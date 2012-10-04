@@ -19,7 +19,8 @@ package nl.inl.blacklab.queryParser.lucene;
  *
  */
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
 
 @SuppressWarnings("all")
 /** An efficient implementation of JavaCC's CharStream interface.  <p>Note that
