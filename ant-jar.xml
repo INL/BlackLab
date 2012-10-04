@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE project>
+<!--
+
+Standard Ant build file for projects that produce a JAR file
+(libraries or (non-web) applications).
+
+Refers to external file build.properties and build-defaults.properties, that contain
+some standard locations. You should only need to change build.properties (overrides
+the defaults).
+
+-->
+<project name="ant-jar">
+	
+	<!-- Load properties from the properties file; use defaults if not set -->
+    <property file="build.properties" />
+    <property file="build-defaults.properties" />
+    
+	<!-- Check that the lib.dir is set -->
+    <fail unless="lib.dir">No lib.dir set for this OS!</fail>
+	
+	<!-- Only execute tests if the test dir exists -->
+	<available file="${test.src.dir}" property="test.dir.exists" />
+	
+	<!-- Make sure we know the current year, for the copyright clause in the javadocs -->
+	<tstamp><format property="CURRENT_YEAR" pattern="yyyy" /></tstamp>
+	
+	<!-- The extra files to include in the JAR (all non-Java source files in the src dir) -->
+	<fileset id="jar.resources" dir="${src.dir}">
+		<exclude name="**/*.java" />
+	</fileset>
+	
+	<!-- ### Targets -->
+		
+	<!-- Build projects that this project depends on -->
+	<target name="build-dependencies">
+		<!-- To be overridden in project build files -->
+	</target>
+	
+	<!-- Initialize additional properties -->
+	<target name="init">
+		<!-- To be overridden in project build files -->
+	</target>
+	
+	<!-- Set the classpath for use in the manifest file, if this is an application -->
+	<target name="manifest-classpath" unless="jar.islibrary">
+		<!-- Convert the libraries to be included in the Class-Path attribute of the MANIFEST.MF file -->
+		<pathconvert refid="classpath" property="jar.manifest.classpath" pathsep=" ">
+			<chainedmapper>
+				<flattenmapper />
+				<globmapper from="*" to="${dist.lib.dirname}/*" />
+			</chainedmapper>
+		</pathconvert>
+	</target>
+	
+	<!-- Determine if this is an application or a library -->
+	<target name="determine-app-or-lib" unless="jar.mainclass">
+		<property name="jar.islibrary" value="true" />
+		<property name="jar.mainclass" value="" />
+		<property name="jar.manifest.classpath" value="" />
+	</target>
+	
+	<!-- Initialize --> 
+	<target name="init-internal" depends="determine-app-or-lib,build-dependencies,manifest-classpath,init">
+		<echo message="----- Building ${ant.project.name} -----" />
+	</target>
+
+	<!-- Remove all intermediate build files, the distribution, and the javadoc files -->
+	<target name="clean" description="Clean up">
+		<delete dir="${build.dir}" />
+		<delete dir="${dist.dir}" />
+		<delete dir="${javadoc.dir}" />
+	</target>
+
+	<!-- Compile the sources -->
+	<target name="compile" description="Compile the source" depends="init-internal">
+		<mkdir dir="${classes.dir}" />
+		
+		<!-- source="1.6" target="1.6" bootclasspath="${jdk.dir}/jre/lib/rt.jar"  -->
+		<javac includeantruntime="false" encoding="utf-8" debug="true" debuglevel="lines,vars,source" 
+			srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" />
+	</target>
+	
+	<!-- Build the JAR file -->
+	<target name="buildjar" depends="compile,test">
+		<mkdir dir="${dist.dir}" />
+		<jar destfile="${jar.file}" basedir="${classes.dir}">
+
+			<!-- Generate the manifest file -->
+			<manifest>
+				<attribute name="Manifest-Version" value="1.0" />
+				<attribute name="Main-Class" value="${jar.mainclass}" />
+				<attribute name="Class-Path" value="${jar.manifest.classpath}" />
+			</manifest>
+
+			<!-- Extra stuff to put in the JAR (propertyfiles, images, etc.) -->
+			<fileset refid="jar.resources" />
+		</jar>
+	</target>
+	
+	<!-- Copy external libraries to the dist/lib dir (only for apps) -->
+	<target name="copylibs" unless="jar.islibrary">
+		<mkdir dir="${dist.lib.dir}" />
+		<copy todir="${dist.lib.dir}" flatten="true">
+			<path refid="classpath" />
+		</copy>
+	</target>
+
+	<!-- Generate the distribution (i.e., build the project) -->
+	<target name="dist" depends="buildjar,copylibs" description="Generate the distribution">
+	</target>
+
+	<!-- Run the application. NOTE: Run doesn't work for console apps -->
+	<target name="run" depends="dist" unless="jar.islibrary">
+		<java fork="true" classname="${jar.mainclass}">
+			<classpath>
+				<path refid="classpath" />
+				<pathelement location="${jar.file}" />
+			</classpath>
+		</java>
+	</target>
+
+	<!-- Generate a clean build -->
+	<target name="clean-dist" depends="clean,dist" />
+
+	<!-- Generate a clean build and run the application. NOTE: Run doesn't work for console apps -->
+	<target name="clean-run" depends="clean,run" />
+
+	<!-- Generate the Javadoc -->
+	<target name="javadoc" depends="init-internal">
+		<mkdir dir="${javadoc.dir}" />
+		<javadoc encoding="utf-8" charset="utf-8" packagenames="${javadoc.packagenames}" 
+		sourcepath="${src.dir}" defaultexcludes="yes" destdir="${javadoc.dir}" 
+		author="true" version="true" use="true" windowtitle="${ant.project.name} API"
+		overview="${src.dir}/overview.html">
+			<classpath refid="classpath" />
+			<doctitle>${ant.project.name} API</doctitle>
+			<bottom>Copyright &#169; ${CURRENT_YEAR} INL, alle rechten voorbehouden.</bottom>
+			<!-- You can define custom Javadoc tags. Recommended is to include a period (.) in the name to avoid collision with future tags.
+			Currently not used.
+			<tag name="todo" scope="all" description="To do:" />
+			-->
+			<!-- You can group packages as follows. Currently not used.
+			<group title="Group 1 Packages" packages="com.dummy.test.a*" />
+			<group title="Group 2 Packages" packages="com.dummy.test.b*:com.dummy.test.c*" />
+			-->
+            <link href="http://docs.oracle.com/javase/1.5.0/docs/api/" />
+		</javadoc>
+	</target>
+
+	<!-- =============================== TESTING =============================== -->
+
+	<!-- Compile the test classes -->
+	<target name="test.compile" description="Compile the test sources" depends="compile" if="test.dir.exists">
+		<mkdir dir="${test.classes.dir}" />
+		<!-- source="1.6" target="1.6" bootclasspath="${jdk.dir}/jre/lib/rt.jar"  -->
+		<javac includeantruntime="false" srcdir="${test.src.dir}" destdir="${test.classes.dir}" encoding="utf-8" debug="true" debuglevel="lines,vars,source">
+			<classpath>
+				<path refid="classpath" />
+				<pathelement location="${junit.jar}" />
+				<pathelement location="${classes.dir}" />
+			</classpath>
+		</javac>
+	</target>
+
+	<!-- Run the project's unit tests -->
+	<target name="test" depends="test.compile" if="test.dir.exists">
+		<mkdir dir="${test.report.dir}" />
+		<junit printsummary="yes" haltonerror="true" tempdir="${tmp.dir}">
+			<classpath>
+				<path refid="classpath" />
+				<pathelement location="${junit.jar}" />
+				<pathelement path="${src.dir}" /> <!-- properties, etc. -->
+				<pathelement path="${classes.dir}" />
+				<pathelement path="${test.classes.dir}" />
+			</classpath>
+
+			<formatter type="xml" />
+
+			<batchtest todir="${test.report.dir}">
+				<fileset dir="${test.src.dir}">
+					<include name="**/Test*.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+</project>

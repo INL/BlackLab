@@ -1,0 +1,35 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2012 Institute for Dutch Lexicology.
+ * All rights reserved.
+ *******************************************************************************/
+package nl.inl.blacklab.search.sequences;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
+
+import nl.inl.blacklab.search.Hit;
+
+import org.apache.lucene.search.spans.Spans;
+
+/**
+ * Wrap a Spans to retrieve hits per document, so we can process all matches in a document
+ * efficiently.
+ *
+ * Hits are sorted by the given comparator.
+ */
+public class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
+	private Comparator<Hit> comparator;
+
+	public SpansInBucketsPerDocumentSorted(Spans source, Comparator<Hit> comparator) {
+		super(source);
+		this.comparator = comparator;
+	}
+
+	@Override
+	protected void gatherHits() throws IOException {
+		super.gatherHits();
+		Collections.sort(hits, comparator);
+	}
+
+}

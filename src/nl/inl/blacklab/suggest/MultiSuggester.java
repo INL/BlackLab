@@ -1,0 +1,49 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2012 Institute for Dutch Lexicology.
+ * All rights reserved.
+ *******************************************************************************/
+package nl.inl.blacklab.suggest;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Base class for a word-based suggester. Suggesters may be chained. The suggest() method produces a
+ * Suggestions object that may contain suggestions of several different types (such as spelling
+ * variations, inflected forms, related terms, etc.).
+ */
+public class MultiSuggester extends Suggester {
+	private List<Suggester> suggesters = new ArrayList<Suggester>();
+
+	/**
+	 * Default constructor, without chaining.
+	 */
+	public MultiSuggester() {
+		//
+	}
+
+	public MultiSuggester(Suggester... suggesters) {
+		this.suggesters.addAll(Arrays.asList(suggesters));
+	}
+
+	public void add(Suggester suggester) {
+		suggesters.add(suggester);
+	}
+
+	/**
+	 * Should be overridden by child classes to add suggestions to the provided Suggestions object.
+	 *
+	 * @param original
+	 *            the original word
+	 * @param suggestions
+	 *            the suggestions object to add to
+	 */
+	@Override
+	public void addSuggestions(String original, Suggestions suggestions) {
+		for (Suggester suggester : suggesters) {
+			suggester.addSuggestions(original, suggestions);
+		}
+	}
+
+}

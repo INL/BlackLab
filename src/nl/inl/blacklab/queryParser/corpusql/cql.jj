@@ -1,0 +1,306 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2012 Institute for Dutch Lexicology.
+ * All rights reserved.
+ *******************************************************************************/
+/*
+
+Corpus Query Language (CQL) parser definition.
+
+javacc is used to generate Java code from this parser definition.
+
+*/
+
+options 
+{
+	STATIC=false;
+	JAVA_UNICODE_ESCAPE=true;
+	//USER_CHAR_STREAM=true;
+}
+
+PARSER_BEGIN(CorpusQueryLanguageParser)
+
+package nl.inl.blacklab.queryParser.corpusql;
+
+import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.TextPatternAnd;
+import nl.inl.blacklab.search.TextPatternOr;
+import nl.inl.blacklab.search.TextPatternProperty;
+import nl.inl.blacklab.search.TextPatternRegex;
+import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
+import nl.inl.blacklab.search.sequences.TextPatternSequence;
+import nl.inl.blacklab.search.sequences.TextPatternRepetition;
+
+@SuppressWarnings("all")
+
+public class CorpusQueryLanguageParser {
+
+    public static void main(String[] args) throws Exception 
+    {
+		CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(args[0]));
+		parser.query();
+    }
+    
+    private int num(Token t)
+    {
+    	return Integer.parseInt(t.toString());
+    }
+    
+    private String chopEnds(String regex)
+    {
+    	if (regex.length() >= 2)
+    		return regex.substring(1, regex.length() - 1);
+    	throw new RuntimeException("Cannot chop slashes");
+    }
+    
+    private TextPattern simplePattern(String str)
+    {
+        if (str.charAt(0) != '^')
+            str = "^" + str;
+        if (str.charAt(str.length() - 1) != '$')
+            str += "$";
+        
+        return TextPatternRegex.getAppropriatePattern(str); 
+    }
+    
+    private String defaultProperty = "word";
+    
+    public void setDefaultProperty(String property) {
+        defaultProperty = property;
+    }
+
+    public String getDefaultProperty() {
+        return defaultProperty;
+    }
+
+    private TextPattern propertyClause(String prop, TextPattern value)
+    {
+    	if (prop.equals(defaultProperty))
+    		return value; // default property
+    	return new TextPatternProperty(prop, value);
+    }
+    
+}
+
+PARSER_END(CorpusQueryLanguageParser)
+
+// Skip whitespace and comment
+SKIP:  
+{
+	" " 
+|	"\t" 
+|	"\n" 
+|	"\r"
+}
+
+/* Comments are 'special tokens': they are not reported, but are available
+   for use by the next reported token */
+SPECIAL_TOKEN:
+{
+	<SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* ("\n"|"\r"|"\r\n")? >
+|	<MULTI_LINE_COMMENT: "/*" (~["*"] | "*" ~["/"])* "*/">
+}
+
+// Token definitions
+TOKEN [IGNORE_CASE]:
+{
+	<NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","0"-"9"])* >
+|	<NUMBER: (["0"-"9"])+ >
+|	<QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
+}
+
+// --- Grammar rules start here --- 
+
+TextPattern query(): 
+{
+	TextPattern query = null;
+} 
+{
+	[ query=sequence() ] <EOF>
+	{
+		return query;
+	}
+}
+
+TextPattern sequence(): 
+{
+	TextPattern first = null;
+	TextPattern result = null;
+} 
+{
+	first=sequencePart() [ result=sequenceRest(first) ]
+	{
+		if (result == null)
+			return first;
+		return result;
+	}
+}
+
+TextPattern sequenceRest(TextPattern first):
+{
+	Token op = null;
+	TextPattern rest = null;
+	Integer[] minMax = null;
+}
+{
+	rest=sequence()
+	{
+		if (rest == null)
+			return first;
+		return new TextPatternSequence(first, rest);
+	}
+|	minMax=sequenceOperator() rest=sequence()
+	{
+		return new TextPatternSequence(first, new TextPatternAnyToken(minMax[0], minMax[1]), rest);
+	}
+|	op=booleanOperator() rest=sequence()
+	{
+		if (op.toString().equals("&"))
+			return new TextPatternAnd(first, rest);
+		return new TextPatternOr(first, rest);
+	}
+}
+
+Integer[] sequenceOperator():
+{
+	Token t = null, t2 = null;
+	Integer[] minMax = null;
+}
+{
+	"[]" [ minMax=repetitionAmount() ]
+	{
+		if (minMax == null)
+			return new Integer[]{1, 1};
+		if (minMax[1] == -1)
+			throw new UnsupportedOperationException("Any-token without max not yet supported");
+		return minMax;
+	}
+}
+
+Integer[] repetitionAmount():
+{
+	Token t = null, t2 = null;
+	Integer[] minMax = new Integer[2];
+}
+{
+	"*"                                 { minMax[0] = 0; minMax[1] = -1; return minMax; }
+|	"+"                                 { minMax[0] = 1; minMax[1] = -1; return minMax; }
+|	"?"                                 { minMax[0] = 0; minMax[1] = 1; return minMax; }
+|	LOOKAHEAD(3) "{" t=<NUMBER> "}"     { minMax[0] = minMax[1] = num(t); return minMax; }
+|	"{" t=<NUMBER> "," [ t2=<NUMBER> ] "}"
+	{
+		minMax[0] = num(t);
+		if (t2 == null)
+			minMax[1] = -1;
+		else
+			minMax[1] = num(t2);
+		return minMax; 
+	}
+}
+
+Token booleanOperator():
+{
+	Token t = null;
+}
+{
+	(t="&" | t="|")  { return t; }
+}
+
+TextPattern sequencePart(): 
+{
+	TextPattern m = null;
+	Integer[] rep = null;
+}
+{
+	( m=position() | "(" m=sequence() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+	{
+		if (rep != null)
+		{
+			return new TextPatternRepetition(m, rep[0], rep[1]);
+		}
+		return m; 
+	}
+|	"!" m=sequencePart()   { throw new UnsupportedOperationException("NOT operator not yet supported"); }
+}
+
+TextPattern position():
+{
+	TextPattern m = null;
+}
+{
+	m=positionWord()         { return m; }
+|	"[" m=positionLong() "]" { return m; }
+}
+
+TextPattern positionWord():
+{
+	Token t = null;
+}
+{
+	t=<QUOTED_STRING>      { return simplePattern(chopEnds(t.toString())); }
+}
+
+TextPattern positionLong():
+{
+	TextPattern a = null, c = null;
+	Token b = null;
+}
+{
+	a=positionLongPart() [ b=booleanOperator() c=positionLong() ]
+	{
+		if (b == null)
+			return a;
+		if (b.toString().equals("&"))
+			return new TextPatternAnd(a, c);
+		return new TextPatternOr(a, c);
+	}
+}
+
+TextPattern positionLongPart():
+{
+	TextPattern m = null;
+}
+{
+	LOOKAHEAD(3)
+	m=attValuePair()              { return m; }
+|	"(" m=positionLong() ")"      { return m; }
+|	"!" m=positionLongPart()      { throw new UnsupportedOperationException("NOT operator not yet supported!"); }
+}
+
+TextPattern attValuePair():
+{
+	TextPattern v = null;
+	Token t = null;
+}
+{
+	LOOKAHEAD(2)
+	t=<NAME> "=" v=valuePart()      { return propertyClause(t.toString(), v); }
+|	t=<NAME> "!=" v=valuePart()      { throw new UnsupportedOperationException("NOT operator not yet supported!"); }
+|	v=valuePart()                   { return v; }
+}
+
+TextPattern value():
+{
+	TextPattern a = null, c = null;
+	Token b = null;
+}
+{
+	LOOKAHEAD(3) a=valuePart() b=booleanOperator() c=value()
+	{
+		if (b.toString().equals("&"))
+			return new TextPatternAnd(a, c);
+		return new TextPatternOr(a, c);
+	}
+|	a=valuePart()                   { return a; }
+}
+
+TextPattern valuePart():
+{
+	TextPattern m = null;
+	Token t = null;
+}
+{
+	t=<QUOTED_STRING>              { return simplePattern(chopEnds(t.toString())); }
+|	"(" m=value() ")"              { return m; }
+|	"!" m=valuePart()              { throw new UnsupportedOperationException("NOT operator not yet supported!"); }
+}
+
