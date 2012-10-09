@@ -10,6 +10,7 @@ More information:
 * [https://github.com/INL/BlackLab/wiki/Features List of features]
 * [https://github.com/INL/BlackLab/wiki/Try-BlackLab-online Try an online demo]
 * [https://github.com/INL/BlackLab/wiki/Frequently-Asked-Questions Frequently Asked Questions]
+* [[Example application|Have a look at the example application]]
 * [https://github.com/INL/BlackLab/wiki/Building-and-testing-BlackLab Build and test it yourself]
 * Follow [https://twitter.com/BlackLabINL @BlackLabINL] on Twitter!
 * For technical questions, contact Jan Niestadt (jan.niestadt@inl.nl)
