@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.Properties;
 
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.util.LogUtil;
 import nl.inl.util.PropertiesUtil;
 
 /**
@@ -26,16 +27,26 @@ import nl.inl.util.PropertiesUtil;
  */
 public class IndexAnwCorpus {
 	public static void main(String[] args) throws Exception {
+		System.out.println("IndexAnwCorpus\n");
+		if (args.length != 1) {
+			System.out
+					.println("Usage: java nl.inl.blacklab.indexers.anwcorpus.IndexAnwCorpus <propfile>\n"
+							+ "(see docs for more information)");
+			return;
+		}
+		File propFile = new File(args[0]);
+		File baseDir = propFile.getParentFile();
+		//String dataSetName = args[0];
+
+		LogUtil.initLog4jBasic();
+
 		// Read property file
-		Properties properties = PropertiesUtil.getFromResource("anwcorpus.properties");
+		Properties properties = PropertiesUtil.readFromFile(propFile);
 
 		// Where to create the index and UTF-16 content
-		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", null);
+		File indexDir = new File(baseDir, properties.getProperty("indexDir", "index"));
 		if (!indexDir.isDirectory())
 			indexDir.mkdir();
-
-		// Where the source files are
-		File inputDir = PropertiesUtil.getFileProp(properties, "inputDir", null);
 
 		// The indexer tool
 		Indexer indexer = new Indexer(indexDir, true, DocIndexerXmlAnw.class);
@@ -45,19 +56,16 @@ public class IndexAnwCorpus {
 			if (maxDocs > 0)
 				indexer.setMaxDocs(maxDocs);
 
+			// Where the source files are
+			File inputDir = new File(baseDir, properties.getProperty("inputDir", "input"));
+
 			// Index a directory
 			indexer.indexDir(inputDir, false);
-
-			// Test: just one large file
-			// File largeFile = new File(inputDir, "ANW_Kranten-versie2.1 (4).xml");
-			// indexer.indexFile(largeFile, factory);
 		} catch (Exception e) {
 			System.err.println("An error occurred, aborting indexing. Error details follow.");
 			e.printStackTrace();
 		} finally {
 			// Finalize and close the index.
-			// This method also takes care of saved lemmatization information (for quick lookups of
-			// word forms).
 			indexer.close();
 		}
 	}

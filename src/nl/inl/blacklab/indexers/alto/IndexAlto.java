@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.Properties;
 
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.util.LogUtil;
 import nl.inl.util.PropertiesUtil;
 
 /**
@@ -35,12 +36,15 @@ public class IndexAlto {
 		if (args.length < 1 || args.length > 2) {
 			System.out
 					.println("Usage:\n"
-							+ "  java nl.inl.blacklab.indexers.alto.IndexAlto <datasetname> [<single_input_file>]\n"
-							+ "(Will look for a <datasetname>.properties on the classpath; "
-							+ "see installation & indexing guide for more information)");
+							+ "  java nl.inl.blacklab.indexers.alto.IndexAlto <propfile> [<single_input_file>]\n"
+							+ "(see docs for more information)");
 			return;
 		}
-		String dataSetName = args[0];
+		File propFile = new File(args[0]);
+		File baseDir = propFile.getParentFile();
+		//String dataSetName = args[0];
+
+		LogUtil.initLog4jBasic();
 
 		// Do we wish to index a single input file?
 		String whichFile = null;
@@ -49,18 +53,16 @@ public class IndexAlto {
 
 		// Read property file
 		System.out.println("Read property file\n");
-		Properties properties = PropertiesUtil.getFromResource(dataSetName + ".properties");
+		Properties properties = PropertiesUtil.readFromFile(propFile);
 
 		// Metadata is in separate file for EDBO set
+		// TODO: generalize this so we don't need this special case anymore
 		AltoUtils.setMetadataFile(PropertiesUtil.getFileProp(properties, "metadataFile", null));
 
 		// Where to create the index and UTF-16 content
-		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", null);
+		File indexDir = new File(baseDir, properties.getProperty("indexDir", "index"));
 		if (!indexDir.isDirectory())
 			indexDir.mkdir();
-
-		// Where the source files are
-		File inputDir = PropertiesUtil.getFileProp(properties, "inputDir", null);
 
 		boolean createLuceneIndex = CREATE_INDEX_FROM_SCRATCH;
 		if (!createLuceneIndex && !isLuceneIndex(indexDir))
@@ -75,6 +77,9 @@ public class IndexAlto {
 			if (maxDocs > 0)
 				indexer.setMaxDocs(maxDocs);
 
+			// Where the source files are
+			File inputDir = new File(baseDir, properties.getProperty("inputDir", "input"));
+
 			// Index a directory
 			File fileToIndex = inputDir;
 			if (whichFile != null)
@@ -86,8 +91,6 @@ public class IndexAlto {
 			e.printStackTrace();
 		} finally {
 			// Finalize and close the index.
-			// This method also takes care of saved lemmatization information (for quick lookups of
-			// word forms).
 			indexer.close();
 		}
 	}

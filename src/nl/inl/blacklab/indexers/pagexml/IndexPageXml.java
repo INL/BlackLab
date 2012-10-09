@@ -31,7 +31,7 @@ public class IndexPageXml {
 		if (args.length != 1) {
 			System.out
 					.println("Usage: java nl.inl.blacklab.indexers.pagexml.IndexPageXml <propfile>\n"
-							+ "(Will look for <propfile>; see installation & indexing guide for more information)");
+							+ "(see docs for more information)");
 			return;
 		}
 		File propFile = new File(args[0]);
@@ -41,7 +41,6 @@ public class IndexPageXml {
 		LogUtil.initLog4jBasic();
 
 		// Read property file
-		//Properties properties = PropertiesUtil.getFromResource(dataSetName + ".properties");
 		Properties properties = PropertiesUtil.readFromFile(propFile);
 
 		// The indexer tool
