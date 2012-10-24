@@ -32,7 +32,6 @@ import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.NumericField;
@@ -192,16 +191,16 @@ public class DocIndexerAlto extends DocIndexerXml {
 	private void startPage(Attributes attributes) {
 		startCaptureContent();
 		currentLuceneDoc = new Document();
-		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, Index.NOT_ANALYZED,
+		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, indexNotAnalyzed,
 				TermVector.NO));
-		currentLuceneDoc.add(new Field("imageFileName", imageFileName, Store.YES, Index.ANALYZED,
+		currentLuceneDoc.add(new Field("imageFileName", imageFileName, Store.YES, indexAnalyzed,
 				TermVector.NO));
-		currentLuceneDoc.add(new Field("title", documentTitle, Store.YES, Index.ANALYZED,
+		currentLuceneDoc.add(new Field("title", documentTitle, Store.YES, indexAnalyzed,
 				TermVector.NO));
 		currentLuceneDoc
-				.add(new Field("page", pageNumber, Store.YES, Index.ANALYZED, TermVector.NO));
-		currentLuceneDoc.add(new Field("author", author, Store.YES, Index.ANALYZED, TermVector.NO));
-		currentLuceneDoc.add(new Field("year", date, Store.YES, Index.ANALYZED, TermVector.NO));
+				.add(new Field("page", pageNumber, Store.YES, indexAnalyzed, TermVector.NO));
+		currentLuceneDoc.add(new Field("author", author, Store.YES, indexAnalyzed, TermVector.NO));
+		currentLuceneDoc.add(new Field("year", date, Store.YES, indexAnalyzed, TermVector.NO));
 
 		reportDocumentStarted(attributes);
 	}

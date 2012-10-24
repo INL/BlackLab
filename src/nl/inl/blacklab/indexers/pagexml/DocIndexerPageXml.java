@@ -31,7 +31,6 @@ import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.NumericField;
@@ -173,7 +172,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			// Header element ended; index the element with the character content captured
 			// (this is stuff like title, yearFrom, yearTo, etc.)
 			characterContent = characterContent.trim();
-			currentLuceneDoc.add(new Field(localName, characterContent, Store.YES, Index.ANALYZED,
+			currentLuceneDoc.add(new Field(localName, characterContent, Store.YES, indexAnalyzed,
 					TermVector.NO));
 			if (localName.equals("yearFrom") || localName.equals("yearTo")) {
 				// Index these fields as numeric too, for faster range queries
@@ -236,7 +235,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	private void startPage(Attributes attributes) {
 		startCaptureContent();
 		currentLuceneDoc = new Document();
-		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, Index.NOT_ANALYZED,
+		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, indexNotAnalyzed,
 				TermVector.NO));
 
 		// Store attribute values from the tag as fields
@@ -244,7 +243,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			String attName = attributes.getLocalName(i);
 			String value = attributes.getValue(i);
 
-			currentLuceneDoc.add(new Field(attName, value, Store.YES, Index.ANALYZED_NO_NORMS,
+			currentLuceneDoc.add(new Field(attName, value, Store.YES, indexAnalyzed,
 					TermVector.WITH_POSITIONS_OFFSETS));
 		}
 

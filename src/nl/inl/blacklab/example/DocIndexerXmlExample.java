@@ -30,7 +30,6 @@ import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.NumericField;
@@ -189,7 +188,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 
 		// Create a new Lucene document
 		currentLuceneDoc = new Document();
-		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, Index.NOT_ANALYZED,
+		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, indexNotAnalyzed,
 				TermVector.NO));
 
 		// Store attribute values from the <doc> tag as fields
@@ -197,7 +196,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 			String attName = attributes.getLocalName(i);
 			String value = attributes.getValue(i);
 
-			currentLuceneDoc.add(new Field(attName, value, Store.YES, Index.ANALYZED_NO_NORMS,
+			currentLuceneDoc.add(new Field(attName, value, Store.YES, indexAnalyzed,
 					TermVector.WITH_POSITIONS_OFFSETS));
 		}
 

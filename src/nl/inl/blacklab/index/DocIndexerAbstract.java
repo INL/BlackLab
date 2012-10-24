@@ -20,6 +20,8 @@ import java.io.Reader;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.util.CountingReader;
 
+import org.apache.lucene.document.Field;
+
 /**
  * Abstract base class for a DocIndexer processing XML files.
  */
@@ -55,6 +57,31 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	private int charsContentAlreadyStored = 0;
 
 	protected int nDocumentsSkipped = 0;
+
+	/**
+	 * The setting to use when creating Field objects that we want to be analyzed
+	 * (i.e., with or without norms; default is without)
+	 */
+	protected Field.Index indexAnalyzed = Field.Index.ANALYZED_NO_NORMS;
+
+	/**
+	 * The setting to use when creating Field objects that we don't want to be analyzed
+	 * (i.e., with or without norms; default is without)
+	 */
+	protected Field.Index indexNotAnalyzed = Field.Index.NOT_ANALYZED_NO_NORMS;
+
+	/**
+	 * Enables or disables norms. Norms are disabled by default.
+	 *
+	 * The method name was chosen to match Lucene's Field.setOmitNorms().
+	 * Norms are only required if you want to use document-length-normalized scoring.
+	 *
+	 * @param b if true, doesn't store norms; if false, does store norms
+	 */
+	public void setOmitNorms(boolean b) {
+		indexAnalyzed = b ? Field.Index.ANALYZED_NO_NORMS : Field.Index.ANALYZED;
+		indexNotAnalyzed = b ? Field.Index.NOT_ANALYZED_NO_NORMS : Field.Index.NOT_ANALYZED;
+	}
 
 	boolean continueIndexing() {
 		return indexer.continueIndexing();
