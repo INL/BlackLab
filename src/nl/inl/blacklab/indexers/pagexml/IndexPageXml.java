@@ -44,7 +44,7 @@ public class IndexPageXml {
 		Properties properties = PropertiesUtil.readFromFile(propFile);
 
 		// The indexer tool
-		File indexDir = new File(baseDir, properties.getProperty("indexDir", "index"));
+		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", baseDir);
 		Indexer indexer = new Indexer(indexDir, true, DocIndexerPageXml.class);
 		try {
 			// How many documents to process (0 = all of them)
@@ -53,7 +53,7 @@ public class IndexPageXml {
 				indexer.setMaxDocs(maxDocs);
 
 			// Where the source files are
-			File inputDir = new File(baseDir, properties.getProperty("inputDir", "input"));
+			File inputDir = PropertiesUtil.getFileProp(properties, "inputDir", "input", baseDir);
 			indexer.indexDir(inputDir, true);
 		} catch (Exception e) {
 			System.err.println("An error occurred, aborting indexing. Error details follow.");

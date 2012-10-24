@@ -41,7 +41,7 @@ public class TestSearch {
 		Properties properties = PropertiesUtil.getFromResource("edbo.properties");
 
 		// Where the Lucene index and the UTF-16 content is
-		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", null);
+		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", null);
 
 		// ------------------------------------------------------------
 		// First, some setup

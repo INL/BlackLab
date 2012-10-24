@@ -37,7 +37,7 @@ public class TestSearch {
 		Properties properties = PropertiesUtil.getFromResource("dutch.properties");
 
 		// Instantiate Searcher object
-		Searcher searcher = new Searcher(PropertiesUtil.getFileProp(properties, "indexDir", null));
+		Searcher searcher = new Searcher(PropertiesUtil.getFileProp(properties, "indexDir", "index", null));
 		try {
 			// Keep track of time
 			long time = System.currentTimeMillis();

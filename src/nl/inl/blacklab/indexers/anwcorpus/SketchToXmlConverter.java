@@ -46,7 +46,7 @@ public class SketchToXmlConverter {
 		File inDir = PropertiesUtil.getFileProp(properties, "sketchDir", null);
 		File listFile = new File(inDir, "lijst.txt");
 
-		File outDir = PropertiesUtil.getFileProp(properties, "inputDir", null);
+		File outDir = PropertiesUtil.getFileProp(properties, "inputDir", "input", null);
 
 		new SketchToXmlConverter().convertList(listFile, inDir, outDir);
 	}

@@ -44,7 +44,7 @@ public class TestCorpusSearch {
 		Properties properties = PropertiesUtil.getFromResource("anwcorpus.properties");
 
 		// Where to create the index and UTF-16 content
-		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", null);
+		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", null);
 
 		// Create the BlackLab searcher object
 		Searcher searcher = new Searcher(indexDir);

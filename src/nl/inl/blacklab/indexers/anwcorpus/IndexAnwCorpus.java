@@ -44,7 +44,7 @@ public class IndexAnwCorpus {
 		Properties properties = PropertiesUtil.readFromFile(propFile);
 
 		// Where to create the index and UTF-16 content
-		File indexDir = new File(baseDir, properties.getProperty("indexDir", "index"));
+		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", baseDir);
 		if (!indexDir.isDirectory())
 			indexDir.mkdir();
 
@@ -57,7 +57,7 @@ public class IndexAnwCorpus {
 				indexer.setMaxDocs(maxDocs);
 
 			// Where the source files are
-			File inputDir = new File(baseDir, properties.getProperty("inputDir", "input"));
+			File inputDir = PropertiesUtil.getFileProp(properties, "inputDir", "input", baseDir);
 
 			// Index a directory
 			indexer.indexDir(inputDir, false);

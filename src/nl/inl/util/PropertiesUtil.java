@@ -143,20 +143,38 @@ public class PropertiesUtil {
 	 * @return the file, or null if not found
 	 */
 	public static File getFileProp(Properties properties, String name, File basePath) {
-		// TODO: what if the property isn't specified?
+		return getFileProp(properties, name, null, basePath);
+	}
 
-		// Is it an absolute path, or no base path given?
+	/**
+	 * Get a File property from a Properties object.
+	 *
+	 * This may be an absolute file path (starts with / or \ or a Windows drive letter spec), or a
+	 * path relative to basePath
+	 *
+	 * @param properties
+	 *            where to read the value from
+	 * @param name
+	 *            the value's name
+	 * @param basePath
+	 *            base path the file path may be relative to
+	 * @return the file, or null if not found
+	 */
+	public static File getFileProp(Properties properties, String name, String defaultValue, File basePath) {
 		Object prop = properties.get(name);
 		if (prop == null)
+			prop = defaultValue;
+		if (prop == null)
 			return null;
-		String filePath = prop.toString();
-		if (basePath == null || filePath.charAt(0) == '/' || filePath.startsWith("^\\")
-				|| filePath.matches("^\\S:.+$")) {
+		File filePath = new File(prop.toString());
+
+		// Is it an absolute path, or no base path given?
+		if (basePath == null || filePath.isAbsolute()) {
 			// Yes; ignore our base directory
-			return new File(filePath);
+			return filePath;
 		}
 		// Relative path; concatenate with base directory
-		return new File(basePath, filePath);
+		return new File(basePath, filePath.getPath());
 	}
 
 	/**
