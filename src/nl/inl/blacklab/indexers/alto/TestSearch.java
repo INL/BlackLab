@@ -37,11 +37,14 @@ public class TestSearch {
 		long time = System.currentTimeMillis();
 		System.out.println("Start");
 
-		// Read property file
-		Properties properties = PropertiesUtil.getFromResource("edbo.properties");
-
-		// Where the Lucene index and the UTF-16 content is
-		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", null);
+		if (args.length == 0) {
+			System.err.println("Usage: TestSearch <path_to_prop_file>");
+			System.exit(0);
+		}
+		File propFile = new File(args[0]);
+		File baseDir = propFile.getParentFile();
+		Properties properties = PropertiesUtil.readFromFile(propFile);
+		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", baseDir);
 
 		// ------------------------------------------------------------
 		// First, some setup
@@ -90,7 +93,9 @@ public class TestSearch {
 			window.findConcordances(false);
 
 			// Print each hit
+			int doc = 0;
 			for (Hit hit : window) {
+				doc = hit.doc;
 				String left = AltoUtils.getFromContentAttributes(hit.conc[0]) + " ";
 				String hitText = AltoUtils.getFromContentAttributes(hit.conc[1]);
 				String right = " " + AltoUtils.getFromContentAttributes(hit.conc[2]);
@@ -100,6 +105,9 @@ public class TestSearch {
 			System.out.println(window.size() + " concordances of a total of " + window.totalHits());
 
 			System.out.println((System.currentTimeMillis() - time) + "ms elapsed");
+
+			// Fetch and show whole XML doc
+			System.out.println(searcher.getContent(searcher.document(doc), "contents"));
 
 			// ------------------------------------------------------------
 			// Done; clean up

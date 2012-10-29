@@ -128,6 +128,8 @@ public class DocIndexerAlto extends DocIndexerXml {
 		super.endElement(uri, localName, qName);
 		if (localName.equals("String")) {
 			endWord();
+		} else if (localName.equals("alto")) {
+			endAlto();
 		} else if (localName.equals("Page")) {
 			endPage();
 		} else if (localName.equals("Description")) {
@@ -164,7 +166,9 @@ public class DocIndexerAlto extends DocIndexerXml {
 	 */
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) {
-		if (localName.equals("Page")) {
+		if (localName.equals("alto")) {
+			startAlto(attributes);
+		} else if (localName.equals("Page")) {
 			startPage(attributes);
 		} else if (localName.equals("String")) {
 			startWord(attributes);
@@ -184,12 +188,12 @@ public class DocIndexerAlto extends DocIndexerXml {
 	}
 
 	/**
-	 * New <doc> tag found. Start a new document in Lucene.
+	 * New <Page> tag found. Start a new document in Lucene.
 	 *
 	 * @param attributes
 	 */
 	private void startPage(Attributes attributes) {
-		startCaptureContent();
+		// We've seen the metadata by now; store it in a new Lucene document
 		currentLuceneDoc = new Document();
 		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, indexNotAnalyzed,
 				TermVector.NO));
@@ -202,6 +206,15 @@ public class DocIndexerAlto extends DocIndexerXml {
 		currentLuceneDoc.add(new Field("author", author, Store.YES, indexAnalyzed, TermVector.NO));
 		currentLuceneDoc.add(new Field("year", date, Store.YES, indexAnalyzed, TermVector.NO));
 
+	}
+
+	/**
+	 * New <alto> tag found. Start a new document in Lucene.
+	 *
+	 * @param attributes
+	 */
+	private void startAlto(Attributes attributes) {
+		startCaptureContent();
 		reportDocumentStarted(attributes);
 	}
 
@@ -223,11 +236,20 @@ public class DocIndexerAlto extends DocIndexerXml {
 	}
 
 	/**
-	 * End <doc> tag found. Store the content and add the document to the index.
+	 * End <Page> tag found.
 	 *
 	 * @param attributes
 	 */
 	private void endPage() {
+		// [moved to endAlto]
+	}
+
+	/**
+	 * End <alto> tag found. Store the content and add the document to the index.
+	 *
+	 * @param attributes
+	 */
+	private void endAlto() {
 		try {
 			indexer.getListener().documentDone(documentTitle);
 

@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.indexers.pagexml;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -33,11 +34,19 @@ import nl.inl.util.XmlUtil;
  */
 public class TestSearch {
 	public static void main(String[] args) throws IOException {
+
 		// Read property file
-		Properties properties = PropertiesUtil.getFromResource("dutch.properties");
+		if (args.length == 0) {
+			System.err.println("Usage: TestSearch <path_to_prop_file>");
+			System.exit(0);
+		}
+		File propFile = new File(args[0]);
+		File baseDir = propFile.getParentFile();
+		Properties properties = PropertiesUtil.readFromFile(propFile);
 
 		// Instantiate Searcher object
-		Searcher searcher = new Searcher(PropertiesUtil.getFileProp(properties, "indexDir", "index", null));
+		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", baseDir);
+		Searcher searcher = new Searcher(indexDir);
 		try {
 			// Keep track of time
 			long time = System.currentTimeMillis();
@@ -70,7 +79,9 @@ public class TestSearch {
 			window.findConcordances();
 
 			// Print each hit
+			int doc = 0;
 			for (Hit hit : window) {
+				doc = hit.doc;
 				String left = XmlUtil.xmlToPlainText(hit.conc[0]);
 				String hitText = XmlUtil.xmlToPlainText(hit.conc[1]);
 				String right = XmlUtil.xmlToPlainText(hit.conc[2]);
@@ -80,6 +91,10 @@ public class TestSearch {
 			System.out.println(window.size() + " concordances of a total of " + window.totalHits());
 
 			System.out.println((System.currentTimeMillis() - time) + "ms elapsed");
+
+			// Fetch and show whole XML doc
+			System.out.println(searcher.getContent(searcher.document(doc), "contents"));
+
 		} finally {
 			searcher.close();
 		}

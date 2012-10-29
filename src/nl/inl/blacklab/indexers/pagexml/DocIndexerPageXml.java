@@ -155,6 +155,8 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		super.endElement(uri, localName, qName);
 		if (localName.equals("Word")) {
 			endWord();
+		} else if (localName.equals("PcGts")) {
+			endPageXML();
 		} else if (localName.equals("Page")) {
 			endPage();
 		} else if (localName.equals("NE")) {
@@ -190,7 +192,9 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	 */
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) {
-		if (localName.equals("Page")) {
+		if (localName.equals("PcGts")) {
+			startPageXML(attributes);
+		} else if (localName.equals("Page")) {
 			startPage(attributes);
 		} else if (localName.equals("Word")) {
 			startWord(attributes);
@@ -227,13 +231,36 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		}
 	}
 
+	private void startPageXML(Attributes attributes) {
+		startCaptureContent();
+	}
+
+	private void endPageXML() {
+		try {
+			addContentToLuceneDoc();
+			indexer.add(currentLuceneDoc);
+			reportCharsProcessed();
+			reportTokensProcessed(wordsDone);
+			wordsDone = 0;
+
+			contentsField.clear();
+
+			if (!indexer.continueIndexing())
+				throw new MaxDocsReachedException();
+		} catch (MaxDocsReachedException e) {
+			// This is okay; just rethrow it
+			throw e;
+		} catch (Exception e) {
+			throw ExUtil.wrapRuntimeException(e);
+		}
+	}
+
 	/**
 	 * New <doc> tag found. Start a new document in Lucene.
 	 *
 	 * @param attributes
 	 */
 	private void startPage(Attributes attributes) {
-		startCaptureContent();
 		currentLuceneDoc = new Document();
 		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, indexNotAnalyzed,
 				TermVector.NO));
@@ -287,20 +314,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 				contentsField.addPropertyValue("starttag", insideNE && neOffset == 0 ? "ne" : "");
 				contentsField.addPropertyValue("endtag", neJustClosed ? "ne" : "");
 			}
-
-			addContentToLuceneDoc();
-			indexer.add(currentLuceneDoc);
-			reportCharsProcessed();
-			reportTokensProcessed(wordsDone);
-			wordsDone = 0;
-
-			contentsField.clear();
-
-			if (!indexer.continueIndexing())
-				throw new MaxDocsReachedException();
-		} catch (MaxDocsReachedException e) {
-			// This is okay; just rethrow it
-			throw e;
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
