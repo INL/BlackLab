@@ -51,7 +51,6 @@ public class TestSearch {
 		// ------------------------------------------------------------
 
 		// Create the BlackLab searcher object
-		System.out.println("Searcher object maken");
 		Searcher searcher = new Searcher(indexDir);
 		try {
 			// ------------------------------------------------------------
@@ -60,7 +59,6 @@ public class TestSearch {
 
 			// Keep track of time
 			System.out.println((System.currentTimeMillis() - time) / 1000 + "s elapsed");
-			System.out.println("Start met zoeken");
 			time = System.currentTimeMillis();
 
 			// Build pattern to search for
