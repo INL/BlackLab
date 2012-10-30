@@ -51,12 +51,6 @@ public class TextPatternRegex extends TextPatternTerm {
 		// Try to convert to a wildcard query.
 		String wildcard = regex;
 
-		// NOTE: Backslashes (like in \w or \s) and pipes (|) were not detected by
-		// StringUtil.escapeRegexCharacters until recently. This if statement can be removed soon.
-		if (regex.contains("\\") || regex.contains("|")) {
-			return new TextPatternRegex(regex);
-		}
-
 		// Wildcard expressions always start at beginning
 		if (wildcard.charAt(0) == '^') {
 			wildcard = wildcard.substring(1);
@@ -72,7 +66,10 @@ public class TextPatternRegex extends TextPatternTerm {
 		}
 
 		// Mark asterisk and questionmark candidates
-		// TODO: kind of ugly to use string markers like this.. better way?
+		// TODO: kind of ugly to use string markers like this.. a better way is to
+		//   walk through the string, detecting stuff as we go. When we detect anything
+		//   that doesn't fit in a wildcard query, we know we have to use regex.
+		//   Otherwise, we do the required replacements and create a wildcard query.
 		wildcard = wildcard.replaceAll("\\.\\*", "##ASTERISK##"); // .* -> *
 		wildcard = wildcard.replaceAll("\\.\\+", "##QUESTIONMARK####ASTERISK##"); // .+ -> ?*
 		wildcard = wildcard.replaceAll("\\.", "##QUESTIONMARK##"); // . -> ?
