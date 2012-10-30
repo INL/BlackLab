@@ -16,6 +16,8 @@
 package nl.inl.blacklab.index;
 
 import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -65,6 +67,18 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 			DocIndexerXml.this.processingInstruction(target, data);
 		}
 
+		@Override
+		public void startPrefixMapping(String prefix, String uri) throws SAXException {
+			super.startPrefixMapping(prefix, uri);
+			DocIndexerXml.this.startPrefixMapping(prefix, uri);
+		}
+
+		@Override
+		public void endPrefixMapping(String prefix) throws SAXException {
+			super.endPrefixMapping(prefix);
+			DocIndexerXml.this.endPrefixMapping(prefix);
+		}
+
 		public String describePosition() {
 			return "line " + locator.getLineNumber() + ", position " + locator.getColumnNumber();
 		}
@@ -75,8 +89,31 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 
 	private static boolean continueParsingAfterError = false;
 
+	/**
+	 * What namespace prefix mappings have we encountered but not output in a start tag
+	 * yet? (used to make sure the stored XML contains all the required mappings)
+	 */
+	protected static Map<String,String> outputPrefixMapping = new HashMap<String, String>();
+
 	public static void setContinueParsingAfterError(boolean continueParsingAfterError) {
 		DocIndexerXml.continueParsingAfterError = continueParsingAfterError;
+	}
+
+	/**
+	 * Encountered a prefix to namespace mapping; now in effect.
+	 * @param prefix the prefix that is now in effect
+	 * @param uri the namespace the prefix refers to
+	 */
+	public void startPrefixMapping(String prefix, String uri) {
+		outputPrefixMapping.put(prefix, uri);
+	}
+
+	/**
+	 * A previously encountered namespace prefix mapping is no longer in effect.
+	 * @param prefix the prefix that's no longer in effect.
+	 */
+	public void endPrefixMapping(String prefix) {
+		//System.out.println("END PREFIX MAPPING: " + prefix);
 	}
 
 	public DocIndexerXml(Indexer indexer, String fileName, Reader reader) {
@@ -90,12 +127,20 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 
 	public void startElement(String uri, String localName, String qName, Attributes attributes) {
 		elementBuilder.delete(0, elementBuilder.length());
-		elementBuilder.append("<").append(localName);
+		elementBuilder.append("<").append(qName);
 		for (int i = 0; i < attributes.getLength(); i++) {
 			String value = escapeXmlChars(attributes.getValue(i));
-			elementBuilder.append(" ").append(attributes.getLocalName(i)).append("=\"")
+			elementBuilder.append(" ").append(attributes.getQName(i)).append("=\"")
 					.append(value).append("\"");
 		}
+		// Append any namespace mapping not yet outputted
+		for (Map.Entry<String, String> e: outputPrefixMapping.entrySet()) {
+			if (e.getKey().length() == 0)
+				elementBuilder.append(" xmlns=\"").append(e.getValue()).append("\"");
+			else
+				elementBuilder.append(" xmlns:").append(e.getKey()).append("=\"").append(e.getValue()).append("\"");
+		}
+		outputPrefixMapping.clear(); // outputted all prefix mappings for now
 		elementBuilder.append(">");
 		processContent(elementBuilder.toString());
 	}
@@ -191,7 +236,7 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 
 	public void endElement(String uri, String localName, String qName) {
 		elementBuilder.delete(0, elementBuilder.length());
-		elementBuilder.append("</").append(localName).append(">");
+		elementBuilder.append("</").append(qName).append(">");
 		processContent(elementBuilder.toString());
 	}
 
