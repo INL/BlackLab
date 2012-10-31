@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.Arrays;
 
 import junit.framework.Assert;
+import nl.inl.util.Utilities;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,32 +33,14 @@ public class TestForwardIndex {
 	String[][] str = { { "How", "much", "wood" }, { "would", "a", "woodchuck", "chuck" },
 			{ "if", "a", "woodchuck", "could", "chuck", "wood" } };
 
-	public boolean deleteFIDirectory() {
-		if (dir.exists()) {
-			File[] files = dir.listFiles();
-			for (int i = 0; i < files.length; i++) {
-				if (!files[i].delete())
-					throw new RuntimeException("Could not delete " + files[i]);
-			}
-		}
-		return (dir.delete());
-	}
-
 	@Before
 	public void setUp() {
-		String tempPath = "d:\\temp";
-		File tempDir = new File(tempPath);
-		if (!tempDir.exists()) {
-			tempPath = "c:\\temp";
-			tempDir = new File(tempPath);
-			if (!tempDir.exists())
-				throw new RuntimeException("Directory " + tempPath
-						+ " must exist to run this test.");
-		}
 
-		dir = new File(tempDir, "testforwardindex");
-		if (dir.exists())
-			deleteFIDirectory();
+		// Remove any previously left over temp test dirs
+		Utilities.removeBlackLabTestDirs();
+
+		// Create new test dir
+		dir = Utilities.createBlackLabTestDir("ForwardIndex");
 
 		fi = new ForwardIndex(dir, true, true);
 		try {
@@ -75,7 +58,8 @@ public class TestForwardIndex {
 	public void tearDown() {
 		if (fi != null)
 			fi.close();
-		deleteFIDirectory();
+		// Try to remove (some files may be locked though)
+		Utilities.removeBlackLabTestDirs();
 	}
 
 	@Test

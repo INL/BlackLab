@@ -18,6 +18,7 @@ package nl.inl.blacklab.externalstorage;
 import java.io.File;
 
 import junit.framework.Assert;
+import nl.inl.util.Utilities;
 
 import org.junit.After;
 import org.junit.Before;
@@ -30,31 +31,14 @@ public class TestContentStoreDirZip {
 
 	String[] str = { "The quick brown fox ", "jumps over the lazy ", "dog.           ", "Leentje leerde Lotje lopen lan" };
 
-	public boolean deleteContentStoreDirectory() {
-		if (dir.exists()) {
-			File[] files = dir.listFiles();
-			for (int i = 0; i < files.length; i++) {
-				files[i].delete();
-			}
-		}
-		return (dir.delete());
-	}
-
 	@Before
 	public void setUp() {
-		String tempPath = "d:\\temp";
-		File tempDir = new File(tempPath);
-		if (!tempDir.exists()) {
-			tempPath = "c:\\temp";
-			tempDir = new File(tempPath);
-			if (!tempDir.exists())
-				throw new RuntimeException("Directory " + tempPath
-						+ " must exist to run this test.");
-		}
 
-		dir = new File(tempDir, "testcontentstore");
-		if (dir.exists())
-			deleteContentStoreDirectory();
+		// Remove any previously left over temp test dirs
+		Utilities.removeBlackLabTestDirs();
+
+		// Create new test dir
+		dir = Utilities.createBlackLabTestDir("ContentStoreDirZip");
 
 		store = new ContentStoreDirZip(dir);
 		try {
@@ -74,7 +58,8 @@ public class TestContentStoreDirZip {
 	@After
 	public void tearDown() {
 		store.close();
-		deleteContentStoreDirectory();
+		// Try to remove (some files may be locked though)
+		Utilities.removeBlackLabTestDirs();
 	}
 
 	@Test

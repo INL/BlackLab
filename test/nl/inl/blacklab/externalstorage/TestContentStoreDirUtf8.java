@@ -16,10 +16,9 @@
 package nl.inl.blacklab.externalstorage;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.util.UUID;
 
 import junit.framework.Assert;
+import nl.inl.util.Utilities;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,40 +31,13 @@ public class TestContentStoreDirUtf8 {
 
 	String[] str = { "The quick brown fox ", "jumps over the lazy ", "dog.           ", "Leentje leerde Lotje lopen lan" };
 
-	public boolean deleteContentStoreDirectory() {
-		if (dir.exists()) {
-			File[] files = dir.listFiles();
-			for (int i = 0; i < files.length; i++) {
-				files[i].delete(); // may fail because of mem-map write lock; will be deleted next time
-			}
-		}
-		return (dir.delete());
-	}
-
 	@Before
 	public void setUp() {
-		File tempDir = new File(System.getProperty("java.io.tmpdir"));
-		if (!tempDir.exists())
-			throw new RuntimeException("Directory " + tempDir
-					+ " must exist to run this test.");
+		// Remove any previously left over temp test dirs
+		Utilities.removeBlackLabTestDirs();
 
-		// Remove old ContentStore test dirs from temp dir, if possible
-		// (may not be possible because of memory mapping lock on Windows;
-		//  in this case we just leave the files and continue)
-		for (File d: tempDir.listFiles(new FilenameFilter() {
-				@Override
-				public boolean accept(File parentDir, String name) {
-					return name.startsWith("BlackLabTest");
-				}
-			})) {
-
-			for (File f: d.listFiles()) {
-				f.delete();
-			}
-			d.delete();
-		}
-
-		dir = new File(tempDir, "BlackLabTest_ContentStore_" + UUID.randomUUID().toString());
+		// Create new test dir
+		dir = Utilities.createBlackLabTestDir("ContentStoreDirUtf8");
 
 		store = new ContentStoreDirUtf8(dir);
 		try {
@@ -88,7 +60,8 @@ public class TestContentStoreDirUtf8 {
 	public void tearDown() {
 		if (store != null)
 			store.close();
-		deleteContentStoreDirectory();
+		// Try to remove (some files may be locked though)
+		Utilities.removeBlackLabTestDirs();
 	}
 
 	@Test
