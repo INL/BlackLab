@@ -29,7 +29,6 @@ import java.util.List;
 import nl.inl.util.ExUtil;
 import nl.inl.util.MemoryUtil;
 import nl.inl.util.OsUtil;
-import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
@@ -246,6 +245,15 @@ public class ForwardIndex {
 		}
 	}
 
+	/** The memory mapped write buffer */
+	IntBuffer writeBuffer;
+
+	/** Buffer offset (position in file of start of writeBuffer) in integer positions
+	 * (so we don't count bytes, we count ints) */
+	long writeBufOffset;
+
+	final static int writeMapReserve = 250000; // 250K integers = 1M bytes
+
 	/**
 	 * Store the given content and assign an id to it
 	 *
@@ -255,25 +263,51 @@ public class ForwardIndex {
 	 */
 	public synchronized int addDocument(List<String> content) {
 		try {
+			if (writeBuffer == null) {
+				// Map writeBuffer
+				writeBufOffset = tokensFp.length() / SIZEOF_INT;
+				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
+						writeBufOffset * SIZEOF_INT, (content.size() + writeMapReserve) * SIZEOF_INT);
+				writeBuffer = byteBuffer.asIntBuffer();
+			}
+
 			// Make entry
-			TocEntry e = new TocEntry(tokensFp.length() / SIZEOF_INT, content.size(), false);
+			long entryOffset = writeBufOffset + writeBuffer.position();
+			TocEntry e = new TocEntry(entryOffset, content.size(), false);
 			toc.add(e);
 			tocModified = true;
 
-			// TODO: We should not re-map for every document, but use a similar approach as with
+			if (writeBuffer.remaining() < content.size()) {
+				// Remap writeBuffer so we have space available
+				writeBufOffset += writeBuffer.position();
+
+				// NOTE: We reserve more space so we don't have to remap for each document, saving time
+				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
+						writeBufOffset * SIZEOF_INT, (content.size() + writeMapReserve) * SIZEOF_INT);
+				writeBuffer = byteBuffer.asIntBuffer();
+			}
+
+			for (String token : content) {
+				writeBuffer.put(terms.indexOf(token));
+			}
+
+
+			/*
+			// NOTE: We should not re-map for every document, but use a similar approach as with
 			// Terms
 
-			MappedByteBuffer buffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
+			MappedByteBuffer writeBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
 					e.offset * SIZEOF_INT, content.size() * SIZEOF_INT);
-			buffer.position(0);
-			IntBuffer ib = buffer.asIntBuffer();
+			writeBuffer.position(0);
+			IntBuffer ib = writeBuffer.asIntBuffer();
 			for (String token : content) {
 				ib.put(terms.indexOf(token));
 			}
 
-			// Unmap buffer to prevent file lock
+			// Unmap writeBuffer to prevent file lock
 			// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
-			Utilities.cleanDirectBufferHack(buffer);
+			Utilities.cleanDirectBufferHack(writeBuffer);
+			*/
 
 			return toc.size() - 1;
 		} catch (IOException e1) {
