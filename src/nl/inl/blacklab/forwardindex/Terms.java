@@ -28,6 +28,9 @@ import nl.inl.util.Utilities;
 
 /**
  * Keeps a first-come-first-serve list of unique terms.
+ * Each term gets a unique index number. These numbers are
+ * stored in the forward index to conserve space and allow quick
+ * lookups of terms occurring in specific positions.
  */
 public class Terms {
 	ArrayList<String> terms = new ArrayList<String>();
@@ -108,6 +111,7 @@ public class Terms {
 				raf.close();
 
 				// Unmap buffer to prevent file lock
+				// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
 				Utilities.cleanDirectBufferHack(buf);
 			}
 		} catch (Exception e) {
@@ -136,6 +140,7 @@ public class Terms {
 						bufOffset += p;
 
 						// Unmap buffer to prevent file lock
+						// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
 						Utilities.cleanDirectBufferHack(buf);
 
 						buf = fc.map(MapMode.READ_WRITE, bufOffset, writeMapReserve);
@@ -150,6 +155,7 @@ public class Terms {
 				raf.close();
 
 				// Unmap buffer to prevent file lock
+				// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
 				Utilities.cleanDirectBufferHack(buf);
 
 			}

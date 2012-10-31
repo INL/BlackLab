@@ -48,16 +48,29 @@ import sun.misc.Cleaner;
  */
 public class Utilities {
 
-	public static void cleanDirectBufferHack(ByteBuffer buffer) {
+	final static boolean USE_CLEAN_DIRECT_BUFFER_HACK = false;
 
-		// This is a bit of a hack to unmap the direct buffer in order to
-		// prevent file lock.
-		// http://bugs.sun.com/view_bug.do?bug_id=4724038
-		// We should find a workaround for this
-		if (buffer != null && buffer.isDirect()) {
-			Cleaner cleaner = ((sun.nio.ch.DirectBuffer) buffer).cleaner();
-			if (cleaner != null)
-				cleaner.clean();
+	/**
+	 * Clean direct buffer hack, switched off now.
+	 *
+	 * We used to have this hack because you can't delete a file you just
+	 * memory mapped on Windows. Now we just avoid the situation altogether
+	 * (it's really only a problem during testing; now we occasionally leave
+	 * some temporary files lying around until the next test run)
+	 *
+	 * @param buffer the buffer to clean
+	 */
+	public static void cleanDirectBufferHack(ByteBuffer buffer) {
+		if (USE_CLEAN_DIRECT_BUFFER_HACK) {
+			// This is a bit of a hack to unmap the direct buffer in order to
+			// prevent file lock.
+			// http://bugs.sun.com/view_bug.do?bug_id=4724038
+			// We should find a workaround for this
+			if (buffer != null && buffer.isDirect()) {
+				Cleaner cleaner = ((sun.nio.ch.DirectBuffer) buffer).cleaner();
+				if (cleaner != null)
+					cleaner.clean();
+			}
 		}
 	}
 

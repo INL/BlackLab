@@ -272,6 +272,7 @@ public class ForwardIndex {
 			}
 
 			// Unmap buffer to prevent file lock
+			// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
 			Utilities.cleanDirectBufferHack(buffer);
 
 			return toc.size() - 1;

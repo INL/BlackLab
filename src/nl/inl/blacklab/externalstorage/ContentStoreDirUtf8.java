@@ -335,6 +335,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 			tocRaf = null;
 
 			// Unmap buffer to prevent file lock
+			// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
 			Utilities.cleanDirectBufferHack(tocFileBuffer);
 			tocFileBuffer = null;
 

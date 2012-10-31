@@ -26,6 +26,8 @@ import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
+import nl.inl.util.FileUtil;
+import nl.inl.util.FileUtil.FileTask;
 import nl.inl.util.XmlUtil;
 
 /**
@@ -56,6 +58,17 @@ public class Example {
 
 		// Get a temporary directory for our test index
 		File indexDir = new File(System.getProperty("java.io.tmpdir"), "BlackLabExample");
+		if (indexDir.exists()) {
+			// Delete the old example dir
+			// (NOTE: we cannot do this on exit because memory mappings may
+			//  prevent deletion on Windows)
+			FileUtil.processTree(indexDir, new FileTask() {
+				@Override
+				public void process(File f) {
+					f.delete();
+				}
+			});
+		}
 
 		// Instantiate the BlackLab indexer, supplying our DocIndexer class
 		Indexer indexer = new Indexer(indexDir, true, DocIndexerXmlExample.class);
