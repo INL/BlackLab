@@ -112,7 +112,7 @@ the defaults).
 
 	<!-- Run the application. NOTE: Run doesn't work for console apps -->
 	<target name="run" depends="dist" unless="jar.islibrary">
-		<java fork="true" classname="${jar.mainclass}">
+		<java classname="${jar.mainclass}">
 			<classpath>
 				<path refid="classpath" />
 				<pathelement location="${jar.file}" />
