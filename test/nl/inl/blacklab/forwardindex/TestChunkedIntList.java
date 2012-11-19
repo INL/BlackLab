@@ -16,6 +16,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -58,6 +59,23 @@ public class TestChunkedIntList {
 		Assert.assertEquals((Integer) 3, l.get(3));
 		Assert.assertEquals((Integer) 5, l.get(4));
 		Assert.assertEquals(5, l.size());
+	}
+
+	@Test
+	public void testIterate() {
+		List<Integer> l = getFibList();
+		Iterator<Integer> it = l.iterator();
+		Assert.assertTrue(it.hasNext());
+		Assert.assertEquals((Integer) 1, it.next());
+		Assert.assertTrue(it.hasNext());
+		Assert.assertEquals((Integer) 1, it.next());
+		Assert.assertTrue(it.hasNext());
+		Assert.assertEquals((Integer) 2, it.next());
+		Assert.assertTrue(it.hasNext());
+		Assert.assertEquals((Integer) 3, it.next());
+		Assert.assertTrue(it.hasNext());
+		Assert.assertEquals((Integer) 5, it.next());
+		Assert.assertFalse(it.hasNext());
 	}
 
 	@Test

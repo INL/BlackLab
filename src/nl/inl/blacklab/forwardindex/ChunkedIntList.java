@@ -18,7 +18,9 @@ package nl.inl.blacklab.forwardindex;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Memory-efficient list of integers.
@@ -29,9 +31,9 @@ import java.util.List;
  * Add and remove operations in the middle of the list are relatively expensive as we may have to
  * shift elements over several chunks. Add and remove at the end should be fast, though.
  *
- * Advantage over ArrayList is that we don't have to reallocate when the array runs out.
- * Disadvantage is slighter slower lookup speed (first we have to determine the chunk the element is
- * in)
+ * Advantage over ArrayList is better storage characteristics and the fact we don't have to
+ * reallocate when the array runs out. Disadvantage is slower index-lookup speed (first we have to
+ * determine the chunk the element is in). Iteration is pretty fast, though.
  */
 public class ChunkedIntList extends AbstractList<Integer> {
 	final static int DEFAULT_CHUNK_SIZE = 250000; // 1M per array
@@ -41,7 +43,7 @@ public class ChunkedIntList extends AbstractList<Integer> {
 	/**
 	 * How many int elements are in each chunk
 	 */
-	private int chunkSize;
+	int chunkSize;
 
 	/**
 	 * The size of the list (not the capacity of the chunks, the actual filled size).
@@ -64,6 +66,59 @@ public class ChunkedIntList extends AbstractList<Integer> {
 	public ChunkedIntList(Collection<Integer> coll, int chunkSize) {
 		this(chunkSize);
 		addAll(coll);
+	}
+
+	/** Iterator class for ChunkedIntList */
+	public class ChunkedIntListIterator implements Iterator<Integer> {
+
+		/** Current element index */
+		int index;
+
+		/** The chunk we're currently iterating through */
+		int[] currentChunk;
+
+		/** Chunk iterator */
+		Iterator<int[]> currentChunkIt;
+
+		/** The position of the current element inside the chunk */
+		int posInChunk;
+
+		public ChunkedIntListIterator() {
+			index = -1;
+			currentChunkIt = chunks.iterator();
+			currentChunk = currentChunkIt.next();
+			posInChunk = -1;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return index < size - 1;
+		}
+
+		@Override
+		public Integer next() {
+			index++;
+			if (index >= size) {
+				throw new NoSuchElementException();
+			}
+			posInChunk++;
+			if (posInChunk == chunkSize) {
+				currentChunk = currentChunkIt.next();
+				posInChunk = 0;
+			}
+			return currentChunk[posInChunk];
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+
+	@Override
+	public Iterator<Integer> iterator() {
+		return new ChunkedIntListIterator();
 	}
 
 	@Override
