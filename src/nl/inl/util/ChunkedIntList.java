@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.forwardindex;
+package nl.inl.util;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -24,6 +24,9 @@ import java.util.NoSuchElementException;
 
 /**
  * Memory-efficient list of integers.
+ *
+ * The reason for this special-case class is that arrays of primitives (int[], not Integer[])
+ * are much more efficient (no object instantiations). For other types, use ChunkedList<T>.
  *
  * Works by keeping a list of chunks. Each chunk is an array of a fixed size (the chunk size).
  * Together the chunks form the storage for the list.

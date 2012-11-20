@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.forwardindex;
+package nl.inl.util;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 import junit.framework.Assert;
+
+import nl.inl.util.ChunkedIntList;
 
 import org.junit.Test;
 
