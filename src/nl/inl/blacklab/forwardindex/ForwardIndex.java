@@ -379,15 +379,6 @@ public class ForwardIndex {
 	 * @return the parts
 	 */
 	public synchronized List<String[]> retrieveParts(int contentId, int[] start, int[] end) {
-		if (tokensFileMapped != null || tokensFileInMem != null)
-			return retrievePartsMapped(contentId, start, end);
-		return retrievePartsUnmapped(contentId, start, end);
-	}
-
-	/**
-	 * Non-Windows version of retrieveParts (uses memory mapping)
-	 */
-	private synchronized List<String[]> retrievePartsMapped(int contentId, int[] start, int[] end) {
 		try {
 			TocEntry e = toc.get(contentId);
 			if (e == null || e.deleted)
@@ -397,15 +388,23 @@ public class ForwardIndex {
 			if (n != end.length)
 				throw new RuntimeException("start and end must be of equal length");
 			List<String[]> result = new ArrayList<String[]>(n);
-			IntBuffer ib;
-			if (tokensFileInMem != null) {
-				// Whole file cached in memory
-				tokensFileInMem.position((int) e.offset * SIZEOF_INT);
-				ib = tokensFileInMem.asIntBuffer();
-			} else {
-				// File memory-mapped
-				tokensFileMapped.position((int) e.offset * SIZEOF_INT);
-				ib = tokensFileMapped.asIntBuffer();
+
+			// Do we have direct access to the tokens file?
+			IntBuffer ib = null;
+			boolean inMem = false;
+			if (tokensFileMapped != null || tokensFileInMem != null) {
+				// Yes, the tokens file has either been fully loaded into memory or
+				// is mapped into memory. Get an int buffer into the file.
+				inMem = true;
+				if (tokensFileInMem != null) {
+					// Whole file cached in memory
+					tokensFileInMem.position((int) e.offset * SIZEOF_INT);
+					ib = tokensFileInMem.asIntBuffer();
+				} else {
+					// File memory-mapped
+					tokensFileMapped.position((int) e.offset * SIZEOF_INT);
+					ib = tokensFileMapped.asIntBuffer();
+				}
 			}
 			for (int i = 0; i < n; i++) {
 				if (start[i] == -1 && end[i] == -1) {
@@ -432,69 +431,24 @@ public class ForwardIndex {
 
 				int snippetLength = end[i] - start[i];
 				String[] snippet = new String[snippetLength];
-				ib.position(start[i]);
-				for (int j = 0; j < snippetLength; j++) {
-					snippet[j] = terms.get(ib.get());
-				}
-				result.add(snippet);
-			}
+				if (inMem) {
+					// The whole file is available in memory (or mem-mapped)
+					// Position us at the correct place in the file.
+					ib.position(start[i]);
+				} else {
+					// Not mapped. Explicitly read the part we require from disk into an int buffer.
+					long offset = e.offset + start[i];
 
-			return result;
-		} catch (Exception e) {
-			throw ExUtil.wrapRuntimeException(e);
-		}
-	}
-
-	/**
-	 * Unmapped version of retrieveParts (Windows has issues with memory mapping in Java)
-	 */
-	private synchronized List<String[]> retrievePartsUnmapped(int contentId, int[] start, int[] end) {
-		try {
-			TocEntry e = toc.get(contentId);
-			if (e == null || e.deleted)
-				return null;
-
-			int n = start.length;
-			if (n != end.length)
-				throw new RuntimeException("start and end must be of equal length");
-			List<String[]> result = new ArrayList<String[]>(n);
-
-			for (int i = 0; i < n; i++) {
-				if (start[i] == -1 && end[i] == -1) {
-					// whole content
-					start[i] = 0;
-					end[i] = e.length;
+					int bytesToRead = snippetLength * SIZEOF_INT;
+					ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
+					int bytesRead = tokensFileChannel.read(buffer, offset * SIZEOF_INT);
+					if (bytesRead < bytesToRead) {
+						throw new RuntimeException("Not enough bytes read: " + bytesRead + " < "
+								+ bytesToRead);
+					}
+					buffer.position(0);
+					ib = buffer.asIntBuffer();
 				}
-				if (start[i] < 0 || end[i] < 0) {
-					throw new RuntimeException("Illegal values, start = " + start[i] + ", end = "
-							+ end[i]);
-				}
-				if (end[i] >= e.length) // Can happen while making KWICs because we don't know the
-										// doc length until here
-					end[i] = e.length;
-				if (start[i] > e.length || end[i] > e.length) {
-					throw new RuntimeException("Value(s) out of range, start = " + start[i]
-							+ ", end = " + end[i] + ", content length = " + e.length);
-				}
-				if (end[i] <= start[i]) {
-					throw new RuntimeException(
-							"Tried to read empty or negative length snippet (from " + start[i]
-									+ " to " + end[i] + ")");
-				}
-
-				int snippetLength = end[i] - start[i];
-				String[] snippet = new String[snippetLength];
-				long offset = e.offset + start[i];
-
-				int bytesToRead = snippetLength * SIZEOF_INT;
-				ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
-				int bytesRead = tokensFileChannel.read(buffer, offset * SIZEOF_INT);
-				if (bytesRead < bytesToRead) {
-					throw new RuntimeException("Not enough bytes read: " + bytesRead + " < "
-							+ bytesToRead);
-				}
-				buffer.position(0);
-				IntBuffer ib = buffer.asIntBuffer();
 				for (int j = 0; j < snippetLength; j++) {
 					snippet[j] = terms.get(ib.get());
 				}
