@@ -42,7 +42,7 @@ public class TestForwardIndex {
 		// Create new test dir
 		dir = Utilities.createBlackLabTestDir("ForwardIndex");
 
-		fi = new ForwardIndex(dir, true, true);
+		fi = new ForwardIndex(dir, true, null, true);
 		try {
 			// Store strings
 			for (int i = 0; i < str.length; i++) {

@@ -20,9 +20,11 @@ import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.text.Collator;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import nl.inl.util.Utilities;
 
@@ -33,10 +35,24 @@ import nl.inl.util.Utilities;
  * lookups of terms occurring in specific positions.
  */
 public class Terms {
-	ArrayList<String> terms = new ArrayList<String>();
+	//ArrayList<String> terms = new ArrayList<String>();
 
-	Map<String, Integer> termIndex = new HashMap<String, Integer>();
+	/** The terms, by index number. Only valid when indexMode == false. */
+	String[] terms;
 
+	/** The index numbers, by sort order. Only valid when indexMode == false. */
+	int[] idPerSortPosition;
+
+	/** The sorting position for each index number. Inverse of sortedOrder[] array. Only valid when indexMode == false. */
+	int[] sortPositionPerId;
+
+	/**
+	 * Mapping from term to its unique index number. We use a SortedMap because we wish to
+	 * store the sorted index numbers later (to speed up sorting). Only valid in indexMode.
+	 */
+	SortedMap<String, Integer> termIndex;
+
+	/** If true, we're indexing data and adding terms. If false, we're searching and just retrieving terms. */
 	private boolean indexMode;
 
 	/**
@@ -44,35 +60,56 @@ public class Terms {
 	 */
 	private int writeMapReserve = 1000000; // 1M
 
-	public Terms(boolean indexMode) {
+	public Terms(boolean indexMode, final Collator collator) {
 		this.indexMode = indexMode;
+		if (collator != null) {
+			// Create a SortedMap based on the specified Collator.
+			this.termIndex = new TreeMap<String, Integer>(new Comparator<String>() {
+				@Override
+				public int compare(String o1, String o2) {
+					return collator.compare(o1, o2);
+				}
+			});
+		} else {
+			// No collator given, use String's natural sort
+			this.termIndex = new TreeMap<String, Integer>();
+		}
 	}
 
-	public Terms(File termsFile, boolean indexMode) {
-		this.indexMode = indexMode;
+	public Terms(boolean indexMode, Collator coll, File termsFile) {
+		this(indexMode, coll);
 		if (termsFile.exists())
 			read(termsFile);
 	}
 
+	/**
+	 * Get the existing index number of a term, or add it to the term list
+	 * and assign it a new index number.
+	 *
+	 * Can only be called in indexMode right now.
+	 *
+	 * @param term the term to get the index number for
+	 * @return the term's index number
+	 */
 	public int indexOf(String term) {
+		if (!indexMode)
+			throw new UnsupportedOperationException("Cannot call indexOf in search mode!");
 		Integer index = termIndex.get(term);
 		if (index != null)
 			return index;
 		index = termIndex.size();
 		termIndex.put(term, index);
-		if (!indexMode)
-			terms.add(term);
 		return index;
 	}
 
 	public void clear() {
-		terms.clear();
+		//terms.clear();
 		termIndex.clear();
 	}
 
 	private void read(File termsFile) {
 		termIndex.clear();
-		terms.clear();
+		//terms.clear();
 		try {
 			RandomAccessFile raf = new RandomAccessFile(termsFile, "r");
 			FileChannel fc = raf.getChannel();
@@ -81,11 +118,15 @@ public class Terms {
 				int n = buf.getInt();
 
 				if (!indexMode) {
-					// Fill terms with nulls so we can set each term as we read it
+					terms = new String[n];
+					idPerSortPosition = new int[n];
+					sortPositionPerId = new int[n];
+
+					/*// Fill terms with nulls so we can set each term as we read it
 					terms.ensureCapacity(n);
 					for (int i = 0; i < n; i++) {
 						terms.add(null);
-					}
+					}*/
 				}
 
 				// Now read terms and fill appropriate structure.
@@ -103,9 +144,19 @@ public class Terms {
 						termIndex.put(str, id);
 					} else {
 						// We need to find term for id while searching
-						terms.set(id, str);
+						terms[id] = str; //.set(id, str);
 					}
 				}
+
+				if (!indexMode) {
+					// Read the term sort order
+					for (int i = 0; i < n; i++) {
+						int termIndexNumber = buf.getInt();
+						idPerSortPosition[i] = termIndexNumber;
+						sortPositionPerId[termIndexNumber] = i;
+					}
+				}
+
 			} finally {
 				fc.close();
 				raf.close();
@@ -120,6 +171,8 @@ public class Terms {
 	}
 
 	public void write(File termsFile) {
+		if (!indexMode)
+			throw new UnsupportedOperationException("Term.write(): not in index mode!");
 		try {
 			RandomAccessFile raf = new RandomAccessFile(termsFile, "rw");
 			FileChannel fc = raf.getChannel();
@@ -150,6 +203,15 @@ public class Terms {
 					buf.putInt(strBuf.length);
 					buf.put(strBuf, 0, strBuf.length);
 				}
+
+				// Write the sort order
+				// Because termIndex is a SortedMap, values are returned in key-sorted order.
+				// In other words, the index numbers are in order of sorted terms, so the id
+				// for 'aardvark' comes before the id for 'ape', etc.
+				for (int id: termIndex.values()) {
+					buf.putInt(id);
+				}
+
 			} finally {
 				fc.close();
 				raf.close();
@@ -165,6 +227,14 @@ public class Terms {
 	}
 
 	public String get(Integer integer) {
-		return terms.get(integer);
+		return terms[integer]; //.get(integer);
+	}
+
+	public int sortPositionToId(int sortPosition) {
+		return idPerSortPosition[sortPosition]; //.get(integer);
+	}
+
+	public int idToSortPosition(int id) {
+		return sortPositionPerId[id]; //.get(integer);
 	}
 }

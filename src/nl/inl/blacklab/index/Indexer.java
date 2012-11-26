@@ -24,8 +24,10 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+import java.text.Collator;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -97,6 +99,13 @@ public class Indexer {
 	private Class<? extends DocIndexer> docIndexerClass;
 
 	/**
+	 * The collator to use for sorting (passed to ForwardIndex to keep a sorted list of terms).
+	 * Defaults to English collator.
+	 */
+	Collator collator = Collator.getInstance(new Locale("en", "GB"));
+
+
+	/**
 	 * When we encounter a zipfile, do we descend into it like it was a directory?
 	 *
 	 * @param b
@@ -141,7 +150,7 @@ public class Indexer {
 
 		writer = openIndexWriter(directory, create);
 		indexLocation = directory;
-		forwardIndex = new ForwardIndex(new File(directory, "forward"), true, create);
+		forwardIndex = new ForwardIndex(new File(directory, "forward"), true, collator, create);
 		contentStore = new ContentStoreDirZip(new File(directory, "xml"), create);
 		closeIndexes = true; // we opened them, so we should close them again
 

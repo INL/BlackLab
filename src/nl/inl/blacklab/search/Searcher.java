@@ -203,7 +203,7 @@ public class Searcher implements Closeable {
 		// Detect and open forward index, if any
 		File forwardIndexDir = new File(indexDir, "forward");
 		if (forwardIndexDir.exists()) {
-			registerForwardIndex(DEFAULT_CONTENTS_FIELD, new ForwardIndex(forwardIndexDir));
+			registerForwardIndex(DEFAULT_CONTENTS_FIELD, new ForwardIndex(forwardIndexDir, false, collator, false));
 			responsibleForClosingForwardIndex = true;
 		}
 

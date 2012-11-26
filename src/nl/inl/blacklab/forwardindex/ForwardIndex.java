@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,14 +88,14 @@ public class ForwardIndex {
 	// private boolean indexMode = false;
 
 	public ForwardIndex(File dir) {
-		this(dir, false, false);
+		this(dir, false, null, false);
 	}
 
 	public ForwardIndex(File dir, boolean indexMode) {
-		this(dir, indexMode, false);
+		this(dir, indexMode, null, false);
 	}
 
-	public ForwardIndex(File dir, boolean indexMode, boolean create) {
+	public ForwardIndex(File dir, boolean indexMode, Collator collator, boolean create) {
 		logger.debug("Opening forward index " + dir);
 		if (!dir.exists())
 			dir.mkdir();
@@ -120,11 +121,11 @@ public class ForwardIndex {
 			boolean existing = false;
 			if (tocFile.exists()) {
 				readToc();
-				terms = new Terms(termsFile, indexMode);
+				terms = new Terms(indexMode, collator, termsFile);
 				existing = true;
 				tocModified = false;
 			} else {
-				terms = new Terms(indexMode);
+				terms = new Terms(indexMode, collator);
 				tokensFile.createNewFile();
 				tokensFileMapped = null;
 				tocModified = true;
