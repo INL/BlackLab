@@ -357,6 +357,21 @@ public class ForwardIndex {
 	}
 
 	/**
+	 * Retrieve part of a document in token ids form.
+	 *
+	 * @param id
+	 *            content store document id
+	 * @param start
+	 *            start of the part to retrieve
+	 * @param end
+	 *            end of the part to retrieve
+	 * @return the token ids
+	 */
+	public int[] retrievePartInt(int id, int start, int end) {
+		return retrievePartsInt(id, new int[] { start }, new int[] { end }).get(0);
+	}
+
+	/**
 	 * Retrieve one or more substrings from the specified content.
 	 *
 	 * This is more efficient than retrieving the whole content, or retrieving parts in separate
@@ -380,6 +395,46 @@ public class ForwardIndex {
 	 * @return the parts
 	 */
 	public synchronized List<String[]> retrieveParts(int contentId, int[] start, int[] end) {
+
+		// First, retrieve the token ids
+		List<int[]> resultInt = retrievePartsInt(contentId, start, end);
+
+		// Translate them to strings using the terms index
+		List<String[]> result = new ArrayList<String[]>(resultInt.size());
+		for (int[] snippetInt: resultInt) {
+			String[] snippet = new String[snippetInt.length];
+			for (int j = 0; j < snippetInt.length; j++) {
+				snippet[j] = terms.get(snippetInt[j]);
+			}
+			result.add(snippet);
+		}
+		return result;
+	}
+
+	/**
+	 * Retrieve one or more parts from the specified content, in the form of token ids.
+	 *
+	 * This is more efficient than retrieving the whole content, or retrieving parts in separate
+	 * calls, because the file is only opened once and random access is used to read only the
+	 * required parts.
+	 *
+	 * NOTE: if offset and length are both -1, retrieves the whole content. This is used by the
+	 * retrieve(id) method.
+	 *
+	 * NOTE2: Mapped file IO on Windows has some issues that sometimes cause an OutOfMemoryError on
+	 * the FileChannel.map() call (which makes no sense, because memory mapping only uses address
+	 * space, it doesn't try to read the whole file). Possibly this could be solved by using 64-bit
+	 * Java, but we haven't tried. For now we just disable memory mapping on Windows.
+	 *
+	 * @param contentId
+	 *            id of the entry to get parts from
+	 * @param start
+	 *            the starting points of the parts to retrieve (in words)
+	 * @param end
+	 *            the end points of the parts to retrieve (in words)
+	 * @return the parts
+	 */
+	public synchronized List<int[]> retrievePartsInt(int contentId, int[] start, int[] end) {
 		try {
 			TocEntry e = toc.get(contentId);
 			if (e == null || e.deleted)
@@ -388,7 +443,7 @@ public class ForwardIndex {
 			int n = start.length;
 			if (n != end.length)
 				throw new RuntimeException("start and end must be of equal length");
-			List<String[]> result = new ArrayList<String[]>(n);
+			List<int[]> result = new ArrayList<int[]>(n);
 
 			// Do we have direct access to the tokens file?
 			IntBuffer ib = null;
@@ -431,7 +486,7 @@ public class ForwardIndex {
 				}
 
 				int snippetLength = end[i] - start[i];
-				String[] snippet = new String[snippetLength];
+				int[] snippet = new int[snippetLength];
 				if (inMem) {
 					// The whole file is available in memory (or mem-mapped)
 					// Position us at the correct place in the file.
@@ -451,7 +506,7 @@ public class ForwardIndex {
 					ib = buffer.asIntBuffer();
 				}
 				for (int j = 0; j < snippetLength; j++) {
-					snippet[j] = terms.get(ib.get());
+					snippet[j] = ib.get();
 				}
 				result.add(snippet);
 			}
