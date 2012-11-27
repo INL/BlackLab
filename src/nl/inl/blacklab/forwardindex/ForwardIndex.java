@@ -40,6 +40,17 @@ import org.apache.log4j.Logger;
  */
 public class ForwardIndex {
 
+	/**
+	 * Version history:
+	 * 1. Initial version.
+	 * 2. Added sort index to terms file.
+	 */
+
+	/**
+	 * Current forward index format version
+	 */
+	private static final String CURRENT_VERSION = "2";
+
 	private static final int MAX_DIRECT_BUFFER_SIZE = 2147483647;
 
 	protected static final Logger logger = Logger.getLogger(ForwardIndex.class);
@@ -103,13 +114,13 @@ public class ForwardIndex {
 		// Version check
 		if (!indexMode || !create) {
 			// We're opening an existing forward index. Check version.
-			if (!VersionFile.isTypeVersion(dir, "fi", "1")) {
-				throw new RuntimeException("Unknown forward index version: "
-						+ VersionFile.report(dir));
+			if (!VersionFile.isTypeVersion(dir, "fi", CURRENT_VERSION)) {
+				throw new RuntimeException("Wrong forward index version: "
+						+ VersionFile.report(dir) + " (" + CURRENT_VERSION + " expected)");
 			}
 		} else {
 			// We're creating a forward index. Write version.
-			VersionFile.write(dir, "fi", "1");
+			VersionFile.write(dir, "fi", CURRENT_VERSION);
 		}
 
 		// this.indexMode = indexMode;
