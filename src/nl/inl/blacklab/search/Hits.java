@@ -32,9 +32,6 @@ import org.apache.lucene.search.spans.Spans;
  * information stored in the Hit objects.
  */
 public class Hits implements Iterable<Hit> {
-	/** Don't actually use term vector for sorting/grouping, use content */
-	private static final boolean AVOID_USING_TERM_VECTOR = false;
-
 	/**
 	 * The types of concordance information the hits may have.
 	 */
@@ -153,7 +150,7 @@ public class Hits implements Iterable<Hit> {
 		Collator collator;
 		if (sortProp.needsConcordances() && concType == ConcType.NONE) {
 			// Get 'em
-			findConcordances(true);
+			findContext();
 
 			// Context needs to be sorted per-word. Get the appropriate collator.
 			collator = searcher.getPerWordCollator();
@@ -245,36 +242,39 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param fieldName
 	 *            the field to use for the concordances (ignore the default concordance field)
-	 * @param useTermVector
-	 *            if true, retrieves concordances using the Lucene term vector instead of the
-	 *            original content. Faster, used for sorting.
 	 */
-	public void findConcordances(String fieldName, boolean useTermVector) {
+	public void findConcordances(String fieldName) {
 		// Make sure we don't have the desired concordances already
 		if (concType != ConcType.NONE && fieldName.equals(concFieldName)) {
-			if (concType == ConcType.TERM_VECTOR && useTermVector || concType == ConcType.CONTENT
-					&& !useTermVector)
+			if (concType == ConcType.CONTENT)
 				return;
 		}
 
 		// Get the concordances
-		searcher.retrieveConcordances(fieldName, useTermVector, hits);
+		searcher.retrieveConcordances(fieldName, hits);
 
 		concFieldName = fieldName;
-		concType = useTermVector ? ConcType.TERM_VECTOR : ConcType.CONTENT;
+		concType = ConcType.CONTENT;
 	}
 
 	/**
-	 * Retrieve concordances for the hits.
+	 * Retrieve context words for the hits.
 	 *
-	 * Uses the default concordance field.
-	 *
-	 * @param useTermVector
-	 *            if true, retrieves concordances using the Lucene term vector instead of the
-	 *            original content. Faster, used for sorting.
+	 * @param fieldName
+	 *            the field to use for the concordances (ignore the default concordance field)
 	 */
-	public void findConcordances(boolean useTermVector) {
-		findConcordances(defaultConcField, AVOID_USING_TERM_VECTOR ? false : useTermVector);
+	public void findContext(String fieldName) {
+		// Make sure we don't have the desired concordances already
+		if (concType != ConcType.NONE && fieldName.equals(concFieldName)) {
+			if (concType == ConcType.TERM_VECTOR)
+				return;
+		}
+
+		// Get the concordances
+		searcher.retrieveContext(fieldName, hits);
+
+		concFieldName = fieldName;
+		concType = ConcType.TERM_VECTOR;
 	}
 
 	/**
@@ -283,7 +283,16 @@ public class Hits implements Iterable<Hit> {
 	 * Uses the default concordance field.
 	 */
 	public void findConcordances() {
-		findConcordances(defaultConcField, false);
+		findConcordances(defaultConcField);
+	}
+
+	/**
+	 * Retrieve concordances for the hits.
+	 *
+	 * Uses the default concordance field.
+	 */
+	public void findContext() {
+		findContext(defaultConcField);
 	}
 
 	/**

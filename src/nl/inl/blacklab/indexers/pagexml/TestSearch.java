@@ -65,9 +65,8 @@ public class TestSearch {
 			// Execute search
 			Hits hits = searcher.find("contents", tp);
 
-			// Find term vector concordances (for sorting/grouping)
-			hits.findConcordances(true); // NOTE: would be nicer if BlackLab detects if/when this is
-											// needed
+			// Find context (for sorting/grouping)
+			hits.findContext(); // NOTE: would be nicer if BlackLab detects if/when this is needed
 
 			// Sort hits on right context
 			hits.sort(new HitPropertyRightContext());

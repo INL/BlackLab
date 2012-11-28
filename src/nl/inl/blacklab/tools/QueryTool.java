@@ -725,7 +725,7 @@ public class QueryTool {
 		HitsWindow window = new HitsWindow(hitsToShow, firstResult, resultsPerPage);
 
 		// Find content concordances (for display)
-		window.findConcordances(false);
+		window.findConcordances();
 
 		// Compile hits display info and calculate necessary width of left context column
 		List<HitToShow> toShow = new ArrayList<HitToShow>();

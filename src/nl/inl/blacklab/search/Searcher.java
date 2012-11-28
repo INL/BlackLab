@@ -1214,7 +1214,7 @@ public class Searcher implements Closeable {
 
 	/**
 	 * Retrieves the concordance information (left, hit and right context) for a number of hits in
-	 * the same document.
+	 * the same document from the ContentStore.
 	 *
 	 * NOTE: the slowest part of this is getting the character offsets (retrieving large term
 	 * vectors takes time; subsequent hits from the same document are significantly faster,
@@ -1226,20 +1226,65 @@ public class Searcher implements Closeable {
 	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
-	 * @param useTermVector
-	 *            true if we want to use term vector for the concordances
 	 */
-	private void makeConcordancesSingleDoc(List<Hit> hits, String fieldName, int wordsAroundHit,
-			boolean useTermVector) {
+	private void makeConcordancesSingleDoc(List<Hit> hits, String fieldName, int wordsAroundHit) {
 		if (hits.size() == 0)
 			return;
 		int doc = hits.get(0).doc;
-
-		// Determine the first and last word of the concordance, as well as the
-		// first and last word of the actual hit inside the concordance.
 		int arrayLength = hits.size() * 2;
 		int[] startsOfWords = new int[arrayLength];
 		int[] endsOfWords = new int[arrayLength];
+
+		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
+
+		// Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
+		// arrays)
+		getCharacterOffsets(doc, fieldName, startsOfWords, endsOfWords, true);
+
+		try {
+			// Make all the concordances
+			makeFieldConcordances(doc, fieldName, startsOfWords, endsOfWords, hits);
+		} finally {
+			// logger.debug("after conc: " + timer.elapsed());
+		}
+	}
+
+	/**
+	 * Retrieves the context (left, hit and right) for a number of hits in
+	 * the same document from the forward index or the term vector.
+	 *
+	 * @param hits
+	 *            the hits in question
+	 * @param fieldName
+	 *            Lucene index field to make conc for
+	 * @param wordsAroundHit
+	 *            number of words left and right of hit to fetch
+	 */
+	private void makeContextSingleDoc(List<Hit> hits, String fieldName, int wordsAroundHit) {
+		if (hits.size() == 0)
+			return;
+		int doc = hits.get(0).doc;
+		int arrayLength = hits.size() * 2;
+		int[] startsOfWords = new int[arrayLength];
+		int[] endsOfWords = new int[arrayLength];
+
+		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
+
+		getContextWords(doc, fieldName, startsOfWords, endsOfWords, hits);
+	}
+
+	/**
+	 * Determine the word positions needed to retrieve context / snippets
+	 * @param doc the document we're looking at
+	 * @param hits the hits for which we want word positions
+	 * @param wordsAroundHit the number of words around the matches word(s) we want
+	 * @param startsOfWords (out) the starts of the contexts and the hits
+	 * @param endsOfWords (out) the ends of the hits and the contexts
+	 */
+	private void determineWordPositions(int doc, List<Hit> hits, int wordsAroundHit,
+			int[] startsOfWords, int[] endsOfWords) {
+		// Determine the first and last word of the concordance, as well as the
+		// first and last word of the actual hit inside the concordance.
 		int startEndArrayIndex = 0;
 		for (Hit hit : hits) {
 			if (hit.doc != doc)
@@ -1261,21 +1306,6 @@ public class Searcher implements Closeable {
 
 			startEndArrayIndex += 2;
 		}
-
-		if (useTermVector) {
-			getConcordancesFromTermVector(doc, fieldName, startsOfWords, endsOfWords, hits);
-		} else {
-			// Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
-			// arrays)
-			getCharacterOffsets(doc, fieldName, startsOfWords, endsOfWords, true);
-
-			try {
-				// Make all the concordances
-				makeFieldConcordances(doc, fieldName, startsOfWords, endsOfWords, hits);
-			} finally {
-				// logger.debug("after conc: " + timer.elapsed());
-			}
-		}
 	}
 
 	/**
@@ -1290,6 +1320,9 @@ public class Searcher implements Closeable {
 	 *
 	 * <code>starsOfWords: A1, B1, A2, B2, ...</code> <code>endsOfWords: C1, D1, C2, D2, ...</code>
 	 *
+	 * @param useForwardIndex
+	 *            if true, gets context words from forward index.
+	 *            if false, gets them from the term vector.
 	 * @param doc
 	 *            the document to build concordances from
 	 * @param fieldName
@@ -1301,8 +1334,9 @@ public class Searcher implements Closeable {
 	 *            contains, for each concordance, the ending word position of the hit and for the
 	 *            left context
 	 * @param resultsList
+	 *            the list of results to add the context to
 	 */
-	private void getConcordancesFromTermVector(int doc, String fieldName, int[] startsOfWords,
+	private void getContextWords(int doc, String fieldName, int[] startsOfWords,
 			int[] endsOfWords, List<Hit> resultsList) {
 		int n = startsOfWords.length / 2;
 		int[] startsOfSnippets = new int[n];
@@ -1386,13 +1420,10 @@ public class Searcher implements Closeable {
 	 *
 	 * @param fieldName
 	 *            field to use for building concordances
-	 * @param useTermVector
-	 *            if true, builds the concordance from the term vector (Lucene index). Used for
-	 *            sorting/grouping.
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 */
-	public void retrieveConcordances(String fieldName, boolean useTermVector, List<Hit> hits) {
+	public void retrieveConcordances(String fieldName, List<Hit> hits) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key : hits) {
@@ -1404,7 +1435,36 @@ public class Searcher implements Closeable {
 			hitsInDoc.add(key);
 		}
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeConcordancesSingleDoc(l, fieldName, concordanceContextSize, useTermVector);
+			makeConcordancesSingleDoc(l, fieldName, concordanceContextSize);
+		}
+	}
+
+	/**
+	 * Retrieve context for a list of hits.
+	 *
+	 * Context are the hit words 'centered' with a certain number of context words around them.
+	 *
+	 * The size of the left and right context (in words) may be set using
+	 * Searcher.setConcordanceContextSize().
+	 *
+	 * @param fieldName
+	 *            field to use for building concordances
+	 * @param hits
+	 *            the hits for which to retrieve concordances
+	 */
+	public void retrieveContext(String fieldName, List<Hit> hits) {
+		// Group hits per document
+		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
+		for (Hit key : hits) {
+			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
+			if (hitsInDoc == null) {
+				hitsInDoc = new ArrayList<Hit>();
+				hitsPerDocument.put(key.doc, hitsInDoc);
+			}
+			hitsInDoc.add(key);
+		}
+		for (List<Hit> l : hitsPerDocument.values()) {
+			makeContextSingleDoc(l, fieldName, concordanceContextSize);
 		}
 	}
 

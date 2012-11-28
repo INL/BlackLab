@@ -69,7 +69,7 @@ public class CorpusSearchStressTest {
 	}
 
 	private static void displayConcordances(Searcher searcher, HitsWindow window) {
-		window.findConcordances(true);
+		window.findContext();
 		for (Hit hit : window) {
 			String left = XmlUtil.xmlToPlainText(hit.conc[0]);
 			String hitText = XmlUtil.xmlToPlainText(hit.conc[1]);

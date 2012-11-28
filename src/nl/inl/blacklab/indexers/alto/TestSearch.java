@@ -78,7 +78,7 @@ public class TestSearch {
 			Hits hits = searcher.find("contents", tp);
 
 			// Find term vector concordances (for sorting/grouping)
-			hits.findConcordances(true);
+			hits.findContext();
 
 			// Sort results
 			HitProperty first = new HitPropertyWordRight();
@@ -88,7 +88,7 @@ public class TestSearch {
 			HitsWindow window = new HitsWindow(hits, 0, 1000);
 
 			// Find content concordances (for display)
-			window.findConcordances(false);
+			window.findConcordances();
 
 			// Print each hit
 			int doc = 0;

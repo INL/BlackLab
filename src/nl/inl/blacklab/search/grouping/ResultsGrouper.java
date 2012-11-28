@@ -103,7 +103,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 		super(hits.getSearcher(), criteria);
 		defaultConcField = hits.getDefaultConcordanceField();
 		if (criteria.needsConcordances())
-			hits.findConcordances(true);
+			hits.findContext();
 		concField = hits.getConcordanceField();
 		concType = hits.getConcordanceType();
 		for (Hit hit : hits) {
