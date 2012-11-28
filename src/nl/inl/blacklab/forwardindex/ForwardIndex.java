@@ -62,6 +62,18 @@ public class ForwardIndex {
 	private static final int SIZEOF_INT = 4;
 
 	/**
+	 * The number of integer positions to reserve when mapping the file for writing.
+	 */
+	final static int WRITE_MAP_RESERVE = 250000; // 250K integers = 1M bytes
+
+	/** The memory mapped write buffer */
+	private IntBuffer writeBuffer;
+
+	/** Buffer offset (position in file of start of writeBuffer) in integer positions
+	 * (so we don't count bytes, we count ints) */
+	private long writeBufOffset;
+
+	/**
 	 * The TOC entries
 	 */
 	private List<TocEntry> toc;
@@ -188,9 +200,9 @@ public class ForwardIndex {
 	}
 
 	/**
-	 * Delete all content in the document store
+	 * Delete all content in the forward index
 	 */
-	public void clear() {
+	private void clear() {
 		// delete data files and empty TOC
 		try {
 			tokensFp.setLength(0);
@@ -241,7 +253,8 @@ public class ForwardIndex {
 	}
 
 	/**
-	 * Write the table of contents to the file
+	 * Close the forward index.
+	 * Writes the table of contents to disk if modified.
 	 */
 	public void close() {
 		try {
@@ -257,15 +270,6 @@ public class ForwardIndex {
 		}
 	}
 
-	/** The memory mapped write buffer */
-	IntBuffer writeBuffer;
-
-	/** Buffer offset (position in file of start of writeBuffer) in integer positions
-	 * (so we don't count bytes, we count ints) */
-	long writeBufOffset;
-
-	final static int writeMapReserve = 250000; // 250K integers = 1M bytes
-
 	/**
 	 * Store the given content and assign an id to it
 	 *
@@ -279,7 +283,7 @@ public class ForwardIndex {
 				// Map writeBuffer
 				writeBufOffset = tokensFp.length() / SIZEOF_INT;
 				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-						writeBufOffset * SIZEOF_INT, (content.size() + writeMapReserve) * SIZEOF_INT);
+						writeBufOffset * SIZEOF_INT, (content.size() + WRITE_MAP_RESERVE) * SIZEOF_INT);
 				writeBuffer = byteBuffer.asIntBuffer();
 			}
 
@@ -295,7 +299,7 @@ public class ForwardIndex {
 
 				// NOTE: We reserve more space so we don't have to remap for each document, saving time
 				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-						writeBufOffset * SIZEOF_INT, (content.size() + writeMapReserve) * SIZEOF_INT);
+						writeBufOffset * SIZEOF_INT, (content.size() + WRITE_MAP_RESERVE) * SIZEOF_INT);
 				writeBuffer = byteBuffer.asIntBuffer();
 			}
 

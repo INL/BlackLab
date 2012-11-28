@@ -20,7 +20,6 @@ import nl.inl.blacklab.search.Hit;
 /**
  * A hit property for grouping on the text actually matched. Requires HitConcordances as input (so
  * we have the hit text available).
- *
  */
 public class HitPropertyHitText extends HitProperty {
 	boolean lowerCase;
