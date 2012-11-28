@@ -67,6 +67,22 @@ public class HitsWindow extends Hits {
 	}
 
 	/**
+	 * Return the concordance for the specified hit.
+	 *
+	 * For HitsWindow, this method will automatically fetch concordances
+	 * if they haven't been fetched yet.
+	 *
+	 * @param h the hit
+	 * @return concordance for this hit
+	 */
+	@Override
+	public Concordance getConcordance(Hit h) {
+		if (concordances == null)
+			findConcordances(); // Automatically find concordances in HitsWindow
+		return super.getConcordance(h);
+	}
+
+	/**
 	 * Are there more hits in the original Hits object beyond our window?
 	 *
 	 * @return true if there are, false if not.

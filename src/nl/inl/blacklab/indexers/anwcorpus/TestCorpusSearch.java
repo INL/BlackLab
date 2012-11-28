@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
@@ -198,9 +199,10 @@ public class TestCorpusSearch {
 	private static void displayConcordances(Searcher searcher, HitsWindow window) {
 		window.findConcordances();
 		for (Hit hit : window) {
-			String left = XmlUtil.xmlToPlainText(hit.conc[0]);
-			String hitText = XmlUtil.xmlToPlainText(hit.conc[1]);
-			String right = XmlUtil.xmlToPlainText(hit.conc[2]);
+			Concordance conc = window.getConcordance(hit);
+			String left = XmlUtil.xmlToPlainText(conc.left);
+			String hitText = XmlUtil.xmlToPlainText(conc.hit);
+			String right = XmlUtil.xmlToPlainText(conc.right);
 			System.out.printf("[%05d:%06d] %45s[%s]%s\n", hit.doc, hit.start, left, hitText, right);
 		}
 	}

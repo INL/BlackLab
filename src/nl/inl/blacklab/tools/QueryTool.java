@@ -31,6 +31,7 @@ import nl.inl.blacklab.indexers.alto.AltoUtils;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
 import nl.inl.blacklab.queryParser.lucene.LuceneQueryParser;
+import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
@@ -731,17 +732,18 @@ public class QueryTool {
 		List<HitToShow> toShow = new ArrayList<HitToShow>();
 		int leftContextMaxSize = 10;
 		for (Hit hit : window) {
+			Concordance conc = window.getConcordance(hit);
 			String left, hitText, right;
 			if (IS_ALTO) {
 				// Content in CONTENT attribute
-				left = AltoUtils.getFromContentAttributes(hit.conc[0]) + " ";
-				hitText = AltoUtils.getFromContentAttributes(hit.conc[1]);
-				right = " " + AltoUtils.getFromContentAttributes(hit.conc[2]);
+				left = AltoUtils.getFromContentAttributes(conc.left) + " ";
+				hitText = AltoUtils.getFromContentAttributes(conc.hit);
+				right = " " + AltoUtils.getFromContentAttributes(conc.right);
 			} else {
 				// Content in text nodes
-				left = XmlUtil.xmlToPlainText(hit.conc[0]);
-				hitText = XmlUtil.xmlToPlainText(hit.conc[1]);
-				right = XmlUtil.xmlToPlainText(hit.conc[2]);
+				left = XmlUtil.xmlToPlainText(conc.left);
+				hitText = XmlUtil.xmlToPlainText(conc.hit);
+				right = XmlUtil.xmlToPlainText(conc.right);
 			}
 			toShow.add(new HitToShow(hit.doc, left, hitText, right));
 			if (leftContextMaxSize < left.length())

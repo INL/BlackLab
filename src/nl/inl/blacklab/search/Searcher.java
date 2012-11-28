@@ -1084,12 +1084,10 @@ public class Searcher implements Closeable {
 	 *            the array of starts of words ([A] and [B] positions)
 	 * @param endsOfWords
 	 *            the array of ends of words ([C] and [D] positions)
-	 * @param resultList
-	 *            the list to add the arrays of concordance strings to. Each concordance is an array
-	 *            of 3 strings: left context, hit text, right context.
+	 * @return the list of concordances
 	 */
-	public void makeFieldConcordances(int doc, String fieldName, int[] startsOfWords,
-			int[] endsOfWords, List<Hit> resultList) {
+	public List<Concordance> makeFieldConcordances(int doc, String fieldName, int[] startsOfWords,
+			int[] endsOfWords) {
 		// Determine starts and ends
 		int n = startsOfWords.length / 2;
 		int[] starts = new int[n];
@@ -1104,19 +1102,24 @@ public class Searcher implements Closeable {
 		String[] content = getSubstringsFromDocument(d, fieldName, starts, ends);
 
 		// Cut 'em up
-		Iterator<Hit> resultListIt = resultList.iterator();
+//		Iterator<Hit> resultListIt = resultList.iterator();
+		List<Concordance> rv = new ArrayList<Concordance>();
 		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
 			// Put the concordance in the Hit object
-			Hit hit = resultListIt.next();
+//			Hit hit = resultListIt.next();
 			int absLeft = startsOfWords[i];
 			int absRight = endsOfWords[i + 1];
 			int relHitLeft = startsOfWords[i + 1] - absLeft;
 			int relHitRight = endsOfWords[i] - absLeft;
 			String currentContent = content[j];
-			hit.conc = new String[] { currentContent.substring(0, relHitLeft),
+			rv.add(new Concordance(new String[] { currentContent.substring(0, relHitLeft),
 					currentContent.substring(relHitLeft, relHitRight),
-					currentContent.substring(relHitRight, absRight - absLeft) };
+					currentContent.substring(relHitRight, absRight - absLeft) }));
+//			hit.conc = new String[] { currentContent.substring(0, relHitLeft),
+//					currentContent.substring(relHitLeft, relHitRight),
+//					currentContent.substring(relHitRight, absRight - absLeft) };
 		}
+		return rv;
 	}
 
 	protected void registerForwardIndex(String fieldName, ForwardIndex fi) {
@@ -1226,8 +1229,9 @@ public class Searcher implements Closeable {
 	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
+	 * @param conc where to add the concordances
 	 */
-	private void makeConcordancesSingleDoc(List<Hit> hits, String fieldName, int wordsAroundHit) {
+	private void makeConcordancesSingleDoc(List<Hit> hits, String fieldName, int wordsAroundHit, Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
 		int doc = hits.get(0).doc;
@@ -1241,11 +1245,10 @@ public class Searcher implements Closeable {
 		// arrays)
 		getCharacterOffsets(doc, fieldName, startsOfWords, endsOfWords, true);
 
-		try {
-			// Make all the concordances
-			makeFieldConcordances(doc, fieldName, startsOfWords, endsOfWords, hits);
-		} finally {
-			// logger.debug("after conc: " + timer.elapsed());
+		// Make all the concordances
+		List<Concordance> newConcs = makeFieldConcordances(doc, fieldName, startsOfWords, endsOfWords);
+		for (int i = 0; i < hits.size(); i++) {
+			conc.put(hits.get(i), newConcs.get(i));
 		}
 	}
 
@@ -1422,8 +1425,9 @@ public class Searcher implements Closeable {
 	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
+	 * @return the list of concordances
 	 */
-	public void retrieveConcordances(String fieldName, List<Hit> hits) {
+	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key : hits) {
@@ -1434,9 +1438,11 @@ public class Searcher implements Closeable {
 			}
 			hitsInDoc.add(key);
 		}
+		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeConcordancesSingleDoc(l, fieldName, concordanceContextSize);
+			makeConcordancesSingleDoc(l, fieldName, concordanceContextSize, conc);
 		}
+		return conc;
 	}
 
 	/**

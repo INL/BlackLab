@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
@@ -52,6 +53,11 @@ public class Hits implements Iterable<Hit> {
 	 * The hits.
 	 */
 	protected List<Hit> hits;
+
+	/**
+	 * The concordances, if they have been retrieved.
+	 */
+	protected Map<Hit, Concordance> concordances;
 
 	/**
 	 * The searcher object.
@@ -238,6 +244,23 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Return the concordance for the specified hit.
+	 *
+	 * You can only call this method after fetching concordances using Hits.findConcordances().
+	 *
+	 * @param h the hit
+	 * @return concordance for this hit
+	 */
+	public Concordance getConcordance(Hit h) {
+		if (concordances == null)
+			throw new RuntimeException("Concordances haven't been retrieved yet; call Hits.findConcordances()");
+		Concordance conc = concordances.get(h);
+		if (conc == null)
+			throw new RuntimeException("Concordance for hit not found: " + h);
+		return conc;
+	}
+
+	/**
 	 * Retrieve concordances for the hits.
 	 *
 	 * @param fieldName
@@ -245,16 +268,18 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public void findConcordances(String fieldName) {
 		// Make sure we don't have the desired concordances already
-		if (concType != ConcType.NONE && fieldName.equals(concFieldName)) {
-			if (concType == ConcType.CONTENT)
-				return;
+		if (concordances != null && fieldName.equals(concFieldName)) {
+			return;
 		}
+//		if (concType != ConcType.NONE && fieldName.equals(concFieldName)) {
+//			if (concType == ConcType.CONTENT)
+//				return;
+//		}
 
 		// Get the concordances
-		searcher.retrieveConcordances(fieldName, hits);
-
+		concordances = searcher.retrieveConcordances(fieldName, hits);
 		concFieldName = fieldName;
-		concType = ConcType.CONTENT;
+		//concType = ConcType.CONTENT;
 	}
 
 	/**
