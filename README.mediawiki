@@ -12,5 +12,6 @@ More information:
 * [https://github.com/INL/BlackLab/wiki/Frequently-Asked-Questions Frequently Asked Questions]
 * [https://github.com/INL/BlackLab/wiki/Example-application Have a look at the example application]
 * [https://github.com/INL/BlackLab/wiki/Building-and-testing-BlackLab Build and test it yourself]
+* [https://github.com/INL/BlackLab/wiki/BlackLab-blog BlackLab blog]
 * Follow [https://twitter.com/BlackLabINL @BlackLabINL] on Twitter!
 * For technical questions, contact Jan Niestadt (jan.niestadt@inl.nl)
