@@ -630,7 +630,7 @@ public class QueryTool {
 
 		// Group results
 		HitProperty crit = null;
-		if (groupBy.equals("word"))
+		if (groupBy.equals("word") || groupBy.equals("match"))
 			crit = new HitPropertyHitText(true);
 		else if (groupBy.startsWith("left"))
 			crit = new HitPropertyWordLeft(true);
