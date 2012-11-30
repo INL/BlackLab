@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
@@ -87,17 +87,11 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 
 	SaxParseHandler saxParseHandler = new SaxParseHandler();
 
-	private static boolean continueParsingAfterError = false;
-
 	/**
 	 * What namespace prefix mappings have we encountered but not output in a start tag
 	 * yet? (used to make sure the stored XML contains all the required mappings)
 	 */
 	protected static Map<String,String> outputPrefixMapping = new HashMap<String, String>();
-
-	public static void setContinueParsingAfterError(boolean continueParsingAfterError) {
-		DocIndexerXml.continueParsingAfterError = continueParsingAfterError;
-	}
 
 	/**
 	 * Encountered a prefix to namespace mapping; now in effect.
@@ -247,26 +241,30 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 	}
 
 	@Override
-	public void index() throws Exception {
+	public void index() throws IOException, InputFormatException  {
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);
-		SAXParser parser = factory.newSAXParser();
+		SAXParser parser;
 		try {
+			parser = factory.newSAXParser();
+		} catch (Exception e1) {
+			// Unrecoverable error, throw runtime exception
+			throw new RuntimeException(e1);
+		}
+//		try {
 			try {
 				parser.parse(new InputSource(reader), saxParseHandler);
-			} catch (SAXParseException e) {
-				if (continueParsingAfterError) {
-					System.err.println("Parsing " + fileName + " failed:");
-					e.printStackTrace();
-				} else
-					throw e;
+			} catch (IOException e) {
+				throw e;
+			} catch (SAXException e) {
+				throw new InputFormatException();
 			} catch (DocIndexer.MaxDocsReachedException e) {
 				// OK; just stop indexing prematurely
 			}
-		} catch (Exception e) {
-			System.out.println("An exception occurred while parsing at " + describePosition());
-			throw e;
-		}
+//		} catch (Exception e) {
+//			System.out.println("An exception occurred while parsing at " + describePosition());
+//			throw e;
+//		}
 
 		if (nDocumentsSkipped > 0)
 			System.err.println("Skipped " + nDocumentsSkipped + " large documents");

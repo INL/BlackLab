@@ -105,6 +105,18 @@ public class Indexer {
 	Collator collator = Collator.getInstance(new Locale("en", "GB"));
 
 
+	/** If an error, like a parse error, should we
+	 *  try to continue indexing, or abort? */
+	private boolean continueAfterInputError = false;
+
+	/** If an error, like a parse error, should we
+	 *  try to continue indexing, or abort?
+	 *  @param b if true, continue; if false, abort
+	 */
+	public void setContinueAfterInputError(boolean b) {
+		continueAfterInputError = b;
+	}
+
 	/**
 	 * When we encounter a zipfile, do we descend into it like it was a directory?
 	 *
@@ -316,27 +328,51 @@ public class Indexer {
 	/**
 	 * Index a document from a Reader, using the specified type of DocIndexer
 	 *
-	 * @param fileName
-	 *            the filename
+	 * @param documentName
+	 *            some (preferably unique) name for this document (for example, the file
+	 *            name or path)
 	 * @param reader
 	 *            where to index from
 	 * @throws Exception
 	 */
-	public void index(String fileName, Reader reader) throws Exception {
+	public void index(String documentName, Reader reader) throws Exception {
 		try {
-			listener.fileStarted(fileName);
+			listener.fileStarted(documentName);
 
-			// Instantiate our DocIndexer class
-			Constructor<? extends DocIndexer> constructor = docIndexerClass.getConstructor(
-					Indexer.class, String.class, Reader.class);
-			DocIndexer docIndexer = constructor.newInstance(this, fileName, reader);
+			DocIndexer docIndexer = createDocIndexer(documentName, reader);
 
 			docIndexer.index();
-			listener.fileDone(fileName);
+			listener.fileDone(documentName);
+		} catch (InputFormatException e) {
+			if (continueAfterInputError) {
+				System.err.println("Parsing " + documentName + " failed:");
+				e.printStackTrace();
+				System.err.println("(continuing indexing)");
+			} else {
+				// Don't continue; re-throw the exception so we eventually abort
+				throw e;
+			}
 		} catch (Exception e) {
-			System.err.println("Exception while processing " + fileName);
+			System.err.println("Exception while processing " + documentName);
 			throw e;
 		}
+	}
+
+	/**
+	 * Called to create a new instance of DocIndexer.
+	 *
+	 * @param documentName the name of the data to index
+	 * @param reader what to index
+	 * @return the DocIndexer
+	 * @throws Exception if the DocIndexer could not be instantiated for some reason
+	 */
+	protected DocIndexer createDocIndexer(String documentName, Reader reader)
+			throws Exception {
+		// Instantiate our DocIndexer class
+		Constructor<? extends DocIndexer> constructor = docIndexerClass.getConstructor(
+				Indexer.class, String.class, Reader.class);
+		DocIndexer docIndexer = constructor.newInstance(this, documentName, reader);
+		return docIndexer;
 	}
 
 	/**
@@ -683,6 +719,11 @@ public class Indexer {
 
 	public File getIndexLocation() {
 		 return indexLocation;
+	}
+
+	public void getDocIndexer() {
+		// TODO Auto-generated method stub
+
 	}
 
 }
