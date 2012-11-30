@@ -37,6 +37,8 @@ import nl.inl.util.Utilities;
 public class Terms {
 	//ArrayList<String> terms = new ArrayList<String>();
 
+	final static int INT_SIZE = Integer.SIZE / Byte.SIZE;
+
 	/** The terms, by index number. Only valid when indexMode == false. */
 	String[] terms;
 
@@ -187,7 +189,7 @@ public class Terms {
 					String term = e.getKey();
 					byte[] strBuf = term.getBytes("utf-8");
 
-					if (buf.remaining() < 8 + strBuf.length) {
+					if (buf.remaining() < INT_SIZE * 2 + strBuf.length) {
 						// Create new direct buffer with extra room
 						int p = buf.position();
 						bufOffset += p;
@@ -209,6 +211,19 @@ public class Terms {
 				// In other words, the index numbers are in order of sorted terms, so the id
 				// for 'aardvark' comes before the id for 'ape', etc.
 				for (int id: termIndex.values()) {
+
+					if (buf.remaining() < INT_SIZE) {
+						// Create new direct buffer with extra room
+						int p = buf.position();
+						bufOffset += p;
+
+						// Unmap buffer to prevent file lock
+						// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
+						Utilities.cleanDirectBufferHack(buf);
+
+						buf = fc.map(MapMode.READ_WRITE, bufOffset, writeMapReserve);
+					}
+
 					buf.putInt(id);
 				}
 
