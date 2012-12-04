@@ -40,8 +40,8 @@ import org.apache.log4j.Logger;
  */
 public class ForwardIndex {
 
-	/**
-	 * Version history:
+	/*
+	 * File format version history:
 	 * 1. Initial version.
 	 * 2. Added sort index to terms file.
 	 */
