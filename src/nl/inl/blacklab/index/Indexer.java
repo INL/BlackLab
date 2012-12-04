@@ -350,11 +350,18 @@ public class Indexer {
 				System.err.println("(continuing indexing)");
 			} else {
 				// Don't continue; re-throw the exception so we eventually abort
+				System.err.println("Input error while processing " + documentName);
 				throw e;
 			}
 		} catch (Exception e) {
-			System.err.println("Exception while processing " + documentName);
-			throw e;
+			if (continueAfterInputError) {
+				System.err.println("Parsing " + documentName + " failed:");
+				e.printStackTrace();
+				System.err.println("(continuing indexing)");
+			} else {
+				System.err.println("Exception while processing " + documentName);
+				throw e;
+			}
 		}
 	}
 
