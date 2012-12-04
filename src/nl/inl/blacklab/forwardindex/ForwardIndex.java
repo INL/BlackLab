@@ -51,6 +51,10 @@ public class ForwardIndex {
 	 */
 	private static final String CURRENT_VERSION = "2";
 
+	/** Java has as limit of 2GB for MappedByteBuffer.
+	 *  But this could be worked around using arrays of MappedByteBuffers, see:
+	 *  http://stackoverflow.com/questions/5675748/java-memorymapping-big-files
+	 */
 	private static final int MAX_DIRECT_BUFFER_SIZE = 2147483647;
 
 	protected static final Logger logger = Logger.getLogger(ForwardIndex.class);
