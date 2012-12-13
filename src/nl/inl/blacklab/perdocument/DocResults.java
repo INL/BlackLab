@@ -32,7 +32,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * A list of DocResult objects (document-level query results). The list may be sorted by calling
@@ -63,10 +63,10 @@ public class DocResults {
 					if (dr != null)
 						results.add(dr);
 					doc = hit.doc;
-					dr = new DocResult(searcher, hits.getDefaultConcordanceField(), hit.doc,
+					dr = new DocResult(searcher, hits.getConcordanceField(), hit.doc,
 							indexReader.document(hit.doc));
-					dr.copyConcordanceStatus(hits); // make sure we remember what kind of
-													// concordances we have, if any
+					dr.setContextField(hits.getContextField()); // make sure we remember what kind of
+													// context we have, if any
 				}
 				dr.addHit(hit);
 			}
@@ -78,8 +78,8 @@ public class DocResults {
 		}
 	}
 
-	public DocResults(Searcher searcher, String field, Spans spans) {
-		this(searcher, new Hits(searcher, spans, field));
+	public DocResults(Searcher searcher, String field, SpanQuery query) {
+		this(searcher, new Hits(searcher, query, field));
 	}
 
 	public DocResults(Searcher searcher, Scorer sc) {

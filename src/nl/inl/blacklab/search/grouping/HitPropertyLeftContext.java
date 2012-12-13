@@ -82,7 +82,7 @@ public class HitPropertyLeftContext extends HitProperty {
 	}
 
 	@Override
-	public boolean needsConcordances() {
+	public boolean needsContext() {
 		return true;
 	}
 

@@ -31,8 +31,6 @@ import nl.inl.util.PropertiesUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
-import org.apache.lucene.search.spans.SpanQuery;
-
 /**
  * Simple test program to demonstrate corpus search functionality.
  */
@@ -59,8 +57,7 @@ public class CorpusSearchStressTest {
 
 		TextPattern pattern = new TextPatternTerm("die");
 
-		SpanQuery query = searcher.createSpanQuery("contents", pattern);
-		Hits hits = searcher.find(query, "contents");
+		Hits hits = searcher.find("contents", pattern);
 		System.out.println(hits.size() + " hits found; sorting...");
 
 		// Heavy shit
@@ -73,7 +70,6 @@ public class CorpusSearchStressTest {
 	}
 
 	private static void displayConcordances(Searcher searcher, HitsWindow window) {
-		window.findContext();
 		for (Hit hit : window) {
 			Concordance conc = window.getConcordance(hit);
 			String left = XmlUtil.xmlToPlainText(conc.left);

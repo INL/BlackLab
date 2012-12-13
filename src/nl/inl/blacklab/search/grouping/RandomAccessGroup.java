@@ -19,7 +19,6 @@ import java.util.Iterator;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.Hits.ConcType;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.lucene.SpansWithHit;
 
@@ -97,8 +96,8 @@ public class RandomAccessGroup extends Group {
 		};
 	}
 
-	protected void setConcordanceStatus(String concField, ConcType concType) {
-		results.setConcordanceStatus(concField, concType);
+	public void setContextField(String contextField) {
+		 results.setContextField(contextField);
 	}
 
 	// @Override

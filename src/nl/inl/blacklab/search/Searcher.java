@@ -296,24 +296,6 @@ public class Searcher implements Closeable {
 		return new SpanQueryFiltered(query, docIdSet);
 	}
 
-//	/**
-//	 * Filter a Spans object (collection of hits), only keeping hits in a subset of documents. All
-//	 * other hits are discarded.
-//	 *
-//	 * @param spans
-//	 *            the collection of hits
-//	 * @param docIdSet
-//	 *            the documents for which to keep the hits
-//	 * @return the resulting Spans
-//	 */
-//	public Spans filterDocuments(Spans spans, DocIdSet docIdSet) {
-//		try {
-//			return new SpansFiltered(spans, docIdSet);
-//		} catch (IOException e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
-
 	/**
 	 * Filter a Spans object (collection of hits), only keeping hits in a subset of documents,
 	 * described by a Filter. All other hits are discarded.
@@ -331,99 +313,6 @@ public class Searcher implements Closeable {
 			throw new RuntimeException(e);
 		}
 	}
-
-//	/**
-//	 * Filter a Spans object (collection of hits), only keeping hits in a single document.
-//	 *
-//	 * @param spans
-//	 *            the collection of hits
-//	 * @param docId
-//	 *            the document we want hits in
-//	 * @return the resulting Spans
-//	 */
-//	public Spans filterSingleDocument(Spans spans, final int docId) {
-//		return filterDocuments(spans, new SingleDocIdSet(docId));
-//	}
-//
-//	/**
-//	 * Filter a Hits object, only keeping hits in a single document.
-//	 *
-//	 * @param hits
-//	 *            the collection of hits
-//	 * @param id
-//	 *            the document we want hits in
-//	 * @return the resulting Spans
-//	 */
-//	public Hits filterSingleDocument(Hits hits, int id) {
-//		Hits hitsFiltered = new Hits(this, hits.getDefaultConcordanceField());
-//		hitsFiltered.setConcordanceStatus(hits.getConcordanceField(), hits.getConcordanceType());
-//		for (Hit hit : hits) {
-//			if (hit.doc == id)
-//				hitsFiltered.add(hit);
-//		}
-//		return hitsFiltered;
-//	}
-
-//	/**
-//	 * Find hits in a field. Returns a Lucene Spans object.
-//	 *
-//	 * @param spanQuery
-//	 *            the query
-//	 * @return the Results object
-//	 * @throws BooleanQuery.TooManyClauses
-//	 *             if a wildcard or regular expression term is overly broad
-//	 */
-//	public Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
-//		return findSpans(spanQuery, null);
-//	}
-
-	/**
-	 * Find hits in a field. Returns a Lucene Spans object.
-	 *
-	 * Uses a Filter to only search certain documents and ignore others.
-	 *
-	 * @param spanQuery
-	 *            the query
-	 * @return the results object
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	 public Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
-		try {
-			spanQuery = (SpanQuery) spanQuery.rewrite(indexReader);
-			return spanQuery.getSpans(indexReader);
-		} catch (BooleanQuery.TooManyClauses e) {
-			// re-throw so the application can catch it
-			throw e;
-		} catch (Exception e) {
-			throw ExUtil.wrapRuntimeException(e);
-		}
-	}
-
-//	/**
-//	 * Find hits for a pattern in a field. Returns a Lucene Spans object.
-//	 *
-//	 * Uses a Filter to only search certain documents and ignore others.
-//	 *
-//	 * @param field
-//	 *            which field to find the pattern in
-//	 * @param pattern
-//	 *            the pattern to find
-//	 * @param filter
-//	 *            determines which documents to search
-//	 * @return the results object
-//	 * @throws BooleanQuery.TooManyClauses
-//	 *             if a wildcard or regular expression term is overly broad
-//	 */
-//	public Spans findSpans(String field, TextPattern pattern, Filter filter)
-//			throws BooleanQuery.TooManyClauses {
-//		try {
-//			SpanQuery spanQuery = createSpanQuery(field, pattern, filter.getDocIdSet(indexReader));
-//			return findSpans(spanQuery);
-//		} catch (IOException e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
 
 	public SpanQuery createSpanQuery(String field, TextPattern pattern, DocIdSet docIdSet) {
 		// Convert to SpanQuery
@@ -448,36 +337,6 @@ public class Searcher implements Closeable {
 		return createSpanQuery(field, pattern, (DocIdSet)null);
 	}
 
-//	/**
-//	 * Find hits for a pattern in a field. Returns a Lucene Spans object.
-//	 *
-//	 * @param field
-//	 *            which field to find the pattern in
-//	 * @param pattern
-//	 *            the pattern to find
-//	 * @return the results object
-//	 * @throws BooleanQuery.TooManyClauses
-//	 *             if a wildcard or regular expression term is overly broad
-//	 */
-//	public Spans findSpans(String field, TextPattern pattern) throws BooleanQuery.TooManyClauses {
-//		return findSpans(field, pattern, null);
-//	}
-
-//	/**
-//	 * Find hits for a pattern in a field.
-//	 *
-//	 * @param field
-//	 *            which field to find the pattern in
-//	 * @param pattern
-//	 *            the pattern to find
-//	 * @return the hits found
-//	 * @throws BooleanQuery.TooManyClauses
-//	 *             if a wildcard or regular expression term is overly broad
-//	 */
-//	public Hits find(String field, TextPattern pattern) throws BooleanQuery.TooManyClauses {
-//		return new Hits(this, findSpans(field, pattern), field);
-//	}
-
 	/**
 	 * Find hits for a pattern in a field.
 	 *
@@ -493,38 +352,38 @@ public class Searcher implements Closeable {
 		return new Hits(this, query, defaultConcField);
 	}
 
-//	/**
-//	 * Execute a Span query.
-//	 *
-//	 * @param field
-//	 *            field to use for sorting and displaying resulting concordances.
-//	 * @param query
-//	 *            the query to execute
-//	 * @return the hits found
-//	 * @throws BooleanQuery.TooManyClauses
-//	 *             if a wildcard or regular expression term is overly broad
-//	 */
-//	public Hits find(String field, SpanQuery query) throws BooleanQuery.TooManyClauses {
-//		return new Hits(this, findSpans(query), field);
-//	}
+	/**
+	 * Find hits for a pattern in a field.
+	 *
+	 * @param field
+	 *            field to use for sorting and displaying resulting concordances.
+	 * @param pattern
+	 *            the pattern to find
+	 * @param filter
+	 *            determines which documents to search
+	 * @return the hits found
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	public Hits find(String field, TextPattern pattern, Filter filter)
+			throws BooleanQuery.TooManyClauses {
+		return new Hits(this, createSpanQuery(field, pattern, filter), field);
+	}
 
-//	/**
-//	 * Find hits for a pattern in a field.
-//	 *
-//	 * @param field
-//	 *            field to use for sorting and displaying resulting concordances.
-//	 * @param pattern
-//	 *            the pattern to find
-//	 * @param filter
-//	 *            determines which documents to search
-//	 * @return the hits found
-//	 * @throws BooleanQuery.TooManyClauses
-//	 *             if a wildcard or regular expression term is overly broad
-//	 */
-//	public Hits find(String field, TextPattern pattern, Filter filter)
-//			throws BooleanQuery.TooManyClauses {
-//		return new Hits(this, findSpans(field, pattern, filter), field);
-//	}
+	/**
+	 * Find hits for a pattern in a field.
+	 *
+	 * @param field
+	 *            which field to find the pattern in
+	 * @param pattern
+	 *            the pattern to find
+	 * @return the hits found
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	public Hits find(String field, TextPattern pattern) throws BooleanQuery.TooManyClauses {
+		return find(field, pattern, null);
+	}
 
 	/**
 	 * Find matching documents and their scores for a pattern.

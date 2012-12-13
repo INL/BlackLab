@@ -15,28 +15,39 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.grouping.HitProperty;
-
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Sort results using some comparator. Subclasses SpansCacher to retrieve all results, then sorts
- * the resulting list.
+ * Stub SpanQuery class for testing. Takes arrays and iterates through 'hits'
+ * from these arrays.
  */
-public class SpansSorter extends SpansCacher {
+public class SpanQueryStub extends SpanQuery {
+	private int[] doc;
 
-	public SpansSorter(Searcher searcher, Spans source, HitProperty sortProp,
-			String defaultConcField) {
-		this(searcher, source, sortProp, false, defaultConcField);
+	private int[] start;
+
+	private int[] end;
+
+	public SpanQueryStub(int[] doc, int[] start, int[] end) {
+		this.doc = doc;
+		this.start = start;
+		this.end = end;
 	}
 
-	public SpansSorter(Searcher searcher, Spans source, HitProperty sortProp,
-			final boolean reverseSort, String defaultConcField) {
-		super(searcher, source, defaultConcField);
+	@Override
+	public Spans getSpans(IndexReader reader) {
+		return new SpansStub(doc, start, end);
+	}
 
-		hits.sort(sortProp, reverseSort);
+	@Override
+	public String toString(String field) {
+		return "SpanQueryStub()";
+	}
 
-		reset();
+	@Override
+	public String getField() {
+		return "stub";
 	}
 }

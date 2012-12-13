@@ -69,8 +69,8 @@ public class DocResult {
 		return score;
 	}
 
-	public void copyConcordanceStatus(Hits source) {
-		hits.setConcordanceStatus(source.getConcordanceField(), source.getConcordanceType());
+	public void setContextField(String contextField) {
+		hits.setContextField(contextField);
 	}
 
 }

@@ -18,9 +18,9 @@ package nl.inl.blacklab.search.grouping;
 import java.util.Map;
 
 import junit.framework.Assert;
-import nl.inl.blacklab.search.lucene.SpansStub;
+import nl.inl.blacklab.search.lucene.SpanQueryStub;
 
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.junit.Test;
 
 public class TestResultsGrouper {
@@ -30,9 +30,9 @@ public class TestResultsGrouper {
 
 	@Test
 	public void testGrouper() {
-		Spans source = new SpansStub(doc, start, end);
+		SpanQuery query = new SpanQueryStub(doc, start, end);
 		HitProperty crit = new HitPropertyDocumentId();
-		ResultsGrouper grouper = new ResultsGrouper(null, source, crit, null);
+		ResultsGrouper grouper = new ResultsGrouper(null, query, crit, null);
 		Map<Object, RandomAccessGroup> groups = grouper.getGroupMap();
 
 		Assert.assertEquals(3, groups.size());

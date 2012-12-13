@@ -60,12 +60,6 @@ public class TestCorpusSearch {
 	private static void performTestSearches(Searcher searcher) {
 		TextPattern pattern;
 
-		// Search for a regular expression
-		// System.out.println("---");
-		// pattern = new TextPatternRegex("", ".*ing");
-		// patternSearch(searcher, "contents", pattern, 20);
-		// wildcardSearch(searcher, "ing", 20);
-
 		System.out.println("---");
 		pattern = new TextPatternTerm("he");
 		// pattern = new TextPatternRegex("beschr.*ing");
@@ -73,27 +67,6 @@ public class TestCorpusSearch {
 		patternSearch(searcher, "contents", pattern, 20);
 
 		patternSearchNonSpan(searcher, "contents", pattern, 20);
-
-		// System.out.println("---");
-		// patternSearch(searcher, "contents", new TextPatternTerm("zorg"), 20);
-		//
-		// System.out.println("---");
-		// patternSearch(searcher, "contents", new TextPatternTerm("hw", "zorgen"), 20);
-
-		// Search for specific word form and headword
-		// System.out.println("---");
-		// pattern = new TextPatternAnd(new TextPatternTerm("zorg"), // word == "zorg" AND
-		// new TextPatternTerm("hw", "zorgen") // headword == "zorgen"
-		// );
-		// patternSearch(searcher, "contents", pattern, 20);
-
-		// Search for specific word form and headword
-		// System.out.println("---");
-		// pattern = new TextPatternAnd(
-		// new TextPatternTerm("weet"), // word == "zorg" AND
-		// new TextPatternTerm("hw", "weten") // headword == "zorgen"
-		// );
-		// patternSearch(searcher, "contents", pattern, 20);
 
 		// Search simple field (not linguistically enriched; no word, hw, pos properties)
 		System.out.println("---");
@@ -103,35 +76,10 @@ public class TestCorpusSearch {
 		System.out.println("---");
 		pattern = new TextPatternSequence(new TextPatternTerm("en"), new TextPatternTerm("waar"));
 		patternSearch(searcher, "contents", pattern, 20);
-
-		// findLemmatisations(searcher, "zorg");
-		// findLemmatisations(searcher, "weet"); // > 4000 occurrences, slow
 	}
 
 	private static void patternSearchNonSpan(Searcher searcher, String fieldName,
 			TextPattern pattern, int n) {
-		// // Execute search
-		// Scorer scorer = searcher.findDocScores(fieldName, pattern);
-		// try
-		// {
-		// int i = 0;
-		// while (true)
-		// {
-		// int id = scorer.nextDoc();
-		// if (id == DocIdSetIterator.NO_MORE_DOCS)
-		// break;
-		// float score = scorer.score();
-		// System.out.println("Doc = " + id + "; score = " + score);
-		// i++;
-		// // if (i == n)
-		// // break;
-		// }
-		// }
-		// catch (IOException e)
-		// {
-		// throw ExUtil.wrapRuntimeException(e);
-		// }
-
 		TextPatternTranslatorSpanQuery translator = new TextPatternTranslatorSpanQuery();
 		SpanQuery query = pattern.translate(translator, fieldName);
 		SpanQuery spanQuery = query;
@@ -148,8 +96,7 @@ public class TestCorpusSearch {
 
 	private static void patternSearch(Searcher searcher, String fieldName, TextPattern pattern,
 			int n, Filter filter) {
-		SpanQuery query = searcher.createSpanQuery(fieldName, pattern, filter);
-		Hits hits = searcher.find(query, "contents");
+		Hits hits = searcher.find(fieldName, pattern, filter);
 
 		// Limit results to the first n
 		HitsWindow window = new HitsWindow(hits, 0, n);
@@ -157,48 +104,7 @@ public class TestCorpusSearch {
 		displayConcordances(searcher, window);
 	}
 
-	// @SuppressWarnings("unused")
-	// private static void findForms(Searcher searcher, String headword)
-	// {
-	// String[] forms = searcher.wordFormsForHeadword(headword);
-	// System.out.println("Vormen van '" + headword + "' in de index: "
-	// + StringUtil.join(Arrays.asList(forms), ";"));
-	// }
-
-	// /**
-	// * Find all lemmatisations for a word form.
-	// * @param searcher
-	// * @param wordForm
-	// */
-	// static void findLemmatisations(Searcher searcher, String wordForm)
-	// {
-	// TextPattern pattern = new TextPatternTerm(wordForm);
-	// String fieldName = "contents";
-	// SpanQuery spanQuery = getSpanQuery(fieldName, pattern);
-	//
-	// // Execute search
-	// Spans results = searcher.find(spanQuery);
-	//
-	// // Wrap results object in concordance maker
-	// // (we reconstruct the hit text from the term vector because "hw" is not a stored field)
-	// results = new SpansConcordances(searcher, results, ComplexFieldUtil
-	// .getComplexFieldName(fieldName, "hw"), 0, true);
-	//
-	// // What do we want to group on?
-	// GroupCriteria groupCriteria = new GroupCriteria(new HitPropertyHitText());
-	//
-	// // Group the results
-	// ResultsGrouper grouped = new ResultsGrouper(results, groupCriteria);
-	//
-	// // Show the groups we got
-	// for (RandomAccessGroup group : grouped.getGroups())
-	// {
-	// System.out.println(group);
-	// }
-	// }
-
 	private static void displayConcordances(Searcher searcher, HitsWindow window) {
-		window.findConcordances();
 		for (Hit hit : window) {
 			Concordance conc = window.getConcordance(hit);
 			String left = XmlUtil.xmlToPlainText(conc.left);

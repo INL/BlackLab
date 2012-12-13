@@ -27,6 +27,9 @@ import java.util.NoSuchElementException;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 
@@ -35,21 +38,6 @@ import org.apache.lucene.search.spans.Spans;
  * information stored in the Hit objects.
  */
 public class Hits implements Iterable<Hit> {
-	/**
-	 * The types of concordance information the hits may have.
-	 */
-	public static enum ConcType {
-		/** Hits have no concordance information */
-		NONE,
-
-		/**
-		 * Hits have concordance information from the term vector (Lucene index), useful for sorting
-		 */
-		TERM_VECTOR,
-
-		/** Hits have actual content concordances (original XML content), useful for display */
-		CONTENT
-	}
 
 	/**
 	 * The hits.
@@ -67,19 +55,15 @@ public class Hits implements Iterable<Hit> {
 	protected Searcher searcher;
 
 	/**
-	 * If we have concordance information, this specifies the field the concordances came from.
+	 * If we have context information, this specifies the property (i.e. word, lemma, pos) the context came from.
+	 * Otherwise, it is null.
 	 */
-	protected String concFieldName;
+	protected String contextFieldName;
 
 	/**
 	 * The default field to use for retrieving concordance information.
 	 */
-	protected String defaultConcField;
-
-	/**
-	 * The type of concordance information our hits currently have.
-	 */
-	protected ConcType concType = ConcType.NONE;
+	protected String concordanceField;
 
 	/**
 	 * Did we completely read our Spans object?
@@ -111,11 +95,14 @@ public class Hits implements Iterable<Hit> {
 		this.searcher = searcher;
 		hits = new ArrayList<Hit>();
 		totalNumberOfHits = 0;
-		this.defaultConcField = defaultConcField;
+		this.concordanceField = defaultConcField;
 	}
 
 	/**
-	 * Construct an empty Hits object
+	 * Construct an empty Hits object.
+	 *
+	 * If possible, don't use this constructor, use the one that takes
+	 * a SpanQuery, as it's more efficient.
 	 *
 	 * @param searcher
 	 *            the searcher object
@@ -124,13 +111,35 @@ public class Hits implements Iterable<Hit> {
 	 * @param defaultConcField
 	 *            field to use by default when finding concordances
 	 */
-	public Hits(Searcher searcher, Spans source, String defaultConcField) {
+	Hits(Searcher searcher, Spans source, String defaultConcField) {
 		this.searcher = searcher;
 		sourceSpans = source;
 		sourceSpansFullyRead = false;
 		totalNumberOfHits = -1; // unknown
 		hits = new ArrayList<Hit>(); //Hit.hitList(source);
-		this.defaultConcField = defaultConcField;
+		this.concordanceField = defaultConcField;
+	}
+
+	/**
+	 * Executes the SpanQuery to get a Spans object.
+	 *
+	 * @param spanQuery
+	 *            the query
+	 * @return the results object
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
+		try {
+			IndexReader reader = null;
+			if (searcher != null) { // this may happen while testing with stub classes; don't try to rewrite
+				reader = searcher.getIndexReader();
+			}
+			spanQuery = (SpanQuery) spanQuery.rewrite(reader);
+			return spanQuery.getSpans(reader);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -142,10 +151,11 @@ public class Hits implements Iterable<Hit> {
 	 *            the query to execute to get the hits
 	 * @param defaultConcField
 	 *            field to use by default when finding concordances
+	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
 	 */
-	public Hits(Searcher searcher, SpanQuery sourceQuery, String defaultConcField) {
+	public Hits(Searcher searcher, SpanQuery sourceQuery, String defaultConcField) throws TooManyClauses {
 		this.searcher = searcher;
-		sourceSpans = searcher.findSpans(sourceQuery);
+		sourceSpans = findSpans(sourceQuery);
 		totalNumberOfHits = 0;
 		try {
 			while (sourceSpans.next()) {
@@ -154,10 +164,10 @@ public class Hits implements Iterable<Hit> {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		sourceSpans = searcher.findSpans(sourceQuery); // Counted 'em. Now reset.
+		sourceSpans = findSpans(sourceQuery); // Counted 'em. Now reset.
 		sourceSpansFullyRead = false;
 		hits = new ArrayList<Hit>(); //Hit.hitList(source);
-		this.defaultConcField = defaultConcField;
+		this.concordanceField = defaultConcField;
 	}
 
 	/**
@@ -249,7 +259,7 @@ public class Hits implements Iterable<Hit> {
 		ensureAllHitsRead();
 		// Do we need concordances and don't we have them yet?
 		//Collator collator;
-		if (sortProp.needsConcordances() && concType == ConcType.NONE) {
+		if (sortProp.needsContext() && contextFieldName == null) {
 			// Get 'em
 			findContext();
 
@@ -401,15 +411,20 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Return the concordance for the specified hit.
 	 *
-	 * You can only call this method after fetching concordances using Hits.findConcordances().
+	 * The first call to this method will fetch the concordances for all the hits in this
+	 * Hits object. So make sure to select an appropriate HitsWindow first: don't call this
+	 * method on a Hits set with >1M hits unless you really want to display all of them in one
+	 * go.
 	 *
 	 * @param h the hit
 	 * @return concordance for this hit
 	 */
 	public Concordance getConcordance(Hit h) {
 		ensureAllHitsRead();
-		if (concordances == null)
-			throw new RuntimeException("Concordances haven't been retrieved yet; call Hits.findConcordances()");
+		if (concordances == null) {
+			findConcordances(); // just try to find the default concordances
+			//throw new RuntimeException("Concordances haven't been retrieved yet; call Hits.findConcordances(fieldName)");
+		}
 		Concordance conc = concordances.get(h);
 		if (conc == null)
 			throw new RuntimeException("Concordance for hit not found: " + h);
@@ -419,24 +434,18 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Retrieve concordances for the hits.
 	 *
-	 * @param fieldName
-	 *            the field to use for the concordances (ignore the default concordance field)
+	 * You shouldn't have to call this manually, as it's automatically called when
+	 * you call getConcordance() for the first time.
 	 */
-	public void findConcordances(String fieldName) {
+	void findConcordances() {
 		ensureAllHitsRead();
 		// Make sure we don't have the desired concordances already
-		if (concordances != null && fieldName.equals(concFieldName)) {
+		if (concordances != null) {
 			return;
 		}
-//		if (concType != ConcType.NONE && fieldName.equals(concFieldName)) {
-//			if (concType == ConcType.CONTENT)
-//				return;
-//		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(fieldName, hits);
-		concFieldName = fieldName;
-		//concType = ConcType.CONTENT;
+		concordances = searcher.retrieveConcordances(concordanceField, hits);
 	}
 
 	/**
@@ -448,34 +457,26 @@ public class Hits implements Iterable<Hit> {
 	public void findContext(String fieldName) {
 		ensureAllHitsRead();
 		// Make sure we don't have the desired concordances already
-		if (concType != ConcType.NONE && fieldName.equals(concFieldName)) {
-			if (concType == ConcType.TERM_VECTOR)
-				return;
+		if (contextFieldName != null && fieldName.equals(contextFieldName)) {
+			return;
 		}
 
 		// Get the concordances
 		searcher.retrieveContext(fieldName, hits);
 
-		concFieldName = fieldName;
-		concType = ConcType.TERM_VECTOR;
+		contextFieldName = fieldName;
 	}
 
 	/**
-	 * Retrieve concordances for the hits.
+	 * Retrieve context for the hits, for sorting/grouping.
 	 *
-	 * Uses the default concordance field.
-	 */
-	public void findConcordances() {
-		findConcordances(defaultConcField);
-	}
-
-	/**
-	 * Retrieve concordances for the hits.
+	 * NOTE: you should never have to call this manually; it is
+	 * called if needed by the sorting/grouping code.
 	 *
 	 * Uses the default concordance field.
 	 */
 	public void findContext() {
-		findContext(defaultConcField);
+		findContext(concordanceField);
 	}
 
 	/**
@@ -488,22 +489,22 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Returns the default field to use for retrieving concordances.
+	 * Returns the field to use for retrieving concordances.
 	 *
 	 * @return the field name
 	 */
-	public String getDefaultConcordanceField() {
-		return defaultConcField;
+	public String getConcordanceField() {
+		return concordanceField;
 	}
 
 	/**
-	 * Sets the default field to use for retrieving concordances.
+	 * Sets the field to use for retrieving concordances.
 	 *
 	 * @param defaultConcField
 	 *            the field name
 	 */
-	public void setDefaultConcordanceField(String defaultConcField) {
-		this.defaultConcField = defaultConcField;
+	public void setConcordanceField(String defaultConcField) {
+		this.concordanceField = defaultConcField;
 	}
 
 	/**
@@ -511,34 +512,22 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the field name
 	 */
-	public String getConcordanceField() {
-		return concFieldName;
+	public String getContextField() {
+		return contextFieldName;
 	}
 
 	/**
-	 * Get type of the current concordance information in our hits.
-	 *
-	 * @return the concordance type
+	 * Retrieve a sublist of hits.
+	 * @param fromIndex first hit to include in the resulting list
+	 * @param toIndex first hit not to include in the resulting list
+	 * @return the sublist
 	 */
-	public ConcType getConcordanceType() {
-		return concType;
-	}
-
-	/**
-	 * Set the current concordance type and field for our hits.
-	 *
-	 * @param concField
-	 *            the field name
-	 * @param concType
-	 *            the type of concordances
-	 */
-	public void setConcordanceStatus(String concField, ConcType concType) {
-		concFieldName = concField;
-		this.concType = concType;
-	}
-
 	public List<Hit> subList(int fromIndex, int toIndex) {
 		ensureHitsRead(toIndex - 1);
 		return hits.subList(fromIndex, toIndex);
+	}
+
+	public void setContextField(String contextField) {
+		this.contextFieldName = contextField;
 	}
 }

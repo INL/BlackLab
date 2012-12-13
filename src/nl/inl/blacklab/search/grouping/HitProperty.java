@@ -31,7 +31,7 @@ public abstract class HitProperty {
 	 */
 	public abstract int compare(Hit a, Hit b);
 
-	public boolean needsConcordances() {
+	public boolean needsContext() {
 		return false;
 	}
 

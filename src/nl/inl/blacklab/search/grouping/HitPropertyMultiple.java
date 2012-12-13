@@ -77,9 +77,9 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	}
 
 	@Override
-	public boolean needsConcordances() {
+	public boolean needsContext() {
 		for (HitProperty prop : criteria) {
-			if (prop.needsConcordances())
+			if (prop.needsContext())
 				return true;
 		}
 		return false;

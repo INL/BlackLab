@@ -56,7 +56,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.varia.NullAppender;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.Filter;
 import org.apache.lucene.util.Version;
 
 /**
@@ -496,8 +496,8 @@ public class QueryTool {
 			TextPattern pattern = currentParser.parse(query);
 
 			// Execute search
-			SpanQuery spanQuery = searcher.createSpanQuery("contents", pattern);
-			hits = searcher.find(spanQuery, "contents");
+			Filter filter = null; // TODO: metadata search!
+			hits = searcher.find("contents", pattern, filter);
 			groups = null;
 			showWhichGroup = -1;
 			showGroups = false;
@@ -726,9 +726,6 @@ public class QueryTool {
 
 		// Limit results to the first n
 		HitsWindow window = new HitsWindow(hitsToShow, firstResult, resultsPerPage);
-
-		// Find content concordances (for display)
-		window.findConcordances();
 
 		// Compile hits display info and calculate necessary width of left context column
 		List<HitToShow> toShow = new ArrayList<HitToShow>();

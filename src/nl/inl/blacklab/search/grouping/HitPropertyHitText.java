@@ -73,7 +73,7 @@ public class HitPropertyHitText extends HitProperty {
 	}
 
 	@Override
-	public boolean needsConcordances() {
+	public boolean needsContext() {
 		return true;
 	}
 

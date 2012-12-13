@@ -32,8 +32,6 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 import nl.inl.util.XmlUtil;
 
-import org.apache.lucene.search.spans.SpanQuery;
-
 /**
  * Simple test program to demonstrate index & search functionality.
  */
@@ -155,8 +153,7 @@ public class Example {
 	 */
 	static void findPattern(TextPattern tp) {
 		// Execute the search
-		SpanQuery query = searcher.createSpanQuery("contents", tp);
-		Hits hits = searcher.find(query, "contents");
+		Hits hits = searcher.find("contents", tp);
 
 		hits.sort(new HitPropertyHitText(searcher, "contents"));
 
@@ -171,10 +168,6 @@ public class Example {
 	 *            the hits to display
 	 */
 	static void displayConcordances(Hits hits) {
-		// Find concordances (pieces of the original content surrounding the match),
-		// so we can display them.
-		hits.findConcordances();
-
 		// Loop over the hits and display.
 		for (Hit hit : hits) {
 			Concordance conc = hits.getConcordance(hit);

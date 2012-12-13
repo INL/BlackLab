@@ -22,6 +22,10 @@ import java.util.Collection;
 
 import org.apache.lucene.search.spans.Spans;
 
+/**
+ * Stub Spans class for testing. Takes arrays and iterates through 'hits'
+ * from these arrays.
+ */
 public class SpansStub extends Spans {
 	private int[] doc;
 

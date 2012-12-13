@@ -24,10 +24,9 @@ import java.util.Map;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.Hits.ConcType;
 import nl.inl.blacklab.search.Searcher;
 
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * Groups results on the basis of a list of criteria, and provide random access to the resulting
@@ -56,13 +55,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	/**
 	 * Field our current concordances came from.
 	 */
-	private String concField;
-
-	/**
-	 * Current concordance type (might be from the original content, or reconstructed from the term
-	 * vector / forward index.
-	 */
-	private ConcType concType;
+	private String contextField;
 
 	/**
 	 * Total number of hits.
@@ -86,7 +79,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 * @param defaultConcField
 	 *            the default concordance field
 	 */
-	public ResultsGrouper(Searcher searcher, Spans source, HitProperty criteria,
+	public ResultsGrouper(Searcher searcher, SpanQuery source, HitProperty criteria,
 			String defaultConcField) {
 		this(new Hits(searcher, source, defaultConcField), criteria);
 	}
@@ -101,11 +94,10 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 */
 	public ResultsGrouper(Hits hits, HitProperty criteria) {
 		super(hits.getSearcher(), criteria);
-		defaultConcField = hits.getDefaultConcordanceField();
-		if (criteria.needsConcordances())
+		defaultConcField = hits.getConcordanceField();
+		if (criteria.needsContext())
 			hits.findContext();
-		concField = hits.getConcordanceField();
-		concType = hits.getConcordanceType();
+		contextField = hits.getContextField();
 		for (Hit hit : hits) {
 			addHit(hit);
 		}
@@ -122,7 +114,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 		RandomAccessGroup group = groups.get(identity);
 		if (group == null) {
 			group = new RandomAccessGroup(searcher, identity, defaultConcField);
-			group.setConcordanceStatus(concField, concType);
+			group.setContextField(contextField);
 			groups.put(identity, group);
 			groupsOrdered.add(group);
 		}
