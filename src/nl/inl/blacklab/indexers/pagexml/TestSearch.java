@@ -26,9 +26,11 @@ import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternPrefix;
-import nl.inl.blacklab.search.grouping.HitPropertyRightContext;
+import nl.inl.blacklab.search.grouping.HitPropertyHitText;
 import nl.inl.util.PropertiesUtil;
 import nl.inl.util.XmlUtil;
+
+import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * Simple test program to demonstrate corpus search functionality.
@@ -52,7 +54,7 @@ public class TestSearch {
 			// Keep track of time
 			long time = System.currentTimeMillis();
 
-			TextPattern tp = new TextPatternPrefix("der");
+			TextPattern tp = new TextPatternPrefix("pad");
 			// TextPattern tp = new TextPatternSequence(new TextPatternTerm("de"), new
 			// TextPatternTerm("de"));
 			// TextPattern tp = new TextPatternRepetition(new TextPatternWildcard("de*"), 2, 3);
@@ -64,13 +66,14 @@ public class TestSearch {
 			// TextPatternAnyToken(1, 2));
 
 			// Execute search
-			Hits hits = searcher.find("contents", tp);
+			SpanQuery query = searcher.createSpanQuery("contents", tp);
+			Hits hits = searcher.find(query, "contents");
 
 			// Find context (for sorting/grouping)
 			hits.findContext(); // NOTE: would be nicer if BlackLab detects if/when this is needed
 
 			// Sort hits on right context
-			hits.sort(new HitPropertyRightContext());
+			hits.sort(new HitPropertyHitText(searcher, "contents"));
 
 			// Limit results to the first n
 			HitsWindow window = new HitsWindow(hits, 0, 100);
@@ -79,10 +82,8 @@ public class TestSearch {
 			window.findConcordances();
 
 			// Print each hit
-			int doc = 0;
 			for (Hit hit : window) {
 				Concordance conc = window.getConcordance(hit);
-				doc = hit.doc;
 				String left = XmlUtil.xmlToPlainText(conc.left);
 				String hitText = XmlUtil.xmlToPlainText(conc.hit);
 				String right = XmlUtil.xmlToPlainText(conc.right);
@@ -94,7 +95,7 @@ public class TestSearch {
 			System.out.println((System.currentTimeMillis() - time) + "ms elapsed");
 
 			// Fetch and show whole XML doc
-			System.out.println(searcher.getContent(searcher.document(doc), "contents"));
+			//System.out.println(searcher.getContent(searcher.document(doc), "contents"));
 
 		} finally {
 			searcher.close();

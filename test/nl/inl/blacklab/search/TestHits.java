@@ -13,32 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search.grouping;
+package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.Hit;
+import junit.framework.Assert;
+import nl.inl.blacklab.search.lucene.SpansStub;
 
-/**
- * A hit property for grouping per document.
- */
-public class HitPropertyDocumentId extends HitProperty {
-	@Override
-	public HitPropValueInt get(Hit result) {
-		return new HitPropValueInt(result.doc);
-	}
+import org.apache.lucene.search.spans.Spans;
+import org.junit.Test;
 
-//	@Override
-//	public String getHumanReadable(Hit result) {
-//		return Integer.toString(result.doc);
-//	}
+public class TestHits {
 
-	@Override
-	public String getName() {
-		return "document id";
-	}
+	@Test
+	public void testHitsIterate() {
+		int[] aDoc = new int[] { 1, 2 };
+		int[] aStart = new int[] { 1, 2 };
+		int[] aEnd = new int[] { 2, 3 };
+		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-	@Override
-	public int compare(Hit a, Hit b) {
-		return a.doc - b.doc;
+		Hits hits = new Hits(null, a, null);
+
+		int i = 0;
+		for (Hit hit: hits) {
+			Assert.assertEquals(aDoc[i], hit.doc);
+			Assert.assertEquals(aStart[i], hit.start);
+			Assert.assertEquals(aEnd[i], hit.end);
+			i++;
+		}
 	}
 
 }

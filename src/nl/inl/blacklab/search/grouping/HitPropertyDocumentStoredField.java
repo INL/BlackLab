@@ -42,16 +42,21 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 	}
 
 	@Override
-	public String get(Hit result) {
+	public HitPropValueString get(Hit result) {
 		try {
 			Document d = reader.document(result.doc);
 			String value = d.get(fieldName);
 			if (value == null)
-				return "";
-			return value;
+				value = "";
+			return new HitPropValueString(value);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public int compare(Hit a, Hit b) {
+		return get(a).compareTo(get(b));
 	}
 
 	@Override

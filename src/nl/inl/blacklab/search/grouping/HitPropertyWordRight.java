@@ -15,36 +15,41 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Hit;
-import nl.inl.util.Utilities;
+import nl.inl.blacklab.search.Searcher;
 
 /**
  * A hit property for grouping on the context of the hit. Requires HitConcordances as input (so we
  * have the hit text available).
  */
 public class HitPropertyWordRight extends HitProperty {
-	boolean lowerCase;
 
-	public HitPropertyWordRight(boolean lowerCase) {
-		super();
-		this.lowerCase = lowerCase;
-	}
+	private Terms terms;
 
-	public HitPropertyWordRight() {
-		this(false);
+	public HitPropertyWordRight(Searcher searcher, String field) {
+		this.terms = searcher.getTerms(field);
 	}
 
 	@Override
-	public String get(Hit result) {
-		if (result.conc == null) {
-			throw new RuntimeException("Can only sort/group on context if results are concordances");
+	public HitPropValueContextWord get(Hit result) {
+		if (result.context == null) {
+			throw new RuntimeException("Context not available in hits objects; cannot sort/group on context");
 		}
-		String rightContext = result.conc[2].trim();
-		int indexOf = rightContext.indexOf(' ');
-		String word = rightContext;
-		if (indexOf >= 0)
-			word = rightContext.substring(0, indexOf);
-		return Utilities.xmlToSortable(word, lowerCase);
+
+		if (result.context.length <= result.contextRightStart)
+			return new HitPropValueContextWord(terms, -1);
+		return new HitPropValueContextWord(terms, result.context[result.contextRightStart]);
+	}
+
+	@Override
+	public int compare(Hit a, Hit b) {
+		if (a.context.length <= a.contextRightStart)
+			return b.context.length <= b.contextRightStart ? 0 : -1;
+		if (b.context.length <= b.contextRightStart)
+			return 1;
+		// Compare one word to the right of the hit
+		return a.context[a.contextRightStart] - b.context[b.contextRightStart];
 	}
 
 	@Override

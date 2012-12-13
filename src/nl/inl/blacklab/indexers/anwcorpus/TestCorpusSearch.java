@@ -148,7 +148,8 @@ public class TestCorpusSearch {
 
 	private static void patternSearch(Searcher searcher, String fieldName, TextPattern pattern,
 			int n, Filter filter) {
-		Hits hits = searcher.find(fieldName, pattern, filter);
+		SpanQuery query = searcher.createSpanQuery(fieldName, pattern, filter);
+		Hits hits = searcher.find(query, "contents");
 
 		// Limit results to the first n
 		HitsWindow window = new HitsWindow(hits, 0, n);

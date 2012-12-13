@@ -39,30 +39,50 @@ public class HitPropertyDocumentDecade extends HitProperty {
 	}
 
 	@Override
-	public String get(Hit result) {
+	public HitPropValueDecade get(Hit result) {
 		try {
 			Document d = reader.document(result.doc);
 			String strYear = d.get(fieldName);
 			int year = Integer.parseInt(strYear);
 			year -= year % 10;
-			return Integer.toString(year);
+			return new HitPropValueDecade(year);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public String getHumanReadable(Hit result) {
+	public int compare(Hit a, Hit b) {
 		try {
-			Document d = reader.document(result.doc);
+			Document d = reader.document(a.doc);
 			String strYear = d.get(fieldName);
-			int year = Integer.parseInt(strYear);
-			year -= year % 10;
-			return year + "-" + (year + 9);
+			int aYear = Integer.parseInt(strYear);
+			aYear -= aYear % 10;
+
+			d = reader.document(b.doc);
+			strYear = d.get(fieldName);
+			int bYear = Integer.parseInt(strYear);
+			bYear -= bYear % 10;
+
+			return aYear - bYear;
+
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
+
+//	@Override
+//	public String getHumanReadable(Hit result) {
+//		try {
+//			Document d = reader.document(result.doc);
+//			String strYear = d.get(fieldName);
+//			int year = Integer.parseInt(strYear);
+//			year -= year % 10;
+//			return year + "-" + (year + 9);
+//		} catch (Exception e) {
+//			throw new RuntimeException(e);
+//		}
+//	}
 
 	@Override
 	public String getName() {

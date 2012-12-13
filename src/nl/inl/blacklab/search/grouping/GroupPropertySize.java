@@ -15,15 +15,14 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+
 /**
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public class GroupPropertySize extends GroupProperty {
 	@Override
-	public String get(Group result) {
-		if (result instanceof RandomAccessGroup)
-			return String.format("%09d", ((RandomAccessGroup) result).size());
-		throw new RuntimeException("Cannot get group size from non-random-access group");
+	public HitPropValueInt get(Group result) {
+		return new HitPropValueInt(((RandomAccessGroup)result).size());
 	}
 
 	@Override

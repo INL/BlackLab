@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
 
 import org.apache.lucene.search.spans.Spans;
@@ -36,9 +37,9 @@ public class SpansFilteredHitProperty extends SpansWithHit {
 
 	boolean more;
 
-	private String value;
+	private HitPropValue value;
 
-	public SpansFilteredHitProperty(Spans spans, HitProperty prop, String value) {
+	public SpansFilteredHitProperty(Spans spans, HitProperty prop, HitPropValue value) {
 		this.spans = spans;
 		this.prop = prop;
 		this.value = value;

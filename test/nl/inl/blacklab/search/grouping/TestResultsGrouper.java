@@ -33,16 +33,19 @@ public class TestResultsGrouper {
 		Spans source = new SpansStub(doc, start, end);
 		HitProperty crit = new HitPropertyDocumentId();
 		ResultsGrouper grouper = new ResultsGrouper(null, source, crit, null);
-		Map<String, RandomAccessGroup> groups = grouper.getGroupMap();
+		Map<Object, RandomAccessGroup> groups = grouper.getGroupMap();
 
 		Assert.assertEquals(3, groups.size());
-		RandomAccessGroup group1 = groups.get("000000001");
-		Assert.assertEquals("000000001", group1.getIdentity());
+		HitPropValueInt one = new HitPropValueInt(1);
+		RandomAccessGroup group1 = groups.get(one);
+		Assert.assertEquals(one, group1.getIdentity());
 		Assert.assertEquals(3, group1.size());
 		Assert.assertEquals(1, group1.getHits().get(0).doc);
 		Assert.assertEquals(1, group1.getHits().get(1).doc);
 		Assert.assertEquals(1, group1.getHits().get(2).doc);
-		Assert.assertEquals(2, groups.get("000000002").size());
-		Assert.assertEquals(1, groups.get("000000003").size());
+		HitPropValueInt two = new HitPropValueInt(2);
+		Assert.assertEquals(2, groups.get(two).size());
+		HitPropValueInt three = new HitPropValueInt(3);
+		Assert.assertEquals(1, groups.get(three).size());
 	}
 }

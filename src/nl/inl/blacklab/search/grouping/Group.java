@@ -24,21 +24,18 @@ import org.apache.lucene.search.spans.Spans;
  * access to the hits.
  */
 public abstract class Group {
-	protected String groupIdentity;
+	protected HitPropValue groupIdentity;
 
-	private String humanReadableGroupIdentity;
-
-	public Group(String groupIdentity, String humanReadableGroupIdentity) {
+	public Group(HitPropValue groupIdentity) {
 		this.groupIdentity = groupIdentity;
-		this.humanReadableGroupIdentity = humanReadableGroupIdentity;
 	}
 
-	public String getIdentity() {
+	public HitPropValue getIdentity() {
 		return groupIdentity;
 	}
 
 	public String getHumanReadableIdentity() {
-		return humanReadableGroupIdentity;
+		return groupIdentity.toString();
 	}
 
 	public abstract Spans getSpans();

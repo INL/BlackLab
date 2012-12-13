@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
-import java.text.CollationKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -108,11 +107,14 @@ public class Hit implements Comparable<Hit> {
 	/** Start of this hit's span (in word positions) */
 	public int start;
 
-	/** Context (concordance) information */
-	public String[] conc;
+	/** Context information */
+	public int[] context;
 
-	/** Calculated collation key, for faster sorting */
-	public CollationKey sort;
+	/** Where in the context array the hit text starts */
+	public int contextHitStart;
+
+	/** Where in the context array the right context starts */
+	public int contextRightStart;
 
 	/**
 	 * Construct a hit object

@@ -37,9 +37,8 @@ public class RandomAccessGroup extends Group {
 	// this(searcher, groupIdentity, null);
 	// }
 
-	public RandomAccessGroup(Searcher searcher, String groupIdentity,
-			String humanReadableGroupIdentity, String defaultConcField) {
-		super(groupIdentity, humanReadableGroupIdentity);
+	public RandomAccessGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField) {
+		super(groupIdentity);
 		results = new Hits(searcher, defaultConcField);
 	}
 

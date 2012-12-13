@@ -39,14 +39,45 @@ public class Timer {
 	/**
 	 * Describe the elapsed time in a human-readable way.
 	 *
-	 * TODO: why only elapsed time? Generalise to describe any supplied interval.
-	 *
 	 * @return human-readable string for the elapsed time.
 	 */
 	public String elapsedDescription() {
-		long sec = elapsed() / 1000;
+		return elapsedDescription(false);
+	}
+
+	/**
+	 * Describe the elapsed time in a human-readable way.
+	 *
+	 * TODO: why only elapsed time? Generalise to describe any supplied interval.
+	 * @param reportMsec if true, also reports milliseconds
+	 *
+	 * @return human-readable string for the elapsed time.
+	 */
+	public String elapsedDescription(boolean reportMsec) {
+		return describeInterval(elapsed(), reportMsec);
+	}
+
+	/**
+	 * Describe the elapsed time in a human-readable way.
+	 *
+	 * TODO: why only elapsed time? Generalise to describe any supplied interval.
+	 * @param reportMsec if true, also reports milliseconds
+	 *
+	 * @return human-readable string for the elapsed time.
+	 */
+	public static String describeInterval(long interval, boolean reportMsec) {
+		long msec = interval % 1000;
+		long sec = interval / 1000;
 		long min = sec / 60;
 		sec %= 60;
-		return min + " minutes, " + sec + " seconds";
+		StringBuilder result = new StringBuilder();
+		if (min > 0) {
+			result.append(min).append(" ").append(StringUtil.pluralize("minute", min)).append(", ");
+		}
+		result.append(sec).append(" ").append(StringUtil.pluralize("second", sec));
+		if (reportMsec) {
+			result.append(", ").append(msec).append(" ").append(StringUtil.pluralize("millisecond", msec));
+		}
+		return result.toString();
 	}
 }

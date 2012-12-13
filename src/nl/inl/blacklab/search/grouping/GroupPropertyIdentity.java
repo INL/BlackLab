@@ -17,13 +17,14 @@ package nl.inl.blacklab.search.grouping;
 
 import nl.inl.util.Utilities;
 
+
 /**
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public class GroupPropertyIdentity extends GroupProperty {
 	@Override
-	public String get(Group result) {
-		return Utilities.sanitizeForSorting(result.getIdentity().toString());
+	public HitPropValueString get(Group result) {
+		return new HitPropValueString(Utilities.sanitizeForSorting(result.getIdentity().toString()));
 	}
 
 	@Override

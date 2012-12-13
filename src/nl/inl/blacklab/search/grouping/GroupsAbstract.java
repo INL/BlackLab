@@ -38,11 +38,7 @@ public abstract class GroupsAbstract implements Groups {
 		this.criteria = criteria;
 	}
 
-	protected String getHumanReadableGroupIdentity(Hit result) {
-		return criteria.getHumanReadable(result);
-	}
-
-	protected String getGroupIdentity(Hit result) {
+	protected HitPropValue getGroupIdentity(Hit result) {
 		return criteria.get(result);
 	}
 

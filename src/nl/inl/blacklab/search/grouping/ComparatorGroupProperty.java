@@ -33,11 +33,11 @@ public class ComparatorGroupProperty implements Comparator<Group> {
 
 	@Override
 	public int compare(Group first, Group second) {
-		String a = prop.get(first);
-		String b = prop.get(second);
+		HitPropValue a = prop.get(first);
+		HitPropValue b = prop.get(second);
 		if (sortReverse)
-			return collator.compare(b, a);
-		return collator.compare(a, b);
+			return b.compareTo(a);
+		return a.compareTo(b);
 	}
 
 }

@@ -252,4 +252,13 @@ public class Terms {
 	public int idToSortPosition(int id) {
 		return sortPositionPerId[id]; //.get(integer);
 	}
+
+	public String getFromSortPosition(int sortPosition) {
+		if (sortPosition < 0) {
+			// This can happen, for example, when sorting on right context when the hit is
+			// at the end of the document.
+			return "";
+		}
+		return terms[idPerSortPosition[sortPosition]];
+	}
 }

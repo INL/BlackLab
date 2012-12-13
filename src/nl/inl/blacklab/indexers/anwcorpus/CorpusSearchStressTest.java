@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
@@ -29,6 +30,8 @@ import nl.inl.blacklab.search.grouping.HitPropertyRightContext;
 import nl.inl.util.PropertiesUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
+
+import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * Simple test program to demonstrate corpus search functionality.
@@ -56,11 +59,12 @@ public class CorpusSearchStressTest {
 
 		TextPattern pattern = new TextPatternTerm("die");
 
-		Hits hits = searcher.find("contents", pattern);
+		SpanQuery query = searcher.createSpanQuery("contents", pattern);
+		Hits hits = searcher.find(query, "contents");
 		System.out.println(hits.size() + " hits found; sorting...");
 
 		// Heavy shit
-		hits.sort(new HitPropertyRightContext());
+		hits.sort(new HitPropertyRightContext(searcher, "contents"));
 
 		displayConcordances(searcher, new HitsWindow(hits, 0, 10));
 
@@ -71,9 +75,10 @@ public class CorpusSearchStressTest {
 	private static void displayConcordances(Searcher searcher, HitsWindow window) {
 		window.findContext();
 		for (Hit hit : window) {
-			String left = XmlUtil.xmlToPlainText(hit.conc[0]);
-			String hitText = XmlUtil.xmlToPlainText(hit.conc[1]);
-			String right = XmlUtil.xmlToPlainText(hit.conc[2]);
+			Concordance conc = window.getConcordance(hit);
+			String left = XmlUtil.xmlToPlainText(conc.left);
+			String hitText = XmlUtil.xmlToPlainText(conc.hit);
+			String right = XmlUtil.xmlToPlainText(conc.right);
 			System.out.printf("[%05d:%06d] %45s[%s]%s\n", hit.doc, hit.start, left, hitText, right);
 		}
 	}

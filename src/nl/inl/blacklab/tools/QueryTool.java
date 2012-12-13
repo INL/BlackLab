@@ -56,6 +56,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.varia.NullAppender;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.util.Version;
 
 /**
@@ -495,7 +496,8 @@ public class QueryTool {
 			TextPattern pattern = currentParser.parse(query);
 
 			// Execute search
-			hits = searcher.find("contents", pattern);
+			SpanQuery spanQuery = searcher.createSpanQuery("contents", pattern);
+			hits = searcher.find(spanQuery, "contents");
 			groups = null;
 			showWhichGroup = -1;
 			showGroups = false;
@@ -579,11 +581,11 @@ public class QueryTool {
 		if (sortBy.equals("doc"))
 			crit = new HitPropertyDocumentId();
 		else if (sortBy.equals("match") || sortBy.equals("word"))
-			crit = new HitPropertyHitText(true);
+			crit = new HitPropertyHitText(searcher, "contents");
 		else if (sortBy.startsWith("left"))
-			crit = new HitPropertyLeftContext(true);
+			crit = new HitPropertyLeftContext(searcher, "contents");
 		else if (sortBy.startsWith("right"))
-			crit = new HitPropertyRightContext(true);
+			crit = new HitPropertyRightContext(searcher, "contents");
 		if (crit == null) {
 			out.println("Invalid hit sort criterium: " + sortBy
 					+ " (valid are: match, left, right)");
@@ -632,11 +634,11 @@ public class QueryTool {
 		// Group results
 		HitProperty crit = null;
 		if (groupBy.equals("word") || groupBy.equals("match"))
-			crit = new HitPropertyHitText(true);
+			crit = new HitPropertyHitText(searcher, "contents");
 		else if (groupBy.startsWith("left"))
-			crit = new HitPropertyWordLeft(true);
+			crit = new HitPropertyWordLeft(searcher, "contents");
 		else if (groupBy.startsWith("right"))
-			crit = new HitPropertyWordRight(true);
+			crit = new HitPropertyWordRight(searcher, "contents");
 		if (crit == null) {
 			out.println("Unknown criterium: " + groupBy);
 			return;
@@ -674,8 +676,8 @@ public class QueryTool {
 	 *            object keeping the time
 	 */
 	private void reportTime(Timer t) {
-		if (t.elapsed() > 5000) // don't report short intervals
-			out.println(t.elapsedDescription() + " elapsed");
+		//if (t.elapsed() > 5000) // don't report short intervals
+		out.println(t.elapsedDescription(true) + " elapsed");
 	}
 
 	/**

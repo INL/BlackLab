@@ -63,7 +63,7 @@ public class HitsWindow extends Hits {
 			number = source.size() - first;
 
 		// Make sublist
-		hits = source.getHits().subList(first, first + number);
+		hits = source.subList(first, first + number);
 	}
 
 	/**

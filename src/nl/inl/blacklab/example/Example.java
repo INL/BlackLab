@@ -27,9 +27,12 @@ import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.grouping.HitPropertyHitText;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 import nl.inl.util.XmlUtil;
+
+import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * Simple test program to demonstrate index & search functionality.
@@ -152,7 +155,10 @@ public class Example {
 	 */
 	static void findPattern(TextPattern tp) {
 		// Execute the search
-		Hits hits = searcher.find("contents", tp);
+		SpanQuery query = searcher.createSpanQuery("contents", tp);
+		Hits hits = searcher.find(query, "contents");
+
+		hits.sort(new HitPropertyHitText(searcher, "contents"));
 
 		// Display the concordances
 		displayConcordances(hits);

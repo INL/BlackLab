@@ -38,9 +38,11 @@ import nl.inl.blacklab.externalstorage.ContentStoreDirAbstract;
 import nl.inl.blacklab.externalstorage.ContentStoreDirUtf8;
 import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpansFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.ExUtil;
@@ -282,23 +284,35 @@ public class Searcher implements Closeable {
 		}
 	}
 
-	/**
-	 * Filter a Spans object (collection of hits), only keeping hits in a subset of documents. All
-	 * other hits are discarded.
-	 *
-	 * @param spans
-	 *            the collection of hits
-	 * @param docIdSet
-	 *            the documents for which to keep the hits
-	 * @return the resulting Spans
-	 */
-	public Spans filterDocuments(Spans spans, DocIdSet docIdSet) {
+	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
 		try {
-			return new SpansFiltered(spans, docIdSet);
+			return new SpanQueryFiltered(query, filter, indexReader);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
+
+	public SpanQuery filterDocuments(SpanQuery query, DocIdSet docIdSet) {
+		return new SpanQueryFiltered(query, docIdSet);
+	}
+
+//	/**
+//	 * Filter a Spans object (collection of hits), only keeping hits in a subset of documents. All
+//	 * other hits are discarded.
+//	 *
+//	 * @param spans
+//	 *            the collection of hits
+//	 * @param docIdSet
+//	 *            the documents for which to keep the hits
+//	 * @return the resulting Spans
+//	 */
+//	public Spans filterDocuments(Spans spans, DocIdSet docIdSet) {
+//		try {
+//			return new SpansFiltered(spans, docIdSet);
+//		} catch (IOException e) {
+//			throw new RuntimeException(e);
+//		}
+//	}
 
 	/**
 	 * Filter a Spans object (collection of hits), only keeping hits in a subset of documents,
@@ -318,50 +332,50 @@ public class Searcher implements Closeable {
 		}
 	}
 
-	/**
-	 * Filter a Spans object (collection of hits), only keeping hits in a single document.
-	 *
-	 * @param spans
-	 *            the collection of hits
-	 * @param docId
-	 *            the document we want hits in
-	 * @return the resulting Spans
-	 */
-	public Spans filterSingleDocument(Spans spans, final int docId) {
-		return filterDocuments(spans, new SingleDocIdSet(docId));
-	}
+//	/**
+//	 * Filter a Spans object (collection of hits), only keeping hits in a single document.
+//	 *
+//	 * @param spans
+//	 *            the collection of hits
+//	 * @param docId
+//	 *            the document we want hits in
+//	 * @return the resulting Spans
+//	 */
+//	public Spans filterSingleDocument(Spans spans, final int docId) {
+//		return filterDocuments(spans, new SingleDocIdSet(docId));
+//	}
+//
+//	/**
+//	 * Filter a Hits object, only keeping hits in a single document.
+//	 *
+//	 * @param hits
+//	 *            the collection of hits
+//	 * @param id
+//	 *            the document we want hits in
+//	 * @return the resulting Spans
+//	 */
+//	public Hits filterSingleDocument(Hits hits, int id) {
+//		Hits hitsFiltered = new Hits(this, hits.getDefaultConcordanceField());
+//		hitsFiltered.setConcordanceStatus(hits.getConcordanceField(), hits.getConcordanceType());
+//		for (Hit hit : hits) {
+//			if (hit.doc == id)
+//				hitsFiltered.add(hit);
+//		}
+//		return hitsFiltered;
+//	}
 
-	/**
-	 * Filter a Hits object, only keeping hits in a single document.
-	 *
-	 * @param hits
-	 *            the collection of hits
-	 * @param id
-	 *            the document we want hits in
-	 * @return the resulting Spans
-	 */
-	public Hits filterSingleDocument(Hits hits, int id) {
-		Hits hitsFiltered = new Hits(this, hits.getDefaultConcordanceField());
-		hitsFiltered.setConcordanceStatus(hits.getConcordanceField(), hits.getConcordanceType());
-		for (Hit hit : hits) {
-			if (hit.doc == id)
-				hitsFiltered.add(hit);
-		}
-		return hitsFiltered;
-	}
-
-	/**
-	 * Find hits in a field. Returns a Lucene Spans object.
-	 *
-	 * @param spanQuery
-	 *            the query
-	 * @return the Results object
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	public Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
-		return findSpans(spanQuery, null);
-	}
+//	/**
+//	 * Find hits in a field. Returns a Lucene Spans object.
+//	 *
+//	 * @param spanQuery
+//	 *            the query
+//	 * @return the Results object
+//	 * @throws BooleanQuery.TooManyClauses
+//	 *             if a wildcard or regular expression term is overly broad
+//	 */
+//	public Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
+//		return findSpans(spanQuery, null);
+//	}
 
 	/**
 	 * Find hits in a field. Returns a Lucene Spans object.
@@ -370,20 +384,14 @@ public class Searcher implements Closeable {
 	 *
 	 * @param spanQuery
 	 *            the query
-	 * @param filter
-	 *            determines which documents to search
 	 * @return the results object
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Spans findSpans(SpanQuery spanQuery, Filter filter) throws BooleanQuery.TooManyClauses {
+	 public Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
 		try {
 			spanQuery = (SpanQuery) spanQuery.rewrite(indexReader);
-			Spans spans = spanQuery.getSpans(indexReader);
-			if (filter != null)
-				spans = new SpansFiltered(spans, filter, indexReader);
-
-			return spans;
+			return spanQuery.getSpans(indexReader);
 		} catch (BooleanQuery.TooManyClauses e) {
 			// re-throw so the application can catch it
 			throw e;
@@ -392,110 +400,131 @@ public class Searcher implements Closeable {
 		}
 	}
 
-	/**
-	 * Find hits for a pattern in a field. Returns a Lucene Spans object.
-	 *
-	 * Uses a Filter to only search certain documents and ignore others.
-	 *
-	 * @param field
-	 *            which field to find the pattern in
-	 * @param pattern
-	 *            the pattern to find
-	 * @param filter
-	 *            determines which documents to search
-	 * @return the results object
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	public Spans findSpans(String field, TextPattern pattern, Filter filter)
-			throws BooleanQuery.TooManyClauses {
+//	/**
+//	 * Find hits for a pattern in a field. Returns a Lucene Spans object.
+//	 *
+//	 * Uses a Filter to only search certain documents and ignore others.
+//	 *
+//	 * @param field
+//	 *            which field to find the pattern in
+//	 * @param pattern
+//	 *            the pattern to find
+//	 * @param filter
+//	 *            determines which documents to search
+//	 * @return the results object
+//	 * @throws BooleanQuery.TooManyClauses
+//	 *             if a wildcard or regular expression term is overly broad
+//	 */
+//	public Spans findSpans(String field, TextPattern pattern, Filter filter)
+//			throws BooleanQuery.TooManyClauses {
+//		try {
+//			SpanQuery spanQuery = createSpanQuery(field, pattern, filter.getDocIdSet(indexReader));
+//			return findSpans(spanQuery);
+//		} catch (IOException e) {
+//			throw new RuntimeException(e);
+//		}
+//	}
+
+	public SpanQuery createSpanQuery(String field, TextPattern pattern, DocIdSet docIdSet) {
 		// Convert to SpanQuery
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
 		SpanQuery spanQuery = pattern.translate(spanQueryTranslator, field);
 
-		return findSpans(spanQuery, filter);
+		if (docIdSet != null) {
+			spanQuery = new SpanQueryFiltered(spanQuery, docIdSet);
+		}
+		return spanQuery;
 	}
 
-	/**
-	 * Find hits for a pattern in a field. Returns a Lucene Spans object.
-	 *
-	 * @param field
-	 *            which field to find the pattern in
-	 * @param pattern
-	 *            the pattern to find
-	 * @return the results object
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	public Spans findSpans(String field, TextPattern pattern) throws BooleanQuery.TooManyClauses {
-		return findSpans(field, pattern, null);
+	public SpanQuery createSpanQuery(String field, TextPattern pattern, Filter filter) {
+		try {
+			return createSpanQuery(field, pattern, filter == null ? null : filter.getDocIdSet(indexReader));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	/**
-	 * Find hits for a pattern in a field.
-	 *
-	 * @param field
-	 *            which field to find the pattern in
-	 * @param pattern
-	 *            the pattern to find
-	 * @return the hits found
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	public Hits find(String field, TextPattern pattern) throws BooleanQuery.TooManyClauses {
-		return new Hits(this, findSpans(field, pattern), field);
+	public SpanQuery createSpanQuery(String field, TextPattern pattern) {
+		return createSpanQuery(field, pattern, (DocIdSet)null);
 	}
 
-	/**
-	 * Execute a Span query and filter the results.
-	 *
-	 * @param field
-	 *            field to use for sorting and displaying resulting concordances.
-	 * @param query
-	 *            the query to execute
-	 * @param filter
-	 *            determines which documents to search
-	 * @return the hits found
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	public Hits find(String field, SpanQuery query, Filter filter)
-			throws BooleanQuery.TooManyClauses {
-		return new Hits(this, findSpans(query, filter), field);
-	}
+//	/**
+//	 * Find hits for a pattern in a field. Returns a Lucene Spans object.
+//	 *
+//	 * @param field
+//	 *            which field to find the pattern in
+//	 * @param pattern
+//	 *            the pattern to find
+//	 * @return the results object
+//	 * @throws BooleanQuery.TooManyClauses
+//	 *             if a wildcard or regular expression term is overly broad
+//	 */
+//	public Spans findSpans(String field, TextPattern pattern) throws BooleanQuery.TooManyClauses {
+//		return findSpans(field, pattern, null);
+//	}
 
-	/**
-	 * Execute a Span query.
-	 *
-	 * @param field
-	 *            field to use for sorting and displaying resulting concordances.
-	 * @param query
-	 *            the query to execute
-	 * @return the hits found
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	public Hits find(String field, SpanQuery query) throws BooleanQuery.TooManyClauses {
-		return new Hits(this, findSpans(query), field);
-	}
+//	/**
+//	 * Find hits for a pattern in a field.
+//	 *
+//	 * @param field
+//	 *            which field to find the pattern in
+//	 * @param pattern
+//	 *            the pattern to find
+//	 * @return the hits found
+//	 * @throws BooleanQuery.TooManyClauses
+//	 *             if a wildcard or regular expression term is overly broad
+//	 */
+//	public Hits find(String field, TextPattern pattern) throws BooleanQuery.TooManyClauses {
+//		return new Hits(this, findSpans(field, pattern), field);
+//	}
 
 	/**
 	 * Find hits for a pattern in a field.
 	 *
-	 * @param field
-	 *            field to use for sorting and displaying resulting concordances.
-	 * @param pattern
+	 * @param query
 	 *            the pattern to find
-	 * @param filter
-	 *            determines which documents to search
+	 * @param defaultConcField
+	 *            field to use for concordances
 	 * @return the hits found
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(String field, TextPattern pattern, Filter filter)
-			throws BooleanQuery.TooManyClauses {
-		return new Hits(this, findSpans(field, pattern, filter), field);
+	public Hits find(SpanQuery query, String defaultConcField) throws BooleanQuery.TooManyClauses {
+		return new Hits(this, query, defaultConcField);
 	}
+
+//	/**
+//	 * Execute a Span query.
+//	 *
+//	 * @param field
+//	 *            field to use for sorting and displaying resulting concordances.
+//	 * @param query
+//	 *            the query to execute
+//	 * @return the hits found
+//	 * @throws BooleanQuery.TooManyClauses
+//	 *             if a wildcard or regular expression term is overly broad
+//	 */
+//	public Hits find(String field, SpanQuery query) throws BooleanQuery.TooManyClauses {
+//		return new Hits(this, findSpans(query), field);
+//	}
+
+//	/**
+//	 * Find hits for a pattern in a field.
+//	 *
+//	 * @param field
+//	 *            field to use for sorting and displaying resulting concordances.
+//	 * @param pattern
+//	 *            the pattern to find
+//	 * @param filter
+//	 *            determines which documents to search
+//	 * @return the hits found
+//	 * @throws BooleanQuery.TooManyClauses
+//	 *             if a wildcard or regular expression term is overly broad
+//	 */
+//	public Hits find(String field, TextPattern pattern, Filter filter)
+//			throws BooleanQuery.TooManyClauses {
+//		return new Hits(this, findSpans(field, pattern, filter), field);
+//	}
 
 	/**
 	 * Find matching documents and their scores for a pattern.
@@ -703,7 +732,7 @@ public class Searcher implements Closeable {
 	 *            the hits for which we wish to find character positions
 	 * @return a list of HitSpan objects containing the character positions for the hits.
 	 */
-	public List<HitSpan> getCharacterOffsets(int doc, String fieldName, List<Hit> hits) {
+	public List<HitSpan> getCharacterOffsets(int doc, String fieldName, Hits hits) {
 		int[] starts = new int[hits.size()];
 		int[] ends = new int[hits.size()];
 		Iterator<Hit> hitsIt = hits.iterator();
@@ -1018,7 +1047,7 @@ public class Searcher implements Closeable {
 		XmlHighlighter hl = new XmlHighlighter();
 
 		// Find the character offsets
-		List<HitSpan> hitspans = getCharacterOffsets(docId, fieldName, hits.getHits());
+		List<HitSpan> hitspans = getCharacterOffsets(docId, fieldName, hits);
 
 		return hl.highlight(content, hitspans);
 	}
@@ -1053,7 +1082,7 @@ public class Searcher implements Closeable {
 		hl.setRemoveEmptyHlTags(false);
 
 		// Find the character offsets
-		List<HitSpan> hitspans = getCharacterOffsets(docId, fieldName, hits.getHits());
+		List<HitSpan> hitspans = getCharacterOffsets(docId, fieldName, hits);
 
 		String result = hl.highlight(content, hitspans);
 
@@ -1350,49 +1379,55 @@ public class Searcher implements Closeable {
 		}
 
 		// Get all the words from the term vector
-		List<String[]> words;
+		List<int[]> words;
 		ForwardIndex forwardIndex = forwardIndices.get(fieldName);
 		if (forwardIndex != null) {
 			// We have a forward index for this field. Use it.
 			Document d = document(doc);
 			int fiid = Integer.parseInt(d.get(ComplexFieldUtil.fieldName(DEFAULT_CONTENTS_FIELD,
 					"fiid")));
-			words = forwardIndex.retrieveParts(fiid, startsOfSnippets, endsOfSnippets);
+			words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
 		} else {
+			throw new RuntimeException("Cannot get context without a term vector");
 			// We don't have a forward index. Use the term vector.
-			words = getWordsFromTermVector(doc, fieldName, startsOfSnippets, endsOfSnippets);
+//			words = getWordsFromTermVector(doc, fieldName, startsOfSnippets, endsOfSnippets);
 		}
 
 		// Build the actual concordances
-		Iterator<String[]> wordsIt = words.iterator();
+		Iterator<int[]> wordsIt = words.iterator();
 		Iterator<Hit> resultsListIt = resultsList.iterator();
 		for (int j = 0; j < n; j++) {
-			int concPart = 0;
-			StringBuilder[] concBuilder = new StringBuilder[] { new StringBuilder(),
-					new StringBuilder(), new StringBuilder() };
+//			int concPart = 0;
+//			StringBuilder[] concBuilder = new StringBuilder[] { new StringBuilder(),
+//					new StringBuilder(), new StringBuilder() };
+//			concBuilder[2].append(" ");
 
-			concBuilder[2].append(" ");
-			String[] theseWords = wordsIt.next(); // words.get(j);
-			for (int i = 0; i < theseWords.length; i++) {
-				int c = i + startsOfWords[j * 2];
-
-				if (c < startsOfWords[j * 2 + 1]) {
-					concPart = 0;
-				} else if (c > endsOfWords[j * 2]) {
-					concPart = 2;
-				} else
-					concPart = 1;
-				if (concBuilder[concPart].length() == 0)
-					concBuilder[concPart].append(theseWords[i]);
-				else
-					concBuilder[concPart].append(" ").append(theseWords[i]);
-			}
-			concBuilder[0].append(" ");
+			int[] theseWords = wordsIt.next(); // words.get(j);
+//			for (int i = 0; i < theseWords.length; i++) {
+//				int c = i + startsOfWords[j * 2];
+//
+//				if (c < startsOfWords[j * 2 + 1]) {
+//					concPart = 0;
+//				} else if (c > endsOfWords[j * 2]) {
+//					concPart = 2;
+//				} else
+//					concPart = 1;
+//				if (concBuilder[concPart].length() == 0)
+//					concBuilder[concPart].append(theseWords[i]);
+//				else
+//					concBuilder[concPart].append(" ").append(theseWords[i]);
+//			}
+//			concBuilder[0].append(" ");
 
 			// Put the concordance in the Hit object
 			Hit hit = resultsListIt.next(); // resultsList.get(j);
-			hit.conc = new String[] { concBuilder[0].toString(), concBuilder[1].toString(),
-					concBuilder[2].toString() };
+			int firstWordIndex = startsOfWords[j * 2];
+			hit.context = theseWords;
+			hit.contextHitStart = startsOfWords[j * 2 + 1] - firstWordIndex;
+			hit.contextRightStart = endsOfWords[j * 2] - firstWordIndex + 1;
+
+//			hit.context = new String[] { concBuilder[0].toString(), concBuilder[1].toString(),
+//					concBuilder[2].toString() };
 		}
 	}
 
@@ -1532,6 +1567,27 @@ public class Searcher implements Closeable {
 	 */
 	public ContentStore openContentStore(File indexXmlDir) {
 		return getContentStoreDir(indexXmlDir, false);
+	}
+
+	/**
+	 * Get the Terms object for the specified field.
+	 *
+	 * The Terms object is part of the ForwardIndex module and provides a mapping from term
+	 * id to term String, and between term id and term sort position. It is used while sorting
+	 * and grouping hits (by mapping the context term ids to term sort position ids),
+	 * and later used to display the group name (by mapping the sort position ids
+	 * back to Strings)
+	 *
+	 * @param field the field for which we want the Terms object
+	 * @return the Terms object
+	 * @throws RuntimeException if this field does not have a forward index, and hence no Terms object.
+	 */
+	public Terms getTerms(String field) {
+		ForwardIndex forwardIndex = forwardIndices.get(field);
+		if (forwardIndex == null) {
+			throw new RuntimeException("Field " + field + " has no forward index!");
+		}
+		return forwardIndex.getTerms();
 	}
 
 	// /**

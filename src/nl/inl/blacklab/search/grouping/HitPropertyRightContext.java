@@ -15,33 +15,60 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Searcher;
 
 /**
  * A hit property for grouping on the context of the hit. Requires HitConcordances as input (so we
  * have the hit text available).
  */
 public class HitPropertyRightContext extends HitProperty {
-	boolean lowerCase;
 
-	public HitPropertyRightContext(boolean lowerCase) {
-		super();
-		this.lowerCase = lowerCase;
-	}
+	private Terms terms;
 
-	public HitPropertyRightContext() {
-		this(false);
+	public HitPropertyRightContext(Searcher searcher, String field) {
+		this.terms = searcher.getTerms(field);
 	}
 
 	@Override
-	public String get(Hit result) {
-		if (result.conc == null) {
-			throw new RuntimeException("Can only sort/group on context if results are concordances");
+	public HitPropValueContextWords get(Hit result) {
+		if (result.context == null) {
+			throw new RuntimeException("Context not available in hits objects; cannot sort/group on context");
 		}
-		// NOTE: disabled XML stripping because we use the forward index or term vector for
-		// sorting/grouping!
-		return lowerCase ? result.conc[2].toLowerCase() : result.conc[2];
-		// return Utilities.xmlToSortable(result.conc[2], lowerCase);
+
+		// Copy the desired part of the context
+		int n = result.context.length - result.contextRightStart;
+		if (n <= 0)
+			return new HitPropValueContextWords(terms, new int[0]);
+		int[] dest = new int[n];
+		System.arraycopy(result.context, result.contextRightStart, dest, 0, n);
+		return new HitPropValueContextWords(terms, dest);
+	}
+
+	@Override
+	public int compare(Hit a, Hit b) {
+		// Compare the right context for these two hits
+		int ai = a.contextRightStart;
+		int bi = b.contextRightStart;
+		while (ai < a.context.length && bi < b.context.length) {
+			int ac = a.context[ai];
+			int bc = b.context[bi];
+			if (ac != bc) {
+				return ac - bc;
+			}
+			ai++;
+			bi++;
+		}
+		// One or both ran out, and so far, they're equal.
+		if (ai >= a.context.length) {
+			if (bi < b.context.length) {
+				// b longer than a => a < b
+				return -1;
+			}
+			return 0; // same length; a == b
+		}
+		return 1; // a longer than b => a > b
 	}
 
 	@Override

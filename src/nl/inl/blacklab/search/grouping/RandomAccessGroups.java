@@ -37,13 +37,13 @@ public abstract class RandomAccessGroups extends GroupsAbstract {
 		this.searcher = searcher;
 	}
 
-	public abstract Map<String, RandomAccessGroup> getGroupMap();
+	public abstract Map<Object, RandomAccessGroup> getGroupMap();
 
 	public abstract List<RandomAccessGroup> getGroups();
 
 	public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
 
-	public RandomAccessGroup getGroup(String identity) {
+	public RandomAccessGroup getGroup(Object identity) {
 		return getGroupMap().get(identity);
 	}
 

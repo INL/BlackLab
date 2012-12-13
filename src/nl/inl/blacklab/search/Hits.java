@@ -15,17 +15,19 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import java.text.Collator;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 
+import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -80,6 +82,24 @@ public class Hits implements Iterable<Hit> {
 	protected ConcType concType = ConcType.NONE;
 
 	/**
+	 * Did we completely read our Spans object?
+	 */
+	protected boolean sourceSpansFullyRead = true;
+
+	/**
+	 * Our Spans object, which may not have been fully read yet.
+	 */
+	protected Spans sourceSpans;
+
+	/**
+	 * How many hits do we have in total?
+	 * (We keep this separately because we may run through a Spans first to
+	 * count the hits without storing them, to avoid unnecessarily instantiating
+	 * Hit objects)
+	 */
+	private int totalNumberOfHits;
+
+	/**
 	 * Construct an empty Hits object
 	 *
 	 * @param searcher
@@ -90,6 +110,7 @@ public class Hits implements Iterable<Hit> {
 	public Hits(Searcher searcher, String defaultConcField) {
 		this.searcher = searcher;
 		hits = new ArrayList<Hit>();
+		totalNumberOfHits = 0;
 		this.defaultConcField = defaultConcField;
 	}
 
@@ -105,7 +126,37 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public Hits(Searcher searcher, Spans source, String defaultConcField) {
 		this.searcher = searcher;
-		hits = Hit.hitList(source);
+		sourceSpans = source;
+		sourceSpansFullyRead = false;
+		totalNumberOfHits = -1; // unknown
+		hits = new ArrayList<Hit>(); //Hit.hitList(source);
+		this.defaultConcField = defaultConcField;
+	}
+
+	/**
+	 * Construct an empty Hits object
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param sourceQuery
+	 *            the query to execute to get the hits
+	 * @param defaultConcField
+	 *            field to use by default when finding concordances
+	 */
+	public Hits(Searcher searcher, SpanQuery sourceQuery, String defaultConcField) {
+		this.searcher = searcher;
+		sourceSpans = searcher.findSpans(sourceQuery);
+		totalNumberOfHits = 0;
+		try {
+			while (sourceSpans.next()) {
+				totalNumberOfHits++;
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		sourceSpans = searcher.findSpans(sourceQuery); // Counted 'em. Now reset.
+		sourceSpansFullyRead = false;
+		hits = new ArrayList<Hit>(); //Hit.hitList(source);
 		this.defaultConcField = defaultConcField;
 	}
 
@@ -113,9 +164,52 @@ public class Hits implements Iterable<Hit> {
 	 * Get the list of hits.
 	 *
 	 * @return the list of hits
+	 * @deprecated Breaks optimizations. Use iteration or subList() instead.
 	 */
+	@Deprecated
 	public List<Hit> getHits() {
+		ensureAllHitsRead();
 		return Collections.unmodifiableList(hits);
+	}
+
+	/**
+	 * If we still have only partially read our Spans object,
+	 * read the rest of it and add all the hits.
+	 */
+	private void ensureAllHitsRead() {
+		if (sourceSpansFullyRead)
+			return;
+		sourceSpansFullyRead = true;
+
+		try {
+			while (sourceSpans.next()) {
+				hits.add(Hit.getHit(sourceSpans));
+			}
+			totalNumberOfHits = hits.size();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * If we still have only partially read our Spans object,
+	 * read the rest of it and add all the hits.
+	 */
+	private void ensureHitsRead(int index) {
+		if (sourceSpansFullyRead)
+			return;
+
+		try {
+			while (hits.size() <= index) {
+				if (!sourceSpans.next()) {
+					sourceSpansFullyRead = true;
+					break;
+				}
+				hits.add(Hit.getHit(sourceSpans));
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -151,23 +245,24 @@ public class Hits implements Iterable<Hit> {
 	 * @param reverseSort
 	 *            if true, sort in descending order
 	 */
-	public void sort(HitProperty sortProp, boolean reverseSort) {
+	public void sort(final HitProperty sortProp, boolean reverseSort) {
+		ensureAllHitsRead();
 		// Do we need concordances and don't we have them yet?
-		Collator collator;
+		//Collator collator;
 		if (sortProp.needsConcordances() && concType == ConcType.NONE) {
 			// Get 'em
 			findContext();
 
 			// Context needs to be sorted per-word. Get the appropriate collator.
-			collator = searcher.getPerWordCollator();
+			//collator = searcher.getPerWordCollator();
 		} else {
 			// For other sorting tasks, use the regular collator.
-			collator = searcher.getCollator();
+			//collator = searcher.getCollator();
 		}
 
-		for (Hit hit : hits) {
-			hit.sort = collator.getCollationKey(sortProp.get(hit));
-		}
+//		for (Hit hit : hits) {
+//			hit.sort = collator.getCollationKey(sortProp.get(hit));
+//		}
 
 		// Sort on the hits' sort property
 		Comparator<Object> comparator;
@@ -184,23 +279,25 @@ public class Hits implements Iterable<Hit> {
 			comparator = new Comparator<Object>() {
 				@Override
 				public int compare(Object o1, Object o2) {
-					return ((Hit) o2).sort.compareTo(((Hit) o1).sort);
+					return sortProp.compare((Hit) o2, (Hit) o1);
+					//return ((Hit) o2).sort.compareTo(((Hit) o1).sort);
 				}
 			};
 		} else {
 			comparator = new Comparator<Object>() {
 				@Override
 				public int compare(Object o1, Object o2) {
-					return ((Hit) o1).sort.compareTo(((Hit) o2).sort);
+					return sortProp.compare((Hit) o1, (Hit) o2);
+					//return ((Hit) o1).sort.compareTo(((Hit) o2).sort);
 				}
 			};
 		}
 		Collections.sort(hits, comparator);
 
-		// Clear the collation keys to free up memory
-		for (Hit hit : hits) {
-			hit.sort = null;
-		}
+//		// Clear the collation keys to free up memory
+//		for (Hit hit : hits) {
+//			hit.sort = null;
+//		}
 	}
 
 	/**
@@ -210,7 +307,9 @@ public class Hits implements Iterable<Hit> {
 	 *            the hit
 	 */
 	public void add(Hit hit) {
+		ensureAllHitsRead();
 		hits.add(hit);
+		totalNumberOfHits++;
 	}
 
 	/**
@@ -219,7 +318,12 @@ public class Hits implements Iterable<Hit> {
 	 * @return the number of hits
 	 */
 	public int size() {
-		return hits.size();
+		if (totalNumberOfHits >= 0)
+			return totalNumberOfHits; // fully known, or pre-counted
+
+		// Probably not all hits have been seen yet. Collect them all.
+		ensureAllHitsRead();
+		return totalNumberOfHits;
 	}
 
 	/**
@@ -229,7 +333,57 @@ public class Hits implements Iterable<Hit> {
 	 */
 	@Override
 	public Iterator<Hit> iterator() {
-		return hits.iterator();
+//		ensureSpansRead();
+//		return hits.iterator();
+
+//		while (sourceSpans.next()) {
+//			hits.add(Hit.getHit(sourceSpans));
+//		}
+
+		// Construct a custom iterator that iterates over the hits in the hits
+		// list, but can also take into account the Spans object that may not have
+		// been fully read. This ensures we don't instantiate Hit objects for all hits
+		// if we just want to display the first few.
+		return new Iterator<Hit>() {
+
+			int index = -1;
+
+			@Override
+			public boolean hasNext() {
+				// Do we still have hits in the hits list?
+				if (index + 1 >= hits.size()) {
+					// No; are there more hits to be read in the Spans?
+					if (sourceSpansFullyRead)
+						return false;
+					try {
+						if (!sourceSpans.next())
+							return false;
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+					// Yep; add hit from Spans to hits list and position the iterator correctly
+					hits.add(Hit.getHit(sourceSpans));
+					index = hits.size() - 2;
+				}
+				return true;
+			}
+
+			@Override
+			public Hit next() {
+				// Check if there is a next, taking unread hits from Spans into account
+				if (hasNext()) {
+					index++;
+					return hits.get(index);
+				}
+				throw new NoSuchElementException();
+			}
+
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+
+		};
 	}
 
 	/**
@@ -240,6 +394,7 @@ public class Hits implements Iterable<Hit> {
 	 * @return the hit
 	 */
 	public Hit get(int i) {
+		ensureHitsRead(i);
 		return hits.get(i);
 	}
 
@@ -252,6 +407,7 @@ public class Hits implements Iterable<Hit> {
 	 * @return concordance for this hit
 	 */
 	public Concordance getConcordance(Hit h) {
+		ensureAllHitsRead();
 		if (concordances == null)
 			throw new RuntimeException("Concordances haven't been retrieved yet; call Hits.findConcordances()");
 		Concordance conc = concordances.get(h);
@@ -267,6 +423,7 @@ public class Hits implements Iterable<Hit> {
 	 *            the field to use for the concordances (ignore the default concordance field)
 	 */
 	public void findConcordances(String fieldName) {
+		ensureAllHitsRead();
 		// Make sure we don't have the desired concordances already
 		if (concordances != null && fieldName.equals(concFieldName)) {
 			return;
@@ -289,6 +446,7 @@ public class Hits implements Iterable<Hit> {
 	 *            the field to use for the concordances (ignore the default concordance field)
 	 */
 	public void findContext(String fieldName) {
+		ensureAllHitsRead();
 		// Make sure we don't have the desired concordances already
 		if (concType != ConcType.NONE && fieldName.equals(concFieldName)) {
 			if (concType == ConcType.TERM_VECTOR)
@@ -377,5 +535,10 @@ public class Hits implements Iterable<Hit> {
 	public void setConcordanceStatus(String concField, ConcType concType) {
 		concFieldName = concField;
 		this.concType = concType;
+	}
+
+	public List<Hit> subList(int fromIndex, int toIndex) {
+		ensureHitsRead(toIndex - 1);
+		return hits.subList(fromIndex, toIndex);
 	}
 }

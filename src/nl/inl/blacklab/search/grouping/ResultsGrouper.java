@@ -41,7 +41,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	/**
 	 * The groups.
 	 */
-	Map<String, RandomAccessGroup> groups = new HashMap<String, RandomAccessGroup>();
+	Map<Object, RandomAccessGroup> groups = new HashMap<Object, RandomAccessGroup>();
 
 	/**
 	 * The groups, in sorted order.
@@ -118,13 +118,12 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 *            the hit to add
 	 */
 	public void addHit(Hit hit) {
-		String idStr = getGroupIdentity(hit);
-		RandomAccessGroup group = groups.get(idStr);
+		HitPropValue identity = getGroupIdentity(hit);
+		RandomAccessGroup group = groups.get(identity);
 		if (group == null) {
-			group = new RandomAccessGroup(searcher, getGroupIdentity(hit),
-					getHumanReadableGroupIdentity(hit), defaultConcField);
+			group = new RandomAccessGroup(searcher, identity, defaultConcField);
 			group.setConcordanceStatus(concField, concType);
-			groups.put(idStr, group);
+			groups.put(identity, group);
 			groupsOrdered.add(group);
 		}
 		group.add(hit);
@@ -149,7 +148,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 * @return a map of groups indexed by group property
 	 */
 	@Override
-	public Map<String, RandomAccessGroup> getGroupMap() {
+	public Map<Object, RandomAccessGroup> getGroupMap() {
 		return Collections.unmodifiableMap(groups);
 	}
 

@@ -21,11 +21,15 @@ import nl.inl.blacklab.search.Hit;
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public abstract class HitProperty {
-	public abstract String get(Hit result);
+	public abstract HitPropValue get(Hit result);
 
-	public String getHumanReadable(Hit result) {
-		return get(result);
-	}
+	/**
+	 * Compares two hits on this property
+	 * @param a first hit
+	 * @param b second hit
+	 * @return 0 if equal, negative if a < b, positive if a > b.
+	 */
+	public abstract int compare(Hit a, Hit b);
 
 	public boolean needsConcordances() {
 		return false;

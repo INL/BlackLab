@@ -15,36 +15,70 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Hit;
-import nl.inl.util.Utilities;
+import nl.inl.blacklab.search.Searcher;
 
 /**
  * A hit property for grouping on the context of the hit. Requires HitConcordances as input (so we
  * have the hit text available).
  */
 public class HitPropertyLeftContext extends HitProperty {
-	boolean lowerCase;
 
-	public HitPropertyLeftContext(boolean lowerCase) {
-		super();
-		this.lowerCase = lowerCase;
-	}
+	private Terms terms;
 
-	public HitPropertyLeftContext() {
-		this(false);
+	public HitPropertyLeftContext(Searcher searcher, String field) {
+		this.terms = searcher.getTerms(field);
 	}
 
 	@Override
-	public String get(Hit result) {
-		if (result.conc == null) {
-			throw new RuntimeException("Can only sort/group on context if results are concordances");
+	public HitPropValueContextWords get(Hit result) {
+		if (result.context == null) {
+			throw new RuntimeException("Context not available in hits objects; cannot sort/group on context");
 		}
-		// NOTE: disabled XML stripping because we use the forward index or term vector for
-		// sorting/grouping!
-		String context = lowerCase ? result.conc[0].toLowerCase() : result.conc[0]; // Utilities.xmlToSortable(result.conc[0],
-																					// lowerCase);
-		return Utilities.reverseWordsInString(context); // Reverse words because we want to sort on
-														// the last word first
+
+		// Copy the desired part of the context
+		int n = result.contextRightStart - result.contextHitStart;
+		if (n <= 0)
+			return new HitPropValueContextWords(terms, new int[0]);
+		int[] dest = new int[n];
+		System.arraycopy(result.context, result.contextHitStart, dest, 0, n);
+
+		// Reverse the order of the array, because we want to sort from right to left
+		for (int i = 0; i < n / 2; i++) {
+			int o = n - 1 - i;
+			// Swap values
+			int t = dest[i];
+			dest[i] = dest[o];
+			dest[o] = t;
+		}
+		return new HitPropValueContextWords(terms, dest);
+	}
+
+	@Override
+	public int compare(Hit a, Hit b) {
+		// Compare the left context for these two hits, starting at the end
+		int ai = a.contextHitStart - 1;
+		int bi = b.contextHitStart - 1;
+		while (ai >= 0 && bi >= 0) {
+			int ac = a.context[ai];
+			int bc = b.context[bi];
+			if (ac != bc) {
+				// Found a difference; comparison finished.
+				return ac - bc;
+			}
+			ai--;
+			bi--;
+		}
+		// One or both ran out, and so far, they're equal.
+		if (ai < 0) {
+			if (bi >= 0) {
+				// b longer than a => a < b
+				return -1;
+			}
+			return 0; // same length; a == b
+		}
+		return 1; // a longer than b => a > b
 	}
 
 	@Override

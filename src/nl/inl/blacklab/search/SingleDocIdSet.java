@@ -21,7 +21,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 /**
  * Used for finding hits in a single document (for highlighting).
  */
-class SingleDocIdSet extends DocIdSet {
+public class SingleDocIdSet extends DocIdSet {
 	final int id;
 
 	public SingleDocIdSet(int id) {

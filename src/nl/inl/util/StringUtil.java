@@ -527,4 +527,19 @@ public class StringUtil {
 
 		return input;
 	}
+
+	/**
+	 * Optionally 'pluralize' a singular noun by appending an s if the
+	 * number is not equal to 1.
+	 *
+	 * Obviously, this doesn't take irregular plural forms (sheep/sheep, man/men)
+	 * into account.
+	 *
+	 * @param singular the singular to 'pluralize'
+	 * @param number if this equals 1, no s is added
+	 * @return the possibly pluralized form
+	 */
+	public static String pluralize(String singular, long number) {
+		return singular + (number != 1 ? "s" : "");
+	}
 }

@@ -391,6 +391,21 @@ public class ForwardIndex {
 	}
 
 	/**
+	 * Retrieve part of a document in token ids form.
+	 *
+	 * @param id
+	 *            content store document id
+	 * @param start
+	 *            start of the part to retrieve
+	 * @param end
+	 *            end of the part to retrieve
+	 * @return the token ids
+	 */
+	public int[] retrievePartSortOrder(int id, int start, int end) {
+		return retrievePartsSortOrder(id, new int[] { start }, new int[] { end }).get(0);
+	}
+
+	/**
 	 * Retrieve one or more substrings from the specified content.
 	 *
 	 * This is more efficient than retrieving the whole content, or retrieving parts in separate
@@ -428,6 +443,35 @@ public class ForwardIndex {
 			result.add(snippet);
 		}
 		return result;
+	}
+
+	/**
+	 * Retrieve one or more parts from the specified content, in the form of token sort order ids.
+	 *
+	 * This is more efficient than retrieving the whole content, or retrieving parts in separate
+	 * calls, because the file is only opened once and random access is used to read only the
+	 * required parts.
+	 *
+	 * @param contentId
+	 *            id of the entry to get parts from
+	 * @param start
+	 *            the starting points of the parts to retrieve (in words)
+	 * @param end
+	 *            the end points of the parts to retrieve (in words)
+	 * @return the parts
+	 */
+	public synchronized List<int[]> retrievePartsSortOrder(int contentId, int[] start, int[] end) {
+
+		// First, retrieve the token ids
+		List<int[]> resultInt = retrievePartsInt(contentId, start, end);
+
+		// Translate them to sort orders
+		for (int[] snippetInt: resultInt) {
+			for (int j = 0; j < snippetInt.length; j++) {
+				snippetInt[j] = terms.idToSortPosition(snippetInt[j]);
+			}
+		}
+		return resultInt;
 	}
 
 	/**
@@ -549,6 +593,10 @@ public class ForwardIndex {
 		} finally {
 			fi.close();
 		}
+	}
+
+	public Terms getTerms() {
+		return terms;
 	}
 
 }

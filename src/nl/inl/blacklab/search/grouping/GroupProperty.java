@@ -19,7 +19,7 @@ package nl.inl.blacklab.search.grouping;
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public abstract class GroupProperty {
-	public abstract String get(Group result);
+	public abstract HitPropValue get(Group result);
 
 	public boolean defaultSortDescending() {
 		return false;

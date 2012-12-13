@@ -30,6 +30,8 @@ import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyWordRight;
 import nl.inl.util.PropertiesUtil;
 
+import org.apache.lucene.search.spans.SpanQuery;
+
 /**
  * Simple test program to demonstrate corpus search functionality.
  */
@@ -76,13 +78,14 @@ public class TestSearch {
 			// TextPatternAnyToken(1, 2));
 
 			// Execute search
-			Hits hits = searcher.find("contents", tp);
+			SpanQuery query = searcher.createSpanQuery("contents", tp);
+			Hits hits = searcher.find(query, "contents");
 
 			// Find term vector concordances (for sorting/grouping)
 			hits.findContext();
 
 			// Sort results
-			HitProperty first = new HitPropertyWordRight();
+			HitProperty first = new HitPropertyWordRight(searcher, "contents");
 			hits.sort(first);
 
 			// Limit results to the first n
