@@ -166,7 +166,7 @@ public class Hits implements Iterable<Hit> {
 		}
 		sourceSpans = findSpans(sourceQuery); // Counted 'em. Now reset.
 		sourceSpansFullyRead = false;
-		hits = new ArrayList<Hit>(); //Hit.hitList(source);
+		hits = new ArrayList<Hit>();
 		this.concordanceField = defaultConcField;
 	}
 
@@ -257,22 +257,11 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public void sort(final HitProperty sortProp, boolean reverseSort) {
 		ensureAllHitsRead();
-		// Do we need concordances and don't we have them yet?
-		//Collator collator;
+		// Do we need context and don't we have it yet?
 		if (sortProp.needsContext() && contextFieldName == null) {
 			// Get 'em
 			findContext();
-
-			// Context needs to be sorted per-word. Get the appropriate collator.
-			//collator = searcher.getPerWordCollator();
-		} else {
-			// For other sorting tasks, use the regular collator.
-			//collator = searcher.getCollator();
 		}
-
-//		for (Hit hit : hits) {
-//			hit.sort = collator.getCollationKey(sortProp.get(hit));
-//		}
 
 		// Sort on the hits' sort property
 		Comparator<Object> comparator;
@@ -303,11 +292,6 @@ public class Hits implements Iterable<Hit> {
 			};
 		}
 		Collections.sort(hits, comparator);
-
-//		// Clear the collation keys to free up memory
-//		for (Hit hit : hits) {
-//			hit.sort = null;
-//		}
 	}
 
 	/**
@@ -343,13 +327,6 @@ public class Hits implements Iterable<Hit> {
 	 */
 	@Override
 	public Iterator<Hit> iterator() {
-//		ensureSpansRead();
-//		return hits.iterator();
-
-//		while (sourceSpans.next()) {
-//			hits.add(Hit.getHit(sourceSpans));
-//		}
-
 		// Construct a custom iterator that iterates over the hits in the hits
 		// list, but can also take into account the Spans object that may not have
 		// been fully read. This ensures we don't instantiate Hit objects for all hits
@@ -423,7 +400,6 @@ public class Hits implements Iterable<Hit> {
 		ensureAllHitsRead();
 		if (concordances == null) {
 			findConcordances(); // just try to find the default concordances
-			//throw new RuntimeException("Concordances haven't been retrieved yet; call Hits.findConcordances(fieldName)");
 		}
 		Concordance conc = concordances.get(h);
 		if (conc == null)

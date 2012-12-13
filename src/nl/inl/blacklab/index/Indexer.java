@@ -43,7 +43,6 @@ import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
@@ -75,15 +74,6 @@ public class Indexer {
 	 * Where to report indexing progress. Default: dummy listener.
 	 */
 	private IndexListener listener = new IndexListener();
-
-	/**
-	 * For using different analyzers per field
-	 *
-	 * @deprecated Changed in Lucene and not used in BlackLab anyway. We may re-implement this in
-	 *             the future, but differently.
-	 */
-	@Deprecated
-	private PerFieldAnalyzerWrapper analyzer;
 
 	/**
 	 * When we encounter a zipfile, do we descend into it like it was a directory?
@@ -171,126 +161,14 @@ public class Indexer {
 		listener.indexStart();
 	}
 
-	/**
-	 * Construct Indexer
-	 *
-	 * @param writer
-	 *            the index to write to
-	 * @param listener
-	 *            where to report our progress
-	 * @throws IOException
-	 */
-	@Deprecated
-	public Indexer(IndexWriter writer, IndexListener listener) throws IOException {
-		this(writer, null, null, listener);
-	}
-
-	/**
-	 * Construct Indexer that reports progress to stdout.
-	 *
-	 * @param writer
-	 *            the index to write to
-	 * @param forwardIndex
-	 *            the forward index (or null if none)
-	 * @param contentStore
-	 *            the content store
-	 * @throws IOException
-	 */
-	@Deprecated
-	public Indexer(IndexWriter writer, ForwardIndex forwardIndex, ContentStore contentStore)
-			throws IOException {
-		this(writer, forwardIndex, contentStore, new IndexListenerReportConsole());
-	}
-
-	/**
-	 * Construct Indexer.
-	 *
-	 * @param writer
-	 *            the index to write to
-	 * @param forwardIndex
-	 *            the forward index (or null if none)
-	 * @param contentStore
-	 *            the content store
-	 * @param listener
-	 *            where to report our progress (if null, doesn't report anything)
-	 * @throws IOException
-	 */
-	@Deprecated
-	public Indexer(IndexWriter writer, ForwardIndex forwardIndex, ContentStore contentStore,
-			IndexListener listener) throws IOException {
-		this.writer = writer;
-		this.forwardIndex = forwardIndex;
-		this.contentStore = contentStore;
-		clearFieldAnalyzers();
-		this.listener = listener == null ? new IndexListenerDevNull() : listener;
-		listener.indexerCreated(this);
-		listener.indexStart();
-	}
-
-	/**
-	 * Construct Indexer
-	 *
-	 * @param writer
-	 *            the index to write to
-	 * @param forwardIndex
-	 *            the forward index (or null if none)
-	 * @param listener
-	 *            where to report our progress
-	 * @throws IOException
-	 */
-	@Deprecated
-	public Indexer(IndexWriter writer, ForwardIndex forwardIndex, IndexListener listener)
-			throws IOException {
-		this(writer, forwardIndex, null, listener);
-	}
-
 	private void log(String msg, IOException e) {
 		// @@@ TODO write to file. log4j?
 		e.printStackTrace();
 		System.err.println(msg);
 	}
 
-	/**
-	 * Add specific analyzer for a field
-	 *
-	 * @deprecated Changed in Lucene and not used in BlackLab anyway. We may re-implement this in
-	 *             the future, but differently.
-	 * @param fieldName
-	 *            field name
-	 * @param analyzer
-	 *            analyzer
-	 */
-	@Deprecated
-	public void setFieldAnalyzer(String fieldName, Analyzer analyzer) {
-		this.analyzer.addAnalyzer(fieldName, analyzer);
-	}
-
-	/**
-	 * @deprecated Changed in Lucene and not used in BlackLab anyway. We may re-implement this in
-	 *             the future, but differently.
-	 */
-	@Deprecated
-	public void clearFieldAnalyzers() {
-		analyzer = new PerFieldAnalyzerWrapper(writer.getAnalyzer());
-	}
-
 	public void setMaxDocs(int maxDocs) {
 		this.maxDocs = maxDocs;
-	}
-
-	/**
-	 * Optimize index
-	 *
-	 * @deprecated Because Lucene's optimize is (no longer necessary)
-	 *
-	 * @throws CorruptIndexException
-	 * @throws IOException
-	 */
-	@Deprecated
-	public void optimize() throws CorruptIndexException, IOException {
-		listener.optimizeStart();
-		writer.optimize();
-		listener.optimizeEnd();
 	}
 
 	/**

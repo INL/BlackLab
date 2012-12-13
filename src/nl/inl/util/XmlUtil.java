@@ -200,8 +200,11 @@ public class XmlUtil {
 	}
 
 	/**
-	 * Takes an XML input string and... - removes tags - replaces entities with characters -
-	 * normalizes whitespace - (optionally) replaces spaces with non-breaking spaces
+	 * Takes an XML input string and...
+	 * * removes tags
+	 * * replaces entities with characters
+	 * * normalizes whitespace
+	 * * (optionally) replaces spaces with non-breaking spaces
 	 *
 	 * @param conc
 	 *            the input XML string

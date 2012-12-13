@@ -17,8 +17,6 @@ package nl.inl.blacklab.indexers.pagexml;
 
 import java.util.regex.Pattern;
 
-import nl.inl.util.Utilities;
-
 /**
  * Simple test program to demonstrate corpus search functionality.
  */
@@ -60,9 +58,8 @@ public class TimeStringFunctions {
 		return xmlString;
 	}
 
-	@SuppressWarnings("deprecation")
 	public static void main(String[] args) {
-		long t, x;
+//		long t, x;
 
 		/*
 		 * // Compare xmlToPlainText versions
@@ -97,32 +94,32 @@ public class TimeStringFunctions {
 
 		// Compare xmlToSortable versions
 
-		t = System.currentTimeMillis();
-		x = 0; // used to prevent optimizing the call away
-		for (int i = 0; i < 1000000; i++) {
-			x += Utilities.xmlToSortableOld("test &gt;&#65;&#x42;   <bla &quot; >test</bla> test",
-					true).length();
-		}
-		System.out.println("xmlToSortable: " + (System.currentTimeMillis() - t)
-				+ "ms            [[" + x + "]]");
+//		t = System.currentTimeMillis();
+//		x = 0; // used to prevent optimizing the call away
+//		for (int i = 0; i < 1000000; i++) {
+//			x += Utilities.xmlToSortableOld("test &gt;&#65;&#x42;   <bla &quot; >test</bla> test",
+//					true).length();
+//		}
+//		System.out.println("xmlToSortable: " + (System.currentTimeMillis() - t)
+//				+ "ms            [[" + x + "]]");
 
-		t = System.currentTimeMillis();
-		x = 0; // used to prevent optimizing the call away
-		for (int i = 0; i < 1000000; i++) {
-			x += Utilities.xmlToSortable("test &gt;&#65;&#x42;   <bla &quot; >test</bla> test",
-					true).length();
-		}
-		System.out.println("xmlToSortableOpt: " + (System.currentTimeMillis() - t)
-				+ "ms            [[" + x + "]]");
-
-		t = System.currentTimeMillis();
-		x = 0; // used to prevent optimizing the call away
-		for (int i = 0; i < 1000000; i++) {
-			x += Utilities.xmlToSortable("tëst &gt;&#65;&#x42;   <bla &quot; >test</bla> test",
-					true).length();
-		}
-		System.out.println("xmlToSortableOpt met non-ASCII: " + (System.currentTimeMillis() - t)
-				+ "ms            [[" + x + "]]");
+//		t = System.currentTimeMillis();
+//		x = 0; // used to prevent optimizing the call away
+//		for (int i = 0; i < 1000000; i++) {
+//			x += Utilities.xmlToSortable("test &gt;&#65;&#x42;   <bla &quot; >test</bla> test",
+//					true).length();
+//		}
+//		System.out.println("xmlToSortableOpt: " + (System.currentTimeMillis() - t)
+//				+ "ms            [[" + x + "]]");
+//
+//		t = System.currentTimeMillis();
+//		x = 0; // used to prevent optimizing the call away
+//		for (int i = 0; i < 1000000; i++) {
+//			x += Utilities.xmlToSortable("tëst &gt;&#65;&#x42;   <bla &quot; >test</bla> test",
+//					true).length();
+//		}
+//		System.out.println("xmlToSortableOpt met non-ASCII: " + (System.currentTimeMillis() - t)
+//				+ "ms            [[" + x + "]]");
 
 	}
 

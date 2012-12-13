@@ -67,12 +67,6 @@ public class StringUtil {
 	private static final Pattern PATT_PUNCTUATION = Pattern
 			.compile("[^\\sA-Za-z0-9\\p{InCombiningDiacriticalMarks}]");
 
-	/**
-	 * @deprecated replaced with CHAR_NON_BREAKING_SPACE.
-	 */
-	@Deprecated
-	public static final Character charNbsp = '\u00A0';
-
 	/** The default collator: Dutch, case-insensitive */
 	protected static Collator dutchInsensitiveCollator = null;
 
@@ -98,26 +92,6 @@ public class StringUtil {
 	 */
 	public static String convertNbspToSpace(String string) {
 		return PATT_NON_BREAKING_SPACE.matcher(string).replaceAll(" ");
-	}
-
-	/**
-	 * Abbreviates a string if necessary.
-	 *
-	 * @param str
-	 *            the string to abbreviate
-	 * @param preferredLength
-	 *            the maximum length we would like to see
-	 * @param overshootAllowed
-	 *            how many more characters than the previous value is allowable
-	 * @param addEllipsis
-	 *            whether or not we should add "..." at the end if we abbreviated
-	 * @return the (possibly) abbreviated string
-	 * @deprecated renamed to abbreviate.
-	 */
-	@Deprecated
-	public static String cutAtWhitespace(String str, int preferredLength, int overshootAllowed,
-			boolean addEllipsis) {
-		return abbreviate(str, preferredLength, overshootAllowed, addEllipsis);
 	}
 
 	/**
@@ -475,19 +449,6 @@ public class StringUtil {
 	 */
 	public static String nullToEmpty(String str) {
 		return str == null ? "" : str;
-	}
-
-	/**
-	 * Convert accented letters to their unaccented counterparts.
-	 *
-	 * @param input
-	 *            the string possibly containing accented letters.
-	 * @return the unaccented version
-	 * @deprecated misleading name, renamed to "StringUtil.removeAccents()"
-	 */
-	@Deprecated
-	public static String asciify(String input) {
-		return removeAccents(input);
 	}
 
 	/**

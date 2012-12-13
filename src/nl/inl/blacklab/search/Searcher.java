@@ -144,49 +144,6 @@ public class Searcher implements Closeable {
 	private boolean responsibleForClosingContentStore = false;
 
 	/**
-	 * @deprecated use Searcher(indexDir) instead
-	 * @param indexReader
-	 */
-	@Deprecated
-	public Searcher(IndexReader indexReader) {
-		this(indexReader, null);
-	}
-
-	/**
-	 * Construct a Searcher object. Note that using this constructor, the caller is responsible for
-	 * closing the Lucene index after closing the Searcher object.
-	 *
-	 * @deprecated use Searcher(indexDir) instead
-	 * @param indexReader
-	 *            the Lucene index reader
-	 * @param forwardIndex
-	 *            the forward index, or null if none
-	 */
-	@Deprecated
-	public Searcher(IndexReader indexReader, ForwardIndex forwardIndex) {
-		this.indexReader = indexReader;
-		registerForwardIndex(DEFAULT_CONTENTS_FIELD, forwardIndex);
-		init();
-	}
-
-	/**
-	 * @deprecated use Searcher(indexDir) instead
-	 *
-	 * @param indexDir
-	 * @param forwardIndex
-	 * @throws CorruptIndexException
-	 * @throws IOException
-	 */
-	@Deprecated
-	public Searcher(File indexDir, ForwardIndex forwardIndex) throws CorruptIndexException,
-			IOException {
-		indexReader = IndexReader.open(FSDirectory.open(indexDir));
-		registerForwardIndex(DEFAULT_CONTENTS_FIELD, forwardIndex);
-		responsibleForClosingReader = true;
-		init();
-	}
-
-	/**
 	 * Construct a Searcher object. Note that using this constructor, the Searcher is responsible
 	 * for opening and closing the Lucene index, forward index and content store.
 	 *
@@ -400,9 +357,6 @@ public class Searcher implements Closeable {
 		try {
 			IndexSearcher s = new IndexSearcher(indexReader); // TODO: cache in field?
 			try {
-				// OLD:
-				// q = q.rewrite(indexReader);
-				// Weight w = q.weight(s);
 				Weight w = s.createNormalizedWeight(q);
 				Scorer sc = w.scorer(indexReader, true, false);
 				return sc;
@@ -794,8 +748,6 @@ public class Searcher implements Closeable {
 					return concordanceWords;
 			}
 			if (numFound < concordanceWords.length) {
-				// throw new
-				// RuntimeException("Not all words found ("+numFound+" out of "+concordanceWords.length+")");
 				String[] partial = new String[numFound];
 				for (int i = 0; i < numFound; i++) {
 					partial[i] = concordanceWords[i];
@@ -859,8 +811,6 @@ public class Searcher implements Closeable {
 						break;
 				}
 				if (numFound < concordanceWords.length) {
-					// throw new
-					// RuntimeException("Not all words found ("+numFound+" out of "+concordanceWords.length+")");
 					String[] partial = new String[numFound];
 					for (int j = 0; j < numFound; j++) {
 						partial[j] = concordanceWords[j];
@@ -990,11 +940,9 @@ public class Searcher implements Closeable {
 		String[] content = getSubstringsFromDocument(d, fieldName, starts, ends);
 
 		// Cut 'em up
-//		Iterator<Hit> resultListIt = resultList.iterator();
 		List<Concordance> rv = new ArrayList<Concordance>();
 		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
 			// Put the concordance in the Hit object
-//			Hit hit = resultListIt.next();
 			int absLeft = startsOfWords[i];
 			int absRight = endsOfWords[i + 1];
 			int relHitLeft = startsOfWords[i + 1] - absLeft;
@@ -1003,9 +951,6 @@ public class Searcher implements Closeable {
 			rv.add(new Concordance(new String[] { currentContent.substring(0, relHitLeft),
 					currentContent.substring(relHitLeft, relHitRight),
 					currentContent.substring(relHitRight, absRight - absLeft) }));
-//			hit.conc = new String[] { currentContent.substring(0, relHitLeft),
-//					currentContent.substring(relHitLeft, relHitRight),
-//					currentContent.substring(relHitRight, absRight - absLeft) };
 		}
 		return rv;
 	}
@@ -1248,35 +1193,13 @@ public class Searcher implements Closeable {
 			words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
 		} else {
 			throw new RuntimeException("Cannot get context without a term vector");
-			// We don't have a forward index. Use the term vector.
-//			words = getWordsFromTermVector(doc, fieldName, startsOfSnippets, endsOfSnippets);
 		}
 
 		// Build the actual concordances
 		Iterator<int[]> wordsIt = words.iterator();
 		Iterator<Hit> resultsListIt = resultsList.iterator();
 		for (int j = 0; j < n; j++) {
-//			int concPart = 0;
-//			StringBuilder[] concBuilder = new StringBuilder[] { new StringBuilder(),
-//					new StringBuilder(), new StringBuilder() };
-//			concBuilder[2].append(" ");
-
-			int[] theseWords = wordsIt.next(); // words.get(j);
-//			for (int i = 0; i < theseWords.length; i++) {
-//				int c = i + startsOfWords[j * 2];
-//
-//				if (c < startsOfWords[j * 2 + 1]) {
-//					concPart = 0;
-//				} else if (c > endsOfWords[j * 2]) {
-//					concPart = 2;
-//				} else
-//					concPart = 1;
-//				if (concBuilder[concPart].length() == 0)
-//					concBuilder[concPart].append(theseWords[i]);
-//				else
-//					concBuilder[concPart].append(" ").append(theseWords[i]);
-//			}
-//			concBuilder[0].append(" ");
+			int[] theseWords = wordsIt.next();
 
 			// Put the concordance in the Hit object
 			Hit hit = resultsListIt.next(); // resultsList.get(j);
@@ -1284,25 +1207,7 @@ public class Searcher implements Closeable {
 			hit.context = theseWords;
 			hit.contextHitStart = startsOfWords[j * 2 + 1] - firstWordIndex;
 			hit.contextRightStart = endsOfWords[j * 2] - firstWordIndex + 1;
-
-//			hit.context = new String[] { concBuilder[0].toString(), concBuilder[1].toString(),
-//					concBuilder[2].toString() };
 		}
-	}
-
-	/**
-	 * Indicate if we'd like to use the forward index, if one is present.
-	 *
-	 * Mainly useful for debugging purposed.
-	 *
-	 * @deprecated not really necessary anymore; forward index is always used if available
-	 *
-	 * @param useForwardIndex
-	 *            true if we'd like to use a forward index, false if not.
-	 */
-	@Deprecated
-	public void setUseForwardIndex(boolean useForwardIndex) {
-		// this.useForwardIndex = useForwardIndex;
 	}
 
 	/**
@@ -1385,17 +1290,6 @@ public class Searcher implements Closeable {
 	 */
 	public void setConcordanceContextSize(int concordanceContextSize) {
 		this.concordanceContextSize = concordanceContextSize;
-	}
-
-	/**
-	 * Do we have a forward index, and is it enabled?
-	 *
-	 * @return true if we're using one, false if not
-	 * @deprecated not used
-	 */
-	@Deprecated
-	public boolean isUsingForwardIndex() {
-		return forwardIndices.get(DEFAULT_CONTENTS_FIELD) != null;
 	}
 
 	/**

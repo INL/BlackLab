@@ -153,26 +153,6 @@ public class IndexListener {
 	}
 
 	/**
-	 * The optimize process started
-	 *
-	 * @deprecated optimize is no longer used
-	 */
-	@Deprecated
-	public void optimizeStart() {
-		optimizeStartTime = System.currentTimeMillis();
-	}
-
-	/**
-	 * The optimize process ended
-	 *
-	 * @deprecated optimize is no longer used
-	 */
-	@Deprecated
-	public void optimizeEnd() {
-		optimizeTime = System.currentTimeMillis() - optimizeStartTime;
-	}
-
-	/**
 	 * The close process started
 	 */
 	public void closeStart() {
