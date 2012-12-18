@@ -45,6 +45,8 @@ import org.xml.sax.Attributes;
  * easily display it using XSLT.
  */
 public class DocIndexerPageXml extends DocIndexerXml {
+	private static final String CONTENTS_FIELD = "contents";
+
 	/** Used to capture the content between some XML tags for indexing */
 	private String characterContent = null;
 
@@ -332,9 +334,10 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
 		// Add contents field (case-insensitive tokens) to forward index
-		int forwardId = indexer.addToForwardIndex(contentsField.getPropertyValues(""));
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName("contents", "fiid"),
-				Store.YES, false).setIntValue(forwardId));
+		int fiidContents = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getPropertyValues("lemma"));
+
+		currentLuceneDoc.add(new NumericField(CONTENTS_FIELD + "__fiid",
+				Store.YES, false).setIntValue(fiidContents));
 	}
 
 	private void startWord(Attributes attributes) {

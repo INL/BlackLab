@@ -124,8 +124,11 @@ public class ForwardIndex {
 
 	public ForwardIndex(File dir, boolean indexMode, Collator collator, boolean create) {
 		logger.debug("Opening forward index " + dir);
-		if (!dir.exists())
+		if (!dir.exists()) {
+			if (!create)
+				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
 			dir.mkdir();
+		}
 
 		// Version check
 		if (!indexMode || !create) {

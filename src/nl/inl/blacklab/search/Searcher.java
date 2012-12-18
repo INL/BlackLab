@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
@@ -41,12 +40,10 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpansFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.ExUtil;
-import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
 
 import org.apache.lucene.document.Document;
@@ -83,7 +80,11 @@ import org.apache.lucene.store.FSDirectory;
  * Searcher is thread-safe: a single instance may be shared to perform a number of simultaneous
  * searches.
  */
-public class Searcher implements Closeable {
+public class Searcher {
+
+	/**
+	 * The default contents field (if you don't specify one in the constructor)
+	 */
 	private static final String DEFAULT_CONTENTS_FIELD = "contents";
 
 	/**
@@ -92,17 +93,11 @@ public class Searcher implements Closeable {
 	private Collator collator = Collator.getInstance(new Locale("en", "GB"));
 
 	/**
-	 * The collator to use for sorting hit context. Defaults to a per-word version of the English
-	 * collator. Per-word means that for example "cat dog" is sorted before "catapult". The normal
-	 * collator would ignore the space and sort "catapult" first.
-	 */
-	private Collator perWordCollator = Utilities.getPerWordCollator(collator);
-
-	/**
-	 * ContentAccessors tell us how to get a field's content: - if there is no contentaccessor: get
-	 * it from the Lucene index (stored field) - from an external source (file, database) if it's
-	 * not (because the content is very large and/or we want faster random access to the content
-	 * than a stored field can provide)
+	 * ContentAccessors tell us how to get a field's content:
+	 * - if there is no contentaccessor: get it from the Lucene index (stored field)
+	 * - from an external source (file, database) if it's not (because the content
+	 * is very large and/or we want faster random access to the content than a
+	 * stored field can provide)
 	 */
 	private Map<String, ContentAccessor> contentAccessors = new HashMap<String, ContentAccessor>();
 
@@ -124,24 +119,19 @@ public class Searcher implements Closeable {
 	private IndexSearcher indexSearcher;
 
 	/**
-	 * Should we close the IndexReader in our close() method, or will the client do that?
-	 */
-	private boolean responsibleForClosingReader;
-
-	/**
 	 * Number of words around a hit (default value 5)
 	 */
 	private int concordanceContextSize = 5;
 
 	/**
-	 * Should we close the default forward index (on the field "contents")?
+	 * Directory where our index resides
 	 */
-	private boolean responsibleForClosingForwardIndex = false;
+	private File indexLocation;
 
-	/**
-	 * Should we close the default content store (on the field "contents")?
-	 */
-	private boolean responsibleForClosingContentStore = false;
+//	/**
+//	 * The main contents field of our index, linked to the ContentStore
+//	 */
+//	private String contentsField;
 
 	/**
 	 * Construct a Searcher object. Note that using this constructor, the Searcher is responsible
@@ -155,31 +145,38 @@ public class Searcher implements Closeable {
 	 * @throws IOException
 	 */
 	public Searcher(File indexDir) throws CorruptIndexException, IOException {
-		if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1"))
+		this(indexDir, DEFAULT_CONTENTS_FIELD);
+	}
+
+	/**
+	 * Construct a Searcher object. Note that using this constructor, the Searcher is responsible
+	 * for opening and closing the Lucene index, forward index and content store.
+	 *
+	 * Automatically detects and uses forward index and content store if available.
+	 *
+	 * @param indexDir
+	 *            the index directory
+	 * @param contentsField
+	 *            the main contents field of the index, linked to the ContentStore
+	 * @throws CorruptIndexException
+	 * @throws IOException
+	 */
+	public Searcher(File indexDir, String contentsField) throws CorruptIndexException, IOException {
+		if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1") &&
+			!VersionFile.isTypeVersion(indexDir, "blacklab", "2"))
 			throw new RuntimeException("BlackLab index has wrong type or version! "
 					+ VersionFile.report(indexDir));
 
-		// Detect and open forward index, if any
-		File forwardIndexDir = new File(indexDir, "forward");
-		if (forwardIndexDir.exists()) {
-			registerForwardIndex(DEFAULT_CONTENTS_FIELD, new ForwardIndex(forwardIndexDir, false, collator, false));
-			responsibleForClosingForwardIndex = true;
-		}
-
-		// Detect and open the default ContentStore (field "contents"). This
-		// resides in a directory called "xml" (old) or "cs_contents" (new).
-		File contentsContentStoreDirOld = new File(indexDir, "xml");
-		File contentsContentStoreDirNew = new File(indexDir, "cs_contents");
-		File dir = contentsContentStoreDirOld.exists() ? contentsContentStoreDirOld
-				: contentsContentStoreDirNew;
+		// Detect and open the ContentStore for the contents field
+		this.indexLocation = indexDir;
+		//this.contentsField = contentsField;
+		File dir = new File(indexDir, "xml");
 		if (dir.exists()) {
-			registerContentStore(DEFAULT_CONTENTS_FIELD, openContentStore(dir));
-			responsibleForClosingContentStore = true;
+			registerContentStore(contentsField, openContentStore(dir));
 		}
 
 		// Open Lucene index
 		indexReader = IndexReader.open(FSDirectory.open(indexDir));
-		responsibleForClosingReader = true;
 
 		init();
 	}
@@ -198,29 +195,23 @@ public class Searcher implements Closeable {
 	 * Finalize the Searcher object. This closes the IndexSearcher and (depending on the constructor
 	 * used) may also close the index reader.
 	 */
-	@Override
 	public void close() {
 		try {
 			indexSearcher.close();
-			if (responsibleForClosingReader)
-				indexReader.close();
-			if (responsibleForClosingForwardIndex) {
-				// NOTE: we only close the "main" forward index. Additional
-				// forward indices may have been added by the client, but it is
-				// responsible for closing them.
-				ForwardIndex mainForwInd = forwardIndices.get(DEFAULT_CONTENTS_FIELD);
-				if (mainForwInd != null)
-					mainForwInd.close();
+			indexReader.close();
+
+			// Close the forward indices
+			for (ForwardIndex fi: forwardIndices.values()) {
+				fi.close();
 			}
-			if (responsibleForClosingContentStore) {
-				// Close the default content store (because we opened it)
-				ContentAccessor ca = contentAccessors.get(DEFAULT_CONTENTS_FIELD);
-				if (ca instanceof ContentAccessorContentStore) {
-					ContentStore contentStore = ((ContentAccessorContentStore) ca)
-							.getContentStore();
-					contentStore.close();
-				}
+
+			// Close the content accessor(s)
+			// (the ContentStore, and possibly other content accessors
+			//  (although that feature is not used right now))
+			for (ContentAccessor ca: contentAccessors.values()) {
+				ca.close();
 			}
+
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
@@ -955,10 +946,6 @@ public class Searcher implements Closeable {
 		return rv;
 	}
 
-	protected void registerForwardIndex(String fieldName, ForwardIndex fi) {
-		forwardIndices.put(fieldName, fi);
-	}
-
 	/**
 	 * Register a content accessor.
 	 *
@@ -968,7 +955,7 @@ public class Searcher implements Closeable {
 	 *
 	 * @param contentAccessor
 	 */
-	protected void registerContentAccessor(ContentAccessor contentAccessor) {
+	private void registerContentAccessor(ContentAccessor contentAccessor) {
 		contentAccessors.put(contentAccessor.getFieldName(), contentAccessor);
 	}
 
@@ -987,7 +974,7 @@ public class Searcher implements Closeable {
 	 *            the ContentStore object by which to access the content
 	 *
 	 */
-	public void registerContentStore(String fieldName, ContentStore contentStore) {
+	private void registerContentStore(String fieldName, ContentStore contentStore) {
 		registerContentAccessor(new ContentAccessorContentStore(fieldName, contentStore));
 	}
 
@@ -1025,27 +1012,6 @@ public class Searcher implements Closeable {
 	 */
 	public Collator getCollator() {
 		return collator;
-	}
-
-	/**
-	 * Set the collator used for sorting context.
-	 *
-	 * The default collator is a space-correct English one.
-	 *
-	 * @param collator
-	 *            the collator
-	 */
-	public void setPerWordCollator(Collator collator) {
-		perWordCollator = collator;
-	}
-
-	/**
-	 * Get the collator being used for sorting context.
-	 *
-	 * @return the collator
-	 */
-	public Collator getPerWordCollator() {
-		return perWordCollator;
 	}
 
 	/**
@@ -1184,12 +1150,11 @@ public class Searcher implements Closeable {
 
 		// Get all the words from the term vector
 		List<int[]> words;
-		ForwardIndex forwardIndex = forwardIndices.get(fieldName);
+		ForwardIndex forwardIndex = getForwardIndex(fieldName);
 		if (forwardIndex != null) {
 			// We have a forward index for this field. Use it.
 			Document d = document(doc);
-			int fiid = Integer.parseInt(d.get(ComplexFieldUtil.fieldName(DEFAULT_CONTENTS_FIELD,
-					"fiid")));
+			int fiid = Integer.parseInt(d.get(fieldName + "__fiid"));
 			words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
 		} else {
 			throw new RuntimeException("Cannot get context without a term vector");
@@ -1208,6 +1173,41 @@ public class Searcher implements Closeable {
 			hit.contextHitStart = startsOfWords[j * 2 + 1] - firstWordIndex;
 			hit.contextRightStart = endsOfWords[j * 2] - firstWordIndex + 1;
 		}
+	}
+
+	/**
+	 * Tries to get the ForwardIndex object for the specified fieldname.
+	 *
+	 * Looks for an already-opened forward index first. If none is found,
+	 * and if we're in "create index" mode, may create a new forward index.
+	 * Otherwise, looks for an existing forward index and opens that.
+	 *
+	 * @param fieldName the field for which we want the forward index
+	 * @return the ForwardIndex if found/created, or null otherwise
+	 */
+	private ForwardIndex getForwardIndex(String fieldName) {
+		ForwardIndex forwardIndex = forwardIndices.get(fieldName);
+		if (forwardIndex == null)  {
+			File dir = new File(indexLocation, "fi_" + fieldName);
+
+			// Special case for old BL index with "forward" as the name of the single forward index
+			// (this should be removed eventually)
+			if (fieldName.equals(DEFAULT_CONTENTS_FIELD) && !dir.exists()) {
+				// Default forward index used to be called "forward". Look for that instead.
+				File alt = new File(indexLocation, "forward");
+				if (alt.exists())
+					dir = alt;
+			}
+
+			if (!dir.exists()) {
+				// Forward index doesn't exist
+				return null;
+			}
+			// Open forward index
+			forwardIndex = new ForwardIndex(dir, false, collator, false);
+			forwardIndices.put(fieldName, forwardIndex);
+		}
+		return forwardIndex;
 	}
 
 	/**
@@ -1336,7 +1336,7 @@ public class Searcher implements Closeable {
 	 * @throws RuntimeException if this field does not have a forward index, and hence no Terms object.
 	 */
 	public Terms getTerms(String field) {
-		ForwardIndex forwardIndex = forwardIndices.get(field);
+		ForwardIndex forwardIndex = getForwardIndex(field);
 		if (forwardIndex == null) {
 			throw new RuntimeException("Field " + field + " has no forward index!");
 		}

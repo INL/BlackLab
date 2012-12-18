@@ -566,6 +566,8 @@ public class QueryTool {
 		}
 	}
 
+	final String CONTEXT_FIELD = "contents__lemma";
+
 	/**
 	 * Sort hits by the specified property.
 	 *
@@ -581,11 +583,11 @@ public class QueryTool {
 		if (sortBy.equals("doc"))
 			crit = new HitPropertyDocumentId();
 		else if (sortBy.equals("match") || sortBy.equals("word"))
-			crit = new HitPropertyHitText(searcher, "contents");
+			crit = new HitPropertyHitText(searcher, CONTEXT_FIELD);
 		else if (sortBy.startsWith("left"))
-			crit = new HitPropertyLeftContext(searcher, "contents");
+			crit = new HitPropertyLeftContext(searcher, CONTEXT_FIELD);
 		else if (sortBy.startsWith("right"))
-			crit = new HitPropertyRightContext(searcher, "contents");
+			crit = new HitPropertyRightContext(searcher, CONTEXT_FIELD);
 		if (crit == null) {
 			out.println("Invalid hit sort criterium: " + sortBy
 					+ " (valid are: match, left, right)");
@@ -634,11 +636,11 @@ public class QueryTool {
 		// Group results
 		HitProperty crit = null;
 		if (groupBy.equals("word") || groupBy.equals("match"))
-			crit = new HitPropertyHitText(searcher, "contents");
+			crit = new HitPropertyHitText(searcher, CONTEXT_FIELD);
 		else if (groupBy.startsWith("left"))
-			crit = new HitPropertyWordLeft(searcher, "contents");
+			crit = new HitPropertyWordLeft(searcher, CONTEXT_FIELD);
 		else if (groupBy.startsWith("right"))
-			crit = new HitPropertyWordRight(searcher, "contents");
+			crit = new HitPropertyWordRight(searcher, CONTEXT_FIELD);
 		if (crit == null) {
 			out.println("Unknown criterium: " + groupBy);
 			return;

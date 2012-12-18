@@ -26,8 +26,10 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.text.Collator;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -55,11 +57,21 @@ import org.apache.lucene.store.LockObtainFailedException;
  * Tool for indexing. Reports its progress to an IndexListener.
  */
 public class Indexer {
+	/**
+	 *
+	 * The default contents field (if you don't specify one in the constructor)
+	 */
+	private static final String DEFAULT_CONTENTS_FIELD = "contents";
+
 	/** Our index */
 	private IndexWriter writer;
 
-	/** Our forward index */
-	private ForwardIndex forwardIndex;
+	/**
+	 * ForwardIndices allow us to quickly find what token occurs at a specific position. This speeds
+	 * up grouping and sorting. By default, there will be one forward index, on the "contents"
+	 * field.
+	 */
+	private Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
 
 	/** Our content store (where we store the full XML of (part of) the document) */
 	private ContentStore contentStore;
@@ -71,20 +83,19 @@ public class Indexer {
 	private File indexLocation;
 
 	/**
-	 * Where to report indexing progress. Default: dummy listener.
+	 * Where to report indexing progress.
 	 */
-	private IndexListener listener = new IndexListener();
+	private IndexListener listener = null;
+
+	/**
+	 * Have we reported our creation and the start of indexing to the listener yet?
+	 */
+	private boolean createAndIndexStartReported = false;
 
 	/**
 	 * When we encounter a zipfile, do we descend into it like it was a directory?
 	 */
 	private boolean processZipFilesAsDirectories = true;
-
-	/**
-	 * Should we close the Lucene index, forward index and contentstore in close()? (Yes if we
-	 * opened them; no if they were passed to us)
-	 */
-	private boolean closeIndexes = false;
 
 	private Class<? extends DocIndexer> docIndexerClass;
 
@@ -92,12 +103,21 @@ public class Indexer {
 	 * The collator to use for sorting (passed to ForwardIndex to keep a sorted list of terms).
 	 * Defaults to English collator.
 	 */
-	Collator collator = Collator.getInstance(new Locale("en", "GB"));
-
+	static Collator collator = Collator.getInstance(new Locale("en", "GB"));
 
 	/** If an error, like a parse error, should we
 	 *  try to continue indexing, or abort? */
 	private boolean continueAfterInputError = false;
+
+	/**
+	 * Did we create a new index (true) or are we appending to an existing one (false)?
+	 */
+	private boolean createdNewIndex;
+
+	/**
+	 * Our main contents field, coupled to the ContentStore
+	 */
+	private String contentsField;
 
 	/** If an error, like a parse error, should we
 	 *  try to continue indexing, or abort?
@@ -105,6 +125,15 @@ public class Indexer {
 	 */
 	public void setContinueAfterInputError(boolean b) {
 		continueAfterInputError = b;
+	}
+
+	/**
+	 * Set the collator to use for sorting (passed to ForwardIndex to keep a sorted list of terms).
+	 * Defaults to English collator.
+	 * @param collator the collator
+	 */
+	static public void setCollator(Collator collator) {
+		Indexer.collator = collator;
 	}
 
 	/**
@@ -117,12 +146,8 @@ public class Indexer {
 		processZipFilesAsDirectories = b;
 	}
 
-	public IndexListener getListener() {
-		return listener;
-	}
-
 	/**
-	 * Construct Indexer that reports progress to stdout.
+	 * Construct Indexer, with the default contents field.
 	 *
 	 * @param directory
 	 *            the main BlackLab index directory
@@ -130,9 +155,8 @@ public class Indexer {
 	 *            if true, creates a new index; otherwise, appends to existing index
 	 * @throws IOException
 	 */
-	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
-			throws IOException {
-		this(directory, create, docIndexerClass, new IndexListenerReportConsole());
+	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass) throws IOException {
+		this(directory, create, docIndexerClass, DEFAULT_CONTENTS_FIELD);
 	}
 
 	/**
@@ -142,23 +166,47 @@ public class Indexer {
 	 *            the main BlackLab index directory
 	 * @param create
 	 *            if true, creates a new index; otherwise, appends to existing index
-	 * @param listener
-	 *            where to report our progress
+	 * @param contentsField
+	 *            the main contents field, coupled to the ContentStore
 	 * @throws IOException
 	 */
-	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass,
-			IndexListener listener) throws IOException {
+	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass, String contentsField) throws IOException {
 		this.docIndexerClass = docIndexerClass;
+		this.createdNewIndex = create;
+		this.contentsField = contentsField;
 
 		writer = openIndexWriter(directory, create);
 		indexLocation = directory;
-		forwardIndex = new ForwardIndex(new File(directory, "forward"), true, collator, create);
 		contentStore = new ContentStoreDirZip(new File(directory, "xml"), create);
-		closeIndexes = true; // we opened them, so we should close them again
+	}
 
+	/**
+	 * Set the listener object that receives messages about indexing progress.
+	 * @param listener the listener object to report to
+	 */
+	public void setListener(IndexListener listener) {
 		this.listener = listener;
-		listener.indexerCreated(this);
-		listener.indexStart();
+		getListener(); // report creation and start of indexing, if it hadn't been reported yet
+	}
+
+	/**
+	 * Get our index listener, or create a console reporting listener if none was set yet.
+	 *
+	 * Also reports the creation of the Indexer and start of indexing, if it hadn't been reported
+	 * already.
+	 *
+	 * @return the listener
+	 */
+	public IndexListener getListener() {
+		if (listener == null) {
+			listener = new IndexListenerReportConsole();
+		}
+		if (!createAndIndexStartReported) {
+			createAndIndexStartReported = true;
+			listener.indexerCreated(this);
+			listener.indexStart();
+		}
+		return listener;
 	}
 
 	private void log(String msg, IOException e) {
@@ -178,25 +226,26 @@ public class Indexer {
 	 * @throws CorruptIndexException
 	 */
 	public void close() throws CorruptIndexException, IOException {
-		listener.indexEnd();
 
-		// optimize();
-		listener.closeStart();
+		// Signal to the listener that we're done indexing and closing the index (which might take a while)
+		getListener().indexEnd();
+		getListener().closeStart();
 
-		if (closeIndexes) {
-			// NOTE: we should close the IndexWriter here too, but that could
-			// break legacy applications (we used to always close the IndexWriter even
-			// though it was passed to us by the client). We should eventually change this.
-			if (forwardIndex != null)
-				forwardIndex.close();
-			if (contentStore != null)
-				contentStore.close();
+		// Close our forward indices
+		for (ForwardIndex fi: forwardIndices.values()) {
+			fi.close();
 		}
 
+		// Close our content store
+		if (contentStore != null)
+			contentStore.close();
+
+		// Close the Lucene IndexWriter
 		writer.close();
 
-		listener.closeEnd();
-		listener.indexerClosed();
+		// Signal that we're completely done now
+		getListener().closeEnd();
+		getListener().indexerClosed();
 	}
 
 	public void setDocIndexer(Class<? extends DocIndexer> docIndexerClass) {
@@ -215,12 +264,12 @@ public class Indexer {
 	 */
 	public void index(String documentName, Reader reader) throws Exception {
 		try {
-			listener.fileStarted(documentName);
+			getListener().fileStarted(documentName);
 
 			DocIndexer docIndexer = createDocIndexer(documentName, reader);
 
 			docIndexer.index();
-			listener.fileDone(documentName);
+			getListener().fileDone(documentName);
 		} catch (InputFormatException e) {
 			if (continueAfterInputError) {
 				System.err.println("Parsing " + documentName + " failed:");
@@ -270,13 +319,60 @@ public class Indexer {
 	 */
 	public void add(Document document) throws CorruptIndexException, IOException {
 		writer.addDocument(document /* , analyzer */);
-		listener.luceneDocumentAdded();
+		getListener().luceneDocumentAdded();
 	}
 
+	/**
+	 * Add a list of tokens to the default forward index (coupled to the main contents field).
+	 *
+	 * @param tokens the tokens to add
+	 * @return the id assigned to the content
+	 */
 	public int addToForwardIndex(List<String> tokens) {
-		if (forwardIndex != null)
-			return forwardIndex.addDocument(tokens);
-		return -1;
+		return addToForwardIndex(contentsField, tokens);
+	}
+
+	public int addToForwardIndex(String fieldName, List<String> tokens) {
+		ForwardIndex forwardIndex = getForwardIndex(fieldName);
+		if (forwardIndex == null)
+			throw new RuntimeException("No forward index for field " + fieldName);
+
+		return forwardIndex.addDocument(tokens);
+	}
+
+	/**
+	 * Tries to get the ForwardIndex object for the specified fieldname.
+	 *
+	 * Looks for an already-opened forward index first. If none is found,
+	 * and if we're in "create index" mode, may create a new forward index.
+	 * Otherwise, looks for an existing forward index and opens that.
+	 *
+	 * @param fieldName the field for which we want the forward index
+	 * @return the ForwardIndex if found/created, or null otherwise
+	 */
+	private ForwardIndex getForwardIndex(String fieldName) {
+		ForwardIndex forwardIndex = forwardIndices.get(fieldName);
+		if (forwardIndex == null)  {
+			File dir = new File(indexLocation, "fi_" + fieldName);
+
+			// Special case for old BL index with "forward" as the name of the single forward index
+			// (this should be removed eventually)
+			if (!createdNewIndex && fieldName.equals(DEFAULT_CONTENTS_FIELD) && !dir.exists()) {
+				// Default forward index used to be called "forward". Look for that instead.
+				File alt = new File(indexLocation, "forward");
+				if (alt.exists())
+					dir = alt;
+			}
+
+			if (!createdNewIndex && !dir.exists()) {
+				// Append mode, and forward index doesn't exist
+				return null;
+			}
+			// Open or create forward index
+			forwardIndex = new ForwardIndex(dir, true, collator, createdNewIndex);
+			forwardIndices.put(fieldName, forwardIndex);
+		}
+		return forwardIndex;
 	}
 
 	/**
@@ -576,6 +672,12 @@ public class Indexer {
 		}
 	}
 
+	/*
+	 * BlackLab index version history:
+	 * 1. Initial version
+	 * 2. Sort index added to forward index; multiple forward indexes possible
+	 */
+
 	public static IndexWriter openIndexWriter(File indexDir, boolean create) throws IOException,
 			CorruptIndexException, LockObtainFailedException {
 		if (!indexDir.exists() && create) {
@@ -587,9 +689,10 @@ public class Indexer {
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
 		if (create)
-			VersionFile.write(indexDir, "blacklab", "1");
+			VersionFile.write(indexDir, "blacklab", "2");
 		else {
-			if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1")) {
+			if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1") &&
+				!VersionFile.isTypeVersion(indexDir, "blacklab", "2")) {
 				throw new RuntimeException("BlackLab index has wrong type or version! "
 						+ VersionFile.report(indexDir));
 			}

@@ -42,6 +42,8 @@ import org.xml.sax.Attributes;
  * Index an ALTO file.
  */
 public class DocIndexerAlto extends DocIndexerXml {
+	private static final String CONTENTS_FIELD = "contents";
+
 	/** Pattern for getting DPO number and page number from image file name */
 	private static Pattern pattDpoAndPage = Pattern.compile("^dpo_(\\d+)_(\\d+)_");
 
@@ -97,7 +99,7 @@ public class DocIndexerAlto extends DocIndexerXml {
 		};
 
 		// Define the properties that make up our complex field
-		contentsField = new ComplexFieldImpl("contents", desensitizeFilterAdder); // actual text;
+		contentsField = new ComplexFieldImpl(CONTENTS_FIELD, desensitizeFilterAdder); // actual text;
 																					// this property
 																					// will contain
 																					// the offset
@@ -276,7 +278,7 @@ public class DocIndexerAlto extends DocIndexerXml {
 		// written because we write in chunks to save memory), retrieve the content id, and store
 		// that in Lucene.
 		int contentId = storeCapturedContent();
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName("contents", "cid"),
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "cid"),
 				Store.YES, false).setIntValue(contentId));
 
 		// Store the different properties of the complex contents field that were gathered in
@@ -284,8 +286,8 @@ public class DocIndexerAlto extends DocIndexerXml {
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
 		// Add contents field (case-insensitive tokens) to forward index
-		int forwardId = indexer.addToForwardIndex(contentsField.getPropertyValues(""));
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName("contents", "fiid"),
+		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getPropertyValues(""));
+		currentLuceneDoc.add(new NumericField(CONTENTS_FIELD + "__fiid",
 				Store.YES, false).setIntValue(forwardId));
 	}
 

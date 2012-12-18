@@ -52,6 +52,8 @@ import org.xml.sax.Attributes;
  */
 public class DocIndexerXmlExample extends DocIndexerXml {
 
+	private static final String CONTENTS_FIELDS = "contents";
+
 	/**
 	 * Text content for the element we're currently parsing
 	 */
@@ -283,8 +285,8 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
 		// Add contents field (case-insensitive tokens) to forward index
-		int forwardId = indexer.addToForwardIndex(contentsField.getPropertyValues(""));
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName("contents", "fiid"),
+		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELDS, contentsField.getPropertyValues(""));
+		currentLuceneDoc.add(new NumericField("contents__fiid",
 				Store.YES, false).setIntValue(forwardId));
 	}
 

@@ -63,4 +63,9 @@ public class ContentAccessorContentStore extends ContentAccessor {
 		return contentStore.retrieveParts(contentId, start, end);
 	}
 
+	@Override
+	public void close() {
+		contentStore.close();
+	}
+
 }

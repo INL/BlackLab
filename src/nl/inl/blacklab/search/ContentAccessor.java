@@ -67,4 +67,6 @@ public abstract class ContentAccessor {
 		return getSubstringsFromDocument(d, new int[] { start }, new int[] { end })[0];
 	}
 
+	public abstract void close();
+
 }
