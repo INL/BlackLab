@@ -40,6 +40,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpansFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
@@ -1154,7 +1155,7 @@ public class Searcher {
 		if (forwardIndex != null) {
 			// We have a forward index for this field. Use it.
 			Document d = document(doc);
-			int fiid = Integer.parseInt(d.get(fieldName + "__fiid"));
+			int fiid = Integer.parseInt(d.get(ComplexFieldUtil.fieldName(fieldName, "fiid")));
 			words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
 		} else {
 			throw new RuntimeException("Cannot get context without a term vector");
