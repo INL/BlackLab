@@ -25,10 +25,13 @@ import nl.inl.blacklab.search.Searcher;
  */
 public class HitPropertyWordLeft extends HitProperty {
 
+	private String fieldName;
+
 	private Terms terms;
 
 	public HitPropertyWordLeft(Searcher searcher, String field) {
 		this.terms = searcher.getTerms(field);
+		this.fieldName = field;
 	}
 
 	@Override
@@ -53,8 +56,8 @@ public class HitPropertyWordLeft extends HitProperty {
 	}
 
 	@Override
-	public boolean needsContext() {
-		return true;
+	public String needsContext() {
+		return fieldName;
 	}
 
 	@Override

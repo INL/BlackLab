@@ -25,11 +25,14 @@ import nl.inl.blacklab.search.Searcher;
  */
 public class HitPropertyHitText extends HitProperty {
 
+	private String fieldName;
+
 	private Terms terms;
 
-	public HitPropertyHitText(Searcher searcher, String field/*boolean lowerCase*/) {
+	public HitPropertyHitText(Searcher searcher, String field) {
 		super();
 		this.terms = searcher.getTerms(field);
+		this.fieldName = field;
 	}
 
 	@Override
@@ -73,8 +76,8 @@ public class HitPropertyHitText extends HitProperty {
 	}
 
 	@Override
-	public boolean needsContext() {
-		return true;
+	public String needsContext() {
+		return fieldName;
 	}
 
 	@Override

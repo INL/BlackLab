@@ -31,8 +31,13 @@ public abstract class HitProperty {
 	 */
 	public abstract int compare(Hit a, Hit b);
 
-	public boolean needsContext() {
-		return false;
+	/**
+	 * Retrieve context from which field prior to sorting/grouping on this
+	 * property?
+	 * @return null if no context is required, the fieldname otherwise
+	 */
+	public String needsContext() {
+		return null;
 	}
 
 	public abstract String getName();

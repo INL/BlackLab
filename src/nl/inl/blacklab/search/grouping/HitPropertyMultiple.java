@@ -77,12 +77,13 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	}
 
 	@Override
-	public boolean needsContext() {
+	public String needsContext() {
 		for (HitProperty prop : criteria) {
-			if (prop.needsContext())
-				return true;
+			String requiredContext = prop.needsContext();
+			if (requiredContext != null)
+				return requiredContext;  // FIXME: what if multiple different contexts are required? sort/group in phases?
 		}
-		return false;
+		return null;
 	}
 
 	@Override

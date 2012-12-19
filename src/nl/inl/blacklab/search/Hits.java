@@ -258,9 +258,10 @@ public class Hits implements Iterable<Hit> {
 	public void sort(final HitProperty sortProp, boolean reverseSort) {
 		ensureAllHitsRead();
 		// Do we need context and don't we have it yet?
-		if (sortProp.needsContext() && contextFieldName == null) {
+		String requiredContext = sortProp.needsContext();
+		if (requiredContext != null && !requiredContext.equals(contextFieldName)) {
 			// Get 'em
-			findContext();
+			findContext(requiredContext);
 		}
 
 		// Sort on the hits' sort property
