@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.alto.AltoUtils;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
@@ -422,12 +423,15 @@ public class QueryTool {
 			} else if (expr.startsWith("sort ")) {
 				sortBy(expr.substring(5));
 			} else if (expr.startsWith("group by ")) {
-				groupBy(expr.substring(9));
+				String[] parts = expr.substring(9).split("\\s+", 2);
+				groupBy(parts[0], parts.length > 1 ? parts[1] : null);
 			} else if (expr.startsWith("group ")) {
 				if (expr.substring(6).matches("\\d+"))
 					changeShowSettings(expr);
-				else
-					groupBy(expr.substring(6));
+				else {
+					String[] parts = expr.substring(6).split("\\s+", 2);
+					groupBy(parts[0], parts.length > 1 ? parts[1] : null);
+				}
 			} else if (expr.equals("groups") || expr.equals("hits") || expr.startsWith("group ")) {
 				changeShowSettings(expr);
 			} else if (expr.equals("switch") || expr.equals("sw")) {
@@ -458,8 +462,8 @@ public class QueryTool {
 		out.println("Control commands:");
 		out.println("  sw(itch)                          # Switch languages (" + langAvail + ")");
 		out.println("  p(rev) / n(ext) / pagesize <n>    # Page through results");
-		out.println("  sort {match|left|right}           # Sort query results (left = left context, etc.)");
-		out.println("  group {match|left|right}          # Group query results");
+		out.println("  sort {match|left|right} [prop]    # Sort query results  (left = left context, etc.)");
+		out.println("  group {match|left|right} [prop]   # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
 		out.println("  hits / groups / group <n>         # Switch between results modes");
 		out.println("  help                              # This message");
 		out.println("  exit                              # Exit program");
@@ -562,19 +566,24 @@ public class QueryTool {
 		if (showGroups) {
 			sortGroups(sortBy);
 		} else {
-			sortHits(sortBy);
+			String[] parts = sortBy.split("\\s+", 2);
+			sortHits(parts[0], parts.length > 1 ? parts[1] : null);
 		}
 	}
 
-	final String CONTEXT_FIELD = "contents__lemma";
+	final String CONTEXT_FIELD = "contents";
 
 	/**
 	 * Sort hits by the specified property.
 	 *
 	 * @param sortBy
-	 *            property to sort by
+	 *            hit property to sort by
+	 * @param property
+	 * 			  (optional) if sortBy is a context property (say, hit text), this gives the token property to use for the context.
+	 *            Example: if this is "lemma", will look at the lemma(ta) of the hit text. If this is null, uses the
+	 *            "main property" (word form, usually).
 	 */
-	private void sortHits(String sortBy) {
+	private void sortHits(String sortBy, String property) {
 		Timer t = new Timer();
 
 		Hits hitsToSort = getCurrentHitSet();
@@ -582,12 +591,17 @@ public class QueryTool {
 		HitProperty crit = null;
 		if (sortBy.equals("doc"))
 			crit = new HitPropertyDocumentId();
-		else if (sortBy.equals("match") || sortBy.equals("word"))
-			crit = new HitPropertyHitText(searcher, CONTEXT_FIELD);
-		else if (sortBy.startsWith("left"))
-			crit = new HitPropertyLeftContext(searcher, CONTEXT_FIELD);
-		else if (sortBy.startsWith("right"))
-			crit = new HitPropertyRightContext(searcher, CONTEXT_FIELD);
+		else {
+			if (property.equals("word"))
+				property = null; // default property
+			String fieldName = ComplexFieldUtil.fieldName(CONTEXT_FIELD, property);
+			if (sortBy.equals("match") || sortBy.equals("word"))
+				crit = new HitPropertyHitText(searcher, fieldName);
+			else if (sortBy.startsWith("left"))
+				crit = new HitPropertyLeftContext(searcher, fieldName);
+			else if (sortBy.startsWith("right"))
+				crit = new HitPropertyRightContext(searcher, fieldName);
+		}
 		if (crit == null) {
 			out.println("Invalid hit sort criterium: " + sortBy
 					+ " (valid are: match, left, right)");
@@ -625,9 +639,13 @@ public class QueryTool {
 	 * Group hits by the specified property.
 	 *
 	 * @param groupBy
-	 *            property to group by
+	 *            hit property to group by
+	 * @param property
+	 * 			  (optional) if groupBy is a context property (say, hit text), this gives the token property to use for the context.
+	 *            Example: if this is "lemma", will look at the lemma(ta) of the hit text. If this is null, uses the
+	 *            "main property" (word form, usually).
 	 */
-	private void groupBy(String groupBy) {
+	private void groupBy(String groupBy, String property) {
 		if (hits == null)
 			return;
 
@@ -635,12 +653,15 @@ public class QueryTool {
 
 		// Group results
 		HitProperty crit = null;
+		if (property.equals("word"))
+			property = null; // default property
+		String fieldName = ComplexFieldUtil.fieldName(CONTEXT_FIELD, property);
 		if (groupBy.equals("word") || groupBy.equals("match"))
-			crit = new HitPropertyHitText(searcher, CONTEXT_FIELD);
+			crit = new HitPropertyHitText(searcher, fieldName);
 		else if (groupBy.startsWith("left"))
-			crit = new HitPropertyWordLeft(searcher, CONTEXT_FIELD);
+			crit = new HitPropertyWordLeft(searcher, fieldName);
 		else if (groupBy.startsWith("right"))
-			crit = new HitPropertyWordRight(searcher, CONTEXT_FIELD);
+			crit = new HitPropertyWordRight(searcher, fieldName);
 		if (crit == null) {
 			out.println("Unknown criterium: " + groupBy);
 			return;
