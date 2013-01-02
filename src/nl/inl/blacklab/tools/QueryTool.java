@@ -396,11 +396,10 @@ public class QueryTool {
 		printHelp();
 
 		while (true) {
-			out.print(currentParser.getPrompt() + "> ");
-			out.flush();
+			String prompt = currentParser.getPrompt() + "> ";
 			String expr;
 			try {
-				expr = stdin.readLine();
+				expr = readCommand(prompt);
 			} catch (IOException e1) {
 				throw new RuntimeException(e1);
 			}
@@ -451,6 +450,50 @@ public class QueryTool {
 			}
 		}
 		cleanup();
+	}
+
+	/** If JLine is available, this holds the ConsoleReader object */
+	Object jlineConsoleReader;
+
+	/** If JLine is available, this holds the readLine() method */
+	Method jlineReadLineMethod;
+
+	/** Did we check if JLine is available? */
+	boolean jlineChecked = false;
+
+	private String readCommand(String prompt) throws IOException {
+		if (jlineConsoleReader == null && !jlineChecked) {
+			jlineChecked = true;
+			try {
+				Class<?> c = Class.forName("jline.ConsoleReader");
+				jlineConsoleReader = c.newInstance();
+
+				// Disable bell
+				c.getMethod("setBellEnabled", boolean.class).invoke(jlineConsoleReader, false);
+
+				// Fetch and store the readLine method
+				jlineReadLineMethod = c.getMethod("readLine", String.class);
+
+				System.err.println("Command line editing enabled.");
+			} catch (ClassNotFoundException e) {
+				// Can't init JLine; too bad, fall back to stdin
+				System.err.println("Command line editing not available; to enable, place jline jar in classpath.");
+			} catch (Exception e) {
+				throw new RuntimeException("Could not init JLine console reader", e);
+			}
+		}
+
+		if (jlineConsoleReader != null) {
+			try {
+				return (String)jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
+			} catch (Exception e) {
+				throw new RuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
+			}
+		}
+
+		out.print(prompt);
+		out.flush();
+		return stdin.readLine();
 	}
 
 	/**
