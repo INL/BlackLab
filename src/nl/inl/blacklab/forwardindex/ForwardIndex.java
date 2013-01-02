@@ -29,7 +29,6 @@ import java.util.List;
 
 import nl.inl.util.ExUtil;
 import nl.inl.util.MemoryUtil;
-import nl.inl.util.OsUtil;
 import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
@@ -55,13 +54,26 @@ public class ForwardIndex {
 	 *  But this could be worked around using arrays of MappedByteBuffers, see:
 	 *  http://stackoverflow.com/questions/5675748/java-memorymapping-big-files
 	 */
-	private static final int MAX_DIRECT_BUFFER_SIZE = 2147483647;
+	private static final int MAX_DIRECT_BUFFER_SIZE = Integer.MAX_VALUE;
+
+	/** Desired chunk size. Usually just MAX_DIRECT_BUFFER_SIZE, but can be
+	 *  set to be smaller (for easier testing).
+	 */
+	static int preferredChunkSize = MAX_DIRECT_BUFFER_SIZE;
+
+	/**
+	 * Try to keep the whole file in memory, if there's enough free memory available.
+	 * Turn this off for testing.
+	 */
+	static boolean keepInMemoryIfPossible = true;
+
+	/**
+	 * Use memory mapping to access the file.
+	 * Turn this off for testing.
+	 */
+	static boolean useMemoryMapping = true;
 
 	protected static final Logger logger = Logger.getLogger(ForwardIndex.class);
-
-	private static final boolean CACHE_FILE_IN_MEM = true;
-
-	private static final boolean USE_MEMORY_MAPPING = true;
 
 	private static final int SIZEOF_INT = 4;
 
@@ -104,9 +116,15 @@ public class ForwardIndex {
 
 	private RandomAccessFile tokensFp;
 
-	private MappedByteBuffer tokensFileMapped = null;
+	/**
+	 * Mapping into the tokens file
+	 */
+	private List<ByteBuffer> tokensFileChunks = null;
 
-	private ByteBuffer tokensFileInMem = null;
+	/**
+	 * Offsets of the mappings into the token file
+	 */
+	private List<Long> tokensFileChunkOffsetBytes = null;
 
 	private FileChannel tokensFileChannel;
 
@@ -157,39 +175,33 @@ public class ForwardIndex {
 			} else {
 				terms = new Terms(indexMode, collator);
 				tokensFile.createNewFile();
-				tokensFileMapped = null;
+				tokensFileChunks = null;
 				tocModified = true;
 			}
 			tokensFp = new RandomAccessFile(tokensFile, indexMode ? "rw" : "r");
 			tokensFileChannel = tokensFp.getChannel();
 
 			// Tricks to speed up reading
-			if (existing && !create && !OsUtil.isWindows()) { // Memory mapping has issues on
+			if (existing && !create /*&& !OsUtil.isWindows()*/) { // Memory mapping has issues on
 																// Windows
 				long free = MemoryUtil.getFree();
 
 				logger.debug("Free memory = " + free);
-				if (!indexMode && CACHE_FILE_IN_MEM && free / 2 >= tokensFile.length()
-						&& tokensFile.length() < MAX_DIRECT_BUFFER_SIZE) { // Enough free memory;
-																			// cache whole file
+				if (!indexMode && keepInMemoryIfPossible && free / 2 >= tokensFile.length()) {
+					// Enough free memory; cache whole file
 					logger.debug("FI: reading entire tokens file into memory");
-
 					// NOTE: we can't add to the file this way, so we only use this in search mode
-					tokensFileInMem = ByteBuffer.allocate((int) tokensFile.length());
-					tokensFileChannel.position(0);
-					int bytesRead = tokensFileChannel.read(tokensFileInMem);
-					if (bytesRead != tokensFileInMem.capacity()) {
-						throw new RuntimeException("Could not read whole tokens file into memory!");
-					}
-				} else if (!indexMode && USE_MEMORY_MAPPING) {
+					memoryMapTokensFile(true);
+
+				} else if (!indexMode && useMemoryMapping) {
 					logger.debug("FI: memory-mapping the tokens file");
 
 					// Memory-map the file (sometimes fails on Windows with large files..? Increase
 					// direct buffer size with cmdline option?)
 					// NOTE: we can't add to the file this way! We only use this in search mode.
 					// @@@ add support for mapped write (need to re-map as the file grows in size)
-					tokensFileMapped = tokensFileChannel.map(FileChannel.MapMode.READ_ONLY, 0,
-							tokensFileChannel.size());
+					memoryMapTokensFile(false);
+
 				} else {
 					// Don't cache whole file in memory, don't use memory mapping. Just read from
 					// file channel.
@@ -204,6 +216,65 @@ public class ForwardIndex {
 		if (create) {
 			clear();
 		}
+	}
+
+	private void memoryMapTokensFile(boolean keepInMemory) throws IOException {
+
+		// Map the tokens file in chunks of 2GB each. When retrieving documents, we always
+		// read it from just one chunk, not multiple, but because each chunk begins at a
+		// document start, documents of up to 2G tokens can be processed. We could get around
+		// this limitation by reading from multiple chunks, but this would make the code
+		// more complex.
+		tokensFileChunks = new ArrayList<ByteBuffer>();
+		tokensFileChunkOffsetBytes = new ArrayList<Long>();
+		long mapped = 0;
+		long usefulTokensFileSize = getNumberOfTokens() * SIZEOF_INT;
+		while (mapped < usefulTokensFileSize) {
+			// Find the last TOC entry start point that's also in the previous mapping
+			// (or right the first byte after the previous mapping).
+			long startOfNextMapping = 0;
+			for (TocEntry e: toc) {
+				long entryOffset = e.offset * SIZEOF_INT;
+				if (entryOffset <= mapped && entryOffset > startOfNextMapping) {
+					startOfNextMapping = entryOffset;
+				}
+			}
+
+			// Map this chunk
+			long size = usefulTokensFileSize - startOfNextMapping;
+			if (size > preferredChunkSize)
+				size = preferredChunkSize;
+
+			ByteBuffer mapping;
+			if (keepInMemory) {
+				mapping = ByteBuffer.allocate((int)size);
+				tokensFileChannel.position(startOfNextMapping);
+				int bytesRead = tokensFileChannel.read(mapping);
+				if (bytesRead != mapping.capacity()) {
+					throw new RuntimeException("Could not read tokens file chunk into memory!");
+				}
+			} else {
+				mapping = tokensFileChannel.map(FileChannel.MapMode.READ_ONLY, startOfNextMapping,
+						size);
+			}
+			tokensFileChunks.add(mapping);
+			tokensFileChunkOffsetBytes.add(startOfNextMapping);
+			mapped = startOfNextMapping + size;
+		}
+	}
+
+	/**
+	 * Returns the total number of tokens stored in the file
+	 * @return the number of tokens
+	 */
+	private long getNumberOfTokens() {
+		long size = 0;
+		for (TocEntry e: toc) {
+			long end = e.offset + e.length;
+			if (end > size)
+				size = end;
+		}
+		return size;
 	}
 
 	/**
@@ -265,13 +336,15 @@ public class ForwardIndex {
 	 */
 	public void close() {
 		try {
-			tokensFileInMem = null;
 			if (tocModified) {
 				writeToc();
 				terms.write(termsFile);
 			}
+
 			tokensFileChannel.close();
+
 			tokensFp.close();
+
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
@@ -288,7 +361,9 @@ public class ForwardIndex {
 		try {
 			if (writeBuffer == null) {
 				// Map writeBuffer
-				writeBufOffset = tokensFp.length() / SIZEOF_INT;
+
+				writeBufOffset = getNumberOfTokens();
+
 				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
 						writeBufOffset * SIZEOF_INT, (content.size() + WRITE_MAP_RESERVE) * SIZEOF_INT);
 				writeBuffer = byteBuffer.asIntBuffer();
@@ -332,31 +407,6 @@ public class ForwardIndex {
 			Utilities.cleanDirectBufferHack(writeBuffer);
 			*/
 
-			return toc.size() - 1;
-		} catch (IOException e1) {
-			throw new RuntimeException(e1);
-		}
-	}
-
-	/**
-	 * Store the given content and assign an id to it.
-	 *
-	 * NOTE: this version uses no memory mapping and is quite a bit slower.
-	 *
-	 * @param content
-	 *            the content to store
-	 * @return the id assigned to the content
-	 */
-	public synchronized int addDocumentNoMapping(List<String> content) {
-		try { // Make entry
-			TocEntry e = new TocEntry(tokensFp.length() / SIZEOF_INT, content.size(), false);
-			toc.add(e);
-			tocModified = true;
-
-			tokensFp.seek(e.offset * SIZEOF_INT);
-			for (String token : content) {
-				tokensFp.writeInt(terms.indexOf(token));
-			}
 			return toc.size() - 1;
 		} catch (IOException e1) {
 			throw new RuntimeException(e1);
@@ -511,23 +561,6 @@ public class ForwardIndex {
 				throw new RuntimeException("start and end must be of equal length");
 			List<int[]> result = new ArrayList<int[]>(n);
 
-			// Do we have direct access to the tokens file?
-			IntBuffer ib = null;
-			boolean inMem = false;
-			if (tokensFileMapped != null || tokensFileInMem != null) {
-				// Yes, the tokens file has either been fully loaded into memory or
-				// is mapped into memory. Get an int buffer into the file.
-				inMem = true;
-				if (tokensFileInMem != null) {
-					// Whole file cached in memory
-					tokensFileInMem.position((int) e.offset * SIZEOF_INT);
-					ib = tokensFileInMem.asIntBuffer();
-				} else {
-					// File memory-mapped
-					tokensFileMapped.position((int) e.offset * SIZEOF_INT);
-					ib = tokensFileMapped.asIntBuffer();
-				}
-			}
 			for (int i = 0; i < n; i++) {
 				if (start[i] == -1 && end[i] == -1) {
 					// whole content
@@ -549,6 +582,33 @@ public class ForwardIndex {
 					throw new RuntimeException(
 							"Tried to read empty or negative length snippet (from " + start[i]
 									+ " to " + end[i] + ")");
+				}
+
+				// Get an IntBuffer to read the desired content
+				IntBuffer ib = null;
+				boolean inMem = false;
+				if (tokensFileChunks != null) {
+					// Yes, the tokens file has either been fully loaded into memory or
+					// is mapped into memory. Get an int buffer into the file.
+					inMem = true;
+
+					// Figure out which chunk to access.
+					ByteBuffer whichChunk = null;
+					long chunkOffsetBytes = -1;
+					long entryOffsetBytes = e.offset * SIZEOF_INT;
+					for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
+						long offsetBytes = tokensFileChunkOffsetBytes.get(j);
+						ByteBuffer buffer = tokensFileChunks.get(j);
+						if (offsetBytes <= entryOffsetBytes + start[i] * SIZEOF_INT && offsetBytes + buffer.capacity() >= entryOffsetBytes + end[i] * SIZEOF_INT) {
+							// This one!
+							whichChunk = buffer;
+							chunkOffsetBytes = offsetBytes;
+							break;
+						}
+					}
+
+					whichChunk.position((int) (e.offset * SIZEOF_INT - chunkOffsetBytes));
+					ib = whichChunk.asIntBuffer();
 				}
 
 				int snippetLength = end[i] - start[i];

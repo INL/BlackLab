@@ -22,7 +22,6 @@ import junit.framework.Assert;
 import nl.inl.util.Utilities;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 public class TestForwardIndex {
@@ -33,9 +32,7 @@ public class TestForwardIndex {
 	String[][] str = { { "How", "much", "wood" }, { "would", "a", "woodchuck", "chuck" },
 			{ "if", "a", "woodchuck", "could", "chuck", "wood" } };
 
-	@Before
-	public void setUp() {
-
+	private void setUpForwardIndex() {
 		// Remove any previously left over temp test dirs
 		Utilities.removeBlackLabTestDirs();
 
@@ -64,6 +61,50 @@ public class TestForwardIndex {
 
 	@Test
 	public void testRetrieve() {
+		ForwardIndex.preferredChunkSize = Integer.MAX_VALUE; // make sure this is at the default
+		ForwardIndex.keepInMemoryIfPossible = true; // default
+		ForwardIndex.useMemoryMapping = true; // default
+		setUpForwardIndex();
+
+		// Retrieve strings
+		for (int i = 0; i < str.length; i++) {
+			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
+		}
+	}
+
+	@Test
+	public void testChunkingInMemory() {
+		ForwardIndex.preferredChunkSize = 24; // really small so chunked mapping is forced
+		ForwardIndex.keepInMemoryIfPossible = true; // default
+		ForwardIndex.useMemoryMapping = true; // default
+		setUpForwardIndex();
+
+		// Retrieve strings
+		for (int i = 0; i < str.length; i++) {
+			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
+		}
+	}
+
+	@Test
+	public void testChunkingMapped() {
+		ForwardIndex.preferredChunkSize = 24; // really small so chunked mapping is forced
+		ForwardIndex.keepInMemoryIfPossible = false; // test mapped access
+		ForwardIndex.useMemoryMapping = true; // default
+		setUpForwardIndex();
+
+		// Retrieve strings
+		for (int i = 0; i < str.length; i++) {
+			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
+		}
+	}
+
+	@Test
+	public void testChunkingFileChannel() {
+		ForwardIndex.preferredChunkSize = Integer.MAX_VALUE; // default
+		ForwardIndex.keepInMemoryIfPossible = false; // test direct file channel access
+		ForwardIndex.useMemoryMapping = false; // test direct file channel access
+		setUpForwardIndex();
+
 		// Retrieve strings
 		for (int i = 0; i < str.length; i++) {
 			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
