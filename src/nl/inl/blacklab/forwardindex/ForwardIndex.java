@@ -59,7 +59,7 @@ public class ForwardIndex {
 	/** Desired chunk size. Usually just MAX_DIRECT_BUFFER_SIZE, but can be
 	 *  set to be smaller (for easier testing).
 	 */
-	static int preferredChunkSize = MAX_DIRECT_BUFFER_SIZE;
+	static int preferredChunkSizeBytes = MAX_DIRECT_BUFFER_SIZE / 2; // DEBUG crash on Linux 64bit??
 
 	/**
 	 * Try to keep the whole file in memory, if there's enough free memory available.
@@ -77,9 +77,7 @@ public class ForwardIndex {
 
 	private static final int SIZEOF_INT = 4;
 
-	/**
-	 * The number of integer positions to reserve when mapping the file for writing.
-	 */
+	/** The number of integer positions to reserve when mapping the file for writing. */
 	final static int WRITE_MAP_RESERVE = 250000; // 250K integers = 1M bytes
 
 	/** The memory mapped write buffer */
@@ -89,46 +87,38 @@ public class ForwardIndex {
 	 * (so we don't count bytes, we count ints) */
 	private long writeBufOffset;
 
-	/**
-	 * The TOC entries
-	 */
+	/** The TOC entries */
 	private List<TocEntry> toc;
 
-	/**
-	 * The table of contents (TOC) file, docs.dat
-	 */
+	/** The table of contents (TOC) file, docs.dat */
 	private File tocFile;
 
-	/**
-	 * The tokens file (stores indexes into terms.dat)
-	 */
+	/** The tokens file (stores indexes into terms.dat) */
 	private File tokensFile;
 
-	/**
-	 * The terms file (stores unique terms)
-	 */
+	/** The terms file (stores unique terms) */
 	private File termsFile;
 
-	/**
-	 * The unique terms in our index
-	 */
+	/**  The unique terms in our index */
 	private Terms terms;
 
+	/** The total number of tokens stored in the tokens file */
 	private RandomAccessFile tokensFp;
 
-	/**
-	 * Mapping into the tokens file
-	 */
+	/** Mapping into the tokens file */
 	private List<ByteBuffer> tokensFileChunks = null;
 
-	/**
-	 * Offsets of the mappings into the token file
-	 */
+	/** Offsets of the mappings into the token file */
 	private List<Long> tokensFileChunkOffsetBytes = null;
 
+	/** File channel for the tokens file */
 	private FileChannel tokensFileChannel;
 
+	/** Has the table of contents been modified? */
 	private boolean tocModified = false;
+
+	/** The total number of tokens stored in the tokens file */
+	private long tokenFileEndPosition = 0;
 
 	// private boolean indexMode = false;
 
@@ -227,39 +217,42 @@ public class ForwardIndex {
 		// more complex.
 		tokensFileChunks = new ArrayList<ByteBuffer>();
 		tokensFileChunkOffsetBytes = new ArrayList<Long>();
-		long mapped = 0;
-		long usefulTokensFileSize = getNumberOfTokens() * SIZEOF_INT;
-		while (mapped < usefulTokensFileSize) {
+		long mappedBytes = 0;
+		long tokenFileEndBytes = getTokenFileEndPosition() * SIZEOF_INT;
+		while (mappedBytes < tokenFileEndBytes) {
 			// Find the last TOC entry start point that's also in the previous mapping
 			// (or right the first byte after the previous mapping).
-			long startOfNextMapping = 0;
+			long startOfNextMappingBytes = 0;
+
+			// OPT: if we keep the toc sorted, we could do a binary search here
 			for (TocEntry e: toc) {
 				long entryOffset = e.offset * SIZEOF_INT;
-				if (entryOffset <= mapped && entryOffset > startOfNextMapping) {
-					startOfNextMapping = entryOffset;
+				if (entryOffset <= mappedBytes && entryOffset > startOfNextMappingBytes) {
+					startOfNextMappingBytes = entryOffset;
 				}
 			}
 
 			// Map this chunk
-			long size = usefulTokensFileSize - startOfNextMapping;
-			if (size > preferredChunkSize)
-				size = preferredChunkSize;
+			long sizeBytes = tokenFileEndBytes - startOfNextMappingBytes;
+			if (sizeBytes > preferredChunkSizeBytes)
+				sizeBytes = preferredChunkSizeBytes;
 
 			ByteBuffer mapping;
 			if (keepInMemory) {
-				mapping = ByteBuffer.allocate((int)size);
-				tokensFileChannel.position(startOfNextMapping);
+				mapping = ByteBuffer.allocate((int)sizeBytes);
+				tokensFileChannel.position(startOfNextMappingBytes);
+				logger.debug("Read tokens file offset " + startOfNextMappingBytes + " length " + sizeBytes);
 				int bytesRead = tokensFileChannel.read(mapping);
 				if (bytesRead != mapping.capacity()) {
 					throw new RuntimeException("Could not read tokens file chunk into memory!");
 				}
 			} else {
-				mapping = tokensFileChannel.map(FileChannel.MapMode.READ_ONLY, startOfNextMapping,
-						size);
+				mapping = tokensFileChannel.map(FileChannel.MapMode.READ_ONLY, startOfNextMappingBytes,
+						sizeBytes);
 			}
 			tokensFileChunks.add(mapping);
-			tokensFileChunkOffsetBytes.add(startOfNextMapping);
-			mapped = startOfNextMapping + size;
+			tokensFileChunkOffsetBytes.add(startOfNextMappingBytes);
+			mappedBytes = startOfNextMappingBytes + sizeBytes;
 		}
 	}
 
@@ -267,14 +260,8 @@ public class ForwardIndex {
 	 * Returns the total number of tokens stored in the file
 	 * @return the number of tokens
 	 */
-	private long getNumberOfTokens() {
-		long size = 0;
-		for (TocEntry e: toc) {
-			long end = e.offset + e.length;
-			if (end > size)
-				size = end;
-		}
-		return size;
+	private long getTokenFileEndPosition() {
+		return tokenFileEndPosition;
 	}
 
 	/**
@@ -290,6 +277,7 @@ public class ForwardIndex {
 		termsFile.delete();
 		tocFile.delete();
 		toc.clear();
+		tokenFileEndPosition = 0;
 		tocModified = true;
 	}
 
@@ -305,6 +293,10 @@ public class ForwardIndex {
 				while (raf.getFilePointer() < fl) {
 					TocEntry e = TocEntry.deserialize(raf);
 					toc.add(e);
+
+					long end = e.offset + e.length;
+					if (end > tokenFileEndPosition)
+						tokenFileEndPosition = end;
 				}
 			} finally {
 				raf.close();
@@ -314,6 +306,9 @@ public class ForwardIndex {
 		}
 	}
 
+	/**
+	 * Write the table of contents to the file
+	 */
 	private void writeToc() {
 		try {
 			RandomAccessFile raf = new RandomAccessFile(tocFile, "rw");
@@ -362,7 +357,7 @@ public class ForwardIndex {
 			if (writeBuffer == null) {
 				// Map writeBuffer
 
-				writeBufOffset = getNumberOfTokens();
+				writeBufOffset = getTokenFileEndPosition();
 
 				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
 						writeBufOffset * SIZEOF_INT, (content.size() + WRITE_MAP_RESERVE) * SIZEOF_INT);
@@ -373,6 +368,9 @@ public class ForwardIndex {
 			long entryOffset = writeBufOffset + writeBuffer.position();
 			TocEntry e = new TocEntry(entryOffset, content.size(), false);
 			toc.add(e);
+			long end = e.offset + e.length;
+			if (end > tokenFileEndPosition)
+				tokenFileEndPosition = end;
 			tocModified = true;
 
 			if (writeBuffer.remaining() < content.size()) {

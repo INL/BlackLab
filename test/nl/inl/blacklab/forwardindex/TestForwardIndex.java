@@ -61,7 +61,7 @@ public class TestForwardIndex {
 
 	@Test
 	public void testRetrieve() {
-		ForwardIndex.preferredChunkSize = Integer.MAX_VALUE; // make sure this is at the default
+		ForwardIndex.preferredChunkSizeBytes = Integer.MAX_VALUE; // make sure this is at the default
 		ForwardIndex.keepInMemoryIfPossible = true; // default
 		ForwardIndex.useMemoryMapping = true; // default
 		setUpForwardIndex();
@@ -74,7 +74,7 @@ public class TestForwardIndex {
 
 	@Test
 	public void testChunkingInMemory() {
-		ForwardIndex.preferredChunkSize = 24; // really small so chunked mapping is forced
+		ForwardIndex.preferredChunkSizeBytes = 24; // really small so chunked mapping is forced
 		ForwardIndex.keepInMemoryIfPossible = true; // default
 		ForwardIndex.useMemoryMapping = true; // default
 		setUpForwardIndex();
@@ -87,7 +87,7 @@ public class TestForwardIndex {
 
 	@Test
 	public void testChunkingMapped() {
-		ForwardIndex.preferredChunkSize = 24; // really small so chunked mapping is forced
+		ForwardIndex.preferredChunkSizeBytes = 24; // really small so chunked mapping is forced
 		ForwardIndex.keepInMemoryIfPossible = false; // test mapped access
 		ForwardIndex.useMemoryMapping = true; // default
 		setUpForwardIndex();
@@ -100,7 +100,7 @@ public class TestForwardIndex {
 
 	@Test
 	public void testChunkingFileChannel() {
-		ForwardIndex.preferredChunkSize = Integer.MAX_VALUE; // default
+		ForwardIndex.preferredChunkSizeBytes = Integer.MAX_VALUE; // default
 		ForwardIndex.keepInMemoryIfPossible = false; // test direct file channel access
 		ForwardIndex.useMemoryMapping = false; // test direct file channel access
 		setUpForwardIndex();
