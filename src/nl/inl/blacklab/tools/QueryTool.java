@@ -54,7 +54,6 @@ import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.varia.NullAppender;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.search.Filter;
@@ -353,7 +352,7 @@ public class QueryTool {
 		String propIsAlto = System.getProperty("IS_ALTO");
 		IS_ALTO = propIsAlto == null ? false : propIsAlto.equalsIgnoreCase("true");
 
-		BasicConfigurator.configure(new NullAppender()); // ignore logging for now
+		BasicConfigurator.configure(); //new NullAppender()); // ignore logging for now
 
 		// Change output encoding?
 		if (args.length == 2) {
@@ -635,7 +634,7 @@ public class QueryTool {
 		if (sortBy.equals("doc"))
 			crit = new HitPropertyDocumentId();
 		else {
-			if (property.equals("word"))
+			if (property != null && property.equals("word"))
 				property = null; // default property
 			String fieldName = ComplexFieldUtil.fieldName(CONTEXT_FIELD, property);
 			if (sortBy.equals("match") || sortBy.equals("word"))
@@ -696,7 +695,7 @@ public class QueryTool {
 
 		// Group results
 		HitProperty crit = null;
-		if (property.equals("word"))
+		if (property != null && property.equals("word"))
 			property = null; // default property
 		String fieldName = ComplexFieldUtil.fieldName(CONTEXT_FIELD, property);
 		if (groupBy.equals("word") || groupBy.equals("match"))
