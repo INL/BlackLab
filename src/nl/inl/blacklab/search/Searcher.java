@@ -868,7 +868,9 @@ public class Searcher {
 	 * @param hits
 	 *            the hits
 	 * @return the highlighted content
+	 * @deprecated not needed anymore, highlighter only suspends highlighting if stricly necessary, so content in attributes works properly
 	 */
+	@Deprecated
 	public String highlightContentAlto(int docId, String fieldName, Hits hits) {
 		// Get the field content
 		Document doc = document(docId);

@@ -58,6 +58,13 @@ public class XmlHighlighter {
 		int end;
 
 		/**
+		 * Start position of matching tag (the close to this open tag, or vice versa) in original content.
+		 * A negative value indicates that this tag was unmatched (which might happen if we're highlighting snippets
+		 * of a document).
+		 */
+		int matchingTagStart;
+
+		/**
 		 * Unique id for each tag; used as a tie-breaker so sorting is always the same, and end tags
 		 * always follow their start tags
 		 */
@@ -67,6 +74,7 @@ public class XmlHighlighter {
 			this.type = type;
 			this.start = start;
 			this.end = end;
+			matchingTagStart = -1; // unmatched tag (until we find its match)
 			objectNum = n;
 			n++;
 		}
@@ -111,20 +119,17 @@ public class XmlHighlighter {
 	 */
 	private static final int OVERSHOOT_ALLOWED = 10;
 
-	/**
-	 * How deep are we inside highlighting tags?
-	 */
+	/** How deep are we inside highlighting tags? */
 	private int inHighlightTag;
 
-	/**
-	 * Where the highlighted content is built - therefore, this class is not threadsafe!
-	 */
+	/** Where the highlighted content is built - therefore, this class is not threadsafe! */
 	StringBuilder b;
 
-	/**
-	 * Remove empty <hl></hl> tags after highlighting?
-	 */
+	/** Remove empty <hl></hl> tags after highlighting? */
 	private boolean removeEmptyHlTags = true;
+
+	/** The outer (usually, only) highlight tag we're inside of, or null if we're not highlighting. */
+	private TagLocation outerHighlightTag = null;
 
 	/**
 	 * Given XML content and a sorted list of existing tags and highlight tags to be added, add the
@@ -140,7 +145,7 @@ public class XmlHighlighter {
 	 *            the existing tags and highlight tags to add. This list must be sorted!
 	 * @param preferredLength
 	 *            after how many characters of text content to cut this fragment. Just set to
-	 *            elementContent.size() if you don't want to do any cutting.
+	 *            xmlContent.length() if you don't want to do any cutting.
 	 * @return the highlighted XML content.
 	 */
 	private String highlightInternal(String xmlContent, List<TagLocation> tags, int preferredLength) {
@@ -148,7 +153,7 @@ public class XmlHighlighter {
 		b = new StringBuilder();
 		inHighlightTag = 0;
 		int visibleCharsAdded = 0;
-		boolean addVisibleChars = true;
+		boolean addVisibleChars = true; // keep adding text content until we reach the preferred length
 		boolean wasCut = false;
 		for (TagLocation tag : tags) {
 			if (tag.start < positionInContent) {
@@ -192,10 +197,10 @@ public class XmlHighlighter {
 	private void processTag(String xmlContent, TagLocation tag) {
 		switch (tag.type) {
 		case HIGHLIGHT_START:
-			startHighlight();
+			startHighlight(tag);
 			break;
 		case EXISTING_TAG:
-			existingTag(xmlContent.substring(tag.start, tag.end));
+			existingTag(tag, xmlContent.substring(tag.start, tag.end));
 			break;
 		case HIGHLIGHT_END:
 			endHighlight();
@@ -204,17 +209,21 @@ public class XmlHighlighter {
 	}
 
 	/** Add highlight tag if not already added; increment depth */
-	private void startHighlight() {
-		if (inHighlightTag == 0)
+	private void startHighlight(TagLocation tag) {
+		if (inHighlightTag == 0) {
 			b.append(startHighlightTag);
+			outerHighlightTag  = tag;
+		}
 		inHighlightTag++;
 	}
 
 	/** Decrement depth; End highlight if we're at level 0 */
 	private void endHighlight() {
 		inHighlightTag--;
-		if (inHighlightTag == 0)
+		if (inHighlightTag == 0) {
 			b.append(endHighlightTag);
+			outerHighlightTag = null;
+		}
 	}
 
 	/**
@@ -224,11 +233,22 @@ public class XmlHighlighter {
 	 * @param str
 	 *            the existing tag encountered.
 	 */
-	private void existingTag(String str) {
-		if (inHighlightTag > 0)
+	private void existingTag(TagLocation tag, String str) {
+		boolean suspendHighlighting = false;
+
+		if (inHighlightTag > 0) {
+			// We should possibly suspend highlighting for this tag to maintain well-formedness.
+			// Check the current (outer) highlighting span and see if our matching tag is inside or outside this highlighting span.
+			if (outerHighlightTag.start > tag.matchingTagStart || outerHighlightTag.matchingTagStart <= tag.matchingTagStart) {
+				// Matching tag is outside the highlighting span; highlighting must be suspended to maintain well-formedness.
+				suspendHighlighting = true;
+			}
+		}
+
+		if (suspendHighlighting)
 			b.append(endHighlightTag);
 		b.append(str);
-		if (inHighlightTag > 0)
+		if (suspendHighlighting)
 			b.append(startHighlightTag);
 	}
 
@@ -257,14 +277,25 @@ public class XmlHighlighter {
 			final int a = hit.getStartChar();
 			if (a < 0) // non-highlighting element, for example: searching for example date range
 				continue;
-			tags.add(new TagLocation(TagType.HIGHLIGHT_START, a, a));
 			final int b = hit.getEndChar();
-			tags.add(new TagLocation(TagType.HIGHLIGHT_END, b, b));
+			TagLocation start = new TagLocation(TagType.HIGHLIGHT_START, a, a);
+			start.matchingTagStart = b;
+			tags.add(start);
+			TagLocation end = new TagLocation(TagType.HIGHLIGHT_END, b, b);
+			end.matchingTagStart = a;
+			tags.add(end);
 		}
 	}
 
 	/**
 	 * Given XML content, make a list of tag locations in this content.
+	 *
+	 * Note that the XML content is assumed to be (part of) a well-formed XML
+	 * document. This way we can highlight a whole document or part of a document.
+	 * It's therefore okay if we encounter close tags at the start that we haven't
+	 * seen an open tag for, or open tags at the end that we'll never see a close tag
+	 * for, but if there are other tag errors (e.g. hierarchy errors such as &lt;i&gt;&lt;b&gt;&lt;/i&gt;&lt;/b&gt;)
+	 * the behaviour of the highlighter is undefined.
 	 *
 	 * @param elementContent
 	 *            the XML content
@@ -272,12 +303,60 @@ public class XmlHighlighter {
 	 */
 	private static List<TagLocation> makeTagList(String elementContent) {
 		List<TagLocation> tags = new ArrayList<TagLocation>();
-		Pattern xmlTags = Pattern.compile("<[^>]+>");
+		Pattern xmlTags = Pattern.compile("<\\s*(/?)[^>]+>"); // group 1 indicates if this is an open or close tag
 		Matcher m = xmlTags.matcher(elementContent);
+		List<TagLocation> openTagStack = new ArrayList<TagLocation>(); // keep track of open tags
 		while (m.find()) {
-			tags.add(new TagLocation(TagType.EXISTING_TAG, m.start(), m.end()));
+			TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, m.start(), m.end());
+
+			// Keep track of open tags, so we know if the tags are matched
+			boolean isOpenTag = m.group(1).length() == 0;
+			boolean isSelfClosing = isOpenTag && isSelfClosing(m.group());
+			if (isOpenTag) {
+				if (!isSelfClosing) {
+					// Open tag. Add to the stack.
+					openTagStack.add(tagLocation);
+				} else {
+					// Self-closing tag. Don't add to stack, link to self
+					tagLocation.matchingTagStart = tagLocation.start;
+				}
+			} else {
+				// Close tag. Did we encounter a matching open tag?
+				if (openTagStack.size() > 0) {
+					// Yes, this tag is matched. Find matching tag and link them.
+					TagLocation openTag = openTagStack.remove(openTagStack.size() - 1);
+					openTag.matchingTagStart = tagLocation.start;
+					tagLocation.matchingTagStart = openTag.start;
+				}
+			}
+
+			// Add tag to the tag list
+			tags.add(tagLocation);
 		}
 		return tags;
+	}
+
+	/**
+	 * Determines if a tag is a self-closing tag (ends with "/&gt;")
+	 * @param tag the tag
+	 * @return true iff it is self-closing
+	 */
+	private static boolean isSelfClosing(String tag) {
+		// Start at the second to last character (skip the '>') and look for slash.
+		for (int i = tag.length() - 2; i >= 0; i--) {
+			switch(tag.charAt(i)) {
+			case '/':
+				// Yes, self-closing tag
+				return true;
+			case ' ': case '\t': case '\n': case '\r':
+				// Whitespace; continue
+				break;
+			default:
+				// We found an attribute or the tag name before encountering a slash, so it's not self-closing.
+				return false;
+			}
+		}
+		return false;
 	}
 
 	/**
