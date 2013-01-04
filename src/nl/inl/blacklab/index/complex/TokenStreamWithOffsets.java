@@ -22,9 +22,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 /**
  * Takes a List&lt;String&gt; plus two List&lt;Integer&gt;'s and iterates through them as a
@@ -51,11 +51,13 @@ class TokenStreamWithOffsets extends TokenStream {
 
 	protected Iterator<String> iterator;
 
+	protected Iterator<Integer> incrementIt;
+
 	private Iterator<Integer> startCharIt;
 
 	private Iterator<Integer> endCharIt;
 
-	public TokenStreamWithOffsets(List<String> tokens, List<Integer> startChar,
+	public TokenStreamWithOffsets(List<String> tokens, List<Integer> increments, List<Integer> startChar,
 			List<Integer> endChar) {
 		clearAttributes();
 		termAttr = addAttribute(CharTermAttribute.class);
@@ -64,6 +66,7 @@ class TokenStreamWithOffsets extends TokenStream {
 		positionIncrementAttr.setPositionIncrement(1);
 
 		iterator = tokens.iterator();
+		incrementIt = increments.iterator();
 		startCharIt = startChar.iterator();
 		endCharIt = endChar.iterator();
 	}
@@ -76,6 +79,7 @@ class TokenStreamWithOffsets extends TokenStream {
 			if (term == null)
 				System.err.println("TERM==NULL");
 			termAttr.copyBuffer(term.toCharArray(), 0, term.length());
+			positionIncrementAttr.setPositionIncrement(incrementIt.next());
 			offsetAttr.setOffset(startCharIt.next(), endCharIt.next());
 			return true;
 		}

@@ -32,10 +32,17 @@ import org.apache.lucene.document.Field.TermVector;
 /**
  * A property in a complex field. See ComplexFieldImpl for details.
  */
-class ComplexFieldPropertyImplSimple implements ComplexFieldProperty {
+class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 	protected boolean includeOffsets;
 
+	/**
+	 *  Term values for this property.
+	 */
 	protected List<String> values = new ArrayList<String>();
+
+	/** Token position increments. This allows us to index multiple terms at a single token position (just
+	 *  set the token increments of the additional tokens to 0). */
+	protected List<Integer> increments = new ArrayList<Integer>();
 
 	/**
 	 * A property may be indexed in different ways (alternatives). This specifies names and filters
@@ -61,16 +68,17 @@ class ComplexFieldPropertyImplSimple implements ComplexFieldProperty {
 	}
 
 	@Override
-	public void addValue(String value) {
+	public void addValue(String value, int increment) {
 		values.add(value);
+		increments.add(increment);
 	}
 
 	TokenStream getTokenStream(String altName, List<Integer> startChars, List<Integer> endChars) {
 		TokenStream ts;
 		if (includeOffsets)
-			ts = new TokenStreamWithOffsets(values, startChars, endChars);
+			ts = new TokenStreamWithOffsets(values, increments, startChars, endChars);
 		else
-			ts = new TokenStreamFromList(values);
+			ts = new TokenStreamFromList(values, increments);
 		TokenFilterAdder filterAdder = alternatives.get(altName);
 		if (filterAdder != null)
 			return filterAdder.addFilters(ts);
@@ -93,6 +101,7 @@ class ComplexFieldPropertyImplSimple implements ComplexFieldProperty {
 	@Override
 	public void clear() {
 		values.clear();
+		increments.clear();
 	}
 
 	@Override
@@ -103,6 +112,11 @@ class ComplexFieldPropertyImplSimple implements ComplexFieldProperty {
 	@Override
 	public List<String> getValues() {
 		return Collections.unmodifiableList(values);
+	}
+
+	@Override
+	public List<Integer> getPositionIncrements() {
+		return Collections.unmodifiableList(increments);
 	}
 
 }

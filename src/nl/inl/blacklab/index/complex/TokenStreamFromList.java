@@ -34,7 +34,12 @@ import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
  * The Strings are taken as terms, and the position increment is always 1.
  */
 class TokenStreamFromList extends TokenStream {
+
+	/** Iterator over the terms */
 	protected Iterator<String> iterator;
+
+	/** Iterator over the position increments */
+	private Iterator<Integer> incrementIt;
 
 	/**
 	 * Term text of the current token
@@ -46,13 +51,14 @@ class TokenStreamFromList extends TokenStream {
 	 */
 	protected PositionIncrementAttribute positionIncrementAttr;
 
-	public TokenStreamFromList(Iterable<String> tokens) {
+	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments) {
 		clearAttributes();
 		termAttr = addAttribute(CharTermAttribute.class);
 		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
 		positionIncrementAttr.setPositionIncrement(1);
 
 		iterator = tokens.iterator();
+		incrementIt = increments.iterator();
 	}
 
 	@Override
@@ -61,13 +67,14 @@ class TokenStreamFromList extends TokenStream {
 		if (iterator.hasNext()) {
 			String word = iterator.next();
 			termAttr.copyBuffer(word.toCharArray(), 0, word.length());
+			positionIncrementAttr.setPositionIncrement(incrementIt.next());
 			return true;
 		}
 		return false;
 	}
 
 	public static void main(String[] args) throws IOException {
-		TokenStream s = new TokenStreamFromList(Arrays.asList("a", "b", "c"));
+		TokenStream s = new TokenStreamFromList(Arrays.asList("a", "b", "c"), Arrays.asList(1, 1, 1));
 		try {
 			CharTermAttribute term = s.addAttribute(CharTermAttribute.class);
 			s.incrementToken();

@@ -22,9 +22,13 @@ import org.apache.lucene.document.Document;
 /**
  * A property in a complex field. See ComplexFieldImpl for details.
  */
-interface ComplexFieldProperty {
+abstract class ComplexFieldProperty {
 
-	public abstract void addValue(String value);
+	public void addValue(String value) {
+		addValue(value, 1);
+	}
+
+	public abstract void addValue(String value, int increment);
 
 	public abstract void addToLuceneDoc(Document doc, String fieldName, List<Integer> startChars,
 			List<Integer> endChars);
@@ -34,5 +38,7 @@ interface ComplexFieldProperty {
 	public abstract void addAlternative(String destName, TokenFilterAdder filterAdder);
 
 	public abstract List<String> getValues();
+
+	public abstract List<Integer> getPositionIncrements();
 
 }
