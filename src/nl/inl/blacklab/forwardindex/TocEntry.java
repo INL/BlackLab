@@ -20,7 +20,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /** Table of contents entry; stored in docs.dat */
-class TocEntry {
+class TocEntry implements Comparable<TocEntry> {
 	/** token offset in tokens.dat */
 	public long offset;
 
@@ -63,5 +63,15 @@ class TocEntry {
 		int length = d.readInt();
 		boolean deleted = d.readByte() != 0;
 		return new TocEntry(offset, length, deleted);
+	}
+
+	/**
+	 * Compare this entry to another (for sorting).
+	 * @param o the entry to compare with
+	 * @return the comparison result
+	 */
+	@Override
+	public int compareTo(TocEntry o) {
+		return (int) (offset - o.offset);
 	}
 }

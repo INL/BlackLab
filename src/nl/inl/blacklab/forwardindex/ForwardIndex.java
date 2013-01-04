@@ -16,6 +16,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -25,6 +26,7 @@ import java.nio.channels.FileChannel;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import nl.inl.util.ExUtil;
@@ -38,6 +40,8 @@ import org.apache.log4j.Logger;
  * "what word occurs in doc X at position Y"?
  */
 public class ForwardIndex {
+
+	protected static final Logger logger = Logger.getLogger(ForwardIndex.class);
 
 	/*
 	 * File format version history:
@@ -58,14 +62,17 @@ public class ForwardIndex {
 
 	/** Desired chunk size. Usually just MAX_DIRECT_BUFFER_SIZE, but can be
 	 *  set to be smaller (for easier testing).
+	 *
+	 *  NOTE: using MAX_DIRECT_BUFFER_SIZE (2GB) failed on Linux 64 bit, so
+	 *  we're using 1GB for now.
 	 */
-	static int preferredChunkSizeBytes = MAX_DIRECT_BUFFER_SIZE / 2; // DEBUG crash on Linux 64bit??
+	static int preferredChunkSizeBytes = MAX_DIRECT_BUFFER_SIZE / 2;
 
 	/**
 	 * Try to keep the whole file in memory, if there's enough free memory available.
-	 * Turn this off for testing.
+	 * Turn this off to use memory-mapping (leaving caching to the OS) or for testing.
 	 */
-	static boolean keepInMemoryIfPossible = true;
+	static boolean keepInMemoryIfPossible = false; //true;
 
 	/**
 	 * Use memory mapping to access the file.
@@ -73,9 +80,8 @@ public class ForwardIndex {
 	 */
 	static boolean useMemoryMapping = true;
 
-	protected static final Logger logger = Logger.getLogger(ForwardIndex.class);
-
-	private static final int SIZEOF_INT = 4;
+	/** Size of an int in bytes. This will always be 4, according to the standard. */
+	private static final int SIZEOF_INT = Integer.SIZE / 8;
 
 	/** The number of integer positions to reserve when mapping the file for writing. */
 	final static int WRITE_MAP_RESERVE = 250000; // 250K integers = 1M bytes
@@ -87,7 +93,7 @@ public class ForwardIndex {
 	 * (so we don't count bytes, we count ints) */
 	private long writeBufOffset;
 
-	/** The TOC entries */
+	/** The table of contents (where documents start in the tokens file and how long they are) */
 	private List<TocEntry> toc;
 
 	/** The table of contents (TOC) file, docs.dat */
@@ -99,10 +105,10 @@ public class ForwardIndex {
 	/** The terms file (stores unique terms) */
 	private File termsFile;
 
-	/**  The unique terms in our index */
+	/** The unique terms in our index */
 	private Terms terms;
 
-	/** The total number of tokens stored in the tokens file */
+	/** Handle for the tokens file */
 	private RandomAccessFile tokensFp;
 
 	/** Mapping into the tokens file */
@@ -117,7 +123,8 @@ public class ForwardIndex {
 	/** Has the table of contents been modified? */
 	private boolean tocModified = false;
 
-	/** The total number of tokens stored in the tokens file */
+	/** The position (in ints) in the tokens file after the last token written. Note that
+	 *  the actual file may be larger because we reserve space at the end. */
 	private long tokenFileEndPosition = 0;
 
 	// private boolean indexMode = false;
@@ -168,8 +175,7 @@ public class ForwardIndex {
 				tokensFileChunks = null;
 				tocModified = true;
 			}
-			tokensFp = new RandomAccessFile(tokensFile, indexMode ? "rw" : "r");
-			tokensFileChannel = tokensFp.getChannel();
+			openTokensFile(indexMode);
 
 			// Tricks to speed up reading
 			if (existing && !create /*&& !OsUtil.isWindows()*/) { // Memory mapping has issues on
@@ -182,6 +188,11 @@ public class ForwardIndex {
 					logger.debug("FI: reading entire tokens file into memory");
 					// NOTE: we can't add to the file this way, so we only use this in search mode
 					memoryMapTokensFile(true);
+
+					// We don't need the file handle anymore; close it to free up any cached resources.
+					tokensFp.close();
+					tokensFp = null;
+					tokensFileChannel = null;
 
 				} else if (!indexMode && useMemoryMapping) {
 					logger.debug("FI: memory-mapping the tokens file");
@@ -208,6 +219,11 @@ public class ForwardIndex {
 		}
 	}
 
+	private void openTokensFile(boolean indexMode) throws FileNotFoundException {
+		tokensFp = new RandomAccessFile(tokensFile, indexMode ? "rw" : "r");
+		tokensFileChannel = tokensFp.getChannel();
+	}
+
 	private void memoryMapTokensFile(boolean keepInMemory) throws IOException {
 
 		// Map the tokens file in chunks of 2GB each. When retrieving documents, we always
@@ -219,18 +235,25 @@ public class ForwardIndex {
 		tokensFileChunkOffsetBytes = new ArrayList<Long>();
 		long mappedBytes = 0;
 		long tokenFileEndBytes = getTokenFileEndPosition() * SIZEOF_INT;
+		Collections.sort(toc);
 		while (mappedBytes < tokenFileEndBytes) {
 			// Find the last TOC entry start point that's also in the previous mapping
 			// (or right the first byte after the previous mapping).
 			long startOfNextMappingBytes = 0;
 
-			// OPT: if we keep the toc sorted, we could do a binary search here
-			for (TocEntry e: toc) {
-				long entryOffset = e.offset * SIZEOF_INT;
-				if (entryOffset <= mappedBytes && entryOffset > startOfNextMappingBytes) {
-					startOfNextMappingBytes = entryOffset;
+			// Look for the largest entryOffset that's smaller than mappedBytes.
+			// Uses binary search.
+			int min = 0, max = toc.size();
+			while (max - min > 1) {
+				int middle = (min + max) / 2;
+				long middleVal = toc.get(middle).offset * SIZEOF_INT;
+				if (middleVal <= mappedBytes) {
+					min = middle;
+				} else {
+					max = middle;
 				}
 			}
+			startOfNextMappingBytes = toc.get(min).offset * SIZEOF_INT;
 
 			// Map this chunk
 			long sizeBytes = tokenFileEndBytes - startOfNextMappingBytes;
@@ -270,6 +293,8 @@ public class ForwardIndex {
 	private void clear() {
 		// delete data files and empty TOC
 		try {
+			if (tokensFp == null)
+				openTokensFile(true);
 			tokensFp.setLength(0);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -336,9 +361,11 @@ public class ForwardIndex {
 				terms.write(termsFile);
 			}
 
-			tokensFileChannel.close();
+			if (tokensFileChannel != null)
+				tokensFileChannel.close();
 
-			tokensFp.close();
+			if (tokensFp != null)
+				tokensFp.close();
 
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
