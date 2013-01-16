@@ -24,7 +24,7 @@ import org.apache.lucene.document.Document;
  */
 abstract class ComplexFieldProperty {
 
-	public void addValue(String value) {
+	final public void addValue(String value) {
 		addValue(value, 1);
 	}
 

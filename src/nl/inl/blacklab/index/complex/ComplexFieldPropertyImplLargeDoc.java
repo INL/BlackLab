@@ -40,14 +40,14 @@ class ComplexFieldPropertyImplLargeDoc extends ComplexFieldPropertyImplSimple {
 	}
 
 	@Override
-	public void addValue(String value) {
+	public void addValue(String value, int increment) {
 		// Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
 		String storedValue = storedValues.get(value);
 		if (storedValue == null) {
 			storedValues.put(value, value);
 			storedValue = value;
 		}
-		values.add(storedValue);
+		super.addValue(storedValue, increment);
 	}
 
 	@Override
