@@ -19,7 +19,7 @@ public class HitPropValueString extends HitPropValue {
 
 	@Override
 	public boolean equals(Object obj) {
-		return value.equals(obj);
+		return value.equals(((HitPropValueString)obj).value);
 	}
 
 	@Override
