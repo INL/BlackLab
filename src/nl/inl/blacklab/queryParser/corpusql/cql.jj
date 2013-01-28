@@ -110,6 +110,7 @@ TOKEN [IGNORE_CASE]:
 
 // --- Grammar rules start here --- 
 
+/* a query, consisting of a single sequence. */
 TextPattern query(): 
 {
 	TextPattern query = null;
@@ -121,6 +122,7 @@ TextPattern query():
 	}
 }
 
+/* a sequence of token constraints */
 TextPattern sequence(): 
 {
 	TextPattern first = null;
@@ -135,6 +137,7 @@ TextPattern sequence():
 	}
 }
 
+/* continuation of a sequence (after the first part) */
 TextPattern sequenceRest(TextPattern first):
 {
 	Token op = null;
@@ -154,12 +157,15 @@ TextPattern sequenceRest(TextPattern first):
 	}
 |	op=booleanOperator() rest=sequence()
 	{
+        if (b.toString().equals("->"))
+            throw new UnsupportedOperationException("Implication operator not yet supported");
 		if (op.toString().equals("&"))
 			return new TextPatternAnd(first, rest);
 		return new TextPatternOr(first, rest);
 	}
 }
 
+/* matchall token with optional repetition amount */
 Integer[] sequenceOperator():
 {
 	Token t = null, t2 = null;
@@ -176,6 +182,7 @@ Integer[] sequenceOperator():
 	}
 }
 
+/* a repetition specifier */
 Integer[] repetitionAmount():
 {
 	Token t = null, t2 = null;
@@ -197,14 +204,16 @@ Integer[] repetitionAmount():
 	}
 }
 
+/* boolean operator: and, or or implication */
 Token booleanOperator():
 {
 	Token t = null;
 }
 {
-	(t="&" | t="|")  { return t; }
+	(t="&" | t="|" | t="->")  { return t; }
 }
 
+/* sequence part: one part in a sequence, possibly with a repetition operator or NOT operator */
 TextPattern sequencePart(): 
 {
 	TextPattern m = null;
@@ -219,9 +228,13 @@ TextPattern sequencePart():
 		}
 		return m; 
 	}
-|	"!" m=sequencePart()   { throw new UnsupportedOperationException("NOT operator not yet supported"); }
+|	"!" m=sequencePart()
+    {
+        throw new UnsupportedOperationException("NOT operator not yet supported");
+    }
 }
 
+/* position: a simple attribute value or complex attribute expression between square brackets */
 TextPattern position():
 {
 	TextPattern m = null;
@@ -231,6 +244,7 @@ TextPattern position():
 |	"[" m=positionLong() "]" { return m; }
 }
 
+/* position word: no brackets, just a single token constraint for the default attribute (usually word form) */
 TextPattern positionWord():
 {
 	Token t = null;
@@ -239,6 +253,8 @@ TextPattern positionWord():
 	t=<QUOTED_STRING>      { return simplePattern(chopEnds(t.toString())); }
 }
 
+/* expression inside square brackets: an attribute clause, or multiple 
+   attribute clauses combined with boolean operators */
 TextPattern positionLong():
 {
 	TextPattern a = null, c = null;
@@ -249,12 +265,15 @@ TextPattern positionLong():
 	{
 		if (b == null)
 			return a;
+        if (b.toString().equals("->"))
+            throw new UnsupportedOperationException("Implication operator not yet supported");
 		if (b.toString().equals("&"))
 			return new TextPatternAnd(a, c);
 		return new TextPatternOr(a, c);
 	}
 }
 
+/* attribute clause: an attribute/value pair, attribute expression between parens, or a negated attribute/value pair */
 TextPattern positionLongPart():
 {
 	TextPattern m = null;
@@ -266,6 +285,7 @@ TextPattern positionLongPart():
 |	"!" m=positionLongPart()      { throw new UnsupportedOperationException("NOT operator not yet supported!"); }
 }
 
+/* attribute/value pair, with equals or not equals sign, or possibly just a value (default attribute) */
 TextPattern attValuePair():
 {
 	TextPattern v = null;
@@ -278,6 +298,7 @@ TextPattern attValuePair():
 |	v=valuePart()                   { return v; }
 }
 
+/* value expression: a value or multiple values combined with boolean operators */
 TextPattern value():
 {
 	TextPattern a = null, c = null;
@@ -286,6 +307,8 @@ TextPattern value():
 {
 	LOOKAHEAD(3) a=valuePart() b=booleanOperator() c=value()
 	{
+        if (b.toString().equals("->"))
+            throw new UnsupportedOperationException("Implication operator not yet supported");
 		if (b.toString().equals("&"))
 			return new TextPatternAnd(a, c);
 		return new TextPatternOr(a, c);
@@ -293,6 +316,7 @@ TextPattern value():
 |	a=valuePart()                   { return a; }
 }
 
+/* value: a quoted string, a value expression between parens, or a negated value */
 TextPattern valuePart():
 {
 	TextPattern m = null;
