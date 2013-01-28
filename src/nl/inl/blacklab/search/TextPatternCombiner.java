@@ -41,4 +41,18 @@ public abstract class TextPatternCombiner extends TextPattern {
 		clauses.add(clause);
 	}
 
+	@Override
+	public Object clone() {
+		try {
+			TextPatternCombiner clone = (TextPatternCombiner) super.clone();
+
+			// copy list of children so we can modify it independently
+			clone.clauses = new ArrayList<TextPattern>(clauses);
+
+			return clone;
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException("Clone not supported: " + e.getMessage());
+		}
+	}
+
 }

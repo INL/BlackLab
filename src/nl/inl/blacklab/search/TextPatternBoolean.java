@@ -94,4 +94,20 @@ public class TextPatternBoolean extends TextPattern {
 		}
 	}
 
+	@Override
+	public Object clone() {
+		try {
+			TextPatternBoolean clone = (TextPatternBoolean) super.clone();
+
+			// copy list of children so we can modify it independently
+			clone.must = new ArrayList<TextPattern>(must);
+			clone.should = new ArrayList<TextPattern>(should);
+			clone.mustNot = new ArrayList<TextPattern>(mustNot);
+
+			return clone;
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException("Clone not supported: " + e.getMessage());
+		}
+	}
+
 }
