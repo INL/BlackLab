@@ -46,6 +46,9 @@ public class TextPatternWildcard extends TextPatternTerm {
 			return new TextPatternTerm(expression);
 		}
 
+		// Replace multiple consecutive asterisks with a single one
+		expression = expression.replaceAll("\\*+", "*");
+
 		// Is it a prefix query? ("bla*")
 		if (expression.indexOf('*') == expression.length() - 1 && expression.indexOf('?') < 0) {
 			// Yes!
