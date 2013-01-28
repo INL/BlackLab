@@ -63,6 +63,8 @@ public class TextPatternSequence extends TextPatternAnd {
 				TextPatternAnyToken any = (TextPatternAnyToken) cl;
 				if (chResults.size() > 0) {
 					// Yes, we have a query to the right. Use that.
+					//@@@ distinguish between the cases where this matchall is at the start
+					//    of the query (use expansion) and where it is in the middle (use distance)
 					T rightNeighbour = chResults.remove(0);
 					boolean rightNeighbourMatchesEmpty = matchesEmptySeq.remove(0);
 					T result = translator.expand(rightNeighbour, true, any.min, any.max);

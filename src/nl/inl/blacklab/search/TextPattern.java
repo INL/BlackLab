@@ -17,10 +17,8 @@ package nl.inl.blacklab.search;
 
 /**
  * Describes some pattern of words in a content field. The point of this interface is to provide an
- * abstract layer to describe the pattern we're interested in, which can then be translated into
- * either a Query or SpanQuery object, depending on our needs. Note that the returned Query object
- * may in some cases produce false positives; see the implementing classes (such as
- * TextPatternSequence) for details. It should be used as a first filtering tool.
+ * abstract layer to describe the pattern we're interested in, which can then be translated into,
+ * for example, a SpanQuery object or a String, depending on our needs.
  */
 public abstract class TextPattern {
 	/**

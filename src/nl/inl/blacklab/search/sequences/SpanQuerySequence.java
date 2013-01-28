@@ -63,10 +63,8 @@ public class SpanQuerySequence extends SpanQueryBase {
 			// Note: the spans coming from SequenceSpansRaw are not sorted by end point.
 			// This is okay in this loop because combi is used as the left part of the next
 			// sequence (so it is explicitly sorted by end point when we put it back in
-			// SequenceSpansRaw
-			// for the next part of the sequence), but before returning the final spans, we wrap it
-			// in
-			// a per-document (start-point) sorter.
+			// SequenceSpansRaw for the next part of the sequence), but before returning the
+			// final spans, we wrap it in a per-document (start-point) sorter.
 			combi = new SpansSequenceRaw(combi, si);
 		}
 		// return new BucketsToSpans(new SpansInBucketsPerDocumentSorted(combi,

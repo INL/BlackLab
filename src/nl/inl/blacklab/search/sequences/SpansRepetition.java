@@ -27,6 +27,11 @@ import org.apache.lucene.search.spans.Spans;
 /**
  * Finds all sequences of consecutive hits from the source spans of the specified min and max
  * lengths. Used to implement repetition operators.
+ *
+ * This generates all possible sequences of consecutive hits, so if we search
+ * for B+ in the input string ABBBA, we'll get 3 hits of length 1, 2 hits of length 2,
+ * and 1 hit of length 3. In the future, this should be made configurable (to specifically
+ * support greedy matching, etc.)
  */
 class SpansRepetition extends Spans {
 	private SpansInBuckets source;
