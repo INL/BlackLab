@@ -24,7 +24,7 @@ import org.apache.lucene.search.spans.Spans;
  * Expands the source spans to the left and right by the given ranges.
  *
  * This is used to support sequences including subsequences of completely unknown tokens (like
- * "apple /2..4 pear" to find apple and pear with 2 to 4 tokens in between).
+ * <code>"apple" []{2,4} "pear"</code> to find apple and pear with 2 to 4 tokens in between).
  *
  * Note that this class will generate all possible expansions, so if you call it with left-expansion
  * of between 2 to 4 tokens, it will generate 3 new hits for every hit from the source spans: one

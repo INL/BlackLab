@@ -28,8 +28,9 @@ import org.apache.lucene.search.spans.Spans;
  * Wrap a Spans to retrieve sequences of certain matches (in "buckets"), so we can process the
  * sequence efficiently.
  *
- * Examples of sequences of hits might be: - all hits in a document - all consecutive hits in a
- * document
+ * Examples of sequences of hits might be:
+ * * all hits in a document
+ * * all consecutive hits in a document
  *
  * This way we can retrieve hits and perform some operation on them (like sorting or retrieving some
  * extra information).

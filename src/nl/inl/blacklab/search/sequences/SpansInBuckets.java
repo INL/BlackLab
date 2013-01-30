@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.Hit;
  * Specifically, SpansInBuckets is designed to have random access to the contents of a bucket, but
  * for efficiency's sake, only has sequential access to the buckets themselves. Also, SpansInBuckets
  * uses subclassing instead of GroupIdentity objects to determine what goes in a bucket. This makes
- * it better optimizable.
+ * it easier to optimize.
  */
 public interface SpansInBuckets {
 	/**
