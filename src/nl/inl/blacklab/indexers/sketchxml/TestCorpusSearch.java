@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.indexers.anwcorpus;
+package nl.inl.blacklab.indexers.sketchxml;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,15 +26,20 @@ import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTerm;
-import nl.inl.blacklab.search.grouping.HitPropertyRightContext;
+import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
+import nl.inl.blacklab.search.sequences.TextPatternSequence;
 import nl.inl.util.PropertiesUtil;
-import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
+
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * Simple test program to demonstrate corpus search functionality.
  */
-public class CorpusSearchStressTest {
+public class TestCorpusSearch {
 	public static void main(String[] args) throws IOException {
 		// Read property file
 		Properties properties = PropertiesUtil.getFromResource("anwcorpus.properties");
@@ -53,20 +58,50 @@ public class CorpusSearchStressTest {
 	}
 
 	private static void performTestSearches(Searcher searcher) {
-		Timer timer = new Timer();
+		TextPattern pattern;
 
-		TextPattern pattern = new TextPatternTerm("die");
+		System.out.println("---");
+		pattern = new TextPatternTerm("he");
+		// pattern = new TextPatternRegex("beschr.*ing");
+		// pattern = new TextPatternAnd(new TextPatternTerm("de"), new TextPatternTerm("het"));
+		patternSearch(searcher, "contents", pattern, 20);
 
-		Hits hits = searcher.find("contents", pattern);
-		System.out.println(hits.size() + " hits found; sorting...");
+		patternSearchNonSpan(searcher, "contents", pattern, 20);
 
-		// Heavy shit
-		hits.sort(new HitPropertyRightContext(searcher, "contents"));
+		// Search simple field (not linguistically enriched; no word, hw, pos properties)
+		System.out.println("---");
+		patternSearch(searcher, "bronentitel", new TextPatternTerm("de"), 20);
 
-		displayConcordances(searcher, new HitsWindow(hits, 0, 10));
+		// Search for a sequence of words
+		System.out.println("---");
+		pattern = new TextPatternSequence(new TextPatternTerm("en"), new TextPatternTerm("waar"));
+		patternSearch(searcher, "contents", pattern, 20);
+	}
 
-		System.out.println(timer.elapsedDescription() + " elapsed");
-		System.out.flush();
+	private static void patternSearchNonSpan(Searcher searcher, String fieldName,
+			TextPattern pattern, int n) {
+		TextPatternTranslatorSpanQuery translator = new TextPatternTranslatorSpanQuery();
+		SpanQuery query = pattern.translate(translator, fieldName);
+		SpanQuery spanQuery = query;
+		TopDocs d = searcher.findTopDocs(spanQuery, 30);
+		for (ScoreDoc sd : d.scoreDocs) {
+			System.out.println("Doc = " + sd.doc + "; score = " + sd.score);
+		}
+	}
+
+	private static void patternSearch(Searcher searcher, String fieldName, TextPattern pattern,
+			int n) {
+		patternSearch(searcher, fieldName, pattern, n, null);
+	}
+
+	private static void patternSearch(Searcher searcher, String fieldName, TextPattern pattern,
+			int n, Filter filter) {
+		Hits hits = searcher.find(fieldName, pattern, filter);
+
+		// Limit results to the first n
+		HitsWindow window = new HitsWindow(hits, 0, n);
+
+		displayConcordances(searcher, window);
 	}
 
 	private static void displayConcordances(Searcher searcher, HitsWindow window) {

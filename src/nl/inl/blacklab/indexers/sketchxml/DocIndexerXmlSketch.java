@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.indexers.anwcorpus;
+package nl.inl.blacklab.indexers.sketchxml;
 
 import java.io.Reader;
 import java.util.HashSet;
@@ -39,13 +39,13 @@ import org.apache.lucene.util.Version;
 import org.xml.sax.Attributes;
 
 /**
- * Index an ANW corpus XML file.
+ * Index a Sketch XML file.
  *
- * The ANW corpus XML format was created with a trivial transform of the Sketch Engine input file,
- * making the ANW corpus data well-formed XML. Using XML is useful because it allows us to later
+ * The Sketch XML format was created with a trivial transform of the Sketch Engine input file,
+ * converting the data to well-formed XML. Using XML is useful because it allows us to later
  * easily display it using XSLT.
  */
-public class DocIndexerXmlAnw extends DocIndexerXml {
+public class DocIndexerXmlSketch extends DocIndexerXml {
 	private static final String CONTENTS_FIELD = "contents";
 
 	private String currentElementText = null;
@@ -67,7 +67,7 @@ public class DocIndexerXmlAnw extends DocIndexerXml {
 
 	private Set<String> indexSensitiveAndInsensitiveFields = new HashSet<String>();
 
-	public DocIndexerXmlAnw(Indexer indexer, String fileName, Reader reader) {
+	public DocIndexerXmlSketch(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 
 		// Adds a lower case filter to the property

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.indexers.anwcorpus;
+package nl.inl.blacklab.indexers.sketchxml;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;

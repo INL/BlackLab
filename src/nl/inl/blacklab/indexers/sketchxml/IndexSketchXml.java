@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.indexers.anwcorpus;
+package nl.inl.blacklab.indexers.sketchxml;
 
 import java.io.File;
 import java.util.Properties;
@@ -23,14 +23,14 @@ import nl.inl.util.LogUtil;
 import nl.inl.util.PropertiesUtil;
 
 /**
- * The indexer class and main program for the ANW corpus.
+ * The indexer class and main program for the Sketch XML format.
  */
-public class IndexAnwCorpus {
+public class IndexSketchXml {
 	public static void main(String[] args) throws Exception {
-		System.out.println("IndexAnwCorpus\n");
+		System.out.println("IndexSketchXml\n");
 		if (args.length != 1) {
 			System.out
-					.println("Usage: java nl.inl.blacklab.indexers.anwcorpus.IndexAnwCorpus <propfile>\n"
+					.println("Usage: java nl.inl.blacklab.indexers.sketchxml.IndexSketchXml <propfile>\n"
 							+ "(see docs for more information)");
 			return;
 		}
@@ -49,7 +49,7 @@ public class IndexAnwCorpus {
 			indexDir.mkdir();
 
 		// The indexer tool
-		Indexer indexer = new Indexer(indexDir, true, DocIndexerXmlAnw.class);
+		Indexer indexer = new Indexer(indexDir, true, DocIndexerXmlSketch.class);
 		try {
 			// How many documents to process (0 = all of them)
 			int maxDocs = PropertiesUtil.getIntProp(properties, "maxDocs", 0);
