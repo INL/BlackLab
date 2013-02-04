@@ -25,16 +25,8 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.ToStringUtils;
 
 /**
- * <p>
- * Een SpanQuery voor een AND NOT-constructie met twee clauses:
- *
- * <code>appel AND NOT peer</code>
- * </p>
- *
- * <p>
- * Bovenstaand voorbeeld levert de documenten waar wel 'appel' maar niet 'peer' in voorkomt, met als
- * spans de voorkomens van 'appel'
- * </p>
+ * A SpanQuery for an AND NOT query: <code>[word = "look" & pos != "VERB"]</code>
+ * (find occurrences of the word "look" but exclude the verb form)
  */
 public class SpanQueryAndNot extends SpanQuery {
 	private SpanQuery[] clauses = null;
@@ -92,7 +84,7 @@ public class SpanQueryAndNot extends SpanQuery {
 	}
 
 	/**
-	 * @return naam van de zoekvelden
+	 * @return name of search field
 	 */
 	@Override
 	public String getField() {
@@ -100,13 +92,13 @@ public class SpanQueryAndNot extends SpanQuery {
 	}
 
 	/**
-	 * Maakt een Spans object (bestaande uit WrappedTypedSpans en/of AndSpans objecten) dat alle
-	 * spans van de te matchen documenten bevat (wel die van de include query, niet die van de
-	 * exclude query).
+	 * Constructs a Spans object (consisting of WrappedTypedSpans and/or AndSpans objects) that
+	 * contains all spans from the include clause in documents that don't contain the exclude
+	 * spans.
 	 *
 	 * @param reader
-	 *            de IndexReader
-	 * @return het Spans object, of null in geval van fout
+	 *            the IndexReader
+	 * @return the Spans object, or null on error
 	 * @throws IOException
 	 */
 	@Override

@@ -21,16 +21,16 @@ import java.util.Collection;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * "AND NOT"-samenvoeging van twee Spans objecten.
+ * "AND NOT"-combination of two Spans objects.
  *
- * Bepaalt nieuwe spans, gebaseerd op twee spans-objecten: een met te includen documenten, en een
- * met te excluden documenten.
+ * Determines new spans, based on two spans-objects: one with documents to include, and one with
+ * documents to exclude.
  */
 public class SpansAndNot extends Spans {
-	/** AND gedeelte (documenten met deze spans wel, tenzij ze ook in exclude_spans staan) */
+	/** AND part (include documents in this spans unless they're also in the exclude part) */
 	private Spans includeSpans;
 
-	/** NOT gedeelte (documenten met deze spans uitsluiten) */
+	/** NOT part (exclude documents from this spans) */
 	private Spans excludeSpans;
 
 	private boolean excludeSpansNexted;
@@ -48,7 +48,7 @@ public class SpansAndNot extends Spans {
 	}
 
 	/**
-	 * @return het huidige documentnummer
+	 * @return current document number
 	 */
 	@Override
 	public int doc() {
@@ -56,7 +56,7 @@ public class SpansAndNot extends Spans {
 	}
 
 	/**
-	 * @return het einde van de huidige span
+	 * @return end of current span
 	 */
 	@Override
 	public int end() {
@@ -64,15 +64,15 @@ public class SpansAndNot extends Spans {
 	}
 
 	/**
-	 * Ga naar de volgende span.
+	 * Go to next hit.
 	 *
-	 * @return true als we op een geldige span staan, false als we klaar zijn.
+	 * @return true if we're on a valid hit, false otherwise
 	 * @throws IOException
 	 */
 	@Override
 	public boolean next() throws IOException {
-		// Dit moet direct al gebeuren, maar we willen het niet in de
-		// constructor vanwege de throws clause
+		// This has to be done right away, but we don't want it in the
+		// constructor because it may throw an exception
 		if (!excludeSpansNexted) {
 			excludeSpansNexted = true;
 			moreExcludeSpans = excludeSpans.next();
@@ -96,13 +96,12 @@ public class SpansAndNot extends Spans {
 	}
 
 	/**
-	 * Ga naar het opgegeven document, als daarin hits zitten. Zo niet, ga naar het eerstvolgende
-	 * document met hits daarna.
+	 * Go to the specified document, if it has any hits. If not, go to the first document after
+	 * that with hits.
 	 *
 	 * @param doc
-	 *            het documentnummer om (over)heen te skippen
-	 * @return true als er nog een document met hits gevonden is (hoeft niet het opgegeven doc te
-	 *         zijn), false anders
+	 *            the document number to skip to (or over)
+	 * @return true if we're on a valid hit, false otherwise
 	 * @throws IOException
 	 */
 	@Override
@@ -123,7 +122,7 @@ public class SpansAndNot extends Spans {
 	}
 
 	/**
-	 * @return het begin van de huidige span
+	 * @return start of current span
 	 */
 	@Override
 	public int start() {

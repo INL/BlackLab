@@ -352,11 +352,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * Vervang aaneengesloten whitespace door 1 spatie
+	 * Replace adjacent whitespace characters with a single space
 	 *
 	 * @param s
-	 *            de source-string
-	 * @return het resultaat
+	 *            source string
+	 * @return the result
 	 */
 	public static String normalizeWhitespace(String s) {
 		Matcher m = PATT_WHITESPACE.matcher(s);

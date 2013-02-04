@@ -77,8 +77,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 
 		// Sort the resulting spans by start point.
 		// Note that duplicates may have formed by combining spans from left and right. Eliminate
-		// these
-		// duplicates now (hence the 'true').
+		// these duplicates now (hence the 'true').
 		return new PerDocumentSortedSpans(spans, spanComparatorStartPoint, true);
 	}
 

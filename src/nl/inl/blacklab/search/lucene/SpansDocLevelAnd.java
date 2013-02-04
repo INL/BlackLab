@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-/*
- * de AndSpans gedragen zich op documentniveau als een boolese 'AND',
- * en binnen het document als en 'OR':
- * alle hits van spans[0] en spans[1] binnen het document worden afgeteld
- */
 
 package nl.inl.blacklab.search.lucene;
 
@@ -27,39 +22,43 @@ import java.util.Collection;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * "AND"-samenvoeging van twee Spans objecten.
+ * "AND"-combination of two Spans objects.
+ *
+ * Behave as a boolean AND at the document level and as a boolean
+ * OR within each document.
  */
 public class SpansDocLevelAnd extends Spans {
-	/** Het document id waarvoor we spans teruggeven */
+	/** Current document id */
 	private int currentDocId;
 
-	/** De spans-index waarin de huidige span staat */
+	/** Index of spans object that contains the current hit */
 	private int currentSpansIndex;
 
-	/** De span-lijsten */
+	/** The spans objects we're producing hits from */
 	private Spans[] spans;
 
-	/** Zijn we voorbij de laatste span gegaan? */
+	/** Did we go past the last hit? */
 	private boolean stillValidSpans[];
 
+	/** spans[1].next() should be called right away. If this is true, that has been done. */
 	private boolean spans1nexted;
 
 	public SpansDocLevelAnd(Spans leftClause, Spans rightClause) {
 		spans = new Spans[2];
 		spans[0] = leftClause;
 		spans[1] = rightClause;
-		currentDocId = -1; // we hebben nog geen current document
+		currentDocId = -1; // no current document yet
 		stillValidSpans = new boolean[2];
-		spans1nexted = false; // spans[1] zetten we straks alvast op de eerste span
+		spans1nexted = false; // spans[1] will be placed on the first hit right away
 		stillValidSpans[1] = true;
 		stillValidSpans[0] = true;
 		currentSpansIndex = 0;
 	}
 
 	/**
-	 * Retourneert doc nummer
+	 * Returns document id of current hit
 	 *
-	 * @return het huidige docnr
+	 * @return current document id
 	 */
 	@Override
 	public int doc() {
@@ -67,19 +66,19 @@ public class SpansDocLevelAnd extends Spans {
 	}
 
 	/**
-	 * Controleert of de aangegeven spans-lijst nog wel naar het huidige document wijst, of dat deze
-	 * lijst naar een ander document wijst of uitgeput is.
+	 * Checks if the specified spans still points to the current document, or if it points to a
+	 * different document (or is depleted).
 	 *
 	 * @param spansNumber
-	 *            de index in het spans[] array waarvan we dit willen weten
-	 * @return true als deze spans-lijst nog naar het huidige document wijst, false anders
+	 *            index in the spans[] array
+	 * @return true if this spans still points to current document, false if not
 	 */
 	private boolean doesSpansPointToCurrentDoc(int spansNumber) {
 		return stillValidSpans[spansNumber] && spans[spansNumber].doc() == currentDocId;
 	}
 
 	/**
-	 * @return het eind van de huidige span
+	 * @return end of current hit
 	 */
 	@Override
 	public int end() {
@@ -87,29 +86,28 @@ public class SpansDocLevelAnd extends Spans {
 	}
 
 	/**
-	 * Ga naar de volgende span.
+	 * Go to next hit.
 	 *
-	 * @return true als we op een geldige span staan, false als we klaar zijn.
+	 * @return true if we're on a valid hit, false if we're done.
 	 * @throws IOException
 	 */
 	@Override
 	public boolean next() throws IOException {
-		// Dit moet als eerste gebeuren zodat spans[1] alvast op een geldige span
-		// staat, maar we willen het niet in de constructor i.v.m de throws clause
+		// We must do this right away, but not in the constructor because of exceptions
 		if (!spans1nexted) {
 			spans1nexted = true;
 			stillValidSpans[1] = spans[1].next();
 		}
 
-		// Zorg dat we de span die we vorige keer teruggaven 'doordraaien',
-		// zodat we in spans[0] en spans[1] een 'verse' span hebben staan.
-		// (Natuurlijk kan het voorkomen dat spans[0] of spans[1] hiermee uitgeput
-		// raakt; dat controleren we met de validspans[0] en validspans[1] members)
+		// Advance the spans from which the last hit was produced,
+		// so that both spans[0] and spans[1] point to a 'fresh' hit.
+		// (Of course one or both might become depleted at some point;
+		// we keep track of this in validspans[])
 
 		stillValidSpans[currentSpansIndex] = spans[currentSpansIndex].next();
 
-		// Als we nog geen document hadden, of we zijn klaar met het huidige document:
-		// ga door naar het volgende document
+		// If we didn't have a current document yet, or we're done with the current doc:
+		// advance to next document
 		if (currentDocId == -1
 				|| ((!stillValidSpans[0] || spans[0].doc() != currentDocId) && (!stillValidSpans[1] || spans[1]
 						.doc() != currentDocId))) {
@@ -118,90 +116,86 @@ public class SpansDocLevelAnd extends Spans {
 				return false;
 		}
 
-		// Als je hier komt, weet je zeker dat je met een geldig document bezig bent.
-		// Wel kan het zijn dat een van de spans uitgeput is en dat je de andere spans nog af
-		// moet maken.
+		// When we arrive here, we know we have a valid document.
+		// It's still possible that one of the spans is depleted while the other one still has
+		// hits in it.
 
 		boolean spansPointsToCurrentDoc[] = new boolean[2];
 		spansPointsToCurrentDoc[0] = doesSpansPointToCurrentDoc(0);
 		spansPointsToCurrentDoc[1] = doesSpansPointToCurrentDoc(1);
 		if (spansPointsToCurrentDoc[0] && spansPointsToCurrentDoc[1]) {
-			// We hebben twee spans om uit te kiezen, kies degene die het eerste in het document
-			// voorkomt.
+			// Two spans to choose from; choose the hit occurring first in the document.
 			if (spans[0].start() < spans[1].start())
 				currentSpansIndex = 0;
 			else
 				currentSpansIndex = 1;
 		} else if (spansPointsToCurrentDoc[0]) {
-			// Alleen spans[0] heeft nog spans uit het huidige document.
+			// Only spans[0] still has hits in the current document.
 			currentSpansIndex = 0;
 		} else if (spansPointsToCurrentDoc[1]) {
-			// Alleen spans[1] heeft nog spans uit het huidige document.
+			// Only spans[1] still has hits in the current document.
 			currentSpansIndex = 1;
 		} else {
-			// kan niet (de checks bovenaan de functie maken dit onmogelijk, we zouden
-			// dan al in een nieuw document zitten of helemaal klaar zijn)
+			// not possible (checks at the top of the method make this impossible,
+			// we would be in a new document or be all done)
 			assert (false);
 		}
 
-		// Nieuwe span gevonden; we onthouden welke span dit is in de 'currentSpanFromspans[0]'
-		// member, zodat de doc(), item(), getSearchTerm(), start() en end() functies
-		// weten welke van de twee spans ze moeten gebruiken.
+		// Found new hit
 		return true;
 	}
 
 	/**
-	 * Indien spans[0] en spans[1] op een verschillend documentnummer staan, zoekt deze functie het
-	 * eerstvolgende overeenkomende documentnummer.
+	 * If spans[0] and spans[1] are at different document ids, this method will
+	 * advance them until they're in the same document again.
 	 *
-	 * @return true als er een volgend document gevonden is, false als we klaar zijn
+	 * @return true if a next document has been found, false if we're done
 	 */
 	private boolean synchronize() throws IOException {
-		// Waren we al klaar?
+		// Were we done already?
 		if (!stillValidSpans[0] || !stillValidSpans[1]) {
-			// Ja
+			// Yes
 			return false;
 		}
 
-		// Loop net zo lang tot we een match in spans[0] en spans[1] vinden
+		// Loop until we match up spans[0] and spans[1]
 		int doc1, doc2;
 		doc1 = spans[0].doc();
 		doc2 = spans[1].doc();
 		while (doc1 != doc2) {
-			// Welke van de twee moeten we doordraaien?
+			// Which of the two should we advance?
 			if (doc1 < doc2) {
-				// spans[0] ligt achter op spans[1]; skip spans[0] tot de positie van spans[1]
+				// spans[0] is behind spans[1]; skip spans[0] to spans[1]'s position
 				stillValidSpans[0] = spans[0].skipTo(doc2);
 				if (!stillValidSpans[0]) {
-					// spans[0] is uitgeput; we zijn klaar
+					// spans[0] is depleted; we're done
 					return false;
 				}
 				doc1 = spans[0].doc();
 			} else {
-				// spans[1] ligt achter op spans[0]; skip spans[1] tot de positie van spans[0]
+				// spans[1] is behind spans[0]; skip spans[1] to spans[0]'s position
 				stillValidSpans[1] = spans[1].skipTo(doc1);
 				if (!stillValidSpans[1]) {
-					// spans[1] is uitgeput; we zijn klaar
+					// spans[1] is depleted; we're done
 					return false;
 				}
 				doc2 = spans[1].doc();
 			}
 		}
 
-		// We hebben een match gevonden; dit is ons nieuwe current document.
-		// spans[0] en spans[1] staan nu op de eerste match van dit document.
+		// Found a match; this is new current doc.
+		// spans[0] and spans[1] are at their first hits in the document.
 		currentDocId = doc1;
 		return true;
 	}
 
 	/**
-	 * Ga naar het opgegeven document, als daarin hits zitten. Zo niet, ga naar het eerstvolgende
-	 * document met hits daarna.
+	 * Go to the specified document, if it contains hits. If not, go to the first document
+	 * after that containing hits.
 	 *
 	 * @param doc
-	 *            het documentnummer om (over)heen te skippen
-	 * @return true als er nog een document met hits gevonden is (hoeft niet het opgegeven doc te
-	 *         zijn), false anders
+	 *            document id to skip to (or over)
+	 * @return true if we're on a valid hit, false if we're done
 	 * @throws IOException
 	 */
 	@Override
@@ -213,7 +207,7 @@ public class SpansDocLevelAnd extends Spans {
 	}
 
 	/**
-	 * @return het begin van de huidige span
+	 * @return start of current hit
 	 */
 	@Override
 	public int start() {

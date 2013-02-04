@@ -32,7 +32,7 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Een SpanQuery voor een AND-constructie met twee of meer clauses.
+ * A SpanQuery for and AND-construction at the document level.
  */
 public class SpanQueryDocLevelAnd extends SpanQueryBase {
 	public SpanQueryDocLevelAnd(SpanQuery first, SpanQuery second) {
@@ -48,13 +48,12 @@ public class SpanQueryDocLevelAnd extends SpanQueryBase {
 	}
 
 	/**
-	 * Maakt een Spans object (bestaande uit WrappedTypedSpans en/of AndSpans objecten) dat alle
-	 * spans van de gemeenschappelijke documenten van alle clauses bevat. Als je meer dan twee
-	 * clauses hebt toegevoegd, wordt dit dus een soort boomstructuur.
+	 * Constructs a Spans object that contains all spans in all the documents that contain
+	 * both clauses.
 	 *
 	 * @param reader
-	 *            de IndexReader
-	 * @return het Spans object, of null in geval van fout
+	 *            the IndexReader
+	 * @return the Spans object, or null on error
 	 * @throws IOException
 	 */
 	@Override

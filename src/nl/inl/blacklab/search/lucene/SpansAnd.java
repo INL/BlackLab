@@ -75,10 +75,10 @@ class SpansAnd extends Spans {
 	}
 
 	private boolean synchronize() throws IOException {
-		// Synchroniseer de spans
+		// Synchronise spans
 		boolean synched = false;
 		while (!synched && stillValidSpans[0] && stillValidSpans[1]) {
-			// Synch op documentnivo
+			// Synch at document level
 			if (spans[0].doc() != spans[1].doc()) {
 				if (spans[0].doc() < spans[1].doc())
 					synchDoc(0);
@@ -87,7 +87,7 @@ class SpansAnd extends Spans {
 				continue;
 			}
 
-			// Synch op match start nivo
+			// Synch at match start level
 			if (spans[0].start() != spans[1].start()) {
 				if (spans[0].start() < spans[1].start())
 					synchMatchStart(0);
@@ -96,7 +96,7 @@ class SpansAnd extends Spans {
 				continue;
 			}
 
-			// Synch op match end nivo
+			// Synch at match end level
 			if (spans[0].end() != spans[1].end()) {
 				if (spans[0].end() < spans[1].end())
 					synchMatchEnd(0);
@@ -108,13 +108,13 @@ class SpansAnd extends Spans {
 			synched = true;
 		}
 
-		// Zijn we nu klaar?
+		// Are we done?
 		if (!stillValidSpans[0] || !stillValidSpans[1]) {
-			// Ja
+			// Yes
 			return false;
 		}
 
-		// Nee, match gevonden.
+		// No, match not found
 		return true;
 	}
 
