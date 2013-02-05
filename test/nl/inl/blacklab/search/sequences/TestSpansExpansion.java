@@ -31,7 +31,8 @@ public class TestSpansExpansion {
 		int[] aEnd = new int[] { 2, 3 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-		SpansExpansionRaw spans = new SpansExpansionRaw(a, false, 1, 2);
+		SpansExpansionRaw spans = new SpansExpansionRaw(null, null, a, false, 1, 2);
+		spans.setTest(true); // for test, all documents are 5 long
 
 		Assert.assertTrue(spans.next());
 		Assert.assertEquals(1, spans.doc());
@@ -58,13 +59,52 @@ public class TestSpansExpansion {
 	}
 
 	@Test
+	public void testExpansionRightInfinite() throws IOException {
+		int[] aDoc = new int[] { 1, 1, 1 };
+		int[] aStart = new int[] { 0, 3, 4 };
+		int[] aEnd = new int[] { 1, 4, 5 };
+		Spans a = new SpansStub(aDoc, aStart, aEnd);
+
+		SpansExpansionRaw spans = new SpansExpansionRaw(null, null, a, false, 1, -1);
+		spans.setTest(true); // for test, all documents are 5 long
+
+		Assert.assertTrue(spans.next());
+		Assert.assertEquals(1, spans.doc());
+		Assert.assertEquals(0, spans.start());
+		Assert.assertEquals(2, spans.end());
+
+		Assert.assertTrue(spans.next());
+		Assert.assertEquals(1, spans.doc());
+		Assert.assertEquals(0, spans.start());
+		Assert.assertEquals(3, spans.end());
+
+		Assert.assertTrue(spans.next());
+		Assert.assertEquals(1, spans.doc());
+		Assert.assertEquals(0, spans.start());
+		Assert.assertEquals(4, spans.end());
+
+		Assert.assertTrue(spans.next());
+		Assert.assertEquals(1, spans.doc());
+		Assert.assertEquals(0, spans.start());
+		Assert.assertEquals(5, spans.end());
+
+		Assert.assertTrue(spans.next());
+		Assert.assertEquals(1, spans.doc());
+		Assert.assertEquals(3, spans.start());
+		Assert.assertEquals(5, spans.end());
+
+		// Done
+		Assert.assertFalse(spans.next());
+	}
+
+	@Test
 	public void testExpansionLeft() throws IOException {
 		int[] aDoc = new int[] { 1, 2 };
 		int[] aStart = new int[] { 1, 2 };
 		int[] aEnd = new int[] { 2, 3 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-		SpansExpansionRaw spans = new SpansExpansionRaw(a, true, 2, 3);
+		SpansExpansionRaw spans = new SpansExpansionRaw(null, null, a, true, 2, 3);
 
 		// NOTE: first hit cannot be expanded at all (minimum expansion would set start to -1),
 		// second hit can only be expanded once.

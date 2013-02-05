@@ -58,13 +58,13 @@ public class TextPatternSequence extends TextPatternAnd {
 				// These are a special case, because we cannot translate these into a
 				// query by themselves. We need to combine them with a query to the left
 				// or to the right.
-				// We prefer the query to the right, as this prevents us from accidentally
-				// going past the end of the document (see SpansExpansionRaw).
+				// (We used to prefer the query to the right, as this prevented us from
+				// accidentally going past the end of the document (old version of
+				// SpansExpansionRaw), but this issue has since been fixed. We still
+				// go through the sequence from right to left for this reason, however)
 				TextPatternAnyToken any = (TextPatternAnyToken) cl;
 				if (chResults.size() > 0) {
 					// Yes, we have a query to the right. Use that.
-					//@@@ distinguish between the cases where this matchall is at the start
-					//    of the query (use expansion) and where it is in the middle (use distance)
 					T rightNeighbour = chResults.remove(0);
 					boolean rightNeighbourMatchesEmpty = matchesEmptySeq.remove(0);
 					T result = translator.expand(rightNeighbour, true, any.min, any.max);
@@ -75,7 +75,18 @@ public class TextPatternSequence extends TextPatternAnd {
 					// No, we don't have a query to the right, use the one to the left.
 					// Of course, we haven't seen that one yet, so save the pattern and
 					// handle it in the next loop iteration
-					previousAnyTokensPart = any;
+
+					if (previousAnyTokensPart != null) {
+						// We already encountered a matchall which we haven't
+						// yet processed. Simply add the two together.
+						int min = previousAnyTokensPart.min + any.min;
+						int max = previousAnyTokensPart.max + any.max;
+						if (previousAnyTokensPart.max == -1 || any.max == -1)
+							max = -1; // infinite expansion
+						previousAnyTokensPart = new TextPatternAnyToken(min, max);
+					}
+					else
+						previousAnyTokensPart = any;
 				}
 				continue; // done with the AnyToken pattern, on to the next
 			}
@@ -175,29 +186,22 @@ public class TextPatternSequence extends TextPatternAnd {
 		return true;
 	}
 
-	/*
-
-	// NOTE: this code rewrites the sequence, first flattening some
-	// parts of it and then unflattening it again. This is not used at the moment,
-	// but may at some point come in handy, so we'll leave it commented out for now.
-
 	@Override
 	public TextPattern rewrite() {
 
-		// If any clauses are sequences consisting only of NOT clauses (which we cannot
-		// practically execute), incorporate them into this sequence (i.e. flatten the
-		// nested sequence). This doesn't change the query because the sequence operator is associative.
+		// Flatten nested sequences.
+		// This doesn't change the query because the sequence operator is associative.
 		TextPatternSequence result = null;
 		for (TextPattern child: clauses) {
 			TextPattern rewritten = child.rewrite();
-			boolean sequenceWithOnlyNotClauses = rewritten instanceof TextPatternSequence && ((TextPatternSequence)rewritten).hasOnlyNotClauseChildren();
-			if (child != rewritten || sequenceWithOnlyNotClauses) {
+			boolean flattenSequence = rewritten instanceof TextPatternSequence;
+			if (child != rewritten || flattenSequence) {
 				if (result == null) {
 					// This is the first rewrite we're doing. Clone this query now.
 					result = (TextPatternSequence) clone();
 				}
-				if (sequenceWithOnlyNotClauses) {
-					// Problem child sequence (consisting only of NOT clauses)
+				if (flattenSequence) {
+					// Child sequence we want to flatten into this sequence.
 					// Replace the child, incorporating the child sequence into the rewritten sequence
 					result.replaceClause(child, ((TextPatternSequence)rewritten).clauses.toArray(new TextPattern[] {}));
 				} else {
@@ -207,11 +211,12 @@ public class TextPatternSequence extends TextPatternAnd {
 			}
 		}
 
-		if (result == null && clauses.size() <= 2) {
-			// No child clause rewritten, and maximum of two child clauses: nothing to do.
+		if (result == null) {
+			// No child clause rewritten: return ourselves.
 			return this;
 		}
 
+		/*
 		if (result == null) {
 			// No rewrites or subsequence-incorporations done yet,
 			// but sequence should be unflattened, so clone it now.
@@ -253,6 +258,7 @@ public class TextPatternSequence extends TextPatternAnd {
 				}
 			}
 		}
+		*/
 
 //		if (result.clauses.size() > 2) {
 //			// This can only happen if the sequence consists of all NOT queries, because
@@ -265,6 +271,5 @@ public class TextPatternSequence extends TextPatternAnd {
 
 		return result;
 	}
-	*/
 
 }

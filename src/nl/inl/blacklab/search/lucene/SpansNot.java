@@ -18,11 +18,8 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.TermFreqVector;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -50,23 +47,14 @@ class SpansNot extends Spans {
 	/** Current document length */
 	private int currentToken;
 
-	/** Name of the field we're searching */
-	private String fieldName;
-
 	/** The Lucene index reader, for querying field length */
 	private IndexReader reader;
 
 	/** For testing, we don't have an IndexReader available, so we use test values */
 	private boolean useTestValues = false;
 
-	/** Did we check if the field length is stored separately in the index? */
-	private boolean lookedForLengthField = false;
-
-	/** Is the field length stored separately in the index? */
-	private boolean lengthFieldIsStored = false;
-
-	/** Field name to check for the length of the field in tokens */
-	private String lengthTokensFieldName;
+	/** Used to get the field length in tokens for a document */
+	DocFieldLengthGetter lengthGetter;
 
 	/** For testing, we don't have an IndexReader available, so we use test values.
 	 *
@@ -76,13 +64,13 @@ class SpansNot extends Spans {
 	 */
 	void setTest(boolean test) {
 		this.useTestValues = test;
+		lengthGetter.setTest(test);
 	}
 
 	public SpansNot(IndexReader reader, String fieldName, Spans clause) {
 		this.reader = reader;
-		this.fieldName = fieldName;
+		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		this.clause = clause;
-		lengthTokensFieldName = ComplexFieldUtil.fieldName(fieldName, "length_tokens");
 
 		done = false;
 		moreHitsInClause = true;
@@ -200,74 +188,9 @@ class SpansNot extends Spans {
 			done = true;
 			return false; // no more docs; we're done
 		}
-		currentDocLength = getCurrentDocFieldLength();
+		currentDocLength = lengthGetter.getFieldLength(currentDoc);
 		currentToken = 0;
 		return true;
-	}
-
-	/**
-	 * Get the number of indexed tokens for our field in the current document.
-	 *
-	 * Used to produce all tokens that aren't hits in our clause.
-	 *
-	 * @return the number of tokens
-	 */
-	private int getCurrentDocFieldLength() {
-
-		if (useTestValues)
-			return 5; // while testing, all documents are 10 tokens long
-
-		if (!lookedForLengthField || lengthFieldIsStored)  {
-			// We either know the field length is stored in the index,
-			// or we haven't checked yet and should do so now.
-			try {
-				Document document = reader.document(currentDoc);
-				String strLength = document.get(lengthTokensFieldName);
-				lookedForLengthField = true;
-				if (strLength != null) {
-					// Yes, found the field length stored in the index.
-					// Parse and return it.
-					lengthFieldIsStored = true;
-					return Integer.parseInt(strLength);
-				}
-				// No, length field is not stored in the index. Always use term vector from now on.
-				lengthFieldIsStored = false;
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		// Calculate the total field length by adding all the term frequencies.
-		// (much slower)
-		try {
-			TermFreqVector tfv = reader.getTermFreqVector(currentDoc, fieldName);
-			if (tfv == null) {
-
-				// No term frequency vector. We have to assume this is because no tokens were
-				// stored for this document (document is empty)
-				return 0;
-
-				/*
-				Document d = reader.document(currentDoc);
-				for (Fieldable f: d.getFields()) {
-					System.err.println(f.name() + ": " + f.stringValue());
-				}
-
-				throw new RuntimeException("No term frequency vector found for field " + fieldName + " (doc " + currentDoc + ")");
-				*/
-
-			}
-			int [] tfs = tfv.getTermFrequencies();
-			if (tfs == null)
-				throw new RuntimeException("No term frequencies found for field " + fieldName + " (doc " + currentDoc + ")");
-			int n = 0;
-			for (int tf: tfs) {
-				n += tf;
-			}
-			return n;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	/**

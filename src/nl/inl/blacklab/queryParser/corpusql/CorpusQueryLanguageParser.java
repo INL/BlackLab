@@ -67,7 +67,8 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         TextPattern query = null;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case QUOTED_STRING:
-    case 20:
+    case 19:
+    case 21:
     case 22:
       query = sequence();
       break;
@@ -88,10 +89,8 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case QUOTED_STRING:
     case 10:
-    case 17:
-    case 18:
     case 19:
-    case 20:
+    case 21:
     case 22:
       result = sequenceRest(first);
       break;
@@ -109,10 +108,10 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
   final public TextPattern sequenceRest(TextPattern first) throws ParseException {
         Token op = null;
         TextPattern rest = null;
-        Integer[] minMax = null;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case QUOTED_STRING:
-    case 20:
+    case 19:
+    case 21:
     case 22:
       rest = sequence();
                 if (rest == null)
@@ -120,19 +119,8 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
                 {if (true) return new TextPatternSequence(first, rest);}
       break;
     case 10:
-      minMax = sequenceOperator();
+      jj_consume_token(10);
       rest = sequence();
-                {if (true) return new TextPatternSequence(first, new TextPatternAnyToken(minMax[0], minMax[1]), rest);}
-      break;
-    case 17:
-    case 18:
-    case 19:
-      op = booleanOperator();
-      rest = sequence();
-        if (op.toString().equals("->"))
-            {if (true) throw new UnsupportedOperationException("Implication operator not yet supported");}
-                if (op.toString().equals("&"))
-                        {if (true) return new TextPatternAnd(first, rest);}
                 {if (true) return new TextPatternOr(first, rest);}
       break;
     default:
@@ -140,30 +128,6 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
       jj_consume_token(-1);
       throw new ParseException();
     }
-    throw new Error("Missing return statement in function");
-  }
-
-/* matchall token with optional repetition amount */
-  final public Integer[] sequenceOperator() throws ParseException {
-        Token t = null, t2 = null;
-        Integer[] minMax = null;
-    jj_consume_token(10);
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-      minMax = repetitionAmount();
-      break;
-    default:
-      jj_la1[3] = jj_gen;
-      ;
-    }
-                if (minMax == null)
-                        {if (true) return new Integer[]{1, 1};}
-                if (minMax[1] == -1)
-                        {if (true) throw new UnsupportedOperationException("Any-token without max not yet supported");}
-                {if (true) return minMax;}
     throw new Error("Missing return statement in function");
   }
 
@@ -185,7 +149,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
                                               minMax[0] = 0; minMax[1] = 1; {if (true) return minMax;}
       break;
     default:
-      jj_la1[5] = jj_gen;
+      jj_la1[4] = jj_gen;
       if (jj_2_1(3)) {
         jj_consume_token(14);
         t = jj_consume_token(NUMBER);
@@ -202,7 +166,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
             t2 = jj_consume_token(NUMBER);
             break;
           default:
-            jj_la1[4] = jj_gen;
+            jj_la1[3] = jj_gen;
             ;
           }
           jj_consume_token(15);
@@ -214,7 +178,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
                 {if (true) return minMax;}
           break;
         default:
-          jj_la1[6] = jj_gen;
+          jj_la1[5] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -230,14 +194,14 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     case 17:
       t = jj_consume_token(17);
       break;
+    case 10:
+      t = jj_consume_token(10);
+      break;
     case 18:
       t = jj_consume_token(18);
       break;
-    case 19:
-      t = jj_consume_token(19);
-      break;
     default:
-      jj_la1[7] = jj_gen;
+      jj_la1[6] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -245,35 +209,56 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     throw new Error("Missing return statement in function");
   }
 
-/* sequence part: one part in a sequence, possibly with a repetition operator or NOT operator */
+/* sequence part: one part in a sequence, possibly with a repetition operator */
   final public TextPattern sequencePart() throws ParseException {
         TextPattern m = null;
         Integer[] rep = null;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case QUOTED_STRING:
+    case 19:
     case 22:
-      m = position();
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case QUOTED_STRING:
+      case 22:
+        m = position();
+        break;
+      case 19:
+        jj_consume_token(19);
+        m = sequence();
+        jj_consume_token(20);
+        break;
+      default:
+        jj_la1[7] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+      if (jj_2_2(6)) {
+        rep = repetitionAmount();
+      } else {
+        ;
+      }
+                if (rep != null)
+                {
+                        {if (true) return new TextPatternRepetition(m, rep[0], rep[1]);}
+                }
+                {if (true) return m;}
       break;
-    case 20:
-      jj_consume_token(20);
-      m = sequence();
+    case 21:
       jj_consume_token(21);
+      if (jj_2_3(6)) {
+        rep = repetitionAmount();
+      } else {
+        ;
+      }
+        if (rep == null)
+            rep = new Integer[]{1, 1};
+        {if (true) return new TextPatternAnyToken(rep[0], rep[1]);}
       break;
     default:
       jj_la1[8] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
-    if (jj_2_2(6)) {
-      rep = repetitionAmount();
-    } else {
-      ;
-    }
-                if (rep != null)
-                {
-                        {if (true) return new TextPatternRepetition(m, rep[0], rep[1]);}
-                }
-                {if (true) return m;}
     throw new Error("Missing return statement in function");
   }
 
@@ -314,9 +299,9 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         Token b = null;
     a = positionLongPart();
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case 10:
     case 17:
     case 18:
-    case 19:
       b = booleanOperator();
       c = positionLong();
       break;
@@ -337,15 +322,15 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
 /* attribute clause: an attribute/value pair, attribute expression between parens, or a negated attribute/value pair */
   final public TextPattern positionLongPart() throws ParseException {
         TextPattern m = null;
-    if (jj_2_3(3)) {
+    if (jj_2_4(3)) {
       m = attValuePair();
                                         {if (true) return m;}
     } else {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case 20:
-        jj_consume_token(20);
+      case 19:
+        jj_consume_token(19);
         m = positionLong();
-        jj_consume_token(21);
+        jj_consume_token(20);
                                         {if (true) return m;}
         break;
       case 24:
@@ -366,7 +351,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
   final public TextPattern attValuePair() throws ParseException {
         TextPattern v = null;
         Token t = null;
-    if (jj_2_4(2)) {
+    if (jj_2_5(2)) {
       t = jj_consume_token(NAME);
       jj_consume_token(25);
       v = valuePart();
@@ -380,7 +365,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
                                            {if (true) return new TextPatternNot(propertyClause(t.toString(), v));}
         break;
       case QUOTED_STRING:
-      case 20:
+      case 19:
         v = valuePart();
                                           {if (true) return v;}
         break;
@@ -397,7 +382,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
   final public TextPattern value() throws ParseException {
         TextPattern a = null, c = null;
         Token b = null;
-    if (jj_2_5(3)) {
+    if (jj_2_6(3)) {
       a = valuePart();
       b = booleanOperator();
       c = value();
@@ -409,7 +394,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     } else {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case QUOTED_STRING:
-      case 20:
+      case 19:
         a = valuePart();
                                           {if (true) return a;}
         break;
@@ -431,10 +416,10 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
       t = jj_consume_token(QUOTED_STRING);
                                          {if (true) return simplePattern(chopEnds(t.toString()));}
       break;
-    case 20:
-      jj_consume_token(20);
+    case 19:
+      jj_consume_token(19);
       m = value();
-      jj_consume_token(21);
+      jj_consume_token(20);
                                          {if (true) return m;}
       break;
     default:
@@ -480,76 +465,11 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     finally { jj_save(4, xla); }
   }
 
-  private boolean jj_3R_14() {
-    if (jj_3R_3()) return true;
-    return false;
-  }
-
-  private boolean jj_3_2() {
-    if (jj_3R_1()) return true;
-    return false;
-  }
-
-  private boolean jj_3_5() {
-    if (jj_3R_3()) return true;
-    if (jj_3R_4()) return true;
-    if (jj_3R_5()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_5() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_5()) {
-    jj_scanpos = xsp;
-    if (jj_3R_14()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3R_4() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_scan_token(17)) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(18)) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(19)) return true;
-    }
-    }
-    return false;
-  }
-
-  private boolean jj_3R_11() {
-    if (jj_3R_3()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_10() {
-    if (jj_scan_token(NAME)) return true;
-    if (jj_scan_token(26)) return true;
-    if (jj_3R_3()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_2() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_4()) {
-    jj_scanpos = xsp;
-    if (jj_3R_10()) {
-    jj_scanpos = xsp;
-    if (jj_3R_11()) return true;
-    }
-    }
-    return false;
-  }
-
-  private boolean jj_3_4() {
-    if (jj_scan_token(NAME)) return true;
-    if (jj_scan_token(25)) return true;
-    if (jj_3R_3()) return true;
-    return false;
+  private boolean jj_2_6(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_6(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(5, xla); }
   }
 
   private boolean jj_3R_9() {
@@ -563,6 +483,11 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     return false;
   }
 
+  private boolean jj_3_4() {
+    if (jj_3R_2()) return true;
+    return false;
+  }
+
   private boolean jj_3_1() {
     if (jj_scan_token(14)) return true;
     if (jj_scan_token(NUMBER)) return true;
@@ -570,8 +495,30 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     return false;
   }
 
+  private boolean jj_3R_13() {
+    if (jj_scan_token(19)) return true;
+    if (jj_3R_5()) return true;
+    if (jj_scan_token(20)) return true;
+    return false;
+  }
+
   private boolean jj_3R_8() {
     if (jj_scan_token(13)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_12() {
+    if (jj_scan_token(QUOTED_STRING)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_3() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_12()) {
+    jj_scanpos = xsp;
+    if (jj_3R_13()) return true;
+    }
     return false;
   }
 
@@ -605,29 +552,79 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
   }
 
   private boolean jj_3_3() {
-    if (jj_3R_2()) return true;
+    if (jj_3R_1()) return true;
     return false;
   }
 
-  private boolean jj_3R_13() {
-    if (jj_scan_token(20)) return true;
+  private boolean jj_3R_14() {
+    if (jj_3R_3()) return true;
+    return false;
+  }
+
+  private boolean jj_3_6() {
+    if (jj_3R_3()) return true;
+    if (jj_3R_4()) return true;
     if (jj_3R_5()) return true;
-    if (jj_scan_token(21)) return true;
     return false;
   }
 
-  private boolean jj_3R_3() {
+  private boolean jj_3R_5() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_12()) {
+    if (jj_3_6()) {
     jj_scanpos = xsp;
-    if (jj_3R_13()) return true;
+    if (jj_3R_14()) return true;
     }
     return false;
   }
 
-  private boolean jj_3R_12() {
-    if (jj_scan_token(QUOTED_STRING)) return true;
+  private boolean jj_3_2() {
+    if (jj_3R_1()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_4() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_scan_token(17)) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(10)) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(18)) return true;
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3R_11() {
+    if (jj_3R_3()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_10() {
+    if (jj_scan_token(NAME)) return true;
+    if (jj_scan_token(26)) return true;
+    if (jj_3R_3()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_2() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_5()) {
+    jj_scanpos = xsp;
+    if (jj_3R_10()) {
+    jj_scanpos = xsp;
+    if (jj_3R_11()) return true;
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3_5() {
+    if (jj_scan_token(NAME)) return true;
+    if (jj_scan_token(25)) return true;
+    if (jj_3R_3()) return true;
     return false;
   }
 
@@ -648,9 +645,9 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
       jj_la1_init_0();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x500200,0x5e0600,0x5e0600,0x7800,0x100,0x3800,0x4000,0xe0000,0x500200,0x400200,0xe0000,0x1100000,0x100280,0x100200,0x100200,};
+      jj_la1_0 = new int[] {0x680200,0x680600,0x680600,0x100,0x3800,0x4000,0x60400,0x480200,0x680200,0x400200,0x60400,0x1080000,0x80280,0x80200,0x80200,};
    }
-  final private JJCalls[] jj_2_rtns = new JJCalls[5];
+  final private JJCalls[] jj_2_rtns = new JJCalls[6];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
@@ -875,7 +872,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
 
   private void jj_rescan_token() {
     jj_rescan = true;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
     try {
       JJCalls p = jj_2_rtns[i];
       do {
@@ -887,6 +884,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
             case 2: jj_3_3(); break;
             case 3: jj_3_4(); break;
             case 4: jj_3_5(); break;
+            case 5: jj_3_6(); break;
           }
         }
         p = p.next;

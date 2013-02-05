@@ -18,6 +18,9 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 import java.util.Collection;
 
+import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
+
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -38,11 +41,6 @@ import org.apache.lucene.search.spans.Spans;
  *
  * Therefore, objects of this class should be wrapped in a class that sort the matches per document
  * and eliminates duplicates.
- *
- * NOTE: because we don't know the field length at this time, expansion to the right may actually
- * yield hits that are beyond the end of the field content. This is not a problem when wild card
- * tokens occur in the middle of a pattern, but when the wild card tokens can occur at the end of
- * the pattern, you should detect and remove the invalid hits later.
  */
 class SpansExpansionRaw extends Spans {
 	private Spans clause;
@@ -61,15 +59,34 @@ class SpansExpansionRaw extends Spans {
 
 	private int expandStepsLeft = 0;
 
-	public SpansExpansionRaw(Spans clause, boolean expandToLeft, int min, int max) {
+	/** For which document do we have the token length? */
+	private int tokenLengthDocId = -1;
+
+	/** Token length for the doc specified in tokenLengthDocId */
+	private int tokenLength;
+
+	/** Used to get the field length in tokens for a document */
+	DocFieldLengthGetter lengthGetter;
+
+	public SpansExpansionRaw(IndexReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
+		if (!expandToLeft) {
+			// We need to know document length to properly do expansion to the right
+			lengthGetter = new DocFieldLengthGetter(reader, fieldName);
+		}
 		this.clause = clause;
 		this.expandToLeft = expandToLeft;
 		this.min = min;
 		this.max = max;
-		if (min > max)
+		if (max != -1 && min > max)
 			throw new RuntimeException("min > max");
-		if (min < 0 || max < 0)
-			throw new RuntimeException("negative expansions not supported");
+		if (min < 0 || max < -1)
+			throw new RuntimeException("Expansions cannot be negative");
+	}
+
+	/** For test, we don't have an index reader, so use default values (all docs are 5 tokens long) */
+	public void setTest(boolean b) {
+		if (lengthGetter != null)
+			lengthGetter.setTest(b);
 	}
 
 	/**
@@ -167,10 +184,34 @@ class SpansExpansionRaw extends Spans {
 				start -= min;
 			else
 				end += min;
-			expandStepsLeft = max - min;
 
-			// Valid expansion?
-			if (start >= 0)
+			// What's the maximum we could still expand from here?
+			int maxExpandSteps;
+			if (expandToLeft) {
+				// Can only expand to the left until token 0.
+				maxExpandSteps = start;
+			} else {
+				// Can only expand to the right until last token in document.
+
+				// Do we know this document's length already?
+				if (clause.doc() != tokenLengthDocId) {
+					// No, determine length now
+					tokenLengthDocId = clause.doc();
+					tokenLength = lengthGetter.getFieldLength(tokenLengthDocId);
+				}
+				maxExpandSteps = tokenLength - end;
+			}
+			if (max == -1) {
+				// Infinite expansion; just use max
+				expandStepsLeft = maxExpandSteps;
+			}
+			else {
+				// Limited expansion; clamp by maximum
+				expandStepsLeft = Math.min(max - min, maxExpandSteps);
+			}
+
+			// Valid expansion?   [shouldn't be necessary anymore because we calculated max]
+			if (/*start >= 0 &&*/ expandStepsLeft >= 0)
 				return true; // Yes, return
 
 			// No, try the next hit, if there one

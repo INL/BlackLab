@@ -53,7 +53,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 		this.expandToLeft = expandToLeft;
 		this.min = min;
 		this.max = max;
-		if (min > max)
+		if (max != -1 && min > max)
 			throw new RuntimeException("min > max");
 	}
 
@@ -70,7 +70,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 
 	@Override
 	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans spans = new SpansExpansionRaw(clauses[0].getSpans(reader), expandToLeft, min, max);
+		Spans spans = new SpansExpansionRaw(reader, clauses[0].getField(), clauses[0].getSpans(reader), expandToLeft, min, max);
 
 		// Note: the spans coming from SpansExpansion are not sorted properly.
 		// Before returning the final spans, we wrap it in a per-document (start-point) sorter.

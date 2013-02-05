@@ -143,7 +143,7 @@ TextPattern sequenceRest(TextPattern first):
 {
 	Token op = null;
 	TextPattern rest = null;
-	Integer[] minMax = null;
+/*	Integer[] minMax = null;*/
 }
 {
 	rest=sequence()
@@ -152,34 +152,13 @@ TextPattern sequenceRest(TextPattern first):
 			return first;
 		return new TextPatternSequence(first, rest);
 	}
-|	minMax=sequenceOperator() rest=sequence()
+/*|	minMax=matchall() rest=sequence()
 	{
 		return new TextPatternSequence(first, new TextPatternAnyToken(minMax[0], minMax[1]), rest);
-	}
-|	op=booleanOperator() rest=sequence()
+	}*/
+|	"|" rest=sequence()
 	{
-        if (op.toString().equals("->"))
-            throw new UnsupportedOperationException("Implication operator not yet supported");
-		if (op.toString().equals("&"))
-			return new TextPatternAnd(first, rest);
 		return new TextPatternOr(first, rest);
-	}
-}
-
-/* matchall token with optional repetition amount */
-Integer[] sequenceOperator():
-{
-	Token t = null, t2 = null;
-	Integer[] minMax = null;
-}
-{
-	"[]" [ minMax=repetitionAmount() ]
-	{
-		if (minMax == null)
-			return new Integer[]{1, 1};
-		if (minMax[1] == -1)
-			throw new UnsupportedOperationException("Any-token without max not yet supported");
-		return minMax;
 	}
 }
 
@@ -214,7 +193,7 @@ Token booleanOperator():
 	(t="&" | t="|" | t="->")  { return t; }
 }
 
-/* sequence part: one part in a sequence, possibly with a repetition operator or NOT operator */
+/* sequence part: one part in a sequence, possibly with a repetition operator */
 TextPattern sequencePart(): 
 {
 	TextPattern m = null;
@@ -229,12 +208,12 @@ TextPattern sequencePart():
 		}
 		return m; 
 	}
-/*  CorpusQL doesn't allow NOT in sequence parts? (only in token constraints)
-|	"!" m=sequencePart()
+|   "[]" [ LOOKAHEAD(6) rep=repetitionAmount() ]
     {
-        return new TextPatternNot(m);
+        if (rep == null)
+            rep = new Integer[]{1, 1};
+        return new TextPatternAnyToken(rep[0], rep[1]);
     }
-*/
 }
 
 /* position: a simple attribute value or complex attribute expression between square brackets */
@@ -329,8 +308,5 @@ TextPattern valuePart():
 	t=<QUOTED_STRING>              { return simplePattern(chopEnds(t.toString())); }
 |	"(" m=value() ")"              { return m; }
 
-/*  CorpusQL doesn't allow NOT before values?
-|	"!" m=valuePart()              { return new TextPatternNot(m); }
-*/
 }
 
