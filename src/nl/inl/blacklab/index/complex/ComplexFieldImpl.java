@@ -30,6 +30,9 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Index;
+import org.apache.lucene.document.Field.Store;
 
 /**
  * A complex field is like a Lucene field, but in addition to its "normal" value, it can have
@@ -125,6 +128,12 @@ public class ComplexFieldImpl implements ComplexField {
 		for (ComplexFieldProperty p : properties.values()) {
 			p.addToLuceneDoc(doc, fieldName, start, end);
 		}
+
+		// Add number of tokens in complex field as a stored field,
+		// because we need to be able to find this property quickly
+		// for SpanQueryNot.
+		doc.add(new Field(ComplexFieldUtil.fieldName(fieldName, "length_tokens"),
+				"" + numberOfTokens(), Store.YES, Index.NO));
 	}
 
 	@Override

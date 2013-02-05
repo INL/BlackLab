@@ -17,7 +17,6 @@ package nl.inl.blacklab.search;
 
 import java.util.List;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.StringUtil;
 
 /**
@@ -36,7 +35,12 @@ public class TextPatternTranslatorString implements TextPatternTranslator<String
 
 	@Override
 	public String property(String fieldName, String propertyName, String altName, TextPattern input) {
-		return input.translate(this, ComplexFieldUtil.fieldName(fieldName, propertyName, altName));
+//		return input.translate(this, ComplexFieldUtil.fieldName(fieldName, propertyName, altName));
+		if (propertyName == null || propertyName.length() == 0)
+			propertyName = "-";
+		if (altName == null || altName.length() == 0)
+			altName = "-";
+		return "PROP(" + propertyName + ", " + altName + ", " + input.translate(this, fieldName) + ")";
 	}
 
 	@Override
@@ -97,5 +101,10 @@ public class TextPatternTranslatorString implements TextPatternTranslator<String
 	@Override
 	public String prefix(String fieldName, String value) {
 		return "PREFIX(" + value + ")";
+	}
+
+	@Override
+	public String not(String fieldName, String clause) {
+		return "NOT(" + clause + ")";
 	}
 }

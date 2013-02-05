@@ -71,6 +71,17 @@ public interface TextPatternTranslator<T> {
 	T or(String fieldName, List<T> clauses);
 
 	/**
+	 * Token-level NOT.
+	 *
+	 * @param fieldName
+	 *            the field to search
+	 * @param clause
+	 *            the clause to invert
+	 * @return result of the translation
+	 */
+	T not(String fieldName, T clause);
+
+	/**
 	 * Sequence query.
 	 *
 	 * @param fieldName

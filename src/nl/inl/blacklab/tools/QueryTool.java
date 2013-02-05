@@ -540,6 +540,8 @@ public class QueryTool {
 		Timer t = new Timer();
 		try {
 			TextPattern pattern = currentParser.parse(query);
+			pattern = pattern.rewrite();
+			System.out.println(pattern.toString("contents"));
 
 			// Execute search
 			Filter filter = null; // TODO: metadata search!

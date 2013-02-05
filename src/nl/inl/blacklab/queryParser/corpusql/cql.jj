@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternOr;
 import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternRegex;
+import nl.inl.blacklab.search.TextPatternNot;
 import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
 import nl.inl.blacklab.search.sequences.TextPatternSequence;
 import nl.inl.blacklab.search.sequences.TextPatternRepetition;
@@ -157,7 +158,7 @@ TextPattern sequenceRest(TextPattern first):
 	}
 |	op=booleanOperator() rest=sequence()
 	{
-        if (b.toString().equals("->"))
+        if (op.toString().equals("->"))
             throw new UnsupportedOperationException("Implication operator not yet supported");
 		if (op.toString().equals("&"))
 			return new TextPatternAnd(first, rest);
@@ -228,10 +229,12 @@ TextPattern sequencePart():
 		}
 		return m; 
 	}
+/*  CorpusQL doesn't allow NOT in sequence parts? (only in token constraints)
 |	"!" m=sequencePart()
     {
-        throw new UnsupportedOperationException("NOT operator not yet supported");
+        return new TextPatternNot(m);
     }
+*/
 }
 
 /* position: a simple attribute value or complex attribute expression between square brackets */
@@ -282,7 +285,7 @@ TextPattern positionLongPart():
 	LOOKAHEAD(3)
 	m=attValuePair()              { return m; }
 |	"(" m=positionLong() ")"      { return m; }
-|	"!" m=positionLongPart()      { throw new UnsupportedOperationException("NOT operator not yet supported!"); }
+|	"!" m=positionLongPart()      { return new TextPatternNot(m); }
 }
 
 /* attribute/value pair, with equals or not equals sign, or possibly just a value (default attribute) */
@@ -294,7 +297,7 @@ TextPattern attValuePair():
 {
 	LOOKAHEAD(2)
 	t=<NAME> "=" v=valuePart()      { return propertyClause(t.toString(), v); }
-|	t=<NAME> "!=" v=valuePart()      { throw new UnsupportedOperationException("NOT operator not yet supported!"); }
+|	t=<NAME> "!=" v=valuePart()      { return new TextPatternNot(propertyClause(t.toString(), v)); }
 |	v=valuePart()                   { return v; }
 }
 
@@ -325,6 +328,9 @@ TextPattern valuePart():
 {
 	t=<QUOTED_STRING>              { return simplePattern(chopEnds(t.toString())); }
 |	"(" m=value() ")"              { return m; }
-|	"!" m=valuePart()              { throw new UnsupportedOperationException("NOT operator not yet supported!"); }
+
+/*  CorpusQL doesn't allow NOT before values?
+|	"!" m=valuePart()              { return new TextPatternNot(m); }
+*/
 }
 

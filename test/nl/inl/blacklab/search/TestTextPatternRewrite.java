@@ -1,0 +1,50 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+package nl.inl.blacklab.search;
+
+import java.io.StringReader;
+
+import junit.framework.Assert;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.ParseException;
+
+import org.junit.Test;
+
+public class TestTextPatternRewrite {
+
+	static TextPatternTranslatorString stringifier = new TextPatternTranslatorString();
+
+	static TextPattern getPatternFromCql(String cqlQuery) {
+		try {
+			cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
+			CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
+					cqlQuery));
+			return parser.query();
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Test
+	public void testRewrite() {
+		TextPattern original = getPatternFromCql("[!(word != 'water')]");
+		Assert.assertEquals("NOT(NOT(TERM(water)))", original.translate(stringifier, "word"));
+		TextPattern rewritten = original.rewrite();
+		String rewrittenStr = rewritten.translate(stringifier, "word");
+		Assert.assertEquals("TERM(water)", rewrittenStr);
+	}
+
+}

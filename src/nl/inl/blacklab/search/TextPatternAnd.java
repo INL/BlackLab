@@ -46,4 +46,34 @@ public class TextPatternAnd extends TextPatternCombiner {
 			return chResults.get(0);
 		return translator.and(fieldName, chResults);
 	}
+
+	/*
+
+	NOTE: this code rewrites AND queries containing only NOT children
+	into OR queries. It is not currently used but we may want to use something
+	like this in the future to better optimize certain queries, so we'll leave
+	it here for now.
+
+	@Override
+	public TextPattern rewrite() {
+		boolean hasOnlyNotChildren = true;
+		for (TextPattern child: clauses) {
+			if (!(child instanceof TextPatternNot)) {
+				hasOnlyNotChildren = false;
+				break;
+			}
+		}
+		if (hasOnlyNotChildren) {
+			// Node should be rewritten to OR
+			TextPattern[] rewrittenAndInv = new TextPattern[clauses.size()];
+			for (int i = 0; i < clauses.size(); i++) {
+				rewrittenAndInv[i] = clauses.get(i).rewrite().inverted();
+			}
+			return new TextPatternNot(new TextPatternOr(rewrittenAndInv));
+		}
+		// Node need not be rewritten
+		return this;
+	}
+
+	*/
 }

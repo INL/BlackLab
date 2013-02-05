@@ -55,4 +55,44 @@ public abstract class TextPatternCombiner extends TextPattern {
 		}
 	}
 
+	public void replaceClause(TextPattern oldClause, TextPattern... newClauses) {
+		int i = clauses.indexOf(oldClause);
+		clauses.remove(i);
+		for (TextPattern newChild: newClauses) {
+			clauses.add(i, newChild);
+			i++;
+		}
+	}
+
+	/**
+	 * Rewrites the query by calling rewrite() on its children and, if any of its
+	 * children are rewritten, cloning this with the rewritten children.
+	 * @return the rewritten query (or, if no rewriting was necessary, this)
+	 */
+	@Override
+	public TextPattern rewrite() {
+		TextPatternCombiner clone = null;
+		for (TextPattern child : clauses) {
+			TextPattern rewritten = child.rewrite();
+			if (rewritten != child) {
+				if (clone == null)
+					clone = (TextPatternCombiner) clone();
+				clone.replaceClause(child, rewritten);
+			}
+		}
+		if (clone != null) {
+			return clone;
+		}
+		return this;
+	}
+
+	public boolean hasOnlyNotClauseChildren() {
+		boolean result = true;
+		for (TextPattern child: clauses) {
+			if (!(child instanceof TextPatternNot))
+				result = false;
+		}
+		return result;
+	}
+
 }

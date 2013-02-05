@@ -55,6 +55,11 @@ public class TextPatternTranslatorQuery implements TextPatternTranslator<Query> 
 
 	@Override
 	public Query and(String fieldName, List<Query> clauses) {
+		return docLevelAnd(fieldName, clauses);
+	}
+
+	@Override
+	public Query docLevelAnd(String fieldName, List<Query> clauses) {
 		return makeBooleanQuery(clauses, Occur.MUST);
 	}
 
@@ -95,11 +100,6 @@ public class TextPatternTranslatorQuery implements TextPatternTranslator<Query> 
 			pq.add(((TermQuery) q).getTerm());
 		}
 		return pq;
-	}
-
-	@Override
-	public Query docLevelAnd(String fieldName, List<Query> clauses) {
-		return and(fieldName, clauses);
 	}
 
 	@Override
@@ -148,5 +148,12 @@ public class TextPatternTranslatorQuery implements TextPatternTranslator<Query> 
 	@Override
 	public Query prefix(String fieldName, String value) {
 		return new PrefixQuery(new Term(fieldName, value));
+	}
+
+	@Override
+	public Query not(String fieldName, Query clause) {
+		BooleanQuery booleanQuery = new BooleanQuery();
+		booleanQuery.add(clause, Occur.MUST_NOT);
+		return booleanQuery;
 	}
 }

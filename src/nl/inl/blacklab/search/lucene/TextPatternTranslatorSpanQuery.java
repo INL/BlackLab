@@ -118,4 +118,9 @@ public class TextPatternTranslatorSpanQuery implements TextPatternTranslator<Spa
 				value)));
 	}
 
+	@Override
+	public SpanQuery not(String fieldName, SpanQuery clause) {
+		return new SpanQueryNot(clause);
+	}
+
 }

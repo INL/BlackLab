@@ -73,4 +73,27 @@ public abstract class TextPattern implements Cloneable {
 	public String toString(String fieldName) {
 		return translate(new TextPatternTranslatorString(), fieldName);
 	}
+
+	/**
+	 * Rewrite the TextPattern before translation.
+	 *
+	 * This changes the structure of certain queries so they can be executed
+	 * more efficiently.
+	 *
+	 * @return either the original TextPattern (if no rewriting was necessary),
+	 * or the rewritten TextPattern
+	 */
+	public TextPattern rewrite() {
+		return this;
+	}
+
+	/**
+	 * Return an inverted version of this TextPattern.
+	 *
+	 * @return the inverted TextPattern
+	 */
+	public TextPattern inverted() {
+		return new TextPatternNot(this);
+	}
+
 }

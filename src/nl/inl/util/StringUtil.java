@@ -360,8 +360,7 @@ public class StringUtil {
 	 */
 	public static String normalizeWhitespace(String s) {
 		Matcher m = PATT_WHITESPACE.matcher(s);
-		String out0 = m.replaceAll(" ");
-		return out0;
+		return m.replaceAll(" ");
 	}
 
 	/**

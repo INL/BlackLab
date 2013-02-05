@@ -174,4 +174,97 @@ public class TextPatternSequence extends TextPatternAnd {
 		}
 		return true;
 	}
+
+	/*
+
+	// NOTE: this code rewrites the sequence, first flattening some
+	// parts of it and then unflattening it again. This is not used at the moment,
+	// but may at some point come in handy, so we'll leave it commented out for now.
+
+	@Override
+	public TextPattern rewrite() {
+
+		// If any clauses are sequences consisting only of NOT clauses (which we cannot
+		// practically execute), incorporate them into this sequence (i.e. flatten the
+		// nested sequence). This doesn't change the query because the sequence operator is associative.
+		TextPatternSequence result = null;
+		for (TextPattern child: clauses) {
+			TextPattern rewritten = child.rewrite();
+			boolean sequenceWithOnlyNotClauses = rewritten instanceof TextPatternSequence && ((TextPatternSequence)rewritten).hasOnlyNotClauseChildren();
+			if (child != rewritten || sequenceWithOnlyNotClauses) {
+				if (result == null) {
+					// This is the first rewrite we're doing. Clone this query now.
+					result = (TextPatternSequence) clone();
+				}
+				if (sequenceWithOnlyNotClauses) {
+					// Problem child sequence (consisting only of NOT clauses)
+					// Replace the child, incorporating the child sequence into the rewritten sequence
+					result.replaceClause(child, ((TextPatternSequence)rewritten).clauses.toArray(new TextPattern[] {}));
+				} else {
+					// Replace the child with the rewritten version
+					result.replaceClause(child, rewritten);
+				}
+			}
+		}
+
+		if (result == null && clauses.size() <= 2) {
+			// No child clause rewritten, and maximum of two child clauses: nothing to do.
+			return this;
+		}
+
+		if (result == null) {
+			// No rewrites or subsequence-incorporations done yet,
+			// but sequence should be unflattened, so clone it now.
+			result = (TextPatternSequence) clone();
+		}
+
+		// Now, "unflatten" the sequence into a binary tree, taking care to combine NOT-queries
+		// with an adjacent positive query.
+		boolean changesMade = true;
+		while (result.clauses.size() > 2 && changesMade) {
+			changesMade = false;
+			for (int i = 0; i < result.clauses.size() - 1; i++) {
+				TextPattern child = result.clauses.get(i);
+
+				// NOT-query with adjacent positive query?
+				if (child instanceof TextPatternNot) {
+					TextPattern leftNeighbour = i > 0 ? result.clauses.get(i - 1) : null;
+					if (leftNeighbour != null && !(leftNeighbour instanceof TextPatternNot)) {
+						// Combine with left query
+						TextPattern combined = new TextPatternSequence(leftNeighbour, child);
+						result.clauses.remove(i - 1);
+						result.replaceClause(child, combined);
+						changesMade = true;
+					} else if (!(result.clauses.get(i + 1) instanceof TextPatternNot)){
+						// Combine with right query
+						TextPattern combined = new TextPatternSequence(child, result.clauses.get(i + 1));
+						result.clauses.remove(i + 1);
+						result.replaceClause(child, combined);
+						changesMade = true;
+					} else {
+						// Can't combine with left or right neighbour; maybe next pass.
+					}
+				} else {
+					// Positive query; can and should always be combined with right neighbour
+					TextPattern combined = new TextPatternSequence(child, result.clauses.get(i + 1));
+					result.clauses.remove(i + 1);
+					result.replaceClause(child, combined);
+					changesMade = true;
+				}
+			}
+		}
+
+//		if (result.clauses.size() > 2) {
+//			// This can only happen if the sequence consists of all NOT queries, because
+//			// that's the only situation in which we can't combine any of them.
+//			throw new RuntimeException("Cannot process sequence consisting of all NOT queries");
+//		} else if (result.clauses.size() == 2 && result.clauses.get(0) instanceof TextPatternNot && result.clauses.get(1) instanceof TextPatternNot) {
+//			// TextPatternSequence of 2 (correct) which consists of two NOT queries (incorrect, we can't execute this)
+//			throw new RuntimeException("Cannot process sequence consisting of all NOT queries");
+//		}
+
+		return result;
+	}
+	*/
+
 }

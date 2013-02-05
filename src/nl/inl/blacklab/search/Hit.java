@@ -101,7 +101,10 @@ public class Hit implements Comparable<Hit> {
 	/** The Lucene doc this hits occurs in */
 	public int doc;
 
-	/** End of this hit's span (in word positions) */
+	/** End of this hit's span (in word positions).
+	 *
+	 *  Note that this actually points to the first word not in the hit (just like Spans).
+	 */
 	public int end;
 
 	/** Start of this hit's span (in word positions) */

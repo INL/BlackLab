@@ -22,6 +22,7 @@ import java.util.List;
  * A TextPattern matching at least one of its child clauses.
  */
 public class TextPatternOr extends TextPatternCombiner {
+
 	public TextPatternOr(TextPattern... clauses) {
 		super(clauses);
 	}
@@ -36,4 +37,37 @@ public class TextPatternOr extends TextPatternCombiner {
 			return chResults.get(0);
 		return translator.or(fieldName, chResults);
 	}
+
+	/*
+
+	NOTE: this code rewrites OR queries containing one or more NOT children
+	into AND queries. It is not currently used but we may want to use something
+	like this in the future to better optimize certain queries, so we'll leave
+	it here for now.
+
+	@Override
+	public TextPattern rewrite() {
+		boolean hasNotChild = false;
+		TextPattern[] rewritten = new TextPattern[clauses.size()];
+		for (int i = 0; i < clauses.size(); i++) {
+			TextPattern child = clauses.get(i);
+			rewritten[i] = child.rewrite();
+			if (rewritten[i] instanceof TextPatternNot) {
+				hasNotChild = true;
+				break;
+			}
+		}
+		if (hasNotChild) {
+			// At least one clause starts with NOT.
+			// Node should be rewritten to AND. Invert all clauses.
+			for (int i = 0; i < rewritten.length; i++) {
+				rewritten[i] = rewritten[i].inverted();
+			}
+			return new TextPatternNot(new TextPatternAnd(rewritten));
+		}
+		// Node need not be rewritten; return as-is
+		return this;
+	}
+
+	 */
 }

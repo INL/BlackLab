@@ -265,6 +265,7 @@ public class Searcher {
 
 	public SpanQuery createSpanQuery(String field, TextPattern pattern, DocIdSet docIdSet) {
 		// Convert to SpanQuery
+		pattern = pattern.rewrite();
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
 		SpanQuery spanQuery = pattern.translate(spanQueryTranslator, field);
 
