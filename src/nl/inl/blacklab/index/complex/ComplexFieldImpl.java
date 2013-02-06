@@ -18,17 +18,11 @@
  */
 package nl.inl.blacklab.index.complex;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.util.Utilities;
-
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
@@ -48,11 +42,12 @@ import org.apache.lucene.document.Field.Store;
  * for highlighting). All Lucene fields will include position information (for use with
  * SpanQueries).
  *
- * N.B. It is crucial that you call addValue() for every token. Also, make sure you call
- * addPropertyValue() for EVERY property EVERY token. The same goes for addStartChar() and
- * addEndChar() (although, if you don't want any offsets, you need not call these).
+ * N.B. It is crucial that everything stays in synch, so you should call all the appropriate add*()
+ * methods for each property and each token, or use the correct position increments to keep everything
+ * synched up. The same goes for addStartChar() and addEndChar() (although, if you don't want any
+ * offsets, you need not call these).
  */
-public class ComplexFieldImpl implements ComplexField {
+public class ComplexFieldImpl extends ComplexField {
 	private Map<String, ComplexFieldProperty> properties = new HashMap<String, ComplexFieldProperty>();
 
 	private List<Integer> start = new ArrayList<Integer>();
@@ -100,12 +95,6 @@ public class ComplexFieldImpl implements ComplexField {
 	}
 
 	@Override
-	public void addValue(String value) {
-		ComplexFieldProperty p = properties.get("");
-		p.addValue(value);
-	}
-
-	@Override
 	public void addStartChar(int startChar) {
 		start.add(startChar);
 	}
@@ -116,11 +105,17 @@ public class ComplexFieldImpl implements ComplexField {
 	}
 
 	@Override
-	public void addPropertyValue(String name, String value) {
+	public void addValue(String value, int posIncr) {
+		ComplexFieldProperty p = properties.get("");
+		p.addValue(value, posIncr);
+	}
+
+	@Override
+	public void addPropertyValue(String name, String value, int posIncr) {
 		ComplexFieldProperty p = properties.get(name);
 		if (p == null)
 			throw new RuntimeException("Undefined property '" + name + "'");
-		p.addValue(value);
+		p.addValue(value, posIncr);
 	}
 
 	@Override
@@ -155,23 +150,32 @@ public class ComplexFieldImpl implements ComplexField {
 		this.addPropertyAlternative("", altName, filterAdder);
 	}
 
-	@Override
-	public void addPropertyTokens(String propertyName, TokenStream c) throws IOException {
-		CharTermAttribute ta = c.addAttribute(CharTermAttribute.class);
-		while (c.incrementToken()) {
-			addPropertyValue(propertyName, Utilities.getTerm(ta));
-		}
-	}
+//	@Override
+//	public void addPropertyTokens(String propertyName, TokenStream c) throws IOException {
+//		CharTermAttribute ta = c.addAttribute(CharTermAttribute.class);
+//		while (c.incrementToken()) {
+//			addPropertyValue(propertyName, Utilities.getTerm(ta));
+//		}
+//	}
+
+//	@Override
+//	public void addTokens(TokenStream c) throws IOException {
+//		CharTermAttribute ta = c.addAttribute(CharTermAttribute.class);
+//		OffsetAttribute oa = c.addAttribute(OffsetAttribute.class);
+//		while (c.incrementToken()) {
+//			addValue(Utilities.getTerm(ta));
+//			addStartChar(oa.startOffset());
+//			addEndChar(oa.endOffset());
+//		}
+//	}
 
 	@Override
-	public void addTokens(TokenStream c) throws IOException {
-		CharTermAttribute ta = c.addAttribute(CharTermAttribute.class);
-		OffsetAttribute oa = c.addAttribute(OffsetAttribute.class);
-		while (c.incrementToken()) {
-			addValue(Utilities.getTerm(ta));
-			addStartChar(oa.startOffset());
-			addEndChar(oa.endOffset());
-		}
+	public ComplexFieldProperty getProperty(String propName, String altPostfix) {
+		String name = ComplexFieldUtil.fieldName(fieldName, propName, altPostfix);
+		ComplexFieldProperty p = properties.get(name);
+		if (p == null)
+			throw new RuntimeException("Undefined property '" + name + "'");
+		return p;
 	}
 
 	@Override
@@ -180,5 +184,13 @@ public class ComplexFieldImpl implements ComplexField {
 		if (p == null)
 			throw new RuntimeException("Undefined property '" + name + "'");
 		return p.getValues();
+	}
+
+	@Override
+	public List<Integer> getPropertyPositionIncrements(String name) {
+		ComplexFieldProperty p = properties.get(name);
+		if (p == null)
+			throw new RuntimeException("Undefined property '" + name + "'");
+		return p.getPositionIncrements();
 	}
 }

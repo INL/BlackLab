@@ -39,6 +39,7 @@ import java.util.zip.ZipFile;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeReader;
 import nl.inl.util.Utilities;
@@ -332,12 +333,46 @@ public class Indexer {
 		return addToForwardIndex(contentsField, tokens);
 	}
 
+	/**
+	 * Add a list of tokens to a forward index.
+	 *
+	 * @param fieldName what forward index to add this to
+	 * @param tokens the tokens to add
+	 * @return the id assigned to the content
+	 */
 	public int addToForwardIndex(String fieldName, List<String> tokens) {
 		ForwardIndex forwardIndex = getForwardIndex(fieldName);
 		if (forwardIndex == null)
 			throw new RuntimeException("No forward index for field " + fieldName);
 
 		return forwardIndex.addDocument(tokens);
+	}
+
+	/**
+	 * Add a list of tokens to a forward index
+	 *
+	 * @param fieldName what forward index to add this to
+	 * @param prop the property to get values and position increments from
+	 * @return the id assigned to the content
+	 */
+	public int addToForwardIndex(String fieldName, ComplexFieldProperty prop) {
+		return addToForwardIndex(fieldName, prop.getValues(), prop.getPositionIncrements());
+	}
+
+	/**
+	 * Add a list of tokens to a forward index
+	 *
+	 * @param fieldName what forward index to add this to
+	 * @param tokens the tokens to add
+	 * @param posIncr position increment associated with each token
+	 * @return the id assigned to the content
+	 */
+	public int addToForwardIndex(String fieldName, List<String> tokens, List<Integer> posIncr) {
+		ForwardIndex forwardIndex = getForwardIndex(fieldName);
+		if (forwardIndex == null)
+			throw new RuntimeException("No forward index for field " + fieldName);
+
+		return forwardIndex.addDocument(tokens, posIncr);
 	}
 
 	/**

@@ -285,7 +285,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
 		// Add contents field (case-insensitive tokens) to forward index
-		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getPropertyValues(""));
+		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getProperty(""));
 		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "fiid"),
 				Store.YES, false).setIntValue(forwardId));
 	}

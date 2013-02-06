@@ -15,10 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.index.complex;
 
-import java.io.IOException;
 import java.util.List;
 
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 
 /**
@@ -39,37 +37,197 @@ import org.apache.lucene.document.Document;
  * addPropertyValue() for EVERY property EVERY token. The same goes for addStartChar() and
  * addEndChar() (although, if you don't want any offsets, you need not call these).
  */
-public interface ComplexField {
+public abstract class ComplexField {
+
+	/**
+	 * Current number of tokens (actually, the number of start character positions added so far)
+	 * @return the number of tokens
+	 */
 	public abstract int numberOfTokens();
 
+	/**
+	 * Add a property to the complex field
+	 * @param name property name
+	 */
+	public abstract void addProperty(String name);
+
+	/**
+	 * Add a property to the complex field
+	 * @param name property name
+	 * @param filterAdder specifies what filters to add to the TokenStream for this property,
+	 * so for example input can be lowercased, etc.
+	 */
 	public abstract void addProperty(String name, TokenFilterAdder filterAdder);
 
+	/**
+	 * Add a property alternative to the complex field.
+	 *
+	 * A property alternative is simply another way of indexing the same TokenStream. So,
+	 * for example, you might have a property "lemma" and you might want to index it
+	 * lowercased by default (for case-insensitive search) but also add a non-lowercased
+	 * alternative (for case-sensitive search).
+	 *
+	 * @param sourceName property name
+	 * @param altPostfix alternative postfix to add to the property name
+	 */
 	public abstract void addPropertyAlternative(String sourceName, String altPostfix);
 
+	/**
+	 * Add a property alternative to the complex field.
+	 *
+	 * A property alternative is simply another way of indexing the same TokenStream. So,
+	 * for example, you might have a property "lemma" and you might want to index it
+	 * lowercased by default (for case-insensitive search) but also add a non-lowercased
+	 * alternative (for case-sensitive search).
+	 *
+	 * @param sourceName property name
+	 * @param altPostfix alternative postfix to add to the property name
+	 * @param filterAdder specifies what filters to add to the TokenStream for this property,
+	 * so for example input can be lowercased, etc.
+	 */
 	public abstract void addPropertyAlternative(String sourceName, String altPostfix,
 			TokenFilterAdder filterAdder);
 
-	public abstract void addProperty(String name);
-
-	public abstract void addValue(String value);
-
-	public abstract void addStartChar(int startChar);
-
-	public abstract void addEndChar(int endChar);
-
-	public abstract void addPropertyValue(String name, String value);
-
-	public abstract void addToLuceneDoc(Document doc);
-
-	public abstract void clear();
-
+	/**
+	 * Add an alternative for the main property to the complex field.
+	 *
+	 * The main property is nameless and usually contains the word form.
+	 *
+	 * An alternative is simply another way of indexing the same TokenStream. So,
+	 * for example, you might want to index the main property lowercased by default
+	 * (for case-insensitive search) but also add a non-lowercased alternative
+	 * (for case-sensitive search).
+	 *
+	 * @param altPostfix alternative postfix to add to the property name
+	 */
 	public abstract void addAlternative(String altPostfix);
 
+	/**
+	 * Add an alternative for the main property to the complex field.
+	 *
+	 * The main property is nameless and usually contains the word form.
+	 *
+	 * An alternative is simply another way of indexing the same TokenStream. So,
+	 * for example, you might want to index the main property lowercased by default
+	 * (for case-insensitive search) but also add a non-lowercased alternative
+	 * (for case-sensitive search).
+	 *
+	 * @param altPostfix alternative postfix to add to the property name
+	 * @param filterAdder specifies what filters to add to the TokenStream for this property,
+	 * so for example input can be lowercased, etc.
+	 */
 	public abstract void addAlternative(String altPostfix, TokenFilterAdder filterAdder);
 
-	public abstract void addTokens(TokenStream c) throws IOException;
+	/**
+	 * Add a token value to the main property for this field.
+	 *
+	 * The main property is nameless and usually contains the word form.
+	 *
+	 * @param value the token value to add
+	 */
+	public void addValue(String value) {
+		addValue(value, 1);
+	}
 
-	public abstract void addPropertyTokens(String propertyName, TokenStream c) throws IOException;
+	/**
+	 * Add a token value to the main property for this field.
+	 *
+	 * The main property is nameless and usually contains the word form.
+	 *
+	 * @param value the token value to add
+	 * @param posIncrement position increment to use for this value
+	 */
+	public abstract void addValue(String value, int posIncrement);
 
+	/**
+	 * Add a property value.
+	 *
+	 * @param name name of the property to add value to
+	 * @param value the token value to add
+	 */
+	public void addPropertyValue(String name, String value) {
+		addPropertyValue(name, value, 1);
+	}
+
+	/**
+	 * Add a property value.
+	 *
+	 * @param name name of the property to add value to
+	 * @param value the token value to add
+	 * @param posIncrement position increment to use for this value
+	 */
+	public abstract void addPropertyValue(String name, String value, int posIncrement);
+
+	/**
+	 * Add a token starting character position in the original input.
+	 *
+	 * @param startChar the character position to add
+	 */
+	public abstract void addStartChar(int startChar);
+
+	/**
+	 * Add a token endinf character position in the original input.
+	 *
+	 * @param endChar the character position to add
+	 */
+	public abstract void addEndChar(int endChar);
+
+	/**
+	 * Add all the stored values for this complex field to the Lucene document
+	 *
+	 * @param doc the document to add the values to
+	 */
+	public abstract void addToLuceneDoc(Document doc);
+
+	/**
+	 * Clear the contents of the complex field
+	 */
+	public abstract void clear();
+
+//	public abstract void addTokens(TokenStream c) throws IOException;
+
+//	public abstract void addPropertyTokens(String propertyName, TokenStream c) throws IOException;
+
+	/**
+	 * Retrieve a property object
+	 *
+	 * This is used to fill the forward index.
+	 *
+	 * @param propName property name
+	 * @return the property object
+	 */
+	public ComplexFieldProperty getProperty(String propName) {
+		return getProperty(propName, null);
+	}
+
+	/** Retrieve a property [alternative] object
+	 *
+	 * This is used to fill the forward index.
+	 *
+	 * @param propName property name
+	 * @param altPostfix property alternative postfix, or null or empty for the property itself
+	 * @return the property object
+	 */
+	public abstract ComplexFieldProperty getProperty(String propName, String altPostfix);
+
+	/**
+	 * Get all the values stored for the specified property [alternative].
+	 *
+	 * This is used to fill the forward index.
+	 *
+	 * @param name name of the property (or alternative) to retrieve values for
+	 * @return the list of stored values
+	 */
 	public abstract List<String> getPropertyValues(String name);
+
+	/**
+	 * Get all the position increments stored for the specified property [alternative].
+	 *
+	 * This is used to fill the forward index.
+	 *
+	 * @param name name of the property (or alternative) to retrieve pos. increments for
+	 * @return the list of stored position increments
+	 */
+	public abstract List<Integer> getPropertyPositionIncrements(String name);
+
 }

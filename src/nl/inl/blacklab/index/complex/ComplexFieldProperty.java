@@ -22,7 +22,7 @@ import org.apache.lucene.document.Document;
 /**
  * A property in a complex field. See ComplexFieldImpl for details.
  */
-abstract class ComplexFieldProperty {
+public abstract class ComplexFieldProperty {
 
 	final public void addValue(String value) {
 		addValue(value, 1);

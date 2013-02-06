@@ -27,6 +27,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import nl.inl.util.ExUtil;
@@ -373,13 +374,33 @@ public class ForwardIndex {
 	}
 
 	/**
-	 * Store the given content and assign an id to it
+	 * Store the given content and assign an id to it.
+	 *
+	 * Note that if more than one token occurs at any position, we only store the first in the
+	 * forward index.
 	 *
 	 * @param content
 	 *            the content to store
+	 * @param posIncr the associated position increments, or null if position increment is always 1.
 	 * @return the id assigned to the content
 	 */
-	public synchronized int addDocument(List<String> content) {
+	public synchronized int addDocument(List<String> content, List<Integer> posIncr) {
+
+		// Calculate the total number of tokens we need to store, based on the number
+		// of positions (we store 1 token per position, regardless of whether we have
+		// none, one or multiple values for that position)
+		int numberOfTokens;
+		if (posIncr == null) {
+			// No position increments given; assume always 1
+			numberOfTokens = content.size();
+		} else {
+			// Calculate using position increments
+			numberOfTokens = 0;
+			for (int inc: posIncr) {
+				numberOfTokens += inc;
+			}
+		}
+
 		try {
 			if (writeBuffer == null) {
 				// Map writeBuffer
@@ -387,55 +408,61 @@ public class ForwardIndex {
 				writeBufOffset = getTokenFileEndPosition();
 
 				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-						writeBufOffset * SIZEOF_INT, (content.size() + WRITE_MAP_RESERVE) * SIZEOF_INT);
+						writeBufOffset * SIZEOF_INT, (numberOfTokens + WRITE_MAP_RESERVE) * SIZEOF_INT);
 				writeBuffer = byteBuffer.asIntBuffer();
 			}
 
 			// Make entry
 			long entryOffset = writeBufOffset + writeBuffer.position();
-			TocEntry e = new TocEntry(entryOffset, content.size(), false);
+			TocEntry e = new TocEntry(entryOffset, numberOfTokens, false);
 			toc.add(e);
 			long end = e.offset + e.length;
 			if (end > tokenFileEndPosition)
 				tokenFileEndPosition = end;
 			tocModified = true;
 
-			if (writeBuffer.remaining() < content.size()) {
+			if (writeBuffer.remaining() < numberOfTokens) {
 				// Remap writeBuffer so we have space available
 				writeBufOffset += writeBuffer.position();
 
 				// NOTE: We reserve more space so we don't have to remap for each document, saving time
 				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-						writeBufOffset * SIZEOF_INT, (content.size() + WRITE_MAP_RESERVE) * SIZEOF_INT);
+						writeBufOffset * SIZEOF_INT, (numberOfTokens + WRITE_MAP_RESERVE) * SIZEOF_INT);
 				writeBuffer = byteBuffer.asIntBuffer();
 			}
 
-			for (String token : content) {
+			Iterator<String> contentIt = content.iterator();
+			Iterator<Integer> posIncrIt = posIncr == null ? null : posIncr.iterator();
+			while (contentIt.hasNext()) {
+				String token = contentIt.next();
+				int pi = posIncrIt == null ? 1 : posIncrIt.next();
+				if (pi == 0)
+					continue; // we only store the first token at any position
+				if (pi > 1) {
+					// Skipped a few tokens; add empty tokens for these positions
+					for (int i = 0; i < pi - 1; i++) {
+						writeBuffer.put(terms.indexOf(""));
+					}
+				}
+
 				writeBuffer.put(terms.indexOf(token));
 			}
-
-
-			/*
-			// NOTE: We should not re-map for every document, but use a similar approach as with
-			// Terms
-
-			MappedByteBuffer writeBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-					e.offset * SIZEOF_INT, content.size() * SIZEOF_INT);
-			writeBuffer.position(0);
-			IntBuffer ib = writeBuffer.asIntBuffer();
-			for (String token : content) {
-				ib.put(terms.indexOf(token));
-			}
-
-			// Unmap writeBuffer to prevent file lock
-			// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
-			Utilities.cleanDirectBufferHack(writeBuffer);
-			*/
 
 			return toc.size() - 1;
 		} catch (IOException e1) {
 			throw new RuntimeException(e1);
 		}
+	}
+
+	/**
+	 * Store the given content and assign an id to it
+	 *
+	 * @param content
+	 *            the content to store
+	 * @return the id assigned to the content
+	 */
+	public synchronized int addDocument(List<String> content) {
+		return addDocument(content, null);
 	}
 
 	/**
