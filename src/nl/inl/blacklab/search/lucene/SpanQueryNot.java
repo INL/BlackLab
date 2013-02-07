@@ -30,21 +30,41 @@ import org.apache.lucene.search.spans.Spans;
  */
 public class SpanQueryNot extends SpanQueryBase {
 
+	String fieldName;
+
 	public SpanQueryNot(SpanQuery query) {
 		super(query);
+		fieldName = query.getField();
 	}
 
 	public SpanQueryNot(Collection<SpanQuery> clauscol) {
 		super(clauscol);
+		fieldName = clauses[0].getField();
 	}
 
 	public SpanQueryNot(SpanQuery[] _clauses) {
 		super(_clauses);
+		fieldName = clauses[0].getField();
+	}
+
+	/**
+	 * A SpanQuery that simply matches all tokens in a field
+	 * @param matchAllTokensFieldName what field to match all tokens in
+	 */
+	private SpanQueryNot(String matchAllTokensFieldName) {
+		clauses = new SpanQuery[1];
+		clauses[0] = null;
+		fieldName = matchAllTokensFieldName;
+	}
+
+	public static SpanQuery matchAllTokens(String fieldName) {
+		return new SpanQueryNot(fieldName);
 	}
 
 	@Override
 	public Spans getSpans(IndexReader reader) throws IOException {
-		return new SpansNot(reader, clauses[0].getField(), clauses[0].getSpans(reader));
+		SpanQuery query = clauses[0];
+		return new SpansNot(reader, fieldName, query == null ? null : query.getSpans(reader));
 	}
 
 	@Override

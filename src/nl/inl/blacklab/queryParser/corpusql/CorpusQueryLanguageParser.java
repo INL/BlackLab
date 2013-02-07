@@ -483,11 +483,6 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     return false;
   }
 
-  private boolean jj_3_4() {
-    if (jj_3R_2()) return true;
-    return false;
-  }
-
   private boolean jj_3_1() {
     if (jj_scan_token(14)) return true;
     if (jj_scan_token(NUMBER)) return true;
@@ -495,30 +490,8 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     return false;
   }
 
-  private boolean jj_3R_13() {
-    if (jj_scan_token(19)) return true;
-    if (jj_3R_5()) return true;
-    if (jj_scan_token(20)) return true;
-    return false;
-  }
-
   private boolean jj_3R_8() {
     if (jj_scan_token(13)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_12() {
-    if (jj_scan_token(QUOTED_STRING)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_3() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_12()) {
-    jj_scanpos = xsp;
-    if (jj_3R_13()) return true;
-    }
     return false;
   }
 
@@ -551,13 +524,45 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     return false;
   }
 
+  private boolean jj_3_4() {
+    if (jj_3R_2()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_13() {
+    if (jj_scan_token(19)) return true;
+    if (jj_3R_5()) return true;
+    if (jj_scan_token(20)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_12() {
+    if (jj_scan_token(QUOTED_STRING)) return true;
+    return false;
+  }
+
   private boolean jj_3_3() {
     if (jj_3R_1()) return true;
     return false;
   }
 
+  private boolean jj_3R_3() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_12()) {
+    jj_scanpos = xsp;
+    if (jj_3R_13()) return true;
+    }
+    return false;
+  }
+
   private boolean jj_3R_14() {
     if (jj_3R_3()) return true;
+    return false;
+  }
+
+  private boolean jj_3_2() {
+    if (jj_3R_1()) return true;
     return false;
   }
 
@@ -575,11 +580,6 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     jj_scanpos = xsp;
     if (jj_3R_14()) return true;
     }
-    return false;
-  }
-
-  private boolean jj_3_2() {
-    if (jj_3R_1()) return true;
     return false;
   }
 

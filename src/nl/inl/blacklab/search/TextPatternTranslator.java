@@ -160,4 +160,11 @@ public interface TextPatternTranslator<T> {
 	T wildcard(String fieldName, String value);
 
 	T prefix(String fieldName, String value);
+
+	/**
+	 * Any token in field.
+	 * @param fieldName the field to search
+	 * @return the resulting any-token clause
+	 */
+	T any(String fieldName);
 }

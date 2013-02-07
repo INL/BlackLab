@@ -86,7 +86,12 @@ public class Searcher {
 	/**
 	 * The default contents field (if you don't specify one in the constructor)
 	 */
-	private static final String DEFAULT_CONTENTS_FIELD = "contents";
+	public static final String DEFAULT_CONTENTS_FIELD = "contents";
+
+	/**
+	 * Name of complex field metadata property that stores the length in tokens
+	 */
+	public static final String FIELD_LENGTH_PROP_NAME = "length_tokens";
 
 	/**
 	 * The collator to use for sorting. Defaults to English collator.

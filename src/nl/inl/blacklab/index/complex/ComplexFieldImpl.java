@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.search.Searcher;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
@@ -127,8 +129,8 @@ public class ComplexFieldImpl extends ComplexField {
 		// Add number of tokens in complex field as a stored field,
 		// because we need to be able to find this property quickly
 		// for SpanQueryNot.
-		doc.add(new Field(ComplexFieldUtil.fieldName(fieldName, "length_tokens"),
-				"" + numberOfTokens(), Store.YES, Index.NO));
+		doc.add(new Field(ComplexFieldUtil.fieldName(fieldName, Searcher.FIELD_LENGTH_PROP_NAME),
+				"" + numberOfTokens(), Store.YES, Index.NOT_ANALYZED_NO_NORMS));
 	}
 
 	@Override

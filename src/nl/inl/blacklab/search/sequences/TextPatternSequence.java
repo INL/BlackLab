@@ -111,6 +111,14 @@ public class TextPatternSequence extends TextPatternAnd {
 			matchesEmptySeq.add(0, translatedMatchesEmpty);
 		}
 
+		// Did the whole sequence consist of any-token parts?
+		if (chResults.size() == 0 && previousAnyTokensPart != null) {
+			// Yes.
+			// Translate as-is (don't use expansion). Probably less efficient,
+			// but it's the only way to resolve this type of query.
+			chResults.add(previousAnyTokensPart.translate(translator, fieldName));
+		}
+
 		// Is it still a sequence, or just one part?
 		if (chResults.size() == 1)
 			return chResults.get(0); // just one part, return that

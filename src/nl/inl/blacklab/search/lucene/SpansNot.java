@@ -18,7 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
-
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.Spans;
 
@@ -67,6 +66,12 @@ class SpansNot extends Spans {
 		lengthGetter.setTest(test);
 	}
 
+	/**
+	 * Constructs a SpansNot.
+	 * @param reader the index reader, for getting field lengths
+	 * @param fieldName the field name, for getting field lengths
+	 * @param clause the clause to invert, or null if we want all tokens
+	 */
 	public SpansNot(IndexReader reader, String fieldName, Spans clause) {
 		this.reader = reader;
 		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
@@ -119,7 +124,7 @@ class SpansNot extends Spans {
 				if (!nextDoc()) {
 					return false;
 				}
-				moreHitsInClause = clause.next();
+				moreHitsInClause = clause == null ? false : clause.next();
 
 				// Loop again to determine if we are at a valid token or not.
 
@@ -204,7 +209,7 @@ class SpansNot extends Spans {
 	@Override
 	public boolean skipTo(int doc) throws IOException {
 		// Skip clause to doc (or beyond if there's no hits in doc)
-		moreHitsInClause = clause.skipTo(doc);
+		moreHitsInClause = clause == null ? false : clause.skipTo(doc);
 
 		if (currentDoc >= doc) {
 			// We can't skip to it because we're already there or beyond.
@@ -232,7 +237,7 @@ class SpansNot extends Spans {
 
 	@Override
 	public String toString() {
-		return "NotSpans(" + clause + ")";
+		return clause == null ? "AnyToken()" : "NotSpans(" + clause + ")";
 	}
 
 	@Override

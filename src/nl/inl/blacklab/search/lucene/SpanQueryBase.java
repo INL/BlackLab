@@ -137,7 +137,7 @@ public abstract class SpanQueryBase extends SpanQuery {
 		SpanQueryBase clone = null;
 		for (int i = 0; i < clauses.length; i++) {
 			SpanQuery c = clauses[i];
-			SpanQuery query = (SpanQuery) c.rewrite(reader);
+			SpanQuery query = c == null ? null : (SpanQuery) c.rewrite(reader);
 			if (query != c) {
 				// clause rewritten: must clone
 				if (clone == null)

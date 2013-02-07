@@ -84,6 +84,16 @@ public class Hits implements Iterable<Hit> {
 	private int totalNumberOfHits;
 
 	/**
+	 * For extremely large queries, stop retrieving hits after this number.
+	 */
+	public final static int MAX_HITS_TO_RETRIEVE = 10000000;
+
+	/**
+	 * For extremely large queries, stop retrieving hits after this number.
+	 */
+	private boolean allHitsRetrieved = true;
+
+	/**
 	 * Construct an empty Hits object
 	 *
 	 * @param searcher
@@ -160,6 +170,11 @@ public class Hits implements Iterable<Hit> {
 		try {
 			while (sourceSpans.next()) {
 				totalNumberOfHits++;
+				if (totalNumberOfHits >= MAX_HITS_TO_RETRIEVE) {
+					// Too many hits; stop collecting here
+					allHitsRetrieved = false;
+					break;
+				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -168,6 +183,14 @@ public class Hits implements Iterable<Hit> {
 		sourceSpansFullyRead = false;
 		hits = new ArrayList<Hit>();
 		this.concordanceField = defaultConcField;
+	}
+
+	/**
+	 * Were all hits retrieved, or did we stop because there were too many?
+	 * @return true if all hits were retrieved
+	 */
+	public boolean allHitsRetrieved() {
+		return allHitsRetrieved;
 	}
 
 	/**

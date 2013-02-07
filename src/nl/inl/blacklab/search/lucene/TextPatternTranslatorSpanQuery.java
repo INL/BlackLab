@@ -123,4 +123,9 @@ public class TextPatternTranslatorSpanQuery implements TextPatternTranslator<Spa
 		return new SpanQueryNot(clause);
 	}
 
+	@Override
+	public SpanQuery any(String fieldName) {
+		return SpanQueryNot.matchAllTokens(fieldName);
+	}
+
 }

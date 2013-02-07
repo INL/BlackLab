@@ -50,12 +50,23 @@ public class TextPatternRepetition extends TextPattern {
 	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
 		T baseTranslated = base.translate(translator, fieldName);
 
+		int realMin = min;
+		if (realMin == 0) {
+			// This can happen if the whole query is optional, so
+			// it's impossible to build an alternative without this clause.
+			// In this case, min == 0 has no real meaning and we simply
+			// behave the same as if min == 1.
+			realMin = 1;
+		}
+		if (realMin == 1 && max == 1)
+			return baseTranslated; // no repetition
+
 		// NOTE: the case min == 0 is handled higher up the TextPattern hierarchy
 		// (by checking matchesEmptySequence()). When translating, we just pretend this
 		// case is equal to min == 1.
 		// A repetition with min == 0 in isolation would not make sense anyway, only
 		// in terms of surrounding patterns.
-		return translator.repetition(baseTranslated, min == 0 ? 1 : min, max);
+		return translator.repetition(baseTranslated, realMin, max);
 	}
 
 	@Override

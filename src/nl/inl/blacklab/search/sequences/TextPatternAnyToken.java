@@ -41,8 +41,20 @@ public class TextPatternAnyToken extends TextPattern {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		throw new RuntimeException(
-				"Cannot translate the any-token pattern, must be done by TextPatternSequence");
+		T any = translator.any(fieldName);
+
+		int realMin = min;
+		if (realMin == 0) {
+			// This can happen if the whole query is optional, so
+			// it's impossible to build an alternative without this clause.
+			// In this case, min == 0 has no real meaning and we simply
+			// behave the same as if min == 1.
+			realMin = 1;
+		}
+		if (realMin == 1 && max == 1)
+			return any;
+
+		return translator.repetition(any, realMin, max);
 	}
 
 	@Override

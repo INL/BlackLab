@@ -25,6 +25,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
@@ -155,5 +156,10 @@ public class TextPatternTranslatorQuery implements TextPatternTranslator<Query> 
 		BooleanQuery booleanQuery = new BooleanQuery();
 		booleanQuery.add(clause, Occur.MUST_NOT);
 		return booleanQuery;
+	}
+
+	@Override
+	public Query any(String fieldName) {
+		return new MatchAllDocsQuery();
 	}
 }

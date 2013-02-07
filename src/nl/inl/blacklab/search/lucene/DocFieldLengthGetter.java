@@ -3,10 +3,12 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.Searcher;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.TermFreqVector;
+import org.apache.lucene.search.FieldCache;
 
 /**
  * Used to get the field length in tokens for a document.
@@ -33,10 +35,35 @@ public class DocFieldLengthGetter {
 	/** Field name to check for the length of the field in tokens */
 	private String lengthTokensFieldName;
 
+	/** Lengths may have been cached using FieldCache */
+	private int[] cached;
+
 	public DocFieldLengthGetter(IndexReader reader, String fieldName) {
 		this.reader = reader;
 		this.fieldName = fieldName;
-		lengthTokensFieldName = ComplexFieldUtil.fieldName(fieldName, "length_tokens");
+		lengthTokensFieldName = ComplexFieldUtil.fieldName(fieldName, Searcher.FIELD_LENGTH_PROP_NAME);
+
+		if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD)) {
+			// Cache the lengths for this field to speed things up
+			try {
+				cached = FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName);
+
+				// Check if the cache was retrieved OK
+				boolean allZeroes = true;
+				for (int i = 0; i < 100; i++) {
+					if (cached[i] != 0) {
+						allZeroes = false;
+						break;
+					}
+				}
+				if (allZeroes) {
+					// Tokens lengths weren't saved in the index, skip cache
+					cached = null;
+				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 
 	/** For testing, we don't have an IndexReader available, so we use test values.
@@ -60,6 +87,10 @@ public class DocFieldLengthGetter {
 
 		if (useTestValues)
 			return 5; // while testing, all documents are 10 tokens long
+
+		if (cached != null) {
+			return cached[doc];
+		}
 
 		if (!lookedForLengthField || lengthFieldIsStored)  {
 			// We either know the field length is stored in the index,

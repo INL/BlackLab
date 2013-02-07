@@ -107,4 +107,9 @@ public class TextPatternTranslatorString implements TextPatternTranslator<String
 	public String not(String fieldName, String clause) {
 		return "NOT(" + clause + ")";
 	}
+
+	@Override
+	public String any(String fieldName) {
+		return "ANYTOKEN";
+	}
 }
