@@ -828,7 +828,7 @@ public class QueryTool {
 			msg = (window.first() + 1) + "-" + (window.last() + 1) + " of " + window.totalHits()
 					+ " hits";
 		out.println(msg);
-		if (!hitsToShow.tooManyHits()) {
+		if (hitsToShow.tooManyHits()) {
 			System.out.println("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE + " were collected)");
 		}
 	}
