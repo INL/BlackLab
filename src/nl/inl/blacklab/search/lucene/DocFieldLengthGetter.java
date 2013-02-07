@@ -36,7 +36,7 @@ public class DocFieldLengthGetter {
 	private String lengthTokensFieldName;
 
 	/** Lengths may have been cached using FieldCache */
-	private int[] cached;
+	private int[] cachedFieldLengths;
 
 	public DocFieldLengthGetter(IndexReader reader, String fieldName) {
 		this.reader = reader;
@@ -46,19 +46,19 @@ public class DocFieldLengthGetter {
 		if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD)) {
 			// Cache the lengths for this field to speed things up
 			try {
-				cached = FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName);
+				cachedFieldLengths = FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName);
 
 				// Check if the cache was retrieved OK
 				boolean allZeroes = true;
-				for (int i = 0; i < 100; i++) {
-					if (cached[i] != 0) {
+				for (int i = 0; i < 1000 && i < cachedFieldLengths.length; i++) {
+					if (cachedFieldLengths[i] != 0) {
 						allZeroes = false;
 						break;
 					}
 				}
 				if (allZeroes) {
 					// Tokens lengths weren't saved in the index, skip cache
-					cached = null;
+					cachedFieldLengths = null;
 				}
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -88,8 +88,8 @@ public class DocFieldLengthGetter {
 		if (useTestValues)
 			return 5; // while testing, all documents are 10 tokens long
 
-		if (cached != null) {
-			return cached[doc];
+		if (cachedFieldLengths != null) {
+			return cachedFieldLengths[doc];
 		}
 
 		if (!lookedForLengthField || lengthFieldIsStored)  {

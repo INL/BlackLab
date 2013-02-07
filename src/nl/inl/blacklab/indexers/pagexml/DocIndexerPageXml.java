@@ -82,10 +82,10 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	 */
 	private String neType = "NONE";
 
-	/**
-	 * Current named entity id. Only valid when insideNE == true.
-	 */
-	private int neGid = 0;
+//	/**
+//	 * Current named entity id. Only valid when insideNE == true.
+//	 */
+//	private int neGid = 0;
 
 	/**
 	 * Current word offset within named entity. Only valid when insideNE == true.
@@ -127,9 +127,25 @@ public class DocIndexerPageXml extends DocIndexerXml {
 																					// the offset
 																					// information
 		contentsField.addAlternative("s"); // sensitive version of main value
+
+		// Named entity fields (experimental version for IMPACT retrieval demonstrator)
+		//---------------------
+
+		// Named entity type. Used in retr. demonstrator to search for word as NE type,
+		// but BlackLab now uses a different approach to this:
+		// we just search for "element CONTAINING search string" or "search string WITHIN element".
+		// So this extra field is no longer necessary for future applications
+		// (starttag and endtag are enough) and will be removed when we update the retrieval
+		//  demonstrator.
 		contentsField.addProperty("ne"); // named entity type (NONE/PER/LOC/ORG)
-		contentsField.addProperty("negid"); // named entity gid
-		contentsField.addProperty("neoffset"); // named entity offset (word number inside ne)
+
+		// Named entity global id (not used, but could be used for linking to a database or something)
+		//contentsField.addProperty("negid");
+
+		// Named entity offset (word number inside ne)
+		// (not used, commented out)
+		//contentsField.addProperty("neoffset");
+
 		contentsField.addProperty("starttag"); // start tag positions (just NE tags for now)
 		contentsField.addProperty("endtag"); // end tag positions (just NE tags for now)
 	}
@@ -180,8 +196,9 @@ public class DocIndexerPageXml extends DocIndexerXml {
 					TermVector.NO));
 			if (localName.equals("yearFrom") || localName.equals("yearTo")) {
 				// Index these fields as numeric too, for faster range queries
+				// (we do both because yearFrom/yearTo aren't always clean numeric fields)
 				NumericField nf = new NumericField(ComplexFieldUtil.fieldName(localName, null,
-						"numeric"));
+						"numeric"), Store.YES, true);
 				nf.setIntValue(Integer.parseInt(characterContent));
 				currentLuceneDoc.add(nf);
 			}
@@ -203,7 +220,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		} else if (localName.equals("NE")) {
 			insideNE = true;
 			getNamedEntityType(attributes);
-			getNamedEntityGid(attributes);
+//			getNamedEntityGid(attributes);
 			neOffset = 0; // word position inside the NE
 		} else if (localName.equals("header")) {
 			inHeader = true;
@@ -220,18 +237,18 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			System.err.println("Unknown ne type: " + neType);
 	}
 
-	private void getNamedEntityGid(Attributes attributes) {
-		String gid = attributes.getValue("gid");
-		neGid = 0; // GID of this NE
-		if (gid != null) {
-			try {
-				neGid = Integer.parseInt(gid);
-			} catch (NumberFormatException e) {
-				// too bad...
-				System.err.println("Error parsing NE gid: " + gid);
-			}
-		}
-	}
+//	private void getNamedEntityGid(Attributes attributes) {
+//		String gid = attributes.getValue("gid");
+//		neGid = 0; // GID of this NE
+//		if (gid != null) {
+//			try {
+//				neGid = Integer.parseInt(gid);
+//			} catch (NumberFormatException e) {
+//				// too bad...
+//				System.err.println("Error parsing NE gid: " + gid);
+//			}
+//		}
+//	}
 
 	private void startPageXML(Attributes attributes) {
 		startCaptureContent();
@@ -311,8 +328,8 @@ public class DocIndexerPageXml extends DocIndexerXml {
 				contentsField.addEndChar(getContentPosition());
 				contentsField.addValue("");
 				contentsField.addPropertyValue("ne", neType);
-				contentsField.addPropertyValue("negid", neGid + "");
-				contentsField.addPropertyValue("neoffset", neOffset + "");
+				//contentsField.addPropertyValue("negid", neGid + "");
+				//contentsField.addPropertyValue("neoffset", neOffset + "");
 				contentsField.addPropertyValue("starttag", insideNE && neOffset == 0 ? "ne" : "");
 				contentsField.addPropertyValue("endtag", neJustClosed ? "ne" : "");
 			}
@@ -327,7 +344,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		// that in Lucene.
 		int contentId = storeCapturedContent();
 		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName("contents", "cid"),
-				Store.YES, false).setIntValue(contentId));
+				Store.YES, true).setIntValue(contentId));
 
 		// Store the different properties of the complex contents field that were gathered in
 		// lists while parsing.
@@ -337,7 +354,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		int fiidContents = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getPropertyValues(""));
 
 		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "fiid"),
-				Store.YES, false).setIntValue(fiidContents));
+				Store.YES, true).setIntValue(fiidContents));
 	}
 
 	private void startWord(Attributes attributes) {
@@ -352,8 +369,8 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			characterContent = "";
 		contentsField.addValue(preprocessWord(characterContent));
 		contentsField.addPropertyValue("ne", neType);
-		contentsField.addPropertyValue("negid", neGid + "");
-		contentsField.addPropertyValue("neoffset", neOffset + "");
+		//contentsField.addPropertyValue("negid", neGid + "");
+		//contentsField.addPropertyValue("neoffset", neOffset + "");
 
 		// Keep track of NE start and end tags
 		contentsField.addPropertyValue("starttag", insideNE && neOffset == 0 ? "ne" : "");

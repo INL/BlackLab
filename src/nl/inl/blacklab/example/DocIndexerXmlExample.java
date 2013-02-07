@@ -278,7 +278,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 		// that in Lucene.
 		int contentId = storeCapturedContent();
 		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName("contents", "cid"),
-				Store.YES, false).setIntValue(contentId));
+				Store.YES, true).setIntValue(contentId));
 
 		// Store the different properties of the complex contents field that were gathered in
 		// lists while parsing.
@@ -287,7 +287,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 		// Add contents field (case-insensitive tokens) to forward index
 		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getProperty(""));
 		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "fiid"),
-				Store.YES, false).setIntValue(forwardId));
+				Store.YES, true).setIntValue(forwardId));
 	}
 
 	/**

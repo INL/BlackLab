@@ -30,17 +30,22 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.ExUtil;
 import nl.inl.util.MemoryUtil;
 import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.FieldCache;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question
  * "what word occurs in doc X at position Y"?
  */
 public class ForwardIndex {
+
+	public static final String FORWARD_INDEX_ID_FIELD_NAME = "fiid";
 
 	protected static final Logger logger = Logger.getLogger(ForwardIndex.class);
 
@@ -129,6 +134,51 @@ public class ForwardIndex {
 	private long tokenFileEndPosition = 0;
 
 	// private boolean indexMode = false;
+
+	/** Index reader, for getting documents (for translating from Lucene doc id to fiid) */
+	private IndexReader reader;
+
+	/** fiid field name in the Lucene index (for translating from Lucene doc id to fiid) */
+	private String fiidFieldName;
+
+	/** Cached fiid field */
+	private int[] cachedFiids;
+
+	public void setIdTranslateInfo(IndexReader reader, String fieldName) {
+		this.reader = reader;
+		this.fiidFieldName = ComplexFieldUtil.fieldName(fieldName, FORWARD_INDEX_ID_FIELD_NAME);
+		try {
+			cachedFiids = FieldCache.DEFAULT.getInts(reader, fiidFieldName);
+
+			// Check if the cache was retrieved OK
+			boolean allZeroes = true;
+			for (int i = 0; i < 1000 && i < cachedFiids.length; i++) {
+				if (cachedFiids[i] != 0) {
+					allZeroes = false;
+					break;
+				}
+			}
+			if (allZeroes) {
+				// Tokens lengths weren't saved in the index, skip cache
+				cachedFiids = null;
+			}
+
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public int luceneDocIdToFiid(int docId) {
+		if (cachedFiids != null)
+			return cachedFiids[docId];
+
+		// Not cached; find fiid by reading stored value from Document now
+		try {
+			return Integer.parseInt(reader.document(docId).get(fiidFieldName));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public ForwardIndex(File dir) {
 		this(dir, false, null, false);
@@ -469,7 +519,7 @@ public class ForwardIndex {
 	 * Retrieve substring from a document.
 	 *
 	 * @param id
-	 *            content store document id
+	 *            forward index document id
 	 * @param start
 	 *            start of the substring
 	 * @param end
@@ -484,7 +534,7 @@ public class ForwardIndex {
 	 * Retrieve part of a document in token ids form.
 	 *
 	 * @param id
-	 *            content store document id
+	 *            forward index document id
 	 * @param start
 	 *            start of the part to retrieve
 	 * @param end
@@ -499,7 +549,7 @@ public class ForwardIndex {
 	 * Retrieve part of a document in token ids form.
 	 *
 	 * @param id
-	 *            content store document id
+	 *            forward index document id
 	 * @param start
 	 *            start of the part to retrieve
 	 * @param end
@@ -525,18 +575,18 @@ public class ForwardIndex {
 	 * space, it doesn't try to read the whole file). Possibly this could be solved by using 64-bit
 	 * Java, but we haven't tried. For now we just disable memory mapping on Windows.
 	 *
-	 * @param contentId
-	 *            id of the entry to get substrings from
+	 * @param fiid
+	 *            forward index document id
 	 * @param start
 	 *            the starting points of the substrings (in words)
 	 * @param end
 	 *            the end points of the substrings (in words)
 	 * @return the parts
 	 */
-	public synchronized List<String[]> retrieveParts(int contentId, int[] start, int[] end) {
+	public synchronized List<String[]> retrieveParts(int fiid, int[] start, int[] end) {
 
 		// First, retrieve the token ids
-		List<int[]> resultInt = retrievePartsInt(contentId, start, end);
+		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
 
 		// Translate them to strings using the terms index
 		List<String[]> result = new ArrayList<String[]>(resultInt.size());
@@ -557,18 +607,18 @@ public class ForwardIndex {
 	 * calls, because the file is only opened once and random access is used to read only the
 	 * required parts.
 	 *
-	 * @param contentId
-	 *            id of the entry to get parts from
+	 * @param fiid
+	 *            forward index document id
 	 * @param start
 	 *            the starting points of the parts to retrieve (in words)
 	 * @param end
 	 *            the end points of the parts to retrieve (in words)
 	 * @return the parts
 	 */
-	public synchronized List<int[]> retrievePartsSortOrder(int contentId, int[] start, int[] end) {
+	public synchronized List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end) {
 
 		// First, retrieve the token ids
-		List<int[]> resultInt = retrievePartsInt(contentId, start, end);
+		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
 
 		// Translate them to sort orders
 		for (int[] snippetInt: resultInt) {
@@ -594,17 +644,17 @@ public class ForwardIndex {
 	 * space, it doesn't try to read the whole file). Possibly this could be solved by using 64-bit
 	 * Java, but we haven't tried. For now we just disable memory mapping on Windows.
 	 *
-	 * @param contentId
-	 *            id of the entry to get parts from
+	 * @param fiid
+	 *            forward index document id
 	 * @param start
 	 *            the starting points of the parts to retrieve (in words)
 	 * @param end
 	 *            the end points of the parts to retrieve (in words)
 	 * @return the parts
 	 */
-	public synchronized List<int[]> retrievePartsInt(int contentId, int[] start, int[] end) {
+	public synchronized List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
 		try {
-			TocEntry e = toc.get(contentId);
+			TocEntry e = toc.get(fiid);
 			if (e == null || e.deleted)
 				return null;
 

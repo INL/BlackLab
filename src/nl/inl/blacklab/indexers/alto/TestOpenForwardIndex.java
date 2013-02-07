@@ -20,7 +20,7 @@ import java.io.File;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 
 /**
- * The indexer class and main program for the ANW corpus.
+ * Test program for analyzing performance of opening forward index (old).
  */
 public class TestOpenForwardIndex {
 	public static void main(String[] args) throws Exception {

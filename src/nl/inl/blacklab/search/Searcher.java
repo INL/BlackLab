@@ -99,18 +99,17 @@ public class Searcher {
 	private Collator collator = Collator.getInstance(new Locale("en", "GB"));
 
 	/**
-	 * ContentAccessors tell us how to get a field's content:
-	 * - if there is no contentaccessor: get it from the Lucene index (stored field)
-	 * - from an external source (file, database) if it's not (because the content
-	 * is very large and/or we want faster random access to the content than a
-	 * stored field can provide)
+	 * ContentAccessors tell us how to get a field's content: - if there is no contentaccessor: get
+	 * it from the Lucene index (stored field) - from an external source (file, database) if it's
+	 * not (because the content is very large and/or we want faster random access to the content
+	 * than a stored field can provide)
 	 */
 	private Map<String, ContentAccessor> contentAccessors = new HashMap<String, ContentAccessor>();
 
 	/**
 	 * ForwardIndices allow us to quickly find what token occurs at a specific position. This speeds
-	 * up grouping and sorting. By default, there will be one forward index, on the "contents"
-	 * field.
+	 * up grouping and sorting. There may be several indices on a complex field, e.g.: word form,
+	 * lemma, part of speech.
 	 */
 	private Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
 
@@ -134,10 +133,10 @@ public class Searcher {
 	 */
 	private File indexLocation;
 
-//	/**
-//	 * The main contents field of our index, linked to the ContentStore
-//	 */
-//	private String contentsField;
+	// /**
+	// * The main contents field of our index, linked to the ContentStore
+	// */
+	// private String contentsField;
 
 	/**
 	 * Construct a Searcher object. Note that using this constructor, the Searcher is responsible
@@ -168,14 +167,14 @@ public class Searcher {
 	 * @throws IOException
 	 */
 	public Searcher(File indexDir, String contentsField) throws CorruptIndexException, IOException {
-		if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1") &&
-			!VersionFile.isTypeVersion(indexDir, "blacklab", "2"))
+		if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1")
+				&& !VersionFile.isTypeVersion(indexDir, "blacklab", "2"))
 			throw new RuntimeException("BlackLab index has wrong type or version! "
 					+ VersionFile.report(indexDir));
 
 		// Detect and open the ContentStore for the contents field
 		this.indexLocation = indexDir;
-		//this.contentsField = contentsField;
+		// this.contentsField = contentsField;
 		File dir = new File(indexDir, "xml");
 		if (dir.exists()) {
 			registerContentStore(contentsField, openContentStore(dir));
@@ -207,14 +206,14 @@ public class Searcher {
 			indexReader.close();
 
 			// Close the forward indices
-			for (ForwardIndex fi: forwardIndices.values()) {
+			for (ForwardIndex fi : forwardIndices.values()) {
 				fi.close();
 			}
 
 			// Close the content accessor(s)
 			// (the ContentStore, and possibly other content accessors
-			//  (although that feature is not used right now))
-			for (ContentAccessor ca: contentAccessors.values()) {
+			// (although that feature is not used right now))
+			for (ContentAccessor ca : contentAccessors.values()) {
 				ca.close();
 			}
 
@@ -282,14 +281,15 @@ public class Searcher {
 
 	public SpanQuery createSpanQuery(String field, TextPattern pattern, Filter filter) {
 		try {
-			return createSpanQuery(field, pattern, filter == null ? null : filter.getDocIdSet(indexReader));
+			return createSpanQuery(field, pattern,
+					filter == null ? null : filter.getDocIdSet(indexReader));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public SpanQuery createSpanQuery(String field, TextPattern pattern) {
-		return createSpanQuery(field, pattern, (DocIdSet)null);
+		return createSpanQuery(field, pattern, (DocIdSet) null);
 	}
 
 	/**
@@ -874,7 +874,8 @@ public class Searcher {
 	 * @param hits
 	 *            the hits
 	 * @return the highlighted content
-	 * @deprecated not needed anymore, highlighter only suspends highlighting if stricly necessary, so content in attributes works properly
+	 * @deprecated not needed anymore, highlighter only suspends highlighting if stricly necessary,
+	 *             so content in attributes works properly
 	 */
 	@Deprecated
 	public String highlightContentAlto(int docId, String fieldName, Hits hits) {
@@ -1037,9 +1038,11 @@ public class Searcher {
 	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
-	 * @param conc where to add the concordances
+	 * @param conc
+	 *            where to add the concordances
 	 */
-	private void makeConcordancesSingleDoc(List<Hit> hits, String fieldName, int wordsAroundHit, Map<Hit, Concordance> conc) {
+	private void makeConcordancesSingleDoc(List<Hit> hits, String fieldName, int wordsAroundHit,
+			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
 		int doc = hits.get(0).doc;
@@ -1054,24 +1057,27 @@ public class Searcher {
 		getCharacterOffsets(doc, fieldName, startsOfWords, endsOfWords, true);
 
 		// Make all the concordances
-		List<Concordance> newConcs = makeFieldConcordances(doc, fieldName, startsOfWords, endsOfWords);
+		List<Concordance> newConcs = makeFieldConcordances(doc, fieldName, startsOfWords,
+				endsOfWords);
 		for (int i = 0; i < hits.size(); i++) {
 			conc.put(hits.get(i), newConcs.get(i));
 		}
 	}
 
 	/**
-	 * Retrieves the context (left, hit and right) for a number of hits in
-	 * the same document from the forward index or the term vector.
+	 * Retrieves the context (left, hit and right) for a number of hits in the same document from
+	 * the forward index.
 	 *
 	 * @param hits
 	 *            the hits in question
-	 * @param fieldName
-	 *            Lucene index field to make conc for
+	 * @param forwardIndex
+	 *            forward index for our field
+	 * @param fiidFieldName
+	 * 			  name of the forward index id (fiid) field
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
 	 */
-	private void makeContextSingleDoc(List<Hit> hits, String fieldName, int wordsAroundHit) {
+	private void makeContextSingleDoc(List<Hit> hits, ForwardIndex forwardIndex, String fiidFieldName, int wordsAroundHit) {
 		if (hits.size() == 0)
 			return;
 		int doc = hits.get(0).doc;
@@ -1081,16 +1087,22 @@ public class Searcher {
 
 		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
 
-		getContextWords(doc, fieldName, startsOfWords, endsOfWords, hits);
+		getContextWords(doc, forwardIndex, fiidFieldName, startsOfWords, endsOfWords, hits);
 	}
 
 	/**
 	 * Determine the word positions needed to retrieve context / snippets
-	 * @param doc the document we're looking at
-	 * @param hits the hits for which we want word positions
-	 * @param wordsAroundHit the number of words around the matches word(s) we want
-	 * @param startsOfWords (out) the starts of the contexts and the hits
-	 * @param endsOfWords (out) the ends of the hits and the contexts
+	 *
+	 * @param doc
+	 *            the document we're looking at
+	 * @param hits
+	 *            the hits for which we want word positions
+	 * @param wordsAroundHit
+	 *            the number of words around the matches word(s) we want
+	 * @param startsOfWords
+	 *            (out) the starts of the contexts and the hits
+	 * @param endsOfWords
+	 *            (out) the ends of the hits and the contexts
 	 */
 	private void determineWordPositions(int doc, List<Hit> hits, int wordsAroundHit,
 			int[] startsOfWords, int[] endsOfWords) {
@@ -1120,35 +1132,32 @@ public class Searcher {
 	}
 
 	/**
-	 * Build concordances from the term vector.
+	 * Get context words from the forward index.
 	 *
 	 * The array layout is a little unusual. If this is a typical concordance:
 	 *
 	 * <code>[A] left context [B] hit text [C] right context [D]</code>
 	 *
-	 * the positions A-D for each of the concordances should be in the arrays startsOfWords and
+	 * the positions A-D for each of the bits of context should be in the arrays startsOfWords and
 	 * endsOfWords as follows:
 	 *
 	 * <code>starsOfWords: A1, B1, A2, B2, ...</code> <code>endsOfWords: C1, D1, C2, D2, ...</code>
 	 *
-	 * @param useForwardIndex
-	 *            if true, gets context words from forward index.
-	 *            if false, gets them from the term vector.
 	 * @param doc
-	 *            the document to build concordances from
-	 * @param fieldName
-	 *            the field to build concordances from
+	 *            the document to get context from
+	 * @param forwardIndex
+	 *            forward index to get context from
 	 * @param startsOfWords
-	 *            contains, for each concordance, the starting word position of the left context and
-	 *            for the hit
+	 *            contains, for each bit of context requested, the starting word
+	 *            position of the left context and for the hit
 	 * @param endsOfWords
-	 *            contains, for each concordance, the ending word position of the hit and for the
-	 *            left context
+	 *            contains, for each bit of context requested, the ending word
+	 *            position of the hit and for the left context
 	 * @param resultsList
 	 *            the list of results to add the context to
 	 */
-	private void getContextWords(int doc, String fieldName, int[] startsOfWords,
-			int[] endsOfWords, List<Hit> resultsList) {
+	private void getContextWords(int doc, ForwardIndex forwardIndex, String fiidFieldName, int[] startsOfWords, int[] endsOfWords,
+			List<Hit> resultsList) {
 		int n = startsOfWords.length / 2;
 		int[] startsOfSnippets = new int[n];
 		int[] endsOfSnippets = new int[n];
@@ -1157,16 +1166,16 @@ public class Searcher {
 			endsOfSnippets[j] = endsOfWords[i + 1];
 		}
 
-		// Get all the words from the term vector
+		// Get all the words from the forward index
 		List<int[]> words;
-		ForwardIndex forwardIndex = getForwardIndex(fieldName);
 		if (forwardIndex != null) {
 			// We have a forward index for this field. Use it.
-			Document d = document(doc);
-			int fiid = Integer.parseInt(d.get(ComplexFieldUtil.fieldName(fieldName, "fiid")));
+			int fiid = forwardIndex.luceneDocIdToFiid(doc);
+			//Document d = document(doc);
+			//int fiid = Integer.parseInt(d.get(fiidFieldName));
 			words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
 		} else {
-			throw new RuntimeException("Cannot get context without a term vector");
+			throw new RuntimeException("Cannot get context without a forward index");
 		}
 
 		// Build the actual concordances
@@ -1187,16 +1196,17 @@ public class Searcher {
 	/**
 	 * Tries to get the ForwardIndex object for the specified fieldname.
 	 *
-	 * Looks for an already-opened forward index first. If none is found,
-	 * and if we're in "create index" mode, may create a new forward index.
-	 * Otherwise, looks for an existing forward index and opens that.
+	 * Looks for an already-opened forward index first. If none is found, and if we're in
+	 * "create index" mode, may create a new forward index. Otherwise, looks for an existing forward
+	 * index and opens that.
 	 *
-	 * @param fieldName the field for which we want the forward index
+	 * @param fieldName
+	 *            the field for which we want the forward index
 	 * @return the ForwardIndex if found/created, or null otherwise
 	 */
 	private ForwardIndex getForwardIndex(String fieldName) {
 		ForwardIndex forwardIndex = forwardIndices.get(fieldName);
-		if (forwardIndex == null)  {
+		if (forwardIndex == null) {
 			File dir = new File(indexLocation, "fi_" + fieldName);
 
 			// Special case for old BL index with "forward" as the name of the single forward index
@@ -1214,6 +1224,7 @@ public class Searcher {
 			}
 			// Open forward index
 			forwardIndex = new ForwardIndex(dir, false, collator, false);
+			forwardIndex.setIdTranslateInfo(indexReader, fieldName); // how to translate from Lucene doc to fiid
 			forwardIndices.put(fieldName, forwardIndex);
 		}
 		return forwardIndex;
@@ -1277,8 +1288,12 @@ public class Searcher {
 			}
 			hitsInDoc.add(key);
 		}
+
+		ForwardIndex forwardIndex = getForwardIndex(fieldName);
+		String fiidFieldName = ComplexFieldUtil.fieldName(fieldName, "fiid");
+
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeContextSingleDoc(l, fieldName, concordanceContextSize);
+			makeContextSingleDoc(l, forwardIndex, fiidFieldName, concordanceContextSize);
 		}
 	}
 
@@ -1334,15 +1349,16 @@ public class Searcher {
 	/**
 	 * Get the Terms object for the specified field.
 	 *
-	 * The Terms object is part of the ForwardIndex module and provides a mapping from term
-	 * id to term String, and between term id and term sort position. It is used while sorting
-	 * and grouping hits (by mapping the context term ids to term sort position ids),
-	 * and later used to display the group name (by mapping the sort position ids
-	 * back to Strings)
+	 * The Terms object is part of the ForwardIndex module and provides a mapping from term id to
+	 * term String, and between term id and term sort position. It is used while sorting and
+	 * grouping hits (by mapping the context term ids to term sort position ids), and later used to
+	 * display the group name (by mapping the sort position ids back to Strings)
 	 *
-	 * @param field the field for which we want the Terms object
+	 * @param field
+	 *            the field for which we want the Terms object
 	 * @return the Terms object
-	 * @throws RuntimeException if this field does not have a forward index, and hence no Terms object.
+	 * @throws RuntimeException
+	 *             if this field does not have a forward index, and hence no Terms object.
 	 */
 	public Terms getTerms(String field) {
 		ForwardIndex forwardIndex = getForwardIndex(field);

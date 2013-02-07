@@ -89,9 +89,9 @@ public class Hits implements Iterable<Hit> {
 	public final static int MAX_HITS_TO_RETRIEVE = 10000000;
 
 	/**
-	 * For extremely large queries, stop retrieving hits after this number.
+	 * For extremely large queries, stop retrieving hits at some point.
 	 */
-	private boolean allHitsRetrieved = true;
+	private boolean tooManyHits = false;
 
 	/**
 	 * Construct an empty Hits object
@@ -167,18 +167,22 @@ public class Hits implements Iterable<Hit> {
 		this.searcher = searcher;
 		sourceSpans = findSpans(sourceQuery);
 		totalNumberOfHits = 0;
+
+		// Count how many hits there are in total
 		try {
+			tooManyHits = false;
 			while (sourceSpans.next()) {
 				totalNumberOfHits++;
 				if (totalNumberOfHits >= MAX_HITS_TO_RETRIEVE) {
 					// Too many hits; stop collecting here
-					allHitsRetrieved = false;
+					tooManyHits = true;
 					break;
 				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+
 		sourceSpans = findSpans(sourceQuery); // Counted 'em. Now reset.
 		sourceSpansFullyRead = false;
 		hits = new ArrayList<Hit>();
@@ -189,8 +193,8 @@ public class Hits implements Iterable<Hit> {
 	 * Were all hits retrieved, or did we stop because there were too many?
 	 * @return true if all hits were retrieved
 	 */
-	public boolean allHitsRetrieved() {
-		return allHitsRetrieved;
+	public boolean tooManyHits() {
+		return tooManyHits;
 	}
 
 	/**
@@ -217,6 +221,11 @@ public class Hits implements Iterable<Hit> {
 		try {
 			while (sourceSpans.next()) {
 				hits.add(Hit.getHit(sourceSpans));
+				if (hits.size() >= totalNumberOfHits) {
+					// Either we've got them all, or we should stop
+					// collecting them because there's too many
+					break;
+				}
 			}
 			totalNumberOfHits = hits.size();
 		} catch (IOException e) {
