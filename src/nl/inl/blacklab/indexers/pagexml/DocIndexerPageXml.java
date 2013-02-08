@@ -87,10 +87,10 @@ public class DocIndexerPageXml extends DocIndexerXml {
 //	 */
 //	private int neGid = 0;
 
-	/**
-	 * Current word offset within named entity. Only valid when insideNE == true.
-	 */
-	private int neOffset = 0;
+//	/**
+//	 * Current word offset within named entity. Only valid when insideNE == true.
+//	 */
+//	private int neOffset = 0;
 
 	/**
 	 * Have we found a &lt;NE&gt; start tag but no &lt;/NE&gt; end tag yet? In other words:
@@ -99,15 +99,21 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	private boolean insideNE = false;
 
 	/**
+	 * Have we added a start tag at the current token position yet?
+	 * Used to make sure the starttag property stays in synch.
+	 */
+	private boolean startTagAdded = false;
+
+	/**
 	 * Are we parsing the &lt;header&gt; tag right now?
 	 */
 	private boolean inHeader = false;
 
-	/**
-	 * Was a &lt;/NE&gt; close tag just found? Used to index it (at the first token position AFTER
-	 * the close tag!)
-	 */
-	private boolean neJustClosed = false;
+//	/**
+//	 * Was a &lt;/NE&gt; close tag just found? Used to index it (at the first token position AFTER
+//	 * the close tag!)
+//	 */
+//	private boolean neJustClosed = false;
 
 	public DocIndexerPageXml(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
@@ -180,8 +186,11 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		} else if (localName.equals("NE")) {
 			neType = "none";
 			insideNE = false;
-			neJustClosed = true;
-			neOffset = 0;
+//			neJustClosed = true;
+
+			contentsField.addPropertyValue("endtag", "ne", 0); // empty value was already added for previous token; replace with "ne close tag".
+
+//			neOffset = 0;
 		} else if (localName.equals("header")) {
 			inHeader = false;
 			captureCharacterContent = false;
@@ -221,7 +230,17 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			insideNE = true;
 			getNamedEntityType(attributes);
 //			getNamedEntityGid(attributes);
-			neOffset = 0; // word position inside the NE
+//			neOffset = 0; // word position inside the NE
+
+			contentsField.addPropertyValue("starttag", "ne", startTagAdded ? 0 : 1);
+			for (int i = 0; i < attributes.getLength(); i++) {
+				// Index element attribute values
+				String name = attributes.getLocalName(i);
+				String value = attributes.getValue(i);
+				contentsField.addPropertyValue("starttag", "@" + name + "__" + value, 0);
+			}
+			startTagAdded = true; // to keep the property in synch
+
 		} else if (localName.equals("header")) {
 			inHeader = true;
 			captureCharacterContent = true;
@@ -321,6 +340,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		try {
 			indexer.getListener().documentDone(currentDocumentName);
 
+			/*
 			if (neJustClosed) {
 				// We didn't record the closing of the NE-tag yet (because there is no
 				// next word, we're at the end of the document). Record it now.
@@ -331,8 +351,9 @@ public class DocIndexerPageXml extends DocIndexerXml {
 				//contentsField.addPropertyValue("negid", neGid + "");
 				//contentsField.addPropertyValue("neoffset", neOffset + "");
 				contentsField.addPropertyValue("starttag", insideNE && neOffset == 0 ? "ne" : "");
-				contentsField.addPropertyValue("endtag", neJustClosed ? "ne" : "");
-			}
+				contentsField.addPropertyValue("endtag", ""); // add empty token to maintain synch; possibly add close tags later with posIncr == 0
+			}*/
+
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
@@ -373,10 +394,15 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		//contentsField.addPropertyValue("neoffset", neOffset + "");
 
 		// Keep track of NE start and end tags
-		contentsField.addPropertyValue("starttag", insideNE && neOffset == 0 ? "ne" : "");
-		contentsField.addPropertyValue("endtag", neJustClosed ? "ne" : "");
-		if (neJustClosed)
-			neJustClosed = false;
+		if (!startTagAdded) {
+			// No start tags found; add empty token to keep the property in synch
+			contentsField.addPropertyValue("starttag", ""); //insideNE && neOffset == 0 ? "ne" : "");
+		}
+		//contentsField.addPropertyValue("endtag", neJustClosed ? "ne" : "");
+		contentsField.addPropertyValue("endtag", ""); // add empty token to maintain synch; possibly add close tags later with posIncr == 0
+		/*if (neJustClosed)
+			neJustClosed = false;*/
+		startTagAdded = false; // reset for next token positon
 
 		characterContent = null;
 
@@ -388,8 +414,8 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			wordsDone = 0;
 		}
 
-		if (insideNE)
-			neOffset++; // if we're inside an NE, keep track of the word position in this NE
+//		if (insideNE)
+//			neOffset++; // if we're inside an NE, keep track of the word position in this NE
 	}
 
 	static Pattern punctuationAtEnd = Pattern.compile("\\p{P}+$"); // remove non-word chars. Note:

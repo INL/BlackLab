@@ -15,11 +15,15 @@ public interface CorpusQueryLanguageParserConstants {
   /** RegularExpression Id. */
   int MULTI_LINE_COMMENT = 6;
   /** RegularExpression Id. */
-  int NAME = 7;
+  int WITHIN = 7;
   /** RegularExpression Id. */
-  int NUMBER = 8;
+  int CONTAINING = 8;
   /** RegularExpression Id. */
-  int QUOTED_STRING = 9;
+  int NAME = 9;
+  /** RegularExpression Id. */
+  int NUMBER = 10;
+  /** RegularExpression Id. */
+  int QUOTED_STRING = 11;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -33,9 +37,14 @@ public interface CorpusQueryLanguageParserConstants {
     "\"\\r\"",
     "<SINGLE_LINE_COMMENT>",
     "<MULTI_LINE_COMMENT>",
+    "\"within\"",
+    "\"containing\"",
     "<NAME>",
     "<NUMBER>",
     "<QUOTED_STRING>",
+    "\"<\"",
+    "\"/\"",
+    "\">\"",
     "\"|\"",
     "\"*\"",
     "\"+\"",
@@ -47,7 +56,6 @@ public interface CorpusQueryLanguageParserConstants {
     "\"->\"",
     "\"(\"",
     "\")\"",
-    "\"[]\"",
     "\"[\"",
     "\"]\"",
     "\"!\"",

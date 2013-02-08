@@ -15,21 +15,20 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-/**
- * A TextPattern searching for TextPatterns that contain a hit from another TextPattern. This may be
- * used to search for sentences containing a certain word, etc.
- */
-public class TextPatternContaining extends TextPatternCombiner {
 
-	public TextPatternContaining(TextPattern containers, TextPattern search) {
-		super(containers, search);
+/**
+ * Find hits at the start of hits from another query.
+ * Useful for e.g. finding a sequence of words at the start of a sentence.
+ */
+public class TextPatternStartsAt extends TextPatternCombiner {
+
+	public TextPatternStartsAt(TextPattern producer, TextPattern filter) {
+		super(producer, filter);
 	}
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		T trContainers = clauses.get(0).translate(translator, fieldName);
-		T trSearch = clauses.get(1).translate(translator, fieldName);
-		return translator.containing(fieldName, trContainers, trSearch);
+		return translator.startsAt(fieldName, clauses.get(0).translate(translator, fieldName), clauses.get(1).translate(translator, fieldName));
 	}
 
 }

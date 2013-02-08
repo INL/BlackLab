@@ -69,6 +69,19 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 
 	@Override
 	public void addValue(String value, int increment) {
+
+		// Special case: if previous value was the empty string and position increment is 0,
+		// replace the previous value. This is convenient to keep all the properties synched
+		// up while indexing (by adding a dummy empty string if we don't have a value for a
+		// property), while still being able to add a value to this position later (for example,
+		// when we encounter an XML close tag.
+		int lastIndex = values.size() - 1;
+		if (lastIndex >= 0 && values.get(lastIndex).length() == 0 && increment == 0) {
+			// Change the last value but don't change the increment.
+			values.set(lastIndex, value);
+			return;
+		}
+
 		values.add(value);
 		increments.add(increment);
 	}

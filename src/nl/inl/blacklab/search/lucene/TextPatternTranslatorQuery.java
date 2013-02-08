@@ -162,4 +162,19 @@ public class TextPatternTranslatorQuery implements TextPatternTranslator<Query> 
 	public Query any(String fieldName) {
 		return new MatchAllDocsQuery();
 	}
+
+	@Override
+	public Query within(String fieldName, Query search, Query containers) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Query startsAt(String fieldName, Query producer, Query filter) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Query endsAt(String fieldName, Query producer, Query filter) {
+		throw new UnsupportedOperationException();
+	}
 }

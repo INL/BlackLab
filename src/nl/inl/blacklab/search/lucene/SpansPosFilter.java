@@ -20,29 +20,54 @@ import java.util.Collection;
 import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.lucene.SpanQueryPosFilter.Filter;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
 
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Keeps spans from a set that contain one or more spans from the second set.
+ * Finds hits from a set that contain one or more hits from the second set,
+ * or finds hits from a set that are contained by hit(s) from the second set.
  */
-class SpansContaining extends Spans {
+class SpansPosFilter extends Spans {
 	/** The two sets of hits to combine */
-	private Spans containers;
+	private Spans producer;
 
 	/** Does the Spans object still point to a valid hit? */
 	private boolean stillValidContainers = true;
 
-	private SpansInBucketsPerDocumentSorted search;
+	private SpansInBucketsPerDocumentSorted filter;
 
 	private boolean stillValidSearch = true;
 
-	public SpansContaining(Spans containers, Spans search) {
-		this.containers = containers;
+	/**
+	 * What filter operation to use
+	 */
+	private Filter op;
+
+	/**
+	 * Find hits containing other hits, or contained by other hits.
+	 *
+	 * @param producer the hits we may be interested in
+	 * @param filter the hits used to filter the producer hits
+	 * @param op filter operation to use
+	 */
+	public SpansPosFilter(Spans producer, Spans filter, SpanQueryPosFilter.Filter op) {
+		this.producer = producer;
+		this.op = op;
 		stillValidContainers = true;
-		this.search = new SpansInBucketsPerDocumentSorted(search, new SpanComparatorStartPoint());
+		this.filter = new SpansInBucketsPerDocumentSorted(filter, new SpanComparatorStartPoint());
+	}
+
+	/**
+	 * Find hits containing other hits.
+	 *
+	 * @param containers the containers we may be interested in.
+	 * @param filter we only want containers that contain at least on hit from this filter.
+	 */
+	public SpansPosFilter(Spans containers, Spans filter) {
+		this(containers, filter, Filter.CONTAINING);
 	}
 
 	/**
@@ -50,7 +75,7 @@ class SpansContaining extends Spans {
 	 */
 	@Override
 	public int doc() {
-		return containers.doc();
+		return producer.doc();
 	}
 
 	/**
@@ -58,7 +83,7 @@ class SpansContaining extends Spans {
 	 */
 	@Override
 	public int end() {
-		return containers.end();
+		return producer.end();
 	}
 
 	/**
@@ -74,7 +99,7 @@ class SpansContaining extends Spans {
 			return false;
 
 		// Advance container
-		stillValidContainers = containers.next();
+		stillValidContainers = producer.next();
 		if (!stillValidContainers)
 			return false; // no more containers; we're done.
 
@@ -92,29 +117,62 @@ class SpansContaining extends Spans {
 		// Find the next "valid" container, if there is one.
 		while (true) {
 			// Are search and container in the same document?
-			if (search.doc() < containers.doc()) {
+			if (filter.doc() < producer.doc()) {
 				// No, advance search to be in the same document as the container
-				stillValidSearch = search.skipTo(containers.doc());
+				stillValidSearch = filter.skipTo(producer.doc());
 				if (!stillValidSearch)
 					return false; // No more search results, we're done.
 			}
 
 			// Are there search results in this document?
-			if (search.doc() == containers.doc()) {
+			if (filter.doc() == producer.doc()) {
 				// Yes. See if the current container contains any of the search results.
-				List<Hit> hits = search.getHits();
-				for (Hit hit : hits) {
-					if (hit.start >= containers.start() && hit.end <= containers.end()) {
-						// Yes, this search result is contained in the current container.
-						// Therefore, this container is a result we want. Return.
-						return true;
+				List<Hit> filterHits = filter.getHits();
+				switch(op) {
+				case CONTAINING:
+					// Looking for producer hits with a filter hit inside
+					for (Hit filterHit : filterHits) {
+						if (filterHit.start >= producer.start() && filterHit.end <= producer.end()) {
+							// Yes, this filter hit is contained in the current producer hit.
+							return true;
+						}
 					}
+					break;
+				case WITHIN:
+					// Looking for producer hits contained by a filter hit
+					for (Hit filterHit : filterHits) {
+						if (filterHit.start <= producer.start() && filterHit.end >= producer.end()) {
+							// Yes, this filter hit contains the current producer hit.
+							return true;
+						}
+					}
+					break;
+				case STARTS_AT:
+					// Looking for producer hits with a filter hit inside
+					for (Hit filterHit : filterHits) {
+						if (filterHit.start == producer.start()) {
+							// Yes, this filter hit starts at the current producer hit.
+							return true;
+						}
+					}
+					break;
+				case ENDS_AT:
+					// Looking for producer hits with a filter hit inside
+					for (Hit filterHit : filterHits) {
+						if (filterHit.end == producer.end()) {
+							// Yes, this filter hit ends at the current producer hit.
+							return true;
+						}
+					}
+					break;
+				default:
+					throw new RuntimeException("Unknown filter operation " + op);
 				}
 			}
 
 			// No search results found in the current container.
 			// Advance to the next container.
-			stillValidContainers = containers.next();
+			stillValidContainers = producer.next();
 			if (!stillValidContainers)
 				return false; // no more containers; we're done.
 		}
@@ -131,7 +189,7 @@ class SpansContaining extends Spans {
 	@Override
 	public boolean skipTo(int doc) throws IOException {
 		// Skip both to doc
-		stillValidContainers = containers.skipTo(doc);
+		stillValidContainers = producer.skipTo(doc);
 
 		// Find first matching container from here
 		return synchronize();
@@ -142,12 +200,23 @@ class SpansContaining extends Spans {
 	 */
 	@Override
 	public int start() {
-		return containers.start();
+		return producer.start();
 	}
 
 	@Override
 	public String toString() {
-		return "SpansContaining(" + containers + " containing " + search + ")";
+		switch (op) {
+		case CONTAINING:
+			return "SpansContaining(" + producer + " containing " + filter + ")";
+		case WITHIN:
+			return "SpansContaining(" + producer + " within " + filter + ")";
+		case STARTS_AT:
+			return "SpansContaining(" + producer + " starts at " + filter + ")";
+		case ENDS_AT:
+			return "SpansContaining(" + producer + " ends at " + filter + ")";
+		default:
+			throw new RuntimeException("Unknown filter operation " + op);
+		}
 	}
 
 	@Override

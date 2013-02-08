@@ -74,6 +74,21 @@ public class TextPatternTranslatorString implements TextPatternTranslator<String
 	}
 
 	@Override
+	public String within(String fieldName, String search, String containers) {
+		return "WITHIN(" + search + ", " + containers + ")";
+	}
+
+	@Override
+	public String startsAt(String fieldName, String producer, String filter) {
+		return "STARTSAT(" + producer + ", " + filter + ")";
+	}
+
+	@Override
+	public String endsAt(String fieldName, String producer, String filter) {
+		return "ENDSAT(" + producer + ", " + filter + ")";
+	}
+
+	@Override
 	public String term(String fieldName, String value) {
 		return "TERM(" + value + ")";
 	}

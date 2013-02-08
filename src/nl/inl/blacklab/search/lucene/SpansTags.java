@@ -50,7 +50,7 @@ class SpansTags extends Spans {
 	 */
 	@Override
 	public int end() {
-		return spans[1].end() - 1;
+		return spans[1].end();
 	}
 
 	/**

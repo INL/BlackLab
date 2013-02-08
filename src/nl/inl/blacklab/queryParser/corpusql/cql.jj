@@ -23,13 +23,18 @@ package nl.inl.blacklab.queryParser.corpusql;
 
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
+import nl.inl.blacklab.search.TextPatternContaining;
+import nl.inl.blacklab.search.TextPatternEndsAt;
+import nl.inl.blacklab.search.TextPatternNot;
 import nl.inl.blacklab.search.TextPatternOr;
 import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternRegex;
-import nl.inl.blacklab.search.TextPatternNot;
+import nl.inl.blacklab.search.TextPatternStartsAt;
+import nl.inl.blacklab.search.TextPatternTags;
+import nl.inl.blacklab.search.TextPatternWithin;
 import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
-import nl.inl.blacklab.search.sequences.TextPatternSequence;
 import nl.inl.blacklab.search.sequences.TextPatternRepetition;
+import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 @SuppressWarnings("all")
 
@@ -104,23 +109,73 @@ SPECIAL_TOKEN:
 // Token definitions
 TOKEN [IGNORE_CASE]:
 {
-	<NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","0"-"9"])* >
+    <WITHIN: "within" >
+|   <CONTAINING: "containing" >
+|	<NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","0"-"9"])* >
 |	<NUMBER: (["0"-"9"])+ >
 |	<QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 }
 
 // --- Grammar rules start here --- 
 
-/* a query, consisting of a single sequence. */
+/* a query */
 TextPattern query(): 
 {
-	TextPattern query = null;
+	TextPattern a = null;
 } 
 {
-	[ query=sequence() ] <EOF>
-	{
-		return query;
-	}
+    a=complexQuery() <EOF>
+    {
+        return a;
+    }
+}
+
+TextPattern complexQuery():
+{
+    TextPattern a = null, b = null;
+    Token op = null;
+} 
+{
+    a=simpleQuery() [ op=queryOperator() b=complexQuery() ]
+    {
+        if (op == null)
+            return a;
+        if (op.toString().equals("within")) {
+            // a within b
+            return new TextPatternWithin(a, b);
+        }
+        
+        // a containing b
+        return new TextPatternContaining(a, b);
+    }
+}
+
+Token queryOperator():
+{
+    Token t = null;
+}
+{
+    (t=<WITHIN> | t=<CONTAINING>)
+    {
+        return t;
+    }
+}
+
+/* a simple query (not including containing, within, etc.) */
+TextPattern simpleQuery(): 
+{
+    TextPattern query = null;
+} 
+{
+    LOOKAHEAD(3) /* to distinguish between open tag and self-closing tag */
+    query=sequence()
+    {
+        return query;
+    }
+|   query=selfClosingTag()
+    {
+        return query;
+    }
 }
 
 /* a sequence of token constraints */
@@ -128,14 +183,59 @@ TextPattern sequence():
 {
 	TextPattern first = null;
 	TextPattern result = null;
+    Token t = null, t2 = null;
 } 
 {
-	first=sequencePart() [ result=sequenceRest(first) ]
+    [ t=startTag() ] first=sequencePart() [ LOOKAHEAD(2) result=sequenceRest(first) ] [ LOOKAHEAD(2) t2=endTag() ]
 	{
 		if (result == null)
-			return first;
+			result = first;
+        if (t != null)
+        {
+            result = new TextPatternStartsAt(result, new TextPatternTags(t.toString()));
+        }
+        if (t2 != null)
+        {
+            result = new TextPatternEndsAt(result, new TextPatternTags(t2.toString()));
+        }
 		return result;
 	}
+}
+
+/* a self-closing tag such as <s/> (for finding XML elements) */
+TextPattern selfClosingTag():
+{
+    Token t;
+}
+{
+    "<" t=<NAME> "/" ">"
+    {
+        return new TextPatternTags(t.toString());
+    }
+}
+
+/* a start tag such as <s> (for finding XML elements) */
+Token startTag():
+{
+    Token t;
+}
+{
+    "<" t=<NAME> ">"
+    {
+        return t;
+    }
+}
+
+/* an end tag such as </s> (for finding XML elements) */
+Token endTag():
+{
+    Token t;
+}
+{
+    "<" "/" t=<NAME> ">"
+    {
+        return t;
+    }
 }
 
 /* continuation of a sequence (after the first part) */
@@ -200,20 +300,19 @@ TextPattern sequencePart():
 	Integer[] rep = null;
 }
 {
-	( m=position() | "(" m=sequence() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+	( m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
 	{
 		if (rep != null)
 		{
-			return new TextPatternRepetition(m, rep[0], rep[1]);
+            if (m instanceof TextPatternAnyToken)
+            {
+                TextPatternAnyToken any = (TextPatternAnyToken)m;
+                m = any.repeat(rep[0], rep[1]);
+            } else
+                m = new TextPatternRepetition(m, rep[0], rep[1]);
 		}
-		return m; 
+		return m;
 	}
-|   "[]" [ LOOKAHEAD(6) rep=repetitionAmount() ]
-    {
-        if (rep == null)
-            rep = new Integer[]{1, 1};
-        return new TextPatternAnyToken(rep[0], rep[1]);
-    }
 }
 
 /* position: a simple attribute value or complex attribute expression between square brackets */
@@ -223,7 +322,12 @@ TextPattern position():
 }
 {
 	m=positionWord()         { return m; }
-|	"[" m=positionLong() "]" { return m; }
+|	"[" [ m=positionLong() ] "]"
+    {
+        if (m == null)
+            return new TextPatternAnyToken(1, 1);
+        return m;
+    }
 }
 
 /* position word: no brackets, just a single token constraint for the default attribute (usually word form) */

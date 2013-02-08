@@ -116,6 +116,12 @@ public interface TextPatternTranslator<T> {
 
 	T containing(String fieldName, T containers, T search);
 
+	T within(String fieldName, T search, T containers);
+
+	T startsAt(String fieldName, T producer, T filter);
+
+	T endsAt(String fieldName, T producer, T filter);
+
 	/**
 	 * Expand the given clause by a number of tokens, either to the left or to the right.
 	 *

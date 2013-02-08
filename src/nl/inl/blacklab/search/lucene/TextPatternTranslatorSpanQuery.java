@@ -80,7 +80,22 @@ public class TextPatternTranslatorSpanQuery implements TextPatternTranslator<Spa
 
 	@Override
 	public SpanQuery containing(String fieldName, SpanQuery containers, SpanQuery search) {
-		return new SpanQueryContaining(containers, search);
+		return new SpanQueryPosFilter(containers, search, SpanQueryPosFilter.Filter.CONTAINING);
+	}
+
+	@Override
+	public SpanQuery within(String fieldName, SpanQuery search, SpanQuery containers) {
+		return new SpanQueryPosFilter(search, containers, SpanQueryPosFilter.Filter.WITHIN);
+	}
+
+	@Override
+	public SpanQuery startsAt(String fieldName, SpanQuery producer, SpanQuery filter) {
+		return new SpanQueryPosFilter(producer, filter, SpanQueryPosFilter.Filter.STARTS_AT);
+	}
+
+	@Override
+	public SpanQuery endsAt(String fieldName, SpanQuery producer, SpanQuery filter) {
+		return new SpanQueryPosFilter(producer, filter, SpanQueryPosFilter.Filter.ENDS_AT);
 	}
 
 	@Override

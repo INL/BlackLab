@@ -39,6 +39,15 @@ public class TextPatternAnyToken extends TextPattern {
 		this.max = max;
 	}
 
+	public TextPattern repeat(int nmin, int nmax) {
+		if (nmin == 1 && nmax == 1)
+			return this;
+		if (min == 1 && max == 1) {
+			return new TextPatternAnyToken(nmin, nmax);
+		}
+		return new TextPatternRepetition(this, nmin, nmax);
+	}
+
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
 		T any = translator.any(fieldName);

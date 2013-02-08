@@ -31,8 +31,8 @@ public class TestSpansTags {
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
 		int[] bDoc = new int[] { 1, 2, 2 };
-		int[] bStart = new int[] { 21, 2, 6 };
-		int[] bEnd = new int[] { 22, 3, 7 };
+		int[] bStart = new int[] { 20, 1, 5 };
+		int[] bEnd = new int[] { 21, 2, 6 };
 		Spans b = new SpansStub(bDoc, bStart, bEnd);
 
 		SpansTags spansTags = new SpansTags(a, b);

@@ -16,20 +16,24 @@
 package nl.inl.blacklab.search;
 
 /**
- * A TextPattern searching for TextPatterns that contain a hit from another TextPattern. This may be
- * used to search for sentences containing a certain word, etc.
+ * A TextPattern searching for a TextPattern inside the hits from another TextPattern. This may be
+ * used to search for a sequence of words inside a sentence, etc.
  */
-public class TextPatternContaining extends TextPatternCombiner {
+public class TextPatternWithin extends TextPattern {
+	private TextPattern search;
 
-	public TextPatternContaining(TextPattern containers, TextPattern search) {
-		super(containers, search);
+	private TextPattern containers;
+
+	public TextPatternWithin(TextPattern search, TextPattern containers) {
+		this.search = search;
+		this.containers = containers;
 	}
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		T trContainers = clauses.get(0).translate(translator, fieldName);
-		T trSearch = clauses.get(1).translate(translator, fieldName);
-		return translator.containing(fieldName, trContainers, trSearch);
+		T trSearch = search.translate(translator, fieldName);
+		T trContainers = containers.translate(translator, fieldName);
+		return translator.within(fieldName, trSearch, trContainers);
 	}
 
 }
