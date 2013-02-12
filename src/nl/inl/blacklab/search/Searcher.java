@@ -949,9 +949,17 @@ public class Searcher {
 			int relHitLeft = startsOfWords[i + 1] - absLeft;
 			int relHitRight = endsOfWords[i] - absLeft;
 			String currentContent = content[j];
-			rv.add(new Concordance(new String[] { currentContent.substring(0, relHitLeft),
-					currentContent.substring(relHitLeft, relHitRight),
-					currentContent.substring(relHitRight, absRight - absLeft) }));
+
+			// Determine context and build concordance.
+			// Note that hit text may be empty for hits of length zero,
+			// such as a search for open tags (which have a location but zero length,
+			// like a search for a word has a length 1)
+			String hitText = relHitRight < relHitLeft ? "" : currentContent.substring(relHitLeft, relHitRight);
+			String leftContext = currentContent.substring(0, relHitLeft);
+			String rightContext = currentContent.substring(relHitRight, absRight - absLeft);
+			rv.add(new Concordance(new String[] { leftContext,
+					hitText,
+					rightContext }));
 		}
 		return rv;
 	}

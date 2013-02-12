@@ -45,6 +45,7 @@ public interface CorpusQueryLanguageParserConstants {
     "\"<\"",
     "\"/\"",
     "\">\"",
+    "\"=\"",
     "\"|\"",
     "\"*\"",
     "\"+\"",
@@ -59,7 +60,6 @@ public interface CorpusQueryLanguageParserConstants {
     "\"[\"",
     "\"]\"",
     "\"!\"",
-    "\"=\"",
     "\"!=\"",
   };
 

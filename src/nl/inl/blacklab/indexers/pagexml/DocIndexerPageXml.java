@@ -92,11 +92,11 @@ public class DocIndexerPageXml extends DocIndexerXml {
 //	 */
 //	private int neOffset = 0;
 
-	/**
-	 * Have we found a &lt;NE&gt; start tag but no &lt;/NE&gt; end tag yet? In other words:
-	 * "are we currently parsing a named entity?"
-	 */
-	private boolean insideNE = false;
+//	/**
+//	 * Have we found a &lt;NE&gt; start tag but no &lt;/NE&gt; end tag yet? In other words:
+//	 * "are we currently parsing a named entity?"
+//	 */
+//	private boolean insideNE = false;
 
 	/**
 	 * Have we added a start tag at the current token position yet?
@@ -185,7 +185,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			endPage();
 		} else if (localName.equals("NE")) {
 			neType = "none";
-			insideNE = false;
+//			insideNE = false;
 //			neJustClosed = true;
 
 			contentsField.addPropertyValue("endtag", "ne", 0); // empty value was already added for previous token; replace with "ne close tag".
@@ -227,7 +227,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		} else if (localName.equals("Word")) {
 			startWord(attributes);
 		} else if (localName.equals("NE")) {
-			insideNE = true;
+//			insideNE = true;
 			getNamedEntityType(attributes);
 //			getNamedEntityGid(attributes);
 //			neOffset = 0; // word position inside the NE
@@ -237,7 +237,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 				// Index element attribute values
 				String name = attributes.getLocalName(i);
 				String value = attributes.getValue(i);
-				contentsField.addPropertyValue("starttag", "@" + name + "__" + value, 0);
+				contentsField.addPropertyValue("starttag", "@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
 			}
 			startTagAdded = true; // to keep the property in synch
 

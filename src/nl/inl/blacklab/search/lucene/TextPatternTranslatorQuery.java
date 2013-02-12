@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPattern;
@@ -45,7 +46,7 @@ import org.apache.lucene.search.regex.RegexQuery;
  * ConstantScoreQuery. This might be fixable; google "MultiTermQuery scoring" or see the code for
  * details.
  */
-public class TextPatternTranslatorQuery implements TextPatternTranslator<Query> {
+public class TextPatternTranslatorQuery extends TextPatternTranslator<Query> {
 	private Query makeBooleanQuery(List<Query> clauses, Occur occur) {
 		BooleanQuery booleanQuery = new BooleanQuery();
 		for (Query query : clauses) {
@@ -109,7 +110,7 @@ public class TextPatternTranslatorQuery implements TextPatternTranslator<Query> 
 	}
 
 	@Override
-	public Query tags(String fieldName, String elementName) {
+	public Query tags(String fieldName, String elementName, Map<String, String> attr) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -175,6 +176,11 @@ public class TextPatternTranslatorQuery implements TextPatternTranslator<Query> 
 
 	@Override
 	public Query endsAt(String fieldName, Query producer, Query filter) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Query edge(Query clause, boolean rightEdge) {
 		throw new UnsupportedOperationException();
 	}
 }

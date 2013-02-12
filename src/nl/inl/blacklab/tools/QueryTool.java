@@ -247,19 +247,6 @@ public class QueryTool {
 			} catch (InvocationTargetException e) {
 				throw new RuntimeException(e);
 			}
-
-			/*
-			 * try { // TODO: simplify this, and/or abstract gritty details into a convenience
-			 * method CQLParser parser = new CQLParser(); CQLNode cqlroot = parser.parse(query);
-			 * String xml = cqlroot.toXCQL(0); DocumentBuilderFactory f =
-			 * DocumentBuilderFactory.newInstance(); f.setIgnoringElementContentWhitespace(true);
-			 * DocumentBuilder b = f.newDocumentBuilder(); Document d = b.parse(new InputSource(new
-			 * StringReader(xml))); XCQLParserNode root = new XCQLParserNode(); root.initialise(d);
-			 * return root.getQuery(); } catch (CQLParseException e) { // TODO: Streamline our
-			 * exceptions throw new ParseException(e.getMessage()); } catch (IOException e) { throw
-			 * new RuntimeException(e); } catch (ParserConfigurationException e) { throw new
-			 * RuntimeException(e); } catch (SAXException e) { throw new RuntimeException(e); }
-			 */
 		}
 
 		@Override
@@ -807,9 +794,9 @@ public class QueryTool {
 				right = " " + AltoUtils.getFromContentAttributes(conc.right);
 			} else {
 				// Content in text nodes
-				left = XmlUtil.xmlToPlainText(conc.left);
-				hitText = XmlUtil.xmlToPlainText(conc.hit);
-				right = XmlUtil.xmlToPlainText(conc.right);
+				left = prepConcForDisplay(conc.left);
+				hitText = prepConcForDisplay(conc.hit);
+				right = prepConcForDisplay(conc.right);
 			}
 			toShow.add(new HitToShow(hit.doc, left, hitText, right));
 			if (leftContextMaxSize < left.length())
@@ -831,6 +818,10 @@ public class QueryTool {
 		if (hitsToShow.tooManyHits()) {
 			System.out.println("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE + " were collected)");
 		}
+	}
+
+	String prepConcForDisplay(String input) {
+		return XmlUtil.xmlToPlainText(input);
 	}
 
 	/**

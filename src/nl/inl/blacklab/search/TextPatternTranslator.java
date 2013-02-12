@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface for translating a TextPattern into a different representation.
@@ -25,7 +26,7 @@ import java.util.List;
  * @param <T>
  *            the destination type
  */
-public interface TextPatternTranslator<T> {
+public abstract class TextPatternTranslator<T> {
 	/**
 	 * A simple field/value query
 	 *
@@ -35,7 +36,7 @@ public interface TextPatternTranslator<T> {
 	 *            the value to search for
 	 * @return result of the translation
 	 */
-	T term(String fieldName, String value);
+	public abstract T term(String fieldName, String value);
 
 	/**
 	 * A regular expression query
@@ -46,7 +47,7 @@ public interface TextPatternTranslator<T> {
 	 *            the value to search for
 	 * @return result of the translation
 	 */
-	T regex(String fieldName, String value);
+	public abstract T regex(String fieldName, String value);
 
 	/**
 	 * Token-level AND.
@@ -57,7 +58,7 @@ public interface TextPatternTranslator<T> {
 	 *            the clauses to combine using AND
 	 * @return result of the translation
 	 */
-	T and(String fieldName, List<T> clauses);
+	public abstract T and(String fieldName, List<T> clauses);
 
 	/**
 	 * Token-level OR.
@@ -68,7 +69,7 @@ public interface TextPatternTranslator<T> {
 	 *            the clauses to combine using OR
 	 * @return result of the translation
 	 */
-	T or(String fieldName, List<T> clauses);
+	public abstract T or(String fieldName, List<T> clauses);
 
 	/**
 	 * Token-level NOT.
@@ -79,7 +80,7 @@ public interface TextPatternTranslator<T> {
 	 *            the clause to invert
 	 * @return result of the translation
 	 */
-	T not(String fieldName, T clause);
+	public abstract T not(String fieldName, T clause);
 
 	/**
 	 * Sequence query.
@@ -90,9 +91,9 @@ public interface TextPatternTranslator<T> {
 	 *            the clauses to find in sequence
 	 * @return result of the translation
 	 */
-	T sequence(String fieldName, List<T> clauses);
+	public abstract T sequence(String fieldName, List<T> clauses);
 
-	// TODO: This is the same for all implementations? Convert to abstract class and implement here?
+	// TODO: This is the same for all implementations? Convert to public abstract class and implement here?
 	/**
 	 * Property query: find the specified TextPattern in the specified property of the field.
 	 *
@@ -106,21 +107,23 @@ public interface TextPatternTranslator<T> {
 	 *            the source query we want to find in the specified property
 	 * @return result of the translation
 	 */
-	T property(String fieldName, String propertyName, String altName, TextPattern input);
+	public abstract T property(String fieldName, String propertyName, String altName, TextPattern input);
 
-	T docLevelAnd(String fieldName, List<T> clauses);
+	public abstract T docLevelAnd(String fieldName, List<T> clauses);
 
-	T fuzzy(String fieldName, String value, float similarity, int prefixLength);
+	public abstract T fuzzy(String fieldName, String value, float similarity, int prefixLength);
 
-	T tags(String fieldName, String elementName);
+	public abstract T tags(String fieldName, String elementName, Map<String, String> attr);
 
-	T containing(String fieldName, T containers, T search);
+	public abstract T edge(T clause, boolean rightEdge);
 
-	T within(String fieldName, T search, T containers);
+	public abstract T containing(String fieldName, T containers, T search);
 
-	T startsAt(String fieldName, T producer, T filter);
+	public abstract T within(String fieldName, T search, T containers);
 
-	T endsAt(String fieldName, T producer, T filter);
+	public abstract T startsAt(String fieldName, T producer, T filter);
+
+	public abstract T endsAt(String fieldName, T producer, T filter);
 
 	/**
 	 * Expand the given clause by a number of tokens, either to the left or to the right.
@@ -137,7 +140,7 @@ public interface TextPatternTranslator<T> {
 	 *            maximum number of tokens to expand the clause
 	 * @return the resulting clause
 	 */
-	T expand(T clause, boolean expandToLeft, int min, int max);
+	public abstract T expand(T clause, boolean expandToLeft, int min, int max);
 
 	/**
 	 * Repetition of a clause.
@@ -150,7 +153,7 @@ public interface TextPatternTranslator<T> {
 	 *            the maximum number of times it may be repeated (-1 for no limit)
 	 * @return the resulting clause
 	 */
-	T repetition(T clause, int min, int max);
+	public abstract T repetition(T clause, int min, int max);
 
 	/**
 	 * Inclusion/exclusion.
@@ -161,16 +164,16 @@ public interface TextPatternTranslator<T> {
 	 *            clause that must not occur
 	 * @return the resulting clause
 	 */
-	T docLevelAndNot(T include, T exclude);
+	public abstract T docLevelAndNot(T include, T exclude);
 
-	T wildcard(String fieldName, String value);
+	public abstract T wildcard(String fieldName, String value);
 
-	T prefix(String fieldName, String value);
+	public abstract T prefix(String fieldName, String value);
 
 	/**
 	 * Any token in field.
 	 * @param fieldName the field to search
 	 * @return the resulting any-token clause
 	 */
-	T any(String fieldName);
+	public abstract T any(String fieldName);
 }

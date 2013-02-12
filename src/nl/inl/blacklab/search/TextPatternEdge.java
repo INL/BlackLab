@@ -16,19 +16,25 @@
 package nl.inl.blacklab.search;
 
 
-/**
- * Find hits at the end of hits from another query.
- * Useful for e.g. finding a sequence of words at the end of a sentence.
- */
-public class TextPatternEndsAt extends TextPatternCombiner {
 
-	public TextPatternEndsAt(TextPattern producer, TextPattern filter) {
-		super(producer, filter);
+
+/**
+ * Returns either the left edge or right edge of the specified query.
+ *
+ * Note that the results of this query are zero-length spans.
+ */
+public class TextPatternEdge extends TextPatternCombiner {
+
+	private boolean rightEdge;
+
+	public TextPatternEdge(TextPattern clause, boolean rightEdge) {
+		super(clause);
+		this.rightEdge = rightEdge;
 	}
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		return translator.endsAt(fieldName, clauses.get(0).translate(translator, fieldName), clauses.get(1).translate(translator, fieldName));
+		//throw new RuntimeException("Cannot search for isolated NOT query (must always be AND NOT)");
+		return translator.edge(clauses.get(0).translate(translator, fieldName), rightEdge);
 	}
-
 }

@@ -26,8 +26,8 @@ import org.apache.lucene.search.spans.Spans;
  * This allows us to do several things, such as:
  * * find hits from the producer that contain one or more hits from the filter
  * * find hits from the producer are contained by hit(s) from the filter
- * * find hits from the producer that start at the some position as a hit from the filter
- * * find hits from the producer that end at the some position as a hit from the filter
+ * * find hits from the producer that start at the same position as a hit from the filter
+ * * find hits from the producer that end at the same position as a hit from the filter
  */
 public class SpanQueryPosFilter extends SpanQueryBase {
 

@@ -133,6 +133,11 @@ public class Hit implements Comparable<Hit> {
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
+		/*if (start == end) {
+			// Hit of length 0; convert to hit of length 1 so we
+			// can display something
+			this.end++;
+		}*/
 	}
 
 	/**
@@ -148,9 +153,7 @@ public class Hit implements Comparable<Hit> {
 	 *            context (concordance) information
 	 */
 	public Hit(int doc, int start, int end, String[] conc) {
-		this.doc = doc;
-		this.start = start;
-		this.end = end;
+		this(doc, start, end);
 	}
 
 	@Override

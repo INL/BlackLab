@@ -16,13 +16,14 @@
 package nl.inl.blacklab.search;
 
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.util.StringUtil;
 
 /**
  * Translates a TextPattern to a String, for debugging and testing purposes.
  */
-public class TextPatternTranslatorString implements TextPatternTranslator<String> {
+public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	@Override
 	public String and(String fieldName, List<String> clauses) {
 		return "AND(" + StringUtil.join(clauses, ", ") + ")";
@@ -64,8 +65,8 @@ public class TextPatternTranslatorString implements TextPatternTranslator<String
 	}
 
 	@Override
-	public String tags(String fieldName, String elementName) {
-		return "TAGS(" + elementName + ")";
+	public String tags(String fieldName, String elementName, Map<String, String> attr) {
+		return "TAGS(" + elementName + (attr == null ? "-" : ", " + StringUtil.join(attr.values(), ";")) + ")";
 	}
 
 	@Override
@@ -126,5 +127,10 @@ public class TextPatternTranslatorString implements TextPatternTranslator<String
 	@Override
 	public String any(String fieldName) {
 		return "ANYTOKEN";
+	}
+
+	@Override
+	public String edge(String clause, boolean rightEdge) {
+		return "EDGE(" + clause + ", " + rightEdge + ")";
 	}
 }

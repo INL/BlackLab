@@ -15,11 +15,14 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTranslator;
+import nl.inl.blacklab.search.lucene.SpanQueryPosFilter.Filter;
 import nl.inl.blacklab.search.sequences.SpanQueryExpansion;
 import nl.inl.blacklab.search.sequences.SpanQueryRepetition;
 import nl.inl.blacklab.search.sequences.SpanQuerySequence;
@@ -34,7 +37,7 @@ import org.apache.lucene.search.spans.SpanQuery;
 /**
  * Translates a TextPattern to a Lucene SpanQuery object.
  */
-public class TextPatternTranslatorSpanQuery implements TextPatternTranslator<SpanQuery> {
+public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQuery> {
 	@Override
 	public SpanQuery and(String fieldName, List<SpanQuery> clauses) {
 		return new SpanQueryAnd(clauses);
@@ -74,8 +77,23 @@ public class TextPatternTranslatorSpanQuery implements TextPatternTranslator<Spa
 	}
 
 	@Override
-	public SpanQuery tags(String fieldName, String elementName) {
-		return new SpanQueryTags(fieldName, elementName);
+	public SpanQuery tags(String fieldName, String elementName, Map<String, String> attr) {
+		SpanQueryTags allTags = new SpanQueryTags(fieldName, elementName);
+		if (attr == null || attr.size() == 0)
+			return allTags;
+
+		// Construct attribute filters
+		List<SpanQuery> attrFilters = new ArrayList<SpanQuery>();
+		String startTagFieldName = ComplexFieldUtil.fieldName(fieldName, "starttag");
+		for (Map.Entry<String,String> e: attr.entrySet()) {
+			attrFilters.add(term(startTagFieldName, "@" + e.getKey() + "__" + e.getValue()));
+		}
+
+		// Filter the tags
+		// (NOTE: only works for start tags and full elements because attribute values
+		//  are indexed at the start tag!)
+		SpanQuery filter = new SpanQueryAnd(attrFilters);
+		return new SpanQueryPosFilter(allTags, filter, Filter.STARTS_AT);
 	}
 
 	@Override
@@ -141,6 +159,11 @@ public class TextPatternTranslatorSpanQuery implements TextPatternTranslator<Spa
 	@Override
 	public SpanQuery any(String fieldName) {
 		return SpanQueryNot.matchAllTokens(fieldName);
+	}
+
+	@Override
+	public SpanQuery edge(SpanQuery clause, boolean rightEdge) {
+		return new SpanQueryEdge(clause, rightEdge);
 	}
 
 }

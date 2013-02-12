@@ -21,15 +21,16 @@ PARSER_BEGIN(CorpusQueryLanguageParser)
 
 package nl.inl.blacklab.queryParser.corpusql;
 
+import java.util.Map;
+import java.util.HashMap;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternContaining;
-import nl.inl.blacklab.search.TextPatternEndsAt;
+import nl.inl.blacklab.search.TextPatternEdge;
 import nl.inl.blacklab.search.TextPatternNot;
 import nl.inl.blacklab.search.TextPatternOr;
 import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternRegex;
-import nl.inl.blacklab.search.TextPatternStartsAt;
 import nl.inl.blacklab.search.TextPatternTags;
 import nl.inl.blacklab.search.TextPatternWithin;
 import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
@@ -51,11 +52,11 @@ public class CorpusQueryLanguageParser {
     	return Integer.parseInt(t.toString());
     }
     
-    private String chopEnds(String regex)
+    private String chopEnds(String regex) throws ParseException
     {
     	if (regex.length() >= 2)
     		return regex.substring(1, regex.length() - 1);
-    	throw new RuntimeException("Cannot chop slashes");
+    	throw new ParseException("Cannot chop slashes");
     }
     
     private TextPattern simplePattern(String str)
@@ -167,12 +168,7 @@ TextPattern simpleQuery():
     TextPattern query = null;
 } 
 {
-    LOOKAHEAD(3) /* to distinguish between open tag and self-closing tag */
     query=sequence()
-    {
-        return query;
-    }
-|   query=selfClosingTag()
     {
         return query;
     }
@@ -183,58 +179,55 @@ TextPattern sequence():
 {
 	TextPattern first = null;
 	TextPattern result = null;
-    Token t = null, t2 = null;
+	TextPattern[] tag = null;
+    Token t2 = null;
 } 
 {
-    [ t=startTag() ] first=sequencePart() [ LOOKAHEAD(2) result=sequenceRest(first) ] [ LOOKAHEAD(2) t2=endTag() ]
+    first=sequencePart() [ LOOKAHEAD(2) result=sequenceRest(first) ]
 	{
 		if (result == null)
 			result = first;
-        if (t != null)
-        {
-            result = new TextPatternStartsAt(result, new TextPatternTags(t.toString()));
-        }
-        if (t2 != null)
-        {
-            result = new TextPatternEndsAt(result, new TextPatternTags(t2.toString()));
-        }
+			
 		return result;
 	}
 }
 
-/* a self-closing tag such as <s/> (for finding XML elements) */
-TextPattern selfClosingTag():
+/* a start or self-closing tag tag such as <s> or <s/> (for finding XML elements).
+ * Note that it returns one TextPattern, but if it's in [0] that means it's a start
+ * tag; if it's in [1] it's a self-closing tag.
+ */
+TextPattern tag():
 {
-    Token t;
+    Token tagName, endTagSlash = null, selfCloseSlash = null;
+    Map<String, String> attr = new HashMap<String, String>();
 }
 {
-    "<" t=<NAME> "/" ">"
+    "<" (endTagSlash="/")? tagName=<NAME> ( attributes(attr) )* (selfCloseSlash="/")? ">"
     {
-        return new TextPatternTags(t.toString());
+        if (endTagSlash != null && selfCloseSlash != null) {
+            throw new ParseException("Malformed tag in query");
+        }
+        TextPattern tags = new TextPatternTags(tagName.toString(), attr);
+        if (selfCloseSlash != null)
+            return tags;
+        if (endTagSlash != null) {
+            if (attr.size() > 0) {
+                throw new ParseException("Cannot filter end tag on attributes");
+            }
+            return new TextPatternEdge(tags, true); // right edge
+        }
+        return new TextPatternEdge(tags, false); // left edge
     }
 }
 
-/* a start tag such as <s> (for finding XML elements) */
-Token startTag():
+void attributes(Map<String, String> attr):
 {
-    Token t;
+    Token name, value;
 }
 {
-    "<" t=<NAME> ">"
+    name=<NAME> "=" value=<QUOTED_STRING>
     {
-        return t;
-    }
-}
-
-/* an end tag such as </s> (for finding XML elements) */
-Token endTag():
-{
-    Token t;
-}
-{
-    "<" "/" t=<NAME> ">"
-    {
-        return t;
+        attr.put(name.toString(), chopEnds(value.toString()));
     }
 }
 
@@ -300,7 +293,7 @@ TextPattern sequencePart():
 	Integer[] rep = null;
 }
 {
-	( m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+	( m=tag() | m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
 	{
 		if (rep != null)
 		{

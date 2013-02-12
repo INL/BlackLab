@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.util.Map;
+
 import org.apache.lucene.index.Term;
 
 /**
@@ -24,8 +26,15 @@ public class TextPatternTags extends TextPattern {
 
 	protected String elementName;
 
-	public TextPatternTags(String elementName) {
+	Map<String, String> attr;
+
+	public TextPatternTags(String elementName, Map<String, String> attr) {
 		this.elementName = elementName;
+		this.attr = attr;
+	}
+
+	public TextPatternTags(String elementName) {
+		this(elementName, null);
 	}
 
 	public Term getTerm(String fieldName) {
@@ -34,7 +43,7 @@ public class TextPatternTags extends TextPattern {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		return translator.tags(fieldName, elementName);
+		return translator.tags(fieldName, elementName, attr);
 	}
 
 }
