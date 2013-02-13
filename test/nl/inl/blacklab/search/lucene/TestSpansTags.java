@@ -23,6 +23,7 @@ import org.apache.lucene.search.spans.Spans;
 import org.junit.Test;
 
 public class TestSpansTags {
+
 	@Test
 	public void test() throws IOException {
 		int[] aDoc = new int[] { 1, 2, 2 };
@@ -54,6 +55,66 @@ public class TestSpansTags {
 		Assert.assertEquals(2, spansTags.doc());
 		Assert.assertEquals(4, spansTags.start());
 		Assert.assertEquals(6, spansTags.end());
+
+		// Done
+		Assert.assertFalse(spansTags.next());
+	}
+
+	@Test
+	public void testNested() throws IOException {
+		int[] aDoc = new int[] { 1, 1 };
+		int[] aStart = new int[] { 2, 4 };
+		int[] aEnd = new int[] { 3, 5 };
+		Spans a = new SpansStub(aDoc, aStart, aEnd);
+
+		int[] bDoc = new int[] { 1, 1 };
+		int[] bStart = new int[] { 4, 6 };
+		int[] bEnd = new int[] { 5, 7 };
+		Spans b = new SpansStub(bDoc, bStart, bEnd);
+
+		SpansTags spansTags = new SpansTags(a, b);
+
+		// First hit
+		Assert.assertTrue(spansTags.next());
+		Assert.assertEquals(1, spansTags.doc());
+		Assert.assertEquals(2, spansTags.start());
+		Assert.assertEquals(7, spansTags.end());
+
+		// Second hit
+		Assert.assertTrue(spansTags.next());
+		Assert.assertEquals(1, spansTags.doc());
+		Assert.assertEquals(4, spansTags.start());
+		Assert.assertEquals(5, spansTags.end());
+
+		// Done
+		Assert.assertFalse(spansTags.next());
+	}
+
+	@Test
+	public void testSkip() throws IOException {
+		int[] aDoc = new int[] { 1, 1, 2, 2 };
+		int[] aStart = new int[] { 2, 4, 12, 14 };
+		int[] aEnd = new int[] { 3, 5, 13, 15 };
+		Spans a = new SpansStub(aDoc, aStart, aEnd);
+
+		int[] bDoc = new int[] { 1, 1, 2, 2 };
+		int[] bStart = new int[] { 4, 6, 14, 16 };
+		int[] bEnd = new int[] { 5, 7, 15, 17 };
+		Spans b = new SpansStub(bDoc, bStart, bEnd);
+
+		SpansTags spansTags = new SpansTags(a, b);
+		spansTags.skipTo(2);
+
+		// First hit
+		Assert.assertEquals(2, spansTags.doc());
+		Assert.assertEquals(12, spansTags.start());
+		Assert.assertEquals(17, spansTags.end());
+
+		// Second hit
+		Assert.assertTrue(spansTags.next());
+		Assert.assertEquals(2, spansTags.doc());
+		Assert.assertEquals(14, spansTags.start());
+		Assert.assertEquals(15, spansTags.end());
 
 		// Done
 		Assert.assertFalse(spansTags.next());
