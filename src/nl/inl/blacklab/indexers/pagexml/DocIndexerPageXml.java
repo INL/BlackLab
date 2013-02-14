@@ -102,18 +102,18 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	 * Have we added a start tag at the current token position yet?
 	 * Used to make sure the starttag property stays in synch.
 	 */
-	private boolean startTagAdded = false;
+	private boolean startTagAdded;
+
+	/**
+	 * Have we added an end tag at the current token position yet?
+	 * Used to make sure the endtag property stays in synch.
+	 */
+	private boolean endTagAdded;
 
 	/**
 	 * Are we parsing the &lt;header&gt; tag right now?
 	 */
 	private boolean inHeader = false;
-
-//	/**
-//	 * Was a &lt;/NE&gt; close tag just found? Used to index it (at the first token position AFTER
-//	 * the close tag!)
-//	 */
-//	private boolean neJustClosed = false;
 
 	public DocIndexerPageXml(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
@@ -185,10 +185,9 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			endPage();
 		} else if (localName.equals("NE")) {
 			neType = "none";
-//			insideNE = false;
-//			neJustClosed = true;
 
-			contentsField.addPropertyValue("endtag", "ne", 0); // empty value was already added for previous token; replace with "ne close tag".
+			contentsField.addPropertyValue("endtag", "ne", endTagAdded ? 0 : 1);
+			endTagAdded = true;
 
 //			neOffset = 0;
 		} else if (localName.equals("header")) {
@@ -299,6 +298,10 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	 * @param attributes
 	 */
 	private void startPage(Attributes attributes) {
+		// Initialise these, so we don't go out of synch because these contain old values
+		startTagAdded = false;
+		endTagAdded = false;
+
 		currentLuceneDoc = new Document();
 		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, indexNotAnalyzed,
 				TermVector.NO));
@@ -338,21 +341,23 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	 */
 	private void endPage() {
 		try {
-			indexer.getListener().documentDone(currentDocumentName);
-
-			/*
-			if (neJustClosed) {
-				// We didn't record the closing of the NE-tag yet (because there is no
-				// next word, we're at the end of the document). Record it now.
+			if (startTagAdded || endTagAdded) {
+				// Start and/or end tag(s) were found after the last token. They were
+				// added to the "next token", so in order to maintain synch, we have to
+				// add dummy values for all the other properties now.
 				contentsField.addStartChar(getContentPosition());
 				contentsField.addEndChar(getContentPosition());
 				contentsField.addValue("");
 				contentsField.addPropertyValue("ne", neType);
-				//contentsField.addPropertyValue("negid", neGid + "");
-				//contentsField.addPropertyValue("neoffset", neOffset + "");
-				contentsField.addPropertyValue("starttag", insideNE && neOffset == 0 ? "ne" : "");
-				contentsField.addPropertyValue("endtag", ""); // add empty token to maintain synch; possibly add close tags later with posIncr == 0
-			}*/
+				if (!startTagAdded)
+					contentsField.addPropertyValue("starttag", "");
+				startTagAdded = false; // reset for next time
+				if (!endTagAdded)
+					contentsField.addPropertyValue("endtag", "");
+				endTagAdded = false; // reset for next time
+			}
+
+			indexer.getListener().documentDone(currentDocumentName);
 
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -398,11 +403,12 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			// No start tags found; add empty token to keep the property in synch
 			contentsField.addPropertyValue("starttag", ""); //insideNE && neOffset == 0 ? "ne" : "");
 		}
-		//contentsField.addPropertyValue("endtag", neJustClosed ? "ne" : "");
-		contentsField.addPropertyValue("endtag", ""); // add empty token to maintain synch; possibly add close tags later with posIncr == 0
-		/*if (neJustClosed)
-			neJustClosed = false;*/
 		startTagAdded = false; // reset for next token positon
+		if (!endTagAdded) {
+			// No end tags found; add empty token to keep the property in synch
+			contentsField.addPropertyValue("endtag", "");
+		}
+		endTagAdded = false; // reset for next token positon
 
 		characterContent = null;
 

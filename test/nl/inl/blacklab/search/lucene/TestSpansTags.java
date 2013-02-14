@@ -32,8 +32,8 @@ public class TestSpansTags {
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
 		int[] bDoc = new int[] { 1, 2, 2 };
-		int[] bStart = new int[] { 20, 1, 5 };
-		int[] bEnd = new int[] { 21, 2, 6 };
+		int[] bStart = new int[] { 21, 2, 6 };
+		int[] bEnd = new int[] { 22, 3, 7 };
 		Spans b = new SpansStub(bDoc, bStart, bEnd);
 
 		SpansTags spansTags = new SpansTags(a, b);
@@ -68,8 +68,8 @@ public class TestSpansTags {
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
 		int[] bDoc = new int[] { 1, 1 };
-		int[] bStart = new int[] { 4, 6 };
-		int[] bEnd = new int[] { 5, 7 };
+		int[] bStart = new int[] { 5, 7 };
+		int[] bEnd = new int[] { 6, 8 };
 		Spans b = new SpansStub(bDoc, bStart, bEnd);
 
 		SpansTags spansTags = new SpansTags(a, b);
@@ -90,6 +90,43 @@ public class TestSpansTags {
 		Assert.assertFalse(spansTags.next());
 	}
 
+	/**
+	 * Test the case where there's an empty tag between two tokens.
+	 *
+	 * E.g.: <code>quick &lt;b&gt;&lt;/b&gt; brown</code>
+	 *
+	 * @throws IOException
+	 */
+	@Test
+	public void testEmptyTag() throws IOException {
+		int[] aDoc = new int[] { 1, 1 };
+		int[] aStart = new int[] { 2, 4 };
+		int[] aEnd = new int[] { 3, 5 };
+		Spans a = new SpansStub(aDoc, aStart, aEnd);
+
+		int[] bDoc = new int[] { 1, 1 };
+		int[] bStart = new int[] { 2, 7 };
+		int[] bEnd = new int[] { 3, 8 };
+		Spans b = new SpansStub(bDoc, bStart, bEnd);
+
+		SpansTags spansTags = new SpansTags(a, b);
+
+		// First hit
+		Assert.assertTrue(spansTags.next());
+		Assert.assertEquals(1, spansTags.doc());
+		Assert.assertEquals(2, spansTags.start());
+		Assert.assertEquals(2, spansTags.end());
+
+		// Second hit
+		Assert.assertTrue(spansTags.next());
+		Assert.assertEquals(1, spansTags.doc());
+		Assert.assertEquals(4, spansTags.start());
+		Assert.assertEquals(7, spansTags.end());
+
+		// Done
+		Assert.assertFalse(spansTags.next());
+	}
+
 	@Test
 	public void testSkip() throws IOException {
 		int[] aDoc = new int[] { 1, 1, 2, 2 };
@@ -98,8 +135,8 @@ public class TestSpansTags {
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
 		int[] bDoc = new int[] { 1, 1, 2, 2 };
-		int[] bStart = new int[] { 4, 6, 14, 16 };
-		int[] bEnd = new int[] { 5, 7, 15, 17 };
+		int[] bStart = new int[] { 5, 7, 15, 17 };
+		int[] bEnd = new int[] { 6, 8, 16, 18 };
 		Spans b = new SpansStub(bDoc, bStart, bEnd);
 
 		SpansTags spansTags = new SpansTags(a, b);

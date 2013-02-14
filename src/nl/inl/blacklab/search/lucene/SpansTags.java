@@ -137,38 +137,70 @@ class SpansTags extends Spans {
 
 	private void gatherHits() {
 		// Put the start and end tag positions in one list (ends negative)
-		// (Note that we add 1 to the position to avoid the problem of x == -x for x == 0)
+		// (Note that we add 2 to the tag position to avoid the problem of x == -x for x == 0;
+		//  below we subtract it again)
 		List<Integer> startsAndEnds = new ArrayList<Integer>();
 		for (Hit h: spans[0].getHits()) {
-			startsAndEnds.add(h.start + 1);
+			startsAndEnds.add(h.start + 2);
 		}
 		for (Hit h: spans[1].getHits()) {
-			startsAndEnds.add(- (h.start + 1));
+			// +2 to avoid 0/-0 problem; -1 because endtag is attached to next token, but this
+			// is inconvenient for this process, we want it attached to the previous token now.
+			startsAndEnds.add(- (h.start + 2 - 1));
 		}
 
 		// Sort the list by position (ends after starts)
-		// OPT: sort could be prevented by 'zipping' arrays in a single loop
+		// OPT: sort could be prevented by merging arrays in a single loop
 		Collections.sort(startsAndEnds, tagLocationComparator);
 
 		// Go through the list of all tags, keep track of unmatched open tags and finding matches
 		List<Integer> unmatchedOpenTagIndices = new ArrayList<Integer>();
+		List<Integer> emptyElementIndices = new ArrayList<Integer>(); // empty elements between tokens need special attention (see below)
 		starts.clear();
 		ends.clear();
 		currentHit = 0; // first hit
 		for (Integer tag: startsAndEnds) {
 			if (tag > 0) {
-				// Open tag. As yet unmatched. Add to starts list, reserve space in ends list, add the index to the stack.
-				starts.add(tag - 1); // subtract 1 again (see above)
-				ends.add(-1); // "to be filled in later"
-				unmatchedOpenTagIndices.add(ends.size() - 1); // index to fill in when end tag found
+				int startPositionToStore = tag - 2;  // subtract 2 again to get original position (see above)
+				if (emptyElementIndices.size() > 0) {
+					// We have an unmatched close tag, probably an empty element between tokens (see below).
+					// Is this the corresponding start tag?
+					int index = emptyElementIndices.remove(emptyElementIndices.size() - 1);
+					if (startPositionToStore == ends.get(index)) {
+						// Yes. Fill in start position.
+						starts.set(index, startPositionToStore);
+					} else {
+						throw new RuntimeException("Unmatched close tag");
+					}
+				} else {
+					// Open tag. As yet unmatched. Add to starts list, reserve space in ends list, add the index to the stack.
+					starts.add(startPositionToStore);
+					ends.add(-1); // "to be filled in later"
+					unmatchedOpenTagIndices.add(ends.size() - 1); // index to fill in when end tag found
+				}
 			} else {
-				// Close tag. Match it to the most recently added unmatched open tag.
-				int index = unmatchedOpenTagIndices.remove(unmatchedOpenTagIndices.size() - 1);
-				ends.set(index, -tag); // No -1 here because end tag points to last token while we need the first token after the tag.
+				// Close tag. Are there unmatched open tags?
+				int endPositionToStore = -tag - 2 + 1; // subtract 2 and add 1 to let it point to the next token again (see above)
+				if (unmatchedOpenTagIndices.size() == 0) {
+					// No. This must be an empty element between two tokens. Because we don't know the
+					// relative order of tags between tokens (this information is not in the index),
+					// our sort messes this up.
+					// Add placeholder at this position and fix it when we find the open tag.
+					starts.add(-1); // "to be filled in later"
+					ends.add(endPositionToStore);
+					emptyElementIndices.add(ends.size() - 1); // index to fill in when end tag found
+				} else {
+					// Yes. Match it to the most recently added unmatched open tag.
+					int index = unmatchedOpenTagIndices.remove(unmatchedOpenTagIndices.size() - 1);
+					ends.set(index, endPositionToStore);
+				}
 			}
 		}
 		if (unmatchedOpenTagIndices.size() > 0) {
 			throw new RuntimeException("Unmatched open tags left for document");
+		}
+		if (emptyElementIndices.size() > 0) {
+			throw new RuntimeException("Unmatched close tag left for document");
 		}
 	}
 
