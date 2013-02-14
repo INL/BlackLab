@@ -124,9 +124,9 @@ public class Searcher {
 	private IndexSearcher indexSearcher;
 
 	/**
-	 * Number of words around a hit (default value 5)
+	 * Default number of words around a hit
 	 */
-	private int concordanceContextSize = 5;
+	private int defaultContextSize = 5;
 
 	/**
 	 * Directory where our index resides
@@ -1252,9 +1252,11 @@ public class Searcher {
 	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
+	 * @param contextSize
+	 *            how many words around the hit to retrieve
 	 * @return the list of concordances
 	 */
-	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits) {
+	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits, int contextSize) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key : hits) {
@@ -1267,7 +1269,7 @@ public class Searcher {
 		}
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeConcordancesSingleDoc(l, fieldName, concordanceContextSize, conc);
+			makeConcordancesSingleDoc(l, fieldName, contextSize, conc);
 		}
 		return conc;
 	}
@@ -1284,8 +1286,10 @@ public class Searcher {
 	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
+	 * @param contextSize
+	 *            how many words around the hit to retrieve
 	 */
-	public void retrieveContext(String fieldName, List<Hit> hits) {
+	public void retrieveContext(String fieldName, List<Hit> hits, int contextSize) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key : hits) {
@@ -1301,27 +1305,27 @@ public class Searcher {
 		String fiidFieldName = ComplexFieldUtil.fieldName(fieldName, "fiid");
 
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeContextSingleDoc(l, forwardIndex, fiidFieldName, concordanceContextSize);
+			makeContextSingleDoc(l, forwardIndex, fiidFieldName, contextSize);
 		}
 	}
 
 	/**
-	 * Get the context size used for building concordances
+	 * Get the default context size used for building concordances
 	 *
 	 * @return the context size
 	 */
-	public int getConcordanceContextSize() {
-		return concordanceContextSize;
+	public int getDefaultContextSize() {
+		return defaultContextSize;
 	}
 
 	/**
-	 * Set the context size to use for building concordances
+	 * Set the default context size to use for building concordances
 	 *
-	 * @param concordanceContextSize
+	 * @param defaultContextSize
 	 *            the context size
 	 */
-	public void setConcordanceContextSize(int concordanceContextSize) {
-		this.concordanceContextSize = concordanceContextSize;
+	public void setDefaultContextSize(int defaultContextSize) {
+		this.defaultContextSize = defaultContextSize;
 	}
 
 	/**

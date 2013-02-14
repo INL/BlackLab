@@ -19,11 +19,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 
@@ -94,6 +96,12 @@ public class Hits implements Iterable<Hit> {
 	private boolean tooManyHits = false;
 
 	/**
+	 * The desired context size (number of words to fetch around hits).
+	 * Defaults to Searcher.getDefaultContextSize().
+	 */
+	private int contextSize;
+
+	/**
 	 * Construct an empty Hits object
 	 *
 	 * @param searcher
@@ -106,6 +114,7 @@ public class Hits implements Iterable<Hit> {
 		hits = new ArrayList<Hit>();
 		totalNumberOfHits = 0;
 		this.concordanceField = defaultConcField;
+		contextSize = searcher.getDefaultContextSize();
 	}
 
 	/**
@@ -128,28 +137,7 @@ public class Hits implements Iterable<Hit> {
 		totalNumberOfHits = -1; // unknown
 		hits = new ArrayList<Hit>(); //Hit.hitList(source);
 		this.concordanceField = defaultConcField;
-	}
-
-	/**
-	 * Executes the SpanQuery to get a Spans object.
-	 *
-	 * @param spanQuery
-	 *            the query
-	 * @return the results object
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
-		try {
-			IndexReader reader = null;
-			if (searcher != null) { // this may happen while testing with stub classes; don't try to rewrite
-				reader = searcher.getIndexReader();
-			}
-			spanQuery = (SpanQuery) spanQuery.rewrite(reader);
-			return spanQuery.getSpans(reader);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		contextSize = searcher.getDefaultContextSize();
 	}
 
 	/**
@@ -187,6 +175,49 @@ public class Hits implements Iterable<Hit> {
 		sourceSpansFullyRead = false;
 		hits = new ArrayList<Hit>();
 		this.concordanceField = defaultConcField;
+		contextSize = searcher.getDefaultContextSize();
+	}
+
+	/** Returns the context size.
+	 * @return context size (number of words to fetch around hits)
+	 */
+	public int getContextSize() {
+		return contextSize;
+	}
+
+	/** Sets the desired context size.
+	 * @param contextSize the context size (number of words to fetch around hits)
+	 */
+	public void setContextSize(int contextSize) {
+		if (this.contextSize == contextSize)
+			return; // no need to reset anything
+		this.contextSize = contextSize;
+
+		// Reset context and concordances so we get the correct context size next time
+		contextFieldName = null;
+		concordances = null;
+	}
+
+	/**
+	 * Executes the SpanQuery to get a Spans object.
+	 *
+	 * @param spanQuery
+	 *            the query
+	 * @return the results object
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
+		try {
+			IndexReader reader = null;
+			if (searcher != null) { // this may happen while testing with stub classes; don't try to rewrite
+				reader = searcher.getIndexReader();
+			}
+			spanQuery = (SpanQuery) spanQuery.rewrite(reader);
+			return spanQuery.getSpans(reader);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -454,7 +485,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(concordanceField, hits);
+		concordances = searcher.retrieveConcordances(concordanceField, hits, contextSize);
 	}
 
 	/**
@@ -471,7 +502,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		searcher.retrieveContext(fieldName, hits);
+		searcher.retrieveContext(fieldName, hits, contextSize);
 
 		contextFieldName = fieldName;
 	}
@@ -484,8 +515,58 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * Uses the default concordance field.
 	 */
-	public void findContext() {
+	void findContext() {
 		findContext(concordanceField);
+	}
+
+	/**
+	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
+	 */
+	public void clearConcordances() {
+		concordances = null;
+	}
+
+	/**
+	 * Clear any cached concordances so new ones will be created when necessary.
+	 */
+	public void clearContext() {
+		for (Hit hit: hits) {
+			hit.context = null;
+		}
+		contextFieldName = null;
+	}
+
+	/**
+	 * Count contxwords around hit
+	 */
+	public Map<String, Integer> getCollocations(String fieldName) {
+		findContext(fieldName);
+		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
+		for (Hit hit: hits) {
+			int[] context = hit.context;
+
+			// Count words
+			for (int i = 0; i < context.length; i++) {
+				if (i >= hit.contextHitStart && i < hit.contextRightStart)
+					continue; // don't count words in hit itself, just around
+				int w = context[i];
+				Integer n = coll.get(w);
+				if (n == null)
+					n = 1;
+				else
+					n++;
+				coll.put(w, n);
+			}
+		}
+
+		// Get the actual words from the sort positions
+		Map<String, Integer> collStr = new HashMap<String, Integer>();
+		Terms terms = searcher.getTerms(contextFieldName);
+		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
+			String word = terms.getFromSortPosition(e.getKey());
+			collStr.put(word, e.getValue());
+		}
+		return collStr;
 	}
 
 	/**

@@ -101,9 +101,18 @@ public class QueryTool {
 	private ResultsGrouper groups = null;
 
 	/**
-	 * If true, we're showing groups. If false, we're showing hits.
+	 * What results view do we want to see?
 	 */
-	private boolean showGroups = false;
+	enum ShowSetting {
+		HITS,
+		GROUPS,
+		COLLOC
+	}
+
+	/**
+	 * What results view do we want to see? (hits, groups or collocations)
+	 */
+	private ShowSetting showSetting = ShowSetting.HITS;
 
 	/**
 	 * If we're looking at hits in one group, this is the index of the group number. Otherwise, this
@@ -373,6 +382,8 @@ public class QueryTool {
 		// Create the BlackLab searcher object
 		searcher = new Searcher(indexDir);
 		System.out.println("Done.\n");
+
+		contextSize = searcher.getDefaultContextSize();
 	}
 
 	/**
@@ -403,6 +414,9 @@ public class QueryTool {
 				resultsPerPage = Integer.parseInt(expr.substring(9));
 				firstResult = 0;
 				showResultsPage();
+			} else if (expr.startsWith("context ")) {
+				contextSize = Integer.parseInt(expr.substring(8));
+				showResultsPage();
 			} else if (expr.startsWith("sort by ")) {
 				sortBy(expr.substring(8));
 			} else if (expr.startsWith("sort ")) {
@@ -417,7 +431,7 @@ public class QueryTool {
 					String[] parts = expr.substring(6).split("\\s+", 2);
 					groupBy(parts[0], parts.length > 1 ? parts[1] : null);
 				}
-			} else if (expr.equals("groups") || expr.equals("hits") || expr.startsWith("group ")) {
+			} else if (expr.equals("groups") || expr.equals("hits") || expr.equals("colloc") || expr.startsWith("group ")) {
 				changeShowSettings(expr);
 			} else if (expr.equals("switch") || expr.equals("sw")) {
 				currentParser = currentParser.nextParser();
@@ -489,13 +503,14 @@ public class QueryTool {
 		String langAvail = "Lucene, CorpusQL" + (isContextQlAvailable ? ", ContextQL" : "");
 
 		out.println("Control commands:");
-		out.println("  sw(itch)                          # Switch languages (" + langAvail + ")");
-		out.println("  p(rev) / n(ext) / pagesize <n>    # Page through results");
-		out.println("  sort {match|left|right} [prop]    # Sort query results  (left = left context, etc.)");
-		out.println("  group {match|left|right} [prop]   # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
-		out.println("  hits / groups / group <n>         # Switch between results modes");
-		out.println("  help                              # This message");
-		out.println("  exit                              # Exit program");
+		out.println("  sw(itch)                           # Switch languages (" + langAvail + ")");
+		out.println("  p(rev) / n(ext) / pagesize <n>     # Page through results");
+		out.println("  sort {match|left|right} [prop]     # Sort query results  (left = left context, etc.)");
+		out.println("  group {match|left|right} [prop]    # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
+		out.println("  hits / groups / group <n> / colloc # Switch between results modes");
+		out.println("  context <n>                        # Set number of words to show around hits");
+		out.println("  help                               # This message");
+		out.println("  exit                               # Exit program");
 		out.println("");
 
 		printQueryHelp();
@@ -535,7 +550,7 @@ public class QueryTool {
 			hits = searcher.find("contents", pattern, filter);
 			groups = null;
 			showWhichGroup = -1;
-			showGroups = false;
+			showSetting = ShowSetting.HITS;
 			firstResult = 0;
 			reportTime(t);
 			showResultsPage();
@@ -559,9 +574,17 @@ public class QueryTool {
 	 */
 	private void nextPage() {
 		if (hits != null) {
-			int max = hits.size();
-			if (showGroups)
+			int max;
+			switch(showSetting) {
+			case COLLOC:
+				throw new UnsupportedOperationException();
+			case GROUPS:
 				max = groups.numberOfGroups();
+				break;
+			default:
+				max = hits.size();
+				break;
+			}
 
 			// Next page
 			firstResult += resultsPerPage;
@@ -594,15 +617,25 @@ public class QueryTool {
 		if (hits == null)
 			return;
 
-		if (showGroups) {
+		switch(showSetting) {
+		case COLLOC:
+			throw new UnsupportedOperationException();
+		case GROUPS:
 			sortGroups(sortBy);
-		} else {
+			break;
+		default:
 			String[] parts = sortBy.split("\\s+", 2);
 			sortHits(parts[0], parts.length > 1 ? parts[1] : null);
+			break;
 		}
 	}
 
 	final String CONTEXT_FIELD = "contents";
+
+	/**
+	 * Desired context size
+	 */
+	private int contextSize;
 
 	/**
 	 * Sort hits by the specified property.
@@ -698,7 +731,7 @@ public class QueryTool {
 			return;
 		}
 		groups = new ResultsGrouper(hits, crit);
-		showGroups = true;
+		showSetting = ShowSetting.GROUPS;
 		reportTime(t);
 		sortGroups("size");
 	}
@@ -708,17 +741,19 @@ public class QueryTool {
 	 */
 	private void changeShowSettings(String showWhat) {
 		if (showWhat.equals("hits")) {
-			showGroups = false;
+			showSetting = ShowSetting.HITS;
 			showWhichGroup = -1;
-		} else if (showWhat.equals("groups") && groups != null)
-			showGroups = true;
-		else if (showWhat.startsWith("group ") && groups != null) {
+		} else if (showWhat.equals("colloc") && groups != null) {
+			showSetting = ShowSetting.COLLOC;
+		} else if (showWhat.equals("groups") && groups != null) {
+			showSetting = ShowSetting.GROUPS;
+		} else if (showWhat.startsWith("group ") && groups != null) {
 			showWhichGroup = Integer.parseInt(showWhat.substring(6)) - 1;
 			if (showWhichGroup < 0 || showWhichGroup >= groups.numberOfGroups()) {
 				System.err.println("Group doesn't exist");
 				showWhichGroup = -1;
 			} else
-				showGroups = false; // Show hits in group, not all the groups
+				showSetting = ShowSetting.HITS; // Show hits in group, not all the groups
 		}
 		showResultsPage();
 	}
@@ -745,10 +780,16 @@ public class QueryTool {
 	 * Show the current results page (either hits or groups).
 	 */
 	private void showResultsPage() {
-		if (showGroups) {
+		switch (showSetting) {
+		case COLLOC:
+			throw new UnsupportedOperationException();
+		case GROUPS:
 			showGroupsPage();
-		} else {
+			break;
+		default:
 			showHitsPage();
+			break;
+
 		}
 	}
 
@@ -756,6 +797,7 @@ public class QueryTool {
 	 * Show the current page of hits.
 	 */
 	private void showHitsPage() {
+
 		/**
 		 * A hit we're about to show.
 		 *
@@ -777,13 +819,16 @@ public class QueryTool {
 		}
 
 		Hits hitsToShow = getCurrentHitSet();
+		if (hitsToShow == null)
+			return; // nothing to show
 
 		// Limit results to the first n
 		HitsWindow window = new HitsWindow(hitsToShow, firstResult, resultsPerPage);
 
 		// Compile hits display info and calculate necessary width of left context column
 		List<HitToShow> toShow = new ArrayList<HitToShow>();
-		int leftContextMaxSize = 10;
+		window.setContextSize(contextSize); // number of words around hit
+		int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
 		for (Hit hit : window) {
 			Concordance conc = window.getConcordance(hit);
 			String left, hitText, right;

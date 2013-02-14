@@ -133,27 +133,6 @@ public class Hit implements Comparable<Hit> {
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
-		/*if (start == end) {
-			// Hit of length 0; convert to hit of length 1 so we
-			// can display something
-			this.end++;
-		}*/
-	}
-
-	/**
-	 * Construct a hit object with context information
-	 *
-	 * @param doc
-	 *            the document
-	 * @param start
-	 *            start of the hit (word positions)
-	 * @param end
-	 *            end of the hit (word positions)
-	 * @param conc
-	 *            context (concordance) information
-	 */
-	public Hit(int doc, int start, int end, String[] conc) {
-		this(doc, start, end);
 	}
 
 	@Override
