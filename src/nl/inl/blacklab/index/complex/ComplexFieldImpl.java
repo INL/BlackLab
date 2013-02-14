@@ -172,8 +172,7 @@ public class ComplexFieldImpl extends ComplexField {
 //	}
 
 	@Override
-	public ComplexFieldProperty getProperty(String propName, String altPostfix) {
-		String name = ComplexFieldUtil.fieldName(fieldName, propName, altPostfix);
+	public ComplexFieldProperty getProperty(String name) {
 		ComplexFieldProperty p = properties.get(name);
 		if (p == null)
 			throw new RuntimeException("Undefined property '" + name + "'");
