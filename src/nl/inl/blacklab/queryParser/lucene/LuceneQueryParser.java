@@ -916,7 +916,7 @@ import org.apache.lucene.util.VirtualMethod;
    * @return new WildcardQuery instance
    */
   protected TextPattern newWildcardQuery(Term t) {
-    TextPattern query = TextPatternWildcard.getAppropriatePattern(t.text());
+    TextPattern query = new TextPatternWildcard(t.text());
     return query;
   }
 

@@ -45,7 +45,10 @@ import org.apache.lucene.search.regex.RegexQuery;
  * TextPatternRegex/Wildcard expand to MultiTermQueries, which quickly fall back to
  * ConstantScoreQuery. This might be fixable; google "MultiTermQuery scoring" or see the code for
  * details.
+ *
+ * @deprecated Not actually very useful, will be removed soon.
  */
+@Deprecated
 public class TextPatternTranslatorQuery extends TextPatternTranslator<Query> {
 	private Query makeBooleanQuery(List<Query> clauses, Occur occur) {
 		BooleanQuery booleanQuery = new BooleanQuery();

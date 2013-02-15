@@ -17,6 +17,7 @@ package nl.inl.blacklab.search;
 
 import nl.inl.util.StringUtil;
 
+
 /**
  * A TextPattern matching a regular expression.
  */
@@ -39,17 +40,16 @@ public class TextPatternRegex extends TextPatternTerm {
 	}
 
 	/**
-	 * Instantiate the "best" TextPattern class for the given regex. Tries to make a
+	 * Rewrite to the "best" TextPattern class for the given regex. Tries to make a
 	 * TextPatternTerm, TextPatternPrefix or TextPatternWildcard because those tend to be faster
 	 * than TextPatternRegex in Lucene.
 	 *
-	 * @param regex
-	 *            the regex we want a TextPattern for
 	 * @return the TextPattern
 	 */
-	public static TextPattern getAppropriatePattern(String regex) {
+	@Override
+	public TextPattern rewrite() {
 		// Try to convert to a wildcard query.
-		String wildcard = regex;
+		String wildcard = value;
 
 		// Wildcard expressions always start at beginning
 		if (wildcard.charAt(0) == '^') {
@@ -66,7 +66,7 @@ public class TextPatternRegex extends TextPatternTerm {
 		}
 
 		// Mark asterisk and questionmark candidates
-		// TODO: kind of ugly to use string markers like this.. a better way is to
+		// TO DO: kind of ugly to use string markers like this.. a better way is to
 		//   walk through the string, detecting stuff as we go. When we detect anything
 		//   that doesn't fit in a wildcard query, we know we have to use regex.
 		//   Otherwise, we do the required replacements and create a wildcard query.
@@ -83,11 +83,11 @@ public class TextPatternRegex extends TextPatternTerm {
 			wildcard = wildcard.replaceAll("##QUESTIONMARK##", "?");
 
 			// Let TextPatternWildcard sort out the rest.
-			return TextPatternWildcard.getAppropriatePattern(wildcard);
+			return new TextPatternWildcard(wildcard).rewrite();
 		}
 
 		// Bummer, it's a real regex.
-		return new TextPatternRegex(regex);
+		return this;
 	}
 
 }

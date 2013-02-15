@@ -46,7 +46,8 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         if (str.charAt(str.length() - 1) != '$')
             str += "$";
 
-        return TextPatternRegex.getAppropriatePattern(str);
+        // Treat everything like regex now; will be simplified later if possible
+        return new TextPatternRegex(str);
     }
 
     private String defaultProperty = "word";

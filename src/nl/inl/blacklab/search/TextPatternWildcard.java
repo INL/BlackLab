@@ -32,31 +32,30 @@ public class TextPatternWildcard extends TextPatternTerm {
 	}
 
 	/**
-	 * Instantiate the "best" TextPattern class for the given regex. Tries to make a TextPatternTerm
+	 * Rewrite to the "best" TextPattern class for the given wildcard query. Tries to make a TextPatternTerm
 	 * or TextPatternPrefix because those tend to be faster than TextPatternWildcard in Lucene.
 	 *
-	 * @param expression
-	 *            the wildcard expression we want a TextPattern for
 	 * @return the TextPattern
 	 */
-	public static TextPattern getAppropriatePattern(String expression) {
+	@Override
+	public TextPattern rewrite() {
 		// Hey, maybe it doesn't even contain wildcards?
-		if (expression.indexOf("*") < 0 && expression.indexOf("?") < 0) {
+		if (value.indexOf("*") < 0 && value.indexOf("?") < 0) {
 			// Woot!
-			return new TextPatternTerm(expression);
+			return new TextPatternTerm(value);
 		}
 
 		// Replace multiple consecutive asterisks with a single one
-		expression = expression.replaceAll("\\*+", "*");
+		value = value.replaceAll("\\*+", "*");
 
 		// Is it a prefix query? ("bla*")
-		if (expression.indexOf('*') == expression.length() - 1 && expression.indexOf('?') < 0) {
+		if (value.indexOf('*') == value.length() - 1 && value.indexOf('?') < 0) {
 			// Yes!
-			String prefix = expression.substring(0, expression.length() - 1);
+			String prefix = value.substring(0, value.length() - 1);
 			return new TextPatternPrefix(prefix);
 		}
 
-		return new TextPatternWildcard(expression);
+		// Can't simplify, just return ourselves
+		return this;
 	}
-
 }

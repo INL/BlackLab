@@ -56,7 +56,6 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery regex(String fieldName, String value) {
-		// return new BLSpanRegexQuery(new Term(fieldName, value));
 		return new BLSpanMultiTermQueryWrapper<RegexQuery>(new RegexQuery(
 				new Term(fieldName, value)));
 	}

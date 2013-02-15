@@ -57,6 +57,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.util.Version;
 
 /**
@@ -377,11 +378,11 @@ public class QueryTool {
 	 */
 	public QueryTool(File indexDir) throws CorruptIndexException, IOException {
 		printProgramHead();
-		System.out.print("Opening index " + indexDir + "... ");
+		out.print("Opening index " + indexDir + "... ");
 
 		// Create the BlackLab searcher object
 		searcher = new Searcher(indexDir);
-		System.out.println("Done.\n");
+		out.println("Done.\n");
 
 		contextSize = searcher.getDefaultContextSize();
 	}
@@ -543,11 +544,13 @@ public class QueryTool {
 		try {
 			TextPattern pattern = currentParser.parse(query);
 			pattern = pattern.rewrite();
-			System.out.println(pattern.toString(CONTENTS_FIELD));
+			out.println("TextPattern: " + pattern.toString(CONTENTS_FIELD));
 
 			// Execute search
 			Filter filter = null; // TODO: metadata search!
-			hits = searcher.find(pattern, CONTENTS_FIELD, filter);
+			SpanQuery spanQuery = searcher.createSpanQuery(pattern, filter);
+			out.println("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
+			hits = searcher.find(spanQuery);
 			groups = null;
 			showWhichGroup = -1;
 			showSetting = ShowSetting.HITS;
