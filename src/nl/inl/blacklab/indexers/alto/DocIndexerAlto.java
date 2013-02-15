@@ -26,6 +26,7 @@ import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldImpl;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.TokenFilterAdder;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 
 import org.apache.lucene.analysis.LowerCaseFilter;
@@ -42,7 +43,7 @@ import org.xml.sax.Attributes;
  * Index an ALTO file.
  */
 public class DocIndexerAlto extends DocIndexerXml {
-	private static final String CONTENTS_FIELD = "contents";
+	private static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
 
 	/** Pattern for getting DPO number and page number from image file name */
 	private static Pattern pattDpoAndPage = Pattern.compile("^dpo_(\\d+)_(\\d+)_");

@@ -15,11 +15,16 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
-import nl.inl.util.Utilities;
+import nl.inl.blacklab.search.grouping.HitPropValue;
 
 public class DocGroupPropertyIdentity extends DocGroupProperty {
 	@Override
-	public String get(DocGroup result) {
-		return Utilities.sanitizeForSorting(result.getIdentity());
+	public HitPropValue get(DocGroup result) {
+		return result.getIdentity();
+	}
+
+	@Override
+	public int compare(DocGroup a, DocGroup b) {
+		return a.getIdentity().compareTo(b.getIdentity());
 	}
 }

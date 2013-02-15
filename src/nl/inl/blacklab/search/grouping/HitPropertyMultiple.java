@@ -99,19 +99,13 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
 	@Override
 	public int compare(Hit a, Hit b) {
-		return get(a).compareTo(get(b));
+		for (HitProperty crit : criteria) {
+			int cmp = crit.compare(a, b);
+			if (cmp != 0)
+				return cmp;
+		}
+		return 0;
 	}
-
-//	@Override
-//	public String getHumanReadable(Hit result) {
-//		StringBuilder b = new StringBuilder();
-//		for (HitProperty crit : criteria) {
-//			if (b.length() > 0)
-//				b.append(", ");
-//			b.append(crit.getHumanReadable(result));
-//		}
-//		return b.toString();
-//	}
 
 	@Override
 	public String getName() {

@@ -84,14 +84,11 @@ import org.apache.lucene.store.FSDirectory;
 public class Searcher {
 
 	/**
-	 * The default contents field (if you don't specify one in the constructor)
-	 */
-	public static final String DEFAULT_CONTENTS_FIELD = "contents";
-
-	/**
 	 * Name of complex field metadata property that stores the length in tokens
 	 */
 	public static final String FIELD_LENGTH_PROP_NAME = "length_tokens";
+
+	public static final String DEFAULT_CONTENTS_FIELD = "contents";
 
 	/**
 	 * The collator to use for sorting. Defaults to English collator.
@@ -122,6 +119,11 @@ public class Searcher {
 	 * The Lucene IndexSearcher, for dealing with non-Span queries (for per-document scoring)
 	 */
 	private IndexSearcher indexSearcher;
+
+	/**
+	 * The contents field (used by default to make concordances)
+	 */
+	public String contentsField;
 
 	/**
 	 * Default number of words around a hit
@@ -174,6 +176,7 @@ public class Searcher {
 
 		// Detect and open the ContentStore for the contents field
 		this.indexLocation = indexDir;
+		this.contentsField = contentsField;
 		// this.contentsField = contentsField;
 		File dir = new File(indexDir, "xml");
 		if (dir.exists()) {
@@ -267,7 +270,7 @@ public class Searcher {
 		}
 	}
 
-	public SpanQuery createSpanQuery(String field, TextPattern pattern, DocIdSet docIdSet) {
+	public SpanQuery createSpanQuery(TextPattern pattern, String field, DocIdSet docIdSet) {
 		// Convert to SpanQuery
 		pattern = pattern.rewrite();
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
@@ -279,17 +282,29 @@ public class Searcher {
 		return spanQuery;
 	}
 
-	public SpanQuery createSpanQuery(String field, TextPattern pattern, Filter filter) {
+	public SpanQuery createSpanQuery(TextPattern pattern, DocIdSet docIdSet) {
+		return createSpanQuery(pattern, contentsField, docIdSet);
+	}
+
+	public SpanQuery createSpanQuery(TextPattern pattern, String field, Filter filter) {
 		try {
-			return createSpanQuery(field, pattern,
+			return createSpanQuery(pattern, field,
 					filter == null ? null : filter.getDocIdSet(indexReader));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public SpanQuery createSpanQuery(String field, TextPattern pattern) {
-		return createSpanQuery(field, pattern, (DocIdSet) null);
+	public SpanQuery createSpanQuery(TextPattern pattern, Filter filter) {
+		return createSpanQuery(pattern, contentsField, filter);
+	}
+
+	public SpanQuery createSpanQuery(TextPattern pattern, String field) {
+		return createSpanQuery(pattern, field, (DocIdSet) null);
+	}
+
+	public SpanQuery createSpanQuery(TextPattern pattern) {
+		return createSpanQuery(pattern, contentsField, (DocIdSet) null);
 	}
 
 	/**
@@ -304,40 +319,82 @@ public class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(SpanQuery query, String defaultConcField) throws BooleanQuery.TooManyClauses {
-		return new Hits(this, query, defaultConcField);
+		return new Hits(this, defaultConcField, query);
 	}
 
 	/**
 	 * Find hits for a pattern in a field.
 	 *
+	 * @param query
+	 *            the pattern to find
+	 * @return the hits found
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	public Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses {
+		return new Hits(this, contentsField, query);
+	}
+
+	/**
+	 * Find hits for a pattern in a field.
+	 * @param pattern
+	 *            the pattern to find
 	 * @param field
 	 *            field to use for sorting and displaying resulting concordances.
+	 * @param filter
+	 *            determines which documents to search
+	 *
+	 * @return the hits found
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	public Hits find(TextPattern pattern, String field, Filter filter)
+			throws BooleanQuery.TooManyClauses {
+		return new Hits(this, field, createSpanQuery(pattern, field, filter));
+	}
+
+	/**
+	 * Find hits for a pattern and filter them.
 	 * @param pattern
 	 *            the pattern to find
 	 * @param filter
 	 *            determines which documents to search
+	 *
 	 * @return the hits found
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(String field, TextPattern pattern, Filter filter)
+	public Hits find(TextPattern pattern, Filter filter)
 			throws BooleanQuery.TooManyClauses {
-		return new Hits(this, createSpanQuery(field, pattern, filter), field);
+		return find(pattern, contentsField, filter);
 	}
 
 	/**
 	 * Find hits for a pattern in a field.
-	 *
-	 * @param field
-	 *            which field to find the pattern in
 	 * @param pattern
 	 *            the pattern to find
+	 * @param field
+	 *            which field to find the pattern in
+	 *
 	 * @return the hits found
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(String field, TextPattern pattern) throws BooleanQuery.TooManyClauses {
-		return find(field, pattern, null);
+	public Hits find(TextPattern pattern, String field) throws BooleanQuery.TooManyClauses {
+		return find(pattern, field, null);
+	}
+
+	/**
+	 * Find hits for a pattern.
+	 * @param pattern
+	 *            the pattern to find
+	 *
+	 * @return the hits found
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	public Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses {
+		return find(pattern, contentsField, null);
 	}
 
 	/**
@@ -586,6 +643,17 @@ public class Searcher {
 			content = ca.getSubstringFromDocument(d, -1, -1);
 		}
 		return content;
+	}
+
+	/**
+	 * Get the document contents (original XML).
+	 *
+	 * @param d
+	 *            the Document
+	 * @return the field content
+	 */
+	public String getContent(Document d) {
+		return getContent(d, contentsField);
 	}
 
 	/**
@@ -857,6 +925,21 @@ public class Searcher {
 		List<HitSpan> hitspans = getCharacterOffsets(docId, fieldName, hits);
 
 		return hl.highlight(content, hitspans);
+	}
+
+	/**
+	 * Highlight field content with the specified hits.
+	 *
+	 * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
+	 *
+	 * @param docId
+	 *            document to highlight a field from
+	 * @param hits
+	 *            the hits
+	 * @return the highlighted content
+	 */
+	public String highlightContent(int docId, Hits hits) {
+		return highlightContent(docId, contentsField, hits);
 	}
 
 	static private Pattern altoProblem = Pattern
@@ -1219,7 +1302,7 @@ public class Searcher {
 
 			// Special case for old BL index with "forward" as the name of the single forward index
 			// (this should be removed eventually)
-			if (fieldName.equals(DEFAULT_CONTENTS_FIELD) && !dir.exists()) {
+			if (fieldName.equals(contentsField) && !dir.exists()) {
 				// Default forward index used to be called "forward". Look for that instead.
 				File alt = new File(indexLocation, "forward");
 				if (alt.exists())
@@ -1378,6 +1461,26 @@ public class Searcher {
 			throw new RuntimeException("Field " + field + " has no forward index!");
 		}
 		return forwardIndex.getTerms();
+	}
+
+	/**
+	 * Get the Terms object for the contents field.
+	 *
+	 * The Terms object is part of the ForwardIndex module and provides a mapping from term id to
+	 * term String, and between term id and term sort position. It is used while sorting and
+	 * grouping hits (by mapping the context term ids to term sort position ids), and later used to
+	 * display the group name (by mapping the sort position ids back to Strings)
+	 *
+	 * @return the Terms object
+	 * @throws RuntimeException
+	 *             if this field does not have a forward index, and hence no Terms object.
+	 */
+	public Terms getTerms() {
+		return getTerms(contentsField);
+	}
+
+	public String getContentsField() {
+		return contentsField;
 	}
 
 	// /**

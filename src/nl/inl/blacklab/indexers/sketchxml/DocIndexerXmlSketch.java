@@ -87,7 +87,7 @@ public class DocIndexerXmlSketch extends DocIndexerXml {
 		};
 
 		// Define the properties that make up our complex field
-		contentsField = new ComplexFieldImpl("contents", desensitizeFilterAdder); // actual text;
+		contentsField = new ComplexFieldImpl(CONTENTS_FIELD, desensitizeFilterAdder); // actual text;
 																					// this property
 																					// will contain
 																					// the offset
@@ -242,7 +242,7 @@ public class DocIndexerXmlSketch extends DocIndexerXml {
 		int contentId = storeCapturedContent();
 		// TODO: "cid" is not really a property here, but a subfield of contents with a single
 		// value. Different naming scheme?
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName("contents", "cid"),
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "cid"),
 				Store.YES, true).setIntValue(contentId));
 
 		// Store the different properties of the complex contents field that were gathered in

@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import nl.inl.blacklab.search.grouping.HitPropValue;
+import nl.inl.blacklab.search.grouping.HitPropValueMultiple;
+
 /**
  * A collection of GroupProperty's identifying a particular group.
  */
@@ -75,25 +78,30 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 	}
 
 	@Override
-	public String get(DocResult result) {
-		StringBuilder b = new StringBuilder();
+	public HitPropValueMultiple get(DocResult result) {
+		HitPropValue[] rv = new HitPropValue[criteria.size()];
+		int i = 0;
 		for (DocProperty crit : criteria) {
-			if (b.length() > 0)
-				b.append(";");
-			b.append(crit.get(result));
+			rv[i] = crit.get(result);
+			i++;
 		}
-		return b.toString();
+		return new HitPropValueMultiple(rv);
 	}
 
+	/**
+	 * Compares two docs on this property
+	 * @param a first doc
+	 * @param b second doc
+	 * @return 0 if equal, negative if a < b, positive if a > b.
+	 */
 	@Override
-	public String getHumanReadable(DocResult result) {
-		StringBuilder b = new StringBuilder();
+	public int compare(DocResult a, DocResult b) {
 		for (DocProperty crit : criteria) {
-			if (b.length() > 0)
-				b.append(", ");
-			b.append(crit.getHumanReadable(result));
+			int cmp = crit.compare(a, b);
+			if (cmp != 0)
+				return cmp;
 		}
-		return b.toString();
+		return 0;
 	}
 
 	@Override

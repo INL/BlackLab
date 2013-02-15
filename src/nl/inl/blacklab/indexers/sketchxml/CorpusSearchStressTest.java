@@ -57,10 +57,10 @@ public class CorpusSearchStressTest {
 
 		TextPattern pattern = new TextPatternTerm("die");
 
-		Hits hits = searcher.find("contents", pattern);
+		Hits hits = searcher.find(pattern, "contents");
 		System.out.println(hits.size() + " hits found; sorting...");
 
-		hits.sort(new HitPropertyRightContext(searcher, "contents"));
+		hits.sort(new HitPropertyRightContext(searcher));
 
 		displayConcordances(searcher, new HitsWindow(hits, 0, 10));
 

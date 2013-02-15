@@ -16,21 +16,19 @@
 package nl.inl.blacklab.perdocument;
 
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.grouping.HitPropValue;
 
 /**
  * A group of DocResult objects, plus the "group identity". For example, if you're grouping on
  * author name, the group identity might be the string "Harry Mulisch".
  */
 public class DocGroup {
-	private String groupIdentity;
-
-	private String humanReadableGroupIdentity;
+	private HitPropValue groupIdentity;
 
 	private DocResults results;
 
-	public DocGroup(Searcher searcher, String groupIdentity, String humanReadableGroupIdentity) {
+	public DocGroup(Searcher searcher, HitPropValue groupIdentity) {
 		this.groupIdentity = groupIdentity;
-		this.humanReadableGroupIdentity = humanReadableGroupIdentity;
 		results = new DocResults(searcher);
 	}
 
@@ -38,12 +36,8 @@ public class DocGroup {
 		results.add(e);
 	}
 
-	public String getIdentity() {
+	public HitPropValue getIdentity() {
 		return groupIdentity;
-	}
-
-	public String getHumanReadableIdentity() {
-		return humanReadableGroupIdentity;
 	}
 
 	public DocResults getResults() {

@@ -15,14 +15,21 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import nl.inl.blacklab.search.grouping.HitPropValueInt;
+
 public class DocGroupPropertySize extends DocGroupProperty {
 	@Override
-	public String get(DocGroup result) {
-		return String.format("%09d", result.size());
+	public HitPropValueInt get(DocGroup result) {
+		return new HitPropValueInt(result.size());
 	}
 
 	@Override
 	public boolean defaultSortDescending() {
 		return true;
+	}
+
+	@Override
+	public int compare(DocGroup a, DocGroup b) {
+		return a.size() - b.size();
 	}
 }

@@ -297,7 +297,7 @@ public class QueryTool {
 		@Override
 		public TextPattern parse(String query) throws ParseException {
 			try {
-				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_36, "contents",
+				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_36, CONTENTS_FIELD,
 						new WhitespaceAnalyzer(Version.LUCENE_36));
 				return parser.parse(query);
 			} catch (Exception e) {
@@ -543,11 +543,11 @@ public class QueryTool {
 		try {
 			TextPattern pattern = currentParser.parse(query);
 			pattern = pattern.rewrite();
-			System.out.println(pattern.toString("contents"));
+			System.out.println(pattern.toString(CONTENTS_FIELD));
 
 			// Execute search
 			Filter filter = null; // TODO: metadata search!
-			hits = searcher.find("contents", pattern, filter);
+			hits = searcher.find(pattern, CONTENTS_FIELD, filter);
 			groups = null;
 			showWhichGroup = -1;
 			showSetting = ShowSetting.HITS;
@@ -630,7 +630,7 @@ public class QueryTool {
 		}
 	}
 
-	final String CONTEXT_FIELD = "contents";
+	final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
 
 	/**
 	 * Desired context size
@@ -658,7 +658,7 @@ public class QueryTool {
 		else {
 			if (property != null && property.equals("word"))
 				property = null; // default property
-			String fieldName = ComplexFieldUtil.fieldName(CONTEXT_FIELD, property);
+			String fieldName = ComplexFieldUtil.fieldName(CONTENTS_FIELD, property);
 			if (sortBy.equals("match") || sortBy.equals("word"))
 				crit = new HitPropertyHitText(searcher, fieldName);
 			else if (sortBy.startsWith("left"))
@@ -719,7 +719,7 @@ public class QueryTool {
 		HitProperty crit = null;
 		if (property != null && property.equals("word"))
 			property = null; // default property
-		String fieldName = ComplexFieldUtil.fieldName(CONTEXT_FIELD, property);
+		String fieldName = ComplexFieldUtil.fieldName(CONTENTS_FIELD, property);
 		if (groupBy.equals("word") || groupBy.equals("match"))
 			crit = new HitPropertyHitText(searcher, fieldName);
 		else if (groupBy.startsWith("left"))
@@ -893,7 +893,7 @@ public class QueryTool {
 		int i;
 		for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
 			RandomAccessGroup g = listGroups.get(i);
-			out.println(String.format("%4d %5d %s", i + 1, g.size(), g.getHumanReadableIdentity()));
+			out.println(String.format("%4d %5d %s", i + 1, g.size(), g.getIdentity().toString()));
 		}
 
 		// Summarize

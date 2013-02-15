@@ -96,7 +96,7 @@ public class TestCorpusSearch {
 
 	private static void patternSearch(Searcher searcher, String fieldName, TextPattern pattern,
 			int n, Filter filter) {
-		Hits hits = searcher.find(fieldName, pattern, filter);
+		Hits hits = searcher.find(pattern, fieldName, filter);
 
 		// Limit results to the first n
 		HitsWindow window = new HitsWindow(hits, 0, n);

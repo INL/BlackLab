@@ -76,10 +76,10 @@ public class TestSearch {
 			// TextPatternAnyToken(1, 2));
 
 			// Execute search
-			Hits hits = searcher.find("contents", tp);
+			Hits hits = searcher.find(tp);
 
 			// Sort results
-			HitProperty first = new HitPropertyWordRight(searcher, "contents");
+			HitProperty first = new HitPropertyWordRight(searcher);
 			hits.sort(first);
 
 			// Limit results to the first n
@@ -101,7 +101,7 @@ public class TestSearch {
 			System.out.println((System.currentTimeMillis() - time) + "ms elapsed");
 
 			// Fetch and show whole XML doc
-			System.out.println(searcher.getContent(searcher.document(doc), "contents"));
+			System.out.println(searcher.getContent(searcher.document(doc)));
 
 			// ------------------------------------------------------------
 			// Done; clean up

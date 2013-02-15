@@ -40,7 +40,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	/**
 	 * The groups.
 	 */
-	Map<Object, RandomAccessGroup> groups = new HashMap<Object, RandomAccessGroup>();
+	Map<HitPropValue, RandomAccessGroup> groups = new HashMap<HitPropValue, RandomAccessGroup>();
 
 	/**
 	 * The groups, in sorted order.
@@ -81,7 +81,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 */
 	public ResultsGrouper(Searcher searcher, SpanQuery source, HitProperty criteria,
 			String defaultConcField) {
-		this(new Hits(searcher, source, defaultConcField), criteria);
+		this(new Hits(searcher, defaultConcField, source), criteria);
 	}
 
 	/**
@@ -141,7 +141,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 * @return a map of groups indexed by group property
 	 */
 	@Override
-	public Map<Object, RandomAccessGroup> getGroupMap() {
+	public Map<HitPropValue, RandomAccessGroup> getGroupMap() {
 		return Collections.unmodifiableMap(groups);
 	}
 

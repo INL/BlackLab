@@ -153,7 +153,7 @@ public class Example {
 	 */
 	static void findPattern(TextPattern tp) {
 		// Execute the search
-		Hits hits = searcher.find("contents", tp);
+		Hits hits = searcher.find(tp);
 
 		hits.sort(new HitPropertyHitText(searcher, "contents"));
 

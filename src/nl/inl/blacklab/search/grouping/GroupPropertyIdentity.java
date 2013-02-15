@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-import nl.inl.util.Utilities;
 
 
 /**
@@ -23,12 +22,18 @@ import nl.inl.util.Utilities;
  */
 public class GroupPropertyIdentity extends GroupProperty {
 	@Override
-	public HitPropValueString get(Group result) {
-		return new HitPropValueString(Utilities.sanitizeForSorting(result.getIdentity().toString()));
+	public HitPropValue get(Group result) {
+		return result.getIdentity();
+	}
+
+	@Override
+	public int compare(Group a, Group b) {
+		return a.getIdentity().compareTo(b.getIdentity());
 	}
 
 	@Override
 	public boolean defaultSortDescending() {
 		return false;
 	}
+
 }

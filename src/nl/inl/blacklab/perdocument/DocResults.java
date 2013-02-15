@@ -16,7 +16,6 @@
 package nl.inl.blacklab.perdocument;
 
 import java.io.IOException;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -79,7 +78,7 @@ public class DocResults {
 	}
 
 	public DocResults(Searcher searcher, String field, SpanQuery query) {
-		this(searcher, new Hits(searcher, query, field));
+		this(searcher, new Hits(searcher, field, query));
 	}
 
 	public DocResults(Searcher searcher, Scorer sc) {
@@ -134,8 +133,7 @@ public class DocResults {
 	}
 
 	public void sort(DocProperty prop, boolean sortReverse) {
-		Collator collator = searcher.getCollator();
-		Comparator<DocResult> comparator = new ComparatorDocProperty(prop, collator);
+		Comparator<DocResult> comparator = new ComparatorDocProperty(prop);
 		if (sortReverse) {
 			comparator = new ReverseComparator<DocResult>(comparator);
 		}

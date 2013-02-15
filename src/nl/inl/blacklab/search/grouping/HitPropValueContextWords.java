@@ -40,4 +40,26 @@ public class HitPropValueContextWords extends HitPropValue {
 		}
 		return b.toString();
 	}
+
+	public static HitPropValue deserialize(Terms terms, String info) {
+		String[] strIds = info.split(",,");
+		int[] ids = new int[strIds.length];
+		int i = 0;
+		for (String strId: strIds) {
+			ids[i] = Integer.parseInt(strId);
+			i++;
+		}
+		return new HitPropValueContextWords(terms, ids);
+	}
+
+	@Override
+	public String serialize() {
+		StringBuilder b = new StringBuilder();
+		for (int v: value) {
+			if (b.length() > 0)
+				b.append(",,");
+			b.append(v);
+		}
+		return "cws:" + b.toString();
+	}
 }

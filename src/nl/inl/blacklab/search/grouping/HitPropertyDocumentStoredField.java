@@ -56,7 +56,21 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
 	@Override
 	public int compare(Hit a, Hit b) {
-		return get(a).compareTo(get(b));
+		try {
+			Document d = reader.document(a.doc);
+			String va = d.get(fieldName);
+			if (va == null)
+				va = "";
+
+			d = reader.document(b.doc);
+			String vb = d.get(fieldName);
+			if (vb == null)
+				vb = "";
+
+			return HitPropValue.collator.compare(va, vb);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override

@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import nl.inl.blacklab.search.grouping.HitPropValueString;
+
 /**
  * For grouping DocResult objects by the value of a stored field in the Lucene documents. The field
  * name is given when instantiating this class, and might be "author", "year", and such.
@@ -33,8 +35,21 @@ public class DocPropertyStoredField extends DocProperty {
 	}
 
 	@Override
-	public String get(DocResult result) {
-		return result.getDocument().get(fieldName);
+	public HitPropValueString get(DocResult result) {
+		return new HitPropValueString(result.getDocument().get(fieldName));
+	}
+
+	/**
+	 * Compares two docs on this property
+	 * @param a first doc
+	 * @param b second doc
+	 * @return 0 if equal, negative if a < b, positive if a > b.
+	 */
+	@Override
+	public int compare(DocResult a, DocResult b) {
+		String sa = a.getDocument().get(fieldName);
+		String sb = b.getDocument().get(fieldName);
+		return sa.compareTo(sb);
 	}
 
 	@Override

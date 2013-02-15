@@ -15,14 +15,27 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import nl.inl.blacklab.search.grouping.HitPropValueInt;
+
 /**
  * For grouping DocResult objects on the number of hits. This would put documents with 1 hit in a
  * group, documents with 2 hits in another group, etc.
  */
 public class DocPropertyNumberOfHits extends DocProperty {
 	@Override
-	public String get(DocResult result) {
-		return String.format("%5d", result.getHits().size());
+	public HitPropValueInt get(DocResult result) {
+		return new HitPropValueInt(result.getHits().size());
+	}
+
+	/**
+	 * Compares two docs on this property
+	 * @param a first doc
+	 * @param b second doc
+	 * @return 0 if equal, negative if a < b, positive if a > b.
+	 */
+	@Override
+	public int compare(DocResult a, DocResult b) {
+		return a.getHits().size() - b.getHits().size();
 	}
 
 	@Override

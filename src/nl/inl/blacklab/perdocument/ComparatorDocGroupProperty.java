@@ -33,11 +33,7 @@ public class ComparatorDocGroupProperty implements Comparator<DocGroup> {
 
 	@Override
 	public int compare(DocGroup first, DocGroup second) {
-		String a = prop.get(first);
-		String b = prop.get(second);
-		if (sortReverse)
-			return collator.compare(b, a);
-		return collator.compare(a, b);
+		return sortReverse ? -prop.compare(first, second) : prop.compare(first, second);
 	}
 
 }

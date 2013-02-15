@@ -26,7 +26,13 @@ public class GroupPropertySize extends GroupProperty {
 	}
 
 	@Override
+	public int compare(Group a, Group b) {
+		return ((RandomAccessGroup)a).size() - ((RandomAccessGroup)b).size();
+	}
+
+	@Override
 	public boolean defaultSortDescending() {
 		return true;
 	}
+
 }

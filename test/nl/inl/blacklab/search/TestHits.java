@@ -30,7 +30,8 @@ public class TestHits {
 		int[] aEnd = new int[] { 2, 3 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-		Hits hits = new Hits(null, a, null);
+		@SuppressWarnings("deprecation")
+		Hits hits = new Hits(null, null, a);
 
 		int i = 0;
 		for (Hit hit: hits) {

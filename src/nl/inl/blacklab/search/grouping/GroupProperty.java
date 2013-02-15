@@ -21,6 +21,8 @@ package nl.inl.blacklab.search.grouping;
 public abstract class GroupProperty {
 	public abstract HitPropValue get(Group result);
 
+	public abstract int compare(Group a, Group b);
+
 	public boolean defaultSortDescending() {
 		return false;
 	}

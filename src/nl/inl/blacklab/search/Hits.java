@@ -106,6 +106,16 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param searcher
 	 *            the searcher object
+	 */
+	public Hits(Searcher searcher) {
+		this(searcher, searcher.getContentsField());
+	}
+
+	/**
+	 * Construct an empty Hits object
+	 *
+	 * @param searcher
+	 *            the searcher object
 	 * @param defaultConcField
 	 *            field to use by default when finding concordances
 	 */
@@ -114,7 +124,7 @@ public class Hits implements Iterable<Hit> {
 		hits = new ArrayList<Hit>();
 		totalNumberOfHits = 0;
 		this.concordanceField = defaultConcField;
-		contextSize = searcher.getDefaultContextSize();
+		contextSize = searcher == null ? 0 /* only for test */ : searcher.getDefaultContextSize();
 	}
 
 	/**
@@ -125,19 +135,19 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param source
-	 *            where to retrieve the Hit objects from
 	 * @param defaultConcField
 	 *            field to use by default when finding concordances
+	 * @param source
+	 *            where to retrieve the Hit objects from
+	 * @deprecated supply a SpanQuery to a Hits object instead
 	 */
-	Hits(Searcher searcher, Spans source, String defaultConcField) {
-		this.searcher = searcher;
+	@Deprecated
+	Hits(Searcher searcher, String defaultConcField, Spans source) {
+		this(searcher, defaultConcField);
+
+		totalNumberOfHits = -1; // "not known yet"
 		sourceSpans = source;
 		sourceSpansFullyRead = false;
-		totalNumberOfHits = -1; // unknown
-		hits = new ArrayList<Hit>(); //Hit.hitList(source);
-		this.concordanceField = defaultConcField;
-		contextSize = searcher.getDefaultContextSize();
 	}
 
 	/**
@@ -145,16 +155,16 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param sourceQuery
-	 *            the query to execute to get the hits
 	 * @param defaultConcField
 	 *            field to use by default when finding concordances
+	 * @param sourceQuery
+	 *            the query to execute to get the hits
 	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
 	 */
-	public Hits(Searcher searcher, SpanQuery sourceQuery, String defaultConcField) throws TooManyClauses {
-		this.searcher = searcher;
+	public Hits(Searcher searcher, String defaultConcField, SpanQuery sourceQuery) throws TooManyClauses {
+		this(searcher, defaultConcField);
+
 		sourceSpans = findSpans(sourceQuery);
-		totalNumberOfHits = 0;
 
 		// Count how many hits there are in total
 		try {
@@ -173,9 +183,19 @@ public class Hits implements Iterable<Hit> {
 
 		sourceSpans = findSpans(sourceQuery); // Counted 'em. Now reset.
 		sourceSpansFullyRead = false;
-		hits = new ArrayList<Hit>();
-		this.concordanceField = defaultConcField;
-		contextSize = searcher.getDefaultContextSize();
+	}
+
+	/**
+	 * Construct an empty Hits object
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param sourceQuery
+	 *            the query to execute to get the hits
+	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
+	 */
+	public Hits(Searcher searcher, SpanQuery sourceQuery) throws TooManyClauses {
+		this(searcher, searcher.getContentsField(), sourceQuery);
 	}
 
 	/** Returns the context size.
@@ -252,7 +272,7 @@ public class Hits implements Iterable<Hit> {
 		try {
 			while (sourceSpans.next()) {
 				hits.add(Hit.getHit(sourceSpans));
-				if (hits.size() >= totalNumberOfHits) {
+				if (totalNumberOfHits >= 0 && hits.size() >= totalNumberOfHits) {
 					// Either we've got them all, or we should stop
 					// collecting them because there's too many
 					break;

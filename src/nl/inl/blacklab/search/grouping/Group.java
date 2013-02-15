@@ -34,10 +34,6 @@ public abstract class Group {
 		return groupIdentity;
 	}
 
-	public String getHumanReadableIdentity() {
-		return groupIdentity.toString();
-	}
-
 	public abstract Spans getSpans();
 
 }

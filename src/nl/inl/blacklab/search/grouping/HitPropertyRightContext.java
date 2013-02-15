@@ -34,6 +34,10 @@ public class HitPropertyRightContext extends HitProperty {
 		this.fieldName = field;
 	}
 
+	public HitPropertyRightContext(Searcher searcher) {
+		this(searcher, searcher.getContentsField());
+	}
+
 	@Override
 	public HitPropValueContextWords get(Hit result) {
 		if (result.context == null) {

@@ -36,16 +36,12 @@ import org.apache.lucene.index.LogMergePolicy;
 import org.apache.lucene.index.MergePolicy;
 import org.apache.lucene.util.Version;
 
-import sun.misc.Cleaner;
-
 /**
  * Misc. utilities that haven't yet found a place in InlJavaLib.
  *
  * TODO: move to InlJavaLib (deprecate/remove here)
  */
 public class Utilities {
-
-	final static boolean USE_CLEAN_DIRECT_BUFFER_HACK = false;
 
 	/**
 	 * Clean direct buffer hack, switched off now.
@@ -58,17 +54,15 @@ public class Utilities {
 	 * @param buffer the buffer to clean
 	 */
 	public static void cleanDirectBufferHack(ByteBuffer buffer) {
-		if (USE_CLEAN_DIRECT_BUFFER_HACK) {
-			// This is a bit of a hack to unmap the direct buffer in order to
-			// prevent file lock.
-			// http://bugs.sun.com/view_bug.do?bug_id=4724038
-			// We should find a workaround for this
-			if (buffer != null && buffer.isDirect()) {
-				Cleaner cleaner = ((sun.nio.ch.DirectBuffer) buffer).cleaner();
-				if (cleaner != null)
-					cleaner.clean();
-			}
-		}
+//			// This is a bit of a hack to unmap the direct buffer in order to
+//			// prevent file lock.
+//			// http://bugs.sun.com/view_bug.do?bug_id=4724038
+//			// We should find a workaround for this
+//			if (buffer != null && buffer.isDirect()) {
+//				Cleaner cleaner = ((sun.nio.ch.DirectBuffer) buffer).cleaner();
+//				if (cleaner != null)
+//					cleaner.clean();
+//			}
 	}
 
 	/**

@@ -27,4 +27,13 @@ public class HitPropValueContextWord extends HitPropValue {
 	public String toString() {
 		return terms.getFromSortPosition(value);
 	}
+
+	public static HitPropValue deserialize(Terms terms, String info) {
+		return new HitPropValueContextWord(terms, Integer.parseInt(info));
+	}
+
+	@Override
+	public String serialize() {
+		return "cwo:" + value;
+	}
 }

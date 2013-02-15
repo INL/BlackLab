@@ -15,15 +15,21 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import nl.inl.blacklab.search.grouping.HitPropValue;
+
 /**
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public abstract class DocGroupProperty {
-	public abstract String get(DocGroup result);
+	public abstract HitPropValue get(DocGroup result);
 
-	public String getHumanReadable(DocGroup result) {
-		return get(result);
-	}
+	/**
+	 * Compares two groups on this property
+	 * @param a first group
+	 * @param b second group
+	 * @return 0 if equal, negative if a < b, positive if a > b.
+	 */
+	public abstract int compare(DocGroup a, DocGroup b);
 
 	public boolean defaultSortDescending() {
 		return false;

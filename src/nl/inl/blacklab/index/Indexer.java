@@ -40,6 +40,7 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeReader;
 import nl.inl.util.Utilities;
@@ -62,7 +63,7 @@ public class Indexer {
 	 *
 	 * The default contents field (if you don't specify one in the constructor)
 	 */
-	private static final String DEFAULT_CONTENTS_FIELD = "contents";
+	private static final String DEFAULT_CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
 
 	/** Our index */
 	private IndexWriter writer;

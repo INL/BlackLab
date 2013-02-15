@@ -33,7 +33,7 @@ public class TestResultsGrouper {
 		SpanQuery query = new SpanQueryStub(doc, start, end);
 		HitProperty crit = new HitPropertyDocumentId();
 		ResultsGrouper grouper = new ResultsGrouper(null, query, crit, null);
-		Map<Object, RandomAccessGroup> groups = grouper.getGroupMap();
+		Map<HitPropValue, RandomAccessGroup> groups = grouper.getGroupMap();
 
 		Assert.assertEquals(3, groups.size());
 		HitPropValueInt one = new HitPropValueInt(1);

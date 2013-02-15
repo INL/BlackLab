@@ -26,4 +26,14 @@ public class HitPropValueString extends HitPropValue {
 	public String toString() {
 		return value;
 	}
+
+	public static HitPropValue deserialize(String info) {
+		return new HitPropValueString(info);
+	}
+
+	@Override
+	public String serialize() {
+		return "str:" + value;
+	}
+
 }

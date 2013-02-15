@@ -24,6 +24,7 @@ import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldImpl;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.TokenFilterAdder;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 
 import org.apache.lucene.analysis.LowerCaseFilter;
@@ -52,7 +53,7 @@ import org.xml.sax.Attributes;
  */
 public class DocIndexerXmlExample extends DocIndexerXml {
 
-	private static final String CONTENTS_FIELD = "contents";
+	private static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
 
 	/**
 	 * Text content for the element we're currently parsing
@@ -114,7 +115,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 		// Define the properties that make up our complex field
 
 		contentsField = // main field: actual text; this property will contain the character offsets
-		new ComplexFieldImpl("contents", desensitize);
+		new ComplexFieldImpl(CONTENTS_FIELD, desensitize);
 		contentsField.addAlternative("s"); // case-sensitive version of main value
 		contentsField.addProperty("pos", lowerCase); // part of speech
 		contentsField.addProperty("hw", desensitize); // headword
@@ -277,7 +278,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 		// written because we write in chunks to save memory), retrieve the content id, and store
 		// that in Lucene.
 		int contentId = storeCapturedContent();
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName("contents", "cid"),
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "cid"),
 				Store.YES, true).setIntValue(contentId));
 
 		// Store the different properties of the complex contents field that were gathered in

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.grouping;
 
+
 public class HitPropValueInt extends HitPropValue {
 	int value;
 
@@ -26,4 +27,14 @@ public class HitPropValueInt extends HitPropValue {
 	public String toString() {
 		return value + "";
 	}
+
+	public static HitPropValue deserialize(String info) {
+		return new HitPropValueInt(Integer.parseInt(info));
+	}
+
+	@Override
+	public String serialize() {
+		return "int:" + value;
+	}
+
 }

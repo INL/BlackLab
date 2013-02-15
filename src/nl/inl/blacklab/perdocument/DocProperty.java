@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import nl.inl.blacklab.search.grouping.HitPropValue;
+
 /**
  * Abstract base class for criteria on which to group DocResult objects. Subclasses implement
  * specific grouping criteria (number of hits, the value of a stored field in the Lucene document,
@@ -28,10 +30,16 @@ public abstract class DocProperty {
 	 *            the result to get the grouping property for
 	 * @return the grouping property. e.g. this might be "Harry Mulisch" when grouping on author.
 	 */
-	public abstract String get(DocResult result);
+	public abstract HitPropValue get(DocResult result);
 
-	public String getHumanReadable(DocResult result) {
-		return get(result);
+	/**
+	 * Compares two docs on this property
+	 * @param a first doc
+	 * @param b second doc
+	 * @return 0 if equal, negative if a < b, positive if a > b.
+	 */
+	public int compare(DocResult a, DocResult b) {
+		return get(a).compareTo(get(b));
 	}
 
 	public boolean defaultSortDescending() {
