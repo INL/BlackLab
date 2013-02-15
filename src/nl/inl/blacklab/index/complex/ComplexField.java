@@ -188,27 +188,14 @@ public abstract class ComplexField {
 
 //	public abstract void addPropertyTokens(String propertyName, TokenStream c) throws IOException;
 
-	/**
-	 * Retrieve a property object
-	 *
-	 * This is used to fill the forward index.
-	 *
-	 * @param propName property name
-	 * @return the property object
-	 */
-	public ComplexFieldProperty getProperty(String propName) {
-		return getProperty(propName, null);
-	}
-
 	/** Retrieve a property [alternative] object
 	 *
 	 * This is used to fill the forward index.
 	 *
 	 * @param propName property name
-	 * @param altPostfix property alternative postfix, or null or empty for the property itself
 	 * @return the property object
 	 */
-	public abstract ComplexFieldProperty getProperty(String propName, String altPostfix);
+	public abstract ComplexFieldProperty getProperty(String propName);
 
 	/**
 	 * Get all the values stored for the specified property [alternative].
