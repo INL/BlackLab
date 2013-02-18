@@ -15,8 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import org.junit.Test;
+
 
 public class TestTextPatternRegex {
+
+	@Test
+	public void testBla() {
+		// OK
+	}
 
 //	@Test
 //	public void testGetAppropriatePatternSimple() {
