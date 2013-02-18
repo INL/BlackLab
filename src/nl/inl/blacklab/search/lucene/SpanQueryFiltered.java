@@ -50,6 +50,20 @@ public class SpanQueryFiltered extends SpanQuery {
 	}
 
 	@Override
+    public SpanQuery rewrite(IndexReader reader) throws IOException {
+		SpanQuery query = source == null ? null : (SpanQuery) source.rewrite(reader);
+		if (query != source) {
+			// clause rewritten: must clone
+			SpanQueryFiltered clone = null;
+			clone = (SpanQueryFiltered) clone();
+			clone.source = query;
+			return clone;
+		}
+
+		return this; // no clauses rewritten
+    }
+
+	@Override
 	public String toString(String field) {
 		return "SpanQueryFiltered(" + source + ", " + docIdSet + ")";
 	}
