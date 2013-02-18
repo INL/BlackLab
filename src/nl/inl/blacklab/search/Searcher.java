@@ -135,8 +135,8 @@ public class Searcher {
 	 */
 	private File indexLocation;
 
-	/** Metadata about our index */
-	private IndexMetadata indexMetadata;
+	/** Structure of our index */
+	private IndexStructure indexStructure;
 
 	// /**
 	// * The main contents field of our index, linked to the ContentStore
@@ -190,7 +190,7 @@ public class Searcher {
 		indexReader = IndexReader.open(FSDirectory.open(indexDir));
 
 		// Determine the index structure
-		indexMetadata = new IndexMetadata(indexReader);
+		indexStructure = new IndexStructure(indexReader);
 
 		init();
 	}
@@ -231,9 +231,12 @@ public class Searcher {
 		}
 	}
 
-	/** @return metadata about our index */
-	public IndexMetadata getIndexMetadata() {
-		return indexMetadata;
+	/**
+	 * Get information about the structure of the BlackLab index.
+	 * @return the structure object
+	 */
+	public IndexStructure getIndexStructure() {
+		return indexStructure;
 	}
 
 	/**

@@ -20,7 +20,7 @@ import org.apache.lucene.util.ReaderUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-class IndexMetadata {
+class IndexStructure {
 	/** Possible types of metadata fields. */
 	public enum FieldType {
 		TEXT,
@@ -248,11 +248,11 @@ class IndexMetadata {
 	private Map<String, ComplexFieldDesc> complexFields;
 
 	/**
-	 * Construct an IndexMetadata object, querying the index for the available
+	 * Construct an IndexStructure object, querying the index for the available
 	 * fields and their types.
-	 * @param reader the index for which we want metadata
+	 * @param reader the index of which we want to know the structure
 	 */
-	public IndexMetadata(IndexReader reader) {
+	public IndexStructure(IndexReader reader) {
 		metadataFields = new HashMap<String, FieldType>();
 		complexFields = new HashMap<String, ComplexFieldDesc>();
 
@@ -336,7 +336,7 @@ class IndexMetadata {
 	}
 
 	/** Get the type of one metadata field */
-	public IndexMetadata.FieldType getMetadataType(String fieldName) {
+	public IndexStructure.FieldType getMetadataType(String fieldName) {
 		return metadataFields.get(fieldName);
 	}
 
