@@ -23,13 +23,13 @@ public class ComplexFieldUtil {
 	 * String used to separate the base field name (say, contents) and the field property (pos,
 	 * lemma, etc.)
 	 */
-	static final String PROP_SEP = "__";
+	public static final String PROP_SEP = "__";
 
 	/**
 	 * String used to separate the field/property name (say, contents_lemma) and the alternative
 	 * (e.g. "s" for case-sensitive)
 	 */
-	static final String ALT_SEP = "_ALT_";
+	public static final String ALT_SEP = "_ALT_";
 
 	/** Length of the ALT separator */
 	final static int ALT_SEP_LEN = ALT_SEP.length();
@@ -115,6 +115,58 @@ public class ComplexFieldUtil {
 
 		return new String[] { fieldName.substring(0, p), fieldName.substring(p + PROP_SEP_LEN, a),
 				fieldName.substring(a + ALT_SEP_LEN) };
+	}
+
+	/**
+	 * Gets the different components of a complex field property (alternative) name.
+	 *
+	 * @param fieldName
+	 *   the Lucene index field name, with possibly a property and/or alternative added
+	 * @return an array of size 1-3, containing the field name, and optionally the property name and
+	 *   alternative name. Note that property name may be empty if just an alternative name was given.
+	 */
+	public static String[] getNameComponents(String fieldName) {
+
+		String baseName, propName, altName;
+
+		// Strip off property and possible alternative
+		int pos = fieldName.indexOf(PROP_SEP);
+		if (pos >= 0) {
+			baseName = fieldName.substring(0, pos);
+
+			String rest = fieldName.substring(pos + PROP_SEP_LEN);
+			pos = rest.indexOf(ALT_SEP);
+			if (pos >= 0) {
+				// Property and alternative given
+				propName = rest.substring(0, pos);
+				altName = rest.substring(pos + ALT_SEP_LEN);
+				return new String[] {baseName, propName, altName};
+			}
+
+			// Maybe it's a forward index, like "contents_lemma_fiid"?
+			// (this also uses the property separator)
+			pos = rest.indexOf(PROP_SEP);
+			if (pos >= 0) {
+				// Property plus bookkeeping subfield given.
+				propName = rest.substring(0, pos);
+				altName = rest.substring(pos + PROP_SEP_LEN);
+				return new String[] {baseName, propName, altName};
+			}
+
+			// No alternative given
+			return new String[] {baseName, rest};
+		}
+
+		// No property given. Alternative?
+		pos = fieldName.indexOf(ALT_SEP);
+		if (pos >= 0) {
+			baseName = fieldName.substring(0, pos);
+			altName = fieldName.substring(pos + ALT_SEP_LEN);
+			return new String[] {baseName, "", altName};
+		}
+
+		// Just the base name given
+		return new String[] {fieldName};
 	}
 
 	/**

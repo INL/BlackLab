@@ -135,6 +135,9 @@ public class Searcher {
 	 */
 	private File indexLocation;
 
+	/** Metadata about our index */
+	private IndexMetadata indexMetadata;
+
 	// /**
 	// * The main contents field of our index, linked to the ContentStore
 	// */
@@ -186,6 +189,9 @@ public class Searcher {
 		// Open Lucene index
 		indexReader = IndexReader.open(FSDirectory.open(indexDir));
 
+		// Determine the index structure
+		indexMetadata = new IndexMetadata(indexReader);
+
 		init();
 	}
 
@@ -223,6 +229,11 @@ public class Searcher {
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
+	}
+
+	/** @return metadata about our index */
+	public IndexMetadata getIndexMetadata() {
+		return indexMetadata;
 	}
 
 	/**
