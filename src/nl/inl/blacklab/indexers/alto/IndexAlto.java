@@ -29,48 +29,38 @@ public class IndexAlto {
 	/**
 	 * If true, always wipes existing index. If false, appends to existing index.
 	 */
-	final static boolean CREATE_INDEX_FROM_SCRATCH = false;
-
 	public static void main(String[] args) throws Exception {
 		System.out.println("IndexAlto\n");
-		if (args.length < 1 || args.length > 2) {
+		if (args.length < 1) {
 			System.out
 					.println("Usage:\n"
-							+ "  java nl.inl.blacklab.indexers.alto.IndexAlto <propfile> [<single_input_file>]\n"
+							+ "  java nl.inl.blacklab.test.IndexTei <propfile> [<file_to_process>] [create]\n"
 							+ "(see docs for more information)");
 			return;
 		}
 		File propFile = new File(args[0]);
 		File baseDir = propFile.getParentFile();
-		//String dataSetName = args[0];
+		boolean createNewIndex = args[args.length - 1].equals("create");
 
 		LogUtil.initLog4jBasic();
 
 		// Do we wish to index a single input file?
 		String whichFile = null;
-		if (args.length == 2)
+		if (args.length == 2 && !args[1].equals("create"))
 			whichFile = args[1]; // yes
 
 		// Read property file
-		System.out.println("Read property file\n");
 		Properties properties = PropertiesUtil.readFromFile(propFile);
 
 		// Metadata is in separate file for EDBO set
 		// TODO: generalize this so we don't need this special case anymore
 		AltoUtils.setMetadataFile(PropertiesUtil.getFileProp(properties, "metadataFile", null));
 
-		// Where to create the index and UTF-16 content
-		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", baseDir);
-		if (!indexDir.isDirectory())
-			indexDir.mkdir();
-
-		boolean createLuceneIndex = CREATE_INDEX_FROM_SCRATCH;
-		if (!createLuceneIndex && !isLuceneIndex(indexDir))
-			createLuceneIndex = true;
-
 		// The indexer tool
-		System.out.println("Create Indexer\n");
-		Indexer indexer = new Indexer(indexDir, createLuceneIndex, DocIndexerAlto.class);
+		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", baseDir);
+		Indexer indexer = new Indexer(indexDir, createNewIndex, DocIndexerAlto.class);
+		indexer.setContinueAfterInputError(true);
+		indexer.getDocIndexer();
 		try {
 			// How many documents to process (0 = all of them)
 			int maxDocs = PropertiesUtil.getIntProp(properties, "maxDocs", 0);
@@ -84,7 +74,6 @@ public class IndexAlto {
 			File fileToIndex = inputDir;
 			if (whichFile != null)
 				fileToIndex = new File(inputDir, whichFile);
-			System.out.println("Start indexing\n");
 			indexer.index(fileToIndex);
 		} catch (Exception e) {
 			System.err.println("An error occurred, aborting indexing. Error details follow.");
@@ -95,14 +84,4 @@ public class IndexAlto {
 		}
 	}
 
-	private static boolean isLuceneIndex(File indexDir) {
-		boolean found = false;
-		for (File f : indexDir.listFiles()) {
-			if (f.getName().startsWith("segments")) {
-				found = true;
-				break;
-			}
-		}
-		return found;
-	}
 }
