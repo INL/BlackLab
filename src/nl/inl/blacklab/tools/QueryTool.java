@@ -36,6 +36,7 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
+import nl.inl.blacklab.search.IndexStructure;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.GroupProperty;
@@ -55,8 +56,13 @@ import nl.inl.util.XmlUtil;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.util.Version;
 
@@ -96,10 +102,17 @@ public class QueryTool {
 	 */
 	private int resultsPerPage = 20;
 
+	private boolean showDocTitle = false;
+
 	/**
 	 * The groups, or null if we haven't grouped our results.
 	 */
 	private ResultsGrouper groups = null;
+
+	/**
+	 * The filter query, if any.
+	 */
+	private Query filterQuery = null;
 
 	/**
 	 * What results view do we want to see?
@@ -404,41 +417,69 @@ public class QueryTool {
 			if (expr == null || expr.trim().equals("exit")) {
 				break;
 			}
-			expr = expr.trim().toLowerCase();
-			if (expr.length() == 0)
+			expr = expr.trim();
+			String lcased = expr.toLowerCase();
+			if (lcased.length() == 0)
 				continue;
-			if (expr.equals("prev") || expr.equals("p")) {
+			if (lcased.equals("prev") || lcased.equals("p")) {
 				prevPage();
-			} else if (expr.equals("next") || expr.equals("n")) {
+			} else if (lcased.equals("next") || lcased.equals("n")) {
 				nextPage();
-			} else if (expr.startsWith("pagesize ")) {
-				resultsPerPage = Integer.parseInt(expr.substring(9));
+			} else if (lcased.startsWith("pagesize ")) {
+				resultsPerPage = Integer.parseInt(lcased.substring(9));
 				firstResult = 0;
 				showResultsPage();
-			} else if (expr.startsWith("context ")) {
-				contextSize = Integer.parseInt(expr.substring(8));
+			} else if (lcased.startsWith("context ")) {
+				contextSize = Integer.parseInt(lcased.substring(8));
 				showResultsPage();
-			} else if (expr.startsWith("sort by ")) {
-				sortBy(expr.substring(8));
-			} else if (expr.startsWith("sort ")) {
-				sortBy(expr.substring(5));
-			} else if (expr.startsWith("group by ")) {
-				String[] parts = expr.substring(9).split("\\s+", 2);
-				groupBy(parts[0], parts.length > 1 ? parts[1] : null);
-			} else if (expr.startsWith("group ")) {
-				if (expr.substring(6).matches("\\d+"))
-					changeShowSettings(expr);
+			} else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
+				if (expr.length() <= 7) {
+					filterQuery = null; // clear filter
+					System.out.println("Filter cleared.");
+				}
 				else {
-					String[] parts = expr.substring(6).split("\\s+", 2);
+					String filterExpr = expr.substring(7);
+					QueryParser qp = new QueryParser(Version.LUCENE_36, "title", new StandardAnalyzer(Version.LUCENE_36));
+					try {
+						filterQuery = qp.parse(filterExpr);
+					} catch (org.apache.lucene.queryParser.ParseException e) {
+						System.err.println("Error parsing filter query.");
+					}
+					System.out.println("Filter created: " + filterQuery);
+				}
+			} else if (lcased.startsWith("sensitive ")) {
+				String v = lcased.substring(10);
+				boolean b = v.equals("on") || v.equals("yes") || v.equals("true");
+				searcher.setDefaultSearchSensitive(b);
+				System.out.println("Sensitive search " + (b ? "ON" : "OFF") +
+						" (case and diacritics " + (b ? "" : "don't ") + "matter in search)");
+			} else if (lcased.startsWith("doctitle ")) {
+				String v = lcased.substring(9);
+				showDocTitle = v.equals("on") || v.equals("yes") || v.equals("true");
+				System.out.println("Show document titles: " + (showDocTitle ? "ON" : "OFF"));
+			} else if (lcased.equals("struct") || lcased.equals("structure")) {
+				showIndexStructure();
+			} else if (lcased.startsWith("sort by ")) {
+				sortBy(lcased.substring(8));
+			} else if (lcased.startsWith("sort ")) {
+				sortBy(lcased.substring(5));
+			} else if (lcased.startsWith("group by ")) {
+				String[] parts = lcased.substring(9).split("\\s+", 2);
+				groupBy(parts[0], parts.length > 1 ? parts[1] : null);
+			} else if (lcased.startsWith("group ")) {
+				if (lcased.substring(6).matches("\\d+"))
+					changeShowSettings(lcased);
+				else {
+					String[] parts = lcased.substring(6).split("\\s+", 2);
 					groupBy(parts[0], parts.length > 1 ? parts[1] : null);
 				}
-			} else if (expr.equals("groups") || expr.equals("hits") || expr.equals("colloc") || expr.startsWith("group ")) {
+			} else if (lcased.equals("groups") || lcased.equals("hits") || lcased.equals("colloc") || lcased.startsWith("group ")) {
 				changeShowSettings(expr);
-			} else if (expr.equals("switch") || expr.equals("sw")) {
+			} else if (lcased.equals("switch") || lcased.equals("sw")) {
 				currentParser = currentParser.nextParser();
 				out.println("Switching to " + currentParser.getName() + ".\n");
 				printQueryHelp();
-			} else if (expr.equals("help") || expr.equals("?")) {
+			} else if (lcased.equals("help") || lcased.equals("?")) {
 				printHelp();
 			} else {
 				// Not a command; assume it's a query
@@ -451,6 +492,12 @@ public class QueryTool {
 			}
 		}
 		cleanup();
+	}
+
+	private void showIndexStructure() {
+		IndexStructure s = searcher.getIndexStructure();
+		out.println("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
+		s.print(System.out);
 	}
 
 	/** If JLine is available, this holds the ConsoleReader object */
@@ -547,7 +594,8 @@ public class QueryTool {
 			out.println("TextPattern: " + pattern.toString(CONTENTS_FIELD));
 
 			// Execute search
-			Filter filter = null; // TODO: metadata search!
+			//Filter filter = null; // TODO: metadata search!
+			Filter filter = filterQuery == null ? null : new QueryWrapperFilter(filterQuery);
 			SpanQuery spanQuery = searcher.createSpanQuery(pattern, filter);
 			out.println("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
 			hits = searcher.find(spanQuery);
@@ -853,8 +901,27 @@ public class QueryTool {
 
 		// Display hits
 		String format = "[doc %05d] %" + leftContextMaxSize + "s[%s]%s\n";
+		if (showDocTitle)
+			format = "%" + leftContextMaxSize + "s[%s]%s\n";
+		int currentDoc = -1;
+		String titleField = searcher.getIndexStructure().getDocumentTitleField();
 		for (HitToShow hit : toShow) {
-			out.printf(format, hit.doc, hit.left, hit.hitText, hit.right);
+			if (showDocTitle && hit.doc != currentDoc) {
+				if (currentDoc != -1)
+					out.println("");
+				currentDoc = hit.doc;
+				Document d = searcher.document(currentDoc);
+				String title = d.get(titleField);
+				if (title == null)
+					title = "(doc #" + currentDoc + ", no " + titleField + " given)";
+				else
+					title = title + " (doc #" + currentDoc + ")";
+				out.println("--- " + title + " ---");
+			}
+			if (showDocTitle)
+				out.printf(format, hit.left, hit.hitText, hit.right);
+			else
+				out.printf(format, hit.doc, hit.left, hit.hitText, hit.right);
 		}
 
 		// Summarize
