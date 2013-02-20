@@ -37,14 +37,14 @@ public class TextPatternAnd extends TextPatternCombiner {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
 		List<T> chResults = new ArrayList<T>(clauses.size());
 		for (TextPattern cl : clauses) {
-			chResults.add(cl.translate(translator, fieldName));
+			chResults.add(cl.translate(translator, context));
 		}
 		if (chResults.size() == 1)
 			return chResults.get(0);
-		return translator.and(fieldName, chResults);
+		return translator.and(context, chResults);
 	}
 
 	/*

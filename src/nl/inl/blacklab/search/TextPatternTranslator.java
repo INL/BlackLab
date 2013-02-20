@@ -18,6 +18,8 @@ package nl.inl.blacklab.search;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.util.StringUtil;
+
 /**
  * Interface for translating a TextPattern into a different representation.
  *
@@ -27,103 +29,88 @@ import java.util.Map;
  *            the destination type
  */
 public abstract class TextPatternTranslator<T> {
+
 	/**
 	 * A simple field/value query
 	 *
-	 * @param fieldName
-	 *            the field to search
+	 * @param context
+	 *            the current translation context
 	 * @param value
 	 *            the value to search for
 	 * @return result of the translation
 	 */
-	public abstract T term(String fieldName, String value);
+	public abstract T term(TPTranslationContext context, String value);
 
 	/**
 	 * A regular expression query
 	 *
-	 * @param fieldName
-	 *            the field to search
+	 * @param context
+	 *            the current translation context
 	 * @param value
 	 *            the value to search for
 	 * @return result of the translation
 	 */
-	public abstract T regex(String fieldName, String value);
+	public abstract T regex(TPTranslationContext context, String value);
 
 	/**
 	 * Token-level AND.
 	 *
-	 * @param fieldName
-	 *            the field to search
+	 * @param context
+	 *            the current translation context
 	 * @param clauses
 	 *            the clauses to combine using AND
 	 * @return result of the translation
 	 */
-	public abstract T and(String fieldName, List<T> clauses);
+	public abstract T and(TPTranslationContext context, List<T> clauses);
 
 	/**
 	 * Token-level OR.
 	 *
-	 * @param fieldName
-	 *            the field to search
+	 * @param context
+	 *            the current translation context
 	 * @param clauses
 	 *            the clauses to combine using OR
 	 * @return result of the translation
 	 */
-	public abstract T or(String fieldName, List<T> clauses);
+	public abstract T or(TPTranslationContext context, List<T> clauses);
 
 	/**
 	 * Token-level NOT.
 	 *
-	 * @param fieldName
-	 *            the field to search
+	 * @param context
+	 *            the current translation context
 	 * @param clause
 	 *            the clause to invert
 	 * @return result of the translation
 	 */
-	public abstract T not(String fieldName, T clause);
+	public abstract T not(TPTranslationContext context, T clause);
 
 	/**
 	 * Sequence query.
 	 *
-	 * @param fieldName
-	 *            the field to search
+	 * @param context
+	 *            the current translation context
 	 * @param clauses
 	 *            the clauses to find in sequence
 	 * @return result of the translation
 	 */
-	public abstract T sequence(String fieldName, List<T> clauses);
+	public abstract T sequence(TPTranslationContext context, List<T> clauses);
 
-	// TODO: This is the same for all implementations? Convert to public abstract class and implement here?
-	/**
-	 * Property query: find the specified TextPattern in the specified property of the field.
-	 *
-	 * @param fieldName
-	 *            the field to search
-	 * @param propertyName
-	 *            the property to search
-	 * @param altName
-	 *            human-readable name for the property
-	 * @param input
-	 *            the source query we want to find in the specified property
-	 * @return result of the translation
-	 */
-	public abstract T property(String fieldName, String propertyName, String altName, TextPattern input);
+	public abstract T docLevelAnd(TPTranslationContext context, List<T> clauses);
 
-	public abstract T docLevelAnd(String fieldName, List<T> clauses);
+	public abstract T fuzzy(TPTranslationContext context, String value, float similarity, int prefixLength);
 
-	public abstract T fuzzy(String fieldName, String value, float similarity, int prefixLength);
-
-	public abstract T tags(String fieldName, String elementName, Map<String, String> attr);
+	public abstract T tags(TPTranslationContext context, String elementName, Map<String, String> attr);
 
 	public abstract T edge(T clause, boolean rightEdge);
 
-	public abstract T containing(String fieldName, T containers, T search);
+	public abstract T containing(TPTranslationContext context, T containers, T search);
 
-	public abstract T within(String fieldName, T search, T containers);
+	public abstract T within(TPTranslationContext context, T search, T containers);
 
-	public abstract T startsAt(String fieldName, T producer, T filter);
+	public abstract T startsAt(TPTranslationContext context, T producer, T filter);
 
-	public abstract T endsAt(String fieldName, T producer, T filter);
+	public abstract T endsAt(TPTranslationContext context, T producer, T filter);
 
 	/**
 	 * Expand the given clause by a number of tokens, either to the left or to the right.
@@ -166,14 +153,23 @@ public abstract class TextPatternTranslator<T> {
 	 */
 	public abstract T docLevelAndNot(T include, T exclude);
 
-	public abstract T wildcard(String fieldName, String value);
+	public abstract T wildcard(TPTranslationContext context, String value);
 
-	public abstract T prefix(String fieldName, String value);
+	public abstract T prefix(TPTranslationContext context, String value);
 
 	/**
 	 * Any token in field.
-	 * @param fieldName the field to search
+	 * @param context
+	 *            the current translation context
 	 * @return the resulting any-token clause
 	 */
-	public abstract T any(String fieldName);
+	public abstract T any(TPTranslationContext context);
+
+	public String optCaseInsensitive(TPTranslationContext context, String value) {
+		if (!context.diacriticsSensitive)
+			value = StringUtil.removeAccents(value);
+		if (!context.caseSensitive)
+			value = value.toLowerCase();
+		return value;
+	}
 }

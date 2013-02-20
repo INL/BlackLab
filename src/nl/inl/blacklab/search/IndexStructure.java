@@ -1,7 +1,9 @@
 package nl.inl.blacklab.search;
 
-import java.util.Arrays;
+import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,7 @@ import org.apache.lucene.util.ReaderUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-class IndexStructure {
+public class IndexStructure {
 	/** Possible types of metadata fields. */
 	public enum FieldType {
 		TEXT,
@@ -36,8 +38,6 @@ class IndexStructure {
 	/** Description of a complex field */
 	public static class ComplexFieldDesc {
 
-		private final static List<String> bookkeepingSubfields = Arrays.asList("cid", "fiid", "length_tokens", "starttag", "endtag");
-
 		/** Complex field's name */
 		private String fieldName;
 
@@ -48,7 +48,7 @@ class IndexStructure {
 		private boolean contentStore;
 
 		/** Is the field length in tokens stored? */
-		private boolean lengthTokens;
+		private boolean lengthInTokens;
 
 		/** Are there XML tag locations stored for this field? */
 		private boolean xmlTags;
@@ -57,7 +57,7 @@ class IndexStructure {
 			fieldName = name;
 			props = new HashMap<String, PropertyDesc>();
 			contentStore = false;
-			lengthTokens = false;
+			lengthInTokens = false;
 			xmlTags = false;
 		}
 
@@ -93,7 +93,7 @@ class IndexStructure {
 		}
 
 		public boolean hasLengthTokens() {
-			return lengthTokens;
+			return lengthInTokens;
 		}
 
 		public boolean hasXmlTags() {
@@ -110,7 +110,7 @@ class IndexStructure {
 
 			// See if this is a builtin bookkeeping field or a property.
 			String propPart = parts.length == 1 ? "" : parts[1];
-			int bookkeepingFieldIndex = bookkeepingSubfields.indexOf(propPart);
+			int bookkeepingFieldIndex = ComplexFieldUtil.BOOKKEEPING_SUBFIELDS.indexOf(propPart);
 			switch (bookkeepingFieldIndex) {
 			case 0: /* cid */
 				// Complex field has content store
@@ -122,7 +122,7 @@ class IndexStructure {
 				return;
 			case 2: /* length_tokens */
 				// Complex field has length in tokens
-				lengthTokens = true;
+				lengthInTokens = true;
 				return;
 			case 3: case 4: /* starttags, endtags */
 				xmlTags = true;
@@ -148,6 +148,15 @@ class IndexStructure {
 			}
 			return pd;
 		}
+
+		public void print(PrintStream out) {
+			for (Map.Entry<String, PropertyDesc> e: props.entrySet()) {
+				out.println("  * Property: " + e.getValue().toString());
+			}
+			out.println("  * " + (contentStore ? "Includes" : "No") + " content store");
+			out.println("  * " + (xmlTags ? "Includes" : "No") + " XML tag index");
+			out.println("  * " + (lengthInTokens ? "Includes" : "No") + " document length field");
+		}
 	}
 
 	/** Description of a property */
@@ -168,8 +177,13 @@ class IndexStructure {
 
 		@Override
 		public String toString() {
-			String altDesc = alternatives.size() > 0 ? "{" + StringUtil.join(alternatives.values(), ", ") + "}" : "";
-			return (propName.length() == 0 ? "<default>" : propName) + altDesc;
+			String altDesc = "";
+			String altList = StringUtil.join(alternatives.values(), "\", \"");
+			if (alternatives.size() > 1)
+				altDesc = ", with alternatives \"" + altList + "\"";
+			else if (alternatives.size() == 1)
+				altDesc = ", with alternative \"" + altList + "\"";
+			return (propName.length() == 0 ? "(default)" : propName) + (forwardIndex ? " (+FI)" : "") + altDesc;
 		}
 
 		public boolean hasForwardIndex() {
@@ -203,7 +217,7 @@ class IndexStructure {
 		 * @param name name of the alternative
 		 * @return the description
 		 */
-		public AltDesc getPropertyDesc(String name) {
+		public AltDesc getAlternativeDesc(String name) {
 			return alternatives.get(name);
 		}
 	}
@@ -338,6 +352,59 @@ class IndexStructure {
 	/** Get the type of one metadata field */
 	public IndexStructure.FieldType getMetadataType(String fieldName) {
 		return metadataFields.get(fieldName);
+	}
+
+	public String getDocumentTitleField() {
+		// Find documents with title, name or desc in the field name
+		String field;
+		field = findTextField("title");
+		if (field == null)
+			field = findTextField("name");
+		if (field == null)
+			field = findTextField("desc");
+		if (field != null)
+			return field;
+
+		// Return the first text field we can find.
+		for (Map.Entry<String, FieldType> e: metadataFields.entrySet()) {
+			if (e.getValue() == FieldType.TEXT) {
+				return e.getKey();
+			}
+		}
+		return null;
+	}
+
+	public String findTextField(String search) {
+		// Find documents with title in the name
+		List<String> fieldsFound = new ArrayList<String>();
+		for (Map.Entry<String, FieldType> e: metadataFields.entrySet()) {
+			if (e.getValue() == FieldType.TEXT && e.getKey().toLowerCase().contains(search)) {
+				fieldsFound.add(e.getKey());
+			}
+		}
+		if (fieldsFound.size() == 0)
+			return null;
+
+		// Sort (so we get title.level1 not title.level2 for example)
+		Collections.sort(fieldsFound);
+		return fieldsFound.get(0);
+	}
+
+	public void print(PrintStream out) {
+		out.println("COMPLEX FIELDS");
+		for (Map.Entry<String, ComplexFieldDesc> e: complexFields.entrySet()) {
+			out.println("- " + e.getKey());
+			e.getValue().print(out);
+		}
+
+		out.println("\nMETADATA FIELDS");
+		String titleField = getDocumentTitleField();
+		for (Map.Entry<String, FieldType> e: metadataFields.entrySet()) {
+			if (e.getKey().endsWith("_ALT_numeric"))
+				continue; // special case, will probably be removed later
+			FieldType type = e.getValue();
+			out.println("- " + e.getKey() + (type == FieldType.TEXT ? "" : " (" + type + ")") + (e.getKey().equals(titleField) ? " (TITLEFIELD)" : "") );
+		}
 	}
 
 }

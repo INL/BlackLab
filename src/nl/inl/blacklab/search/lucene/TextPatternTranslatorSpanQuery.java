@@ -19,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.TPTranslationContext;
 import nl.inl.blacklab.search.TextPatternTranslator;
 import nl.inl.blacklab.search.lucene.SpanQueryPosFilter.Filter;
 import nl.inl.blacklab.search.sequences.SpanQueryExpansion;
@@ -38,54 +37,50 @@ import org.apache.lucene.search.spans.SpanQuery;
  * Translates a TextPattern to a Lucene SpanQuery object.
  */
 public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQuery> {
+
 	@Override
-	public SpanQuery and(String fieldName, List<SpanQuery> clauses) {
+	public SpanQuery and(TPTranslationContext context, List<SpanQuery> clauses) {
 		return new SpanQueryAnd(clauses);
 	}
 
 	@Override
-	public SpanQuery or(String fieldName, List<SpanQuery> clauses) {
+	public SpanQuery or(TPTranslationContext context, List<SpanQuery> clauses) {
 		return new SpanOrQuery(clauses.toArray(new SpanQuery[] {}));
 	}
 
 	@Override
-	public SpanQuery property(String fieldName, String propertyName, String altName,
-			TextPattern input) {
-		return input.translate(this, ComplexFieldUtil.fieldName(fieldName, propertyName, altName));
-	}
-
-	@Override
-	public SpanQuery regex(String fieldName, String value) {
+	public SpanQuery regex(TPTranslationContext context, String value) {
 		return new BLSpanMultiTermQueryWrapper<RegexQuery>(new RegexQuery(
-				new Term(fieldName, value)));
+				new Term(context.luceneField(), value)));
 	}
 
 	@Override
-	public SpanQuery sequence(String fieldName, List<SpanQuery> clauses) {
+	public SpanQuery sequence(TPTranslationContext context, List<SpanQuery> clauses) {
 		return new SpanQuerySequence(clauses);
 	}
 
 	@Override
-	public SpanQuery docLevelAnd(String fieldName, List<SpanQuery> clauses) {
+	public SpanQuery docLevelAnd(TPTranslationContext context, List<SpanQuery> clauses) {
 		return new SpanQueryDocLevelAnd(clauses);
 	}
 
 	@Override
-	public SpanQuery fuzzy(String fieldName, String value, float similarity, int prefixLength) {
-		return new SpanFuzzyQuery(new Term(fieldName, value), similarity, prefixLength);
+	public SpanQuery fuzzy(TPTranslationContext context, String value, float similarity, int prefixLength) {
+		return new SpanFuzzyQuery(new Term(context.luceneField(), value), similarity, prefixLength);
 	}
 
 	@Override
-	public SpanQuery tags(String fieldName, String elementName, Map<String, String> attr) {
-		SpanQueryTags allTags = new SpanQueryTags(fieldName, elementName);
+	public SpanQuery tags(TPTranslationContext context, String elementName, Map<String, String> attr) {
+		SpanQueryTags allTags = new SpanQueryTags(context.fieldName, elementName);
 		if (attr == null || attr.size() == 0)
 			return allTags;
 
 		// Construct attribute filters
 		List<SpanQuery> attrFilters = new ArrayList<SpanQuery>();
-		String startTagFieldName = ComplexFieldUtil.fieldName(fieldName, "starttag");
+		TPTranslationContext startTagContext = context.withProperty("starttag");
 		for (Map.Entry<String,String> e: attr.entrySet()) {
-			attrFilters.add(term(startTagFieldName, "@" + e.getKey() + "__" + e.getValue()));
+			String value = optCaseInsensitive(context, "@" + e.getKey() + "__" + e.getValue());
+			attrFilters.add(term(startTagContext, value));
 		}
 
 		// Filter the tags
@@ -96,31 +91,31 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	}
 
 	@Override
-	public SpanQuery containing(String fieldName, SpanQuery containers, SpanQuery search) {
+	public SpanQuery containing(TPTranslationContext context, SpanQuery containers, SpanQuery search) {
 		return new SpanQueryPosFilter(containers, search, SpanQueryPosFilter.Filter.CONTAINING);
 	}
 
 	@Override
-	public SpanQuery within(String fieldName, SpanQuery search, SpanQuery containers) {
+	public SpanQuery within(TPTranslationContext context, SpanQuery search, SpanQuery containers) {
 		return new SpanQueryPosFilter(search, containers, SpanQueryPosFilter.Filter.WITHIN);
 	}
 
 	@Override
-	public SpanQuery startsAt(String fieldName, SpanQuery producer, SpanQuery filter) {
+	public SpanQuery startsAt(TPTranslationContext context, SpanQuery producer, SpanQuery filter) {
 		return new SpanQueryPosFilter(producer, filter, SpanQueryPosFilter.Filter.STARTS_AT);
 	}
 
 	@Override
-	public SpanQuery endsAt(String fieldName, SpanQuery producer, SpanQuery filter) {
+	public SpanQuery endsAt(TPTranslationContext context, SpanQuery producer, SpanQuery filter) {
 		return new SpanQueryPosFilter(producer, filter, SpanQueryPosFilter.Filter.ENDS_AT);
 	}
 
 	@Override
-	public SpanQuery term(String fieldName, String value) {
+	public SpanQuery term(TPTranslationContext context, String value) {
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,
 		// not the complete field name with the property.
-		return new BLSpanTermQuery(new Term(fieldName, value));
+		return new BLSpanTermQuery(new Term(context.luceneField(), value));
 	}
 
 	@Override
@@ -139,25 +134,25 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	}
 
 	@Override
-	public SpanQuery wildcard(String fieldName, String value) {
-		return new BLSpanMultiTermQueryWrapper<WildcardQuery>(new WildcardQuery(new Term(fieldName,
+	public SpanQuery wildcard(TPTranslationContext context, String value) {
+		return new BLSpanMultiTermQueryWrapper<WildcardQuery>(new WildcardQuery(new Term(context.luceneField(),
 				value)));
 	}
 
 	@Override
-	public SpanQuery prefix(String fieldName, String value) {
-		return new BLSpanMultiTermQueryWrapper<PrefixQuery>(new PrefixQuery(new Term(fieldName,
+	public SpanQuery prefix(TPTranslationContext context, String value) {
+		return new BLSpanMultiTermQueryWrapper<PrefixQuery>(new PrefixQuery(new Term(context.luceneField(),
 				value)));
 	}
 
 	@Override
-	public SpanQuery not(String fieldName, SpanQuery clause) {
+	public SpanQuery not(TPTranslationContext context, SpanQuery clause) {
 		return new SpanQueryNot(clause);
 	}
 
 	@Override
-	public SpanQuery any(String fieldName) {
-		return SpanQueryNot.matchAllTokens(fieldName);
+	public SpanQuery any(TPTranslationContext context) {
+		return SpanQueryNot.matchAllTokens(context.luceneField());
 	}
 
 	@Override

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import nl.inl.blacklab.search.TPTranslationContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternTranslator;
@@ -39,7 +40,7 @@ public class TextPatternSequence extends TextPatternAnd {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
 		List<T> chResults = new ArrayList<T>();
 
 		// Keep track of which clauses can match the empty sequence. Use this to build alternatives
@@ -92,7 +93,7 @@ public class TextPatternSequence extends TextPatternAnd {
 			}
 
 			// Translate this part of the sequence
-			T translated = cl.translate(translator, fieldName);
+			T translated = cl.translate(translator, context);
 			boolean translatedMatchesEmpty = cl.matchesEmptySequence();
 
 			// If a wildcard part (TextPatternAnyToken) was found to the right of this,
@@ -116,7 +117,7 @@ public class TextPatternSequence extends TextPatternAnd {
 			// Yes.
 			// Translate as-is (don't use expansion). Probably less efficient,
 			// but it's the only way to resolve this type of query.
-			chResults.add(previousAnyTokensPart.translate(translator, fieldName));
+			chResults.add(previousAnyTokensPart.translate(translator, context));
 		}
 
 		// Is it still a sequence, or just one part?
@@ -124,7 +125,7 @@ public class TextPatternSequence extends TextPatternAnd {
 			return chResults.get(0); // just one part, return that
 
 		// Multiple parts; create sequence object
-		return makeAlternatives(translator, fieldName, chResults, matchesEmptySeq);
+		return makeAlternatives(translator, context, chResults, matchesEmptySeq);
 	}
 
 	/**
@@ -137,13 +138,13 @@ public class TextPatternSequence extends TextPatternAnd {
 	 *
 	 * @param <T> type to translate to
 	 * @param translator translator
-	 * @param fieldName field to search in
+	 * @param context the translation context
 	 * @param chResults translation results for each of the clauses so far
 	 * @param matchesEmptySeq whether each of the clauses matches the empty sequence
 	 * @return several alternatives combined with or
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> T makeAlternatives(TextPatternTranslator<T> translator, String fieldName,
+	public <T> T makeAlternatives(TextPatternTranslator<T> translator, TPTranslationContext context,
 			List<T> chResults, List<Boolean> matchesEmptySeq) {
 		if (chResults.size() == 1) {
 			// Last clause in the sequence; just return it
@@ -159,17 +160,17 @@ public class TextPatternSequence extends TextPatternAnd {
 		// Recursively determine the query for the "tail" of the list
 		List<T> resultsRest = chResults.subList(1, chResults.size());
 		List<Boolean> emptyRest = matchesEmptySeq.subList(1, matchesEmptySeq.size());
-		T rest = makeAlternatives(translator, fieldName, resultsRest, emptyRest);
+		T rest = makeAlternatives(translator, context, resultsRest, emptyRest);
 
 		// Now, add the head part and check if it could match the empty sequence
 		T firstPart = chResults.get(0);
 		boolean firstPartMatchesEmpty = matchesEmptySeq.get(0);
-		T result = translator.sequence(fieldName, Arrays.asList(firstPart, rest));
+		T result = translator.sequence(context, Arrays.asList(firstPart, rest));
 		if (firstPartMatchesEmpty) {
 			// Yes, head matches empty sequence. Also include sequence without the head.
 			List<T> alternatives = Arrays.asList(result,
-					translator.sequence(fieldName, Arrays.asList(rest)));
-			result = translator.or(fieldName, alternatives);
+					translator.sequence(context, Arrays.asList(rest)));
+			result = translator.or(context, alternatives);
 		}
 		return result;
 	}

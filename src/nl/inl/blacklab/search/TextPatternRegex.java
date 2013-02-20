@@ -35,8 +35,8 @@ public class TextPatternRegex extends TextPatternTerm {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		return translator.regex(fieldName, value);
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+		return translator.regex(context, translator.optCaseInsensitive(context, value));
 	}
 
 	/**

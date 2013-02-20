@@ -64,6 +64,6 @@ public class SpanQueryNot extends SpanQueryBase {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryNot(" + clausesToString(field, " & ") + ")";
+		return "SpanQueryNot(" + (clauses[0] == null ? "" : clausesToString(field, " & ")) + ")";
 	}
 }

@@ -36,8 +36,8 @@ public class TextPatternTerm extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		return translator.term(fieldName, value);
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+		return translator.term(context, translator.optCaseInsensitive(context, value));
 	}
 
 }

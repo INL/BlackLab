@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.index.complex;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Some utility functions for dealing with complex field names.
  */
@@ -291,5 +294,7 @@ public class ComplexFieldUtil {
 				|| fieldName.length() >= endOfFirstBit + ALT_SEP_LEN
 				&& fieldName.substring(endOfFirstBit, endOfFirstBit + ALT_SEP_LEN).equals(ALT_SEP);
 	}
+
+	public final static List<String> BOOKKEEPING_SUBFIELDS = Arrays.asList("cid", "fiid", "length_tokens", "starttag", "endtag");
 
 }

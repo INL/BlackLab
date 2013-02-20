@@ -42,8 +42,8 @@ public class TextPatternTags extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		return translator.tags(fieldName, elementName, attr);
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+		return translator.tags(context, translator.optCaseInsensitive(context, elementName), attr);
 	}
 
 }

@@ -24,74 +24,65 @@ import nl.inl.util.StringUtil;
  * Translates a TextPattern to a String, for debugging and testing purposes.
  */
 public class TextPatternTranslatorString extends TextPatternTranslator<String> {
+
 	@Override
-	public String and(String fieldName, List<String> clauses) {
+	public String and(TPTranslationContext context, List<String> clauses) {
 		return "AND(" + StringUtil.join(clauses, ", ") + ")";
 	}
 
 	@Override
-	public String or(String fieldName, List<String> clauses) {
+	public String or(TPTranslationContext context, List<String> clauses) {
 		return "OR(" + StringUtil.join(clauses, ", ") + ")";
 	}
 
 	@Override
-	public String property(String fieldName, String propertyName, String altName, TextPattern input) {
-//		return input.translate(this, ComplexFieldUtil.fieldName(fieldName, propertyName, altName));
-		if (propertyName == null || propertyName.length() == 0)
-			propertyName = "-";
-		if (altName == null || altName.length() == 0)
-			altName = "-";
-		return "PROP(" + propertyName + ", " + altName + ", " + input.translate(this, fieldName) + ")";
+	public String regex(TPTranslationContext context, String value) {
+		return "REGEX(" + context.luceneField() + ", " + value + ")";
 	}
 
 	@Override
-	public String regex(String fieldName, String value) {
-		return "REGEX(" + value + ")";
-	}
-
-	@Override
-	public String sequence(String fieldName, List<String> clauses) {
+	public String sequence(TPTranslationContext context, List<String> clauses) {
 		return "SEQ(" + StringUtil.join(clauses, ", ") + ")";
 	}
 
 	@Override
-	public String docLevelAnd(String fieldName, List<String> clauses) {
+	public String docLevelAnd(TPTranslationContext context, List<String> clauses) {
 		return "DOC-AND(" + StringUtil.join(clauses, ", ") + ")";
 	}
 
 	@Override
-	public String fuzzy(String fieldName, String value, float similarity, int prefixLength) {
-		return "FUZZY(" + value + ", " + similarity + ", " + prefixLength + ")";
+	public String fuzzy(TPTranslationContext context, String value, float similarity, int prefixLength) {
+		return "FUZZY(" + context.luceneField() + ", " + value + ", " + similarity + ", " + prefixLength + ")";
 	}
 
 	@Override
-	public String tags(String fieldName, String elementName, Map<String, String> attr) {
+	public String tags(TPTranslationContext context, String elementName, Map<String, String> attr) {
 		return "TAGS(" + elementName + (attr == null ? "-" : ", " + StringUtil.join(attr.values(), ";")) + ")";
 	}
 
 	@Override
-	public String containing(String fieldName, String containers, String search) {
+	public String containing(TPTranslationContext context, String containers, String search) {
 		return "CONTAINING(" + containers + ", " + search + ")";
 	}
 
 	@Override
-	public String within(String fieldName, String search, String containers) {
+	public String within(TPTranslationContext context, String search, String containers) {
 		return "WITHIN(" + search + ", " + containers + ")";
 	}
 
 	@Override
-	public String startsAt(String fieldName, String producer, String filter) {
+	public String startsAt(TPTranslationContext context, String producer, String filter) {
 		return "STARTSAT(" + producer + ", " + filter + ")";
 	}
 
 	@Override
-	public String endsAt(String fieldName, String producer, String filter) {
+	public String endsAt(TPTranslationContext context, String producer, String filter) {
 		return "ENDSAT(" + producer + ", " + filter + ")";
 	}
 
 	@Override
-	public String term(String fieldName, String value) {
-		return "TERM(" + value + ")";
+	public String term(TPTranslationContext context, String value) {
+		return "TERM(" + context.luceneField() + ", " + value + ")";
 	}
 
 	@Override
@@ -110,22 +101,22 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	}
 
 	@Override
-	public String wildcard(String fieldName, String value) {
-		return "WILDCARD(" + value + ")";
+	public String wildcard(TPTranslationContext context, String value) {
+		return "WILDCARD(" + context.luceneField() + ", " + value + ")";
 	}
 
 	@Override
-	public String prefix(String fieldName, String value) {
-		return "PREFIX(" + value + ")";
+	public String prefix(TPTranslationContext context, String value) {
+		return "PREFIX(" + context.luceneField() + ", " + value + ")";
 	}
 
 	@Override
-	public String not(String fieldName, String clause) {
+	public String not(TPTranslationContext context, String clause) {
 		return "NOT(" + clause + ")";
 	}
 
 	@Override
-	public String any(String fieldName) {
+	public String any(TPTranslationContext context) {
 		return "ANYTOKEN";
 	}
 
@@ -133,4 +124,5 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	public String edge(String clause, boolean rightEdge) {
 		return "EDGE(" + clause + ", " + rightEdge + ")";
 	}
+
 }

@@ -42,7 +42,7 @@ public class TextPatternBoolean extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
 
 		// First, translate clauses into complete TextPattern. Then translate that.
 		TextPattern translated = null;
@@ -73,7 +73,7 @@ public class TextPatternBoolean extends TextPattern {
 					mustNot.toArray(new TextPattern[0])));
 		}
 
-		return translated.translate(translator, fieldName);
+		return translated.translate(translator, context);
 	}
 
 	public void add(TextPattern query, Occur occur) {
@@ -110,4 +110,5 @@ public class TextPatternBoolean extends TextPattern {
 		}
 	}
 
+	// TODO: implement rewrite!
 }

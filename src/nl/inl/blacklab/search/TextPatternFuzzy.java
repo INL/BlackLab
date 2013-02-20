@@ -42,8 +42,8 @@ public class TextPatternFuzzy extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		return translator.fuzzy(fieldName, value, similarity, prefixLength);
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+		return translator.fuzzy(context, value, similarity, prefixLength);
 	}
 
 }

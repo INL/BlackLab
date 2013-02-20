@@ -41,10 +41,10 @@ public class TestTextPatternRewrite {
 	@Test
 	public void testRewrite() {
 		TextPattern original = getPatternFromCql("[!(word != 'water')]");
-		Assert.assertEquals("NOT(NOT(REGEX(^water$)))", original.translate(stringifier, "word"));
+		Assert.assertEquals("NOT(NOT(REGEX(contents, ^water$)))", original.translate(stringifier));
 		TextPattern rewritten = original.rewrite();
-		String rewrittenStr = rewritten.translate(stringifier, "word");
-		Assert.assertEquals("TERM(water)", rewrittenStr);
+		String rewrittenStr = rewritten.translate(stringifier);
+		Assert.assertEquals("TERM(contents, water)", rewrittenStr);
 	}
 
 }

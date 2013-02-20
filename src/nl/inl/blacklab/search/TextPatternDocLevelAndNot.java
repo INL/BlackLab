@@ -31,9 +31,17 @@ public class TextPatternDocLevelAndNot extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		return translator.docLevelAndNot(include.translate(translator, fieldName),
-				exclude.translate(translator, fieldName));
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+		return translator.docLevelAndNot(include.translate(translator, context),
+				exclude.translate(translator, context));
 	}
 
+	@Override
+	public TextPattern rewrite() {
+		TextPattern inclRewr = include.rewrite();
+		TextPattern exclRewr = exclude.rewrite();
+		if (inclRewr == include && exclRewr == exclude)
+			return this; // Nothing to rewrite
+		return new TextPatternDocLevelAndNot(inclRewr, exclRewr);
+	}
 }

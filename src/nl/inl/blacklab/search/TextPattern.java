@@ -35,14 +35,53 @@ public abstract class TextPattern implements Cloneable {
 	 *
 	 * @param translator
 	 *            the translator to use
-	 * @param fieldName
-	 *            name of the field to search
+	 * @param context
+	 *            translation context to use
 	 *
 	 * @param <T>
 	 *            type of object to translate to
 	 * @return result of the translation
 	 */
-	public abstract <T> T translate(TextPatternTranslator<T> translator, String fieldName);
+	public abstract <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context);
+
+	/**
+	 * Translate this TextPattern into some other representation.
+	 *
+	 * For example, TextPatternTranslatorSpanQuery translates it into Lucene SpanQuerys.
+	 *
+	 * Uses the searcher's initial translation context.
+	 *
+	 * @param translator
+	 *            the translator to use
+	 * @param searcher
+	 * 			  our searcher, to get the inital translation context from
+	 *
+	 *
+	 * @param <T>
+	 *            type of object to translate to
+	 * @return result of the translation
+	 */
+	public <T> T translate(TextPatternTranslator<T> translator, Searcher searcher) {
+		return translate(translator, searcher.getDefaultTranslationContext());
+	}
+
+	/**
+	 * Translate this TextPattern into some other representation.
+	 *
+	 * For example, TextPatternTranslatorSpanQuery translates it into Lucene SpanQuerys.
+	 *
+	 * Used a simple default translation context not tied to a Searcher. Useful for testing.
+	 *
+	 * @param translator
+	 *            the translator to use
+	 *
+	 * @param <T>
+	 *            type of object to translate to
+	 * @return result of the translation
+	 */
+	public <T> T translate(TextPatternTranslator<T> translator) {
+		return translate(translator, TPTranslationContext.getSimple("contents"));
+	}
 
 	/**
 	 * Does this TextPattern match the empty sequence?
@@ -71,7 +110,7 @@ public abstract class TextPattern implements Cloneable {
 	}
 
 	public String toString(String fieldName) {
-		return translate(new TextPatternTranslatorString(), fieldName);
+		return translate(new TextPatternTranslatorString(), TPTranslationContext.getSimple(fieldName));
 	}
 
 	/**

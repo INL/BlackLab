@@ -30,9 +30,9 @@ public class TestTextPatternSequence {
 				"fox"));
 
 		TextPatternTranslatorString trans = new TextPatternTranslatorString();
-		String str = seq.translate(trans, "contents");
+		String str = seq.translate(trans);
 
-		Assert.assertEquals("SEQ(TERM(the), TERM(fox))", str);
+		Assert.assertEquals("SEQ(TERM(contents, the), TERM(contents, fox))", str);
 	}
 
 	@Test
@@ -42,9 +42,9 @@ public class TestTextPatternSequence {
 				new TextPatternAnyToken(1, 3), new TextPatternTerm("fox"));
 
 		TextPatternTranslatorString trans = new TextPatternTranslatorString();
-		String str = seq.translate(trans, "contents");
+		String str = seq.translate(trans);
 
-		Assert.assertEquals("SEQ(TERM(the), EXPAND(TERM(fox), true, 1, 3))", str);
+		Assert.assertEquals("SEQ(TERM(contents, the), EXPAND(TERM(contents, fox), true, 1, 3))", str);
 	}
 
 	@Test
@@ -54,9 +54,9 @@ public class TestTextPatternSequence {
 				new TextPatternAnyToken(1, 3));
 
 		TextPatternTranslatorString trans = new TextPatternTranslatorString();
-		String str = seq.translate(trans, "contents");
+		String str = seq.translate(trans);
 
-		Assert.assertEquals("EXPAND(TERM(the), false, 1, 3)", str);
+		Assert.assertEquals("EXPAND(TERM(contents, the), false, 1, 3)", str);
 	}
 
 	@Test
@@ -66,9 +66,9 @@ public class TestTextPatternSequence {
 				new TextPatternTerm("fox"));
 
 		TextPatternTranslatorString trans = new TextPatternTranslatorString();
-		String str = seq.translate(trans, "contents");
+		String str = seq.translate(trans);
 
-		Assert.assertEquals("EXPAND(TERM(fox), true, 1, 3)", str);
+		Assert.assertEquals("EXPAND(TERM(contents, fox), true, 1, 3)", str);
 	}
 
 }

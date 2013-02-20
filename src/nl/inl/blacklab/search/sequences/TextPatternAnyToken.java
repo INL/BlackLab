@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.sequences;
 
+import nl.inl.blacklab.search.TPTranslationContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
@@ -49,8 +50,8 @@ public class TextPatternAnyToken extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
-		T any = translator.any(fieldName);
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+		T any = translator.any(context);
 
 		int realMin = min;
 		if (realMin == 0) {

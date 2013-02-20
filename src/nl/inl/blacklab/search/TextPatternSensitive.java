@@ -22,19 +22,29 @@ package nl.inl.blacklab.search;
  * TextPattern tp = new TextPatternProperty("lemma", new TextPatternWildcard("bla*"));
  * </code>
  */
-public class TextPatternProperty extends TextPattern {
+public class TextPatternSensitive extends TextPattern {
+	private boolean caseSensitive;
+
+	private boolean diacriticsSensitive;
+
 	private TextPattern input;
 
-	private String propertyName;
-
-	public TextPatternProperty(String propertyName, TextPattern input) {
-		this.propertyName = propertyName == null ? "" : propertyName;
+	/**
+	 * Indicate that we want to use a different list of alternatives for this
+	 * part of the query.
+	 * @param caseSensitive search case-sensitively?
+	 * @param diacriticsSensitive search diacritics-sensitively?
+	 * @param input
+	 */
+	public TextPatternSensitive(boolean caseSensitive, boolean diacriticsSensitive, TextPattern input) {
+		this.caseSensitive = caseSensitive;
+		this.diacriticsSensitive = diacriticsSensitive;
 		this.input = input;
 	}
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
-		return input.translate(translator, context.withProperty(propertyName));
+		return input.translate(translator, context.withSensitive(caseSensitive, diacriticsSensitive));
 	}
 
 	@Override
@@ -42,6 +52,6 @@ public class TextPatternProperty extends TextPattern {
 		TextPattern rewritten = input.rewrite();
 		if (rewritten == input)
 			return this; // Nothing to rewrite
-		return new TextPatternProperty(propertyName, rewritten);
+		return new TextPatternSensitive(caseSensitive, diacriticsSensitive, rewritten);
 	}
 }

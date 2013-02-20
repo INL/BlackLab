@@ -27,9 +27,9 @@ public class TextPatternNot extends TextPatternCombiner {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, String fieldName) {
+	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
 		//throw new RuntimeException("Cannot search for isolated NOT query (must always be AND NOT)");
-		return translator.not(fieldName, clauses.get(0).translate(translator, fieldName));
+		return translator.not(context, clauses.get(0).translate(translator, context));
 	}
 
 	@Override

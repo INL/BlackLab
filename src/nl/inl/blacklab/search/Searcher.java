@@ -125,10 +125,11 @@ public class Searcher {
 	 */
 	public String contentsField;
 
-	/**
-	 * Default number of words around a hit
-	 */
+	/** Default number of words around a hit */
 	private int defaultContextSize = 5;
+
+	/** Should we default to case-sensitive searching? [false] */
+	private boolean defaultSearchSensitive = false;
 
 	/**
 	 * Directory where our index resides
@@ -288,7 +289,7 @@ public class Searcher {
 		// Convert to SpanQuery
 		pattern = pattern.rewrite();
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
-		SpanQuery spanQuery = pattern.translate(spanQueryTranslator, field);
+		SpanQuery spanQuery = pattern.translate(spanQueryTranslator, getDefaultTranslationContext(field));
 
 		if (docIdSet != null) {
 			spanQuery = new SpanQueryFiltered(spanQuery, docIdSet);
@@ -1495,6 +1496,38 @@ public class Searcher {
 
 	public String getContentsField() {
 		return contentsField;
+	}
+
+	public boolean isDefaultCaseSensitive() {
+		return defaultSearchSensitive;
+	}
+
+	public void setDefaultSearchSensitive(boolean defaultCaseSensitive) {
+		this.defaultSearchSensitive = defaultCaseSensitive;
+	}
+
+	/**
+	 * Get the default initial translation context.
+	 * @param field the field to search
+	 * @return the translation context
+	 */
+	public TPTranslationContext getDefaultTranslationContext(String field) {
+		return new TPTranslationContext(this, field, "", defaultSearchSensitive, defaultSearchSensitive);
+	}
+
+	/**
+	 * Get the default initial translation context.
+	 *
+	 * Uses the default contents field.
+	 *
+	 * @return the translation context
+	 */
+	public TPTranslationContext getDefaultTranslationContext() {
+		return getDefaultTranslationContext(contentsField);
+	}
+
+	public String getIndexName() {
+		return indexLocation.toString();
 	}
 
 	// /**
