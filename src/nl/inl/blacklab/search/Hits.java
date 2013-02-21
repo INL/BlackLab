@@ -26,8 +26,10 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
+import nl.inl.util.StringUtil;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
@@ -65,7 +67,7 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * The default field to use for retrieving concordance information.
 	 */
-	protected String concordanceField;
+	protected String contentsField;
 
 	/**
 	 * Did we completely read our Spans object?
@@ -99,7 +101,12 @@ public class Hits implements Iterable<Hit> {
 	 * The desired context size (number of words to fetch around hits).
 	 * Defaults to Searcher.getDefaultContextSize().
 	 */
-	private int contextSize;
+	private int desiredContextSize;
+
+	/**
+	 * The current context size (number of words around hits we now have).
+	 */
+	private int currentContextSize;
 
 	/**
 	 * Construct an empty Hits object
@@ -123,8 +130,9 @@ public class Hits implements Iterable<Hit> {
 		this.searcher = searcher;
 		hits = new ArrayList<Hit>();
 		totalNumberOfHits = 0;
-		this.concordanceField = defaultConcField;
-		contextSize = searcher == null ? 0 /* only for test */ : searcher.getDefaultContextSize();
+		this.contentsField = defaultConcField;
+		desiredContextSize = searcher == null ? 0 /* only for test */ : searcher.getDefaultContextSize();
+		currentContextSize = -1;
 	}
 
 	/**
@@ -202,18 +210,19 @@ public class Hits implements Iterable<Hit> {
 	 * @return context size (number of words to fetch around hits)
 	 */
 	public int getContextSize() {
-		return contextSize;
+		return desiredContextSize;
 	}
 
 	/** Sets the desired context size.
 	 * @param contextSize the context size (number of words to fetch around hits)
 	 */
 	public void setContextSize(int contextSize) {
-		if (this.contextSize == contextSize)
+		if (this.desiredContextSize == contextSize)
 			return; // no need to reset anything
-		this.contextSize = contextSize;
+		this.desiredContextSize = contextSize;
 
 		// Reset context and concordances so we get the correct context size next time
+		currentContextSize = -1;
 		contextFieldName = null;
 		concordances = null;
 	}
@@ -342,7 +351,7 @@ public class Hits implements Iterable<Hit> {
 		ensureAllHitsRead();
 		// Do we need context and don't we have it yet?
 		String requiredContext = sortProp.needsContext();
-		if (requiredContext != null && !requiredContext.equals(contextFieldName)) {
+		if (requiredContext != null && (!requiredContext.equals(contextFieldName) || currentContextSize != desiredContextSize)) {
 			// Get 'em
 			findContext(requiredContext);
 		}
@@ -505,7 +514,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(concordanceField, hits, contextSize);
+		concordances = searcher.retrieveConcordances(contentsField, hits, desiredContextSize);
 	}
 
 	/**
@@ -517,12 +526,13 @@ public class Hits implements Iterable<Hit> {
 	public void findContext(String fieldName) {
 		ensureAllHitsRead();
 		// Make sure we don't have the desired concordances already
-		if (contextFieldName != null && fieldName.equals(contextFieldName)) {
+		if (contextFieldName != null && fieldName.equals(contextFieldName) && desiredContextSize == currentContextSize) {
 			return;
 		}
 
 		// Get the concordances
-		searcher.retrieveContext(fieldName, hits, contextSize);
+		searcher.retrieveContext(fieldName, hits, desiredContextSize);
+		currentContextSize = desiredContextSize;
 
 		contextFieldName = fieldName;
 	}
@@ -536,7 +546,7 @@ public class Hits implements Iterable<Hit> {
 	 * Uses the default concordance field.
 	 */
 	void findContext() {
-		findContext(concordanceField);
+		findContext(contentsField);
 	}
 
 	/**
@@ -557,10 +567,22 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Count contxwords around hit
+	 * Count occurrences of context words around hit.
+	 *
+	 * Uses the default contents field for collocations.
 	 */
-	public Map<String, Integer> getCollocations(String fieldName) {
-		findContext(fieldName);
+	public TokenFrequencyList getCollocations() {
+		return getCollocations(null, null);
+	}
+
+	/**
+	 * Count occurrences of context words around hit.
+	 *
+	 * @param propName the property to use for the collocations, or null if default
+	 * @param altName the alternative to use, or null if none
+	 */
+	public TokenFrequencyList getCollocations(String propName, String altName) {
+		findContext(ComplexFieldUtil.fieldName(contentsField, propName, altName));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
 			int[] context = hit.context;
@@ -580,13 +602,19 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the actual words from the sort positions
-		Map<String, Integer> collStr = new HashMap<String, Integer>();
+		boolean sensitive = searcher.isDefaultSearchSensitive();
+		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
+		//Map<String, Integer> collStr = new HashMap<String, Integer>();
 		Terms terms = searcher.getTerms(contextFieldName);
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
 			String word = terms.getFromSortPosition(e.getKey());
-			collStr.put(word, e.getValue());
+			if (!sensitive) {
+				word = StringUtil.removeAccents(word.toLowerCase());
+			}
+			collocations.add(new TokenFrequency(word, e.getValue()));
+			//collStr.put(word, e.getValue());
 		}
-		return collStr;
+		return collocations; //collStr;
 	}
 
 	/**
@@ -604,7 +632,7 @@ public class Hits implements Iterable<Hit> {
 	 * @return the field name
 	 */
 	public String getConcordanceField() {
-		return concordanceField;
+		return contentsField;
 	}
 
 	/**
@@ -614,7 +642,7 @@ public class Hits implements Iterable<Hit> {
 	 *            the field name
 	 */
 	public void setConcordanceField(String defaultConcField) {
-		this.concordanceField = defaultConcField;
+		this.contentsField = defaultConcField;
 	}
 
 	/**

@@ -45,7 +45,7 @@ public class HitsWindow extends Hits {
 	 *            the size of our window
 	 */
 	public HitsWindow(Hits source, int first, int windowSize) {
-		super(source.searcher, source.concordanceField);
+		super(source.searcher, source.contentsField);
 		this.source = source;
 		this.first = first;
 		this.windowSize = windowSize;

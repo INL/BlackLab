@@ -1498,7 +1498,7 @@ public class Searcher {
 		return contentsField;
 	}
 
-	public boolean isDefaultCaseSensitive() {
+	public boolean isDefaultSearchSensitive() {
 		return defaultSearchSensitive;
 	}
 

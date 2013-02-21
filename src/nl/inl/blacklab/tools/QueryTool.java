@@ -39,6 +39,8 @@ import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.IndexStructure;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.TokenFrequency;
+import nl.inl.blacklab.search.TokenFrequencyList;
 import nl.inl.blacklab.search.grouping.GroupProperty;
 import nl.inl.blacklab.search.grouping.GroupPropertyIdentity;
 import nl.inl.blacklab.search.grouping.GroupPropertySize;
@@ -93,6 +95,21 @@ public class QueryTool {
 	private Hits hits = null;
 
 	/**
+	 * The groups, or null if we haven't grouped our results.
+	 */
+	private ResultsGrouper groups = null;
+
+	/**
+	 * The collocations, or null if we're not looking at collocations.
+	 */
+	private TokenFrequencyList collocations = null;
+
+	/**
+	 * What property to use for collocations (
+	 */
+	private String collocProperty = null;
+
+	/**
 	 * The first hit or group to show on the current results page.
 	 */
 	private int firstResult;
@@ -103,11 +120,6 @@ public class QueryTool {
 	private int resultsPerPage = 20;
 
 	private boolean showDocTitle = false;
-
-	/**
-	 * The groups, or null if we haven't grouped our results.
-	 */
-	private ResultsGrouper groups = null;
 
 	/**
 	 * The filter query, if any.
@@ -431,6 +443,10 @@ public class QueryTool {
 				showResultsPage();
 			} else if (lcased.startsWith("context ")) {
 				contextSize = Integer.parseInt(lcased.substring(8));
+				if (hits != null && hits.getContextSize() != contextSize) {
+					hits.setContextSize(contextSize);
+					collocations = null;
+				}
 				showResultsPage();
 			} else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
 				if (expr.length() <= 7) {
@@ -473,7 +489,7 @@ public class QueryTool {
 					String[] parts = lcased.substring(6).split("\\s+", 2);
 					groupBy(parts[0], parts.length > 1 ? parts[1] : null);
 				}
-			} else if (lcased.equals("groups") || lcased.equals("hits") || lcased.equals("colloc") || lcased.startsWith("group ")) {
+			} else if (lcased.equals("groups") || lcased.equals("hits") || lcased.startsWith("colloc") || lcased.startsWith("group ")) {
 				changeShowSettings(expr);
 			} else if (lcased.equals("switch") || lcased.equals("sw")) {
 				currentParser = currentParser.nextParser();
@@ -600,6 +616,7 @@ public class QueryTool {
 			out.println("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
 			hits = searcher.find(spanQuery);
 			groups = null;
+			collocations = null;
 			showWhichGroup = -1;
 			showSetting = ShowSetting.HITS;
 			firstResult = 0;
@@ -628,7 +645,8 @@ public class QueryTool {
 			int max;
 			switch(showSetting) {
 			case COLLOC:
-				throw new UnsupportedOperationException();
+				max = collocations.size();
+				break;
 			case GROUPS:
 				max = groups.numberOfGroups();
 				break;
@@ -794,8 +812,15 @@ public class QueryTool {
 		if (showWhat.equals("hits")) {
 			showSetting = ShowSetting.HITS;
 			showWhichGroup = -1;
-		} else if (showWhat.equals("colloc") && groups != null) {
+		} else if (showWhat.startsWith("colloc") && hits != null) {
 			showSetting = ShowSetting.COLLOC;
+			if (showWhat.length() >= 7) {
+				String newCollocProp = showWhat.substring(7);
+				if (!newCollocProp.equals(collocProperty)) {
+					collocProperty = newCollocProp;
+					collocations = null;
+				}
+			}
 		} else if (showWhat.equals("groups") && groups != null) {
 			showSetting = ShowSetting.GROUPS;
 		} else if (showWhat.startsWith("group ") && groups != null) {
@@ -833,7 +858,8 @@ public class QueryTool {
 	private void showResultsPage() {
 		switch (showSetting) {
 		case COLLOC:
-			throw new UnsupportedOperationException();
+			showCollocations();
+			break;
 		case GROUPS:
 			showGroupsPage();
 			break;
@@ -842,6 +868,58 @@ public class QueryTool {
 			break;
 
 		}
+	}
+
+	/**
+	 * Show the current page of collocations.
+	 */
+	private void showCollocations() {
+		if (collocations == null) {
+			String altName = null;
+
+			// Case-sensitive collocations..?
+			if (collocProperty == null)
+				collocProperty = "";
+			if (searcher.isDefaultSearchSensitive() && searcher.getIndexStructure().getComplexFieldDesc(CONTENTS_FIELD).getPropertyDesc(collocProperty).getAlternativeDesc("s") != null) {
+				altName = "s";
+			}
+
+			collocations = hits.getCollocations(collocProperty, altName);
+			collocations.sort();
+		}
+
+		int i = 0;
+		for (TokenFrequency coll: collocations) {
+			if (i >= firstResult && i < firstResult + resultsPerPage) {
+				int j = i - firstResult + 1;
+				out.println(String.format("%4d %7d %s", j, coll.frequency, coll.token));
+			}
+			i++;
+		}
+
+		// Summarize
+		String msg = collocations.size() + " collocations";
+		if (collocations.size() > resultsPerPage)
+			msg = (firstResult + 1) + "-" + i + " of " + collocations.size() + " collocations";
+		out.println(msg);
+	}
+
+	/**
+	 * Show the current page of group results.
+	 */
+	private void showGroupsPage() {
+		List<RandomAccessGroup> listGroups = groups.getGroups();
+		int i;
+		for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
+			RandomAccessGroup g = listGroups.get(i);
+			out.println(String.format("%4d %5d %s", i + 1, g.size(), g.getIdentity().toString()));
+		}
+
+		// Summarize
+		String msg = groups.numberOfGroups() + " groups";
+		if (groups.numberOfGroups() > resultsPerPage)
+			msg = (firstResult + 1) + "-" + i + " of " + groups.numberOfGroups() + " groups";
+		out.println(msg);
 	}
 
 	/**
@@ -953,23 +1031,5 @@ public class QueryTool {
 			hitsToShow = g.getHits();
 		}
 		return hitsToShow;
-	}
-
-	/**
-	 * Show the current page of group results.
-	 */
-	private void showGroupsPage() {
-		List<RandomAccessGroup> listGroups = groups.getGroups();
-		int i;
-		for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
-			RandomAccessGroup g = listGroups.get(i);
-			out.println(String.format("%4d %5d %s", i + 1, g.size(), g.getIdentity().toString()));
-		}
-
-		// Summarize
-		String msg = groups.numberOfGroups() + " groups";
-		if (groups.numberOfGroups() > resultsPerPage)
-			msg = (firstResult + 1) + "-" + i + " of " + groups.numberOfGroups() + " groups";
-		out.println(msg);
 	}
 }
