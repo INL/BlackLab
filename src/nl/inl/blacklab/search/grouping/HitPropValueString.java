@@ -4,7 +4,7 @@ public class HitPropValueString extends HitPropValue {
 	String value;
 
 	public HitPropValueString(String value) {
-		this.value = value;
+		this.value = value == null ? "" : value;
 	}
 
 	@Override
