@@ -27,7 +27,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.alto.AltoUtils;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
@@ -725,17 +724,12 @@ public class QueryTool {
 		if (sortBy.equals("doc"))
 			crit = new HitPropertyDocumentId();
 		else {
-			String fieldName;
-			if (property == null)
-				fieldName = ComplexFieldUtil.mainPropertyField(CONTENTS_FIELD);
-			else
-				fieldName = ComplexFieldUtil.propertyField(CONTENTS_FIELD, property);
 			if (sortBy.equals("match") || sortBy.equals("word"))
-				crit = new HitPropertyHitText(searcher, fieldName);
+				crit = new HitPropertyHitText(searcher, CONTENTS_FIELD, property);
 			else if (sortBy.startsWith("left"))
-				crit = new HitPropertyLeftContext(searcher, fieldName);
+				crit = new HitPropertyLeftContext(searcher, CONTENTS_FIELD, property);
 			else if (sortBy.startsWith("right"))
-				crit = new HitPropertyRightContext(searcher, fieldName);
+				crit = new HitPropertyRightContext(searcher, CONTENTS_FIELD, property);
 		}
 		if (crit == null) {
 			out.println("Invalid hit sort criterium: " + sortBy
@@ -788,17 +782,12 @@ public class QueryTool {
 
 		// Group results
 		HitProperty crit = null;
-		String fieldName;
-		if (property == null)
-			fieldName = ComplexFieldUtil.mainPropertyField(CONTENTS_FIELD);
-		else
-			fieldName = ComplexFieldUtil.propertyField(CONTENTS_FIELD, property);
 		if (groupBy.equals("word") || groupBy.equals("match"))
-			crit = new HitPropertyHitText(searcher, fieldName);
+			crit = new HitPropertyHitText(searcher, CONTENTS_FIELD, property);
 		else if (groupBy.startsWith("left"))
-			crit = new HitPropertyWordLeft(searcher, fieldName);
+			crit = new HitPropertyWordLeft(searcher, CONTENTS_FIELD, property);
 		else if (groupBy.startsWith("right"))
-			crit = new HitPropertyWordRight(searcher, fieldName);
+			crit = new HitPropertyWordRight(searcher, CONTENTS_FIELD, property);
 		if (crit == null) {
 			out.println("Unknown criterium: " + groupBy);
 			return;

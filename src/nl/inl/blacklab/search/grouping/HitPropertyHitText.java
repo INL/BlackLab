@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.grouping;
 
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Searcher;
 
@@ -29,14 +30,18 @@ public class HitPropertyHitText extends HitProperty {
 
 	private Terms terms;
 
-	public HitPropertyHitText(Searcher searcher, String field) {
+	public HitPropertyHitText(Searcher searcher, String field, String property) {
 		super();
 		this.terms = searcher.getTerms(field);
-		this.fieldName = field;
+		this.fieldName = ComplexFieldUtil.propertyField(field, property);
+	}
+
+	public HitPropertyHitText(Searcher searcher, String field) {
+		this(searcher, field, ComplexFieldUtil.mainPropLuceneName());
 	}
 
 	public HitPropertyHitText(Searcher searcher) {
-		this(searcher, searcher.getContentsField());
+		this(searcher, searcher.getMainContentsField());
 	}
 
 	@Override
