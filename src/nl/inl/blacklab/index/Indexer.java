@@ -59,12 +59,6 @@ import org.apache.lucene.store.LockObtainFailedException;
  * Tool for indexing. Reports its progress to an IndexListener.
  */
 public class Indexer {
-	/**
-	 *
-	 * The default contents field (if you don't specify one in the constructor)
-	 */
-	private static final String DEFAULT_CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
-
 	/** Our index */
 	private IndexWriter writer;
 
@@ -116,11 +110,6 @@ public class Indexer {
 	 */
 	private boolean createdNewIndex;
 
-	/**
-	 * Our main contents field, coupled to the ContentStore
-	 */
-	private String contentsField;
-
 	/** If an error, like a parse error, should we
 	 *  try to continue indexing, or abort?
 	 *  @param b if true, continue; if false, abort
@@ -149,33 +138,17 @@ public class Indexer {
 	}
 
 	/**
-	 * Construct Indexer, with the default contents field.
-	 *
-	 * @param directory
-	 *            the main BlackLab index directory
-	 * @param create
-	 *            if true, creates a new index; otherwise, appends to existing index
-	 * @throws IOException
-	 */
-	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass) throws IOException {
-		this(directory, create, docIndexerClass, DEFAULT_CONTENTS_FIELD);
-	}
-
-	/**
 	 * Construct Indexer
 	 *
 	 * @param directory
 	 *            the main BlackLab index directory
 	 * @param create
 	 *            if true, creates a new index; otherwise, appends to existing index
-	 * @param contentsField
-	 *            the main contents field, coupled to the ContentStore
 	 * @throws IOException
 	 */
-	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass, String contentsField) throws IOException {
+	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass/*, String contentsField*/) throws IOException {
 		this.docIndexerClass = docIndexerClass;
 		this.createdNewIndex = create;
-		this.contentsField = contentsField;
 
 		writer = openIndexWriter(directory, create);
 		indexLocation = directory;
@@ -325,16 +298,6 @@ public class Indexer {
 	}
 
 	/**
-	 * Add a list of tokens to the default forward index (coupled to the main contents field).
-	 *
-	 * @param tokens the tokens to add
-	 * @return the id assigned to the content
-	 */
-	public int addToForwardIndex(List<String> tokens) {
-		return addToForwardIndex(contentsField, tokens);
-	}
-
-	/**
 	 * Add a list of tokens to a forward index.
 	 *
 	 * @param fieldName what forward index to add this to
@@ -393,7 +356,7 @@ public class Indexer {
 
 			// Special case for old BL index with "forward" as the name of the single forward index
 			// (this should be removed eventually)
-			if (!createdNewIndex && fieldName.equals(DEFAULT_CONTENTS_FIELD) && !dir.exists()) {
+			if (!createdNewIndex && fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD) && !dir.exists()) {
 				// Default forward index used to be called "forward". Look for that instead.
 				File alt = new File(indexLocation, "forward");
 				if (alt.exists())
