@@ -514,7 +514,8 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(contentsField, hits, desiredContextSize);
+		String mainPropField = ComplexFieldUtil.mainPropertyField(contentsField);
+		concordances = searcher.retrieveConcordances(mainPropField, hits, desiredContextSize);
 	}
 
 	/**
@@ -582,7 +583,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param altName the alternative to use, or null if none
 	 */
 	public TokenFrequencyList getCollocations(String propName, String altName) {
-		findContext(ComplexFieldUtil.fieldName(contentsField, propName, altName));
+		findContext(ComplexFieldUtil.propertyField(contentsField, propName, altName));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
 			int[] context = hit.context;

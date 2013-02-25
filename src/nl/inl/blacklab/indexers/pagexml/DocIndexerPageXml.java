@@ -153,8 +153,8 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		// (not used, commented out)
 		//contentsField.addProperty("neoffset");
 
-		contentsField.addProperty("starttag"); // start tag positions (just NE tags for now)
-		contentsField.addProperty("endtag"); // end tag positions (just NE tags for now)
+		contentsField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start tag positions (just NE tags for now)
+		contentsField.addProperty(ComplexFieldUtil.END_TAG_PROP_NAME); // end tag positions (just NE tags for now)
 	}
 
 	/**
@@ -187,7 +187,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		} else if (localName.equals("NE")) {
 			neType = "none";
 
-			contentsField.addPropertyValue("endtag", "ne", endTagAdded ? 0 : 1);
+			contentsField.addPropertyValue(ComplexFieldUtil.END_TAG_PROP_NAME, "ne", endTagAdded ? 0 : 1);
 			endTagAdded = true;
 
 //			neOffset = 0;
@@ -206,8 +206,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			if (localName.equals("yearFrom") || localName.equals("yearTo")) {
 				// Index these fields as numeric too, for faster range queries
 				// (we do both because yearFrom/yearTo aren't always clean numeric fields)
-				NumericField nf = new NumericField(ComplexFieldUtil.fieldName(localName, null,
-						"numeric"), Store.YES, true);
+				NumericField nf = new NumericField(localName + "Numeric", Store.YES, true);
 				nf.setIntValue(Integer.parseInt(characterContent));
 				currentLuceneDoc.add(nf);
 			}
@@ -232,12 +231,12 @@ public class DocIndexerPageXml extends DocIndexerXml {
 //			getNamedEntityGid(attributes);
 //			neOffset = 0; // word position inside the NE
 
-			contentsField.addPropertyValue("starttag", "ne", startTagAdded ? 0 : 1);
+			contentsField.addPropertyValue(ComplexFieldUtil.START_TAG_PROP_NAME, "ne", startTagAdded ? 0 : 1);
 			for (int i = 0; i < attributes.getLength(); i++) {
 				// Index element attribute values
 				String name = attributes.getLocalName(i);
 				String value = attributes.getValue(i);
-				contentsField.addPropertyValue("starttag", "@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
+				contentsField.addPropertyValue(ComplexFieldUtil.START_TAG_PROP_NAME, "@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
 			}
 			startTagAdded = true; // to keep the property in synch
 
@@ -351,10 +350,10 @@ public class DocIndexerPageXml extends DocIndexerXml {
 				contentsField.addValue("");
 				contentsField.addPropertyValue("ne", neType);
 				if (!startTagAdded)
-					contentsField.addPropertyValue("starttag", "");
+					contentsField.addPropertyValue(ComplexFieldUtil.START_TAG_PROP_NAME, "");
 				startTagAdded = false; // reset for next time
 				if (!endTagAdded)
-					contentsField.addPropertyValue("endtag", "");
+					contentsField.addPropertyValue(ComplexFieldUtil.END_TAG_PROP_NAME, "");
 				endTagAdded = false; // reset for next time
 			}
 
@@ -370,17 +369,18 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		// written because we write in chunks to save memory), retrieve the content id, and store
 		// that in Lucene.
 		int contentId = storeCapturedContent();
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "cid"),
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.contentIdField(CONTENTS_FIELD),
 				Store.YES, true).setIntValue(contentId));
 
 		// Store the different properties of the complex contents field that were gathered in
 		// lists while parsing.
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
-		// Add contents field (case-insensitive tokens) to forward index
-		int fiidContents = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getPropertyValues(""));
+		// Add words property (case-sensitive tokens) to forward index
+		String wordPropFieldName = ComplexFieldUtil.mainPropertyField(CONTENTS_FIELD);
+		int fiidContents = indexer.addToForwardIndex(wordPropFieldName, contentsField.getMainProperty().getValues());
 
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "fiid"),
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(wordPropFieldName),
 				Store.YES, true).setIntValue(fiidContents));
 	}
 
@@ -402,12 +402,12 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		// Keep track of NE start and end tags
 		if (!startTagAdded) {
 			// No start tags found; add empty token to keep the property in synch
-			contentsField.addPropertyValue("starttag", ""); //insideNE && neOffset == 0 ? "ne" : "");
+			contentsField.addPropertyValue(ComplexFieldUtil.START_TAG_PROP_NAME, ""); //insideNE && neOffset == 0 ? "ne" : "");
 		}
 		startTagAdded = false; // reset for next token positon
 		if (!endTagAdded) {
 			// No end tags found; add empty token to keep the property in synch
-			contentsField.addPropertyValue("endtag", "");
+			contentsField.addPropertyValue(ComplexFieldUtil.END_TAG_PROP_NAME, "");
 		}
 		endTagAdded = false; // reset for next token positon
 

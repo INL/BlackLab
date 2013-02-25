@@ -109,33 +109,46 @@ public class IndexStructure {
 		void processIndexField(String[] parts) {
 
 			// See if this is a builtin bookkeeping field or a property.
+			if (parts.length == 1 && !ComplexFieldUtil.MAIN_PROPERTY_NAMELESS)
+				throw new RuntimeException("Complex field with just basename given, error!");
+
 			String propPart = parts.length == 1 ? "" : parts[1];
-			int bookkeepingFieldIndex = ComplexFieldUtil.BOOKKEEPING_SUBFIELDS.indexOf(propPart);
-			switch (bookkeepingFieldIndex) {
-			case 0: /* cid */
-				// Complex field has content store
-				contentStore = true;
-				return;
-			case 1: /* fiid */
-				// Main property has forward index
-				getOrCreateProperty("").setForwardIndex(true);
-				return;
-			case 2: /* length_tokens */
-				// Complex field has length in tokens
-				lengthInTokens = true;
-				return;
-			case 3: case 4: /* starttags, endtags */
-				xmlTags = true;
-				return;
+
+			if (propPart == null && parts.length >= 3) {
+				// Bookkeeping field
+				int bookkeepingFieldIndex = ComplexFieldUtil.BOOKKEEPING_SUBFIELDS.indexOf(parts[3]);
+				switch (bookkeepingFieldIndex) {
+				case 0: /* cid */
+					// Complex field has content store
+					contentStore = true;
+					return;
+				case 1: /* fiid */
+					// Main property has forward index
+					getOrCreateProperty("").setForwardIndex(true);
+					return;
+				case 2: /* length_tokens */
+					// Complex field has length in tokens
+					lengthInTokens = true;
+					return;
+				default:
+					throw new RuntimeException();
+				}
 			}
 
 			// Not a bookkeeping field; must be a property (alternative).
 			PropertyDesc pd = getOrCreateProperty(propPart);
+			if (pd.getName().equals(ComplexFieldUtil.START_TAG_PROP_NAME))
+				xmlTags = true;
 			if (parts.length > 2) {
-				if (parts[2].equals("fiid")) {
-					pd.setForwardIndex(true);
-				} else {
+				if (parts[2] != null) {
+					// Alternative
 					pd.addAlternative(parts[2]);
+				} else if (parts.length >= 3){
+					// Property bookkeeping field
+					if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_FIELD_NAME))
+						pd.setForwardIndex(true);
+					else
+						throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
 				}
 			}
 		}
@@ -271,6 +284,23 @@ public class IndexStructure {
 		complexFields = new HashMap<String, ComplexFieldDesc>();
 
 		FieldInfos fis = ReaderUtil.getMergedFieldInfos(reader);
+
+		// Detect index naming scheme
+		boolean isOldNamingScheme = true, avoidSpecialChars = true;
+		for (int i = 0; i < fis.size(); i++) {
+			FieldInfo fi = fis.fieldInfo(i);
+			String name = fi.name;
+			if (name.contains("%")) {
+				isOldNamingScheme = false;
+				avoidSpecialChars = false;
+			}
+			if (name.contains("_PR_")) {
+				isOldNamingScheme = false;
+				avoidSpecialChars = true;
+			}
+		}
+		ComplexFieldUtil.setFieldNameSeparators(avoidSpecialChars, isOldNamingScheme);
+
 		//reader.getFieldInfos();
 		for (int i = 0; i < fis.size(); i++) {
 			FieldInfo fi = fis.fieldInfo(i);
@@ -278,7 +308,7 @@ public class IndexStructure {
 
 			// Parse the name to see if it is a metadata field or part of a complex field.
 			String[] parts;
-			if (name.endsWith("_ALT_numeric")) {
+			if (name.endsWith("Numeric")) {
 				// Special case: this is not a property alternative, but a numeric
 				// alternative for a metadata field.
 				// (TODO: this should probably be changed or removed)
@@ -287,8 +317,8 @@ public class IndexStructure {
 				parts = ComplexFieldUtil.getNameComponents(name);
 			}
 			if (parts.length == 1 && !complexFields.containsKey(parts[0])) {
-				// Probably a metadata field (or the main field of a complex field;
-				// if so, we'll figure that out later)
+				// Probably a metadata field (or, if using old style, the main field
+				// of a complex field; if so, we'll figure that out later)
 				// Detect type by finding the first document that includes this
 				// field and inspecting the Fieldable. This assumes that the field type
 				// is the same for all documents.
@@ -315,6 +345,9 @@ public class IndexStructure {
 				if (metadataFields.containsKey(parts[0])) {
 					// This complex field was incorrectly identified as a metadata field at first.
 					// Correct this now.
+					if (!ComplexFieldUtil.MAIN_PROPERTY_NAMELESS) {
+						throw new RuntimeException("Complex field and metadata field with same name, error! (" + parts[0] + ")");
+					}
 					metadataFields.remove(parts[0]);
 				}
 
@@ -400,7 +433,7 @@ public class IndexStructure {
 		out.println("\nMETADATA FIELDS");
 		String titleField = getDocumentTitleField();
 		for (Map.Entry<String, FieldType> e: metadataFields.entrySet()) {
-			if (e.getKey().endsWith("_ALT_numeric"))
+			if (e.getKey().endsWith("Numeric"))
 				continue; // special case, will probably be removed later
 			FieldType type = e.getValue();
 			out.println("- " + e.getKey() + (type == FieldType.TEXT ? "" : " (" + type + ")") + (e.getKey().equals(titleField) ? " (TITLEFIELD)" : "") );

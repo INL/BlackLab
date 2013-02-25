@@ -279,7 +279,7 @@ public class DocIndexerAlto extends DocIndexerXml {
 		// written because we write in chunks to save memory), retrieve the content id, and store
 		// that in Lucene.
 		int contentId = storeCapturedContent();
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "cid"),
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.contentIdField(CONTENTS_FIELD),
 				Store.YES, true).setIntValue(contentId));
 
 		// Store the different properties of the complex contents field that were gathered in
@@ -287,8 +287,8 @@ public class DocIndexerAlto extends DocIndexerXml {
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
 		// Add contents field (case-insensitive tokens) to forward index
-		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getPropertyValues(""));
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.fieldName(CONTENTS_FIELD, "fiid"),
+		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getMainProperty().getValues());
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(CONTENTS_FIELD),
 				Store.YES, true).setIntValue(forwardId));
 	}
 

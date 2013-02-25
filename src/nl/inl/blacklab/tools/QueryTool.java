@@ -725,9 +725,11 @@ public class QueryTool {
 		if (sortBy.equals("doc"))
 			crit = new HitPropertyDocumentId();
 		else {
-			if (property != null && property.equals("word"))
-				property = null; // default property
-			String fieldName = ComplexFieldUtil.fieldName(CONTENTS_FIELD, property);
+			String fieldName;
+			if (property == null)
+				fieldName = ComplexFieldUtil.mainPropertyField(CONTENTS_FIELD);
+			else
+				fieldName = ComplexFieldUtil.propertyField(CONTENTS_FIELD, property);
 			if (sortBy.equals("match") || sortBy.equals("word"))
 				crit = new HitPropertyHitText(searcher, fieldName);
 			else if (sortBy.startsWith("left"))
@@ -786,9 +788,11 @@ public class QueryTool {
 
 		// Group results
 		HitProperty crit = null;
-		if (property != null && property.equals("word"))
-			property = null; // default property
-		String fieldName = ComplexFieldUtil.fieldName(CONTENTS_FIELD, property);
+		String fieldName;
+		if (property == null)
+			fieldName = ComplexFieldUtil.mainPropertyField(CONTENTS_FIELD);
+		else
+			fieldName = ComplexFieldUtil.propertyField(CONTENTS_FIELD, property);
 		if (groupBy.equals("word") || groupBy.equals("match"))
 			crit = new HitPropertyHitText(searcher, fieldName);
 		else if (groupBy.startsWith("left"))

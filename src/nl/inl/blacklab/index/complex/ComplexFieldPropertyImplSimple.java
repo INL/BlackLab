@@ -98,16 +98,23 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 		return ts;
 	}
 
-	TermVector getTermVectorOption() {
-		return includeOffsets ? TermVector.WITH_POSITIONS_OFFSETS : TermVector.WITH_POSITIONS;
+	TermVector getTermVectorOption(String altName) {
+		if (includeOffsets && altName.length() == 0) {
+			// Main alternative of a property may get character offsets
+			// (if it's the main property of a complex field)
+			return TermVector.WITH_POSITIONS_OFFSETS;
+		}
+
+		// Named alternatives and additional properties don't get character offsets
+		return TermVector.WITH_POSITIONS;
 	}
 
 	@Override
 	public void addToLuceneDoc(Document doc, String fieldName, List<Integer> startChars,
 			List<Integer> endChars) {
 		for (String altName : alternatives.keySet()) {
-			doc.add(new Field(ComplexFieldUtil.fieldName(fieldName, propName, altName),
-					getTokenStream(altName, startChars, endChars), getTermVectorOption()));
+			doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
+					getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
 		}
 	}
 

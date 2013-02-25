@@ -217,4 +217,6 @@ public abstract class ComplexField {
 	 */
 	public abstract List<Integer> getPropertyPositionIncrements(String name);
 
+	public abstract ComplexFieldProperty getMainProperty();
+
 }

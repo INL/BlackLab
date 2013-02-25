@@ -45,8 +45,6 @@ import org.apache.lucene.search.FieldCache;
  */
 public class ForwardIndex {
 
-	public static final String FORWARD_INDEX_ID_FIELD_NAME = "fiid";
-
 	protected static final Logger logger = Logger.getLogger(ForwardIndex.class);
 
 	/*
@@ -146,7 +144,7 @@ public class ForwardIndex {
 
 	public void setIdTranslateInfo(IndexReader reader, String fieldName) {
 		this.reader = reader;
-		this.fiidFieldName = ComplexFieldUtil.fieldName(fieldName, FORWARD_INDEX_ID_FIELD_NAME);
+		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldName);
 		try {
 			cachedFiids = FieldCache.DEFAULT.getInts(reader, fiidFieldName);
 

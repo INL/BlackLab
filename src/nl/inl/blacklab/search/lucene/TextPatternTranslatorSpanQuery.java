@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TPTranslationContext;
 import nl.inl.blacklab.search.TextPatternTranslator;
 import nl.inl.blacklab.search.lucene.SpanQueryPosFilter.Filter;
@@ -77,7 +78,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 		// Construct attribute filters
 		List<SpanQuery> attrFilters = new ArrayList<SpanQuery>();
-		TPTranslationContext startTagContext = context.withProperty("starttag");
+		TPTranslationContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		for (Map.Entry<String,String> e: attr.entrySet()) {
 			String value = optCaseInsensitive(context, "@" + e.getKey() + "__" + e.getValue());
 			attrFilters.add(term(startTagContext, value));

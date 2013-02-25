@@ -85,8 +85,8 @@ public class TPTranslationContext {
 		if (searcher == null) {
 			// Mostly for testing. Don't check, just combine field parts.
 			if (alternatives == null || alternatives.length == 0)
-				return ComplexFieldUtil.fieldName(fieldName, propName);
-			return ComplexFieldUtil.fieldName(fieldName, propName, alternatives[0]);
+				return ComplexFieldUtil.propertyField(fieldName, propName);
+			return ComplexFieldUtil.propertyField(fieldName, propName, alternatives[0]);
 		}
 
 		// Find the field and the property.
@@ -95,29 +95,30 @@ public class TPTranslationContext {
 			return null;
 
 		if (ComplexFieldUtil.BOOKKEEPING_SUBFIELDS.contains(propName)) {
-			// Not a property but a bookkeeping subfield; ok, return it
-			return ComplexFieldUtil.fieldName(fieldName, propName);
+			// Not a property but a bookkeeping subfield (prob. starttag/endtag); ok, return it
+			// (can be removed when old field naming scheme is removed)
+			return ComplexFieldUtil.bookkeepingField(fieldName, propName);
 		}
 
 		// Find the property
 		PropertyDesc pd = cfd.getPropertyDesc(propName);
 		if (pd == null)
-			return null; // doesn't exist
+			return ComplexFieldUtil.propertyField(fieldName, propName); // doesn't exist? use plain property name
 
 		if (alternatives == null || alternatives.length == 0) {
 			// Don't use any alternatives
-			return ComplexFieldUtil.fieldName(fieldName, propName);
+			return ComplexFieldUtil.propertyField(fieldName, propName);
 		}
 
 		// Find the first available alternative to use
 		for (String alt: alternatives) {
 			AltDesc ad = pd.getAlternativeDesc(alt);
 			if (ad != null)
-				return ComplexFieldUtil.fieldName(fieldName, propName, alt);
+				return ComplexFieldUtil.propertyField(fieldName, propName, alt);
 		}
 
-		// No valid alternative found.
-		return null;
+		// No valid alternative found. Use plain property.
+		return ComplexFieldUtil.propertyField(fieldName, propName);
 	}
 
 	public static TPTranslationContext getSimple(String fieldName) {

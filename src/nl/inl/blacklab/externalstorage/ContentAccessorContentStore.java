@@ -34,7 +34,7 @@ public class ContentAccessorContentStore extends ContentAccessor {
 
 	public ContentAccessorContentStore(String fieldName, ContentStore contentStore) {
 		super(fieldName);
-		contentIdField = ComplexFieldUtil.fieldName(fieldName, "cid");
+		contentIdField = ComplexFieldUtil.contentIdField(ComplexFieldUtil.getBaseName(fieldName));
 		this.contentStore = contentStore;
 	}
 

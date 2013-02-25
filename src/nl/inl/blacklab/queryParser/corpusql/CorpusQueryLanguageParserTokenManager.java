@@ -2,6 +2,7 @@
 package nl.inl.blacklab.queryParser.corpusql;
 import java.util.Map;
 import java.util.HashMap;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternContaining;

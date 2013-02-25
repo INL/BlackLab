@@ -17,30 +17,34 @@ package nl.inl.blacklab.index.complex;
 
 import junit.framework.Assert;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TestComplexFieldUtil {
-	@Test
-	public void testIsProperty() {
-		String fieldName = ComplexFieldUtil.fieldName("field", "property");
-		Assert.assertEquals(true, ComplexFieldUtil.isProperty(fieldName, "property"));
-		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, ""));
-		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, "field"));
+//	@Test
+//	public void testIsProperty() {
+//		String fieldName = ComplexFieldUtil.fieldName("field", "property");
+//		Assert.assertEquals(true, ComplexFieldUtil.isProperty(fieldName, "property"));
+//		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, ""));
+//		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, "field"));
+//
+//		fieldName = ComplexFieldUtil.fieldName("field", "property", "alternative");
+//		Assert.assertEquals(true, ComplexFieldUtil.isProperty(fieldName, "property"));
+//		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, ""));
+//		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, "alternative"));
+//	}
 
-		fieldName = ComplexFieldUtil.fieldName("field", "property", "alternative");
-		Assert.assertEquals(true, ComplexFieldUtil.isProperty(fieldName, "property"));
-		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, ""));
-		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, "alternative"));
-	}
+	private boolean oldFieldNameSetting;
 
 	@Test
 	public void testIsAlternative() {
-		String fieldName = ComplexFieldUtil.fieldName("field", "property");
+		String fieldName = ComplexFieldUtil.propertyField("field", "property");
 		Assert.assertEquals(true, ComplexFieldUtil.isAlternative(fieldName, ""));
 		// Assert.assertEquals(false, ComplexFieldUtil.isAlternative(fieldName, "property"));
 		Assert.assertEquals(false, ComplexFieldUtil.isAlternative(fieldName, "field"));
 
-		fieldName = ComplexFieldUtil.fieldName("field", "property", "alternative");
+		fieldName = ComplexFieldUtil.propertyField("field", "property", "alternative");
 		Assert.assertEquals(true, ComplexFieldUtil.isAlternative(fieldName, "alternative"));
 		Assert.assertEquals(false, ComplexFieldUtil.isAlternative(fieldName, "property"));
 		Assert.assertEquals(false, ComplexFieldUtil.isAlternative(fieldName, "field"));
@@ -48,24 +52,24 @@ public class TestComplexFieldUtil {
 
 	@Test
 	public void testGetBaseName() {
-		String fieldName = ComplexFieldUtil.fieldName("field", "property");
+		String fieldName = ComplexFieldUtil.propertyField("field", "property");
 		Assert.assertEquals("field", ComplexFieldUtil.getBaseName(fieldName));
 
-		fieldName = ComplexFieldUtil.fieldName("field", "property", "alternative");
+		fieldName = ComplexFieldUtil.propertyField("field", "property", "alternative");
 		Assert.assertEquals("field", ComplexFieldUtil.getBaseName(fieldName));
 	}
 
 	@Test
 	public void testComplexFieldName() {
 		Assert.assertEquals("field" + ComplexFieldUtil.PROP_SEP + "property",
-				ComplexFieldUtil.fieldName("field", "property"));
+				ComplexFieldUtil.propertyField("field", "property"));
 		Assert.assertEquals("field" + ComplexFieldUtil.PROP_SEP + "property"
 				+ ComplexFieldUtil.ALT_SEP + "alternative",
-				ComplexFieldUtil.fieldName("field", "property", "alternative"));
+				ComplexFieldUtil.propertyField("field", "property", "alternative"));
 		Assert.assertEquals("test" + ComplexFieldUtil.ALT_SEP + "s",
-				ComplexFieldUtil.fieldName("test", null, "s"));
+				ComplexFieldUtil.propertyField("test", null, "s"));
 		Assert.assertEquals("hw" + ComplexFieldUtil.ALT_SEP + "s",
-				ComplexFieldUtil.fieldName(null, "hw", "s"));
+				ComplexFieldUtil.propertyField(null, "hw", "s"));
 	}
 
 	public void testArray(String[] expected, String[] actual) {
@@ -75,15 +79,46 @@ public class TestComplexFieldUtil {
 		}
 	}
 
+	@Before
+	public void setup() {
+		oldFieldNameSetting = ComplexFieldUtil.usingOldFieldNames();
+	}
+
+	@After
+	public void shutdown() {
+		ComplexFieldUtil.setFieldNameSeparators(oldFieldNameSetting);
+	}
+
 	@Test
-	public void testSplit() {
-		testArray(new String[] { "contents", "", "" },
-				ComplexFieldUtil.split(ComplexFieldUtil.fieldName("contents", null)));
-		testArray(new String[] { "contents", "lemma", "" },
-				ComplexFieldUtil.split(ComplexFieldUtil.fieldName("contents", "lemma")));
+	public void testGetNameComponentsOld() {
+		ComplexFieldUtil.setFieldNameSeparators(true);
+		testArray(new String[] { "contents" },
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
+		testArray(new String[] { "contents", "lemma" },
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", "lemma", null)));
 		testArray(new String[] { "contents", "lemma", "s" },
-				ComplexFieldUtil.split(ComplexFieldUtil.fieldName("contents", "lemma", "s")));
-		testArray(new String[] { "contents", "", "s" },
-				ComplexFieldUtil.split(ComplexFieldUtil.fieldName("contents", null, "s")));
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", "lemma", "s")));
+
+		testArray(new String[] { "contents", null, null, "cid" },
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.bookkeepingField("contents", null, "cid")));
+		testArray(new String[] { "contents", "lemma", null, "fiid" },
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.bookkeepingField("contents", "lemma", "fiid")));
+	}
+
+	@Test
+	public void testGetNameComponents() {
+		ComplexFieldUtil.setFieldNameSeparators(false);
+		//testArray(new String[] { "contents" },
+		//		ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
+		testArray(new String[] { "contents", "lemma" },
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", "lemma", null)));
+		testArray(new String[] { "contents", "lemma", "s" },
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", "lemma", "s")));
+
+		testArray(new String[] { "contents", null, null, "cid" },
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.bookkeepingField("contents", null, "cid")));
+		testArray(new String[] { "contents", "lemma", null, "fiid" },
+				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.bookkeepingField("contents", "lemma", "fiid")));
+
 	}
 }

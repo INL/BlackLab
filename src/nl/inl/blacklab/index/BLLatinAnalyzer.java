@@ -60,7 +60,7 @@ public final class BLLatinAnalyzer extends Analyzer {
 			while (ts.incrementToken()) {
 				System.out.println(Utilities.getTerm(ta));
 			}
-			TokenStream ts2 = a.tokenStream(ComplexFieldUtil.fieldName("test", null, "s"),
+			TokenStream ts2 = a.tokenStream(ComplexFieldUtil.propertyField("test", null, "s"),
 					new StringReader(TEST_STR));
 			ta = ts2.addAttribute(CharTermAttribute.class);
 			while (ts2.incrementToken()) {

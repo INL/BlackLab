@@ -83,11 +83,6 @@ import org.apache.lucene.store.FSDirectory;
  */
 public class Searcher {
 
-	/**
-	 * Name of complex field metadata property that stores the length in tokens
-	 */
-	public static final String FIELD_LENGTH_PROP_NAME = "length_tokens";
-
 	public static final String DEFAULT_CONTENTS_FIELD = "contents";
 
 	/**
@@ -139,6 +134,8 @@ public class Searcher {
 	/** Structure of our index */
 	private IndexStructure indexStructure;
 
+
+
 	// /**
 	// * The main contents field of our index, linked to the ContentStore
 	// */
@@ -178,20 +175,20 @@ public class Searcher {
 			throw new RuntimeException("BlackLab index has wrong type or version! "
 					+ VersionFile.report(indexDir));
 
+		// Open Lucene index
+		indexReader = IndexReader.open(FSDirectory.open(indexDir));
+
+		// Determine the index structure
+		indexStructure = new IndexStructure(indexReader);
+
 		// Detect and open the ContentStore for the contents field
 		this.indexLocation = indexDir;
 		this.contentsField = contentsField;
 		// this.contentsField = contentsField;
 		File dir = new File(indexDir, "xml");
 		if (dir.exists()) {
-			registerContentStore(contentsField, openContentStore(dir));
+			registerContentStore(ComplexFieldUtil.mainPropertyField(contentsField), openContentStore(dir));
 		}
-
-		// Open Lucene index
-		indexReader = IndexReader.open(FSDirectory.open(indexDir));
-
-		// Determine the index structure
-		indexStructure = new IndexStructure(indexReader);
 
 		init();
 	}
@@ -1400,7 +1397,7 @@ public class Searcher {
 		}
 
 		ForwardIndex forwardIndex = getForwardIndex(fieldName);
-		String fiidFieldName = ComplexFieldUtil.fieldName(fieldName, "fiid");
+		String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldName);
 
 		for (List<Hit> l : hitsPerDocument.values()) {
 			makeContextSingleDoc(l, forwardIndex, fiidFieldName, contextSize);
@@ -1512,7 +1509,7 @@ public class Searcher {
 	 * @return the translation context
 	 */
 	public TPTranslationContext getDefaultTranslationContext(String field) {
-		return new TPTranslationContext(this, field, "", defaultSearchSensitive, defaultSearchSensitive);
+		return new TPTranslationContext(this, field, ComplexFieldUtil.mainPropLuceneName(), defaultSearchSensitive, defaultSearchSensitive);
 	}
 
 	/**

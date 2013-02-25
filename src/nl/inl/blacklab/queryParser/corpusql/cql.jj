@@ -23,6 +23,7 @@ package nl.inl.blacklab.queryParser.corpusql;
 
 import java.util.Map;
 import java.util.HashMap;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternContaining;
@@ -70,7 +71,7 @@ public class CorpusQueryLanguageParser {
         return new TextPatternRegex(str); 
     }
     
-    private String defaultProperty = "word";
+    private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
     
     public void setDefaultProperty(String property) {
         defaultProperty = property;
@@ -82,9 +83,17 @@ public class CorpusQueryLanguageParser {
 
     private TextPattern propertyClause(String prop, TextPattern value)
     {
-    	if (prop.equals(defaultProperty))
-    		return value; // default property
-    	return new TextPatternProperty(prop, value);
+        if (ComplexFieldUtil.MAIN_PROPERTY_NAMELESS) {
+            // Main property has no name.
+        	if (prop == null || prop.length() == 0 || prop.equals(ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME))
+        		return value; // default property
+        	return new TextPatternProperty(prop, value);
+        } else {
+            // Main property has a name. Use that.
+            if (prop == null || prop.length() == 0)
+                prop = ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+            return new TextPatternProperty(prop, value);
+        }
     }
     
 }

@@ -23,8 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.search.Searcher;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
@@ -58,13 +56,24 @@ public class ComplexFieldImpl extends ComplexField {
 
 	private String fieldName;
 
+	private String mainPropertyName;
+
 	public ComplexFieldImpl(String name, TokenFilterAdder filterAdder) {
-		this(name, filterAdder, true);
+		this(name, ComplexFieldUtil.mainPropLuceneName(), filterAdder, true);
+	}
+
+	public ComplexFieldImpl(String name, String mainProperty, TokenFilterAdder filterAdder) {
+		this(name, mainProperty, filterAdder, true);
 	}
 
 	public ComplexFieldImpl(String name, TokenFilterAdder filterAdder, boolean includeOffsets) {
+		this(name, ComplexFieldUtil.mainPropLuceneName(), filterAdder, includeOffsets);
+	}
+
+	public ComplexFieldImpl(String name, String mainProperty, TokenFilterAdder filterAdder, boolean includeOffsets) {
 		fieldName = name;
-		properties.put("", new ComplexFieldPropertyImplLargeDoc("", filterAdder, includeOffsets));
+		mainPropertyName = mainProperty;
+		properties.put(mainPropertyName, new ComplexFieldPropertyImplLargeDoc(mainPropertyName, filterAdder, includeOffsets));
 	}
 
 	@Override
@@ -108,7 +117,7 @@ public class ComplexFieldImpl extends ComplexField {
 
 	@Override
 	public void addValue(String value, int posIncr) {
-		ComplexFieldProperty p = properties.get("");
+		ComplexFieldProperty p = properties.get(mainPropertyName);
 		p.addValue(value, posIncr);
 	}
 
@@ -129,7 +138,7 @@ public class ComplexFieldImpl extends ComplexField {
 		// Add number of tokens in complex field as a stored field,
 		// because we need to be able to find this property quickly
 		// for SpanQueryNot.
-		doc.add(new Field(ComplexFieldUtil.fieldName(fieldName, Searcher.FIELD_LENGTH_PROP_NAME),
+		doc.add(new Field(ComplexFieldUtil.lengthTokensField(fieldName),
 				"" + numberOfTokens(), Store.YES, Index.NOT_ANALYZED_NO_NORMS));
 	}
 
@@ -144,12 +153,12 @@ public class ComplexFieldImpl extends ComplexField {
 
 	@Override
 	public void addAlternative(String altName) {
-		addPropertyAlternative("", altName, null);
+		addPropertyAlternative(mainPropertyName, altName, null);
 	}
 
 	@Override
 	public void addAlternative(String altName, TokenFilterAdder filterAdder) {
-		this.addPropertyAlternative("", altName, filterAdder);
+		this.addPropertyAlternative(mainPropertyName, altName, filterAdder);
 	}
 
 //	@Override
@@ -193,5 +202,10 @@ public class ComplexFieldImpl extends ComplexField {
 		if (p == null)
 			throw new RuntimeException("Undefined property '" + name + "'");
 		return p.getPositionIncrements();
+	}
+
+	@Override
+	public ComplexFieldProperty getMainProperty() {
+		return getProperty(mainPropertyName);
 	}
 }

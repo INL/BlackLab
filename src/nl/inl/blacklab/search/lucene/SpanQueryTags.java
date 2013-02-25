@@ -43,8 +43,8 @@ public class SpanQueryTags extends SpanQueryBase {
 		this.tagName = tagName;
 		clauses = new SpanQuery[2];
 		baseFieldName = complexFieldName;
-		String startTagFieldName = ComplexFieldUtil.fieldName(complexFieldName, "starttag");
-		String endTagFieldName = ComplexFieldUtil.fieldName(complexFieldName, "endtag");
+		String startTagFieldName = ComplexFieldUtil.startTagPropertyField(complexFieldName);
+		String endTagFieldName = ComplexFieldUtil.endTagPropertyField(complexFieldName);
 
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,

@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.Properties;
 
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.PropertiesUtil;
 
@@ -27,6 +28,10 @@ import nl.inl.util.PropertiesUtil;
  */
 public class IndexPageXml {
 	public static void main(String[] args) throws Exception {
+
+		// Use new field naming scheme
+		ComplexFieldUtil.setFieldNameSeparators(false, false);
+
 		System.out.println("IndexPageXml\n");
 		if (args.length != 1) {
 			System.out

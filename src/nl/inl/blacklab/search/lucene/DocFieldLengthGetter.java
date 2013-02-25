@@ -41,7 +41,7 @@ public class DocFieldLengthGetter {
 	public DocFieldLengthGetter(IndexReader reader, String fieldName) {
 		this.reader = reader;
 		this.fieldName = fieldName;
-		lengthTokensFieldName = ComplexFieldUtil.fieldName(fieldName, Searcher.FIELD_LENGTH_PROP_NAME);
+		lengthTokensFieldName = ComplexFieldUtil.lengthTokensField(fieldName);
 
 		if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD)) {
 			// Cache the lengths for this field to speed things up

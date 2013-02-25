@@ -34,9 +34,9 @@ public class TestSpanQueryAnd {
 
 	@Test
 	public void testComplexFieldDifferentProperties() {
-		SpanTermQuery first = new SpanTermQuery(new Term(ComplexFieldUtil.fieldName("contents",
+		SpanTermQuery first = new SpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
 				"prop1"), "bla"));
-		SpanTermQuery second = new SpanTermQuery(new Term(ComplexFieldUtil.fieldName("contents",
+		SpanTermQuery second = new SpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
 				"prop2"), "bla"));
 
 		// No exception here because both are properties of complex field "field"
