@@ -73,10 +73,10 @@ public class ComplexFieldUtil {
 	}
 
 	/** Set what field name separators to use.
-	 * @param noSpecialChars if true, use only standard identifier characters for the separators. If false, use special chars %, @, #.
+	 * @param avoidSpecialChars if true, use only standard identifier characters for the separators. If false, use special chars %, @, #.
 	 */
-	public static void setFieldNameSeparators(boolean noSpecialChars) {
-		setFieldNameSeparators(noSpecialChars, false);
+	public static void setFieldNameSeparators(boolean avoidSpecialChars) {
+		setFieldNameSeparators(avoidSpecialChars, false);
 	}
 
 	/** Set what field name separators to use.
@@ -146,8 +146,8 @@ public class ComplexFieldUtil {
 	static int BOOKKEEPING_SEP_LEN;
 
 	static {
-		// Default: use old field naming scheme
-		setFieldNameSeparators(true, true);
+		// Default: use new field naming scheme.
+		setFieldNameSeparators(false, false);
 	}
 
 	/**
