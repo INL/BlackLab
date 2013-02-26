@@ -43,7 +43,9 @@ import org.xml.sax.Attributes;
  * Index an ALTO file.
  */
 public class DocIndexerAlto extends DocIndexerXml {
-	private static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
+	public static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
+
+	private static final String MAIN_PROPERTY = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
 
 	/** Pattern for getting DPO number and page number from image file name */
 	private static Pattern pattDpoAndPage = Pattern.compile("^dpo_(\\d+)_(\\d+)_");
@@ -287,8 +289,9 @@ public class DocIndexerAlto extends DocIndexerXml {
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
 		// Add contents field (case-insensitive tokens) to forward index
-		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getMainProperty().getValues());
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(CONTENTS_FIELD),
+		String mainPropField = ComplexFieldUtil.propertyField(CONTENTS_FIELD, MAIN_PROPERTY);
+		int forwardId = indexer.addToForwardIndex(mainPropField, contentsField.getMainProperty().getValues());
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(mainPropField),
 				Store.YES, true).setIntValue(forwardId));
 	}
 

@@ -62,9 +62,9 @@ public class DocResults {
 					if (dr != null)
 						results.add(dr);
 					doc = hit.doc;
-					dr = new DocResult(searcher, hits.getConcordanceField(), hit.doc,
+					dr = new DocResult(searcher, hits.getConcordanceFieldName(), hit.doc,
 							indexReader.document(hit.doc));
-					dr.setContextField(hits.getContextField()); // make sure we remember what kind of
+					dr.setContextField(hits.getContextFieldPropName()); // make sure we remember what kind of
 													// context we have, if any
 				}
 				dr.addHit(hit);

@@ -32,16 +32,19 @@ public class HitPropertyWordRight extends HitProperty {
 
 	public HitPropertyWordRight(Searcher searcher, String field, String property) {
 		super();
-		this.terms = searcher.getTerms(field);
-		this.fieldName = ComplexFieldUtil.propertyField(field, property);
+		if (property == null || property.length() == 0)
+			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
+		else
+			this.fieldName = ComplexFieldUtil.propertyField(field, property);
+		this.terms = searcher.getTerms(fieldName);
 	}
 
 	public HitPropertyWordRight(Searcher searcher, String field) {
-		this(searcher, field, ComplexFieldUtil.mainPropLuceneName());
+		this(searcher, field, null);
 	}
 
 	public HitPropertyWordRight(Searcher searcher) {
-		this(searcher, searcher.getMainContentsField());
+		this(searcher, searcher.getContentsFieldMainPropName());
 	}
 
 	@Override

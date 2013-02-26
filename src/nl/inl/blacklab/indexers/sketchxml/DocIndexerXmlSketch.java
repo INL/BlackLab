@@ -46,7 +46,9 @@ import org.xml.sax.Attributes;
  * easily display it using XSLT.
  */
 public class DocIndexerXmlSketch extends DocIndexerXml {
-	private static final String CONTENTS_FIELD = "contents";
+	static final String CONTENTS_FIELD = "contents";
+
+	private static final String MAIN_PROP_NAME = ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
 
 	private String currentElementText = null;
 
@@ -248,8 +250,9 @@ public class DocIndexerXmlSketch extends DocIndexerXml {
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
 		// Add contents field (case-insensitive tokens) to forward index
-		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getMainProperty().getValues());
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(CONTENTS_FIELD),
+		String mainPropFieldName = ComplexFieldUtil.propertyField(CONTENTS_FIELD, MAIN_PROP_NAME);
+		int forwardId = indexer.addToForwardIndex(mainPropFieldName, contentsField.getMainProperty().getValues());
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(mainPropFieldName),
 				Store.YES, true).setIntValue(forwardId));
 	}
 

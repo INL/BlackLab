@@ -66,8 +66,8 @@ public class TestComplexFieldUtil {
 		Assert.assertEquals("field" + ComplexFieldUtil.PROP_SEP + "property"
 				+ ComplexFieldUtil.ALT_SEP + "alternative",
 				ComplexFieldUtil.propertyField("field", "property", "alternative"));
-		Assert.assertEquals("test" + ComplexFieldUtil.ALT_SEP + "s",
-				ComplexFieldUtil.propertyField("test", null, "s"));
+		Assert.assertEquals("test" + ComplexFieldUtil.PROP_SEP + "word" + ComplexFieldUtil.ALT_SEP + "s",
+				ComplexFieldUtil.propertyField("test", "word", "s"));
 		Assert.assertEquals("hw" + ComplexFieldUtil.ALT_SEP + "s",
 				ComplexFieldUtil.propertyField(null, "hw", "s"));
 	}
@@ -86,12 +86,12 @@ public class TestComplexFieldUtil {
 
 	@After
 	public void shutdown() {
-		ComplexFieldUtil.setFieldNameSeparators(oldFieldNameSetting);
+		ComplexFieldUtil.setFieldNameSeparators(false, oldFieldNameSetting);
 	}
 
 	@Test
 	public void testGetNameComponentsOld() {
-		ComplexFieldUtil.setFieldNameSeparators(true);
+		ComplexFieldUtil.setFieldNameSeparators(false, true);
 		testArray(new String[] { "contents" },
 				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
 		testArray(new String[] { "contents", "lemma" },
@@ -107,7 +107,7 @@ public class TestComplexFieldUtil {
 
 	@Test
 	public void testGetNameComponents() {
-		ComplexFieldUtil.setFieldNameSeparators(false);
+		ComplexFieldUtil.setFieldNameSeparators(false, false);
 		//testArray(new String[] { "contents" },
 		//		ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
 		testArray(new String[] { "contents", "lemma" },

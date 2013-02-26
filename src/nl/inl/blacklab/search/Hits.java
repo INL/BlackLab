@@ -62,12 +62,17 @@ public class Hits implements Iterable<Hit> {
 	 * If we have context information, this specifies the property (i.e. word, lemma, pos) the context came from.
 	 * Otherwise, it is null.
 	 */
-	protected String contextFieldName;
+	protected String contextFieldPropName;
 
 	/**
 	 * The default field to use for retrieving concordance information.
 	 */
-	protected String contentsField;
+	protected String concordanceFieldName;
+
+	/**
+	 * Lucene name for the main property field of the current contents field.
+	 */
+	private String concordanceMainFieldPropName;
 
 	/**
 	 * Did we completely read our Spans object?
@@ -115,7 +120,7 @@ public class Hits implements Iterable<Hit> {
 	 *            the searcher object
 	 */
 	public Hits(Searcher searcher) {
-		this(searcher, searcher.getContentsField());
+		this(searcher, searcher.getContentsFieldMainPropName());
 	}
 
 	/**
@@ -123,14 +128,14 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param defaultConcField
+	 * @param concordanceFieldPropName
 	 *            field to use by default when finding concordances
 	 */
-	public Hits(Searcher searcher, String defaultConcField) {
+	public Hits(Searcher searcher, String concordanceFieldPropName) {
 		this.searcher = searcher;
 		hits = new ArrayList<Hit>();
 		totalNumberOfHits = 0;
-		this.contentsField = defaultConcField;
+		setConcordanceField(concordanceFieldPropName);
 		desiredContextSize = searcher == null ? 0 /* only for test */ : searcher.getDefaultContextSize();
 		currentContextSize = -1;
 	}
@@ -143,15 +148,15 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param defaultConcField
+	 * @param concordanceFieldPropName
 	 *            field to use by default when finding concordances
 	 * @param source
 	 *            where to retrieve the Hit objects from
 	 * @deprecated supply a SpanQuery to a Hits object instead
 	 */
 	@Deprecated
-	Hits(Searcher searcher, String defaultConcField, Spans source) {
-		this(searcher, defaultConcField);
+	Hits(Searcher searcher, String concordanceFieldPropName, Spans source) {
+		this(searcher, concordanceFieldPropName);
 
 		totalNumberOfHits = -1; // "not known yet"
 		sourceSpans = source;
@@ -163,14 +168,14 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param defaultConcField
+	 * @param concordanceFieldPropName
 	 *            field to use by default when finding concordances
 	 * @param sourceQuery
 	 *            the query to execute to get the hits
 	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
 	 */
-	public Hits(Searcher searcher, String defaultConcField, SpanQuery sourceQuery) throws TooManyClauses {
-		this(searcher, defaultConcField);
+	public Hits(Searcher searcher, String concordanceFieldPropName, SpanQuery sourceQuery) throws TooManyClauses {
+		this(searcher, concordanceFieldPropName);
 
 		sourceSpans = findSpans(sourceQuery);
 
@@ -203,7 +208,7 @@ public class Hits implements Iterable<Hit> {
 	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
 	 */
 	public Hits(Searcher searcher, SpanQuery sourceQuery) throws TooManyClauses {
-		this(searcher, searcher.getContentsField(), sourceQuery);
+		this(searcher, searcher.getContentsFieldMainPropName(), sourceQuery);
 	}
 
 	/** Returns the context size.
@@ -223,7 +228,7 @@ public class Hits implements Iterable<Hit> {
 
 		// Reset context and concordances so we get the correct context size next time
 		currentContextSize = -1;
-		contextFieldName = null;
+		contextFieldPropName = null;
 		concordances = null;
 	}
 
@@ -351,7 +356,7 @@ public class Hits implements Iterable<Hit> {
 		ensureAllHitsRead();
 		// Do we need context and don't we have it yet?
 		String requiredContext = sortProp.needsContext();
-		if (requiredContext != null && (!requiredContext.equals(contextFieldName) || currentContextSize != desiredContextSize)) {
+		if (requiredContext != null && (!requiredContext.equals(contextFieldPropName) || currentContextSize != desiredContextSize)) {
 			// Get 'em
 			findContext(requiredContext);
 		}
@@ -514,28 +519,27 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		String mainPropField = ComplexFieldUtil.mainPropertyField(contentsField);
-		concordances = searcher.retrieveConcordances(mainPropField, hits, desiredContextSize);
+		concordances = searcher.retrieveConcordances(concordanceFieldName, hits, desiredContextSize);
 	}
 
 	/**
 	 * Retrieve context words for the hits.
 	 *
-	 * @param fieldName
-	 *            the field to use for the concordances (ignore the default concordance field)
+	 * @param fieldPropName
+	 *            the field and property to use for the concordances
 	 */
-	public void findContext(String fieldName) {
+	public void findContext(String fieldPropName) {
 		ensureAllHitsRead();
 		// Make sure we don't have the desired concordances already
-		if (contextFieldName != null && fieldName.equals(contextFieldName) && desiredContextSize == currentContextSize) {
+		if (contextFieldPropName != null && fieldPropName.equals(contextFieldPropName) && desiredContextSize == currentContextSize) {
 			return;
 		}
 
 		// Get the concordances
-		searcher.retrieveContext(fieldName, hits, desiredContextSize);
+		searcher.retrieveContext(fieldPropName, hits, desiredContextSize);
 		currentContextSize = desiredContextSize;
 
-		contextFieldName = fieldName;
+		contextFieldPropName = fieldPropName;
 	}
 
 	/**
@@ -544,10 +548,10 @@ public class Hits implements Iterable<Hit> {
 	 * NOTE: you should never have to call this manually; it is
 	 * called if needed by the sorting/grouping code.
 	 *
-	 * Uses the default concordance field.
+	 * Uses the main property field.
 	 */
 	void findContext() {
-		findContext(contentsField);
+		findContext(concordanceMainFieldPropName);
 	}
 
 	/**
@@ -564,7 +568,7 @@ public class Hits implements Iterable<Hit> {
 		for (Hit hit: hits) {
 			hit.context = null;
 		}
-		contextFieldName = null;
+		contextFieldPropName = null;
 	}
 
 	/**
@@ -583,7 +587,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param altName the alternative to use, or null if none
 	 */
 	public TokenFrequencyList getCollocations(String propName, String altName) {
-		findContext(ComplexFieldUtil.propertyField(contentsField, propName, altName));
+		findContext(ComplexFieldUtil.propertyField(concordanceFieldName, propName, altName));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
 			int[] context = hit.context;
@@ -606,7 +610,7 @@ public class Hits implements Iterable<Hit> {
 		boolean sensitive = searcher.isDefaultSearchSensitive();
 		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
 		//Map<String, Integer> collStr = new HashMap<String, Integer>();
-		Terms terms = searcher.getTerms(contextFieldName);
+		Terms terms = searcher.getTerms(contextFieldPropName);
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
 			String word = terms.getFromSortPosition(e.getKey());
 			if (!sensitive) {
@@ -632,18 +636,26 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the field name
 	 */
-	public String getConcordanceField() {
-		return contentsField;
+	public String getConcordanceFieldName() {
+		return concordanceFieldName;
 	}
 
 	/**
 	 * Sets the field to use for retrieving concordances.
 	 *
-	 * @param defaultConcField
+	 * @param concordanceFieldName
 	 *            the field name
 	 */
-	public void setConcordanceField(String defaultConcField) {
-		this.contentsField = defaultConcField;
+	public void setConcordanceField(String concordanceFieldName) {
+		this.concordanceFieldName = concordanceFieldName;
+		if (searcher == null) {
+			// Can occur during testing. Just use default main property name.
+			concordanceMainFieldPropName = ComplexFieldUtil.propertyField(concordanceFieldName, ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME);
+		}
+		else {
+			// Get the main property name from the index structure.
+			concordanceMainFieldPropName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), concordanceFieldName);
+		}
 	}
 
 	/**
@@ -651,8 +663,8 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the field name
 	 */
-	public String getContextField() {
-		return contextFieldName;
+	public String getContextFieldPropName() {
+		return contextFieldPropName;
 	}
 
 	/**
@@ -667,6 +679,6 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	public void setContextField(String contextField) {
-		this.contextFieldName = contextField;
+		this.contextFieldPropName = contextField;
 	}
 }

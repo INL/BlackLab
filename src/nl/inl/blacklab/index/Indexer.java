@@ -146,13 +146,13 @@ public class Indexer {
 	 *            if true, creates a new index; otherwise, appends to existing index
 	 * @throws IOException
 	 */
-	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass/*, String contentsField*/) throws IOException {
+	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass, String contentsFieldName) throws IOException {
 		this.docIndexerClass = docIndexerClass;
 		this.createdNewIndex = create;
 
 		writer = openIndexWriter(directory, create);
 		indexLocation = directory;
-		contentStore = new ContentStoreDirZip(new File(directory, "xml"), create);
+		contentStore = new ContentStoreDirZip(new File(directory, "cs_" + contentsFieldName), create);
 	}
 
 	/**
@@ -356,7 +356,7 @@ public class Indexer {
 
 			// Special case for old BL index with "forward" as the name of the single forward index
 			// (this should be removed eventually)
-			if (!createdNewIndex && fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD) && !dir.exists()) {
+			if (!createdNewIndex && fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME) && !dir.exists()) {
 				// Default forward index used to be called "forward". Look for that instead.
 				File alt = new File(indexLocation, "forward");
 				if (alt.exists())
@@ -706,11 +706,6 @@ public class Indexer {
 
 	public File getIndexLocation() {
 		 return indexLocation;
-	}
-
-	public void getDocIndexer() {
-		// TODO Auto-generated method stub
-
 	}
 
 }

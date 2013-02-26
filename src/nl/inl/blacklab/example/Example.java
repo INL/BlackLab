@@ -73,7 +73,7 @@ public class Example {
 		}
 
 		// Instantiate the BlackLab indexer, supplying our DocIndexer class
-		Indexer indexer = new Indexer(indexDir, true, DocIndexerXmlExample.class);
+		Indexer indexer = new Indexer(indexDir, true, DocIndexerXmlExample.class, DocIndexerXmlExample.CONTENTS_FIELD);
 		try {
 
 			// Index each of our test "documents".

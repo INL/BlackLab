@@ -43,7 +43,7 @@ public class DocFieldLengthGetter {
 		this.fieldName = fieldName;
 		lengthTokensFieldName = ComplexFieldUtil.lengthTokensField(fieldName);
 
-		if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD)) {
+		if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME)) {
 			// Cache the lengths for this field to speed things up
 			try {
 				cachedFieldLengths = FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName);

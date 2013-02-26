@@ -32,16 +32,19 @@ public class HitPropertyRightContext extends HitProperty {
 
 	public HitPropertyRightContext(Searcher searcher, String field, String property) {
 		super();
-		this.terms = searcher.getTerms(field);
-		this.fieldName = ComplexFieldUtil.propertyField(field, property);
+		if (property == null || property.length() == 0)
+			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
+		else
+			this.fieldName = ComplexFieldUtil.propertyField(field, property);
+		this.terms = searcher.getTerms(fieldName);
 	}
 
 	public HitPropertyRightContext(Searcher searcher, String field) {
-		this(searcher, field, ComplexFieldUtil.mainPropLuceneName());
+		this(searcher, field, null);
 	}
 
 	public HitPropertyRightContext(Searcher searcher) {
-		this(searcher, searcher.getMainContentsField());
+		this(searcher, searcher.getContentsFieldMainPropName());
 	}
 
 	@Override

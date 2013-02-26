@@ -142,9 +142,9 @@ public class ForwardIndex {
 	/** Cached fiid field */
 	private int[] cachedFiids;
 
-	public void setIdTranslateInfo(IndexReader reader, String fieldName) {
+	public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
 		this.reader = reader;
-		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldName);
+		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
 		try {
 			cachedFiids = FieldCache.DEFAULT.getInts(reader, fiidFieldName);
 

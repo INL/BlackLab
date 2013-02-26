@@ -45,11 +45,11 @@ public class HitsWindow extends Hits {
 	 *            the size of our window
 	 */
 	public HitsWindow(Hits source, int first, int windowSize) {
-		super(source.searcher, source.contentsField);
+		super(source.searcher, source.concordanceFieldName);
 		this.source = source;
 		this.first = first;
 		this.windowSize = windowSize;
-		this.contextFieldName = source.contextFieldName;
+		this.contextFieldPropName = source.contextFieldPropName;
 
 		// Error if first out of range
 		if (first < 0 || (source.size() == 0 && first > 0)

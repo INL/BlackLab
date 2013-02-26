@@ -46,7 +46,9 @@ import org.xml.sax.Attributes;
  * easily display it using XSLT.
  */
 public class DocIndexerPageXml extends DocIndexerXml {
-	private static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
+	static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
+
+	private static final String MAIN_PROP_NAME = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
 
 	/** Used to capture the content between some XML tags for indexing */
 	private String characterContent = null;
@@ -377,7 +379,7 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
 		// Add words property (case-sensitive tokens) to forward index
-		String wordPropFieldName = ComplexFieldUtil.mainPropertyField(CONTENTS_FIELD);
+		String wordPropFieldName = ComplexFieldUtil.propertyField(CONTENTS_FIELD, MAIN_PROP_NAME);
 		int fiidContents = indexer.addToForwardIndex(wordPropFieldName, contentsField.getMainProperty().getValues());
 
 		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(wordPropFieldName),

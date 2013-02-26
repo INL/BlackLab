@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
 import nl.inl.blacklab.externalstorage.ContentStore;
@@ -83,18 +81,21 @@ import org.apache.lucene.store.FSDirectory;
  */
 public class Searcher {
 
-	public static final String DEFAULT_CONTENTS_FIELD = "contents";
+	/** Complex field name for default contents field */
+	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
 
-	/**
-	 * The collator to use for sorting. Defaults to English collator.
-	 */
+	/** The collator to use for sorting. Defaults to English collator. */
 	private Collator collator = Collator.getInstance(new Locale("en", "GB"));
 
 	/**
-	 * ContentAccessors tell us how to get a field's content: - if there is no contentaccessor: get
-	 * it from the Lucene index (stored field) - from an external source (file, database) if it's
-	 * not (because the content is very large and/or we want faster random access to the content
-	 * than a stored field can provide)
+	 * ContentAccessors tell us how to get a field's content:
+	 * <ol>
+	 * <li>if there is no contentaccessor: get it from the Lucene index (stored field)</li>
+	 * <li>from an external source (file, database) if it's not (because the content is very large
+	 * and/or we want faster random access to the content than a stored field can provide)</li>
+	 * </ol>
+	 *
+	 * Indexed by complex field name.
 	 */
 	private Map<String, ContentAccessor> contentAccessors = new HashMap<String, ContentAccessor>();
 
@@ -102,6 +103,8 @@ public class Searcher {
 	 * ForwardIndices allow us to quickly find what token occurs at a specific position. This speeds
 	 * up grouping and sorting. There may be several indices on a complex field, e.g.: word form,
 	 * lemma, part of speech.
+	 *
+	 * Indexed by property name.
 	 */
 	private Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
 
@@ -116,9 +119,9 @@ public class Searcher {
 	private IndexSearcher indexSearcher;
 
 	/**
-	 * The contents field (used by default to make concordances)
+	 * Name of the main contents field (used as default parameter value for many methods)
 	 */
-	public String contentsField;
+	public String fieldNameContents;
 
 	/** Default number of words around a hit */
 	private int defaultContextSize = 5;
@@ -134,13 +137,6 @@ public class Searcher {
 	/** Structure of our index */
 	private IndexStructure indexStructure;
 
-
-
-	// /**
-	// * The main contents field of our index, linked to the ContentStore
-	// */
-	// private String contentsField;
-
 	/**
 	 * Construct a Searcher object. Note that using this constructor, the Searcher is responsible
 	 * for opening and closing the Lucene index, forward index and content store.
@@ -153,23 +149,6 @@ public class Searcher {
 	 * @throws IOException
 	 */
 	public Searcher(File indexDir) throws CorruptIndexException, IOException {
-		this(indexDir, DEFAULT_CONTENTS_FIELD);
-	}
-
-	/**
-	 * Construct a Searcher object. Note that using this constructor, the Searcher is responsible
-	 * for opening and closing the Lucene index, forward index and content store.
-	 *
-	 * Automatically detects and uses forward index and content store if available.
-	 *
-	 * @param indexDir
-	 *            the index directory
-	 * @param contentsField
-	 *            the main contents field of the index, linked to the ContentStore
-	 * @throws CorruptIndexException
-	 * @throws IOException
-	 */
-	public Searcher(File indexDir, String contentsField) throws CorruptIndexException, IOException {
 		if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1")
 				&& !VersionFile.isTypeVersion(indexDir, "blacklab", "2"))
 			throw new RuntimeException("BlackLab index has wrong type or version! "
@@ -183,11 +162,19 @@ public class Searcher {
 
 		// Detect and open the ContentStore for the contents field
 		this.indexLocation = indexDir;
-		this.contentsField = contentsField;
-		// this.contentsField = contentsField;
-		File dir = new File(indexDir, "xml");
-		if (dir.exists()) {
-			registerContentStore(ComplexFieldUtil.mainPropertyField(contentsField), openContentStore(dir));
+		this.fieldNameContents = indexStructure.getMainContentsField().getName();
+
+		// Register content stores
+		for (String cfn: indexStructure.getComplexFields()) {
+			if (indexStructure.getComplexFieldDesc(cfn).hasContentStore()) {
+				File dir = new File(indexDir, "cs_" + cfn);
+				if (!dir.exists()) {
+					dir = new File(indexDir, "xml");
+				}
+				if (dir.exists()) {
+					registerContentStore(fieldNameContents, openContentStore(dir));
+				}
+			}
 		}
 
 		init();
@@ -231,6 +218,7 @@ public class Searcher {
 
 	/**
 	 * Get information about the structure of the BlackLab index.
+	 *
 	 * @return the structure object
 	 */
 	public IndexStructure getIndexStructure() {
@@ -282,11 +270,12 @@ public class Searcher {
 		}
 	}
 
-	public SpanQuery createSpanQuery(TextPattern pattern, String field, DocIdSet docIdSet) {
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, DocIdSet docIdSet) {
 		// Convert to SpanQuery
 		pattern = pattern.rewrite();
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
-		SpanQuery spanQuery = pattern.translate(spanQueryTranslator, getDefaultTranslationContext(field));
+		SpanQuery spanQuery = pattern.translate(spanQueryTranslator,
+				getDefaultTranslationContext(fieldName));
 
 		if (docIdSet != null) {
 			spanQuery = new SpanQueryFiltered(spanQuery, docIdSet);
@@ -295,12 +284,12 @@ public class Searcher {
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, DocIdSet docIdSet) {
-		return createSpanQuery(pattern, contentsField, docIdSet);
+		return createSpanQuery(pattern, fieldNameContents, docIdSet);
 	}
 
-	public SpanQuery createSpanQuery(TextPattern pattern, String field, Filter filter) {
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
 		try {
-			return createSpanQuery(pattern, field,
+			return createSpanQuery(pattern, fieldName,
 					filter == null ? null : filter.getDocIdSet(indexReader));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -308,15 +297,15 @@ public class Searcher {
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, Filter filter) {
-		return createSpanQuery(pattern, contentsField, filter);
+		return createSpanQuery(pattern, fieldNameContents, filter);
 	}
 
-	public SpanQuery createSpanQuery(TextPattern pattern, String field) {
-		return createSpanQuery(pattern, field, (DocIdSet) null);
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
+		return createSpanQuery(pattern, fieldName, (DocIdSet) null);
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern) {
-		return createSpanQuery(pattern, contentsField, (DocIdSet) null);
+		return createSpanQuery(pattern, fieldNameContents, (DocIdSet) null);
 	}
 
 	/**
@@ -324,14 +313,14 @@ public class Searcher {
 	 *
 	 * @param query
 	 *            the pattern to find
-	 * @param defaultConcField
+	 * @param fieldNameConc
 	 *            field to use for concordances
 	 * @return the hits found
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(SpanQuery query, String defaultConcField) throws BooleanQuery.TooManyClauses {
-		return new Hits(this, defaultConcField, query);
+	public Hits find(SpanQuery query, String fieldNameConc) throws BooleanQuery.TooManyClauses {
+		return new Hits(this, fieldNameConc, query);
 	}
 
 	/**
@@ -344,14 +333,15 @@ public class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses {
-		return new Hits(this, contentsField, query);
+		return new Hits(this, fieldNameContents, query);
 	}
 
 	/**
 	 * Find hits for a pattern in a field.
+	 *
 	 * @param pattern
 	 *            the pattern to find
-	 * @param field
+	 * @param fieldName
 	 *            field to use for sorting and displaying resulting concordances.
 	 * @param filter
 	 *            determines which documents to search
@@ -360,13 +350,14 @@ public class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(TextPattern pattern, String field, Filter filter)
+	public Hits find(TextPattern pattern, String fieldName, Filter filter)
 			throws BooleanQuery.TooManyClauses {
-		return new Hits(this, field, createSpanQuery(pattern, field, filter));
+		return new Hits(this, fieldName, createSpanQuery(pattern, fieldName, filter));
 	}
 
 	/**
 	 * Find hits for a pattern and filter them.
+	 *
 	 * @param pattern
 	 *            the pattern to find
 	 * @param filter
@@ -376,28 +367,29 @@ public class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(TextPattern pattern, Filter filter)
-			throws BooleanQuery.TooManyClauses {
-		return find(pattern, contentsField, filter);
+	public Hits find(TextPattern pattern, Filter filter) throws BooleanQuery.TooManyClauses {
+		return find(pattern, fieldNameContents, filter);
 	}
 
 	/**
 	 * Find hits for a pattern in a field.
+	 *
 	 * @param pattern
 	 *            the pattern to find
-	 * @param field
+	 * @param fieldName
 	 *            which field to find the pattern in
 	 *
 	 * @return the hits found
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(TextPattern pattern, String field) throws BooleanQuery.TooManyClauses {
-		return find(pattern, field, null);
+	public Hits find(TextPattern pattern, String fieldName) throws BooleanQuery.TooManyClauses {
+		return find(pattern, fieldName, null);
 	}
 
 	/**
 	 * Find hits for a pattern.
+	 *
 	 * @param pattern
 	 *            the pattern to find
 	 *
@@ -406,7 +398,7 @@ public class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses {
-		return find(pattern, contentsField, null);
+		return find(pattern, fieldNameContents, null);
 	}
 
 	/**
@@ -504,7 +496,8 @@ public class Searcher {
 	 */
 	public void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords,
 			int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
-		TermFreqVector termFreqVector = getTermFreqVector(doc, fieldName);
+		String fieldPropName = ComplexFieldUtil.mainPropertyField(indexStructure, fieldName);
+		TermFreqVector termFreqVector = getTermFreqVector(doc, fieldPropName);
 		if (!(termFreqVector instanceof TermPositionVector)) {
 			throw new RuntimeException("Field has no character position information!");
 		}
@@ -665,7 +658,7 @@ public class Searcher {
 	 * @return the field content
 	 */
 	public String getContent(Document d) {
-		return getContent(d, contentsField);
+		return getContent(d, fieldNameContents);
 	}
 
 	/**
@@ -680,7 +673,7 @@ public class Searcher {
 	/**
 	 * Get all the terms in the index with low edit distance from the supplied term
 	 *
-	 * @param field
+	 * @param luceneName
 	 *            the field to search in
 	 * @param searchTerms
 	 *            search terms
@@ -690,14 +683,14 @@ public class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if the expansion resulted in too many terms
 	 */
-	public Set<String> getMatchingTermsFromIndex(String field, Collection<String> searchTerms,
+	public Set<String> getMatchingTermsFromIndex(String luceneName, Collection<String> searchTerms,
 			float similarity) {
 		boolean doFuzzy = true;
 		if (similarity >= 0.99f) {
 			// Exact match; don't use fuzzy query (slow)
 			Set<String> result = new HashSet<String>();
 			for (String term : searchTerms) {
-				if (termOccursInIndex(new Term(field, term)))
+				if (termOccursInIndex(new Term(luceneName, term)))
 					result.add(term);
 			}
 			return result;
@@ -705,7 +698,7 @@ public class Searcher {
 
 		BooleanQuery q = new BooleanQuery();
 		for (String s : searchTerms) {
-			FuzzyQuery fq = new FuzzyQuery(new Term(field, s), similarity);
+			FuzzyQuery fq = new FuzzyQuery(new Term(luceneName, s), similarity);
 			q.add(fq, Occur.SHOULD);
 		}
 
@@ -745,8 +738,10 @@ public class Searcher {
 		ContentAccessor ca = contentAccessors.get(fieldName);
 		String[] content;
 		if (ca == null) {
-			// No special content accessor set; assume a stored field
-			String fieldContent = d.get(fieldName);
+			// No special content accessor set; assume a non-complex stored field
+			// TODO: check with index structure?
+			String luceneName = fieldName; // <- non-complex, so this works
+			String fieldContent = d.get(luceneName);
 			content = new String[starts.length];
 			for (int i = 0; i < starts.length; i++) {
 				content[i] = fieldContent.substring(starts[i], ends[i]);
@@ -763,15 +758,14 @@ public class Searcher {
 	 *
 	 * @param doc
 	 *            the document
-	 * @param fieldName
+	 * @param luceneName
 	 *            the field
 	 * @return the term vector
 	 */
-	private TermFreqVector getTermFreqVector(int doc, String fieldName) {
+	private TermFreqVector getTermFreqVector(int doc, String luceneName) {
 		try {
-			// Vraag de term position vector van de contents van dit document op
-			// NOTE: je kunt ook alle termvectors in 1x opvragen. Kan sneller zijn.
-			TermFreqVector termFreqVector = indexReader.getTermFreqVector(doc, fieldName);
+			// Retrieve term position vector of the contents of this document
+			TermFreqVector termFreqVector = indexReader.getTermFreqVector(doc, luceneName);
 			if (termFreqVector == null) {
 				throw new RuntimeException("Field has no term vector!");
 			}
@@ -789,7 +783,7 @@ public class Searcher {
 	 *
 	 * @param doc
 	 *            doc id
-	 * @param fieldName
+	 * @param luceneName
 	 *            the index field from which to use the term vector
 	 * @param start
 	 *            start position (first word we want to request)
@@ -797,14 +791,14 @@ public class Searcher {
 	 *            end position (last word we want to request)
 	 * @return the words found, in order
 	 */
-	public String[] getWordsFromTermVector(int doc, String fieldName, int start, int end) {
+	public String[] getWordsFromTermVector(int doc, String luceneName, int start, int end) {
 		try {
 			// Vraag de term position vector van de contents van dit document op
 			// NOTE: je kunt ook alle termvectors in 1x opvragen. Kan sneller zijn.
 			TermPositionVector termPositionVector = (TermPositionVector) indexReader
-					.getTermFreqVector(doc, fieldName);
+					.getTermFreqVector(doc, luceneName);
 			if (termPositionVector == null) {
-				throw new RuntimeException("Field " + fieldName + " has no TermPositionVector");
+				throw new RuntimeException("Field " + luceneName + " has no TermPositionVector");
 			}
 
 			// Vraag het array van terms (voor reconstructie text)
@@ -851,7 +845,7 @@ public class Searcher {
 	 *
 	 * @param doc
 	 *            doc id
-	 * @param fieldName
+	 * @param luceneName
 	 *            the index field from which to use the term vector
 	 * @param start
 	 *            start position (first word we want to request)
@@ -859,13 +853,13 @@ public class Searcher {
 	 *            end position (last word we want to request)
 	 * @return the words found, in order
 	 */
-	public List<String[]> getWordsFromTermVector(int doc, String fieldName, int[] start, int[] end) {
+	public List<String[]> getWordsFromTermVector(int doc, String luceneName, int[] start, int[] end) {
 		try {
 			// Get the term position vector of the requested field
 			TermPositionVector termPositionVector = (TermPositionVector) indexReader
-					.getTermFreqVector(doc, fieldName);
+					.getTermFreqVector(doc, luceneName);
 			if (termPositionVector == null) {
-				throw new RuntimeException("Field " + fieldName + " has no TermPositionVector");
+				throw new RuntimeException("Field " + luceneName + " has no TermPositionVector");
 			}
 
 			// Get the array of terms (for reconstructing text)
@@ -951,51 +945,7 @@ public class Searcher {
 	 * @return the highlighted content
 	 */
 	public String highlightContent(int docId, Hits hits) {
-		return highlightContent(docId, contentsField, hits);
-	}
-
-	static private Pattern altoProblem = Pattern
-			.compile("</hl>(<String [^>]+>)<hl></hl>(</String>)<hl>");
-
-	/**
-	 * Highlight field content with the specified hits.
-	 *
-	 * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
-	 *
-	 * @param docId
-	 *            document to highlight a field from
-	 * @param fieldName
-	 *            field to highlight
-	 * @param hits
-	 *            the hits
-	 * @return the highlighted content
-	 * @deprecated not needed anymore, highlighter only suspends highlighting if stricly necessary,
-	 *             so content in attributes works properly
-	 */
-	@Deprecated
-	public String highlightContentAlto(int docId, String fieldName, Hits hits) {
-		// Get the field content
-		Document doc = document(docId);
-		String content = getContent(doc, fieldName);
-
-		// Nothing to highlight?
-		if (hits == null || hits.size() == 0)
-			return content;
-
-		// Iterate over the concordances and display
-		XmlHighlighter hl = new XmlHighlighter();
-		hl.setRemoveEmptyHlTags(false);
-
-		// Find the character offsets
-		List<HitSpan> hitspans = getCharacterOffsets(docId, fieldName, hits);
-
-		String result = hl.highlight(content, hitspans);
-
-		// Hack to fix the alto problem (content is in attributes, so doesn't get highlighted)
-		// @@@ TODO: generalise the highlighting code to better understand XML structure so this
-		// isn't necessary anymore.
-		Matcher m = altoProblem.matcher(result);
-		return m.replaceAll("$1$2");
+		return highlightContent(docId, fieldNameContents, hits);
 	}
 
 	/**
@@ -1049,12 +999,11 @@ public class Searcher {
 			// Note that hit text may be empty for hits of length zero,
 			// such as a search for open tags (which have a location but zero length,
 			// like a search for a word has a length 1)
-			String hitText = relHitRight < relHitLeft ? "" : currentContent.substring(relHitLeft, relHitRight);
+			String hitText = relHitRight < relHitLeft ? "" : currentContent.substring(relHitLeft,
+					relHitRight);
 			String leftContext = currentContent.substring(0, relHitLeft);
 			String rightContext = currentContent.substring(relHitRight, absRight - absLeft);
-			rv.add(new Concordance(new String[] { leftContext,
-					hitText,
-					rightContext }));
+			rv.add(new Concordance(new String[] { leftContext, hitText, rightContext }));
 		}
 		return rv;
 	}
@@ -1175,12 +1124,13 @@ public class Searcher {
 	 *            the hits in question
 	 * @param forwardIndex
 	 *            forward index for our field
-	 * @param fiidFieldName
-	 * 			  name of the forward index id (fiid) field
+	 * @param fieldPropFiidName
+	 *            name of the forward index id (fiid) field
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
 	 */
-	private void makeContextSingleDoc(List<Hit> hits, ForwardIndex forwardIndex, String fiidFieldName, int wordsAroundHit) {
+	private void makeContextSingleDoc(List<Hit> hits, ForwardIndex forwardIndex,
+			String fieldPropFiidName, int wordsAroundHit) {
 		if (hits.size() == 0)
 			return;
 		int doc = hits.get(0).doc;
@@ -1190,7 +1140,7 @@ public class Searcher {
 
 		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
 
-		getContextWords(doc, forwardIndex, fiidFieldName, startsOfWords, endsOfWords, hits);
+		getContextWords(doc, forwardIndex, fieldPropFiidName, startsOfWords, endsOfWords, hits);
 	}
 
 	/**
@@ -1251,16 +1201,16 @@ public class Searcher {
 	 * @param forwardIndex
 	 *            forward index to get context from
 	 * @param startsOfWords
-	 *            contains, for each bit of context requested, the starting word
-	 *            position of the left context and for the hit
+	 *            contains, for each bit of context requested, the starting word position of the
+	 *            left context and for the hit
 	 * @param endsOfWords
-	 *            contains, for each bit of context requested, the ending word
-	 *            position of the hit and for the left context
+	 *            contains, for each bit of context requested, the ending word position of the hit
+	 *            and for the left context
 	 * @param resultsList
 	 *            the list of results to add the context to
 	 */
-	private void getContextWords(int doc, ForwardIndex forwardIndex, String fiidFieldName, int[] startsOfWords, int[] endsOfWords,
-			List<Hit> resultsList) {
+	private void getContextWords(int doc, ForwardIndex forwardIndex, String fieldPropFiidName,
+			int[] startsOfWords, int[] endsOfWords, List<Hit> resultsList) {
 		int n = startsOfWords.length / 2;
 		int[] startsOfSnippets = new int[n];
 		int[] endsOfSnippets = new int[n];
@@ -1274,8 +1224,8 @@ public class Searcher {
 		if (forwardIndex != null) {
 			// We have a forward index for this field. Use it.
 			int fiid = forwardIndex.luceneDocIdToFiid(doc);
-			//Document d = document(doc);
-			//int fiid = Integer.parseInt(d.get(fiidFieldName));
+			// Document d = document(doc);
+			// int fiid = Integer.parseInt(d.get(fiidFieldName));
 			words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
 		} else {
 			throw new RuntimeException("Cannot get context without a forward index");
@@ -1303,18 +1253,18 @@ public class Searcher {
 	 * "create index" mode, may create a new forward index. Otherwise, looks for an existing forward
 	 * index and opens that.
 	 *
-	 * @param fieldName
+	 * @param fieldPropName
 	 *            the field for which we want the forward index
 	 * @return the ForwardIndex if found/created, or null otherwise
 	 */
-	private ForwardIndex getForwardIndex(String fieldName) {
-		ForwardIndex forwardIndex = forwardIndices.get(fieldName);
+	private ForwardIndex getForwardIndex(String fieldPropName) {
+		ForwardIndex forwardIndex = forwardIndices.get(fieldPropName);
 		if (forwardIndex == null) {
-			File dir = new File(indexLocation, "fi_" + fieldName);
+			File dir = new File(indexLocation, "fi_" + fieldPropName);
 
 			// Special case for old BL index with "forward" as the name of the single forward index
 			// (this should be removed eventually)
-			if (fieldName.equals(contentsField) && !dir.exists()) {
+			if (fieldPropName.equals(fieldNameContents) && !dir.exists()) {
 				// Default forward index used to be called "forward". Look for that instead.
 				File alt = new File(indexLocation, "forward");
 				if (alt.exists())
@@ -1327,8 +1277,9 @@ public class Searcher {
 			}
 			// Open forward index
 			forwardIndex = new ForwardIndex(dir, false, collator, false);
-			forwardIndex.setIdTranslateInfo(indexReader, fieldName); // how to translate from Lucene doc to fiid
-			forwardIndices.put(fieldName, forwardIndex);
+			forwardIndex.setIdTranslateInfo(indexReader, fieldPropName); // how to translate from Lucene
+																		// doc to fiid
+			forwardIndices.put(fieldPropName, forwardIndex);
 		}
 		return forwardIndex;
 	}
@@ -1351,7 +1302,8 @@ public class Searcher {
 	 *            how many words around the hit to retrieve
 	 * @return the list of concordances
 	 */
-	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits, int contextSize) {
+	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits,
+			int contextSize) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key : hits) {
@@ -1377,14 +1329,14 @@ public class Searcher {
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
 	 *
-	 * @param fieldName
-	 *            field to use for building concordances
+	 * @param fieldPropName
+	 *            field to use for retrieving context
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
 	 */
-	public void retrieveContext(String fieldName, List<Hit> hits, int contextSize) {
+	public void retrieveContext(String fieldPropName, List<Hit> hits, int contextSize) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key : hits) {
@@ -1396,8 +1348,8 @@ public class Searcher {
 			hitsInDoc.add(key);
 		}
 
-		ForwardIndex forwardIndex = getForwardIndex(fieldName);
-		String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldName);
+		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
+		String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldPropName);
 
 		for (List<Hit> l : hitsPerDocument.values()) {
 			makeContextSingleDoc(l, forwardIndex, fiidFieldName, contextSize);
@@ -1461,22 +1413,22 @@ public class Searcher {
 	 * grouping hits (by mapping the context term ids to term sort position ids), and later used to
 	 * display the group name (by mapping the sort position ids back to Strings)
 	 *
-	 * @param field
+	 * @param fieldPropName
 	 *            the field for which we want the Terms object
 	 * @return the Terms object
 	 * @throws RuntimeException
 	 *             if this field does not have a forward index, and hence no Terms object.
 	 */
-	public Terms getTerms(String field) {
-		ForwardIndex forwardIndex = getForwardIndex(field);
+	public Terms getTerms(String fieldPropName) {
+		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
 		if (forwardIndex == null) {
-			throw new RuntimeException("Field " + field + " has no forward index!");
+			throw new RuntimeException("Field " + fieldPropName + " has no forward index!");
 		}
 		return forwardIndex.getTerms();
 	}
 
 	/**
-	 * Get the Terms object for the contents field.
+	 * Get the Terms object for the main contents field.
 	 *
 	 * The Terms object is part of the ForwardIndex module and provides a mapping from term id to
 	 * term String, and between term id and term sort position. It is used while sorting and
@@ -1488,11 +1440,11 @@ public class Searcher {
 	 *             if this field does not have a forward index, and hence no Terms object.
 	 */
 	public Terms getTerms() {
-		return getTerms(contentsField);
+		return getTerms(ComplexFieldUtil.mainPropertyField(indexStructure, fieldNameContents));
 	}
 
-	public String getContentsField() {
-		return contentsField;
+	public String getContentsFieldMainPropName() {
+		return fieldNameContents;
 	}
 
 	public boolean isDefaultSearchSensitive() {
@@ -1505,11 +1457,15 @@ public class Searcher {
 
 	/**
 	 * Get the default initial translation context.
-	 * @param field the field to search
+	 *
+	 * @param fieldName
+	 *            the field to search
 	 * @return the translation context
 	 */
-	public TPTranslationContext getDefaultTranslationContext(String field) {
-		return new TPTranslationContext(this, field, ComplexFieldUtil.mainPropLuceneName(), defaultSearchSensitive, defaultSearchSensitive);
+	public TPTranslationContext getDefaultTranslationContext(String fieldName) {
+		String mainPropName = indexStructure.getComplexFieldDesc(fieldName).getMainProperty().getName();
+		return new TPTranslationContext(this, fieldName, mainPropName,
+				defaultSearchSensitive, defaultSearchSensitive);
 	}
 
 	/**
@@ -1520,7 +1476,7 @@ public class Searcher {
 	 * @return the translation context
 	 */
 	public TPTranslationContext getDefaultTranslationContext() {
-		return getDefaultTranslationContext(contentsField);
+		return getDefaultTranslationContext(fieldNameContents);
 	}
 
 	public String getIndexName() {

@@ -94,11 +94,11 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 */
 	public ResultsGrouper(Hits hits, HitProperty criteria) {
 		super(hits.getSearcher(), criteria);
-		defaultConcField = hits.getConcordanceField();
+		defaultConcField = hits.getConcordanceFieldName();
 		String requiredContext = criteria.needsContext();
 		if (requiredContext != null)
 			hits.findContext(requiredContext);
-		contextField = hits.getContextField();
+		contextField = hits.getContextFieldPropName();
 		for (Hit hit : hits) {
 			addHit(hit);
 		}

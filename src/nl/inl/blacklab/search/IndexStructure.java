@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +18,8 @@ import org.apache.lucene.document.NumericField;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.TermFreqVector;
+import org.apache.lucene.index.TermPositionVector;
 import org.apache.lucene.util.ReaderUtil;
 
 /**
@@ -44,6 +47,9 @@ public class IndexStructure {
 		/** This complex field's properties */
 		private Map<String, PropertyDesc> props;
 
+		/** The field's main property */
+		private PropertyDesc mainProperty;
+
 		/** Does the field have an associated content store? */
 		private boolean contentStore;
 
@@ -59,6 +65,7 @@ public class IndexStructure {
 			contentStore = false;
 			lengthInTokens = false;
 			xmlTags = false;
+			mainProperty = null;
 		}
 
 		@Override
@@ -145,7 +152,7 @@ public class IndexStructure {
 					pd.addAlternative(parts[2]);
 				} else if (parts.length >= 3){
 					// Property bookkeeping field
-					if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_FIELD_NAME))
+					if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME))
 						pd.setForwardIndex(true);
 					else
 						throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
@@ -162,14 +169,55 @@ public class IndexStructure {
 			return pd;
 		}
 
+		public PropertyDesc getMainProperty() {
+			return mainProperty;
+		}
+
+		public void detectMainProperty(IndexReader reader) {
+			// Iterate over documents in the index until we find a property
+			// for this complex field that has stored character offsets. This is
+			// our main property.
+			for (int n = 0; n < reader.maxDoc(); n++) {
+				if (!reader.isDeleted(n)) {
+					for (PropertyDesc pr: props.values()) {
+						String lucenePropName = ComplexFieldUtil.propertyField(fieldName, pr.getName());
+						try {
+							TermFreqVector tv = reader.getTermFreqVector(n, lucenePropName);
+							if (tv == null) {
+								// No term vector; probably not stored in this document.
+								continue;
+							}
+							if (tv instanceof TermPositionVector) {
+								if (((TermPositionVector) tv).getOffsets(0) != null) {
+									// This field has offsets stored. Must be the main prop field.
+									mainProperty = pr;
+									return;
+								}
+							}
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				}
+			}
+			throw new RuntimeException("No main property (with char. offsets) detected for complex field " + fieldName);
+		}
+
+		public String getMainPropertyLuceneName() {
+			if (ComplexFieldUtil.MAIN_PROPERTY_NAMELESS)
+				return fieldName;
+			return ComplexFieldUtil.propertyField(fieldName, mainProperty.getName());
+		}
+
 		public void print(PrintStream out) {
-			for (Map.Entry<String, PropertyDesc> e: props.entrySet()) {
-				out.println("  * Property: " + e.getValue().toString());
+			for (PropertyDesc pr: props.values()) {
+				out.println("  * Property: " + pr.toString());
 			}
 			out.println("  * " + (contentStore ? "Includes" : "No") + " content store");
 			out.println("  * " + (xmlTags ? "Includes" : "No") + " XML tag index");
 			out.println("  * " + (lengthInTokens ? "Includes" : "No") + " document length field");
 		}
+
 	}
 
 	/** Description of a property */
@@ -268,11 +316,18 @@ public class IndexStructure {
 		}
 	}
 
+	/** Our index */
+	private IndexReader reader;
+
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, FieldType> metadataFields;
 
 	/** The complex fields in our index */
 	private Map<String, ComplexFieldDesc> complexFields;
+
+	/** The main contents field in our index. This is either the complex field with the name "contents",
+	 *  or if that doesn't exist, the first complex field found. */
+	private ComplexFieldDesc mainContentsField;
 
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
@@ -280,6 +335,7 @@ public class IndexStructure {
 	 * @param reader the index of which we want to know the structure
 	 */
 	public IndexStructure(IndexReader reader) {
+		this.reader = reader;
 		metadataFields = new HashMap<String, FieldType>();
 		complexFields = new HashMap<String, ComplexFieldDesc>();
 
@@ -319,35 +375,20 @@ public class IndexStructure {
 			if (parts.length == 1 && !complexFields.containsKey(parts[0])) {
 				// Probably a metadata field (or, if using old style, the main field
 				// of a complex field; if so, we'll figure that out later)
-				// Detect type by finding the first document that includes this
-				// field and inspecting the Fieldable. This assumes that the field type
-				// is the same for all documents.
-				FieldType type = FieldType.TEXT;
-				for (int n = 0; n < reader.maxDoc(); n++) {
-					if (!reader.isDeleted(n)) {
-						Document d;
-						try {
-							d = reader.document(n);
-						} catch (Exception e) {
-							throw new RuntimeException(e);
-						}
-						Fieldable f = d.getFieldable(name);
-						if (f != null) {
-							if (f instanceof NumericField)
-								type = FieldType.NUMERIC;
-							break;
-						}
-					}
-				}
-				metadataFields.put(name, type);
+				metadataFields.put(name, getFieldType(name));
 			} else {
 				// Part of complex field.
 				if (metadataFields.containsKey(parts[0])) {
 					// This complex field was incorrectly identified as a metadata field at first.
 					// Correct this now.
+					if (hasOffsets(parts[0])) {
+						// Must be a nameless main property. Change the setting if necessary.
+						ComplexFieldUtil.MAIN_PROPERTY_NAMELESS = true;
+					}
 					if (!ComplexFieldUtil.MAIN_PROPERTY_NAMELESS) {
 						throw new RuntimeException("Complex field and metadata field with same name, error! (" + parts[0] + ")");
 					}
+
 					metadataFields.remove(parts[0]);
 				}
 
@@ -356,6 +397,76 @@ public class IndexStructure {
 				cfd.processIndexField(parts);
 			}
 		}
+
+		// Detect the main properties for all complex fields
+		// (looks for fields with char offset information stored)
+		mainContentsField = null;
+		for (ComplexFieldDesc d: complexFields.values()) {
+			if (mainContentsField == null || d.getName().equals("contents"))
+				mainContentsField = d;
+			d.detectMainProperty(reader);
+		}
+	}
+
+	/**
+	 * The main contents field in our index. This is either the complex field with the name "contents",
+	 * or if that doesn't exist, the first complex field found.
+	 * @return the main contents field
+	 */
+	public ComplexFieldDesc getMainContentsField() {
+		return mainContentsField;
+	}
+
+	/** Detect type by finding the first document that includes this
+	 * field and inspecting the Fieldable. This assumes that the field type
+	 * is the same for all documents.
+	 *
+	 * @param reader our index
+	 * @param fieldName the field name to determine the type for
+	 * @return type of the field (text or numeric)
+	 */
+	private FieldType getFieldType(String fieldName) {
+		FieldType type = FieldType.TEXT;
+		for (int n = 0; n < reader.maxDoc(); n++) {
+			if (!reader.isDeleted(n)) {
+				Document d;
+				try {
+					d = reader.document(n);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+				Fieldable f = d.getFieldable(fieldName);
+				if (f != null) {
+					if (f instanceof NumericField)
+						type = FieldType.NUMERIC;
+					break;
+				}
+			}
+		}
+		return type;
+	}
+
+	/** See if a field has character offset information stored.
+	 *
+	 * @param reader our index
+	 * @param fieldName the field name to inspect
+	 * @return true if it has offsets, false if not
+	 */
+	private boolean hasOffsets(String fieldName) {
+		for (int n = 0; n < reader.maxDoc(); n++) {
+			if (!reader.isDeleted(n)) {
+				Document d;
+				try {
+					d = reader.document(n);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+				Fieldable f = d.getFieldable(fieldName);
+				if (f != null)
+					return f.isStoreOffsetWithTermVector();
+			}
+		}
+		return false;
 	}
 
 	private ComplexFieldDesc getOrCreateComplexField(String name) {
@@ -425,9 +536,9 @@ public class IndexStructure {
 
 	public void print(PrintStream out) {
 		out.println("COMPLEX FIELDS");
-		for (Map.Entry<String, ComplexFieldDesc> e: complexFields.entrySet()) {
-			out.println("- " + e.getKey());
-			e.getValue().print(out);
+		for (ComplexFieldDesc cf: complexFields.values()) {
+			out.println("- " + cf.getName());
+			cf.print(out);
 		}
 
 		out.println("\nMETADATA FIELDS");

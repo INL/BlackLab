@@ -59,7 +59,7 @@ public class ComplexFieldImpl extends ComplexField {
 	private String mainPropertyName;
 
 	public ComplexFieldImpl(String name, TokenFilterAdder filterAdder) {
-		this(name, ComplexFieldUtil.mainPropLuceneName(), filterAdder, true);
+		this(name, null, filterAdder, true);
 	}
 
 	public ComplexFieldImpl(String name, String mainProperty, TokenFilterAdder filterAdder) {
@@ -67,12 +67,14 @@ public class ComplexFieldImpl extends ComplexField {
 	}
 
 	public ComplexFieldImpl(String name, TokenFilterAdder filterAdder, boolean includeOffsets) {
-		this(name, ComplexFieldUtil.mainPropLuceneName(), filterAdder, includeOffsets);
+		this(name, null, filterAdder, includeOffsets);
 	}
 
 	public ComplexFieldImpl(String name, String mainProperty, TokenFilterAdder filterAdder, boolean includeOffsets) {
 		fieldName = name;
 		mainPropertyName = mainProperty;
+		if (mainPropertyName == null)
+			mainPropertyName = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
 		properties.put(mainPropertyName, new ComplexFieldPropertyImplLargeDoc(mainPropertyName, filterAdder, includeOffsets));
 	}
 

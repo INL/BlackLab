@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.IndexStructure;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternContaining;
@@ -54,6 +55,10 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
 
     private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
 
+    public void setDefaultProperty(IndexStructure structure, String fieldName) {
+        defaultProperty = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
+    }
+
     public void setDefaultProperty(String property) {
         defaultProperty = property;
     }
@@ -62,20 +67,19 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         return defaultProperty;
     }
 
-    private TextPattern propertyClause(String prop, TextPattern value)
-    {
-        if (ComplexFieldUtil.MAIN_PROPERTY_NAMELESS) {
-            // Main property has no name.
-                if (prop == null || prop.length() == 0 || prop.equals(ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME))
-                        return value; // default property
-                return new TextPatternProperty(prop, value);
-        } else {
-            // Main property has a name. Use that.
-            if (prop == null || prop.length() == 0)
-                prop = ComplexFieldUtil.mainPropLuceneName();
-            return new TextPatternProperty(prop, value);
-        }
-    }
+	private TextPattern propertyClause(String prop, TextPattern value) {
+		if (ComplexFieldUtil.MAIN_PROPERTY_NAMELESS) {
+			// Main property has no name.
+			if (prop == null || prop.length() == 0 || prop.equals(defaultProperty))
+				return value; // default property
+			return new TextPatternProperty(prop, value);
+		} else {
+			// Main property has a name. Use that.
+			if (prop == null || prop.length() == 0)
+				prop = defaultProperty;
+			return new TextPatternProperty(prop, value);
+		}
+	}
 
 // --- Grammar rules start here ---
 

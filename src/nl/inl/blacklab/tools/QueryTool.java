@@ -36,6 +36,7 @@ import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.IndexStructure;
+import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TokenFrequency;
@@ -698,7 +699,7 @@ public class QueryTool {
 		}
 	}
 
-	final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
+	final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
 
 	/**
 	 * Desired context size
@@ -871,8 +872,10 @@ public class QueryTool {
 			String altName = null;
 
 			// Case-sensitive collocations..?
-			if (collocProperty == null)
-				collocProperty = "";
+			if (collocProperty == null) {
+				ComplexFieldDesc cf = searcher.getIndexStructure().getComplexFieldDesc(hits.getConcordanceFieldName());
+				collocProperty = cf.getMainProperty().getName();
+			}
 			if (searcher.isDefaultSearchSensitive() && searcher.getIndexStructure().getComplexFieldDesc(CONTENTS_FIELD).getPropertyDesc(collocProperty).getAlternativeDesc("s") != null) {
 				altName = "s";
 			}

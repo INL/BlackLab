@@ -122,7 +122,8 @@ public class TPTranslationContext {
 	}
 
 	public static TPTranslationContext getSimple(String fieldName) {
-		return new TPTranslationContext(null, fieldName, "", false, false);
+		String mainPropName = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+		return new TPTranslationContext(null, fieldName, mainPropName, false, false);
 	}
 
 

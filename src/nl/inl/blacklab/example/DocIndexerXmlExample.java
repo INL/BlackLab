@@ -53,7 +53,9 @@ import org.xml.sax.Attributes;
  */
 public class DocIndexerXmlExample extends DocIndexerXml {
 
-	private static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD;
+	static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
+
+	private static final String MAIN_PROPERTY = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
 
 	/**
 	 * Text content for the element we're currently parsing
@@ -285,9 +287,10 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 		// lists while parsing.
 		contentsField.addToLuceneDoc(currentLuceneDoc);
 
-		// Add contents field (case-insensitive tokens) to forward index
-		int forwardId = indexer.addToForwardIndex(CONTENTS_FIELD, contentsField.getMainProperty());
-		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(CONTENTS_FIELD),
+		// Add contents field (case-sensitive tokens) to forward index
+		String mainPropName = ComplexFieldUtil.propertyField(CONTENTS_FIELD, MAIN_PROPERTY);
+		int forwardId = indexer.addToForwardIndex(mainPropName, contentsField.getMainProperty());
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(mainPropName),
 				Store.YES, true).setIntValue(forwardId));
 	}
 
