@@ -81,11 +81,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	private int wordsDone;
 
 	/**
-	 * Current named entity type. Only valid when insideNE == true.
-	 */
-	private String neType = "NONE";
-
-	/**
 	 * Have we added a start tag at the current token position yet?
 	 * Used to make sure the starttag property stays in synch.
 	 */
@@ -124,14 +119,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		// Named entity fields (experimental version for IMPACT retrieval demonstrator)
 		//---------------------
 
-		// Named entity type. Used in retr. demonstrator to search for word as NE type,
-		// but BlackLab now uses a different approach to this:
-		// we just search for "element CONTAINING search string" or "search string WITHIN element".
-		// So this extra field is no longer necessary for future applications
-		// (starttag and endtag are enough) and will be removed when we update the retrieval
-		//  demonstrator.
-		contentsField.addProperty("ne"); // named entity type (NONE/PER/LOC/ORG)
-
 		contentsField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start tag positions (just NE tags for now)
 		contentsField.addProperty(ComplexFieldUtil.END_TAG_PROP_NAME); // end tag positions (just NE tags for now)
 	}
@@ -164,12 +151,8 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		} else if (localName.equals("Page")) {
 			endPage();
 		} else if (localName.equals("NE")) {
-			neType = "none";
-
 			contentsField.addPropertyValue(ComplexFieldUtil.END_TAG_PROP_NAME, "ne", endTagAdded ? 0 : 1);
 			endTagAdded = true;
-
-//			neOffset = 0;
 		} else if (localName.equals("header")) {
 			inHeader = false;
 			captureCharacterContent = false;
@@ -205,11 +188,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		} else if (localName.equals("Word")) {
 			startWord(attributes);
 		} else if (localName.equals("NE")) {
-//			insideNE = true;
-			getNamedEntityType(attributes);
-//			getNamedEntityGid(attributes);
-//			neOffset = 0; // word position inside the NE
-
 			contentsField.addPropertyValue(ComplexFieldUtil.START_TAG_PROP_NAME, "ne", startTagAdded ? 0 : 1);
 			for (int i = 0; i < attributes.getLength(); i++) {
 				// Index element attribute values
@@ -224,14 +202,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			captureCharacterContent = true;
 		}
 		super.startElement(uri, localName, qName, attributes);
-	}
-
-	private void getNamedEntityType(Attributes attributes) {
-		neType = attributes.getValue("type").replaceAll("^\\-", "").toLowerCase();
-		if (neType.equals("pers"))
-			neType = "per";
-		if (!neType.matches("^(loc|per|org)$"))
-			System.err.println("Unknown ne type: " + neType);
 	}
 
 	private void startPageXML(Attributes attributes) {
@@ -314,7 +284,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 				contentsField.addStartChar(getContentPosition());
 				contentsField.addEndChar(getContentPosition());
 				contentsField.addValue("");
-				contentsField.addPropertyValue("ne", neType);
 				if (!startTagAdded)
 					contentsField.addPropertyValue(ComplexFieldUtil.START_TAG_PROP_NAME, "");
 				startTagAdded = false; // reset for next time
@@ -361,12 +330,11 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		if (characterContent == null)
 			characterContent = "";
 		contentsField.addValue(preprocessWord(characterContent));
-		contentsField.addPropertyValue("ne", neType);
 
 		// Keep track of NE start and end tags
 		if (!startTagAdded) {
 			// No start tags found; add empty token to keep the property in synch
-			contentsField.addPropertyValue(ComplexFieldUtil.START_TAG_PROP_NAME, ""); //insideNE && neOffset == 0 ? "ne" : "");
+			contentsField.addPropertyValue(ComplexFieldUtil.START_TAG_PROP_NAME, "");
 		}
 		startTagAdded = false; // reset for next token positon
 		if (!endTagAdded) {
