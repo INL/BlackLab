@@ -720,6 +720,7 @@ public class Indexer {
 		ContentStore contentStore = contentStores.get(fieldName);
 		if (contentStore == null) {
 			contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_" + fieldName), createdNewIndex);
+			contentStores.put(fieldName, contentStore);
 		}
 		return contentStore;
 	}
