@@ -19,7 +19,6 @@ import java.io.File;
 import java.util.Properties;
 
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.PropertiesUtil;
 
@@ -29,8 +28,7 @@ import nl.inl.util.PropertiesUtil;
 public class IndexPageXml {
 	public static void main(String[] args) throws Exception {
 
-		// Use new field naming scheme
-		ComplexFieldUtil.setFieldNameSeparators(false, false);
+		//ComplexFieldUtil.setFieldNameSeparators(true, true);
 
 		System.out.println("IndexPageXml\n");
 		if (args.length != 1) {
@@ -50,7 +48,7 @@ public class IndexPageXml {
 
 		// The indexer tool
 		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", baseDir);
-		Indexer indexer = new Indexer(indexDir, true, DocIndexerPageXml.class);
+		Indexer indexer = new Indexer(indexDir, true, DocIndexerPageXml.class, DocIndexerPageXml.CONTENTS_FIELD);
 		try {
 			// How many documents to process (0 = all of them)
 			int maxDocs = PropertiesUtil.getIntProp(properties, "maxDocs", 0);

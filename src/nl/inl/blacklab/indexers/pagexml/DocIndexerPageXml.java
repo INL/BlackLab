@@ -85,22 +85,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	 */
 	private String neType = "NONE";
 
-//	/**
-//	 * Current named entity id. Only valid when insideNE == true.
-//	 */
-//	private int neGid = 0;
-
-//	/**
-//	 * Current word offset within named entity. Only valid when insideNE == true.
-//	 */
-//	private int neOffset = 0;
-
-//	/**
-//	 * Have we found a &lt;NE&gt; start tag but no &lt;/NE&gt; end tag yet? In other words:
-//	 * "are we currently parsing a named entity?"
-//	 */
-//	private boolean insideNE = false;
-
 	/**
 	 * Have we added a start tag at the current token position yet?
 	 * Used to make sure the starttag property stays in synch.
@@ -147,13 +131,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 		// (starttag and endtag are enough) and will be removed when we update the retrieval
 		//  demonstrator.
 		contentsField.addProperty("ne"); // named entity type (NONE/PER/LOC/ORG)
-
-		// Named entity global id (not used, but could be used for linking to a database or something)
-		//contentsField.addProperty("negid");
-
-		// Named entity offset (word number inside ne)
-		// (not used, commented out)
-		//contentsField.addProperty("neoffset");
 
 		contentsField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start tag positions (just NE tags for now)
 		contentsField.addProperty(ComplexFieldUtil.END_TAG_PROP_NAME); // end tag positions (just NE tags for now)
@@ -398,8 +375,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			characterContent = "";
 		contentsField.addValue(preprocessWord(characterContent));
 		contentsField.addPropertyValue("ne", neType);
-		//contentsField.addPropertyValue("negid", neGid + "");
-		//contentsField.addPropertyValue("neoffset", neOffset + "");
 
 		// Keep track of NE start and end tags
 		if (!startTagAdded) {
@@ -422,19 +397,13 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			reportTokensProcessed(wordsDone);
 			wordsDone = 0;
 		}
-
-//		if (insideNE)
-//			neOffset++; // if we're inside an NE, keep track of the word position in this NE
 	}
 
-	static Pattern punctuationAtEnd = Pattern.compile("\\p{P}+$"); // remove non-word chars. Note:
-																	// pattern is greedy, so will
-																	// match as much as possible
+	/** Punctuation and/or whitespace at the end of the token */
+	static Pattern junkAtEnd = Pattern.compile("[\\p{P}\\s]+$");
 
-	static Pattern punctuationAtStart = Pattern.compile("^\\p{P}+"); // remove non-word chars. Note:
-																		// pattern is greedy, so
-																		// will match as much as
-																		// possible
+	/** Punctuation and/or whitespace at the start of the token */
+	static Pattern junkAtStart = Pattern.compile("^[\\p{P}\\s]+");
 
 	/**
 	 * Words may still include leading/trailing whitespace and punctuation in this format. Remove
@@ -445,9 +414,9 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	 * @return sanitized word
 	 */
 	public static String preprocessWord(String word) {
-		word = word.trim(); // remove leading/trailing whitespace before indexing
-		word = punctuationAtEnd.matcher(word).replaceAll("");
-		word = punctuationAtStart.matcher(word).replaceAll("");
+		//word = word.trim(); // remove leading/trailing whitespace before indexing
+		word = junkAtEnd.matcher(word).replaceAll("");
+		word = junkAtStart.matcher(word).replaceAll("");
 		return word;
 	}
 
