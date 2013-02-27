@@ -48,7 +48,7 @@ import org.xml.sax.Attributes;
 public class DocIndexerPageXml extends DocIndexerXml {
 	static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
 
-	private static final String MAIN_PROP_NAME = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+	private static final String MAIN_PROP_NAME = ComplexFieldUtil.getDefaultMainPropName();
 
 	/** Used to capture the content between some XML tags for indexing */
 	private String characterContent = null;
@@ -234,21 +234,8 @@ public class DocIndexerPageXml extends DocIndexerXml {
 			System.err.println("Unknown ne type: " + neType);
 	}
 
-//	private void getNamedEntityGid(Attributes attributes) {
-//		String gid = attributes.getValue("gid");
-//		neGid = 0; // GID of this NE
-//		if (gid != null) {
-//			try {
-//				neGid = Integer.parseInt(gid);
-//			} catch (NumberFormatException e) {
-//				// too bad...
-//				System.err.println("Error parsing NE gid: " + gid);
-//			}
-//		}
-//	}
-
 	private void startPageXML(Attributes attributes) {
-		startCaptureContent();
+		startCaptureContent(CONTENTS_FIELD);
 	}
 
 	private void endPageXML() {

@@ -69,8 +69,8 @@ public class Indexer {
 	 */
 	private Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
 
-	/** Our content store (where we store the full XML of (part of) the document) */
-	private ContentStore contentStore;
+	/** ContentStores are where we store the full XML of (part of) the document) */
+	private Map<String, ContentStore> contentStores = new HashMap<String, ContentStore>();
 
 	/** Stop after indexing this number of docs. -1 if we shouldn't stop. */
 	private int maxDocs = -1;
@@ -145,14 +145,29 @@ public class Indexer {
 	 * @param create
 	 *            if true, creates a new index; otherwise, appends to existing index
 	 * @throws IOException
+	 * @deprecated use version without contents field name
 	 */
+	@Deprecated
 	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass, String contentsFieldName) throws IOException {
+		this(directory, create, docIndexerClass);
+	}
+
+	/**
+	 * Construct Indexer
+	 *
+	 * @param directory
+	 *            the main BlackLab index directory
+	 * @param create
+	 *            if true, creates a new index; otherwise, appends to existing index
+	 * @throws IOException
+	 */
+	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass) throws IOException {
 		this.docIndexerClass = docIndexerClass;
 		this.createdNewIndex = create;
 
 		writer = openIndexWriter(directory, create);
 		indexLocation = directory;
-		contentStore = new ContentStoreDirZip(new File(directory, "cs_" + contentsFieldName), create);
+		//contentStore = new ContentStoreDirZip(new File(directory, "cs_" + contentsFieldName), create);
 	}
 
 	/**
@@ -184,7 +199,7 @@ public class Indexer {
 		return listener;
 	}
 
-	private void log(String msg, IOException e) {
+	private void log(String msg, Exception e) {
 		// @@@ TODO write to file. log4j?
 		e.printStackTrace();
 		System.err.println(msg);
@@ -211,9 +226,10 @@ public class Indexer {
 			fi.close();
 		}
 
-		// Close our content store
-		if (contentStore != null)
-			contentStore.close();
+		// Close our content stores
+		for (ContentStore cs: contentStores.values()) {
+			cs.close();
+		}
 
 		// Close the Lucene IndexWriter
 		writer.close();
@@ -530,7 +546,7 @@ public class Indexer {
 	 *            the file
 	 * @return true if we should skip it, false otherwise
 	 */
-	private boolean skipFile(File file) {
+	protected boolean skipFile(File file) {
 		return file.getName().equals("Thumbs.db");
 	}
 
@@ -700,7 +716,11 @@ public class Indexer {
 		return writer;
 	}
 
-	public ContentStore getContentStore() {
+	public ContentStore getContentStore(String fieldName) {
+		ContentStore contentStore = contentStores.get(fieldName);
+		if (contentStore == null) {
+			contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_" + fieldName), createdNewIndex);
+		}
 		return contentStore;
 	}
 

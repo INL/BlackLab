@@ -94,7 +94,7 @@ public class TPTranslationContext {
 		if (cfd == null)
 			return null;
 
-		if (ComplexFieldUtil.BOOKKEEPING_SUBFIELDS.contains(propName)) {
+		if (ComplexFieldUtil.isBookkeepingSubfield(propName)) {
 			// Not a property but a bookkeeping subfield (prob. starttag/endtag); ok, return it
 			// (can be removed when old field naming scheme is removed)
 			return ComplexFieldUtil.bookkeepingField(fieldName, propName);
@@ -122,7 +122,7 @@ public class TPTranslationContext {
 	}
 
 	public static TPTranslationContext getSimple(String fieldName) {
-		String mainPropName = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
 		return new TPTranslationContext(null, fieldName, mainPropName, false, false);
 	}
 

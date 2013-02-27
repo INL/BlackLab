@@ -74,7 +74,7 @@ public class ComplexFieldImpl extends ComplexField {
 		fieldName = name;
 		mainPropertyName = mainProperty;
 		if (mainPropertyName == null)
-			mainPropertyName = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+			mainPropertyName = ComplexFieldUtil.getDefaultMainPropName();
 		properties.put(mainPropertyName, new ComplexFieldPropertyImplLargeDoc(mainPropertyName, filterAdder, includeOffsets));
 	}
 

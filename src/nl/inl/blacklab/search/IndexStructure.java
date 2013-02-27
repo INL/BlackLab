@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
 
 import org.apache.lucene.document.Document;
@@ -116,30 +117,29 @@ public class IndexStructure {
 		void processIndexField(String[] parts) {
 
 			// See if this is a builtin bookkeeping field or a property.
-			if (parts.length == 1 && !ComplexFieldUtil.MAIN_PROPERTY_NAMELESS)
+			if (parts.length == 1 && !ComplexFieldUtil.isMainPropertyNameless())
 				throw new RuntimeException("Complex field with just basename given, error!");
 
 			String propPart = parts.length == 1 ? "" : parts[1];
 
 			if (propPart == null && parts.length >= 3) {
 				// Bookkeeping field
-				int bookkeepingFieldIndex = ComplexFieldUtil.BOOKKEEPING_SUBFIELDS.indexOf(parts[3]);
+				BookkeepFieldType bookkeepingFieldIndex = ComplexFieldUtil.whichBookkeepingSubfield(parts[3]);
 				switch (bookkeepingFieldIndex) {
-				case 0: /* cid */
+				case CONTENT_ID:
 					// Complex field has content store
 					contentStore = true;
 					return;
-				case 1: /* fiid */
+				case FORWARD_INDEX_ID:
 					// Main property has forward index
 					getOrCreateProperty("").setForwardIndex(true);
 					return;
-				case 2: /* length_tokens */
+				case LENGTH_TOKENS:
 					// Complex field has length in tokens
 					lengthInTokens = true;
 					return;
-				default:
-					throw new RuntimeException();
 				}
+				throw new RuntimeException();
 			}
 
 			// Not a bookkeeping field; must be a property (alternative).
@@ -204,8 +204,8 @@ public class IndexStructure {
 		}
 
 		public String getMainPropertyLuceneName() {
-			if (ComplexFieldUtil.MAIN_PROPERTY_NAMELESS)
-				return fieldName;
+//			if (ComplexFieldUtil.isMainPropertyNameless())
+//				return fieldName;
 			return ComplexFieldUtil.propertyField(fieldName, mainProperty.getName());
 		}
 
@@ -383,9 +383,9 @@ public class IndexStructure {
 					// Correct this now.
 					if (hasOffsets(parts[0])) {
 						// Must be a nameless main property. Change the setting if necessary.
-						ComplexFieldUtil.MAIN_PROPERTY_NAMELESS = true;
+						ComplexFieldUtil._setMainPropertyNameless(true);
 					}
-					if (!ComplexFieldUtil.MAIN_PROPERTY_NAMELESS) {
+					if (!ComplexFieldUtil.isMainPropertyNameless()) {
 						throw new RuntimeException("Complex field and metadata field with same name, error! (" + parts[0] + ")");
 					}
 

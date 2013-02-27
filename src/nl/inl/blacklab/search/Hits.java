@@ -650,7 +650,7 @@ public class Hits implements Iterable<Hit> {
 		this.concordanceFieldName = concordanceFieldName;
 		if (searcher == null) {
 			// Can occur during testing. Just use default main property name.
-			concordanceMainFieldPropName = ComplexFieldUtil.propertyField(concordanceFieldName, ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME);
+			concordanceMainFieldPropName = ComplexFieldUtil.propertyField(concordanceFieldName, ComplexFieldUtil.getDefaultMainPropName());
 		}
 		else {
 			// Get the main property name from the index structure.

@@ -68,7 +68,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     }
 
 	private TextPattern propertyClause(String prop, TextPattern value) {
-		if (ComplexFieldUtil.MAIN_PROPERTY_NAMELESS) {
+		if (ComplexFieldUtil.isMainPropertyNameless()) {
 			// Main property has no name.
 			if (prop == null || prop.length() == 0 || prop.equals(defaultProperty))
 				return value; // default property

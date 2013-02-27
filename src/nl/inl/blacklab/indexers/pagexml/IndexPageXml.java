@@ -48,7 +48,7 @@ public class IndexPageXml {
 
 		// The indexer tool
 		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", baseDir);
-		Indexer indexer = new Indexer(indexDir, true, DocIndexerPageXml.class, DocIndexerPageXml.CONTENTS_FIELD);
+		Indexer indexer = new Indexer(indexDir, true, DocIndexerPageXml.class);
 		try {
 			// How many documents to process (0 = all of them)
 			int maxDocs = PropertiesUtil.getIntProp(properties, "maxDocs", 0);

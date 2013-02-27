@@ -45,7 +45,7 @@ import org.xml.sax.Attributes;
 public class DocIndexerAlto extends DocIndexerXml {
 	public static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
 
-	private static final String MAIN_PROPERTY = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+	private static final String MAIN_PROPERTY = ComplexFieldUtil.getDefaultMainPropName();
 
 	/** Pattern for getting DPO number and page number from image file name */
 	private static Pattern pattDpoAndPage = Pattern.compile("^dpo_(\\d+)_(\\d+)_");
@@ -219,7 +219,7 @@ public class DocIndexerAlto extends DocIndexerXml {
 	 * @param attributes
 	 */
 	private void startAlto(Attributes attributes) {
-		startCaptureContent();
+		startCaptureContent(CONTENTS_FIELD);
 		reportDocumentStarted(attributes);
 	}
 

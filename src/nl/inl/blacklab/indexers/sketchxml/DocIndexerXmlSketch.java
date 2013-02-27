@@ -48,7 +48,7 @@ import org.xml.sax.Attributes;
 public class DocIndexerXmlSketch extends DocIndexerXml {
 	static final String CONTENTS_FIELD = "contents";
 
-	private static final String MAIN_PROP_NAME = ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+	private static final String MAIN_PROP_NAME = ComplexFieldUtil.getDefaultMainPropName();
 
 	private String currentElementText = null;
 
@@ -167,7 +167,7 @@ public class DocIndexerXmlSketch extends DocIndexerXml {
 	 * @param attributes
 	 */
 	private void startDoc(Attributes attributes) {
-		startCaptureContent();
+		startCaptureContent(CONTENTS_FIELD);
 		currentLuceneDoc = new Document();
 		currentLuceneDoc.add(new Field("fromInputFile", fileName, Store.YES, indexNotAnalyzed,
 				TermVector.NO));

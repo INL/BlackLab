@@ -58,7 +58,7 @@ public class IndexAlto {
 
 		// The indexer tool
 		File indexDir = PropertiesUtil.getFileProp(properties, "indexDir", "index", baseDir);
-		Indexer indexer = new Indexer(indexDir, createNewIndex, DocIndexerAlto.class, DocIndexerAlto.CONTENTS_FIELD);
+		Indexer indexer = new Indexer(indexDir, createNewIndex, DocIndexerAlto.class);
 		indexer.setContinueAfterInputError(true);
 		try {
 			// How many documents to process (0 = all of them)

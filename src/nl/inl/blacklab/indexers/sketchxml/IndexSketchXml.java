@@ -49,7 +49,7 @@ public class IndexSketchXml {
 			indexDir.mkdir();
 
 		// The indexer tool
-		Indexer indexer = new Indexer(indexDir, true, DocIndexerXmlSketch.class, DocIndexerXmlSketch.CONTENTS_FIELD);
+		Indexer indexer = new Indexer(indexDir, true, DocIndexerXmlSketch.class);
 		try {
 			// How many documents to process (0 = all of them)
 			int maxDocs = PropertiesUtil.getIntProp(properties, "maxDocs", 0);

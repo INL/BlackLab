@@ -55,7 +55,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 
 	static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
 
-	private static final String MAIN_PROPERTY = ComplexFieldUtil.MAIN_PROPERTY_NAMELESS ? "" : ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+	private static final String MAIN_PROPERTY = ComplexFieldUtil.getDefaultMainPropName();
 
 	/**
 	 * Text content for the element we're currently parsing
@@ -189,7 +189,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 	private void startDoc(Attributes attributes) {
 
 		// Start storing the document in the content store
-		startCaptureContent();
+		startCaptureContent(CONTENTS_FIELD);
 
 		// Create a new Lucene document
 		currentLuceneDoc = new Document();

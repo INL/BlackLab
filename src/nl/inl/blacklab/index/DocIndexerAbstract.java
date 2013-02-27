@@ -18,6 +18,7 @@ package nl.inl.blacklab.index;
 import java.io.Reader;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.CountingReader;
 
 import org.apache.lucene.document.Field;
@@ -48,11 +49,15 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
 	protected CountingReader reader;
 
-	protected ContentStore contentStore;
+	//protected ContentStore contentStore;
 
 	private StringBuilder content = new StringBuilder();
 
+	/** Are we capturing the content of the document for indexing? */
 	private boolean captureContent = false;
+
+	/** What field we're capturing content for */
+	private String captureContentFieldName;
 
 	private int charsContentAlreadyStored = 0;
 
@@ -87,8 +92,18 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		return indexer.continueIndexing();
 	}
 
+	/**
+	 * Starts capturing of content.
+	 * @deprecated pass the field name you're capturing content for
+	 */
+	@Deprecated
 	public void startCaptureContent() {
+		startCaptureContent(Searcher.DEFAULT_CONTENTS_FIELD_NAME);
+	}
+
+	public void startCaptureContent(String fieldName) {
 		captureContent = true;
+		captureContentFieldName = fieldName;
 
 		// Empty the StringBuilder object
 		if (content != null)
@@ -100,8 +115,10 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	public int storeCapturedContent() {
 		captureContent = false;
 		int id = -1;
-		if (!skippingCurrentDocument)
+		if (!skippingCurrentDocument) {
+			ContentStore contentStore = indexer.getContentStore(captureContentFieldName);
 			id = contentStore.store(content.toString());
+		}
 		content = null;
 		charsContentAlreadyStored = 0;
 		return id;
@@ -109,8 +126,10 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
 	public void storePartCapturedContent() {
 		charsContentAlreadyStored += content.length();
-		if (!skippingCurrentDocument)
+		if (!skippingCurrentDocument) {
+			ContentStore contentStore = indexer.getContentStore(captureContentFieldName);
 			contentStore.storePart(content.toString());
+		}
 		content = new StringBuilder();
 	}
 
@@ -162,7 +181,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		this.indexer = indexer;
 		this.fileName = fileName;
 		this.reader = new CountingReader(reader);
-		contentStore = indexer.getContentStore();
+		//contentStore = indexer.getContentStore();
 	}
 
 	public void reportCharsProcessed() {

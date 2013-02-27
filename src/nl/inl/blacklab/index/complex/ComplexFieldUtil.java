@@ -32,22 +32,83 @@ public class ComplexFieldUtil {
 
 	public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
 
-	public static final String CONTENT_ID_BOOKKEEP_NAME = "cid";
+	private static final String CONTENT_ID_BOOKKEEP_NAME = "cid";
 
-	public static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
+	private static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
 
-	public static final String DEFAULT_MAIN_PROP_NAME = "word";
+	private static final String DEFAULT_MAIN_PROP_NAME = "word";
 
 	public static final String START_TAG_PROP_NAME = "starttag";
 
 	public static final String END_TAG_PROP_NAME = "endtag";
 
+	/**
+	 * Is the main property of the field (the one containing word forms and character positions)
+	 * nameless, or does it have a property name like the other properties (e.g. "word" or "wf")?
+	 * In the old scheme, they were nameless, in the new scheme not.
+	 */
+	private static boolean MAIN_PROPERTY_NAMELESS;
+
+	/**
+	 * String used to separate the base field name (say, contents) and the field property (pos,
+	 * lemma, etc.)
+	 */
+	static String PROP_SEP;
+
+	/**
+	 * String used to separate the field/property name (say, contents_lemma) and the alternative
+	 * (e.g. "s" for case-sensitive)
+	 */
+	static String ALT_SEP;
+
+	/**
+	 * String used to separate the field/property name (say, contents_lemma) and the alternative
+	 * (e.g. "s" for case-sensitive)
+	 */
+	static String BOOKKEEPING_SEP;
+
+	/** Length of the ALT separator */
+	static int ALT_SEP_LEN;
+
+	/** Length of the PROP separator */
+	static int PROP_SEP_LEN;
+
+	/** Length of the BOOKKEEPING separator */
+	static int BOOKKEEPING_SEP_LEN;
+
+	static {
+		// Default: use new field naming scheme.
+		setFieldNameSeparators(false, false);
+	}
+
 	/** What are the names of the bookkeeping subfields (i.e. content id, forward index id, etc.) */
-	public final static List<String> BOOKKEEPING_SUBFIELDS = Arrays.asList(
+	private final static List<String> BOOKKEEPING_SUBFIELDS = Arrays.asList(
 		CONTENT_ID_BOOKKEEP_NAME,
 		FORWARD_INDEX_ID_BOOKKEEP_NAME,
 		LENGTH_TOKENS_BOOKKEEP_NAME
 	);
+
+	public enum BookkeepFieldType {
+		CONTENT_ID,
+		FORWARD_INDEX_ID,
+		LENGTH_TOKENS
+	}
+
+	public static boolean isBookkeepingSubfield(String bookkeepName) {
+		return BOOKKEEPING_SUBFIELDS.contains(bookkeepName);
+	}
+
+	public static BookkeepFieldType whichBookkeepingSubfield(String bookkeepName) {
+		switch(BOOKKEEPING_SUBFIELDS.indexOf(bookkeepName)) {
+		case 0:
+			return BookkeepFieldType.CONTENT_ID;
+		case 1:
+			return BookkeepFieldType.FORWARD_INDEX_ID;
+		case 2:
+			return BookkeepFieldType.LENGTH_TOKENS;
+		}
+		throw new RuntimeException();
+	}
 
 	public static String contentIdField(String fieldName) {
 		return bookkeepingField(fieldName, CONTENT_ID_BOOKKEEP_NAME);
@@ -116,45 +177,6 @@ public class ComplexFieldUtil {
 		ALT_SEP_LEN = ALT_SEP.length();
 		PROP_SEP_LEN = PROP_SEP.length();
 		BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
-	}
-
-	/**
-	 * Is the main property of the field (the one containing word forms and character positions)
-	 * nameless, or does it have a property name like the other properties (e.g. "word" or "wf")?
-	 * In the old scheme, they were nameless, in the new scheme not.
-	 */
-	public static boolean MAIN_PROPERTY_NAMELESS;
-
-	/**
-	 * String used to separate the base field name (say, contents) and the field property (pos,
-	 * lemma, etc.)
-	 */
-	public static String PROP_SEP;
-
-	/**
-	 * String used to separate the field/property name (say, contents_lemma) and the alternative
-	 * (e.g. "s" for case-sensitive)
-	 */
-	public static String ALT_SEP;
-
-	/**
-	 * String used to separate the field/property name (say, contents_lemma) and the alternative
-	 * (e.g. "s" for case-sensitive)
-	 */
-	public static String BOOKKEEPING_SEP;
-
-	/** Length of the ALT separator */
-	static int ALT_SEP_LEN;
-
-	/** Length of the PROP separator */
-	static int PROP_SEP_LEN;
-
-	/** Length of the BOOKKEEPING separator */
-	static int BOOKKEEPING_SEP_LEN;
-
-	static {
-		// Default: use new field naming scheme.
-		setFieldNameSeparators(false, false);
 	}
 
 	/**
@@ -500,12 +522,6 @@ public class ComplexFieldUtil {
 		// We're looking for an alternative
 		String altSuffix = ALT_SEP + altName;
 		return fieldPropAltName.endsWith(altSuffix);
-//		int pos = fieldName.indexOf(altSuffix);
-//		if (pos < 0)
-//			return false; // Not found
-//
-//		// Should occur at the end
-//		return pos + altSuffix.length() == fieldName.length();
 	}
 
 	/**
@@ -550,6 +566,24 @@ public class ComplexFieldUtil {
 	public static String mainPropertyField(IndexStructure structure, String fieldName) {
 		//return propertyField(fieldName, MAIN_PROPERTY_NAMELESS ? "" : DEFAULT_MAIN_PROP_NAME);
 		return structure.getComplexFieldDesc(fieldName).getMainPropertyLuceneName();
+	}
+
+	public static String getDefaultMainPropName() {
+		return MAIN_PROPERTY_NAMELESS ? "" : DEFAULT_MAIN_PROP_NAME;
+	}
+
+	public static boolean isMainPropertyNameless() {
+		return MAIN_PROPERTY_NAMELESS;
+	}
+
+	/**
+	 * Don't call this yourself. It is called by the IndexStructure constructor
+	 * in case it detects the index has nameless main properties. Will
+	 * eventually be removed.
+	 * @param b true iff main property is nameless
+	 */
+	public static void _setMainPropertyNameless(boolean b) {
+		MAIN_PROPERTY_NAMELESS = b;
 	}
 
 
