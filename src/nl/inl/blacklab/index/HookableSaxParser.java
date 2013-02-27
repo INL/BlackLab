@@ -30,6 +30,7 @@ import nl.inl.util.StringUtil;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -96,11 +97,11 @@ public class HookableSaxParser extends DefaultHandler {
 			}
 
 			public boolean currentElementMatched() {
-				return succesfulMatches == elementNames.size() && failedMatches == 0;
+				return succesfulMatches == elementNames.size() && failedMatches == 0 && attributeName == null;
 			}
 
 			public boolean ancestorMatched() {
-				return succesfulMatches == elementNames.size();
+				return succesfulMatches == elementNames.size() && attributeName == null;
 			}
 
 			public boolean attributeMatches(String attributeFound) {
@@ -176,6 +177,7 @@ public class HookableSaxParser extends DefaultHandler {
 				matchers.add(new ExprMatcher());
 			}
 
+			// Call each of the matchers to signal the start of this element
 			for (ExprMatcher m : matchers) {
 				m.startElement(localName);
 			}
@@ -186,6 +188,7 @@ public class HookableSaxParser extends DefaultHandler {
 		public void endElement() {
 			depth--;
 
+			// Call each of the matchers to signal the end of this element
 			Set<ExprMatcher> toRemove = new HashSet<ExprMatcher>();
 			for (ExprMatcher m : matchers) {
 				if (!m.endElement())
@@ -302,10 +305,10 @@ public class HookableSaxParser extends DefaultHandler {
 		}
 
 		public void endElement(String uri, String localName, String qName) {
-			expression.endElement();
 			if (shouldCallHandler()) {
 				handler.endElement(uri, localName, qName);
 			}
+			expression.endElement();
 		}
 
 		public void characters(char[] ch, int start, int length) {
@@ -321,6 +324,29 @@ public class HookableSaxParser extends DefaultHandler {
 
 	/** The list of hooks into our parser */
 	private List<SaxParserHook> hooks = new ArrayList<SaxParserHook>();
+
+	/** The SAX parser to use */
+	SAXParser parser;
+
+	/** To keep track of the position within the document */
+	protected Locator locator;
+
+	public void setParser(SAXParser parser) {
+		this.parser = parser;
+	}
+
+	private SAXParser getParser() {
+		if (parser == null) {
+			SAXParserFactory factory = SAXParserFactory.newInstance();
+			factory.setNamespaceAware(true);
+			try {
+				parser = factory.newSAXParser();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return parser;
+	}
 
 	public HookableSaxParser() {
 		//
@@ -339,6 +365,34 @@ public class HookableSaxParser extends DefaultHandler {
 	public void addHook(SaxPathExpressionChecker condition, boolean callHandlerForAllDescendants,
 			SaxParserHandler handler) {
 		hooks.add(new SaxParserHook(condition, callHandlerForAllDescendants, handler));
+	}
+
+	/**
+	 * Add a hook to the parser.
+	 *
+	 * @param condition
+	 *            when to invoke the handler (xpath subset expression)
+	 * @param callHandlerForAllDescendants
+	 *            whether or not to call the handler for all descendants of the matched element
+	 * @param handler
+	 *            what to do when the condition matches
+	 */
+	public void addHook(String condition, boolean callHandlerForAllDescendants,
+			SaxParserHandler handler) {
+		addHook(new SaxPathExpressionChecker(condition), callHandlerForAllDescendants, handler);
+	}
+
+	@Override
+	public void setDocumentLocator(Locator locator) {
+		this.locator = locator;
+	}
+
+	/**
+	 * Describe current parsing position
+	 * @return the description
+	 */
+	public String describePosition() {
+		return "line " + locator.getLineNumber() + ", position " + locator.getColumnNumber();
 	}
 
 	/**
@@ -371,7 +425,10 @@ public class HookableSaxParser extends DefaultHandler {
 		}
 	}
 
-	// TODO: convert to unit tests
+	public void parse(InputSource inputSource) throws SAXException, IOException {
+		getParser().parse(inputSource, this);
+	}
+
 	/**
 	 * Test program
 	 *
@@ -386,11 +443,8 @@ public class HookableSaxParser extends DefaultHandler {
 				+ "<child><name>A</name><child att='123'><name>C</name></child></child>"
 				+ "<child><name>B</name><child att='456'><name>D</name></child></child>"
 				+ "</root>";
-		SAXParserFactory factory = SAXParserFactory.newInstance();
-		factory.setNamespaceAware(true);
-		SAXParser parser = factory.newSAXParser();
 		HookableSaxParser p = new HookableSaxParser();
-		p.addHook(new SaxPathExpressionChecker("/root/child"), true, new SaxParserHandler() {
+		p.addHook("/root/child", true, new SaxParserHandler() {
 			@Override
 			public void startElement(String uri, String localName, String qName,
 					Attributes attributes) {
@@ -402,19 +456,20 @@ public class HookableSaxParser extends DefaultHandler {
 				System.out.println("End of element: " + localName);
 			}
 		});
-		p.addHook(new SaxPathExpressionChecker("//child/name"), true, new SaxParserHandler() {
+		p.addHook("//child/name", true, new SaxParserHandler() {
 			@Override
 			public void characters(char[] ch, int start, int length) {
 				System.out.println("Child name: " + new String(ch, start, length));
 			}
 		});
-		p.addHook(new SaxPathExpressionChecker("//@att"), true, new SaxParserHandler() {
+		p.addHook("//@att", true, new SaxParserHandler() {
 
 			@Override
 			public void attribute(String name, String value) {
 				System.out.println("Attribute: " + value);
 			}
 		});
-		parser.parse(new InputSource(new StringReader(xml)), p);
+		p.parse(new InputSource(new StringReader(xml)));
 	}
+
 }
