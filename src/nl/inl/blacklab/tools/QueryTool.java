@@ -222,6 +222,7 @@ public class QueryTool {
 			out.println("  [hw=\"zijn\"] [hw=\"blijven\"]       # Find a form of \"zijn\" followed by a form of \"blijven\"");
 			out.println("  \"der.*\"{2,}                      # Find two or more successive words starting with \"der\"");
 			out.println("  [pos=\"a.*\"]+ \"man\"               # Find adjectives applied to \"man\"");
+			out.println("  \"stad\" []{2,3} \"dorp\"            # Find \"stad\" followed within 2-3 words by \"dorp\"");
 		}
 
 		@Override
@@ -441,6 +442,8 @@ public class QueryTool {
 				prevPage();
 			} else if (lcased.equals("next") || lcased.equals("n")) {
 				nextPage();
+			} else if (lcased.startsWith("page ")) {
+				showPage(Integer.parseInt(lcased.substring(5)));
 			} else if (lcased.startsWith("pagesize ")) {
 				resultsPerPage = Integer.parseInt(lcased.substring(9));
 				firstResult = 0;
@@ -581,11 +584,15 @@ public class QueryTool {
 
 		out.println("Control commands:");
 		out.println("  sw(itch)                           # Switch languages (" + langAvail + ")");
-		out.println("  p(rev) / n(ext) / pagesize <n>     # Page through results");
+		out.println("  p(rev) / n(ext) / page <n>         # Page through results");
 		out.println("  sort {match|left|right} [prop]     # Sort query results  (left = left context, etc.)");
 		out.println("  group {match|left|right} [prop]    # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
 		out.println("  hits / groups / group <n> / colloc # Switch between results modes");
+		out.println("  pagesize <n>                       # Set number of hits to show per page");
 		out.println("  context <n>                        # Set number of words to show around hits");
+		out.println("  sensitive {on|off|case|diac}       # Set case-/diacritics-sensitivity");
+		out.println("  filter <luceneQuery>               # Set document filter, e.g. title:\"Smith\"");
+		out.println("  doctitle {on|off}                  # Show document titles between hits?");
 		out.println("  help                               # This message");
 		out.println("  exit                               # Exit program");
 		out.println("");
@@ -651,42 +658,47 @@ public class QueryTool {
 	}
 
 	/**
-	 * Show the next page of results.
+	 * Show the a specific page of results.
 	 */
-	private void nextPage() {
+	private void showPage(int pageNumber) {
 		if (hits != null) {
-			int max;
+			int totalResults;
 			switch(showSetting) {
 			case COLLOC:
-				max = collocations.size();
+				totalResults = collocations.size();
 				break;
 			case GROUPS:
-				max = groups.numberOfGroups();
+				totalResults = groups.numberOfGroups();
 				break;
 			default:
-				max = hits.size();
+				totalResults = hits.size();
 				break;
 			}
 
+			int totalPages = (totalResults + resultsPerPage - 1) / resultsPerPage;
+			if (pageNumber < 0)
+				pageNumber = totalPages - 1;
+			if (pageNumber >= totalPages)
+				pageNumber = 0;
+
 			// Next page
-			firstResult += resultsPerPage;
-			if (firstResult >= max)
-				firstResult = 0;
+			firstResult = pageNumber * resultsPerPage;
 			showResultsPage();
 		}
+	}
+
+	/**
+	 * Show the next page of results.
+	 */
+	private void nextPage() {
+		showPage(firstResult / resultsPerPage + 1);
 	}
 
 	/**
 	 * Show the previous page of results.
 	 */
 	private void prevPage() {
-		if (hits != null) {
-			// Previous page
-			firstResult -= resultsPerPage;
-			if (firstResult < 0)
-				firstResult = 0;
-			showResultsPage();
-		}
+		showPage(firstResult / resultsPerPage - 1);
 	}
 
 	/**
