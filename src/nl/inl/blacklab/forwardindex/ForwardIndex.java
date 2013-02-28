@@ -131,8 +131,6 @@ public class ForwardIndex {
 	 *  the actual file may be larger because we reserve space at the end. */
 	private long tokenFileEndPosition = 0;
 
-	// private boolean indexMode = false;
-
 	/** Index reader, for getting documents (for translating from Lucene doc id to fiid) */
 	private IndexReader reader;
 
@@ -142,6 +140,15 @@ public class ForwardIndex {
 	/** Cached fiid field */
 	private int[] cachedFiids;
 
+	/**
+	 * Indicate how to translate Lucene document ids to forward index ids
+	 * (by looking them up in the index).
+	 *
+	 * Caches the forward index id field.
+	 *
+	 * @param reader the index
+	 * @param lucenePropFieldName the forward index if field
+	 */
 	public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
 		this.reader = reader;
 		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
@@ -206,7 +213,6 @@ public class ForwardIndex {
 			VersionFile.write(dir, "fi", CURRENT_VERSION);
 		}
 
-		// this.indexMode = indexMode;
 		termsFile = new File(dir, "terms.dat");
 		tocFile = new File(dir, "docs.dat");
 		tokensFile = new File(dir, "tokens.dat");
@@ -511,51 +517,6 @@ public class ForwardIndex {
 	 */
 	public synchronized int addDocument(List<String> content) {
 		return addDocument(content, null);
-	}
-
-	/**
-	 * Retrieve substring from a document.
-	 *
-	 * @param id
-	 *            forward index document id
-	 * @param start
-	 *            start of the substring
-	 * @param end
-	 *            end of the substring
-	 * @return the substring
-	 */
-	public String[] retrievePart(int id, int start, int end) {
-		return retrieveParts(id, new int[] { start }, new int[] { end }).get(0);
-	}
-
-	/**
-	 * Retrieve part of a document in token ids form.
-	 *
-	 * @param id
-	 *            forward index document id
-	 * @param start
-	 *            start of the part to retrieve
-	 * @param end
-	 *            end of the part to retrieve
-	 * @return the token ids
-	 */
-	public int[] retrievePartInt(int id, int start, int end) {
-		return retrievePartsInt(id, new int[] { start }, new int[] { end }).get(0);
-	}
-
-	/**
-	 * Retrieve part of a document in token ids form.
-	 *
-	 * @param id
-	 *            forward index document id
-	 * @param start
-	 *            start of the part to retrieve
-	 * @param end
-	 *            end of the part to retrieve
-	 * @return the token ids
-	 */
-	public int[] retrievePartSortOrder(int id, int start, int end) {
-		return retrievePartsSortOrder(id, new int[] { start }, new int[] { end }).get(0);
 	}
 
 	/**

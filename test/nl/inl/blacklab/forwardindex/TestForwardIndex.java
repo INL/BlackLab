@@ -59,6 +59,10 @@ public class TestForwardIndex {
 		Utilities.removeBlackLabTestDirs();
 	}
 
+	public String[] retrievePart(int id, int start, int end) {
+		return fi.retrieveParts(id, new int[] { start }, new int[] { end }).get(0);
+	}
+
 	@Test
 	public void testRetrieve() {
 		ForwardIndex.preferredChunkSizeBytes = Integer.MAX_VALUE; // make sure this is at the default
@@ -68,7 +72,7 @@ public class TestForwardIndex {
 
 		// Retrieve strings
 		for (int i = 0; i < str.length; i++) {
-			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
+			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(retrievePart(i, -1, -1)));
 		}
 	}
 
@@ -81,7 +85,7 @@ public class TestForwardIndex {
 
 		// Retrieve strings
 		for (int i = 0; i < str.length; i++) {
-			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
+			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(retrievePart(i, -1, -1)));
 		}
 	}
 
@@ -94,7 +98,7 @@ public class TestForwardIndex {
 
 		// Retrieve strings
 		for (int i = 0; i < str.length; i++) {
-			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
+			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(retrievePart(i, -1, -1)));
 		}
 	}
 
@@ -107,7 +111,7 @@ public class TestForwardIndex {
 
 		// Retrieve strings
 		for (int i = 0; i < str.length; i++) {
-			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
+			Assert.assertEquals(Arrays.asList(str[i]), Arrays.asList(retrievePart(i, -1, -1)));
 		}
 	}
 

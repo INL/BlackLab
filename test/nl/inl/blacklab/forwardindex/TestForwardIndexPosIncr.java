@@ -63,6 +63,10 @@ public class TestForwardIndexPosIncr {
 		Utilities.removeBlackLabTestDirs();
 	}
 
+	public String[] retrievePart(int id, int start, int end) {
+		return fi.retrieveParts(id, new int[] { start }, new int[] { end }).get(0);
+	}
+
 	@Test
 	public void testRetrieve() {
 		setUpForwardIndex();
@@ -70,7 +74,7 @@ public class TestForwardIndexPosIncr {
 		// Retrieve strings
 		String[][] expected = { { "How", "much", "", "", "wood" } };
 		for (int i = 0; i < str.length; i++) {
-			Assert.assertEquals(Arrays.asList(expected[i]), Arrays.asList(fi.retrievePart(i, -1, -1)));
+			Assert.assertEquals(Arrays.asList(expected[i]), Arrays.asList(retrievePart(i, -1, -1)));
 		}
 	}
 
