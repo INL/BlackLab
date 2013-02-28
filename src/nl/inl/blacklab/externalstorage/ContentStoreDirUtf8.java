@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.util.ExUtil;
-import nl.inl.util.Utilities;
 
 /**
  * Store string content by id in a directory of compound files with a TOC file. Quickly retrieve
@@ -334,9 +333,6 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 			tocRaf.close();
 			tocRaf = null;
 
-			// Unmap buffer to prevent file lock
-			// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
-			Utilities.cleanDirectBufferHack(tocFileBuffer);
 			tocFileBuffer = null;
 
 		} catch (IOException e) {

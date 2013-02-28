@@ -17,7 +17,6 @@ package nl.inl.util;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.nio.ByteBuffer;
 import java.text.Collator;
 import java.text.Normalizer;
 import java.text.ParseException;
@@ -42,28 +41,6 @@ import org.apache.lucene.util.Version;
  * TODO: move to InlJavaLib (deprecate/remove here)
  */
 public class Utilities {
-
-	/**
-	 * Clean direct buffer hack, switched off now.
-	 *
-	 * We used to have this hack because you can't delete a file you just
-	 * memory mapped on Windows. Now we just avoid the situation altogether
-	 * (it's really only a problem during testing; now we occasionally leave
-	 * some temporary files lying around until the next test run)
-	 *
-	 * @param buffer the buffer to clean
-	 */
-	public static void cleanDirectBufferHack(ByteBuffer buffer) {
-//			// This is a bit of a hack to unmap the direct buffer in order to
-//			// prevent file lock.
-//			// http://bugs.sun.com/view_bug.do?bug_id=4724038
-//			// We should find a workaround for this
-//			if (buffer != null && buffer.isDirect()) {
-//				Cleaner cleaner = ((sun.nio.ch.DirectBuffer) buffer).cleaner();
-//				if (cleaner != null)
-//					cleaner.clean();
-//			}
-	}
 
 	/**
 	 * Removes temporary test directories that may be left over from previous test

@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import nl.inl.util.Utilities;
-
 /**
  * Keeps a first-come-first-serve list of unique terms.
  * Each term gets a unique index number. These numbers are
@@ -35,8 +33,6 @@ import nl.inl.util.Utilities;
  * lookups of terms occurring in specific positions.
  */
 public class Terms {
-	//ArrayList<String> terms = new ArrayList<String>();
-
 	final static int INT_SIZE = Integer.SIZE / Byte.SIZE;
 
 	/** The terms, by index number. Only valid when indexMode == false. */
@@ -45,7 +41,7 @@ public class Terms {
 	/** The index numbers, by sort order. Only valid when indexMode == false. */
 	int[] idPerSortPosition;
 
-	/** The sorting position for each index number. Inverse of sortedOrder[] array. Only valid when indexMode == false. */
+	/** The sorting position for each index number. Inverse of idPerSortPosition[] array. Only valid when indexMode == false. */
 	int[] sortPositionPerId;
 
 	/**
@@ -105,13 +101,11 @@ public class Terms {
 	}
 
 	public void clear() {
-		//terms.clear();
 		termIndex.clear();
 	}
 
 	private void read(File termsFile) {
 		termIndex.clear();
-		//terms.clear();
 		try {
 			RandomAccessFile raf = new RandomAccessFile(termsFile, "r");
 			FileChannel fc = raf.getChannel();
@@ -123,12 +117,6 @@ public class Terms {
 					terms = new String[n];
 					idPerSortPosition = new int[n];
 					sortPositionPerId = new int[n];
-
-					/*// Fill terms with nulls so we can set each term as we read it
-					terms.ensureCapacity(n);
-					for (int i = 0; i < n; i++) {
-						terms.add(null);
-					}*/
 				}
 
 				// Now read terms and fill appropriate structure.
@@ -146,7 +134,7 @@ public class Terms {
 						termIndex.put(str, id);
 					} else {
 						// We need to find term for id while searching
-						terms[id] = str; //.set(id, str);
+						terms[id] = str;
 					}
 				}
 
@@ -162,10 +150,6 @@ public class Terms {
 			} finally {
 				fc.close();
 				raf.close();
-
-				// Unmap buffer to prevent file lock
-				// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
-				Utilities.cleanDirectBufferHack(buf);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -194,10 +178,6 @@ public class Terms {
 						int p = buf.position();
 						bufOffset += p;
 
-						// Unmap buffer to prevent file lock
-						// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
-						Utilities.cleanDirectBufferHack(buf);
-
 						buf = fc.map(MapMode.READ_WRITE, bufOffset, writeMapReserve);
 					}
 
@@ -217,10 +197,6 @@ public class Terms {
 						int p = buf.position();
 						bufOffset += p;
 
-						// Unmap buffer to prevent file lock
-						// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
-						Utilities.cleanDirectBufferHack(buf);
-
 						buf = fc.map(MapMode.READ_WRITE, bufOffset, writeMapReserve);
 					}
 
@@ -230,11 +206,6 @@ public class Terms {
 			} finally {
 				fc.close();
 				raf.close();
-
-				// Unmap buffer to prevent file lock
-				// NOTE: this doesn't do anything anymore, will be removed soon, see method Javadoc.
-				Utilities.cleanDirectBufferHack(buf);
-
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
