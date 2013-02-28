@@ -15,7 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.sequences;
 
-import nl.inl.blacklab.search.TPTranslationContext;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
@@ -50,7 +50,7 @@ public class TextPatternAnyToken extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		T any = translator.any(context);
 
 		int realMin = min;

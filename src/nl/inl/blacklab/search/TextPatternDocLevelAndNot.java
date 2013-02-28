@@ -31,7 +31,7 @@ public class TextPatternDocLevelAndNot extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		return translator.docLevelAndNot(include.translate(translator, context),
 				exclude.translate(translator, context));
 	}

@@ -16,7 +16,7 @@
 package nl.inl.blacklab.search.sequences;
 
 import junit.framework.Assert;
-import nl.inl.blacklab.search.TPTranslationContext;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTerm;
 import nl.inl.blacklab.search.TextPatternTranslatorString;
@@ -27,7 +27,7 @@ public class TestTextPatternSequence {
 
 	TextPatternTranslatorString stringifier = new TextPatternTranslatorString();
 
-	TPTranslationContext ctx = TPTranslationContext.getSimple("contents");
+	QueryExecutionContext ctx = QueryExecutionContext.getSimple("contents");
 
 	@Test
 	public void testSequence() {
@@ -36,7 +36,7 @@ public class TestTextPatternSequence {
 				"fox"));
 
 		String str = seq.translate(stringifier, ctx);
-		Assert.assertEquals("SEQ(TERM(contents%word, the), TERM(contents%word, fox))", str);
+		Assert.assertEquals("SEQ(TERM(contents%word@i, the), TERM(contents%word@i, fox))", str);
 	}
 
 	@Test
@@ -46,7 +46,7 @@ public class TestTextPatternSequence {
 				new TextPatternAnyToken(1, 3), new TextPatternTerm("fox"));
 
 		String str = seq.translate(stringifier);
-		Assert.assertEquals("SEQ(TERM(contents%word, the), EXPAND(TERM(contents%word, fox), true, 1, 3))", str);
+		Assert.assertEquals("SEQ(TERM(contents%word@i, the), EXPAND(TERM(contents%word@i, fox), true, 1, 3))", str);
 	}
 
 	@Test
@@ -56,7 +56,7 @@ public class TestTextPatternSequence {
 				new TextPatternAnyToken(1, 3));
 
 		String str = seq.translate(stringifier);
-		Assert.assertEquals("EXPAND(TERM(contents%word, the), false, 1, 3)", str);
+		Assert.assertEquals("EXPAND(TERM(contents%word@i, the), false, 1, 3)", str);
 	}
 
 	@Test
@@ -66,7 +66,7 @@ public class TestTextPatternSequence {
 				new TextPatternTerm("fox"));
 
 		String str = seq.translate(stringifier);
-		Assert.assertEquals("EXPAND(TERM(contents%word, fox), true, 1, 3)", str);
+		Assert.assertEquals("EXPAND(TERM(contents%word@i, fox), true, 1, 3)", str);
 	}
 
 }

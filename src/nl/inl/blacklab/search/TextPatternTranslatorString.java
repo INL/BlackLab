@@ -26,62 +26,62 @@ import nl.inl.util.StringUtil;
 public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 
 	@Override
-	public String and(TPTranslationContext context, List<String> clauses) {
+	public String and(QueryExecutionContext context, List<String> clauses) {
 		return "AND(" + StringUtil.join(clauses, ", ") + ")";
 	}
 
 	@Override
-	public String or(TPTranslationContext context, List<String> clauses) {
+	public String or(QueryExecutionContext context, List<String> clauses) {
 		return "OR(" + StringUtil.join(clauses, ", ") + ")";
 	}
 
 	@Override
-	public String regex(TPTranslationContext context, String value) {
+	public String regex(QueryExecutionContext context, String value) {
 		return "REGEX(" + context.luceneField() + ", " + value + ")";
 	}
 
 	@Override
-	public String sequence(TPTranslationContext context, List<String> clauses) {
+	public String sequence(QueryExecutionContext context, List<String> clauses) {
 		return "SEQ(" + StringUtil.join(clauses, ", ") + ")";
 	}
 
 	@Override
-	public String docLevelAnd(TPTranslationContext context, List<String> clauses) {
+	public String docLevelAnd(QueryExecutionContext context, List<String> clauses) {
 		return "DOC-AND(" + StringUtil.join(clauses, ", ") + ")";
 	}
 
 	@Override
-	public String fuzzy(TPTranslationContext context, String value, float similarity, int prefixLength) {
+	public String fuzzy(QueryExecutionContext context, String value, float similarity, int prefixLength) {
 		return "FUZZY(" + context.luceneField() + ", " + value + ", " + similarity + ", " + prefixLength + ")";
 	}
 
 	@Override
-	public String tags(TPTranslationContext context, String elementName, Map<String, String> attr) {
+	public String tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
 		return "TAGS(" + elementName + (attr == null ? "-" : ", " + StringUtil.join(attr.values(), ";")) + ")";
 	}
 
 	@Override
-	public String containing(TPTranslationContext context, String containers, String search) {
+	public String containing(QueryExecutionContext context, String containers, String search) {
 		return "CONTAINING(" + containers + ", " + search + ")";
 	}
 
 	@Override
-	public String within(TPTranslationContext context, String search, String containers) {
+	public String within(QueryExecutionContext context, String search, String containers) {
 		return "WITHIN(" + search + ", " + containers + ")";
 	}
 
 	@Override
-	public String startsAt(TPTranslationContext context, String producer, String filter) {
+	public String startsAt(QueryExecutionContext context, String producer, String filter) {
 		return "STARTSAT(" + producer + ", " + filter + ")";
 	}
 
 	@Override
-	public String endsAt(TPTranslationContext context, String producer, String filter) {
+	public String endsAt(QueryExecutionContext context, String producer, String filter) {
 		return "ENDSAT(" + producer + ", " + filter + ")";
 	}
 
 	@Override
-	public String term(TPTranslationContext context, String value) {
+	public String term(QueryExecutionContext context, String value) {
 		return "TERM(" + context.luceneField() + ", " + value + ")";
 	}
 
@@ -101,22 +101,22 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	}
 
 	@Override
-	public String wildcard(TPTranslationContext context, String value) {
+	public String wildcard(QueryExecutionContext context, String value) {
 		return "WILDCARD(" + context.luceneField() + ", " + value + ")";
 	}
 
 	@Override
-	public String prefix(TPTranslationContext context, String value) {
+	public String prefix(QueryExecutionContext context, String value) {
 		return "PREFIX(" + context.luceneField() + ", " + value + ")";
 	}
 
 	@Override
-	public String not(TPTranslationContext context, String clause) {
+	public String not(QueryExecutionContext context, String clause) {
 		return "NOT(" + clause + ")";
 	}
 
 	@Override
-	public String any(TPTranslationContext context) {
+	public String any(QueryExecutionContext context) {
 		return "ANYTOKEN";
 	}
 

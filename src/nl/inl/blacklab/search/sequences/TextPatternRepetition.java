@@ -15,7 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.sequences;
 
-import nl.inl.blacklab.search.TPTranslationContext;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
@@ -48,7 +48,7 @@ public class TextPatternRepetition extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		T baseTranslated = base.translate(translator, context);
 
 		int realMin = min;

@@ -33,7 +33,7 @@ public class TextPatternEdge extends TextPatternCombiner {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		//throw new RuntimeException("Cannot search for isolated NOT query (must always be AND NOT)");
 		return translator.edge(clauses.get(0).translate(translator, context), rightEdge);
 	}

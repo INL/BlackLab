@@ -27,7 +27,7 @@ public class TextPatternWildcard extends TextPatternTerm {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		return translator.wildcard(context, translator.optCaseInsensitive(context, value));
 	}
 

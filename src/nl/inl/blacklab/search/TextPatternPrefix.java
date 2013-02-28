@@ -24,7 +24,7 @@ public class TextPatternPrefix extends TextPatternTerm {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		return translator.prefix(context, translator.optCaseInsensitive(context, value));
 	}
 

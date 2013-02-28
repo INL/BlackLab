@@ -22,26 +22,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestComplexFieldUtil {
-//	@Test
-//	public void testIsProperty() {
-//		String fieldName = ComplexFieldUtil.fieldName("field", "property");
-//		Assert.assertEquals(true, ComplexFieldUtil.isProperty(fieldName, "property"));
-//		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, ""));
-//		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, "field"));
-//
-//		fieldName = ComplexFieldUtil.fieldName("field", "property", "alternative");
-//		Assert.assertEquals(true, ComplexFieldUtil.isProperty(fieldName, "property"));
-//		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, ""));
-//		Assert.assertEquals(false, ComplexFieldUtil.isProperty(fieldName, "alternative"));
-//	}
 
 	private boolean oldFieldNameSetting;
 
 	@Test
 	public void testIsAlternative() {
-		String fieldName = ComplexFieldUtil.propertyField("field", "property");
+		String fieldName;
+		fieldName = ComplexFieldUtil.propertyField("field", "property");
 		Assert.assertEquals(true, ComplexFieldUtil.isAlternative(fieldName, ""));
-		// Assert.assertEquals(false, ComplexFieldUtil.isAlternative(fieldName, "property"));
+		Assert.assertEquals(false, ComplexFieldUtil.isAlternative(fieldName, "property"));
 		Assert.assertEquals(false, ComplexFieldUtil.isAlternative(fieldName, "field"));
 
 		fieldName = ComplexFieldUtil.propertyField("field", "property", "alternative");
@@ -52,7 +41,8 @@ public class TestComplexFieldUtil {
 
 	@Test
 	public void testGetBaseName() {
-		String fieldName = ComplexFieldUtil.propertyField("field", "property");
+		String fieldName;
+		fieldName = ComplexFieldUtil.propertyField("field", "property");
 		Assert.assertEquals("field", ComplexFieldUtil.getBaseName(fieldName));
 
 		fieldName = ComplexFieldUtil.propertyField("field", "property", "alternative");

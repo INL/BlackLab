@@ -15,7 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.queryParser.lucene.helpers;
 
-import nl.inl.blacklab.search.TPTranslationContext;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
@@ -26,7 +26,7 @@ public class TPMatchAllDocs extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		throw new RuntimeException("Match all docs is not supported");
 	}
 

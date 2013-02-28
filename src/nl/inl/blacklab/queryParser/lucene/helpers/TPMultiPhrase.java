@@ -15,14 +15,14 @@
  *******************************************************************************/
 package nl.inl.blacklab.queryParser.lucene.helpers;
 
-import nl.inl.blacklab.search.TPTranslationContext;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
 public class TPMultiPhrase extends TextPattern {
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		throw new RuntimeException("MultiPhrase is not supported");
 	}
 

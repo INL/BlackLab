@@ -6,12 +6,12 @@ import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
 
 /**
- * Represents the current "translation context" while translating a TextPattern
- * into a query. Inside a query, the context may change: a different property may
+ * Represents the current "execution context" for executing a TextPattern query.
+ * Inside a query, this context may change: a different property may
  * be "selected" to search in, the case sensitivity setting may change, etc. This
  * object is passed to the translation methods and keeps track of this context.
  */
-public class TPTranslationContext {
+public class QueryExecutionContext {
 	/** The searcher object, representing the BlackLab index */
 	public Searcher searcher;
 
@@ -36,11 +36,11 @@ public class TPTranslationContext {
 	public boolean diacriticsSensitive;
 
 	/**
-	 * Construct a translation context object.
+	 * Construct a query execution context object.
 	 * @param fieldName the (complex) field to search
 	 * @param propName the property to search
 	 */
-	public TPTranslationContext(Searcher searcher, String fieldName, String propName, boolean caseSensitive, boolean diacriticsSensitive) {
+	public QueryExecutionContext(Searcher searcher, String fieldName, String propName, boolean caseSensitive, boolean diacriticsSensitive) {
 		this.searcher = searcher;
 		this.fieldName = fieldName;
 		this.propName = propName;
@@ -49,27 +49,46 @@ public class TPTranslationContext {
 	}
 
 	/**
-	 * Return a new translation context with a different property selected.
+	 * Return a new query execution context with a different property selected.
 	 * @param newPropName the property to select
 	 * @return the new context
 	 */
-	public TPTranslationContext withProperty(String newPropName) {
-		return new TPTranslationContext(searcher, fieldName, newPropName, caseSensitive, diacriticsSensitive);
+	public QueryExecutionContext withProperty(String newPropName) {
+		return new QueryExecutionContext(searcher, fieldName, newPropName, caseSensitive, diacriticsSensitive);
 	}
 
-	public TPTranslationContext withSensitive(boolean caseSensitive_, boolean diacriticsSensitive_) {
-		return new TPTranslationContext(searcher, fieldName, propName, caseSensitive_, diacriticsSensitive_);
+	public QueryExecutionContext withSensitive(boolean caseSensitive_, boolean diacriticsSensitive_) {
+		return new QueryExecutionContext(searcher, fieldName, propName, caseSensitive_, diacriticsSensitive_);
 	}
 
 	public String[] getAlternatives() {
-		if (!caseSensitive && !diacriticsSensitive)
-			return null; // no alternatives
-		if (caseSensitive && diacriticsSensitive)
-			return new String[] {"s", "cs", "ds", ""}; // search fully-sensitive if available
-		if (caseSensitive)
-			return new String[] {"cs", "s", ""}; // search case-sensitive if available
 
-		return new String[] {"ds", "s", ""}; // search diacritics-sensitive if available
+		final String s = ComplexFieldUtil.SENSITIVE_ALT_NAME;
+		final String i = ComplexFieldUtil.INSENSITIVE_ALT_NAME;
+		final String ci = ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME;
+		final String di = ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
+
+		if (ComplexFieldUtil.isMainAlternativeNameless())  {
+			// Old alternative naming scheme
+			if (!caseSensitive && !diacriticsSensitive)
+				return new String[] {i, ""}; // insensitive
+			if (caseSensitive && diacriticsSensitive)
+				return new String[] {s, ""}; // search fully-sensitive if available
+			if (!diacriticsSensitive)
+				return new String[] {di, s, i, ""}; // search case-sensitive if available
+
+			return new String[] {ci, s, i, ""}; // search diacritics-sensitive if available
+		}
+
+		// New alternative naming scheme (every alternative has a name)
+		if (!caseSensitive && !diacriticsSensitive)
+			return new String[] {i, s}; // insensitive
+		if (caseSensitive && diacriticsSensitive)
+			return new String[] {s, i}; // search fully-sensitive if available
+		if (!diacriticsSensitive)
+			return new String[] {di, s, i}; // search case-sensitive if available
+
+		return new String[] {ci, s, i}; // search diacritics-sensitive if available
 	}
 
 	/**
@@ -121,9 +140,9 @@ public class TPTranslationContext {
 		return ComplexFieldUtil.propertyField(fieldName, propName);
 	}
 
-	public static TPTranslationContext getSimple(String fieldName) {
+	public static QueryExecutionContext getSimple(String fieldName) {
 		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
-		return new TPTranslationContext(null, fieldName, mainPropName, false, false);
+		return new QueryExecutionContext(null, fieldName, mainPropName, false, false);
 	}
 
 

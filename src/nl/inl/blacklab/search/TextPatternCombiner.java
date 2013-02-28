@@ -35,7 +35,7 @@ public abstract class TextPatternCombiner extends TextPattern {
 	}
 
 	@Override
-	public abstract <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context);
+	public abstract <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context);
 
 	public void addClause(TextPattern clause) {
 		clauses.add(clause);

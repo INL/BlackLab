@@ -24,10 +24,27 @@ import org.apache.lucene.document.Document;
  */
 public abstract class ComplexFieldProperty {
 
+	/** How a property is to be indexed with respect to case and diacritics sensitivity. */
+	public enum SensitivitySetting {
+		ONLY_SENSITIVE,                 // only index case- and diacritics-sensitively
+		ONLY_INSENSITIVE,               // only index case- and diacritics-insensitively
+		SENSITIVE_AND_INSENSITIVE,      // case+diac sensitive as well as case+diac insensitive
+		CASE_AND_DIACRITICS_SEPARATE	// all four combinations (sens, insens, case-insens, diac-insens)
+	}
+
+	/**
+	 * Add a value to the property.
+	 * @param value value to add
+	 */
 	final public void addValue(String value) {
 		addValue(value, 1);
 	}
 
+	/**
+	 * Add a value with a specific position increment to the property.
+	 * @param value value to add
+	 * @param increment number of tokens past the previous value
+	 */
 	public abstract void addValue(String value, int increment);
 
 	public abstract void addToLuceneDoc(Document doc, String fieldName, List<Integer> startChars,

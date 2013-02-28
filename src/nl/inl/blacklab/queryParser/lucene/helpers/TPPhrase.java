@@ -18,7 +18,7 @@ package nl.inl.blacklab.queryParser.lucene.helpers;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.search.TPTranslationContext;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTerm;
 import nl.inl.blacklab.search.TextPatternTranslator;
@@ -32,7 +32,7 @@ public class TPPhrase extends TextPattern {
 	List<TextPattern> terms = new ArrayList<TextPattern>();
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		List<T> clauses = new ArrayList<T>();
 		for (TextPattern t : terms) {
 			clauses.add(t.translate(translator, context));

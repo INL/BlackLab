@@ -81,7 +81,7 @@ public class TestCorpusSearch {
 	private static void patternSearchNonSpan(Searcher searcher, String fieldName,
 			TextPattern pattern, int n) {
 		TextPatternTranslatorSpanQuery translator = new TextPatternTranslatorSpanQuery();
-		SpanQuery query = pattern.translate(translator, searcher.getDefaultTranslationContext(fieldName));
+		SpanQuery query = pattern.translate(translator, searcher.getDefaultExecutionContext(fieldName));
 		SpanQuery spanQuery = query;
 		TopDocs d = searcher.findTopDocs(spanQuery, 30);
 		for (ScoreDoc sd : d.scoreDocs) {

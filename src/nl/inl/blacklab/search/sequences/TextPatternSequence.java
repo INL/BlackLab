@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.TPTranslationContext;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternTranslator;
@@ -40,7 +40,7 @@ public class TextPatternSequence extends TextPatternAnd {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		List<T> chResults = new ArrayList<T>();
 
 		// Keep track of which clauses can match the empty sequence. Use this to build alternatives
@@ -138,13 +138,13 @@ public class TextPatternSequence extends TextPatternAnd {
 	 *
 	 * @param <T> type to translate to
 	 * @param translator translator
-	 * @param context the translation context
+	 * @param context the query execution context
 	 * @param chResults translation results for each of the clauses so far
 	 * @param matchesEmptySeq whether each of the clauses matches the empty sequence
 	 * @return several alternatives combined with or
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> T makeAlternatives(TextPatternTranslator<T> translator, TPTranslationContext context,
+	public <T> T makeAlternatives(TextPatternTranslator<T> translator, QueryExecutionContext context,
 			List<T> chResults, List<Boolean> matchesEmptySeq) {
 		if (chResults.size() == 1) {
 			// Last clause in the sequence; just return it

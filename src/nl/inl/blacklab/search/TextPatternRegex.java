@@ -35,7 +35,7 @@ public class TextPatternRegex extends TextPatternTerm {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		return translator.regex(context, translator.optCaseInsensitive(context, value));
 	}
 

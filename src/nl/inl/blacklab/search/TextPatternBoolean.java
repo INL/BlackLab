@@ -42,7 +42,7 @@ public class TextPatternBoolean extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 
 		// First, translate clauses into complete TextPattern. Then translate that.
 		TextPattern translated = null;

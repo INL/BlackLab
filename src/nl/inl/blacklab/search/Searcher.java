@@ -127,7 +127,10 @@ public class Searcher {
 	private int defaultContextSize = 5;
 
 	/** Should we default to case-sensitive searching? [false] */
-	private boolean defaultSearchSensitive = false;
+	private boolean defaultCaseSensitive = false;
+
+	/** Should we default to diacritics-sensitive searching? [false] */
+	private boolean defaultDiacriticsSensitive = false;
 
 	/**
 	 * Directory where our index resides
@@ -275,7 +278,7 @@ public class Searcher {
 		pattern = pattern.rewrite();
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
 		SpanQuery spanQuery = pattern.translate(spanQueryTranslator,
-				getDefaultTranslationContext(fieldName));
+				getDefaultExecutionContext(fieldName));
 
 		if (docIdSet != null) {
 			spanQuery = new SpanQueryFiltered(spanQuery, docIdSet);
@@ -496,7 +499,7 @@ public class Searcher {
 	 */
 	public void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords,
 			int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
-		String fieldPropName = ComplexFieldUtil.mainPropertyField(indexStructure, fieldName);
+		String fieldPropName = ComplexFieldUtil.mainPropertyOffsetsField(indexStructure, fieldName);
 		TermFreqVector termFreqVector = getTermFreqVector(doc, fieldPropName);
 		if (!(termFreqVector instanceof TermPositionVector)) {
 			throw new RuntimeException("Field has no character position information!");
@@ -1447,36 +1450,45 @@ public class Searcher {
 		return fieldNameContents;
 	}
 
-	public boolean isDefaultSearchSensitive() {
-		return defaultSearchSensitive;
+	public boolean isDefaultSearchCaseSensitive() {
+		return defaultCaseSensitive;
 	}
 
-	public void setDefaultSearchSensitive(boolean defaultCaseSensitive) {
-		this.defaultSearchSensitive = defaultCaseSensitive;
+	public boolean isDefaultSearchDiacriticsSensitive() {
+		return defaultDiacriticsSensitive;
+	}
+
+	public void setDefaultSearchSensitive(boolean b) {
+		defaultCaseSensitive = defaultDiacriticsSensitive = b;
+	}
+
+	public void setDefaultSearchSensitive(boolean caseSensitive, boolean diacriticsSensitive) {
+		defaultCaseSensitive = caseSensitive;
+		defaultDiacriticsSensitive = diacriticsSensitive;
 	}
 
 	/**
-	 * Get the default initial translation context.
+	 * Get the default initial query execution context.
 	 *
 	 * @param fieldName
 	 *            the field to search
-	 * @return the translation context
+	 * @return the query execution context
 	 */
-	public TPTranslationContext getDefaultTranslationContext(String fieldName) {
+	public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
 		String mainPropName = indexStructure.getComplexFieldDesc(fieldName).getMainProperty().getName();
-		return new TPTranslationContext(this, fieldName, mainPropName,
-				defaultSearchSensitive, defaultSearchSensitive);
+		return new QueryExecutionContext(this, fieldName, mainPropName,
+				defaultCaseSensitive, defaultDiacriticsSensitive);
 	}
 
 	/**
-	 * Get the default initial translation context.
+	 * Get the default initial query execution context.
 	 *
 	 * Uses the default contents field.
 	 *
-	 * @return the translation context
+	 * @return the query execution context
 	 */
-	public TPTranslationContext getDefaultTranslationContext() {
-		return getDefaultTranslationContext(fieldNameContents);
+	public QueryExecutionContext getDefaultExecutionContext() {
+		return getDefaultExecutionContext(fieldNameContents);
 	}
 
 	public String getIndexName() {

@@ -17,6 +17,8 @@ package nl.inl.blacklab.index.complex;
 
 import java.util.List;
 
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+
 import org.apache.lucene.document.Document;
 
 /**
@@ -48,7 +50,9 @@ public abstract class ComplexField {
 	/**
 	 * Add a property to the complex field
 	 * @param name property name
+	 * @deprecated use version with sensitivity parameter
 	 */
+	@Deprecated
 	public abstract void addProperty(String name);
 
 	/**
@@ -56,16 +60,24 @@ public abstract class ComplexField {
 	 * @param name property name
 	 * @param filterAdder specifies what filters to add to the TokenStream for this property,
 	 * so for example input can be lowercased, etc.
+	 * @deprecated use version with sensitivity parameter
 	 */
+	@Deprecated
 	public abstract void addProperty(String name, TokenFilterAdder filterAdder);
+
+	/**
+	 * Add a property to the complex field
+	 * @param name property name
+	 * @param sensitivity ways to index property, with respect to case- and
+	 *   diacritics-sensitivity.
+	 */
+	public abstract void addProperty(String name, SensitivitySetting sensitivity);
 
 	/**
 	 * Add a property alternative to the complex field.
 	 *
-	 * A property alternative is simply another way of indexing the same TokenStream. So,
-	 * for example, you might have a property "lemma" and you might want to index it
-	 * lowercased by default (for case-insensitive search) but also add a non-lowercased
-	 * alternative (for case-sensitive search).
+	 * Use this if the default SensitivitySettings are not enough for your purposes,
+	 * and you want to index the same TokenStream in an additional way.
 	 *
 	 * @param sourceName property name
 	 * @param altPostfix alternative postfix to add to the property name
@@ -75,10 +87,8 @@ public abstract class ComplexField {
 	/**
 	 * Add a property alternative to the complex field.
 	 *
-	 * A property alternative is simply another way of indexing the same TokenStream. So,
-	 * for example, you might have a property "lemma" and you might want to index it
-	 * lowercased by default (for case-insensitive search) but also add a non-lowercased
-	 * alternative (for case-sensitive search).
+	 * Use this if the default SensitivitySettings are not enough for your purposes,
+	 * and you want to index the same TokenStream in an additional way.
 	 *
 	 * @param sourceName property name
 	 * @param altPostfix alternative postfix to add to the property name
@@ -93,10 +103,8 @@ public abstract class ComplexField {
 	 *
 	 * The main property is nameless and usually contains the word form.
 	 *
-	 * An alternative is simply another way of indexing the same TokenStream. So,
-	 * for example, you might want to index the main property lowercased by default
-	 * (for case-insensitive search) but also add a non-lowercased alternative
-	 * (for case-sensitive search).
+	 * Use this if the default SensitivitySettings are not enough for your purposes,
+	 * and you want to index the same TokenStream in an additional way.
 	 *
 	 * @param altPostfix alternative postfix to add to the property name
 	 */
@@ -107,10 +115,8 @@ public abstract class ComplexField {
 	 *
 	 * The main property is nameless and usually contains the word form.
 	 *
-	 * An alternative is simply another way of indexing the same TokenStream. So,
-	 * for example, you might want to index the main property lowercased by default
-	 * (for case-insensitive search) but also add a non-lowercased alternative
-	 * (for case-sensitive search).
+	 * Use this if the default SensitivitySettings are not enough for your purposes,
+	 * and you want to index the same TokenStream in an additional way.
 	 *
 	 * @param altPostfix alternative postfix to add to the property name
 	 * @param filterAdder specifies what filters to add to the TokenStream for this property,

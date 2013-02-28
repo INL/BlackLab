@@ -42,7 +42,7 @@ public class TextPatternFuzzy extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		return translator.fuzzy(context, value, similarity, prefixLength);
 	}
 

@@ -50,20 +50,69 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 	 */
 	private Map<String, TokenFilterAdder> alternatives = new HashMap<String, TokenFilterAdder>();
 
-	/**
-	 * The property name
-	 */
+	/** The main alternative (the one that gets character offsets if desired) */
+	private String mainAlternative;
+
+	/** The property name */
 	private String propName;
 
+	/**
+	 * Construct a ComplexFieldProperty object with the default alternative
+	 * @param name property name
+	 * @param includeOffsets whether to include character offsets in the main alternative
+	 * @deprecated Use constructor with SensitivitySetting parameter
+	 */
+	@Deprecated
 	public ComplexFieldPropertyImplSimple(String name, boolean includeOffsets) {
-		this(name, null, includeOffsets);
+		this(name, (TokenFilterAdder)null, includeOffsets);
 	}
 
+	/**
+	 * Construct a ComplexFieldProperty object with the default alternative
+	 * @param name property name
+	 * @param filterAdder what filter(s) to add, or null if none
+	 * @param includeOffsets whether to include character offsets in the main alternative
+	 * @deprecated Use constructor with SensitivitySetting parameter
+	 */
+	@Deprecated
 	public ComplexFieldPropertyImplSimple(String name, TokenFilterAdder filterAdder,
 			boolean includeOffsets) {
 		super();
 		propName = name;
-		alternatives.put("", filterAdder);
+		alternatives.put(ComplexFieldUtil.getDefaultMainAlternativeName(), filterAdder);
+		this.includeOffsets = includeOffsets;
+	}
+
+	/**
+	 * Construct a ComplexFieldProperty object with the default alternative
+	 * @param name property name
+	 * @param sensitivity ways to index this property, with respect to case- and
+	 *   diacritics-sensitivity.
+	 * @param includeOffsets whether to include character offsets in the main alternative
+	 */
+	public ComplexFieldPropertyImplSimple(String name, SensitivitySetting sensitivity,
+			boolean includeOffsets) {
+		super();
+		propName = name;
+
+		mainAlternative = null;
+		if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
+			// Add sensitive alternative
+			alternatives.put(ComplexFieldUtil.SENSITIVE_ALT_NAME, null);
+			mainAlternative = ComplexFieldUtil.SENSITIVE_ALT_NAME;
+		}
+		if (sensitivity != SensitivitySetting.ONLY_SENSITIVE) {
+			// Add insensitive alternative
+			alternatives.put(ComplexFieldUtil.INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, true));
+			if (mainAlternative == null)
+				mainAlternative = ComplexFieldUtil.INSENSITIVE_ALT_NAME;
+		}
+		if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE) {
+			// Add case-insensitive and diacritics-insensitive alternatives
+			alternatives.put(ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, false));
+			alternatives.put(ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME, new DesensitizerAdder(false, true));
+		}
+
 		this.includeOffsets = includeOffsets;
 	}
 
@@ -99,7 +148,7 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 	}
 
 	TermVector getTermVectorOption(String altName) {
-		if (includeOffsets && altName.length() == 0) {
+		if (includeOffsets && altName.equals(mainAlternative)) {
 			// Main alternative of a property may get character offsets
 			// (if it's the main property of a complex field)
 			return TermVector.WITH_POSITIONS_OFFSETS;

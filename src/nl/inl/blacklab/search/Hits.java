@@ -584,10 +584,10 @@ public class Hits implements Iterable<Hit> {
 	 * Count occurrences of context words around hit.
 	 *
 	 * @param propName the property to use for the collocations, or null if default
-	 * @param altName the alternative to use, or null if none
+	 * @param ctx query execution context, containing the sensitivity settings
 	 */
-	public TokenFrequencyList getCollocations(String propName, String altName) {
-		findContext(ComplexFieldUtil.propertyField(concordanceFieldName, propName, altName));
+	public TokenFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
+		findContext(ctx.luceneField());
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
 			int[] context = hit.context;
@@ -607,19 +607,22 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the actual words from the sort positions
-		boolean sensitive = searcher.isDefaultSearchSensitive();
+		boolean caseSensitive = searcher.isDefaultSearchCaseSensitive();
+		boolean diacSensitive = searcher.isDefaultSearchDiacriticsSensitive();
 		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
 		//Map<String, Integer> collStr = new HashMap<String, Integer>();
 		Terms terms = searcher.getTerms(contextFieldPropName);
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
 			String word = terms.getFromSortPosition(e.getKey());
-			if (!sensitive) {
-				word = StringUtil.removeAccents(word.toLowerCase());
+			if (!diacSensitive) {
+				word = StringUtil.removeAccents(word);
+			}
+			if (!caseSensitive) {
+				word = word.toLowerCase();
 			}
 			collocations.add(new TokenFrequency(word, e.getValue()));
-			//collStr.put(word, e.getValue());
 		}
-		return collocations; //collStr;
+		return collocations;
 	}
 
 	/**

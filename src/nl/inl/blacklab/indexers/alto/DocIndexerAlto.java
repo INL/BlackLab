@@ -19,24 +19,20 @@ import java.io.Reader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
 import nl.inl.blacklab.index.DocIndexerXml;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldImpl;
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.index.complex.TokenFilterAdder;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 
-import org.apache.lucene.analysis.LowerCaseFilter;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.NumericField;
-import org.apache.lucene.util.Version;
 import org.xml.sax.Attributes;
 
 /**
@@ -93,21 +89,8 @@ public class DocIndexerAlto extends DocIndexerXml {
 	public DocIndexerAlto(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 
-		// Adds lower case and accents filters to the property
-		TokenFilterAdder desensitizeFilterAdder = new TokenFilterAdder() {
-			@Override
-			public TokenStream addFilters(TokenStream input) {
-				return new RemoveAllAccentsFilter(new LowerCaseFilter(Version.LUCENE_36, input));
-			}
-		};
-
 		// Define the properties that make up our complex field
-		contentsField = new ComplexFieldImpl(CONTENTS_FIELD, desensitizeFilterAdder); // actual text;
-																					// this property
-																					// will contain
-																					// the offset
-																					// information
-		contentsField.addAlternative("s"); // sensitive version of main value
+		contentsField = new ComplexFieldImpl(CONTENTS_FIELD, MAIN_PROPERTY, SensitivitySetting.SENSITIVE_AND_INSENSITIVE);
 	}
 
 	/**

@@ -36,25 +36,25 @@ public abstract class TextPattern implements Cloneable {
 	 * @param translator
 	 *            the translator to use
 	 * @param context
-	 *            translation context to use
+	 *            query execution context to use
 	 *
 	 * @param <T>
 	 *            type of object to translate to
 	 * @return result of the translation
 	 */
-	public abstract <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context);
+	public abstract <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context);
 
 	/**
 	 * Translate this TextPattern into some other representation.
 	 *
 	 * For example, TextPatternTranslatorSpanQuery translates it into Lucene SpanQuerys.
 	 *
-	 * Uses the searcher's initial translation context.
+	 * Uses the searcher's initial query execution context.
 	 *
 	 * @param translator
 	 *            the translator to use
 	 * @param searcher
-	 * 			  our searcher, to get the inital translation context from
+	 * 			  our searcher, to get the inital query execution context from
 	 *
 	 *
 	 * @param <T>
@@ -62,7 +62,7 @@ public abstract class TextPattern implements Cloneable {
 	 * @return result of the translation
 	 */
 	public <T> T translate(TextPatternTranslator<T> translator, Searcher searcher) {
-		return translate(translator, searcher.getDefaultTranslationContext());
+		return translate(translator, searcher.getDefaultExecutionContext());
 	}
 
 	/**
@@ -70,7 +70,7 @@ public abstract class TextPattern implements Cloneable {
 	 *
 	 * For example, TextPatternTranslatorSpanQuery translates it into Lucene SpanQuerys.
 	 *
-	 * Used a simple default translation context not tied to a Searcher. Useful for testing.
+	 * Used a simple default query execution context not tied to a Searcher. Useful for testing.
 	 *
 	 * @param translator
 	 *            the translator to use
@@ -80,7 +80,7 @@ public abstract class TextPattern implements Cloneable {
 	 * @return result of the translation
 	 */
 	public <T> T translate(TextPatternTranslator<T> translator) {
-		return translate(translator, TPTranslationContext.getSimple("contents"));
+		return translate(translator, QueryExecutionContext.getSimple("contents"));
 	}
 
 	/**
@@ -109,8 +109,16 @@ public abstract class TextPattern implements Cloneable {
 		return toString("fieldName");
 	}
 
+	public String toString(Searcher searcher) {
+		return toString(searcher, "fieldName");
+	}
+
 	public String toString(String fieldName) {
-		return translate(new TextPatternTranslatorString(), TPTranslationContext.getSimple(fieldName));
+		return translate(new TextPatternTranslatorString(), QueryExecutionContext.getSimple(fieldName));
+	}
+
+	public String toString(Searcher searcher, String fieldName) {
+		return translate(new TextPatternTranslatorString(), searcher.getDefaultExecutionContext());
 	}
 
 	/**

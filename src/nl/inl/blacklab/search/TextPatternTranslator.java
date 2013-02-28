@@ -34,83 +34,83 @@ public abstract class TextPatternTranslator<T> {
 	 * A simple field/value query
 	 *
 	 * @param context
-	 *            the current translation context
+	 *            the current query execution context
 	 * @param value
 	 *            the value to search for
-	 * @return result of the translation
+	 * @return result of the query execution
 	 */
-	public abstract T term(TPTranslationContext context, String value);
+	public abstract T term(QueryExecutionContext context, String value);
 
 	/**
 	 * A regular expression query
 	 *
 	 * @param context
-	 *            the current translation context
+	 *            the current query execution context
 	 * @param value
 	 *            the value to search for
-	 * @return result of the translation
+	 * @return result of the query execution
 	 */
-	public abstract T regex(TPTranslationContext context, String value);
+	public abstract T regex(QueryExecutionContext context, String value);
 
 	/**
 	 * Token-level AND.
 	 *
 	 * @param context
-	 *            the current translation context
+	 *            the current query execution context
 	 * @param clauses
 	 *            the clauses to combine using AND
-	 * @return result of the translation
+	 * @return result of the query execution
 	 */
-	public abstract T and(TPTranslationContext context, List<T> clauses);
+	public abstract T and(QueryExecutionContext context, List<T> clauses);
 
 	/**
 	 * Token-level OR.
 	 *
 	 * @param context
-	 *            the current translation context
+	 *            the current query execution context
 	 * @param clauses
 	 *            the clauses to combine using OR
-	 * @return result of the translation
+	 * @return result of the query execution
 	 */
-	public abstract T or(TPTranslationContext context, List<T> clauses);
+	public abstract T or(QueryExecutionContext context, List<T> clauses);
 
 	/**
 	 * Token-level NOT.
 	 *
 	 * @param context
-	 *            the current translation context
+	 *            the current query execution context
 	 * @param clause
 	 *            the clause to invert
-	 * @return result of the translation
+	 * @return result of the query execution
 	 */
-	public abstract T not(TPTranslationContext context, T clause);
+	public abstract T not(QueryExecutionContext context, T clause);
 
 	/**
 	 * Sequence query.
 	 *
 	 * @param context
-	 *            the current translation context
+	 *            the current query execution context
 	 * @param clauses
 	 *            the clauses to find in sequence
-	 * @return result of the translation
+	 * @return result of the query execution
 	 */
-	public abstract T sequence(TPTranslationContext context, List<T> clauses);
+	public abstract T sequence(QueryExecutionContext context, List<T> clauses);
 
-	public abstract T docLevelAnd(TPTranslationContext context, List<T> clauses);
+	public abstract T docLevelAnd(QueryExecutionContext context, List<T> clauses);
 
-	public abstract T fuzzy(TPTranslationContext context, String value, float similarity, int prefixLength);
+	public abstract T fuzzy(QueryExecutionContext context, String value, float similarity, int prefixLength);
 
-	public abstract T tags(TPTranslationContext context, String elementName, Map<String, String> attr);
+	public abstract T tags(QueryExecutionContext context, String elementName, Map<String, String> attr);
 
 	public abstract T edge(T clause, boolean rightEdge);
 
-	public abstract T containing(TPTranslationContext context, T containers, T search);
+	public abstract T containing(QueryExecutionContext context, T containers, T search);
 
-	public abstract T within(TPTranslationContext context, T search, T containers);
+	public abstract T within(QueryExecutionContext context, T search, T containers);
 
-	public abstract T startsAt(TPTranslationContext context, T producer, T filter);
+	public abstract T startsAt(QueryExecutionContext context, T producer, T filter);
 
-	public abstract T endsAt(TPTranslationContext context, T producer, T filter);
+	public abstract T endsAt(QueryExecutionContext context, T producer, T filter);
 
 	/**
 	 * Expand the given clause by a number of tokens, either to the left or to the right.
@@ -153,19 +153,19 @@ public abstract class TextPatternTranslator<T> {
 	 */
 	public abstract T docLevelAndNot(T include, T exclude);
 
-	public abstract T wildcard(TPTranslationContext context, String value);
+	public abstract T wildcard(QueryExecutionContext context, String value);
 
-	public abstract T prefix(TPTranslationContext context, String value);
+	public abstract T prefix(QueryExecutionContext context, String value);
 
 	/**
 	 * Any token in field.
 	 * @param context
-	 *            the current translation context
+	 *            the current query execution context
 	 * @return the resulting any-token clause
 	 */
-	public abstract T any(TPTranslationContext context);
+	public abstract T any(QueryExecutionContext context);
 
-	public String optCaseInsensitive(TPTranslationContext context, String value) {
+	public String optCaseInsensitive(QueryExecutionContext context, String value) {
 		if (!context.diacriticsSensitive)
 			value = StringUtil.removeAccents(value);
 		if (!context.caseSensitive)

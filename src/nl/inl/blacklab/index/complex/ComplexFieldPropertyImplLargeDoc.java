@@ -30,13 +30,40 @@ import java.util.Map;
 class ComplexFieldPropertyImplLargeDoc extends ComplexFieldPropertyImplSimple {
 	private Map<String, String> storedValues = new HashMap<String, String>();
 
+	/**
+	 * Construct a ComplexFieldProperty object with the default alternative
+	 * @param name property name
+	 * @param includeOffsets whether to include character offsets in the main alternative
+	 * @deprecated Use constructor with SensitivitySetting parameter
+	 */
+	@Deprecated
 	public ComplexFieldPropertyImplLargeDoc(String name, boolean includeOffsets) {
 		super(name, includeOffsets);
 	}
 
+	/**
+	 * Construct a ComplexFieldProperty object with the default alternative
+	 * @param name property name
+	 * @param filterAdder what filter(s) to add, or null if none
+	 * @param includeOffsets whether to include character offsets in the main alternative
+	 * @deprecated Use constructor with SensitivitySetting parameter
+	 */
+	@Deprecated
 	public ComplexFieldPropertyImplLargeDoc(String name, TokenFilterAdder filterAdder,
 			boolean includeOffsets) {
 		super(name, filterAdder, includeOffsets);
+	}
+
+	/**
+	 * Construct a ComplexFieldProperty object with the default alternative
+	 * @param name property name
+	 * @param sensitivity ways to index this property, with respect to case- and
+	 *   diacritics-sensitivity.
+	 * @param includeOffsets whether to include character offsets in the main alternative
+	 */
+	public ComplexFieldPropertyImplLargeDoc(String name, SensitivitySetting sensitivity,
+			boolean includeOffsets) {
+		super(name, sensitivity, includeOffsets);
 	}
 
 	@Override
@@ -56,7 +83,8 @@ class ComplexFieldPropertyImplLargeDoc extends ComplexFieldPropertyImplSimple {
 
 		// We don't need to clear the cached values between documents, just re-use them all the
 		// time.
-		// storedValues.clear();
+		// NOTE: re-enabled clearing because this leaks memory for large data sets
+		storedValues.clear();
 	}
 
 }

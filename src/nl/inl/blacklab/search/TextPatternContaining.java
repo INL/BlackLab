@@ -26,7 +26,7 @@ public class TextPatternContaining extends TextPatternCombiner {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		T trContainers = clauses.get(0).translate(translator, context);
 		T trSearch = clauses.get(1).translate(translator, context);
 		return translator.containing(context, trContainers, trSearch);

@@ -19,6 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.IndexStructure;
+import nl.inl.blacklab.search.IndexStructure.AltDesc;
+import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
+import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
 
 
 /**
@@ -38,6 +41,16 @@ public class ComplexFieldUtil {
 
 	private static final String DEFAULT_MAIN_PROP_NAME = "word";
 
+	public static final String SENSITIVE_ALT_NAME = "s";
+
+	private static final String DEFAULT_MAIN_ALT_NAME = SENSITIVE_ALT_NAME;
+
+	public static final String INSENSITIVE_ALT_NAME = "i";
+
+	public static final String CASE_INSENSITIVE_ALT_NAME = "ci";
+
+	public static final String DIACRITICS_INSENSITIVE_ALT_NAME = "di";
+
 	public static final String START_TAG_PROP_NAME = "starttag";
 
 	public static final String END_TAG_PROP_NAME = "endtag";
@@ -48,6 +61,13 @@ public class ComplexFieldUtil {
 	 * In the old scheme, they were nameless, in the new scheme not.
 	 */
 	private static boolean MAIN_PROPERTY_NAMELESS;
+
+	/**
+	 * Is the main "alternative" of a property, or does it have a name like the other
+	 * alternatives? (e.g. "s", "i", "ci", "di")
+	 * In the old scheme, they were nameless, in the new scheme not.
+	 */
+	private static boolean MAIN_ALTERNATIVE_NAMELESS;
 
 	/**
 	 * String used to separate the base field name (say, contents) and the field property (pos,
@@ -148,6 +168,9 @@ public class ComplexFieldUtil {
 	}
 
 	/** Set what field name separators to use.
+	 *
+	 * Used for backwards compatibility; will eventually be removed.
+	 *
 	 * @param avoidSpecialChars if true, use only standard identifier characters for the separators. If false, use special chars %, @, #.
 	 * @param oldVersion if true, use the old naming scheme.
 	 */
@@ -158,6 +181,7 @@ public class ComplexFieldUtil {
 			ALT_SEP = "_ALT_";
 			BOOKKEEPING_SEP = PROP_SEP;
 			MAIN_PROPERTY_NAMELESS = true;
+			MAIN_ALTERNATIVE_NAMELESS = true;
 		} else {
 			if (avoidSpecialChars) {
 				// Avoid using special characters in fieldnames, in case
@@ -173,6 +197,7 @@ public class ComplexFieldUtil {
 				BOOKKEEPING_SEP = "#";
 			}
 			MAIN_PROPERTY_NAMELESS = false;
+			MAIN_ALTERNATIVE_NAMELESS = false;
 		}
 		ALT_SEP_LEN = ALT_SEP.length();
 		PROP_SEP_LEN = PROP_SEP.length();
@@ -246,8 +271,9 @@ public class ComplexFieldUtil {
 			fieldPropName = fieldName + (propGiven ? PROP_SEP + propName : "");
 		}
 
-		if (altName == null || altName.length() == 0)
+		if (altName == null || altName.length() == 0) {
 			return fieldPropName;
+		}
 		return fieldPropName + ALT_SEP + altName;
 	}
 
@@ -262,6 +288,21 @@ public class ComplexFieldUtil {
 	 */
 	public static String propertyField(String fieldName, String propName) {
 		return propertyField(fieldName, propName, null);
+	}
+
+	/**
+	 * Construct a property alternative name from a field property name
+	 * @param fieldPropName the field property name
+	 * @param altName the alternative name
+	 * @return the field property alternative name
+	 */
+	public static String propertyAlternative(String fieldPropName, String altName) {
+		if (altName == null || altName.length() == 0) {
+			if (!MAIN_ALTERNATIVE_NAMELESS)
+				throw new RuntimeException("Must specify an alternative name");
+			return fieldPropName;
+		}
+		return fieldPropName + ALT_SEP + altName;
 	}
 
 	/**
@@ -564,8 +605,16 @@ public class ComplexFieldUtil {
 	}
 
 	public static String mainPropertyField(IndexStructure structure, String fieldName) {
-		//return propertyField(fieldName, MAIN_PROPERTY_NAMELESS ? "" : DEFAULT_MAIN_PROP_NAME);
-		return structure.getComplexFieldDesc(fieldName).getMainPropertyLuceneName();
+		ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
+		PropertyDesc pr = cf.getMainProperty();
+		return propertyField(fieldName, pr.getName());
+	}
+
+	public static String mainPropertyOffsetsField(IndexStructure structure, String fieldName) {
+		ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
+		PropertyDesc pr = cf.getMainProperty();
+		AltDesc alt = pr.getOffsetsAlternative();
+		return propertyField(fieldName, pr.getName(), alt.getName());
 	}
 
 	public static String getDefaultMainPropName() {
@@ -576,14 +625,32 @@ public class ComplexFieldUtil {
 		return MAIN_PROPERTY_NAMELESS;
 	}
 
+	public static String getDefaultMainAlternativeName() {
+		return MAIN_ALTERNATIVE_NAMELESS ? "" : DEFAULT_MAIN_ALT_NAME;
+	}
+
+	public static boolean isMainAlternativeNameless() {
+		return MAIN_ALTERNATIVE_NAMELESS;
+	}
+
 	/**
-	 * Don't call this yourself. It is called by the IndexStructure constructor
+	 * Don't call this yourself. It is called by IndexStructure
 	 * in case it detects the index has nameless main properties. Will
 	 * eventually be removed.
 	 * @param b true iff main property is nameless
 	 */
 	public static void _setMainPropertyNameless(boolean b) {
 		MAIN_PROPERTY_NAMELESS = b;
+	}
+
+	/**
+	 * Don't call this yourself. It is called by IndexStructure
+	 * in case it detects the index has nameless alternatives. Will
+	 * eventually be removed.
+	 * @param b true iff main alternative is nameless
+	 */
+	public static void _setMainAlternativeNameless(boolean b) {
+		MAIN_ALTERNATIVE_NAMELESS = b;
 	}
 
 

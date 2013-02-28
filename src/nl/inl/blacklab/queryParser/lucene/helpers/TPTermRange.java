@@ -17,7 +17,7 @@ package nl.inl.blacklab.queryParser.lucene.helpers;
 
 import java.text.Collator;
 
-import nl.inl.blacklab.search.TPTranslationContext;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
@@ -29,7 +29,7 @@ public class TPTermRange extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		throw new RuntimeException("Term Range is not supported");
 	}
 

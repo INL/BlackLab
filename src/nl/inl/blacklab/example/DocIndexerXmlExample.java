@@ -17,24 +17,20 @@ package nl.inl.blacklab.example;
 
 import java.io.Reader;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
 import nl.inl.blacklab.index.DocIndexerXml;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldImpl;
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.index.complex.TokenFilterAdder;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 
-import org.apache.lucene.analysis.LowerCaseFilter;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.NumericField;
-import org.apache.lucene.util.Version;
 import org.xml.sax.Attributes;
 
 /**
@@ -96,32 +92,10 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 	public DocIndexerXmlExample(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 
-		// FilterAdders allow us to specify how the different properties are indexed.
-
-		// Adds a lower case filter to the property, for case-insensitivity.
-		TokenFilterAdder lowerCase = new TokenFilterAdder() {
-			@Override
-			public TokenStream addFilters(TokenStream input) {
-				return new LowerCaseFilter(Version.LUCENE_36, input);
-			}
-		};
-
-		// Adds lower case and accents filters to the property
-		TokenFilterAdder desensitize = new TokenFilterAdder() {
-			@Override
-			public TokenStream addFilters(TokenStream input) {
-				return new RemoveAllAccentsFilter(new LowerCaseFilter(Version.LUCENE_36, input));
-			}
-		};
-
 		// Define the properties that make up our complex field
-
-		contentsField = // main field: actual text; this property will contain the character offsets
-		new ComplexFieldImpl(CONTENTS_FIELD, desensitize);
-		contentsField.addAlternative("s"); // case-sensitive version of main value
-		contentsField.addProperty("pos", lowerCase); // part of speech
-		contentsField.addProperty("hw", desensitize); // headword
-		contentsField.addPropertyAlternative("hw", "s"); // case-sensitive version of above
+		contentsField = new ComplexFieldImpl(CONTENTS_FIELD, MAIN_PROPERTY, SensitivitySetting.SENSITIVE_AND_INSENSITIVE);
+		contentsField.addProperty("pos", SensitivitySetting.ONLY_INSENSITIVE); // part of speech
+		contentsField.addProperty("hw", SensitivitySetting.SENSITIVE_AND_INSENSITIVE); // headword
 	}
 
 	/**

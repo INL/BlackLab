@@ -429,6 +429,10 @@ public class QueryTool {
 			if (expr == null || expr.trim().equals("exit")) {
 				break;
 			}
+
+			// DEBUG because of stdin encoding issues on Windows
+			expr = expr.replaceAll("##", "é");
+
 			expr = expr.trim();
 			String lcased = expr.toLowerCase();
 			if (lcased.length() == 0)
@@ -465,10 +469,19 @@ public class QueryTool {
 				}
 			} else if (lcased.startsWith("sensitive ")) {
 				String v = lcased.substring(10);
-				boolean b = v.equals("on") || v.equals("yes") || v.equals("true");
-				searcher.setDefaultSearchSensitive(b);
-				System.out.println("Sensitive search " + (b ? "ON" : "OFF") +
-						" (case and diacritics " + (b ? "" : "don't ") + "matter in search)");
+				boolean caseSensitive = false, diacSensitive = false;
+				if (v.equals("on") || v.equals("yes") || v.equals("true")) {
+					caseSensitive = diacSensitive = true;
+				} else if (v.equals("off") || v.equals("no") || v.equals("false")) {
+					// nothing to do
+				} else if (v.equals("case")) {
+					caseSensitive = true;
+				} else if (v.equals("diac") || v.equals("diacritics")) {
+					diacSensitive = true;
+				}
+				searcher.setDefaultSearchSensitive(caseSensitive, diacSensitive);
+				System.out.println("Search defaults to " + (caseSensitive ? "case-sensitive" : "case-insensitive") +
+						" and " + (diacSensitive ? "diacritics-sensitive" : "diacritics-insensitive"));
 			} else if (lcased.startsWith("doctitle ")) {
 				String v = lcased.substring(9);
 				showDocTitle = v.equals("on") || v.equals("yes") || v.equals("true");
@@ -607,7 +620,7 @@ public class QueryTool {
 		try {
 			TextPattern pattern = currentParser.parse(query);
 			pattern = pattern.rewrite();
-			out.println("TextPattern: " + pattern.toString(CONTENTS_FIELD));
+			out.println("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
 
 			// Execute search
 			//Filter filter = null; // TODO: metadata search!
@@ -869,18 +882,14 @@ public class QueryTool {
 	 */
 	private void showCollocations() {
 		if (collocations == null) {
-			String altName = null;
-
 			// Case-sensitive collocations..?
+			String fieldName = hits.getConcordanceFieldName();
 			if (collocProperty == null) {
-				ComplexFieldDesc cf = searcher.getIndexStructure().getComplexFieldDesc(hits.getConcordanceFieldName());
+				ComplexFieldDesc cf = searcher.getIndexStructure().getComplexFieldDesc(fieldName);
 				collocProperty = cf.getMainProperty().getName();
 			}
-			if (searcher.isDefaultSearchSensitive() && searcher.getIndexStructure().getComplexFieldDesc(CONTENTS_FIELD).getPropertyDesc(collocProperty).getAlternativeDesc("s") != null) {
-				altName = "s";
-			}
 
-			collocations = hits.getCollocations(collocProperty, altName);
+			collocations = hits.getCollocations(collocProperty, searcher.getDefaultExecutionContext(fieldName));
 			collocations.sort();
 		}
 

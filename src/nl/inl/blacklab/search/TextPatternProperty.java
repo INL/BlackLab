@@ -33,7 +33,7 @@ public class TextPatternProperty extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, TPTranslationContext context) {
+	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		return input.translate(translator, context.withProperty(propertyName));
 	}
 

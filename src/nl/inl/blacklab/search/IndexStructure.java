@@ -156,6 +156,10 @@ public class IndexStructure {
 						pd.setForwardIndex(true);
 					else
 						throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
+				} else {
+					// No alternative specified; guess we have nameless alternatives.
+					ComplexFieldUtil._setMainAlternativeNameless(true);
+					pd.addAlternative("");
 				}
 			}
 		}
@@ -174,39 +178,14 @@ public class IndexStructure {
 		}
 
 		public void detectMainProperty(IndexReader reader) {
-			// Iterate over documents in the index until we find a property
-			// for this complex field that has stored character offsets. This is
-			// our main property.
-			for (int n = 0; n < reader.maxDoc(); n++) {
-				if (!reader.isDeleted(n)) {
-					for (PropertyDesc pr: props.values()) {
-						String lucenePropName = ComplexFieldUtil.propertyField(fieldName, pr.getName());
-						try {
-							TermFreqVector tv = reader.getTermFreqVector(n, lucenePropName);
-							if (tv == null) {
-								// No term vector; probably not stored in this document.
-								continue;
-							}
-							if (tv instanceof TermPositionVector) {
-								if (((TermPositionVector) tv).getOffsets(0) != null) {
-									// This field has offsets stored. Must be the main prop field.
-									mainProperty = pr;
-									return;
-								}
-							}
-						} catch (IOException e) {
-							throw new RuntimeException(e);
-						}
-					}
+			for (PropertyDesc pr: props.values()) {
+				if (pr.detectOffsetsAlternative(reader, fieldName))  {
+					// This field has offsets stored. Must be the main prop field.
+					mainProperty = pr;
+					return;
 				}
 			}
 			throw new RuntimeException("No main property (with char. offsets) detected for complex field " + fieldName);
-		}
-
-		public String getMainPropertyLuceneName() {
-//			if (ComplexFieldUtil.isMainPropertyNameless())
-//				return fieldName;
-			return ComplexFieldUtil.propertyField(fieldName, mainProperty.getName());
 		}
 
 		public void print(PrintStream out) {
@@ -229,6 +208,9 @@ public class IndexStructure {
 		private Map<String, AltDesc> alternatives;
 
 		private boolean forwardIndex;
+
+		/** Which of the alternatives is the main one (containing the offset info, if present) */
+		private AltDesc offsetsAlternative;
 
 		public PropertyDesc(String name) {
 			propName = name;
@@ -280,6 +262,56 @@ public class IndexStructure {
 		 */
 		public AltDesc getAlternativeDesc(String name) {
 			return alternatives.get(name);
+		}
+
+		/**
+		 * Detect which alternative is the one containing character offsets.
+		 *
+		 * Note that there may not be such an alternative.
+		 *
+		 * @param reader the index reader
+		 * @param fieldName the field this property belongs under
+		 * @return true if found, false if not
+		 */
+		public boolean detectOffsetsAlternative(IndexReader reader, String fieldName) {
+			// Iterate over documents in the index until we find a property
+			// for this complex field that has stored character offsets. This is
+			// our main property.
+			for (int n = 0; n < reader.maxDoc(); n++) {
+				if (!reader.isDeleted(n)) {
+					for (AltDesc alt: alternatives.values()) {
+						String luceneAltName = ComplexFieldUtil.propertyField(fieldName, propName, alt.getName());
+						try {
+							TermFreqVector tv = reader.getTermFreqVector(n, luceneAltName);
+							if (tv == null) {
+								// No term vector; probably not stored in this document.
+								continue;
+							}
+							if (tv instanceof TermPositionVector) {
+								if (((TermPositionVector) tv).getOffsets(0) != null) {
+									// This field has offsets stored. Must be the main alternative.
+									offsetsAlternative = alt;
+									return true;
+								}
+							}
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * Return which alternative contains character offset information.
+		 *
+		 * Note that there may not be such an alternative.
+		 *
+		 * @return the alternative, or null if there is none.
+		 */
+		public AltDesc getOffsetsAlternative() {
+			return offsetsAlternative;
 		}
 	}
 
@@ -448,22 +480,28 @@ public class IndexStructure {
 
 	/** See if a field has character offset information stored.
 	 *
-	 * @param reader our index
-	 * @param fieldName the field name to inspect
+	 * @param luceneFieldName the field name to inspect
 	 * @return true if it has offsets, false if not
 	 */
-	private boolean hasOffsets(String fieldName) {
+	public boolean hasOffsets(String luceneFieldName) {
+		// Iterate over documents in the index until we find a property
+		// for this complex field that has stored character offsets. This is
+		// our main property.
 		for (int n = 0; n < reader.maxDoc(); n++) {
 			if (!reader.isDeleted(n)) {
-				Document d;
 				try {
-					d = reader.document(n);
-				} catch (Exception e) {
+					TermFreqVector tv = reader.getTermFreqVector(n, luceneFieldName);
+					if (tv == null) {
+						// No term vector; probably not stored in this document.
+						continue;
+					}
+					if (tv instanceof TermPositionVector) {
+						// Check if there are offsets stored.
+						return ((TermPositionVector) tv).getOffsets(0) != null;
+					}
+				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
-				Fieldable f = d.getFieldable(fieldName);
-				if (f != null)
-					return f.isStoreOffsetWithTermVector();
 			}
 		}
 		return false;

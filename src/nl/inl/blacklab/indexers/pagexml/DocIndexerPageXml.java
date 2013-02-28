@@ -18,32 +18,24 @@ package nl.inl.blacklab.indexers.pagexml;
 import java.io.Reader;
 import java.util.regex.Pattern;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
 import nl.inl.blacklab.index.DocIndexerXml;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldImpl;
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.index.complex.TokenFilterAdder;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 
-import org.apache.lucene.analysis.LowerCaseFilter;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.NumericField;
-import org.apache.lucene.util.Version;
 import org.xml.sax.Attributes;
 
 /**
- * Index an ANW corpus XML file.
- *
- * The ANW corpus XML format was created with a trivial transform of the Sketch Engine input file,
- * making the ANW corpus data well-formed XML. Using XML is useful because it allows us to later
- * easily display it using XSLT.
+ * Index a PageXML (OCR'ed text) file.
  */
 public class DocIndexerPageXml extends DocIndexerXml {
 	static final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
@@ -100,27 +92,10 @@ public class DocIndexerPageXml extends DocIndexerXml {
 	public DocIndexerPageXml(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 
-		// Adds lower case and accents filters to the property
-		TokenFilterAdder desensitizeFilterAdder = new TokenFilterAdder() {
-			@Override
-			public TokenStream addFilters(TokenStream input) {
-				return new RemoveAllAccentsFilter(new LowerCaseFilter(Version.LUCENE_36, input));
-			}
-		};
-
 		// Define the properties that make up our complex field
-		contentsField = new ComplexFieldImpl(CONTENTS_FIELD, desensitizeFilterAdder); // actual text;
-																					// this property
-																					// will contain
-																					// the offset
-																					// information
-		contentsField.addAlternative("s"); // sensitive version of main value
-
-		// Named entity fields (experimental version for IMPACT retrieval demonstrator)
-		//---------------------
-
-		contentsField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start tag positions (just NE tags for now)
-		contentsField.addProperty(ComplexFieldUtil.END_TAG_PROP_NAME); // end tag positions (just NE tags for now)
+		contentsField = new ComplexFieldImpl(CONTENTS_FIELD, MAIN_PROP_NAME, SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE);
+		contentsField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, SensitivitySetting.ONLY_INSENSITIVE); // start tag positions (just NE tags for now)
+		contentsField.addProperty(ComplexFieldUtil.END_TAG_PROP_NAME, SensitivitySetting.ONLY_INSENSITIVE); // end tag positions (just NE tags for now)
 	}
 
 	/**
