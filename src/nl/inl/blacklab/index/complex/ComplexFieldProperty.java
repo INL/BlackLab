@@ -58,4 +58,8 @@ public abstract class ComplexFieldProperty {
 
 	public abstract List<Integer> getPositionIncrements();
 
+	public abstract int lastValuePosition();
+
+	public abstract String getName();
+
 }

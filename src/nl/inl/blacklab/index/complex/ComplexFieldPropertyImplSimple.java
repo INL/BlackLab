@@ -44,6 +44,10 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 	 *  set the token increments of the additional tokens to 0). */
 	protected List<Integer> increments = new ArrayList<Integer>();
 
+	/** Position of the last value added
+	 */
+	protected int position = -1;
+
 	/**
 	 * A property may be indexed in different ways (alternatives). This specifies names and filters
 	 * for each way.
@@ -133,6 +137,7 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 
 		values.add(value);
 		increments.add(increment);
+		position += increment; // keep track of position of last token
 	}
 
 	TokenStream getTokenStream(String altName, List<Integer> startChars, List<Integer> endChars) {
@@ -186,6 +191,16 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 	@Override
 	public List<Integer> getPositionIncrements() {
 		return Collections.unmodifiableList(increments);
+	}
+
+	@Override
+	public int lastValuePosition() {
+		return position;
+	}
+
+	@Override
+	public String getName() {
+		return propName;
 	}
 
 }

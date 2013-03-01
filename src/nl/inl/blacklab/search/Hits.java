@@ -587,7 +587,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param ctx query execution context, containing the sensitivity settings
 	 */
 	public TokenFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
-		findContext(ctx.luceneField());
+		findContext(ctx.luceneField(false));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
 			int[] context = hit.context;

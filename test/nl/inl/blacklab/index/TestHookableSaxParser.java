@@ -3,8 +3,11 @@ package nl.inl.blacklab.index;
 import java.io.IOException;
 import java.io.StringReader;
 
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
 import junit.framework.Assert;
-import nl.inl.blacklab.index.HookableSaxParser.SaxParserHandler;
+import nl.inl.blacklab.index.HookableSaxHandler.HookHandler;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,11 +17,13 @@ import org.xml.sax.SAXException;
 
 public class TestHookableSaxParser {
 
-	private HookableSaxParser hookableSaxParser;
+	private HookableSaxHandler hookableSaxHandler;
 
 	private InputSource inputSource;
 
-	private SaxParserHandler handler;
+	private HookHandler hookHandler;
+
+	private SAXParser parser;
 
 	@Before
 	public void setUp() {
@@ -27,11 +32,20 @@ public class TestHookableSaxParser {
 				+ "<child><name>B</name><child att='456'><name>D</name></child></child>"
 				+ "</root>";
 		inputSource = new InputSource(new StringReader(testXml));
-		hookableSaxParser = new HookableSaxParser();
-		handler = new StringConcatenateHandler();
+		hookableSaxHandler = new HookableSaxHandler();
+
+		SAXParserFactory factory = SAXParserFactory.newInstance();
+		factory.setNamespaceAware(true);
+		try {
+			parser = factory.newSAXParser();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		hookHandler = new StringConcatenateHandler();
 	}
 
-	class StringConcatenateHandler extends SaxParserHandler {
+	class StringConcatenateHandler extends HookHandler {
 
 		private StringBuilder builder = new StringBuilder();
 
@@ -68,29 +82,29 @@ public class TestHookableSaxParser {
 
 	@Test
 	public void testRootChild() throws SAXException, IOException {
-		hookableSaxParser.addHook("/root/child", false, handler);
-		hookableSaxParser.parse(inputSource);
-		Assert.assertEquals("<><>", handler.toString());
+		hookableSaxHandler.addHook("/root/child", hookHandler, false);
+		parser.parse(inputSource, hookableSaxHandler);
+		Assert.assertEquals("<><>", hookHandler.toString());
 	}
 
 	@Test
 	public void testAnyChildName() throws SAXException, IOException {
-		hookableSaxParser.addHook("//child/name", false, handler);
-		hookableSaxParser.parse(inputSource);
-		Assert.assertEquals("<$><$><$><$>", handler.toString());
+		hookableSaxHandler.addHook("//child/name", hookHandler, false);
+		parser.parse(inputSource, hookableSaxHandler);
+		Assert.assertEquals("<$><$><$><$>", hookHandler.toString());
 	}
 
 	@Test
 	public void testAllDescendants() throws SAXException, IOException {
-		hookableSaxParser.addHook("/root", true, handler);
-		hookableSaxParser.parse(inputSource);
-		Assert.assertEquals("<<<$><<$>>><<$><<$>>>>", handler.toString());
+		hookableSaxHandler.addHook("/root", hookHandler, true);
+		parser.parse(inputSource, hookableSaxHandler);
+		Assert.assertEquals("<<<$><<$>>><<$><<$>>>>", hookHandler.toString());
 	}
 
 	@Test
 	public void testAttribute() throws SAXException, IOException {
-		hookableSaxParser.addHook("//@att", true, handler);
-		hookableSaxParser.parse(inputSource);
-		Assert.assertEquals("@@", handler.toString());
+		hookableSaxHandler.addHook("//@att", hookHandler, true);
+		parser.parse(inputSource, hookableSaxHandler);
+		Assert.assertEquals("@@", hookHandler.toString());
 	}
 }

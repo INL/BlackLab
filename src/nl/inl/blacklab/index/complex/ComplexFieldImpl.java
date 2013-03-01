@@ -197,25 +197,6 @@ public class ComplexFieldImpl extends ComplexField {
 		this.addPropertyAlternative(mainPropertyName, altName, filterAdder);
 	}
 
-//	@Override
-//	public void addPropertyTokens(String propertyName, TokenStream c) throws IOException {
-//		CharTermAttribute ta = c.addAttribute(CharTermAttribute.class);
-//		while (c.incrementToken()) {
-//			addPropertyValue(propertyName, Utilities.getTerm(ta));
-//		}
-//	}
-
-//	@Override
-//	public void addTokens(TokenStream c) throws IOException {
-//		CharTermAttribute ta = c.addAttribute(CharTermAttribute.class);
-//		OffsetAttribute oa = c.addAttribute(OffsetAttribute.class);
-//		while (c.incrementToken()) {
-//			addValue(Utilities.getTerm(ta));
-//			addStartChar(oa.startOffset());
-//			addEndChar(oa.endOffset());
-//		}
-//	}
-
 	@Override
 	public ComplexFieldProperty getProperty(String name) {
 		ComplexFieldProperty p = properties.get(name);
@@ -244,4 +225,10 @@ public class ComplexFieldImpl extends ComplexField {
 	public ComplexFieldProperty getMainProperty() {
 		return getProperty(mainPropertyName);
 	}
+
+	@Override
+	public String getName() {
+		return fieldName;
+	}
+
 }

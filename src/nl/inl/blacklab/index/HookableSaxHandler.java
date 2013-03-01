@@ -38,7 +38,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * SAX parser with the ability to attach "SAX-path hooks" to process specific elements/attributes in
  * the XML.
  */
-public class HookableSaxParser extends DefaultHandler {
+public class HookableSaxHandler extends DefaultHandler {
 	/**
 	 * Describes a path in an XML document that can be evaluated while doing SAX parsing, and keeps
 	 * track of the current matching state(s).
@@ -61,17 +61,20 @@ public class HookableSaxParser extends DefaultHandler {
 					failedMatches++;
 				} else {
 					// No failed matches yet. Does this one match?
-					if (succesfulMatches < elementNames.size()
-							&& elementNames.get(succesfulMatches).equals(elementName)) {
-						// We have a match! Record it.
-						succesfulMatches++;
-					} else {
-						// Are we still in the skipping phase for a relative path?
-						if (isRelativePath && succesfulMatches == 0)
-							elementsSkipped++; // Yes, skip one more
-						else
-							failedMatches++; // No, record failed match
+					if (succesfulMatches < elementNames.size()) {
+						String elementToMatch = elementNames.get(succesfulMatches);
+						if (elementToMatch.equals(elementName) || elementToMatch.equals("*")) {
+							// We have a match! Record it.
+							succesfulMatches++;
+						}
+						return;
 					}
+
+					// No, no match. Are we still in the skipping phase for a relative path?
+					if (isRelativePath && succesfulMatches == 0)
+						elementsSkipped++; // Yes, skip one more
+					else
+						failedMatches++; // No, record failed match
 				}
 			}
 
@@ -244,7 +247,7 @@ public class HookableSaxParser extends DefaultHandler {
 	/**
 	 * Represents a handler for when a SAX path condition matches
 	 */
-	public static class SaxParserHandler {
+	public static class HookHandler {
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
 			// To be implemented by child class
 		}
@@ -270,13 +273,13 @@ public class HookableSaxParser extends DefaultHandler {
 		private SaxPathExpressionChecker expression;
 
 		/** The handler for this hook */
-		private SaxParserHandler handler;
+		private HookHandler handler;
 
 		/** Whether or not to call the handler for all descendants of the matched element */
 		private boolean callHandlerForDescendants;
 
 		public SaxParserHook(SaxPathExpressionChecker expression,
-				boolean callHandlerForDescendants, SaxParserHandler handler) {
+				boolean callHandlerForDescendants, HookHandler handler) {
 			super();
 			this.expression = expression;
 			this.handler = handler;
@@ -325,30 +328,30 @@ public class HookableSaxParser extends DefaultHandler {
 	/** The list of hooks into our parser */
 	private List<SaxParserHook> hooks = new ArrayList<SaxParserHook>();
 
-	/** The SAX parser to use */
-	SAXParser parser;
+//	/** The SAX parser to use */
+//	SAXParser parser;
 
 	/** To keep track of the position within the document */
 	protected Locator locator;
 
-	public void setParser(SAXParser parser) {
-		this.parser = parser;
-	}
+//	public void setParser(SAXParser parser) {
+//		this.parser = parser;
+//	}
+//
+//	private SAXParser getParser() {
+//		if (parser == null) {
+//			SAXParserFactory factory = SAXParserFactory.newInstance();
+//			factory.setNamespaceAware(true);
+//			try {
+//				parser = factory.newSAXParser();
+//			} catch (Exception e) {
+//				throw new RuntimeException(e);
+//			}
+//		}
+//		return parser;
+//	}
 
-	private SAXParser getParser() {
-		if (parser == null) {
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			factory.setNamespaceAware(true);
-			try {
-				parser = factory.newSAXParser();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return parser;
-	}
-
-	public HookableSaxParser() {
+	public HookableSaxHandler() {
 		//
 	}
 
@@ -362,8 +365,8 @@ public class HookableSaxParser extends DefaultHandler {
 	 * @param handler
 	 *            what to do when the condition matches
 	 */
-	public void addHook(SaxPathExpressionChecker condition, boolean callHandlerForAllDescendants,
-			SaxParserHandler handler) {
+	private void addHook(SaxPathExpressionChecker condition, boolean callHandlerForAllDescendants,
+			HookHandler handler) {
 		hooks.add(new SaxParserHook(condition, callHandlerForAllDescendants, handler));
 	}
 
@@ -372,14 +375,28 @@ public class HookableSaxParser extends DefaultHandler {
 	 *
 	 * @param condition
 	 *            when to invoke the handler (xpath subset expression)
+	 * @param handler
+	 *            what to do when the condition matches
 	 * @param callHandlerForAllDescendants
 	 *            whether or not to call the handler for all descendants of the matched element
+	 */
+	public void addHook(String condition, HookHandler handler,
+			boolean callHandlerForAllDescendants) {
+		addHook(new SaxPathExpressionChecker(condition), callHandlerForAllDescendants, handler);
+	}
+
+	/**
+	 * Add a hook to the parser.
+	 *
+	 * The hook is called only for the matched element itself, not all its descendants.
+	 *
+	 * @param condition
+	 *            when to invoke the handler (xpath subset expression)
 	 * @param handler
 	 *            what to do when the condition matches
 	 */
-	public void addHook(String condition, boolean callHandlerForAllDescendants,
-			SaxParserHandler handler) {
-		addHook(new SaxPathExpressionChecker(condition), callHandlerForAllDescendants, handler);
+	public void addHook(String condition, HookHandler handler) {
+		addHook(condition, handler, false);
 	}
 
 	@Override
@@ -425,9 +442,9 @@ public class HookableSaxParser extends DefaultHandler {
 		}
 	}
 
-	public void parse(InputSource inputSource) throws SAXException, IOException {
-		getParser().parse(inputSource, this);
-	}
+//	public void parse(InputSource inputSource) throws SAXException, IOException {
+//		getParser().parse(inputSource, this);
+//	}
 
 	/**
 	 * Test program
@@ -443,8 +460,8 @@ public class HookableSaxParser extends DefaultHandler {
 				+ "<child><name>A</name><child att='123'><name>C</name></child></child>"
 				+ "<child><name>B</name><child att='456'><name>D</name></child></child>"
 				+ "</root>";
-		HookableSaxParser p = new HookableSaxParser();
-		p.addHook("/root/child", true, new SaxParserHandler() {
+		HookableSaxHandler hookableHandler = new HookableSaxHandler();
+		hookableHandler.addHook("/root/child", new HookHandler() {
 			@Override
 			public void startElement(String uri, String localName, String qName,
 					Attributes attributes) {
@@ -455,21 +472,29 @@ public class HookableSaxParser extends DefaultHandler {
 			public void endElement(String uri, String localName, String qName) {
 				System.out.println("End of element: " + localName);
 			}
-		});
-		p.addHook("//child/name", true, new SaxParserHandler() {
+		}, true);
+		hookableHandler.addHook("//child/name", new HookHandler() {
 			@Override
 			public void characters(char[] ch, int start, int length) {
 				System.out.println("Child name: " + new String(ch, start, length));
 			}
-		});
-		p.addHook("//@att", true, new SaxParserHandler() {
+		}, true);
+		hookableHandler.addHook("//@att", new HookHandler() {
 
 			@Override
 			public void attribute(String name, String value) {
 				System.out.println("Attribute: " + value);
 			}
-		});
-		p.parse(new InputSource(new StringReader(xml)));
+		}, true);
+
+		SAXParserFactory factory = SAXParserFactory.newInstance();
+		factory.setNamespaceAware(true);
+		try {
+			SAXParser parser = factory.newSAXParser();
+			parser.parse(new InputSource(new StringReader(xml)), hookableHandler);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

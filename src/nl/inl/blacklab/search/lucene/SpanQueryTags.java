@@ -16,9 +16,9 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.QueryExecutionContext;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -38,27 +38,34 @@ import org.apache.lucene.search.spans.Spans;
 public class SpanQueryTags extends SpanQueryBase {
 	private String tagName;
 
-	public SpanQueryTags(String complexFieldName, String tagName) {
+//	public SpanQueryTags(String complexFieldName, String tagName) {
+//		super();
+//		this.tagName = tagName;
+//		clauses = new SpanQuery[2];
+//		baseFieldName = complexFieldName;
+//		String startTagFieldName = ComplexFieldUtil.startTagPropertyField(complexFieldName);
+//		String endTagFieldName = ComplexFieldUtil.endTagPropertyField(complexFieldName);
+//
+//		// Use a BlackLabSpanTermQuery instead of default Lucene one
+//		// because we need to override getField() to only return the base field name,
+//		// not the complete field name with the property.
+//		clauses[0] = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
+//		clauses[1] = new BLSpanTermQuery(new Term(endTagFieldName, tagName));
+//	}
+
+	public SpanQueryTags(QueryExecutionContext context, String tagName) {
 		super();
 		this.tagName = tagName;
 		clauses = new SpanQuery[2];
-		baseFieldName = complexFieldName;
-		String startTagFieldName = ComplexFieldUtil.startTagPropertyField(complexFieldName);
-		String endTagFieldName = ComplexFieldUtil.endTagPropertyField(complexFieldName);
+		baseFieldName = context.fieldName;
+		String startTagFieldName = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME).luceneField();
+		String endTagFieldName = context.withProperty(ComplexFieldUtil.END_TAG_PROP_NAME).luceneField();
 
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,
 		// not the complete field name with the property.
 		clauses[0] = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
 		clauses[1] = new BLSpanTermQuery(new Term(endTagFieldName, tagName));
-	}
-
-	public SpanQueryTags(Collection<SpanQuery> clauscol) {
-		super(clauscol);
-	}
-
-	public SpanQueryTags(SpanQuery[] _clauses) {
-		super(_clauses);
 	}
 
 	@Override

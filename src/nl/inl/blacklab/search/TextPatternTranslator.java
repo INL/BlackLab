@@ -165,7 +165,7 @@ public abstract class TextPatternTranslator<T> {
 	 */
 	public abstract T any(QueryExecutionContext context);
 
-	public String optCaseInsensitive(QueryExecutionContext context, String value) {
+	public String optInsensitive(QueryExecutionContext context, String value) {
 		if (!context.diacriticsSensitive)
 			value = StringUtil.removeAccents(value);
 		if (!context.caseSensitive)

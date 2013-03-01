@@ -37,7 +37,7 @@ public class TextPatternTerm extends TextPattern {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.term(context, translator.optCaseInsensitive(context, value));
+		return translator.term(context, translator.optInsensitive(context, value));
 	}
 
 }

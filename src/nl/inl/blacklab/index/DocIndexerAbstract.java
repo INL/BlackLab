@@ -39,13 +39,13 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
 	protected boolean skippingCurrentDocument = false;
 
-	protected Indexer indexer;
+	public Indexer indexer;
 
 	/**
 	 * File we're currently parsing. This can be useful for storing the original filename in the
 	 * index.
 	 */
-	protected String fileName;
+	public String fileName;
 
 	protected CountingReader reader;
 
@@ -67,13 +67,13 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	 * The setting to use when creating Field objects that we want to be analyzed
 	 * (i.e., with or without norms; default is without)
 	 */
-	protected Field.Index indexAnalyzed = Field.Index.ANALYZED_NO_NORMS;
+	public Field.Index indexAnalyzed = Field.Index.ANALYZED_NO_NORMS;
 
 	/**
 	 * The setting to use when creating Field objects that we don't want to be analyzed
 	 * (i.e., with or without norms; default is without)
 	 */
-	protected Field.Index indexNotAnalyzed = Field.Index.NOT_ANALYZED_NO_NORMS;
+	public Field.Index indexNotAnalyzed = Field.Index.NOT_ANALYZED_NO_NORMS;
 
 	/**
 	 * Enables or disables norms. Norms are disabled by default.

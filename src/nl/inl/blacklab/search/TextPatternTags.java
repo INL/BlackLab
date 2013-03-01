@@ -43,7 +43,7 @@ public class TextPatternTags extends TextPattern {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.tags(context, translator.optCaseInsensitive(context, elementName), attr);
+		return translator.tags(context, translator.optInsensitive(context, elementName), attr);
 	}
 
 }

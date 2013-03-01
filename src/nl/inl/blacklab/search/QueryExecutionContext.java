@@ -97,9 +97,18 @@ public class QueryExecutionContext {
 	 * @return null if field, property or alternative not found; valid Lucene field name otherwise
 	 */
 	public String luceneField() {
+		return luceneField(true);
+	}
+
+	/**
+	 * Returns the correct current Lucene field name to use, based on the complex field name,
+	 * property name and list of alternatives.
+	 * @return null if field, property or alternative not found; valid Lucene field name otherwise
+	 */
+	public String luceneField(boolean includeAlternative) {
 
 		// Determine preferred alternatives based on sensitivity preferences.
-		String[] alternatives = getAlternatives();
+		String[] alternatives = includeAlternative ? getAlternatives() : null;
 
 		if (searcher == null) {
 			// Mostly for testing. Don't check, just combine field parts.

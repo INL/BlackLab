@@ -72,7 +72,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
-		SpanQueryTags allTags = new SpanQueryTags(context.fieldName, elementName);
+		SpanQueryTags allTags = new SpanQueryTags(context, elementName);
 		if (attr == null || attr.size() == 0)
 			return allTags;
 
@@ -80,7 +80,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		List<SpanQuery> attrFilters = new ArrayList<SpanQuery>();
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		for (Map.Entry<String,String> e: attr.entrySet()) {
-			String value = optCaseInsensitive(context, "@" + e.getKey() + "__" + e.getValue());
+			String value = optInsensitive(context, "@" + e.getKey() + "__" + e.getValue());
 			attrFilters.add(term(startTagContext, value));
 		}
 

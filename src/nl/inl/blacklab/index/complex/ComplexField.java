@@ -225,4 +225,6 @@ public abstract class ComplexField {
 
 	public abstract ComplexFieldProperty getMainProperty();
 
+	public abstract String getName();
+
 }
