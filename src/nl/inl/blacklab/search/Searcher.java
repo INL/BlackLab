@@ -39,6 +39,8 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
+import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpansFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
@@ -1475,7 +1477,13 @@ public class Searcher {
 	 * @return the query execution context
 	 */
 	public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-		String mainPropName = indexStructure.getComplexFieldDesc(fieldName).getMainProperty().getName();
+		ComplexFieldDesc complexFieldDesc = indexStructure.getComplexFieldDesc(fieldName);
+		if (complexFieldDesc == null)
+			throw new RuntimeException("Unknown complex field " + fieldName);
+		PropertyDesc mainProperty = complexFieldDesc.getMainProperty();
+		if (mainProperty == null)
+			throw new RuntimeException("Main property not found for " + fieldName);
+		String mainPropName = mainProperty.getName();
 		return new QueryExecutionContext(this, fieldName, mainPropName,
 				defaultCaseSensitive, defaultDiacriticsSensitive);
 	}
