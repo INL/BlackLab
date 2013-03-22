@@ -48,7 +48,11 @@ public class DocPropertyStoredField extends DocProperty {
 	@Override
 	public int compare(DocResult a, DocResult b) {
 		String sa = a.getDocument().get(fieldName);
+		if (sa == null)
+			sa = "";
 		String sb = b.getDocument().get(fieldName);
+		if (sb == null)
+			sb = "";
 		return sa.compareTo(sb);
 	}
 
