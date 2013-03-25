@@ -51,6 +51,9 @@ public class TextPatternRegex extends TextPatternTerm {
 		// Try to convert to a wildcard query.
 		String wildcard = value;
 
+		// Does the regex pattern begin with (?i) (case-insensitive search)?
+		boolean searchCaseInsensitively = false;
+
 		// Wildcard expressions always start at beginning
 		if (wildcard.charAt(0) == '^') {
 			wildcard = wildcard.substring(1);
@@ -74,6 +77,12 @@ public class TextPatternRegex extends TextPatternTerm {
 		wildcard = wildcard.replaceAll("\\.\\+", "##QUESTIONMARK####ASTERISK##"); // .+ -> ?*
 		wildcard = wildcard.replaceAll("\\.", "##QUESTIONMARK##"); // . -> ?
 
+		// See if we want case-insensitive search
+		if (wildcard.startsWith("(?i)")) {
+			searchCaseInsensitively = true;
+			wildcard = wildcard.substring(4);
+		}
+
 		// See if there's any regex stuff left
 		if (StringUtil.escapeRegexCharacters(wildcard).equals(wildcard)) {
 			// Nope! Safe to turn this into a wildcard query.
@@ -81,9 +90,16 @@ public class TextPatternRegex extends TextPatternTerm {
 			// Turn into wildcard query
 			wildcard = wildcard.replaceAll("##ASTERISK##", "*");
 			wildcard = wildcard.replaceAll("##QUESTIONMARK##", "?");
+			TextPattern wildcardPattern = new TextPatternWildcard(wildcard);
 
-			// Let TextPatternWildcard sort out the rest.
-			return new TextPatternWildcard(wildcard).rewrite();
+			// Optionally make it case-insensitive
+			if (searchCaseInsensitively) {
+				wildcardPattern = new TextPatternSensitive(false, false, wildcardPattern);
+			}
+
+			// Let TextPatternWildcard sort out the rest
+			// (may be turned into a prefix or term query if possible).
+			return wildcardPattern.rewrite();
 		}
 
 		// Bummer, it's a real regex.

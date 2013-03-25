@@ -40,11 +40,46 @@ public class TestTextPatternRewrite {
 
 	@Test
 	public void testRewrite() {
-		TextPattern original = getPatternFromCql("[!(word != 'water')]");
+		TextPattern original = getPatternFromCql("[!(word != 'Water')]");
 		Assert.assertEquals("NOT(NOT(REGEX(contents%word@i, ^water$)))", original.translate(stringifier));
 		TextPattern rewritten = original.rewrite();
 		String rewrittenStr = rewritten.translate(stringifier);
 		Assert.assertEquals("TERM(contents%word@i, water)", rewrittenStr);
 	}
 
+	@Test
+	public void testRewriteInsensitive() {
+		TextPattern original = getPatternFromCql("[word = '(?i)Appel']");
+		Assert.assertEquals("REGEX(contents%word@i, ^(?i)appel$)", original.translate(stringifier));
+		TextPattern rewritten = original.rewrite();
+		String rewrittenStr = rewritten.translate(stringifier);
+		Assert.assertEquals("TERM(contents%word@i, appel)", rewrittenStr);
+	}
+
+	@Test
+	public void testRewriteInsensitive2() {
+		TextPattern original = getPatternFromCql("[word = '(?i)Appel.*']");
+		Assert.assertEquals("REGEX(contents%word@i, ^(?i)appel.*$)", original.translate(stringifier));
+		TextPattern rewritten = original.rewrite();
+		String rewrittenStr = rewritten.translate(stringifier);
+		Assert.assertEquals("PREFIX(contents%word@i, appel)", rewrittenStr);
+	}
+
+	@Test
+	public void testRewriteInsensitive3() {
+		TextPattern original = getPatternFromCql("[word = '(?i).*Appel']");
+		Assert.assertEquals("REGEX(contents%word@i, ^(?i).*appel$)", original.translate(stringifier));
+		TextPattern rewritten = original.rewrite();
+		String rewrittenStr = rewritten.translate(stringifier);
+		Assert.assertEquals("WILDCARD(contents%word@i, *appel)", rewrittenStr);
+	}
+
+	@Test
+	public void testRewriteInsensitive4() {
+		TextPattern original = getPatternFromCql("[word = '(?i)[ao]ppel']");
+		Assert.assertEquals("REGEX(contents%word@i, ^(?i)[ao]ppel$)", original.translate(stringifier));
+		TextPattern rewritten = original.rewrite();
+		String rewrittenStr = rewritten.translate(stringifier);
+		Assert.assertEquals("REGEX(contents%word@i, ^(?i)[ao]ppel$)", rewrittenStr);
+	}
 }
