@@ -39,7 +39,7 @@ public class DocResultsWindow extends DocResults {
 			int number = numberPerPage;
 			if (first + number > source.size())
 				number = source.size() - first;
-			results = source.getResults().subList(first, first + number);
+			results = source.subList(first, first + number);
 		}
 	}
 

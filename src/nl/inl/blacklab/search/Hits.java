@@ -114,6 +114,12 @@ public class Hits implements Iterable<Hit> {
 	private int currentContextSize;
 
 	/**
+	 * The number of documents counted (only valid if the basis for this is a SpanQuery object;
+	 * used by DocResults to report the total number of docs without retrieving them all first)
+	 */
+	private int totalNumberOfDocs;
+
+	/**
 	 * Construct an empty Hits object
 	 *
 	 * @param searcher
@@ -138,6 +144,7 @@ public class Hits implements Iterable<Hit> {
 		setConcordanceField(concordanceFieldPropName);
 		desiredContextSize = searcher == null ? 0 /* only for test */ : searcher.getDefaultContextSize();
 		currentContextSize = -1;
+		totalNumberOfDocs = -1; // unknown
 	}
 
 	/**
@@ -155,12 +162,14 @@ public class Hits implements Iterable<Hit> {
 	 * @deprecated supply a SpanQuery to a Hits object instead
 	 */
 	@Deprecated
+	public
 	Hits(Searcher searcher, String concordanceFieldPropName, Spans source) {
 		this(searcher, concordanceFieldPropName);
 
 		totalNumberOfHits = -1; // "not known yet"
 		sourceSpans = source;
 		sourceSpansFullyRead = false;
+		totalNumberOfDocs = -1; // unknown
 	}
 
 	/**
@@ -181,8 +190,14 @@ public class Hits implements Iterable<Hit> {
 
 		// Count how many hits there are in total
 		try {
+			totalNumberOfDocs = 0;
+			int doc = -1;
 			tooManyHits = false;
 			while (sourceSpans.next()) {
+				if (doc != sourceSpans.doc()) {
+					doc = sourceSpans.doc();
+					totalNumberOfDocs++;
+				}
 				totalNumberOfHits++;
 				if (totalNumberOfHits >= MAX_HITS_TO_RETRIEVE) {
 					// Too many hits; stop collecting here
@@ -683,5 +698,15 @@ public class Hits implements Iterable<Hit> {
 
 	public void setContextField(String contextField) {
 		this.contextFieldPropName = contextField;
+	}
+
+	/**
+	 * The number of documents counted (only valid if the basis for this is a SpanQuery object;
+	 * used by DocResults to report the total number of docs without retrieving them all first)
+	 *
+	 * @return number of docs, or -1 if this Hits object was not constructed from a SpanQuery object
+	 */
+	public int numberOfDocs() {
+		return totalNumberOfDocs;
 	}
 }

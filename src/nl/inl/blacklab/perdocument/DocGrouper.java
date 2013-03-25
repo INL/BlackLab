@@ -54,7 +54,7 @@ public class DocGrouper implements Iterable<DocGroup> {
 	public DocGrouper(DocResults docResults, DocProperty groupBy) {
 		searcher = docResults.getSearcher();
 		this.groupBy = groupBy;
-		for (DocResult r : docResults.getResults()) {
+		for (DocResult r : docResults) {
 			HitPropValue groupId = groupBy.get(r);
 			DocGroup group = groups.get(groupId);
 			if (group == null) {
