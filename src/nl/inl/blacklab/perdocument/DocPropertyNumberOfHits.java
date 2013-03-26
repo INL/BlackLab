@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.grouping.HitPropValueInt;
 public class DocPropertyNumberOfHits extends DocProperty {
 	@Override
 	public HitPropValueInt get(DocResult result) {
-		return new HitPropValueInt(result.getHits().size());
+		return new HitPropValueInt(result.getNumberOfHits());
 	}
 
 	/**
@@ -35,7 +35,7 @@ public class DocPropertyNumberOfHits extends DocProperty {
 	 */
 	@Override
 	public int compare(DocResult a, DocResult b) {
-		return a.getHits().size() - b.getHits().size();
+		return a.getNumberOfHits() - b.getNumberOfHits();
 	}
 
 	@Override

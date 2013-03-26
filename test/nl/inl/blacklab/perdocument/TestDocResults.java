@@ -40,7 +40,7 @@ public class TestDocResults {
 		int i = 0;
 		for (DocResult dr: drs) {
 			Assert.assertEquals(expDoc[i], dr.getDocId());
-			Assert.assertEquals(expHits[i], dr.getHits().size());
+			Assert.assertEquals(expHits[i], dr.getNumberOfHits());
 			i++;
 		}
 	}

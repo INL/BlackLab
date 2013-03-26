@@ -17,6 +17,7 @@ package nl.inl.blacklab.perdocument;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.Searcher;
 
 import org.apache.lucene.document.Document;
@@ -57,8 +58,37 @@ public class DocResult {
 		return document;
 	}
 
+	/**
+	 * Get all the hits in the document
+	 * @return all hits in the document
+	 * @deprecated inefficient when making concordances. Use getNumberOfHits() or
+	 *   getHits(int max) to retrieve some or all of the hits as needed
+	 */
+	@Deprecated
 	public Hits getHits() {
 		return hits;
+	}
+
+	/**
+	 * Get the number of hits in this document.
+	 * @return the number of hits in the document
+	 */
+	public int getNumberOfHits() {
+		return hits.size();
+	}
+
+	/**
+	 * Get some or all hits in this document.
+	 * @param max the maximum number of hits we want, or 0 if we want all hits.
+	 *   Only use 0 if you really want all the hits. For example, if making concordances,
+	 *   it is more efficient to retrieve only some of the hits, so BlackLab won't
+	 *   fetch context for all the hits, even the ones you don't want concordances for.
+	 * @return the hits
+	 */
+	public Hits getHits(int max) {
+		if (max == 0)
+			return hits;
+		return new HitsWindow(hits, 0, max);
 	}
 
 	public int getDocId() {
