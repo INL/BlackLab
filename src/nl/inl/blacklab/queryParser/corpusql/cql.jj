@@ -54,11 +54,18 @@ public class CorpusQueryLanguageParser {
     	return Integer.parseInt(t.toString());
     }
     
-    private String chopEnds(String regex) throws ParseException
+    private String chopEnds(String input) throws ParseException
     {
-    	if (regex.length() >= 2)
-    		return regex.substring(1, regex.length() - 1);
-    	throw new ParseException("Cannot chop slashes");
+    	if (input.length() >= 2)
+    		return input.substring(1, input.length() - 1);
+    	throw new RuntimeException();
+    }
+    
+    private String getStringBetweenQuotes(String input) throws ParseException
+    {
+        if (!allowSingleQuotes && input.charAt(0) == '\'')
+            throw new ParseException("Only double quoted strings are allowed in CorpusQL query");
+        return chopEnds(input);
     }
     
     private TextPattern simplePattern(String str)
@@ -71,7 +78,20 @@ public class CorpusQueryLanguageParser {
         // Treat everything like regex now; will be simplified later if possible
         return new TextPatternRegex(str); 
     }
+
+    /** Allow strings to be quoted using single quotes? */
+    private boolean allowSingleQuotes = false;
     
+    /** Allow strings to be quoted using single quotes? [default: no] */
+    public void setAllowSingleQuotes(boolean b) {
+        allowSingleQuotes = b;
+    }
+
+    /** Allow strings to be quoted using single quotes? */
+    public boolean getAllowSingleQuotes() {
+        return allowSingleQuotes;
+    }
+
     private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
     
     public void setDefaultProperty(IndexStructure structure, String fieldName) {
@@ -129,6 +149,7 @@ TOKEN [IGNORE_CASE]:
 |	<NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","0"-"9"])* >
 |	<NUMBER: (["0"-"9"])+ >
 |	<QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
+|   <SINGLE_QUOTED_STRING: "'" (~["'","\\"] | "\\" ~[] )* "'" >
 }
 
 // --- Grammar rules start here --- 
@@ -234,14 +255,23 @@ TextPattern tag():
     }
 }
 
+Token quotedString():
+{
+    Token a;
+}
+{
+    a=<QUOTED_STRING>        { return a; }
+|   a=<SINGLE_QUOTED_STRING> { return a; }
+}
+
 void attributes(Map<String, String> attr):
 {
     Token name, value;
 }
 {
-    name=<NAME> "=" value=<QUOTED_STRING>
+    name=<NAME> "=" value=quotedString()
     {
-        attr.put(name.toString(), chopEnds(value.toString()));
+        attr.put(name.toString(), getStringBetweenQuotes(value.toString()));
     }
 }
 
@@ -343,7 +373,7 @@ TextPattern positionWord():
 	Token t = null;
 }
 {
-	t=<QUOTED_STRING>      { return simplePattern(chopEnds(t.toString())); }
+	t=quotedString()      { return simplePattern(getStringBetweenQuotes(t.toString())); }
 }
 
 /* expression inside square brackets: an attribute clause, or multiple 
@@ -416,7 +446,7 @@ TextPattern valuePart():
 	Token t = null;
 }
 {
-	t=<QUOTED_STRING>              { return simplePattern(chopEnds(t.toString())); }
+	t=quotedString()              { return simplePattern(getStringBetweenQuotes(t.toString())); }
 |	"(" m=value() ")"              { return m; }
 
 }

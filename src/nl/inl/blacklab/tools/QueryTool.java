@@ -207,9 +207,12 @@ public class QueryTool {
 			try {
 				CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
 						query));
+				parser.setAllowSingleQuotes(true);
 				return parser.query();
+			} catch (nl.inl.blacklab.queryParser.corpusql.ParseException e) {
+				throw new ParseException(e.getMessage());
 			} catch (Exception e) {
-				throw new ParseException(e);
+				throw new ParseException("Fatale fout tijdens parsen: " + e.getMessage());
 			}
 		}
 
@@ -327,8 +330,10 @@ public class QueryTool {
 				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_36, CONTENTS_FIELD,
 						new WhitespaceAnalyzer(Version.LUCENE_36));
 				return parser.parse(query);
+			} catch (nl.inl.blacklab.queryParser.lucene.ParseException e) {
+				throw new ParseException(e.getMessage());
 			} catch (Exception e) {
-				throw new ParseException(e);
+				throw new ParseException("Fatale fout tijdens parsen: " + e.getMessage());
 			}
 		}
 

@@ -24,6 +24,8 @@ public interface CorpusQueryLanguageParserConstants {
   int NUMBER = 10;
   /** RegularExpression Id. */
   int QUOTED_STRING = 11;
+  /** RegularExpression Id. */
+  int SINGLE_QUOTED_STRING = 12;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -42,6 +44,7 @@ public interface CorpusQueryLanguageParserConstants {
     "<NAME>",
     "<NUMBER>",
     "<QUOTED_STRING>",
+    "<SINGLE_QUOTED_STRING>",
     "\"<\"",
     "\"/\"",
     "\">\"",
