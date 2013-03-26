@@ -54,17 +54,17 @@ public class CorpusQueryLanguageParser {
     	return Integer.parseInt(t.toString());
     }
     
-    private String chopEnds(String input) throws ParseException
+    private String chopEnds(String input)
     {
     	if (input.length() >= 2)
     		return input.substring(1, input.length() - 1);
     	throw new RuntimeException();
     }
     
-    private String getStringBetweenQuotes(String input) throws ParseException
+    private String getStringBetweenQuotes(String input) throws SingleQuotesException
     {
         if (!allowSingleQuotes && input.charAt(0) == '\'')
-            throw new ParseException("Only double quoted strings are allowed in CorpusQL query");
+            throw new SingleQuotesException();
         return chopEnds(input);
     }
     
@@ -240,14 +240,14 @@ TextPattern tag():
     "<" (endTagSlash="/")? tagName=<NAME> ( attributes(attr) )* (selfCloseSlash="/")? ">"
     {
         if (endTagSlash != null && selfCloseSlash != null) {
-            throw new ParseException("Malformed tag in query");
+            throw new MalformedTagException();
         }
         TextPattern tags = new TextPatternTags(tagName.toString(), attr);
         if (selfCloseSlash != null)
             return tags;
         if (endTagSlash != null) {
             if (attr.size() > 0) {
-                throw new ParseException("Cannot filter end tag on attributes");
+                throw new MalformedTagException("Cannot filter XML end tag on attributes");
             }
             return new TextPatternEdge(tags, true); // right edge
         }

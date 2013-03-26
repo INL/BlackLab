@@ -34,17 +34,17 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         return Integer.parseInt(t.toString());
     }
 
-    private String chopEnds(String input) throws ParseException
+    private String chopEnds(String input)
     {
         if (input.length() >= 2)
                 return input.substring(1, input.length() - 1);
-        throw new ParseException("Cannot chop first and last character, too short");
+        throw new RuntimeException();
     }
 
-    private String getStringBetweenQuotes(String input) throws ParseException
+    private String getStringBetweenQuotes(String input) throws SingleQuotesException
     {
         if (!allowSingleQuotes && input.charAt(0) == '\u005c'')
-            throw new ParseException("Only double quoted strings are allowed in CorpusQL query");
+            throw new SingleQuotesException();
         return chopEnds(input);
     }
 
@@ -221,14 +221,14 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     }
     jj_consume_token(15);
         if (endTagSlash != null && selfCloseSlash != null) {
-            {if (true) throw new ParseException("Malformed tag in query");}
+            {if (true) throw new MalformedTagException();}
         }
         TextPattern tags = new TextPatternTags(tagName.toString(), attr);
         if (selfCloseSlash != null)
             {if (true) return tags;}
         if (endTagSlash != null) {
             if (attr.size() > 0) {
-                {if (true) throw new ParseException("Cannot filter end tag on attributes");}
+                {if (true) throw new MalformedTagException("Cannot filter XML end tag on attributes");}
             }
             {if (true) return new TextPatternEdge(tags, true);} // right edge
         }

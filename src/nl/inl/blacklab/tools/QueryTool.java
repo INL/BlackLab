@@ -207,7 +207,7 @@ public class QueryTool {
 			try {
 				CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
 						query));
-				parser.setAllowSingleQuotes(true);
+				//parser.setAllowSingleQuotes(true);
 				return parser.query();
 			} catch (nl.inl.blacklab.queryParser.corpusql.ParseException e) {
 				throw new ParseException(e.getMessage());
