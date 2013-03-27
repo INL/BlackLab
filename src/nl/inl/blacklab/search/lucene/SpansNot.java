@@ -208,8 +208,10 @@ class SpansNot extends Spans {
 	 */
 	@Override
 	public boolean skipTo(int doc) throws IOException {
-		// Skip clause to doc (or beyond if there's no hits in doc)
-		moreHitsInClause = clause == null ? false : clause.skipTo(doc);
+		// If it's not already (past) there, skip clause
+		// to doc (or beyond if there's no hits in doc)
+		if (clause.doc() < doc)
+			moreHitsInClause = clause == null ? false : clause.skipTo(doc);
 
 		if (currentDoc >= doc) {
 			// We can't skip to it because we're already there or beyond.
