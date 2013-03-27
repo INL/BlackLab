@@ -93,7 +93,7 @@ class SpansAnd extends Spans {
 					synchMatchStart(0);
 				else
 					synchMatchStart(1);
-				continue;
+				continue; // restart synching at doc level
 			}
 
 			// Synch at match end level
@@ -110,11 +110,11 @@ class SpansAnd extends Spans {
 
 		// Are we done?
 		if (!stillValidSpans[0] || !stillValidSpans[1]) {
-			// Yes
+			// Yes, one of the Spans was exhausted
 			return false;
 		}
 
-		// No, match not found
+		// No, we are synched on a new hit
 		return true;
 	}
 
@@ -123,22 +123,20 @@ class SpansAnd extends Spans {
 	}
 
 	private void synchMatchStart(int laggingSpans) throws IOException {
-		int i = laggingSpans;
-		int doc = spans[i].doc();
-		int catchUpTo = spans[1 - i].start();
-		while (stillValidSpans[i] && spans[i].start() < catchUpTo && spans[i].doc() == doc) {
-			stillValidSpans[i] = spans[i].next();
+		int doc = spans[laggingSpans].doc();
+		int catchUpTo = spans[1 - laggingSpans].start();
+		while (stillValidSpans[laggingSpans] && spans[laggingSpans].start() < catchUpTo && spans[laggingSpans].doc() == doc) {
+			stillValidSpans[laggingSpans] = spans[laggingSpans].next();
 		}
 	}
 
 	private void synchMatchEnd(int laggingSpans) throws IOException {
-		int i = laggingSpans;
-		int doc = spans[i].doc();
-		int start = spans[i].start();
-		int catchUpTo = spans[1 - i].end();
-		while (stillValidSpans[i] && spans[i].end() < catchUpTo && spans[i].doc() == doc
-				&& spans[i].start() == start) {
-			stillValidSpans[i] = spans[i].next();
+		int doc = spans[laggingSpans].doc();
+		int start = spans[laggingSpans].start();
+		int catchUpTo = spans[1 - laggingSpans].end();
+		while (stillValidSpans[laggingSpans] && spans[laggingSpans].end() < catchUpTo && spans[laggingSpans].doc() == doc
+				&& spans[laggingSpans].start() == start) {
+			stillValidSpans[laggingSpans] = spans[laggingSpans].next();
 		}
 	}
 
