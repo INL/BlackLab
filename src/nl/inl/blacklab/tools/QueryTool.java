@@ -130,9 +130,7 @@ public class QueryTool {
 	 * What results view do we want to see?
 	 */
 	enum ShowSetting {
-		HITS,
-		GROUPS,
-		COLLOC
+		HITS, GROUPS, COLLOC
 	}
 
 	/**
@@ -207,7 +205,7 @@ public class QueryTool {
 			try {
 				CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
 						query));
-				//parser.setAllowSingleQuotes(true);
+				// parser.setAllowSingleQuotes(true);
 				return parser.query();
 			} catch (nl.inl.blacklab.queryParser.corpusql.ParseException e) {
 				throw new ParseException(e.getMessage());
@@ -380,7 +378,7 @@ public class QueryTool {
 		String propIsAlto = System.getProperty("IS_ALTO");
 		IS_ALTO = propIsAlto == null ? false : propIsAlto.equalsIgnoreCase("true");
 
-		BasicConfigurator.configure(); //new NullAppender()); // ignore logging for now
+		BasicConfigurator.configure(); // new NullAppender()); // ignore logging for now
 
 		// Change output encoding?
 		if (args.length == 2) {
@@ -464,10 +462,10 @@ public class QueryTool {
 				if (expr.length() <= 7) {
 					filterQuery = null; // clear filter
 					System.out.println("Filter cleared.");
-				}
-				else {
+				} else {
 					String filterExpr = expr.substring(7);
-					QueryParser qp = new QueryParser(Version.LUCENE_36, "title", new StandardAnalyzer(Version.LUCENE_36));
+					QueryParser qp = new QueryParser(Version.LUCENE_36, "title",
+							new StandardAnalyzer(Version.LUCENE_36));
 					try {
 						filterQuery = qp.parse(filterExpr);
 					} catch (org.apache.lucene.queryParser.ParseException e) {
@@ -488,8 +486,9 @@ public class QueryTool {
 					diacSensitive = true;
 				}
 				searcher.setDefaultSearchSensitive(caseSensitive, diacSensitive);
-				System.out.println("Search defaults to " + (caseSensitive ? "case-sensitive" : "case-insensitive") +
-						" and " + (diacSensitive ? "diacritics-sensitive" : "diacritics-insensitive"));
+				System.out.println("Search defaults to "
+						+ (caseSensitive ? "case-sensitive" : "case-insensitive") + " and "
+						+ (diacSensitive ? "diacritics-sensitive" : "diacritics-insensitive"));
 			} else if (lcased.startsWith("doctitle ")) {
 				String v = lcased.substring(9);
 				showDocTitle = v.equals("on") || v.equals("yes") || v.equals("true");
@@ -510,7 +509,8 @@ public class QueryTool {
 					String[] parts = lcased.substring(6).split("\\s+", 2);
 					groupBy(parts[0], parts.length > 1 ? parts[1] : null);
 				}
-			} else if (lcased.equals("groups") || lcased.equals("hits") || lcased.startsWith("colloc") || lcased.startsWith("group ")) {
+			} else if (lcased.equals("groups") || lcased.equals("hits")
+					|| lcased.startsWith("colloc") || lcased.startsWith("group ")) {
 				changeShowSettings(expr);
 			} else if (lcased.equals("switch") || lcased.equals("sw")) {
 				currentParser = currentParser.nextParser();
@@ -562,7 +562,8 @@ public class QueryTool {
 				System.err.println("Command line editing enabled.");
 			} catch (ClassNotFoundException e) {
 				// Can't init JLine; too bad, fall back to stdin
-				System.err.println("Command line editing not available; to enable, place jline jar in classpath.");
+				System.err
+						.println("Command line editing not available; to enable, place jline jar in classpath.");
 			} catch (Exception e) {
 				throw new RuntimeException("Could not init JLine console reader", e);
 			}
@@ -570,7 +571,7 @@ public class QueryTool {
 
 		if (jlineConsoleReader != null) {
 			try {
-				return (String)jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
+				return (String) jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
 			} catch (Exception e) {
 				throw new RuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
 			}
@@ -635,7 +636,7 @@ public class QueryTool {
 			out.println("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
 
 			// Execute search
-			//Filter filter = null; // TODO: metadata search!
+			// Filter filter = null; // TODO: metadata search!
 			Filter filter = filterQuery == null ? null : new QueryWrapperFilter(filterQuery);
 			SpanQuery spanQuery = searcher.createSpanQuery(pattern, filter);
 			out.println("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
@@ -645,8 +646,9 @@ public class QueryTool {
 			showWhichGroup = -1;
 			showSetting = ShowSetting.HITS;
 			firstResult = 0;
-			reportTime(t);
+			long searchTime = t.elapsed();
 			showResultsPage();
+			reportTime("search", searchTime, "display", t.elapsed() - searchTime);
 		} catch (TokenMgrError e) {
 			// Lexical error
 			System.err.println("Invalid query: " + e.getMessage());
@@ -668,7 +670,7 @@ public class QueryTool {
 	private void showPage(int pageNumber) {
 		if (hits != null) {
 			int totalResults;
-			switch(showSetting) {
+			switch (showSetting) {
 			case COLLOC:
 				totalResults = collocations.size();
 				break;
@@ -716,7 +718,7 @@ public class QueryTool {
 		if (hits == null)
 			return;
 
-		switch(showSetting) {
+		switch (showSetting) {
 		case COLLOC:
 			throw new UnsupportedOperationException();
 		case GROUPS:
@@ -742,9 +744,10 @@ public class QueryTool {
 	 * @param sortBy
 	 *            hit property to sort by
 	 * @param property
-	 * 			  (optional) if sortBy is a context property (say, hit text), this gives the token property to use for the context.
-	 *            Example: if this is "lemma", will look at the lemma(ta) of the hit text. If this is null, uses the
-	 *            "main property" (word form, usually).
+	 *            (optional) if sortBy is a context property (say, hit text), this gives the token
+	 *            property to use for the context. Example: if this is "lemma", will look at the
+	 *            lemma(ta) of the hit text. If this is null, uses the "main property" (word form,
+	 *            usually).
 	 */
 	private void sortHits(String sortBy, String property) {
 		Timer t = new Timer();
@@ -768,8 +771,9 @@ public class QueryTool {
 		} else {
 			hitsToSort.sort(crit);
 			firstResult = 0;
-			reportTime(t);
+			long sortTime = t.elapsed();
 			showResultsPage();
+			reportTime("sort", sortTime, "display", t.elapsed() - sortTime);
 		}
 	}
 
@@ -801,9 +805,10 @@ public class QueryTool {
 	 * @param groupBy
 	 *            hit property to group by
 	 * @param property
-	 * 			  (optional) if groupBy is a context property (say, hit text), this gives the token property to use for the context.
-	 *            Example: if this is "lemma", will look at the lemma(ta) of the hit text. If this is null, uses the
-	 *            "main property" (word form, usually).
+	 *            (optional) if groupBy is a context property (say, hit text), this gives the token
+	 *            property to use for the context. Example: if this is "lemma", will look at the
+	 *            lemma(ta) of the hit text. If this is null, uses the "main property" (word form,
+	 *            usually).
 	 */
 	private void groupBy(String groupBy, String property) {
 		if (hits == null)
@@ -825,8 +830,9 @@ public class QueryTool {
 		}
 		groups = new ResultsGrouper(hits, crit);
 		showSetting = ShowSetting.GROUPS;
-		reportTime(t);
+		long groupTime = t.elapsed();
 		sortGroups("size");
+		reportTime("group", groupTime, "sort/display", t.elapsed() - groupTime);
 	}
 
 	/**
@@ -861,12 +867,15 @@ public class QueryTool {
 	/**
 	 * If an operation took longer than 5 seconds, report the time it took.
 	 *
-	 * @param t
+	 * @param searchTime
+	 *
+	 * @param timerAfterDisplay
 	 *            object keeping the time
 	 */
-	private void reportTime(Timer t) {
-		//if (t.elapsed() > 5000) // don't report short intervals
-		out.println(t.elapsedDescription(true) + " elapsed");
+	private void reportTime(String name1, long time1, String name2, long time2) {
+		out.println(Timer.describeInterval(time1 + time2) + " elapsed ("
+				+ Timer.describeInterval(time1) + " " + name1 + ", "
+				+ Timer.describeInterval(time2) + " " + name2 + ")");
 	}
 
 	/**
@@ -906,12 +915,13 @@ public class QueryTool {
 				collocProperty = cf.getMainProperty().getName();
 			}
 
-			collocations = hits.getCollocations(collocProperty, searcher.getDefaultExecutionContext(fieldName));
+			collocations = hits.getCollocations(collocProperty,
+					searcher.getDefaultExecutionContext(fieldName));
 			collocations.sort();
 		}
 
 		int i = 0;
-		for (TokenFrequency coll: collocations) {
+		for (TokenFrequency coll : collocations) {
 			if (i >= firstResult && i < firstResult + resultsPerPage) {
 				int j = i - firstResult + 1;
 				out.println(String.format("%4d %7d %s", j, coll.frequency, coll.token));
@@ -1031,7 +1041,8 @@ public class QueryTool {
 					+ " hits";
 		out.println(msg);
 		if (hitsToShow.tooManyHits()) {
-			System.out.println("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE + " were collected)");
+			System.out.println("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE
+					+ " were collected)");
 		}
 	}
 

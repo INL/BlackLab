@@ -58,9 +58,21 @@ public class Timer {
 	}
 
 	/**
+	 * Describe the interval in a human-readable way.
+	 *
+	 * Doesn't report details below a second.
+	 *
+	 * @param interval time in ms
+	 * @return human-readable string for the interval.
+	 */
+	public static String describeInterval(long interval) {
+		return describeInterval(interval, false);
+	}
+
+	/**
 	 * Describe the elapsed time in a human-readable way.
 	 *
-	 * TODO: why only elapsed time? Generalise to describe any supplied interval.
+	 * @param interval time in ms
 	 * @param reportMsec if true, also reports milliseconds
 	 *
 	 * @return human-readable string for the elapsed time.
