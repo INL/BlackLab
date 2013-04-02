@@ -76,7 +76,31 @@ public class ForwardIndex {
 	 * Try to keep the whole file in memory, if there's enough free memory available.
 	 * Turn this off to use memory-mapping (leaving caching to the OS) or for testing.
 	 */
-	static boolean keepInMemoryIfPossible = false; //true;
+	static boolean keepInMemoryIfPossible = true;
+
+	/**
+	 * When deciding whether or not to keep forward indices in memory, this is how much
+	 * heap memory we should keep free for other purposes. By default, keep 2.5G free.
+	 */
+	private static long keepMemoryFree = 2500000;
+
+	/**
+	 * Sets the options for keeping forward indices in memory.
+	 * @param keepInMemory if true, tries to keep the forward index in memory
+	 * @param keepFree how much of the maximum heap to keep free (only used if keepInMemory == true)
+	 */
+	public static void setKeepInMemory(boolean keepInMemory, long keepFree) {
+		keepInMemoryIfPossible = keepInMemory;
+		keepMemoryFree = keepFree;
+	}
+
+	/**
+	 * Sets the options for keeping forward indices in memory.
+	 * @param keepInMemory if true, tries to keep the forward index in memory
+	 */
+	public static void setKeepInMemory(boolean keepInMemory) {
+		keepInMemoryIfPossible = keepInMemory;
+	}
 
 	/**
 	 * Use memory mapping to access the file.
@@ -238,7 +262,7 @@ public class ForwardIndex {
 				long free = MemoryUtil.getFree();
 
 				logger.debug("Free memory = " + free);
-				if (!indexMode && keepInMemoryIfPossible && free / 2 >= tokensFile.length()) {
+				if (!indexMode && keepInMemoryIfPossible && free - keepMemoryFree >= tokensFile.length()) {
 					// Enough free memory; cache whole file
 					logger.debug("FI: reading entire tokens file into memory");
 					// NOTE: we can't add to the file this way, so we only use this in search mode
