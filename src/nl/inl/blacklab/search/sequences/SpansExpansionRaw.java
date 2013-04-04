@@ -47,6 +47,8 @@ class SpansExpansionRaw extends Spans {
 
 	private boolean more = true;
 
+	private boolean clauseNexted;
+
 	private boolean expandToLeft;
 
 	private int min;
@@ -74,6 +76,7 @@ class SpansExpansionRaw extends Spans {
 			lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		}
 		this.clause = clause;
+		clauseNexted = false;
 		this.expandToLeft = expandToLeft;
 		this.min = min;
 		this.max = max;
@@ -138,6 +141,7 @@ class SpansExpansionRaw extends Spans {
 		}
 
 		more = clause.next();
+		clauseNexted = true;
 		if (more)
 			return resetExpand();
 		return false;
@@ -156,7 +160,7 @@ class SpansExpansionRaw extends Spans {
 	public boolean skipTo(int doc) throws IOException {
 		if (!more)
 			return false;
-		if (clause.doc() < doc) {
+		if (!clauseNexted || clause.doc() < doc) {
 			more = clause.skipTo(doc);
 			if (more)
 				return resetExpand();

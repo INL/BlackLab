@@ -39,9 +39,9 @@ public class SpansAndNot extends Spans {
 
 	private boolean moreExcludeSpans;
 
-	public SpansAndNot(Spans include_spans, Spans exclude_spans) {
-		includeSpans = include_spans;
-		excludeSpans = exclude_spans;
+	public SpansAndNot(Spans includeSpans, Spans excludeSpans) {
+		this.includeSpans = includeSpans;
+		this.excludeSpans = excludeSpans;
 		excludeSpansNexted = false;
 		moreIncludeSpans = true;
 		moreExcludeSpans = true;
@@ -74,8 +74,8 @@ public class SpansAndNot extends Spans {
 		// This has to be done right away, but we don't want it in the
 		// constructor because it may throw an exception
 		if (!excludeSpansNexted) {
-			excludeSpansNexted = true;
 			moreExcludeSpans = excludeSpans.next();
+			excludeSpansNexted = true;
 		}
 
 		boolean done = false;
@@ -113,6 +113,7 @@ public class SpansAndNot extends Spans {
 
 		if (moreExcludeSpans) {
 			moreExcludeSpans = excludeSpans.skipTo(doc);
+			excludeSpansNexted = true;
 			if (moreExcludeSpans && includeSpans.doc() == excludeSpans.doc()) {
 				return next();
 			}

@@ -40,8 +40,8 @@ public class SpansDocLevelAnd extends Spans {
 	/** Did we go past the last hit? */
 	private boolean stillValidSpans[];
 
-	/** spans[1].next() should be called right away. If this is true, that has been done. */
-	private boolean spans1nexted;
+	/** Have the spans iterations been started? */
+	private boolean spansNexted[];
 
 	public SpansDocLevelAnd(Spans leftClause, Spans rightClause) {
 		spans = new Spans[2];
@@ -49,7 +49,9 @@ public class SpansDocLevelAnd extends Spans {
 		spans[1] = rightClause;
 		currentDocId = -1; // no current document yet
 		stillValidSpans = new boolean[2];
-		spans1nexted = false; // spans[1] will be placed on the first hit right away
+		spansNexted = new boolean[2];
+		spansNexted[0] = false;
+		spansNexted[1] = false;
 		stillValidSpans[1] = true;
 		stillValidSpans[0] = true;
 		currentSpansIndex = 0;
@@ -74,7 +76,7 @@ public class SpansDocLevelAnd extends Spans {
 	 * @return true if this spans still points to current document, false if not
 	 */
 	private boolean doesSpansPointToCurrentDoc(int spansNumber) {
-		return stillValidSpans[spansNumber] && spans[spansNumber].doc() == currentDocId;
+		return stillValidSpans[spansNumber] && spansNexted[spansNumber] && spans[spansNumber].doc() == currentDocId;
 	}
 
 	/**
@@ -94,9 +96,9 @@ public class SpansDocLevelAnd extends Spans {
 	@Override
 	public boolean next() throws IOException {
 		// We must do this right away, but not in the constructor because of exceptions
-		if (!spans1nexted) {
-			spans1nexted = true;
+		if (!spansNexted[1]) {
 			stillValidSpans[1] = spans[1].next();
+			spansNexted[1] = true;
 		}
 
 		// Advance the spans from which the last hit was produced,
@@ -105,11 +107,12 @@ public class SpansDocLevelAnd extends Spans {
 		// we keep track of this in validspans[])
 
 		stillValidSpans[currentSpansIndex] = spans[currentSpansIndex].next();
+		spansNexted[currentSpansIndex] = true;
 
 		// If we didn't have a current document yet, or we're done with the current doc:
 		// advance to next document
 		if (currentDocId == -1
-				|| ((!stillValidSpans[0] || spans[0].doc() != currentDocId) && (!stillValidSpans[1] || spans[1]
+				|| ((!stillValidSpans[0] || !spansNexted[0] || spans[0].doc() != currentDocId) && (!stillValidSpans[1] || !spansNexted[1] || spans[1]
 						.doc() != currentDocId))) {
 			boolean ok = synchronize();
 			if (!ok)
@@ -160,13 +163,14 @@ public class SpansDocLevelAnd extends Spans {
 
 		// Loop until we match up spans[0] and spans[1]
 		int doc1, doc2;
-		doc1 = spans[0].doc();
-		doc2 = spans[1].doc();
+		doc1 = spansNexted[0] ? spans[0].doc() : -1;
+		doc2 = spansNexted[1] ? spans[1].doc() : -1;
 		while (doc1 != doc2) {
 			// Which of the two should we advance?
 			if (doc1 < doc2) {
 				// spans[0] is behind spans[1]; skip spans[0] to spans[1]'s position
 				stillValidSpans[0] = spans[0].skipTo(doc2);
+				spansNexted[0] = true;
 				if (!stillValidSpans[0]) {
 					// spans[0] is depleted; we're done
 					return false;
@@ -175,6 +179,7 @@ public class SpansDocLevelAnd extends Spans {
 			} else {
 				// spans[1] is behind spans[0]; skip spans[1] to spans[0]'s position
 				stillValidSpans[1] = spans[1].skipTo(doc1);
+				spansNexted[1] = true;
 				if (!stillValidSpans[1]) {
 					// spans[1] is depleted; we're done
 					return false;
@@ -203,6 +208,7 @@ public class SpansDocLevelAnd extends Spans {
 		// Skip beiden tot aan doc
 		stillValidSpans[0] = spans[0].skipTo(doc);
 		stillValidSpans[1] = spans[1].skipTo(doc);
+		spansNexted[0] = spansNexted[1] = true;
 		return synchronize();
 	}
 

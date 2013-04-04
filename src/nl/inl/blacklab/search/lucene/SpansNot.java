@@ -31,6 +31,9 @@ class SpansNot extends Spans {
 	/** The spans to invert */
 	private Spans clause;
 
+	/** Have we called next() or skipTo on the clause yet? */
+	private boolean clauseIterationStarted;
+
 	/** Are there more hits in our spans? */
 	private boolean moreHitsInClause;
 
@@ -79,6 +82,7 @@ class SpansNot extends Spans {
 
 		done = false;
 		moreHitsInClause = true;
+		clauseIterationStarted = false;
 		currentDoc = -1;
 		currentDocLength = -1;
 		currentToken = -1;
@@ -125,6 +129,7 @@ class SpansNot extends Spans {
 					return false;
 				}
 				moreHitsInClause = clause == null ? false : clause.next();
+				clauseIterationStarted = true;
 
 				// Loop again to determine if we are at a valid token or not.
 
@@ -149,6 +154,7 @@ class SpansNot extends Spans {
 					// Now go to next hit and loop again, until we hit the
 					// then-part above.
 					moreHitsInClause = clause.next();
+					clauseIterationStarted = true;
 				}
 
 			} else {
@@ -210,8 +216,10 @@ class SpansNot extends Spans {
 	public boolean skipTo(int doc) throws IOException {
 		// If it's not already (past) there, skip clause
 		// to doc (or beyond if there's no hits in doc)
-		if (clause.doc() < doc)
+		if (!clauseIterationStarted || clause.doc() < doc) {
 			moreHitsInClause = clause == null ? false : clause.skipTo(doc);
+			clauseIterationStarted = true;
+		}
 
 		if (currentDoc >= doc) {
 			// We can't skip to it because we're already there or beyond.
