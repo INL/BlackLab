@@ -19,6 +19,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
@@ -273,12 +274,28 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		if (!dir.exists())
 			dir.mkdir();
 		tocFile = new File(dir, "toc.dat");
+		if (create && tocFile.exists()) {
+			// Delete the ContentStore files
+			tocFile.delete();
+			new File(dir, "version.dat").delete();
+			File[] dataFiles = dir.listFiles(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir_, String name) {
+					return name.matches("data\\d+.dat");
+				}
+			});
+			for (File f: dataFiles) {
+				f.delete();
+			}
+		}
 		toc = new HashMap<Integer, TocEntry>();
 		if (tocFile.exists())
 			readToc();
 		tocModified = false;
 		if (create) {
 			clear();
+			if (tocFile.exists())
+				tocFile.delete();
 			setStoreType();
 		}
 		blockOffsetWhileStoring = new ArrayList<Integer>();

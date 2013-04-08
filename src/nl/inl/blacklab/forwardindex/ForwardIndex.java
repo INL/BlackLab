@@ -240,6 +240,14 @@ public class ForwardIndex {
 		termsFile = new File(dir, "terms.dat");
 		tocFile = new File(dir, "docs.dat");
 		tokensFile = new File(dir, "tokens.dat");
+		if (create) {
+			if (tokensFile.exists())
+				tokensFile.delete();
+			if (tocFile.exists())
+				tocFile.delete();
+			if (termsFile.exists())
+				termsFile.delete();
+		}
 		toc = new ArrayList<TocEntry>();
 		try {
 			boolean existing = false;

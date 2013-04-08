@@ -567,7 +567,7 @@ public class IndexStructure {
 		if (fieldsFound.size() == 0)
 			return null;
 
-		// Sort (so we get title.level1 not title.level2 for example)
+		// Sort (so we get titleLevel1 not titleLevel2 for example)
 		Collections.sort(fieldsFound);
 		return fieldsFound.get(0);
 	}
