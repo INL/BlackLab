@@ -49,6 +49,12 @@ public class CorpusQueryLanguageParser {
 		parser.query();
     }
     
+    public static TextPattern parse(String query) throws Exception 
+    {
+        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(query));
+        return parser.query();
+    }
+    
     private int num(Token t)
     {
     	return Integer.parseInt(t.toString());

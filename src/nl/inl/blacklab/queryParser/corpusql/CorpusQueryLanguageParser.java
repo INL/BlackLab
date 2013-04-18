@@ -29,6 +29,12 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
                 parser.query();
     }
 
+    public static TextPattern parse(String query) throws Exception
+    {
+        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(query));
+        return parser.query();
+    }
+
     private int num(Token t)
     {
         return Integer.parseInt(t.toString());
@@ -638,28 +644,12 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     finally { jj_save(5, xla); }
   }
 
-  private boolean jj_3R_34() {
-    if (jj_3R_35()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_26() {
-    if (jj_scan_token(26)) return true;
-    if (jj_3R_29()) return true;
-    return false;
-  }
-
   private boolean jj_3R_31() {
     if (jj_scan_token(28)) return true;
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_34()) jj_scanpos = xsp;
     if (jj_scan_token(29)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_29() {
-    if (jj_3R_32()) return true;
     return false;
   }
 
@@ -675,6 +665,11 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
 
   private boolean jj_3R_30() {
     if (jj_3R_33()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_29() {
+    if (jj_3R_32()) return true;
     return false;
   }
 
@@ -952,6 +947,17 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
 
   private boolean jj_3R_33() {
     if (jj_3R_20()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_34() {
+    if (jj_3R_35()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_26() {
+    if (jj_scan_token(26)) return true;
+    if (jj_3R_29()) return true;
     return false;
   }
 
