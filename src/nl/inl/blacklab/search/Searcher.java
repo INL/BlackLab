@@ -47,6 +47,7 @@ import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.ExUtil;
 import nl.inl.util.VersionFile;
 
+import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
@@ -82,6 +83,8 @@ import org.apache.lucene.store.FSDirectory;
  * searches.
  */
 public class Searcher {
+
+	protected static final Logger logger = Logger.getLogger(Searcher.class);
 
 	/** Complex field name for default contents field */
 	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
@@ -1249,6 +1252,24 @@ public class Searcher {
 			hit.contextHitStart = startsOfWords[j * 2 + 1] - firstWordIndex;
 			hit.contextRightStart = endsOfWords[j * 2] - firstWordIndex + 1;
 		}
+	}
+
+	/**
+	 * Opens all the forward indices, to avoid this delay later.
+	 */
+	public void openForwardIndices() {
+		logger.debug("Opening all forward indices. This may take a while...");
+		for (String field: indexStructure.getComplexFields()) {
+			ComplexFieldDesc fieldDesc = indexStructure.getComplexFieldDesc(field);
+			for (String property: fieldDesc.getProperties()) {
+				PropertyDesc propDesc = fieldDesc.getPropertyDesc(property);
+				if (propDesc.hasForwardIndex()) {
+					// This property has a forward index. Make sure it is open.
+					getForwardIndex(ComplexFieldUtil.propertyField(field, property));
+				}
+			}
+		}
+		logger.debug("All forward indices opened.");
 	}
 
 	/**

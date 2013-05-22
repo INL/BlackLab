@@ -518,6 +518,9 @@ public class QueryTool {
 				printQueryHelp();
 			} else if (lcased.equals("help") || lcased.equals("?")) {
 				printHelp();
+			} else if (lcased.equals("openfi")) {
+				// Open the forward indices
+				searcher.openForwardIndices();
 			} else {
 				// Not a command; assume it's a query
 				parseAndExecute(expr);
