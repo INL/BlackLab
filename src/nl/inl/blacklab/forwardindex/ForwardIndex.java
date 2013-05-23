@@ -229,8 +229,8 @@ public class ForwardIndex {
 		if (!indexMode || !create) {
 			// We're opening an existing forward index. Check version.
 			if (!VersionFile.isTypeVersion(dir, "fi", CURRENT_VERSION)) {
-				throw new RuntimeException("Wrong forward index version: "
-						+ VersionFile.report(dir) + " (" + CURRENT_VERSION + " expected)");
+				throw new RuntimeException("Not a forward index or wrong version: "
+						+ VersionFile.report(dir) + " (fi " + CURRENT_VERSION + " expected)");
 			}
 		} else {
 			// We're creating a forward index. Write version.
@@ -753,6 +753,14 @@ public class ForwardIndex {
 
 	public Terms getTerms() {
 		return terms;
+	}
+
+	public int getNumDocs() {
+		return toc.size();
+	}
+
+	public int getDocLength(int fiid) {
+		return toc.get(fiid).length;
 	}
 
 }

@@ -25,6 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import nl.inl.blacklab.indexers.alto.AltoUtils;
@@ -119,7 +120,21 @@ public class QueryTool {
 	 */
 	private int resultsPerPage = 20;
 
+	/** Show document titles between hits? */
 	private boolean showDocTitle = false;
+
+	/** Show concordances or not? (if not, just shows number of hits) */
+	private boolean showConc = true;
+
+	/** Show extra information about query being processed? */
+	private boolean verbose = false;
+
+	/** Show total number of hits (takes extra time for large sets) */
+	private boolean determineTotalNumberOfHits = true;
+
+	/** If true, describes time in minutes and seconds.
+	 *  If false, just gives the number of milliseconds. */
+	boolean timeDisplayHumanFriendly = false;
 
 	/**
 	 * The filter query, if any.
@@ -521,6 +536,18 @@ public class QueryTool {
 			} else if (lcased.equals("openfi")) {
 				// Open the forward indices
 				searcher.openForwardIndices();
+			} else if (lcased.startsWith("showconc ")) {
+				String v = lcased.substring(9);
+				showConc = v.equals("on") || v.equals("yes") || v.equals("true");
+				System.out.println("Show concordances: " + (showConc ? "ON" : "OFF"));
+			} else if (lcased.startsWith("verbose ")) {
+				String v = lcased.substring(8);
+				verbose = v.equals("on") || v.equals("yes") || v.equals("true");
+				System.out.println("Verbose: " + (showConc ? "ON" : "OFF"));
+			} else if (lcased.startsWith("total ")) {
+				String v = lcased.substring(6);
+				determineTotalNumberOfHits = v.equals("on") || v.equals("yes") || v.equals("true");
+				System.out.println("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
 			} else {
 				// Not a command; assume it's a query
 				parseAndExecute(expr);
@@ -636,13 +663,15 @@ public class QueryTool {
 		try {
 			TextPattern pattern = currentParser.parse(query);
 			pattern = pattern.rewrite();
-			out.println("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
+			if (verbose)
+				out.println("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
 
 			// Execute search
 			// Filter filter = null; // TODO: metadata search!
 			Filter filter = filterQuery == null ? null : new QueryWrapperFilter(filterQuery);
 			SpanQuery spanQuery = searcher.createSpanQuery(pattern, filter);
-			out.println("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
+			if (verbose)
+				out.println("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
 			hits = searcher.find(spanQuery);
 			groups = null;
 			collocations = null;
@@ -672,24 +701,28 @@ public class QueryTool {
 	 */
 	private void showPage(int pageNumber) {
 		if (hits != null) {
-			int totalResults;
-			switch (showSetting) {
-			case COLLOC:
-				totalResults = collocations.size();
-				break;
-			case GROUPS:
-				totalResults = groups.numberOfGroups();
-				break;
-			default:
-				totalResults = hits.size();
-				break;
-			}
 
-			int totalPages = (totalResults + resultsPerPage - 1) / resultsPerPage;
-			if (pageNumber < 0)
-				pageNumber = totalPages - 1;
-			if (pageNumber >= totalPages)
-				pageNumber = 0;
+			if (determineTotalNumberOfHits) {
+				// Clamp page number of total number of hits
+				int totalResults;
+				switch (showSetting) {
+				case COLLOC:
+					totalResults = collocations.size();
+					break;
+				case GROUPS:
+					totalResults = groups.numberOfGroups();
+					break;
+				default:
+					totalResults = hits.size();
+					break;
+				}
+
+				int totalPages = (totalResults + resultsPerPage - 1) / resultsPerPage;
+				if (pageNumber < 0)
+					pageNumber = totalPages - 1;
+				if (pageNumber >= totalPages)
+					pageNumber = 0;
+			}
 
 			// Next page
 			firstResult = pageNumber * resultsPerPage;
@@ -876,9 +909,20 @@ public class QueryTool {
 	 *            object keeping the time
 	 */
 	private void reportTime(String name1, long time1, String name2, long time2) {
-		out.println(Timer.describeInterval(time1 + time2) + " elapsed ("
-				+ Timer.describeInterval(time1) + " " + name1 + ", "
-				+ Timer.describeInterval(time2) + " " + name2 + ")");
+		if (verbose) {
+			out.println(describeInterval(time1 + time2) + " elapsed ("
+					+ describeInterval(time1) + " " + name1 + ", "
+					+ describeInterval(time2) + " " + name2 + ")");
+			return;
+		}
+
+		out.println(describeInterval(time1 + time2) + " elapsed");
+	}
+
+	private String describeInterval(long time1) {
+		if (timeDisplayHumanFriendly)
+			return Timer.describeInterval(time1);
+		return time1 + " ms";
 	}
 
 	/**
@@ -962,6 +1006,21 @@ public class QueryTool {
 	 */
 	private void showHitsPage() {
 
+		if (!showConc) {
+			if (determineTotalNumberOfHits) {
+				// Just show total number of hits, no concordances
+				System.out.println(getCurrentHitSet().size() + " hits");
+			} else {
+				Iterator<Hit> it = getCurrentHitSet().iterator();
+				int i;
+				for (i = 0; it.hasNext() && i < resultsPerPage; i++) {
+					it.next();
+				}
+				System.out.println( (i == resultsPerPage ? "At least " : "") + i + " hits (total not determined)");
+			}
+			return;
+		}
+
 		/**
 		 * A hit we're about to show.
 		 *
@@ -1039,9 +1098,13 @@ public class QueryTool {
 
 		// Summarize
 		String msg = window.size() + " hits";
-		if (window.totalHits() > window.size())
+		if (!determineTotalNumberOfHits) {
+			msg = (window.size() == resultsPerPage ? "At least " : "") + (window.last() + 1) + " hits (total not determined)";
+		}
+		else if (window.totalHits() > window.size()) {
 			msg = (window.first() + 1) + "-" + (window.last() + 1) + " of " + window.totalHits()
 					+ " hits";
+		}
 		out.println(msg);
 		if (hitsToShow.tooManyHits()) {
 			System.out.println("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE

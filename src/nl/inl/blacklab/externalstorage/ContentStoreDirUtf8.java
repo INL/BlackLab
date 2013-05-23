@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import nl.inl.util.ExUtil;
 
@@ -764,6 +765,21 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		TocEntry e = toc.get(id);
 		e.deleted = true;
 		tocModified = true;
+	}
+
+	@Override
+	public Set<Integer> getDocIds() {
+		return toc.keySet();
+	}
+
+	@Override
+	public boolean isDeleted(int id) {
+		return toc.get(id).deleted;
+	}
+
+	@Override
+	public int getDocLength(int id) {
+		return toc.get(id).entryLengthCharacters;
 	}
 
 }

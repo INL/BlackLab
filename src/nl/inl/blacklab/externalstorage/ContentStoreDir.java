@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import nl.inl.util.ExUtil;
 
@@ -402,6 +403,21 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 	public synchronized void delete(int id) {
 		TocEntry e = toc.get(id);
 		e.deleted = true;
+	}
+
+	@Override
+	public Set<Integer> getDocIds() {
+		return toc.keySet();
+	}
+
+	@Override
+	public boolean isDeleted(int id) {
+		return toc.get(id).deleted;
+	}
+
+	@Override
+	public int getDocLength(int id) {
+		return toc.get(id).length;
 	}
 
 }

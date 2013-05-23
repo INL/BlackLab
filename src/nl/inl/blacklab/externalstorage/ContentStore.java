@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.externalstorage;
 
+import java.util.Set;
+
+
 /**
  * Store string content by integer id. Quickly retrieve (parts of) the string content.
  */
@@ -58,5 +61,22 @@ public abstract class ContentStore {
 	public abstract void delete(int id);
 
 	public abstract void clear();
+
+	/**
+	 * Returns the set of doc ids in the store.
+	 * Note that the IDs of deleted document are still returned by this method.
+	 * Use isDeleted() to check.
+	 */
+	public abstract Set<Integer> getDocIds();
+
+	/**
+	 * Return true iff the entry with this id was deleted.
+	 */
+	public abstract boolean isDeleted(int id);
+
+	/**
+	 * Returns the document length in characters
+	 */
+	public abstract int getDocLength(int id);
 
 }

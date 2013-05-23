@@ -63,6 +63,7 @@ public class HitsWindow extends Hits {
 
 		// Make sublist
 		hits = source.subList(first, first + number);
+		totalNumberOfHits = hits.size();
 	}
 
 	/**
@@ -138,5 +139,6 @@ public class HitsWindow extends Hits {
 	public int totalHits() {
 		return source.size();
 	}
+
 
 }

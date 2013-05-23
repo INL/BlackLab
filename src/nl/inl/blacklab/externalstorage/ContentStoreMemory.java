@@ -17,6 +17,7 @@ package nl.inl.blacklab.externalstorage;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Store string content by id in memory.
@@ -131,6 +132,21 @@ public class ContentStoreMemory extends ContentStore {
 	@Override
 	public void storePart(String content) {
 		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public Set<Integer> getDocIds() {
+		return toc.keySet();
+	}
+
+	@Override
+	public boolean isDeleted(int id) {
+		return false;
+	}
+
+	@Override
+	public int getDocLength(int id) {
+		return toc.get(id).length();
 	}
 
 }

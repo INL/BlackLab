@@ -90,7 +90,7 @@ public class Hits implements Iterable<Hit> {
 	 * count the hits without storing them, to avoid unnecessarily instantiating
 	 * Hit objects)
 	 */
-	private int totalNumberOfHits;
+	int totalNumberOfHits;
 
 	/**
 	 * For extremely large queries, stop retrieving hits after this number.
