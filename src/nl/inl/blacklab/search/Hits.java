@@ -97,6 +97,8 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public final static int MAX_HITS_TO_RETRIEVE = 10000000;
 
+	private static final boolean PRE_COUNT_TOTAL_HITS = false;
+
 	/**
 	 * For extremely large queries, stop retrieving hits at some point.
 	 */
@@ -186,27 +188,31 @@ public class Hits implements Iterable<Hit> {
 	public Hits(Searcher searcher, String concordanceFieldPropName, SpanQuery sourceQuery) throws TooManyClauses {
 		this(searcher, concordanceFieldPropName);
 
-		sourceSpans = findSpans(sourceQuery);
+		totalNumberOfDocs = -1;
+		totalNumberOfHits = -1;
 
-		// Count how many hits there are in total
-		try {
-			totalNumberOfDocs = 0;
-			int doc = -1;
-			tooManyHits = false;
-			while (sourceSpans.next()) {
-				if (doc != sourceSpans.doc()) {
-					doc = sourceSpans.doc();
-					totalNumberOfDocs++;
+		if (PRE_COUNT_TOTAL_HITS) {
+			// Count how many hits there are in total
+			sourceSpans = findSpans(sourceQuery);
+			try {
+				totalNumberOfDocs = 0;
+				int doc = -1;
+				tooManyHits = false;
+				while (sourceSpans.next()) {
+					if (doc != sourceSpans.doc()) {
+						doc = sourceSpans.doc();
+						totalNumberOfDocs++;
+					}
+					totalNumberOfHits++;
+					if (totalNumberOfHits >= MAX_HITS_TO_RETRIEVE) {
+						// Too many hits; stop collecting here
+						tooManyHits = true;
+						break;
+					}
 				}
-				totalNumberOfHits++;
-				if (totalNumberOfHits >= MAX_HITS_TO_RETRIEVE) {
-					// Too many hits; stop collecting here
-					tooManyHits = true;
-					break;
-				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 
 		sourceSpans = findSpans(sourceQuery); // Counted 'em. Now reset.
@@ -491,10 +497,12 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param i
 	 *            index of the desired hit
-	 * @return the hit
+	 * @return the hit, or null if it's beyond the last hit
 	 */
 	public Hit get(int i) {
 		ensureHitsRead(i);
+		if (i >= hits.size())
+			return null;
 		return hits.get(i);
 	}
 
@@ -687,12 +695,18 @@ public class Hits implements Iterable<Hit> {
 
 	/**
 	 * Retrieve a sublist of hits.
+	 *
+	 * If toIndex is beyond the last hit, will return a list up to and
+	 * including the last hit.
+	 *
 	 * @param fromIndex first hit to include in the resulting list
 	 * @param toIndex first hit not to include in the resulting list
 	 * @return the sublist
 	 */
 	public List<Hit> subList(int fromIndex, int toIndex) {
 		ensureHitsRead(toIndex - 1);
+		if (toIndex > hits.size())
+			toIndex = hits.size();
 		return hits.subList(fromIndex, toIndex);
 	}
 

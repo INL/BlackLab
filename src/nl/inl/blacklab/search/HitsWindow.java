@@ -52,9 +52,10 @@ public class HitsWindow extends Hits {
 		this.contextFieldPropName = source.contextFieldPropName;
 
 		// Error if first out of range
-		if (first < 0 || (source.size() == 0 && first > 0)
-				|| (source.size() > 0 && first >= source.size()))
+		if (first < 0 || (source.size() == 0 && first > 0) ||
+			(source.size() > 0 && first >= source.size())) {
 			throw new RuntimeException("First hit out of range");
+		}
 
 		// Auto-clamp number
 		int number = windowSize;
@@ -62,6 +63,10 @@ public class HitsWindow extends Hits {
 			number = source.size() - first;
 
 		// Make sublist
+		// NOTE: subList gives an error if the "source" list changes in size!
+		//  It works for now because we call source.size() above, which fetches all hits,
+		//  but we want to avoid this. Then we can't use subList anymore because the source
+		//  list may change size later.
 		hits = source.subList(first, first + number);
 		totalNumberOfHits = hits.size();
 	}
@@ -139,6 +144,5 @@ public class HitsWindow extends Hits {
 	public int totalHits() {
 		return source.size();
 	}
-
 
 }
