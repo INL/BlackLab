@@ -21,26 +21,19 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+import nl.inl.util.SimpleResourcePool;
+
 /**
  * Variant of ContentStoreDirUtf8 that also compresses each block using GZIP. Achieves around 4x
  * compression of XML data, depending on block size
  */
 public class ContentStoreDirZip extends ContentStoreDirUtf8 {
 
-	/**
-	 * Takes care of compression
-	 */
-	Deflater compresser = new Deflater();
+	SimpleResourcePool<Deflater> compresserPool;
 
-	/**
-	 * Takes care of decompression
-	 */
-	Inflater decompresser = new Inflater();
+	SimpleResourcePool<Inflater> decompresserPool;
 
-	/**
-	 * The buffer to use for (de)compressing the data
-	 */
-	byte[] zipbuf;
+	SimpleResourcePool<byte[]> zipbufPool;
 
 	public ContentStoreDirZip(File dir) {
 		this(dir, false);
@@ -48,13 +41,42 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
 
 	public ContentStoreDirZip(File dir, boolean create) {
 		super(dir, create);
-		setZipBufferSize();
+		int POOL_SIZE = 10;
+		compresserPool = new SimpleResourcePool<Deflater>(POOL_SIZE){
+			@Override
+			public Deflater createResource() {
+				return new Deflater();
+			}
+
+			@Override
+			public void destroyResource(Deflater resource) {
+				resource.end();
+			}
+		};
+		decompresserPool = new SimpleResourcePool<Inflater>(POOL_SIZE){
+			@Override
+			public Inflater createResource() {
+				return new Inflater();
+			}
+
+			@Override
+			public void destroyResource(Inflater resource) {
+				resource.end();
+			}
+		};
+		zipbufPool = new SimpleResourcePool<byte[]>(POOL_SIZE){
+			@Override
+			public byte[] createResource() {
+				return new byte[newEntryBlockSizeCharacters * 2];
+			}
+		};
 	}
 
 	@Override
 	public void close() {
-		compresser.end();
-		decompresser.end();
+		compresserPool.close();
+		decompresserPool.close();
+		zipbufPool.close();
 		super.close();
 	}
 
@@ -63,40 +85,54 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
 		setStoreType("utf8zip", "1");
 	}
 
-	private void setZipBufferSize() {
-		zipbuf = new byte[newEntryBlockSizeCharacters * 2]; // just to be safe
+	private void zipBufferSizeChanged() {
+		zipbufPool.clear();
 	}
 
 	@Override
 	public void setBlockSizeCharacters(int size) {
 		super.setBlockSizeCharacters(size);
-		setZipBufferSize();
+		zipBufferSizeChanged();
 	}
 
 	@Override
 	protected byte[] encodeBlock(String block) {
 		byte[] encoded = super.encodeBlock(block);
-		compresser.reset();
-		compresser.setInput(encoded);
-		compresser.finish();
-		int compressedDataLength = compresser.deflate(zipbuf);
-		if (compressedDataLength <= 0) {
-			throw new RuntimeException("Error, deflate returned " + compressedDataLength);
+		Deflater compresser = compresserPool.acquire();
+		byte[] zipbuf = zipbufPool.acquire();
+		try {
+			compresser.reset();
+			compresser.setInput(encoded);
+			compresser.finish();
+			int compressedDataLength = compresser.deflate(zipbuf);
+			if (compressedDataLength <= 0) {
+				throw new RuntimeException("Error, deflate returned " + compressedDataLength);
+			}
+			return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
+		} finally {
+			compresserPool.release(compresser);
+			zipbufPool.release(zipbuf);
 		}
-		return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
 	}
 
 	@Override
 	protected String decodeBlock(byte[] buf, int offset, int length) {
 		try {
 			// unzip block
-			decompresser.reset();
-			decompresser.setInput(buf, offset, length);
-			int resultLength = decompresser.inflate(zipbuf);
-			if (resultLength <= 0) {
-				throw new RuntimeException("Error, inflate returned " + resultLength);
+			Inflater decompresser = decompresserPool.acquire();
+			byte[] zipbuf = zipbufPool.acquire();
+			try {
+				decompresser.reset();
+				decompresser.setInput(buf, offset, length);
+				int resultLength = decompresser.inflate(zipbuf);
+				if (resultLength <= 0) {
+					throw new RuntimeException("Error, inflate returned " + resultLength);
+				}
+				return super.decodeBlock(zipbuf, 0, resultLength);
+			} finally {
+				decompresserPool.release(decompresser);
+				zipbufPool.release(zipbuf);
 			}
-			return super.decodeBlock(zipbuf, 0, resultLength);
 		} catch (DataFormatException e) {
 			throw new RuntimeException(e);
 		}
