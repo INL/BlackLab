@@ -63,9 +63,12 @@ public class BatchContentStore {
 			return;
 		}
 
-		System.err.print("Opening store... ");
+		System.err.print("Opening content store... ");
 		ContentStore cs = new ContentStoreDirZip(indexDir);
 		System.err.println("done. [#docs: " + cs.getDocIds().size() + "]");
+
+		System.out.println("First\tNumber\tSkip\tSnippets\tTime");
+
 		for (String query : FileUtil.readLines(inputFile)) {
 			query = query.trim();
 			if (query.length() == 0 || query.charAt(0) == '#')
@@ -82,7 +85,7 @@ public class BatchContentStore {
 				int skip = numbers.length > 2 ? numbers[2] : 0;
 				int snippets = numbers.length > 3 ? numbers[3] : 5;
 				long time = doPerformanceTest(cs, first, number, skip, snippets);
-				System.out.println(String.format("%d %d %d %d %d", first, number, skip, snippets,
+				System.out.println(String.format("%d\t%d\t%d\t%d\t%d", first, number, skip, snippets,
 						time));
 
 			} catch (Exception e) {
@@ -119,18 +122,24 @@ public class BatchContentStore {
 		Collections.sort(docIds);
 
 		Timer t = new Timer();
+		int docPos = first;
 		for (int i = 0; i < number; i++) {
-			int docPos = first + i * (skip + 1);
-			if (docPos >= docIds.size())
-				throw new RuntimeException("Performance test went beyond end of content store ("
-						+ docIds.size() + " docs)");
-			int id = docIds.get(docPos);
+			int id, length;
+			do {
+				if (docPos >= docIds.size())
+					throw new RuntimeException("Performance test went beyond end of content store ("
+							+ docIds.size() + " docs)");
+				id = docIds.get(docPos);
 
-			// Choose random snippets
-			int length = cs.getDocLength(id);
+				// Choose random snippets
+				length = cs.getDocLength(id);
+				if (length == 0) // can't get snippet from empty doc
+					docPos++;
+			} while (length == 0);
+			int snippetLength = Math.min(SNIPPET_LENGTH_CHARS, length);
 			for (int j = 0; j < snippets; j++) {
-				start[j] = (int) (Math.random() * (length - SNIPPET_LENGTH_CHARS));
-				end[j] = start[j] + SNIPPET_LENGTH_CHARS;
+				start[j] = (int) (Math.random() * (length - snippetLength));
+				end[j] = start[j] + snippetLength;
 			}
 
 			// Retrieve snippets

@@ -66,6 +66,13 @@ public class BatchQuery {
 		System.err.print("Opening index... ");
 		Searcher searcher = new Searcher(indexDir);
 		System.err.println("done.");
+
+		System.out.print("Query\tSearch Time");
+		if (determineTotalHits) {
+			System.out.print("\t# Hits\tTotal Time");
+		}
+		System.out.println("");
+
 		for (String query : FileUtil.readLines(inputFile)) {
 			query = query.trim();
 			if (query.length() == 0 || query.charAt(0) == '#')

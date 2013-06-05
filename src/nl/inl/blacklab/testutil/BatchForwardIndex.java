@@ -6,6 +6,8 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
 
+import org.apache.log4j.BasicConfigurator;
+
 /**
  * Executes a batch of fetch operations on a forward index.
  */
@@ -15,13 +17,15 @@ public class BatchForwardIndex {
 
 	public static void main(String[] args) throws Exception {
 
+		BasicConfigurator.configure(); // suppress log4j warning
+
 		int fileArgNumber = 0;
 		File indexDir = null, inputFile = null;
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i].trim();
 			if (arg.charAt(0) == '-') {
-				if (arg.equals("-t")) {
-					// determineTotalHits = false;
+				if (arg.equals("-m")) {
+					ForwardIndex.setKeepInMemory(false);
 				} else {
 					System.err.println("Illegal option: " + arg);
 					usage();
@@ -59,9 +63,12 @@ public class BatchForwardIndex {
 			return;
 		}
 
-		System.err.print("Opening index... ");
+		System.err.print("Opening forward index... ");
 		ForwardIndex fi = new ForwardIndex(indexDir);
 		System.err.println("done. [#docs: " + fi.getNumDocs() + "]");
+
+		System.out.println("First\tNumber\tSkip\tSnippets\tTime");
+
 		for (String query : FileUtil.readLines(inputFile)) {
 			query = query.trim();
 			if (query.length() == 0 || query.charAt(0) == '#')
@@ -78,7 +85,7 @@ public class BatchForwardIndex {
 				int skip = numbers.length > 2 ? numbers[2] : 0;
 				int snippets = numbers.length > 3 ? numbers[3] : 5;
 				long time = doPerformanceTest(fi, first, number, skip, snippets);
-				System.out.println(String.format("%d %d %d %d %d", first, number, skip, snippets,
+				System.out.println(String.format("%d\t%d\t%d\t%d\t%d", first, number, skip, snippets,
 						time));
 
 			} catch (Exception e) {
@@ -106,37 +113,46 @@ public class BatchForwardIndex {
 		Timer t = new Timer();
 		int[] start = new int[snippets];
 		int[] end = new int[snippets];
+		int docPos = first;
 		for (int i = 0; i < number; i++) {
-			int docPos = first + i * (skip + 1);
-			if (docPos >= fi.getNumDocs())
-				throw new RuntimeException("Performance test went beyond end of forward index ("
-						+ fi.getNumDocs() + " docs)");
+			int length;
+			do {
+				if (docPos >= fi.getNumDocs())
+					throw new RuntimeException("Performance test went beyond end of forward index ("
+							+ fi.getNumDocs() + " docs)");
 
-			// Choose random snippets
-			int length = fi.getDocLength(docPos);
+				// Choose random snippets
+				length = fi.getDocLength(docPos);
+				if (length == 0) // can't get snippet from empty doc
+					docPos++;
+			} while (length == 0);
+			int snippetLength = Math.min(SNIPPET_LENGTH_WORDS, length);
 			for (int j = 0; j < snippets; j++) {
-				start[j] = (int) (Math.random() * (length - SNIPPET_LENGTH_WORDS));
-				end[j] = start[j] + SNIPPET_LENGTH_WORDS;
+				start[j] = (int) (Math.random() * (length - snippetLength));
+				end[j] = start[j] + snippetLength;
 			}
 
 			// Retrieve snippets
 			fi.retrieveParts(docPos, start, end);
+
+			// Go to next doc
+			docPos += skip + 1;
 		}
 		return t.elapsed();
 	}
 
 	private static void usage() {
 		System.err.println("\nUsage: " + BatchForwardIndex.class.getSimpleName()
-				+ " <forwardIndexDir> <inputfile>\n\n"
+				+ " [options] <forwardIndexDir> <inputfile>\n\n"
 				+ "<inputfile> should contain lines of whitespace-separated integers:\n"
 				+ "   <first> <number> <skip> <snippets>\n" + "\n"
 				+ "   first: position of the first document to access\n"
 				+ "   number: number of documents to access [100]\n"
 				+ "   skip: how many documents to skip between accesses [0]\n"
 				+ "   snippets: how many random snippets to retrieve per document [5]\n" + "\n"
-				// + "Options:\n"
-				// + "-t do not determine total number of hits\n"
-				// + "\n"
+				+ "Options:\n"
+				+ "-m don't try to read ForwardIndex into memory\n"
+				+ "\n"
 				+ "Output:\n" + "<first> <number> <skip> <snippets>\t<searchTimeMs>\n");
 	}
 }
