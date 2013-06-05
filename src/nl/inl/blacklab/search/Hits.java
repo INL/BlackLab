@@ -718,7 +718,7 @@ public class Hits implements Iterable<Hit> {
 	 * The number of documents counted (only valid if the basis for this is a SpanQuery object;
 	 * used by DocResults to report the total number of docs without retrieving them all first)
 	 *
-	 * @return number of docs, or -1 if this Hits object was not constructed from a SpanQuery object
+	 * @return number of docs, or -1 if we haven't seen all the hits yet and therefore don't know
 	 */
 	public int numberOfDocs() {
 		return totalNumberOfDocs;

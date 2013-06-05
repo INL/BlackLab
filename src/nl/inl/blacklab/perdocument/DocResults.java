@@ -149,7 +149,14 @@ public class DocResults implements Iterable<DocResult> {
 	}
 
 	public int size() {
-		return sourceHitsFullyRead() ? results.size() : sourceHits.numberOfDocs();
+		// Does the Hits object know the answer?
+		int numberOfDocs = sourceHits.numberOfDocs();
+		if (numberOfDocs >= 0)
+			return numberOfDocs;
+
+		// No; make sure we've collected all results and return the size of our result list.
+		ensureAllResultsRead();
+		return results.size();
 	}
 
 	public void sort(DocProperty prop, boolean sortReverse) {
