@@ -74,18 +74,26 @@ public class ForwardIndex {
 
 	/**
 	 * Try to keep the whole file in memory, if there's enough free memory available.
-	 * Turn this off to use memory-mapping (leaving caching to the OS) or for testing.
+	 * Turn this off to use memory-mapping (leaving caching to the OS).
+	 * NOTE: leaving it to the OS is probably a better idea, as it prevents double copies of
+	 * the file and makes more physical memory available for smart, efficient OS-caching.
 	 */
-	static boolean keepInMemoryIfPossible = true;
+	static boolean keepInMemoryIfPossible = false;
 
 	/**
 	 * When deciding whether or not to keep forward indices in memory, this is how much
 	 * heap memory we should keep free for other purposes. By default, keep 2.5G free.
+	 * NOTE: keeping the forward index in memory is probably a bad idea as it costs a lot of
+	 * physical memory and makes OS caching superfluous. Just reduce your application's
+	 * memory requirements and rely on the OS caching via memory mapping instead.
 	 */
 	private static long keepMemoryFree = 2500000;
 
 	/**
 	 * Sets the options for keeping forward indices in memory.
+	 *
+	 * Default and recommended setting is false, as it takes advantage of OS caching.
+	 *
 	 * @param keepInMemory if true, tries to keep the forward index in memory
 	 * @param keepFree how much of the maximum heap to keep free (only used if keepInMemory == true)
 	 */
