@@ -473,6 +473,29 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Determines if there are at least a certain number of hits
+	 *
+	 * This may be used if we don't want to process all hits (which
+	 * may be a lot) but we do need to know something about the size
+	 * of the result set (such as for paging).
+	 *
+	 * @param lowerBound the number we're testing against
+	 *
+	 * @return true if the size of this set is at least lowerBound, false otherwise.
+	 */
+	public boolean sizeAtLeast(int lowerBound) {
+		try {
+			// Try to fetch at least this many hits
+			ensureHitsRead(lowerBound);
+		} catch (InterruptedException e) {
+			// Thread was interrupted; abort operation
+			// and let client decide what to do
+		}
+
+		return hits.size() >= lowerBound;
+	}
+
+	/**
 	 * Return the number of hits.
 	 *
 	 * @return the number of hits

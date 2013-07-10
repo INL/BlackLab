@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.util.ArrayList;
+
 /**
  * Represents a subset of a Hits object, for example a page of hits.
  */
@@ -52,23 +54,24 @@ public class HitsWindow extends Hits {
 		this.contextFieldPropName = source.contextFieldPropName;
 
 		// Error if first out of range
-		if (first < 0 || (source.size() == 0 && first > 0) ||
-			(source.size() > 0 && first >= source.size())) {
+		boolean emptyResultSet = !source.sizeAtLeast(1);
+		if (first < 0 || (emptyResultSet && first > 0) ||
+			(!emptyResultSet && !source.sizeAtLeast(first + 1))) {
 			throw new RuntimeException("First hit out of range");
 		}
 
 		// Auto-clamp number
 		int number = windowSize;
-		if (first + number > source.size())
+		if (!source.sizeAtLeast(first + number))
 			number = source.size() - first;
 
-		// Make sublist
-		// NOTE: subList gives an error if the "source" list changes in size!
-		//  It works for now because we call source.size() above, which fetches all hits,
-		//  but we want to avoid this. Then we can't use subList anymore because the source
-		//  list may change size later.
-		hits = source.subList(first, first + number);
-		totalNumberOfHits = hits.size();
+		// Make sublist (don't use sublist because the backing list may change if not
+		// all hits have been read yet)
+		hits = new ArrayList<Hit>();
+		for (int i = first; i < first + number; i++) {
+			hits.add(source.get(i));
+		}
+		totalNumberOfHits = -1; //hits.size();
 	}
 
 	/**
@@ -126,13 +129,15 @@ public class HitsWindow extends Hits {
 	}
 
 	/**
-	 * How many hits are in the window?
+	 * How many hits are in this window?
 	 *
-	 * Note that this may be different from the window size, as the window may not be full.
+	 * Note that this may be different from the specified "window size",
+	 * as the window may not be full.
 	 *
-	 * @return the number of hits
+	 * @return number of hits
 	 */
-	public int number() {
+	@Override
+	public int size() {
 		return hits.size();
 	}
 
