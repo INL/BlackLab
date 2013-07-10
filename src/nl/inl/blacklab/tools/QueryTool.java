@@ -24,6 +24,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -54,6 +55,8 @@ import nl.inl.blacklab.search.grouping.HitPropertyWordLeft;
 import nl.inl.blacklab.search.grouping.HitPropertyWordRight;
 import nl.inl.blacklab.search.grouping.RandomAccessGroup;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
+import nl.inl.util.FileUtil;
+import nl.inl.util.IoUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
@@ -80,15 +83,36 @@ public class QueryTool {
 	 */
 	static PrintStream out = System.out;
 
+	static boolean batchMode = false;
+
+	public static void outprintln(String str) {
+		if (!batchMode)
+			out.println(str);
+	}
+
+	public static void outprint(String str) {
+		if (!batchMode)
+			out.print(str);
+	}
+
+	public static void outprintf(String str, Object... args) {
+		if (!batchMode)
+			out.printf(str, args);
+	}
+
+	public static void errprintln(String str) {
+		System.err.println(str);
+	}
+
+	public static void statprintln(String str) {
+		if (batchMode)
+			out.println(str);
+	}
+
 	/**
 	 * Our BlackLab Searcher object.
 	 */
 	private Searcher searcher;
-
-	/**
-	 * Standard input.
-	 */
-	private BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 
 	/**
 	 * The hits that are the result of our query.
@@ -231,14 +255,14 @@ public class QueryTool {
 
 		@Override
 		public void printHelp() {
-			out.println("Corpus Query Language examples:");
-			out.println("  \"stad\" | \"dorp\"                  # Find the word \"stad\" or the word \"dorp\"");
-			out.println("  \"de\" \"sta.*\"                     # Find \"de\" followed by a word starting with \"sta\"");
-			out.println("  [hw=\"zijn\" & pos=\"d.*\"]          # Find forms of the headword \"zijn\" as a posessive pronoun");
-			out.println("  [hw=\"zijn\"] [hw=\"blijven\"]       # Find a form of \"zijn\" followed by a form of \"blijven\"");
-			out.println("  \"der.*\"{2,}                      # Find two or more successive words starting with \"der\"");
-			out.println("  [pos=\"a.*\"]+ \"man\"               # Find adjectives applied to \"man\"");
-			out.println("  \"stad\" []{2,3} \"dorp\"            # Find \"stad\" followed within 2-3 words by \"dorp\"");
+			outprintln("Corpus Query Language examples:");
+			outprintln("  \"stad\" | \"dorp\"                  # Find the word \"stad\" or the word \"dorp\"");
+			outprintln("  \"de\" \"sta.*\"                     # Find \"de\" followed by a word starting with \"sta\"");
+			outprintln("  [hw=\"zijn\" & pos=\"d.*\"]          # Find forms of the headword \"zijn\" as a posessive pronoun");
+			outprintln("  [hw=\"zijn\"] [hw=\"blijven\"]       # Find a form of \"zijn\" followed by a form of \"blijven\"");
+			outprintln("  \"der.*\"{2,}                      # Find two or more successive words starting with \"der\"");
+			outprintln("  [pos=\"a.*\"]+ \"man\"               # Find adjectives applied to \"man\"");
+			outprintln("  \"stad\" []{2,3} \"dorp\"            # Find \"stad\" followed within 2-3 words by \"dorp\"");
 		}
 
 		@Override
@@ -290,7 +314,7 @@ public class QueryTool {
 			} catch (ClassNotFoundException e) {
 				throw new UnsupportedOperationException(e);
 			} catch (NoSuchMethodException e) {
-				System.err.println("method not found");
+				errprintln("method not found");
 				throw new RuntimeException(e);
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
@@ -303,10 +327,10 @@ public class QueryTool {
 
 		@Override
 		public void printHelp() {
-			out.println("Contextual Query Language examples:");
-			out.println("  stad or dorp            # Find the word \"stad\" or the word \"dorp\"");
-			out.println("  \"de sta*\"               # Find \"de\" followed by a word starting with \"sta\"");
-			out.println("  hw=zijn and pos=d*      # Find forms of the headword \"zijn\" as a posessive pronoun");
+			outprintln("Contextual Query Language examples:");
+			outprintln("  stad or dorp            # Find the word \"stad\" or the word \"dorp\"");
+			outprintln("  \"de sta*\"               # Find \"de\" followed by a word starting with \"sta\"");
+			outprintln("  hw=zijn and pos=d*      # Find forms of the headword \"zijn\" as a posessive pronoun");
 		}
 
 		@Override
@@ -352,10 +376,10 @@ public class QueryTool {
 
 		@Override
 		public void printHelp() {
-			out.println("Lucene Query Language examples:");
-			out.println("  stad dorp                  # Find the word \"stad\" or the word \"dorp\"");
-			out.println("  \"de stad\"                  # Find the word \"de\" followed by the word \"stad\"");
-			out.println("  +stad -dorp                # Find documents containing \"stad\" but not \"dorp\"");
+			outprintln("Lucene Query Language examples:");
+			outprintln("  stad dorp                  # Find the word \"stad\" or the word \"dorp\"");
+			outprintln("  \"de stad\"                  # Find the word \"de\" followed by the word \"stad\"");
+			outprintln("  +stad -dorp                # Find documents containing \"stad\" but not \"dorp\"");
 		}
 
 		@Override
@@ -368,6 +392,15 @@ public class QueryTool {
 	/** The current command parser object */
 	private Parser currentParser = new ParserCorpusQl();
 
+	/** Where to read commands from */
+	private BufferedReader in;
+
+	/** For stats output (batch mode), extra info (such as # hits) */
+	private String statInfo;
+
+	/** If false, command was not a query, prefix stats line with # */
+	private boolean commandWasQuery;
+
 	/**
 	 * The main program.
 	 *
@@ -376,13 +409,51 @@ public class QueryTool {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		if (args.length < 1 || args.length > 2) {
-			out.println("Usage: " + QueryTool.class.getName() + " <indexDir> [<encoding>]");
+
+		File indexDir = null;
+		File inputFile = null;
+		String encoding = Charset.defaultCharset().name();
+		for (int i = 0; i < args.length; i++)  {
+			String arg = args[i].trim();
+			if (arg.charAt(0) == '-') {
+				if (arg.equals("-e")) {
+					if (i + 1 == args.length) {
+						errprintln("-e option needs argument");
+						usage();
+						return;
+					}
+					encoding = args[i + 1];
+					i++;
+				} else if (arg.equals("-f")) {
+					if (i + 1 == args.length) {
+						errprintln("-f option needs argument");
+						usage();
+						return;
+					}
+					inputFile = new File(args[i + 1]);
+					i++;
+					System.err.println("Batch mode; reading commands from " + inputFile);
+				} else {
+					errprintln("Unknown option: " + arg);
+					usage();
+					return;
+				}
+			} else {
+				if (indexDir != null) {
+					errprintln("Can only specify 1 index directory");
+					usage();
+					return;
+				}
+				indexDir = new File(arg);
+			}
+		}
+		if (indexDir == null) {
+			usage();
 			return;
 		}
-		File indexDir = new File(args[0]);
-		if (!indexDir.exists()) {
-			out.println("Index dir " + indexDir.getPath() + " doesn't exist.");
+
+		if (!indexDir.exists() || !indexDir.isDirectory()) {
+			outprintln("Index dir " + indexDir.getPath() + " doesn't exist.");
 			return;
 		}
 
@@ -393,23 +464,60 @@ public class QueryTool {
 		String propIsAlto = System.getProperty("IS_ALTO");
 		IS_ALTO = propIsAlto == null ? false : propIsAlto.equalsIgnoreCase("true");
 
-		BasicConfigurator.configure(); // new NullAppender()); // ignore logging for now
+		BasicConfigurator.configure();
+		//BasicConfigurator.configure(new NullAppender()); // ignore logging for now
 
 		// Change output encoding?
 		if (args.length == 2) {
 			try {
 				// Yes
-				out = new PrintStream(System.out, true, args[1]);
-				System.out.println("Using output encoding " + args[1] + "\n");
+				out = new PrintStream(System.out, true, encoding);
+				outprintln("Using output encoding " + encoding + "\n");
 			} catch (UnsupportedEncodingException e) {
 				// Nope; fall back to default
-				System.err.println("Unknown encoding " + args[1] + "; using default");
+				errprintln("Unknown encoding " + encoding + "; using default");
 				out = System.out;
 			}
 		}
 
-		QueryTool c = new QueryTool(indexDir);
-		c.commandProcessor();
+		BufferedReader in;
+		if (inputFile == null) {
+			// No input file specified; use stdin
+			in = IoUtil.makeBuffered(new InputStreamReader(System.in, encoding));
+		}
+		else {
+			// Open input file
+			in = FileUtil.openForReading(inputFile, "utf-8");
+			batchMode = true;
+		}
+
+		try {
+			QueryTool c = new QueryTool(indexDir, in);
+			c.commandProcessor();
+		} finally {
+			in.close();
+		}
+	}
+
+	private static void usage() {
+		errprintln("Usage: " + QueryTool.class.getName() + " [options] <indexDir>");
+		errprintln("");
+		errprintln("Options:");
+		errprintln("-e <encoding>   Specify what output encoding to use");
+		errprintln(
+			"-f <file>       Execute batch commands from file, print performance\n" +
+			"                info and exit");
+		errprintln("");
+		errprintln(
+			"In batch mode, for every command executed, the command is printed\n" +
+			"to stdout with the elapsed time and (if applicable) the number of\n" +
+			"hits found (tab-separated). Non-query commands are preceded by @.\n" +
+			"\n" +
+			"Batch command files should contain one command per line, or multiple\n" +
+			"commands on a single line separated by && (use this e.g. to time\n" +
+			"querying and sorting together). Lines starting with # are comments.\n" +
+			"Comments are printed on stdout as well. Lines starting with - will\n" +
+			"not be reported. Start a line with -# for an unreported comment.");
 	}
 
 	/**
@@ -417,16 +525,20 @@ public class QueryTool {
 	 *
 	 * @param indexDir
 	 *            directory our index is in
+	 * @param in
+	 *      where to read commands from
 	 * @throws CorruptIndexException
 	 * @throws IOException
 	 */
-	public QueryTool(File indexDir) throws CorruptIndexException, IOException {
+	public QueryTool(File indexDir, BufferedReader in) throws CorruptIndexException, IOException {
 		printProgramHead();
-		out.print("Opening index " + indexDir + "... ");
+		outprint("Opening index " + indexDir + "... ");
 
 		// Create the BlackLab searcher object
 		searcher = new Searcher(indexDir);
-		out.println("Done.\n");
+		outprintln("Done.\n");
+
+		this.in = in;
 
 		contextSize = searcher.getDefaultContextSize();
 	}
@@ -439,23 +551,69 @@ public class QueryTool {
 
 		while (true) {
 			String prompt = currentParser.getPrompt() + "> ";
-			String expr;
+			String cmd;
 			try {
-				expr = readCommand(prompt);
+				cmd = readCommand(prompt);
 			} catch (IOException e1) {
 				throw new RuntimeException(e1);
 			}
-			if (expr == null || expr.trim().equals("exit")) {
+			if (cmd == null || cmd.trim().equals("exit")) {
 				break;
 			}
 
-			// DEBUG because of stdin encoding issues on Windows
-			expr = expr.replaceAll("##", "é");
+			boolean printStat = true;
+			if (cmd.length() > 0 && cmd.charAt(0) == '-') {
+				// Command preceded by "-": silent, don't output stats
+				printStat = false;
+				cmd = cmd.substring(1).trim();
+			}
 
-			expr = expr.trim();
-			String lcased = expr.toLowerCase();
-			if (lcased.length() == 0)
+			if (cmd.length() > 0 && cmd.charAt(0) == '#') {
+				// Line starting with "#": comment
+				if (printStat)
+					statprintln(cmd);
 				continue;
+			}
+
+			// Comment after command? Strip.
+			cmd = cmd.replaceAll("#.+$", "").trim();
+			if (cmd.length() == 0) {
+				statprintln(""); // output empty lines in stats
+				continue; // no actual command on line, skip
+			}
+
+			Timer t = new Timer();
+			statInfo = "";
+			commandWasQuery = false;
+			processCommand(cmd);
+			if (printStat)
+				statprintln((commandWasQuery ? "" : "@ ") + cmd + "\t" + t.elapsed() + "\t" + statInfo);
+
+			try {
+				Thread.sleep(100); // Give Eclipse console time to show stderr output
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		cleanup();
+	}
+
+	private void processCommand(String fullCmd) {
+		fullCmd = fullCmd.trim();
+		if (fullCmd.charAt(0) == '#')
+			return;
+
+		String cmd = null, restCommand = null;
+		int commandSeparatorIndex = fullCmd.indexOf("&&");
+		if (commandSeparatorIndex >= 0) {
+			cmd = fullCmd.substring(0, commandSeparatorIndex).trim();
+			restCommand = fullCmd.substring(commandSeparatorIndex + 2).trim();
+		} else {
+			cmd = fullCmd;
+		}
+
+		String lcased = cmd.toLowerCase();
+		if (lcased.length() > 0) {
 			if (lcased.equals("prev") || lcased.equals("p")) {
 				prevPage();
 			} else if (lcased.equals("next") || lcased.equals("n")) {
@@ -465,6 +623,7 @@ public class QueryTool {
 			} else if (lcased.startsWith("pagesize ")) {
 				resultsPerPage = Integer.parseInt(lcased.substring(9));
 				firstResult = 0;
+				//statprintln("# pagesize\t" + resultsPerPage);
 				showResultsPage();
 			} else if (lcased.startsWith("context ")) {
 				contextSize = Integer.parseInt(lcased.substring(8));
@@ -472,21 +631,23 @@ public class QueryTool {
 					hits.setContextSize(contextSize);
 					collocations = null;
 				}
+				//statprintln("# context\t" + contextSize);
 				showResultsPage();
 			} else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
-				if (expr.length() <= 7) {
+				//statprintln("# filter\t" + cmd);
+				if (cmd.length() <= 7) {
 					filterQuery = null; // clear filter
-					System.out.println("Filter cleared.");
+					outprintln("Filter cleared.");
 				} else {
-					String filterExpr = expr.substring(7);
+					String filterExpr = cmd.substring(7);
 					QueryParser qp = new QueryParser(Version.LUCENE_36, "title",
 							new StandardAnalyzer(Version.LUCENE_36));
 					try {
 						filterQuery = qp.parse(filterExpr);
 					} catch (org.apache.lucene.queryParser.ParseException e) {
-						System.err.println("Error parsing filter query.");
+						errprintln("Error parsing filter query.");
 					}
-					System.out.println("Filter created: " + filterQuery);
+					outprintln("Filter created: " + filterQuery);
 				}
 			} else if (lcased.startsWith("sensitive ")) {
 				String v = lcased.substring(10);
@@ -501,12 +662,14 @@ public class QueryTool {
 					diacSensitive = true;
 				}
 				searcher.setDefaultSearchSensitive(caseSensitive, diacSensitive);
-				System.out.println("Search defaults to "
+				//statprintln("# sensitive\tcase: " + (caseSensitive ? "yed" : "no") + "\tdiac: " + (diacSensitive ? "yes" : "no"));
+				outprintln("Search defaults to "
 						+ (caseSensitive ? "case-sensitive" : "case-insensitive") + " and "
 						+ (diacSensitive ? "diacritics-sensitive" : "diacritics-insensitive"));
 			} else if (lcased.startsWith("doctitle ")) {
 				String v = lcased.substring(9);
 				showDocTitle = v.equals("on") || v.equals("yes") || v.equals("true");
+				//statprintln("# doctitle\t" + (showDocTitle ? "on" : "off"));
 				System.out.println("Show document titles: " + (showDocTitle ? "ON" : "OFF"));
 			} else if (lcased.equals("struct") || lcased.equals("structure")) {
 				showIndexStructure();
@@ -526,44 +689,46 @@ public class QueryTool {
 				}
 			} else if (lcased.equals("groups") || lcased.equals("hits")
 					|| lcased.startsWith("colloc") || lcased.startsWith("group ")) {
-				changeShowSettings(expr);
+				changeShowSettings(cmd);
 			} else if (lcased.equals("switch") || lcased.equals("sw")) {
 				currentParser = currentParser.nextParser();
-				out.println("Switching to " + currentParser.getName() + ".\n");
+				//statprintln("# parser\t" + currentParser.getName());
+				outprintln("Switching to " + currentParser.getName() + ".\n");
 				printQueryHelp();
 			} else if (lcased.equals("help") || lcased.equals("?")) {
 				printHelp();
 			} else if (lcased.equals("openfi")) {
 				// Open the forward indices
+				//statprintln("# openfi");
 				searcher.openForwardIndices();
 			} else if (lcased.startsWith("showconc ")) {
 				String v = lcased.substring(9);
 				showConc = v.equals("on") || v.equals("yes") || v.equals("true");
+				//statprintln("# showconc\t" + (showConc ? "on" : "off"));
 				System.out.println("Show concordances: " + (showConc ? "ON" : "OFF"));
 			} else if (lcased.startsWith("verbose ")) {
 				String v = lcased.substring(8);
 				verbose = v.equals("on") || v.equals("yes") || v.equals("true");
-				System.out.println("Verbose: " + (showConc ? "ON" : "OFF"));
+				//statprintln("# verbose\t" + (verbose ? "on" : "off"));
+				outprintln("Verbose: " + (verbose ? "ON" : "OFF"));
 			} else if (lcased.startsWith("total ")) {
 				String v = lcased.substring(6);
 				determineTotalNumberOfHits = v.equals("on") || v.equals("yes") || v.equals("true");
-				System.out.println("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
+				//statprintln("# total\t" + (determineTotalNumberOfHits ? "on" : "off"));
+				outprintln("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
 			} else {
 				// Not a command; assume it's a query
-				parseAndExecute(expr);
-			}
-			try {
-				Thread.sleep(100); // Give Eclipse console time to show stderr output
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
+				parseAndExecuteQuery(cmd);
 			}
 		}
-		cleanup();
+
+		if (restCommand != null)
+			processCommand(restCommand);
 	}
 
 	private void showIndexStructure() {
 		IndexStructure s = searcher.getIndexStructure();
-		out.println("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
+		outprintln("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
 		s.print(System.out);
 	}
 
@@ -577,7 +742,7 @@ public class QueryTool {
 	boolean jlineChecked = false;
 
 	private String readCommand(String prompt) throws IOException {
-		if (jlineConsoleReader == null && !jlineChecked) {
+		if (!batchMode && jlineConsoleReader == null && !jlineChecked) {
 			jlineChecked = true;
 			try {
 				Class<?> c = Class.forName("jline.ConsoleReader");
@@ -589,11 +754,10 @@ public class QueryTool {
 				// Fetch and store the readLine method
 				jlineReadLineMethod = c.getMethod("readLine", String.class);
 
-				System.err.println("Command line editing enabled.");
+				errprintln("Command line editing enabled.");
 			} catch (ClassNotFoundException e) {
 				// Can't init JLine; too bad, fall back to stdin
-				System.err
-						.println("Command line editing not available; to enable, place jline jar in classpath.");
+				errprintln("Command line editing not available; to enable, place jline jar in classpath.");
 			} catch (Exception e) {
 				throw new RuntimeException("Could not init JLine console reader", e);
 			}
@@ -607,9 +771,9 @@ public class QueryTool {
 			}
 		}
 
-		out.print(prompt);
+		outprint(prompt);
 		out.flush();
-		return stdin.readLine();
+		return in.readLine();
 	}
 
 	/**
@@ -618,20 +782,20 @@ public class QueryTool {
 	private void printHelp() {
 		String langAvail = "Lucene, CorpusQL" + (isContextQlAvailable ? ", ContextQL" : "");
 
-		out.println("Control commands:");
-		out.println("  sw(itch)                           # Switch languages (" + langAvail + ")");
-		out.println("  p(rev) / n(ext) / page <n>         # Page through results");
-		out.println("  sort {match|left|right} [prop]     # Sort query results  (left = left context, etc.)");
-		out.println("  group {match|left|right} [prop]    # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
-		out.println("  hits / groups / group <n> / colloc # Switch between results modes");
-		out.println("  pagesize <n>                       # Set number of hits to show per page");
-		out.println("  context <n>                        # Set number of words to show around hits");
-		out.println("  sensitive {on|off|case|diac}       # Set case-/diacritics-sensitivity");
-		out.println("  filter <luceneQuery>               # Set document filter, e.g. title:\"Smith\"");
-		out.println("  doctitle {on|off}                  # Show document titles between hits?");
-		out.println("  help                               # This message");
-		out.println("  exit                               # Exit program");
-		out.println("");
+		outprintln("Control commands:");
+		outprintln("  sw(itch)                           # Switch languages (" + langAvail + ")");
+		outprintln("  p(rev) / n(ext) / page <n>         # Page through results");
+		outprintln("  sort {match|left|right} [prop]     # Sort query results  (left = left context, etc.)");
+		outprintln("  group {match|left|right} [prop]    # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
+		outprintln("  hits / groups / group <n> / colloc # Switch between results modes");
+		outprintln("  pagesize <n>                       # Set number of hits to show per page");
+		outprintln("  context <n>                        # Set number of words to show around hits");
+		outprintln("  sensitive {on|off|case|diac}       # Set case-/diacritics-sensitivity");
+		outprintln("  filter <luceneQuery>               # Set document filter, e.g. title:\"Smith\"");
+		outprintln("  doctitle {on|off}                  # Show document titles between hits?");
+		outprintln("  help                               # This message");
+		outprintln("  exit                               # Exit program");
+		outprintln("");
 
 		printQueryHelp();
 	}
@@ -641,15 +805,15 @@ public class QueryTool {
 	 */
 	private void printQueryHelp() {
 		currentParser.printHelp();
-		out.println("");
+		outprintln("");
 	}
 
 	/**
 	 * Show the program head.
 	 */
 	private void printProgramHead() {
-		out.println("BlackLab Query Tool");
-		out.println("===================");
+		outprintln("BlackLab Query Tool");
+		outprintln("===================");
 	}
 
 	/**
@@ -658,20 +822,20 @@ public class QueryTool {
 	 * @param query
 	 *            the query
 	 */
-	private void parseAndExecute(String query) {
+	private void parseAndExecuteQuery(String query) {
 		Timer t = new Timer();
 		try {
 			TextPattern pattern = currentParser.parse(query);
 			pattern = pattern.rewrite();
 			if (verbose)
-				out.println("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
+				outprintln("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
 
 			// Execute search
 			// Filter filter = null; // TODO: metadata search!
 			Filter filter = filterQuery == null ? null : new QueryWrapperFilter(filterQuery);
 			SpanQuery spanQuery = searcher.createSpanQuery(pattern, filter);
 			if (verbose)
-				out.println("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
+				outprintln("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
 			hits = searcher.find(spanQuery);
 			groups = null;
 			collocations = null;
@@ -681,18 +845,24 @@ public class QueryTool {
 			long searchTime = t.elapsed();
 			showResultsPage();
 			reportTime("search", searchTime, "display", t.elapsed() - searchTime);
+			if (determineTotalNumberOfHits)
+				statInfo = "" + hits.size();
+			else
+				statInfo = "?";
+			commandWasQuery = true;
+			//statprintln(query + "\t" + hits.size() + "\t" + t.elapsed());
 		} catch (TokenMgrError e) {
 			// Lexical error
-			System.err.println("Invalid query: " + e.getMessage());
-			System.err.println("(Type 'help' for examples or see accompanying documents)");
+			errprintln("Invalid query: " + e.getMessage());
+			errprintln("(Type 'help' for examples or see accompanying documents)");
 		} catch (ParseException e) {
 			// Parse error
-			System.err.println("Invalid query: " + e.getMessage());
-			System.err.println("(Type 'help' for examples or see accompanying documents)");
+			errprintln("Invalid query: " + e.getMessage());
+			errprintln("(Type 'help' for examples or see accompanying documents)");
 		} catch (UnsupportedOperationException e) {
 			// Unimplemented part of query language used
-			System.err.println("Cannot execute query; " + e.getMessage());
-			System.err.println("(Type 'help' for examples or see accompanying documents)");
+			errprintln("Cannot execute query; " + e.getMessage());
+			errprintln("(Type 'help' for examples or see accompanying documents)");
 		}
 	}
 
@@ -726,6 +896,7 @@ public class QueryTool {
 
 			// Next page
 			firstResult = pageNumber * resultsPerPage;
+			//statprintln("# page\t" + pageNumber);
 			showResultsPage();
 		}
 	}
@@ -802,13 +973,16 @@ public class QueryTool {
 				crit = new HitPropertyRightContext(searcher, CONTENTS_FIELD, property);
 		}
 		if (crit == null) {
-			out.println("Invalid hit sort criterium: " + sortBy
+			errprintln("Invalid hit sort criterium: " + sortBy
 					+ " (valid are: match, left, right)");
 		} else {
 			hitsToSort.sort(crit);
 			firstResult = 0;
 			long sortTime = t.elapsed();
 			showResultsPage();
+			if (property == null)
+				property = "(default)";
+			//statprintln("# sort\t" + sortBy + "\t" + property + "\t" + t.elapsed());
 			reportTime("sort", sortTime, "display", t.elapsed() - sortTime);
 		}
 	}
@@ -826,11 +1000,12 @@ public class QueryTool {
 		else if (sortBy.startsWith("size"))
 			crit = new GroupPropertySize();
 		if (crit == null) {
-			out.println("Invalid group sort criterium: " + sortBy
+			errprintln("Invalid group sort criterium: " + sortBy
 					+ " (valid are: id(entity), size)");
 		} else {
 			groups.sortGroups(crit, false);
 			firstResult = 0;
+			//statprintln("# sortgroups\t" + sortBy);
 			showResultsPage();
 		}
 	}
@@ -861,13 +1036,16 @@ public class QueryTool {
 		else if (groupBy.startsWith("right"))
 			crit = new HitPropertyWordRight(searcher, CONTENTS_FIELD, property);
 		if (crit == null) {
-			out.println("Unknown criterium: " + groupBy);
+			errprintln("Unknown criterium: " + groupBy);
 			return;
 		}
 		groups = new ResultsGrouper(hits, crit);
 		showSetting = ShowSetting.GROUPS;
 		long groupTime = t.elapsed();
 		sortGroups("size");
+		if (property == null)
+			property = "(default)";
+		//statprintln("# group\t" + groupBy + "\t" + property + "\t" + t.elapsed());
 		reportTime("group", groupTime, "sort/display", t.elapsed() - groupTime);
 	}
 
@@ -892,11 +1070,12 @@ public class QueryTool {
 		} else if (showWhat.startsWith("group ") && groups != null) {
 			showWhichGroup = Integer.parseInt(showWhat.substring(6)) - 1;
 			if (showWhichGroup < 0 || showWhichGroup >= groups.numberOfGroups()) {
-				System.err.println("Group doesn't exist");
+				errprintln("Group doesn't exist");
 				showWhichGroup = -1;
 			} else
 				showSetting = ShowSetting.HITS; // Show hits in group, not all the groups
 		}
+		//statprintln("# show\t" + showWhat);
 		showResultsPage();
 	}
 
@@ -910,13 +1089,13 @@ public class QueryTool {
 	 */
 	private void reportTime(String name1, long time1, String name2, long time2) {
 		if (verbose) {
-			out.println(describeInterval(time1 + time2) + " elapsed ("
+			outprintln(describeInterval(time1 + time2) + " elapsed ("
 					+ describeInterval(time1) + " " + name1 + ", "
 					+ describeInterval(time2) + " " + name2 + ")");
 			return;
 		}
 
-		out.println(describeInterval(time1 + time2) + " elapsed");
+		outprintln(describeInterval(time1 + time2) + " elapsed");
 	}
 
 	private String describeInterval(long time1) {
@@ -971,7 +1150,7 @@ public class QueryTool {
 		for (TokenFrequency coll : collocations) {
 			if (i >= firstResult && i < firstResult + resultsPerPage) {
 				int j = i - firstResult + 1;
-				out.println(String.format("%4d %7d %s", j, coll.frequency, coll.token));
+				outprintln(String.format("%4d %7d %s", j, coll.frequency, coll.token));
 			}
 			i++;
 		}
@@ -980,7 +1159,7 @@ public class QueryTool {
 		String msg = collocations.size() + " collocations";
 		if (collocations.size() > resultsPerPage)
 			msg = (firstResult + 1) + "-" + i + " of " + collocations.size() + " collocations";
-		out.println(msg);
+		outprintln(msg);
 	}
 
 	/**
@@ -991,14 +1170,14 @@ public class QueryTool {
 		int i;
 		for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
 			RandomAccessGroup g = listGroups.get(i);
-			out.println(String.format("%4d %5d %s", i + 1, g.size(), g.getIdentity().toString()));
+			outprintln(String.format("%4d %5d %s", i + 1, g.size(), g.getIdentity().toString()));
 		}
 
 		// Summarize
 		String msg = groups.numberOfGroups() + " groups";
 		if (groups.numberOfGroups() > resultsPerPage)
 			msg = (firstResult + 1) + "-" + i + " of " + groups.numberOfGroups() + " groups";
-		out.println(msg);
+		outprintln(msg);
 	}
 
 	/**
@@ -1009,14 +1188,14 @@ public class QueryTool {
 		if (!showConc) {
 			if (determineTotalNumberOfHits) {
 				// Just show total number of hits, no concordances
-				System.out.println(getCurrentHitSet().size() + " hits");
+				outprintln(getCurrentHitSet().size() + " hits");
 			} else {
 				Iterator<Hit> it = getCurrentHitSet().iterator();
 				int i;
 				for (i = 0; it.hasNext() && i < resultsPerPage; i++) {
 					it.next();
 				}
-				System.out.println( (i == resultsPerPage ? "At least " : "") + i + " hits (total not determined)");
+				outprintln( (i == resultsPerPage ? "At least " : "") + i + " hits (total not determined)");
 			}
 			return;
 		}
@@ -1080,7 +1259,7 @@ public class QueryTool {
 		for (HitToShow hit : toShow) {
 			if (showDocTitle && hit.doc != currentDoc) {
 				if (currentDoc != -1)
-					out.println("");
+					outprintln("");
 				currentDoc = hit.doc;
 				Document d = searcher.document(currentDoc);
 				String title = d.get(titleField);
@@ -1088,12 +1267,12 @@ public class QueryTool {
 					title = "(doc #" + currentDoc + ", no " + titleField + " given)";
 				else
 					title = title + " (doc #" + currentDoc + ")";
-				out.println("--- " + title + " ---");
+				outprintln("--- " + title + " ---");
 			}
 			if (showDocTitle)
-				out.printf(format, hit.left, hit.hitText, hit.right);
+				outprintf(format, hit.left, hit.hitText, hit.right);
 			else
-				out.printf(format, hit.doc, hit.left, hit.hitText, hit.right);
+				outprintf(format, hit.doc, hit.left, hit.hitText, hit.right);
 		}
 
 		// Summarize
@@ -1105,7 +1284,7 @@ public class QueryTool {
 			msg = (window.first() + 1) + "-" + (window.last() + 1) + " of " + window.totalHits()
 					+ " hits";
 		}
-		out.println(msg);
+		outprintln(msg);
 		if (hitsToShow.tooManyHits()) {
 			System.out.println("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE
 					+ " were collected)");
