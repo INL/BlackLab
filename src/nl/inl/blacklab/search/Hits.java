@@ -31,6 +31,7 @@ import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.util.StringUtil;
 
+import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
@@ -42,6 +43,7 @@ import org.apache.lucene.search.spans.Spans;
  * information stored in the Hit objects.
  */
 public class Hits implements Iterable<Hit> {
+	protected static final Logger logger = Logger.getLogger(Hits.class);
 
 	/**
 	 * The hits.
@@ -291,21 +293,30 @@ public class Hits implements Iterable<Hit> {
 	 */
 	@Deprecated
 	public List<Hit> getHits() {
-		ensureAllHitsRead();
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Interrupted; just return the hits we've gathered so far.
+		}
 		return Collections.unmodifiableList(hits);
 	}
 
 	/**
 	 * If we still have only partially read our Spans object,
 	 * read the rest of it and add all the hits.
+	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
-	private void ensureAllHitsRead() {
+	private void ensureAllHitsRead() throws InterruptedException {
 		if (sourceSpansFullyRead)
 			return;
 		sourceSpansFullyRead = true;
 
 		try {
 			while (sourceSpans.next()) {
+
+				if (Thread.currentThread().isInterrupted())
+					throw new InterruptedException("Thread was interrupted while gathering hits");
+
 				hits.add(Hit.getHit(sourceSpans));
 				if (totalNumberOfHits >= 0 && hits.size() >= totalNumberOfHits) {
 					// Either we've got them all, or we should stop
@@ -314,21 +325,29 @@ public class Hits implements Iterable<Hit> {
 				}
 			}
 			totalNumberOfHits = hits.size();
+			logger.debug("Read all hits: " + totalNumberOfHits);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	/**
-	 * If we still have only partially read our Spans object,
-	 * read the rest of it and add all the hits.
+	 * Ensure that we have read at least as many hits as specified in the index parameter.
+	 *
+	 * @param index the minimum number of hits that will have been read when this method
+	 *   returns (unless there are fewer hits than this)
+	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
-	private void ensureHitsRead(int index) {
+	private void ensureHitsRead(int index) throws InterruptedException {
 		if (sourceSpansFullyRead)
 			return;
 
 		try {
 			while (hits.size() <= index) {
+
+				if (Thread.currentThread().isInterrupted())
+					throw new InterruptedException("Thread was interrupted while gathering hits");
+
 				if (!sourceSpans.next()) {
 					sourceSpansFullyRead = true;
 					break;
@@ -342,6 +361,11 @@ public class Hits implements Iterable<Hit> {
 
 	/**
 	 * Sort the list of hits.
+	 *
+	 * Note that if the thread is interrupted during this, sort may return
+	 * without the hits actually being fully read and sorted. We don't want
+	 * to add throws declarations to our whole API, so we assume the calling
+	 * method will check for thread interruption if the application uses it.
 	 *
 	 * @param sortProp
 	 *            the hit property/properties to sort on
@@ -358,6 +382,11 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Sort the list of hits.
 	 *
+	 * Note that if the thread is interrupted during this, sort may return
+	 * without the hits actually being fully read and sorted. We don't want
+	 * to add throws declarations to our whole API, so we assume the calling
+	 * method will check for thread interruption if the application uses it.
+	 *
 	 * @param sortProp
 	 *            the hit property/properties to sort on
 	 */
@@ -368,13 +397,25 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Sort the list of hits.
 	 *
+	 * Note that if the thread is interrupted during this, sort may return
+	 * without the hits actually being fully read and sorted. We don't want
+	 * to add throws declarations to our whole API, so we assume the calling
+	 * method will check for thread interruption if the application uses it.
+	 *
 	 * @param sortProp
 	 *            the hit property to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
 	 */
 	public void sort(final HitProperty sortProp, boolean reverseSort) {
-		ensureAllHitsRead();
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			return;
+		}
+
 		// Do we need context and don't we have it yet?
 		String requiredContext = sortProp.needsContext();
 		if (requiredContext != null && (!requiredContext.equals(contextFieldPropName) || currentContextSize != desiredContextSize)) {
@@ -420,7 +461,13 @@ public class Hits implements Iterable<Hit> {
 	 *            the hit
 	 */
 	public void add(Hit hit) {
-		ensureAllHitsRead();
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			return;
+		}
 		hits.add(hit);
 		totalNumberOfHits++;
 	}
@@ -435,7 +482,16 @@ public class Hits implements Iterable<Hit> {
 			return totalNumberOfHits; // fully known, or pre-counted
 
 		// Probably not all hits have been seen yet. Collect them all.
-		ensureAllHitsRead();
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			// Returned value is probably not the correct total number of hits,
+			// but will not cause any crashes. The thread was interrupted anyway,
+			// the value should never be presented to the user.
+			return hits.size();
+		}
 		return totalNumberOfHits;
 	}
 
@@ -500,7 +556,12 @@ public class Hits implements Iterable<Hit> {
 	 * @return the hit, or null if it's beyond the last hit
 	 */
 	public Hit get(int i) {
-		ensureHitsRead(i);
+		try {
+			ensureHitsRead(i);
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Required hit hasn't been gathered;
+			// we will just return null.
+		}
 		if (i >= hits.size())
 			return null;
 		return hits.get(i);
@@ -518,7 +579,15 @@ public class Hits implements Iterable<Hit> {
 	 * @return concordance for this hit
 	 */
 	public Concordance getConcordance(Hit h) {
-		ensureAllHitsRead();
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Just go ahead with the hits we did
+			// get, so at least we can return a valid concordance object and
+			// not break the calling method. It is responsible for checking
+			// for thread interruption (only some applications use this at all,
+			// so throwing exceptions from all methods is too inconvenient)
+		}
 		if (concordances == null) {
 			findConcordances(); // just try to find the default concordances
 		}
@@ -535,7 +604,12 @@ public class Hits implements Iterable<Hit> {
 	 * you call getConcordance() for the first time.
 	 */
 	void findConcordances() {
-		ensureAllHitsRead();
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Just go ahead with the hits we did
+			// get, so at least we'll have valid concordances.
+		}
 		// Make sure we don't have the desired concordances already
 		if (concordances != null) {
 			return;
@@ -552,7 +626,12 @@ public class Hits implements Iterable<Hit> {
 	 *            the field and property to use for the concordances
 	 */
 	public void findContext(String fieldPropName) {
-		ensureAllHitsRead();
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Just go ahead with the hits we did
+			// get, so at least we can return with valid context.
+		}
 		// Make sure we don't have the desired concordances already
 		if (contextFieldPropName != null && fieldPropName.equals(contextFieldPropName) && desiredContextSize == currentContextSize) {
 			return;
@@ -704,7 +783,13 @@ public class Hits implements Iterable<Hit> {
 	 * @return the sublist
 	 */
 	public List<Hit> subList(int fromIndex, int toIndex) {
-		ensureHitsRead(toIndex - 1);
+		try {
+			ensureHitsRead(toIndex - 1);
+		} catch (InterruptedException e) {
+			// Thread was interrupted. We may not even have read
+			// the first hit in the sublist, so just return an empty list.
+			return Collections.emptyList();
+		}
 		if (toIndex > hits.size())
 			toIndex = hits.size();
 		return hits.subList(fromIndex, toIndex);
