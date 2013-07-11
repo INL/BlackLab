@@ -145,6 +145,38 @@ public class Searcher {
 	/** Structure of our index */
 	private IndexStructure indexStructure;
 
+	/** Do we want to retrieve concordances from the forward index instead of from the
+	 *  content store? This may be more efficient, particularly for small result sets
+	 *  (because it eliminates seek time and decompression time).
+	 *
+	 *  By default, this is set to true iff a punctuation forward index is present.
+	 */
+	private boolean concordancesFromForwardIndex = false;
+
+	/**
+	 * Are we making concordances using the forward index (true) or using
+	 * the content store (false)? Forward index is more efficient but returns
+	 * concordances that don't include XML tags.
+	 *
+	 * @return true iff we use the forward index for making concordances.
+	 */
+	public boolean getMakeConcordancesFromForwardIndex() {
+		return concordancesFromForwardIndex;
+	}
+
+	/**
+	 * Do we want to retrieve concordances from the forward index instead of from the
+	 * content store? This may be more efficient, particularly for small result sets
+	 * (because it eliminates seek time and decompression time), but concordances won't
+	 * include XML tags.
+	 *
+	 * @param concordancesFromForwardIndex true if we want to use the forward index to make
+	 * concordances.
+	 */
+	public void setMakeConcordancesFromForwardIndex(boolean concordancesFromForwardIndex) {
+		this.concordancesFromForwardIndex = concordancesFromForwardIndex;
+	}
+
 	/**
 	 * Construct a Searcher object. Note that using this constructor, the Searcher is responsible
 	 * for opening and closing the Lucene index, forward index and content store.
@@ -1125,6 +1157,71 @@ public class Searcher {
 	}
 
 	/**
+	 * Retrieves the concordance information (left, hit and right context) for a number of hits in
+	 * the same document from the ContentStore.
+	 *
+	 * NOTE: the slowest part of this is getting the character offsets (retrieving large term
+	 * vectors takes time; subsequent hits from the same document are significantly faster,
+	 * presumably because of caching)
+	 *
+	 * @param hits
+	 *            the hits in question
+	 * @param fieldName
+	 *            Lucene index field to make conc for
+	 * @param wordsAroundHit
+	 *            number of words left and right of hit to fetch
+	 * @param conc
+	 *            where to add the concordances
+	 */
+	private void makeConcordancesSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
+			String fieldPropFiidName, int wordsAroundHit,
+			Map<Hit, Concordance> conc) {
+		if (hits.size() == 0)
+			return;
+		int doc = hits.get(0).doc;
+		int arrayLength = hits.size() * 2;
+		int[] startsOfWords = new int[arrayLength];
+		int[] endsOfWords = new int[arrayLength];
+
+		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
+
+		getContextWords(doc, forwardIndex, fieldPropFiidName, startsOfWords, endsOfWords, hits);
+
+		// Make the concordances from the context
+		Terms terms = forwardIndex.getTerms();
+		for (int i = 0; i < hits.size(); i++) {
+			Hit h = hits.get(i);
+			StringBuilder[] part = new StringBuilder[3];
+			for (int j = 0; j < 3; j++) {
+				part[j] = new StringBuilder();
+			}
+			int currentPart = 0;
+			StringBuilder current = part[currentPart];
+			for (int j = 0; j < h.context.length; j++) {
+
+				if (j == h.contextRightStart) {
+					currentPart = 2;
+					current = part[currentPart];
+				}
+				else if (j == h.contextHitStart) {
+					currentPart = 1;
+					current = part[currentPart];
+				}
+
+				if (current.length() > 0 || currentPart == 2) {
+					current.append(" ");
+				}
+				current.append(terms.getFromSortPosition(h.context[j]));
+			}
+			if (part[0].length() > 0)
+				part[0].append(" ");
+			String[] concStr = new String[] {part[0].toString(), part[1].toString(), part[2].toString()};
+			Concordance concordance = new Concordance(concStr);
+			conc.put(h, concordance);
+		}
+	}
+
+	/**
 	 * Retrieves the context (left, hit and right) for a number of hits in the same document from
 	 * the forward index.
 	 *
@@ -1330,6 +1427,11 @@ public class Searcher {
 	 */
 	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits,
 			int contextSize) {
+
+		if (concordancesFromForwardIndex) {
+			return retrieveConcordancesForwardIndex(fieldName, hits, contextSize);
+		}
+
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key : hits) {
@@ -1343,6 +1445,47 @@ public class Searcher {
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l : hitsPerDocument.values()) {
 			makeConcordancesSingleDoc(l, fieldName, contextSize, conc);
+		}
+		return conc;
+	}
+
+	/**
+	 * Retrieve concordancs for a list of hits.
+	 *
+	 * Concordances are the hit words 'centered' with a certain number of context words around them.
+	 *
+	 * The concordances are placed inside the Hit objects, in the conc[] array.
+	 *
+	 * The size of the left and right context (in words) may be set using
+	 * Searcher.setConcordanceContextSize().
+	 *
+	 * @param fieldName
+	 *            field to use for building concordances
+	 * @param hits
+	 *            the hits for which to retrieve concordances
+	 * @param contextSize
+	 *            how many words around the hit to retrieve
+	 * @return the list of concordances
+	 */
+	public Map<Hit, Concordance> retrieveConcordancesForwardIndex(String fieldName, List<Hit> hits,
+			int contextSize) {
+		// Group hits per document
+		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
+		for (Hit key : hits) {
+			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
+			if (hitsInDoc == null) {
+				hitsInDoc = new ArrayList<Hit>();
+				hitsPerDocument.put(key.doc, hitsInDoc);
+			}
+			hitsInDoc.add(key);
+		}
+
+		ForwardIndex forwardIndex = getForwardIndex(fieldName);
+		String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldName);
+
+		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
+		for (List<Hit> l : hitsPerDocument.values()) {
+			makeConcordancesSingleDocForwardIndex(l, forwardIndex, fiidFieldName, contextSize, conc);
 		}
 		return conc;
 	}
