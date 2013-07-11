@@ -59,7 +59,9 @@ public class HitPropertyWordLeft extends HitProperty {
 	}
 
 	@Override
-	public int compare(Hit a, Hit b) {
+	public int compare(Object oa, Object ob) {
+		Hit a = (Hit) oa, b = (Hit) ob;
+
 		if (a.contextHitStart <= 0)
 			return b.contextHitStart <= 0 ? 0 : -1;
 		if (b.contextHitStart <= 0)

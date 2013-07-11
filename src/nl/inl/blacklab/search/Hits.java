@@ -18,7 +18,6 @@ package nl.inl.blacklab.search;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +51,8 @@ public class Hits implements Iterable<Hit> {
 
 	/**
 	 * The concordances, if they have been retrieved.
+	 *
+	 * NOTE: this will always be null if not all the hits have been retrieved.
 	 */
 	protected Map<Hit, Concordance> concordances;
 
@@ -91,6 +92,7 @@ public class Hits implements Iterable<Hit> {
 	 * (We keep this separately because we may run through a Spans first to
 	 * count the hits without storing them, to avoid unnecessarily instantiating
 	 * Hit objects)
+	 * If -1, we don't know the total number of hits yet.
 	 */
 	int totalNumberOfHits;
 
@@ -99,10 +101,17 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public final static int MAX_HITS_TO_RETRIEVE = 10000000;
 
+	/**
+	 * If true, we try to count the total number of hits even if we don't
+	 * actually retrieve all of them yet. Now set to false because for large
+	 * queries even enumerating the hits takes a lot of time, so this is only
+	 * done if requested.
+	 */
 	private static final boolean PRE_COUNT_TOTAL_HITS = false;
 
 	/**
-	 * For extremely large queries, stop retrieving hits at some point.
+	 * If true, we've stopped retrieving hits because there are more than
+	 * the maximum we've set.
 	 */
 	private boolean tooManyHits = false;
 
@@ -119,7 +128,8 @@ public class Hits implements Iterable<Hit> {
 
 	/**
 	 * The number of documents counted (only valid if the basis for this is a SpanQuery object;
-	 * used by DocResults to report the total number of docs without retrieving them all first)
+	 * used by DocResults to report the total number of docs without retrieving them all first).
+	 * If the value is -1, we don't know the total number of docs.
 	 */
 	private int totalNumberOfDocs;
 
@@ -325,7 +335,7 @@ public class Hits implements Iterable<Hit> {
 				}
 			}
 			totalNumberOfHits = hits.size();
-			logger.debug("Read all hits: " + totalNumberOfHits);
+			//logger.debug("Read all hits: " + totalNumberOfHits);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -423,35 +433,14 @@ public class Hits implements Iterable<Hit> {
 			findContext(requiredContext);
 		}
 
-		// Sort on the hits' sort property
-		Comparator<Object> comparator;
-
-		// NOTE: we define two separate Comparators for normal and reverse sort
-		// because this method gets called a LOT for large result sets, so
-		// saving one if/then/else is worth it.
-
-		// NOTE2: we use Comparator<Object> and not Comparator<Hit> because this is
-		// significantly faster when doing many comparisons, presumably because less
-		// runtime type checking is done. We know all our objects our Hits, so this
-		// is okay.
+		Collections.sort(hits, sortProp);
 		if (reverseSort) {
-			comparator = new Comparator<Object>() {
-				@Override
-				public int compare(Object o1, Object o2) {
-					return sortProp.compare((Hit) o2, (Hit) o1);
-					//return ((Hit) o2).sort.compareTo(((Hit) o1).sort);
-				}
-			};
-		} else {
-			comparator = new Comparator<Object>() {
-				@Override
-				public int compare(Object o1, Object o2) {
-					return sortProp.compare((Hit) o1, (Hit) o2);
-					//return ((Hit) o1).sort.compareTo(((Hit) o2).sort);
-				}
-			};
+			// Instead of creating a new Comparator that reverses the order of the
+			// sort property (which adds an extra layer of indirection to each of the
+			// O(n log n) comparisons), just reverse the hits now (which runs
+			// in linear time).
+			Collections.reverse(hits);
 		}
-		Collections.sort(hits, comparator);
 	}
 
 	/**

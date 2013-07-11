@@ -52,14 +52,14 @@ public class HitPropertyDocumentDecade extends HitProperty {
 	}
 
 	@Override
-	public int compare(Hit a, Hit b) {
+	public int compare(Object a, Object b) {
 		try {
-			Document d = reader.document(a.doc);
+			Document d = reader.document(((Hit)a).doc);
 			String strYear = d.get(fieldName);
 			int aYear = Integer.parseInt(strYear);
 			aYear -= aYear % 10;
 
-			d = reader.document(b.doc);
+			d = reader.document(((Hit)b).doc);
 			strYear = d.get(fieldName);
 			int bYear = Integer.parseInt(strYear);
 			bYear -= bYear % 10;

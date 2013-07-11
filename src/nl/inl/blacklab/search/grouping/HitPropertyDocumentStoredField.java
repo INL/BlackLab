@@ -55,14 +55,14 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 	}
 
 	@Override
-	public int compare(Hit a, Hit b) {
+	public int compare(Object a, Object b) {
 		try {
-			Document d = reader.document(a.doc);
+			Document d = reader.document(((Hit)a).doc);
 			String va = d.get(fieldName);
 			if (va == null)
 				va = "";
 
-			d = reader.document(b.doc);
+			d = reader.document(((Hit)b).doc);
 			String vb = d.get(fieldName);
 			if (vb == null)
 				vb = "";

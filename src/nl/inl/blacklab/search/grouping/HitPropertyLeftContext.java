@@ -72,7 +72,9 @@ public class HitPropertyLeftContext extends HitProperty {
 	}
 
 	@Override
-	public int compare(Hit a, Hit b) {
+	public int compare(Object oa, Object ob) {
+		Hit a = (Hit) oa, b = (Hit) ob;
+
 		// Compare the left context for these two hits, starting at the end
 		int ai = a.contextHitStart - 1;
 		int bi = b.contextHitStart - 1;

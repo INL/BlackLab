@@ -63,7 +63,9 @@ public class HitPropertyRightContext extends HitProperty {
 	}
 
 	@Override
-	public int compare(Hit a, Hit b) {
+	public int compare(Object oa, Object ob) {
+		Hit a = (Hit) oa, b = (Hit) ob;
+
 		// Compare the right context for these two hits
 		int ai = a.contextRightStart;
 		int bi = b.contextRightStart;

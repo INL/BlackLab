@@ -37,8 +37,8 @@ public class HitPropertyDocumentId extends HitProperty {
 	}
 
 	@Override
-	public int compare(Hit a, Hit b) {
-		return a.doc - b.doc;
+	public int compare(Object a, Object b) {
+		return ((Hit)a).doc - ((Hit)b).doc;
 	}
 
 }
