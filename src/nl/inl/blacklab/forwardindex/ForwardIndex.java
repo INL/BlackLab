@@ -47,10 +47,18 @@ public class ForwardIndex {
 
 	protected static final Logger logger = Logger.getLogger(ForwardIndex.class);
 
+	/**
+	 * If true, we want to disable actual I/O and assign random term id's instead.
+	 * (used to test the impact of I/O on sorting/grouping)
+	 */
+	private static final boolean TESTING_IO_IMPACT = false;
+
 	/*
 	 * File format version history:
 	 * 1. Initial version.
 	 * 2. Added sort index to terms file.
+	 * 3. [WORK IN PROGRESS] Store terms case-sensitively; provide different
+	 *    sort indices for sensitivity alternatives.
 	 */
 
 	/**
@@ -260,8 +268,11 @@ public class ForwardIndex {
 		try {
 			boolean existing = false;
 			if (tocFile.exists()) {
+				//logger.debug("FI: reading table of contents...");
 				readToc();
+				//logger.debug("FI: table of contents read. Reading terms file...");
 				terms = new Terms(indexMode, collator, termsFile);
+				//logger.debug("FI: terms file read.");
 				existing = true;
 				tocModified = false;
 			} else {
@@ -714,26 +725,37 @@ public class ForwardIndex {
 
 				int snippetLength = end[i] - start[i];
 				int[] snippet = new int[snippetLength];
-				if (inMem) {
-					// The whole file is available in memory (or mem-mapped)
-					// Position us at the correct place in the file.
-					ib.position(start[i]);
-				} else {
-					// Not mapped. Explicitly read the part we require from disk into an int buffer.
-					long offset = e.offset + start[i];
-
-					int bytesToRead = snippetLength * SIZEOF_INT;
-					ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
-					int bytesRead = tokensFileChannel.read(buffer, offset * SIZEOF_INT);
-					if (bytesRead < bytesToRead) {
-						throw new RuntimeException("Not enough bytes read: " + bytesRead + " < "
-								+ bytesToRead);
+				if (TESTING_IO_IMPACT) {
+					// We're testing how much impact forward index I/O has on sorting/grouping.
+					// Fill the array with random token ids instead of reading them from the
+					// file.
+					int numberOfTerms = terms.numberOfTerms();
+					for (int j = 0; j < snippetLength; j++) {
+						int randomTermId = (int) Math.random() * numberOfTerms;
+						snippet[j] = randomTermId;
 					}
-					buffer.position(0);
-					ib = buffer.asIntBuffer();
-				}
-				for (int j = 0; j < snippetLength; j++) {
-					snippet[j] = ib.get();
+				} else {
+					if (inMem) {
+						// The whole file is available in memory (or mem-mapped)
+						// Position us at the correct place in the file.
+						ib.position(start[i]);
+					} else {
+						// Not mapped. Explicitly read the part we require from disk into an int buffer.
+						long offset = e.offset + start[i];
+
+						int bytesToRead = snippetLength * SIZEOF_INT;
+						ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
+						int bytesRead = tokensFileChannel.read(buffer, offset * SIZEOF_INT);
+						if (bytesRead < bytesToRead) {
+							throw new RuntimeException("Not enough bytes read: " + bytesRead + " < "
+									+ bytesToRead);
+						}
+						buffer.position(0);
+						ib = buffer.asIntBuffer();
+					}
+					for (int j = 0; j < snippetLength; j++) {
+						snippet[j] = ib.get();
+					}
 				}
 				result.add(snippet);
 			}

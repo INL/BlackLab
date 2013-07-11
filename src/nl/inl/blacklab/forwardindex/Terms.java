@@ -232,4 +232,9 @@ public class Terms {
 		}
 		return terms[idPerSortPosition[sortPosition]];
 	}
+
+	public int numberOfTerms() {
+		return idPerSortPosition.length;
+	}
+
 }
