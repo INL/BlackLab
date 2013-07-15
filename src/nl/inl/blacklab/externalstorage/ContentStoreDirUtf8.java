@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
@@ -90,48 +91,48 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		/**
 		 * Store TOC entry in the TOC file
 		 *
-		 * @param d
+		 * @param buf
 		 *            where to serialize to
 		 * @throws IOException
 		 *             on error
 		 */
-		public void serialize(ByteBuffer d) throws IOException {
-			d.putInt(id);
-			d.putInt(fileId);
-			d.putInt(entryOffsetBytes);
-			d.putInt(entryLengthBytes);
-			d.putInt(deleted ? -1 : entryLengthCharacters);
-			d.putInt(blockSizeCharacters);
-			d.putInt(blockOffsetBytes.length);
-			for (int i = 0; i < blockOffsetBytes.length; i++) {
-				d.putInt(blockOffsetBytes[i]);
-			}
+		public void serialize(ByteBuffer buf) throws IOException {
+			buf.putInt(id);
+			buf.putInt(fileId);
+			buf.putInt(entryOffsetBytes);
+			buf.putInt(entryLengthBytes);
+			buf.putInt(deleted ? -1 : entryLengthCharacters);
+			buf.putInt(blockSizeCharacters);
+			buf.putInt(blockOffsetBytes.length);
+			IntBuffer ib = buf.asIntBuffer();
+			ib.put(blockOffsetBytes);
+			buf.position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
 		}
 
 		/**
 		 * Read TOC entry from the TOC file
 		 *
-		 * @param raf
+		 * @param buf
 		 *            the buffer to read from
 		 * @return new TocEntry
 		 * @throws IOException
 		 *             on error
 		 */
-		public static TocEntry deserialize(ByteBuffer raf) throws IOException {
-			int id = raf.getInt();
-			int fileId = raf.getInt();
-			int offset = raf.getInt();
-			int length = raf.getInt();
-			int charLength = raf.getInt();
+		public static TocEntry deserialize(ByteBuffer buf) throws IOException {
+			int id = buf.getInt();
+			int fileId = buf.getInt();
+			int offset = buf.getInt();
+			int length = buf.getInt();
+			int charLength = buf.getInt();
 			boolean deleted = charLength < 0;
-			int blockSize = raf.getInt();
-			int nBlocks = raf.getInt();
-			int[] blockOffset = new int[nBlocks];
-			for (int i = 0; i < nBlocks; i++) {
-				blockOffset[i] = raf.getInt();
-			}
+			int blockSize = buf.getInt();
+			int nBlocks = buf.getInt();
+			int[] blockOffsetBytes = new int[nBlocks];
+			IntBuffer ib = buf.asIntBuffer();
+			ib.get(blockOffsetBytes);
+			buf.position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
 			return new TocEntry(id, fileId, offset, length, charLength, blockSize, deleted,
-					blockOffset);
+					blockOffsetBytes);
 		}
 
 		/**
@@ -245,10 +246,15 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 
 	/**
 	 * What block size to use when adding a new document to the content store. Contributing factors
-	 * for choosing block size: - larger blocks improve compression ratio - larger blocks decrease
-	 * number of blocks you have to read - smaller blocks decrease the decompression time - smaller
-	 * blocks increase the chance that we only have to read one disk block for a single concordance
-	 * (disk blocks are generally 2 or 4K)
+	 * for choosing block size:
+	 * - larger blocks improve compression ratio
+	 * - larger blocks decrease number of blocks you have to read
+	 * - smaller blocks decrease the decompression time
+	 * - smaller blocks increase the chance that we only have to read one disk block for a single concordance
+	 *   (disk blocks are generally 2 or 4K)
+	 * - consider OS I/O caching and memory mapping. Then it becomes the difference between reading
+	 *   a few bytes from memory and reading a few kilobytes and decompressing them. Right now,
+	 *   making concordances is often CPU-bound (because of decompression?)
 	 */
 	protected int newEntryBlockSizeCharacters = 4000;
 
@@ -285,7 +291,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 					return name.matches("data\\d+.dat");
 				}
 			});
-			for (File f: dataFiles) {
+			for (File f : dataFiles) {
 				f.delete();
 			}
 		}
