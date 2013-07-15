@@ -26,7 +26,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestTerms {
+public class TestTermsV2 {
 	private Terms t;
 
 	private File dir;
@@ -43,7 +43,7 @@ public class TestTerms {
 		dir = Utilities.createBlackLabTestDir("Terms");
 
 		// Store some terms
-		t = new Terms(true, Collator.getInstance(new Locale("en", "GB")));
+		t = new TermsImplV2(true, Collator.getInstance(new Locale("en", "GB")));
 		for (int i = 0; i < str.length; i++) {
 			t.indexOf(str[i]);
 		}
@@ -51,7 +51,7 @@ public class TestTerms {
 		t.write(f); // close so everything is guaranteed to be written
 
 		// Open for reading
-		t = new Terms(false, Collator.getInstance(new Locale("en", "GB")), f);
+		t = new TermsImplV2(false, Collator.getInstance(new Locale("en", "GB")), f);
 	}
 
 	@After

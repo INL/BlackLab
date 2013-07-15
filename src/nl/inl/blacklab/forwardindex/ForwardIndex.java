@@ -64,7 +64,7 @@ public class ForwardIndex {
 	/**
 	 * Current forward index format version
 	 */
-	private static final String CURRENT_VERSION = "2";
+	private static final String CURRENT_VERSION = "3";
 
 	/** Java has as limit of 2GB for MappedByteBuffer.
 	 *  But this could be worked around using arrays of MappedByteBuffers, see:
@@ -242,11 +242,16 @@ public class ForwardIndex {
 		}
 
 		// Version check
+		boolean isVersion2 = false;
 		if (!indexMode || !create) {
 			// We're opening an existing forward index. Check version.
 			if (!VersionFile.isTypeVersion(dir, "fi", CURRENT_VERSION)) {
-				throw new RuntimeException("Not a forward index or wrong version: "
-						+ VersionFile.report(dir) + " (fi " + CURRENT_VERSION + " expected)");
+				if (VersionFile.isTypeVersion(dir, "fi", "2")) {
+					isVersion2 = true;
+				} else {
+					throw new RuntimeException("Not a forward index or wrong version: "
+							+ VersionFile.report(dir) + " (fi " + CURRENT_VERSION + " expected)");
+				}
 			}
 		} else {
 			// We're creating a forward index. Write version.
@@ -271,12 +276,18 @@ public class ForwardIndex {
 				//logger.debug("FI: reading table of contents...");
 				readToc();
 				//logger.debug("FI: table of contents read. Reading terms file...");
-				terms = new Terms(indexMode, collator, termsFile);
+				if (isVersion2)
+					terms = new TermsImplV2(indexMode, collator, termsFile);
+				else
+					terms = new TermsImplV3(indexMode, collator, termsFile);
 				//logger.debug("FI: terms file read.");
 				existing = true;
 				tocModified = false;
 			} else {
-				terms = new Terms(indexMode, collator);
+				if (isVersion2)
+					terms = new TermsImplV2(indexMode, collator);
+				else
+					terms = new TermsImplV3(indexMode, collator);
 				tokensFile.createNewFile();
 				tokensFileChunks = null;
 				tocModified = true;
