@@ -360,6 +360,7 @@ public class Hits implements Iterable<Hit> {
 
 				if (!sourceSpans.next()) {
 					sourceSpansFullyRead = true;
+					totalNumberOfHits = hits.size();
 					break;
 				}
 				hits.add(Hit.getHit(sourceSpans));
