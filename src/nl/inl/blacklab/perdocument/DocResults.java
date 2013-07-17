@@ -71,7 +71,13 @@ public class DocResults implements Iterable<DocResult> {
 	}
 
 	public void add(DocResult r) {
-		ensureAllResultsRead();
+		try {
+			ensureAllResultsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			return;
+		}
 		results.add(r);
 	}
 
@@ -133,7 +139,13 @@ public class DocResults implements Iterable<DocResult> {
 	 */
 	@Deprecated
 	public List<DocResult> getResults() {
-		ensureAllResultsRead();
+		try {
+			ensureAllResultsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// the results we have.
+			// Let caller detect and deal with interruption.
+		}
 		return results;
 	}
 
@@ -144,8 +156,36 @@ public class DocResults implements Iterable<DocResult> {
 	 *            how to sort the results
 	 */
 	void sort(Comparator<DocResult> comparator) {
-		ensureAllResultsRead();
+		try {
+			ensureAllResultsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; just sort the results we have.
+			// Let caller detect and deal with interruption.
+		}
 		Collections.sort(results, comparator);
+	}
+
+	/**
+	 * Determines if there are at least a certain number of results
+	 *
+	 * This may be used if we don't want to process all results (which
+	 * may be a lot) but we do need to know something about the size
+	 * of the result set (such as for paging).
+	 *
+	 * @param lowerBound the number we're testing against
+	 *
+	 * @return true if the size of this set is at least lowerBound, false otherwise.
+	 */
+	public boolean sizeAtLeast(int lowerBound) {
+		try {
+			// Try to fetch at least this many hits
+			ensureResultsRead(lowerBound);
+		} catch (InterruptedException e) {
+			// Thread was interrupted; abort operation
+			// and let client decide what to do
+		}
+
+		return results.size() >= lowerBound;
 	}
 
 	public int size() {
@@ -157,7 +197,12 @@ public class DocResults implements Iterable<DocResult> {
 		}
 
 		// No; make sure we've collected all results and return the size of our result list.
-		ensureAllResultsRead();
+		try {
+			ensureAllResultsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; return size of the results we have.
+			// Let caller detect and deal with interruption.
+		}
 		return results.size();
 	}
 
@@ -176,15 +221,22 @@ public class DocResults implements Iterable<DocResult> {
 	 * @return the sublist
 	 */
 	public List<DocResult> subList(int fromIndex, int toIndex) {
-		ensureResultsRead(toIndex - 1);
+		try {
+			ensureResultsRead(toIndex - 1);
+		} catch (InterruptedException e) {
+			// Thread was interrupted. We may not even have read
+			// the first result in the sublist, so just return an empty list.
+			return Collections.emptyList();
+		}
 		return results.subList(fromIndex, toIndex);
 	}
 
 	/**
 	 * If we still have only partially read our Hits object,
 	 * read the rest of it and add all the hits.
+	 * @throws InterruptedException
 	 */
-	private void ensureAllResultsRead() {
+	private void ensureAllResultsRead() throws InterruptedException {
 		ensureResultsRead(-1);
 	}
 
@@ -193,8 +245,9 @@ public class DocResults implements Iterable<DocResult> {
 	 * read some more of it and add the hits.
 	 *
 	 * @param index the number of results we want to ensure have been read, or negative for all results
+	 * @throws InterruptedException
 	 */
-	void ensureResultsRead(int index) {
+	void ensureResultsRead(int index) throws InterruptedException {
 		if (sourceHitsFullyRead())
 			return;
 
@@ -207,6 +260,10 @@ public class DocResults implements Iterable<DocResult> {
 			@SuppressWarnings("resource")
 			IndexReader indexReader = searcher == null ? null : searcher.getIndexReader();
 			while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
+
+				if (Thread.currentThread().isInterrupted())
+					throw new InterruptedException("Thread was interrupted while gathering hits");
+
 				Hit hit = sourceHitsIterator.next();
 				if (hit.doc != doc) {
 					if (dr != null)
@@ -257,7 +314,13 @@ public class DocResults implements Iterable<DocResult> {
 			@Override
 			public boolean hasNext() {
 				// Do we still have hits in the hits list?
-				ensureResultsRead(index + 1);
+				try {
+					ensureResultsRead(index + 1);
+				} catch (InterruptedException e) {
+					// Thread was interrupted. Act like we're done.
+					// Let caller detect and deal with interruption.
+					return false;
+				}
 				return index + 1 < results.size();
 			}
 
@@ -279,6 +342,16 @@ public class DocResults implements Iterable<DocResult> {
 		};
 	}
 
-
+	public DocResult get(int i) {
+		try {
+			ensureResultsRead(i);
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Required hit hasn't been gathered;
+			// we will just return null.
+		}
+		if (i >= results.size())
+			return null;
+		return results.get(i);
+	}
 
 }

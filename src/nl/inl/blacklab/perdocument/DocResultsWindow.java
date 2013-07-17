@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import java.util.ArrayList;
+
 /**
  * A list of DocResult objects (document-level query results). The list may be sorted by calling
  * DocResults.sort().
@@ -32,19 +34,27 @@ public class DocResultsWindow extends DocResults {
 		this.first = first;
 		this.numberPerPage = numberPerPage;
 
-		if (source.size() > 0) {
-			if (first < 0 || (source.size() > 0 && first >= source.size()))
-				throw new RuntimeException("First hit out of range");
+		boolean emptyResultSet = !source.sizeAtLeast(1);
+		if (first < 0 || (emptyResultSet && first > 0) ||
+			(!emptyResultSet && !source.sizeAtLeast(first + 1))) {
+			throw new RuntimeException("First hit out of range");
+		}
 
-			int number = numberPerPage;
-			if (first + number > source.size())
-				number = source.size() - first;
-			results = source.subList(first, first + number);
+		// Auto-clamp number
+		int number = numberPerPage;
+		if (!source.sizeAtLeast(first + number))
+			number = source.size() - first;
+
+		// Make sublist (don't use sublist because the backing list may change if not
+		// all hits have been read yet)
+		results = new ArrayList<DocResult>();
+		for (int i = first; i < first + number; i++) {
+			results.add(source.get(i));
 		}
 	}
 
 	public boolean hasNext() {
-		return first + numberPerPage < source.size();
+		return source.sizeAtLeast(first + numberPerPage + 1);
 	}
 
 	public boolean hasPrevious() {

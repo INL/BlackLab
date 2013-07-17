@@ -80,7 +80,7 @@ public class HitsWindow extends Hits {
 	 * @return true if there are, false if not.
 	 */
 	public boolean hasNext() {
-		return first + windowSize < source.size();
+		return source.sizeAtLeast(first + windowSize + 1);
 	}
 
 	/**
