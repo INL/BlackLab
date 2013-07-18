@@ -100,6 +100,15 @@ public class ResultsGrouper extends RandomAccessGroups {
 			hits.findContext(requiredContext);
 		contextField = hits.getContextFieldPropName();
 		for (Hit hit : hits) {
+			if (Thread.currentThread().isInterrupted()) {
+				// Thread was interrupted. Don't throw exception because not
+				// all client programs use this feature and we shouldn't force
+				// them to catch a useless exception.
+				// This does mean that it's the client's responsibility to detect
+				// thread interruption if it wants to be able to break off long-running
+				// queries.
+				return;
+			}
 			addHit(hit);
 		}
 	}
