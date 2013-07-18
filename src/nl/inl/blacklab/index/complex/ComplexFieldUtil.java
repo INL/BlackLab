@@ -55,6 +55,9 @@ public class ComplexFieldUtil {
 
 	public static final String END_TAG_PROP_NAME = "endtag";
 
+	/** Property name for the spaces and punctuation between words */
+	public static final String PUNCTUATION_PROP_NAME = "punct";
+
 	/**
 	 * Is the main property of the field (the one containing word forms and character positions)
 	 * nameless, or does it have a property name like the other properties (e.g. "word" or "wf")?

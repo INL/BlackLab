@@ -39,7 +39,7 @@ import org.apache.log4j.Logger;
  * This version of the class stores the terms in a more efficient way so it
  * saves and loads faster, and includes the case-insensitive sorting order.
  */
-public class TermsImplV3 implements Terms {
+class TermsImplV3 extends Terms {
 	/** Number of sort buffers we store in the terms file (case-sensitive/insensitive and inverted buffers for both as well) */
 	private static final int NUM_SORT_BUFFERS = 4;
 

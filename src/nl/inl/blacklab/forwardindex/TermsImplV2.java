@@ -35,8 +35,11 @@ import org.apache.log4j.Logger;
  *
  * This version of the class stores the terms in a less efficient way
  * and does not support case-insensitive sorting/grouping. Version 3 does.
+ *
+ * NOTE: version 2 of the forward index will be phased out soon. Re-index
+ * your data if you're still using it!
  */
-public class TermsImplV2 implements Terms {
+class TermsImplV2 extends Terms {
 	protected static final Logger logger = Logger.getLogger(TermsImplV2.class);
 
 	final static int INT_SIZE = Integer.SIZE / Byte.SIZE;

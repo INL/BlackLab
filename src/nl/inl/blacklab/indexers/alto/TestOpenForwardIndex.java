@@ -25,7 +25,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 public class TestOpenForwardIndex {
 	public static void main(String[] args) throws Exception {
 		File dir = new File("D:\\dev\\blacklab\\pagexml\\index\\forward");
-		ForwardIndex fi = new ForwardIndex(dir);
+		ForwardIndex fi = ForwardIndex.open(dir);
 
 		Thread.sleep(1000 * 60); // Allow time to analyze memory
 

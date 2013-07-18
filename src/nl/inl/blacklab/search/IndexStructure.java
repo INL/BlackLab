@@ -109,6 +109,17 @@ public class IndexStructure {
 		}
 
 		/**
+		 * Checks if this field has a "punctuation" forward index, storing all the
+		 * intra-word characters (whitespace and punctuation) so we can build concordances
+		 * directly from the forward indices.
+		 * @return true iff there's a punctuation forward index.
+		 */
+		public boolean hasPunctuation() {
+			PropertyDesc pd = props.get(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+			return pd != null && pd.hasForwardIndex();
+		}
+
+		/**
 		 * An index field was found and split into parts, and belongs
 		 * to this complex field. See what type it is and update our
 		 * fields accordingly.
@@ -152,8 +163,9 @@ public class IndexStructure {
 					pd.addAlternative(parts[2]);
 				} else if (parts.length >= 3){
 					// Property bookkeeping field
-					if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME))
+					if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
 						pd.setForwardIndex(true);
+					}
 					else
 						throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
 				} else {

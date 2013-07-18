@@ -2,7 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 
-public interface Terms {
+public abstract class Terms {
 
 	/**
 	 * Get the existing index number of a term, or add it to the term list

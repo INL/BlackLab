@@ -15,6 +15,7 @@ public class BatchForwardIndex {
 
 	private static final int SNIPPET_LENGTH_WORDS = 11;
 
+	@SuppressWarnings("deprecation")
 	public static void main(String[] args) throws Exception {
 
 		BasicConfigurator.configure(); // suppress log4j warning
@@ -64,7 +65,7 @@ public class BatchForwardIndex {
 		}
 
 		System.err.print("Opening forward index... ");
-		ForwardIndex fi = new ForwardIndex(indexDir);
+		ForwardIndex fi = ForwardIndex.open(indexDir);
 		System.err.println("done. [#docs: " + fi.getNumDocs() + "]");
 
 		System.out.println("First\tNumber\tSkip\tSnippets\tTime");

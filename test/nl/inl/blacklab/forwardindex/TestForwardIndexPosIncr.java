@@ -43,7 +43,7 @@ public class TestForwardIndexPosIncr {
 		// Create new test dir
 		dir = Utilities.createBlackLabTestDir("ForwardIndexPosIncr");
 
-		fi = new ForwardIndex(dir, true, null, true);
+		fi = new ForwardIndexImplV2(dir, true, null, true);
 		try {
 			// Store strings
 			for (int i = 0; i < str.length; i++) {
@@ -52,7 +52,7 @@ public class TestForwardIndexPosIncr {
 		} finally {
 			fi.close(); // close so everything is guaranteed to be written
 		}
-		fi = new ForwardIndex(dir);
+		fi = new ForwardIndexImplV2(dir, false, null, false);
 	}
 
 	@After

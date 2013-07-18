@@ -24,7 +24,7 @@ import nl.inl.util.Utilities;
 import org.junit.After;
 import org.junit.Test;
 
-public class TestForwardIndex {
+public class TestForwardIndexV2 {
 	private ForwardIndex fi;
 
 	private File dir;
@@ -39,7 +39,7 @@ public class TestForwardIndex {
 		// Create new test dir
 		dir = Utilities.createBlackLabTestDir("ForwardIndex");
 
-		fi = new ForwardIndex(dir, true, null, true);
+		fi = new ForwardIndexImplV2(dir, true, null, true);
 		try {
 			// Store strings
 			for (int i = 0; i < str.length; i++) {
@@ -48,7 +48,7 @@ public class TestForwardIndex {
 		} finally {
 			fi.close(); // close so everything is guaranteed to be written
 		}
-		fi = new ForwardIndex(dir);
+		fi = new ForwardIndexImplV2(dir, false, null, false);
 	}
 
 	@After
@@ -65,9 +65,9 @@ public class TestForwardIndex {
 
 	@Test
 	public void testRetrieve() {
-		ForwardIndex.preferredChunkSizeBytes = Integer.MAX_VALUE; // make sure this is at the default
-		ForwardIndex.keepInMemoryIfPossible = true; // default
-		ForwardIndex.useMemoryMapping = true; // default
+		ForwardIndexImplV2.preferredChunkSizeBytes = Integer.MAX_VALUE; // make sure this is at the default
+		ForwardIndexImplV2.keepInMemoryIfPossible = true; // default
+		ForwardIndexImplV2.useMemoryMapping = true; // default
 		setUpForwardIndex();
 
 		// Retrieve strings
@@ -78,9 +78,9 @@ public class TestForwardIndex {
 
 	@Test
 	public void testChunkingInMemory() {
-		ForwardIndex.preferredChunkSizeBytes = 24; // really small so chunked mapping is forced
-		ForwardIndex.keepInMemoryIfPossible = true; // default
-		ForwardIndex.useMemoryMapping = true; // default
+		ForwardIndexImplV2.preferredChunkSizeBytes = 24; // really small so chunked mapping is forced
+		ForwardIndexImplV2.keepInMemoryIfPossible = true; // default
+		ForwardIndexImplV2.useMemoryMapping = true; // default
 		setUpForwardIndex();
 
 		// Retrieve strings
@@ -91,9 +91,9 @@ public class TestForwardIndex {
 
 	@Test
 	public void testChunkingMapped() {
-		ForwardIndex.preferredChunkSizeBytes = 24; // really small so chunked mapping is forced
-		ForwardIndex.keepInMemoryIfPossible = false; // test mapped access
-		ForwardIndex.useMemoryMapping = true; // default
+		ForwardIndexImplV2.preferredChunkSizeBytes = 24; // really small so chunked mapping is forced
+		ForwardIndexImplV2.keepInMemoryIfPossible = false; // test mapped access
+		ForwardIndexImplV2.useMemoryMapping = true; // default
 		setUpForwardIndex();
 
 		// Retrieve strings
@@ -104,9 +104,9 @@ public class TestForwardIndex {
 
 	@Test
 	public void testChunkingFileChannel() {
-		ForwardIndex.preferredChunkSizeBytes = Integer.MAX_VALUE; // default
-		ForwardIndex.keepInMemoryIfPossible = false; // test direct file channel access
-		ForwardIndex.useMemoryMapping = false; // test direct file channel access
+		ForwardIndexImplV2.preferredChunkSizeBytes = Integer.MAX_VALUE; // default
+		ForwardIndexImplV2.keepInMemoryIfPossible = false; // test direct file channel access
+		ForwardIndexImplV2.useMemoryMapping = false; // test direct file channel access
 		setUpForwardIndex();
 
 		// Retrieve strings

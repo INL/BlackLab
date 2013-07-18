@@ -165,10 +165,24 @@ public class Searcher {
 	}
 
 	/**
+	 * Do our concordances include the original XML tags, or are they stripped out?
+	 * Concordances made from the content store do include tags; those made from
+	 * the forward index do not.
+	 *
+	 * @return true iff our concordances include XML tags.
+	 */
+	public boolean concordancesIncludeXmlTags() {
+		return !concordancesFromForwardIndex;
+	}
+
+	/**
 	 * Do we want to retrieve concordances from the forward index instead of from the
 	 * content store? This may be more efficient, particularly for small result sets
 	 * (because it eliminates seek time and decompression time), but concordances won't
 	 * include XML tags.
+	 *
+	 * Also, if there is no punctuation forward index ("punct"), concordances won't include
+	 * punctuation.
 	 *
 	 * @param concordancesFromForwardIndex true if we want to use the forward index to make
 	 * concordances.
@@ -203,6 +217,12 @@ public class Searcher {
 		// Detect and open the ContentStore for the contents field
 		this.indexLocation = indexDir;
 		this.fieldNameContents = indexStructure.getMainContentsField().getName();
+
+		// See if we have a punctuation forward index. If we do,
+		// default to creating concordances using that.
+		if (indexStructure.getMainContentsField().hasPunctuation()) {
+			concordancesFromForwardIndex = true;
+		}
 
 		// Register content stores
 		for (String cfn: indexStructure.getComplexFields()) {
@@ -1166,6 +1186,14 @@ public class Searcher {
 	 *
 	 * @param hits
 	 *            the hits in question
+	 * @param fiidFieldName
+	 *    Lucene field name containing fiid's for word FI
+	 * @param forwardIndex
+	 *    Forward index for the words
+	 * @param punctPropFiidName
+	 *    Lucene field name containing fiid's for punctuation FI
+	 * @param punctForwardIndex
+	 *    Forward index for the punctuation
 	 * @param fieldName
 	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
@@ -1174,7 +1202,7 @@ public class Searcher {
 	 *            where to add the concordances
 	 */
 	private void makeConcordancesSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
-			String fieldPropFiidName, int wordsAroundHit,
+			String fieldPropFiidName, ForwardIndex punctForwardIndex, String punctPropFiidName, int wordsAroundHit,
 			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
@@ -1187,8 +1215,26 @@ public class Searcher {
 
 		getContextWords(doc, forwardIndex, fieldPropFiidName, startsOfWords, endsOfWords, hits);
 
+		// Copy the context information out of the Hit objects, so we can get the punctuation
+		// context as well.
+		int[][] context = new int[hits.size()][];
+		int[] contextHitStart = new int[hits.size()];
+		int[] contextRightStart = new int[hits.size()];
+		for (int i = 0; i < hits.size(); i++) {
+			Hit h = hits.get(i);
+			context[i] = h.context;
+			contextHitStart[i] = h.contextHitStart;
+			contextRightStart[i] = h.contextRightStart;
+		}
+
+		// Get punctuation context
+		if (punctForwardIndex != null) {
+			getContextWords(doc, punctForwardIndex, punctPropFiidName, startsOfWords, endsOfWords, hits);
+		}
+
 		// Make the concordances from the context
 		Terms terms = forwardIndex.getTerms();
+		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
 		for (int i = 0; i < hits.size(); i++) {
 			Hit h = hits.get(i);
 			StringBuilder[] part = new StringBuilder[3];
@@ -1203,18 +1249,34 @@ public class Searcher {
 					currentPart = 2;
 					current = part[currentPart];
 				}
-				else if (j == h.contextHitStart) {
+
+				// Add punctuation
+				// (NOTE: punctuation after match is added to right context;
+				//  punctuation before match is added to left context)
+				if (j > 0) {
+					if (punctTerms == null) {
+						// There is no punctuation forward index. Just put a space
+						// between every word.
+						current.append(" ");
+					}
+					else
+						current.append(punctTerms.getFromSortPosition(h.context[j]));
+				}
+
+				if (currentPart == 0 && j == h.contextHitStart) {
 					currentPart = 1;
 					current = part[currentPart];
 				}
 
+				/* DON'T ADD SPACE; THIS IS STORED IN PUNCT FI
 				if (current.length() > 0 || currentPart == 2) {
 					current.append(" ");
-				}
-				current.append(terms.getFromSortPosition(h.context[j]));
+				}*/
+
+				current.append(terms.getFromSortPosition(context[i][j]));
 			}
-			if (part[0].length() > 0)
-				part[0].append(" ");
+			/*if (part[0].length() > 0)
+				part[0].append(" ");*/
 			String[] concStr = new String[] {part[0].toString(), part[1].toString(), part[2].toString()};
 			Concordance concordance = new Concordance(concStr);
 			conc.put(h, concordance);
@@ -1399,7 +1461,7 @@ public class Searcher {
 				return null;
 			}
 			// Open forward index
-			forwardIndex = new ForwardIndex(dir, false, collator, false);
+			forwardIndex = ForwardIndex.open(dir, false, collator, false);
 			forwardIndex.setIdTranslateInfo(indexReader, fieldPropName); // how to translate from Lucene
 																		// doc to fiid
 			forwardIndices.put(fieldPropName, forwardIndex);
@@ -1418,18 +1480,20 @@ public class Searcher {
 	 * Searcher.setConcordanceContextSize().
 	 *
 	 * @param fieldName
-	 *            field to use for building concordances
+	 *            field to use for building concordances (if using content store)
+	 * @param propName
+	 *            property forward index to use for building concordances (if using FI)
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
 	 * @return the list of concordances
 	 */
-	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits,
+	public Map<Hit, Concordance> retrieveConcordances(String fieldName, String propName, List<Hit> hits,
 			int contextSize) {
 
 		if (concordancesFromForwardIndex) {
-			return retrieveConcordancesForwardIndex(fieldName, hits, contextSize);
+			return retrieveConcordancesForwardIndex(propName, hits, contextSize);
 		}
 
 		// Group hits per document
@@ -1450,7 +1514,7 @@ public class Searcher {
 	}
 
 	/**
-	 * Retrieve concordancs for a list of hits.
+	 * Retrieve concordancs for a list of hits using the forward index.
 	 *
 	 * Concordances are the hit words 'centered' with a certain number of context words around them.
 	 *
@@ -1459,15 +1523,15 @@ public class Searcher {
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
 	 *
-	 * @param fieldName
-	 *            field to use for building concordances
+	 * @param fieldPropName
+	 *            field property to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
 	 * @return the list of concordances
 	 */
-	public Map<Hit, Concordance> retrieveConcordancesForwardIndex(String fieldName, List<Hit> hits,
+	public Map<Hit, Concordance> retrieveConcordancesForwardIndex(String fieldPropName, List<Hit> hits,
 			int contextSize) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
@@ -1480,12 +1544,17 @@ public class Searcher {
 			hitsInDoc.add(key);
 		}
 
-		ForwardIndex forwardIndex = getForwardIndex(fieldName);
-		String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldName);
+		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
+		String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldPropName);
+
+		String fieldName = ComplexFieldUtil.getBaseName(fieldPropName);
+		String punctPropName = ComplexFieldUtil.propertyField(fieldName, ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+		ForwardIndex punctForwardIndex = getForwardIndex(punctPropName);
+		String punctFiidFieldName = ComplexFieldUtil.forwardIndexIdField(punctPropName);
 
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeConcordancesSingleDocForwardIndex(l, forwardIndex, fiidFieldName, contextSize, conc);
+			makeConcordancesSingleDocForwardIndex(l, forwardIndex, fiidFieldName, punctForwardIndex, punctFiidFieldName, contextSize, conc);
 		}
 		return conc;
 	}
@@ -1550,10 +1619,28 @@ public class Searcher {
 	 * @param indexXmlDir
 	 *            the content store directory
 	 * @return the content store
+	 * @deprecated renamed to openContentStore()
 	 */
+	@Deprecated
 	public ContentStore getContentStoreDir(File indexXmlDir, boolean create) {
-		VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
-		String type = vf.getType();
+		return openContentStore(indexXmlDir, create);
+	}
+
+	/**
+	 * Factory method to create a directory content store.
+	 *
+	 * @param indexXmlDir
+	 *            the content store directory
+	 * @return the content store
+	 */
+	public ContentStore openContentStore(File indexXmlDir, boolean create) {
+		String type;
+		if (create)
+			type = "utf8zip";
+		else {
+			VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
+			type = vf.getType();
+		}
 		if (type.equals("utf8zip"))
 			return new ContentStoreDirZip(indexXmlDir, create);
 		if (type.equals("utf8"))
@@ -1571,7 +1658,7 @@ public class Searcher {
 	 * @return the content store
 	 */
 	public ContentStore openContentStore(File indexXmlDir) {
-		return getContentStoreDir(indexXmlDir, false);
+		return openContentStore(indexXmlDir, false);
 	}
 
 	/**

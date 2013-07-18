@@ -384,7 +384,7 @@ public class Indexer {
 				return null;
 			}
 			// Open or create forward index
-			forwardIndex = new ForwardIndex(dir, true, collator, createdNewIndex);
+			forwardIndex = ForwardIndex.open(dir, true, collator, createdNewIndex);
 			forwardIndices.put(fieldName, forwardIndex);
 		}
 		return forwardIndex;
