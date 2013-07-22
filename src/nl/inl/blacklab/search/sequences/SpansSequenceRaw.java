@@ -18,8 +18,6 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
 
@@ -68,25 +66,25 @@ import org.apache.lucene.search.spans.Spans;
  * and eliminates duplicates.
  */
 class SpansSequenceRaw extends Spans {
-	private static Comparator<Hit> spanComparatorEndPoint = new SpanComparatorEndPoint();
+	private static Comparator<Hit> comparatorEndPoint = new SpanComparatorEndPoint();
 
 	private Spans left;
 
 	private SpansInBuckets right;
 
-	List<Hit> hitsInRightBucket;
+	int indexInBucket = -2; // -2 == not started yet; -1 == just started a bucket
 
-	Iterator<Hit> bucketIterator;
+	int leftStart = -1;
 
-	private Hit currentRightHit = null;
+	int rightEnd = -1;
 
 	boolean more = true;
 
+	int currentDoc = -1;
+
 	public SpansSequenceRaw(Spans leftClause, Spans rightClause) {
 		// Sort the left spans by (1) document (2) end point (3) start point
-		// left = new BucketsToSpans(new SpansInBucketsPerDocumentSorted(leftClause,
-		// spanComparatorEndPoint));
-		left = new PerDocumentSortedSpans(leftClause, spanComparatorEndPoint);
+		left = new PerDocumentSortedSpans(leftClause, comparatorEndPoint);
 
 		// From the right spans, let us extract all end points belonging with a start point.
 		// Already start point sorted.
@@ -98,7 +96,7 @@ class SpansSequenceRaw extends Spans {
 	 */
 	@Override
 	public int doc() {
-		return left.doc();
+		return currentDoc;
 	}
 
 	/**
@@ -106,7 +104,7 @@ class SpansSequenceRaw extends Spans {
 	 */
 	@Override
 	public int end() {
-		return currentRightHit.end;
+		return rightEnd;
 	}
 
 	/**
@@ -134,7 +132,7 @@ class SpansSequenceRaw extends Spans {
 		if (!more)
 			return false;
 
-		if (bucketIterator == null || !bucketIterator.hasNext()) {
+		if (indexInBucket == -2 || indexInBucket == right.bucketSize() - 1) {
 			/*
 			 * We're out of end points (right matches). Advance the left Spans and realign both
 			 * spans to the mid point.
@@ -145,7 +143,8 @@ class SpansSequenceRaw extends Spans {
 			return realign();
 		}
 
-		currentRightHit = bucketIterator.next();
+		indexInBucket++;
+		rightEnd = right.end(indexInBucket);
 		return true;
 	}
 
@@ -181,13 +180,13 @@ class SpansSequenceRaw extends Spans {
 			}
 
 			// Synchronize within doc
-			int rightStart = right.getHits().get(0).start;
+			int rightStart = right.start(0);
 			while (left.doc() == right.doc() && left.end() != rightStart) {
 				if (rightStart < left.end()) {
 					// Advance right if necessary
 					while (left.doc() == right.doc() && rightStart < left.end()) {
 						more = right.next();
-						rightStart = right.getHits().get(0).start;
+						rightStart = right.start(0);
 						if (!more)
 							return false;
 					}
@@ -202,10 +201,12 @@ class SpansSequenceRaw extends Spans {
 			}
 		} while (left.doc() != right.doc()); // Repeat until left and right align.
 
+		// Save doc, start and end positions.
 		// Reset the end point iterator (end points of right matches starting at this mid point)
-		hitsInRightBucket = right.getHits();
-		bucketIterator = hitsInRightBucket.iterator();
-		currentRightHit = bucketIterator.next();
+		currentDoc = right.doc();
+		leftStart = left.start();
+		indexInBucket = 0;
+		rightEnd = right.end(indexInBucket);
 		return true;
 	}
 
@@ -237,7 +238,7 @@ class SpansSequenceRaw extends Spans {
 	 */
 	@Override
 	public int start() {
-		return left.start();
+		return leftStart;
 	}
 
 	@Override

@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
@@ -39,17 +40,40 @@ import org.apache.lucene.search.spans.Spans;
  * object. If you want other kinds of hit buckets (containing non-consecutive spans), you should
  * just implement the SpansInBuckets interface, not extend SpansInBucketsAbstract.
  *
+ * Also, SpansInBuckets assumes all hits in a bucket are from a single document.
+ *
  */
 abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	protected Spans source;
 
 	protected int currentDoc = -1;
 
-	protected List<Hit> hits = new ArrayList<Hit>();
+	private List<Hit> hits = new ArrayList<Hit>();
+
+	private int bucketSize = 0;
+
+	protected void addHit(int doc, int start, int end) {
+		hits.add(new Hit(doc, start, end));
+		bucketSize++;
+	}
+
+	protected void sortHits(Comparator<Hit> hitComparator) {
+		Collections.sort(hits, hitComparator);
+	}
 
 	@Override
-	public List<Hit> getHits() {
-		return Collections.unmodifiableList(hits);
+	public int bucketSize() {
+		return bucketSize;
+	}
+
+	@Override
+	public int start(int index) {
+		return hits.get(index).start;
+	}
+
+	@Override
+	public int end(int index) {
+		return hits.get(index).end;
 	}
 
 	/**
@@ -112,6 +136,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	private void gatherHitsInternal() throws IOException {
 		currentDoc = source.doc();
 		hits.clear();
+		bucketSize = 0;
 		gatherHits();
 	}
 

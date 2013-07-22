@@ -40,7 +40,7 @@ import org.apache.lucene.search.spans.Spans;
  * duplicates generated will be discarded.
  */
 public class SpanQueryExpansion extends SpanQueryBase {
-	private static Comparator<Hit> spanComparatorStartPoint = new SpanComparatorStartPoint();
+	private static Comparator<Hit> comparatorStartPoint = new SpanComparatorStartPoint();
 
 	private boolean expandToLeft;
 
@@ -78,7 +78,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 		// Sort the resulting spans by start point.
 		// Note that duplicates may have formed by combining spans from left and right. Eliminate
 		// these duplicates now (hence the 'true').
-		return new PerDocumentSortedSpans(spans, spanComparatorStartPoint, true);
+		return new PerDocumentSortedSpans(spans, comparatorStartPoint, true);
 	}
 
 	@Override

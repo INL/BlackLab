@@ -19,8 +19,9 @@ import java.util.Comparator;
 
 import nl.inl.blacklab.search.Hit;
 
+
 /**
- * Compare two hits by end point, then by start point.
+ * Compare two hits (assumed to be in the same document) by end point, then by start point.
  *
  * So the following hits:
  *

@@ -16,10 +16,8 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.List;
 
 import junit.framework.Assert;
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.lucene.SpansStub;
 
 import org.apache.lucene.search.spans.Spans;
@@ -41,26 +39,26 @@ public class TestSpansInBucketsConsecutive {
 	@Test
 	public void testListInterface() throws IOException {
 		Assert.assertTrue(hpd.next());
-		List<Hit> l = hpd.getHits();
+		//List<Hit> l = hpd.getHits();
 		Assert.assertEquals(1, hpd.doc());
-		Assert.assertEquals(2, l.size());
-		Assert.assertEquals(1, l.get(0).start);
-		Assert.assertEquals(2, l.get(0).end);
-		Assert.assertEquals(2, l.get(1).start);
-		Assert.assertEquals(3, l.get(1).end);
+		Assert.assertEquals(2, hpd.bucketSize());
+		Assert.assertEquals(1, hpd.start(0));
+		Assert.assertEquals(2, hpd.end(0));
+		Assert.assertEquals(2, hpd.start(1));
+		Assert.assertEquals(3, hpd.end(1));
 
 		Assert.assertTrue(hpd.next());
-		l = hpd.getHits();
+		//l = hpd.getHits();
 		Assert.assertEquals(2, hpd.doc());
-		Assert.assertEquals(2, l.size());
-		Assert.assertEquals(3, l.get(0).start);
-		Assert.assertEquals(4, l.get(0).end);
+		Assert.assertEquals(2, hpd.bucketSize());
+		Assert.assertEquals(3, hpd.start(0));
+		Assert.assertEquals(4, hpd.end(0));
 
 		Assert.assertTrue(hpd.next());
-		l = hpd.getHits();
-		Assert.assertEquals(2, l.size());
-		Assert.assertEquals(6, l.get(0).start);
-		Assert.assertEquals(7, l.get(0).end);
+		//l = hpd.getHits();
+		Assert.assertEquals(2, hpd.bucketSize());
+		Assert.assertEquals(6, hpd.start(0));
+		Assert.assertEquals(7, hpd.end(0));
 
 		Assert.assertFalse(hpd.next());
 	}

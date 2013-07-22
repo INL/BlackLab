@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Comparator;
 
 import nl.inl.blacklab.search.Hit;
@@ -40,7 +39,7 @@ public class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
 	@Override
 	protected void gatherHits() throws IOException {
 		super.gatherHits();
-		Collections.sort(hits, comparator);
+		sortHits(comparator);
 	}
 
 }

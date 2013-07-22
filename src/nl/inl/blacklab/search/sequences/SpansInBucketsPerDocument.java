@@ -17,8 +17,6 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Hit;
-
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -37,7 +35,7 @@ public class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
 	@Override
 	protected void gatherHits() throws IOException {
 		while (more && source.doc() == currentDoc) {
-			hits.add(new Hit(source.doc(), source.start(), source.end()));
+			addHit(source.doc(), source.start(), source.end());
 			more = source.next();
 		}
 	}

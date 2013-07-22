@@ -16,10 +16,8 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.List;
 
 import junit.framework.Assert;
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.lucene.SpansStub;
 
 import org.apache.lucene.search.spans.Spans;
@@ -39,23 +37,23 @@ public class TestSpansInBuckets {
 	@Test
 	public void testNextNormal() throws IOException {
 		Assert.assertTrue(hpd.next());
-		List<Hit> l = hpd.getHits();
+		//List<Hit> l = hpd.getHits();
 		Assert.assertEquals(1, hpd.doc());
-		Assert.assertEquals(1, l.size());
-		Assert.assertEquals(1, l.get(0).start);
-		Assert.assertEquals(5, l.get(0).end);
+		Assert.assertEquals(1, hpd.bucketSize());
+		Assert.assertEquals(1, hpd.start(0));
+		Assert.assertEquals(5, hpd.end(0));
 
 		Assert.assertTrue(hpd.next());
-		l = hpd.getHits();
+		//l = hpd.getHits();
 		Assert.assertEquals(4, hpd.doc());
-		Assert.assertEquals(2, l.size());
-		Assert.assertEquals(2, l.get(0).start);
-		Assert.assertEquals(6, l.get(0).end);
+		Assert.assertEquals(2, hpd.bucketSize());
+		Assert.assertEquals(2, hpd.start(0));
+		Assert.assertEquals(6, hpd.end(0));
 
 		Assert.assertTrue(hpd.next());
-		l = hpd.getHits();
+		//l = hpd.getHits();
 		Assert.assertEquals(5, hpd.doc());
-		Assert.assertEquals(1, l.size());
+		Assert.assertEquals(1, hpd.bucketSize());
 
 		Assert.assertFalse(hpd.next());
 	}
@@ -63,18 +61,18 @@ public class TestSpansInBuckets {
 	@Test
 	public void testSkipToFirst() throws IOException {
 		Assert.assertTrue(hpd.skipTo(1));
-		List<Hit> l = hpd.getHits();
+		//List<Hit> l = hpd.getHits();
 		Assert.assertEquals(1, hpd.doc());
-		Assert.assertEquals(1, l.size());
-		Assert.assertEquals(1, l.get(0).start);
-		Assert.assertEquals(5, l.get(0).end);
+		Assert.assertEquals(1, hpd.bucketSize());
+		Assert.assertEquals(1, hpd.start(0));
+		Assert.assertEquals(5, hpd.end(0));
 	}
 
 	@Test
 	public void testSkipToNormal() throws IOException {
 		Assert.assertTrue(hpd.skipTo(4));
 		Assert.assertEquals(4, hpd.doc());
-		Assert.assertEquals(2, hpd.getHits().size());
+		Assert.assertEquals(2, hpd.bucketSize());
 	}
 
 	@Test

@@ -26,9 +26,9 @@ import org.junit.Test;
 public class TestSpansRepetition {
 	@Test
 	public void testRepetition() throws IOException {
-		int[] aDoc = new int[] { 1, 1, 1, 1, 1, 1 };
+		int[] aDoc = new int[]   { 1, 1, 1, 1, 1,  1 };
 		int[] aStart = new int[] { 1, 2, 3, 5, 6, 10 };
-		int[] aEnd = new int[] { 2, 3, 4, 6, 7, 11 };
+		int[] aEnd = new int[]   { 2, 3, 4, 6, 7, 11 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
 		SpansRepetition spans = new SpansRepetition(a, 2, 4);

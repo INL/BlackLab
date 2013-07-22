@@ -19,8 +19,9 @@ import java.util.Comparator;
 
 import nl.inl.blacklab.search.Hit;
 
+
 /**
- * Compare two hits by start point, then by end point.
+ * Compare two hits (assumed to be in the same document) by start point, then by end point.
  */
 public class SpanComparatorStartPoint implements Comparator<Hit> {
 	@Override

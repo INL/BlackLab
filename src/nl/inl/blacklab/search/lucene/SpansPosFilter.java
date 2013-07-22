@@ -17,9 +17,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.lucene.SpanQueryPosFilter.Filter;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
@@ -127,12 +125,12 @@ class SpansPosFilter extends Spans {
 			// Are there search results in this document?
 			if (filter.doc() == producer.doc()) {
 				// Yes. See if the current container contains any of the search results.
-				List<Hit> filterHits = filter.getHits();
+				//List<Hit> filterHits = filter.getHits();
 				switch(op) {
 				case CONTAINING:
 					// Looking for producer hits with a filter hit inside
-					for (Hit filterHit : filterHits) {
-						if (filterHit.start >= producer.start() && filterHit.end <= producer.end()) {
+					for (int i = 0; i < filter.bucketSize(); i++) {
+						if (filter.start(i) >= producer.start() && filter.end(i) <= producer.end()) {
 							// Yes, this filter hit is contained in the current producer hit.
 							return true;
 						}
@@ -140,8 +138,8 @@ class SpansPosFilter extends Spans {
 					break;
 				case WITHIN:
 					// Looking for producer hits contained by a filter hit
-					for (Hit filterHit : filterHits) {
-						if (filterHit.start <= producer.start() && filterHit.end >= producer.end()) {
+					for (int i = 0; i < filter.bucketSize(); i++) {
+						if (filter.start(i) <= producer.start() && filter.end(i) >= producer.end()) {
 							// Yes, this filter hit contains the current producer hit.
 							return true;
 						}
@@ -149,8 +147,8 @@ class SpansPosFilter extends Spans {
 					break;
 				case STARTS_AT:
 					// Looking for producer hits with a filter hit inside
-					for (Hit filterHit : filterHits) {
-						if (filterHit.start == producer.start()) {
+					for (int i = 0; i < filter.bucketSize(); i++) {
+						if (filter.start(i) == producer.start()) {
 							// Yes, this filter hit starts at the current producer hit.
 							return true;
 						}
@@ -158,8 +156,8 @@ class SpansPosFilter extends Spans {
 					break;
 				case ENDS_AT:
 					// Looking for producer hits with a filter hit inside
-					for (Hit filterHit : filterHits) {
-						if (filterHit.end == producer.end()) {
+					for (int i = 0; i < filter.bucketSize(); i++) {
+						if (filter.end(i) == producer.end()) {
 							// Yes, this filter hit ends at the current producer hit.
 							return true;
 						}

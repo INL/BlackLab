@@ -18,8 +18,6 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
 
@@ -29,17 +27,15 @@ import org.apache.lucene.search.spans.Spans;
  * Sort the given Spans per document, according to the given comparator.
  */
 public class PerDocumentSortedSpans extends Spans {
-	private Hit currentHit;
+	private int curDoc = -1, curStart = -1, curEnd = -1;
 
 	private SpansInBuckets bucketedSpans;
 
 	private boolean eliminateDuplicates;
 
-	private Hit previousHit = null;
+	private int prevStart, prevEnd;
 
-	private List<Hit> hitsInBucket;
-
-	private Iterator<Hit> hitIterator = null;
+	private int indexInBucket = -2; // -2 == not started yet; -1 == just started a bucket
 
 	public PerDocumentSortedSpans(Spans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
 		// Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
@@ -54,32 +50,39 @@ public class PerDocumentSortedSpans extends Spans {
 
 	@Override
 	public int doc() {
-		return bucketedSpans.doc();
+		return curDoc;
 	}
 
 	@Override
 	public int start() {
-		return currentHit.start;
+		return curStart;
 	}
 
 	@Override
 	public int end() {
-		return currentHit.end;
+		return curEnd;
 	}
 
 	@Override
 	public boolean next() throws IOException {
 		do {
-			if (hitIterator == null || !hitIterator.hasNext()) {
+			if (indexInBucket >= 0) {
+				prevStart = bucketedSpans.start(indexInBucket);
+				prevEnd = bucketedSpans.end(indexInBucket);
+			} else {
+				prevStart = prevEnd = -1;
+			}
+			if (indexInBucket == -2 || indexInBucket == bucketedSpans.bucketSize() - 1) {
 				if (!bucketedSpans.next())
 					return false;
-				previousHit = null;
-				hitsInBucket = bucketedSpans.getHits();
-				hitIterator = hitsInBucket.iterator();
+				prevStart = prevEnd = -1;
+				indexInBucket = -1;
 			}
-			previousHit = currentHit;
-			currentHit = hitIterator.next();
-		} while (eliminateDuplicates && (previousHit != null && currentHit.equals(previousHit)));
+			indexInBucket++;
+			curDoc = bucketedSpans.doc();
+			curStart = bucketedSpans.start(indexInBucket);
+			curEnd = bucketedSpans.end(indexInBucket);
+		} while (eliminateDuplicates && prevStart == curStart && prevEnd == curEnd);
 		return true;
 	}
 
@@ -89,9 +92,8 @@ public class PerDocumentSortedSpans extends Spans {
 		if (!bucketedSpans.skipTo(target))
 			return false;
 		if (oldDoc != bucketedSpans.doc())
-			previousHit = null;
-		hitsInBucket = bucketedSpans.getHits();
-		hitIterator = hitsInBucket.iterator();
+			prevStart = prevEnd = -1;
+		indexInBucket = -1;
 		return next();
 	}
 

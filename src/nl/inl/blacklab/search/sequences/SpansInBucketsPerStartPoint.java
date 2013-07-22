@@ -16,11 +16,8 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
-
-import nl.inl.blacklab.search.Hit;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -35,14 +32,14 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 
 	protected int currentStart = -1;
 
-	protected List<Integer> endPoints = new ArrayList<Integer>();
+	private List<Integer> endPoints = new ArrayList<Integer>();
+
+	private int bucketSize = 0;
 
 	/**
 	 * Does the source Spans have more hits?
 	 */
 	protected boolean moreInSource = true;
-
-	private List<Hit> hits = null;
 
 	public SpansInBucketsPerStartPoint(Spans source) {
 		this.source = source;
@@ -51,10 +48,6 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	@Override
 	public int doc() {
 		return currentDoc;
-	}
-
-	public List<Integer> endPoints() {
-		return endPoints;
 	}
 
 	/**
@@ -81,23 +74,12 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 		currentDoc = source.doc();
 		currentStart = source.start();
 		endPoints.clear();
+		bucketSize = 0;
 		while (moreInSource && source.doc() == currentDoc && source.start() == currentStart) {
 			endPoints.add(source.end());
+			bucketSize++;
 			moreInSource = source.next();
 		}
-		hits = new AbstractList<Hit>() {
-			@Override
-			public Hit get(int index) {
-				// NOTE: this is inefficient if we retrieve the same hit two or more
-				// times. But this shouldn't normally happen.
-				return new Hit(currentDoc, currentStart, endPoints.get(index));
-			}
-
-			@Override
-			public int size() {
-				return endPoints.size();
-			}
-		};
 	}
 
 	/**
@@ -139,8 +121,18 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	}
 
 	@Override
-	public List<Hit> getHits() {
-		return hits;
+	public int bucketSize() {
+		return bucketSize;
+	}
+
+	@Override
+	public int start(int index) {
+		return currentStart;
+	}
+
+	@Override
+	public int end(int index) {
+		return endPoints.get(index);
 	}
 
 }

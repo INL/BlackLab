@@ -16,9 +16,6 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.List;
-
-import nl.inl.blacklab.search.Hit;
 
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets") instead of individual
@@ -35,8 +32,14 @@ import nl.inl.blacklab.search.Hit;
  * for efficiency's sake, only has sequential access to the buckets themselves. Also, SpansInBuckets
  * uses subclassing instead of GroupIdentity objects to determine what goes in a bucket. This makes
  * it easier to optimize.
+ *
+ * Note that SpansInBuckets assumes all hits in a bucket are from a single document.
  */
 public interface SpansInBuckets {
+	public static interface BucketSpanComparator {
+		abstract public int compare(int start1, int end1, int start2, int end2);
+	}
+
 	/**
 	 * Document id of current bucket
 	 *
@@ -44,12 +47,11 @@ public interface SpansInBuckets {
 	 */
 	int doc();
 
-	/**
-	 * Return a list of hits in the current bucket
-	 *
-	 * @return the hits
-	 */
-	List<Hit> getHits();
+	int bucketSize();
+
+	int start(int index);
+
+	int end(int index);
 
 	/**
 	 * Go to the next bucket.

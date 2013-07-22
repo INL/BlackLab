@@ -17,10 +17,6 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
-import nl.inl.blacklab.search.Hit;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -36,9 +32,9 @@ import org.apache.lucene.search.spans.Spans;
 class SpansRepetition extends Spans {
 	private SpansInBuckets source;
 
-	List<Hit> hitsInBucket = null;
+	private int currentDoc = -1;
 
-	Iterator<Hit> bucketIterator;
+	boolean sourceNexted = false;
 
 	boolean more = true;
 
@@ -66,7 +62,7 @@ class SpansRepetition extends Spans {
 	 */
 	@Override
 	public int doc() {
-		return source.doc();
+		return currentDoc;
 	}
 
 	/**
@@ -74,7 +70,7 @@ class SpansRepetition extends Spans {
 	 */
 	@Override
 	public int end() {
-		return hitsInBucket.get(firstToken + tokenLength - 1).end;
+		return source.end(firstToken + tokenLength - 1);
 	}
 
 	/**
@@ -88,20 +84,20 @@ class SpansRepetition extends Spans {
 		if (!more)
 			return false;
 
-		if (hitsInBucket != null) {
+		if (sourceNexted) {
 			// We have a bucket.
 
 			// Go to the next hit length for this start point.
 			tokenLength++;
 
 			// Find the first valid hit in the bucket
-			if ((max != -1 && tokenLength > max) || firstToken + tokenLength > hitsInBucket.size()) {
+			if ((max != -1 && tokenLength > max) || firstToken + tokenLength > source.bucketSize()) {
 				// On to the next start point.
 				firstToken++;
 				tokenLength = min;
 			}
 
-			if (firstToken + tokenLength <= hitsInBucket.size()) {
+			if (firstToken + tokenLength <= source.bucketSize()) {
 				// Still a valid rep. hit.
 				return true;
 			}
@@ -111,8 +107,10 @@ class SpansRepetition extends Spans {
 
 		// Next bucket
 		more = source.next();
-		if (more)
+		sourceNexted = true;
+		if (more) {
 			return resetRepeat();
+		}
 		return false;
 	}
 
@@ -130,6 +128,7 @@ class SpansRepetition extends Spans {
 		if (!more)
 			return false;
 		more = source.skipTo(doc);
+		sourceNexted = true;
 		if (more)
 			return resetRepeat();
 		return false;
@@ -137,16 +136,17 @@ class SpansRepetition extends Spans {
 
 	private boolean resetRepeat() throws IOException {
 		while (true) {
-			hitsInBucket = source.getHits();
-			if (hitsInBucket.size() >= min) {
+			if (source.bucketSize() >= min) {
 				// This stretch is large enough to get a repetition hit!
 				firstToken = 0;
 				tokenLength = min;
+				currentDoc = source.doc();
 				return true;
 			}
 
 			// Not large enough; next bucket
 			more = source.next();
+			sourceNexted = true;
 			if (!more)
 				return false;
 		}
@@ -157,7 +157,7 @@ class SpansRepetition extends Spans {
 	 */
 	@Override
 	public int start() {
-		return hitsInBucket.get(firstToken).start;
+		return source.start(firstToken);
 	}
 
 	@Override

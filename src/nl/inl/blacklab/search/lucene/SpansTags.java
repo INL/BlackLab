@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
 
 import org.apache.lucene.search.spans.Spans;
@@ -140,14 +139,23 @@ class SpansTags extends Spans {
 		// (Note that we add 2 to the tag position to avoid the problem of x == -x for x == 0;
 		//  below we subtract it again)
 		List<Integer> startsAndEnds = new ArrayList<Integer>();
-		for (Hit h: spans[0].getHits()) {
-			startsAndEnds.add(h.start + 2);
+
+		for (int i = 0; i < spans[0].bucketSize(); i++) {
+			startsAndEnds.add(spans[0].start(i) + 2);
 		}
-		for (Hit h: spans[1].getHits()) {
+//		for (Hit h: spans[0].getHits()) {
+//			startsAndEnds.add(h.start + 2);
+//		}
+		for (int i = 0; i < spans[1].bucketSize(); i++) {
 			// +2 to avoid 0/-0 problem; -1 because endtag is attached to next token, but this
 			// is inconvenient for this process, we want it attached to the previous token now.
-			startsAndEnds.add(- (h.start + 2 - 1));
+			startsAndEnds.add(- (spans[1].start(i) + 2 - 1));
 		}
+//		for (Hit h: spans[1].getHits()) {
+//			// +2 to avoid 0/-0 problem; -1 because endtag is attached to next token, but this
+//			// is inconvenient for this process, we want it attached to the previous token now.
+//			startsAndEnds.add(- (h.start + 2 - 1));
+//		}
 
 		// Sort the list by position (ends after starts)
 		// OPT: sort could be prevented by merging arrays in a single loop
