@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -24,16 +23,16 @@ import org.apache.lucene.search.spans.Spans;
  * Combines two Spans using AND. Note that this means that only matches with the same document id,
  * the same start and the same end positions will be kept.
  */
-class SpansAnd extends Spans {
+class SpansAnd extends BLSpans {
 	/** The two sets of hits to combine */
-	private Spans[] spans = new Spans[2];
+	private BLSpans[] spans = new BLSpans[2];
 
 	/** Do the Spans objects still point to valid hits? */
 	private boolean stillValidSpans[] = new boolean[2];
 
 	public SpansAnd(Spans leftClause, Spans rightClause) {
-		spans[0] = leftClause;
-		spans[1] = rightClause;
+		spans[0] = BLSpansWrapper.optWrapSort(leftClause);
+		spans[1] = BLSpansWrapper.optWrapSort(rightClause);
 		stillValidSpans[1] = true;
 		stillValidSpans[0] = true;
 	}
@@ -170,13 +169,30 @@ class SpansAnd extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
+	public boolean hitsAllSameLength() {
+		return spans[0].hitsAllSameLength() || spans[1].hitsAllSameLength();
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
-		return false;
+	public int hitsLength() {
+		if (spans[0].hitsAllSameLength())
+			return spans[0].hitsLength();
+		return spans[1].hitsLength();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return spans[0].hitsHaveUniqueStart() || spans[1].hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return spans[0].hitsHaveUniqueEnd() || spans[1].hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return spans[0].hitsAreUnique() || spans[1].hitsAreUnique();
 	}
 
 }

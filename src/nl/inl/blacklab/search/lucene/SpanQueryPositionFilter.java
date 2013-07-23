@@ -29,7 +29,7 @@ import org.apache.lucene.search.spans.Spans;
  * * find hits from the producer that start at the same position as a hit from the filter
  * * find hits from the producer that end at the same position as a hit from the filter
  */
-public class SpanQueryPosFilter extends SpanQueryBase {
+public class SpanQueryPositionFilter extends SpanQueryBase {
 
 	/** The different positional operations */
 	public static enum Filter {
@@ -50,18 +50,18 @@ public class SpanQueryPosFilter extends SpanQueryBase {
 	/** Filter operation to apply */
 	private Filter op;
 
-	public SpanQueryPosFilter(SpanQuery producer, SpanQuery filter, Filter op) {
+	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, Filter op) {
 		super(producer, filter);
 		this.op = op;
 	}
 
-	public SpanQueryPosFilter(SpanQuery producer, SpanQuery filter) {
+	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter) {
 		this(producer, filter, Filter.CONTAINING);
 	}
 
 	@Override
 	public Spans getSpans(IndexReader reader) throws IOException {
-		return new SpansPosFilter(clauses[0].getSpans(reader), clauses[1].getSpans(reader), op);
+		return new SpansPositionFilter(clauses[0].getSpans(reader), clauses[1].getSpans(reader), op);
 	}
 
 	@Override

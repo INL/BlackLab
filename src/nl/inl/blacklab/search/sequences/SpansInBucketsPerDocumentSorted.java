@@ -39,7 +39,8 @@ public class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
 	@Override
 	protected void gatherHits() throws IOException {
 		super.gatherHits();
-		sortHits(comparator);
+		if (comparator != null)
+			sortHits(comparator);
 	}
 
 }

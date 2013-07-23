@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import nl.inl.blacklab.search.Hit;
 
@@ -25,17 +24,17 @@ import org.apache.lucene.search.spans.Spans;
 /**
  * Remove consecutive duplicate hits from a source spans.
  */
-public class SpansUnique extends Spans {
+public class SpansUnique extends BLSpans {
 	private Hit previousHit = null;
 
-	private Spans src;
+	private BLSpans src;
 
 	private boolean more = true;
 
 	private boolean nexted = false;
 
 	public SpansUnique(Spans src) {
-		this.src = src;
+		this.src = BLSpansWrapper.optWrapSort(src);
 	}
 
 	@Override
@@ -88,20 +87,44 @@ public class SpansUnique extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		// not used
-		return null;
-	}
-
-	@Override
-	public boolean isPayloadAvailable() {
-		// not used
-		return false;
-	}
-
-	@Override
 	public String toString() {
 		return "UniqueSpans(" + src.toString() + ")";
 	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return src.hitsEndPointSorted();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return src.hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLength() {
+		return src.hitsLength();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return src.hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return src.hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
+	}
+
 
 }

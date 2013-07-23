@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.Spans;
@@ -27,9 +26,9 @@ import org.apache.lucene.search.spans.Spans;
  *
  * Each token is returned as a single hit.
  */
-class SpansNot extends Spans {
+class SpansNot extends BLSpans {
 	/** The spans to invert */
-	private Spans clause;
+	private BLSpans clause;
 
 	/** Have we called next() or skipTo on the clause yet? */
 	private boolean clauseIterationStarted;
@@ -78,7 +77,7 @@ class SpansNot extends Spans {
 	public SpansNot(IndexReader reader, String fieldName, Spans clause) {
 		this.reader = reader;
 		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
-		this.clause = clause;
+		this.clause = BLSpansWrapper.optWrap(clause);
 
 		done = false;
 		moreHitsInClause = true;
@@ -251,13 +250,38 @@ class SpansNot extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
+	public boolean hitsEndPointSorted() {
+		return true;
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
-		return false;
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return true;
+	}
+
+	@Override
+	public int hitsLength() {
+		return 1;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 
 }

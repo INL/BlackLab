@@ -17,10 +17,11 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Comparator;
 
-import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
+import nl.inl.blacklab.search.lucene.SpansUnique;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -40,8 +41,6 @@ import org.apache.lucene.search.spans.Spans;
  * See SpanSequenceRaw for details on the matching process.
  */
 public class SpanQuerySequence extends SpanQueryBase {
-	private static Comparator<Hit> spanComparatorStartPoint = new SpanComparatorStartPoint();
-
 	public SpanQuerySequence(SpanQuery first, SpanQuery second) {
 		super(first, second);
 	}
@@ -56,24 +55,37 @@ public class SpanQuerySequence extends SpanQueryBase {
 
 	@Override
 	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans combi = clauses[0].getSpans(reader);
+		BLSpans combi = BLSpansWrapper.optWrap(clauses[0].getSpans(reader));
 		for (int i = 1; i < clauses.length; i++) {
-			Spans si = clauses[i].getSpans(reader);
+			BLSpans si = BLSpansWrapper.optWrap(clauses[i].getSpans(reader));
 
 			// Note: the spans coming from SequenceSpansRaw are not sorted by end point.
 			// This is okay in this loop because combi is used as the left part of the next
 			// sequence (so it is explicitly sorted by end point when we put it back in
 			// SequenceSpansRaw for the next part of the sequence), but before returning the
 			// final spans, we wrap it in a per-document (start-point) sorter.
-			combi = new SpansSequenceRaw(combi, si);
+
+			if (si.hitsStartPointSorted() && si.hitsHaveUniqueStart() &&
+					combi.hitsEndPointSorted() && combi.hitsHaveUniqueEnd()) {
+				// We can take a shortcut because of what we know about the Spans we're combining.
+				combi = new SpansSequenceSimple(combi, si);
+			}
+			else {
+				combi = new SpansSequenceRaw(combi, si);
+			}
 		}
-		// return new BucketsToSpans(new SpansInBucketsPerDocumentSorted(combi,
-		// spanComparatorStartPoint), true);
 
 		// Sort the resulting spans by start point.
 		// Note that duplicates may have formed by combining spans from left and right. Eliminate
 		// these duplicates now (hence the 'true').
-		return new PerDocumentSortedSpans(combi, spanComparatorStartPoint, true);
+		boolean sorted = combi.hitsStartPointSorted();
+		boolean unique = combi.hitsAreUnique();
+		if (!sorted) {
+			combi = new PerDocumentSortedSpans(combi, false, !unique);
+		} else if (!unique) {
+			combi = new SpansUnique(combi);
+		}
+		return combi;
 	}
 
 	@Override

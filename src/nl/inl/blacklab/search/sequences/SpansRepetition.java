@@ -16,7 +16,9 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.Collection;
+
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -29,7 +31,7 @@ import org.apache.lucene.search.spans.Spans;
  * and 1 hit of length 3. In the future, this should be made configurable (to specifically
  * support greedy matching, etc.)
  */
-class SpansRepetition extends Spans {
+class SpansRepetition extends BLSpans {
 	private SpansInBuckets source;
 
 	private int currentDoc = -1;
@@ -46,9 +48,12 @@ class SpansRepetition extends Spans {
 
 	private int tokenLength;
 
+	private BLSpans spansSource;
+
 	public SpansRepetition(Spans source, int min, int max) {
 		// Find all consecutive matches in this Spans
-		this.source = new SpansInBucketsConsecutive(source);
+		spansSource = BLSpansWrapper.optWrapSortUniq(source);
+		this.source = new SpansInBucketsConsecutive(spansSource);
 		this.min = min;
 		this.max = max;
 		if (max != -1 && min > max)
@@ -166,13 +171,39 @@ class SpansRepetition extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
+	public boolean hitsEndPointSorted() {
+		return spansSource.hitsEndPointSorted() && min == max;
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
-		return false;
+	public boolean hitsStartPointSorted() {
+		return true;
 	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return spansSource.hitsAllSameLength() && min == max;
+	}
+
+	@Override
+	public int hitsLength() {
+		return hitsAllSameLength() ? spansSource.hitsLength() * min : -1;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return spansSource.hitsHaveUniqueStart() && min == max;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return spansSource.hitsHaveUniqueEnd() && min == max;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
+	}
+
 
 }

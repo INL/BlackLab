@@ -1,0 +1,117 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+package nl.inl.blacklab.search.lucene;
+
+import java.io.IOException;
+import java.util.Collection;
+
+import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
+
+import org.apache.lucene.search.spans.Spans;
+
+
+/**
+ * Wrap a "simple" Spans object in a BLSpans object. It will
+ * give the guarantuess appropriate for single-term Spans like
+ * that of SpanTermQuery, SpanRegexQuery, etc.
+ */
+public class BLSpansWrapper extends BLSpans {
+
+	private Spans source;
+
+	public BLSpansWrapper(Spans source) {
+		this.source = source;
+	}
+
+	@Override
+	public int doc() {
+		return source.doc();
+	}
+
+	@Override
+	public int end() {
+		return source.end();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return source.equals(obj);
+	}
+
+	@Override
+	public Collection<byte[]> getPayload() throws IOException {
+		return source.getPayload();
+	}
+
+	@Override
+	public int hashCode() {
+		return source.hashCode();
+	}
+
+	@Override
+	public boolean isPayloadAvailable() {
+		return source.isPayloadAvailable();
+	}
+
+	@Override
+	public boolean next() throws IOException {
+		return source.next();
+	}
+
+	@Override
+	public boolean skipTo(int arg0) throws IOException {
+		return source.skipTo(arg0);
+	}
+
+	@Override
+	public int start() {
+		return source.start();
+	}
+
+	@Override
+	public String toString() {
+		return source.toString();
+	}
+
+	public static BLSpans optWrap(Spans spans) {
+		if (spans instanceof BLSpans)
+			return (BLSpans)spans;
+		return new BLSpansWrapper(spans);
+	}
+
+	public static BLSpans optWrapSort(Spans spans) {
+		BLSpans result;
+		if (spans instanceof BLSpans)
+			result = (BLSpans)spans;
+		else
+			result = new BLSpansWrapper(spans);
+		if (!result.hitsStartPointSorted())
+			result = new PerDocumentSortedSpans(result, false, false);
+		return result;
+	}
+
+	public static BLSpans optWrapSortUniq(Spans spans) {
+		BLSpans result;
+		if (spans instanceof BLSpans)
+			result = (BLSpans)spans;
+		else
+			result = new BLSpansWrapper(spans);
+		if (!result.hitsStartPointSorted() || !result.hitsAreUnique())
+			result = new PerDocumentSortedSpans(result, false, !result.hitsAreUnique());
+		return result;
+	}
+
+}

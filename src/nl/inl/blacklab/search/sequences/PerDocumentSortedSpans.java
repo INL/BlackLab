@@ -20,13 +20,22 @@ import java.util.Collection;
 import java.util.Comparator;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 
 import org.apache.lucene.search.spans.Spans;
 
 /**
  * Sort the given Spans per document, according to the given comparator.
  */
-public class PerDocumentSortedSpans extends Spans {
+public class PerDocumentSortedSpans extends BLSpans {
+
+	static Comparator<Hit> cmpStartPoint = new SpanComparatorStartPoint();
+
+	static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
+
+	protected BLSpans source;
+
 	private int curDoc = -1, curStart = -1, curEnd = -1;
 
 	private SpansInBuckets bucketedSpans;
@@ -37,15 +46,25 @@ public class PerDocumentSortedSpans extends Spans {
 
 	private int indexInBucket = -2; // -2 == not started yet; -1 == just started a bucket
 
-	public PerDocumentSortedSpans(Spans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
+	/** Sort hits by end point instead of by start point? */
+	private boolean sortByEndPoint;
+
+	public PerDocumentSortedSpans(Spans src, boolean sortByEndPoint, boolean eliminateDuplicates) {
+		this.source = BLSpansWrapper.optWrap(src);
+
 		// Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
+		this.sortByEndPoint = sortByEndPoint;
+		Comparator<Hit> comparator = null;
+		if (sortByEndPoint) {
+			if (!source.hitsEndPointSorted())
+				comparator = cmpEndPoint;
+		} else {
+			if (!source.hitsStartPointSorted())
+				comparator = cmpStartPoint;
+		}
 		bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
 
 		this.eliminateDuplicates = eliminateDuplicates;
-	}
-
-	public PerDocumentSortedSpans(Spans src, Comparator<Hit> comparator) {
-		this(src, comparator, false);
 	}
 
 	@Override
@@ -114,4 +133,38 @@ public class PerDocumentSortedSpans extends Spans {
 		return bucketedSpans.toString();
 	}
 
+	@Override
+	public boolean hitsAllSameLength() {
+		return source.hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLength() {
+		return source.hitsLength();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return source.hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return source.hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return source.hitsAreUnique() || eliminateDuplicates;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return sortByEndPoint ? true : hitsAllSameLength();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return sortByEndPoint ? hitsAllSameLength() : true;
+	}
 }

@@ -16,10 +16,10 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.Comparator;
 
-import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
+import nl.inl.blacklab.search.lucene.SpansUnique;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -40,8 +40,6 @@ import org.apache.lucene.search.spans.Spans;
  * duplicates generated will be discarded.
  */
 public class SpanQueryExpansion extends SpanQueryBase {
-	private static Comparator<Hit> comparatorStartPoint = new SpanComparatorStartPoint();
-
 	private boolean expandToLeft;
 
 	private int min;
@@ -70,7 +68,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 
 	@Override
 	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans spans = new SpansExpansionRaw(reader, clauses[0].getField(), clauses[0].getSpans(reader), expandToLeft, min, max);
+		BLSpans spans = new SpansExpansionRaw(reader, clauses[0].getField(), clauses[0].getSpans(reader), expandToLeft, min, max);
 
 		// Note: the spans coming from SpansExpansion are not sorted properly.
 		// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
@@ -78,7 +76,14 @@ public class SpanQueryExpansion extends SpanQueryBase {
 		// Sort the resulting spans by start point.
 		// Note that duplicates may have formed by combining spans from left and right. Eliminate
 		// these duplicates now (hence the 'true').
-		return new PerDocumentSortedSpans(spans, comparatorStartPoint, true);
+		boolean sorted = spans.hitsStartPointSorted();
+		boolean unique = spans.hitsAreUnique();
+		if (!sorted) {
+			return new PerDocumentSortedSpans(spans, false, !unique);
+		} else if (!unique) {
+			return new SpansUnique(spans);
+		}
+		return spans;
 	}
 
 	@Override

@@ -22,7 +22,7 @@ import junit.framework.Assert;
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Test;
 
-public class TestSpansPosFilter {
+public class TestSpansPositionFilter {
 	@Test
 	public void testContaining() throws IOException {
 		int[] aDoc = new int[] { 1, 1, 2, 2, 2, 3 };
@@ -35,7 +35,7 @@ public class TestSpansPosFilter {
 		int[] bEnd = new int[] { 12, 23, 25 };
 		Spans b = new SpansStub(bDoc, bStart, bEnd);
 
-		SpansPosFilter spansContaining = new SpansPosFilter(a, b);
+		SpansPositionFilter spansContaining = new SpansPositionFilter(a, b);
 
 		// First hit
 		Assert.assertTrue(spansContaining.next());
@@ -65,7 +65,7 @@ public class TestSpansPosFilter {
 		int[] bEnd = new int[] { 12, 23, 25 };
 		Spans b = new SpansStub(bDoc, bStart, bEnd);
 
-		SpansPosFilter spansContaining = new SpansPosFilter(b, a, SpanQueryPosFilter.Filter.WITHIN);
+		SpansPositionFilter spansContaining = new SpansPositionFilter(b, a, SpanQueryPositionFilter.Filter.WITHIN);
 
 		// First hit
 		Assert.assertTrue(spansContaining.next());

@@ -93,6 +93,41 @@ public class RandomAccessGroup extends Group {
 				return currentHit;
 			}
 
+			@Override
+			public boolean hitsEndPointSorted() {
+				return false;
+			}
+
+			@Override
+			public boolean hitsStartPointSorted() {
+				return false;
+			}
+
+			@Override
+			public boolean hitsAllSameLength() {
+				return false;
+			}
+
+			@Override
+			public int hitsLength() {
+				return -1;
+			}
+
+			@Override
+			public boolean hitsHaveUniqueStart() {
+				return false;
+			}
+
+			@Override
+			public boolean hitsHaveUniqueEnd() {
+				return false;
+			}
+
+			@Override
+			public boolean hitsAreUnique() {
+				return false;
+			}
+
 		};
 	}
 

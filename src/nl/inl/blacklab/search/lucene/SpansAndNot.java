@@ -26,12 +26,12 @@ import org.apache.lucene.search.spans.Spans;
  * Determines new spans, based on two spans-objects: one with documents to include, and one with
  * documents to exclude.
  */
-public class SpansAndNot extends Spans {
+public class SpansAndNot extends BLSpans {
 	/** AND part (include documents in this spans unless they're also in the exclude part) */
-	private Spans includeSpans;
+	private BLSpans includeSpans;
 
 	/** NOT part (exclude documents from this spans) */
-	private Spans excludeSpans;
+	private BLSpans excludeSpans;
 
 	private boolean excludeSpansNexted;
 
@@ -40,8 +40,8 @@ public class SpansAndNot extends Spans {
 	private boolean moreExcludeSpans;
 
 	public SpansAndNot(Spans includeSpans, Spans excludeSpans) {
-		this.includeSpans = includeSpans;
-		this.excludeSpans = excludeSpans;
+		this.includeSpans = BLSpansWrapper.optWrap(includeSpans);
+		this.excludeSpans = BLSpansWrapper.optWrap(excludeSpans);
 		excludeSpansNexted = false;
 		moreIncludeSpans = true;
 		moreExcludeSpans = true;
@@ -144,4 +144,41 @@ public class SpansAndNot extends Spans {
 	public boolean isPayloadAvailable() {
 		return false;
 	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return includeSpans.hitsEndPointSorted();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return includeSpans.hitsStartPointSorted();
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return includeSpans.hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLength() {
+		return includeSpans.hitsLength();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return includeSpans.hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return includeSpans.hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return includeSpans.hitsAreUnique();
+	}
+
+
 }

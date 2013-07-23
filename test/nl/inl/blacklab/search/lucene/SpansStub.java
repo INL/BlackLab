@@ -20,13 +20,11 @@ package nl.inl.blacklab.search.lucene;
 
 import java.util.Collection;
 
-import org.apache.lucene.search.spans.Spans;
-
 /**
  * Stub Spans class for testing. Takes arrays and iterates through 'hits'
  * from these arrays.
  */
-public class SpansStub extends Spans {
+public class SpansStub extends BLSpans {
 	private int[] doc;
 
 	private int[] start;
@@ -79,4 +77,40 @@ public class SpansStub extends Spans {
 	public int start() {
 		return start[current];
 	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return false;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return false;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return false;
+	}
+
+	@Override
+	public int hitsLength() {
+		return -1;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return false;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return false;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return false;
+	}
+
 }

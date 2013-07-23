@@ -17,7 +17,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -27,7 +26,7 @@ import org.apache.lucene.search.spans.Spans;
  * Behave as a boolean AND at the document level and as a boolean
  * OR within each document.
  */
-public class SpansDocLevelAnd extends Spans {
+public class SpansDocLevelAnd extends BLSpans {
 	/** Current document id */
 	private int currentDocId;
 
@@ -35,7 +34,7 @@ public class SpansDocLevelAnd extends Spans {
 	private int currentSpansIndex;
 
 	/** The spans objects we're producing hits from */
-	private Spans[] spans;
+	private BLSpans[] spans;
 
 	/** Did we go past the last hit? */
 	private boolean stillValidSpans[];
@@ -44,9 +43,9 @@ public class SpansDocLevelAnd extends Spans {
 	private boolean spansNexted[];
 
 	public SpansDocLevelAnd(Spans leftClause, Spans rightClause) {
-		spans = new Spans[2];
-		spans[0] = leftClause;
-		spans[1] = rightClause;
+		spans = new BLSpans[2];
+		spans[0] = BLSpansWrapper.optWrapSort(leftClause);
+		spans[1] = BLSpansWrapper.optWrapSort(rightClause);
 		currentDocId = -1; // no current document yet
 		stillValidSpans = new boolean[2];
 		spansNexted = new boolean[2];
@@ -128,10 +127,13 @@ public class SpansDocLevelAnd extends Spans {
 		spansPointsToCurrentDoc[1] = doesSpansPointToCurrentDoc(1);
 		if (spansPointsToCurrentDoc[0] && spansPointsToCurrentDoc[1]) {
 			// Two spans to choose from; choose the hit occurring first in the document.
-			if (spans[0].start() < spans[1].start())
-				currentSpansIndex = 0;
-			else
-				currentSpansIndex = 1;
+			// (if equal starts, choose the one that ends first)
+			if (spans[0].start() == spans[1].start()) {
+				currentSpansIndex = (spans[0].end() < spans[1].end()) ? 0 : 1;
+			}
+			else {
+				currentSpansIndex = (spans[0].start() < spans[1].start()) ? 0 : 1;
+			}
 		} else if (spansPointsToCurrentDoc[0]) {
 			// Only spans[0] still has hits in the current document.
 			currentSpansIndex = 0;
@@ -226,13 +228,41 @@ public class SpansDocLevelAnd extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
+	public boolean hitsEndPointSorted() {
+		return hitsAllSameLength();
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return spans[0].hitsAllSameLength() && spans[1].hitsAllSameLength() && spans[0].hitsLength() == spans[1].hitsLength();
+	}
+
+	@Override
+	public int hitsLength() {
+		if (hitsAllSameLength())
+			return spans[0].hitsLength();
+		return -1;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
 		return false;
 	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return false;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return false;
+	}
+
 
 }

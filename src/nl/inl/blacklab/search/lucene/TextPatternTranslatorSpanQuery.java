@@ -22,7 +22,7 @@ import java.util.Map;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPatternTranslator;
-import nl.inl.blacklab.search.lucene.SpanQueryPosFilter.Filter;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Filter;
 import nl.inl.blacklab.search.sequences.SpanQueryExpansion;
 import nl.inl.blacklab.search.sequences.SpanQueryRepetition;
 import nl.inl.blacklab.search.sequences.SpanQuerySequence;
@@ -88,27 +88,27 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		// (NOTE: only works for start tags and full elements because attribute values
 		//  are indexed at the start tag!)
 		SpanQuery filter = new SpanQueryAnd(attrFilters);
-		return new SpanQueryPosFilter(allTags, filter, Filter.STARTS_AT);
+		return new SpanQueryPositionFilter(allTags, filter, Filter.STARTS_AT);
 	}
 
 	@Override
 	public SpanQuery containing(QueryExecutionContext context, SpanQuery containers, SpanQuery search) {
-		return new SpanQueryPosFilter(containers, search, SpanQueryPosFilter.Filter.CONTAINING);
+		return new SpanQueryPositionFilter(containers, search, SpanQueryPositionFilter.Filter.CONTAINING);
 	}
 
 	@Override
 	public SpanQuery within(QueryExecutionContext context, SpanQuery search, SpanQuery containers) {
-		return new SpanQueryPosFilter(search, containers, SpanQueryPosFilter.Filter.WITHIN);
+		return new SpanQueryPositionFilter(search, containers, SpanQueryPositionFilter.Filter.WITHIN);
 	}
 
 	@Override
 	public SpanQuery startsAt(QueryExecutionContext context, SpanQuery producer, SpanQuery filter) {
-		return new SpanQueryPosFilter(producer, filter, SpanQueryPosFilter.Filter.STARTS_AT);
+		return new SpanQueryPositionFilter(producer, filter, SpanQueryPositionFilter.Filter.STARTS_AT);
 	}
 
 	@Override
 	public SpanQuery endsAt(QueryExecutionContext context, SpanQuery producer, SpanQuery filter) {
-		return new SpanQueryPosFilter(producer, filter, SpanQueryPosFilter.Filter.ENDS_AT);
+		return new SpanQueryPositionFilter(producer, filter, SpanQueryPositionFilter.Filter.ENDS_AT);
 	}
 
 	@Override

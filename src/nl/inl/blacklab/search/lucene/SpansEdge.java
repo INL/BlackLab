@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -25,10 +24,10 @@ import org.apache.lucene.search.spans.Spans;
  *
  * Note that the results of this query are zero-length spans.
  */
-class SpansEdge extends Spans {
+class SpansEdge extends BLSpans {
 
 	/** query the query to determine edges from */
-	private Spans clause;
+	private BLSpans clause;
 
 	/** if true, return the right edges; if false, the left */
 	private boolean rightEdge;
@@ -39,7 +38,7 @@ class SpansEdge extends Spans {
 	 * @param rightEdge
 	 */
 	public SpansEdge(Spans clause, boolean rightEdge) {
-		this.clause = clause;
+		this.clause = BLSpansWrapper.optWrap(clause);
 		this.rightEdge = rightEdge;
 	}
 
@@ -97,13 +96,39 @@ class SpansEdge extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
+	public boolean hitsEndPointSorted() {
+		return hitsStartPointSorted();
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
-		return false;
+	public boolean hitsStartPointSorted() {
+		return rightEdge ? clause.hitsEndPointSorted() : clause.hitsStartPointSorted();
 	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return true;
+	}
+
+	@Override
+	public int hitsLength() {
+		return 0;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return rightEdge ? clause.hitsHaveUniqueEnd() : clause.hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return hitsHaveUniqueStart();
+	}
+
 
 }

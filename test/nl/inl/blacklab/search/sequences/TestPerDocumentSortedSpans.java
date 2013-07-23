@@ -31,7 +31,7 @@ public class TestPerDocumentSortedSpans {
 	public void setUp() {
 		int[] doc = { 1, 1, 1, 2, 2 }, start = { 1, 1, 4, 2, 2 }, end = { 8, 6, 5, 4, 3 };
 		Spans spans = new SpansStub(doc, start, end);
-		hpd = new PerDocumentSortedSpans(spans, new SpanComparatorEndPoint());
+		hpd = new PerDocumentSortedSpans(spans, true, false);
 	}
 
 	@Test

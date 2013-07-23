@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -29,7 +28,7 @@ import org.apache.lucene.search.spans.Spans;
 /**
  * Gets spans for a certain XML element.
  */
-class SpansTags extends Spans {
+class SpansTags extends BLSpans {
 	/** The two sets of hits to combine */
 	private SpansInBucketsPerDocument[] spans = new SpansInBucketsPerDocument[2];
 
@@ -243,13 +242,40 @@ class SpansTags extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
-	}
-
-	@Override
-	public boolean isPayloadAvailable() {
+	public boolean hitsEndPointSorted() {
 		return false;
 	}
 
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return false;
+	}
+
+	@Override
+	public int hitsLength() {
+		return -1;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		// TODO: what happens if two of the same starttags occur at the same position..?
+		// Right now, we assume this doesn't happen, and it usually doesn't, but if it
+		// does, can it cause a mismatched tag problem?
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
+	}
 }

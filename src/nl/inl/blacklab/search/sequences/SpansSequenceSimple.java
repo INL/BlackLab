@@ -18,77 +18,36 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.BLSpansWrapper;
-
-import org.apache.lucene.search.spans.Spans;
 
 /**
- * Combines spans, keeping only combinations of hits that occur one after the other. The order is
- * significant: a hit from the first span must be followed by a hit from the second.
- *
- * This is a fairly involved process.
- *
- * The Spans for the left clause is sorted by hit end point instead of by hit start point, because
- * this is necessary for efficient sequential hit generation.
- *
- * The Spans for the right clause is wrapped in EndPointsPerStartPoint because we need to combine
- * all left hits with end point X with all right hits with start point X. Note that this Spans
- * should already be start point sorted, but this is the default in Lucene.
- *
- * It has to take the following problem into account, which might arise with more complex sequences
- * with overlapping hits ("1234" are token positions in the document, A-C are hits in spans1, D-F
- * are hits in spans2, "AD", "AE" and "BF" are resulting sequence hits):
- *
- * <pre>
- *  spans1       1234
- *       A(1-2)  -
- *       B(1-3)  --
- *       C(2-4)   --
- *
- *  spans2       1234
- *       D(2-4)   --
- *       E(2-5)   ---
- *       F(3-4)    -
- *
- *  seq(1,2)     1234
- *       AD(1-4) ---
- *       AE(1-5) ----
- *       BF(1-4) ---
- * </pre>
- *
- * Note that the sequence of the two spans contains duplicates (AD and BF are identical) and
- * out-of-order endpoints (AE ends at 5 but BF ends at 4). Both are undesirable; the user doesn't
- * want to see duplicates, and out-of-order endpoints may cause problems when combining this spans
- * with other spans (although that is not certain; should be checked).
- *
- * Therefore, objects of this class should be wrapped in a class that sort the matches per document
- * and eliminates duplicates.
+ * Simple version of sequence Spans. Assumes that:
+ * - right side is ordered by start point (this is true by default in Lucene)
+ * - left side is ordered by end point (true if start point sorted and all
+ *   hits are the same length)
+ * - left side end points and right side start points are unique (true
+ *   if all hits are the same length and there are no duplicate hits (which
+ *   should be true in Lucene by default, tho not 100% sure))
  */
-class SpansSequenceRaw extends BLSpans {
+class SpansSequenceSimple extends BLSpans {
 	private BLSpans left;
 
-	private BLSpans origRight;
-
-	private SpansInBuckets right;
-
-	int indexInBucket = -2; // -2 == not started yet; -1 == just started a bucket
-
-	int leftStart = -1;
-
-	int rightEnd = -1;
+	private BLSpans right;
 
 	boolean more = true;
 
 	int currentDoc = -1;
 
-	public SpansSequenceRaw(Spans leftClause, Spans rightClause) {
-		// Sort the left spans by (1) document (2) end point (3) start point
-		left = new PerDocumentSortedSpans(leftClause, true, false);
-
-		// From the right spans, let us extract all end points belonging with a start point.
-		// Already start point sorted.
-		origRight = BLSpansWrapper.optWrap(rightClause);
-		right = new SpansInBucketsPerStartPoint(origRight);
+	public SpansSequenceSimple(BLSpans leftClause, BLSpans rightClause) {
+		left = leftClause;
+		right = rightClause;
+		if (!right.hitsStartPointSorted())
+			throw new RuntimeException("Right hits not start point sorted!");
+		if (!right.hitsHaveUniqueStart())
+			throw new RuntimeException("Right hits don't have unique start points!");
+		if (!left.hitsEndPointSorted())
+			throw new RuntimeException("Left hits not end point sorted!");
+		if (!left.hitsHaveUniqueEnd())
+			throw new RuntimeException("Left hits don't have unique end points!");
 	}
 
 	/**
@@ -104,7 +63,7 @@ class SpansSequenceRaw extends BLSpans {
 	 */
 	@Override
 	public int end() {
-		return rightEnd;
+		return right.end();
 	}
 
 	/**
@@ -132,20 +91,12 @@ class SpansSequenceRaw extends BLSpans {
 		if (!more)
 			return false;
 
-		if (indexInBucket == -2 || indexInBucket == right.bucketSize() - 1) {
-			/*
-			 * We're out of end points (right matches). Advance the left Spans and realign both
-			 * spans to the mid point.
-			 */
-			more = left.next();
-			if (!more)
-				return false;
-			return realign();
-		}
-
-		indexInBucket++;
-		rightEnd = right.end(indexInBucket);
-		return true;
+		more = left.next();
+		if (more)
+			more = right.next();
+		if (!more)
+			return false;
+		return realign();
 	}
 
 	/**
@@ -180,19 +131,17 @@ class SpansSequenceRaw extends BLSpans {
 			}
 
 			// Synchronize within doc
-			int rightStart = right.start(0);
-			while (left.doc() == right.doc() && left.end() != rightStart) {
-				if (rightStart < left.end()) {
+			while (left.doc() == right.doc() && left.end() != right.start()) {
+				if (right.start() < left.end()) {
 					// Advance right if necessary
-					while (left.doc() == right.doc() && rightStart < left.end()) {
+					while (left.doc() == right.doc() && right.start() < left.end()) {
 						more = right.next();
-						rightStart = right.start(0);
 						if (!more)
 							return false;
 					}
 				} else {
 					// Advance left if necessary
-					while (left.doc() == right.doc() && left.end() < rightStart) {
+					while (left.doc() == right.doc() && left.end() < right.start()) {
 						more = left.next();
 						if (!more)
 							return false;
@@ -201,12 +150,8 @@ class SpansSequenceRaw extends BLSpans {
 			}
 		} while (left.doc() != right.doc()); // Repeat until left and right align.
 
-		// Save doc, start and end positions.
-		// Reset the end point iterator (end points of right matches starting at this mid point)
+		// Found a sequence hit
 		currentDoc = right.doc();
-		leftStart = left.start();
-		indexInBucket = 0;
-		rightEnd = right.end(indexInBucket);
 		return true;
 	}
 
@@ -238,42 +183,42 @@ class SpansSequenceRaw extends BLSpans {
 	 */
 	@Override
 	public int start() {
-		return leftStart;
+		return left.start();
 	}
 
 	@Override
 	public String toString() {
-		return "SpansSequence(" + left + ", " + right + ")";
+		return "SpansSequenceSimple(" + left + ", " + right + ")";
 	}
 
 	@Override
 	public boolean hitsEndPointSorted() {
-		return origRight.hitsAllSameLength();
+		return right.hitsEndPointSorted();
 	}
 
 	@Override
 	public boolean hitsStartPointSorted() {
-		return left.hitsAllSameLength();
+		return left.hitsStartPointSorted();
 	}
 
 	@Override
 	public boolean hitsAllSameLength() {
-		return left.hitsAllSameLength() && origRight.hitsAllSameLength();
+		return left.hitsAllSameLength() && right.hitsAllSameLength();
 	}
 
 	@Override
 	public int hitsLength() {
-		return hitsAllSameLength() ? left.hitsLength() + origRight.hitsLength() : -1;
+		return hitsAllSameLength() ? left.hitsLength() + right.hitsLength() : -1;
 	}
 
 	@Override
 	public boolean hitsHaveUniqueStart() {
-		return left.hitsHaveUniqueStart() && origRight.hitsHaveUniqueStart();
+		return left.hitsHaveUniqueStart();
 	}
 
 	@Override
 	public boolean hitsHaveUniqueEnd() {
-		return left.hitsHaveUniqueEnd() && origRight.hitsHaveUniqueEnd();
+		return right.hitsHaveUniqueEnd();
 	}
 
 	@Override

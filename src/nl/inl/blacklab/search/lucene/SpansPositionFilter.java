@@ -16,10 +16,10 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
-import nl.inl.blacklab.search.lucene.SpanQueryPosFilter.Filter;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Filter;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
+import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
 
 import org.apache.lucene.search.spans.Spans;
@@ -28,14 +28,16 @@ import org.apache.lucene.search.spans.Spans;
  * Finds hits from a set that contain one or more hits from the second set,
  * or finds hits from a set that are contained by hit(s) from the second set.
  */
-class SpansPosFilter extends Spans {
+class SpansPositionFilter extends BLSpans {
+	static SpanComparatorStartPoint cmpStartPoint = new SpanComparatorStartPoint();
+
 	/** The two sets of hits to combine */
-	private Spans producer;
+	private BLSpans producer;
 
 	/** Does the Spans object still point to a valid hit? */
 	private boolean stillValidContainers = true;
 
-	private SpansInBucketsPerDocumentSorted filter;
+	private SpansInBucketsPerDocument filter;
 
 	private boolean stillValidSearch = true;
 
@@ -51,11 +53,18 @@ class SpansPosFilter extends Spans {
 	 * @param filter the hits used to filter the producer hits
 	 * @param op filter operation to use
 	 */
-	public SpansPosFilter(Spans producer, Spans filter, SpanQueryPosFilter.Filter op) {
-		this.producer = producer;
+	public SpansPositionFilter(Spans producer, Spans filter, SpanQueryPositionFilter.Filter op) {
+		this.producer = BLSpansWrapper.optWrapSort(producer);
 		this.op = op;
 		stillValidContainers = true;
-		this.filter = new SpansInBucketsPerDocumentSorted(filter, new SpanComparatorStartPoint());
+		if (!(filter instanceof BLSpans) || (filter instanceof BLSpans && ((BLSpans)filter).hitsStartPointSorted())) {
+			// Already start point sorted; no need to sort buckets again
+			this.filter = new SpansInBucketsPerDocument(filter);
+		}
+		else {
+			// Not sorted yet; sort buckets
+			this.filter = new SpansInBucketsPerDocumentSorted(filter, cmpStartPoint);
+		}
 	}
 
 	/**
@@ -64,7 +73,7 @@ class SpansPosFilter extends Spans {
 	 * @param containers the containers we may be interested in.
 	 * @param filter we only want containers that contain at least on hit from this filter.
 	 */
-	public SpansPosFilter(Spans containers, Spans filter) {
+	public SpansPositionFilter(Spans containers, Spans filter) {
 		this(containers, filter, Filter.CONTAINING);
 	}
 
@@ -146,7 +155,7 @@ class SpansPosFilter extends Spans {
 					}
 					break;
 				case STARTS_AT:
-					// Looking for producer hits with a filter hit inside
+					// Looking for producer hits starting at a filter hit
 					for (int i = 0; i < filter.bucketSize(); i++) {
 						if (filter.start(i) == producer.start()) {
 							// Yes, this filter hit starts at the current producer hit.
@@ -155,7 +164,7 @@ class SpansPosFilter extends Spans {
 					}
 					break;
 				case ENDS_AT:
-					// Looking for producer hits with a filter hit inside
+					// Looking for producer hits ending at a filter hit
 					for (int i = 0; i < filter.bucketSize(); i++) {
 						if (filter.end(i) == producer.end()) {
 							// Yes, this filter hit ends at the current producer hit.
@@ -218,13 +227,38 @@ class SpansPosFilter extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
+	public boolean hitsEndPointSorted() {
+		return producer.hitsEndPointSorted();
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
-		return false;
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return producer.hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLength() {
+		return producer.hitsLength();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return producer.hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return producer.hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return producer.hitsAreUnique();
 	}
 
 }

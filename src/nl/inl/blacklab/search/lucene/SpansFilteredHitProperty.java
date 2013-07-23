@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.grouping.HitPropValue;
@@ -31,7 +30,7 @@ import org.apache.lucene.search.spans.Spans;
  * executing our query.
  */
 public class SpansFilteredHitProperty extends SpansWithHit {
-	Spans spans;
+	BLSpans spans;
 
 	HitProperty prop;
 
@@ -40,7 +39,7 @@ public class SpansFilteredHitProperty extends SpansWithHit {
 	private HitPropValue value;
 
 	public SpansFilteredHitProperty(Spans spans, HitProperty prop, HitPropValue value) {
-		this.spans = spans;
+		this.spans = BLSpansWrapper.optWrap(spans);
 		this.prop = prop;
 		this.value = value;
 		more = true;
@@ -80,16 +79,6 @@ public class SpansFilteredHitProperty extends SpansWithHit {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() throws IOException {
-		return spans.getPayload();
-	}
-
-	@Override
-	public boolean isPayloadAvailable() {
-		return spans.isPayloadAvailable();
-	}
-
-	@Override
 	public int start() {
 		return spans.start();
 	}
@@ -97,6 +86,41 @@ public class SpansFilteredHitProperty extends SpansWithHit {
 	@Override
 	public Hit getHit() {
 		return Hit.getHit(spans);
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return spans.hitsEndPointSorted();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return spans.hitsStartPointSorted();
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return spans.hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLength() {
+		return spans.hitsLength();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return spans.hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return spans.hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return spans.hitsAreUnique();
 	}
 
 }

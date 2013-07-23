@@ -16,8 +16,9 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.Collection;
 
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 
 import org.apache.lucene.index.IndexReader;
@@ -42,8 +43,8 @@ import org.apache.lucene.search.spans.Spans;
  * Therefore, objects of this class should be wrapped in a class that sort the matches per document
  * and eliminates duplicates.
  */
-class SpansExpansionRaw extends Spans {
-	private Spans clause;
+class SpansExpansionRaw extends BLSpans {
+	private BLSpans clause;
 
 	private boolean more = true;
 
@@ -75,7 +76,7 @@ class SpansExpansionRaw extends Spans {
 			// We need to know document length to properly do expansion to the right
 			lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		}
-		this.clause = clause;
+		this.clause = BLSpansWrapper.optWrap(clause);
 		clauseNexted = false;
 		this.expandToLeft = expandToLeft;
 		this.min = min;
@@ -238,13 +239,37 @@ class SpansExpansionRaw extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
+	public boolean hitsEndPointSorted() {
+		return clause.hitsEndPointSorted() && (expandToLeft || !expandToLeft && min == max);
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
-		return false;
+	public boolean hitsStartPointSorted() {
+		return clause.hitsStartPointSorted() && (!expandToLeft || expandToLeft && min == max);
 	}
 
+	@Override
+	public boolean hitsAllSameLength() {
+		return clause.hitsAllSameLength() && min == max;
+	}
+
+	@Override
+	public int hitsLength() {
+		return hitsAllSameLength() ? clause.hitsLength() + min : -1;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return clause.hitsHaveUniqueStart() && (!expandToLeft || expandToLeft && min == max);
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return clause.hitsHaveUniqueEnd() && (expandToLeft || !expandToLeft && min == max);
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return clause.hitsAreUnique() && min == max;
+	}
 }

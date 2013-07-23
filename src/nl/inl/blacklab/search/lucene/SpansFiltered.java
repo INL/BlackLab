@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.DocIdSet;
@@ -30,8 +29,8 @@ import org.apache.lucene.search.spans.Spans;
  * This allows us to only consider certain documents (say, only documents in a certain domain) when
  * executing our query.
  */
-public class SpansFiltered extends Spans {
-	Spans spans;
+public class SpansFiltered extends BLSpans {
+	BLSpans spans;
 
 	DocIdSetIterator docIdSetIter;
 
@@ -42,7 +41,7 @@ public class SpansFiltered extends Spans {
 	}
 
 	public SpansFiltered(Spans spans, DocIdSet filterDocs) throws IOException {
-		this.spans = spans;
+		this.spans = BLSpansWrapper.optWrap(spans);
 		docIdSetIter = filterDocs.iterator();
 		more = false;
 		if (docIdSetIter != null) {
@@ -87,18 +86,43 @@ public class SpansFiltered extends Spans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() throws IOException {
-		return spans.getPayload();
-	}
-
-	@Override
-	public boolean isPayloadAvailable() {
-		return spans.isPayloadAvailable();
-	}
-
-	@Override
 	public int start() {
 		return spans.start();
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return spans.hitsEndPointSorted();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return spans.hitsStartPointSorted();
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return spans.hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLength() {
+		return spans.hitsLength();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return spans.hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return spans.hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return spans.hitsAreUnique();
 	}
 
 }

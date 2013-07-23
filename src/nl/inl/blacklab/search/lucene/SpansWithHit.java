@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.Hit;
  * the hit information. This way, if the client needs a Hit object too, we avoid instantiating
  * multiple copies of the same Hit.
  */
-public abstract class SpansWithHit extends SpansAbstract {
+public abstract class SpansWithHit extends BLSpans {
 	/**
 	 * Makes a new Hit object from the document id, start and end positions.
 	 *
