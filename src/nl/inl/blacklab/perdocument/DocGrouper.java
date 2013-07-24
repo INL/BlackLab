@@ -54,9 +54,9 @@ public class DocGrouper implements Iterable<DocGroup> {
 	public DocGrouper(DocResults docResults, DocProperty groupBy) {
 		searcher = docResults.getSearcher();
 		this.groupBy = groupBy;
+		Thread currentThread = Thread.currentThread();
 		for (DocResult r : docResults) {
-
-			if (Thread.currentThread().isInterrupted()) {
+			if (currentThread.isInterrupted()) {
 				// Thread was interrupted. Don't throw exception because not
 				// all client programs use this feature and we shouldn't force
 				// them to catch a useless exception.

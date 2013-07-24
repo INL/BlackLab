@@ -259,9 +259,10 @@ public class DocResults implements Iterable<DocResult> {
 
 			@SuppressWarnings("resource")
 			IndexReader indexReader = searcher == null ? null : searcher.getIndexReader();
+			Thread currentThread = Thread.currentThread();
 			while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
-				if (Thread.currentThread().isInterrupted())
+				if (currentThread.isInterrupted())
 					throw new InterruptedException("Thread was interrupted while gathering hits");
 
 				Hit hit = sourceHitsIterator.next();
