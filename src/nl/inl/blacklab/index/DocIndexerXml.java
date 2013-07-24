@@ -193,6 +193,8 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 	 *
 	 * @param source
 	 *            the source string
+	 * @param start where in the string to start processing
+	 * @param length how many characters to process
 	 * @return the escaped string
 	 */
 	public String escapeXmlChars(char[] source, int start, int length) {

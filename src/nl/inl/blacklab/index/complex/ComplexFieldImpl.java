@@ -60,25 +60,37 @@ public class ComplexFieldImpl extends ComplexField {
 
 	private String mainPropertyName;
 
-	/** @deprecated use constructor with sensitivity parameter */
+	/** @param name
+	 * @param filterAdder
+	 * @deprecated use constructor with sensitivity parameter */
 	@Deprecated
 	public ComplexFieldImpl(String name, TokenFilterAdder filterAdder) {
 		this(name, null, filterAdder, true);
 	}
 
-	/** @deprecated use constructor with sensitivity parameter */
+	/** @param name
+	 * @param mainProperty
+	 * @param filterAdder
+	 * @deprecated use constructor with sensitivity parameter */
 	@Deprecated
 	public ComplexFieldImpl(String name, String mainProperty, TokenFilterAdder filterAdder) {
 		this(name, mainProperty, filterAdder, true);
 	}
 
-	/** @deprecated use constructor with sensitivity parameter */
+	/** @param name
+	 * @param filterAdder
+	 * @param includeOffsets
+	 * @deprecated use constructor with sensitivity parameter */
 	@Deprecated
 	public ComplexFieldImpl(String name, TokenFilterAdder filterAdder, boolean includeOffsets) {
 		this(name, null, filterAdder, includeOffsets);
 	}
 
-	/** @deprecated use constructor with sensitivity parameter */
+	/** @param name
+	 * @param mainProperty
+	 * @param filterAdder
+	 * @param includeOffsets
+	 * @deprecated use constructor with sensitivity parameter */
 	@Deprecated
 	public ComplexFieldImpl(String name, String mainProperty, TokenFilterAdder filterAdder, boolean includeOffsets) {
 		fieldName = name;

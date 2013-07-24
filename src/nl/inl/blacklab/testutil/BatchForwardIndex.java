@@ -99,6 +99,7 @@ public class BatchForwardIndex {
 
 	/**
 	 * Do a performance test, retrieving snippets from a number of documents.
+	 * @param fi the forward index
 	 *
 	 * @param first
 	 *            fiid (position in toc) of first document to access
@@ -108,6 +109,7 @@ public class BatchForwardIndex {
 	 *            number of documents to skip between accesses
 	 * @param snippets
 	 *            number of random snippets to retrieve from each document
+	 * @return elapsed time in ms
 	 */
 	public static long doPerformanceTest(ForwardIndex fi, int first, int number, int skip,
 			int snippets) {

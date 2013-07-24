@@ -77,10 +77,11 @@ public class DocFieldLengthGetter {
 	}
 
 	/**
-	 * Get the number of indexed tokens for our field in the current document.
+	 * Get the number of indexed tokens for our field in the specified document.
 	 *
 	 * Used to produce all tokens that aren't hits in our clause.
 	 *
+	 * @param doc the document
 	 * @return the number of tokens
 	 */
 	public int getFieldLength(int doc) {

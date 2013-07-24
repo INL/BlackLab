@@ -34,6 +34,8 @@ import java.util.NoSuchElementException;
  * Advantage over ArrayList is better storage characteristics and the fact we don't have to
  * reallocate when the array runs out. Disadvantage is slower index-lookup speed (first we have to
  * determine the chunk the element is in). Iteration is pretty fast, though.
+ *
+ * @param <T> the type of data to keep in the list
  */
 public class ChunkedList<T> extends AbstractList<T> {
 	final static int DEFAULT_CHUNK_SIZE = 250000; // 1M per array

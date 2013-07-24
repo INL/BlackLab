@@ -58,6 +58,7 @@ import org.apache.lucene.search.spans.Spans;
  *
  * </blockquote>
  */
+@SuppressWarnings("javadoc")
 public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQuery {
 	protected final Q query;
 	private Method getFieldMethod = null, getTermMethod = null;

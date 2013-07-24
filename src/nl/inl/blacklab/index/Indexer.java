@@ -408,6 +408,9 @@ public class Indexer {
 	 *            the input file or directory
 	 * @param recurseSubdirs
 	 *            recursively index subdirectories?
+	 * @throws UnsupportedEncodingException
+	 * @throws FileNotFoundException
+	 * @throws IOException
 	 * @throws Exception
 	 */
 	public void index(File fileToIndex, boolean recurseSubdirs)

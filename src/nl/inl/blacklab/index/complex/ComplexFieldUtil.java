@@ -158,7 +158,8 @@ public class ComplexFieldUtil {
 		return propertyField(fieldName, END_TAG_PROP_NAME);
 	}
 
-	/** Are we using the old field names? */
+	/** Are we using the old field names?
+	 * @return true if we are, false if not */
 	public static boolean usingOldFieldNames() {
 		return oldFieldNames;
 	}

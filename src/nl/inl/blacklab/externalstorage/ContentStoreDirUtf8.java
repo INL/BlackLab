@@ -460,6 +460,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 
 	/**
 	 * Encode and write the block we've compiled so far and reset for next block
+	 * @param os where to write to block to
 	 */
 	public void writeCurrentBlock(OutputStream os) {
 		try {

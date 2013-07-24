@@ -98,6 +98,7 @@ public class BatchContentStore {
 
 	/**
 	 * Do a performance test, retrieving snippets from a number of documents.
+	 * @param cs the content store
 	 *
 	 * @param first
 	 *            fiid (position in toc) of first document to access
@@ -107,6 +108,7 @@ public class BatchContentStore {
 	 *            number of documents to skip between accesses
 	 * @param snippets
 	 *            number of random snippets to retrieve from each document
+	 * @return elapsed time in ms
 	 */
 	public static long doPerformanceTest(ContentStore cs, int first, int number, int skip,
 			int snippets) {
