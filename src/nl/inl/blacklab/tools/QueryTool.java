@@ -1286,7 +1286,7 @@ public class QueryTool {
 		}
 		outprintln(msg);
 		if (hitsToShow.tooManyHits()) {
-			System.out.println("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE
+			outprintln("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE
 					+ " were collected)");
 		}
 	}
