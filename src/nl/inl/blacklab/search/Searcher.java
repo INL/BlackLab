@@ -174,7 +174,8 @@ public class Searcher {
 	 */
 	public boolean concordancesIncludeXmlTags() {
 		// @@@ TODO experimental, should be parameterized
-		return !concordancesFromForwardIndex || forwardIndices.containsKey("lemma");
+		String lemmaField = ComplexFieldUtil.propertyField(fieldNameContents, "lemma");
+		return !concordancesFromForwardIndex || forwardIndices.containsKey(lemmaField);
 	}
 
 	/**
