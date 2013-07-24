@@ -352,8 +352,10 @@ public class Hits implements Iterable<Hit> {
 					// Either we've got them all, or we should stop
 					// collecting them because there's too many
 					sourceSpansFullyRead = true;
-					if (hits.size() >= MAX_HITS_TO_RETRIEVE)
+					if (hits.size() >= MAX_HITS_TO_RETRIEVE) {
 						tooManyHits = true;
+						totalNumberOfHits = hits.size();
+					}
 					break;
 				}
 			}
