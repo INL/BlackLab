@@ -156,7 +156,8 @@ public class Hits implements Iterable<Hit> {
 		hits = new ArrayList<Hit>();
 		totalNumberOfHits = 0;
 		setConcordanceField(concordanceFieldPropName);
-		desiredContextSize = searcher == null ? 0 /* only for test */ : searcher.getDefaultContextSize();
+		desiredContextSize = searcher == null ? 0 /* only for test */: searcher
+				.getDefaultContextSize();
 		currentContextSize = -1;
 		totalNumberOfDocs = -1; // unknown
 	}
@@ -176,8 +177,7 @@ public class Hits implements Iterable<Hit> {
 	 * @deprecated supply a SpanQuery to a Hits object instead
 	 */
 	@Deprecated
-	public
-	Hits(Searcher searcher, String concordanceFieldPropName, Spans source) {
+	public Hits(Searcher searcher, String concordanceFieldPropName, Spans source) {
 		this(searcher, concordanceFieldPropName);
 
 		totalNumberOfHits = -1; // "not known yet"
@@ -197,7 +197,8 @@ public class Hits implements Iterable<Hit> {
 	 *            the query to execute to get the hits
 	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
 	 */
-	public Hits(Searcher searcher, String concordanceFieldPropName, SpanQuery sourceQuery) throws TooManyClauses {
+	public Hits(Searcher searcher, String concordanceFieldPropName, SpanQuery sourceQuery)
+			throws TooManyClauses {
 		this(searcher, concordanceFieldPropName);
 
 		totalNumberOfDocs = -1;
@@ -228,6 +229,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		sourceSpans = findSpans(sourceQuery); // Counted 'em. Now reset.
+		// logger.debug("SPANS: " + sourceSpans);
 		sourceSpansFullyRead = false;
 	}
 
@@ -277,7 +279,8 @@ public class Hits implements Iterable<Hit> {
 	Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
 		try {
 			IndexReader reader = null;
-			if (searcher != null) { // this may happen while testing with stub classes; don't try to rewrite
+			if (searcher != null) { // this may happen while testing with stub classes; don't try to
+									// rewrite
 				reader = searcher.getIndexReader();
 			}
 			spanQuery = (SpanQuery) spanQuery.rewrite(reader);
@@ -317,45 +320,25 @@ public class Hits implements Iterable<Hit> {
 	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
 	private void ensureAllHitsRead() throws InterruptedException {
-		if (sourceSpansFullyRead)
-			return;
-		sourceSpansFullyRead = true;
-
-		try {
-			while (sourceSpans.next()) {
-
-				if (Thread.currentThread().isInterrupted())
-					throw new InterruptedException("Thread was interrupted while gathering hits");
-
-				hits.add(Hit.getHit(sourceSpans));
-				if (totalNumberOfHits >= 0 && hits.size() >= totalNumberOfHits) {
-					// Either we've got them all, or we should stop
-					// collecting them because there's too many
-					break;
-				}
-			}
-			totalNumberOfHits = hits.size();
-			//logger.debug("Read all hits: " + totalNumberOfHits);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		ensureHitsRead(-1);
 	}
 
 	/**
-	 * Ensure that we have read at least as many hits as specified in the index parameter.
+	 * Ensure that we have read at least as many hits as specified in the parameter.
 	 *
-	 * @param index the minimum number of hits that will have been read when this method
-	 *   returns (unless there are fewer hits than this)
+	 * @param number the minimum number of hits that will have been read when this method
+	 *   returns (unless there are fewer hits than this); if negative, reads all hits
 	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
-	private void ensureHitsRead(int index) throws InterruptedException {
+	void ensureHitsRead(int number) throws InterruptedException {
 		if (sourceSpansFullyRead)
 			return;
 
+		boolean readAllHits = number < 0;
+		Thread currentThread = Thread.currentThread();
 		try {
-			while (hits.size() <= index) {
-
-				if (Thread.currentThread().isInterrupted())
+			while (readAllHits || hits.size() < number) {
+				if (currentThread.isInterrupted())
 					throw new InterruptedException("Thread was interrupted while gathering hits");
 
 				if (!sourceSpans.next()) {
@@ -364,6 +347,15 @@ public class Hits implements Iterable<Hit> {
 					break;
 				}
 				hits.add(Hit.getHit(sourceSpans));
+				if (totalNumberOfHits >= 0 && hits.size() >= totalNumberOfHits
+						|| hits.size() >= MAX_HITS_TO_RETRIEVE) {
+					// Either we've got them all, or we should stop
+					// collecting them because there's too many
+					sourceSpansFullyRead = true;
+					if (hits.size() >= MAX_HITS_TO_RETRIEVE)
+						tooManyHits = true;
+					break;
+				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -429,7 +421,8 @@ public class Hits implements Iterable<Hit> {
 
 		// Do we need context and don't we have it yet?
 		String requiredContext = sortProp.needsContext();
-		if (requiredContext != null && (!requiredContext.equals(contextFieldPropName) || currentContextSize != desiredContextSize)) {
+		if (requiredContext != null
+				&& (!requiredContext.equals(contextFieldPropName) || currentContextSize != desiredContextSize)) {
 			// Get 'em
 			findContext(requiredContext);
 		}
@@ -526,21 +519,14 @@ public class Hits implements Iterable<Hit> {
 			@Override
 			public boolean hasNext() {
 				// Do we still have hits in the hits list?
-				if (index + 1 >= hits.size()) {
-					// No; are there more hits to be read in the Spans?
-					if (sourceSpansFullyRead)
-						return false;
-					try {
-						if (!sourceSpans.next())
-							return false;
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-					// Yep; add hit from Spans to hits list and position the iterator correctly
-					hits.add(Hit.getHit(sourceSpans));
-					index = hits.size() - 2;
+				try {
+					ensureHitsRead(index + 2);
+				} catch (InterruptedException e) {
+					// Thread was interrupted. Don't finish reading hits and accept possibly wrong
+					// answer.
+					// Client must detect the interruption and stop the thread.
 				}
-				return true;
+				return hits.size() >= index + 2;
 			}
 
 			@Override
@@ -570,7 +556,7 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public Hit get(int i) {
 		try {
-			ensureHitsRead(i);
+			ensureHitsRead(i + 1);
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Required hit hasn't been gathered;
 			// we will just return null.
@@ -629,7 +615,8 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(concordanceFieldName, concordanceMainFieldPropName, hits, desiredContextSize);
+		concordances = searcher.retrieveConcordances(concordanceFieldName,
+				concordanceMainFieldPropName, hits, desiredContextSize);
 	}
 
 	/**
@@ -646,7 +633,8 @@ public class Hits implements Iterable<Hit> {
 			// get, so at least we can return with valid context.
 		}
 		// Make sure we don't have the desired concordances already
-		if (contextFieldPropName != null && fieldPropName.equals(contextFieldPropName) && desiredContextSize == currentContextSize) {
+		if (contextFieldPropName != null && fieldPropName.equals(contextFieldPropName)
+				&& desiredContextSize == currentContextSize) {
 			return;
 		}
 
@@ -690,6 +678,8 @@ public class Hits implements Iterable<Hit> {
 	 * Count occurrences of context words around hit.
 	 *
 	 * Uses the default contents field for collocations.
+	 *
+	 * @return the frequency of each occurring token
 	 */
 	public TokenFrequencyList getCollocations() {
 		return getCollocations(null, null);
@@ -700,6 +690,8 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param propName the property to use for the collocations, or null if default
 	 * @param ctx query execution context, containing the sensitivity settings
+	 *
+	 * @return the frequency of each occurring token
 	 */
 	public TokenFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
 		findContext(ctx.luceneField(false));
@@ -725,7 +717,7 @@ public class Hits implements Iterable<Hit> {
 		boolean caseSensitive = searcher.isDefaultSearchCaseSensitive();
 		boolean diacSensitive = searcher.isDefaultSearchDiacriticsSensitive();
 		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
-		//Map<String, Integer> collStr = new HashMap<String, Integer>();
+		// Map<String, Integer> collStr = new HashMap<String, Integer>();
 		Terms terms = searcher.getTerms(contextFieldPropName);
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
 			String word = terms.getFromSortPosition(e.getKey());
@@ -768,11 +760,12 @@ public class Hits implements Iterable<Hit> {
 		this.concordanceFieldName = concordanceFieldName;
 		if (searcher == null) {
 			// Can occur during testing. Just use default main property name.
-			concordanceMainFieldPropName = ComplexFieldUtil.propertyField(concordanceFieldName, ComplexFieldUtil.getDefaultMainPropName());
-		}
-		else {
+			concordanceMainFieldPropName = ComplexFieldUtil.propertyField(concordanceFieldName,
+					ComplexFieldUtil.getDefaultMainPropName());
+		} else {
 			// Get the main property name from the index structure.
-			concordanceMainFieldPropName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), concordanceFieldName);
+			concordanceMainFieldPropName = ComplexFieldUtil.mainPropertyField(
+					searcher.getIndexStructure(), concordanceFieldName);
 		}
 	}
 
@@ -797,7 +790,7 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public List<Hit> subList(int fromIndex, int toIndex) {
 		try {
-			ensureHitsRead(toIndex - 1);
+			ensureHitsRead(toIndex);
 		} catch (InterruptedException e) {
 			// Thread was interrupted. We may not even have read
 			// the first hit in the sublist, so just return an empty list.
