@@ -226,6 +226,7 @@ public class Searcher {
 		if (indexStructure.getMainContentsField().hasPunctuation()) {
 			concordancesFromForwardIndex = true;
 		}
+		logger.debug("Make concordances from forward index: " + (concordancesFromForwardIndex ? "TRUE" : "FALSE"));
 
 		// Register content stores
 		for (String cfn: indexStructure.getComplexFields()) {
