@@ -45,6 +45,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpansFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.ExUtil;
+import nl.inl.util.StringUtil;
 import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
@@ -172,7 +173,8 @@ public class Searcher {
 	 * @return true iff our concordances include XML tags.
 	 */
 	public boolean concordancesIncludeXmlTags() {
-		return !concordancesFromForwardIndex;
+		// @@@ TODO experimental, should be parameterized
+		return !concordancesFromForwardIndex || forwardIndices.containsKey("lemma");
 	}
 
 	/**
@@ -1202,7 +1204,7 @@ public class Searcher {
 	 *            where to add the concordances
 	 */
 	private void makeConcordancesSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
-			ForwardIndex punctForwardIndex, int wordsAroundHit,
+			ForwardIndex punctForwardIndex, ForwardIndex lemmaForwardIndex, ForwardIndex posForwardIndex, int wordsAroundHit,
 			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
@@ -1213,28 +1215,31 @@ public class Searcher {
 
 		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
 
-		getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
-
-		// Copy the context information out of the Hit objects, so we can get the punctuation
-		// context as well.
-		int[][] context = new int[hits.size()][];
-		int[] contextHitStart = new int[hits.size()];
-		int[] contextRightStart = new int[hits.size()];
-		for (int i = 0; i < hits.size(); i++) {
-			Hit h = hits.get(i);
-			context[i] = h.context;
-			contextHitStart[i] = h.contextHitStart;
-			contextRightStart[i] = h.contextRightStart;
-		}
-
 		// Get punctuation context
+		int[][] punctContext = null;
 		if (punctForwardIndex != null) {
 			getContextWords(doc, punctForwardIndex, startsOfWords, endsOfWords, hits);
+			punctContext = getContextFromHits(hits);
 		}
+
+		int[][] lemmaContext = null;
+		int[][] posContext = null;
+		if (lemmaForwardIndex != null) {
+			// Get lemma and pos context as well
+			getContextWords(doc, lemmaForwardIndex, startsOfWords, endsOfWords, hits);
+			lemmaContext = getContextFromHits(hits);
+			getContextWords(doc, posForwardIndex, startsOfWords, endsOfWords, hits);
+			posContext = getContextFromHits(hits);
+		}
+
+		// Get word context
+		getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
 
 		// Make the concordances from the context
 		Terms terms = forwardIndex.getTerms();
 		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
+		Terms lemmaTerms = lemmaForwardIndex == null ? null : lemmaForwardIndex.getTerms();
+		Terms posTerms = posForwardIndex == null ? null : posForwardIndex.getTerms();
 		for (int i = 0; i < hits.size(); i++) {
 			Hit h = hits.get(i);
 			StringBuilder[] part = new StringBuilder[3];
@@ -1260,7 +1265,7 @@ public class Searcher {
 						current.append(" ");
 					}
 					else
-						current.append(punctTerms.getFromSortPosition(h.context[j]));
+						current.append(punctTerms.getFromSortPosition(punctContext[i][j]));
 				}
 
 				if (currentPart == 0 && j == h.contextHitStart) {
@@ -1273,7 +1278,22 @@ public class Searcher {
 					current.append(" ");
 				}*/
 
-				current.append(terms.getFromSortPosition(context[i][j]));
+				if (lemmaContext != null) {
+					// Make word tag with lemma and pos attributes
+					current
+						.append("<w lemma=\"")
+						.append(StringUtil.escapeXmlChars(lemmaTerms.getFromSortPosition(lemmaContext[i][j])))
+						.append("\" pos=\"")
+						.append(StringUtil.escapeXmlChars(posTerms.getFromSortPosition(posContext[i][j])))
+						.append("\">");
+				}
+
+				current.append(terms.getFromSortPosition(h.context[j]));
+
+				if (lemmaContext != null) {
+					// End word tag
+					current.append("</w>");
+				}
 			}
 			/*if (part[0].length() > 0)
 				part[0].append(" ");*/
@@ -1281,6 +1301,21 @@ public class Searcher {
 			Concordance concordance = new Concordance(concStr);
 			conc.put(h, concordance);
 		}
+	}
+
+	/**
+	 * Get the context information from the list of hits, so we can
+	 * look up a different context but still have access to this one as well.
+	 * @param hits the hits to save the context for
+	 * @return the context
+	 */
+	private int[][] getContextFromHits(List<Hit> hits) {
+		int[][] context = new int[hits.size()][];
+		for (int i = 0; i < hits.size(); i++) {
+			Hit h = hits.get(i);
+			context[i] = h.context;
+		}
+		return context;
 	}
 
 	/**
@@ -1550,9 +1585,17 @@ public class Searcher {
 		String punctPropName = ComplexFieldUtil.propertyField(fieldName, ComplexFieldUtil.PUNCTUATION_PROP_NAME);
 		ForwardIndex punctForwardIndex = getForwardIndex(punctPropName);
 
+		// @@@ TODO experimental, should be parameterized to deal with different index formats
+
+		String lemmaPropName = ComplexFieldUtil.propertyField(fieldName, "lemma");
+		ForwardIndex lemmaForwardIndex = getForwardIndex(lemmaPropName);
+
+		String posPropName = ComplexFieldUtil.propertyField(fieldName, "type");
+		ForwardIndex posForwardIndex = getForwardIndex(posPropName);
+
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeConcordancesSingleDocForwardIndex(l, forwardIndex, punctForwardIndex, contextSize, conc);
+			makeConcordancesSingleDocForwardIndex(l, forwardIndex, punctForwardIndex, lemmaForwardIndex, posForwardIndex, contextSize, conc);
 		}
 		return conc;
 	}
