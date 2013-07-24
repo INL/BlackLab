@@ -33,6 +33,8 @@ public class BLSpansWrapper extends BLSpans {
 	private Spans source;
 
 	public BLSpansWrapper(Spans source) {
+		if (source == null)
+			throw new RuntimeException("Cannot wrap null Spans!");
 		this.source = source;
 	}
 

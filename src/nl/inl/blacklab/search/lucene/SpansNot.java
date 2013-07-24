@@ -77,7 +77,7 @@ class SpansNot extends BLSpans {
 	public SpansNot(IndexReader reader, String fieldName, Spans clause) {
 		this.reader = reader;
 		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
-		this.clause = BLSpansWrapper.optWrap(clause);
+		this.clause = clause == null ? null : BLSpansWrapper.optWrap(clause);
 
 		done = false;
 		moreHitsInClause = true;
