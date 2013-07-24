@@ -1186,14 +1186,14 @@ public class Searcher {
 	 *
 	 * @param hits
 	 *            the hits in question
-	 * @param fiidFieldName
-	 *    Lucene field name containing fiid's for word FI
 	 * @param forwardIndex
 	 *    Forward index for the words
-	 * @param punctPropFiidName
-	 *    Lucene field name containing fiid's for punctuation FI
 	 * @param punctForwardIndex
 	 *    Forward index for the punctuation
+	 * @param lemmaForwardIndex
+	 *    Forward index for lemmas, or null if none
+	 * @param posForwardIndex
+	 *    Forward index for the part of speech, or null if none
 	 * @param fieldName
 	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
@@ -1202,7 +1202,7 @@ public class Searcher {
 	 *            where to add the concordances
 	 */
 	private void makeConcordancesSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
-			String fieldPropFiidName, ForwardIndex punctForwardIndex, String punctPropFiidName, int wordsAroundHit,
+			ForwardIndex punctForwardIndex, int wordsAroundHit,
 			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
@@ -1213,7 +1213,7 @@ public class Searcher {
 
 		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
 
-		getContextWords(doc, forwardIndex, fieldPropFiidName, startsOfWords, endsOfWords, hits);
+		getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
 
 		// Copy the context information out of the Hit objects, so we can get the punctuation
 		// context as well.
@@ -1229,7 +1229,7 @@ public class Searcher {
 
 		// Get punctuation context
 		if (punctForwardIndex != null) {
-			getContextWords(doc, punctForwardIndex, punctPropFiidName, startsOfWords, endsOfWords, hits);
+			getContextWords(doc, punctForwardIndex, startsOfWords, endsOfWords, hits);
 		}
 
 		// Make the concordances from the context
@@ -1297,7 +1297,7 @@ public class Searcher {
 	 *            number of words left and right of hit to fetch
 	 */
 	private void makeContextSingleDoc(List<Hit> hits, ForwardIndex forwardIndex,
-			String fieldPropFiidName, int wordsAroundHit) {
+			int wordsAroundHit) {
 		if (hits.size() == 0)
 			return;
 		int doc = hits.get(0).doc;
@@ -1307,7 +1307,7 @@ public class Searcher {
 
 		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
 
-		getContextWords(doc, forwardIndex, fieldPropFiidName, startsOfWords, endsOfWords, hits);
+		getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
 	}
 
 	/**
@@ -1376,7 +1376,7 @@ public class Searcher {
 	 * @param resultsList
 	 *            the list of results to add the context to
 	 */
-	private void getContextWords(int doc, ForwardIndex forwardIndex, String fieldPropFiidName,
+	private void getContextWords(int doc, ForwardIndex forwardIndex,
 			int[] startsOfWords, int[] endsOfWords, List<Hit> resultsList) {
 		int n = startsOfWords.length / 2;
 		int[] startsOfSnippets = new int[n];
@@ -1545,16 +1545,14 @@ public class Searcher {
 		}
 
 		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
-		String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldPropName);
 
 		String fieldName = ComplexFieldUtil.getBaseName(fieldPropName);
 		String punctPropName = ComplexFieldUtil.propertyField(fieldName, ComplexFieldUtil.PUNCTUATION_PROP_NAME);
 		ForwardIndex punctForwardIndex = getForwardIndex(punctPropName);
-		String punctFiidFieldName = ComplexFieldUtil.forwardIndexIdField(punctPropName);
 
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeConcordancesSingleDocForwardIndex(l, forwardIndex, fiidFieldName, punctForwardIndex, punctFiidFieldName, contextSize, conc);
+			makeConcordancesSingleDocForwardIndex(l, forwardIndex, punctForwardIndex, contextSize, conc);
 		}
 		return conc;
 	}
@@ -1587,10 +1585,9 @@ public class Searcher {
 		}
 
 		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
-		String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(fieldPropName);
 
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeContextSingleDoc(l, forwardIndex, fiidFieldName, contextSize);
+			makeContextSingleDoc(l, forwardIndex, contextSize);
 		}
 	}
 
@@ -1618,6 +1615,7 @@ public class Searcher {
 	 *
 	 * @param indexXmlDir
 	 *            the content store directory
+	 * @param create if true, create a new content store even if one exists
 	 * @return the content store
 	 * @deprecated renamed to openContentStore()
 	 */
@@ -1631,6 +1629,7 @@ public class Searcher {
 	 *
 	 * @param indexXmlDir
 	 *            the content store directory
+	 * @param create if true, create a new content store even if one exists
 	 * @return the content store
 	 */
 	public ContentStore openContentStore(File indexXmlDir, boolean create) {
