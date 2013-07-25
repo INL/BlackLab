@@ -188,7 +188,6 @@ class ForwardIndexImplV2 extends ForwardIndex {
 	}
 
 	public ForwardIndexImplV2(File dir, boolean indexMode, Collator collator, boolean create) {
-		logger.debug("Opening forward index " + dir);
 		if (!dir.exists()) {
 			if (!create)
 				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
@@ -222,11 +221,8 @@ class ForwardIndexImplV2 extends ForwardIndex {
 		try {
 			boolean existing = false;
 			if (tocFile.exists()) {
-				//logger.debug("FI: reading table of contents...");
 				readToc();
-				//logger.debug("FI: table of contents read. Reading terms file...");
 				terms = new TermsImplV2(indexMode, collator, termsFile);
-				//logger.debug("FI: terms file read.");
 				existing = true;
 				tocModified = false;
 			} else {
@@ -242,10 +238,8 @@ class ForwardIndexImplV2 extends ForwardIndex {
 																// Windows
 				long free = MemoryUtil.getFree();
 
-				logger.debug("Free memory = " + free);
 				if (!indexMode && keepInMemoryIfPossible && free - keepMemoryFree >= tokensFile.length()) {
 					// Enough free memory; cache whole file
-					logger.debug("FI: reading entire tokens file into memory");
 					// NOTE: we can't add to the file this way, so we only use this in search mode
 					memoryMapTokensFile(true);
 
@@ -255,7 +249,6 @@ class ForwardIndexImplV2 extends ForwardIndex {
 					tokensFileChannel = null;
 
 				} else if (!indexMode && useMemoryMapping) {
-					logger.debug("FI: memory-mapping the tokens file");
 
 					// Memory-map the file (sometimes fails on Windows with large files..? Increase
 					// direct buffer size with cmdline option?)
@@ -266,7 +259,6 @@ class ForwardIndexImplV2 extends ForwardIndex {
 				} else {
 					// Don't cache whole file in memory, don't use memory mapping. Just read from
 					// file channel.
-					logger.debug("FI: no memory-mapping tokens file");
 				}
 			}
 
@@ -324,7 +316,6 @@ class ForwardIndexImplV2 extends ForwardIndex {
 			if (keepInMemory) {
 				mapping = ByteBuffer.allocate((int)sizeBytes);
 				tokensFileChannel.position(startOfNextMappingBytes);
-				logger.debug("Read tokens file offset " + startOfNextMappingBytes + " length " + sizeBytes);
 				int bytesRead = tokensFileChannel.read(mapping);
 				if (bytesRead != mapping.capacity()) {
 					throw new RuntimeException("Could not read tokens file chunk into memory!");

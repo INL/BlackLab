@@ -115,7 +115,6 @@ class TermsImplV2 extends Terms {
 			MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, termsFile.length());
 			try {
 				int n = buf.getInt();
-				logger.debug("Reading terms file containing " + n + " terms...");
 
 				if (!indexMode) {
 					terms = new String[n];

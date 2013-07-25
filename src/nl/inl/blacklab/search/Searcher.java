@@ -211,6 +211,8 @@ public class Searcher {
 			throw new RuntimeException("BlackLab index has wrong type or version! "
 					+ VersionFile.report(indexDir));
 
+		logger.debug("Constructing Searcher...");
+
 		// Open Lucene index
 		indexReader = IndexReader.open(FSDirectory.open(indexDir));
 
@@ -226,7 +228,6 @@ public class Searcher {
 		if (indexStructure.getMainContentsField().hasPunctuation()) {
 			concordancesFromForwardIndex = true;
 		}
-		logger.debug("Make concordances from forward index: " + (concordancesFromForwardIndex ? "TRUE" : "FALSE"));
 
 		// Register content stores
 		for (String cfn: indexStructure.getComplexFields()) {
@@ -242,6 +243,7 @@ public class Searcher {
 		}
 
 		init();
+		logger.debug("Done.");
 	}
 
 	/**
@@ -252,6 +254,9 @@ public class Searcher {
 
 		// Make sure large wildcard/regex expansions succeed
 		BooleanQuery.setMaxClauseCount(100000);
+
+		// Open the forward indices
+		openForwardIndices();
 	}
 
 	/**
@@ -1454,7 +1459,6 @@ public class Searcher {
 	 * Opens all the forward indices, to avoid this delay later.
 	 */
 	public void openForwardIndices() {
-		logger.debug("Opening all forward indices. This may take a while...");
 		for (String field: indexStructure.getComplexFields()) {
 			ComplexFieldDesc fieldDesc = indexStructure.getComplexFieldDesc(field);
 			for (String property: fieldDesc.getProperties()) {
@@ -1465,7 +1469,6 @@ public class Searcher {
 				}
 			}
 		}
-		logger.debug("All forward indices opened.");
 	}
 
 	/**
