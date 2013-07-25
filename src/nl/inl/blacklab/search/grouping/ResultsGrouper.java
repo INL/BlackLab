@@ -55,7 +55,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	/**
 	 * Field our current concordances came from.
 	 */
-	private String contextField;
+	private List<String> contextField;
 
 	/**
 	 * Total number of hits.
@@ -95,7 +95,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	public ResultsGrouper(Hits hits, HitProperty criteria) {
 		super(hits.getSearcher(), criteria);
 		defaultConcField = hits.getConcordanceFieldName();
-		String requiredContext = criteria.needsContext();
+		List<String> requiredContext = criteria.needsContext();
 		if (requiredContext != null)
 			hits.findContext(requiredContext);
 		contextField = hits.getContextFieldPropName();

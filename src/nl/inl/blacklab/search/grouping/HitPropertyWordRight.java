@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Hit;
@@ -55,7 +58,8 @@ public class HitPropertyWordRight extends HitProperty {
 
 		if (result.context.length <= result.contextRightStart)
 			return new HitPropValueContextWord(terms, -1);
-		return new HitPropValueContextWord(terms, result.context[result.contextRightStart]);
+		int contextStart = result.contextLength * contextIndices.get(0);
+		return new HitPropValueContextWord(terms, result.context[contextStart + result.contextRightStart]);
 	}
 
 	@Override
@@ -67,12 +71,14 @@ public class HitPropertyWordRight extends HitProperty {
 		if (b.context.length <= b.contextRightStart)
 			return 1;
 		// Compare one word to the right of the hit
-		return a.context[a.contextRightStart] - b.context[b.contextRightStart];
+		int contextIndex = contextIndices.get(0);
+		return a.context[contextIndex * a.contextLength + a.contextRightStart]
+				- b.context[contextIndex * b.contextLength + b.contextRightStart];
 	}
 
 	@Override
-	public String needsContext() {
-		return fieldName;
+	public List<String> needsContext() {
+		return Arrays.asList(fieldName);
 	}
 
 	@Override

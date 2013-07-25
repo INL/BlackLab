@@ -17,6 +17,7 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -65,7 +66,7 @@ public class Hits implements Iterable<Hit> {
 	 * If we have context information, this specifies the property (i.e. word, lemma, pos) the context came from.
 	 * Otherwise, it is null.
 	 */
-	protected String contextFieldPropName;
+	protected List<String> contextFieldsPropName;
 
 	/**
 	 * The default field to use for retrieving concordance information.
@@ -263,7 +264,7 @@ public class Hits implements Iterable<Hit> {
 
 		// Reset context and concordances so we get the correct context size next time
 		currentContextSize = -1;
-		contextFieldPropName = null;
+		contextFieldsPropName = null;
 		concordances = null;
 	}
 
@@ -279,8 +280,7 @@ public class Hits implements Iterable<Hit> {
 	Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
 		try {
 			IndexReader reader = null;
-			if (searcher != null) { // this may happen while testing with stub classes; don't try to
-									// rewrite
+			if (searcher != null) { // this may happen while testing with stub classes
 				reader = searcher.getIndexReader();
 			}
 			spanQuery = (SpanQuery) spanQuery.rewrite(reader);
@@ -422,9 +422,9 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Do we need context and don't we have it yet?
-		String requiredContext = sortProp.needsContext();
+		List<String> requiredContext = sortProp.needsContext();
 		if (requiredContext != null
-				&& (!requiredContext.equals(contextFieldPropName) || currentContextSize != desiredContextSize)) {
+				&& (!requiredContext.equals(contextFieldsPropName) || currentContextSize != desiredContextSize)) {
 			// Get 'em
 			findContext(requiredContext);
 		}
@@ -625,26 +625,36 @@ public class Hits implements Iterable<Hit> {
 	 * Retrieve context words for the hits.
 	 *
 	 * @param fieldPropName
-	 *            the field and property to use for the concordances
+	 *            the field and property to use for the context
 	 */
 	public void findContext(String fieldPropName) {
+		findContext(Arrays.asList(fieldPropName));
+	}
+
+	/**
+	 * Retrieve context words for the hits.
+	 *
+	 * @param fieldProps
+	 *            the field and properties to use for the context
+	 */
+	public void findContext(List<String> fieldProps) {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Just go ahead with the hits we did
 			// get, so at least we can return with valid context.
 		}
-		// Make sure we don't have the desired concordances already
-		if (contextFieldPropName != null && fieldPropName.equals(contextFieldPropName)
+		// Make sure we don't have the desired context already
+		if (contextFieldsPropName != null && fieldProps.equals(contextFieldsPropName)
 				&& desiredContextSize == currentContextSize) {
 			return;
 		}
 
-		// Get the concordances
-		searcher.retrieveContext(fieldPropName, hits, desiredContextSize);
+		// Get the context
+		searcher.retrieveContext(fieldProps, hits, desiredContextSize);
 		currentContextSize = desiredContextSize;
 
-		contextFieldPropName = fieldPropName;
+		contextFieldsPropName = fieldProps == null ? fieldProps : new ArrayList<String>(fieldProps);
 	}
 
 	/**
@@ -673,7 +683,7 @@ public class Hits implements Iterable<Hit> {
 		for (Hit hit: hits) {
 			hit.context = null;
 		}
-		contextFieldPropName = null;
+		contextFieldsPropName = null;
 	}
 
 	/**
@@ -720,7 +730,8 @@ public class Hits implements Iterable<Hit> {
 		boolean diacSensitive = searcher.isDefaultSearchDiacriticsSensitive();
 		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
 		// Map<String, Integer> collStr = new HashMap<String, Integer>();
-		Terms terms = searcher.getTerms(contextFieldPropName);
+		// FIXME: get collocations for multiple contexts?
+		Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
 			String word = terms.getFromSortPosition(e.getKey());
 			if (!diacSensitive) {
@@ -776,8 +787,8 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the field name
 	 */
-	public String getContextFieldPropName() {
-		return contextFieldPropName;
+	public List<String> getContextFieldPropName() {
+		return contextFieldsPropName;
 	}
 
 	/**
@@ -803,8 +814,8 @@ public class Hits implements Iterable<Hit> {
 		return hits.subList(fromIndex, toIndex);
 	}
 
-	public void setContextField(String contextField) {
-		this.contextFieldPropName = contextField;
+	public void setContextField(List<String> contextField) {
+		this.contextFieldsPropName = contextField == null ? null : new ArrayList<String>(contextField);
 	}
 
 	/**

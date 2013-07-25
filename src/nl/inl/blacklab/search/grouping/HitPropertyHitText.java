@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Hit;
@@ -58,7 +61,12 @@ public class HitPropertyHitText extends HitProperty {
 		if (n <= 0)
 			return new HitPropValueContextWords(terms, new int[0]);
 		int[] dest = new int[n];
-		System.arraycopy(result.context, result.contextHitStart, dest, 0, n);
+		int contextStart = result.contextLength * contextIndices.get(0);
+		try {
+			System.arraycopy(result.context, contextStart + result.contextHitStart, dest, 0, n);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 		return new HitPropValueContextWords(terms, dest);
 	}
 
@@ -67,11 +75,18 @@ public class HitPropertyHitText extends HitProperty {
 		Hit a = (Hit) oa, b = (Hit) ob;
 
 		// Compare the hit context for these two hits
+		int contextIndex = contextIndices.get(0);
 		int ai = a.contextHitStart;
 		int bi = b.contextHitStart;
 		while (ai < a.contextRightStart && bi < b.contextRightStart) {
-			int ac = a.context[ai];
-			int bc = b.context[bi];
+			int ac;
+			int bc;
+			try {
+				ac = a.context[contextIndex * a.contextLength + ai];
+				bc = b.context[contextIndex * b.contextLength + bi];
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 			if (ac != bc) {
 				return ac - bc;
 			}
@@ -90,8 +105,8 @@ public class HitPropertyHitText extends HitProperty {
 	}
 
 	@Override
-	public String needsContext() {
-		return fieldName;
+	public List<String> needsContext() {
+		return Arrays.asList(fieldName);
 	}
 
 	@Override

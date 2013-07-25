@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Hit;
@@ -58,7 +61,8 @@ public class HitPropertyLeftContext extends HitProperty {
 		if (n <= 0)
 			return new HitPropValueContextWords(terms, new int[0]);
 		int[] dest = new int[n];
-		System.arraycopy(result.context, result.contextHitStart, dest, 0, n);
+		int contextStart = result.contextLength * contextIndices.get(0);
+		System.arraycopy(result.context, contextStart + result.contextHitStart, dest, 0, n);
 
 		// Reverse the order of the array, because we want to sort from right to left
 		for (int i = 0; i < n / 2; i++) {
@@ -76,11 +80,12 @@ public class HitPropertyLeftContext extends HitProperty {
 		Hit a = (Hit) oa, b = (Hit) ob;
 
 		// Compare the left context for these two hits, starting at the end
+		int contextIndex = contextIndices.get(0);
 		int ai = a.contextHitStart - 1;
 		int bi = b.contextHitStart - 1;
 		while (ai >= 0 && bi >= 0) {
-			int ac = a.context[ai];
-			int bc = b.context[bi];
+			int ac = a.context[contextIndex * a.contextLength + ai];
+			int bc = b.context[contextIndex * b.contextLength + bi];
 			if (ac != bc) {
 				// Found a difference; comparison finished.
 				return ac - bc;
@@ -100,8 +105,8 @@ public class HitPropertyLeftContext extends HitProperty {
 	}
 
 	@Override
-	public String needsContext() {
-		return fieldName;
+	public List<String> needsContext() {
+		return Arrays.asList(fieldName);
 	}
 
 	@Override

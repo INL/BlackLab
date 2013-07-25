@@ -51,7 +51,7 @@ public class HitsWindow extends Hits {
 		this.source = source;
 		this.first = first;
 		this.windowSize = windowSize;
-		this.contextFieldPropName = source.contextFieldPropName;
+		this.contextFieldsPropName = source.contextFieldsPropName;
 
 		// Error if first out of range
 		boolean emptyResultSet = !source.sizeAtLeast(1);

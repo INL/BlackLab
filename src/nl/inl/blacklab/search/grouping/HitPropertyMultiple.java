@@ -28,6 +28,8 @@ import nl.inl.blacklab.search.Hit;
 public class HitPropertyMultiple extends HitProperty implements Iterable<HitProperty> {
 	List<HitProperty> criteria;
 
+	List<String> contextNeeded;
+
 	/**
 	 * Quick way to create group criteria. Just call this method with the GroupCriterium object(s)
 	 * you want.
@@ -37,6 +39,30 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	 */
 	public HitPropertyMultiple(HitProperty... criteria) {
 		this.criteria = new ArrayList<HitProperty>(Arrays.asList(criteria));
+
+		// Figure out what context(s) we need
+		List<String> result = new ArrayList<String>();
+		for (HitProperty prop : criteria) {
+			List<String> requiredContext = prop.needsContext();
+			if (requiredContext != null) {
+				for (String c: requiredContext) {
+					if (!result.contains(c))
+						result.add(c);
+				}
+			}
+		}
+		contextNeeded = result.isEmpty() ? null : result;
+
+		// Let criteria know what context number(s) they need
+		for (HitProperty prop : criteria) {
+			List<String> requiredContext = prop.needsContext();
+			List<Integer> contextNumbers = new ArrayList<Integer>();
+			for (String c: requiredContext) {
+				contextNumbers.add(contextNeeded.indexOf(c));
+			}
+			prop.setContextIndices(contextNumbers);
+		}
+		contextNeeded = result.isEmpty() ? null : result;
 	}
 
 	@Override
@@ -77,13 +103,8 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	}
 
 	@Override
-	public String needsContext() {
-		for (HitProperty prop : criteria) {
-			String requiredContext = prop.needsContext();
-			if (requiredContext != null)
-				return requiredContext;  // FIXME: what if multiple different contexts are required? sort/group in phases?
-		}
-		return null;
+	public List<String> needsContext() {
+		return contextNeeded;
 	}
 
 	@Override

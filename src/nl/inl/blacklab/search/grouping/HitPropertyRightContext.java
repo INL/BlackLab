@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Hit;
@@ -58,7 +61,8 @@ public class HitPropertyRightContext extends HitProperty {
 		if (n <= 0)
 			return new HitPropValueContextWords(terms, new int[0]);
 		int[] dest = new int[n];
-		System.arraycopy(result.context, result.contextRightStart, dest, 0, n);
+		int contextStart = result.contextLength * contextIndices.get(0);
+		System.arraycopy(result.context, contextStart + result.contextRightStart, dest, 0, n);
 		return new HitPropValueContextWords(terms, dest);
 	}
 
@@ -67,11 +71,12 @@ public class HitPropertyRightContext extends HitProperty {
 		Hit a = (Hit) oa, b = (Hit) ob;
 
 		// Compare the right context for these two hits
+		int contextIndex = contextIndices.get(0);
 		int ai = a.contextRightStart;
 		int bi = b.contextRightStart;
 		while (ai < a.context.length && bi < b.context.length) {
-			int ac = a.context[ai];
-			int bc = b.context[bi];
+			int ac = a.context[contextIndex * a.contextLength + ai];
+			int bc = b.context[contextIndex * b.contextLength + bi];
 			if (ac != bc) {
 				return ac - bc;
 			}
@@ -79,8 +84,8 @@ public class HitPropertyRightContext extends HitProperty {
 			bi++;
 		}
 		// One or both ran out, and so far, they're equal.
-		if (ai >= a.context.length) {
-			if (bi < b.context.length) {
+		if (ai >= a.contextLength) {
+			if (bi < b.contextLength) {
 				// b longer than a => a < b
 				return -1;
 			}
@@ -90,8 +95,8 @@ public class HitPropertyRightContext extends HitProperty {
 	}
 
 	@Override
-	public String needsContext() {
-		return fieldName;
+	public List<String> needsContext() {
+		return Arrays.asList(fieldName);
 	}
 
 	@Override

@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.grouping;
 
 import java.util.Iterator;
+import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
@@ -131,7 +132,7 @@ public class RandomAccessGroup extends Group {
 		};
 	}
 
-	public void setContextField(String contextField) {
+	public void setContextField(List<String> contextField) {
 		 results.setContextField(contextField);
 	}
 
