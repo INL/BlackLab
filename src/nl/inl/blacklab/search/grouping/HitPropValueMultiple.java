@@ -29,10 +29,10 @@ public class HitPropValueMultiple extends HitPropValue {
 		StringBuilder b = new StringBuilder();
 		for (HitPropValue v: value) {
 			if (b.length() > 0)
-				b.append(",");
+				b.append(" / ");
 			b.append(v.toString());
 		}
-		return "HitPropValueMultiple[" + b.toString() + "]";
+		return b.toString();
 	}
 
 	public static HitPropValueMultiple deserialize(Terms terms, String info) {
