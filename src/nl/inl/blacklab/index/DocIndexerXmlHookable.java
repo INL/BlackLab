@@ -200,6 +200,8 @@ public abstract class DocIndexerXmlHookable extends DocIndexerAbstract {
 	 *
 	 * @param source
 	 *            the source string
+	 * @param start start index of the string to escape
+	 * @param length length of the string to escape
 	 * @return the escaped string
 	 */
 	public String escapeXmlChars(char[] source, int start, int length) {

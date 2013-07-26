@@ -144,6 +144,8 @@ public class Indexer {
 	 *            the main BlackLab index directory
 	 * @param create
 	 *            if true, creates a new index; otherwise, appends to existing index
+	 * @param docIndexerClass how to index the files
+	 * @param contentsFieldName name of the main contents field
 	 * @throws IOException
 	 * @deprecated use version without contents field name
 	 */
@@ -159,6 +161,7 @@ public class Indexer {
 	 *            the main BlackLab index directory
 	 * @param create
 	 *            if true, creates a new index; otherwise, appends to existing index
+	 * @param docIndexerClass how to index the files
 	 * @throws IOException
 	 */
 	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass) throws IOException {
@@ -167,7 +170,6 @@ public class Indexer {
 
 		writer = openIndexWriter(directory, create);
 		indexLocation = directory;
-		//contentStore = new ContentStoreDirZip(new File(directory, "cs_" + contentsFieldName), create);
 	}
 
 	/**
@@ -480,6 +482,8 @@ public class Indexer {
 	 *
 	 * @param dir
 	 *            directory to index
+	 * @param glob what files to index
+	 * @param recurseSubdirs whether or not to index subdirectories
 	 * @throws UnsupportedEncodingException
 	 * @throws FileNotFoundException
 	 * @throws Exception

@@ -28,6 +28,8 @@ import nl.inl.util.PropertiesUtil;
 public class IndexAlto {
 	/**
 	 * If true, always wipes existing index. If false, appends to existing index.
+	 * @param args commandline arguments
+	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
 		System.out.println("IndexAlto\n");

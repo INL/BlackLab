@@ -17,7 +17,8 @@ package nl.inl.util;
 
 import java.util.Comparator;
 
-/** Comparator that reverses the sort order of another comparator */
+/** Comparator that reverses the sort order of another comparator
+ * @param <T> type to compare */
 public class ReverseComparator<T> implements Comparator<T> {
 	private Comparator<T> comparator;
 

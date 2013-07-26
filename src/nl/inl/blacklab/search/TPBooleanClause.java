@@ -31,6 +31,8 @@ public class TPBooleanClause {
 
 	/**
 	 * Constructs a TPBooleanClause.
+	 * @param query the clause
+	 * @param occur if the clause should, must or must not occur
 	 */
 	public TPBooleanClause(TextPattern query, Occur occur) {
 		this.query = query;

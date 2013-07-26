@@ -156,6 +156,7 @@ public class PropertiesUtil {
 	 *            where to read the value from
 	 * @param name
 	 *            the value's name
+	 * @param defaultValue default value if the property was not specified
 	 * @param basePath
 	 *            base path the file path may be relative to
 	 * @return the file, or null if not found
@@ -186,6 +187,7 @@ public class PropertiesUtil {
 	 *            where to read the value from
 	 * @param name
 	 *            the value's name
+	 * @param defaultValue default value if the property was not specified
 	 * @return the boolean value
 	 * @throws RuntimeException
 	 *             on illegal value
