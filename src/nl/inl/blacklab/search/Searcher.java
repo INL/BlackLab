@@ -1453,7 +1453,7 @@ public class Searcher {
 		int[] endsOfSnippets = new int[n];
 		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
 			startsOfSnippets[j] = startsOfWords[i];
-			endsOfSnippets[j] = endsOfWords[i + 1];
+			endsOfSnippets[j] = endsOfWords[i + 1] + 1;
 		}
 
 		int fiNumber = 0;
