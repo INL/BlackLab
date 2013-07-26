@@ -155,6 +155,15 @@ public class Searcher {
 	 */
 	private boolean concordancesFromForwardIndex = false;
 
+	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
+	String concWordFI = "word";
+
+	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
+	String concPunctFI = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
+
+	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
+	Collection<String> concAttrFI = null; // all other FIs are attributes
+
 	/**
 	 * Are we making concordances using the forward index (true) or using
 	 * the content store (false)? Forward index is more efficient but returns
@@ -1200,10 +1209,8 @@ public class Searcher {
 	 *    Forward index for the words
 	 * @param punctForwardIndex
 	 *    Forward index for the punctuation
-	 * @param lemmaForwardIndex
-	 *    Forward index for lemmas, or null if none
-	 * @param posForwardIndex
-	 *    Forward index for the part of speech, or null if none
+	 * @param attrForwardIndices
+	 *    Forward indices for the attributes, or null if none
 	 * @param fieldName
 	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
@@ -1212,7 +1219,7 @@ public class Searcher {
 	 *            where to add the concordances
 	 */
 	private void makeConcordancesSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
-			ForwardIndex punctForwardIndex, ForwardIndex lemmaForwardIndex, ForwardIndex posForwardIndex, int wordsAroundHit,
+			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices, int wordsAroundHit,
 			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
@@ -1234,25 +1241,36 @@ public class Searcher {
 			getContextWords(doc, punctForwardIndex, startsOfWords, endsOfWords, hits);
 			punctContext = getContextFromHits(hits);
 		}
+		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
 
-		int[][] lemmaContext = null;
-		int[][] posContext = null;
-		if (lemmaForwardIndex != null) {
-			// Get lemma and pos context as well
-			getContextWords(doc, lemmaForwardIndex, startsOfWords, endsOfWords, hits);
-			lemmaContext = getContextFromHits(hits);
-			getContextWords(doc, posForwardIndex, startsOfWords, endsOfWords, hits);
-			posContext = getContextFromHits(hits);
+		// Get attributes context
+		String[] attrName = null;
+		ForwardIndex[] attrFI = null;
+		Terms[] attrTerms = null;
+		int[][][] attrContext = null;
+		if (attrForwardIndices != null) {
+			int n = attrForwardIndices.size();
+			attrName = new String[n];
+			attrFI = new ForwardIndex[n];
+			attrTerms = new Terms[n];
+			attrContext = new int[n][][];
+			int i = 0;
+			for (Map.Entry<String, ForwardIndex> e: attrForwardIndices.entrySet()) {
+				attrName[i] = e.getKey();
+				attrFI[i] = e.getValue();
+				attrTerms[i] = attrFI[i].getTerms();
+				getContextWords(doc, attrFI[i], startsOfWords, endsOfWords, hits);
+				attrContext[i] = getContextFromHits(hits);
+				i++;
+			}
 		}
 
 		// Get word context
-		getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
+		if (forwardIndex != null)
+			getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
+		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
 
 		// Make the concordances from the context
-		Terms terms = forwardIndex.getTerms();
-		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
-		Terms lemmaTerms = lemmaForwardIndex == null ? null : lemmaForwardIndex.getTerms();
-		Terms posTerms = posForwardIndex == null ? null : posForwardIndex.getTerms();
 		for (int i = 0; i < hits.size(); i++) {
 			Hit h = hits.get(i);
 			StringBuilder[] part = new StringBuilder[3];
@@ -1286,27 +1304,25 @@ public class Searcher {
 					current = part[currentPart];
 				}
 
-				/* DON'T ADD SPACE; THIS IS STORED IN PUNCT FI
-				if (current.length() > 0 || currentPart == 2) {
-					current.append(" ");
-				}*/
-
-				if (lemmaContext != null) {
-					// Make word tag with lemma and pos attributes
-					current
-						.append("<w lemma=\"")
-						.append(StringUtil.escapeXmlChars(lemmaTerms.getFromSortPosition(lemmaContext[i][j])))
-						.append("\" type=\"")
-						.append(StringUtil.escapeXmlChars(posTerms.getFromSortPosition(posContext[i][j])))
-						.append("\">");
+				// Make word tag with lemma and pos attributes
+				current.append("<w");
+				if (attrContext != null) {
+					for (int k = 0; k < attrContext.length; k++) {
+						current
+						 	.append(" ")
+							.append(attrName[k])
+							.append("=\"")
+							.append(StringUtil.escapeXmlChars(attrTerms[k].getFromSortPosition(attrContext[k][i][j])))
+							.append("\"");
+					}
 				}
+				current.append(">");
 
-				current.append(terms.getFromSortPosition(h.context[j]));
+				if (terms != null)
+					current.append(terms.getFromSortPosition(h.context[j]));
 
-				if (lemmaContext != null) {
-					// End word tag
-					current.append("</w>");
-				}
+				// End word tag
+				current.append("</w>");
 			}
 			/*if (part[0].length() > 0)
 				part[0].append(" ");*/
@@ -1593,6 +1609,19 @@ public class Searcher {
 	}
 
 	/**
+	 * Indicate how to use the forward indices to build concordances.
+	 *
+	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
+	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
+	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
+	 */
+	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
+		concWordFI = wordFI;
+		concPunctFI = punctFI;
+		concAttrFI = attrFI;
+	}
+
+	/**
 	 * Retrieve concordancs for a list of hits using the forward index.
 	 *
 	 * Concordances are the hit words 'centered' with a certain number of context words around them.
@@ -1623,22 +1652,34 @@ public class Searcher {
 			hitsInDoc.add(key);
 		}
 
-		ForwardIndex forwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, "word"));
+		ForwardIndex forwardIndex = null;
+		if (concWordFI != null)
+			forwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, concWordFI));
 
-		String punctPropName = ComplexFieldUtil.propertyField(fieldName, ComplexFieldUtil.PUNCTUATION_PROP_NAME);
-		ForwardIndex punctForwardIndex = getForwardIndex(punctPropName);
+		ForwardIndex punctForwardIndex = null;
+		if (concPunctFI != null)
+			punctForwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, concPunctFI));
 
-		// @@@ TODO experimental, should be parameterized to deal with different index formats
-
-		String lemmaPropName = ComplexFieldUtil.propertyField(fieldName, "lemma");
-		ForwardIndex lemmaForwardIndex = getForwardIndex(lemmaPropName);
-
-		String posPropName = ComplexFieldUtil.propertyField(fieldName, "type");
-		ForwardIndex posForwardIndex = getForwardIndex(posPropName);
+		Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
+		if (concAttrFI == null) {
+			// All other FIs are attributes
+			for (String p: forwardIndices.keySet()) {
+				String[] components = ComplexFieldUtil.getNameComponents(p);
+				String propName = components[1];
+				if (propName.equals(concWordFI) || propName.equals(concPunctFI))
+					continue;
+				attrForwardIndices.put(propName, getForwardIndex(p));
+			}
+		} else {
+			// Specific list of attribute FIs
+			for (String p: concAttrFI) {
+				attrForwardIndices.put(p, getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
+			}
+		}
 
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeConcordancesSingleDocForwardIndex(l, forwardIndex, punctForwardIndex, lemmaForwardIndex, posForwardIndex, contextSize, conc);
+			makeConcordancesSingleDocForwardIndex(l, forwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc);
 		}
 		return conc;
 	}
