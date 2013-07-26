@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.search.lucene.SpansWithHit;
-
-import org.apache.lucene.search.spans.Spans;
+import nl.inl.blacklab.search.lucene.BLSpans;
 
 /**
  * Class for a hit. Normally, hits are iterated over in a Lucene Spans object, but in some places,
@@ -44,15 +42,11 @@ public class Hit implements Comparable<Hit> {
 	 * @param spans
 	 *            the Spans to get the Hit from
 	 * @return the Hit [subclass] object
+	 * @deprecated use BLSpans.getHit()
 	 */
-	public static Hit getHit(Spans spans) {
-		if (spans instanceof SpansWithHit) {
-			// There's already a Hit [subclass] object available; return that
-			return ((SpansWithHit) spans).getHit();
-		}
-
-		// Nothing available yet; just instantiate a new basic hit object
-		return new Hit(spans.doc(), spans.start(), spans.end());
+	@Deprecated
+	public static Hit getHit(BLSpans spans) {
+		return spans.getHit();
 	}
 
 	/**
@@ -61,12 +55,14 @@ public class Hit implements Comparable<Hit> {
 	 * @param spans
 	 *            where to retrieve the hits
 	 * @return the list of hits
+	 * @deprecated use Hits class
 	 */
-	public static List<Hit> hitList(Spans spans) {
+	@Deprecated
+	public static List<Hit> hitList(BLSpans spans) {
 		List<Hit> result = new ArrayList<Hit>();
 		try {
 			while (spans.next()) {
-				result.add(getHit(spans));
+				result.add(spans.getHit());
 			}
 			return result;
 		} catch (IOException e) {

@@ -17,15 +17,17 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Hit;
-
 import org.apache.lucene.search.spans.Spans;
 
 /**
  * Remove consecutive duplicate hits from a source spans.
  */
 public class SpansUnique extends BLSpans {
-	private Hit previousHit = null;
+	private int prevDoc = -1;
+
+	private int prevStart = -1;
+
+	private int prevEnd = -1;
 
 	private BLSpans src;
 
@@ -59,14 +61,16 @@ public class SpansUnique extends BLSpans {
 		do {
 			if (nexted) {
 				// Save previous hit
-				previousHit = Hit.getHit(src);
+				prevDoc = src.doc();
+				prevStart = src.start();
+				prevEnd = src.end();
 			}
 			more = src.next();
 			nexted = true;
 			if (!more)
 				return false;
-		} while (previousHit != null && previousHit.doc == src.doc()
-				&& previousHit.start == src.start() && previousHit.end == src.end());
+		} while (prevDoc >= 0 && prevDoc == src.doc()
+				&& prevStart == src.start() && prevEnd == src.end());
 		return true;
 	}
 
@@ -75,7 +79,7 @@ public class SpansUnique extends BLSpans {
 		if (!more)
 			return false;
 
-		if (previousHit != null && target == src.doc()) {
+		if (prevDoc >= 0 && target == src.doc()) {
 			// We're already in the target doc. Just go to the next hit.
 			return next();
 		}

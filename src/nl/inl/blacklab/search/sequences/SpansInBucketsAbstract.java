@@ -76,6 +76,11 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 		return hits.get(index).end;
 	}
 
+	@Override
+	public Hit getHit(int index) {
+		return hits.get(index);
+	}
+
 	/**
 	 * Does the source Spans have more hits?
 	 */

@@ -17,6 +17,8 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Hit;
+
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets") instead of individual
  * matches like with Spans.
@@ -52,6 +54,8 @@ public interface SpansInBuckets {
 	int start(int index);
 
 	int end(int index);
+
+	Hit getHit(int index);
 
 	/**
 	 * Go to the next bucket.

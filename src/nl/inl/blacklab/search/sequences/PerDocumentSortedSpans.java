@@ -83,6 +83,11 @@ public class PerDocumentSortedSpans extends BLSpans {
 	}
 
 	@Override
+	public Hit getHit() {
+		return bucketedSpans.getHit(indexInBucket);
+	}
+
+	@Override
 	public boolean next() throws IOException {
 		do {
 			if (indexInBucket >= 0) {

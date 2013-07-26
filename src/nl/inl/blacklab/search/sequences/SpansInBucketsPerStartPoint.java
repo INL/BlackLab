@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.search.Hit;
+
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -134,5 +136,11 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	public int end(int index) {
 		return endPoints.get(index);
 	}
+
+	@Override
+	public Hit getHit(int index) {
+		return new Hit(doc(), start(index), end(index));
+	}
+
 
 }
