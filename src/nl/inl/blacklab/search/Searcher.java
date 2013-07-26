@@ -1561,20 +1561,18 @@ public class Searcher {
 	 * Searcher.setConcordanceContextSize().
 	 *
 	 * @param fieldName
-	 *            field to use for building concordances (if using content store)
-	 * @param propName
-	 *            property forward index to use for building concordances (if using FI)
+	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
 	 * @return the list of concordances
 	 */
-	public Map<Hit, Concordance> retrieveConcordances(String fieldName, String propName, List<Hit> hits,
+	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits,
 			int contextSize) {
 
 		if (concordancesFromForwardIndex) {
-			return retrieveConcordancesForwardIndex(propName, hits, contextSize);
+			return retrieveConcordancesForwardIndex(fieldName, hits, contextSize);
 		}
 
 		// Group hits per document
@@ -1604,15 +1602,15 @@ public class Searcher {
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
 	 *
-	 * @param fieldPropName
-	 *            field property to use for building concordances
+	 * @param fieldName
+	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
 	 * @return the list of concordances
 	 */
-	public Map<Hit, Concordance> retrieveConcordancesForwardIndex(String fieldPropName, List<Hit> hits,
+	public Map<Hit, Concordance> retrieveConcordancesForwardIndex(String fieldName, List<Hit> hits,
 			int contextSize) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
@@ -1625,9 +1623,8 @@ public class Searcher {
 			hitsInDoc.add(key);
 		}
 
-		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
+		ForwardIndex forwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, "word"));
 
-		String fieldName = ComplexFieldUtil.getBaseName(fieldPropName);
 		String punctPropName = ComplexFieldUtil.propertyField(fieldName, ComplexFieldUtil.PUNCTUATION_PROP_NAME);
 		ForwardIndex punctForwardIndex = getForwardIndex(punctPropName);
 

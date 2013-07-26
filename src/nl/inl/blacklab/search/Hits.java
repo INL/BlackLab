@@ -617,8 +617,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(concordanceFieldName,
-				concordanceMainFieldPropName, hits, desiredContextSize);
+		concordances = searcher.retrieveConcordances(concordanceFieldName, hits, desiredContextSize);
 	}
 
 	/**
