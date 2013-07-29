@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.util.regex.Pattern;
 
 import nl.inl.blacklab.index.DocIndexerXmlHookable;
+import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.HookHandler;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexField;
@@ -63,79 +64,71 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 		contentsField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, SensitivitySetting.ONLY_INSENSITIVE); // start tag positions (just NE tags for now)
 		contentsField.addProperty(ComplexFieldUtil.END_TAG_PROP_NAME, SensitivitySetting.ONLY_INSENSITIVE); // end tag positions (just NE tags for now)
 
-		addHook("//Word", new WordHandler(), true); // true because we want to be called for the character content of child elements
+		// Root element
 		addHook("//PcGts", new PcGtsHandler());
-		addHook("//Page", new PageHandler());
-		addHook("//NE", new NeHandler());
+
+		// Metadata elements in the header
 		addHook("//header/*", new MetadataHandler());
+
+		// Page element
+		addHook("//Page", new PageHandler());
+
+		// Words
+		addHook("//Word", new WordHandler(), true); // true because we want to be called for the character content of child elements
+
+		// Named entities
+		addHook("//NE", new NeHandler());
+
 	}
 
+	/** A new document was started. */
 	public void startDocument() {
 		startCaptureContent(contentsField.getName());
 	}
 
+	/** The current document ended. */
 	public void endDocument() {
+		// Finish storing the document in the document store (parts of it may already have been
+		// written because we write in chunks to save memory), retrieve the content id, and store
+		// that in Lucene.
+		int contentId = storeCapturedContent();
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.contentIdField(contentsField.getName()),
+				Store.YES, true).setIntValue(contentId));
+
+		// Store the different properties of the complex contents field that were gathered in
+		// lists while parsing.
+		contentsField.addToLuceneDoc(currentLuceneDoc);
+
+		// Add words property (case-sensitive tokens) to forward index and add id to Lucene doc
+		String wordPropFieldName = ComplexFieldUtil.propertyField(contentsField.getName(), contentsField.getMainProperty().getName());
+		int fiidContents = indexer.addToForwardIndex(wordPropFieldName, contentsField.getMainProperty().getValues());
+		currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(wordPropFieldName),
+				Store.YES, true).setIntValue(fiidContents));
+
 		try {
-			// Finish storing the document in the document store (parts of it may already have been
-			// written because we write in chunks to save memory), retrieve the content id, and store
-			// that in Lucene.
-			int contentId = storeCapturedContent();
-			currentLuceneDoc.add(new NumericField(ComplexFieldUtil.contentIdField(contentsField.getName()),
-					Store.YES, true).setIntValue(contentId));
-
-			// Store the different properties of the complex contents field that were gathered in
-			// lists while parsing.
-			contentsField.addToLuceneDoc(currentLuceneDoc);
-
-			// Add words property (case-sensitive tokens) to forward index
-			String wordPropFieldName = ComplexFieldUtil.propertyField(contentsField.getName(), contentsField.getMainProperty().getName());
-			int fiidContents = indexer.addToForwardIndex(wordPropFieldName, contentsField.getMainProperty().getValues());
-
-			currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(wordPropFieldName),
-					Store.YES, true).setIntValue(fiidContents));
-
+			// Add Lucene doc to indexer
 			indexer.add(currentLuceneDoc);
-			reportCharsProcessed();
-			reportTokensProcessed(wordsDone);
-			wordsDone = 0;
-			contentsField.clear();
-			if (!indexer.continueIndexing())
-				throw new MaxDocsReachedException();
-		} catch (MaxDocsReachedException e) {
-			// This is okay; just rethrow it
-			throw e;
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
-	}
 
-	/**
-	 * A SAX parser hook handler that captures the element's character content
-	 * for processing in the endElement() method.
-	 */
-	class ContentCapturingHandler extends HookHandler {
+		// Report progress
+		reportCharsProcessed();
+		reportTokensProcessed(wordsDone);
+		wordsDone = 0;
 
-		private StringBuilder elementContent;
+		// Reset contents field for next document
+		contentsField.clear();
 
-		public String getElementContent() {
-			return elementContent.toString();
-		}
-
-		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
-			elementContent = new StringBuilder();
-		}
-
-		@Override
-		public void characters(char[] ch, int start, int length) {
-			elementContent.append(ch, start, length);
-		}
-
+		// Stop if required
+		if (!indexer.continueIndexing())
+			throw new MaxDocsReachedException();
 	}
 
 	/** Handle &lt;Word&gt; tags (word tokens). */
 	class WordHandler extends ContentCapturingHandler {
 
+		/** Open tag: save start character position */
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
 			if (localName.equals("Word")) { // Not one of the child elements of Word?
@@ -150,6 +143,7 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 		/** Punctuation and/or whitespace at the start of the token */
 		Pattern junkAtStart = Pattern.compile("^[\\p{P}\\s]+");
 
+		/** Close tag: save end character position, add token to contents field and report progress. */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			super.endElement(uri, localName, qName);
@@ -174,11 +168,13 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 	/** Handle PageXML root element &lt;PcGts&gt;. */
 	class PcGtsHandler extends HookHandler {
 
+		/** Open tag: start indexing this document */
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
 			startDocument();
 		}
 
+		/** Open tag: end indexing the document */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			endDocument();
@@ -189,6 +185,8 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 	/** Handle &lt;Page&gt; elements (containing the annotated text). */
 	class PageHandler extends HookHandler {
 
+		/** Open tag: initialize Lucene doc, add attributes as metadata,
+		 *  save document name, report starting this document */
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
 			currentLuceneDoc = new Document();
@@ -199,7 +197,6 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				String attName = attributes.getLocalName(i);
 				String value = attributes.getValue(i);
-
 				currentLuceneDoc.add(new Field(attName, value, Store.YES, indexAnalyzed,
 						TermVector.WITH_POSITIONS_OFFSETS));
 			}
@@ -211,6 +208,10 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 			indexer.getListener().documentStarted(currentDocumentName);
 		}
 
+		/**
+		 * Close tag: make sure all the properties have an equal number of values
+		 * and report that we're done with the document.
+		 */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			try {
@@ -243,6 +244,7 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 	/** Handle &lt;NE&gt; (named entity) tags. */
 	class NeHandler extends HookHandler {
 
+		/** Open tag: store the start tag location and the attribute values */
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
 			int lastStartTagPos = contentsField.getProperty(ComplexFieldUtil.START_TAG_PROP_NAME).lastValuePosition();
@@ -257,6 +259,7 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 			}
 		}
 
+		/** Close tag: store the end tag location */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			int lastEndTagPos = contentsField.getProperty(ComplexFieldUtil.END_TAG_PROP_NAME).lastValuePosition();
@@ -269,11 +272,10 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 	/** Handle all tags under the &lt;header&gt; tag (document metadata). */
 	class MetadataHandler extends ContentCapturingHandler {
 
+		/** Close tag: store the value of this metadata field */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			super.endElement(uri, localName, qName);
-			// TODO: Field and NumericField can be re-used between documents. Might be faster/more
-			// mem. efficient.
 
 			// Header element ended; index the element with the character content captured
 			// (this is stuff like title, yearFrom, yearTo, etc.)
@@ -284,11 +286,17 @@ public class DocIndexerPageXmlHookable extends DocIndexerXmlHookable {
 				// Index these fields as numeric too, for faster range queries
 				// (we do both because yearFrom/yearTo aren't always clean numeric fields)
 				NumericField nf = new NumericField(localName + "Numeric", Store.YES, true);
-				nf.setIntValue(Integer.parseInt(value));
+				int n = 0;
+				try {
+					n = Integer.parseInt(value);
+				} catch (NumberFormatException e) {
+					// This just happens sometimes, e.g. given multiple years, or
+					// descriptive text like "around 1900". OK to ignore.
+				}
+				nf.setIntValue(n);
 				currentLuceneDoc.add(nf);
 			}
 			value = null;
 		}
 	}
-
 }

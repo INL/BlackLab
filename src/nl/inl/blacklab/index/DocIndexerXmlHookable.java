@@ -32,7 +32,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * Abstract base class for a DocIndexer processing XML files.
+ * Abstract base class for a DocIndexer processing XML files using
+ * the hookable SAX parser.
  */
 public abstract class DocIndexerXmlHookable extends DocIndexerAbstract {
 	class SaxParseHandler extends DefaultHandler {
