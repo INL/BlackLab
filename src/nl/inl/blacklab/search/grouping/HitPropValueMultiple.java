@@ -1,7 +1,7 @@
 package nl.inl.blacklab.search.grouping;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.util.Utilities;
+import nl.inl.util.ArrayUtil;
 
 public class HitPropValueMultiple extends HitPropValue {
 	HitPropValue[] value;
@@ -12,7 +12,7 @@ public class HitPropValueMultiple extends HitPropValue {
 
 	@Override
 	public int compareTo(Object o) {
-		return Utilities.compareArrays(value, ((HitPropValueMultiple)o).value);
+		return ArrayUtil.compareArrays(value, ((HitPropValueMultiple)o).value);
 	}
 
 	@Override

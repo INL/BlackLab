@@ -18,8 +18,6 @@ package nl.inl.blacklab.filter;
 import java.io.IOException;
 
 import junit.framework.Assert;
-import nl.inl.util.Utilities;
-
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.junit.Test;
@@ -33,9 +31,9 @@ public class TestTranscribeGermanAccentsFilter {
 			ts = new TranscribeGermanAccentsFilter(ts);
 			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
 			Assert.assertTrue(ts.incrementToken());
-			Assert.assertEquals("Koeln", Utilities.getTerm(ta));
+			Assert.assertEquals("Koeln", new String(ta.buffer(), 0, ta.length()));
 			Assert.assertTrue(ts.incrementToken());
-			Assert.assertEquals("Berlin", Utilities.getTerm(ta));
+			Assert.assertEquals("Berlin", new String(ta.buffer(), 0, ta.length()));
 			Assert.assertFalse(ts.incrementToken());
 		} finally {
 			ts.close();

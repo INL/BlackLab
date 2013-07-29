@@ -191,7 +191,7 @@ public class DateUtil {
 	 *            the Date object
 	 * @return the year
 	 */
-	public int getYear(Date d) {
+	public static int getYear(Date d) {
 		return Integer.parseInt(new SimpleDateFormat("yyyy").format(d));
 	}
 
@@ -202,7 +202,7 @@ public class DateUtil {
 	 *            the Date object
 	 * @return the month (1-based)
 	 */
-	public int getMonth(Date d) {
+	public static int getMonth(Date d) {
 		return Integer.parseInt(new SimpleDateFormat("MM").format(d));
 	}
 
@@ -213,7 +213,7 @@ public class DateUtil {
 	 *            the Date object
 	 * @return day of the month (1-based)
 	 */
-	public int getDayOfMonth(Date d) {
+	public static int getDayOfMonth(Date d) {
 		return Integer.parseInt(new SimpleDateFormat("dd").format(d));
 	}
 

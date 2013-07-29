@@ -17,6 +17,8 @@ package nl.inl.util;
 
 import java.text.Collator;
 import java.text.Normalizer;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -319,6 +321,27 @@ public class StringUtil {
 	}
 
 	/**
+	 * Join a number of (string representations of) items to a single string using a delimiter
+	 *
+	 * @param <T>
+	 *            the type of items to join
+	 * @param parts
+	 *            the array of parts to join
+	 * @param delimiter
+	 *            the delimiter to use
+	 * @return the joined string
+	 */
+	public static <T> String join(T[] parts, String delimiter) {
+		StringBuilder builder = new StringBuilder();
+		for (T t: parts) {
+			if (builder.length() > 0)
+				builder.append(delimiter);
+			builder.append(t.toString());
+		}
+		return builder.toString();
+	}
+
+	/**
 	 * Limit a string to a certain length, adding an ellipsis if desired.
 	 *
 	 * Tries to cut the string at a word boundary, but will cut through words if necessary.
@@ -502,4 +525,44 @@ public class StringUtil {
 	public static String pluralize(String singular, long number) {
 		return singular + (number != 1 ? "s" : "");
 	}
+	/**
+	 * Convert the first character in a string to uppercase.
+	 * @param str the string to be capitalized
+	 * @return the capitalized string
+	 */
+	public static String capitalizeFirst(String str) {
+		if (str.length() == 0)
+			return str;
+		return str.substring(0, 1).toUpperCase() + str.substring(1);
+	}
+
+	/**
+	 * Returns a new collator that takes spaces into account (unlike the default Java collators,
+	 * which ignore spaces), so we can sort "per word".
+	 *
+	 * Example: with the default collator, "cat dog" would be sorted after "catapult" (a after d).
+	 * With the per-word collator, "cat dog" would be sorted before "catapult" (cat before
+	 * catapult).
+	 *
+	 * NOTE: the base collator must be a RuleBasedCollator, but the argument has type Collator for
+	 * convenience (not having to explicitly cast when calling)
+	 *
+	 * @param base
+	 *            the collator to base the per-word collator on.
+	 * @return the per-word collator
+	 */
+	public static RuleBasedCollator getPerWordCollator(Collator base) {
+		if (!(base instanceof RuleBasedCollator))
+			throw new RuntimeException("Base collator must be rule-based!");
+
+		try {
+			// Insert a collation rule to sort the space character before the underscore
+			RuleBasedCollator ruleBasedCollator = (RuleBasedCollator) base;
+			String rules = ruleBasedCollator.getRules();
+			return new RuleBasedCollator(rules.replaceAll("<'_'", "<' '<'_'"));
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }

@@ -18,8 +18,6 @@ package nl.inl.blacklab.filter;
 import java.io.IOException;
 import java.io.StringReader;
 
-import nl.inl.util.Utilities;
-
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.WhitespaceTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -42,7 +40,7 @@ public class TranscribeGermanAccentsSynonymFilter extends AbstractSynonymFilter 
 
 			CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
 			while (ts.incrementToken()) {
-				System.out.println(Utilities.getTerm(term));
+				System.out.println(new String(term.buffer(), 0, term.length()));
 			}
 		} finally {
 			ts.close();
