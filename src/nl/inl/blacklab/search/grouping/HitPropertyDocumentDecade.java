@@ -22,7 +22,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 /**
- * A hit property for grouping on a stored field in the corresponding Lucene document.
+ * A hit property for grouping on by decade based on a stored field
+ * in the corresponding Lucene document containing a year.
  */
 public class HitPropertyDocumentDecade extends HitProperty {
 	IndexReader reader;
