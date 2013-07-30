@@ -128,7 +128,6 @@ class TermsImplV3 extends Terms {
 			MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, termsFile.length());
 			try {
 				int n = buf.getInt();
-				logger.debug("Reading terms file containing " + n + " terms...");
 
 				// Read the term string offsets and string data block
 				int[] termStringOffsets = new int[n + 1];

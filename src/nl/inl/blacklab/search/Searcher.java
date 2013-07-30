@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -154,6 +155,15 @@ public class Searcher {
 	 */
 	private boolean concordancesFromForwardIndex = false;
 
+	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
+	String concWordFI = "word";
+
+	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
+	String concPunctFI = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
+
+	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
+	Collection<String> concAttrFI = null; // all other FIs are attributes
+
 	/**
 	 * Are we making concordances using the forward index (true) or using
 	 * the content store (false)? Forward index is more efficient but returns
@@ -211,6 +221,8 @@ public class Searcher {
 			throw new RuntimeException("BlackLab index has wrong type or version! "
 					+ VersionFile.report(indexDir));
 
+		logger.debug("Constructing Searcher...");
+
 		// Open Lucene index
 		indexReader = IndexReader.open(FSDirectory.open(indexDir));
 
@@ -226,7 +238,6 @@ public class Searcher {
 		if (indexStructure.getMainContentsField().hasPunctuation()) {
 			concordancesFromForwardIndex = true;
 		}
-		logger.debug("Make concordances from forward index: " + (concordancesFromForwardIndex ? "TRUE" : "FALSE"));
 
 		// Register content stores
 		for (String cfn: indexStructure.getComplexFields()) {
@@ -242,6 +253,7 @@ public class Searcher {
 		}
 
 		init();
+		logger.debug("Done.");
 	}
 
 	/**
@@ -252,6 +264,9 @@ public class Searcher {
 
 		// Make sure large wildcard/regex expansions succeed
 		BooleanQuery.setMaxClauseCount(100000);
+
+		// Open the forward indices
+		openForwardIndices();
 	}
 
 	/**
@@ -1194,10 +1209,8 @@ public class Searcher {
 	 *    Forward index for the words
 	 * @param punctForwardIndex
 	 *    Forward index for the punctuation
-	 * @param lemmaForwardIndex
-	 *    Forward index for lemmas, or null if none
-	 * @param posForwardIndex
-	 *    Forward index for the part of speech, or null if none
+	 * @param attrForwardIndices
+	 *    Forward indices for the attributes, or null if none
 	 * @param fieldName
 	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
@@ -1206,7 +1219,7 @@ public class Searcher {
 	 *            where to add the concordances
 	 */
 	private void makeConcordancesSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
-			ForwardIndex punctForwardIndex, ForwardIndex lemmaForwardIndex, ForwardIndex posForwardIndex, int wordsAroundHit,
+			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices, int wordsAroundHit,
 			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
@@ -1217,31 +1230,47 @@ public class Searcher {
 
 		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
 
+		// Save existing context so we can restore it afterwards
+		int[][] oldContext = null;
+		if (hits.size() > 0 && hits.get(0).context != null)
+			oldContext = getContextFromHits(hits);
+
 		// Get punctuation context
 		int[][] punctContext = null;
 		if (punctForwardIndex != null) {
 			getContextWords(doc, punctForwardIndex, startsOfWords, endsOfWords, hits);
 			punctContext = getContextFromHits(hits);
 		}
+		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
 
-		int[][] lemmaContext = null;
-		int[][] posContext = null;
-		if (lemmaForwardIndex != null) {
-			// Get lemma and pos context as well
-			getContextWords(doc, lemmaForwardIndex, startsOfWords, endsOfWords, hits);
-			lemmaContext = getContextFromHits(hits);
-			getContextWords(doc, posForwardIndex, startsOfWords, endsOfWords, hits);
-			posContext = getContextFromHits(hits);
+		// Get attributes context
+		String[] attrName = null;
+		ForwardIndex[] attrFI = null;
+		Terms[] attrTerms = null;
+		int[][][] attrContext = null;
+		if (attrForwardIndices != null) {
+			int n = attrForwardIndices.size();
+			attrName = new String[n];
+			attrFI = new ForwardIndex[n];
+			attrTerms = new Terms[n];
+			attrContext = new int[n][][];
+			int i = 0;
+			for (Map.Entry<String, ForwardIndex> e: attrForwardIndices.entrySet()) {
+				attrName[i] = e.getKey();
+				attrFI[i] = e.getValue();
+				attrTerms[i] = attrFI[i].getTerms();
+				getContextWords(doc, attrFI[i], startsOfWords, endsOfWords, hits);
+				attrContext[i] = getContextFromHits(hits);
+				i++;
+			}
 		}
 
 		// Get word context
-		getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
+		if (forwardIndex != null)
+			getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
+		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
 
 		// Make the concordances from the context
-		Terms terms = forwardIndex.getTerms();
-		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
-		Terms lemmaTerms = lemmaForwardIndex == null ? null : lemmaForwardIndex.getTerms();
-		Terms posTerms = posForwardIndex == null ? null : posForwardIndex.getTerms();
 		for (int i = 0; i < hits.size(); i++) {
 			Hit h = hits.get(i);
 			StringBuilder[] part = new StringBuilder[3];
@@ -1275,33 +1304,35 @@ public class Searcher {
 					current = part[currentPart];
 				}
 
-				/* DON'T ADD SPACE; THIS IS STORED IN PUNCT FI
-				if (current.length() > 0 || currentPart == 2) {
-					current.append(" ");
-				}*/
-
-				if (lemmaContext != null) {
-					// Make word tag with lemma and pos attributes
-					current
-						.append("<w lemma=\"")
-						.append(StringUtil.escapeXmlChars(lemmaTerms.getFromSortPosition(lemmaContext[i][j])))
-						.append("\" type=\"")
-						.append(StringUtil.escapeXmlChars(posTerms.getFromSortPosition(posContext[i][j])))
-						.append("\">");
+				// Make word tag with lemma and pos attributes
+				current.append("<w");
+				if (attrContext != null) {
+					for (int k = 0; k < attrContext.length; k++) {
+						current
+						 	.append(" ")
+							.append(attrName[k])
+							.append("=\"")
+							.append(StringUtil.escapeXmlChars(attrTerms[k].getFromSortPosition(attrContext[k][i][j])))
+							.append("\"");
+					}
 				}
+				current.append(">");
 
-				current.append(terms.getFromSortPosition(h.context[j]));
+				if (terms != null)
+					current.append(terms.getFromSortPosition(h.context[j]));
 
-				if (lemmaContext != null) {
-					// End word tag
-					current.append("</w>");
-				}
+				// End word tag
+				current.append("</w>");
 			}
 			/*if (part[0].length() > 0)
 				part[0].append(" ");*/
 			String[] concStr = new String[] {part[0].toString(), part[1].toString(), part[2].toString()};
 			Concordance concordance = new Concordance(concStr);
 			conc.put(h, concordance);
+		}
+
+		if (oldContext != null) {
+			restoreContextInHits(hits, oldContext);
 		}
 	}
 
@@ -1321,19 +1352,31 @@ public class Searcher {
 	}
 
 	/**
+	 * Put context information into a list of hits.
+	 * @param hits the hits to restore the context for
+	 * @param context the context to restore
+	 */
+	private void restoreContextInHits(List<Hit> hits, int[][] context) {
+		for (int i = 0; i < hits.size(); i++) {
+			Hit h = hits.get(i);
+			h.context = context[i];
+		}
+	}
+
+	/**
 	 * Retrieves the context (left, hit and right) for a number of hits in the same document from
 	 * the forward index.
 	 *
 	 * @param hits
 	 *            the hits in question
-	 * @param forwardIndex
-	 *            forward index for our field
+	 * @param fis
+	 *            the forward indices to use
 	 * @param fieldPropFiidName
 	 *            name of the forward index id (fiid) field
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
 	 */
-	private void makeContextSingleDoc(List<Hit> hits, ForwardIndex forwardIndex,
+	private void makeContextSingleDoc(List<Hit> hits, List<ForwardIndex> fis,
 			int wordsAroundHit) {
 		if (hits.size() == 0)
 			return;
@@ -1344,7 +1387,7 @@ public class Searcher {
 
 		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
 
-		getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
+		getContextWords(doc, fis, startsOfWords, endsOfWords, hits);
 	}
 
 	/**
@@ -1388,6 +1431,11 @@ public class Searcher {
 		}
 	}
 
+	private void getContextWords(int doc, ForwardIndex forwardIndex,
+			int[] startsOfWords, int[] endsOfWords, List<Hit> resultsList) {
+		getContextWords(doc, Arrays.asList(forwardIndex), startsOfWords, endsOfWords, resultsList);
+	}
+
 	/**
 	 * Get context words from the forward index.
 	 *
@@ -1402,8 +1450,8 @@ public class Searcher {
 	 *
 	 * @param doc
 	 *            the document to get context from
-	 * @param forwardIndex
-	 *            forward index to get context from
+	 * @param contextSources
+	 *            forward indices to get context from
 	 * @param startsOfWords
 	 *            contains, for each bit of context requested, the starting word position of the
 	 *            left context and for the hit
@@ -1413,40 +1461,54 @@ public class Searcher {
 	 * @param resultsList
 	 *            the list of results to add the context to
 	 */
-	private void getContextWords(int doc, ForwardIndex forwardIndex,
+	private void getContextWords(int doc, List<ForwardIndex> contextSources,
 			int[] startsOfWords, int[] endsOfWords, List<Hit> resultsList) {
+
 		int n = startsOfWords.length / 2;
 		int[] startsOfSnippets = new int[n];
 		int[] endsOfSnippets = new int[n];
 		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
 			startsOfSnippets[j] = startsOfWords[i];
-			endsOfSnippets[j] = endsOfWords[i + 1];
+			endsOfSnippets[j] = endsOfWords[i + 1] + 1;
 		}
 
-		// Get all the words from the forward index
-		List<int[]> words;
-		if (forwardIndex != null) {
-			// We have a forward index for this field. Use it.
-			int fiid = forwardIndex.luceneDocIdToFiid(doc);
-			// Document d = document(doc);
-			// int fiid = Integer.parseInt(d.get(fiidFieldName));
-			words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
-		} else {
-			throw new RuntimeException("Cannot get context without a forward index");
-		}
+		int fiNumber = 0;
+		for (ForwardIndex forwardIndex: contextSources) {
+			// Get all the words from the forward index
+			List<int[]> words;
+			if (forwardIndex != null) {
+				// We have a forward index for this field. Use it.
+				int fiid = forwardIndex.luceneDocIdToFiid(doc);
+				// Document d = document(doc);
+				// int fiid = Integer.parseInt(d.get(fiidFieldName));
+				words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
+			} else {
+				throw new RuntimeException("Cannot get context without a forward index");
+			}
 
-		// Build the actual concordances
-		Iterator<int[]> wordsIt = words.iterator();
-		Iterator<Hit> resultsListIt = resultsList.iterator();
-		for (int j = 0; j < n; j++) {
-			int[] theseWords = wordsIt.next();
+			// Build the actual concordances
+			Iterator<int[]> wordsIt = words.iterator();
+			Iterator<Hit> resultsListIt = resultsList.iterator();
+			for (int j = 0; j < n; j++) {
+				int[] theseWords = wordsIt.next();
 
-			// Put the concordance in the Hit object
-			Hit hit = resultsListIt.next(); // resultsList.get(j);
-			int firstWordIndex = startsOfWords[j * 2];
-			hit.context = theseWords;
-			hit.contextHitStart = startsOfWords[j * 2 + 1] - firstWordIndex;
-			hit.contextRightStart = endsOfWords[j * 2] - firstWordIndex + 1;
+				// Put the concordance in the Hit object
+				Hit hit = resultsListIt.next(); // resultsList.get(j);
+				int firstWordIndex = startsOfWords[j * 2];
+
+				if (fiNumber == 0) {
+					// Allocate context array and set hit and right start and context length
+					hit.context = new int[theseWords.length * contextSources.size()];
+					hit.contextHitStart = startsOfWords[j * 2 + 1] - firstWordIndex;
+					hit.contextRightStart = endsOfWords[j * 2] - firstWordIndex + 1;
+					hit.contextLength = theseWords.length;
+				}
+				// Copy the context we just retrieved into the context array
+				int start = fiNumber * theseWords.length;
+				System.arraycopy(theseWords, 0, hit.context, start, theseWords.length);
+			}
+
+			fiNumber++;
 		}
 	}
 
@@ -1454,7 +1516,6 @@ public class Searcher {
 	 * Opens all the forward indices, to avoid this delay later.
 	 */
 	public void openForwardIndices() {
-		logger.debug("Opening all forward indices. This may take a while...");
 		for (String field: indexStructure.getComplexFields()) {
 			ComplexFieldDesc fieldDesc = indexStructure.getComplexFieldDesc(field);
 			for (String property: fieldDesc.getProperties()) {
@@ -1465,7 +1526,6 @@ public class Searcher {
 				}
 			}
 		}
-		logger.debug("All forward indices opened.");
 	}
 
 	/**
@@ -1517,20 +1577,18 @@ public class Searcher {
 	 * Searcher.setConcordanceContextSize().
 	 *
 	 * @param fieldName
-	 *            field to use for building concordances (if using content store)
-	 * @param propName
-	 *            property forward index to use for building concordances (if using FI)
+	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
 	 * @return the list of concordances
 	 */
-	public Map<Hit, Concordance> retrieveConcordances(String fieldName, String propName, List<Hit> hits,
+	public Map<Hit, Concordance> retrieveConcordances(String fieldName, List<Hit> hits,
 			int contextSize) {
 
 		if (concordancesFromForwardIndex) {
-			return retrieveConcordancesForwardIndex(propName, hits, contextSize);
+			return retrieveConcordancesForwardIndex(fieldName, hits, contextSize);
 		}
 
 		// Group hits per document
@@ -1551,6 +1609,19 @@ public class Searcher {
 	}
 
 	/**
+	 * Indicate how to use the forward indices to build concordances.
+	 *
+	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
+	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
+	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
+	 */
+	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
+		concWordFI = wordFI;
+		concPunctFI = punctFI;
+		concAttrFI = attrFI;
+	}
+
+	/**
 	 * Retrieve concordancs for a list of hits using the forward index.
 	 *
 	 * Concordances are the hit words 'centered' with a certain number of context words around them.
@@ -1560,15 +1631,15 @@ public class Searcher {
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
 	 *
-	 * @param fieldPropName
-	 *            field property to use for building concordances
+	 * @param fieldName
+	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
 	 * @return the list of concordances
 	 */
-	public Map<Hit, Concordance> retrieveConcordancesForwardIndex(String fieldPropName, List<Hit> hits,
+	public Map<Hit, Concordance> retrieveConcordancesForwardIndex(String fieldName, List<Hit> hits,
 			int contextSize) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
@@ -1581,23 +1652,34 @@ public class Searcher {
 			hitsInDoc.add(key);
 		}
 
-		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
+		ForwardIndex forwardIndex = null;
+		if (concWordFI != null)
+			forwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, concWordFI));
 
-		String fieldName = ComplexFieldUtil.getBaseName(fieldPropName);
-		String punctPropName = ComplexFieldUtil.propertyField(fieldName, ComplexFieldUtil.PUNCTUATION_PROP_NAME);
-		ForwardIndex punctForwardIndex = getForwardIndex(punctPropName);
+		ForwardIndex punctForwardIndex = null;
+		if (concPunctFI != null)
+			punctForwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, concPunctFI));
 
-		// @@@ TODO experimental, should be parameterized to deal with different index formats
-
-		String lemmaPropName = ComplexFieldUtil.propertyField(fieldName, "lemma");
-		ForwardIndex lemmaForwardIndex = getForwardIndex(lemmaPropName);
-
-		String posPropName = ComplexFieldUtil.propertyField(fieldName, "type");
-		ForwardIndex posForwardIndex = getForwardIndex(posPropName);
+		Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
+		if (concAttrFI == null) {
+			// All other FIs are attributes
+			for (String p: forwardIndices.keySet()) {
+				String[] components = ComplexFieldUtil.getNameComponents(p);
+				String propName = components[1];
+				if (propName.equals(concWordFI) || propName.equals(concPunctFI))
+					continue;
+				attrForwardIndices.put(propName, getForwardIndex(p));
+			}
+		} else {
+			// Specific list of attribute FIs
+			for (String p: concAttrFI) {
+				attrForwardIndices.put(p, getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
+			}
+		}
 
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeConcordancesSingleDocForwardIndex(l, forwardIndex, punctForwardIndex, lemmaForwardIndex, posForwardIndex, contextSize, conc);
+			makeConcordancesSingleDocForwardIndex(l, forwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc);
 		}
 		return conc;
 	}
@@ -1618,6 +1700,25 @@ public class Searcher {
 	 *            how many words around the hit to retrieve
 	 */
 	public void retrieveContext(String fieldPropName, List<Hit> hits, int contextSize) {
+		retrieveContext(Arrays.asList(fieldPropName), hits, contextSize);
+	}
+
+	/**
+	 * Retrieve context for a list of hits.
+	 *
+	 * Context are the hit words 'centered' with a certain number of context words around them.
+	 *
+	 * The size of the left and right context (in words) may be set using
+	 * Searcher.setConcordanceContextSize().
+	 *
+	 * @param fieldProps
+	 *            fields to use for retrieving context
+	 * @param hits
+	 *            the hits for which to retrieve concordances
+	 * @param contextSize
+	 *            how many words around the hit to retrieve
+	 */
+	public void retrieveContext(List<String> fieldProps, List<Hit> hits, int contextSize) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key : hits) {
@@ -1629,10 +1730,13 @@ public class Searcher {
 			hitsInDoc.add(key);
 		}
 
-		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
+		List<ForwardIndex> fis = new ArrayList<ForwardIndex>();
+		for (String fieldPropName: fieldProps) {
+			fis.add(getForwardIndex(fieldPropName));
+		}
 
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeContextSingleDoc(l, forwardIndex, contextSize);
+			makeContextSingleDoc(l, fis, contextSize);
 		}
 	}
 

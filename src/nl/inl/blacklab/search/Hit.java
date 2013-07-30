@@ -119,6 +119,9 @@ public class Hit implements Comparable<Hit> {
 	/** Where in the context array the right context starts */
 	public int contextRightStart;
 
+	/** How many words one context takes up (context[] may contain multiple contexts) */
+	public int contextLength;
+
 	/**
 	 * Construct a hit object
 	 *

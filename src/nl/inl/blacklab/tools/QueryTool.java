@@ -50,6 +50,7 @@ import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyDocumentId;
 import nl.inl.blacklab.search.grouping.HitPropertyHitText;
 import nl.inl.blacklab.search.grouping.HitPropertyLeftContext;
+import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.grouping.HitPropertyRightContext;
 import nl.inl.blacklab.search.grouping.HitPropertyWordLeft;
 import nl.inl.blacklab.search.grouping.HitPropertyWordRight;
@@ -971,6 +972,11 @@ public class QueryTool {
 				crit = new HitPropertyLeftContext(searcher, CONTENTS_FIELD, property);
 			else if (sortBy.startsWith("right"))
 				crit = new HitPropertyRightContext(searcher, CONTENTS_FIELD, property);
+			else if (sortBy.equals("test")) {
+				HitProperty p1 = new HitPropertyHitText(searcher, CONTENTS_FIELD, "lemma");
+				HitProperty p2 = new HitPropertyHitText(searcher, CONTENTS_FIELD, "type");
+				crit = new HitPropertyMultiple(p1, p2);
+			}
 		}
 		if (crit == null) {
 			errprintln("Invalid hit sort criterium: " + sortBy
@@ -1035,6 +1041,11 @@ public class QueryTool {
 			crit = new HitPropertyWordLeft(searcher, CONTENTS_FIELD, property);
 		else if (groupBy.startsWith("right"))
 			crit = new HitPropertyWordRight(searcher, CONTENTS_FIELD, property);
+		else if (groupBy.equals("test")) {
+			HitProperty p1 = new HitPropertyHitText(searcher, CONTENTS_FIELD, "lemma");
+			HitProperty p2 = new HitPropertyHitText(searcher, CONTENTS_FIELD, "type");
+			crit = new HitPropertyMultiple(p1, p2);
+		}
 		if (crit == null) {
 			errprintln("Unknown criterium: " + groupBy);
 			return;

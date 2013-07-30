@@ -175,7 +175,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	}
 
 	public ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create) {
-		logger.debug("Opening forward index " + dir);
 		if (!dir.exists()) {
 			if (!create)
 				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
@@ -209,11 +208,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		try {
 			boolean existing = false;
 			if (tocFile.exists()) {
-				// logger.debug("FI: reading table of contents...");
 				readToc();
-				// logger.debug("FI: table of contents read. Reading terms file...");
 				terms = new TermsImplV3(indexMode, collator, termsFile);
-				// logger.debug("FI: terms file read.");
 				existing = true;
 				tocModified = false;
 			} else {
@@ -228,9 +224,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			if (existing && !create) {
 				long free = MemoryUtil.getFree();
 
-				logger.debug("Free memory = " + free);
 				if (!indexMode && useMemoryMapping) {
-					logger.debug("FI: memory-mapping the tokens file");
 
 					// Memory-map the file
 					// NOTE: We only use this in search mode right now.
@@ -239,7 +233,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 				} else {
 					// Don't use memory mapping. Just read from file channel.
-					logger.debug("FI: no memory-mapping tokens file");
 				}
 			}
 
@@ -297,8 +290,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			if (keepInMemory) {
 				mapping = ByteBuffer.allocate((int) sizeBytes);
 				tokensFileChannel.position(startOfNextMappingBytes);
-				logger.debug("Read tokens file offset " + startOfNextMappingBytes + " length "
-						+ sizeBytes);
 				int bytesRead = tokensFileChannel.read(mapping);
 				if (bytesRead != mapping.capacity()) {
 					throw new RuntimeException("Could not read tokens file chunk into memory!");

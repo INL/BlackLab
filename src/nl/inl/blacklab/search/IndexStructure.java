@@ -13,9 +13,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Fieldable;
-import org.apache.lucene.document.NumericField;
+import org.apache.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
@@ -27,6 +25,8 @@ import org.apache.lucene.util.ReaderUtil;
  * Determines the structure of a BlackLab index.
  */
 public class IndexStructure {
+	protected static final Logger logger = Logger.getLogger(IndexStructure.class);
+
 	/** Possible types of metadata fields. */
 	public enum FieldType {
 		TEXT,
@@ -305,6 +305,7 @@ public class IndexStructure {
 									offsetsAlternative = alt;
 									return true;
 								}
+								return false;
 							}
 						} catch (IOException e) {
 							throw new RuntimeException(e);
@@ -450,6 +451,7 @@ public class IndexStructure {
 				mainContentsField = d;
 			d.detectMainProperty(reader);
 		}
+
 	}
 
 	/**
@@ -471,6 +473,13 @@ public class IndexStructure {
 	 */
 	private FieldType getFieldType(String fieldName) {
 		FieldType type = FieldType.TEXT;
+
+		if (fieldName.endsWith("Numeric") || fieldName.endsWith("Num"))
+			type = FieldType.NUMERIC;
+
+		/*
+		TODO: Slow. Come up with a faster alternative or a better naming convention?
+
 		for (int n = 0; n < reader.maxDoc(); n++) {
 			if (!reader.isDeleted(n)) {
 				Document d;
@@ -486,7 +495,8 @@ public class IndexStructure {
 					break;
 				}
 			}
-		}
+		}*/
+
 		return type;
 	}
 
@@ -528,22 +538,28 @@ public class IndexStructure {
 		return cfd;
 	}
 
-	/** Get the names of all the complex fields in our index */
+	/** Get the names of all the complex fields in our index
+	 * @return the complex field names */
 	public Collection<String> getComplexFields() {
 		return complexFields.keySet();
 	}
 
-	/** Get the description of one complex field */
+	/** Get the description of one complex field
+	 * @param fieldName name of the field
+	 * @return the field description */
 	public ComplexFieldDesc getComplexFieldDesc(String fieldName) {
 		return complexFields.get(fieldName);
 	}
 
-	/** Get the names of all the metadata fields in our index */
-	public Collection<String> getMetadataFields(String fieldName) {
+	/** Get the names of all the metadata fields in our index
+	 * @return the names */
+	public Collection<String> getMetadataFields() {
 		return metadataFields.keySet();
 	}
 
-	/** Get the type of one metadata field */
+	/** Get the type of one metadata field
+	 * @param fieldName name of the field
+	 * @return the type of field */
 	public IndexStructure.FieldType getMetadataType(String fieldName) {
 		return metadataFields.get(fieldName);
 	}

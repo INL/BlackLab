@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import java.util.List;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
@@ -99,7 +101,7 @@ public class DocResult {
 		return score;
 	}
 
-	public void setContextField(String contextField) {
+	public void setContextField(List<String> contextField) {
 		hits.setContextField(contextField);
 	}
 
