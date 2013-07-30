@@ -58,6 +58,7 @@ import nl.inl.blacklab.search.grouping.RandomAccessGroup;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.util.FileUtil;
 import nl.inl.util.IoUtil;
+import nl.inl.util.StringUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
@@ -634,6 +635,14 @@ public class QueryTool {
 				}
 				//statprintln("# context\t" + contextSize);
 				showResultsPage();
+			} else if (lcased.startsWith("snippet ")) {
+				int hitId = Integer.parseInt(lcased.substring(8));
+				Hit h = hits.get(hitId);
+				Concordance conc = hits.getConcordance(h, 50);
+				String left = prepConcForDisplay(conc.left);
+				String middle = prepConcForDisplay(conc.hit);
+				String right = prepConcForDisplay(conc.right);
+				System.out.println(StringUtil.wrapText(left + "[" + middle + "]" + right, 70));
 			} else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
 				//statprintln("# filter\t" + cmd);
 				if (cmd.length() <= 7) {

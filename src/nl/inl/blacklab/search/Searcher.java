@@ -1902,6 +1902,23 @@ public class Searcher {
 		return indexLocation.toString();
 	}
 
+	/**
+	 * Retrieve a single concordance. Only use if you need a larger snippet around a single
+	 * hit. If you need concordances for a set of hits, just instantiate a HitsWindow and call
+	 * getConcordance() on that; it will fetch all concordances in the window in a batch, which
+	 * is more efficient.
+	 *
+	 * @param concordanceFieldName field to use for building the concordance
+	 * @param hit the hit for which we want a concordance
+	 * @param contextSize the desired number of words around the hit
+	 * @return the concordance
+	 */
+	public Concordance getConcordance(String concordanceFieldName, Hit hit, int contextSize) {
+		List<Hit> oneHit = Arrays.asList(hit);
+		Map<Hit, Concordance> oneConc = retrieveConcordances(concordanceFieldName, oneHit, contextSize);
+		return oneConc.get(hit);
+	}
+
 	// /**
 	// * Get all the terms in the index with low edit distance from the supplied term
 	// * @param term search term

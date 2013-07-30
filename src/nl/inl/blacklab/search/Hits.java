@@ -582,6 +582,36 @@ public class Hits implements Iterable<Hit> {
 	 * @return concordance for this hit
 	 */
 	public Concordance getConcordance(Hit h) {
+		return getConcordance(h, desiredContextSize);
+	}
+
+	/**
+	 * Get a concordance with a custom context size.
+	 *
+	 * Don't call this directly for displaying a list of results. In that case,
+	 * just instantiate a HitsWindow, call setContextSize() on it to set a
+	 * default context size and call getConcordance(Hit) for each hit. That's
+	 * more efficient if you're dealing with many hits.
+	 *
+	 * This method is mostly just for getting a larger snippet around
+	 * a single hit.
+	 *
+	 * @param h the hit
+	 * @param contextSize the context size for this concordance
+	 *   (only use if you want a different one than the preset preference)
+	 * @return concordance for this hit
+	 */
+	public Concordance getConcordance(Hit h, int contextSize) {
+		if (contextSize != desiredContextSize) {
+			// Different context size than the default for the whole set;
+			// We probably want to show a hit with a larger snippet around it
+			// (say, 50 words or so). Don't clobber the context of the other
+			// hits, just fetch this snippet separately.
+			return searcher.getConcordance(concordanceFieldName, h, contextSize);
+		}
+
+		// Default context size. Read all hits and find concordances for all of them
+		// in batch.
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
