@@ -717,6 +717,9 @@ public class QueryTool {
 				printQueryHelp();
 			} else if (lcased.equals("help") || lcased.equals("?")) {
 				printHelp();
+			} else if (lcased.equals("warmup")) {
+				outprintln("Warming up the forward indices. This may take a while...");
+				searcher.warmUpForwardIndices();
 			} else if (lcased.startsWith("showconc ")) {
 				String v = lcased.substring(9);
 				showConc = v.equals("on") || v.equals("yes") || v.equals("true");
@@ -819,6 +822,7 @@ public class QueryTool {
 		outprintln("  sensitive {on|off|case|diac}       # Set case-/diacritics-sensitivity");
 		outprintln("  filter <luceneQuery>               # Set document filter, e.g. title:\"Smith\"");
 		outprintln("  doctitle {on|off}                  # Show document titles between hits?");
+		outprintln("  warmup                             # Warm up the forward indices");
 		outprintln("  struct                             # Show index structure");
 		outprintln("  help                               # This message");
 		outprintln("  exit                               # Exit program");

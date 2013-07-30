@@ -242,6 +242,24 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
+	@Override
+	public void warmUp() {
+		int fiid = 0;
+		int oneReadPerHowManyChars = 2000;
+		for (TocEntry e: toc) {
+			int n = e.length / oneReadPerHowManyChars;
+
+			int[] starts = new int[n];
+			int[] ends = new int[n];
+			for (int i = 0; i < n; i++) {
+				starts[i] = i * oneReadPerHowManyChars;
+				ends[i] = starts[i] + 10;
+			}
+			retrievePartsInt(fiid, starts, ends);
+			fiid++;
+		}
+	}
+
 	private void openTokensFile(boolean indexMode) throws FileNotFoundException {
 		tokensFp = new RandomAccessFile(tokensFile, indexMode ? "rw" : "r");
 		tokensFileChannel = tokensFp.getChannel();

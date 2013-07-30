@@ -91,6 +91,8 @@ public class Searcher {
 	/** Complex field name for default contents field */
 	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
 
+	private static final boolean AUTOMATICALLY_WARM_UP_FIS = false;
+
 	/** The collator to use for sorting. Defaults to English collator. */
 	private Collator collator = Collator.getInstance(new Locale("en", "GB"));
 
@@ -1528,6 +1530,20 @@ public class Searcher {
 					getForwardIndex(ComplexFieldUtil.propertyField(field, property));
 				}
 			}
+		}
+
+		if (AUTOMATICALLY_WARM_UP_FIS) {
+			warmUpForwardIndices();
+		}
+	}
+
+	/**
+	 * "Warm up" the forward indices by perform
+	 */
+	public void warmUpForwardIndices() {
+		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
+			logger.debug("Warming up " + e.getKey() + "...");
+			e.getValue().warmUp();
 		}
 	}
 
