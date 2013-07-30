@@ -1514,8 +1514,11 @@ public class Searcher {
 
 	/**
 	 * Opens all the forward indices, to avoid this delay later.
+	 *
+	 * NOTE: used to be public; now private because it's done automatically when
+	 * constructing the Searcher.
 	 */
-	public void openForwardIndices() {
+	private void openForwardIndices() {
 		for (String field: indexStructure.getComplexFields()) {
 			ComplexFieldDesc fieldDesc = indexStructure.getComplexFieldDesc(field);
 			for (String property: fieldDesc.getProperties()) {
