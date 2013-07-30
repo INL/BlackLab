@@ -1285,7 +1285,7 @@ public class Searcher {
 					current
 						.append("<w lemma=\"")
 						.append(StringUtil.escapeXmlChars(lemmaTerms.getFromSortPosition(lemmaContext[i][j])))
-						.append("\" pos=\"")
+						.append("\" type=\"")
 						.append(StringUtil.escapeXmlChars(posTerms.getFromSortPosition(posContext[i][j])))
 						.append("\">");
 				}
