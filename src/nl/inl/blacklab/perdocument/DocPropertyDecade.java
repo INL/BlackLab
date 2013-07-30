@@ -18,8 +18,8 @@ package nl.inl.blacklab.perdocument;
 import nl.inl.blacklab.search.grouping.HitPropValueDecade;
 
 /**
- * For grouping DocResult objects by the value of a stored field in the Lucene documents. The field
- * name is given when instantiating this class, and might be "author", "year", and such.
+ * For grouping DocResult objects by decade based on a
+ * stored field containing a year.
  */
 public class DocPropertyDecade extends DocProperty {
 	private String fieldName;
@@ -45,10 +45,14 @@ public class DocPropertyDecade extends DocProperty {
 	@Override
 	public int compare(DocResult a, DocResult b) {
 		String strYear = a.getDocument().get(fieldName);
+		if (strYear == null || strYear.length() == 0) // sort missing year at the end
+			return 1;
 		int year1 = Integer.parseInt(strYear);
 		year1 -= year1 % 10;
 
 		strYear = b.getDocument().get(fieldName);
+		if (strYear == null || strYear.length() == 0) // sort missing year at the end
+			return -1;
 		int year2 = Integer.parseInt(strYear);
 		year2 -= year2 % 10;
 

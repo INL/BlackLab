@@ -37,8 +37,11 @@ public class QueryExecutionContext {
 
 	/**
 	 * Construct a query execution context object.
+	 * @param searcher the searcher object
 	 * @param fieldName the (complex) field to search
 	 * @param propName the property to search
+	 * @param caseSensitive whether search defaults to case-sensitive
+	 * @param diacriticsSensitive whether search defaults to diacritics-sensitive
 	 */
 	public QueryExecutionContext(Searcher searcher, String fieldName, String propName, boolean caseSensitive, boolean diacriticsSensitive) {
 		this.searcher = searcher;
@@ -103,6 +106,8 @@ public class QueryExecutionContext {
 	/**
 	 * Returns the correct current Lucene field name to use, based on the complex field name,
 	 * property name and list of alternatives.
+	 * @param includeAlternative if true, also includes the default alternative at the end of the field name (alternatives determine
+	 *   stuff like case-/diacritics-sensitivity).
 	 * @return null if field, property or alternative not found; valid Lucene field name otherwise
 	 */
 	public String luceneField(boolean includeAlternative) {

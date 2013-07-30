@@ -17,6 +17,7 @@ package nl.inl.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -131,7 +132,12 @@ public class XmlUtil {
 		try {
 			TransformerFactory tFactory = TransformerFactory.newInstance();
 			Transformer transformer = tFactory.newTransformer(new StreamSource(xsltFile));
-			transformer.transform(new StreamSource(inputFile), new StreamResult(outputFile));
+
+			// NOTE: We use a FileOutputStream because StreamResult+File results in
+			//       a FileNotFOund error, even if it exists...
+			StreamResult outputTarget = new StreamResult(new FileOutputStream(outputFile));
+
+			transformer.transform(new StreamSource(inputFile), outputTarget);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

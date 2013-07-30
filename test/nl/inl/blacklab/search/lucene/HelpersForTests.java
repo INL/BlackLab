@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.Hit;
 import org.apache.lucene.search.spans.Spans;
 
 public class HelpersForTests {
-	static class ListResults extends SpansWithHit {
+	static class ListResults extends BLSpans {
 		private Iterator<Hit> iterator;
 
 		Hit current = null;

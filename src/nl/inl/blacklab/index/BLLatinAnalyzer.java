@@ -23,8 +23,6 @@ import java.io.Reader;
 import java.io.StringReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.util.Utilities;
-
 import org.apache.lucene.analysis.ASCIIFoldingFilter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.LowerCaseFilter;
@@ -58,13 +56,13 @@ public final class BLLatinAnalyzer extends Analyzer {
 			TokenStream ts = a.tokenStream("test", new StringReader(TEST_STR));
 			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
 			while (ts.incrementToken()) {
-				System.out.println(Utilities.getTerm(ta));
+				System.out.println(new String(ta.buffer(), 0, ta.length()));
 			}
 			TokenStream ts2 = a.tokenStream(ComplexFieldUtil.propertyField("test", null, "s"),
 					new StringReader(TEST_STR));
 			ta = ts2.addAttribute(CharTermAttribute.class);
 			while (ts2.incrementToken()) {
-				System.out.println(Utilities.getTerm(ta));
+				System.out.println(new String(ta.buffer(), 0, ta.length()));
 			}
 		} finally {
 			a.close();

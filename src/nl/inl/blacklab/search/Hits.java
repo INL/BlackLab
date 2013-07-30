@@ -29,6 +29,8 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
@@ -86,7 +88,7 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Our Spans object, which may not have been fully read yet.
 	 */
-	protected Spans sourceSpans;
+	protected BLSpans sourceSpans;
 
 	/**
 	 * How many hits do we have in total?
@@ -182,7 +184,7 @@ public class Hits implements Iterable<Hit> {
 		this(searcher, concordanceFieldPropName);
 
 		totalNumberOfHits = -1; // "not known yet"
-		sourceSpans = source;
+		sourceSpans = BLSpansWrapper.optWrap(source);
 		sourceSpansFullyRead = false;
 		totalNumberOfDocs = -1; // unknown
 	}
@@ -277,14 +279,14 @@ public class Hits implements Iterable<Hit> {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	Spans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
+	BLSpans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
 		try {
 			IndexReader reader = null;
 			if (searcher != null) { // this may happen while testing with stub classes
 				reader = searcher.getIndexReader();
 			}
 			spanQuery = (SpanQuery) spanQuery.rewrite(reader);
-			return spanQuery.getSpans(reader);
+			return BLSpansWrapper.optWrap(spanQuery.getSpans(reader));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -346,7 +348,7 @@ public class Hits implements Iterable<Hit> {
 					totalNumberOfHits = hits.size();
 					break;
 				}
-				hits.add(Hit.getHit(sourceSpans));
+				hits.add(sourceSpans.getHit());
 				if (totalNumberOfHits >= 0 && hits.size() >= totalNumberOfHits
 						|| hits.size() >= MAX_HITS_TO_RETRIEVE) {
 					// Either we've got them all, or we should stop
@@ -580,6 +582,36 @@ public class Hits implements Iterable<Hit> {
 	 * @return concordance for this hit
 	 */
 	public Concordance getConcordance(Hit h) {
+		return getConcordance(h, desiredContextSize);
+	}
+
+	/**
+	 * Get a concordance with a custom context size.
+	 *
+	 * Don't call this directly for displaying a list of results. In that case,
+	 * just instantiate a HitsWindow, call setContextSize() on it to set a
+	 * default context size and call getConcordance(Hit) for each hit. That's
+	 * more efficient if you're dealing with many hits.
+	 *
+	 * This method is mostly just for getting a larger snippet around
+	 * a single hit.
+	 *
+	 * @param h the hit
+	 * @param contextSize the context size for this concordance
+	 *   (only use if you want a different one than the preset preference)
+	 * @return concordance for this hit
+	 */
+	public Concordance getConcordance(Hit h, int contextSize) {
+		if (contextSize != desiredContextSize) {
+			// Different context size than the default for the whole set;
+			// We probably want to show a hit with a larger snippet around it
+			// (say, 50 words or so). Don't clobber the context of the other
+			// hits, just fetch this snippet separately.
+			return searcher.getConcordance(concordanceFieldName, h, contextSize);
+		}
+
+		// Default context size. Read all hits and find concordances for all of them
+		// in batch.
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {

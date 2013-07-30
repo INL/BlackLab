@@ -58,6 +58,7 @@ import nl.inl.blacklab.search.grouping.RandomAccessGroup;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.util.FileUtil;
 import nl.inl.util.IoUtil;
+import nl.inl.util.StringUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
@@ -65,6 +66,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Filter;
@@ -402,6 +404,9 @@ public class QueryTool {
 	/** If false, command was not a query, prefix stats line with # */
 	private boolean commandWasQuery;
 
+	/** Size of larger snippet */
+	private int snippetSize = 50;
+
 	/**
 	 * The main program.
 	 *
@@ -634,6 +639,20 @@ public class QueryTool {
 				}
 				//statprintln("# context\t" + contextSize);
 				showResultsPage();
+			} else if (lcased.startsWith("snippet ")) {
+				int hitId = Integer.parseInt(lcased.substring(8)) - 1;
+				Hit h = getCurrentHitSet().get(hitId);
+				Concordance conc = hits.getConcordance(h, snippetSize);
+				String left = prepConcForDisplay(conc.left);
+				String middle = prepConcForDisplay(conc.hit);
+				String right = prepConcForDisplay(conc.right);
+				outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
+			} else if (lcased.startsWith("doc ")) {
+				int docId = Integer.parseInt(lcased.substring(4));
+				showMetadata(docId);
+			} else if (lcased.startsWith("snippetsize ")) {
+				snippetSize = Integer.parseInt(lcased.substring(12));
+				outprintln("Snippets will show " + snippetSize + " words of context.");
 			} else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
 				//statprintln("# filter\t" + cmd);
 				if (cmd.length() <= 7) {
@@ -698,10 +717,9 @@ public class QueryTool {
 				printQueryHelp();
 			} else if (lcased.equals("help") || lcased.equals("?")) {
 				printHelp();
-			} else if (lcased.equals("openfi")) {
-				// Open the forward indices
-				//statprintln("# openfi");
-				searcher.openForwardIndices();
+			} else if (lcased.equals("warmup")) {
+				outprintln("Warming up the forward indices. This may take a while...");
+				searcher.warmUpForwardIndices();
 			} else if (lcased.startsWith("showconc ")) {
 				String v = lcased.substring(9);
 				showConc = v.equals("on") || v.equals("yes") || v.equals("true");
@@ -725,6 +743,13 @@ public class QueryTool {
 
 		if (restCommand != null)
 			processCommand(restCommand);
+	}
+
+	private void showMetadata(int docId) {
+		Document doc = searcher.document(docId);
+		for (Fieldable f: doc.getFields()) {
+			outprintln(f.name() + ": " + f.stringValue());
+		}
 	}
 
 	private void showIndexStructure() {
@@ -789,11 +814,16 @@ public class QueryTool {
 		outprintln("  sort {match|left|right} [prop]     # Sort query results  (left = left context, etc.)");
 		outprintln("  group {match|left|right} [prop]    # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
 		outprintln("  hits / groups / group <n> / colloc # Switch between results modes");
-		outprintln("  pagesize <n>                       # Set number of hits to show per page");
 		outprintln("  context <n>                        # Set number of words to show around hits");
+		outprintln("  pagesize <n>                       # Set number of hits to show per page");
+		outprintln("  snippet <x>                        # Show longer snippet around hit x");
+		outprintln("  doc <id>                           # Show metadata for doc id");
+		outprintln("  snippetsize <n>                    # Words to show around hit in longer snippet");
 		outprintln("  sensitive {on|off|case|diac}       # Set case-/diacritics-sensitivity");
 		outprintln("  filter <luceneQuery>               # Set document filter, e.g. title:\"Smith\"");
 		outprintln("  doctitle {on|off}                  # Show document titles between hits?");
+		outprintln("  warmup                             # Warm up the forward indices");
+		outprintln("  struct                             # Show index structure");
 		outprintln("  help                               # This message");
 		outprintln("  exit                               # Exit program");
 		outprintln("");
@@ -1262,11 +1292,12 @@ public class QueryTool {
 		}
 
 		// Display hits
-		String format = "[doc %05d] %" + leftContextMaxSize + "s[%s]%s\n";
+		String format = "%4d. [%04d] %" + leftContextMaxSize + "s[%s]%s\n";
 		if (showDocTitle)
-			format = "%" + leftContextMaxSize + "s[%s]%s\n";
+			format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
 		int currentDoc = -1;
 		String titleField = searcher.getIndexStructure().getDocumentTitleField();
+		int hitNr = window.first() + 1;
 		for (HitToShow hit : toShow) {
 			if (showDocTitle && hit.doc != currentDoc) {
 				if (currentDoc != -1)
@@ -1281,9 +1312,10 @@ public class QueryTool {
 				outprintln("--- " + title + " ---");
 			}
 			if (showDocTitle)
-				outprintf(format, hit.left, hit.hitText, hit.right);
+				outprintf(format, hitNr, hit.left, hit.hitText, hit.right);
 			else
-				outprintf(format, hit.doc, hit.left, hit.hitText, hit.right);
+				outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
+			hitNr++;
 		}
 
 		// Summarize
@@ -1292,8 +1324,9 @@ public class QueryTool {
 			msg = (window.size() == resultsPerPage ? "At least " : "") + (window.last() + 1) + " hits (total not determined)";
 		}
 		else if (window.totalHits() > window.size()) {
-			msg = (window.first() + 1) + "-" + (window.last() + 1) + " of " + window.totalHits()
-					+ " hits";
+			//String range = (window.first() + 1) + "-" + (window.last() + 1);
+			//msg = range + " of " + window.totalHits() + " hits";
+			msg = window.totalHits() + " hits";
 		}
 		outprintln(msg);
 		if (hitsToShow.tooManyHits()) {

@@ -18,8 +18,6 @@ package nl.inl.blacklab.filter;
 import java.io.IOException;
 import java.io.StringReader;
 
-import nl.inl.util.Utilities;
-
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.WhitespaceTokenizer;
@@ -52,7 +50,7 @@ public class TranscribeGermanAccentsFilter extends TokenFilter {
 
 			CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
 			while (ts.incrementToken()) {
-				System.out.println(Utilities.getTerm(term));
+				System.out.println(new String(term.buffer(), 0, term.length()));
 			}
 		} finally {
 			ts.close();
@@ -69,7 +67,7 @@ public class TranscribeGermanAccentsFilter extends TokenFilter {
 	@Override
 	public boolean incrementToken() throws IOException {
 		if (input.incrementToken()) {
-			String t = Utilities.getTerm(termAtt);
+			String t = new String(termAtt.buffer(), 0, termAtt.length());
 			t = process(t);
 			termAtt.copyBuffer(t.toCharArray(), 0, t.length());
 			return true;

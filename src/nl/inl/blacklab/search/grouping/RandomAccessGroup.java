@@ -21,7 +21,7 @@ import java.util.List;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.lucene.SpansWithHit;
+import nl.inl.blacklab.search.lucene.BLSpans;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -61,7 +61,7 @@ public class RandomAccessGroup extends Group {
 
 	@Override
 	public Spans getSpans() {
-		return new SpansWithHit() {
+		return new BLSpans() {
 			Iterator<Hit> it = results.iterator();
 
 			Hit currentHit = null;

@@ -34,7 +34,6 @@ import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.ExUtil;
-import nl.inl.util.MemoryUtil;
 import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
@@ -222,8 +221,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 			// Tricks to speed up reading
 			if (existing && !create) {
-				long free = MemoryUtil.getFree();
-
 				if (!indexMode && useMemoryMapping) {
 
 					// Memory-map the file
@@ -242,6 +239,24 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 		if (create) {
 			clear();
+		}
+	}
+
+	@Override
+	public void warmUp() {
+		int fiid = 0;
+		int oneReadPerHowManyChars = 2000;
+		for (TocEntry e: toc) {
+			int n = e.length / oneReadPerHowManyChars;
+
+			int[] starts = new int[n];
+			int[] ends = new int[n];
+			for (int i = 0; i < n; i++) {
+				starts[i] = i * oneReadPerHowManyChars;
+				ends[i] = starts[i] + 10;
+			}
+			retrievePartsInt(fiid, starts, ends);
+			fiid++;
 		}
 	}
 

@@ -18,8 +18,6 @@ package nl.inl.blacklab.filter;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import nl.inl.util.Utilities;
-
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -49,7 +47,7 @@ public class RemovePunctuationFilter extends TokenFilter {
 	@Override
 	public boolean incrementToken() throws IOException {
 		if (input.incrementToken()) {
-			String t = Utilities.getTerm(termAtt);
+			String t = new String(termAtt.buffer(), 0, termAtt.length());
 			t = process(t);
 			termAtt.copyBuffer(t.toCharArray(), 0, t.length());
 			return true;

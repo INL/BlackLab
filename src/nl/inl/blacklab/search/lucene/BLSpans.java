@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
+import nl.inl.blacklab.search.Hit;
+
 
 /**
  * Will be the base class for all our own Spans classes. Is able to give extra
@@ -86,6 +88,18 @@ public abstract class BLSpans extends SpansAbstract {
 	 */
 	public boolean hitsAreUnique() {
 		return true;
+	}
+
+	/**
+	 * Makes a new Hit object from the document id, start and end positions.
+	 *
+	 * Subclasses that already have a Hit object available should override this and return the
+	 * existing Hit object, to avoid excessive Hit instantiations.
+	 *
+	 * @return the Hit object for the current hit
+	 */
+	public Hit getHit() {
+		return new Hit(doc(), start(), end());
 	}
 
 }

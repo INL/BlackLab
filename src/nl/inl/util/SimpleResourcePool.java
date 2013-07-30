@@ -13,6 +13,7 @@ import java.util.List;
  * need one for a short time.
  *
  * Note that this is a very basic resource pool.
+ * @param <T> resource type to pool
  */
 public abstract class SimpleResourcePool<T> {
 	/**

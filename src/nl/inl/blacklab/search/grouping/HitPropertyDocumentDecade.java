@@ -22,7 +22,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 /**
- * A hit property for grouping on a stored field in the corresponding Lucene document.
+ * A hit property for grouping on by decade based on a stored field
+ * in the corresponding Lucene document containing a year.
  */
 public class HitPropertyDocumentDecade extends HitProperty {
 	IndexReader reader;
@@ -56,11 +57,15 @@ public class HitPropertyDocumentDecade extends HitProperty {
 		try {
 			Document d = reader.document(((Hit)a).doc);
 			String strYear = d.get(fieldName);
+			if (strYear == null || strYear.length() == 0) // sort missing year at the end
+				return 1;
 			int aYear = Integer.parseInt(strYear);
 			aYear -= aYear % 10;
 
 			d = reader.document(((Hit)b).doc);
 			strYear = d.get(fieldName);
+			if (strYear == null || strYear.length() == 0) // sort missing year at the end
+				return -1;
 			int bYear = Integer.parseInt(strYear);
 			bYear -= bYear % 10;
 

@@ -48,6 +48,8 @@ public class VersionFile {
 	 *
 	 * @param dir
 	 *            the directory containing the version file
+	 * @param defaultType the type to use if the version file does not exist
+	 * @param defaultVersion the versopm to use if the version file does not exist
 	 * @return the VersionFile object
 	 */
 	public static VersionFile read(File dir, String defaultType, String defaultVersion) {
@@ -66,6 +68,8 @@ public class VersionFile {
 	 *
 	 * @param dir
 	 *            the directory to write the version file to
+	 * @param type the type to write
+	 * @param version the version to write
 	 * @return the VersionFile object
 	 */
 	public static VersionFile write(File dir, String type, String version) {

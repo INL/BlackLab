@@ -91,6 +91,8 @@ public class Searcher {
 	/** Complex field name for default contents field */
 	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
 
+	private static final boolean AUTOMATICALLY_WARM_UP_FIS = false;
+
 	/** The collator to use for sorting. Defaults to English collator. */
 	private Collator collator = Collator.getInstance(new Locale("en", "GB"));
 
@@ -1514,8 +1516,11 @@ public class Searcher {
 
 	/**
 	 * Opens all the forward indices, to avoid this delay later.
+	 *
+	 * NOTE: used to be public; now private because it's done automatically when
+	 * constructing the Searcher.
 	 */
-	public void openForwardIndices() {
+	private void openForwardIndices() {
 		for (String field: indexStructure.getComplexFields()) {
 			ComplexFieldDesc fieldDesc = indexStructure.getComplexFieldDesc(field);
 			for (String property: fieldDesc.getProperties()) {
@@ -1525,6 +1530,20 @@ public class Searcher {
 					getForwardIndex(ComplexFieldUtil.propertyField(field, property));
 				}
 			}
+		}
+
+		if (AUTOMATICALLY_WARM_UP_FIS) {
+			warmUpForwardIndices();
+		}
+	}
+
+	/**
+	 * "Warm up" the forward indices by perform
+	 */
+	public void warmUpForwardIndices() {
+		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
+			logger.debug("Warming up " + e.getKey() + "...");
+			e.getValue().warmUp();
 		}
 	}
 
@@ -1900,6 +1919,23 @@ public class Searcher {
 
 	public String getIndexName() {
 		return indexLocation.toString();
+	}
+
+	/**
+	 * Retrieve a single concordance. Only use if you need a larger snippet around a single
+	 * hit. If you need concordances for a set of hits, just instantiate a HitsWindow and call
+	 * getConcordance() on that; it will fetch all concordances in the window in a batch, which
+	 * is more efficient.
+	 *
+	 * @param concordanceFieldName field to use for building the concordance
+	 * @param hit the hit for which we want a concordance
+	 * @param contextSize the desired number of words around the hit
+	 * @return the concordance
+	 */
+	public Concordance getConcordance(String concordanceFieldName, Hit hit, int contextSize) {
+		List<Hit> oneHit = Arrays.asList(hit);
+		Map<Hit, Concordance> oneConc = retrieveConcordances(concordanceFieldName, oneHit, contextSize);
+		return oneConc.get(hit);
 	}
 
 	// /**

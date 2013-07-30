@@ -73,6 +73,24 @@ public class NetUtil {
 	}
 
 	/**
+	 * URLencode a string for use in part of the URL (not a parameter value).
+	 *
+	 * The difference between encoding a parameter value and an URL part is that
+	 * space is encoded as "%20", not "+".
+	 *
+	 * @param string
+	 *            the string to encode
+	 * @return the URLencoded value
+	 */
+	public static String urlPartEncode(String string) {
+		try {
+			return URLEncoder.encode(string, defaultEncoding).replaceAll("\\+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			throw ExUtil.wrapRuntimeException(e);
+		}
+	}
+
+	/**
 	 * URLdecode a value
 	 *
 	 * @param value

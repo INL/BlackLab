@@ -31,6 +31,11 @@ public abstract class ForwardIndex {
 	public abstract int luceneDocIdToFiid(int docId);
 
 	/**
+	 * Perform a series of reads on the forward index to get (most of) it into disk cache.
+	 */
+	public abstract void warmUp();
+
+	/**
 	 * Close the forward index.
 	 * Writes the table of contents to disk if modified.
 	 */

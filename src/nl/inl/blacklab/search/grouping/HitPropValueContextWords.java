@@ -1,7 +1,7 @@
 package nl.inl.blacklab.search.grouping;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.util.Utilities;
+import nl.inl.util.ArrayUtil;
 
 public class HitPropValueContextWords extends HitPropValue {
 	int[] value;
@@ -15,7 +15,7 @@ public class HitPropValueContextWords extends HitPropValue {
 
 	@Override
 	public int compareTo(Object o) {
-		return Utilities.compareArrays(value, ((HitPropValueContextWords)o).value);
+		return ArrayUtil.compareArrays(value, ((HitPropValueContextWords)o).value);
 	}
 
 	@Override

@@ -87,7 +87,8 @@ class SpansExpansionRaw extends BLSpans {
 			throw new RuntimeException("Expansions cannot be negative");
 	}
 
-	/** For test, we don't have an index reader, so use default values (all docs are 5 tokens long) */
+	/** For test, we don't have an index reader, so use default values (all docs are 5 tokens long)
+	 * @param b true if we're testing, false if not */
 	public void setTest(boolean b) {
 		if (lengthGetter != null)
 			lengthGetter.setTest(b);

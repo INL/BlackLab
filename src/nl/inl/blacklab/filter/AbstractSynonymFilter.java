@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Stack;
 
-import nl.inl.util.Utilities;
-
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.WhitespaceTokenizer;
@@ -91,7 +89,7 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 
 		CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
 		while (ts.incrementToken()) {
-			System.out.println(Utilities.getTerm(term));
+			System.out.println(new String(term.buffer(), 0, term.length()));
 		}
 	}
 
@@ -138,7 +136,7 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 	}
 
 	private void addAliasesToStack() {
-		String[] synonyms = getSynonyms(Utilities.getTerm(termAttr));
+		String[] synonyms = getSynonyms(new String(termAttr.buffer(), 0, termAttr.length()));
 		if (synonyms == null)
 			return;
 		State current = captureState();

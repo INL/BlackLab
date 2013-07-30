@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import nl.inl.util.Utilities;
-
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
@@ -78,11 +76,11 @@ class TokenStreamFromList extends TokenStream {
 		try {
 			CharTermAttribute term = s.addAttribute(CharTermAttribute.class);
 			s.incrementToken();
-			System.out.println(Utilities.getTerm(term));
+			System.out.println(new String(term.buffer(), 0, term.length()));
 			s.incrementToken();
-			System.out.println(Utilities.getTerm(term));
+			System.out.println(new String(term.buffer(), 0, term.length()));
 			s.incrementToken();
-			System.out.println(Utilities.getTerm(term));
+			System.out.println(new String(term.buffer(), 0, term.length()));
 			System.out.println(s.incrementToken());
 		} finally {
 			s.close();

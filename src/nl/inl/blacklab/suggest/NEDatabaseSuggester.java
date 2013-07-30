@@ -21,7 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import nl.inl.util.Utilities;
+import nl.inl.util.StringUtil;
 
 /**
  * Suggester using the NE database to suggest word form variants given a word form
@@ -94,7 +94,7 @@ public class NEDatabaseSuggester extends Suggester {
 				while (rs.next()) {
 					// FIXME: suggesties met leestekens (behalve punt) weglaten, foutjes in DB!
 					String s = rs.getString(1);
-					if (s.equals(Utilities.removePunctuation(s)))
+					if (s.equals(StringUtil.removePunctuation(s)))
 						sugg.addSuggestion("named entity", s);
 				}
 			} finally {
