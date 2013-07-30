@@ -57,11 +57,15 @@ public class HitPropertyDocumentDecade extends HitProperty {
 		try {
 			Document d = reader.document(((Hit)a).doc);
 			String strYear = d.get(fieldName);
+			if (strYear == null || strYear.length() == 0) // sort missing year at the end
+				return 1;
 			int aYear = Integer.parseInt(strYear);
 			aYear -= aYear % 10;
 
 			d = reader.document(((Hit)b).doc);
 			strYear = d.get(fieldName);
+			if (strYear == null || strYear.length() == 0) // sort missing year at the end
+				return -1;
 			int bYear = Integer.parseInt(strYear);
 			bYear -= bYear % 10;
 
