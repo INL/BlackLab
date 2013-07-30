@@ -1538,7 +1538,8 @@ public class Searcher {
 	}
 
 	/**
-	 * "Warm up" the forward indices by perform
+	 * "Warm up" the forward indices by performing a large number of reads on them,
+	 * getting them into disk cache.
 	 */
 	public void warmUpForwardIndices() {
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
