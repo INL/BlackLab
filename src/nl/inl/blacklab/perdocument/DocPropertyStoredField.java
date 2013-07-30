@@ -50,9 +50,13 @@ public class DocPropertyStoredField extends DocProperty {
 		String sa = a.getDocument().get(fieldName);
 		if (sa == null)
 			sa = "";
+		if (sa.length() == 0) // sort empty string at the end
+			return 1;
 		String sb = b.getDocument().get(fieldName);
 		if (sb == null)
 			sb = "";
+		if (sb.length() == 0) // sort empty string at the end
+			return 1;
 		return sa.compareTo(sb);
 	}
 
