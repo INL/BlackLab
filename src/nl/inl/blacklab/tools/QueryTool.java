@@ -624,7 +624,7 @@ public class QueryTool {
 			} else if (lcased.equals("next") || lcased.equals("n")) {
 				nextPage();
 			} else if (lcased.startsWith("page ")) {
-				showPage(Integer.parseInt(lcased.substring(5)));
+				showPage(Integer.parseInt(lcased.substring(5)) - 1);
 			} else if (lcased.startsWith("pagesize ")) {
 				resultsPerPage = Integer.parseInt(lcased.substring(9));
 				firstResult = 0;
@@ -1210,13 +1210,11 @@ public class QueryTool {
 		int i;
 		for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
 			RandomAccessGroup g = listGroups.get(i);
-			outprintln(String.format("%4d %5d %s", i + 1, g.size(), g.getIdentity().toString()));
+			outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.getIdentity().toString()));
 		}
 
 		// Summarize
 		String msg = groups.numberOfGroups() + " groups";
-		if (groups.numberOfGroups() > resultsPerPage)
-			msg = (firstResult + 1) + "-" + i + " of " + groups.numberOfGroups() + " groups";
 		outprintln(msg);
 	}
 
@@ -1318,19 +1316,24 @@ public class QueryTool {
 		}
 
 		// Summarize
-		String msg = hitsToShow.size() + " hits";
-		if (hitsToShow.maxHitsRetrieved()) {
-			if (hitsToShow.maxHitsCounted()) {
-				msg = hitsToShow.size() + " hits retrieved, more than " + hitsToShow.totalSize() + " total";
-			} else {
-				msg = hitsToShow.size() + " hits retrieved, " + hitsToShow.totalSize() + " total";
-			}
-		}
+		String msg;
 		if (!determineTotalNumberOfHits) {
 			msg = hitsToShow.totalSize() + " hits counted so far (total not determined)";
 		}
+		else {
+			int numberRetrieved = hitsToShow.size();
+			String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.numberOfDocs() + " documents";
+			if (hitsToShow.maxHitsRetrieved()) {
+				if (hitsToShow.maxHitsCounted()) {
+					msg = hitsInDocs + " retrieved, more than " + hitsToShow.totalSize() + " total";
+				} else {
+					msg = hitsInDocs + " retrieved, " + hitsToShow.totalSize() + " total";
+				}
+			} else {
+				msg = hitsInDocs;
+			}
+		}
 		outprintln(msg);
-		outprintln(hitsToShow.numberOfDocs() + " documents total");
 	}
 
 	String prepConcForDisplay(String input) {
