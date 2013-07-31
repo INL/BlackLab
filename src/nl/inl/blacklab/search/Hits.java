@@ -91,32 +91,56 @@ public class Hits implements Iterable<Hit> {
 	protected BLSpans sourceSpans;
 
 	/**
-	 * How many hits do we have in total?
-	 * (We keep this separately because we may run through a Spans first to
-	 * count the hits without storing them, to avoid unnecessarily instantiating
-	 * Hit objects)
-	 * If -1, we don't know the total number of hits yet.
+	 * Stop retrieving hits after this number.
+	 * (-1 = don't stop retrieving)
 	 */
-	int totalNumberOfHits;
+	private static int defaultMaxHitsToRetrieve = 1000000;
 
 	/**
-	 * For extremely large queries, stop retrieving hits after this number.
+	 * Stop counting hits after this number.
+	 * (-1 = don't stop counting)
 	 */
-	public final static int MAX_HITS_TO_RETRIEVE = 10000000;
+	private static int defaultMaxHitsToCount = -1;
 
 	/**
-	 * If true, we try to count the total number of hits even if we don't
-	 * actually retrieve all of them yet. Now set to false because for large
-	 * queries even enumerating the hits takes a lot of time, so this is only
-	 * done if requested.
+	 * Stop retrieving hits after this number.
+	 * (-1 = don't stop retrieving)
 	 */
-	private static final boolean PRE_COUNT_TOTAL_HITS = false;
+	private int maxHitsToRetrieve = defaultMaxHitsToRetrieve;
+
+	/**
+	 * Stop counting hits after this number.
+	 * (-1 = don't stop counting)
+	 */
+	private int maxHitsToCount = defaultMaxHitsToCount;
 
 	/**
 	 * If true, we've stopped retrieving hits because there are more than
 	 * the maximum we've set.
 	 */
-	private boolean tooManyHits = false;
+	private boolean maxHitsRetrieved = false;
+
+	/**
+	 * If true, we've stopped counting hits because there are more than
+	 * the maximum we've set.
+	 */
+	private boolean maxHitsCounted = false;
+
+	/**
+	 * The number of hits we've seen and counted so far. May be more than
+	 * the number of hits we've retrieved if that exceeds maxHitsToRetrieve.
+	 */
+	private int hitsCounted = 0;
+
+	/**
+	 * The number of separate documents we've seen and counted so far.
+	 */
+	private int docsCounted = 0;
+
+	/**
+	 * Document the previous hit was in, so we can count separate documents.
+	 */
+	private int previousHitDoc = -1;
 
 	/**
 	 * The desired context size (number of words to fetch around hits).
@@ -128,13 +152,6 @@ public class Hits implements Iterable<Hit> {
 	 * The current context size (number of words around hits we now have).
 	 */
 	private int currentContextSize;
-
-	/**
-	 * The number of documents counted (only valid if the basis for this is a SpanQuery object;
-	 * used by DocResults to report the total number of docs without retrieving them all first).
-	 * If the value is -1, we don't know the total number of docs.
-	 */
-	private int totalNumberOfDocs;
 
 	/**
 	 * Construct an empty Hits object
@@ -157,12 +174,11 @@ public class Hits implements Iterable<Hit> {
 	public Hits(Searcher searcher, String concordanceFieldPropName) {
 		this.searcher = searcher;
 		hits = new ArrayList<Hit>();
-		totalNumberOfHits = 0;
+		hitsCounted = 0;
 		setConcordanceField(concordanceFieldPropName);
 		desiredContextSize = searcher == null ? 0 /* only for test */: searcher
 				.getDefaultContextSize();
 		currentContextSize = -1;
-		totalNumberOfDocs = -1; // unknown
 	}
 
 	/**
@@ -183,10 +199,8 @@ public class Hits implements Iterable<Hit> {
 	public Hits(Searcher searcher, String concordanceFieldPropName, Spans source) {
 		this(searcher, concordanceFieldPropName);
 
-		totalNumberOfHits = -1; // "not known yet"
 		sourceSpans = BLSpansWrapper.optWrap(source);
 		sourceSpansFullyRead = false;
-		totalNumberOfDocs = -1; // unknown
 	}
 
 	/**
@@ -204,34 +218,7 @@ public class Hits implements Iterable<Hit> {
 			throws TooManyClauses {
 		this(searcher, concordanceFieldPropName);
 
-		totalNumberOfDocs = -1;
-		totalNumberOfHits = -1;
-
-		if (PRE_COUNT_TOTAL_HITS) {
-			// Count how many hits there are in total
-			sourceSpans = findSpans(sourceQuery);
-			try {
-				totalNumberOfDocs = 0;
-				int doc = -1;
-				tooManyHits = false;
-				while (sourceSpans.next()) {
-					if (doc != sourceSpans.doc()) {
-						doc = sourceSpans.doc();
-						totalNumberOfDocs++;
-					}
-					totalNumberOfHits++;
-					if (totalNumberOfHits >= MAX_HITS_TO_RETRIEVE) {
-						// Too many hits; stop collecting here
-						tooManyHits = true;
-						break;
-					}
-				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		sourceSpans = findSpans(sourceQuery); // Counted 'em. Now reset.
+		sourceSpans = findSpans(sourceQuery);
 		// logger.debug("SPANS: " + sourceSpans);
 		sourceSpansFullyRead = false;
 	}
@@ -295,9 +282,27 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Were all hits retrieved, or did we stop because there were too many?
 	 * @return true if all hits were retrieved
+	 * @deprecated renamed to maxHitsRetrieved()
 	 */
+	@Deprecated
 	public boolean tooManyHits() {
-		return tooManyHits;
+		return maxHitsRetrieved();
+	}
+
+	/**
+	 * Did we stop retrieving hits because we reached the maximum?
+	 * @return true if we reached the maximum and stopped retrieving hits
+	 */
+	public boolean maxHitsRetrieved() {
+		return maxHitsRetrieved;
+	}
+
+	/**
+	 * Did we stop counting hits because we reached the maximum?
+	 * @return true if we reached the maximum and stopped counting hits
+	 */
+	public boolean maxHitsCounted() {
+		return maxHitsCounted;
 	}
 
 	/**
@@ -340,26 +345,33 @@ public class Hits implements Iterable<Hit> {
 		Thread currentThread = Thread.currentThread();
 		try {
 			while (readAllHits || hits.size() < number) {
+
+				// Check if the thread should terminate
 				if (currentThread.isInterrupted())
 					throw new InterruptedException("Thread was interrupted while gathering hits");
 
+				// Stop if we're at the maximum number of hits we want to count
+				if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
+					maxHitsCounted = true;
+					break;
+				}
+
+				// Advance to next hit
 				if (!sourceSpans.next()) {
 					sourceSpansFullyRead = true;
-					totalNumberOfHits = hits.size();
 					break;
 				}
-				hits.add(sourceSpans.getHit());
-				if (totalNumberOfHits >= 0 && hits.size() >= totalNumberOfHits
-						|| hits.size() >= MAX_HITS_TO_RETRIEVE) {
-					// Either we've got them all, or we should stop
-					// collecting them because there's too many
-					sourceSpansFullyRead = true;
-					if (hits.size() >= MAX_HITS_TO_RETRIEVE) {
-						tooManyHits = true;
-						totalNumberOfHits = hits.size();
-					}
-					break;
+
+				// Count the hit and add it (unless we've reached the maximum number of hits we want)
+				hitsCounted++;
+				int hitDoc = sourceSpans.doc();
+				if (hitDoc != previousHitDoc) {
+					docsCounted++;
+					previousHitDoc = hitDoc;
 				}
+				maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
+				if (!maxHitsRetrieved)
+					hits.add(sourceSpans.getHit());
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -456,7 +468,12 @@ public class Hits implements Iterable<Hit> {
 			return;
 		}
 		hits.add(hit);
-		totalNumberOfHits++;
+		hitsCounted++;
+		int hitDoc = hit.doc;
+		if (hitDoc != previousHitDoc) {
+			docsCounted++;
+			previousHitDoc = hitDoc;
+		}
 	}
 
 	/**
@@ -465,6 +482,9 @@ public class Hits implements Iterable<Hit> {
 	 * This may be used if we don't want to process all hits (which
 	 * may be a lot) but we do need to know something about the size
 	 * of the result set (such as for paging).
+	 *
+	 * Note that this method applies to the hits retrieved, which may
+	 * be less than the total number of hits (depending on maxHitsToRetrieve).
 	 *
 	 * @param lowerBound the number we're testing against
 	 *
@@ -483,15 +503,51 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Return the number of hits.
+	 * Return the number of hits available.
 	 *
-	 * @return the number of hits
+	 * Note that this method applies to the hits retrieved, which may
+	 * be less than the total number of hits (depending on maxHitsToRetrieve).
+	 * Use totalSize() to find the total hit count (which may also be limited
+	 * depending on maxHitsToCount).
+	 *
+	 * @return the number of hits available
 	 */
 	public int size() {
-		if (totalNumberOfHits >= 0)
-			return totalNumberOfHits; // fully known, or pre-counted
+		try {
+			// Probably not all hits have been seen yet. Collect them all.
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			// Returned value is probably not the correct total number of hits,
+			// but will not cause any crashes. The thread was interrupted anyway,
+			// the value should never be presented to the user.
+		}
+		return hits.size();
+	}
 
-		// Probably not all hits have been seen yet. Collect them all.
+	/**
+	 * Return the total number of hits.
+	 *
+	 * NOTE: Depending on maxHitsToRetrieve, hit retrieval may stop
+	 * before all hits are seen. We do keep counting hits though
+	 * (until we reach maxHitsToCount, or that value is negative).
+	 * This method returns our total hit count. Some of these hits
+	 * may not be available.
+	 *
+	 * @return the total hit count
+	 */
+	public int totalSize() {
+		return hitsCounted;
+	}
+
+	/**
+	 * Return the total number of documents in all hits.
+	 * This counts documents even in hits that are not stored, only counted.
+	 *
+	 * @return the total number of documents.
+	 */
+	public int numberOfDocs() {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -500,9 +556,8 @@ public class Hits implements Iterable<Hit> {
 			// Returned value is probably not the correct total number of hits,
 			// but will not cause any crashes. The thread was interrupted anyway,
 			// the value should never be presented to the user.
-			return hits.size();
 		}
-		return totalNumberOfHits;
+		return docsCounted;
 	}
 
 	/**
@@ -760,8 +815,7 @@ public class Hits implements Iterable<Hit> {
 		boolean caseSensitive = searcher.isDefaultSearchCaseSensitive();
 		boolean diacSensitive = searcher.isDefaultSearchDiacriticsSensitive();
 		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
-		// Map<String, Integer> collStr = new HashMap<String, Integer>();
-		// FIXME: get collocations for multiple contexts?
+		// TODO: get collocations for multiple contexts?
 		Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
 			String word = terms.getFromSortPosition(e.getKey());
@@ -845,17 +899,60 @@ public class Hits implements Iterable<Hit> {
 		return hits.subList(fromIndex, toIndex);
 	}
 
+	/**
+	 * Set the field properties to retrieve context from
+	 * @param contextField the field properties
+	 */
 	public void setContextField(List<String> contextField) {
 		this.contextFieldsPropName = contextField == null ? null : new ArrayList<String>(contextField);
 	}
 
-	/**
-	 * The number of documents counted (only valid if the basis for this is a SpanQuery object;
-	 * used by DocResults to report the total number of docs without retrieving them all first)
-	 *
-	 * @return number of docs, or -1 if we haven't seen all the hits yet and therefore don't know
-	 */
-	public int numberOfDocs() {
-		return totalNumberOfDocs;
+	/** @return the default maximum number of hits to retrieve. */
+	public static int getDefaultMaxHitsToRetrieve() {
+		return defaultMaxHitsToRetrieve;
 	}
+
+	/** Set the default maximum number of hits to retrieve
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public static void setDefaultMaxHitsToRetrieve(int n) {
+		Hits.defaultMaxHitsToRetrieve = n;
+	}
+
+	/** @return the default maximum number of hits to count. */
+	public static int getDefaultMaxHitsToCount() {
+		return defaultMaxHitsToCount;
+	}
+
+	/** Set the default maximum number of hits to count
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public static void setDefaultMaxHitsToCount(int n) {
+		Hits.defaultMaxHitsToCount = n;
+	}
+
+	/** @return the maximum number of hits to retrieve. */
+	public int getMaxHitsToRetrieve() {
+		return maxHitsToRetrieve;
+	}
+
+	/** Set the maximum number of hits to retrieve
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public void setMaxHitsToRetrieve(int n) {
+		this.maxHitsToRetrieve = n;
+	}
+
+	/** @return the maximum number of hits to count. */
+	public int getMaxHitsToCount() {
+		return maxHitsToCount;
+	}
+
+	/** Set the maximum number of hits to count
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public void setMaxHitsToCount(int n) {
+		this.maxHitsToCount = n;
+	}
+
 }

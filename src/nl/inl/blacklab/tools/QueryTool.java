@@ -538,11 +538,10 @@ public class QueryTool {
 	 */
 	public QueryTool(File indexDir, BufferedReader in) throws CorruptIndexException, IOException {
 		printProgramHead();
-		outprint("Opening index " + indexDir + "... ");
+		outprintln("Opening index " + indexDir + "...");
 
 		// Create the BlackLab searcher object
 		searcher = new Searcher(indexDir);
-		outprintln("Done.\n");
 
 		this.in = in;
 
@@ -1319,20 +1318,19 @@ public class QueryTool {
 		}
 
 		// Summarize
-		String msg = window.size() + " hits";
-		if (!determineTotalNumberOfHits) {
-			msg = (window.size() == resultsPerPage ? "At least " : "") + (window.last() + 1) + " hits (total not determined)";
+		String msg = hitsToShow.size() + " hits";
+		if (hitsToShow.maxHitsRetrieved()) {
+			if (hitsToShow.maxHitsCounted()) {
+				msg = hitsToShow.size() + " hits retrieved, more than " + hitsToShow.totalSize() + " total";
+			} else {
+				msg = hitsToShow.size() + " hits retrieved, " + hitsToShow.totalSize() + " total";
+			}
 		}
-		else if (window.totalHits() > window.size()) {
-			//String range = (window.first() + 1) + "-" + (window.last() + 1);
-			//msg = range + " of " + window.totalHits() + " hits";
-			msg = window.totalHits() + " hits";
+		if (!determineTotalNumberOfHits) {
+			msg = hitsToShow.totalSize() + " hits counted so far (total not determined)";
 		}
 		outprintln(msg);
-		if (hitsToShow.tooManyHits()) {
-			outprintln("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE
-					+ " were collected)");
-		}
+		outprintln(hitsToShow.numberOfDocs() + " documents total");
 	}
 
 	String prepConcForDisplay(String input) {

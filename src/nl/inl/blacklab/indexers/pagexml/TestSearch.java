@@ -81,7 +81,7 @@ public class TestSearch {
 				System.out.printf("[%05d:%06d] %45s[%s]%s\n", hit.doc, hit.start, left, hitText,
 						right);
 			}
-			System.out.println(window.size() + " concordances of a total of " + window.totalHits());
+			System.out.println(window.size() + " concordances of a total of " + window.sourceSize());
 
 			System.out.println((System.currentTimeMillis() - time) + "ms elapsed");
 

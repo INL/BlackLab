@@ -188,15 +188,18 @@ public class DocResults implements Iterable<DocResult> {
 		return results.size() >= lowerBound;
 	}
 
+	/**
+	 * Get the number of documents in this results set.
+	 *
+	 * Note that this returns the number of document results available;
+	 * if there were so many hits that not all were retrieved (call
+	 * maxHitsRetrieved()), you can find the grand total of documents
+	 * by calling totalSize().
+	 *
+	 * @return the number of documents.
+	 */
 	public int size() {
-		// Does the Hits object know the answer?
-		if (sourceHits != null) {
-			int numberOfDocs = sourceHits.numberOfDocs();
-			if (numberOfDocs >= 0)
-				return numberOfDocs;
-		}
-
-		// No; make sure we've collected all results and return the size of our result list.
+		// Make sure we've collected all results and return the size of our result list.
 		try {
 			ensureAllResultsRead();
 		} catch (InterruptedException e) {
@@ -206,6 +209,22 @@ public class DocResults implements Iterable<DocResult> {
 		return results.size();
 	}
 
+	/**
+	 * Get the total number of documents.
+	 * This even counts documents that weren't retrieved because the
+	 * set of hits was too large.
+	 *
+	 * @return the total number of documents.
+	 */
+	public int totalSize() {
+		return sourceHits.numberOfDocs();
+	}
+
+	/**
+	 * Sort documents based on a document property.
+	 * @param prop the property to sort on
+	 * @param sortReverse true iff we want to sort in reverse.
+	 */
 	public void sort(DocProperty prop, boolean sortReverse) {
 		Comparator<DocResult> comparator = new ComparatorDocProperty(prop);
 		if (sortReverse) {
@@ -292,9 +311,27 @@ public class DocResults implements Iterable<DocResult> {
 	/**
 	 * Were all hits retrieved, or did we stop because there were too many?
 	 * @return true if all hits were retrieved
+	 * @deprecated renamed to maxHitsRetrieved()
 	 */
+	@Deprecated
 	public boolean tooManyHits() {
-		return sourceHits.tooManyHits();
+		return maxHitsRetrieved();
+	}
+
+	/**
+	 * Did we stop retrieving hits because we reached the maximum?
+	 * @return true if we reached the maximum and stopped retrieving hits
+	 */
+	public boolean maxHitsRetrieved() {
+		return sourceHits.maxHitsRetrieved();
+	}
+
+	/**
+	 * Did we stop counting hits because we reached the maximum?
+	 * @return true if we reached the maximum and stopped counting hits
+	 */
+	public boolean maxHitsCounted() {
+		return sourceHits.maxHitsCounted();
 	}
 
 	/**

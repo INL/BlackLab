@@ -71,7 +71,6 @@ public class HitsWindow extends Hits {
 		for (int i = first; i < first + number; i++) {
 			hits.add(source.get(i));
 		}
-		totalNumberOfHits = -1; //hits.size();
 	}
 
 	/**
@@ -142,12 +141,34 @@ public class HitsWindow extends Hits {
 	}
 
 	/**
-	 * How many hits are in the original source Hits object?
+	 * How many hits are available in the original source Hits object?
+	 *
+	 * @return total number of hits
+	 * @deprecated use sourceSize() or sourceTotalSize()
+	 */
+	@Deprecated
+	public int totalHits() {
+		return source.size();
+	}
+
+	/**
+	 * How many hits are available in the original source Hits object?
 	 *
 	 * @return total number of hits
 	 */
-	public int totalHits() {
+	public int sourceSize() {
 		return source.size();
+	}
+
+	/**
+	 * How many total hits are in the original source Hits object?
+	 *
+	 * NOTE: this includes hits that were counted but not retrieved.
+	 *
+	 * @return total number of hits
+	 */
+	public int sourceTotalSize() {
+		return source.totalSize();
 	}
 
 }
