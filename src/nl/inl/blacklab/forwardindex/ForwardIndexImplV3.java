@@ -397,10 +397,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			int[] length = new int[n];
 			byte[] deleted = new byte[n];
 			int i = 0;
-			for (TocEntry e : toc) {
+			for (TocEntry e: toc) {
 				offset[i] = e.offset;
 				length[i] = e.length;
-				deleted[i] = (byte)(e.deleted ? 1 : 0);
+				deleted[i] = (byte) (e.deleted ? 1 : 0);
 				i++;
 			}
 			RandomAccessFile raf = new RandomAccessFile(tocFile, "rw");
@@ -462,7 +462,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		} else {
 			// Calculate using position increments
 			numberOfTokens = 0;
-			for (int inc : posIncr) {
+			for (int inc: posIncr) {
 				numberOfTokens += inc;
 			}
 		}
@@ -528,6 +528,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		return addDocument(content, null);
 	}
 
+	@Deprecated
 	@Override
 	public synchronized List<String[]> retrieveParts(int fiid, int[] start, int[] end) {
 
@@ -536,7 +537,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 		// Translate them to strings using the terms index
 		List<String[]> result = new ArrayList<String[]>(resultInt.size());
-		for (int[] snippetInt : resultInt) {
+		for (int[] snippetInt: resultInt) {
 			String[] snippet = new String[snippetInt.length];
 			for (int j = 0; j < snippetInt.length; j++) {
 				snippet[j] = terms.get(snippetInt[j]);
@@ -546,17 +547,17 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		return result;
 	}
 
+	@Deprecated
 	@Override
-	public synchronized List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end) {
+	public synchronized List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end,
+			boolean sensitive) {
 
 		// First, retrieve the token ids
 		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
 
 		// Translate them to sort orders
-		for (int[] snippetInt : resultInt) {
-			for (int j = 0; j < snippetInt.length; j++) {
-				snippetInt[j] = terms.idToSortPosition(snippetInt[j]);
-			}
+		for (int[] snippetInt: resultInt) {
+			terms.toSortOrder(snippetInt, snippetInt, sensitive);
 		}
 		return resultInt;
 	}

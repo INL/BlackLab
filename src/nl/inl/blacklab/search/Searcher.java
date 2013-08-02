@@ -94,7 +94,10 @@ public class Searcher {
 	private static final boolean AUTOMATICALLY_WARM_UP_FIS = false;
 
 	/** The collator to use for sorting. Defaults to English collator. */
-	private Collator collator = Collator.getInstance(new Locale("en", "GB"));
+	private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
+
+	/** The collator to use for sorting. Defaults to English collator. */
+	private Collator collator = defaultCollator;
 
 	/**
 	 * ContentAccessors tell us how to get a field's content:
@@ -207,10 +210,7 @@ public class Searcher {
 	}
 
 	/**
-	 * Construct a Searcher object. Note that using this constructor, the Searcher is responsible
-	 * for opening and closing the Lucene index, forward index and content store.
-	 *
-	 * Automatically detects and uses forward index and content store if available.
+	 * Construct a Searcher object, the main search interface on a BlackLab index.
 	 *
 	 * @param indexDir
 	 *            the index directory
@@ -1237,10 +1237,12 @@ public class Searcher {
 		if (hits.size() > 0 && hits.get(0).context != null)
 			oldContext = getContextFromHits(hits);
 
+		// TODO: more efficient to get all contexts with one getContextWords() call!
+
 		// Get punctuation context
 		int[][] punctContext = null;
 		if (punctForwardIndex != null) {
-			getContextWords(doc, punctForwardIndex, startsOfWords, endsOfWords, hits);
+			getContextWords(doc, Arrays.asList(punctForwardIndex), startsOfWords, endsOfWords, hits);
 			punctContext = getContextFromHits(hits);
 		}
 		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
@@ -1261,7 +1263,7 @@ public class Searcher {
 				attrName[i] = e.getKey();
 				attrFI[i] = e.getValue();
 				attrTerms[i] = attrFI[i].getTerms();
-				getContextWords(doc, attrFI[i], startsOfWords, endsOfWords, hits);
+				getContextWords(doc, Arrays.asList(attrFI[i]), startsOfWords, endsOfWords, hits);
 				attrContext[i] = getContextFromHits(hits);
 				i++;
 			}
@@ -1269,7 +1271,7 @@ public class Searcher {
 
 		// Get word context
 		if (forwardIndex != null)
-			getContextWords(doc, forwardIndex, startsOfWords, endsOfWords, hits);
+			getContextWords(doc, Arrays.asList(forwardIndex), startsOfWords, endsOfWords, hits);
 		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
 
 		// Make the concordances from the context
@@ -1298,7 +1300,7 @@ public class Searcher {
 						current.append(" ");
 					}
 					else
-						current.append(punctTerms.getFromSortPosition(punctContext[i][j]));
+						current.append(punctTerms.get(punctContext[i][j]));
 				}
 
 				if (currentPart == 0 && j == h.contextHitStart) {
@@ -1314,14 +1316,14 @@ public class Searcher {
 						 	.append(" ")
 							.append(attrName[k])
 							.append("=\"")
-							.append(StringUtil.escapeXmlChars(attrTerms[k].getFromSortPosition(attrContext[k][i][j])))
+							.append(StringUtil.escapeXmlChars(attrTerms[k].get(attrContext[k][i][j])))
 							.append("\"");
 					}
 				}
 				current.append(">");
 
 				if (terms != null)
-					current.append(terms.getFromSortPosition(h.context[j]));
+					current.append(terms.get(h.context[j]));
 
 				// End word tag
 				current.append("</w>");
@@ -1366,33 +1368,6 @@ public class Searcher {
 	}
 
 	/**
-	 * Retrieves the context (left, hit and right) for a number of hits in the same document from
-	 * the forward index.
-	 *
-	 * @param hits
-	 *            the hits in question
-	 * @param fis
-	 *            the forward indices to use
-	 * @param fieldPropFiidName
-	 *            name of the forward index id (fiid) field
-	 * @param wordsAroundHit
-	 *            number of words left and right of hit to fetch
-	 */
-	private void makeContextSingleDoc(List<Hit> hits, List<ForwardIndex> fis,
-			int wordsAroundHit) {
-		if (hits.size() == 0)
-			return;
-		int doc = hits.get(0).doc;
-		int arrayLength = hits.size() * 2;
-		int[] startsOfWords = new int[arrayLength];
-		int[] endsOfWords = new int[arrayLength];
-
-		determineWordPositions(doc, hits, wordsAroundHit, startsOfWords, endsOfWords);
-
-		getContextWords(doc, fis, startsOfWords, endsOfWords, hits);
-	}
-
-	/**
 	 * Determine the word positions needed to retrieve context / snippets
 	 *
 	 * @param doc
@@ -1431,11 +1406,6 @@ public class Searcher {
 
 			startEndArrayIndex += 2;
 		}
-	}
-
-	private void getContextWords(int doc, ForwardIndex forwardIndex,
-			int[] startsOfWords, int[] endsOfWords, List<Hit> resultsList) {
-		getContextWords(doc, Arrays.asList(forwardIndex), startsOfWords, endsOfWords, resultsList);
 	}
 
 	/**
@@ -1481,9 +1451,7 @@ public class Searcher {
 			if (forwardIndex != null) {
 				// We have a forward index for this field. Use it.
 				int fiid = forwardIndex.luceneDocIdToFiid(doc);
-				// Document d = document(doc);
-				// int fiid = Integer.parseInt(d.get(fiidFieldName));
-				words = forwardIndex.retrievePartsSortOrder(fiid, startsOfSnippets, endsOfSnippets);
+				words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
 			} else {
 				throw new RuntimeException("Cannot get context without a forward index");
 			}
@@ -1712,25 +1680,6 @@ public class Searcher {
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
 	 *
-	 * @param fieldPropName
-	 *            field to use for retrieving context
-	 * @param hits
-	 *            the hits for which to retrieve concordances
-	 * @param contextSize
-	 *            how many words around the hit to retrieve
-	 */
-	public void retrieveContext(String fieldPropName, List<Hit> hits, int contextSize) {
-		retrieveContext(Arrays.asList(fieldPropName), hits, contextSize);
-	}
-
-	/**
-	 * Retrieve context for a list of hits.
-	 *
-	 * Context are the hit words 'centered' with a certain number of context words around them.
-	 *
-	 * The size of the left and right context (in words) may be set using
-	 * Searcher.setConcordanceContextSize().
-	 *
 	 * @param fieldProps
 	 *            fields to use for retrieving context
 	 * @param hits
@@ -1756,7 +1705,14 @@ public class Searcher {
 		}
 
 		for (List<Hit> l : hitsPerDocument.values()) {
-			makeContextSingleDoc(l, fis, contextSize);
+			if (l.size() > 0) {
+				int doc = l.get(0).doc;
+				int arrayLength = l.size() * 2;
+				int[] startsOfWords = new int[arrayLength];
+				int[] endsOfWords = new int[arrayLength];
+				determineWordPositions(doc, l, contextSize, startsOfWords, endsOfWords);
+				getContextWords(doc, fis, startsOfWords, endsOfWords, l);
+			}
 		}
 	}
 
@@ -1939,44 +1895,12 @@ public class Searcher {
 		return oneConc.get(hit);
 	}
 
-	// /**
-	// * Get all the terms in the index with low edit distance from the supplied term
-	// * @param term search term
-	// * @param similarity measure of similarity we need
-	// * @return the set of terms in the index that are close to our search term
-	// */
-	// public Set<String> getMatchingTermsFromIndex(Term term, float similarity)
-	// {
-	// boolean doFuzzy = true;
-	// if (similarity == 1.0f)
-	// {
-	// // NOTE: even when we don't want to have fuzzy suggestions, we still
-	// // use a FuzzyQuery, because a TermQuery isn't checked against the index
-	// // on rewrite, so we won't know if it actually occurs in the index.
-	// doFuzzy = false;
-	// similarity = 0.75f;
-	// }
-	//
-	// FuzzyQuery fq = new FuzzyQuery(term, similarity);
-	// //TermQuery fq = new TermQuery(term);
-	// try
-	// {
-	// Query rewritten = fq.rewrite(indexReader);
-	// WeightedTerm[] wts = QueryTermExtractor.getTerms(rewritten);
-	// Set<String> terms = new HashSet<String>();
-	// for (WeightedTerm wt : wts)
-	// {
-	// if (doFuzzy || wt.getTerm().equals(term.text()))
-	// {
-	// terms.add(wt.getTerm());
-	// }
-	// }
-	// return terms;
-	// }
-	// catch (IOException e)
-	// {
-	// throw new RuntimeException(e);
-	// }
-	// }
+	public static Collator getDefaultCollator() {
+		return defaultCollator;
+	}
+
+	public static void setDefaultCollator(Collator defaultCollator) {
+		Searcher.defaultCollator = defaultCollator;
+	}
 
 }

@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -74,11 +73,6 @@ public class Hits implements Iterable<Hit> {
 	 * The default field to use for retrieving concordance information.
 	 */
 	protected String concordanceFieldName;
-
-	/**
-	 * Lucene name for the main property field of the current contents field.
-	 */
-	private String concordanceMainFieldPropName;
 
 	/**
 	 * Did we completely read our Spans object?
@@ -390,7 +384,9 @@ public class Hits implements Iterable<Hit> {
 	 *            the hit property/properties to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
+	 * @deprecated use single HitProperty version, possibly with HitPropertyMultiple
 	 */
+	@Deprecated
 	public void sort(HitProperty[] sortProp, boolean reverseSort) {
 		if (sortProp.length == 1)
 			sort(sortProp[0], reverseSort);
@@ -408,7 +404,9 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param sortProp
 	 *            the hit property/properties to sort on
+	 * @deprecated use single HitProperty version, possibly with HitPropertyMultiple
 	 */
+	@Deprecated
 	public void sort(HitProperty... sortProp) {
 		sort(sortProp, false);
 	}
@@ -423,10 +421,46 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param sortProp
 	 *            the hit property to sort on
+	 */
+	public void sort(final HitProperty sortProp) {
+		sort(sortProp, false, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	/**
+	 * Sort the list of hits.
+	 *
+	 * Note that if the thread is interrupted during this, sort may return
+	 * without the hits actually being fully read and sorted. We don't want
+	 * to add throws declarations to our whole API, so we assume the calling
+	 * method will check for thread interruption if the application uses it.
+	 *
+	 * Case-sensitivity depends on the default case-sensitivity set on the Searcher
+	 * object.
+	 *
+	 * @param sortProp
+	 *            the hit property to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
 	 */
 	public void sort(final HitProperty sortProp, boolean reverseSort) {
+		sort(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	/**
+	 * Sort the list of hits.
+	 *
+	 * Note that if the thread is interrupted during this, sort may return
+	 * without the hits actually being fully read and sorted. We don't want
+	 * to add throws declarations to our whole API, so we assume the calling
+	 * method will check for thread interruption if the application uses it.
+	 *
+	 * @param sortProp
+	 *            the hit property to sort on
+	 * @param reverseSort
+	 *            if true, sort in descending order
+	 * @param sensitive whether to sort case-sensitively or not
+	 */
+	public void sort(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -710,16 +744,6 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Retrieve context words for the hits.
 	 *
-	 * @param fieldPropName
-	 *            the field and property to use for the context
-	 */
-	public void findContext(String fieldPropName) {
-		findContext(Arrays.asList(fieldPropName));
-	}
-
-	/**
-	 * Retrieve context words for the hits.
-	 *
 	 * @param fieldProps
 	 *            the field and properties to use for the context
 	 */
@@ -741,18 +765,6 @@ public class Hits implements Iterable<Hit> {
 		currentContextSize = desiredContextSize;
 
 		contextFieldsPropName = fieldProps == null ? fieldProps : new ArrayList<String>(fieldProps);
-	}
-
-	/**
-	 * Retrieve context for the hits, for sorting/grouping.
-	 *
-	 * NOTE: you should never have to call this manually; it is
-	 * called if needed by the sorting/grouping code.
-	 *
-	 * Uses the main property field.
-	 */
-	void findContext() {
-		findContext(concordanceMainFieldPropName);
 	}
 
 	/**
@@ -792,7 +804,7 @@ public class Hits implements Iterable<Hit> {
 	 * @return the frequency of each occurring token
 	 */
 	public TokenFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
-		findContext(ctx.luceneField(false));
+		findContext(Arrays.asList(ctx.luceneField(false)));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
 			int[] context = hit.context;
@@ -817,15 +829,28 @@ public class Hits implements Iterable<Hit> {
 		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
 		// TODO: get collocations for multiple contexts?
 		Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
+		Map<String, Integer> wordFreq = new HashMap<String, Integer>();
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
-			String word = terms.getFromSortPosition(e.getKey());
+			String word = terms.get(e.getKey());
 			if (!diacSensitive) {
 				word = StringUtil.removeAccents(word);
 			}
 			if (!caseSensitive) {
 				word = word.toLowerCase();
 			}
-			collocations.add(new TokenFrequency(word, e.getValue()));
+			// Note that multiple ids may map to the same word (because of sensitivity settings)
+			// Here, those groups are merged.
+			Integer n = wordFreq.get(word);
+			if (n == null) {
+				n = 0;
+			}
+			n += e.getValue();
+			wordFreq.put(word, n);
+		}
+
+		// Transfer from map to list
+		for (Map.Entry<String, Integer> e: wordFreq.entrySet()) {
+			collocations.add(new TokenFrequency(e.getKey(), e.getValue()));
 		}
 		return collocations;
 	}
@@ -856,15 +881,6 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public void setConcordanceField(String concordanceFieldName) {
 		this.concordanceFieldName = concordanceFieldName;
-		if (searcher == null) {
-			// Can occur during testing. Just use default main property name.
-			concordanceMainFieldPropName = ComplexFieldUtil.propertyField(concordanceFieldName,
-					ComplexFieldUtil.getDefaultMainPropName());
-		} else {
-			// Get the main property name from the index structure.
-			concordanceMainFieldPropName = ComplexFieldUtil.mainPropertyField(
-					searcher.getIndexStructure(), concordanceFieldName);
-		}
 	}
 
 	/**

@@ -21,16 +21,18 @@ public abstract class Terms {
 
 	public abstract String get(Integer integer);
 
-	public abstract int sortPositionToId(int sortPosition);
-
-	public abstract int idToSortPosition(int id);
-
-	public abstract int sortPositionToIdInsensitive(int sortPosition);
-
-	public abstract int idToSortPositionInsensitive(int id);
-
-	public abstract String getFromSortPosition(int sortPosition);
-
 	public abstract int numberOfTerms();
+
+	public abstract int idToSortPosition(int id, boolean sensitive);
+
+	public void toSortOrder(int[] tokenId, int[] sortOrder, boolean sensitive) {
+		for (int i = 0; i < tokenId.length; i++) {
+			sortOrder[i] = idToSortPosition(tokenId[i], sensitive);
+		}
+	}
+
+	public int compareSortPosition(int tokenId1, int tokenId2, boolean sensitive) {
+		return idToSortPosition(tokenId1, sensitive) - idToSortPosition(tokenId2, sensitive);
+	}
 
 }

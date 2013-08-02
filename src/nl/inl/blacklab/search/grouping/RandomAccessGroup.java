@@ -32,11 +32,6 @@ import org.apache.lucene.search.spans.Spans;
 public class RandomAccessGroup extends Group {
 	Hits results;
 
-	// public RandomAccessGroup(Searcher searcher, GroupIdentity groupIdentity)
-	// {
-	// this(searcher, groupIdentity, null);
-	// }
-
 	public RandomAccessGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField) {
 		super(groupIdentity);
 		results = new Hits(searcher, defaultConcField);
@@ -59,6 +54,7 @@ public class RandomAccessGroup extends Group {
 		return "GroupOfHits, identity = " + groupIdentity + ", size = " + results.size();
 	}
 
+	@Deprecated
 	@Override
 	public Spans getSpans() {
 		return new BLSpans() {
@@ -135,11 +131,4 @@ public class RandomAccessGroup extends Group {
 	public void setContextField(List<String> contextField) {
 		 results.setContextField(contextField);
 	}
-
-	// @Override
-	// public Iterator<Hit> iterator()
-	// {
-	// return results.iterator();
-	// }
-
 }
