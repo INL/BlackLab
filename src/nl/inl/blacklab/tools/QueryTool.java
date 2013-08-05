@@ -904,6 +904,7 @@ public class QueryTool {
 
 	/**
 	 * Show the a specific page of results.
+	 * @param pageNumber which page to show
 	 */
 	private void showPage(int pageNumber) {
 		if (hits != null) {
@@ -1097,6 +1098,7 @@ public class QueryTool {
 
 	/**
 	 * Switch between showing all hits, groups, and the hits in one group.
+	 * @param showWhat what type of results to show
 	 */
 	private void changeShowSettings(String showWhat) {
 		if (showWhat.equals("hits")) {
@@ -1128,10 +1130,10 @@ public class QueryTool {
 	/**
 	 * If an operation took longer than 5 seconds, report the time it took.
 	 *
-	 * @param searchTime
-	 *
-	 * @param timerAfterDisplay
-	 *            object keeping the time
+	 * @param name1 name of the first part of the operation
+	 * @param time1 how long the first part took
+	 * @param name2 name of the second part of the operation
+	 * @param time2 how long the second part took
 	 */
 	private void reportTime(String name1, long time1, String name2, long time2) {
 		if (verbose) {

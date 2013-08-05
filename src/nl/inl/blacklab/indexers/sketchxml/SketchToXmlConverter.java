@@ -233,6 +233,8 @@ public class SketchToXmlConverter {
 	 *            list of files to index (assumed to reside in or under basedir)
 	 * @param inDir
 	 *            basedir for the files to index
+	 * @param outDir where to write output files
+	 * @throws Exception
 	 */
 	private void convertList(File listFile, File inDir, File outDir) throws Exception {
 		SketchToXmlConverter converter = new SketchToXmlConverter();

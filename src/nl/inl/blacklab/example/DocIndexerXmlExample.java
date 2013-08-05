@@ -159,6 +159,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 
 	/**
 	 * New &lt;doc&gt; tag found. Start a new document in Lucene.
+	 * @param attributes attributes to the doc tag
 	 */
 	private void startDoc(Attributes attributes) {
 
@@ -196,6 +197,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 
 	/**
 	 * Report indexing progress to the IndexListener, so we can show feedback to the user.
+	 * @param attributes attributes for the open tag
 	 */
 	private void reportDocumentStarted(Attributes attributes) {
 		String subcorpus = getAttValue(attributes, "subcorpus");
@@ -271,6 +273,7 @@ public class DocIndexerXmlExample extends DocIndexerXml {
 	/**
 	 * Found the start of a word. Add the values of the attributes (headword, part of speech) to the
 	 * complex field. Add the character position to the complex field.
+	 * @param attributes attributes to the word tag
 	 */
 	private void startWord(Attributes attributes) {
 		inWord = true;
