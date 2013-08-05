@@ -65,11 +65,12 @@ public class HitsWindow extends Hits {
 		if (!source.sizeAtLeast(first + number))
 			number = source.size() - first;
 
-		// Make sublist (don't use sublist because the backing list may change if not
-		// all hits have been read yet)
+		// Copy the hits we're interested in.
+		// (we make a copy because we might want to change the context, which would
+		//  affect the original Hits object if we didn't clone)
 		hits = new ArrayList<Hit>();
 		for (int i = first; i < first + number; i++) {
-			hits.add(source.get(i));
+			hits.add((Hit)source.get(i).clone());
 		}
 	}
 

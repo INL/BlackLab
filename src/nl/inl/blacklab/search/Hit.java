@@ -29,7 +29,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
  * This class has public members for the sake of efficiency; this makes a non-trivial difference
  * when iterating over hundreds of thousands of hits.
  */
-public class Hit implements Comparable<Hit> {
+public class Hit implements Comparable<Hit>, Cloneable {
 	/**
 	 * Get the hit object from a Spans object.
 	 *
@@ -143,5 +143,16 @@ public class Hit implements Comparable<Hit> {
 	public int hashCode() {
 		return (doc * 17 + start) * 31 + end;
 	}
+
+	@Override
+	protected Object clone() {
+		Hit hit = new Hit(doc, start, end);
+		hit.context = context;
+		hit.contextHitStart = contextHitStart;
+		hit.contextRightStart = contextRightStart;
+		hit.contextLength = contextLength;
+		return hit;
+	}
+
 
 }
