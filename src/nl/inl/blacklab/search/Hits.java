@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
@@ -155,6 +156,23 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public Hits(Searcher searcher) {
 		this(searcher, searcher.getContentsFieldMainPropName());
+	}
+
+	/**
+	 * Make a wrapper Hits object for a list of Hit objects.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param hits the list of hits to wrap
+	 */
+	public Hits(Searcher searcher, List<Hit> hits) {
+		this.searcher = searcher;
+		hits = new ArrayList<Hit>();
+		hitsCounted = hits.size();
+		setConcordanceField(searcher.getContentsFieldMainPropName());
+		desiredContextSize = searcher.getDefaultContextSize();
+		currentContextSize = -1;
+		this.hits = hits;
 	}
 
 	/**
@@ -675,6 +693,24 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Retrieve a single concordance. Only use if you need a larger snippet around a single
+	 * hit. If you need concordances for a set of hits, just instantiate a HitsWindow and call
+	 * getConcordance() on that; it will fetch all concordances in the window in a batch, which
+	 * is more efficient.
+	 *
+	 * @param fieldName field to use for building the concordance
+	 * @param hit the hit for which we want a concordance
+	 * @param contextSize the desired number of words around the hit
+	 * @return the concordance
+	 */
+	public Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
+		List<Hit> oneHit = Arrays.asList(hit);
+		Hits h = new Hits(searcher, oneHit);
+		Map<Hit, Concordance> oneConc = searcher.retrieveConcordances(fieldName, h, contextSize);
+		return oneConc.get(hit);
+	}
+
+	/**
 	 * Get a concordance with a custom context size.
 	 *
 	 * Don't call this directly for displaying a list of results. In that case,
@@ -696,7 +732,7 @@ public class Hits implements Iterable<Hit> {
 			// We probably want to show a hit with a larger snippet around it
 			// (say, 50 words or so). Don't clobber the context of the other
 			// hits, just fetch this snippet separately.
-			return searcher.getConcordance(concordanceFieldName, h, contextSize);
+			return getConcordance(concordanceFieldName, h, contextSize);
 		}
 
 		// Default context size. Read all hits and find concordances for all of them
@@ -738,7 +774,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(concordanceFieldName, hits, desiredContextSize);
+		concordances = searcher.retrieveConcordances(concordanceFieldName, this, desiredContextSize);
 	}
 
 	/**
@@ -761,7 +797,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the context
-		searcher.retrieveContext(fieldProps, hits, desiredContextSize);
+		searcher.retrieveContext(fieldProps, this, desiredContextSize);
 		currentContextSize = desiredContextSize;
 
 		contextFieldsPropName = fieldProps == null ? fieldProps : new ArrayList<String>(fieldProps);
@@ -969,6 +1005,287 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public void setMaxHitsToCount(int n) {
 		this.maxHitsToCount = n;
+	}
+
+	/**
+	 * Retrieves the concordance information (left, hit and right context) for a number of hits in
+	 * the same document from the ContentStore.
+	 *
+	 * NOTE: the slowest part of this is getting the character offsets (retrieving large term
+	 * vectors takes time; subsequent hits from the same document are significantly faster,
+	 * presumably because of caching)
+	 *
+	 * @param hits
+	 *            the hits in question
+	 * @param forwardIndex
+	 *    Forward index for the words
+	 * @param punctForwardIndex
+	 *    Forward index for the punctuation
+	 * @param attrForwardIndices
+	 *    Forward indices for the attributes, or null if none
+	 * @param fieldName
+	 *            Lucene index field to make conc for
+	 * @param wordsAroundHit
+	 *            number of words left and right of hit to fetch
+	 * @param conc
+	 *            where to add the concordances
+	 */
+	static void makeConcordancesSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
+			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices, int wordsAroundHit,
+			Map<Hit, Concordance> conc) {
+		if (hits.size() == 0)
+			return;
+		int doc = hits.get(0).doc;
+		int arrayLength = hits.size() * 2;
+		int[] startsOfWords = new int[arrayLength];
+		int[] endsOfWords = new int[arrayLength];
+
+		determineWordPositions(hits, wordsAroundHit, startsOfWords, endsOfWords);
+
+		// Save existing context so we can restore it afterwards
+		int[][] oldContext = null;
+		if (hits.size() > 0 && hits.get(0).context != null)
+			oldContext = getContextFromHits(hits);
+
+		// TODO: more efficient to get all contexts with one getContextWords() call!
+
+		// Get punctuation context
+		int[][] punctContext = null;
+		if (punctForwardIndex != null) {
+			getContextWords(doc, Arrays.asList(punctForwardIndex), startsOfWords, endsOfWords, hits);
+			punctContext = getContextFromHits(hits);
+		}
+		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
+
+		// Get attributes context
+		String[] attrName = null;
+		ForwardIndex[] attrFI = null;
+		Terms[] attrTerms = null;
+		int[][][] attrContext = null;
+		if (attrForwardIndices != null) {
+			int n = attrForwardIndices.size();
+			attrName = new String[n];
+			attrFI = new ForwardIndex[n];
+			attrTerms = new Terms[n];
+			attrContext = new int[n][][];
+			int i = 0;
+			for (Map.Entry<String, ForwardIndex> e: attrForwardIndices.entrySet()) {
+				attrName[i] = e.getKey();
+				attrFI[i] = e.getValue();
+				attrTerms[i] = attrFI[i].getTerms();
+				getContextWords(doc, Arrays.asList(attrFI[i]), startsOfWords, endsOfWords, hits);
+				attrContext[i] = getContextFromHits(hits);
+				i++;
+			}
+		}
+
+		// Get word context
+		if (forwardIndex != null)
+			getContextWords(doc, Arrays.asList(forwardIndex), startsOfWords, endsOfWords, hits);
+		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
+
+		// Make the concordances from the context
+		for (int i = 0; i < hits.size(); i++) {
+			Hit h = hits.get(i);
+			StringBuilder[] part = new StringBuilder[3];
+			for (int j = 0; j < 3; j++) {
+				part[j] = new StringBuilder();
+			}
+			int currentPart = 0;
+			StringBuilder current = part[currentPart];
+			for (int j = 0; j < h.context.length; j++) {
+
+				if (j == h.contextRightStart) {
+					currentPart = 2;
+					current = part[currentPart];
+				}
+
+				// Add punctuation
+				// (NOTE: punctuation after match is added to right context;
+				//  punctuation before match is added to left context)
+				if (j > 0) {
+					if (punctTerms == null) {
+						// There is no punctuation forward index. Just put a space
+						// between every word.
+						current.append(" ");
+					}
+					else
+						current.append(punctTerms.get(punctContext[i][j]));
+				}
+
+				if (currentPart == 0 && j == h.contextHitStart) {
+					currentPart = 1;
+					current = part[currentPart];
+				}
+
+				// Make word tag with lemma and pos attributes
+				current.append("<w");
+				if (attrContext != null) {
+					for (int k = 0; k < attrContext.length; k++) {
+						current
+						 	.append(" ")
+							.append(attrName[k])
+							.append("=\"")
+							.append(StringUtil.escapeXmlChars(attrTerms[k].get(attrContext[k][i][j])))
+							.append("\"");
+					}
+				}
+				current.append(">");
+
+				if (terms != null)
+					current.append(terms.get(h.context[j]));
+
+				// End word tag
+				current.append("</w>");
+			}
+			/*if (part[0].length() > 0)
+				part[0].append(" ");*/
+			String[] concStr = new String[] {part[0].toString(), part[1].toString(), part[2].toString()};
+			Concordance concordance = new Concordance(concStr);
+			conc.put(h, concordance);
+		}
+
+		if (oldContext != null) {
+			restoreContextInHits(hits, oldContext);
+		}
+	}
+
+	/**
+	 * Get context words from the forward index.
+	 *
+	 * The array layout is a little unusual. If this is a typical concordance:
+	 *
+	 * <code>[A] left context [B] hit text [C] right context [D]</code>
+	 *
+	 * the positions A-D for each of the bits of context should be in the arrays startsOfWords and
+	 * endsOfWords as follows:
+	 *
+	 * <code>starsOfWords: A1, B1, A2, B2, ...</code> <code>endsOfWords: C1, D1, C2, D2, ...</code>
+	 *
+	 * @param doc
+	 *            the document to get context from
+	 * @param contextSources
+	 *            forward indices to get context from
+	 * @param startsOfWords
+	 *            contains, for each bit of context requested, the starting word position of the
+	 *            left context and for the hit
+	 * @param endsOfWords
+	 *            contains, for each bit of context requested, the ending word position of the hit
+	 *            and for the left context
+	 * @param resultsList
+	 *            the list of results to add the context to
+	 */
+	static void getContextWords(int doc, List<ForwardIndex> contextSources,
+			int[] startsOfWords, int[] endsOfWords, Iterable<Hit> resultsList) {
+
+		int n = startsOfWords.length / 2;
+		int[] startsOfSnippets = new int[n];
+		int[] endsOfSnippets = new int[n];
+		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
+			startsOfSnippets[j] = startsOfWords[i];
+			endsOfSnippets[j] = endsOfWords[i + 1] + 1;
+		}
+
+		int fiNumber = 0;
+		for (ForwardIndex forwardIndex: contextSources) {
+			// Get all the words from the forward index
+			List<int[]> words;
+			if (forwardIndex != null) {
+				// We have a forward index for this field. Use it.
+				int fiid = forwardIndex.luceneDocIdToFiid(doc);
+				words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
+			} else {
+				throw new RuntimeException("Cannot get context without a forward index");
+			}
+
+			// Build the actual concordances
+			Iterator<int[]> wordsIt = words.iterator();
+			Iterator<Hit> resultsListIt = resultsList.iterator();
+			for (int j = 0; j < n; j++) {
+				int[] theseWords = wordsIt.next();
+
+				// Put the concordance in the Hit object
+				Hit hit = resultsListIt.next(); // resultsList.get(j);
+				int firstWordIndex = startsOfWords[j * 2];
+
+				if (fiNumber == 0) {
+					// Allocate context array and set hit and right start and context length
+					hit.context = new int[theseWords.length * contextSources.size()];
+					hit.contextHitStart = startsOfWords[j * 2 + 1] - firstWordIndex;
+					hit.contextRightStart = endsOfWords[j * 2] - firstWordIndex + 1;
+					hit.contextLength = theseWords.length;
+				}
+				// Copy the context we just retrieved into the context array
+				int start = fiNumber * theseWords.length;
+				System.arraycopy(theseWords, 0, hit.context, start, theseWords.length);
+			}
+
+			fiNumber++;
+		}
+	}
+
+	/**
+	 * Determine the word positions needed to retrieve context / snippets
+	 *
+	 * @param hits
+	 *            the hits for which we want word positions
+	 * @param wordsAroundHit
+	 *            the number of words around the matches word(s) we want
+	 * @param startsOfWords
+	 *            (out) the starts of the contexts and the hits
+	 * @param endsOfWords
+	 *            (out) the ends of the hits and the contexts
+	 */
+	static void determineWordPositions(Iterable<Hit> hits, int wordsAroundHit,
+			int[] startsOfWords, int[] endsOfWords) {
+		// Determine the first and last word of the concordance, as well as the
+		// first and last word of the actual hit inside the concordance.
+		int startEndArrayIndex = 0;
+		for (Hit hit : hits) {
+			int hitStart = hit.start;
+			int hitEnd = hit.end - 1;
+
+			int start = hitStart - wordsAroundHit;
+			if (start < 0)
+				start = 0;
+			int end = hitEnd + wordsAroundHit;
+
+			startsOfWords[startEndArrayIndex] = start;
+			startsOfWords[startEndArrayIndex + 1] = hitStart;
+			endsOfWords[startEndArrayIndex] = hitEnd;
+			endsOfWords[startEndArrayIndex + 1] = end;
+
+			startEndArrayIndex += 2;
+		}
+	}
+
+	/**
+	 * Get the context information from the list of hits, so we can
+	 * look up a different context but still have access to this one as well.
+	 * @param hits the hits to save the context for
+	 * @return the context
+	 */
+	static int[][] getContextFromHits(List<Hit> hits) {
+		int[][] context = new int[hits.size()][];
+		int i = 0;
+		for (Hit h: hits) {
+			context[i] = h.context;
+			i++;
+		}
+		return context;
+	}
+
+	/**
+	 * Put context information into a list of hits.
+	 * @param hits the hits to restore the context for
+	 * @param context the context to restore
+	 */
+	static void restoreContextInHits(List<Hit> hits, int[][] context) {
+		int i = 0;
+		for (Hit h: hits) {
+			h.context = context[i];
+			i++;
+		}
 	}
 
 }
