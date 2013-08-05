@@ -180,15 +180,13 @@ public class Searcher {
 
 	/**
 	 * Do our concordances include the original XML tags, or are they stripped out?
-	 * Concordances made from the content store do include tags; those made from
-	 * the forward index do not.
 	 *
 	 * @return true iff our concordances include XML tags.
+	 * @deprecated always returns true now
 	 */
+	@Deprecated
 	public boolean concordancesIncludeXmlTags() {
-		// @@@ TODO experimental, should be parameterized
-		String lemmaField = ComplexFieldUtil.propertyField(fieldNameContents, "lemma");
-		return !concordancesFromForwardIndex || forwardIndices.containsKey(lemmaField);
+		return true;
 	}
 
 	/**
@@ -1025,20 +1023,20 @@ public class Searcher {
 	 *
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
-	 *
-	 * @param fieldName
-	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
+	 * @param fieldName
+	 *            field to use for building concordances
+	 *
 	 * @return the list of concordances
 	 */
-	Map<Hit, Concordance> retrieveConcordances(String fieldName, Hits hits,
-			int contextSize) {
+	Map<Hit, Concordance> retrieveConcordances(Hits hits, int contextSize,
+			String fieldName) {
 
 		if (concordancesFromForwardIndex) {
-			return retrieveConcordancesForwardIndex(fieldName, hits, contextSize);
+			return retrieveConcordancesForwardIndex(hits, contextSize, fieldName);
 		}
 
 		// Group hits per document
@@ -1084,7 +1082,25 @@ public class Searcher {
 		int[] startsOfWords = new int[arrayLength];
 		int[] endsOfWords = new int[arrayLength];
 
-		Hits.determineWordPositions(hits, wordsAroundHit, startsOfWords, endsOfWords);
+		// Determine the first and last word of the concordance, as well as the
+		// first and last word of the actual hit inside the concordance.
+		int startEndArrayIndex = 0;
+		for (Hit hit : hits) {
+			int hitStart = hit.start;
+			int hitEnd = hit.end - 1;
+
+			int start = hitStart - wordsAroundHit;
+			if (start < 0)
+				start = 0;
+			int end = hitEnd + wordsAroundHit;
+
+			startsOfWords[startEndArrayIndex] = start;
+			startsOfWords[startEndArrayIndex + 1] = hitStart;
+			endsOfWords[startEndArrayIndex] = hitEnd;
+			endsOfWords[startEndArrayIndex + 1] = end;
+
+			startEndArrayIndex += 2;
+		}
 
 		// Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
 		// arrays)
@@ -1180,17 +1196,17 @@ public class Searcher {
 	 *
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
-	 *
-	 * @param fieldName
-	 *            field to use for building concordances
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
+	 * @param fieldName
+	 *            field to use for building concordances
+	 *
 	 * @return the list of concordances
 	 */
-	private Map<Hit, Concordance> retrieveConcordancesForwardIndex(String fieldName, Hits hits,
-			int contextSize) {
+	private Map<Hit, Concordance> retrieveConcordancesForwardIndex(Hits hits, int contextSize,
+			String fieldName) {
 		ForwardIndex forwardIndex = null;
 		if (concWordFI != null)
 			forwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, concWordFI));
@@ -1241,18 +1257,17 @@ public class Searcher {
 	 *
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
-	 *
-	 * @param fieldProps
-	 *            fields to use for retrieving context
 	 * @param hits
 	 *            the hits for which to retrieve concordances
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
+	 * @param fieldProps
+	 *            fields to use for retrieving context
 	 */
-	void retrieveContext(List<String> fieldProps, Hits hits, int contextSize) {
+	void retrieveContext(Hits hits, int contextSize, List<String> fieldProps) {
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
-		for (Hit key : hits) {
+		for (Hit key: hits) {
 			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
 			if (hitsInDoc == null) {
 				hitsInDoc = new ArrayList<Hit>();
@@ -1266,14 +1281,9 @@ public class Searcher {
 			fis.add(getForwardIndex(fieldPropName));
 		}
 
-		for (List<Hit> l : hitsPerDocument.values()) {
-			if (l.size() > 0) {
-				int doc = l.get(0).doc;
-				int arrayLength = l.size() * 2;
-				int[] startsOfWords = new int[arrayLength];
-				int[] endsOfWords = new int[arrayLength];
-				Hits.determineWordPositions(l, contextSize, startsOfWords, endsOfWords);
-				Hits.getContextWords(doc, fis, startsOfWords, endsOfWords, l);
+		for (List<Hit> hitsInSingleDoc: hitsPerDocument.values()) {
+			if (hitsInSingleDoc.size() > 0) {
+				Hits.getContextWords(hitsInSingleDoc, contextSize, fis);
 			}
 		}
 	}

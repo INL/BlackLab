@@ -87,7 +87,7 @@ public class DocFieldLengthGetter {
 	public int getFieldLength(int doc) {
 
 		if (useTestValues)
-			return 5; // while testing, all documents are 10 tokens long
+			return 5; // while testing, all documents have same length
 
 		if (cachedFieldLengths != null) {
 			return cachedFieldLengths[doc];

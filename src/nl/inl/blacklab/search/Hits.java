@@ -167,12 +167,11 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public Hits(Searcher searcher, List<Hit> hits) {
 		this.searcher = searcher;
-		hits = new ArrayList<Hit>();
+		this.hits = hits;
 		hitsCounted = hits.size();
 		setConcordanceField(searcher.getContentsFieldMainPropName());
 		desiredContextSize = searcher.getDefaultContextSize();
 		currentContextSize = -1;
-		this.hits = hits;
 	}
 
 	/**
@@ -706,7 +705,7 @@ public class Hits implements Iterable<Hit> {
 	public Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
 		Hits h = new Hits(searcher, oneHit);
-		Map<Hit, Concordance> oneConc = searcher.retrieveConcordances(fieldName, h, contextSize);
+		Map<Hit, Concordance> oneConc = searcher.retrieveConcordances(h, contextSize, fieldName);
 		return oneConc.get(hit);
 	}
 
@@ -774,7 +773,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(concordanceFieldName, this, desiredContextSize);
+		concordances = searcher.retrieveConcordances(this, desiredContextSize, concordanceFieldName);
 	}
 
 	/**
@@ -797,7 +796,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the context
-		searcher.retrieveContext(fieldProps, this, desiredContextSize);
+		searcher.retrieveContext(this, desiredContextSize, fieldProps);
 		currentContextSize = desiredContextSize;
 
 		contextFieldsPropName = fieldProps == null ? fieldProps : new ArrayList<String>(fieldProps);
@@ -1035,12 +1034,6 @@ public class Hits implements Iterable<Hit> {
 			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
-		int doc = hits.get(0).doc;
-		int arrayLength = hits.size() * 2;
-		int[] startsOfWords = new int[arrayLength];
-		int[] endsOfWords = new int[arrayLength];
-
-		determineWordPositions(hits, wordsAroundHit, startsOfWords, endsOfWords);
 
 		// Save existing context so we can restore it afterwards
 		int[][] oldContext = null;
@@ -1052,7 +1045,7 @@ public class Hits implements Iterable<Hit> {
 		// Get punctuation context
 		int[][] punctContext = null;
 		if (punctForwardIndex != null) {
-			getContextWords(doc, Arrays.asList(punctForwardIndex), startsOfWords, endsOfWords, hits);
+			getContextWords(hits, wordsAroundHit, Arrays.asList(punctForwardIndex));
 			punctContext = getContextFromHits(hits);
 		}
 		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
@@ -1073,7 +1066,7 @@ public class Hits implements Iterable<Hit> {
 				attrName[i] = e.getKey();
 				attrFI[i] = e.getValue();
 				attrTerms[i] = attrFI[i].getTerms();
-				getContextWords(doc, Arrays.asList(attrFI[i]), startsOfWords, endsOfWords, hits);
+				getContextWords(hits, wordsAroundHit, Arrays.asList(attrFI[i]));
 				attrContext[i] = getContextFromHits(hits);
 				i++;
 			}
@@ -1081,7 +1074,7 @@ public class Hits implements Iterable<Hit> {
 
 		// Get word context
 		if (forwardIndex != null)
-			getContextWords(doc, Arrays.asList(forwardIndex), startsOfWords, endsOfWords, hits);
+			getContextWords(hits, wordsAroundHit, Arrays.asList(forwardIndex));
 		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
 
 		// Make the concordances from the context
@@ -1138,8 +1131,6 @@ public class Hits implements Iterable<Hit> {
 				// End word tag
 				current.append("</w>");
 			}
-			/*if (part[0].length() > 0)
-				part[0].append(" ");*/
 			String[] concStr = new String[] {part[0].toString(), part[1].toString(), part[2].toString()};
 			Concordance concordance = new Concordance(concStr);
 			conc.put(h, concordance);
@@ -1151,42 +1142,31 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Get context words from the forward index.
-	 *
-	 * The array layout is a little unusual. If this is a typical concordance:
-	 *
-	 * <code>[A] left context [B] hit text [C] right context [D]</code>
-	 *
-	 * the positions A-D for each of the bits of context should be in the arrays startsOfWords and
-	 * endsOfWords as follows:
-	 *
-	 * <code>starsOfWords: A1, B1, A2, B2, ...</code> <code>endsOfWords: C1, D1, C2, D2, ...</code>
-	 *
-	 * @param doc
-	 *            the document to get context from
-	 * @param contextSources
-	 *            forward indices to get context from
-	 * @param startsOfWords
-	 *            contains, for each bit of context requested, the starting word position of the
-	 *            left context and for the hit
-	 * @param endsOfWords
-	 *            contains, for each bit of context requested, the ending word position of the hit
-	 *            and for the left context
+	 * Get context words from the forward index for hits in a single document.
 	 * @param resultsList
 	 *            the list of results to add the context to
+	 * @param contextSources
+	 *            forward indices to get context from
+	 * @param doc
+	 *            the document to get context from
 	 */
-	static void getContextWords(int doc, List<ForwardIndex> contextSources,
-			int[] startsOfWords, int[] endsOfWords, Iterable<Hit> resultsList) {
+	static void getContextWords(List<Hit> resultsList, int wordsAroundHit,
+			List<ForwardIndex> contextSources) {
 
-		int n = startsOfWords.length / 2;
+		int n = resultsList.size();
+		if (n == 0)
+			return;
 		int[] startsOfSnippets = new int[n];
 		int[] endsOfSnippets = new int[n];
-		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
-			startsOfSnippets[j] = startsOfWords[i];
-			endsOfSnippets[j] = endsOfWords[i + 1] + 1;
+		int i = 0;
+		for (Hit h: resultsList) {
+			startsOfSnippets[i] = wordsAroundHit >= h.start ? 0 : h.start - wordsAroundHit;
+			endsOfSnippets[i] = h.end + wordsAroundHit;
+			i++;
 		}
 
 		int fiNumber = 0;
+		int doc = resultsList.get(0).doc;
 		for (ForwardIndex forwardIndex: contextSources) {
 			// Get all the words from the forward index
 			List<int[]> words;
@@ -1200,62 +1180,27 @@ public class Hits implements Iterable<Hit> {
 
 			// Build the actual concordances
 			Iterator<int[]> wordsIt = words.iterator();
-			Iterator<Hit> resultsListIt = resultsList.iterator();
-			for (int j = 0; j < n; j++) {
+			int j = 0;
+			for (Hit hit: resultsList) {
 				int[] theseWords = wordsIt.next();
 
 				// Put the concordance in the Hit object
-				Hit hit = resultsListIt.next(); // resultsList.get(j);
-				int firstWordIndex = startsOfWords[j * 2];
+				int firstWordIndex = startsOfSnippets[j];
 
 				if (fiNumber == 0) {
 					// Allocate context array and set hit and right start and context length
 					hit.context = new int[theseWords.length * contextSources.size()];
-					hit.contextHitStart = startsOfWords[j * 2 + 1] - firstWordIndex;
-					hit.contextRightStart = endsOfWords[j * 2] - firstWordIndex + 1;
+					hit.contextHitStart = hit.start - firstWordIndex;
+					hit.contextRightStart = hit.end - firstWordIndex;
 					hit.contextLength = theseWords.length;
 				}
 				// Copy the context we just retrieved into the context array
 				int start = fiNumber * theseWords.length;
 				System.arraycopy(theseWords, 0, hit.context, start, theseWords.length);
+				j++;
 			}
 
 			fiNumber++;
-		}
-	}
-
-	/**
-	 * Determine the word positions needed to retrieve context / snippets
-	 *
-	 * @param hits
-	 *            the hits for which we want word positions
-	 * @param wordsAroundHit
-	 *            the number of words around the matches word(s) we want
-	 * @param startsOfWords
-	 *            (out) the starts of the contexts and the hits
-	 * @param endsOfWords
-	 *            (out) the ends of the hits and the contexts
-	 */
-	static void determineWordPositions(Iterable<Hit> hits, int wordsAroundHit,
-			int[] startsOfWords, int[] endsOfWords) {
-		// Determine the first and last word of the concordance, as well as the
-		// first and last word of the actual hit inside the concordance.
-		int startEndArrayIndex = 0;
-		for (Hit hit : hits) {
-			int hitStart = hit.start;
-			int hitEnd = hit.end - 1;
-
-			int start = hitStart - wordsAroundHit;
-			if (start < 0)
-				start = 0;
-			int end = hitEnd + wordsAroundHit;
-
-			startsOfWords[startEndArrayIndex] = start;
-			startsOfWords[startEndArrayIndex + 1] = hitStart;
-			endsOfWords[startEndArrayIndex] = hitEnd;
-			endsOfWords[startEndArrayIndex + 1] = end;
-
-			startEndArrayIndex += 2;
 		}
 	}
 

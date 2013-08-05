@@ -1337,12 +1337,6 @@ public class QueryTool {
 	}
 
 	String prepConcForDisplay(String input) {
-		if (!searcher.concordancesIncludeXmlTags()) {
-			// Concordances made from forward index are not XML
-			return input;
-		}
-
-		// Concordances made from content store are XML
 		return XmlUtil.xmlToPlainText(input);
 	}
 
