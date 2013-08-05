@@ -28,6 +28,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import nl.inl.blacklab.indexers.alto.AltoUtils;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -746,8 +748,12 @@ public class QueryTool {
 
 	private void showMetadata(int docId) {
 		Document doc = searcher.document(docId);
+		Map<String, String> metadata = new TreeMap<String, String>(); // sort by key
 		for (Fieldable f: doc.getFields()) {
-			outprintln(f.name() + ": " + f.stringValue());
+			metadata.put(f.name(), f.stringValue());
+		}
+		for (Map.Entry<String, String> e: metadata.entrySet()) {
+			outprintln(e.getKey() + ": " + e.getValue());
 		}
 	}
 
