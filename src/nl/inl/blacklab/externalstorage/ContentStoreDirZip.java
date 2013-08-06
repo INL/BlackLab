@@ -35,10 +35,17 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
 
 	SimpleResourcePool<byte[]> zipbufPool;
 
+	/**
+	 * @param dir content store dir
+	 */
 	public ContentStoreDirZip(File dir) {
 		this(dir, false);
 	}
 
+	/**
+	 * @param dir content store dir
+	 * @param create if true, create a new content store
+	 */
 	public ContentStoreDirZip(File dir, boolean create) {
 		super(dir, create);
 		int POOL_SIZE = 10;

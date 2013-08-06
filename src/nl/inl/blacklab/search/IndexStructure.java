@@ -467,7 +467,6 @@ public class IndexStructure {
 	 * field and inspecting the Fieldable. This assumes that the field type
 	 * is the same for all documents.
 	 *
-	 * @param reader our index
 	 * @param fieldName the field name to determine the type for
 	 * @return type of the field (text or numeric)
 	 */

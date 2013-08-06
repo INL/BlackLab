@@ -1034,16 +1034,12 @@ public class Hits implements Iterable<Hit> {
 	 * vectors takes time; subsequent hits from the same document are significantly faster,
 	 * presumably because of caching)
 	 *
-	 * @param hits
-	 *            the hits in question
 	 * @param forwardIndex
 	 *    Forward index for the words
 	 * @param punctForwardIndex
 	 *    Forward index for the punctuation
 	 * @param attrForwardIndices
 	 *    Forward indices for the attributes, or null if none
-	 * @param fieldName
-	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
 	 * @param conc
@@ -1223,7 +1219,6 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Get the context information from the list of hits, so we can
 	 * look up a different context but still have access to this one as well.
-	 * @param hits the hits to save the context for
 	 * @return the context
 	 */
 	int[][] getContextFromHits() {
@@ -1237,8 +1232,7 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Put context information into a list of hits.
-	 * @param hits the hits to restore the context for
+	 * Put context information into the list of hits.
 	 * @param context the context to restore
 	 */
 	void restoreContextInHits(int[][] context) {

@@ -28,10 +28,19 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 public class RemovePunctuationFilter extends TokenFilter {
 	final static Pattern punctuationPattern = Pattern.compile("\\p{P}+");
 
+	/**
+	 * Remove punctuation from a string
+	 * @param input the string
+	 * @return same string with punctuation removed
+	 */
 	public static String process(String input) {
 		return punctuationPattern.matcher(input).replaceAll("");
 	}
 
+	/**
+	 * Test program
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		String input = "Hé, jij daar!";
 		System.out.println(process(input));
@@ -39,6 +48,9 @@ public class RemovePunctuationFilter extends TokenFilter {
 
 	private CharTermAttribute termAtt;
 
+	/**
+	 * @param input the token stream to remove punctuation from
+	 */
 	public RemovePunctuationFilter(TokenStream input) {
 		super(input);
 		termAtt = addAttribute(CharTermAttribute.class);

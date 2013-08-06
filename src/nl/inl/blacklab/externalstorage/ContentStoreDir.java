@@ -135,10 +135,17 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 	 */
 	private int charsAlreadyWritten = 0;
 
+	/**
+	 * @param dir directory to use for the content store
+	 */
 	public ContentStoreDir(File dir) {
 		this(dir, false);
 	}
 
+	/**
+	 * @param dir directory to use for the content store
+	 * @param create if true, create a new content store. Otherwise append to the existing one
+	 */
 	public ContentStoreDir(File dir, boolean create) {
 		this.dir = dir;
 		if (!dir.exists())

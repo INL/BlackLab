@@ -247,8 +247,6 @@ public class DocIndexerPageXml extends DocIndexerXml {
 
 	/**
 	 * End <doc> tag found. Store the content and add the document to the index.
-	 *
-	 * @param attributes
 	 */
 	private void endPage() {
 		try {

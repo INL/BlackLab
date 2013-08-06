@@ -225,8 +225,6 @@ public class DocIndexerAlto extends DocIndexerXml {
 
 	/**
 	 * End <Page> tag found.
-	 *
-	 * @param attributes
 	 */
 	private void endPage() {
 		// [moved to endAlto]
@@ -234,8 +232,6 @@ public class DocIndexerAlto extends DocIndexerXml {
 
 	/**
 	 * End <alto> tag found. Store the content and add the document to the index.
-	 *
-	 * @param attributes
 	 */
 	private void endAlto() {
 		try {

@@ -73,6 +73,10 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 		this(input, true);
 	}
 
+	/**
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
 		TokenStream ts = new WhitespaceTokenizer(Version.LUCENE_36, new StringReader(
 				"Dit is een test"));
@@ -93,11 +97,20 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 		}
 	}
 
+	/**
+	 * Token type for synonyms
+	 */
 	public static final String TOKEN_TYPE_SYNONYM = "SYNONYM";
 
+	/**
+	 * Get a list of synonyms
+	 * @param s word to get synonyms for
+	 * @return the list
+	 */
 	public abstract String[] getSynonyms(String s);
 
 	private Stack<State> synonymStack;
+
 	private CharTermAttribute termAttr;
 
 	/**
@@ -150,17 +163,17 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 		}
 	}
 
-	public static void setPositionIncrement(AttributeSource source, int posIncr) {
+	static void setPositionIncrement(AttributeSource source, int posIncr) {
 		PositionIncrementAttribute attr = source.addAttribute(PositionIncrementAttribute.class);
 		attr.setPositionIncrement(posIncr);
 	}
 
-	public static void setTerm(AttributeSource source, String term) {
+	static void setTerm(AttributeSource source, String term) {
 		CharTermAttribute attr = source.addAttribute(CharTermAttribute.class);
 		attr.copyBuffer(term.toCharArray(), 0, term.length());
 	}
 
-	public static void setType(AttributeSource source, String type) {
+	static void setType(AttributeSource source, String type) {
 		TypeAttribute attr = source.addAttribute(TypeAttribute.class);
 		attr.setType(type);
 	}

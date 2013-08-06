@@ -27,6 +27,9 @@ import org.apache.lucene.util.Version;
  * Adds alternative German spellings for words with special and accented characters.
  */
 public class TranscribeGermanAccentsSynonymFilter extends AbstractSynonymFilter {
+	/**
+	 * @param input input token stream
+	 */
 	public TranscribeGermanAccentsSynonymFilter(TokenStream input) {
 		super(input);
 	}
