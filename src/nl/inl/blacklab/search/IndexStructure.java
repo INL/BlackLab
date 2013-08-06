@@ -5,9 +5,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
@@ -29,14 +29,12 @@ public class IndexStructure {
 
 	/** Possible types of metadata fields. */
 	public enum FieldType {
-		TEXT,
-		NUMERIC
+		TEXT, NUMERIC
 	}
 
 	/** Types of property alternatives */
 	public enum AltType {
-		UNKNOWN,
-		SENSITIVE
+		UNKNOWN, SENSITIVE
 	}
 
 	/** Description of a complex field */
@@ -62,7 +60,7 @@ public class IndexStructure {
 
 		public ComplexFieldDesc(String name) {
 			fieldName = name;
-			props = new HashMap<String, PropertyDesc>();
+			props = new TreeMap<String, PropertyDesc>();
 			contentStore = false;
 			lengthInTokens = false;
 			xmlTags = false;
@@ -135,7 +133,8 @@ public class IndexStructure {
 
 			if (propPart == null && parts.length >= 3) {
 				// Bookkeeping field
-				BookkeepFieldType bookkeepingFieldIndex = ComplexFieldUtil.whichBookkeepingSubfield(parts[3]);
+				BookkeepFieldType bookkeepingFieldIndex = ComplexFieldUtil
+						.whichBookkeepingSubfield(parts[3]);
 				switch (bookkeepingFieldIndex) {
 				case CONTENT_ID:
 					// Complex field has content store
@@ -161,12 +160,11 @@ public class IndexStructure {
 				if (parts[2] != null) {
 					// Alternative
 					pd.addAlternative(parts[2]);
-				} else if (parts.length >= 3){
+				} else if (parts.length >= 3) {
 					// Property bookkeeping field
 					if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
 						pd.setForwardIndex(true);
-					}
-					else
+					} else
 						throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
 				} else {
 					// No alternative specified; guess we have nameless alternatives.
@@ -191,13 +189,14 @@ public class IndexStructure {
 
 		public void detectMainProperty(IndexReader reader) {
 			for (PropertyDesc pr: props.values()) {
-				if (pr.detectOffsetsAlternative(reader, fieldName))  {
+				if (pr.detectOffsetsAlternative(reader, fieldName)) {
 					// This field has offsets stored. Must be the main prop field.
 					mainProperty = pr;
 					return;
 				}
 			}
-			throw new RuntimeException("No main property (with char. offsets) detected for complex field " + fieldName);
+			throw new RuntimeException(
+					"No main property (with char. offsets) detected for complex field " + fieldName);
 		}
 
 		public void print(PrintStream out) {
@@ -226,7 +225,7 @@ public class IndexStructure {
 
 		public PropertyDesc(String name) {
 			propName = name;
-			alternatives = new HashMap<String, AltDesc>();
+			alternatives = new TreeMap<String, AltDesc>();
 			forwardIndex = false;
 		}
 
@@ -238,7 +237,8 @@ public class IndexStructure {
 				altDesc = ", with alternatives \"" + altList + "\"";
 			else if (alternatives.size() == 1)
 				altDesc = ", with alternative \"" + altList + "\"";
-			return (propName.length() == 0 ? "(default)" : propName) + (forwardIndex ? " (+FI)" : "") + altDesc;
+			return (propName.length() == 0 ? "(default)" : propName)
+					+ (forwardIndex ? " (+FI)" : "") + altDesc;
 		}
 
 		public boolean hasForwardIndex() {
@@ -286,13 +286,14 @@ public class IndexStructure {
 		 * @return true if found, false if not
 		 */
 		public boolean detectOffsetsAlternative(IndexReader reader, String fieldName) {
-			// Iterate over documents in the index until we find a property
-			// for this complex field that has stored character offsets. This is
-			// our main property.
-			for (int n = 0; n < reader.maxDoc(); n++) {
-				if (!reader.isDeleted(n)) {
-					for (AltDesc alt: alternatives.values()) {
-						String luceneAltName = ComplexFieldUtil.propertyField(fieldName, propName, alt.getName());
+			// Iterate over the alternatives and for each alternative, find a term
+			// vector. If that has character offsets stored, it's our main property.
+			// If not, keep searching.
+			for (AltDesc alt: alternatives.values()) {
+				String luceneAltName = ComplexFieldUtil.propertyField(fieldName, propName,
+						alt.getName());
+				for (int n = 0; n < reader.maxDoc(); n++) {
+					if (!reader.isDeleted(n)) {
 						try {
 							TermFreqVector tv = reader.getTermFreqVector(n, luceneAltName);
 							if (tv == null) {
@@ -305,7 +306,9 @@ public class IndexStructure {
 									offsetsAlternative = alt;
 									return true;
 								}
-								return false;
+								// This alternative has no offsets stored. Don't look at any more documents,
+								// go to the next alternative.
+								break;
 							}
 						} catch (IOException e) {
 							throw new RuntimeException(e);
@@ -313,6 +316,7 @@ public class IndexStructure {
 					}
 				}
 			}
+
 			return false;
 		}
 
@@ -381,8 +385,8 @@ public class IndexStructure {
 	 */
 	public IndexStructure(IndexReader reader) {
 		this.reader = reader;
-		metadataFields = new HashMap<String, FieldType>();
-		complexFields = new HashMap<String, ComplexFieldDesc>();
+		metadataFields = new TreeMap<String, FieldType>();
+		complexFields = new TreeMap<String, ComplexFieldDesc>();
 
 		FieldInfos fis = ReaderUtil.getMergedFieldInfos(reader);
 
@@ -402,7 +406,7 @@ public class IndexStructure {
 		}
 		ComplexFieldUtil.setFieldNameSeparators(avoidSpecialChars, isOldNamingScheme);
 
-		//reader.getFieldInfos();
+		// reader.getFieldInfos();
 		for (int i = 0; i < fis.size(); i++) {
 			FieldInfo fi = fis.fieldInfo(i);
 			String name = fi.name;
@@ -413,7 +417,7 @@ public class IndexStructure {
 				// Special case: this is not a property alternative, but a numeric
 				// alternative for a metadata field.
 				// (TODO: this should probably be changed or removed)
-				parts = new String[] {name};
+				parts = new String[] { name };
 			} else {
 				parts = ComplexFieldUtil.getNameComponents(name);
 			}
@@ -431,7 +435,9 @@ public class IndexStructure {
 						ComplexFieldUtil._setMainPropertyNameless(true);
 					}
 					if (!ComplexFieldUtil.isMainPropertyNameless()) {
-						throw new RuntimeException("Complex field and metadata field with same name, error! (" + parts[0] + ")");
+						throw new RuntimeException(
+								"Complex field and metadata field with same name, error! ("
+										+ parts[0] + ")");
 					}
 
 					metadataFields.remove(parts[0]);
@@ -612,7 +618,8 @@ public class IndexStructure {
 			if (e.getKey().endsWith("Numeric"))
 				continue; // special case, will probably be removed later
 			FieldType type = e.getValue();
-			out.println("- " + e.getKey() + (type == FieldType.TEXT ? "" : " (" + type + ")") + (e.getKey().equals(titleField) ? " (TITLEFIELD)" : "") );
+			out.println("- " + e.getKey() + (type == FieldType.TEXT ? "" : " (" + type + ")")
+					+ (e.getKey().equals(titleField) ? " (TITLEFIELD)" : ""));
 		}
 	}
 
