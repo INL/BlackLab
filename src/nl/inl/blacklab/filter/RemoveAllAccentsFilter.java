@@ -33,7 +33,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  */
 public class RemoveAllAccentsFilter extends TokenFilter {
 
-	public static String process(String input) {
+	static String process(String input) {
 		return StringUtil.removeAccents(input);
 	}
 
