@@ -3,26 +3,31 @@ package nl.inl.blacklab.search.grouping;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.util.ArrayUtil;
 
-public class HitPropValueContextWords extends HitPropValue {
-	int[] value;
+public class HitPropValueContextWords extends HitPropValueContext {
+	int[] valueTokenId;
 
-	private Terms terms;
+	int[] valueSortOrder;
 
-	public HitPropValueContextWords(Terms terms, int[] value) {
-		this.value = value;
-		this.terms = terms;
+	boolean sensitive;
+
+	public HitPropValueContextWords(Terms terms, int[] value, boolean sensitive) {
+		super(terms);
+		this.valueTokenId = value;
+		this.sensitive = sensitive;
+		valueSortOrder = new int[value.length];
+		terms.toSortOrder(value, valueSortOrder, sensitive);
 	}
 
 	@Override
 	public int compareTo(Object o) {
-		return ArrayUtil.compareArrays(value, ((HitPropValueContextWords)o).value);
+		return ArrayUtil.compareArrays(valueSortOrder, ((HitPropValueContextWords) o).valueSortOrder);
 	}
 
 	@Override
 	public int hashCode() {
 		int result = 0;
-		for (int v: value) {
-			result ^= ((Integer)v).hashCode();
+		for (int v: valueSortOrder) {
+			result ^= ((Integer) v).hashCode();
 		}
 		return result;
 	}
@@ -30,8 +35,8 @@ public class HitPropValueContextWords extends HitPropValue {
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder();
-		for (int v: value) {
-			String word = terms.getFromSortPosition(v);
+		for (int v: valueTokenId) {
+			String word = terms.get(v);
 			if (word.length() > 0) {
 				if (b.length() > 0)
 					b.append(" ");
@@ -43,23 +48,22 @@ public class HitPropValueContextWords extends HitPropValue {
 
 	public static HitPropValue deserialize(Terms terms, String info) {
 		String[] strIds = info.split(",,");
-		int[] ids = new int[strIds.length];
-		int i = 0;
-		for (String strId: strIds) {
-			ids[i] = Integer.parseInt(strId);
-			i++;
+		boolean sensitive = strIds[0].equals("1");
+		int[] ids = new int[strIds.length - 1];
+		for (int i = 1; i < strIds.length; i++) {
+			ids[i] = Integer.parseInt(strIds[i + 1]);
 		}
-		return new HitPropValueContextWords(terms, ids);
+		return new HitPropValueContextWords(terms, ids, sensitive);
 	}
 
 	@Override
 	public String serialize() {
 		StringBuilder b = new StringBuilder();
-		for (int v: value) {
+		for (int v: valueTokenId) {
 			if (b.length() > 0)
 				b.append(",,");
 			b.append(v);
 		}
-		return "cws:" + b.toString();
+		return "cws:" + (sensitive ? "1" : "0") + ",," + b.toString();
 	}
 }

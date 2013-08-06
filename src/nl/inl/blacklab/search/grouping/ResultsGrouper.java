@@ -78,7 +78,9 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 *            the criteria to group on
 	 * @param defaultConcField
 	 *            the default concordance field
+	 * @deprecated pass a Hits object to ResultsGrouper
 	 */
+	@Deprecated
 	public ResultsGrouper(Searcher searcher, SpanQuery source, HitProperty criteria,
 			String defaultConcField) {
 		this(new Hits(searcher, defaultConcField, source), criteria);
@@ -96,8 +98,9 @@ public class ResultsGrouper extends RandomAccessGroups {
 		super(hits.getSearcher(), criteria);
 		defaultConcField = hits.getConcordanceFieldName();
 		List<String> requiredContext = criteria.needsContext();
-		if (requiredContext != null)
+		if (requiredContext != null) {
 			hits.findContext(requiredContext);
+		}
 		contextField = hits.getContextFieldPropName();
 		Thread currentThread = Thread.currentThread();
 		for (Hit hit : hits) {
@@ -112,6 +115,11 @@ public class ResultsGrouper extends RandomAccessGroups {
 			}
 			addHit(hit);
 		}
+
+		// If the group identities are context words, we should possibly merge
+		// some groups if they have identical sort orders (up to now, we've grouped on
+		// token id, not sort order).
+
 	}
 
 	/**

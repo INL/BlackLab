@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -76,11 +76,6 @@ public class Hits implements Iterable<Hit> {
 	protected String concordanceFieldName;
 
 	/**
-	 * Lucene name for the main property field of the current contents field.
-	 */
-	private String concordanceMainFieldPropName;
-
-	/**
 	 * Did we completely read our Spans object?
 	 */
 	protected boolean sourceSpansFullyRead = true;
@@ -91,32 +86,61 @@ public class Hits implements Iterable<Hit> {
 	protected BLSpans sourceSpans;
 
 	/**
-	 * How many hits do we have in total?
-	 * (We keep this separately because we may run through a Spans first to
-	 * count the hits without storing them, to avoid unnecessarily instantiating
-	 * Hit objects)
-	 * If -1, we don't know the total number of hits yet.
+	 * Stop retrieving hits after this number.
+	 * (-1 = don't stop retrieving)
 	 */
-	int totalNumberOfHits;
+	private static int defaultMaxHitsToRetrieve = 1000000;
 
 	/**
-	 * For extremely large queries, stop retrieving hits after this number.
+	 * Stop counting hits after this number.
+	 * (-1 = don't stop counting)
 	 */
-	public final static int MAX_HITS_TO_RETRIEVE = 10000000;
+	private static int defaultMaxHitsToCount = -1;
 
 	/**
-	 * If true, we try to count the total number of hits even if we don't
-	 * actually retrieve all of them yet. Now set to false because for large
-	 * queries even enumerating the hits takes a lot of time, so this is only
-	 * done if requested.
+	 * Stop retrieving hits after this number.
+	 * (-1 = don't stop retrieving)
 	 */
-	private static final boolean PRE_COUNT_TOTAL_HITS = false;
+	private int maxHitsToRetrieve = defaultMaxHitsToRetrieve;
+
+	/**
+	 * Stop counting hits after this number.
+	 * (-1 = don't stop counting)
+	 */
+	private int maxHitsToCount = defaultMaxHitsToCount;
 
 	/**
 	 * If true, we've stopped retrieving hits because there are more than
 	 * the maximum we've set.
 	 */
-	private boolean tooManyHits = false;
+	private boolean maxHitsRetrieved = false;
+
+	/**
+	 * If true, we've stopped counting hits because there are more than
+	 * the maximum we've set.
+	 */
+	private boolean maxHitsCounted = false;
+
+	/**
+	 * The number of hits we've seen and counted so far. May be more than
+	 * the number of hits we've retrieved if that exceeds maxHitsToRetrieve.
+	 */
+	private int hitsCounted = 0;
+
+	/**
+	 * The number of separate documents we've seen in the hits retrieved.
+	 */
+	private int docsRetrieved = 0;
+
+	/**
+	 * The number of separate documents we've counted so far (includes non-retrieved hits).
+	 */
+	private int docsCounted = 0;
+
+	/**
+	 * Document the previous hit was in, so we can count separate documents.
+	 */
+	private int previousHitDoc = -1;
 
 	/**
 	 * The desired context size (number of words to fetch around hits).
@@ -130,13 +154,6 @@ public class Hits implements Iterable<Hit> {
 	private int currentContextSize;
 
 	/**
-	 * The number of documents counted (only valid if the basis for this is a SpanQuery object;
-	 * used by DocResults to report the total number of docs without retrieving them all first).
-	 * If the value is -1, we don't know the total number of docs.
-	 */
-	private int totalNumberOfDocs;
-
-	/**
 	 * Construct an empty Hits object
 	 *
 	 * @param searcher
@@ -144,6 +161,22 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public Hits(Searcher searcher) {
 		this(searcher, searcher.getContentsFieldMainPropName());
+	}
+
+	/**
+	 * Make a wrapper Hits object for a list of Hit objects.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param hits the list of hits to wrap
+	 */
+	public Hits(Searcher searcher, List<Hit> hits) {
+		this.searcher = searcher;
+		this.hits = hits;
+		hitsCounted = hits.size();
+		setConcordanceField(searcher.getContentsFieldMainPropName());
+		desiredContextSize = searcher.getDefaultContextSize();
+		currentContextSize = -1;
 	}
 
 	/**
@@ -157,12 +190,11 @@ public class Hits implements Iterable<Hit> {
 	public Hits(Searcher searcher, String concordanceFieldPropName) {
 		this.searcher = searcher;
 		hits = new ArrayList<Hit>();
-		totalNumberOfHits = 0;
+		hitsCounted = 0;
 		setConcordanceField(concordanceFieldPropName);
 		desiredContextSize = searcher == null ? 0 /* only for test */: searcher
 				.getDefaultContextSize();
 		currentContextSize = -1;
-		totalNumberOfDocs = -1; // unknown
 	}
 
 	/**
@@ -183,10 +215,8 @@ public class Hits implements Iterable<Hit> {
 	public Hits(Searcher searcher, String concordanceFieldPropName, Spans source) {
 		this(searcher, concordanceFieldPropName);
 
-		totalNumberOfHits = -1; // "not known yet"
 		sourceSpans = BLSpansWrapper.optWrap(source);
 		sourceSpansFullyRead = false;
-		totalNumberOfDocs = -1; // unknown
 	}
 
 	/**
@@ -204,34 +234,7 @@ public class Hits implements Iterable<Hit> {
 			throws TooManyClauses {
 		this(searcher, concordanceFieldPropName);
 
-		totalNumberOfDocs = -1;
-		totalNumberOfHits = -1;
-
-		if (PRE_COUNT_TOTAL_HITS) {
-			// Count how many hits there are in total
-			sourceSpans = findSpans(sourceQuery);
-			try {
-				totalNumberOfDocs = 0;
-				int doc = -1;
-				tooManyHits = false;
-				while (sourceSpans.next()) {
-					if (doc != sourceSpans.doc()) {
-						doc = sourceSpans.doc();
-						totalNumberOfDocs++;
-					}
-					totalNumberOfHits++;
-					if (totalNumberOfHits >= MAX_HITS_TO_RETRIEVE) {
-						// Too many hits; stop collecting here
-						tooManyHits = true;
-						break;
-					}
-				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		sourceSpans = findSpans(sourceQuery); // Counted 'em. Now reset.
+		sourceSpans = findSpans(sourceQuery);
 		// logger.debug("SPANS: " + sourceSpans);
 		sourceSpansFullyRead = false;
 	}
@@ -295,9 +298,27 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Were all hits retrieved, or did we stop because there were too many?
 	 * @return true if all hits were retrieved
+	 * @deprecated renamed to maxHitsRetrieved()
 	 */
+	@Deprecated
 	public boolean tooManyHits() {
-		return tooManyHits;
+		return maxHitsRetrieved();
+	}
+
+	/**
+	 * Did we stop retrieving hits because we reached the maximum?
+	 * @return true if we reached the maximum and stopped retrieving hits
+	 */
+	public boolean maxHitsRetrieved() {
+		return maxHitsRetrieved;
+	}
+
+	/**
+	 * Did we stop counting hits because we reached the maximum?
+	 * @return true if we reached the maximum and stopped counting hits
+	 */
+	public boolean maxHitsCounted() {
+		return maxHitsCounted;
 	}
 
 	/**
@@ -340,26 +361,35 @@ public class Hits implements Iterable<Hit> {
 		Thread currentThread = Thread.currentThread();
 		try {
 			while (readAllHits || hits.size() < number) {
+
+				// Check if the thread should terminate
 				if (currentThread.isInterrupted())
 					throw new InterruptedException("Thread was interrupted while gathering hits");
 
+				// Stop if we're at the maximum number of hits we want to count
+				if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
+					maxHitsCounted = true;
+					break;
+				}
+
+				// Advance to next hit
 				if (!sourceSpans.next()) {
 					sourceSpansFullyRead = true;
-					totalNumberOfHits = hits.size();
 					break;
 				}
-				hits.add(sourceSpans.getHit());
-				if (totalNumberOfHits >= 0 && hits.size() >= totalNumberOfHits
-						|| hits.size() >= MAX_HITS_TO_RETRIEVE) {
-					// Either we've got them all, or we should stop
-					// collecting them because there's too many
-					sourceSpansFullyRead = true;
-					if (hits.size() >= MAX_HITS_TO_RETRIEVE) {
-						tooManyHits = true;
-						totalNumberOfHits = hits.size();
-					}
-					break;
+
+				// Count the hit and add it (unless we've reached the maximum number of hits we want)
+				hitsCounted++;
+				int hitDoc = sourceSpans.doc();
+				if (hitDoc != previousHitDoc) {
+					docsCounted++;
+					if (!maxHitsRetrieved)
+						docsRetrieved++;
+					previousHitDoc = hitDoc;
 				}
+				maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
+				if (!maxHitsRetrieved)
+					hits.add(sourceSpans.getHit());
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -378,7 +408,9 @@ public class Hits implements Iterable<Hit> {
 	 *            the hit property/properties to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
+	 * @deprecated use single HitProperty version, possibly with HitPropertyMultiple
 	 */
+	@Deprecated
 	public void sort(HitProperty[] sortProp, boolean reverseSort) {
 		if (sortProp.length == 1)
 			sort(sortProp[0], reverseSort);
@@ -396,7 +428,9 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param sortProp
 	 *            the hit property/properties to sort on
+	 * @deprecated use single HitProperty version, possibly with HitPropertyMultiple
 	 */
+	@Deprecated
 	public void sort(HitProperty... sortProp) {
 		sort(sortProp, false);
 	}
@@ -411,10 +445,46 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param sortProp
 	 *            the hit property to sort on
+	 */
+	public void sort(final HitProperty sortProp) {
+		sort(sortProp, false, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	/**
+	 * Sort the list of hits.
+	 *
+	 * Note that if the thread is interrupted during this, sort may return
+	 * without the hits actually being fully read and sorted. We don't want
+	 * to add throws declarations to our whole API, so we assume the calling
+	 * method will check for thread interruption if the application uses it.
+	 *
+	 * Case-sensitivity depends on the default case-sensitivity set on the Searcher
+	 * object.
+	 *
+	 * @param sortProp
+	 *            the hit property to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
 	 */
 	public void sort(final HitProperty sortProp, boolean reverseSort) {
+		sort(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	/**
+	 * Sort the list of hits.
+	 *
+	 * Note that if the thread is interrupted during this, sort may return
+	 * without the hits actually being fully read and sorted. We don't want
+	 * to add throws declarations to our whole API, so we assume the calling
+	 * method will check for thread interruption if the application uses it.
+	 *
+	 * @param sortProp
+	 *            the hit property to sort on
+	 * @param reverseSort
+	 *            if true, sort in descending order
+	 * @param sensitive whether to sort case-sensitively or not
+	 */
+	public void sort(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -456,7 +526,13 @@ public class Hits implements Iterable<Hit> {
 			return;
 		}
 		hits.add(hit);
-		totalNumberOfHits++;
+		hitsCounted++;
+		int hitDoc = hit.doc;
+		if (hitDoc != previousHitDoc) {
+			docsCounted++;
+			docsRetrieved++;
+			previousHitDoc = hitDoc;
+		}
 	}
 
 	/**
@@ -465,6 +541,9 @@ public class Hits implements Iterable<Hit> {
 	 * This may be used if we don't want to process all hits (which
 	 * may be a lot) but we do need to know something about the size
 	 * of the result set (such as for paging).
+	 *
+	 * Note that this method applies to the hits retrieved, which may
+	 * be less than the total number of hits (depending on maxHitsToRetrieve).
 	 *
 	 * @param lowerBound the number we're testing against
 	 *
@@ -483,15 +562,50 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Return the number of hits.
+	 * Return the number of hits available.
 	 *
-	 * @return the number of hits
+	 * Note that this method applies to the hits retrieved, which may
+	 * be less than the total number of hits (depending on maxHitsToRetrieve).
+	 * Use totalSize() to find the total hit count (which may also be limited
+	 * depending on maxHitsToCount).
+	 *
+	 * @return the number of hits available
 	 */
 	public int size() {
-		if (totalNumberOfHits >= 0)
-			return totalNumberOfHits; // fully known, or pre-counted
+		try {
+			// Probably not all hits have been seen yet. Collect them all.
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			// Returned value is probably not the correct total number of hits,
+			// but will not cause any crashes. The thread was interrupted anyway,
+			// the value should never be presented to the user.
+		}
+		return hits.size();
+	}
 
-		// Probably not all hits have been seen yet. Collect them all.
+	/**
+	 * Return the total number of hits.
+	 *
+	 * NOTE: Depending on maxHitsToRetrieve, hit retrieval may stop
+	 * before all hits are seen. We do keep counting hits though
+	 * (until we reach maxHitsToCount, or that value is negative).
+	 * This method returns our total hit count. Some of these hits
+	 * may not be available.
+	 *
+	 * @return the total hit count
+	 */
+	public int totalSize() {
+		return hitsCounted;
+	}
+
+	/**
+	 * Return the number of documents in the hits we've retrieved.
+	 *
+	 * @return the number of documents.
+	 */
+	public int numberOfDocs() {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -500,9 +614,27 @@ public class Hits implements Iterable<Hit> {
 			// Returned value is probably not the correct total number of hits,
 			// but will not cause any crashes. The thread was interrupted anyway,
 			// the value should never be presented to the user.
-			return hits.size();
 		}
-		return totalNumberOfHits;
+		return docsRetrieved;
+	}
+
+	/**
+	 * Return the total number of documents in all hits.
+	 * This counts documents even in hits that are not stored, only counted.
+	 *
+	 * @return the total number of documents.
+	 */
+	public int totalNumberOfDocs() {
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			// Returned value is probably not the correct total number of hits,
+			// but will not cause any crashes. The thread was interrupted anyway,
+			// the value should never be presented to the user.
+		}
+		return docsCounted;
 	}
 
 	/**
@@ -586,6 +718,24 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Retrieve a single concordance. Only use if you need a larger snippet around a single
+	 * hit. If you need concordances for a set of hits, just instantiate a HitsWindow and call
+	 * getConcordance() on that; it will fetch all concordances in the window in a batch, which
+	 * is more efficient.
+	 *
+	 * @param fieldName field to use for building the concordance
+	 * @param hit the hit for which we want a concordance
+	 * @param contextSize the desired number of words around the hit
+	 * @return the concordance
+	 */
+	public Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
+		List<Hit> oneHit = Arrays.asList(hit);
+		Hits h = new Hits(searcher, oneHit);
+		Map<Hit, Concordance> oneConc = searcher.retrieveConcordances(h, contextSize, fieldName);
+		return oneConc.get(hit);
+	}
+
+	/**
 	 * Get a concordance with a custom context size.
 	 *
 	 * Don't call this directly for displaying a list of results. In that case,
@@ -607,7 +757,7 @@ public class Hits implements Iterable<Hit> {
 			// We probably want to show a hit with a larger snippet around it
 			// (say, 50 words or so). Don't clobber the context of the other
 			// hits, just fetch this snippet separately.
-			return searcher.getConcordance(concordanceFieldName, h, contextSize);
+			return getConcordance(concordanceFieldName, h, contextSize);
 		}
 
 		// Default context size. Read all hits and find concordances for all of them
@@ -649,17 +799,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(concordanceFieldName, hits, desiredContextSize);
-	}
-
-	/**
-	 * Retrieve context words for the hits.
-	 *
-	 * @param fieldPropName
-	 *            the field and property to use for the context
-	 */
-	public void findContext(String fieldPropName) {
-		findContext(Arrays.asList(fieldPropName));
+		concordances = searcher.retrieveConcordances(this, desiredContextSize, concordanceFieldName);
 	}
 
 	/**
@@ -682,22 +822,30 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the context
-		searcher.retrieveContext(fieldProps, hits, desiredContextSize);
+		// Group hits per document
+		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
+		for (Hit key: hits) {
+			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
+			if (hitsInDoc == null) {
+				hitsInDoc = new ArrayList<Hit>();
+				hitsPerDocument.put(key.doc, hitsInDoc);
+			}
+			hitsInDoc.add(key);
+		}
+
+		List<ForwardIndex> fis = new ArrayList<ForwardIndex>();
+		for (String fieldPropName: fieldProps) {
+			fis.add(searcher.getForwardIndex(fieldPropName));
+		}
+
+		for (List<Hit> l: hitsPerDocument.values()) {
+			if (l.size() > 0) {
+				Hits hitsInThisDoc = new Hits(searcher, l);
+				hitsInThisDoc.getContextWords(desiredContextSize, fis);
+			}
+		}
 		currentContextSize = desiredContextSize;
-
-		contextFieldsPropName = fieldProps == null ? fieldProps : new ArrayList<String>(fieldProps);
-	}
-
-	/**
-	 * Retrieve context for the hits, for sorting/grouping.
-	 *
-	 * NOTE: you should never have to call this manually; it is
-	 * called if needed by the sorting/grouping code.
-	 *
-	 * Uses the main property field.
-	 */
-	void findContext() {
-		findContext(concordanceMainFieldPropName);
+		contextFieldsPropName = new ArrayList<String>(fieldProps);
 	}
 
 	/**
@@ -737,7 +885,7 @@ public class Hits implements Iterable<Hit> {
 	 * @return the frequency of each occurring token
 	 */
 	public TokenFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
-		findContext(ctx.luceneField(false));
+		findContext(Arrays.asList(ctx.luceneField(false)));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
 			int[] context = hit.context;
@@ -760,18 +908,30 @@ public class Hits implements Iterable<Hit> {
 		boolean caseSensitive = searcher.isDefaultSearchCaseSensitive();
 		boolean diacSensitive = searcher.isDefaultSearchDiacriticsSensitive();
 		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
-		// Map<String, Integer> collStr = new HashMap<String, Integer>();
-		// FIXME: get collocations for multiple contexts?
+		// TODO: get collocations for multiple contexts?
 		Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
+		Map<String, Integer> wordFreq = new HashMap<String, Integer>();
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
-			String word = terms.getFromSortPosition(e.getKey());
+			String word = terms.get(e.getKey());
 			if (!diacSensitive) {
 				word = StringUtil.removeAccents(word);
 			}
 			if (!caseSensitive) {
 				word = word.toLowerCase();
 			}
-			collocations.add(new TokenFrequency(word, e.getValue()));
+			// Note that multiple ids may map to the same word (because of sensitivity settings)
+			// Here, those groups are merged.
+			Integer n = wordFreq.get(word);
+			if (n == null) {
+				n = 0;
+			}
+			n += e.getValue();
+			wordFreq.put(word, n);
+		}
+
+		// Transfer from map to list
+		for (Map.Entry<String, Integer> e: wordFreq.entrySet()) {
+			collocations.add(new TokenFrequency(e.getKey(), e.getValue()));
 		}
 		return collocations;
 	}
@@ -802,15 +962,6 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public void setConcordanceField(String concordanceFieldName) {
 		this.concordanceFieldName = concordanceFieldName;
-		if (searcher == null) {
-			// Can occur during testing. Just use default main property name.
-			concordanceMainFieldPropName = ComplexFieldUtil.propertyField(concordanceFieldName,
-					ComplexFieldUtil.getDefaultMainPropName());
-		} else {
-			// Get the main property name from the index structure.
-			concordanceMainFieldPropName = ComplexFieldUtil.mainPropertyField(
-					searcher.getIndexStructure(), concordanceFieldName);
-		}
 	}
 
 	/**
@@ -845,17 +996,331 @@ public class Hits implements Iterable<Hit> {
 		return hits.subList(fromIndex, toIndex);
 	}
 
+	/**
+	 * Set the field properties to retrieve context from
+	 * @param contextField the field properties
+	 */
 	public void setContextField(List<String> contextField) {
 		this.contextFieldsPropName = contextField == null ? null : new ArrayList<String>(contextField);
 	}
 
-	/**
-	 * The number of documents counted (only valid if the basis for this is a SpanQuery object;
-	 * used by DocResults to report the total number of docs without retrieving them all first)
-	 *
-	 * @return number of docs, or -1 if we haven't seen all the hits yet and therefore don't know
-	 */
-	public int numberOfDocs() {
-		return totalNumberOfDocs;
+	/** @return the default maximum number of hits to retrieve. */
+	public static int getDefaultMaxHitsToRetrieve() {
+		return defaultMaxHitsToRetrieve;
 	}
+
+	/** Set the default maximum number of hits to retrieve
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public static void setDefaultMaxHitsToRetrieve(int n) {
+		Hits.defaultMaxHitsToRetrieve = n;
+	}
+
+	/** @return the default maximum number of hits to count. */
+	public static int getDefaultMaxHitsToCount() {
+		return defaultMaxHitsToCount;
+	}
+
+	/** Set the default maximum number of hits to count
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public static void setDefaultMaxHitsToCount(int n) {
+		Hits.defaultMaxHitsToCount = n;
+	}
+
+	/** @return the maximum number of hits to retrieve. */
+	public int getMaxHitsToRetrieve() {
+		return maxHitsToRetrieve;
+	}
+
+	/** Set the maximum number of hits to retrieve
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public void setMaxHitsToRetrieve(int n) {
+		this.maxHitsToRetrieve = n;
+	}
+
+	/** @return the maximum number of hits to count. */
+	public int getMaxHitsToCount() {
+		return maxHitsToCount;
+	}
+
+	/** Set the maximum number of hits to count
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public void setMaxHitsToCount(int n) {
+		this.maxHitsToCount = n;
+	}
+
+	/**
+	 * Retrieves the concordance information (left, hit and right context) for a number of hits in
+	 * the same document from the ContentStore.
+	 *
+	 * NOTE: the slowest part of this is getting the character offsets (retrieving large term
+	 * vectors takes time; subsequent hits from the same document are significantly faster,
+	 * presumably because of caching)
+	 *
+	 * @param forwardIndex
+	 *    Forward index for the words
+	 * @param punctForwardIndex
+	 *    Forward index for the punctuation
+	 * @param attrForwardIndices
+	 *    Forward indices for the attributes, or null if none
+	 * @param wordsAroundHit
+	 *            number of words left and right of hit to fetch
+	 * @param conc
+	 *            where to add the concordances
+	 */
+	void makeConcordancesSingleDocForwardIndex(ForwardIndex forwardIndex,
+			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices, int wordsAroundHit,
+			Map<Hit, Concordance> conc) {
+		if (hits.size() == 0)
+			return;
+
+		// Save existing context so we can restore it afterwards
+		int[][] oldContext = null;
+		if (hits.size() > 0 && hits.get(0).context != null)
+			oldContext = getContextFromHits();
+
+		// TODO: more efficient to get all contexts with one getContextWords() call!
+
+		// Get punctuation context
+		int[][] punctContext = null;
+		if (punctForwardIndex != null) {
+			getContextWords(wordsAroundHit, Arrays.asList(punctForwardIndex));
+			punctContext = getContextFromHits();
+		}
+		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
+
+		// Get attributes context
+		String[] attrName = null;
+		ForwardIndex[] attrFI = null;
+		Terms[] attrTerms = null;
+		int[][][] attrContext = null;
+		if (attrForwardIndices != null) {
+			int n = attrForwardIndices.size();
+			attrName = new String[n];
+			attrFI = new ForwardIndex[n];
+			attrTerms = new Terms[n];
+			attrContext = new int[n][][];
+			int i = 0;
+			for (Map.Entry<String, ForwardIndex> e: attrForwardIndices.entrySet()) {
+				attrName[i] = e.getKey();
+				attrFI[i] = e.getValue();
+				attrTerms[i] = attrFI[i].getTerms();
+				getContextWords(wordsAroundHit, Arrays.asList(attrFI[i]));
+				attrContext[i] = getContextFromHits();
+				i++;
+			}
+		}
+
+		// Get word context
+		if (forwardIndex != null)
+			getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
+		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
+
+		// Make the concordances from the context
+		for (int i = 0; i < hits.size(); i++) {
+			Hit h = hits.get(i);
+			StringBuilder[] part = new StringBuilder[3];
+			for (int j = 0; j < 3; j++) {
+				part[j] = new StringBuilder();
+			}
+			int currentPart = 0;
+			StringBuilder current = part[currentPart];
+			for (int j = 0; j < h.context.length; j++) {
+
+				if (j == h.contextRightStart) {
+					currentPart = 2;
+					current = part[currentPart];
+				}
+
+				// Add punctuation
+				// (NOTE: punctuation after match is added to right context;
+				//  punctuation before match is added to left context)
+				if (j > 0) {
+					if (punctTerms == null) {
+						// There is no punctuation forward index. Just put a space
+						// between every word.
+						current.append(" ");
+					}
+					else
+						current.append(punctTerms.get(punctContext[i][j]));
+				}
+
+				if (currentPart == 0 && j == h.contextHitStart) {
+					currentPart = 1;
+					current = part[currentPart];
+				}
+
+				// Make word tag with lemma and pos attributes
+				current.append("<w");
+				if (attrContext != null) {
+					for (int k = 0; k < attrContext.length; k++) {
+						current
+						 	.append(" ")
+							.append(attrName[k])
+							.append("=\"")
+							.append(StringUtil.escapeXmlChars(attrTerms[k].get(attrContext[k][i][j])))
+							.append("\"");
+					}
+				}
+				current.append(">");
+
+				if (terms != null)
+					current.append(terms.get(h.context[j]));
+
+				// End word tag
+				current.append("</w>");
+			}
+			String[] concStr = new String[] {part[0].toString(), part[1].toString(), part[2].toString()};
+			Concordance concordance = new Concordance(concStr);
+			conc.put(h, concordance);
+		}
+
+		if (oldContext != null) {
+			restoreContextInHits(oldContext);
+		}
+	}
+
+	/**
+	 * Get context words from the forward index for hits in a single document.
+	 * @param wordsAroundHit how many words of context we want
+	 * @param contextSources
+	 *            forward indices to get context from
+	 */
+	void getContextWords(int wordsAroundHit, List<ForwardIndex> contextSources) {
+
+		int n = hits.size();
+		if (n == 0)
+			return;
+		int[] startsOfSnippets = new int[n];
+		int[] endsOfSnippets = new int[n];
+		int i = 0;
+		for (Hit h: hits) {
+			startsOfSnippets[i] = wordsAroundHit >= h.start ? 0 : h.start - wordsAroundHit;
+			endsOfSnippets[i] = h.end + wordsAroundHit;
+			i++;
+		}
+
+		int fiNumber = 0;
+		int doc = hits.get(0).doc;
+		for (ForwardIndex forwardIndex: contextSources) {
+			// Get all the words from the forward index
+			List<int[]> words;
+			if (forwardIndex != null) {
+				// We have a forward index for this field. Use it.
+				int fiid = forwardIndex.luceneDocIdToFiid(doc);
+				words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
+			} else {
+				throw new RuntimeException("Cannot get context without a forward index");
+			}
+
+			// Build the actual concordances
+			Iterator<int[]> wordsIt = words.iterator();
+			int j = 0;
+			for (Hit hit: hits) {
+				int[] theseWords = wordsIt.next();
+
+				// Put the concordance in the Hit object
+				int firstWordIndex = startsOfSnippets[j];
+
+				if (fiNumber == 0) {
+					// Allocate context array and set hit and right start and context length
+					hit.context = new int[theseWords.length * contextSources.size()];
+					hit.contextHitStart = hit.start - firstWordIndex;
+					hit.contextRightStart = hit.end - firstWordIndex;
+					hit.contextLength = theseWords.length;
+				}
+				// Copy the context we just retrieved into the context array
+				int start = fiNumber * theseWords.length;
+				System.arraycopy(theseWords, 0, hit.context, start, theseWords.length);
+				j++;
+			}
+
+			fiNumber++;
+		}
+	}
+
+	/**
+	 * Get the context information from the list of hits, so we can
+	 * look up a different context but still have access to this one as well.
+	 * @return the context
+	 */
+	int[][] getContextFromHits() {
+		int[][] context = new int[hits.size()][];
+		int i = 0;
+		for (Hit h: hits) {
+			context[i] = h.context;
+			i++;
+		}
+		return context;
+	}
+
+	/**
+	 * Put context information into the list of hits.
+	 * @param context the context to restore
+	 */
+	void restoreContextInHits(int[][] context) {
+		int i = 0;
+		for (Hit h: hits) {
+			h.context = context[i];
+			i++;
+		}
+	}
+
+	/**
+	 * Retrieves the concordance information (left, hit and right context) for a number of hits in
+	 * the same document from the ContentStore.
+	 *
+	 * NOTE1: it is assumed that all hits in this Hits object are in the same document!
+	 *
+	 * @param fieldName
+	 *            Lucene index field to make conc for
+	 * @param wordsAroundHit
+	 *            number of words left and right of hit to fetch
+	 * @param conc
+	 *            where to add the concordances
+	 */
+	void makeConcordancesSingleDoc(String fieldName, int wordsAroundHit,
+			Map<Hit, Concordance> conc) {
+		if (hits.size() == 0)
+			return;
+		int doc = hits.get(0).doc;
+		int arrayLength = hits.size() * 2;
+		int[] startsOfWords = new int[arrayLength];
+		int[] endsOfWords = new int[arrayLength];
+
+		// Determine the first and last word of the concordance, as well as the
+		// first and last word of the actual hit inside the concordance.
+		int startEndArrayIndex = 0;
+		for (Hit hit: hits) {
+			int hitStart = hit.start;
+			int hitEnd = hit.end - 1;
+
+			int start = hitStart - wordsAroundHit;
+			if (start < 0)
+				start = 0;
+			int end = hitEnd + wordsAroundHit;
+
+			startsOfWords[startEndArrayIndex] = start;
+			startsOfWords[startEndArrayIndex + 1] = hitStart;
+			endsOfWords[startEndArrayIndex] = hitEnd;
+			endsOfWords[startEndArrayIndex + 1] = end;
+
+			startEndArrayIndex += 2;
+		}
+
+		// Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
+		// arrays)
+		searcher.getCharacterOffsets(doc, fieldName, startsOfWords, endsOfWords, true);
+
+		// Make all the concordances
+		List<Concordance> newConcs = searcher.makeFieldConcordances(doc, fieldName, startsOfWords,
+				endsOfWords);
+		for (int i = 0; i < hits.size(); i++) {
+			conc.put(hits.get(i), newConcs.get(i));
+		}
+	}
+
 }

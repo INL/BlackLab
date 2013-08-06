@@ -30,6 +30,11 @@ import org.apache.lucene.util.Version;
  * Adapted from sample code from Lucene in Action, 2nd ed.
  */
 public class TranscribeGermanAccentsFilter extends TokenFilter {
+	/**
+	 * Transcribe German accents
+	 * @param input string to process
+	 * @return the string with accents transcribed to ASCII characters
+	 */
 	public static String process(String input) {
 		// NOTE: could be sped up by looping over a char[]
 		input = input.replaceAll("ö", "oe");
@@ -42,6 +47,11 @@ public class TranscribeGermanAccentsFilter extends TokenFilter {
 		return input;
 	}
 
+	/**
+	 * Test program
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
 		TokenStream ts = new WhitespaceTokenizer(Version.LUCENE_36, new StringReader(
 				"Aachen Düsseldorf Köln Berlin Österreich"));
@@ -59,6 +69,9 @@ public class TranscribeGermanAccentsFilter extends TokenFilter {
 
 	private CharTermAttribute termAtt;
 
+	/**
+	 * @param input input token stream
+	 */
 	public TranscribeGermanAccentsFilter(TokenStream input) {
 		super(input);
 		termAtt = addAttribute(CharTermAttribute.class);

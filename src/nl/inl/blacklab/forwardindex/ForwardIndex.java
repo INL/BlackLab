@@ -8,6 +8,9 @@ import nl.inl.util.VersionFile;
 
 import org.apache.lucene.index.IndexReader;
 
+/**
+ * A component that can quickly tell you what word occurs at a specific position of a specific document.
+ */
 public abstract class ForwardIndex {
 
 	/*
@@ -28,6 +31,11 @@ public abstract class ForwardIndex {
 	 */
 	public abstract void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName);
 
+	/**
+	 * Convert a Lucene document id to the corresponding forward index id.
+	 * @param docId the Lucene doc id
+	 * @return the forward index id
+	 */
 	public abstract int luceneDocIdToFiid(int docId);
 
 	/**
@@ -85,7 +93,9 @@ public abstract class ForwardIndex {
 	 * @param end
 	 *            the end points of the substrings (in words)
 	 * @return the parts
+	 * @deprecated use retrievePartsInt and getTerms().get(id)
 	 */
+	@Deprecated
 	public abstract List<String[]> retrieveParts(int fiid, int[] start, int[] end);
 
 	/**
@@ -101,9 +111,13 @@ public abstract class ForwardIndex {
 	 *            the starting points of the parts to retrieve (in words)
 	 * @param end
 	 *            the end points of the parts to retrieve (in words)
+	 * @param sensitive
+	 *            whether to get the case-sensitive sort order or not
 	 * @return the parts
+	 * @deprecated
 	 */
-	public abstract List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end);
+	@Deprecated
+	public abstract List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end, boolean sensitive);
 
 	/**
 	 * Retrieve one or more parts from the specified content, in the form of token ids.
@@ -130,10 +144,22 @@ public abstract class ForwardIndex {
 	 */
 	public abstract List<int[]> retrievePartsInt(int fiid, int[] start, int[] end);
 
+	/**
+	 * Get the Terms object in order to translate ids to token strings
+	 * @return the Terms object
+	 */
 	public abstract Terms getTerms();
 
+	/**
+	 * @return the number of documents in the forward index
+	 */
 	public abstract int getNumDocs();
 
+	/**
+	 * Gets the length (in tokens) of a document
+	 * @param fiid forward index id of a document
+	 * @return length of the document
+	 */
 	public abstract int getDocLength(int fiid);
 
 	/**
@@ -141,14 +167,47 @@ public abstract class ForwardIndex {
 	 */
 	private static final String CURRENT_VERSION = "3";
 
+	/**
+	 * Open a forward index.
+	 *
+	 * Automatically figures out the forward index version and
+	 * instantiates the right class.
+	 *
+	 * @param dir forward index directory
+	 * @return the forward index object
+	 */
 	public static ForwardIndex open(File dir) {
 		return open(dir, false, null, false);
 	}
 
+	/**
+	 * Open a forward index.
+	 *
+	 * Automatically figures out the forward index version and
+	 * instantiates the right class.
+	 *
+	 * @param dir forward index directory
+	 * @param indexMode true iff we're in index mode (writing to
+	 *   the forward index); otherwise it will be read-only.
+	 * @return the forward index object
+	 */
 	public static ForwardIndex open(File dir, boolean indexMode) {
 		return open(dir, indexMode, null, false);
 	}
 
+	/**
+	 * Open a forward index.
+	 *
+	 * Automatically figures out the forward index version and
+	 * instantiates the right class.
+	 *
+	 * @param dir forward index directory
+	 * @param indexMode true iff we're in index mode (writing to
+	 *   the forward index); otherwise it will be read-only.
+	 * @param collator collator to use for sorting
+	 * @param create if true, create a new forward index
+	 * @return the forward index object
+	 */
 	public static ForwardIndex open(File dir, boolean indexMode, Collator collator,
 			boolean create) {
 
@@ -202,4 +261,5 @@ public abstract class ForwardIndex {
 	public static void setKeepInMemory(boolean keepInMemory, long keepFree) {
 		//
 	}
+
 }

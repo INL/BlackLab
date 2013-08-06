@@ -30,6 +30,9 @@ public class ContentStoreMemory extends ContentStore {
 
 	private int nextId = 1;
 
+	/**
+	 * Create a new in-memory content store.
+	 */
 	public ContentStoreMemory() {
 		toc = new HashMap<Integer, String>();
 	}

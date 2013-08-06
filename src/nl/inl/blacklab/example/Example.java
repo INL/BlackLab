@@ -56,6 +56,11 @@ public class Example {
 					+ "<w l='force' p='nou'>force</w> " + "<w l='be' p='vrb'>be</w> "
 					+ "<w l='with' p='pre'>with</w> " + "<w l='you' p='pro'>you</w>" + ".</doc>", };
 
+	/**
+	 * The main program
+	 * @param args command line arguments
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
 
 		// Get a temporary directory for our test index

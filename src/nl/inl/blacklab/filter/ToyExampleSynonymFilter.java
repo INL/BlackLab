@@ -21,6 +21,9 @@ import org.apache.lucene.analysis.TokenStream;
  * A very simple example of an implementation of a synonym filter.
  */
 public class ToyExampleSynonymFilter extends AbstractSynonymFilter {
+	/**
+	 * @param input input token stream
+	 */
 	public ToyExampleSynonymFilter(TokenStream input) {
 		super(input);
 	}

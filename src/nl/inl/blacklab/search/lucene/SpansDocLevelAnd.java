@@ -155,6 +155,7 @@ public class SpansDocLevelAnd extends BLSpans {
 	 * advance them until they're in the same document again.
 	 *
 	 * @return true if a next document has been found, false if we're done
+	 * @throws IOException
 	 */
 	private boolean synchronize() throws IOException {
 		// Were we done already?

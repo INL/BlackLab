@@ -208,7 +208,8 @@ public class XmlHighlighter {
 		}
 	}
 
-	/** Add highlight tag if not already added; increment depth */
+	/** Add highlight tag if not already added; increment depth
+	 * @param tag where the tag occurs */
 	private void startHighlight(TagLocation tag) {
 		if (inHighlightTag == 0) {
 			b.append(startHighlightTag);
@@ -229,7 +230,7 @@ public class XmlHighlighter {
 	/**
 	 * We encountered a tag in the content. If we're inside a highlight tag, ends the current
 	 * highlight, add the existing tag and restart the highlighting.
-	 *
+	 * @param tag where the tag occurs
 	 * @param str
 	 *            the existing tag encountered.
 	 */

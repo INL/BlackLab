@@ -51,15 +51,9 @@ class TermsImplV3 extends Terms {
 	/** Search mode only: the terms, by index number. */
 	String[] terms;
 
-	/** The index numbers, by sort order. Only valid when indexMode == false. */
-	int[] idPerSortPosition;
-
 	/** The sorting position for each index number. Inverse of idPerSortPosition[]
 	 *  array. Only valid when indexMode == false. */
 	int[] sortPositionPerId;
-
-	/** The index numbers, by case-insensitive sort order. Only valid when indexMode == false. */
-	int[] idPerSortPositionInsensitive;
 
 	/** The case-insensitive sorting position for each index number. Inverse of idPerSortPosition[]
 	 *  array. Only valid when indexMode == false. */
@@ -88,7 +82,8 @@ class TermsImplV3 extends Terms {
 		this.indexMode = indexMode;
 		if (collator == null)
 			collator = Collator.getInstance();
-		this.collator = collator;
+		this.collator = (Collator)collator.clone();
+		this.collator.setStrength(Collator.TERTIARY);
 		this.collatorInsensitive = (Collator)collator.clone();
 		collatorInsensitive.setStrength(Collator.PRIMARY);
 
@@ -154,14 +149,13 @@ class TermsImplV3 extends Terms {
 				}
 
 				if (!indexMode) {
+
 					// Read the sort order arrays
-					idPerSortPosition = new int[n];
 					sortPositionPerId = new int[n];
-					idPerSortPositionInsensitive = new int[n];
 					sortPositionPerIdInsensitive = new int[n];
-					ib.get(idPerSortPosition);
+					ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
 					ib.get(sortPositionPerId);
-					ib.get(idPerSortPositionInsensitive);
+					ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
 					ib.get(sortPositionPerIdInsensitive);
 				}
 
@@ -224,16 +218,14 @@ class TermsImplV3 extends Terms {
 				// In other words, the index numbers are in order of sorted terms, so the id
 				// for 'aardvark' comes before the id for 'ape', etc.
 				int i = 0;
-				idPerSortPosition = new int[n];
 				sortPositionPerId = new int[n];
 				Integer[] insensitive = new Integer[n];
 				for (int id: termIndex.values()) {
-					idPerSortPosition[i] = id;
 					sortPositionPerId[id] = i;
 					insensitive[i] = id; // fill this so we can re-sort later, faster b/c already partially sorted
 					i++;
 				}
-				ib.put(idPerSortPosition);
+				ib.put(new int[n]); // NOT USED ANYMORE, JUST FOR FILE COMPATIBILITY
 				ib.put(sortPositionPerId);
 
 				// Now, sort case-insensitively and write those arrays as well
@@ -243,13 +235,19 @@ class TermsImplV3 extends Terms {
 						return collatorInsensitive.compare(terms[a], terms[b]);
 					}
 				});
-				idPerSortPositionInsensitive = new int[n];
+				// Copy into the sortPositionPerIdInsensitive array, making sure that
+				// identical values get identical sort positions!
 				sortPositionPerIdInsensitive = new int[n];
+				int sortPos = 0;
 				for (i = 0; i < n; i++) {
-					idPerSortPositionInsensitive[i] = insensitive[i];
-					sortPositionPerIdInsensitive[insensitive[i]] = i;
+					if (i == 0 || collatorInsensitive.compare(terms[insensitive[i - 1]], terms[insensitive[i]]) != 0) {
+						// Not identical to previous value: gets its own sort position.
+						// If a value is identical to the previous one, it gets the same sort position.
+						sortPos = i;
+					}
+					sortPositionPerIdInsensitive[insensitive[i]] = sortPos;
 				}
-				ib.put(idPerSortPositionInsensitive);
+				ib.put(new int[n]); // NOT USED ANYMORE, JUST FOR FILE COMPATIBILITY
 				ib.put(sortPositionPerIdInsensitive);
 
 			} finally {
@@ -263,42 +261,38 @@ class TermsImplV3 extends Terms {
 
 	@Override
 	public String get(Integer integer) {
-		return terms[integer]; //.get(integer);
-	}
-
-	@Override
-	public int sortPositionToId(int sortPosition) {
-		return idPerSortPosition[sortPosition]; //.get(integer);
-	}
-
-	@Override
-	public int idToSortPosition(int id) {
-		return sortPositionPerId[id]; //.get(integer);
-	}
-
-	@Override
-	public int sortPositionToIdInsensitive(int sortPosition) {
-		return idPerSortPositionInsensitive[sortPosition]; //.get(integer);
-	}
-
-	@Override
-	public int idToSortPositionInsensitive(int id) {
-		return sortPositionPerIdInsensitive[id]; //.get(integer);
-	}
-
-	@Override
-	public String getFromSortPosition(int sortPosition) {
-		if (sortPosition < 0) {
-			// This can happen, for example, when sorting on right context when the hit is
-			// at the end of the document.
-			return "";
-		}
-		return terms[idPerSortPosition[sortPosition]];
+		return terms[integer];
 	}
 
 	@Override
 	public int numberOfTerms() {
-		return idPerSortPosition.length;
+		return sortPositionPerId.length;
+	}
+
+	@Override
+	public void toSortOrder(int[] tokenId, int[] sortOrder, boolean sensitive) {
+		if (sensitive) {
+			for (int i = 0; i < tokenId.length; i++) {
+				sortOrder[i] = sortPositionPerId[tokenId[i]];
+			}
+		} else {
+			for (int i = 0; i < tokenId.length; i++) {
+				sortOrder[i] = sortPositionPerIdInsensitive[tokenId[i]];
+			}
+		}
+	}
+
+	@Override
+	public int compareSortPosition(int tokenId1, int tokenId2, boolean sensitive) {
+		if (sensitive) {
+			return sortPositionPerId[tokenId1] - sortPositionPerId[tokenId2];
+		}
+		return sortPositionPerIdInsensitive[tokenId1] - sortPositionPerIdInsensitive[tokenId2];
+	}
+
+	@Override
+	public int idToSortPosition(int id, boolean sensitive) {
+		return sensitive ? sortPositionPerId[id] : sortPositionPerIdInsensitive[id];
 	}
 
 }

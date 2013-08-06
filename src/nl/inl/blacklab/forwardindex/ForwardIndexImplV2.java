@@ -496,6 +496,7 @@ class ForwardIndexImplV2 extends ForwardIndex {
 		return addDocument(content, null);
 	}
 
+	@Deprecated
 	@Override
 	public synchronized List<String[]> retrieveParts(int fiid, int[] start, int[] end) {
 
@@ -514,17 +515,16 @@ class ForwardIndexImplV2 extends ForwardIndex {
 		return result;
 	}
 
+	@Deprecated
 	@Override
-	public synchronized List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end) {
+	public synchronized List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end, boolean sensitive) {
 
 		// First, retrieve the token ids
 		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
 
 		// Translate them to sort orders
 		for (int[] snippetInt: resultInt) {
-			for (int j = 0; j < snippetInt.length; j++) {
-				snippetInt[j] = terms.idToSortPosition(snippetInt[j]);
-			}
+			terms.toSortOrder(snippetInt, snippetInt, sensitive);
 		}
 		return resultInt;
 	}

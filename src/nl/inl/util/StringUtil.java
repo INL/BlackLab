@@ -488,9 +488,6 @@ public class StringUtil {
 		return PATT_DIACRITICS.matcher(normalized).replaceAll("");
 	}
 
-	// FIXME: when we use regex class for PATT_PUNCTUATION, we should check that we don't rely on
-	// this
-	// method removing diacritical marks (or if the punctuation class includes those too)
 	/**
 	 * Keep all [accented] characters, numbers and spaces. Replace everything else with a space.
 	 *

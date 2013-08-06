@@ -33,33 +33,52 @@ public class HitPropertyWordLeft extends HitProperty {
 
 	private Terms terms;
 
+	private boolean sensitive;
+
 	public HitPropertyWordLeft(Searcher searcher, String field, String property) {
-		super();
-		if (property == null || property.length() == 0)
-			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
-		else
-			this.fieldName = ComplexFieldUtil.propertyField(field, property);
-		this.terms = searcher.getTerms(fieldName);
+		this(searcher, field, property, searcher.isDefaultSearchCaseSensitive());
 	}
 
 	public HitPropertyWordLeft(Searcher searcher, String field) {
-		this(searcher, field, null);
+		this(searcher, field, null, searcher.isDefaultSearchCaseSensitive());
 	}
 
 	public HitPropertyWordLeft(Searcher searcher) {
-		this(searcher, searcher.getContentsFieldMainPropName());
+		this(searcher, searcher.getContentsFieldMainPropName(), searcher
+				.isDefaultSearchCaseSensitive());
+	}
+
+	public HitPropertyWordLeft(Searcher searcher, String field, String property, boolean sensitive) {
+		super();
+		if (property == null || property.length() == 0)
+			this.fieldName = ComplexFieldUtil
+					.mainPropertyField(searcher.getIndexStructure(), field);
+		else
+			this.fieldName = ComplexFieldUtil.propertyField(field, property);
+		this.terms = searcher.getTerms(fieldName);
+		this.sensitive = sensitive;
+	}
+
+	public HitPropertyWordLeft(Searcher searcher, String field, boolean sensitive) {
+		this(searcher, field, null, sensitive);
+	}
+
+	public HitPropertyWordLeft(Searcher searcher, boolean sensitive) {
+		this(searcher, searcher.getContentsFieldMainPropName(), sensitive);
 	}
 
 	@Override
 	public HitPropValueContextWord get(Hit result) {
 		if (result.context == null) {
-			throw new RuntimeException("Context not available in hits objects; cannot sort/group on context");
+			throw new RuntimeException(
+					"Context not available in hits objects; cannot sort/group on context");
 		}
 
 		if (result.contextHitStart <= 0)
-			return new HitPropValueContextWord(terms, -1);
+			return new HitPropValueContextWord(terms, -1, sensitive);
 		int contextStart = result.contextLength * contextIndices.get(0);
-		return new HitPropValueContextWord(terms, result.context[contextStart + result.contextHitStart - 1]);
+		return new HitPropValueContextWord(terms, result.context[contextStart
+				+ result.contextHitStart - 1], sensitive);
 	}
 
 	@Override
@@ -72,8 +91,11 @@ public class HitPropertyWordLeft extends HitProperty {
 			return 1;
 		// Compare one word to the left of the hit
 		int contextIndex = contextIndices.get(0);
-		return a.context[contextIndex * a.contextLength + a.contextHitStart - 1]
-			- b.context[contextIndex * b.contextLength + b.contextHitStart - 1];
+
+		return terms.compareSortPosition(
+				a.context[contextIndex * a.contextLength + a.contextHitStart - 1],
+				b.context[contextIndex * b.contextLength + b.contextHitStart - 1],
+				sensitive);
 	}
 
 	@Override

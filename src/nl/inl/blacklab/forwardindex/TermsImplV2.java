@@ -225,40 +225,14 @@ class TermsImplV2 extends Terms {
 	}
 
 	@Override
-	public int sortPositionToId(int sortPosition) {
-		return idPerSortPosition[sortPosition]; //.get(integer);
-	}
-
-	@Override
-	public int idToSortPosition(int id) {
-		return sortPositionPerId[id]; //.get(integer);
-	}
-
-	@Override
-	public int sortPositionToIdInsensitive(int sortPosition) {
-		// Incorrect, but v2 doesn't support this operation
-		return sortPositionToId(sortPosition);
-	}
-
-	@Override
-	public int idToSortPositionInsensitive(int id) {
-		// Incorrect, but v2 doesn't support this operation
-		return idToSortPosition(id);
-	}
-
-	@Override
-	public String getFromSortPosition(int sortPosition) {
-		if (sortPosition < 0) {
-			// This can happen, for example, when sorting on right context when the hit is
-			// at the end of the document.
-			return "";
-		}
-		return terms[idPerSortPosition[sortPosition]];
-	}
-
-	@Override
 	public int numberOfTerms() {
 		return idPerSortPosition.length;
+	}
+
+	@Override
+	public int idToSortPosition(int id, boolean sensitive) {
+		// Incorrect, but v2 doesn't support insensitive
+		return sortPositionPerId[id];
 	}
 
 }

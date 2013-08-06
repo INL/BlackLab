@@ -22,10 +22,33 @@ import java.util.Set;
  * Store string content by integer id. Quickly retrieve (parts of) the string content.
  */
 public abstract class ContentStore {
+	/**
+	 * Store a document.
+	 *
+	 * It is possible to first call storePart() several times,
+	 * as long as you finish with a call to store. The parameter may
+	 * be the empty string if you wish.
+	 *
+	 * @param content (part of) the content of the document to store
+	 * @return the content store id assigned to the document
+	 */
 	public abstract int store(String content);
 
+	/**
+	 * Store part of a large document.
+	 *
+	 * You can call this several times, but it must end with a call to store()
+	 * or the document isn't properly stored.
+	 *
+	 * @param content part of the content of the document to store
+	 */
 	public abstract void storePart(String content);
 
+	/**
+	 * Retrieve a document from the content store.
+	 * @param id the document's content store id
+	 * @return the original content
+	 */
 	public abstract String retrieve(int id);
 
 	/**
@@ -56,10 +79,20 @@ public abstract class ContentStore {
 	 */
 	public abstract String[] retrieveParts(int id, int[] start, int[] end);
 
+	/**
+	 * Close the content store
+	 */
 	public abstract void close();
 
+	/**
+	 * Delete a document from the content store.
+	 * @param id content store id of the document to delete
+	 */
 	public abstract void delete(int id);
 
+	/**
+	 * Clear the entire content store.
+	 */
 	public abstract void clear();
 
 	/**

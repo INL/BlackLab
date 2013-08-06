@@ -33,21 +33,36 @@ public class HitPropertyHitText extends HitProperty {
 
 	private Terms terms;
 
+	private boolean sensitive;
+
 	public HitPropertyHitText(Searcher searcher, String field, String property) {
+		this(searcher, field, property, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	public HitPropertyHitText(Searcher searcher, String field) {
+		this(searcher, field, null, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	public HitPropertyHitText(Searcher searcher) {
+		this(searcher, searcher.getContentsFieldMainPropName(), searcher.isDefaultSearchCaseSensitive());
+	}
+
+	public HitPropertyHitText(Searcher searcher, String field, String property, boolean sensitive) {
 		super();
 		if (property == null || property.length() == 0)
 			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
 		else
 			this.fieldName = ComplexFieldUtil.propertyField(field, property);
 		this.terms = searcher.getTerms(fieldName);
+		this.sensitive = sensitive;
 	}
 
-	public HitPropertyHitText(Searcher searcher, String field) {
-		this(searcher, field, null);
+	public HitPropertyHitText(Searcher searcher, String field, boolean sensitive) {
+		this(searcher, field, null, sensitive);
 	}
 
-	public HitPropertyHitText(Searcher searcher) {
-		this(searcher, searcher.getContentsFieldMainPropName());
+	public HitPropertyHitText(Searcher searcher, boolean sensitive) {
+		this(searcher, searcher.getContentsFieldMainPropName(), sensitive);
 	}
 
 	@Override
@@ -59,7 +74,7 @@ public class HitPropertyHitText extends HitProperty {
 		// Copy the desired part of the context
 		int n = result.contextRightStart - result.contextHitStart;
 		if (n <= 0)
-			return new HitPropValueContextWords(terms, new int[0]);
+			return new HitPropValueContextWords(terms, new int[0], sensitive);
 		int[] dest = new int[n];
 		int contextStart = result.contextLength * contextIndices.get(0);
 		try {
@@ -67,7 +82,7 @@ public class HitPropertyHitText extends HitProperty {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		return new HitPropValueContextWords(terms, dest);
+		return new HitPropValueContextWords(terms, dest, sensitive);
 	}
 
 	@Override
@@ -79,17 +94,10 @@ public class HitPropertyHitText extends HitProperty {
 		int ai = a.contextHitStart;
 		int bi = b.contextHitStart;
 		while (ai < a.contextRightStart && bi < b.contextRightStart) {
-			int ac;
-			int bc;
-			try {
-				ac = a.context[contextIndex * a.contextLength + ai];
-				bc = b.context[contextIndex * b.contextLength + bi];
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-			if (ac != bc) {
-				return ac - bc;
-			}
+			int cmp = terms.compareSortPosition(a.context[contextIndex * a.contextLength + ai],
+					b.context[contextIndex * b.contextLength + bi], sensitive);
+			if (cmp != 0)
+				return cmp;
 			ai++;
 			bi++;
 		}

@@ -26,12 +26,19 @@ import org.apache.lucene.document.Document;
 public class ContentAccessorContentStore extends ContentAccessor {
 	private ContentStore contentStore;
 
+	/**
+	 * @return the content store
+	 */
 	public ContentStore getContentStore() {
 		return contentStore;
 	}
 
 	private String contentIdField = null;
 
+	/**
+	 * @param fieldName field that this content store stores
+	 * @param contentStore the content store
+	 */
 	public ContentAccessorContentStore(String fieldName, ContentStore contentStore) {
 		super(fieldName);
 		contentIdField = ComplexFieldUtil.contentIdField(ComplexFieldUtil.getBaseName(fieldName));

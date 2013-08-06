@@ -136,7 +136,7 @@ public class BatchForwardIndex {
 			}
 
 			// Retrieve snippets
-			fi.retrieveParts(docPos, start, end);
+			fi.retrievePartsInt(docPos, start, end);
 
 			// Go to next doc
 			docPos += skip + 1;

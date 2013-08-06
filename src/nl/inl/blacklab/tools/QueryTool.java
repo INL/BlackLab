@@ -28,6 +28,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import nl.inl.blacklab.indexers.alto.AltoUtils;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -538,11 +540,10 @@ public class QueryTool {
 	 */
 	public QueryTool(File indexDir, BufferedReader in) throws CorruptIndexException, IOException {
 		printProgramHead();
-		outprint("Opening index " + indexDir + "... ");
+		outprintln("Opening index " + indexDir + "...");
 
 		// Create the BlackLab searcher object
 		searcher = new Searcher(indexDir);
-		outprintln("Done.\n");
 
 		this.in = in;
 
@@ -625,7 +626,7 @@ public class QueryTool {
 			} else if (lcased.equals("next") || lcased.equals("n")) {
 				nextPage();
 			} else if (lcased.startsWith("page ")) {
-				showPage(Integer.parseInt(lcased.substring(5)));
+				showPage(Integer.parseInt(lcased.substring(5)) - 1);
 			} else if (lcased.startsWith("pagesize ")) {
 				resultsPerPage = Integer.parseInt(lcased.substring(9));
 				firstResult = 0;
@@ -747,8 +748,12 @@ public class QueryTool {
 
 	private void showMetadata(int docId) {
 		Document doc = searcher.document(docId);
+		Map<String, String> metadata = new TreeMap<String, String>(); // sort by key
 		for (Fieldable f: doc.getFields()) {
-			outprintln(f.name() + ": " + f.stringValue());
+			metadata.put(f.name(), f.stringValue());
+		}
+		for (Map.Entry<String, String> e: metadata.entrySet()) {
+			outprintln(e.getKey() + ": " + e.getValue());
 		}
 	}
 
@@ -899,6 +904,7 @@ public class QueryTool {
 
 	/**
 	 * Show the a specific page of results.
+	 * @param pageNumber which page to show
 	 */
 	private void showPage(int pageNumber) {
 		if (hits != null) {
@@ -1092,6 +1098,7 @@ public class QueryTool {
 
 	/**
 	 * Switch between showing all hits, groups, and the hits in one group.
+	 * @param showWhat what type of results to show
 	 */
 	private void changeShowSettings(String showWhat) {
 		if (showWhat.equals("hits")) {
@@ -1123,10 +1130,10 @@ public class QueryTool {
 	/**
 	 * If an operation took longer than 5 seconds, report the time it took.
 	 *
-	 * @param searchTime
-	 *
-	 * @param timerAfterDisplay
-	 *            object keeping the time
+	 * @param name1 name of the first part of the operation
+	 * @param time1 how long the first part took
+	 * @param name2 name of the second part of the operation
+	 * @param time2 how long the second part took
 	 */
 	private void reportTime(String name1, long time1, String name2, long time2) {
 		if (verbose) {
@@ -1211,13 +1218,11 @@ public class QueryTool {
 		int i;
 		for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
 			RandomAccessGroup g = listGroups.get(i);
-			outprintln(String.format("%4d %5d %s", i + 1, g.size(), g.getIdentity().toString()));
+			outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.getIdentity().toString()));
 		}
 
 		// Summarize
 		String msg = groups.numberOfGroups() + " groups";
-		if (groups.numberOfGroups() > resultsPerPage)
-			msg = (firstResult + 1) + "-" + i + " of " + groups.numberOfGroups() + " groups";
 		outprintln(msg);
 	}
 
@@ -1319,29 +1324,27 @@ public class QueryTool {
 		}
 
 		// Summarize
-		String msg = window.size() + " hits";
+		String msg;
 		if (!determineTotalNumberOfHits) {
-			msg = (window.size() == resultsPerPage ? "At least " : "") + (window.last() + 1) + " hits (total not determined)";
+			msg = hitsToShow.totalSize() + " hits counted so far (total not determined)";
 		}
-		else if (window.totalHits() > window.size()) {
-			//String range = (window.first() + 1) + "-" + (window.last() + 1);
-			//msg = range + " of " + window.totalHits() + " hits";
-			msg = window.totalHits() + " hits";
+		else {
+			int numberRetrieved = hitsToShow.size();
+			String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.numberOfDocs() + " documents";
+			if (hitsToShow.maxHitsRetrieved()) {
+				if (hitsToShow.maxHitsCounted()) {
+					msg = hitsInDocs + " retrieved, more than " + hitsToShow.totalSize() + " (" + hitsToShow.totalNumberOfDocs() + " docs) total";
+				} else {
+					msg = hitsInDocs + " retrieved, " + hitsToShow.totalSize() + " (" + hitsToShow.totalNumberOfDocs() + " docs) total";
+				}
+			} else {
+				msg = hitsInDocs;
+			}
 		}
 		outprintln(msg);
-		if (hitsToShow.tooManyHits()) {
-			outprintln("(too many hits; only the first " + Hits.MAX_HITS_TO_RETRIEVE
-					+ " were collected)");
-		}
 	}
 
 	String prepConcForDisplay(String input) {
-		if (!searcher.concordancesIncludeXmlTags()) {
-			// Concordances made from forward index are not XML
-			return input;
-		}
-
-		// Concordances made from content store are XML
 		return XmlUtil.xmlToPlainText(input);
 	}
 

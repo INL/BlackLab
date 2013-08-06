@@ -199,6 +199,15 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 	 */
 	private int writeMapReserve = 1000000; // 1M
 
+	/**
+	 * Set the size of the write reserve (the amount of
+	 * space allocated at the end of the file). Larger reserves
+	 * means less re-mapping.
+	 *
+	 * The default is 1M bytes.
+	 *
+	 * @param writeMapReserve size of the reserve in bytes.
+	 */
 	public void setWriteMapReserve(int writeMapReserve) {
 		this.writeMapReserve = writeMapReserve;
 	}
@@ -272,10 +281,17 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		newEntryBlockSizeCharacters = size;
 	}
 
+	/**
+	 * @param dir content store dir
+	 */
 	public ContentStoreDirUtf8(File dir) {
 		this(dir, false);
 	}
 
+	/**
+	 * @param dir content store dir
+	 * @param create if true, create a new content store
+	 */
 	public ContentStoreDirUtf8(File dir, boolean create) {
 		this.dir = dir;
 		if (!dir.exists())

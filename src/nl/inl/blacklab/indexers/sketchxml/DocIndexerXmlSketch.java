@@ -185,8 +185,6 @@ public class DocIndexerXmlSketch extends DocIndexerXml {
 
 	/**
 	 * End <doc> tag found. Store the content and add the document to the index.
-	 *
-	 * @param attributes
 	 */
 	private void endDoc() {
 		try {

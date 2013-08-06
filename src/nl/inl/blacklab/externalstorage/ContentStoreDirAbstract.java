@@ -33,6 +33,11 @@ public abstract class ContentStoreDirAbstract extends ContentStore {
 		VersionFile.write(dir, type, version);
 	}
 
+	/**
+	 * Get the type and version of the content store
+	 * @param dir directory of the content store
+	 * @return the contents of the store's version file
+	 */
 	public static VersionFile getStoreTypeVersion(File dir) {
 		VersionFile vf = new VersionFile(dir);
 		if (vf.exists())

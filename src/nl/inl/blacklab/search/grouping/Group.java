@@ -34,6 +34,7 @@ public abstract class Group {
 		return groupIdentity;
 	}
 
+	@Deprecated
 	public abstract Spans getSpans();
 
 }

@@ -185,8 +185,6 @@ class SpansNot extends BLSpans {
 	 * then determines length and sets currentToken to 0.
 	 *
 	 * @return true if next document was found, false if there are no more documents.
-	 *
-	 * @throws IOException
 	 */
 	private boolean nextDoc() {
 		int maxDoc = useTestValues ? 3 : reader.maxDoc();

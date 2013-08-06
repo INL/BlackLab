@@ -39,6 +39,11 @@ public class DesensitizeFilter extends TokenFilter {
 
 	private boolean removeAccents;
 
+	/**
+	 * @param input the token stream to desensitize
+	 * @param lowerCase whether to lower case tokens
+	 * @param removeAccents whether to remove accents
+	 */
 	public DesensitizeFilter(TokenStream input, boolean lowerCase, boolean removeAccents) {
 		super(input);
 		this.lowerCase = lowerCase;
