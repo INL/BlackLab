@@ -128,7 +128,12 @@ public class Hits implements Iterable<Hit> {
 	private int hitsCounted = 0;
 
 	/**
-	 * The number of separate documents we've seen and counted so far.
+	 * The number of separate documents we've seen in the hits retrieved.
+	 */
+	private int docsRetrieved = 0;
+
+	/**
+	 * The number of separate documents we've counted so far (includes non-retrieved hits).
 	 */
 	private int docsCounted = 0;
 
@@ -378,6 +383,8 @@ public class Hits implements Iterable<Hit> {
 				int hitDoc = sourceSpans.doc();
 				if (hitDoc != previousHitDoc) {
 					docsCounted++;
+					if (!maxHitsRetrieved)
+						docsRetrieved++;
 					previousHitDoc = hitDoc;
 				}
 				maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
@@ -523,6 +530,7 @@ public class Hits implements Iterable<Hit> {
 		int hitDoc = hit.doc;
 		if (hitDoc != previousHitDoc) {
 			docsCounted++;
+			docsRetrieved++;
 			previousHitDoc = hitDoc;
 		}
 	}
@@ -593,12 +601,30 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Return the number of documents in the hits we've retrieved.
+	 *
+	 * @return the number of documents.
+	 */
+	public int numberOfDocs() {
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			// Returned value is probably not the correct total number of hits,
+			// but will not cause any crashes. The thread was interrupted anyway,
+			// the value should never be presented to the user.
+		}
+		return docsRetrieved;
+	}
+
+	/**
 	 * Return the total number of documents in all hits.
 	 * This counts documents even in hits that are not stored, only counted.
 	 *
 	 * @return the total number of documents.
 	 */
-	public int numberOfDocs() {
+	public int totalNumberOfDocs() {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {

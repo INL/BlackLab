@@ -217,7 +217,7 @@ public class DocResults implements Iterable<DocResult> {
 	 * @return the total number of documents.
 	 */
 	public int totalSize() {
-		return sourceHits.numberOfDocs();
+		return sourceHits.totalNumberOfDocs();
 	}
 
 	/**

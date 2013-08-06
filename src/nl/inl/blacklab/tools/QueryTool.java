@@ -1333,9 +1333,9 @@ public class QueryTool {
 			String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.numberOfDocs() + " documents";
 			if (hitsToShow.maxHitsRetrieved()) {
 				if (hitsToShow.maxHitsCounted()) {
-					msg = hitsInDocs + " retrieved, more than " + hitsToShow.totalSize() + " total";
+					msg = hitsInDocs + " retrieved, more than " + hitsToShow.totalSize() + " (" + hitsToShow.totalNumberOfDocs() + " docs) total";
 				} else {
-					msg = hitsInDocs + " retrieved, " + hitsToShow.totalSize() + " total";
+					msg = hitsInDocs + " retrieved, " + hitsToShow.totalSize() + " (" + hitsToShow.totalNumberOfDocs() + " docs) total";
 				}
 			} else {
 				msg = hitsInDocs;
