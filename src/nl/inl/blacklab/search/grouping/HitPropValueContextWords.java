@@ -51,7 +51,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		boolean sensitive = strIds[0].equals("1");
 		int[] ids = new int[strIds.length - 1];
 		for (int i = 1; i < strIds.length; i++) {
-			ids[i] = Integer.parseInt(strIds[i + 1]);
+			ids[i - 1] = Integer.parseInt(strIds[i]);
 		}
 		return new HitPropValueContextWords(terms, ids, sensitive);
 	}
