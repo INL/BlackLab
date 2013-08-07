@@ -29,7 +29,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 
 	@Override
 	public String toString() {
-		return terms.get(valueTokenId);
+		return valueTokenId < 0 ? "" : terms.get(valueTokenId);
 	}
 
 	public static HitPropValue deserialize(Terms terms, String info) {

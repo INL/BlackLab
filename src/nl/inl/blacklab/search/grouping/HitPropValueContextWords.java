@@ -36,7 +36,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 	public String toString() {
 		StringBuilder b = new StringBuilder();
 		for (int v: valueTokenId) {
-			String word = terms.get(v);
+			String word = v < 0 ? "" : terms.get(v);
 			if (word.length() > 0) {
 				if (b.length() > 0)
 					b.append(" ");
