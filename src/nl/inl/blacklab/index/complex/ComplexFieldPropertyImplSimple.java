@@ -176,6 +176,7 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 	public void clear() {
 		values.clear();
 		increments.clear();
+		position = -1;
 	}
 
 	@Override
