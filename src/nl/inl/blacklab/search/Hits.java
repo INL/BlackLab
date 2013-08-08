@@ -597,6 +597,15 @@ public class Hits implements Iterable<Hit> {
 	 * @return the total hit count
 	 */
 	public int totalSize() {
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; don't complete the operation but return
+			// and let the caller detect and deal with the interruption.
+			// Returned value is probably not the correct total number of hits,
+			// but will not cause any crashes. The thread was interrupted anyway,
+			// the value should never be presented to the user.
+		}
 		return hitsCounted;
 	}
 
