@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.index.TermPositionVector;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.Query;
@@ -175,6 +176,24 @@ public class LuceneUtil {
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
+	}
+
+	/**
+	 * Get the number of unique terms in the index
+	 *
+	 * @param r
+	 *            the index
+	 * @return number of terms in index
+	 * @throws Exception
+	 */
+	public static long getTotalUniqueTerms(IndexReader r) throws Exception {
+		TermEnum te = r.terms();
+		long numberOfTerms = 0;
+		while (te.next()) {
+			numberOfTerms++;
+		}
+		te.close();
+		return numberOfTerms;
 	}
 
 }
