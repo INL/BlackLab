@@ -57,17 +57,14 @@ public class StringUtil {
 	private static final Pattern PATT_DIACRITICS = Pattern
 			.compile("\\p{InCombiningDiacriticalMarks}+");
 
-	// FIXME: punctuation actually has a regex class: \\p{P} . Not sure if this matches diacritics
-	// or not, and whether we want to anyway. TEST!
-	/**
-	 * Here, we define punctuation as anything that is not an ASCII character, digit, whitespace or
-	 * diacritical mark. This is used to remove punctuation from a *normalized* String (i.e. one
-	 * where the diacritical marks have been split into separate unicode codepoints).
-	 *
-	 * FIXME: Latin char assumption
-	 */
-	private static final Pattern PATT_PUNCTUATION = Pattern
-			.compile("[^\\sA-Za-z0-9\\p{InCombiningDiacriticalMarks}]");
+	/** Whitespace and/or punctuation at start */
+	final static Pattern PATT_WS_PUNCT_AT_END = Pattern.compile("[\\p{P}\\s]+$");
+
+	/** Whitespace and/or punctuation at end */
+	final static Pattern PATT_WS_PUNCT_AT_START = Pattern.compile("^[\\p{P}\\s]+");
+
+	/** Punctuation. */
+	private static final Pattern PATT_PUNCTUATION = Pattern.compile("\\p{P}");
 
 	/** The default collator: Dutch, case-insensitive */
 	protected static Collator dutchInsensitiveCollator = null;
@@ -489,22 +486,26 @@ public class StringUtil {
 	}
 
 	/**
-	 * Keep all [accented] characters, numbers and spaces. Replace everything else with a space.
+	 * Replace any punctuation characters with a space.
 	 *
 	 * @param input
 	 *            the input string
 	 * @return the string without punctuation
 	 */
 	public static String removePunctuation(String input) {
-		// Decompose (separate) characters into base character and diacritics characters
-		input = Normalizer.normalize(input, Normalizer.Form.NFD);
+		return PATT_PUNCTUATION.matcher(input).replaceAll(" ");
+	}
 
-		// Remove punctuation
-		input = PATT_PUNCTUATION.matcher(input).replaceAll(" ");
-
-		// Recompose accented characters
-		input = Normalizer.normalize(input, Normalizer.Form.NFC);
-
+	/**
+	 * Remove any punctuation and whitespace at the start and end of input.
+	 *
+	 * @param input
+	 *            the input string
+	 * @return the string without punctuation or whitespace at the edges.
+	 */
+	public static String trimWhitespaceAndPunctuation(String input) {
+		input = PATT_WS_PUNCT_AT_END.matcher(input).replaceAll("");
+		input = PATT_WS_PUNCT_AT_START.matcher(input).replaceAll("");
 		return input;
 	}
 
