@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.index.complex;
 
+import java.util.Collection;
 import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
@@ -70,8 +71,9 @@ public abstract class ComplexField {
 	 * @param name property name
 	 * @param sensitivity ways to index property, with respect to case- and
 	 *   diacritics-sensitivity.
+	 * @return the property object
 	 */
-	public abstract void addProperty(String name, SensitivitySetting sensitivity);
+	public abstract ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity);
 
 	/**
 	 * Add a property alternative to the complex field.
@@ -226,5 +228,7 @@ public abstract class ComplexField {
 	public abstract ComplexFieldProperty getMainProperty();
 
 	public abstract String getName();
+
+	public abstract Collection<ComplexFieldProperty> getProperties();
 
 }

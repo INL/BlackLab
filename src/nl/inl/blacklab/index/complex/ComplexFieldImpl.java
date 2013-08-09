@@ -19,6 +19,7 @@
 package nl.inl.blacklab.index.complex;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class ComplexFieldImpl extends ComplexField {
 
 	private String fieldName;
 
-	private String mainPropertyName;
+	private ComplexFieldProperty mainProperty;
 
 	/** @param name
 	 * @param filterAdder
@@ -87,33 +88,33 @@ public class ComplexFieldImpl extends ComplexField {
 	}
 
 	/** @param name
-	 * @param mainProperty
+	 * @param mainPropertyName
 	 * @param filterAdder
 	 * @param includeOffsets
 	 * @deprecated use constructor with sensitivity parameter */
 	@Deprecated
-	public ComplexFieldImpl(String name, String mainProperty, TokenFilterAdder filterAdder, boolean includeOffsets) {
+	public ComplexFieldImpl(String name, String mainPropertyName, TokenFilterAdder filterAdder, boolean includeOffsets) {
 		fieldName = name;
-		mainPropertyName = mainProperty;
 		if (mainPropertyName == null)
 			mainPropertyName = ComplexFieldUtil.getDefaultMainPropName();
-		properties.put(mainPropertyName, new ComplexFieldPropertyImplLargeDoc(mainPropertyName, filterAdder, includeOffsets));
+		mainProperty = new ComplexFieldPropertyImplLargeDoc(mainPropertyName, filterAdder, includeOffsets);
+		properties.put(mainPropertyName, mainProperty);
 	}
 
 	/**
 	 * Construct a ComplexField object with a main property
 	 * @param name field name
-	 * @param mainProperty main property name
+	 * @param mainPropertyName main property name
 	 * @param sensitivity ways to index main property, with respect to case- and
 	 *   diacritics-sensitivity.
 	 */
-	public ComplexFieldImpl(String name, String mainProperty, SensitivitySetting sensitivity) {
+	public ComplexFieldImpl(String name, String mainPropertyName, SensitivitySetting sensitivity) {
 		boolean includeOffsets = true;
 		fieldName = name;
-		mainPropertyName = mainProperty;
 		if (mainPropertyName == null)
 			mainPropertyName = ComplexFieldUtil.getDefaultMainPropName();
-		properties.put(mainPropertyName, new ComplexFieldPropertyImplLargeDoc(mainPropertyName, sensitivity, includeOffsets));
+		mainProperty = new ComplexFieldPropertyImplLargeDoc(mainPropertyName, sensitivity, includeOffsets);
+		properties.put(mainPropertyName, mainProperty);
 	}
 
 	@Override
@@ -129,9 +130,10 @@ public class ComplexFieldImpl extends ComplexField {
 	}
 
 	@Override
-	public void addProperty(String name, SensitivitySetting sensitivity) {
+	public ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity) {
 		ComplexFieldProperty p = new ComplexFieldPropertyImplLargeDoc(name, sensitivity, false);
 		properties.put(name, p);
+		return p;
 	}
 
 	@Override
@@ -165,8 +167,8 @@ public class ComplexFieldImpl extends ComplexField {
 
 	@Override
 	public void addValue(String value, int posIncr) {
-		ComplexFieldProperty p = properties.get(mainPropertyName);
-		p.addValue(value, posIncr);
+		//ComplexFieldProperty p = properties.get(mainPropertyName);
+		mainProperty.addValue(value, posIncr);
 	}
 
 	@Override
@@ -201,12 +203,12 @@ public class ComplexFieldImpl extends ComplexField {
 
 	@Override
 	public void addAlternative(String altName) {
-		addPropertyAlternative(mainPropertyName, altName, null);
+		mainProperty.addAlternative(altName, null);
 	}
 
 	@Override
 	public void addAlternative(String altName, TokenFilterAdder filterAdder) {
-		this.addPropertyAlternative(mainPropertyName, altName, filterAdder);
+		mainProperty.addAlternative(altName, filterAdder);
 	}
 
 	@Override
@@ -235,12 +237,17 @@ public class ComplexFieldImpl extends ComplexField {
 
 	@Override
 	public ComplexFieldProperty getMainProperty() {
-		return getProperty(mainPropertyName);
+		return mainProperty;
 	}
 
 	@Override
 	public String getName() {
 		return fieldName;
+	}
+
+	@Override
+	public Collection<ComplexFieldProperty> getProperties() {
+		return properties.values();
 	}
 
 }
