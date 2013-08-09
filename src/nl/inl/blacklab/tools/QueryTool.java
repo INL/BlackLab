@@ -644,9 +644,9 @@ public class QueryTool {
 				int hitId = Integer.parseInt(lcased.substring(8)) - 1;
 				Hit h = getCurrentHitSet().get(hitId);
 				Concordance conc = hits.getConcordance(h, snippetSize);
-				String left = prepConcForDisplay(conc.left);
-				String middle = prepConcForDisplay(conc.hit);
-				String right = prepConcForDisplay(conc.right);
+				String left = XmlUtil.xmlToPlainText(conc.left);
+				String middle = XmlUtil.xmlToPlainText(conc.hit);
+				String right = XmlUtil.xmlToPlainText(conc.right);
 				outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
 			} else if (lcased.startsWith("doc ")) {
 				int docId = Integer.parseInt(lcased.substring(4));
@@ -1280,16 +1280,17 @@ public class QueryTool {
 		for (Hit hit : window) {
 			Concordance conc = window.getConcordance(hit);
 			String left, hitText, right;
-			if (IS_ALTO) {
-				// Content in CONTENT attribute
+			if (IS_ALTO && !searcher.getMakeConcordancesFromForwardIndex()) {
+				// Special case: Alto input, concordances not made from forward index (old approach)
+				// Extract the contents from the CONTENT attributes
 				left = AltoUtils.getFromContentAttributes(conc.left) + " ";
 				hitText = AltoUtils.getFromContentAttributes(conc.hit);
 				right = " " + AltoUtils.getFromContentAttributes(conc.right);
 			} else {
-				// Content in text nodes
-				left = prepConcForDisplay(conc.left);
-				hitText = prepConcForDisplay(conc.hit);
-				right = prepConcForDisplay(conc.right);
+				// Regular case; just filter out the XML tags
+				left = XmlUtil.xmlToPlainText(conc.left);
+				hitText = XmlUtil.xmlToPlainText(conc.hit);
+				right = XmlUtil.xmlToPlainText(conc.right);
 			}
 			toShow.add(new HitToShow(hit.doc, left, hitText, right));
 			if (leftContextMaxSize < left.length())
@@ -1342,10 +1343,6 @@ public class QueryTool {
 			}
 		}
 		outprintln(msg);
-	}
-
-	String prepConcForDisplay(String input) {
-		return XmlUtil.xmlToPlainText(input);
 	}
 
 	/**
