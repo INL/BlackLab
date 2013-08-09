@@ -62,4 +62,8 @@ public abstract class ComplexFieldProperty {
 
 	public abstract String getName();
 
+	public abstract boolean hasForwardIndex();
+
+	public abstract void setForwardIndex(boolean b);
+
 }

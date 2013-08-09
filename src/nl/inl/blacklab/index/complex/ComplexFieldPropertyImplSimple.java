@@ -60,6 +60,9 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 	/** The property name */
 	private String propName;
 
+	/** Does this property get its own forward index? */
+	private boolean hasForwardIndex = true;
+
 	/**
 	 * Construct a ComplexFieldProperty object with the default alternative
 	 * @param name property name
@@ -202,6 +205,16 @@ class ComplexFieldPropertyImplSimple extends ComplexFieldProperty {
 	@Override
 	public String getName() {
 		return propName;
+	}
+
+	@Override
+	public boolean hasForwardIndex() {
+		return hasForwardIndex;
+	}
+
+	@Override
+	public void setForwardIndex(boolean b) {
+		hasForwardIndex = b;
 	}
 
 }
