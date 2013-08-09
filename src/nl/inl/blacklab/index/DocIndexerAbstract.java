@@ -106,10 +106,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		captureContentFieldName = fieldName;
 
 		// Empty the StringBuilder object
-		if (content != null)
-			content.delete(0, content.length());
-		else
-			content = new StringBuilder();
+		content.setLength(0);
 	}
 
 	public int storeCapturedContent() {
@@ -119,7 +116,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 			ContentStore contentStore = indexer.getContentStore(captureContentFieldName);
 			id = contentStore.store(content.toString());
 		}
-		content = null;
+		content.setLength(0);
 		charsContentAlreadyStored = 0;
 		return id;
 	}
@@ -130,7 +127,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 			ContentStore contentStore = indexer.getContentStore(captureContentFieldName);
 			contentStore.storePart(content.toString());
 		}
-		content = new StringBuilder();
+		content.setLength(0);
 	}
 
 	protected void appendContentInternal(String str) {
@@ -163,12 +160,12 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		}
 	}
 
-	protected void processContent(char[] buffer, int start, int length) {
+	public void processContent(char[] buffer, int start, int length) {
 		if (captureContent)
 			appendContent(buffer, start, length);
 	}
 
-	protected void processContent(String contentToProcess) {
+	public void processContent(String contentToProcess) {
 		if (captureContent)
 			appendContent(contentToProcess);
 	}
