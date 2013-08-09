@@ -33,4 +33,25 @@ public interface DocIndexer {
 	 */
 	public void index() throws Exception;
 
+	/**
+	 * Set a parameter for this indexer (such as which type of metadata block to process)
+	 * @param name parameter name
+	 * @param value parameter value
+	 */
+	public void setParameter(String name, String value);
+
+	/**
+	 * Get a parameter that was set for this indexer
+	 * @param name parameter name
+	 * @param defaultValue parameter default value
+	 * @return the parameter value (or the default value if it was not specified)
+	 */
+	public String getParameter(String name, String defaultValue);
+
+	/**
+	 * Get a parameter that was set for this indexer
+	 * @param name parameter name
+	 * @return the parameter value (or null if it was not specified)
+	 */
+	public String getParameter(String name);
 }

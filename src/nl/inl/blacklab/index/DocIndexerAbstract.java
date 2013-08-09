@@ -16,6 +16,8 @@
 package nl.inl.blacklab.index;
 
 import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.search.Searcher;
@@ -188,6 +190,29 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
 	public void reportTokensProcessed(int n) {
 		indexer.getListener().tokensDone(n);
+	}
+
+	/**
+	 * Parameters passed to this indexer
+	 */
+	private Map<String, String> parameters = new HashMap<String, String>();
+
+	@Override
+	public void setParameter(String name, String value) {
+		parameters.put(name, value);
+	}
+
+	@Override
+	public String getParameter(String name, String defaultValue) {
+		String value = parameters.get(name);
+		if (value == null)
+			return defaultValue;
+		return value;
+	}
+
+	@Override
+	public String getParameter(String name) {
+		return getParameter(name, null);
 	}
 
 }
