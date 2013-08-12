@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns="http://schema.ccs-gmbh.com/ALTO">
+    <Description>
+    <MeasurementUnit>pixel</MeasurementUnit>
+    <sourceImageInformation>
+        <fileName>dpo_285_0007_master.jpf</fileName>
+    </sourceImageInformation>
+</Description>
+<Styles>
+<TextStyle ID="TXT_0" FONTSIZE="6" FONTFAMILY="Times New Roman" FONTSTYLE="bold"/>
+<TextStyle ID="TXT_1" FONTSIZE="7" FONTFAMILY="Times New Roman"/>
+<ParagraphStyle ID="PAR_LEFT" ALIGN="Left"/>
+<ParagraphStyle ID="PAR_BLOCK" ALIGN="Block"/>
+<ParagraphStyle ID="PAR_RIGHT" ALIGN="Right"/>
+</Styles>
+    <Layout>
+        <Page ID="Page7" HEIGHT="2003" WIDTH="1296" PHYSICAL_IMG_NR="1" PC="0.949918699186992">
+            <TopMargin HEIGHT="0" WIDTH="1296" HPOS="0" VPOS="0"/>
+            <LeftMargin HEIGHT="2003" WIDTH="0" HPOS="0" VPOS="0"/>
+            <RightMargin HEIGHT="2003" WIDTH="158" HPOS="1854" VPOS="0"/>
+            <BottomMargin HEIGHT="149" WIDTH="1296" HPOS="0" VPOS="1854"/>
+            <PrintSpace HEIGHT="1854" WIDTH="1138" HPOS="0" VPOS="0">
+                  <TextBlock ID="TextBlock1" HEIGHT="40" WIDTH="657" HPOS="367" VPOS="128" STYLEREFS="TXT_0 PAR_LEFT">
+                  <TextLine ID="TextLine1" HEIGHT="40" WIDTH="644" HPOS="374" VPOS="128">
+                     <String ID="String1" CONTENT="VI" HEIGHT="25" WIDTH="37" HPOS="374" VPOS="143" WC="1" CC="00"/>
+                     <SP ID="SP1" WIDTH="63" HPOS="411" VPOS="128"/>
+                     <String ID="String2" CONTENT="VOORBERICHT." HEIGHT="37" WIDTH="544" HPOS="474" VPOS="128" WC="0.89" CC="000000000650" STYLEREFS="TXT_1"/>
+                  </TextLine>
+               </TextBlock>
+               <TextBlock ID="TextBlock2" HEIGHT="452" WIDTH="760" HPOS="368" VPOS="220" STYLEREFS="TXT_1 PAR_BLOCK">
+                  <TextLine ID="TextLine2" HEIGHT="37" WIDTH="740" HPOS="375" VPOS="220">
+                     <String ID="String3" CONTENT="fchatbaar" HEIGHT="33" WIDTH="162" HPOS="375" VPOS="224" WC="0.91" CC="700000000"/>
+                     <SP ID="SP2" WIDTH="31" HPOS="537" VPOS="224"/>
+                     <String ID="String4" CONTENT="nut" HEIGHT="27" WIDTH="63" HPOS="568" VPOS="228" WC="1" CC="000"/>
+                     <SP ID="SP3" WIDTH="30" HPOS="631" VPOS="223"/>
+                     <String ID="String5" CONTENT="dat" HEIGHT="30" WIDTH="55" HPOS="661" VPOS="223" WC="1" CC="000"/>
+                     <SP ID="SP4" WIDTH="30" HPOS="716" VPOS="220"/>
+                     <String ID="String6" CONTENT="kinderen" HEIGHT="32" WIDTH="157" HPOS="746" VPOS="220" WC="1" CC="00000000"/>
+                     <SP ID="SP5" WIDTH="34" HPOS="903" VPOS="220"/>
+                     <String ID="String7" CONTENT="doof" HEIGHT="33" WIDTH="86" HPOS="937" VPOS="221" WC="1" CC="0000"/>
+                     <SP ID="SP6" WIDTH="31" HPOS="1023" VPOS="221"/>
+                     <String ID="String8" CONTENT="het" HEIGHT="33" WIDTH="61" HPOS="1054" VPOS="221" WC="1" CC="000"/>
+                  </TextLine>
+                  <TextLine ID="TextLine3" HEIGHT="43" WIDTH="738" HPOS="377" VPOS="290">
+                     <String ID="String9" CONTENT="lcezen" HEIGHT="33" WIDTH="115" HPOS="377" VPOS="292" WC="1" CC="000000"/>
+                     <SP ID="SP7" WIDTH="36" HPOS="492" VPOS="292"/>
+                     <String ID="String10" CONTENT="van" HEIGHT="24" WIDTH="63" HPOS="528" VPOS="300" WC="1" CC="000"/>
+                     <SP ID="SP8" WIDTH="36" HPOS="591" VPOS="290"/>
+                     <String ID="String11" CONTENT="zodanige" HEIGHT="42" WIDTH="158" HPOS="627" VPOS="290" WC="1" CC="00000000"/>
+                     <SP ID="SP9" WIDTH="41" HPOS="785" VPOS="290"/>
+                     <String ID="String12" CONTENT="&quot;Werkjes," HEIGHT="43" WIDTH="182" HPOS="826" VPOS="290" WC="1" CC="000000000"/>
+                     <SP ID="SP10" WIDTH="31" HPOS="1008" VPOS="290"/>
+                     <String ID="String13" CONTENT="zich" HEIGHT="33" WIDTH="76" HPOS="1039" VPOS="290" WC="1" CC="0000"/>
+                  </TextLine>
+                  <TextLine ID="TextLine4" HEIGHT="42" WIDTH="745" HPOS="377" VPOS="360">
+                     <String ID="String14" CONTENT="zelve" HEIGHT="33" WIDTH="96" HPOS="377" VPOS="362" WC="1" CC="00000"/>
+                     <SP ID="SP11" WIDTH="37" HPOS="473" VPOS="362"/>
+                     <String ID="String15" CONTENT="kunnen" HEIGHT="32" WIDTH="135" HPOS="510" VPOS="362" WC="1" CC="000000"/>
+                     <SP ID="SP12" WIDTH="29" HPOS="645" VPOS="360"/>
+                     <String ID="String16" CONTENT="vermaaken" HEIGHT="33" WIDTH="189" HPOS="674" VPOS="360" WC="1" CC="000000000"/>
+                     <SP ID="SP13" WIDTH="19" HPOS="863" VPOS="360"/>
+                     <String ID="String17" CONTENT="," HEIGHT="19" WIDTH="11" HPOS="882" VPOS="383" WC="1" CC="0"/>
+                     <SP ID="SP14" WIDTH="30" HPOS="893" VPOS="366"/>
+                     <String ID="String18" CONTENT="met" HEIGHT="27" WIDTH="68" HPOS="923" VPOS="366" WC="1" CC="000"/>
+                     <SP ID="SP15" WIDTH="34" HPOS="991" VPOS="366"/>
+                     <String ID="String19" CONTENT="voor" HEIGHT="24" WIDTH="97" HPOS="1025" VPOS="368" WC="1" CC="00000" SUBS_TYPE="HypPart1" SUBS_CONTENT="voordeel"/>
+                     <HYP CONTENT="-" WIDTH="13" HPOS="1109" VPOS="378"/>                     </TextLine>
+               </TextBlock>
+            </PrintSpace>
+       </Page>
+    </Layout>
+</alto>

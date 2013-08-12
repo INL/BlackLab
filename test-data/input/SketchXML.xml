@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<?xml-stylesheet type="text/xsl" href="xsl/corpus.xsl" ?>
+<docs file="ANW_Kranten-versie2.1 (999).xml">
+<doc subcorpus="Kranten" id="47040" variant="NN" bronentitel="NRC" datering="1994"	jaar="1994"	maand="12"	dag="31" >
+<s>
+<w p="T(def,o,-)" l="de-t">De</w>
+<w p="X(acrpr)" l="wto-x">WTO</w>
+<w p="V(aux,ind,pres,3,sg)" l="zullen-v">zal</w>
+<w p="V(mai,inf,-,-,-)" l="toezien-v">toezien</w>
+<w p="S(pre)" l="op-s">op</w>
+<w p="T(def,o,-)" l="de-t">de</w>
+<w p="A(quali,pos,inflected)" l="internationaal-a">internationale</w>
+<w p="N(comm,fm,sg)" l="handel-n">handel</w>
+<w p="C(coor)" l="en-c">en</w>
+<w p="T(def,o,-)" l="de-t">de</w>
+<w p="N(comm,fm,sg)" l="naleving-n">naleving</w>
+<w p="S(pre)" l="van-s">van</w>
+<w p="T(def,o,-)" l="de-t">de</w>
+<w p="N(comm,fm,pl)" l="regel-n">regels</w>
+<w p="P(rel,-,-,-,-)" l="die-p">die</w>
+<w p="S(pre)" l="in-s">in</w>
+<w p="T(def,n,sg)" l="het-t">het</w>
+<w p="N(comm,n,sg)" l="verdrag-n">verdrag</w>
+<w p="V(cop,ind,pres,3,pl)" l="zijn-v">zijn</w>
+<w p="A(quali,pos,basic,partpast)" l="opgesteld-a">opgesteld</w>
+<g/>
+<pu>.</pu>
+</s>
+<s>
+<w p="S(pre)" l="over-s">Over</w>
+<w p="T(def,n,sg)" l="het-t">het</w>
+<w p="M(ca,-)" l="22.000-m">22.000</w>
+<w p="N(comm,fm,pl)" l="pagina-n">pagina's</w>
+<w p="A(quali,pos,inflected,partpres)" l="tellend-a">tellende</w>
+<w p="N(comm,fm,sg)" l="wereldhandelsverdag-n">wereldhandelsverdag</w>
+<g/>
+<pu>,</pu>
+<w p="C(sub)" l="dat-c">dat</w>
+<w p="V(aux,ind,impf,3,sg)" l="worden-v">werd</w>
+<w p="V(mai,part,past,-,-)" l="sluiten-v">gesloten</w>
+<w p="S(pre)" l="in-s">in</w>
+<w p="T(def,n,sg)" l="het-t">het</w>
+<w p="N(comm,n,sg)" l="kader-n">kader</w>
+<w p="S(pre)" l="van-s">van</w>
+<w p="T(def,o,-)" l="de-t">de</w>
+<pu>'</pu>
+<w p="N(comm,fm,sg)" l="Uruguay'-onderhandelingsronde-n">Uruguay'-onderhandelingsronde</w>
+<g/>
+<pu>,</pu>
+<w p="V(cop,ind,pres,3,sg)" l="zijn-v">is</w>
+<w p="M(ca,pl)" l="acht-m">acht</w>
+<w p="N(comm,n,sg)" l="jaar-n">jaar</w>
+<w p="V(mai,part,past,-,-)" l="onderhandelen-v">onderhandeld</w>
+<g/>
+<pu>.</pu>
+</s>
+</doc>
+</docs>

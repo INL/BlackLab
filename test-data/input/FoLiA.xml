@@ -1,0 +1,1133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="folia2html.xsl"?>
+<FoLiA xmlns="http://ilk.uvt.nl/folia" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="WR-P-E-J-0000000001" version="0.10.0" generator="manual">
+  <metadata type="native">
+    <annotations>
+      <token-annotation annotator="ilktok" annotatortype="auto" />
+      <sentence-annotation set="sentences" annotator="ucto" annotatortype="auto" />
+      <paragraph-annotation set="paragraphs" annotator="ucto" annotatortype="auto" />
+      <pos-annotation set="cgn-combinedtags" annotator="tadpole" annotatortype="auto" />
+      <lemma-annotation set="lemmas-nl" annotator="tadpole" annotatortype="auto" />
+      <correction-annotation set="corrections" annotator="proycon" annotatortype="manual" />
+      <errordetection-annotation set="corrections" annotator="proycon" annotatortype="manual" />
+      <morphological-annotation annotator="proycon" annotatortype="manual" />
+      <gap-annotation annotator="proycon" annotatortype="manual" />
+      <sense-annotation set="sense-set" />
+      <event-annotation set="event-set" />
+      <timesegment-annotation set="event-set" />
+      <entity-annotation set="mwu-set" />
+      <syntax-annotation set="syntax-set" />
+      <dependency-annotation set="alpino-set" />   
+      <alignment-annotation set="alignment-set" />   
+      <semrole-annotation set="semrole-set" />
+      <chunking-annotation set="chunk-set" />
+      <coreference-annotation set="coreference-set" />  
+      <lang-annotation set="lang-set" />
+      <metric-annotation set="metric-set" />
+      <table-annotation set="table-set" />
+      <style-annotation set="style" />
+      <division-annotation set="divs" />
+    </annotations>
+    <meta id="title">Stemma</meta>
+    <meta id="language">nl</meta>
+  </metadata>
+  <text xml:id="WR-P-E-J-0000000001.text">
+      <div xml:id="WR-P-E-J-0000000001.div0.1" class="chapter">
+        <head xml:id="WR-P-E-J-0000000001.head.1">
+          <s xml:id="WR-P-E-J-0000000001.head.1.s.1">
+            <w xml:id="WR-P-E-J-0000000001.head.1.s.1.w.1">
+              <t>Stemma</t>
+              <pos class="N(soort,ev,basis,onz,stan)"/>
+              <lemma class="stemma"/>
+            </w>
+          </s>
+        </head>
+        <p xml:id="WR-P-E-J-0000000001.p.1" class="firstparagraph">
+          <s xml:id="WR-P-E-J-0000000001.p.1.s.1">
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.1.w.1">
+              <t>Stemma</t>
+              <pos class="N(eigen,ev,basis,zijd,stan)" />
+              <lemma class="Stemma" />
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.1.w.2">
+              <t>is</t>
+              <pos class="WW(pv,tgw,ev)"/>
+              <lemma class="zijn"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.1.w.3">
+              <t>een</t>
+              <pos class="LID(onbep,stan,agr)"/>
+              <lemma class="een"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.1.w.4">
+              <t>ander</t>
+              <pos class="ADJ(prenom,basis,zonder)"/>
+              <lemma class="ander"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.1.w.5">
+              <t>woord</t>
+              <pos class="N(soort,ev,basis,onz,stan)"/>
+              <lemma class="woord"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.1.w.6">              
+              <t>voor</t>
+              <desc>Dit woordje is een voorzetsel, het is maar dat je het weet...</desc>
+              <pos class="VZ(init)"/>
+              <lemma class="voor"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.1.w.7">
+              <t>stamboom</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="stamboom"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.1.w.8">
+              <t>.</t>
+              <pos class="LET()"/>
+              <lemma class="."/>
+            </w>
+            <entities>
+                <entity class="ander_woord">
+                    <wref id="WR-P-E-J-0000000001.p.1.s.1.w.4" t="ander" />
+                    <wref id="WR-P-E-J-0000000001.p.1.s.1.w.5" t="woord" />                    
+                </entity>
+            </entities>
+            <syntax>
+                <su class="sentence">
+                 <su class="subject"><wref id="WR-P-E-J-0000000001.p.1.s.1.w.1" t="Stemma" /></su>
+                 <su class="verb"><wref id="WR-P-E-J-0000000001.p.1.s.1.w.2" t="is" /></su>
+                 <su class="predicate">
+                    <su class="np">
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.3" t="een" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.4" t="ander" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.5" t="woord" />
+                    </su>
+                    <su class="pp">
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.6" t="voor" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.7" t="stamboom" />
+                    </su>
+                 </su>
+                 <wref id="WR-P-E-J-0000000001.p.1.s.1.w.8" t="." />
+                </su>
+            </syntax>
+            <dependencies>
+                <dependency xml:id="WR-P-E-J-0000000001.p.1.s.1.dep.1" class="su">
+                    <hd>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.2" t="is" />
+                    </hd>
+                    <dep>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.1" t="Stemma" />
+                    </dep>
+                </dependency>
+                <dependency xml:id="WR-P-E-J-0000000001.p.1.s.1.dep.2" class="predc">
+                    <hd>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.2" t="is" />
+                    </hd>
+                    <dep>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.5" t="woord" />
+                    </dep>
+                </dependency>                
+                <dependency xml:id="WR-P-E-J-0000000001.p.1.s.1.dep.3" class="det">
+                    <hd>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.5" t="woord" />
+                    </hd>
+                    <dep>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.3" t="een" />
+                    </dep>
+                </dependency>                 
+                <dependency xml:id="WR-P-E-J-0000000001.p.1.s.1.dep.4" class="mod">
+                    <hd>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.5" t="woord" />
+                    </hd>
+                    <dep>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.4" t="ander" />
+                    </dep>
+                </dependency>                 
+                <dependency xml:id="WR-P-E-J-0000000001.p.1.s.1.dep.5" class="mod">
+                    <hd>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.5" t="woord" />
+                    </hd>
+                    <dep>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.6" t="voor" />
+                    </dep>
+                </dependency>                     
+                <dependency xml:id="WR-P-E-J-0000000001.p.1.s.1.dep.6" class="obj1">
+                    <hd>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.6" t="voor" />
+                    </hd>
+                    <dep>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.7" t="stamboom" /> 
+                    </dep>
+                </dependency>       
+            </dependencies>            
+            <chunking>
+                <chunk>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.3" t="een" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.4" t="ander" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.5" t="woord" />                
+                </chunk>
+                <chunk>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.6" t="voor" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.7" t="stamboom" />
+                </chunk>
+            </chunking>            
+            <timing>
+                <timesegment actor="speaker" class="utterance" begindatetime="2011-12-15T19:00" enddatetime="2011-12-15T19:02">
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.3" t="een" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.4" t="ander" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.5" t="woord" />                
+                </timesegment>
+                <timesegment actor="annoying_person" class="cough" begindatetime="2011-12-15T19:03" enddatetime="2011-12-15T19:05" />
+                <timesegment actor="speaker" class="utterance" begindatetime="2011-12-15T19:06" enddatetime="2011-12-15T19:07">
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.6" t="voor" />
+                        <wref id="WR-P-E-J-0000000001.p.1.s.1.w.7" t="stamboom" />       
+                </timesegment>
+            </timing>            
+          </s>
+          <s xml:id="WR-P-E-J-0000000001.p.1.s.2">
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.1">
+              <t>In</t>
+              <pos class="VZ(init)"/>
+              <lemma class="in"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.2">
+              <t>de</t>
+              <pos class="LID(bep,stan,rest)" />
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.3">
+              <t>historische</t>
+              <pos class="ADJ(prenom,basis,met-e,stan)"/>
+              <lemma class="historisch"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.4">
+              <t>wetenschap</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="wetenschap"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.5">
+              <t>wordt</t>
+              <pos class="WW(pv,tgw,met-t)">
+                <feat subset="role" class="pv" />
+                <feat subset="tense" class="tgw" />
+                <feat subset="form" class="met-t" />
+              </pos>
+              <lemma class="worden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.6">
+              <t>zo'n</t>
+              <pos class="VNW(aanw,det,stan,prenom,zonder,agr)"/>
+              <lemma class="zo'n"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.7">
+              <t>stamboom</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="stamboom"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.8">
+              <t>,</t>
+              <pos class="LET()"/>
+              <lemma class=","/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.9">
+              <t>onder</t>
+              <pos class="VZ(init)"/>
+              <lemma class="onder"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.10">
+              <t>de</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.11">
+              <t>naam</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="naam"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.12">
+              <t>stemma</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="stemma"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.13">
+              <t>codicum</t>
+              <pos class="N(soort,ev,basis,onz,stan)"/>
+              <lemma class="codicum"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.14">
+              <t>(</t>
+              <pos class="LET()"/>
+              <lemma class="("/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.15">
+              <t>handschriftelijke</t>
+              <pos class="ADJ(prenom,basis,met-e,stan)"/>
+              <lemma class="handschriftelijk"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.16">
+              <t>genealogie</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="genealogie"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.17">
+              <t>)</t>
+              <pos class="LET()"/>
+              <lemma class=")"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.18">
+              <t>,</t>
+              <pos class="LET()"/>
+              <lemma class=","/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.19">
+              <t>gebruikt</t>
+              <pos class="WW(vd,vrij,zonder)"/>
+              <lemma class="gebruiken"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.20">
+              <t>om</t>
+              <pos class="VZ(init)"/>
+              <lemma class="om"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.21">
+              <t>de</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.22">
+              <t>verwantschap</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="verwantschap"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.23">
+              <t>tussen</t>
+              <pos class="VZ(init)"/>
+              <lemma class="tussen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.24">
+              <t>handschrift</t>
+              <pos class="N(soort,ev,basis,onz,stan)"/>
+              <lemma class="handschrift"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.25">
+              <t>en</t>
+              <pos class="VG(neven)"/>
+              <lemma class="en"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.26">
+              <t>weer</t>
+              <pos class="BW()"/>
+              <lemma class="weer"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.27">
+              <t>te</t>
+              <pos class="VZ(init)"/>
+              <lemma class="te"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.28">
+              <t>geven</t>
+              <pos class="WW(inf,vrij,zonder)"/>
+              <lemma class="geven"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.2.w.29">
+              <t>.</t>
+              <pos class="LET()"/>
+              <lemma class="."/>
+            </w>
+          </s>
+          <s xml:id="WR-P-E-J-0000000001.p.1.s.3">
+            <whitespace />
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.1">
+              <t>Werkwijze</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="werkwijz"/>
+            </w>
+            <whitespace />
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.2">
+              <t>Hiervoor</t>
+              <pos class="BW()"/>
+              <lemma class="hiervoor"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.3">
+              <t>worden</t>
+              <pos class="WW(pv,tgw,mv)"/>
+              <lemma class="worden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.4">
+              <t>de</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.5">
+              <t>handschriften</t>
+              <pos class="N(soort,mv,basis)"/>
+              <lemma class="handschrift"/>
+              <morphology>
+                <morpheme class="stem" function="lexical">
+                    <t offset="0">handschrift</t>
+                </morpheme>
+                <morpheme class="suffix" function="inflexional">
+                    <t offset="11">en</t>                   
+                </morpheme>
+              </morphology>              
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.6">
+              <t>genummerd</t>
+              <pos class="WW(vd,vrij,zonder)"/>
+              <lemma class="nummeren"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.7">
+              <t>en</t>
+              <pos class="VG(neven)"/>
+              <lemma class="en"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.8">
+              <t>gedateerd</t>
+              <pos class="WW(vd,vrij,zonder)"/>
+              <lemma class="dateren"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.9">
+              <t>zodat</t>
+              <pos class="VG(onder)"/>
+              <lemma class="zodat"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.10">
+              <t>ze</t>
+              <pos class="VNW(pers,pron,stan,red,3,ev,fem)"/>
+              <lemma class="ze"/>
+              <alignment class="reference">
+                 <aref id="WR-P-E-J-0000000001.p.1.s.3.w.5" t="handschriften" type="w"/>
+              </alignment>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.11">
+              <t>op</t>
+              <pos class="VZ(init)"/>
+              <lemma class="op"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.12">
+              <t>de</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.13">
+              <t>juiste</t>
+              <pos class="ADJ(prenom,basis,met-e,stan)"/>
+              <lemma class="juist"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.14">
+              <t>plaats</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="plaats"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.15">
+              <t>van</t>
+              <pos class="VZ(init)"/>
+              <lemma class="van"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.16">
+              <t>hun</t>
+              <pos class="VNW(bez,det,stan,vol,3,mv,prenom,zonder,agr)"/>
+              <lemma class="hun"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.17">
+              <t>afstammingsgeschiedenis</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="afstammingsgeschiedenis"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.18">
+              <t>geplaatst</t>
+              <pos class="WW(vd,vrij,zonder)"/>
+              <lemma class="plaatsen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.19">
+              <t>kunnen</t>
+              <pos class="WW(pv,tgw,mv)"/>
+              <lemma class="kunnen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.20">
+              <t>worden</t>
+              <pos class="WW(inf,vrij,zonder)"/>
+              <lemma class="worden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.3.w.21">
+              <t>.</t>
+              <pos class="LET()"/>
+              <lemma class="."/>
+            </w>
+          </s>
+          <s xml:id="WR-P-E-J-0000000001.p.1.s.4">
+            <t>De hoofdletter A wordt gebruikt voor het originele handschrift.</t>
+            <t class="original">De hoofdletter A wordt gebruikt voor het originele handschrift.</t>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.1">
+              <t offset="0">De</t>
+              <t offset="0" class="original">De</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.2">
+              <t offset="3">hoofdletter</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="hoofdletter"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.3">
+              <t>A</t>
+              <pos class="SPEC(symb)"/>
+              <lemma class="_"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.4">
+              <t>wordt</t>
+              <pos class="WW(pv,tgw,met-t)"/>
+              <lemma class="worden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.5">
+              <t>gebruikt</t>
+              <pos class="WW(vd,vrij,zonder)"/>
+              <lemma class="gebruiken"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.6">
+              <t>voor</t>
+              <pos class="VZ(init)"/>
+              <lemma class="voor"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.7">
+              <t>het</t>
+              <pos class="LID(bep,stan,evon)"/>
+              <lemma class="het"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.8">
+              <t>originele</t>
+              <pos class="ADJ(prenom,basis,met-e,stan)"/>
+              <lemma class="origineel"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.9">
+              <t>handschrift</t>
+              <pos class="N(soort,ev,basis,onz,stan)"/>
+              <lemma class="handschrift"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.4.w.10">
+              <t>.</t>
+              <pos class="LET()"/>
+              <lemma class="."/>
+            </w>
+          </s>
+          <s xml:id="WR-P-E-J-0000000001.p.1.s.5">
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.1">
+              <t>De</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.2">
+              <t>andere</t>
+              <pos class="ADJ(prenom,basis,met-e,stan)"/>
+              <lemma class="ander"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.3">
+              <t>handschriften</t>
+              <pos class="N(soort,mv,basis)"/>
+              <lemma class="handschrift"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.4">
+              <t>krijgen</t>
+              <pos class="WW(pv,tgw,mv)"/>
+              <lemma class="krijgen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.5">
+              <t>ook</t>
+              <pos class="BW()"/>
+              <lemma class="ook"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.6">
+              <t>een</t>
+              <pos class="LID(onbep,stan,agr)"/>
+              <lemma class="een"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.7">
+              <t>letter</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="letter"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.8">
+              <t>die</t>
+              <pos class="VNW(betr,pron,stan,vol,persoon,getal)"/>
+              <lemma class="die"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.9">
+              <t>verband</t>
+              <pos class="N(soort,ev,basis,onz,stan)"/>
+              <lemma class="verband"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.10">
+              <t>kan</t>
+              <pos class="WW(pv,tgw,ev)"/>
+              <lemma class="kunnen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.11">
+              <t>houden</t>
+              <pos class="WW(inf,vrij,zonder)"/>
+              <lemma class="houden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.12">
+              <t>met</t>
+              <pos class="VZ(init)"/>
+              <lemma class="met"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.13">
+              <t>hun</t>
+              <pos class="VNW(bez,det,stan,vol,3,mv,prenom,zonder,agr)"/>
+              <lemma class="hun"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.14">
+              <t>plaats</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="plaats"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.15">
+              <t>van</t>
+              <pos class="VZ(init)"/>
+              <lemma class="van"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.16">
+              <t>oorsprong</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="oorsprong"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.17">
+              <t>óf</t>
+              <pos class="VG(neven)"/>
+              <lemma class="óf"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.18">
+              <t>plaats</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="plaats"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.19">
+              <t>van</t>
+              <pos class="VZ(init)"/>
+              <lemma class="van"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.20" space="no">
+              <t>bewaring</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="bewaring"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.5.w.21">
+              <t>.</t>
+              <pos class="LET()"/>
+              <lemma class="."/>
+            </w>
+          </s>
+          <s xml:id="WR-P-E-J-0000000001.p.1.s.6" class="sentence">
+              <t>Verdwenen handschriften waarvan men toch vermoedt dat ze ooit bestaan hebben worden ook in het stemma opgenomen en worden weergegeven door de laatste letter van het alfabet en worden tussen <t-correction id="WR-P-E-J-0000000001.p.1.s.6.w.31.c.1" class="spelling" original="vierkant">vierkante</t-correction> haken geplaatst.<br/></t>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.1">
+              <t>Verdwenen</t>
+              <pos class="WW(vd,prenom,zonder)">
+                <feat subset="head" class="WW" />
+              </pos>
+              <lemma class="verdwijnen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.2">
+              <t>handschriften</t>
+              <pos class="N(soort,mv,basis)"/>
+              <lemma class="handschrift"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.3">
+              <t>waarvan</t>
+              <pos class="BW()"/>
+              <lemma class="waarvan"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.4">
+              <t>men</t>
+              <pos class="VNW(pers,pron,nomin,red,3p,ev,masc)"/>
+              <lemma class="men"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.5">
+              <t>toch</t>
+              <pos class="BW()"/>
+              <lemma class="toch"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.6">
+              <t>vermoedt</t>
+              <pos class="WW(pv,tgw,met-t)"/>
+              <lemma class="vermoeden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.7">
+              <t>dat</t>
+              <pos class="VG(onder)"/>
+              <lemma class="dat"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.8">
+              <t>ze</t>
+              <pos class="VNW(pers,pron,stan,red,3,mv)"/>
+              <lemma class="ze"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.9">
+              <t>ooit</t>
+              <pos class="BW()"/>
+              <lemma class="ooit"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.10">
+              <t>bestaan</t>
+              <pos class="WW(inf,vrij,zonder)"/>
+              <lemma class="bestaan"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.11">
+              <t>hebben</t>
+              <pos class="WW(inf,vrij,zonder)"/>
+              <lemma class="hebben"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.12">
+              <t>worden</t>
+              <pos class="WW(inf,vrij,zonder)"/>
+              <lemma class="worden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.13">
+              <t>ook</t>
+              <pos class="BW()"/>
+              <lemma class="ook"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.14">
+              <t>in</t>
+              <pos class="VZ(init)"/>
+              <lemma class="in"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.15">
+              <t>het</t>
+              <pos class="LID(bep,stan,evon)"/>
+              <lemma class="het"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.16">
+              <t>stemma</t>
+              <pos class="N(soort,ev,basis,onz,stan)"/>
+              <lemma class="stemma"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.17">
+              <t>opgenomen</t>
+              <pos class="WW(vd,vrij,zonder)"/>
+              <lemma class="opnemen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.18">
+              <t>en</t>
+              <pos class="VG(neven)"/>
+              <lemma class="en"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.19">
+              <t>worden</t>
+              <pos class="WW(pv,tgw,mv)"/>
+              <lemma class="worden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.20">
+              <t>weergegeven</t>
+              <pos class="WW(vd,vrij,zonder)"/>
+              <lemma class="weergeven"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.21">
+              <t>door</t>
+              <pos class="VZ(init)"/>
+              <lemma class="door"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.22">
+              <t>de</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.23">
+              <t>laatste</t>
+              <pos class="ADJ(prenom,sup,met-e,stan)"/>
+              <lemma class="laat"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.24">
+              <t>letters</t>
+              <pos class="N(soort,mv,basis)"/>
+              <lemma class="letter"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.25">
+              <t>van</t>
+              <pos class="VZ(init)"/>
+              <lemma class="van"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.26">
+              <t>het</t>
+              <pos class="LID(bep,stan,evon)"/>
+              <lemma class="het"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.27">
+              <t>alfabet</t>
+              <pos class="N(soort,ev,basis,onz,stan)"/>
+              <lemma class="alfabet"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.28">
+              <t>en</t>
+              <pos class="VG(neven)"/>
+              <lemma class="en"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.29">
+              <t>worden</t>
+              <pos class="WW(pv,tgw,mv)"/>
+              <lemma class="worden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.30">
+              <t>tussen</t>
+              <pos class="VZ(init)"/>
+              <lemma class="tussen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.31">
+              <correction xml:id="WR-P-E-J-0000000001.p.1.s.6.w.31.c.1">
+                <new>
+                 <t>vierkante</t>
+                </new>
+                <original auth="no">
+                 <t>vierkant</t>
+                </original>
+              </correction>
+              <pos class="ADJ(prenom,basis,met-e,stan)"/>
+              <lemma class="vierkant"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.32">
+              <t>haken</t>
+              <pos class="N(soort,mv,basis)"/>
+              <correction xml:id="WR-P-E-J-0000000001.p.1.s.6.w.32.c.1">
+                <new>              
+                 <lemma class="haak"/>
+                </new>
+                <original auth="no">
+                 <lemma class="haaak"/>
+                </original>
+               </correction>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.33">
+              <t>geplaatst</t>
+              <pos class="WW(vd,vrij,zonder)"/>
+              <lemma class="plaatsen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.6.w.34">
+              <t>.</t>
+              <pos class="LET()"/>
+              <lemma class="."/>
+            </w>
+            <br />
+          </s>
+          <s xml:id="WR-P-E-J-0000000001.p.1.s.7">
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.1">
+              <t>Tenslotte</t>
+              <pos class="BW()"/>
+              <lemma class="tenslotte"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.2">
+              <t>gaat</t>
+              <pos class="WW(pv,tgw,met-t)"/>
+              <lemma class="gaan"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.3">
+              <t>men</t>
+              <pos class="VNW(pers,pron,nomin,red,3p,ev,masc)"/>
+              <lemma class="men"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.4">
+              <t>de</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.5">
+              <t>verwantschap</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="verwantschap"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.6">
+              <t>tussen</t>
+              <pos class="VZ(init)"/>
+              <lemma class="tussen"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.7">
+              <t>de</t>
+              <pos class="LID(bep,stan,rest)"/>
+              <lemma class="de"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.8">
+              <t>handschriften</t>
+              <pos class="N(soort,mv,basis)"/>
+              <lemma class="handschrift"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.9">
+              <t>aanduiden</t>
+              <pos class="WW(inf,vrij,zonder)"/>
+              <lemma class="aanduiden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.7.w.10">
+              <t>.</t>
+              <pos class="LET()"/>
+              <lemma class="."/>
+            </w>
+            <semroles>
+                <semrole class="actor">
+                    <wref id="WR-P-E-J-0000000001.p.1.s.7.w.3" />
+                </semrole>
+                <semrole class="patient">
+                    <wref id="WR-P-E-J-0000000001.p.1.s.7.w.4" />
+                    <hd><wref id="WR-P-E-J-0000000001.p.1.s.7.w.5" /></hd>
+                </semrole>
+            </semroles>
+          </s>
+          <s xml:id="WR-P-E-J-0000000001.p.1.s.8">
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.1">
+              <t>Een</t>
+              <pos class="LID(onbep,stan,agr)"/>
+              <lemma class="een"/>
+            </w>
+            <quote xml:id="WR-P-E-J-0000000001.p.1.s.8.q.1">
+                <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.2">
+                  <t>volle</t>
+                  <pos class="ADJ(prenom,basis,met-e,stan)"/>
+                  <lemma class="vol"/>
+                </w>
+                <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.3">
+                  <t>lijn</t>
+                  <pos class="N(soort,ev,basis,zijd,stan)"/>
+                  <lemma class="lijn"/>
+                </w>
+            </quote>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.4">
+              <t>duidt</t>
+              <pos class="WW(pv,tgw,met-t)"/>
+              <lemma class="duiden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.5">
+              <t>op</t>
+              <pos class="VZ(init)"/>
+              <lemma class="op"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.6">
+              <t>een</t>
+              <pos class="LID(onbep,stan,agr)"/>
+              <lemma class="een"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.7">
+              <t>verwantschap</t>
+              <pos class="N(soort,ev,basis,zijd,stan)"/>
+              <lemma class="verwantschap"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.8">
+              <t>,</t>
+              <pos class="LET()"/>
+              <lemma class=","/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.9">
+              <t>terweil</t>
+              <errordetection class="spelling" />
+              <pos class="VG(onder)"/>
+              <lemma class="terweil"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.10">
+              <t>een</t>
+              <pos class="LID(onbep,stan,agr)"/>
+              <lemma class="een"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.11">
+              <t>stippelijn</t>
+              <pos class="FOUTN(soort,ev,basis,zijd,stan)"/>
+              <lemma class="stippelijn"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.12">
+              <t>op</t>
+              <pos class="VZ(init)"/>
+              <lemma class="op"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.13">
+              <t>een</t>
+              <pos class="LID(onbep,stan,agr)"/>
+              <lemma class="een"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.14">
+              <t>onzekere</t>
+              <pos class="ADJ(prenom,basis,met-e,stan)"/>
+              <lemma class="onzeker"/>
+              <correction xml:id="WR-P-E-J-0000000001.p.1.s.8.w.14.c.1" class="spelling">
+                <suggestion auth="no">
+                    <t>twijfelachtige</t>
+                </suggestion>
+                <suggestion auth="no">
+                    <t>ongewisse</t>
+                </suggestion>
+              </correction>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.15">
+              <t>verwantschap</t>
+              <pos class="N(soort,ev,basis,zijd,stan)" datetime="2011-07-20T19:00:01" />
+              <lemma class="verwantschap"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.16">
+              <t>duidt</t>
+              <pos class="WW(pv,tgw,met-t)"/>
+              <lemma class="duiden"/>
+            </w>
+            <w xml:id="WR-P-E-J-0000000001.p.1.s.8.w.17">
+              <t>.</t>
+              <pos class="LET()"/>
+              <lemma class="."/>
+            </w>
+          </s>
+        </p>
+        <coreferences>
+            <coreferencechain class="ident">
+                <coreferencelink>
+                    <wref id="WR-P-E-J-0000000001.p.1.s.3.w.5" />
+                </coreferencelink>
+                <coreferencelink>
+                    <wref id="WR-P-E-J-0000000001.p.1.s.3.w.10" />
+                </coreferencelink>              
+                <coreferencelink>
+                    <wref id="WR-P-E-J-0000000001.p.1.s.3.w.16" />
+                </coreferencelink>                              
+                <coreferencelink>
+                    <wref id="WR-P-E-J-0000000001.p.1.s.7.w.7" />
+                </coreferencelink>                              
+            </coreferencechain>
+            <coreferencechain class="ident">
+                <coreferencelink>
+                    <wref id="WR-P-E-J-0000000001.p.1.s.6.w.1" />
+                    <hd>
+                        <wref id="WR-P-E-J-0000000001.p.1.s.6.w.2" />
+                    </hd>
+                </coreferencelink>
+                <coreferencelink>
+                    <wref id="WR-P-E-J-0000000001.p.1.s.6.w.8" />
+                </coreferencelink>
+            </coreferencechain>
+        </coreferences>
+      </div>
+      <div xml:id="sandbox">
+          <list xml:id="sandbox.list.1">
+              <listitem xml:id="sandbox.list.1.listitem.1" n="1">
+                  <s xml:id="sandbox.list.1.listitem.1.s.1">
+                      <w xml:id="sandbox.list.1.listitem.1.s.1.w.1">
+                          <t>Eerste</t>
+                          <sense class="some.sense.id" synset="some.synset.id" />
+                      </w>
+                      <w xml:id="sandbox.list.1.listitem.1.s.1.w.2">
+                          <t>testitem</t>
+                      </w>                      
+                  </s>                  
+              </listitem>
+              <event xml:id="sandbox.event.0" class="applause" actor="audience" />
+              <listitem xml:id="sandbox.list.1.listitem.2" n="2">
+                  <s xml:id="sandbox.list.1.listitem.2.s.1">
+                      <w xml:id="sandbox.list.1.listitem.2.s.1.w.1">
+                          <t>Tweede</t>
+                      </w>
+                      <w xml:id="sandbox.list.1.listitem.2.s.1.w.2">
+                          <t>testitem</t>
+                      </w>                      
+                  </s>                  
+              </listitem>
+          </list>
+          <event xml:id="sandbox.event.1" class="presentation" actor="proycon" begindatetime="2011-12-15T19:01" enddatetime="2011-12-15T19:05">                
+              <figure xml:id="sandbox.figure.1" src="http://upload.wikimedia.org/wikipedia/commons/8/8e/Family_tree.svg">
+                  <desc>Stamboom plaatje van wikipedia</desc>              
+                  <caption xml:id="sandbox.figure.1.caption.1">
+                      <s xml:id="sandbox.figure.1.caption.s.1">
+                          <w xml:id="sandbox.figure.1.caption.s.1.w.1">
+                              <t>Een</t>
+                          </w>
+                          <w xml:id="sandbox.figure.1.caption.s.1.w.2">
+                              <t>stamboom</t>
+                          </w>                      
+                      </s>
+                  </caption>
+              </figure>
+           </event>
+           <div xml:id="sandbox.2">
+               <s xml:id="WR-P-E-J-0000000001.sandbox.2.s.1">
+                    <t>De CDA-lijsttrekker heeft fors verloren.</t>
+                    <w xml:id="WR-P-E-J-0000000001.sandbox.2.s.1.w.1">
+                        <t offset="0">De</t>
+                    </w>
+                    <w xml:id="WR-P-E-J-0000000001.sandbox.2.s.1.w.2">
+                        <t offset="3">CDA-lijsttrekker</t>
+                        <morphology>
+                            <morpheme xml:id="WR-P-E-J-0000000001.sandbox.2.s.1.w.1.m.1" class="lexical">
+                                <t offset="0">CDA</t>
+                            </morpheme>
+                            <morpheme class="lexical">
+                                <t offset="4">lijsttrekker</t>
+                                <pos class="n" />
+                                <lemma class="lijsttrekker" />
+                            </morpheme>
+                        </morphology>
+                    </w> 
+                    <w xml:id="WR-P-E-J-0000000001.sandbox.2.s.1.w.3">
+                        <t offset="18">heeft</t>
+                    </w> 
+                    <w xml:id="WR-P-E-J-0000000001.sandbox.2.s.1.w.4">
+                        <t offset="24">fors</t>
+                    </w>  
+                    <w xml:id="WR-P-E-J-0000000001.sandbox.2.s.1.w.5">
+                        <t offset="29">verloren</t>
+                    </w>  
+                    <w xml:id="WR-P-E-J-0000000001.sandbox.2.s.1.w.6">
+                        <t offset="37">.</t>
+                    </w>  
+                    <entities>
+                        <entity class="politicalparty">
+                            <wref id="WR-P-E-J-0000000001.sandbox.2.s.1.w.1.m.1" />
+                        </entity>
+                    </entities>
+                </s>
+            </div>
+            <div xml:id="sandbox.3">
+                <head xml:id="sandbox.3.head">
+                    <!-- Not tokenised! -->
+                    <t>De <t-str id="sandbox.3.str"><t-style xml:id="sandbox.3.str.bold" class="bold">FoLiA</t-style> developers</t-str> zijn:</t> 
+                    <str xml:id="sandbox.3.str">
+                        <t offset="3">FoLiA developers</t>
+                        <lang class="eng" />
+                        <metric class="wordcount" value="2" />
+                    </str>
+                </head> 
+                <table xml:id="example.table.1">
+                <tablehead>
+                    <row>
+                    <cell>
+                        <w xml:id="example.table.1.w.1"><t>Naam</t></w>
+                    </cell>
+                    <cell>
+                        <w xml:id="example.table.1.w.2"><t>Universiteit</t></w>
+                    </cell>
+                    </row>
+                </tablehead>
+                <row>
+                    <cell>
+                        <w xml:id="example.table.1.w.3"><t>Maarten</t></w>
+                        <w xml:id="example.table.1.w.4"><t>van</t></w>
+                        <w xml:id="example.table.1.w.5"><t>Gompel</t></w>
+                    </cell>
+                    <cell>
+                        <w xml:id="example.table.1.w.6"><t>Radboud</t></w>
+                        <w xml:id="example.table.1.w.7"><t>University</t></w>
+                        <w xml:id="example.table.1.w.8"><t>Nijmegen</t></w>
+                    </cell>
+                </row>
+                <row>
+                    <cell>
+                        <w xml:id="example.table.1.w.9"><t>Ko</t></w>
+                        <w xml:id="example.table.1.w.10"><t>van</t></w>
+                        <w xml:id="example.table.1.w.11"><t>der</t></w>
+                        <w xml:id="example.table.1.w.12"><t>Sloot</t></w>
+                    </cell>
+                    <cell>
+                        <w xml:id="example.table.1.w.13"><t>Tilburg</t></w>
+                        <w xml:id="example.table.1.w.14"><t>University</t></w>
+                    </cell>
+                </row>
+                </table>
+           </div>
+      </div>
+      <gap xml:id="WR-P-E-J-0000000001.gap.1" class="backmatter">
+       <desc>Backmatter</desc>
+       <content>
+<![CDATA[
+De tekst is beschikbaar onder de licentie Creative Commons Naamsvermelding/Gelijk delen, er kunnen aanvullende voorwaarden van toepassing zijn. Zie de Gebruiksvoorwaarden voor meer informatie.
+Wikipedia® is een geregistreerd handelsmerk van de Wikimedia Foundation, Inc., een organisatie zonder winstoogmerk.
+]]>
+       </content>
+      </gap>      
+  </text>  
+</FoLiA>
