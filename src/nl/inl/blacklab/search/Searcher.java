@@ -229,11 +229,14 @@ public class Searcher {
 
 		// Detect and open the ContentStore for the contents field
 		this.indexLocation = indexDir;
-		this.fieldNameContents = indexStructure.getMainContentsField().getName();
+		ComplexFieldDesc mainContentsField = indexStructure.getMainContentsField();
+		if (mainContentsField == null)
+			throw new RuntimeException("Could not detect main contents field");
+		this.fieldNameContents = mainContentsField.getName();
 
 		// See if we have a punctuation forward index. If we do,
 		// default to creating concordances using that.
-		if (indexStructure.getMainContentsField().hasPunctuation()) {
+		if (mainContentsField.hasPunctuation()) {
 			concordancesFromForwardIndex = true;
 		}
 
