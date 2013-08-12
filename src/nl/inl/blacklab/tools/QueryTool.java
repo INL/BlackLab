@@ -595,6 +595,17 @@ public class QueryTool {
 		cleanup();
 	}
 
+	int parseInt(String str, int min) {
+		try {
+			int n = Integer.parseInt(str);
+			if (min >= 0 && n < min)
+				return min;
+			return n;
+		} catch (NumberFormatException e) {
+			return min;
+		}
+	}
+
 	private void processCommand(String fullCmd) {
 		fullCmd = fullCmd.trim();
 		if (fullCmd.charAt(0) == '#')
@@ -616,14 +627,14 @@ public class QueryTool {
 			} else if (lcased.equals("next") || lcased.equals("n")) {
 				nextPage();
 			} else if (lcased.startsWith("page ")) {
-				showPage(Integer.parseInt(lcased.substring(5)) - 1);
+				showPage(parseInt(lcased.substring(5), 1) - 1);
 			} else if (lcased.startsWith("pagesize ")) {
-				resultsPerPage = Integer.parseInt(lcased.substring(9));
+				resultsPerPage = parseInt(lcased.substring(9), 1);
 				firstResult = 0;
 				//statprintln("# pagesize\t" + resultsPerPage);
 				showResultsPage();
 			} else if (lcased.startsWith("context ")) {
-				contextSize = Integer.parseInt(lcased.substring(8));
+				contextSize = parseInt(lcased.substring(8), 0);
 				if (hits != null && hits.getContextSize() != contextSize) {
 					hits.setContextSize(contextSize);
 					collocations = null;
@@ -631,7 +642,7 @@ public class QueryTool {
 				//statprintln("# context\t" + contextSize);
 				showResultsPage();
 			} else if (lcased.startsWith("snippet ")) {
-				int hitId = Integer.parseInt(lcased.substring(8)) - 1;
+				int hitId = parseInt(lcased.substring(8), 1) - 1;
 				Hit h = getCurrentHitSet().get(hitId);
 				Concordance conc = hits.getConcordance(h, snippetSize);
 				String left = XmlUtil.xmlToPlainText(conc.left);
@@ -639,10 +650,10 @@ public class QueryTool {
 				String right = XmlUtil.xmlToPlainText(conc.right);
 				outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
 			} else if (lcased.startsWith("doc ")) {
-				int docId = Integer.parseInt(lcased.substring(4));
+				int docId = parseInt(lcased.substring(4), 0);
 				showMetadata(docId);
 			} else if (lcased.startsWith("snippetsize ")) {
-				snippetSize = Integer.parseInt(lcased.substring(12));
+				snippetSize = parseInt(lcased.substring(12), 0);
 				outprintln("Snippets will show " + snippetSize + " words of context.");
 			} else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
 				//statprintln("# filter\t" + cmd);
@@ -1106,7 +1117,7 @@ public class QueryTool {
 		} else if (showWhat.equals("groups") && groups != null) {
 			showSetting = ShowSetting.GROUPS;
 		} else if (showWhat.startsWith("group ") && groups != null) {
-			showWhichGroup = Integer.parseInt(showWhat.substring(6)) - 1;
+			showWhichGroup = parseInt(showWhat.substring(6), 1) - 1;
 			if (showWhichGroup < 0 || showWhichGroup >= groups.numberOfGroups()) {
 				errprintln("Group doesn't exist");
 				showWhichGroup = -1;
