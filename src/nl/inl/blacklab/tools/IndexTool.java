@@ -98,7 +98,7 @@ public class IndexTool {
 							// Windows JVM.
 							arg = arg.substring(1, arg.length() - 1);
 						}
-						if (arg.contains("*") || arg.contains("?")) {
+						if (arg.contains("*") || arg.contains("?") || new File(arg).isFile()) {
 							// Contains file glob. Separate the two components.
 							int n = arg.lastIndexOf('/', arg.length() - 2);
 							if (n < 0)
