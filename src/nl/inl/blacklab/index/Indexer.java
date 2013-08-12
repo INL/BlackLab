@@ -93,6 +93,10 @@ public class Indexer {
 	 */
 	private boolean processZipFilesAsDirectories = true;
 
+	/**
+	 * The class to instantiate for indexing documents. This class must be able to
+	 * deal with the file format of the input files.
+	 */
 	private Class<? extends DocIndexer> docIndexerClass;
 
 	/**
@@ -110,6 +114,9 @@ public class Indexer {
 	 */
 	private boolean createdNewIndex;
 
+	/**
+	 * Parameters we should pass to our DocIndexers upon instantiation.
+	 */
 	private Map<String, String> indexerParam;
 
 	/** If an error, like a parse error, should we
@@ -203,12 +210,22 @@ public class Indexer {
 		return listener;
 	}
 
+	/**
+	 * Log an exception that occurred during indexing
+	 * @param msg log message
+	 * @param e the exception
+	 */
 	private void log(String msg, Exception e) {
 		// @@@ TODO write to file. log4j?
 		e.printStackTrace();
 		System.err.println(msg);
 	}
 
+	/**
+	 * Set number of documents after which we should stop.
+	 * Useful when testing.
+	 * @param maxDocs number of documents after which to stop
+	 */
 	public void setMaxDocs(int maxDocs) {
 		this.maxDocs = maxDocs;
 	}
@@ -243,6 +260,10 @@ public class Indexer {
 		getListener().indexerClosed();
 	}
 
+	/**
+	 * Set the DocIndexer class we should use to index documents.
+	 * @param docIndexerClass the class
+	 */
 	public void setDocIndexer(Class<? extends DocIndexer> docIndexerClass) {
 		this.docIndexerClass = docIndexerClass;
 	}
@@ -720,7 +741,7 @@ public class Indexer {
 	 * 2. Sort index added to forward index; multiple forward indexes possible
 	 */
 
-	public static IndexWriter openIndexWriter(File indexDir, boolean create) throws IOException,
+	private static IndexWriter openIndexWriter(File indexDir, boolean create) throws IOException,
 			CorruptIndexException, LockObtainFailedException {
 		if (!indexDir.exists() && create) {
 			indexDir.mkdir();
@@ -743,7 +764,7 @@ public class Indexer {
 		return writer;
 	}
 
-	public ContentStore getContentStore(String fieldName) {
+	ContentStore getContentStore(String fieldName) {
 		ContentStore contentStore = contentStores.get(fieldName);
 		if (contentStore == null) {
 			contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_" + fieldName), createdNewIndex);
@@ -752,10 +773,18 @@ public class Indexer {
 		return contentStore;
 	}
 
+	/**
+	 * Get our index directory
+	 * @return the index directory
+	 */
 	public File getIndexLocation() {
 		 return indexLocation;
 	}
 
+	/**
+	 * Set parameters we would like to be passed to the DocIndexer class
+	 * @param indexerParam the parameters
+	 */
 	public void setIndexerParam(Map<String, String> indexerParam) {
 		this.indexerParam = indexerParam;
 	}
