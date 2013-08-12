@@ -631,7 +631,6 @@ public class QueryTool {
 			} else if (lcased.startsWith("pagesize ")) {
 				resultsPerPage = parseInt(lcased.substring(9), 1);
 				firstResult = 0;
-				//statprintln("# pagesize\t" + resultsPerPage);
 				showResultsPage();
 			} else if (lcased.startsWith("context ")) {
 				contextSize = parseInt(lcased.substring(8), 0);
@@ -639,7 +638,6 @@ public class QueryTool {
 					hits.setContextSize(contextSize);
 					collocations = null;
 				}
-				//statprintln("# context\t" + contextSize);
 				showResultsPage();
 			} else if (lcased.startsWith("snippet ")) {
 				int hitId = parseInt(lcased.substring(8), 1) - 1;
@@ -656,7 +654,6 @@ public class QueryTool {
 				snippetSize = parseInt(lcased.substring(12), 0);
 				outprintln("Snippets will show " + snippetSize + " words of context.");
 			} else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
-				//statprintln("# filter\t" + cmd);
 				if (cmd.length() <= 7) {
 					filterQuery = null; // clear filter
 					outprintln("Filter cleared.");
@@ -684,14 +681,12 @@ public class QueryTool {
 					diacSensitive = true;
 				}
 				searcher.setDefaultSearchSensitive(caseSensitive, diacSensitive);
-				//statprintln("# sensitive\tcase: " + (caseSensitive ? "yed" : "no") + "\tdiac: " + (diacSensitive ? "yes" : "no"));
 				outprintln("Search defaults to "
 						+ (caseSensitive ? "case-sensitive" : "case-insensitive") + " and "
 						+ (diacSensitive ? "diacritics-sensitive" : "diacritics-insensitive"));
 			} else if (lcased.startsWith("doctitle ")) {
 				String v = lcased.substring(9);
 				showDocTitle = v.equals("on") || v.equals("yes") || v.equals("true");
-				//statprintln("# doctitle\t" + (showDocTitle ? "on" : "off"));
 				System.out.println("Show document titles: " + (showDocTitle ? "ON" : "OFF"));
 			} else if (lcased.equals("struct") || lcased.equals("structure")) {
 				showIndexStructure();
@@ -714,7 +709,6 @@ public class QueryTool {
 				changeShowSettings(cmd);
 			} else if (lcased.equals("switch") || lcased.equals("sw")) {
 				currentParser = currentParser.nextParser();
-				//statprintln("# parser\t" + currentParser.getName());
 				outprintln("Switching to " + currentParser.getName() + ".\n");
 				printQueryHelp();
 			} else if (lcased.equals("help") || lcased.equals("?")) {
@@ -725,17 +719,14 @@ public class QueryTool {
 			} else if (lcased.startsWith("showconc ")) {
 				String v = lcased.substring(9);
 				showConc = v.equals("on") || v.equals("yes") || v.equals("true");
-				//statprintln("# showconc\t" + (showConc ? "on" : "off"));
 				System.out.println("Show concordances: " + (showConc ? "ON" : "OFF"));
 			} else if (lcased.startsWith("verbose ")) {
 				String v = lcased.substring(8);
 				verbose = v.equals("on") || v.equals("yes") || v.equals("true");
-				//statprintln("# verbose\t" + (verbose ? "on" : "off"));
 				outprintln("Verbose: " + (verbose ? "ON" : "OFF"));
 			} else if (lcased.startsWith("total ")) {
 				String v = lcased.substring(6);
 				determineTotalNumberOfHits = v.equals("on") || v.equals("yes") || v.equals("true");
-				//statprintln("# total\t" + (determineTotalNumberOfHits ? "on" : "off"));
 				outprintln("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
 			} else {
 				// Not a command; assume it's a query
@@ -887,7 +878,6 @@ public class QueryTool {
 			else
 				statInfo = "?";
 			commandWasQuery = true;
-			//statprintln(query + "\t" + hits.size() + "\t" + t.elapsed());
 		} catch (TokenMgrError e) {
 			// Lexical error
 			errprintln("Invalid query: " + e.getMessage());
@@ -934,7 +924,6 @@ public class QueryTool {
 
 			// Next page
 			firstResult = pageNumber * resultsPerPage;
-			//statprintln("# page\t" + pageNumber);
 			showResultsPage();
 		}
 	}
@@ -1025,7 +1014,6 @@ public class QueryTool {
 			showResultsPage();
 			if (property == null)
 				property = "(default)";
-			//statprintln("# sort\t" + sortBy + "\t" + property + "\t" + t.elapsed());
 			reportTime("sort", sortTime, "display", t.elapsed() - sortTime);
 		}
 	}
@@ -1048,7 +1036,6 @@ public class QueryTool {
 		} else {
 			groups.sortGroups(crit, false);
 			firstResult = 0;
-			//statprintln("# sortgroups\t" + sortBy);
 			showResultsPage();
 		}
 	}
@@ -1093,7 +1080,6 @@ public class QueryTool {
 		sortGroups("size");
 		if (property == null)
 			property = "(default)";
-		//statprintln("# group\t" + groupBy + "\t" + property + "\t" + t.elapsed());
 		reportTime("group", groupTime, "sort/display", t.elapsed() - groupTime);
 	}
 
@@ -1124,7 +1110,6 @@ public class QueryTool {
 			} else
 				showSetting = ShowSetting.HITS; // Show hits in group, not all the groups
 		}
-		//statprintln("# show\t" + showWhat);
 		showResultsPage();
 	}
 
