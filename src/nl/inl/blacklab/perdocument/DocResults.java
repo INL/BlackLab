@@ -217,6 +217,8 @@ public class DocResults implements Iterable<DocResult> {
 	 * @return the total number of documents.
 	 */
 	public int totalSize() {
+		if (sourceHits == null)
+			return size(); // no hits, just documents
 		return sourceHits.totalNumberOfDocs();
 	}
 
@@ -323,6 +325,8 @@ public class DocResults implements Iterable<DocResult> {
 	 * @return true if we reached the maximum and stopped retrieving hits
 	 */
 	public boolean maxHitsRetrieved() {
+		if (sourceHits == null)
+			return false; // no hits, only docs
 		return sourceHits.maxHitsRetrieved();
 	}
 
@@ -331,6 +335,8 @@ public class DocResults implements Iterable<DocResult> {
 	 * @return true if we reached the maximum and stopped counting hits
 	 */
 	public boolean maxHitsCounted() {
+		if (sourceHits == null)
+			return false; // no hits, only docs
 		return sourceHits.maxHitsCounted();
 	}
 
