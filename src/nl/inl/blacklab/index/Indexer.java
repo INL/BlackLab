@@ -425,7 +425,7 @@ public class Indexer {
 				indexZip(fileToIndex);
 			}
 		} else {
-			if (!skipFile(fileToIndex)) { // skip special thumbnails file
+			if (!isSpecialOperatingSystemFile(fileToIndex)) { // skip special OS files
 				try {
 					indexFile(fileToIndex);
 				} catch (IOException e) {
@@ -491,6 +491,10 @@ public class Indexer {
 	 */
 	public void index(File dir, String glob, boolean recurseSubdirs)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
+		if (!dir.exists())
+			throw new FileNotFoundException("Input dir not found: " + dir);
+		if (!dir.isDirectory())
+			throw new IOException("Specified input dir is not a directory: " + dir);
 		Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
 		for (File fileToIndex : dir.listFiles()) {
 			boolean indexThis = fileToIndex.isDirectory();
@@ -522,7 +526,7 @@ public class Indexer {
 	 */
 	public void indexDir(File dir) throws UnsupportedEncodingException, FileNotFoundException,
 			IOException, Exception {
-		indexDir(dir, true);
+		index(dir, "*", true);
 	}
 
 	/**
@@ -539,21 +543,17 @@ public class Indexer {
 	 */
 	public void indexDir(File dir, boolean recurseSubdirs) throws UnsupportedEncodingException,
 			FileNotFoundException, IOException, Exception {
-		for (File fileToIndex : dir.listFiles()) {
-			index(fileToIndex, recurseSubdirs);
-			if (!continueIndexing())
-				break;
-		}
+		index(dir, "*", recurseSubdirs);
 	}
 
 	/**
-	 * Should we skip the specified file?
+	 * Should we skip the specified file because it is a special OS file?
 	 *
 	 * @param file
 	 *            the file
 	 * @return true if we should skip it, false otherwise
 	 */
-	protected boolean skipFile(File file) {
+	protected boolean isSpecialOperatingSystemFile(File file) {
 		return file.getName().equals("Thumbs.db");
 	}
 
@@ -568,6 +568,8 @@ public class Indexer {
 	 * @throws Exception
 	 */
 	private void indexZip(File zipFile) throws Exception {
+		if (!zipFile.exists())
+			throw new FileNotFoundException("ZIP file not found: " + zipFile);
 		try {
 			ZipFile z = new ZipFile(zipFile);
 			try {
@@ -611,7 +613,9 @@ public class Indexer {
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
+	 * @deprecated not really used, implement your own if required
 	 */
+	@Deprecated
 	public void indexFileList(File listFile) throws UnsupportedEncodingException,
 			FileNotFoundException, IOException, Exception {
 		indexFileList(listFile, null);
@@ -630,9 +634,15 @@ public class Indexer {
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
+	 * @deprecated not really used, implement your own if required
 	 */
+	@Deprecated
 	public void indexFileList(File listFile, File inputDir) throws UnsupportedEncodingException,
 			FileNotFoundException, IOException, Exception {
+		if (!listFile.exists())
+			throw new FileNotFoundException("List file not found: " + listFile);
+		if (inputDir != null && !inputDir.isDirectory())
+			throw new FileNotFoundException("Dir not found: " + inputDir);
 		List<String> filesToRead = FileUtil.readLines(listFile);
 		for (String filePath : filesToRead) {
 			File fileToIndex;
@@ -657,7 +667,9 @@ public class Indexer {
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
+	 * @deprecated not really used, implement your own if required
 	 */
+	@Deprecated
 	public void indexFileList(List<File> list) throws UnsupportedEncodingException,
 			FileNotFoundException, IOException, Exception {
 		for (File fileToIndex : list) {
