@@ -211,6 +211,9 @@ class SpansNot extends BLSpans {
 	 */
 	@Override
 	public boolean skipTo(int doc) throws IOException {
+		if (!moreHitsInClause)
+			return false;
+
 		// If it's not already (past) there, skip clause
 		// to doc (or beyond if there's no hits in doc)
 		if (!clauseIterationStarted || clause.doc() < doc) {
