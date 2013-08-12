@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import nl.inl.blacklab.indexers.alto.AltoUtils;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
 import nl.inl.blacklab.queryParser.lucene.LuceneQueryParser;
@@ -81,8 +80,6 @@ import org.apache.lucene.util.Version;
  * Simple command-line querying tool for BlackLab indices.
  */
 public class QueryTool {
-	private static boolean IS_ALTO = false; // DEBUG
-
 	/**
 	 * Our output stream; System.out wrapped in a PrintStream to output Latin-1
 	 */
@@ -468,24 +465,17 @@ public class QueryTool {
 		// See if we can offer ContextQL or not (if the class is on the classpath)
 		determineContextQlAvailable();
 
-		// Special case for ALTO (to be generalized)
-		String propIsAlto = System.getProperty("IS_ALTO");
-		IS_ALTO = propIsAlto == null ? false : propIsAlto.equalsIgnoreCase("true");
-
 		BasicConfigurator.configure();
-		//BasicConfigurator.configure(new NullAppender()); // ignore logging for now
 
-		// Change output encoding?
-		if (args.length == 2) {
-			try {
-				// Yes
-				out = new PrintStream(System.out, true, encoding);
-				outprintln("Using output encoding " + encoding + "\n");
-			} catch (UnsupportedEncodingException e) {
-				// Nope; fall back to default
-				errprintln("Unknown encoding " + encoding + "; using default");
-				out = System.out;
-			}
+		// Use correct output encoding
+		try {
+			// Yes
+			out = new PrintStream(System.out, true, encoding);
+			outprintln("Using output encoding " + encoding + "\n");
+		} catch (UnsupportedEncodingException e) {
+			// Nope; fall back to default
+			errprintln("Unknown encoding " + encoding + "; using default");
+			out = System.out;
 		}
 
 		BufferedReader in;
@@ -1279,19 +1269,13 @@ public class QueryTool {
 		int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
 		for (Hit hit : window) {
 			Concordance conc = window.getConcordance(hit);
+
+			// Filter out the XML tags
 			String left, hitText, right;
-			if (IS_ALTO && !searcher.getMakeConcordancesFromForwardIndex()) {
-				// Special case: Alto input, concordances not made from forward index (old approach)
-				// Extract the contents from the CONTENT attributes
-				left = AltoUtils.getFromContentAttributes(conc.left) + " ";
-				hitText = AltoUtils.getFromContentAttributes(conc.hit);
-				right = " " + AltoUtils.getFromContentAttributes(conc.right);
-			} else {
-				// Regular case; just filter out the XML tags
-				left = XmlUtil.xmlToPlainText(conc.left);
-				hitText = XmlUtil.xmlToPlainText(conc.hit);
-				right = XmlUtil.xmlToPlainText(conc.right);
-			}
+			left = XmlUtil.xmlToPlainText(conc.left);
+			hitText = XmlUtil.xmlToPlainText(conc.hit);
+			right = XmlUtil.xmlToPlainText(conc.right);
+
 			toShow.add(new HitToShow(hit.doc, left, hitText, right));
 			if (leftContextMaxSize < left.length())
 				leftContextMaxSize = left.length();

@@ -18,17 +18,17 @@
  */
 package nl.inl.blacklab.index.complex;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A property in a complex field. See ComplexFieldImpl for details.
  *
  * This subclass adds the recycling of values per document. This makes sure that large documents can
  * still fit in memory.
+ *
+ * @deprecated instantiate ComplexFieldProperty directly instead
  */
+@Deprecated
 class ComplexFieldPropertyImplLargeDoc extends ComplexFieldPropertyImplSimple {
-	private Map<String, String> storedValues = new HashMap<String, String>();
 
 	/**
 	 * Construct a ComplexFieldProperty object with the default alternative
@@ -65,26 +65,4 @@ class ComplexFieldPropertyImplLargeDoc extends ComplexFieldPropertyImplSimple {
 			boolean includeOffsets) {
 		super(name, sensitivity, includeOffsets);
 	}
-
-	@Override
-	public void addValue(String value, int increment) {
-		// Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
-		String storedValue = storedValues.get(value);
-		if (storedValue == null) {
-			storedValues.put(value, value);
-			storedValue = value;
-		}
-		super.addValue(storedValue, increment);
-	}
-
-	@Override
-	public void clear() {
-		super.clear();
-
-		// We don't need to clear the cached values between documents, just re-use them all the
-		// time.
-		// NOTE: re-enabled clearing because this leaks memory for large data sets
-		storedValues.clear();
-	}
-
 }

@@ -39,6 +39,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * the XML.
  */
 public class HookableSaxHandler extends DefaultHandler {
+
 	/**
 	 * Describes a path in an XML document that can be evaluated while doing SAX parsing, and keeps
 	 * track of the current matching state(s).
@@ -105,7 +106,7 @@ public class HookableSaxHandler extends DefaultHandler {
 			 */
 			public boolean currentElementMatched() {
 				return succesfulMatches == elementNames.size() && failedMatches == 0
-						&& attributeName == null;
+						/*&& attributeName == null*/;
 			}
 
 			/**
@@ -113,22 +114,8 @@ public class HookableSaxHandler extends DefaultHandler {
 			 *
 			 * @return true iff one of our ancestors matched
 			 */
-			public boolean ancestorMatched() {
-				return succesfulMatches == elementNames.size() && attributeName == null;
-			}
-
-			/**
-			 * Check if the attribute we're currently handling matches the path expression.
-			 *
-			 * This of course (possibly) depends on the ancestor elements we've seen as well
-			 * as on the attribute name.
-			 *
-			 * @param attributeFound name of the attribute we're currently handling
-			 * @return true iff specified attribute is a match.
-			 */
-			public boolean attributeMatches(String attributeFound) {
-				return succesfulMatches == elementNames.size() && attributeName != null
-						&& attributeFound.equals(attributeName);
+			public boolean ancestorOrSelfMatched() {
+				return succesfulMatches == elementNames.size() /*&& attributeName == null*/;
 			}
 
 		}
@@ -138,9 +125,6 @@ public class HookableSaxHandler extends DefaultHandler {
 
 		/** The element names to match */
 		List<String> elementNames;
-
-		/** The attribute to match, if any */
-		String attributeName;
 
 		/** Current matching status */
 		private List<ExprMatcher> matchers = new ArrayList<ExprMatcher>();
@@ -176,30 +160,23 @@ public class HookableSaxHandler extends DefaultHandler {
 			String[] parts = expr.split("/");
 			int numberOfElementParts = parts.length;
 			if (parts[numberOfElementParts - 1].charAt(0) == '@') {
-				attributeName = parts[numberOfElementParts - 1].substring(1);
-				numberOfElementParts--;
+				throw new RuntimeException("Cannot match on attribute");
 			}
 			elementNames = new ArrayList<String>();
 			for (int i = 0; i < numberOfElementParts; i++) {
-				if (parts[i].charAt(0) == '@')
-					throw new RuntimeException("Attribute can only be last path part");
+				if (parts[i].charAt(0) == '@') {
+					//throw new RuntimeException("Attribute can only be last path part");
+					throw new RuntimeException("Cannot match on attribute");
+				}
 				elementNames.add(parts[i]);
 			}
 		}
 
 		@Override
 		public String toString() {
-			String attPart = "";
-			if (attributeName != null)
-				attPart = "/@" + attributeName;
-			return "/" + StringUtil.join(elementNames, "/") + attPart;
+			return "/" + StringUtil.join(elementNames, "/");
 		}
 
-		/**
-		 * A start tag was encountered. Signal our matchers and start
-		 * a new expression matcher if this element could be the start of a match.
-		 * @param localName name of the element starting here
-		 */
 		public void startElement(String localName) {
 			// Should we start a new matcher here?
 			if ((elementNames.size() == 0 || localName.equals(elementNames.get(0)))
@@ -216,10 +193,6 @@ public class HookableSaxHandler extends DefaultHandler {
 			depth++;
 		}
 
-		/**
-		 * An end tag was encountered. Signal our matchers and remove
-		 * any matchers that are done.
-		 */
 		public void endElement() {
 			depth--;
 
@@ -234,11 +207,6 @@ public class HookableSaxHandler extends DefaultHandler {
 			}
 		}
 
-		/**
-		 * Does the current element match the expression?
-		 *
-		 * @return true if it does, false if not
-		 */
 		public boolean currentElementMatches() {
 			for (ExprMatcher m: matchers) {
 				if (m.currentElementMatched())
@@ -247,39 +215,20 @@ public class HookableSaxHandler extends DefaultHandler {
 			return false;
 		}
 
-		/**
-		 * Did one of the current ancestors match the expression?
-		 *
-		 * @return true if it does, false if not
-		 */
-		public boolean ancestorMatched() {
+		public boolean ancestorOrSelfMatched() {
 			for (ExprMatcher m: matchers) {
-				if (m.ancestorMatched())
+				if (m.ancestorOrSelfMatched())
 					return true;
 			}
 			return false;
 		}
 
-		/**
-		 * Does the given attribute of the current element match the expression?
-		 *
-		 * @param name
-		 *            attribute name
-		 * @return true if it matches, false if not
-		 */
-		public boolean attributeMatches(String name) {
-			for (ExprMatcher m: matchers) {
-				if (m.attributeMatches(name))
-					return true;
-			}
-			return false;
-		}
 	}
 
 	/**
 	 * Represents a handler for when a SAX path condition matches
 	 */
-	public static class HookHandler {
+	public static class ElementHandler {
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
 			// To be implemented by child class
 		}
@@ -292,8 +241,14 @@ public class HookableSaxHandler extends DefaultHandler {
 			// To be implemented by child class
 		}
 
-		public void attribute(String name, String value) {
-			// To be implemented by child class
+		boolean insideElement = false;
+
+		public boolean insideElement() {
+			return insideElement;
+		}
+
+		public void setInsideElement(boolean b) {
+			insideElement = b;
 		}
 	}
 
@@ -301,9 +256,9 @@ public class HookableSaxHandler extends DefaultHandler {
 	 * A SAX parser hook handler that captures the element's character content
 	 * for processing in the endElement() method.
 	 */
-	public static class ContentCapturingHandler extends HookHandler {
+	public static class ContentCapturingHandler extends ElementHandler {
 
-		private StringBuilder elementContent;
+		private StringBuilder elementContent = new StringBuilder();
 
 		public String getElementContent() {
 			return elementContent.toString();
@@ -311,7 +266,7 @@ public class HookableSaxHandler extends DefaultHandler {
 
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
-			elementContent = new StringBuilder();
+			elementContent.setLength(0);
 		}
 
 		@Override
@@ -329,7 +284,7 @@ public class HookableSaxHandler extends DefaultHandler {
 		private SaxPathExpressionChecker expression;
 
 		/** The handler for this hook */
-		private HookHandler handler;
+		private ElementHandler handler;
 
 		/** Whether or not to call the handler for all descendants of the matched element */
 		private boolean callHandlerForDescendants;
@@ -341,7 +296,7 @@ public class HookableSaxHandler extends DefaultHandler {
 		 * @param callHandlerForDescendants whether or not to call handler for all descendants
 		 *   of a matched element
 		 */
-		public SaxParserHook(SaxPathExpressionChecker expression, HookHandler handler,
+		public SaxParserHook(SaxPathExpressionChecker expression, ElementHandler handler,
 				boolean callHandlerForDescendants) {
 			super();
 			this.expression = expression;
@@ -354,7 +309,7 @@ public class HookableSaxHandler extends DefaultHandler {
 		 */
 		private boolean shouldCallHandler() {
 			if (callHandlerForDescendants)
-				return expression.ancestorMatched();
+				return expression.ancestorOrSelfMatched();
 			return expression.currentElementMatches();
 		}
 
@@ -369,15 +324,8 @@ public class HookableSaxHandler extends DefaultHandler {
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
 			expression.startElement(localName);
 			if (shouldCallHandler()) {
+				handler.setInsideElement(true);
 				handler.startElement(uri, localName, qName, attributes);
-			}
-
-			for (int i = 0; i < attributes.getLength(); i++) {
-				String name = attributes.getLocalName(i);
-				if (expression.attributeMatches(name)) {
-					String value = attributes.getValue(i);
-					handler.attribute(name, value);
-				}
 			}
 		}
 
@@ -391,6 +339,7 @@ public class HookableSaxHandler extends DefaultHandler {
 		public void endElement(String uri, String localName, String qName) {
 			if (shouldCallHandler()) {
 				handler.endElement(uri, localName, qName);
+				handler.setInsideElement(false);
 			}
 			expression.endElement();
 		}
@@ -432,7 +381,7 @@ public class HookableSaxHandler extends DefaultHandler {
 	 * @param callHandlerForAllDescendants
 	 *            whether or not to call the handler for all descendants of the matched element
 	 */
-	private void addHook(SaxPathExpressionChecker condition, HookHandler handler,
+	private void addHook(SaxPathExpressionChecker condition, ElementHandler handler,
 			boolean callHandlerForAllDescendants) {
 		hooks.add(new SaxParserHook(condition, handler, callHandlerForAllDescendants));
 	}
@@ -447,7 +396,7 @@ public class HookableSaxHandler extends DefaultHandler {
 	 * @param callHandlerForAllDescendants
 	 *            whether or not to call the handler for all descendants of the matched element
 	 */
-	public void addHook(String condition, HookHandler handler, boolean callHandlerForAllDescendants) {
+	public void addHook(String condition, ElementHandler handler, boolean callHandlerForAllDescendants) {
 		addHook(new SaxPathExpressionChecker(condition), handler, callHandlerForAllDescendants);
 	}
 
@@ -461,7 +410,7 @@ public class HookableSaxHandler extends DefaultHandler {
 	 * @param handler
 	 *            what to do when the condition matches
 	 */
-	public void addHook(String condition, HookHandler handler) {
+	public void addHook(String condition, ElementHandler handler) {
 		addHook(condition, handler, false);
 	}
 
@@ -523,7 +472,7 @@ public class HookableSaxHandler extends DefaultHandler {
 				+ "<child><name>B</name><child att='456'><name>D</name></child></child>"
 				+ "</root>";
 		HookableSaxHandler hookableHandler = new HookableSaxHandler();
-		hookableHandler.addHook("/root/child", new HookHandler() {
+		hookableHandler.addHook("/root/child", new ElementHandler() {
 			@Override
 			public void startElement(String uri, String localName, String qName,
 					Attributes attributes) {
@@ -535,17 +484,10 @@ public class HookableSaxHandler extends DefaultHandler {
 				System.out.println("End of element: " + localName);
 			}
 		}, true);
-		hookableHandler.addHook("//child/name", new HookHandler() {
+		hookableHandler.addHook("//child/name", new ElementHandler() {
 			@Override
 			public void characters(char[] ch, int start, int length) {
 				System.out.println("Child name: " + new String(ch, start, length));
-			}
-		}, true);
-		hookableHandler.addHook("//@att", new HookHandler() {
-
-			@Override
-			public void attribute(String name, String value) {
-				System.out.println("Attribute: " + value);
 			}
 		}, true);
 
