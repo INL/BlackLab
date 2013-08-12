@@ -48,6 +48,7 @@ public class IndexTool {
 
 		int maxDocs = 0;
 		File indexDir = null, inputDir = null;
+		String glob = "*";
 		String docIndexerName = null;
 		boolean createNewIndex = false;
 		for (int i = 0; i < args.length; i++) {
@@ -81,7 +82,26 @@ public class IndexTool {
 						}
 						docIndexerName = arg;
 					} else {
-						inputDir = new File(arg);
+						if (arg.startsWith("\"") && arg.endsWith("\"")) {
+							// Trim off extra quotes needed to pass file glob to
+							// Windows JVM.
+							arg = arg.substring(1, arg.length() - 1);
+						}
+						if (arg.contains("*") || arg.contains("?")) {
+							// Contains file glob. Separate the two components.
+							int n = arg.lastIndexOf('/', arg.length() - 2);
+							if (n < 0)
+								n = arg.lastIndexOf('\\', arg.length() - 2);
+							if (n < 0) {
+								glob = arg;
+								inputDir = new File(".");
+							} else {
+								glob = arg.substring(n + 1);
+								inputDir = new File(arg.substring(0, n));
+							}
+						} else {
+							inputDir = new File(arg);
+						}
 					}
 				} else {
 					indexDir = new File(arg);
@@ -134,7 +154,7 @@ public class IndexTool {
 		if (maxDocs > 0)
 			indexer.setMaxDocs(maxDocs);
 		try {
-			indexer.indexDir(inputDir, true);
+			indexer.index(inputDir, glob, true);
 		} catch (Exception e) {
 			System.err.println("An error occurred, aborting indexing. Error details follow.");
 			e.printStackTrace();
