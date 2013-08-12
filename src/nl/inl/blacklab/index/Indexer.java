@@ -110,6 +110,8 @@ public class Indexer {
 	 */
 	private boolean createdNewIndex;
 
+	private Map<String, String> indexerParam;
+
 	/** If an error, like a parse error, should we
 	 *  try to continue indexing, or abort?
 	 *  @param b if true, continue; if false, abort
@@ -299,6 +301,12 @@ public class Indexer {
 		Constructor<? extends DocIndexer> constructor = docIndexerClass.getConstructor(
 				Indexer.class, String.class, Reader.class);
 		DocIndexer docIndexer = constructor.newInstance(this, documentName, reader);
+
+		// Set any parameters for this doc indexer
+		for (Map.Entry<String, String> e: indexerParam.entrySet()) {
+			docIndexer.setParameter(e.getKey(), e.getValue());
+		}
+
 		return docIndexer;
 	}
 
@@ -746,6 +754,10 @@ public class Indexer {
 
 	public File getIndexLocation() {
 		 return indexLocation;
+	}
+
+	public void setIndexerParam(Map<String, String> indexerParam) {
+		this.indexerParam = indexerParam;
 	}
 
 }

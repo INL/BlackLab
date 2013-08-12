@@ -51,9 +51,20 @@ public class IndexTool {
 		String glob = "*";
 		String docIndexerName = null;
 		boolean createNewIndex = false;
+		Map<String, String> indexerParam = new TreeMap<String, String>();
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i].trim();
-			if (arg.startsWith("--")) {
+			if (arg.startsWith("---")) {
+				String name = arg.substring(3);
+				if (i + 1 == args.length) {
+					System.err.println("Passing parameter to indexer: argument needed!");
+					usage();
+					return;
+				}
+				i++;
+				String value = args[i];
+				indexerParam.put(name, value);
+			} else if (arg.startsWith("--")) {
 				String name = arg.substring(2);
 				if (name.equals("maxDocs")) {
 					if (i + 1 == args.length) {
@@ -151,6 +162,7 @@ public class IndexTool {
 		}
 
 		Indexer indexer = new Indexer(indexDir, createNewIndex, docIndexerClass);
+		indexer.setIndexerParam(indexerParam);
 		if (maxDocs > 0)
 			indexer.setMaxDocs(maxDocs);
 		try {
@@ -169,8 +181,9 @@ public class IndexTool {
 		System.out
 				.println("Usage: java " + cl + " [options] <indexdir> <inputdir> <format>\n\n"
 						+ "Options:\n"
-						+ "--create        Don't append, create a new index\n"
-						+ "--maxdocs <n>   Stop after indexing <n> documents\n"
+						+ "--create           Don't append, create a new index\n"
+						+ "--maxdocs <n>      Stop after indexing <n> documents\n"
+						+ "---<name> <value>  Pass parameter to indexer\n"
 						+ "\n"
 						+ "Valid formats:");
 		for (String format: formats.keySet()) {
