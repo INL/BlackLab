@@ -96,11 +96,13 @@ public class TestForwardIndexDelete {
 		Utilities.removeBlackLabTestDirs();
 	}
 
+	/** Adding a document the exact length of a gap. */
 	@Test
 	public void testExactFit() {
 		Assert.assertEquals(2, addDocumentOfLength(14));
 	}
 
+	/** Adding a document smaller than a gap. */
 	@Test
 	public void testInexactFit() {
 		Assert.assertEquals(6, addDocumentOfLength(15)); // use gap 18, new entry, leave gap 3 at index 4
@@ -108,6 +110,7 @@ public class TestForwardIndexDelete {
 		Assert.assertEquals(7, addDocumentOfLength(1));  // use gap 10, new entry
 	}
 
+	/** Adding a document larger than any gap. */
 	@Test
 	public void testNoFit() {
 		Assert.assertEquals(6, addDocumentOfLength(19));  // no room, new entry
@@ -117,6 +120,7 @@ public class TestForwardIndexDelete {
 		Assert.assertEquals(7, addDocumentOfLength(1));   // no fit, new entry
 	}
 
+	/** Deleting a document causing a merge. */
 	@Test
 	public void testMerge() {
 		fi.deleteDocument(3); // delete doc len 16, merge with len 14 and 18 (total 48)
@@ -127,6 +131,7 @@ public class TestForwardIndexDelete {
 		Assert.assertTrue(addDocumentOfLength(10) < 5); // exact fit
 	}
 
+	/** Deleting a document at the end, causing a merge and a truncate. */
 	@Test
 	public void testDeleteAtEnd() {
 		fi.deleteDocument(5); // delete doc len 20 at end, merge with len 18 (total 38)
