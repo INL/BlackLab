@@ -682,4 +682,9 @@ class ForwardIndexImplV2 extends ForwardIndex {
 		return toc.get(fiid).length;
 	}
 
+	@Override
+	public void deleteDocument(int fiid) {
+		throw new UnsupportedOperationException();
+	}
+
 }

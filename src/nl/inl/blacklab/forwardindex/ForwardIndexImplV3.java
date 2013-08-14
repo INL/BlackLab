@@ -29,6 +29,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -95,6 +96,9 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	/** The table of contents (where documents start in the tokens file and how long they are) */
 	private List<TocEntry> toc;
 
+	/** Deleted TOC entries, sorted by size */
+	private List<TocEntry> deletedTocEntries;
+
 	/** The table of contents (TOC) file, docs.dat */
 	private File tocFile;
 
@@ -134,6 +138,9 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 	/** Cached fiid field */
 	private int[] cachedFiids;
+
+	/** Are we in index mode (i.e. writing to forward index) or not? */
+	private boolean indexMode;
 
 	@Override
 	public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
@@ -181,6 +188,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 
 		// Version check
+		this.indexMode = indexMode;
 		if (!indexMode || !create) {
 			// We're opening an existing forward index. Check version.
 			if (!VersionFile.isTypeVersion(dir, "fi", THIS_VERSION)) {
@@ -204,6 +212,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				termsFile.delete();
 		}
 		toc = new ArrayList<TocEntry>();
+		deletedTocEntries = new ArrayList<TocEntry>();
 		try {
 			boolean existing = false;
 			if (tocFile.exists()) {
@@ -217,7 +226,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				tokensFileChunks = null;
 				tocModified = true;
 			}
-			openTokensFile(indexMode);
+			openTokensFile();
 
 			// Tricks to speed up reading
 			if (existing && !create) {
@@ -260,7 +269,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
-	private void openTokensFile(boolean indexMode) throws FileNotFoundException {
+	private void openTokensFile() throws FileNotFoundException {
 		tokensFp = new RandomAccessFile(tokensFile, indexMode ? "rw" : "r");
 		tokensFileChannel = tokensFp.getChannel();
 	}
@@ -331,10 +340,13 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	 * Delete all content in the forward index
 	 */
 	private void clear() {
+		if (!indexMode)
+			throw new RuntimeException("Cannot clear, not in index mode");
+
 		// delete data files and empty TOC
 		try {
 			if (tokensFp == null)
-				openTokensFile(true);
+				openTokensFile();
 			tokensFp.setLength(0);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -342,6 +354,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		termsFile.delete();
 		tocFile.delete();
 		toc.clear();
+		deletedTocEntries.clear();
 		tokenFileEndPosition = 0;
 		tocModified = true;
 	}
@@ -351,6 +364,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	 */
 	private void readToc() {
 		toc.clear();
+		deletedTocEntries.clear();
 		try {
 			RandomAccessFile raf = new RandomAccessFile(tocFile, "r");
 			long fileSize = tocFile.length();
@@ -372,10 +386,14 @@ class ForwardIndexImplV3 extends ForwardIndex {
 					for (int i = 0; i < n; i++) {
 						TocEntry e = new TocEntry(offset[i], length[i], deleted[i] != 0);
 						toc.add(e);
+						if (e.deleted) {
+							deletedTocEntries.add(e);
+						}
 						long end = e.offset + e.length;
 						if (end > tokenFileEndPosition)
 							tokenFileEndPosition = end;
 					}
+					sortDeletedTocEntries();
 				} finally {
 					fc.close();
 				}
@@ -387,10 +405,23 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
+	private void sortDeletedTocEntries() {
+		Collections.sort(deletedTocEntries, new Comparator<TocEntry>() {
+			@Override
+			public int compare(TocEntry o1, TocEntry o2) {
+				return o1.length - o2.length;
+			}
+		});
+	}
+
 	/**
 	 * Write the table of contents to the file
 	 */
 	private void writeToc() {
+
+		if (!indexMode)
+			throw new RuntimeException("Cannot write ToC, not in index mode");
+
 		try {
 			int n = toc.size();
 			long[] offset = new long[n];
@@ -451,6 +482,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 	@Override
 	public synchronized int addDocument(List<String> content, List<Integer> posIncr) {
+		if (!indexMode)
+			throw new RuntimeException("Cannot add document, not in index mode");
 
 		// Calculate the total number of tokens we need to store, based on the number
 		// of positions (we store 1 token per position, regardless of whether we have
@@ -698,6 +731,17 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	@Override
 	public int getDocLength(int fiid) {
 		return toc.get(fiid).length;
+	}
+
+	@Override
+	public void deleteDocument(int fiid) {
+		if (!indexMode)
+			throw new RuntimeException("Cannot delete document, not in index mode");
+		TocEntry tocEntry = toc.get(fiid);
+		tocEntry.deleted = true;
+		deletedTocEntries.add(tocEntry);
+		sortDeletedTocEntries();
+		tocModified = true;
 	}
 
 }

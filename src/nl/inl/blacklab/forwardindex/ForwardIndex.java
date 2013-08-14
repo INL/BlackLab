@@ -72,6 +72,13 @@ public abstract class ForwardIndex {
 	public abstract int addDocument(List<String> content);
 
 	/**
+	 * Delete a document from the forward index
+	 *
+	 * @param fiid id of the document to delete
+	 */
+	public abstract void deleteDocument(int fiid);
+
+	/**
 	 * Retrieve one or more substrings from the specified content.
 	 *
 	 * This is more efficient than retrieving the whole content, or retrieving parts in separate

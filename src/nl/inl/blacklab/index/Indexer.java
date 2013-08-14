@@ -40,6 +40,7 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeReader;
@@ -49,8 +50,14 @@ import nl.inl.util.VersionFile;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
@@ -159,7 +166,8 @@ public class Indexer {
 	 * @deprecated use version without contents field name
 	 */
 	@Deprecated
-	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass, String contentsFieldName) throws IOException {
+	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass,
+			String contentsFieldName) throws IOException {
 		this(directory, create, docIndexerClass);
 	}
 
@@ -173,7 +181,8 @@ public class Indexer {
 	 * @param docIndexerClass how to index the files
 	 * @throws IOException
 	 */
-	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass) throws IOException {
+	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
+			throws IOException {
 		this.docIndexerClass = docIndexerClass;
 		this.createdNewIndex = create;
 
@@ -238,7 +247,8 @@ public class Indexer {
 	 */
 	public void close() throws CorruptIndexException, IOException {
 
-		// Signal to the listener that we're done indexing and closing the index (which might take a while)
+		// Signal to the listener that we're done indexing and closing the index (which might take a
+		// while)
 		getListener().indexEnd();
 		getListener().closeStart();
 
@@ -316,8 +326,7 @@ public class Indexer {
 	 * @return the DocIndexer
 	 * @throws Exception if the DocIndexer could not be instantiated for some reason
 	 */
-	protected DocIndexer createDocIndexer(String documentName, Reader reader)
-			throws Exception {
+	protected DocIndexer createDocIndexer(String documentName, Reader reader) throws Exception {
 		// Instantiate our DocIndexer class
 		Constructor<? extends DocIndexer> constructor = docIndexerClass.getConstructor(
 				Indexer.class, String.class, Reader.class);
@@ -398,12 +407,13 @@ public class Indexer {
 	 */
 	private ForwardIndex getForwardIndex(String fieldName) {
 		ForwardIndex forwardIndex = forwardIndices.get(fieldName);
-		if (forwardIndex == null)  {
+		if (forwardIndex == null) {
 			File dir = new File(indexLocation, "fi_" + fieldName);
 
 			// Special case for old BL index with "forward" as the name of the single forward index
 			// (this should be removed eventually)
-			if (!createdNewIndex && fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME) && !dir.exists()) {
+			if (!createdNewIndex && fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME)
+					&& !dir.exists()) {
 				// Default forward index used to be called "forward". Look for that instead.
 				File alt = new File(indexLocation, "forward");
 				if (alt.exists())
@@ -525,7 +535,7 @@ public class Indexer {
 		if (!dir.isDirectory())
 			throw new IOException("Specified input dir is not a directory: " + dir);
 		Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
-		for (File fileToIndex : dir.listFiles()) {
+		for (File fileToIndex: dir.listFiles()) {
 			boolean indexThis = fileToIndex.isDirectory();
 			if (fileToIndex.isFile()) {
 				// Regular file; does it match our glob expression?
@@ -673,7 +683,7 @@ public class Indexer {
 		if (inputDir != null && !inputDir.isDirectory())
 			throw new FileNotFoundException("Dir not found: " + inputDir);
 		List<String> filesToRead = FileUtil.readLines(listFile);
-		for (String filePath : filesToRead) {
+		for (String filePath: filesToRead) {
 			File fileToIndex;
 			if (inputDir == null)
 				fileToIndex = new File(filePath);
@@ -701,7 +711,7 @@ public class Indexer {
 	@Deprecated
 	public void indexFileList(List<File> list) throws UnsupportedEncodingException,
 			FileNotFoundException, IOException, Exception {
-		for (File fileToIndex : list) {
+		for (File fileToIndex: list) {
 			index(fileToIndex);
 			if (!continueIndexing())
 				break;
@@ -754,8 +764,8 @@ public class Indexer {
 		if (create)
 			VersionFile.write(indexDir, "blacklab", "2");
 		else {
-			if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1") &&
-				!VersionFile.isTypeVersion(indexDir, "blacklab", "2")) {
+			if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1")
+					&& !VersionFile.isTypeVersion(indexDir, "blacklab", "2")) {
 				throw new RuntimeException("BlackLab index has wrong type or version! "
 						+ VersionFile.report(indexDir));
 			}
@@ -767,7 +777,8 @@ public class Indexer {
 	ContentStore getContentStore(String fieldName) {
 		ContentStore contentStore = contentStores.get(fieldName);
 		if (contentStore == null) {
-			contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_" + fieldName), createdNewIndex);
+			contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_" + fieldName),
+					createdNewIndex);
 			contentStores.put(fieldName, contentStore);
 		}
 		return contentStore;
@@ -778,7 +789,7 @@ public class Indexer {
 	 * @return the index directory
 	 */
 	public File getIndexLocation() {
-		 return indexLocation;
+		return indexLocation;
 	}
 
 	/**
@@ -787,6 +798,65 @@ public class Indexer {
 	 */
 	public void setIndexerParam(Map<String, String> indexerParam) {
 		this.indexerParam = indexerParam;
+	}
+
+	/** Deletes documents matching a query from the BlackLab index.
+	 *
+	 * This deletes the documents from the Lucene index, the forward indices and the content store(s).
+	 * @param q the query
+	 */
+	public void delete(Query q) {
+		try {
+			IndexReader reader = IndexReader.open(writer, false);
+			try {
+				// Execute the query, iterate over the docs and delete from FI and CS.
+				IndexSearcher s = new IndexSearcher(reader);
+				try {
+					Weight w = s.createNormalizedWeight(q);
+					Scorer sc = w.scorer(reader, true, false);
+					// Iterate over matching docs
+					while (true) {
+						int docId;
+						try {
+							docId = sc.nextDoc();
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+						if (docId == DocIdSetIterator.NO_MORE_DOCS)
+							break;
+						Document d = reader.document(docId);
+
+						// Delete this document in all forward indices
+						for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
+							String fieldName = e.getKey();
+							ForwardIndex fi = e.getValue();
+							int fiid = Integer.parseInt(d.get(ComplexFieldUtil
+									.forwardIndexIdField(fieldName)));
+							fi.deleteDocument(fiid);
+						}
+
+						// Delete this document in all content stores
+						for (Map.Entry<String, ContentStore> e: contentStores.entrySet()) {
+							String fieldName = e.getKey();
+							ContentStore cs = e.getValue();
+							int cid = Integer.parseInt(d.get(ComplexFieldUtil
+									.contentIdField((fieldName))));
+							cs.delete(cid);
+						}
+					}
+				} finally {
+					s.close();
+				}
+			} finally {
+				reader.close();
+			}
+
+			// Finally, delete the documents from the Lucene index
+			writer.deleteDocuments(q);
+
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }
