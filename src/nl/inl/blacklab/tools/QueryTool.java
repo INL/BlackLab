@@ -59,17 +59,16 @@ import nl.inl.blacklab.search.grouping.RandomAccessGroup;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.util.FileUtil;
 import nl.inl.util.IoUtil;
+import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
@@ -659,14 +658,12 @@ public class QueryTool {
 					outprintln("Filter cleared.");
 				} else {
 					String filterExpr = cmd.substring(7);
-					QueryParser qp = new QueryParser(Version.LUCENE_36, "title",
-							new StandardAnalyzer(Version.LUCENE_36));
 					try {
-						filterQuery = qp.parse(filterExpr);
+						filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, "title");
+						outprintln("Filter created: " + filterQuery);
 					} catch (org.apache.lucene.queryParser.ParseException e) {
 						errprintln("Error parsing filter query.");
 					}
-					outprintln("Filter created: " + filterQuery);
 				}
 			} else if (lcased.startsWith("sensitive ")) {
 				String v = lcased.substring(10);

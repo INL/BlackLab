@@ -6,14 +6,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.index.TermPositionVector;
+import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.highlight.QueryTermExtractor;
 import org.apache.lucene.search.highlight.WeightedTerm;
+import org.apache.lucene.util.Version;
 
 public class LuceneUtil {
 
@@ -33,7 +37,7 @@ public class LuceneUtil {
 			doFuzzy = false;
 			similarity = 0.75f;
 		}
-	
+
 		FuzzyQuery fq = new FuzzyQuery(term, similarity);
 		// TermQuery fq = new TermQuery(term);
 		try {
@@ -49,6 +53,20 @@ public class LuceneUtil {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * Parse a query in the Lucene query language format (QueryParser supplied with Lucene).
+	 *
+	 * @param luceneQuery the query string
+	 * @param defaultField default search field
+	 * @return the query
+	 * @throws ParseException on syntax error
+	 */
+	public static Query parseLuceneQuery(String luceneQuery, String defaultField) throws ParseException {
+		QueryParser qp = new QueryParser(Version.LUCENE_36, defaultField,
+				new StandardAnalyzer(Version.LUCENE_36));
+		return qp.parse(luceneQuery);
 	}
 
 	/**
@@ -76,10 +94,10 @@ public class LuceneUtil {
 			if (termPositionVector == null) {
 				throw new RuntimeException("Field " + luceneName + " has no TermPositionVector");
 			}
-	
+
 			// Vraag het array van terms (voor reconstructie text)
 			String[] docTerms = termPositionVector.getTerms();
-	
+
 			// Verzamel concordantiewoorden uit term vector
 			String[] concordanceWords = new String[end - start + 1];
 			int numFound = 0;
@@ -137,10 +155,10 @@ public class LuceneUtil {
 			if (termPositionVector == null) {
 				throw new RuntimeException("Field " + luceneName + " has no TermPositionVector");
 			}
-	
+
 			// Get the array of terms (for reconstructing text)
 			String[] docTerms = termPositionVector.getTerms();
-	
+
 			List<String[]> results = new ArrayList<String[]>(start.length);
 			for (int i = 0; i < start.length; i++) {
 				// Gather concordance words from term vector
