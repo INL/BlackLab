@@ -603,7 +603,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			int tokenIdsIndex = 0;
 			Iterator<String> contentIt = content.iterator();
 			Iterator<Integer> posIncrIt = posIncr == null ? null : posIncr.iterator();
-			int emptyStringTokenId = terms.indexOf("");
+			int emptyStringTokenId = posIncrIt != null ? terms.indexOf("") : -1;
 			while (contentIt.hasNext()) {
 				String token = contentIt.next();
 				int pi = posIncrIt == null ? 1 : posIncrIt.next();
@@ -691,7 +691,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 					throw new RuntimeException("Illegal values, start = " + start[i] + ", end = "
 							+ end[i]);
 				}
-				if (end[i] >= e.length) // Can happen while making KWICs because we don't know the
+				if (end[i] > e.length) // Can happen while making KWICs because we don't know the
 										// doc length until here
 					end[i] = e.length;
 				if (start[i] > e.length || end[i] > e.length) {
@@ -746,7 +746,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 					}
 				} else {
 					if (inMem) {
-						// The whole file is available in memory (or mem-mapped)
+						// The file is mem-mapped.
 						// Position us at the correct place in the file.
 						ib.position(start[i]);
 					} else {
