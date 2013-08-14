@@ -56,17 +56,20 @@ public class HitPropertyDocumentDecade extends HitProperty {
 	public int compare(Object a, Object b) {
 		try {
 			Document d = reader.document(((Hit)a).doc);
-			String strYear = d.get(fieldName);
-			if (strYear == null || strYear.length() == 0) // sort missing year at the end
-				return 1;
-			int aYear = Integer.parseInt(strYear);
-			aYear -= aYear % 10;
-
+			String strYearA = d.get(fieldName);
+			if (strYearA == null)
+				strYearA = "";
 			d = reader.document(((Hit)b).doc);
-			strYear = d.get(fieldName);
-			if (strYear == null || strYear.length() == 0) // sort missing year at the end
+			String strYearB = d.get(fieldName);
+			if (strYearB == null)
+				strYearB = "";
+			if (strYearA.length() == 0) // sort missing year at the end
+				return strYearB.length() == 0 ? 0 : 1;
+			if (strYearB.length() == 0) // sort missing year at the end
 				return -1;
-			int bYear = Integer.parseInt(strYear);
+			int aYear = Integer.parseInt(strYearA);
+			aYear -= aYear % 10;
+			int bYear = Integer.parseInt(strYearB);
 			bYear -= bYear % 10;
 
 			return aYear - bYear;

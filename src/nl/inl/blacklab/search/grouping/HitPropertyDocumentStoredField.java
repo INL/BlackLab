@@ -61,13 +61,12 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 			String va = d.get(fieldName);
 			if (va == null)
 				va = "";
-			if (va.length() == 0) // sort empty string at the end
-				return 1;
-
 			d = reader.document(((Hit)b).doc);
 			String vb = d.get(fieldName);
 			if (vb == null)
 				vb = "";
+			if (va.length() == 0) // sort empty string at the end
+				return vb.length() == 0 ? 0 : 1;
 			if (vb.length() == 0) // sort empty string at the end
 				return -1;
 

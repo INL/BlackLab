@@ -44,16 +44,19 @@ public class DocPropertyDecade extends DocProperty {
 	 */
 	@Override
 	public int compare(DocResult a, DocResult b) {
-		String strYear = a.getDocument().get(fieldName);
-		if (strYear == null || strYear.length() == 0) // sort missing year at the end
-			return 1;
-		int year1 = Integer.parseInt(strYear);
-		year1 -= year1 % 10;
-
-		strYear = b.getDocument().get(fieldName);
-		if (strYear == null || strYear.length() == 0) // sort missing year at the end
+		String strYearA = a.getDocument().get(fieldName);
+		if (strYearA == null)
+			strYearA = "";
+		String strYearB = b.getDocument().get(fieldName);
+		if (strYearB == null)
+			strYearB = "";
+		if (strYearA.length() == 0) // sort missing year at the end
+			return strYearB.length() == 0 ? 0 : 1;
+		if (strYearB.length() == 0) // sort missing year at the end
 			return -1;
-		int year2 = Integer.parseInt(strYear);
+		int year1 = Integer.parseInt(strYearB);
+		year1 -= year1 % 10;
+		int year2 = Integer.parseInt(strYearB);
 		year2 -= year2 % 10;
 
 		return year1 - year2;
