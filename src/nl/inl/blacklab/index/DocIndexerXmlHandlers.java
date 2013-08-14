@@ -100,48 +100,24 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 					Store.YES, true).setIntValue(contentId));
 
 			// Make sure all the properties have an equal number of values.
-//			try {
-				// See what property has the highest position
-				// (in practice, only starttags and endtags should be able to have
-				//  a position one higher than the rest)
-				int lastValuePos = 0;
-				for (ComplexFieldProperty prop: contentsField.getProperties()) {
-					if (prop.lastValuePosition() > lastValuePos)
-						lastValuePos = prop.lastValuePosition();
-				}
-				// Add empty values to all lagging properties
-				for (ComplexFieldProperty prop: contentsField.getProperties()) {
-					while (prop.lastValuePosition() < lastValuePos) {
-						prop.addValue("");
-						if (prop == contentsField.getMainProperty()) {
-							contentsField.addStartChar(getContentPosition());
-							contentsField.addEndChar(getContentPosition());
-						}
+			// See what property has the highest position
+			// (in practice, only starttags and endtags should be able to have
+			//  a position one higher than the rest)
+			int lastValuePos = 0;
+			for (ComplexFieldProperty prop: contentsField.getProperties()) {
+				if (prop.lastValuePosition() > lastValuePos)
+					lastValuePos = prop.lastValuePosition();
+			}
+			// Add empty values to all lagging properties
+			for (ComplexFieldProperty prop: contentsField.getProperties()) {
+				while (prop.lastValuePosition() < lastValuePos) {
+					prop.addValue("");
+					if (prop == contentsField.getMainProperty()) {
+						contentsField.addStartChar(getContentPosition());
+						contentsField.addEndChar(getContentPosition());
 					}
 				}
-
-//				int lastStartTagPos = propStartTag.lastValuePosition();
-//				int lastEndTagPos = propEndTag.lastValuePosition();
-//				int currentPos = contentsField.getMainProperty().lastValuePosition();
-//				boolean startTagsAhead = lastStartTagPos > currentPos;
-//				boolean endTagsAhead = lastEndTagPos > currentPos;
-//				if (startTagsAhead || endTagsAhead) {
-//					// Start and/or end tag(s) were found after the last token. They were
-//					// added to the "next token", so in order to maintain synch, we have to
-//					// add dummy values for all the other properties now.
-//					contentsField.addStartChar(getContentPosition());
-//					contentsField.addEndChar(getContentPosition());
-//					contentsField.addValue("");
-//					if (!startTagsAhead)
-//						propStartTag.addValue("");
-//					if (!endTagsAhead)
-//						propEndTag.addValue("");
-//					propPunct.addValue("");
-//				}
-
-//			} catch (Exception e) {
-//				throw ExUtil.wrapRuntimeException(e);
-//			}
+			}
 
 			// Store the different properties of the complex contents field that were gathered in
 			// lists while parsing.
