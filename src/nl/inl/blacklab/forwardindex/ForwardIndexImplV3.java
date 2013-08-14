@@ -96,7 +96,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	/** The table of contents (where documents start in the tokens file and how long they are) */
 	private List<TocEntry> toc;
 
-	/** Deleted TOC entries, sorted by size */
+	/** Deleted TOC entries. Always sorted by size. */
 	private List<TocEntry> deletedTocEntries;
 
 	/** The table of contents (TOC) file, docs.dat */
@@ -284,14 +284,19 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		tokensFileChunks = new ArrayList<ByteBuffer>();
 		tokensFileChunkOffsetBytes = new ArrayList<Long>();
 		long mappedBytes = 0;
-		long tokenFileEndBytes = getTokenFileEndPosition() * SIZEOF_INT;
-		Collections.sort(toc);
+		long tokenFileEndBytes = tokenFileEndPosition * SIZEOF_INT;
 		while (mappedBytes < tokenFileEndBytes) {
 			// Find the last TOC entry start point that's also in the previous mapping
 			// (or right the first byte after the previous mapping).
 			long startOfNextMappingBytes = 0;
 
-			// Look for the largest entryOffset that's smaller than mappedBytes.
+			// Look for the largest entryOffset that's no larger than mappedBytes.
+			TocEntry mapNextChunkFrom = null;
+			for (TocEntry e: toc) {
+				if (e.offset <= mappedBytes && (mapNextChunkFrom == null || e.offset > mapNextChunkFrom.offset))
+					mapNextChunkFrom = e;
+			}
+
 			// Uses binary search.
 			int min = 0, max = toc.size();
 			while (max - min > 1) {
@@ -326,14 +331,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			tokensFileChunkOffsetBytes.add(startOfNextMappingBytes);
 			mappedBytes = startOfNextMappingBytes + sizeBytes;
 		}
-	}
-
-	/**
-	 * Returns the total number of tokens stored in the file
-	 * @return the number of tokens
-	 */
-	private long getTokenFileEndPosition() {
-		return tokenFileEndPosition;
 	}
 
 	/**
@@ -469,8 +466,11 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				terms.write(termsFile);
 			}
 
-			if (tokensFileChannel != null)
+			if (tokensFileChannel != null) {
+				// Cannot truncate if still mapped; cannot force demapping.
+				//tokensFileChannel.truncate(tokenFileEndPosition * SIZEOF_INT);
 				tokensFileChannel.close();
+			}
 
 			if (tokensFp != null)
 				tokensFp.close();
@@ -478,6 +478,34 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
+	}
+
+	/**
+	 * Find the best-fitting deleted entry for the specified length
+	 * @param length length the entry should at least be
+	 * @return the best-fitting entry
+	 */
+	TocEntry findBestFittingGap(int length) {
+		int n = deletedTocEntries.size();
+
+		// Are there any fitting gaps?
+		if (n == 0 || deletedTocEntries.get(n - 1).length < length)
+			return null;
+
+		// Does the smallest gap fit?
+		if (deletedTocEntries.get(0).length >= length)
+			return deletedTocEntries.get(0);
+
+		// Do a binary search to find the best fit
+		int doesntFit = 0, bestFitSoFar = n - 1;
+		while (bestFitSoFar - doesntFit > 1) {
+			int newTry = doesntFit + bestFitSoFar / 2;
+			if (deletedTocEntries.get(newTry).length < length)
+				doesntFit = newTry;
+			else
+				bestFitSoFar = newTry;
+		}
+		return deletedTocEntries.get(bestFitSoFar);
 	}
 
 	@Override
@@ -500,39 +528,76 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			}
 		}
 
+		// Decide where we're going to store this document,
+		// and update ToC
+		TocEntry gap = findBestFittingGap(numberOfTokens);
+		long newDocumentOffset;
+		int mapReserve;
+		tocModified = true;
+		boolean addNewEntry = true;
+		int newDocumentFiid = -1;
+		if (gap == null) {
+			// No fitting gap; just write it at the end
+			newDocumentOffset = tokenFileEndPosition;
+			mapReserve = WRITE_MAP_RESERVE; // if writing at end, reserve more space
+		}
+		else {
+			// Found a fitting gap; write it there
+			newDocumentOffset = gap.offset;
+			mapReserve = 0; // don't reserve extra write space, not needed
+			if (gap.length == numberOfTokens) {
+				// Exact fit; delete from free list and re-use entry
+				deletedTocEntries.remove(gap);
+				gap.deleted = false;
+				addNewEntry = false;
+				newDocumentFiid = toc.indexOf(gap);
+			} else {
+				// Not an exact fit; calculate remaining gap and re-sort free list
+				gap.offset += numberOfTokens;
+				gap.length -= numberOfTokens;
+				sortDeletedTocEntries();
+			}
+		}
+		// Do we need to create a new entry for this document in the ToC?
+		// (always, unless we found an exact-fitting gap)
+		if (addNewEntry) {
+			// See if there's an unused entry
+			TocEntry smallestFreeEntry = deletedTocEntries.size() == 0 ? null : deletedTocEntries.get(0);
+			if (smallestFreeEntry != null && smallestFreeEntry.length == 0) {
+				// Yes; re-use
+				deletedTocEntries.remove(0);
+				smallestFreeEntry.offset = newDocumentOffset;
+				smallestFreeEntry.length = numberOfTokens;
+				smallestFreeEntry.deleted = false;
+				newDocumentFiid = toc.indexOf(smallestFreeEntry);
+			} else {
+				// No; make new entry
+				toc.add(new TocEntry(newDocumentOffset, numberOfTokens, false));
+				newDocumentFiid = toc.size() - 1;
+			}
+		}
+
 		try {
-			if (writeBuffer == null) {
-				// Map writeBuffer
-
-				writeBufOffset = getTokenFileEndPosition();
-
+			// Can we use the current write buffer for this write?
+			long writeBufEnd = writeBuffer == null ? 0 : writeBufOffset + writeBuffer.limit();
+			if (writeBuffer == null || writeBufOffset > newDocumentOffset || writeBufEnd < newDocumentOffset + numberOfTokens) {
+				// No, remap it
+				writeBufOffset = newDocumentOffset;
 				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-						writeBufOffset * SIZEOF_INT, (numberOfTokens + WRITE_MAP_RESERVE)
+						writeBufOffset * SIZEOF_INT, (numberOfTokens + mapReserve)
 								* SIZEOF_INT);
 				writeBuffer = byteBuffer.asIntBuffer();
 			}
 
-			// Make entry
-			long entryOffset = writeBufOffset + writeBuffer.position();
-			TocEntry e = new TocEntry(entryOffset, numberOfTokens, false);
-			toc.add(e);
-			long end = e.offset + e.length;
+			// Set the correct start position
+			writeBuffer.position((int)(newDocumentOffset - writeBufOffset));
+
+			// Did we increase the length of the tokens file?
+			long end = newDocumentOffset + numberOfTokens;
 			if (end > tokenFileEndPosition)
 				tokenFileEndPosition = end;
-			tocModified = true;
 
-			if (writeBuffer.remaining() < numberOfTokens) {
-				// Remap writeBuffer so we have space available
-				writeBufOffset += writeBuffer.position();
-
-				// NOTE: We reserve more space so we don't have to remap for each document, saving
-				// time
-				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-						writeBufOffset * SIZEOF_INT, (numberOfTokens + WRITE_MAP_RESERVE)
-								* SIZEOF_INT);
-				writeBuffer = byteBuffer.asIntBuffer();
-			}
-
+			// Write the token ids
 			Iterator<String> contentIt = content.iterator();
 			Iterator<Integer> posIncrIt = posIncr == null ? null : posIncr.iterator();
 			while (contentIt.hasNext()) {
@@ -550,7 +615,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				writeBuffer.put(terms.indexOf(token));
 			}
 
-			return toc.size() - 1;
+			return newDocumentFiid;
 		} catch (IOException e1) {
 			throw new RuntimeException(e1);
 		}
@@ -739,9 +804,49 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			throw new RuntimeException("Cannot delete document, not in index mode");
 		TocEntry tocEntry = toc.get(fiid);
 		tocEntry.deleted = true;
-		deletedTocEntries.add(tocEntry);
-		sortDeletedTocEntries();
+		deletedTocEntries.add(tocEntry); // NOTE: mergeAdjacentDeletedEntries takes care of re-sorting
+		mergeAdjacentDeletedEntries();
 		tocModified = true;
+	}
+
+	/**
+	 * Check if we can merge two (or more) deleted entries to create a
+	 * larger gap, and do so.
+	 *
+	 * Also takes care of truncating the file if there are deleted entries
+	 * at the end.
+	 */
+	private void mergeAdjacentDeletedEntries() {
+		// Sort by offset, so we can find adjacent entries
+		Collections.sort(deletedTocEntries);
+
+		// Find and merge adjacent entries
+		TocEntry prev = deletedTocEntries.get(0);
+		for (int i = 1; i < deletedTocEntries.size(); i++) {
+			TocEntry current = deletedTocEntries.get(i);
+			if (current.offset == prev.offset + prev.length) {
+				// Found two adjacent deleted entries. Merge them.
+				current.offset = prev.offset;
+				current.length += prev.length;
+
+				// length == 0 means a toc entry is unused
+				// we can't delete toc entries because it messes up
+				// the fiids. We will reuse them in addDocument().
+				prev.length = 0;
+			}
+			prev = current;
+		}
+
+		TocEntry lastEntry = deletedTocEntries.get(deletedTocEntries.size() - 1);
+		if (lastEntry.offset + lastEntry.length >= tokenFileEndPosition) {
+			// Free entry at the end of the token file. Remove the entry and
+			// make the tokens file shorter.
+			tokenFileEndPosition -= lastEntry.length;
+			lastEntry.length = 0;
+		}
+
+		// Re-sort on gap length
+		sortDeletedTocEntries();
 	}
 
 }

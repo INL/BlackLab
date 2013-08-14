@@ -27,8 +27,6 @@ import org.junit.Test;
 public class TestForwardIndexPosIncr {
 	private ForwardIndex fi;
 
-	private File dir;
-
 	// The tokens to add
 	String[][] str = { { "How", "much", "many", "lots", "wood" } };
 
@@ -41,7 +39,7 @@ public class TestForwardIndexPosIncr {
 		Utilities.removeBlackLabTestDirs();
 
 		// Create new test dir
-		dir = Utilities.createBlackLabTestDir("ForwardIndexPosIncr");
+		File dir = Utilities.createBlackLabTestDir("ForwardIndexPosIncr");
 
 		fi = new ForwardIndexImplV2(dir, true, null, true);
 		try {

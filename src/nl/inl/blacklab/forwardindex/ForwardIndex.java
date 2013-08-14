@@ -98,7 +98,7 @@ public abstract class ForwardIndex {
 	 * @param start
 	 *            the starting points of the substrings (in words)
 	 * @param end
-	 *            the end points of the substrings (in words)
+	 *            the end points (i.e. first token beyond) of the substrings (in words)
 	 * @return the parts
 	 * @deprecated use retrievePartsInt and getTerms().get(id)
 	 */
@@ -117,7 +117,7 @@ public abstract class ForwardIndex {
 	 * @param start
 	 *            the starting points of the parts to retrieve (in words)
 	 * @param end
-	 *            the end points of the parts to retrieve (in words)
+	 *            the end points (i.e. first token beyond) of the parts to retrieve (in words)
 	 * @param sensitive
 	 *            whether to get the case-sensitive sort order or not
 	 * @return the parts
@@ -146,7 +146,7 @@ public abstract class ForwardIndex {
 	 * @param start
 	 *            the starting points of the parts to retrieve (in words)
 	 * @param end
-	 *            the end points of the parts to retrieve (in words)
+	 *            the end points (i.e. first token beyond) of the parts to retrieve (in words)
 	 * @return the parts
 	 */
 	public abstract List<int[]> retrievePartsInt(int fiid, int[] start, int[] end);
