@@ -22,6 +22,7 @@ import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.util.StringUtil;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -149,7 +150,7 @@ public class DocIndexerTeiP4 extends DocIndexerXmlHandlers {
 				propPartOfSpeech.addValue(pos);
 
 				// Add punctuation
-				propPunct.addValue(consumeCharacterContent());
+				propPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
 			}
 
 			@Override
