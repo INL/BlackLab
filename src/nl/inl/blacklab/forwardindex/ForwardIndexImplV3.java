@@ -598,8 +598,12 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				tokenFileEndPosition = end;
 
 			// Write the token ids
+			// (first fill the buffer, then write the buffer in 1 call)
+			int [] tokenIds = new int[numberOfTokens];
+			int tokenIdsIndex = 0;
 			Iterator<String> contentIt = content.iterator();
 			Iterator<Integer> posIncrIt = posIncr == null ? null : posIncr.iterator();
+			int emptyStringTokenId = terms.indexOf("");
 			while (contentIt.hasNext()) {
 				String token = contentIt.next();
 				int pi = posIncrIt == null ? 1 : posIncrIt.next();
@@ -608,12 +612,17 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				if (pi > 1) {
 					// Skipped a few tokens; add empty tokens for these positions
 					for (int i = 0; i < pi - 1; i++) {
-						writeBuffer.put(terms.indexOf(""));
+						tokenIds[tokenIdsIndex] = emptyStringTokenId;
+						tokenIdsIndex++;
 					}
 				}
 
-				writeBuffer.put(terms.indexOf(token));
+				tokenIds[tokenIdsIndex] = terms.indexOf(token);
+				tokenIdsIndex++;
 			}
+			if (tokenIdsIndex != numberOfTokens)
+				throw new RuntimeException("tokenIdsIndex != numberOfTokens (" + tokenIdsIndex + " != " + numberOfTokens + ")");
+			writeBuffer.put(tokenIds);
 
 			return newDocumentFiid;
 		} catch (IOException e1) {
@@ -755,9 +764,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 						buffer.position(0);
 						ib = buffer.asIntBuffer();
 					}
-					for (int j = 0; j < snippetLength; j++) {
-						snippet[j] = ib.get();
-					}
+					ib.get(snippet);
 				}
 				result.add(snippet);
 			}
