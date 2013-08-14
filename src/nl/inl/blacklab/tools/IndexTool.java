@@ -16,7 +16,11 @@
 package nl.inl.blacklab.tools;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import nl.inl.blacklab.index.DocIndexer;
@@ -27,6 +31,10 @@ import nl.inl.blacklab.indexers.DocIndexerPageXml;
 import nl.inl.blacklab.indexers.DocIndexerTeiP4;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 import nl.inl.util.LogUtil;
+import nl.inl.util.LuceneUtil;
+
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.queryParser.ParseException;
 
 /**
  * The indexer class and main program for the ANW corpus.
@@ -51,7 +59,11 @@ public class IndexTool {
 		String glob = "*";
 		String docIndexerName = null;
 		boolean createNewIndex = false;
+		String command = "";
+		Set<String> commands = new HashSet<String>(Arrays.asList("add", "create", "delete"));
 		Map<String, String> indexerParam = new TreeMap<String, String>();
+		boolean addingFiles = true;
+		String deleteQuery = null;
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i].trim();
 			if (arg.startsWith("---")) {
@@ -81,41 +93,51 @@ public class IndexTool {
 						return;
 					}
 				} else if (name.equals("create")) {
+					System.err.println("Option --create is deprecated; use create command (--help for details)");
 					createNewIndex = true;
+				} else if (name.equals("help")) {
+					usage();
+					return;
+				} else {
+					System.err.println("Unknown option --" + name);
+					usage();
+					return;
 				}
 			} else {
-				if (indexDir != null) {
-					if (inputDir != null) {
-						if (docIndexerName != null) {
-							System.err.println("Too many arguments!");
-							usage();
-							return;
-						}
-						docIndexerName = arg;
-					} else {
-						if (arg.startsWith("\"") && arg.endsWith("\"")) {
-							// Trim off extra quotes needed to pass file glob to
-							// Windows JVM.
-							arg = arg.substring(1, arg.length() - 1);
-						}
-						if (arg.contains("*") || arg.contains("?") || new File(arg).isFile()) {
-							// Contains file glob. Separate the two components.
-							int n = arg.lastIndexOf('/', arg.length() - 2);
-							if (n < 0)
-								n = arg.lastIndexOf('\\', arg.length() - 2);
-							if (n < 0) {
-								glob = arg;
-								inputDir = new File(".");
-							} else {
-								glob = arg.substring(n + 1);
-								inputDir = new File(arg.substring(0, n));
-							}
-						} else {
-							inputDir = new File(arg);
-						}
-					}
-				} else {
+				if (command.length() == 0 && commands.contains(arg)) {
+					command = arg;
+					addingFiles = !command.equals("delete");
+				} else if (indexDir == null) {
 					indexDir = new File(arg);
+				} else if (addingFiles && inputDir == null) {
+					if (arg.startsWith("\"") && arg.endsWith("\"")) {
+						// Trim off extra quotes needed to pass file glob to
+						// Windows JVM.
+						arg = arg.substring(1, arg.length() - 1);
+					}
+					if (arg.contains("*") || arg.contains("?") || new File(arg).isFile()) {
+						// Contains file glob. Separate the two components.
+						int n = arg.lastIndexOf('/', arg.length() - 2);
+						if (n < 0)
+							n = arg.lastIndexOf('\\', arg.length() - 2);
+						if (n < 0) {
+							glob = arg;
+							inputDir = new File(".");
+						} else {
+							glob = arg.substring(n + 1);
+							inputDir = new File(arg.substring(0, n));
+						}
+					} else {
+						inputDir = new File(arg);
+					}
+				} else if (addingFiles && docIndexerName == null) {
+					docIndexerName = arg;
+				} else if (command.equals("delete") && deleteQuery == null) {
+					deleteQuery = arg;
+				} else {
+					System.err.println("Too many arguments!");
+					usage();
+					return;
 				}
 			}
 		}
@@ -124,6 +146,17 @@ public class IndexTool {
 			usage();
 			return;
 		}
+
+		if (command.length() == 0) {
+			System.err.println("No command specified; assuming \"add\" (--help for details)");
+			command = "add";
+		}
+		if (command.equals("delete")) {
+			commandDelete(indexDir, deleteQuery);
+			return;
+		}
+		createNewIndex |= command.equals("create");
+
 		if (inputDir == null) {
 			System.err.println("No input dir given.");
 			usage();
@@ -176,19 +209,36 @@ public class IndexTool {
 		}
 	}
 
+	private static void commandDelete(File indexDir, String deleteQuery) throws IOException,
+			ParseException, CorruptIndexException {
+		if (deleteQuery == null) {
+			System.err.println("No delete query given.");
+			usage();
+			return;
+		}
+		Indexer indexer = new Indexer(indexDir, false, null);
+		try {
+			System.out.println("Doing delete: " + deleteQuery);
+			indexer.delete(LuceneUtil.parseLuceneQuery(deleteQuery, null));
+		} finally {
+			indexer.close();
+		}
+	}
+
 	private static void usage() {
-		String cl = IndexTool.class.getName();
 		System.out
-				.println("Usage: java " + cl + " [options] <indexdir> <inputdir> <format>\n\n"
+				.println("Usage:\n"
+						+ "  IndexTool {add|create} [options] <indexdir> <inputdir> <format>\n"
+						+ "  IndexTool delete <indexdir> <filterQuery>\n"
+						+ "\n"
 						+ "Options:\n"
-						+ "--create           Don't append, create a new index\n"
-						+ "--maxdocs <n>      Stop after indexing <n> documents\n"
-						+ "---<name> <value>  Pass parameter to indexer\n"
+						+ "  --maxdocs <n>      Stop after indexing <n> documents\n"
+						+ "  ---<name> <value>  Pass parameter to DocIndexer class\n"
 						+ "\n"
 						+ "Valid formats:");
 		for (String format: formats.keySet()) {
-			System.out.println("- " + format);
+			System.out.println("  " + format);
 		}
-		System.out.println("- (or specify your own DocIndexer class)");
+		System.out.println("  (or specify your own DocIndexer class)");
 	}
 }
