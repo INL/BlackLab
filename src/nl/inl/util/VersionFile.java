@@ -182,4 +182,9 @@ public class VersionFile {
 		return vf.toString();
 	}
 
+	public static boolean exists(File indexDir) {
+		VersionFile vf = new VersionFile(indexDir);
+		return vf.exists();
+	}
+
 }

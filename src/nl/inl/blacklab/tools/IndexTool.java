@@ -30,6 +30,7 @@ import nl.inl.blacklab.indexers.DocIndexerFolia;
 import nl.inl.blacklab.indexers.DocIndexerPageXml;
 import nl.inl.blacklab.indexers.DocIndexerTeiP4;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 
@@ -216,12 +217,12 @@ public class IndexTool {
 			usage();
 			return;
 		}
-		Indexer indexer = new Indexer(indexDir, false, null);
+		Searcher searcher = Searcher.openForWriting(indexDir, false);
 		try {
 			System.out.println("Doing delete: " + deleteQuery);
-			indexer.delete(LuceneUtil.parseLuceneQuery(deleteQuery, null));
+			searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, null));
 		} finally {
-			indexer.close();
+			searcher.close();
 		}
 	}
 

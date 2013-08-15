@@ -26,9 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.text.Collator;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,53 +35,24 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeReader;
-import nl.inl.util.Utilities;
-import nl.inl.util.VersionFile;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.LockObtainFailedException;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
  */
 public class Indexer {
 	/** Our index */
-	private IndexWriter writer;
-
-	/**
-	 * ForwardIndices allow us to quickly find what token occurs at a specific position. This speeds
-	 * up grouping and sorting. By default, there will be one forward index, on the "contents"
-	 * field.
-	 */
-	private Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
-
-	/** ContentStores are where we store the full XML of (part of) the document) */
-	private Map<String, ContentStore> contentStores = new HashMap<String, ContentStore>();
+	Searcher searcher;
 
 	/** Stop after indexing this number of docs. -1 if we shouldn't stop. */
 	private int maxDocs = -1;
-
-	/** The location of the index */
-	private File indexLocation;
 
 	/**
 	 * Where to report indexing progress.
@@ -106,20 +75,9 @@ public class Indexer {
 	 */
 	private Class<? extends DocIndexer> docIndexerClass;
 
-	/**
-	 * The collator to use for sorting (passed to ForwardIndex to keep a sorted list of terms).
-	 * Defaults to English collator.
-	 */
-	static Collator collator = Collator.getInstance(new Locale("en", "GB"));
-
 	/** If an error, like a parse error, should we
 	 *  try to continue indexing, or abort? */
 	private boolean continueAfterInputError = true;
-
-	/**
-	 * Did we create a new index (true) or are we appending to an existing one (false)?
-	 */
-	private boolean createdNewIndex;
 
 	/**
 	 * Parameters we should pass to our DocIndexers upon instantiation.
@@ -138,9 +96,11 @@ public class Indexer {
 	 * Set the collator to use for sorting (passed to ForwardIndex to keep a sorted list of terms).
 	 * Defaults to English collator.
 	 * @param collator the collator
+	 * @deprecated use Searcher.setDefaultCollator()
 	 */
+	@Deprecated
 	static public void setCollator(Collator collator) {
-		Indexer.collator = collator;
+		Searcher.setDefaultCollator(collator);
 	}
 
 	/**
@@ -184,10 +144,8 @@ public class Indexer {
 	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
 			throws IOException {
 		this.docIndexerClass = docIndexerClass;
-		this.createdNewIndex = create;
 
-		writer = openIndexWriter(directory, create);
-		indexLocation = directory;
+		searcher = Searcher.openForWriting(directory, create);
 	}
 
 	/**
@@ -252,18 +210,7 @@ public class Indexer {
 		getListener().indexEnd();
 		getListener().closeStart();
 
-		// Close our forward indices
-		for (ForwardIndex fi: forwardIndices.values()) {
-			fi.close();
-		}
-
-		// Close our content stores
-		for (ContentStore cs: contentStores.values()) {
-			cs.close();
-		}
-
-		// Close the Lucene IndexWriter
-		writer.close();
+		searcher.close();
 
 		// Signal that we're completely done now
 		getListener().closeEnd();
@@ -349,7 +296,7 @@ public class Indexer {
 	 * @throws IOException
 	 */
 	public void add(Document document) throws CorruptIndexException, IOException {
-		writer.addDocument(document /* , analyzer */);
+		searcher.getWriter().addDocument(document);
 		getListener().luceneDocumentAdded();
 	}
 
@@ -402,33 +349,11 @@ public class Indexer {
 	 * and if we're in "create index" mode, may create a new forward index.
 	 * Otherwise, looks for an existing forward index and opens that.
 	 *
-	 * @param fieldName the field for which we want the forward index
+	 * @param fieldPropName the field for which we want the forward index
 	 * @return the ForwardIndex if found/created, or null otherwise
 	 */
-	private ForwardIndex getForwardIndex(String fieldName) {
-		ForwardIndex forwardIndex = forwardIndices.get(fieldName);
-		if (forwardIndex == null) {
-			File dir = new File(indexLocation, "fi_" + fieldName);
-
-			// Special case for old BL index with "forward" as the name of the single forward index
-			// (this should be removed eventually)
-			if (!createdNewIndex && fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME)
-					&& !dir.exists()) {
-				// Default forward index used to be called "forward". Look for that instead.
-				File alt = new File(indexLocation, "forward");
-				if (alt.exists())
-					dir = alt;
-			}
-
-			if (!createdNewIndex && !dir.exists()) {
-				// Append mode, and forward index doesn't exist
-				return null;
-			}
-			// Open or create forward index
-			forwardIndex = ForwardIndex.open(dir, true, collator, createdNewIndex);
-			forwardIndices.put(fieldName, forwardIndex);
-		}
-		return forwardIndex;
+	ForwardIndex getForwardIndex(String fieldPropName) {
+		return searcher.getForwardIndex(fieldPropName);
 	}
 
 	/**
@@ -739,7 +664,7 @@ public class Indexer {
 		try {
 			if (maxDocs < 0)
 				return maxDocs;
-			return Math.max(0, maxDocs - writer.numDocs());
+			return Math.max(0, maxDocs - searcher.getWriter().numDocs());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -751,37 +676,8 @@ public class Indexer {
 	 * 2. Sort index added to forward index; multiple forward indexes possible
 	 */
 
-	private static IndexWriter openIndexWriter(File indexDir, boolean create) throws IOException,
-			CorruptIndexException, LockObtainFailedException {
-		if (!indexDir.exists() && create) {
-			indexDir.mkdir();
-		}
-		Analyzer analyzer = new BLDefaultAnalyzer(); // (Analyzer)analyzerClass.newInstance();
-		Directory indexLuceneDir = FSDirectory.open(indexDir);
-		IndexWriterConfig config = Utilities.getIndexWriterConfig(analyzer, create);
-		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
-
-		if (create)
-			VersionFile.write(indexDir, "blacklab", "2");
-		else {
-			if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1")
-					&& !VersionFile.isTypeVersion(indexDir, "blacklab", "2")) {
-				throw new RuntimeException("BlackLab index has wrong type or version! "
-						+ VersionFile.report(indexDir));
-			}
-		}
-
-		return writer;
-	}
-
 	ContentStore getContentStore(String fieldName) {
-		ContentStore contentStore = contentStores.get(fieldName);
-		if (contentStore == null) {
-			contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_" + fieldName),
-					createdNewIndex);
-			contentStores.put(fieldName, contentStore);
-		}
-		return contentStore;
+		return searcher.getContentStore(fieldName);
 	}
 
 	/**
@@ -789,7 +685,7 @@ public class Indexer {
 	 * @return the index directory
 	 */
 	public File getIndexLocation() {
-		return indexLocation;
+		return searcher.getIndexDirectory();
 	}
 
 	/**
@@ -798,65 +694,6 @@ public class Indexer {
 	 */
 	public void setIndexerParam(Map<String, String> indexerParam) {
 		this.indexerParam = indexerParam;
-	}
-
-	/** Deletes documents matching a query from the BlackLab index.
-	 *
-	 * This deletes the documents from the Lucene index, the forward indices and the content store(s).
-	 * @param q the query
-	 */
-	public void delete(Query q) {
-		try {
-			IndexReader reader = IndexReader.open(writer, false);
-			try {
-				// Execute the query, iterate over the docs and delete from FI and CS.
-				IndexSearcher s = new IndexSearcher(reader);
-				try {
-					Weight w = s.createNormalizedWeight(q);
-					Scorer sc = w.scorer(reader, true, false);
-					// Iterate over matching docs
-					while (true) {
-						int docId;
-						try {
-							docId = sc.nextDoc();
-						} catch (IOException e) {
-							throw new RuntimeException(e);
-						}
-						if (docId == DocIdSetIterator.NO_MORE_DOCS)
-							break;
-						Document d = reader.document(docId);
-
-						// Delete this document in all forward indices
-						for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
-							String fieldName = e.getKey();
-							ForwardIndex fi = e.getValue();
-							int fiid = Integer.parseInt(d.get(ComplexFieldUtil
-									.forwardIndexIdField(fieldName)));
-							fi.deleteDocument(fiid);
-						}
-
-						// Delete this document in all content stores
-						for (Map.Entry<String, ContentStore> e: contentStores.entrySet()) {
-							String fieldName = e.getKey();
-							ContentStore cs = e.getValue();
-							int cid = Integer.parseInt(d.get(ComplexFieldUtil
-									.contentIdField((fieldName))));
-							cs.delete(cid);
-						}
-					}
-				} finally {
-					s.close();
-				}
-			} finally {
-				reader.close();
-			}
-
-			// Finally, delete the documents from the Lucene index
-			writer.deleteDocuments(q);
-
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 }
