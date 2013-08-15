@@ -114,7 +114,7 @@ public class Indexer {
 
 	/** If an error, like a parse error, should we
 	 *  try to continue indexing, or abort? */
-	private boolean continueAfterInputError = false;
+	private boolean continueAfterInputError = true;
 
 	/**
 	 * Did we create a new index (true) or are we appending to an existing one (false)?
