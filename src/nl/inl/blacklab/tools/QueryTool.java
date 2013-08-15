@@ -695,8 +695,10 @@ public class QueryTool {
 				String[] parts = lcased.substring(9).split("\\s+", 2);
 				groupBy(parts[0], parts.length > 1 ? parts[1] : null);
 			} else if (lcased.startsWith("group ")) {
-				if (lcased.substring(6).matches("\\d+"))
+				if (lcased.substring(6).matches("\\d+")) {
+					firstResult = 0; // reset for paging through group
 					changeShowSettings(lcased);
+				}
 				else {
 					String[] parts = lcased.substring(6).split("\\s+", 2);
 					groupBy(parts[0], parts.length > 1 ? parts[1] : null);
