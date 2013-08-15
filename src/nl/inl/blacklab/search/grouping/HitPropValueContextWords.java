@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.grouping;
 
-import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ArrayUtil;
 
 public class HitPropValueContextWords extends HitPropValueContext {
@@ -10,8 +10,8 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
 	boolean sensitive;
 
-	public HitPropValueContextWords(Terms terms, int[] value, boolean sensitive) {
-		super(terms);
+	public HitPropValueContextWords(Searcher searcher, String fieldPropName, int[] value, boolean sensitive) {
+		super(searcher, fieldPropName);
 		this.valueTokenId = value;
 		this.sensitive = sensitive;
 		valueSortOrder = new int[value.length];
@@ -46,14 +46,15 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		return b.toString();
 	}
 
-	public static HitPropValue deserialize(Terms terms, String info) {
-		String[] strIds = info.split(",,");
-		boolean sensitive = strIds[0].equals("1");
-		int[] ids = new int[strIds.length - 1];
-		for (int i = 1; i < strIds.length; i++) {
-			ids[i - 1] = Integer.parseInt(strIds[i]);
+	public static HitPropValue deserialize(Searcher searcher, String info) {
+		String[] strIds = info.split(SERIALIZATION_SEPARATOR);
+		String fieldPropName = strIds[0];
+		boolean sensitive = strIds[1].equals("1");
+		int[] ids = new int[strIds.length - 2];
+		for (int i = 2; i < strIds.length; i++) {
+			ids[i - 2] = Integer.parseInt(strIds[i]);
 		}
-		return new HitPropValueContextWords(terms, ids, sensitive);
+		return new HitPropValueContextWords(searcher, fieldPropName, ids, sensitive);
 	}
 
 	@Override
@@ -61,9 +62,9 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		StringBuilder b = new StringBuilder();
 		for (int v: valueTokenId) {
 			if (b.length() > 0)
-				b.append(",,");
+				b.append(SERIALIZATION_SEPARATOR);
 			b.append(v);
 		}
-		return "cws:" + (sensitive ? "1" : "0") + ",," + b.toString();
+		return "cws:" + fieldPropName + SERIALIZATION_SEPARATOR + (sensitive ? "1" : "0") + SERIALIZATION_SEPARATOR + b.toString();
 	}
 }

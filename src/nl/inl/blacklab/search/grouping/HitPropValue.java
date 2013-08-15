@@ -4,7 +4,7 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.StringUtil;
 
 /**
@@ -15,6 +15,8 @@ import nl.inl.util.StringUtil;
  * sorting of large results sets)
  */
 public abstract class HitPropValue implements Comparable<Object> {
+
+	final static String SERIALIZATION_SEPARATOR = "|";
 
 	/**
 	 * Collator to use for string comparison while sorting/grouping
@@ -35,7 +37,7 @@ public abstract class HitPropValue implements Comparable<Object> {
 	@Override
 	public abstract String toString();
 
-	public static HitPropValue deserialize(Terms terms, String serialized) {
+	public static HitPropValue deserialize(Searcher searcher, String serialized) {
 
 		String[] parts = serialized.split(":", 2);
 		String type = parts[0], info = parts[1];
@@ -43,15 +45,15 @@ public abstract class HitPropValue implements Comparable<Object> {
 		int typeNum = types.indexOf(type);
 		switch (typeNum) {
 		case 0:
-			return HitPropValueContextWord.deserialize(terms, info);
+			return HitPropValueContextWord.deserialize(searcher, info);
 		case 1:
-			return HitPropValueContextWords.deserialize(terms, info);
+			return HitPropValueContextWords.deserialize(searcher, info);
 		case 2:
 			return HitPropValueDecade.deserialize(info);
 		case 3:
 			return HitPropValueInt.deserialize(info);
 		case 4:
-			return HitPropValueMultiple.deserialize(terms, info);
+			return HitPropValueMultiple.deserialize(searcher, info);
 		case 5:
 			return HitPropValueString.deserialize(info);
 		}

@@ -35,6 +35,8 @@ public class HitPropertyWordRight extends HitProperty {
 
 	private boolean sensitive;
 
+	private Searcher searcher;
+
 	public HitPropertyWordRight(Searcher searcher, String field, String property) {
 		this(searcher, field, property, searcher.isDefaultSearchCaseSensitive());
 	}
@@ -49,6 +51,7 @@ public class HitPropertyWordRight extends HitProperty {
 
 	public HitPropertyWordRight(Searcher searcher, String field, String property, boolean sensitive) {
 		super();
+		this.searcher = searcher;
 		if (property == null || property.length() == 0)
 			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
 		else
@@ -72,9 +75,9 @@ public class HitPropertyWordRight extends HitProperty {
 		}
 
 		if (result.context.length <= result.contextRightStart)
-			return new HitPropValueContextWord(terms, -1, sensitive);
+			return new HitPropValueContextWord(searcher, fieldName, -1, sensitive);
 		int contextStart = result.contextLength * contextIndices.get(0);
-		return new HitPropValueContextWord(terms, result.context[contextStart + result.contextRightStart], sensitive);
+		return new HitPropValueContextWord(searcher, fieldName, result.context[contextStart + result.contextRightStart], sensitive);
 	}
 
 	@Override

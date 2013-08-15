@@ -35,6 +35,8 @@ public class HitPropertyRightContext extends HitProperty {
 
 	private boolean sensitive;
 
+	private Searcher searcher;
+
 	public HitPropertyRightContext(Searcher searcher, String field, String property) {
 		this(searcher, field, property, searcher.isDefaultSearchCaseSensitive());
 	}
@@ -49,6 +51,7 @@ public class HitPropertyRightContext extends HitProperty {
 
 	public HitPropertyRightContext(Searcher searcher, String field, String property, boolean sensitive) {
 		super();
+		this.searcher = searcher;
 		if (property == null || property.length() == 0)
 			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
 		else
@@ -74,11 +77,11 @@ public class HitPropertyRightContext extends HitProperty {
 		// Copy the desired part of the context
 		int n = result.context.length - result.contextRightStart;
 		if (n <= 0)
-			return new HitPropValueContextWords(terms, new int[0], sensitive);
+			return new HitPropValueContextWords(searcher, fieldName, new int[0], sensitive);
 		int[] dest = new int[n];
 		int contextStart = result.contextLength * contextIndices.get(0);
 		System.arraycopy(result.context, contextStart + result.contextRightStart, dest, 0, n);
-		return new HitPropValueContextWords(terms, dest, sensitive);
+		return new HitPropValueContextWords(searcher, fieldName, dest, sensitive);
 	}
 
 	@Override
