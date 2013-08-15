@@ -49,42 +49,42 @@ import org.apache.lucene.index.CorruptIndexException;
  */
 public class Indexer {
 	/** Our index */
-	Searcher searcher;
+	protected Searcher searcher;
 
 	/** Stop after indexing this number of docs. -1 if we shouldn't stop. */
-	private int maxDocs = -1;
+	protected int maxDocs = -1;
 
 	/**
 	 * Where to report indexing progress.
 	 */
-	private IndexListener listener = null;
+	protected IndexListener listener = null;
 
 	/**
 	 * Have we reported our creation and the start of indexing to the listener yet?
 	 */
-	private boolean createAndIndexStartReported = false;
+	protected boolean createAndIndexStartReported = false;
 
 	/**
 	 * When we encounter a zipfile, do we descend into it like it was a directory?
 	 */
-	private boolean processZipFilesAsDirectories = true;
+	protected boolean processZipFilesAsDirectories = true;
 
 	/**
 	 * The class to instantiate for indexing documents. This class must be able to
 	 * deal with the file format of the input files.
 	 */
-	private Class<? extends DocIndexer> docIndexerClass;
+	protected Class<? extends DocIndexer> docIndexerClass;
 
-	/** If an error, like a parse error, should we
+	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort? */
-	private boolean continueAfterInputError = true;
+	protected boolean continueAfterInputError = true;
 
 	/**
 	 * Parameters we should pass to our DocIndexers upon instantiation.
 	 */
-	private Map<String, String> indexerParam;
+	protected Map<String, String> indexerParam;
 
-	/** If an error, like a parse error, should we
+	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort?
 	 *  @param b if true, continue; if false, abort
 	 */
@@ -182,7 +182,7 @@ public class Indexer {
 	 * @param msg log message
 	 * @param e the exception
 	 */
-	private void log(String msg, Exception e) {
+	protected void log(String msg, Exception e) {
 		// @@@ TODO write to file. log4j?
 		e.printStackTrace();
 		System.err.println(msg);
@@ -223,46 +223,6 @@ public class Indexer {
 	 */
 	public void setDocIndexer(Class<? extends DocIndexer> docIndexerClass) {
 		this.docIndexerClass = docIndexerClass;
-	}
-
-	/**
-	 * Index a document from a Reader, using the specified type of DocIndexer
-	 *
-	 * @param documentName
-	 *            some (preferably unique) name for this document (for example, the file
-	 *            name or path)
-	 * @param reader
-	 *            where to index from
-	 * @throws Exception
-	 */
-	public void index(String documentName, Reader reader) throws Exception {
-		try {
-			getListener().fileStarted(documentName);
-
-			DocIndexer docIndexer = createDocIndexer(documentName, reader);
-
-			docIndexer.index();
-			getListener().fileDone(documentName);
-		} catch (InputFormatException e) {
-			if (continueAfterInputError) {
-				System.err.println("Parsing " + documentName + " failed:");
-				e.printStackTrace();
-				System.err.println("(continuing indexing)");
-			} else {
-				// Don't continue; re-throw the exception so we eventually abort
-				System.err.println("Input error while processing " + documentName);
-				throw e;
-			}
-		} catch (Exception e) {
-			if (continueAfterInputError) {
-				System.err.println("Parsing " + documentName + " failed:");
-				e.printStackTrace();
-				System.err.println("(continuing indexing)");
-			} else {
-				System.err.println("Exception while processing " + documentName);
-				throw e;
-			}
-		}
 	}
 
 	/**
@@ -308,7 +268,7 @@ public class Indexer {
 	 * @return the id assigned to the content
 	 */
 	public int addToForwardIndex(String fieldName, List<String> tokens) {
-		ForwardIndex forwardIndex = getForwardIndex(fieldName);
+		ForwardIndex forwardIndex = searcher.getForwardIndex(fieldName);
 		if (forwardIndex == null)
 			throw new RuntimeException("No forward index for field " + fieldName);
 
@@ -335,7 +295,7 @@ public class Indexer {
 	 * @return the id assigned to the content
 	 */
 	public int addToForwardIndex(String fieldName, List<String> tokens, List<Integer> posIncr) {
-		ForwardIndex forwardIndex = getForwardIndex(fieldName);
+		ForwardIndex forwardIndex = searcher.getForwardIndex(fieldName);
 		if (forwardIndex == null)
 			throw new RuntimeException("No forward index for field " + fieldName);
 
@@ -343,21 +303,49 @@ public class Indexer {
 	}
 
 	/**
-	 * Tries to get the ForwardIndex object for the specified fieldname.
+	 * Index a document from a Reader, using the specified type of DocIndexer
 	 *
-	 * Looks for an already-opened forward index first. If none is found,
-	 * and if we're in "create index" mode, may create a new forward index.
-	 * Otherwise, looks for an existing forward index and opens that.
-	 *
-	 * @param fieldPropName the field for which we want the forward index
-	 * @return the ForwardIndex if found/created, or null otherwise
+	 * @param documentName
+	 *            some (preferably unique) name for this document (for example, the file
+	 *            name or path)
+	 * @param reader
+	 *            where to index from
+	 * @throws Exception
 	 */
-	ForwardIndex getForwardIndex(String fieldPropName) {
-		return searcher.getForwardIndex(fieldPropName);
+	public void index(String documentName, Reader reader) throws Exception {
+		try {
+			getListener().fileStarted(documentName);
+
+			DocIndexer docIndexer = createDocIndexer(documentName, reader);
+
+			docIndexer.index();
+			getListener().fileDone(documentName);
+		} catch (InputFormatException e) {
+			if (continueAfterInputError) {
+				System.err.println("Parsing " + documentName + " failed:");
+				e.printStackTrace();
+				System.err.println("(continuing indexing)");
+			} else {
+				// Don't continue; re-throw the exception so we eventually abort
+				System.err.println("Input error while processing " + documentName);
+				throw e;
+			}
+		} catch (Exception e) {
+			if (continueAfterInputError) {
+				System.err.println("Parsing " + documentName + " failed:");
+				e.printStackTrace();
+				System.err.println("(continuing indexing)");
+			} else {
+				System.err.println("Exception while processing " + documentName);
+				throw e;
+			}
+		}
 	}
 
 	/**
 	 * Index the file or directory specified.
+	 *
+	 * By default, recurses into subdirectories.
 	 *
 	 * @param file
 	 *            the input file or directory
@@ -401,48 +389,7 @@ public class Indexer {
 	}
 
 	/**
-	 * Index a specific file using the specified type of DocIndexer
-	 *
-	 * @param file
-	 *            file to index
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws Exception
-	 * @throws IOException
-	 */
-	public void indexFile(File file) throws UnsupportedEncodingException, FileNotFoundException,
-			Exception, IOException {
-		FileInputStream is = new FileInputStream(file);
-		try {
-			indexInputStream(file.getName(), is);
-		} finally {
-			is.close();
-		}
-	}
-
-	/**
-	 * Index from an InputStream
-	 *
-	 * @param name
-	 *            name for the InputStream (e.g. name of the file)
-	 * @param is
-	 *            the stream
-	 * @throws IOException
-	 * @throws Exception
-	 */
-	private void indexInputStream(String name, InputStream is) throws IOException, Exception {
-		Reader reader = new BufferedReader(new UnicodeReader(is, "utf-8"));
-		try {
-			index(name, reader);
-		} finally {
-			reader.close();
-		}
-	}
-
-	/**
-	 * Index an entire directory using the specified type of DocIndexer.
-	 *
-	 * DOES recurse into subdirectories.
+	 * Index a group of files in a directory.
 	 *
 	 * @param dir
 	 *            directory to index
@@ -477,20 +424,42 @@ public class Indexer {
 	}
 
 	/**
-	 * Index an entire directory using the specified type of DocIndexer.
+	 * Index a specific file using the specified type of DocIndexer
 	 *
-	 * DOES recurse into subdirectories.
-	 *
-	 * @param dir
-	 *            directory to index
+	 * @param file
+	 *            file to index
 	 * @throws UnsupportedEncodingException
 	 * @throws FileNotFoundException
 	 * @throws Exception
 	 * @throws IOException
 	 */
-	public void indexDir(File dir) throws UnsupportedEncodingException, FileNotFoundException,
-			IOException, Exception {
-		index(dir, "*", true);
+	private void indexFile(File file) throws UnsupportedEncodingException, FileNotFoundException,
+			Exception, IOException {
+		FileInputStream is = new FileInputStream(file);
+		try {
+			indexInputStream(file.getName(), is);
+		} finally {
+			is.close();
+		}
+	}
+
+	/**
+	 * Index from an InputStream
+	 *
+	 * @param name
+	 *            name for the InputStream (e.g. name of the file)
+	 * @param is
+	 *            the stream
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	private void indexInputStream(String name, InputStream is) throws IOException, Exception {
+		Reader reader = new BufferedReader(new UnicodeReader(is, "utf-8"));
+		try {
+			index(name, reader);
+		} finally {
+			reader.close();
+		}
 	}
 
 	/**
@@ -505,20 +474,9 @@ public class Indexer {
 	 * @throws Exception
 	 * @throws IOException
 	 */
-	public void indexDir(File dir, boolean recurseSubdirs) throws UnsupportedEncodingException,
+	private void indexDir(File dir, boolean recurseSubdirs) throws UnsupportedEncodingException,
 			FileNotFoundException, IOException, Exception {
 		index(dir, "*", recurseSubdirs);
-	}
-
-	/**
-	 * Should we skip the specified file because it is a special OS file?
-	 *
-	 * @param file
-	 *            the file
-	 * @return true if we should skip it, false otherwise
-	 */
-	protected boolean isSpecialOperatingSystemFile(File file) {
-		return file.getName().equals("Thumbs.db");
 	}
 
 	/**
@@ -644,6 +602,17 @@ public class Indexer {
 	}
 
 	/**
+	 * Should we skip the specified file because it is a special OS file?
+	 *
+	 * @param file
+	 *            the file
+	 * @return true if we should skip it, false otherwise
+	 */
+	protected boolean isSpecialOperatingSystemFile(File file) {
+		return file.getName().equals("Thumbs.db");
+	}
+
+	/**
 	 * Should we continue indexing or stop (because maxDocs has been reached)?
 	 *
 	 * @return true if we should continue, false if not
@@ -676,7 +645,7 @@ public class Indexer {
 	 * 2. Sort index added to forward index; multiple forward indexes possible
 	 */
 
-	ContentStore getContentStore(String fieldName) {
+	public ContentStore getContentStore(String fieldName) {
 		return searcher.getContentStore(fieldName);
 	}
 
