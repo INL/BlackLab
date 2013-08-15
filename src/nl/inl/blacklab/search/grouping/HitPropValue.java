@@ -16,7 +16,7 @@ import nl.inl.util.StringUtil;
  */
 public abstract class HitPropValue implements Comparable<Object> {
 
-	final static String SERIALIZATION_SEPARATOR = "|";
+	final static String SERIALIZATION_SEPARATOR = ",,";
 
 	/**
 	 * Collator to use for string comparison while sorting/grouping
