@@ -392,19 +392,21 @@ public class IndexStructure {
 
 		// Detect index naming scheme
 		// NOTE: defaults to most-used value for new indices!
-		boolean isOldNamingScheme = false, avoidSpecialChars = false;
+		//boolean isOldNamingScheme = false, avoidSpecialChars = false;
+		boolean foundPercent = false, foundNoSpecialCharIndicator = false;
 		for (int i = 0; i < fis.size(); i++) {
 			FieldInfo fi = fis.fieldInfo(i);
 			String name = fi.name;
-			if (name.contains("__")) {
-				isOldNamingScheme = true;
+			if (name.contains("%")) {
+				foundPercent = true;
 			}
 			if (name.contains("_PR_")) {
-				isOldNamingScheme = false;
-				avoidSpecialChars = true;
+				foundNoSpecialCharIndicator = true;
 			}
 		}
-		ComplexFieldUtil.setFieldNameSeparators(avoidSpecialChars, isOldNamingScheme);
+		boolean useNewNamingScheme = foundPercent || foundNoSpecialCharIndicator;
+		boolean avoidSpecialChars = !foundPercent && foundNoSpecialCharIndicator;
+		ComplexFieldUtil.setFieldNameSeparators(avoidSpecialChars, !useNewNamingScheme);
 
 		// reader.getFieldInfos();
 		for (int i = 0; i < fis.size(); i++) {
