@@ -640,12 +640,17 @@ public class QueryTool {
 				showResultsPage();
 			} else if (lcased.startsWith("snippet ")) {
 				int hitId = parseInt(lcased.substring(8), 1) - 1;
-				Hit h = getCurrentHitSet().get(hitId);
-				Concordance conc = hits.getConcordance(h, snippetSize);
-				String left = XmlUtil.xmlToPlainText(conc.left);
-				String middle = XmlUtil.xmlToPlainText(conc.hit);
-				String right = XmlUtil.xmlToPlainText(conc.right);
-				outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
+				Hits currentHitSet = getCurrentHitSet();
+				if (hitId >= currentHitSet.size()) {
+					errprintln("Hit number out of range.");
+				} else {
+					Hit h = currentHitSet.get(hitId);
+					Concordance conc = hits.getConcordance(h, snippetSize);
+					String left = XmlUtil.xmlToPlainText(conc.left);
+					String middle = XmlUtil.xmlToPlainText(conc.hit);
+					String right = XmlUtil.xmlToPlainText(conc.right);
+					outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
+				}
 			} else if (lcased.startsWith("doc ")) {
 				int docId = parseInt(lcased.substring(4), 0);
 				showMetadata(docId);
