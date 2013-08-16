@@ -366,16 +366,38 @@ public class Searcher {
 	 *
 	 * @param doc
 	 *            the document id
-	 * @return the Lucene Document, or null if it was deleted
+	 * @return the Lucene Document
+	 * @throws RuntimeException if the document doesn't exist (use maxDoc() and isDeleted() to check first!)
 	 */
 	public Document document(int doc) {
 		try {
+			if (doc < 0)
+				throw new RuntimeException("Negative document id");
+			if (doc >= indexReader.maxDoc())
+				throw new RuntimeException("Document id >= maxDoc");
 			if (indexReader.isDeleted(doc))
-				return null;
+				throw new RuntimeException("Document deleted");
 			return indexReader.document(doc);
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
+	}
+
+	/**
+	 * Checks if a document has been deleted from the index
+	 * @param doc the document id
+	 * @return true iff it has been deleted
+	 */
+	public boolean isDeleted(int doc) {
+		return indexReader.isDeleted(doc);
+	}
+
+	/**
+	 * Returns one more than the highest document id
+	 * @return one more than the highest document id
+	 */
+	public int maxDoc() {
+		return indexReader.maxDoc();
 	}
 
 	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
