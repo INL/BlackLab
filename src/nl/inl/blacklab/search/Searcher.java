@@ -1080,6 +1080,18 @@ public class Searcher {
 	}
 
 	/**
+	 * Makes sure the first call to Terms.indexOf() in search mode for all forward
+	 * indices will be fast. Subsequent calls are always fast. (Terms.indexOf() is
+	 * only used in search mode by HitPropValue.deserialize(), so if you're not sure if
+	 * you need to call this method in your application, you probably don't.
+	 */
+	public void buildAllTermIndices() {
+		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
+			e.getValue().getTerms().buildTermIndex();
+		}
+	}
+
+	/**
 	 * Tries to get the ForwardIndex object for the specified fieldname.
 	 *
 	 * Looks for an already-opened forward index first. If none is found, and if we're in
