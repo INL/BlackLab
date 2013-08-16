@@ -174,7 +174,7 @@ public class HookableSaxHandler extends DefaultHandler {
 
 		@Override
 		public String toString() {
-			return "/" + StringUtil.join(elementNames, "/");
+			return (isRelativePath ? "" : "/") + StringUtil.join(elementNames, "/");
 		}
 
 		public void startElement(String localName) {
