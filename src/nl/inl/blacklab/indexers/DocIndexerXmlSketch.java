@@ -55,7 +55,27 @@ public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
 		final ComplexFieldProperty propWordClass = addProperty("class", SensitivitySetting.ONLY_INSENSITIVE);
 
 		// Doc element: the individual documents to index (one or more per file)
-		addHandler("/docs/doc", new DocumentElementHandler());
+		addHandler("/docs/doc", new DocumentElementHandler() {
+
+			@Override
+			public void startElement(String uri, String localName, String qName,
+					Attributes attributes) {
+				super.startElement(uri, localName, qName, attributes);
+
+				// Make sure the punctuation buffer is empty
+				punctuation.setLength(0);
+			}
+
+			@Override
+			public void endElement(String uri, String localName, String qName) {
+
+				// Before ending the document, add the final bit of punctuation.
+				propPunct.addValue(punctuation.toString());
+
+				super.endElement(uri, localName, qName);
+			}
+
+		});
 
 		// Word elements: index as main contents
 		addHandler("//w", new WordHandlerBase() {

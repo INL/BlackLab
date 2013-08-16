@@ -76,6 +76,17 @@ public class DocIndexerTeiP4 extends DocIndexerXmlHandlers {
 					Attributes attributes) {
 				consumeCharacterContent(); // clear it to capture punctuation and words
 			}
+
+			@Override
+			public void endElement(String uri, String localName, String qName) {
+
+				// Before ending the document, add the final bit of punctuation.
+				propPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
+
+				super.endElement(uri, localName, qName);
+			}
+
+
 		});
 
 		// listBibl element: keep track of id attribute
