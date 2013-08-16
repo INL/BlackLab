@@ -35,7 +35,8 @@ public class UnicodeReader extends Reader {
 	private final InputStreamReader reader;
 
 	/**
-	 * Construct UnicodeReader
+	 * Construct UnicodeReader, a Reader that skips
+	 * the BOM in Unicode files (if present).
 	 *
 	 * @param in
 	 *            Input stream.
