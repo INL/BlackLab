@@ -169,13 +169,13 @@ public class DocIndexerTeiP4 extends DocIndexerXmlHandlers {
 			@Override
 			public void startElement(String uri, String localName, String qName,
 					Attributes attributes) {
-				if (!body.insideElement())
+				if (body.insideElement())
 					super.startElement(uri, localName, qName, attributes);
 			}
 
 			@Override
 			public void endElement(String uri, String localName, String qName) {
-				if (!body.insideElement())
+				if (body.insideElement())
 					super.endElement(uri, localName, qName);
 			}
 
