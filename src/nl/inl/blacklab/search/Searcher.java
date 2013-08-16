@@ -332,6 +332,8 @@ public class Searcher {
 		try {
 			indexSearcher.close();
 			indexReader.close();
+			if (indexWriter != null)
+				indexWriter.close();
 
 			// Close the forward indices
 			for (ForwardIndex fi : forwardIndices.values()) {
