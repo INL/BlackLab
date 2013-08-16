@@ -214,10 +214,10 @@ public class Searcher {
 	}
 
 	/** If true, we want to add/delete documents. If false, we're just searching. */
-	boolean indexMode = false;
+	private boolean indexMode = false;
 
 	/** If true, we've just created a new index. Only valid in indexMode */
-	boolean createdNewIndex = false;
+	private boolean createdNewIndex = false;
 
 	/** The index writer. Only valid in indexMode. */
 	private IndexWriter indexWriter = null;
