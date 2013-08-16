@@ -68,6 +68,9 @@ class TermsImplV3 extends Terms {
 	/** If true, we're indexing data and adding terms. If false, we're searching and just retrieving terms. */
 	private boolean indexMode;
 
+	/** If true, termIndex is a valid mapping from term to term id. */
+	private boolean termIndexBuilt;
+
 	/**
 	 * Collator to use for string comparisons
 	 */
@@ -90,6 +93,7 @@ class TermsImplV3 extends Terms {
 		// Create a SortedMap based on the specified Collator.
 
 		this.termIndex = new TreeMap<String, Integer>(this.collator);
+		termIndexBuilt = true;
 	}
 
 	public TermsImplV3(boolean indexMode, Collator coll, File termsFile) {
@@ -100,8 +104,15 @@ class TermsImplV3 extends Terms {
 
 	@Override
 	public int indexOf(String term) {
-		if (!indexMode)
-			throw new UnsupportedOperationException("Cannot call indexOf in search mode!");
+
+		if (!termIndexBuilt) {
+			// We havent' filled termIndex based on terms[] yet.
+			// Do so now. (so the first call to this method might be
+			// slow in search mode, but it's only used to deserialize
+			// HitPropValueContext*, which doesn't happen a lot)
+			buildTermIndex();
+		}
+
 		Integer index = termIndex.get(term);
 		if (index != null)
 			return index;
@@ -111,8 +122,21 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
+	public void buildTermIndex() {
+		if (termIndexBuilt)
+			return;
+		for (int i = 0; i < terms.length; i++) {
+			termIndex.put(terms[i], i);
+		}
+		termIndexBuilt = true;
+	}
+
+	@Override
 	public void clear() {
+		if (!indexMode)
+			throw new RuntimeException("Cannot clear, not in index mode");
 		termIndex.clear();
+		termIndexBuilt = true;
 	}
 
 	private void read(File termsFile) {
@@ -140,15 +164,15 @@ class TermsImplV3 extends Terms {
 					int offset = termStringOffsets[id];
 					int length = termStringOffsets[id + 1] - offset;
 					String str = new String(termStrings, offset, length, "utf-8");
-					if (indexMode) {
-						// We need to find id for term while indexing
-						termIndex.put(str, id);
-					}
+
 					// We need to find term for id while searching
 					terms[id] = str;
 				}
-
-				if (!indexMode) {
+				if (indexMode) {
+					buildTermIndex(); // We need to find id for term while indexing
+					terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
+				} else {
+					termIndexBuilt = false; // termIndex hasn't been filled yet
 
 					// Read the sort order arrays
 					sortPositionPerId = new int[n];
@@ -171,7 +195,7 @@ class TermsImplV3 extends Terms {
 	@Override
 	public void write(File termsFile) {
 		if (!indexMode)
-			throw new UnsupportedOperationException("Term.write(): not in index mode!");
+			throw new RuntimeException("Term.write(): not in index mode!");
 
 		try {
 			// Open the terms file

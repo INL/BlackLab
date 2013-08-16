@@ -11,12 +11,25 @@ public abstract class Terms {
 	 * Get the existing index number of a term, or add it to the term list
 	 * and assign it a new index number.
 	 *
-	 * Can only be called in indexMode right now.
+	 * In index mode, this is fast. In search mode, the first call to this
+	 * method might be slow (because the mapping has to be built), but later
+	 * calls will be fast.
+	 *
+	 * If you want the first call in search mode to be fast, call
+	 * buildTermIndex() at the start of your application.
 	 *
 	 * @param term the term to get the index number for
 	 * @return the term's index number
 	 */
 	public abstract int indexOf(String term);
+
+	/**
+	 * Build the index from term to term id. Depending on the terms
+	 * implementation, this may speed up the first call to indexOf().
+	 */
+	public void buildTermIndex() {
+		// May be implemented by child class
+	}
 
 	/**
 	 * Clear the Terms object.
@@ -30,7 +43,7 @@ public abstract class Terms {
 	public abstract void write(File termsFile);
 
 	/**
-	 * Get a term by id
+	 * Get a term by id. Only works in search mode.
 	 * @param id the term id
 	 * @return the corresponding term
 	 */

@@ -92,8 +92,18 @@ class TermsImplV2 extends Terms {
 
 	@Override
 	public int indexOf(String term) {
-		if (!indexMode)
-			throw new UnsupportedOperationException("Cannot call indexOf in search mode!");
+		if (!indexMode) {
+			// Slow, naive implementation. If this is a problem,
+			// re-index your data to get the newest forward index and terms
+			// implementation, which is faster.
+			for (int i = 0; i < terms.length; i++) {
+				if (terms[i].equals("term"))
+					return i;
+			}
+			return -1;
+		}
+
+		// Index mode. Use termIndex map.
 		Integer index = termIndex.get(term);
 		if (index != null)
 			return index;
