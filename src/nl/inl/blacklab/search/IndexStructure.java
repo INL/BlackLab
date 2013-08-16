@@ -391,13 +391,13 @@ public class IndexStructure {
 		FieldInfos fis = ReaderUtil.getMergedFieldInfos(reader);
 
 		// Detect index naming scheme
-		boolean isOldNamingScheme = true, avoidSpecialChars = true;
+		// NOTE: defaults to most-used value for new indices!
+		boolean isOldNamingScheme = false, avoidSpecialChars = false;
 		for (int i = 0; i < fis.size(); i++) {
 			FieldInfo fi = fis.fieldInfo(i);
 			String name = fi.name;
-			if (name.contains("%")) {
-				isOldNamingScheme = false;
-				avoidSpecialChars = false;
+			if (name.contains("__")) {
+				isOldNamingScheme = true;
 			}
 			if (name.contains("_PR_")) {
 				isOldNamingScheme = false;
