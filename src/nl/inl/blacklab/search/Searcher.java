@@ -366,10 +366,12 @@ public class Searcher {
 	 *
 	 * @param doc
 	 *            the document id
-	 * @return the Lucene Document
+	 * @return the Lucene Document, or null if it was deleted
 	 */
 	public Document document(int doc) {
 		try {
+			if (indexReader.isDeleted(doc))
+				return null;
 			return indexReader.document(doc);
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);

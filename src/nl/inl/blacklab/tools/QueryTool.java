@@ -739,6 +739,11 @@ public class QueryTool {
 
 	private void showMetadata(int docId) {
 		Document doc = searcher.document(docId);
+		if (doc == null) {
+			// Document doesn't exist; was probably deleted
+			outprintln("Document " + docId + " not found");
+			return;
+		}
 		Map<String, String> metadata = new TreeMap<String, String>(); // sort by key
 		for (Fieldable f: doc.getFields()) {
 			metadata.put(f.name(), f.stringValue());
