@@ -47,25 +47,20 @@ public class TestForwardIndexDelete {
 		dir = Utilities.createBlackLabTestDir("ForwardIndexDelete");
 
 		fi = new ForwardIndexImplV3(dir, true, null, true);
-		try {
-			// Store strings
-			List<Integer> toDelete = new ArrayList<Integer>();
-			for (int j = 0; j < docLengths.length; j++) {
-				int length = docLengths[j];
-				int fiid = addDocumentOfLength(length);
+		// Store strings
+		List<Integer> toDelete = new ArrayList<Integer>();
+		for (int j = 0; j < docLengths.length; j++) {
+			int length = docLengths[j];
+			int fiid = addDocumentOfLength(length);
 
-				// See if we want to delete the doc again
-				if (delDoc[j])
-					toDelete.add(fiid);
-			}
-			// Delete docs
-			for (Integer fiid: toDelete) {
-				fi.deleteDocument(fiid);
-			}
-		} finally {
-			fi.close(); // close so everything is guaranteed to be written
+			// See if we want to delete the doc again
+			if (delDoc[j])
+				toDelete.add(fiid);
 		}
-		fi = new ForwardIndexImplV3(dir, true, null, false);
+		// Delete docs
+		for (Integer fiid: toDelete) {
+			fi.deleteDocument(fiid);
+		}
 	}
 
 	private int addDocumentOfLength(int length) {
