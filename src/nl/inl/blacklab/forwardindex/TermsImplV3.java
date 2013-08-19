@@ -116,6 +116,8 @@ class TermsImplV3 extends Terms {
 		Integer index = termIndex.get(term);
 		if (index != null)
 			return index;
+		if (!indexMode)
+			return -1; // term not found
 		index = termIndex.size();
 		termIndex.put(term, index);
 		return index;
