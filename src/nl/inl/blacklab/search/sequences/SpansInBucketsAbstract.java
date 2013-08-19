@@ -140,7 +140,11 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 	private void gatherHitsInternal() throws IOException {
 		currentDoc = source.doc();
-		hits.clear();
+
+		// NOTE: we could call .clear() here, but we don't want to hold on to
+		// a lot of memory indefinitely after encountering one huge bucket.
+		hits = new ArrayList<Hit>();
+
 		bucketSize = 0;
 		gatherHits();
 	}

@@ -75,7 +75,10 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	protected void gatherEndPointsAtStartPoint() throws IOException {
 		currentDoc = source.doc();
 		currentStart = source.start();
-		endPoints.clear();
+
+		// NOTE: we don't call clear() to avoid holding on to a lot of memory indefinitely
+		endPoints = new ArrayList<Integer>();
+
 		bucketSize = 0;
 		while (moreInSource && source.doc() == currentDoc && source.start() == currentStart) {
 			endPoints.add(source.end());
