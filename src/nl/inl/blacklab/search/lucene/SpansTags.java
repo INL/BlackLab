@@ -17,8 +17,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
@@ -43,25 +41,6 @@ class SpansTags extends BLSpans {
 
 	/** Ends of hits in current document */
 	private List<Integer> ends = new ArrayList<Integer>();
-
-	private static Comparator<Integer> tagLocationComparator;
-
-	static {
-		tagLocationComparator = new Comparator<Integer>() {
-			@Override
-			public int compare(Integer o1, Integer o2) {
-				int abs1, abs2;
-				abs1 = o1 < 0 ? -o1 : o1;
-				abs2 = o2 < 0 ? -o2 : o2;
-				if (abs1 == abs2) {
-					// Sort end tags after start tags
-					return o1 < 0 ? 1 : -1;
-				}
-				// Sort according to position
-				return abs1 - abs2;
-			}
-		};
-	}
 
 	public SpansTags(Spans startTags, Spans endTags) {
 		spans[0] = new SpansInBucketsPerDocument(startTags);
@@ -137,34 +116,52 @@ class SpansTags extends BLSpans {
 		// Put the start and end tag positions in one list (ends negative)
 		// (Note that we add 2 to the tag position to avoid the problem of x == -x for x == 0;
 		//  below we subtract it again)
+		// The list will be sorted by tag position.
 		List<Integer> startsAndEnds = new ArrayList<Integer>();
 
-		for (int i = 0; i < spans[0].bucketSize(); i++) {
-			startsAndEnds.add(spans[0].start(i) + 2);
+		int startIndex = 0, endIndex = 0;
+		boolean startDone = false, endDone = false;
+		int startBucketSize = spans[0].bucketSize();
+		int endBucketSize = spans[1].bucketSize();
+		while(!startDone || !endDone) {
+			// Which comes first, the current start tag or end tag?
+			int endTagPos = endDone ? -1 : spans[1].start(endIndex);
+			boolean addEndTag = false;
+			int startTagPos = -1;
+			if (startDone)
+				addEndTag = true;
+			else {
+				startTagPos = spans[0].start(startIndex);
+				if (!endDone && startTagPos >= endTagPos)
+					addEndTag = true;
+			}
+			if (addEndTag) {
+				// Add end tag
+				// +2 to avoid 0/-0 problem; -1 because endtag is attached to next token, but this
+				// is inconvenient for this process, we want it attached to the previous token now.
+				startsAndEnds.add(- (endTagPos + 2 - 1));
+				endIndex++;
+				if (endIndex >= endBucketSize)
+					endDone = true;
+			} else {
+				// Add start tag
+				startsAndEnds.add(startTagPos + 2);
+				startIndex++;
+				if (startIndex >= startBucketSize)
+					startDone = true;
+			}
 		}
-//		for (Hit h: spans[0].getHits()) {
-//			startsAndEnds.add(h.start + 2);
-//		}
-		for (int i = 0; i < spans[1].bucketSize(); i++) {
-			// +2 to avoid 0/-0 problem; -1 because endtag is attached to next token, but this
-			// is inconvenient for this process, we want it attached to the previous token now.
-			startsAndEnds.add(- (spans[1].start(i) + 2 - 1));
-		}
-//		for (Hit h: spans[1].getHits()) {
-//			// +2 to avoid 0/-0 problem; -1 because endtag is attached to next token, but this
-//			// is inconvenient for this process, we want it attached to the previous token now.
-//			startsAndEnds.add(- (h.start + 2 - 1));
-//		}
-
-		// Sort the list by position (ends after starts)
-		// OPT: sort could be prevented by merging arrays in a single loop
-		Collections.sort(startsAndEnds, tagLocationComparator);
 
 		// Go through the list of all tags, keep track of unmatched open tags and finding matches
 		List<Integer> unmatchedOpenTagIndices = new ArrayList<Integer>();
 		List<Integer> emptyElementIndices = new ArrayList<Integer>(); // empty elements between tokens need special attention (see below)
-		starts.clear();
-		ends.clear();
+
+		// NOTE: for starts and ends, we don't just call .clear() because the
+		// application could keep holding on to too much memory after encountering
+		// one really large document!
+		starts = new ArrayList<Integer>();
+		ends = new ArrayList<Integer>();
+
 		currentHit = 0; // first hit
 		for (Integer tag: startsAndEnds) {
 			if (tag > 0) {

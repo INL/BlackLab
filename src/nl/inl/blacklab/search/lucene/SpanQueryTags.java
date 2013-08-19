@@ -38,21 +38,6 @@ import org.apache.lucene.search.spans.Spans;
 public class SpanQueryTags extends SpanQueryBase {
 	private String tagName;
 
-//	public SpanQueryTags(String complexFieldName, String tagName) {
-//		super();
-//		this.tagName = tagName;
-//		clauses = new SpanQuery[2];
-//		baseFieldName = complexFieldName;
-//		String startTagFieldName = ComplexFieldUtil.startTagPropertyField(complexFieldName);
-//		String endTagFieldName = ComplexFieldUtil.endTagPropertyField(complexFieldName);
-//
-//		// Use a BlackLabSpanTermQuery instead of default Lucene one
-//		// because we need to override getField() to only return the base field name,
-//		// not the complete field name with the property.
-//		clauses[0] = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
-//		clauses[1] = new BLSpanTermQuery(new Term(endTagFieldName, tagName));
-//	}
-
 	public SpanQueryTags(QueryExecutionContext context, String tagName) {
 		super();
 		this.tagName = tagName;
