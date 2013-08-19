@@ -236,6 +236,18 @@ public class Searcher {
 		return new Searcher(indexDir, true, createNewIndex);
 	}
 
+	/**
+	 * Open an index for reading ("search mode").
+	 *
+	 * @param indexDir the index directory
+	 * @return the searcher
+	 * @throws CorruptIndexException
+	 * @throws IOException
+	 */
+	public static Searcher open(File indexDir) throws CorruptIndexException, IOException {
+		return new Searcher(indexDir, false, false);
+	}
+
 	private Searcher(File indexDir, boolean indexMode, boolean createNewIndex)
 			throws CorruptIndexException, IOException {
 		this.indexMode = indexMode;
@@ -315,7 +327,9 @@ public class Searcher {
 	 *            the index directory
 	 * @throws CorruptIndexException
 	 * @throws IOException
+	 * @deprecated use Searcher.open(File)
 	 */
+	@Deprecated
 	public Searcher(File indexDir) throws CorruptIndexException, IOException {
 		this(indexDir, false, false);
 	}

@@ -100,7 +100,7 @@ public class Example {
 		}
 
 		// Create the BlackLab searcher object
-		searcher = new Searcher(indexDir);
+		searcher = Searcher.open(indexDir);
 		try {
 
 			// Find the word "the"

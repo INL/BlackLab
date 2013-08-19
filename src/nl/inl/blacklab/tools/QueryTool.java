@@ -532,7 +532,7 @@ public class QueryTool {
 		outprintln("Opening index " + indexDir + "...");
 
 		// Create the BlackLab searcher object
-		searcher = new Searcher(indexDir);
+		searcher = Searcher.open(indexDir);
 
 		this.in = in;
 

@@ -64,7 +64,7 @@ public class BatchQuery {
 		}
 
 		System.err.print("Opening index... ");
-		Searcher searcher = new Searcher(indexDir);
+		Searcher searcher = Searcher.open(indexDir);
 		System.err.println("done.");
 
 		System.out.print("Query\tSearch Time");
