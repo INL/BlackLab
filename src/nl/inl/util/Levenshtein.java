@@ -1,4 +1,4 @@
-package nl.inl.blacklab.suggest;
+package nl.inl.util;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
@@ -17,8 +17,6 @@ package nl.inl.blacklab.suggest;
 
 /* Adapted from class FuzzyTermEnum from Lucene 3.0 */
 
-// TODO: move to InlJavaLib
-
 /**
  * Subclass of FilteredTermEnum for enumerating all terms that are similar to the specified filter
  * term.
@@ -27,7 +25,7 @@ package nl.inl.blacklab.suggest;
  * Term enumerations are always ordered by Term.compareTo(). Each term in the enumeration is greater
  * than all that precede it.
  */
-public final class Levenshtein {
+public class Levenshtein {
 
 	/*
 	 * Allows us save time required to create a new array every time similarity is called.

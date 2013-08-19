@@ -13,31 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.suggest;
+package nl.inl.util;
 
-import java.util.Arrays;
-import java.util.Set;
+import java.util.Comparator;
 
-import nl.inl.blacklab.search.Searcher;
+/**
+ * For sorting words by descending similarity to a given target word
+ */
+public class LevenshteinComparator implements Comparator<String> {
+	private Levenshtein levensthein;
 
-public class FuzzyIndexSuggester extends Suggester {
-	private Searcher searcher;
-	private String field;
-	private float similarity;
-
-	public FuzzyIndexSuggester(Searcher searcher, String field, float similarity) {
-		this.searcher = searcher;
-		this.field = field;
-		this.similarity = similarity;
+	public LevenshteinComparator(String target) {
+		levensthein = new Levenshtein(target);
 	}
 
 	@Override
-	public void addSuggestions(String original, Suggestions sugg) {
-		Set<String> terms = searcher.getMatchingTermsFromIndex(field, Arrays.asList(original),
-				similarity);
-		for (String t : terms) {
-			if (!t.equals(original))
-				sugg.addSuggestion("fuzzy", t);
-		}
+	public int compare(String a, String b) {
+		Float da = levensthein.similarity(a);
+		Float db = levensthein.similarity(b);
+		int result = -da.compareTo(db);
+		if (result == 0)
+			result = a.compareTo(b);
+		return result;
 	}
 }
