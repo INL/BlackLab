@@ -284,4 +284,38 @@ public class LuceneUtil {
 		return numberOfTerms;
 	}
 
+	/**
+	 * Find terms in the index based on a prefix. Useful for autocomplete.
+	 * @param index the index
+	 * @param fieldName the field
+	 * @param prefix the prefix we're looking for
+	 * @param sensitive match case-sensitively or not?
+	 * @return the matching terms
+	 */
+	public static List<String> findTermsByPrefix(IndexReader index, String fieldName, String prefix, boolean sensitive) {
+		try {
+			if (!sensitive)
+				prefix = StringUtil.removeAccents(prefix).toLowerCase();
+			TermEnum termEnum = index.terms(new Term(fieldName, prefix));
+			List<String> results = new ArrayList<String>();
+			while (termEnum.next()) {
+				Term term = termEnum.term();
+				if (!term.field().equals(fieldName))
+					break;
+				String termText = term.text();
+				if (!sensitive)
+					termText = StringUtil.removeAccents(termText).toLowerCase();
+				if (!termText.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
+					// Doesn't match prefix or different field; no more matches
+					break;
+				}
+				// Match, add term
+				results.add(term.text());
+			}
+			return results;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }
