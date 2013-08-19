@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.grouping;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Searcher;
 
 public class HitPropValueContextWord extends HitPropValueContext {
@@ -33,14 +34,17 @@ public class HitPropValueContextWord extends HitPropValueContext {
 	}
 
 	public static HitPropValue deserialize(Searcher searcher, String info) {
-		String[] strIds = info.split(SERIALIZATION_SEPARATOR);
-		String fieldPropName = strIds[0];
-		boolean sensitive = strIds[1].equals("1");
-		return new HitPropValueContextWord(searcher, fieldPropName, Integer.parseInt(strIds[2]), sensitive);
+		String[] parts = info.split(SERIALIZATION_SEPARATOR_ESC_REGEX);
+		String fieldPropName = parts[0];
+		boolean sensitive = parts[1].equals("s");
+		Terms termsObj = searcher.getForwardIndex(fieldPropName).getTerms();
+		int id = termsObj.indexOf(parts[2]);
+		return new HitPropValueContextWord(searcher, fieldPropName, id, sensitive);
 	}
 
 	@Override
 	public String serialize() {
-		return "cwo:" + fieldPropName + SERIALIZATION_SEPARATOR + (sensitive ? "1" : "0") + SERIALIZATION_SEPARATOR + valueTokenId;
+		String token = terms.get(valueTokenId);
+		return "cwo:" + fieldPropName + SERIALIZATION_SEPARATOR + (sensitive ? "s" : "i") + SERIALIZATION_SEPARATOR + token;
 	}
 }

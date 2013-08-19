@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.grouping;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ArrayUtil;
 
@@ -47,12 +48,13 @@ public class HitPropValueContextWords extends HitPropValueContext {
 	}
 
 	public static HitPropValue deserialize(Searcher searcher, String info) {
-		String[] strIds = info.split(SERIALIZATION_SEPARATOR);
-		String fieldPropName = strIds[0];
-		boolean sensitive = strIds[1].equals("1");
-		int[] ids = new int[strIds.length - 2];
-		for (int i = 2; i < strIds.length; i++) {
-			ids[i - 2] = Integer.parseInt(strIds[i]);
+		String[] parts = info.split(SERIALIZATION_SEPARATOR_ESC_REGEX);
+		String fieldPropName = parts[0];
+		boolean sensitive = parts[1].equals("s");
+		int[] ids = new int[parts.length - 2];
+		Terms termsObj = searcher.getForwardIndex(fieldPropName).getTerms();
+		for (int i = 2; i < parts.length; i++) {
+			ids[i - 2] = termsObj.indexOf(parts[i]);
 		}
 		return new HitPropValueContextWords(searcher, fieldPropName, ids, sensitive);
 	}
@@ -63,8 +65,8 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		for (int v: valueTokenId) {
 			if (b.length() > 0)
 				b.append(SERIALIZATION_SEPARATOR);
-			b.append(v);
+			b.append(terms.get(v));
 		}
-		return "cws:" + fieldPropName + SERIALIZATION_SEPARATOR + (sensitive ? "1" : "0") + SERIALIZATION_SEPARATOR + b.toString();
+		return "cws:" + fieldPropName + SERIALIZATION_SEPARATOR + (sensitive ? "s" : "i") + SERIALIZATION_SEPARATOR + b.toString();
 	}
 }
