@@ -21,7 +21,6 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -46,6 +45,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpansFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.ExUtil;
+import nl.inl.util.LuceneUtil;
 import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
 
@@ -60,19 +60,15 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermFreqVector;
 import org.apache.lucene.index.TermPositionVector;
 import org.apache.lucene.index.TermVectorOffsetInfo;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.highlight.QueryTermExtractor;
-import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.Directory;
@@ -818,39 +814,12 @@ public class Searcher {
 	 * @return the set of terms in the index that are close to our search term
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if the expansion resulted in too many terms
+	 * @deprecated moved to LuceneUtil
 	 */
+	@Deprecated
 	public Set<String> getMatchingTermsFromIndex(String luceneName, Collection<String> searchTerms,
 			float similarity) {
-		boolean doFuzzy = true;
-		if (similarity >= 0.99f) {
-			// Exact match; don't use fuzzy query (slow)
-			Set<String> result = new HashSet<String>();
-			for (String term : searchTerms) {
-				if (termOccursInIndex(new Term(luceneName, term)))
-					result.add(term);
-			}
-			return result;
-		}
-
-		BooleanQuery q = new BooleanQuery();
-		for (String s : searchTerms) {
-			FuzzyQuery fq = new FuzzyQuery(new Term(luceneName, s), similarity);
-			q.add(fq, Occur.SHOULD);
-		}
-
-		try {
-			Query rewritten = q.rewrite(indexReader);
-			WeightedTerm[] wts = QueryTermExtractor.getTerms(rewritten);
-			Set<String> terms = new HashSet<String>();
-			for (WeightedTerm wt : wts) {
-				if (doFuzzy || searchTerms.contains(wt.getTerm())) {
-					terms.add(wt.getTerm());
-				}
-			}
-			return terms;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		return LuceneUtil.getMatchingTermsFromIndex(indexReader, luceneName, searchTerms, similarity);
 	}
 
 	/**
@@ -1015,7 +984,9 @@ public class Searcher {
 	 * @param term
 	 *            the term
 	 * @return true iff it occurs in the index
+	 * @deprecated moved to LuceneUtil
 	 */
+	@Deprecated
 	public boolean termOccursInIndex(Term term) {
 		try {
 			return indexReader.docFreq(term) > 0;

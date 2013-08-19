@@ -2,6 +2,7 @@ package nl.inl.util;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,6 +14,8 @@ import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.index.TermPositionVector;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.highlight.QueryTermExtractor;
@@ -27,7 +30,9 @@ public class LuceneUtil {
 	* @param term search term
 	* @param similarity measure of similarity we need
 	* @return the set of terms in the index that are close to our search term
+	* @deprecated use version that takes a Lucene fieldname and a collection of words
 	*/
+	@Deprecated
 	public static Set<String> getMatchingTermsFromIndex(IndexReader indexReader, Term term, float similarity) {
 		boolean doFuzzy = true;
 		if (similarity == 1.0f) {
@@ -46,6 +51,71 @@ public class LuceneUtil {
 			Set<String> terms = new HashSet<String>();
 			for (WeightedTerm wt: wts) {
 				if (doFuzzy || wt.getTerm().equals(term.text())) {
+					terms.add(wt.getTerm());
+				}
+			}
+			return terms;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Test if a term occurs in the index
+	 * @param reader the index
+	 * @param term the term
+	 * @return true iff it occurs in the index
+	 */
+	public static boolean termOccursInIndex(IndexReader reader, Term term) {
+		try {
+			return reader.docFreq(term) > 0;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Get all the terms in the index with low edit distance from the supplied term
+	 * @param reader the index
+	 * @param luceneName
+	 *            the field to search in
+	 * @param searchTerms
+	 *            search terms
+	 * @param similarity
+	 *            measure of similarity we need
+	 * @return the set of terms in the index that are close to our search term
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if the expansion resulted in too many terms
+	 */
+	public static Set<String> getMatchingTermsFromIndex(IndexReader reader, String luceneName, Collection<String> searchTerms,
+			float similarity) {
+		boolean doFuzzy = true;
+		if (similarity >= 0.99f) {
+			// Exact match; don't use fuzzy query (slow)
+			Set<String> result = new HashSet<String>();
+			try {
+				for (String term : searchTerms) {
+					if (reader.docFreq(new Term(luceneName, term)) > 0)
+						result.add(term);
+				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			return result;
+		}
+
+		BooleanQuery q = new BooleanQuery();
+		for (String s : searchTerms) {
+			FuzzyQuery fq = new FuzzyQuery(new Term(luceneName, s), similarity);
+			q.add(fq, Occur.SHOULD);
+		}
+
+		try {
+			Query rewritten = q.rewrite(reader);
+			WeightedTerm[] wts = QueryTermExtractor.getTerms(rewritten);
+			Set<String> terms = new HashSet<String>();
+			for (WeightedTerm wt : wts) {
+				if (doFuzzy || searchTerms.contains(wt.getTerm())) {
 					terms.add(wt.getTerm());
 				}
 			}
