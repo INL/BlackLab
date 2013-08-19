@@ -163,6 +163,21 @@ public abstract class ForwardIndex {
 	public abstract int getNumDocs();
 
 	/**
+	 * @return the amount of space in free blocks in the forward index.
+	 */
+	public abstract long getFreeSpace();
+
+	/**
+	 * @return the number of free blocks in the forward index.
+	 */
+	public abstract int getFreeBlocks();
+
+	/**
+	 * @return total size in bytes of the tokens file.
+	 */
+	public abstract long getTotalSize();
+
+	/**
 	 * Gets the length (in tokens) of a document
 	 * @param fiid forward index id of a document
 	 * @return length of the document

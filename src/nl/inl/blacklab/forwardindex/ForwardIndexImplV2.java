@@ -687,4 +687,19 @@ class ForwardIndexImplV2 extends ForwardIndex {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public long getFreeSpace() {
+		return 0;
+	}
+
+	@Override
+	public int getFreeBlocks() {
+		return 0;
+	}
+
+	@Override
+	public long getTotalSize() {
+		return tokenFileEndPosition;
+	}
+
 }

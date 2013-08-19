@@ -856,4 +856,23 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		sortDeletedTocEntries();
 	}
 
+	@Override
+	public long getFreeSpace() {
+		long freeSpace = 0;
+		for (TocEntry e: deletedTocEntries) {
+			freeSpace += e.length;
+		}
+		return freeSpace;
+	}
+
+	@Override
+	public int getFreeBlocks() {
+		return deletedTocEntries.size();
+	}
+
+	@Override
+	public long getTotalSize() {
+		return tokenFileEndPosition;
+	}
+
 }
