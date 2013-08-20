@@ -105,6 +105,11 @@ public class IndexTool {
 						return;
 					}
 					File propFile = new File(args[i + 1]);
+					if (!propFile.canRead()) {
+						System.err.println("Cannot read " + propFile);
+						usage();
+						return;
+					}
 					Properties p = PropertiesUtil.readFromFile(propFile);
 					for (Map.Entry<Object, Object> e: p.entrySet()) {
 						indexerParam.put(e.getKey().toString(), e.getValue().toString());
