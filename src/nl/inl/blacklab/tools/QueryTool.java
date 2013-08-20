@@ -86,30 +86,6 @@ public class QueryTool {
 
 	static boolean batchMode = false;
 
-	public static void outprintln(String str) {
-		if (!batchMode)
-			out.println(str);
-	}
-
-	public static void outprint(String str) {
-		if (!batchMode)
-			out.print(str);
-	}
-
-	public static void outprintf(String str, Object... args) {
-		if (!batchMode)
-			out.printf(str, args);
-	}
-
-	public static void errprintln(String str) {
-		System.err.println(str);
-	}
-
-	public static void statprintln(String str) {
-		if (batchMode)
-			out.println(str);
-	}
-
 	/**
 	 * Our BlackLab Searcher object.
 	 */
@@ -1352,4 +1328,29 @@ public class QueryTool {
 		}
 		return hitsToShow;
 	}
+
+	public static void outprintln(String str) {
+		if (!batchMode)
+			out.println(str);
+	}
+
+	public static void outprint(String str) {
+		if (!batchMode)
+			out.print(str);
+	}
+
+	public static void outprintf(String str, Object... args) {
+		if (!batchMode)
+			out.printf(str, args);
+	}
+
+	public static void errprintln(String str) {
+		System.err.println(str);
+	}
+
+	public static void statprintln(String str) {
+		if (batchMode)
+			out.println(str);
+	}
+
 }
