@@ -21,7 +21,6 @@ import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 
 import org.xml.sax.Attributes;
 
@@ -50,9 +49,9 @@ public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
 		final ComplexFieldProperty propPunct = getPropPunct();
 
 		// Add some extra properties
-		final ComplexFieldProperty propLemma = addProperty("lemma", SensitivitySetting.SENSITIVE_AND_INSENSITIVE);
-		final ComplexFieldProperty propPartOfSpeech = addProperty("pos", SensitivitySetting.ONLY_INSENSITIVE);
-		final ComplexFieldProperty propWordClass = addProperty("class", SensitivitySetting.ONLY_INSENSITIVE);
+		final ComplexFieldProperty propLemma = addProperty("lemma");
+		final ComplexFieldProperty propPartOfSpeech = addProperty("pos");
+		final ComplexFieldProperty propWordClass = addProperty("class");
 
 		// Doc element: the individual documents to index (one or more per file)
 		addHandler("/docs/doc", new DocumentElementHandler() {

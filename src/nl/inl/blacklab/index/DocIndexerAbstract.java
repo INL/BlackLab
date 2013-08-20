@@ -180,7 +180,9 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		this.indexer = indexer;
 		this.fileName = fileName;
 		this.reader = new CountingReader(reader);
-		//contentStore = indexer.getContentStore();
+
+		// Get our parameters from the indexer
+		setParameters(indexer.getIndexerParameters());
 	}
 
 	public void reportCharsProcessed() {
@@ -200,6 +202,13 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	@Override
 	public void setParameter(String name, String value) {
 		parameters.put(name, value);
+	}
+
+	@Override
+	public void setParameters(Map<String, String> param) {
+		for (Map.Entry<String, String> e: param.entrySet()) {
+			parameters.put(e.getKey(), e.getValue());
+		}
 	}
 
 	@Override

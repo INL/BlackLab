@@ -58,6 +58,12 @@ public class ComplexFieldUtil {
 	/** Property name for the spaces and punctuation between words */
 	public static final String PUNCTUATION_PROP_NAME = "punct";
 
+	/** Property name for lemma/headword (optional, not every input format will have this) */
+	public static final String LEMMA_PROP_NAME = "lemma";
+
+	/** Property name for part of speech (optional, not every input format will have this) */
+	public static final String PART_OF_SPEECH_PROP_NAME = "pos";
+
 	/**
 	 * Is the main property of the field (the one containing word forms and character positions)
 	 * nameless, or does it have a property name like the other properties (e.g. "word" or "wf")?

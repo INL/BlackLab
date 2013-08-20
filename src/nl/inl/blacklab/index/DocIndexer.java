@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
+import java.util.Map;
+
 /**
  * Indexes a file.
  */
@@ -39,6 +41,13 @@ public interface DocIndexer {
 	 * @param value parameter value
 	 */
 	public void setParameter(String name, String value);
+
+
+	/**
+	 * Set a number of parameters for this indexer
+	 * @param param the parameter names and values
+	 */
+	void setParameters(Map<String, String> param);
 
 	/**
 	 * Get a parameter that was set for this indexer

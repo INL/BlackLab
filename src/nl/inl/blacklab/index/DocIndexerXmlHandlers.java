@@ -341,15 +341,52 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		//System.out.println("END PREFIX MAPPING: " + prefix);
 	}
 
+	SensitivitySetting getSensitivitySetting(String propName) {
+		// See if it's specified in a parameter
+		String strSensitivity = getParameter(propName + "_sensitivity");
+		if (strSensitivity != null) {
+			if (strSensitivity.equals("i"))
+				return SensitivitySetting.ONLY_INSENSITIVE;
+			if (strSensitivity.equals("s"))
+				return SensitivitySetting.ONLY_SENSITIVE;
+			if (strSensitivity.equals("si") || strSensitivity.equals("is"))
+				return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+			if (strSensitivity.equals("all"))
+				return SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
+		}
+
+		// Not in parameter (or unrecognized value), use default based on propName
+		if (propName.equals(ComplexFieldUtil.getDefaultMainPropName()) || propName.equals(ComplexFieldUtil.LEMMA_PROP_NAME)) {
+			// Word: default to sensitive/insensitive
+			return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+		}
+		if (propName.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
+			// Punctuation: default to only insensitive
+			return SensitivitySetting.ONLY_INSENSITIVE;
+		}
+		if (propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME) || propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME)) {
+			// XML tag properties: default to only sensitive
+			return SensitivitySetting.ONLY_SENSITIVE;
+		}
+
+		// Unrecognized; default to only insensitive
+		return SensitivitySetting.ONLY_INSENSITIVE;
+	}
+
+	protected ComplexFieldProperty addProperty(String propName) {
+		return contentsField.addProperty(propName, getSensitivitySetting(propName));
+	}
+
 	public DocIndexerXmlHandlers(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 
 		// Define the properties that make up our complex field
-		contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, ComplexFieldUtil.getDefaultMainPropName(), SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE);
-		propPunct = contentsField.addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME, SensitivitySetting.ONLY_INSENSITIVE);
-		propStartTag = contentsField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, SensitivitySetting.ONLY_SENSITIVE); // start tag positions
+		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
+		contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName, getSensitivitySetting(mainPropName));
+		propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+		propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start tag positions
 		propStartTag.setForwardIndex(false);
-		propEndTag = contentsField.addProperty(ComplexFieldUtil.END_TAG_PROP_NAME, SensitivitySetting.ONLY_SENSITIVE); // end tag positions
+		propEndTag = addProperty(ComplexFieldUtil.END_TAG_PROP_NAME); // end tag positions
 		propEndTag.setForwardIndex(false);
 	}
 

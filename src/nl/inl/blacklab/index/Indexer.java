@@ -238,12 +238,6 @@ public class Indexer {
 		Constructor<? extends DocIndexer> constructor = docIndexerClass.getConstructor(
 				Indexer.class, String.class, Reader.class);
 		DocIndexer docIndexer = constructor.newInstance(this, documentName, reader);
-
-		// Set any parameters for this doc indexer
-		for (Map.Entry<String, String> e: indexerParam.entrySet()) {
-			docIndexer.setParameter(e.getKey(), e.getValue());
-		}
-
 		return docIndexer;
 	}
 
@@ -663,6 +657,16 @@ public class Indexer {
 	 */
 	public void setIndexerParam(Map<String, String> indexerParam) {
 		this.indexerParam = indexerParam;
+	}
+
+	/**
+	 * Get the parameters we would like to be passed to the DocIndexer class.
+	 *
+	 * Used by DocIndexer classes to get their parameters.
+	 * @return the parameters
+	 */
+	public Map<String, String> getIndexerParameters() {
+		return indexerParam;
 	}
 
 }
