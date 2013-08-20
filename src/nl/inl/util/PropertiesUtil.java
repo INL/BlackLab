@@ -33,7 +33,9 @@ public class PropertiesUtil {
 	 * @param path
 	 *            path to the file
 	 * @return the Properties read
+	 * @deprecated use version that takes a File
 	 */
+	@Deprecated
 	public static Properties readFromFile(String path) {
 		return readFromFile(new File(path));
 	}

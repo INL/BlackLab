@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -33,6 +34,7 @@ import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
+import nl.inl.util.PropertiesUtil;
 
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.queryParser.ParseException;
@@ -79,9 +81,9 @@ public class IndexTool {
 				indexerParam.put(name, value);
 			} else if (arg.startsWith("--")) {
 				String name = arg.substring(2);
-				if (name.equals("maxDocs")) {
+				if (name.equals("maxdocs")) {
 					if (i + 1 == args.length) {
-						System.err.println("-maxDocs option needs argument");
+						System.err.println("-maxdocs option needs argument");
 						usage();
 						return;
 					}
@@ -89,13 +91,25 @@ public class IndexTool {
 						maxDocs = Integer.parseInt(args[i + 1]);
 						i++;
 					} catch (NumberFormatException e) {
-						System.err.println("-maxDocs option needs integer argument");
+						System.err.println("--maxdocs option needs integer argument");
 						usage();
 						return;
 					}
 				} else if (name.equals("create")) {
 					System.err.println("Option --create is deprecated; use create command (--help for details)");
 					createNewIndex = true;
+				} else if (name.equals("indexparam")) {
+					if (i + 1 == args.length) {
+						System.err.println("--indexparam option needs argument");
+						usage();
+						return;
+					}
+					File propFile = new File(args[i + 1]);
+					Properties p = PropertiesUtil.readFromFile(propFile);
+					for (Map.Entry<Object, Object> e: p.entrySet()) {
+						indexerParam.put(e.getKey().toString(), e.getValue().toString());
+					}
+					i++;
 				} else if (name.equals("help")) {
 					usage();
 					return;
@@ -171,6 +185,12 @@ public class IndexTool {
 		String op = createNewIndex ? "Creating new" : "Appending to";
 		System.out.println(op + " index in " + indexDir + " from " + inputDir + " ("
 				+ docIndexerName + ")");
+		if (indexerParam.size() > 0) {
+			System.out.println("Indexer parameters:");
+			for (Map.Entry<String,String> e: indexerParam.entrySet()) {
+				System.out.println("  " + e.getKey() + ": " + e.getValue());
+			}
+		}
 
 		LogUtil.initLog4jBasic();
 
@@ -233,8 +253,9 @@ public class IndexTool {
 						+ "  IndexTool delete <indexdir> <filterQuery>\n"
 						+ "\n"
 						+ "Options:\n"
-						+ "  --maxdocs <n>      Stop after indexing <n> documents\n"
-						+ "  ---<name> <value>  Pass parameter to DocIndexer class\n"
+						+ "  --maxdocs <n>        Stop after indexing <n> documents\n"
+						+ "  --indexparam <file>  Read properties file with parameters for DocIndexer\n"
+						+ "  ---<name> <value>    Pass parameter to DocIndexer class\n"
 						+ "\n"
 						+ "Valid formats:");
 		for (String format: formats.keySet()) {
