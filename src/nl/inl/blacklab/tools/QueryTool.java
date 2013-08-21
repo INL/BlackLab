@@ -26,10 +26,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
@@ -159,6 +163,9 @@ public class QueryTool {
 	 * is -1.
 	 */
 	private int showWhichGroup = -1;
+
+	/** Lists of words read from file to choose random word from (for batch mode) */
+	private Map<String, List<String>> wordLists = new HashMap<String, List<String>>();
 
 	static boolean isContextQlAvailable = false;
 
@@ -513,6 +520,8 @@ public class QueryTool {
 		this.in = in;
 
 		contextSize = searcher.getDefaultContextSize();
+
+		wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
 	}
 
 	/**
@@ -583,9 +592,31 @@ public class QueryTool {
 
 	private void processCommand(String fullCmd) {
 		fullCmd = fullCmd.trim();
-		if (fullCmd.charAt(0) == '#')
+		if (fullCmd.charAt(0) == '#') // comment (batch mode)
 			return;
 
+		// See if we want to loop a command
+		if (fullCmd.startsWith("repeat ")) {
+			fullCmd = fullCmd.substring(7);
+			Pattern p = Pattern.compile("^\\d+\\s");
+			Matcher m = p.matcher(fullCmd);
+			if (m.find()) {
+				String strNum = m.group();
+				fullCmd = fullCmd.substring(strNum.length());
+				int repCount = parseInt(strNum.trim(), 1);
+				outprint("Repeating " + repCount + " times: " + fullCmd);
+				for (int i = 0; i < repCount; i++) {
+					processCommand(fullCmd);
+				}
+			} else {
+				errprintln("Repeat command should have a repetition count.");
+			}
+			return;
+		}
+
+		// In batch mode, we can use the chain operator (&&) to
+		// time several commands together. See if we're chaining
+		// commands here.
 		String cmd = null, restCommand = null;
 		int commandSeparatorIndex = fullCmd.indexOf("&&");
 		if (commandSeparatorIndex >= 0) {
@@ -627,12 +658,12 @@ public class QueryTool {
 					String right = XmlUtil.xmlToPlainText(conc.right);
 					outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
 				}
-			} else if (lcased.startsWith("doc ")) {
-				int docId = parseInt(lcased.substring(4), 0);
-				showMetadata(docId);
 			} else if (lcased.startsWith("snippetsize ")) {
 				snippetSize = parseInt(lcased.substring(12), 0);
 				outprintln("Snippets will show " + snippetSize + " words of context.");
+			} else if (lcased.startsWith("doc ")) {
+				int docId = parseInt(lcased.substring(4), 0);
+				showMetadata(docId);
 			} else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
 				if (cmd.length() <= 7) {
 					filterQuery = null; // clear filter
@@ -693,9 +724,46 @@ public class QueryTool {
 				printQueryHelp();
 			} else if (lcased.equals("help") || lcased.equals("?")) {
 				printHelp();
+			} else if (lcased.startsWith("sleep")) {
+				try {
+					Thread.sleep((int)(Float.parseFloat(lcased.substring(6)) * 1000));
+				} catch (NumberFormatException e1) {
+					errprintln("Sleep takes a float, the number of seconds to sleep");
+				} catch (InterruptedException e) {
+					// OK
+				}
+			} else if (lcased.startsWith("wordlist")) {
+				if (cmd.length() == 8) {
+					// Show loaded wordlists
+					outprintln("Available word lists:");
+					for (String listName: wordLists.keySet()) {
+						outprintln(" " + listName);
+					}
+				} else {
+					// Load new wordlist or display existing wordlist
+					String[] parts = cmd.substring(9).trim().split("\\s+", 2);
+					String name = "word", fn = parts[0];
+					if (parts.length == 2) {
+						name = parts[1];
+					}
+					File f = new File(fn);
+					if (f.exists()) {
+						// Second arg is a file
+						wordLists.put(name, FileUtil.readLines(f));
+						outprintln("Loaded word list '" + name + "'");
+					} else {
+						if (wordLists.containsKey(fn)) {
+							// Display existing wordlist
+							for (String word: wordLists.get(fn)) {
+								outprintln(" " + word);
+							}
+						} else {
+							errprintln("File " + fn + " not found.");
+						}
+					}
+				}
 			} else if (lcased.equals("warmup")) {
-				outprintln("Warming up the forward indices. This may take a while...");
-				searcher.warmUpForwardIndices();
+				errprintln("Warming up the forward indices is deprecated (done automatically at startup)");
 			} else if (lcased.startsWith("showconc ")) {
 				String v = lcased.substring(9);
 				showConc = v.equals("on") || v.equals("yes") || v.equals("true");
@@ -807,10 +875,15 @@ public class QueryTool {
 		outprintln("  sensitive {on|off|case|diac}       # Set case-/diacritics-sensitivity");
 		outprintln("  filter <luceneQuery>               # Set document filter, e.g. title:\"Smith\"");
 		outprintln("  doctitle {on|off}                  # Show document titles between hits?");
-		outprintln("  warmup                             # Warm up the forward indices");
 		outprintln("  struct                             # Show index structure");
 		outprintln("  help                               # This message");
 		outprintln("  exit                               # Exit program");
+
+		outprintln("\nBatch testing commands (start in batch mode with -f <commandfile>):");
+		outprintln("  wordlist <file> <listname>         # Load a list of words");
+		outprintln("  @@<listname>                       # Substitute a random word from list (use in query)");
+		outprintln("  repeat <n> <query>                 # Repeat a query n times (with different random words)");
+		outprintln("  sleep <f>                          # Sleep a number of seconds");
 		outprintln("");
 
 		printQueryHelp();
@@ -841,6 +914,27 @@ public class QueryTool {
 	private void parseAndExecuteQuery(String query) {
 		Timer t = new Timer();
 		try {
+
+			// See if we want to choose any random words
+			if (query.contains("@@")) {
+				StringBuffer resultString = new StringBuffer();
+				Pattern regex = Pattern.compile("@@[A-Za-z0-9_\\-]+");
+				Matcher regexMatcher = regex.matcher(query);
+				while (regexMatcher.find()) {
+					// You can vary the replacement text for each match on-the-fly
+					String wordListName = regexMatcher.group().substring(2);
+					List<String> list = wordLists.get(wordListName);
+					if (list == null) {
+						errprintln("Word list '" + wordListName + "' not found!");
+						return;
+					}
+					int randomIndex = (int)(Math.random() * list.size());
+					regexMatcher.appendReplacement(resultString, list.get(randomIndex));
+				}
+				regexMatcher.appendTail(resultString);
+				query = resultString.toString();
+			}
+
 			TextPattern pattern = currentParser.parse(query);
 			pattern = pattern.rewrite();
 			if (verbose)
@@ -858,9 +952,8 @@ public class QueryTool {
 			showWhichGroup = -1;
 			showSetting = ShowSetting.HITS;
 			firstResult = 0;
-			long searchTime = t.elapsed();
 			showResultsPage();
-			reportTime("search", searchTime, "display", t.elapsed() - searchTime);
+			reportTime(t.elapsed());
 			if (determineTotalNumberOfHits)
 				statInfo = "" + hits.size();
 			else
@@ -998,11 +1091,10 @@ public class QueryTool {
 		} else {
 			hitsToSort.sort(crit);
 			firstResult = 0;
-			long sortTime = t.elapsed();
 			showResultsPage();
 			if (property == null)
 				property = "(default)";
-			reportTime("sort", sortTime, "display", t.elapsed() - sortTime);
+			reportTime(t.elapsed());
 		}
 	}
 
@@ -1064,11 +1156,10 @@ public class QueryTool {
 		}
 		groups = new ResultsGrouper(hits, crit);
 		showSetting = ShowSetting.GROUPS;
-		long groupTime = t.elapsed();
 		sortGroups("size");
 		if (property == null)
 			property = "(default)";
-		reportTime("group", groupTime, "sort/display", t.elapsed() - groupTime);
+		reportTime(t.elapsed());
 	}
 
 	/**
@@ -1102,22 +1193,11 @@ public class QueryTool {
 	}
 
 	/**
-	 * If an operation took longer than 5 seconds, report the time it took.
-	 *
-	 * @param name1 name of the first part of the operation
-	 * @param time1 how long the first part took
-	 * @param name2 name of the second part of the operation
-	 * @param time2 how long the second part took
+	 * Report how long an operation took
+	 * @param time time to report
 	 */
-	private void reportTime(String name1, long time1, String name2, long time2) {
-		if (verbose) {
-			outprintln(describeInterval(time1 + time2) + " elapsed ("
-					+ describeInterval(time1) + " " + name1 + ", "
-					+ describeInterval(time2) + " " + name2 + ")");
-			return;
-		}
-
-		outprintln(describeInterval(time1 + time2) + " elapsed");
+	private void reportTime(long time) {
+		outprintln(describeInterval(time) + " elapsed");
 	}
 
 	private String describeInterval(long time1) {
