@@ -40,8 +40,9 @@ public abstract class ForwardIndex {
 
 	/**
 	 * Perform a series of reads on the forward index to get (most of) it into disk cache.
+	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
-	public abstract void warmUp();
+	public abstract void warmUp() throws InterruptedException;
 
 	/**
 	 * Close the forward index.

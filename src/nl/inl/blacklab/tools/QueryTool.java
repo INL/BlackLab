@@ -515,6 +515,7 @@ public class QueryTool {
 		outprintln("Opening index " + indexDir + "...");
 
 		// Create the BlackLab searcher object
+		Searcher.setAutoWarmForwardIndices(true);
 		searcher = Searcher.open(indexDir);
 
 		this.in = in;

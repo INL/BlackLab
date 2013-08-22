@@ -93,7 +93,8 @@ public class Searcher {
 	/** Complex field name for default contents field */
 	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
 
-	private static boolean AUTOMATICALLY_WARM_UP_FIS = false;
+	/** Whether or not to automatically warm up the forward indices in a background thread at startup */
+	private static boolean autoWarmForwardIndices = false;
 
 	/** The collator to use for sorting. Defaults to English collator. */
 	private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
@@ -217,6 +218,9 @@ public class Searcher {
 
 	/** The index writer. Only valid in indexMode. */
 	private IndexWriter indexWriter = null;
+
+	/** Thread that automatically warms up the forward indices, if enabled. */
+	private Thread autoWarmThread;
 
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).
@@ -344,6 +348,22 @@ public class Searcher {
 			indexReader.close();
 			if (indexWriter != null)
 				indexWriter.close();
+
+			// See if the forward index warmup thread is running, and if so, stop it
+			if (autoWarmThread != null && autoWarmThread.isAlive()) {
+				autoWarmThread.interrupt();
+
+				// Wait for a maximum of a second for the thread to close down gracefully
+				int i = 0;
+				while (autoWarmThread.isAlive() && i < 10) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						// OK
+					}
+					i++;
+				}
+			}
 
 			// Close the forward indices
 			for (ForwardIndex fi : forwardIndices.values()) {
@@ -1048,18 +1068,32 @@ public class Searcher {
 			}
 		}
 
-		if (!indexMode && AUTOMATICALLY_WARM_UP_FIS) {
-			warmUpForwardIndices();
+		if (!indexMode && autoWarmForwardIndices) {
+			// Start a background thread to warm up the forward indices
+			autoWarmThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						warmUpForwardIndices();
+					} catch (InterruptedException e) {
+						// OK, just quit
+					}
+				}
+			});
+			autoWarmThread.start();
 		}
 	}
 
 	/**
 	 * "Warm up" the forward indices by performing a large number of reads on them,
 	 * getting them into disk cache.
+	 *
+	 * Not that this is done automatically in a background thread at startup, so you
+	 * shouldn't need to call this unless you've specifically switched this behaviour off.
+	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
-	public void warmUpForwardIndices() {
+	public void warmUpForwardIndices() throws InterruptedException {
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
-			logger.debug("Warming up " + e.getKey() + "...");
 			e.getValue().warmUp();
 		}
 	}
@@ -1453,6 +1487,12 @@ public class Searcher {
 
 	public static void setDefaultCollator(Collator defaultCollator) {
 		Searcher.defaultCollator = defaultCollator;
+	}
+
+	/** Set whether or not to automatically warm up the forward indices in a background thread in Searcher constructor
+	 * @param b if true, automatically warm up forward indices in Searcher constructor */
+	public static void setAutoWarmForwardIndices(boolean b) {
+		autoWarmForwardIndices = b;
 	}
 
 	public IndexWriter getWriter() {

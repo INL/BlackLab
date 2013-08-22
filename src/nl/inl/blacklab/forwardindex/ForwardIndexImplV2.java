@@ -530,9 +530,9 @@ class ForwardIndexImplV2 extends ForwardIndex {
 	}
 
 	@Override
-	public void warmUp() {
+	public void warmUp() throws InterruptedException {
 		int fiid = 0;
-		int oneReadPerHowManyChars = 2000;
+		int oneReadPerHowManyChars = 4000;
 		for (TocEntry e: toc) {
 			int n = e.length / oneReadPerHowManyChars;
 
@@ -544,6 +544,11 @@ class ForwardIndexImplV2 extends ForwardIndex {
 			}
 			retrievePartsInt(fiid, starts, ends);
 			fiid++;
+			if (fiid % 100 == 0) {
+				// Allow a little bit of other processing to go on,
+				// and check for thread interruption
+				Thread.sleep(1);
+			}
 		}
 	}
 
