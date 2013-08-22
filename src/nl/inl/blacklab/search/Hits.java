@@ -35,7 +35,6 @@ import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
@@ -234,7 +233,18 @@ public class Hits implements Iterable<Hit> {
 			throws TooManyClauses {
 		this(searcher, concordanceFieldPropName);
 
-		sourceSpans = findSpans(sourceQuery);
+		try {
+			IndexReader reader = null;
+			if (searcher != null) { // this may happen while testing with stub classes
+				reader = searcher.getIndexReader();
+			}
+			SpanQuery spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
+			sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(reader));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+
 		// logger.debug("SPANS: " + sourceSpans);
 		sourceSpansFullyRead = false;
 	}
@@ -262,7 +272,7 @@ public class Hits implements Iterable<Hit> {
 	/** Sets the desired context size.
 	 * @param contextSize the context size (number of words to fetch around hits)
 	 */
-	public void setContextSize(int contextSize) {
+	public synchronized void setContextSize(int contextSize) {
 		if (this.desiredContextSize == contextSize)
 			return; // no need to reset anything
 		this.desiredContextSize = contextSize;
@@ -271,28 +281,6 @@ public class Hits implements Iterable<Hit> {
 		currentContextSize = -1;
 		contextFieldsPropName = null;
 		concordances = null;
-	}
-
-	/**
-	 * Executes the SpanQuery to get a Spans object.
-	 *
-	 * @param spanQuery
-	 *            the query
-	 * @return the results object
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 */
-	BLSpans findSpans(SpanQuery spanQuery) throws BooleanQuery.TooManyClauses {
-		try {
-			IndexReader reader = null;
-			if (searcher != null) { // this may happen while testing with stub classes
-				reader = searcher.getIndexReader();
-			}
-			spanQuery = (SpanQuery) spanQuery.rewrite(reader);
-			return BLSpansWrapper.optWrap(spanQuery.getSpans(reader));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	/**
@@ -328,13 +316,13 @@ public class Hits implements Iterable<Hit> {
 	 * @deprecated Breaks optimizations. Use iteration or subList() instead.
 	 */
 	@Deprecated
-	public List<Hit> getHits() {
+	public synchronized List<Hit> getHits() {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
 			// Interrupted; just return the hits we've gathered so far.
 		}
-		return Collections.unmodifiableList(hits);
+		return new ArrayList<Hit>(hits);
 	}
 
 	/**
@@ -354,45 +342,47 @@ public class Hits implements Iterable<Hit> {
 	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
 	void ensureHitsRead(int number) throws InterruptedException {
-		if (sourceSpansFullyRead)
+		if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
 			return;
 
-		boolean readAllHits = number < 0;
-		Thread currentThread = Thread.currentThread();
-		try {
-			while (readAllHits || hits.size() < number) {
+		synchronized(this) {
+			boolean readAllHits = number < 0;
+			Thread currentThread = Thread.currentThread();
+			try {
+				while (readAllHits || hits.size() < number) {
 
-				// Check if the thread should terminate
-				if (currentThread.isInterrupted())
-					throw new InterruptedException("Thread was interrupted while gathering hits");
+					// Check if the thread should terminate
+					if (currentThread.isInterrupted())
+						throw new InterruptedException("Thread was interrupted while gathering hits");
 
-				// Stop if we're at the maximum number of hits we want to count
-				if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
-					maxHitsCounted = true;
-					break;
-				}
+					// Stop if we're at the maximum number of hits we want to count
+					if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
+						maxHitsCounted = true;
+						break;
+					}
 
-				// Advance to next hit
-				if (!sourceSpans.next()) {
-					sourceSpansFullyRead = true;
-					break;
-				}
+					// Advance to next hit
+					if (!sourceSpans.next()) {
+						sourceSpansFullyRead = true;
+						break;
+					}
 
-				// Count the hit and add it (unless we've reached the maximum number of hits we want)
-				hitsCounted++;
-				int hitDoc = sourceSpans.doc();
-				if (hitDoc != previousHitDoc) {
-					docsCounted++;
+					// Count the hit and add it (unless we've reached the maximum number of hits we want)
+					hitsCounted++;
+					int hitDoc = sourceSpans.doc();
+					if (hitDoc != previousHitDoc) {
+						docsCounted++;
+						if (!maxHitsRetrieved)
+							docsRetrieved++;
+						previousHitDoc = hitDoc;
+					}
+					maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
 					if (!maxHitsRetrieved)
-						docsRetrieved++;
-					previousHitDoc = hitDoc;
+						hits.add(sourceSpans.getHit());
 				}
-				maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
-				if (!maxHitsRetrieved)
-					hits.add(sourceSpans.getHit());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 
@@ -484,7 +474,7 @@ public class Hits implements Iterable<Hit> {
 	 *            if true, sort in descending order
 	 * @param sensitive whether to sort case-sensitively or not
 	 */
-	public void sort(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+	public synchronized void sort(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -517,7 +507,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param hit
 	 *            the hit
 	 */
-	public void add(Hit hit) {
+	public synchronized void add(Hit hit) {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -737,7 +727,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param contextSize the desired number of words around the hit
 	 * @return the concordance
 	 */
-	public Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
+	public synchronized Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
 		Hits h = new Hits(searcher, oneHit);
 		Map<Hit, Concordance> oneConc = searcher.retrieveConcordances(h, contextSize, fieldName);
@@ -760,7 +750,7 @@ public class Hits implements Iterable<Hit> {
 	 *   (only use if you want a different one than the preset preference)
 	 * @return concordance for this hit
 	 */
-	public Concordance getConcordance(Hit h, int contextSize) {
+	public synchronized Concordance getConcordance(Hit h, int contextSize) {
 		if (contextSize != desiredContextSize) {
 			// Different context size than the default for the whole set;
 			// We probably want to show a hit with a larger snippet around it
@@ -795,7 +785,7 @@ public class Hits implements Iterable<Hit> {
 	 * You shouldn't have to call this manually, as it's automatically called when
 	 * you call getConcordance() for the first time.
 	 */
-	void findConcordances() {
+	synchronized void findConcordances() {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -817,7 +807,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param fieldProps
 	 *            the field and properties to use for the context
 	 */
-	public void findContext(List<String> fieldProps) {
+	public synchronized void findContext(List<String> fieldProps) {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -860,14 +850,16 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
 	 */
-	public void clearConcordances() {
+	public synchronized void clearConcordances() {
 		concordances = null;
 	}
 
 	/**
-	 * Clear any cached concordances so new ones will be created when necessary.
+	 * Clear any cached context so new one will be retrieved when necessary.
+	 * @deprecated not used, and not the client's concern
 	 */
-	public void clearContext() {
+	@Deprecated
+	public synchronized void clearContext() {
 		for (Hit hit: hits) {
 			hit.context = null;
 		}
@@ -893,7 +885,7 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the frequency of each occurring token
 	 */
-	public TokenFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
+	public synchronized TokenFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
 		findContext(Arrays.asList(ctx.luceneField(false)));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
@@ -991,7 +983,9 @@ public class Hits implements Iterable<Hit> {
 	 * @param fromIndex first hit to include in the resulting list
 	 * @param toIndex first hit not to include in the resulting list
 	 * @return the sublist
+	 * @deprecated use HitsWindow
 	 */
+	@Deprecated
 	public List<Hit> subList(int fromIndex, int toIndex) {
 		try {
 			ensureHitsRead(toIndex);
@@ -1080,7 +1074,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param conc
 	 *            where to add the concordances
 	 */
-	void makeConcordancesSingleDocForwardIndex(ForwardIndex forwardIndex,
+	synchronized void makeConcordancesSingleDocForwardIndex(ForwardIndex forwardIndex,
 			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices, int wordsAroundHit,
 			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
@@ -1193,12 +1187,15 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Get context words from the forward index for hits in a single document.
+	 * Get context words from the forward index.
+	 *
+	 * NOTE: not synchronized because only ever called from synchronized methods!
+	 *
 	 * @param wordsAroundHit how many words of context we want
 	 * @param contextSources
 	 *            forward indices to get context from
 	 */
-	void getContextWords(int wordsAroundHit, List<ForwardIndex> contextSources) {
+	private void getContextWords(int wordsAroundHit, List<ForwardIndex> contextSources) {
 
 		int n = hits.size();
 		if (n == 0)
@@ -1254,9 +1251,12 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Get the context information from the list of hits, so we can
 	 * look up a different context but still have access to this one as well.
+	 *
+	 * NOTE: not synchronized because only ever called from synchronized methods!
+	 *
 	 * @return the context
 	 */
-	int[][] getContextFromHits() {
+	private int[][] getContextFromHits() {
 		int[][] context = new int[hits.size()][];
 		int i = 0;
 		for (Hit h: hits) {
@@ -1268,9 +1268,12 @@ public class Hits implements Iterable<Hit> {
 
 	/**
 	 * Put context information into the list of hits.
+	 *
+	 * NOTE: not synchronized because only ever called from synchronized methods!
+	 *
 	 * @param context the context to restore
 	 */
-	void restoreContextInHits(int[][] context) {
+	private void restoreContextInHits(int[][] context) {
 		int i = 0;
 		for (Hit h: hits) {
 			h.context = context[i];
@@ -1291,7 +1294,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param conc
 	 *            where to add the concordances
 	 */
-	void makeConcordancesSingleDoc(String fieldName, int wordsAroundHit,
+	synchronized void makeConcordancesSingleDoc(String fieldName, int wordsAroundHit,
 			Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
