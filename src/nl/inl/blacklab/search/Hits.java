@@ -637,6 +637,66 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Return the number of hits counted so far.
+	 *
+	 * If you're retrieving hit in a background thread, call this
+	 * method from another thread to get an update of the count so far.
+	 *
+	 * @return the current total hit count
+	 */
+	public int countSoFarHitsCounted() {
+		return hitsCounted;
+	}
+
+	/**
+	 * Return the number of hits retrieved so far.
+	 *
+	 * If you're retrieving hits in a background thread, call this
+	 * method from another thread to get an update of the count so far.
+	 *
+	 * @return the current total hit count
+	 */
+	public int countSoFarHitsRetrieved() {
+		return hits.size();
+	}
+
+	/**
+	 * Return the number of documents counted so far.
+	 *
+	 * If you're retrieving hit in a background thread, call this
+	 * method from another thread to get an update of the count so far.
+	 *
+	 * @return the current total hit count
+	 */
+	public int countSoFarDocsCounted() {
+		return docsCounted;
+	}
+
+	/**
+	 * Return the number of documents retrieved so far.
+	 *
+	 * If you're retrieving hits in a background thread, call this
+	 * method from another thread to get an update of the count so far.
+	 *
+	 * @return the current total hit count
+	 */
+	public int countSoFarDocsRetrieved() {
+		return docsRetrieved;
+	}
+
+	/**
+	 * Check if we're done retrieving/counting hits.
+	 *
+	 * If you're retrieving hits in a background thread, call this
+	 * method from another thread to check if all hits have been processed.
+	 *
+	 * @return true iff all hits have been retrieved/counted.
+	 */
+	public boolean doneFetchingHits() {
+		return sourceSpansFullyRead || maxHitsCounted;
+	}
+
+	/**
 	 * Return an iterator over these hits.
 	 *
 	 * @return the iterator
