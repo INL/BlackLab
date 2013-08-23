@@ -136,18 +136,15 @@ public class Example {
 	 * @return the resulting BlackLab text pattern
 	 * @throws ParseException
 	 */
-	private static TextPattern parseCorpusQL(String query) throws ParseException {
+	private static TextPattern parseCorpusQL(String query) throws ParseException  {
 
 		// A bit of cheating here - CorpusQL only allows double-quoting, but
 		// that makes our example code look ugly (we have to add backslashes).
 		// We may extend CorpusQL to allow single-quoting in the future.
 		query = query.replaceAll("'", "\"");
 
-		// Instantiate the CorpusQL parser
-		CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(query));
-
-		// Parse the query
-		return parser.query();
+		// Parse query using the CorpusQL parser
+		return CorpusQueryLanguageParser.parse(query);
 	}
 
 	/**
