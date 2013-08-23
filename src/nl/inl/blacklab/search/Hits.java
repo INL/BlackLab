@@ -313,7 +313,7 @@ public class Hits implements Iterable<Hit> {
 	 * Get the list of hits.
 	 *
 	 * @return the list of hits
-	 * @deprecated Breaks optimizations. Use iteration or subList() instead.
+	 * @deprecated Breaks optimizations. Use iteration or window() instead.
 	 */
 	@Deprecated
 	public synchronized List<Hit> getHits() {
@@ -1043,7 +1043,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param fromIndex first hit to include in the resulting list
 	 * @param toIndex first hit not to include in the resulting list
 	 * @return the sublist
-	 * @deprecated use HitsWindow
+	 * @deprecated use window()
 	 */
 	@Deprecated
 	public List<Hit> subList(int fromIndex, int toIndex) {
@@ -1057,6 +1057,25 @@ public class Hits implements Iterable<Hit> {
 		if (toIndex > hits.size())
 			toIndex = hits.size();
 		return hits.subList(fromIndex, toIndex);
+	}
+
+	/**
+	 * Get a window into this list of hits.
+	 *
+	 * Use this if you're displaying part of the resultset, like
+	 * in a paging interface. It makes sure BlackLab only works with
+	 * the hits you want to display and doesn't do any unnecessary
+	 * processing on the other hits.
+	 *
+	 * HitsWindow includes methods to assist with paging, like figuring
+	 * out if there hits before or after the window.
+	 *
+	 * @param first first hit in the window (0-based)
+	 * @param windowSize size of the window
+	 * @return the window
+	 */
+	public HitsWindow window(int first, int windowSize) {
+		return new HitsWindow(this, first, windowSize);
 	}
 
 	/**

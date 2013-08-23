@@ -19,7 +19,6 @@ import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.Searcher;
 
 import org.apache.lucene.document.Document;
@@ -88,9 +87,9 @@ public class DocResult {
 	 * @return the hits
 	 */
 	public Hits getHits(int max) {
-		if (max == 0)
+		if (max <= 0)
 			return hits;
-		return new HitsWindow(hits, 0, max);
+		return hits.window(0, max);
 	}
 
 	public int getDocId() {

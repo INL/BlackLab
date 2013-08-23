@@ -1325,8 +1325,8 @@ public class QueryTool {
 		if (hitsToShow == null)
 			return; // nothing to show
 
-		// Limit results to the first n
-		HitsWindow window = new HitsWindow(hitsToShow, firstResult, resultsPerPage);
+		// Limit results to the current page
+		HitsWindow window = hitsToShow.window(firstResult, resultsPerPage);
 
 		// Compile hits display info and calculate necessary width of left context column
 		List<HitToShow> toShow = new ArrayList<HitToShow>();
