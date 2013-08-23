@@ -206,11 +206,14 @@ Token queryOperator():
 /* a simple query (not including containing, within, etc.) */
 TextPattern simpleQuery(): 
 {
-    TextPattern query = null;
+    TextPattern query = null, rest = null;
 } 
 {
-    query=sequence()
+    query=sequence() [ "|" rest=simpleQuery() ]
     {
+        if (rest != null) {
+            return new TextPatternOr(query, rest);
+        }
         return query;
     }
 }
@@ -286,7 +289,6 @@ TextPattern sequenceRest(TextPattern first):
 {
 	Token op = null;
 	TextPattern rest = null;
-/*	Integer[] minMax = null;*/
 }
 {
 	rest=sequence()
@@ -294,14 +296,6 @@ TextPattern sequenceRest(TextPattern first):
 		if (rest == null)
 			return first;
 		return new TextPatternSequence(first, rest);
-	}
-/*|	minMax=matchall() rest=sequence()
-	{
-		return new TextPatternSequence(first, new TextPatternAnyToken(minMax[0], minMax[1]), rest);
-	}*/
-|	"|" rest=sequence()
-	{
-		return new TextPatternOr(first, rest);
 	}
 }
 
