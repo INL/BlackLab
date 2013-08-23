@@ -23,13 +23,13 @@ import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConstants {
 
-    public static void main(String[] args) throws Exception
+    public static void main(String[] args) throws nl.inl.blacklab.queryParser.corpusql.ParseException
     {
                 CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(args[0]));
                 parser.query();
     }
 
-    public static TextPattern parse(String query) throws Exception
+    public static TextPattern parse(String query) throws nl.inl.blacklab.queryParser.corpusql.ParseException
     {
         CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(query));
         return parser.query();
