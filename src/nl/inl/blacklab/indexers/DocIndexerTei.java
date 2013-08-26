@@ -71,8 +71,8 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 			}
 
 		};
-		addHandler("/TEI", documentElementHandler);
-		addHandler("/TEI.2", documentElementHandler);
+		addHandler("TEI", documentElementHandler);
+		addHandler("TEI.2", documentElementHandler);
 
 		// Body element: clear character content at the beginning
 		final ElementHandler body = addHandler("body", new ElementHandler() {
