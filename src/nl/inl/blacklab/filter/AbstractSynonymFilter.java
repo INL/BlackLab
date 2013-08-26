@@ -80,20 +80,24 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 	public static void main(String[] args) throws IOException {
 		TokenStream ts = new WhitespaceTokenizer(Version.LUCENE_36, new StringReader(
 				"Dit is een test"));
-		ts = new AbstractSynonymFilter(ts) {
-			@Override
-			public String[] getSynonyms(String s) {
-				if (s.equals("test"))
-					return new String[] { "testje" };
-				if (s.equals("is"))
-					return new String[] { "zijn" };
-				return null;
-			}
-		};
+		try {
+			ts = new AbstractSynonymFilter(ts) {
+				@Override
+				public String[] getSynonyms(String s) {
+					if (s.equals("test"))
+						return new String[] { "testje" };
+					if (s.equals("is"))
+						return new String[] { "zijn" };
+					return null;
+				}
+			};
 
-		CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
-		while (ts.incrementToken()) {
-			System.out.println(new String(term.buffer(), 0, term.length()));
+			CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
+			while (ts.incrementToken()) {
+				System.out.println(new String(term.buffer(), 0, term.length()));
+			}
+		} finally {
+			ts.close();
 		}
 	}
 
