@@ -29,7 +29,7 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.DocIndexerAlto;
 import nl.inl.blacklab.indexers.DocIndexerFolia;
 import nl.inl.blacklab.indexers.DocIndexerPageXml;
-import nl.inl.blacklab.indexers.DocIndexerTeiP4;
+import nl.inl.blacklab.indexers.DocIndexerTei;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.LogUtil;
@@ -47,7 +47,7 @@ public class IndexTool {
 	static Map<String, Class<? extends DocIndexer>> formats = new TreeMap<String, Class<? extends DocIndexer>>();
 
 	static {
-		formats.put("teip4", DocIndexerTeiP4.class);
+		formats.put("tei", DocIndexerTei.class);
 		formats.put("sketchxml", DocIndexerXmlSketch.class);
 		formats.put("alto", DocIndexerAlto.class);
 		formats.put("folia", DocIndexerFolia.class);
@@ -200,6 +200,10 @@ public class IndexTool {
 		LogUtil.initLog4jBasic();
 
 		Class<? extends DocIndexer> docIndexerClass;
+		if (docIndexerName.equals("teip4")) {
+			System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
+			docIndexerName = "tei";
+		}
 		if (formats.containsKey(docIndexerName.toLowerCase())) {
 			// Predefined format.
 			docIndexerClass = formats.get(docIndexerName.toLowerCase());
