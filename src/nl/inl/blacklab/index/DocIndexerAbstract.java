@@ -224,4 +224,23 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		return getParameter(name, null);
 	}
 
+	public boolean getParameter(String name, boolean defaultValue) {
+		String value = parameters.get(name);
+		if (value == null)
+			return defaultValue;
+		value = value.trim().toLowerCase();
+		return value.equals("true") || value.equals("1") || value.equals("yes");
+	}
+
+	public int getParameter(String name, int defaultValue) {
+		String value = parameters.get(name);
+		if (value == null)
+			return defaultValue;
+		try {
+			return Integer.parseInt(value);
+		} catch (NumberFormatException e) {
+			return defaultValue;
+		}
+	}
+
 }
