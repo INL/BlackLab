@@ -204,32 +204,42 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 	}
 
 	void combineAuthorAndTitleFields() {
-		// Make author field, which is authorLevel1 or authorLevel2 if the first is empty
-		// Also make authorCombined, which is an indexed field combining the two levels (for searching).
 		Document myLuceneDoc = getCurrentLuceneDoc();
 		String author = myLuceneDoc.get("authorLevel1");
 		String authorLevel2 = myLuceneDoc.get("authorLevel2");
-		String authorCombined = author + " " + authorLevel2;
-		if (author == null || author.isEmpty()) {
-			author = authorLevel2;
+		if (author != null || authorLevel2 != null) {
+			// Make author field, which is authorLevel1 or authorLevel2 if the first is empty
+			// Also make authorCombined, which is an indexed field combining the two levels (for searching).
+			if (author == null)
+				author = "";
+			if (authorLevel2 == null)
+				authorLevel2 = "";
+			if (author.isEmpty()) {
+				author = authorLevel2;
+				authorLevel2 = "";
+			}
+			String authorCombined = author + " " + authorLevel2;
+			myLuceneDoc.add(new Field("author", author, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
+			myLuceneDoc.add(new Field("authorCombined", authorCombined, Store.NO, Index.ANALYZED_NO_NORMS, TermVector.NO));
 		}
-		if (author == null)
-			author = "";
-		myLuceneDoc.add(new Field("author", author, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
-		myLuceneDoc.add(new Field("authorCombined", authorCombined, Store.NO, Index.ANALYZED_NO_NORMS, TermVector.NO));
 
-		// Make title field, which is titleLevel1 or titleLevel2 if the first is empty
-		// Also make titleCombined, which is an indexed field combining the two levels (for searching).
 		String title = myLuceneDoc.get("titleLevel1");
 		String titleLevel2 = myLuceneDoc.get("titleLevel2");
-		String titleCombined = title + " " + titleLevel2;
-		if (title == null || title.isEmpty()) {
-			title = titleLevel2;
+		if (title != null || titleLevel2 != null) {
+			// Make title field, which is titleLevel1 or titleLevel2 if the first is empty
+			// Also make titleCombined, which is an indexed field combining the two levels (for searching).
+			if (title == null)
+				title = "";
+			if (titleLevel2 == null)
+				titleLevel2 = "";
+			if (title.isEmpty()) {
+				title = titleLevel2;
+				titleLevel2 = "";
+			}
+			String titleCombined = title + " " + titleLevel2;
+			myLuceneDoc.add(new Field("title", title, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
+			myLuceneDoc.add(new Field("titleCombined", titleCombined, Store.NO, Index.ANALYZED_NO_NORMS, TermVector.NO));
 		}
-		if (title == null)
-			title = "";
-		myLuceneDoc.add(new Field("title", title, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
-		myLuceneDoc.add(new Field("titleCombined", titleCombined, Store.NO, Index.ANALYZED_NO_NORMS, TermVector.NO));
 	}
 
 
