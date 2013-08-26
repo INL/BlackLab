@@ -56,10 +56,12 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
 
     private TextPattern simplePattern(String str)
     {
-        if (str.charAt(0) != '^')
-            str = "^" + str;
-        if (str.charAt(str.length() - 1) != '$')
-            str += "$";
+        if (str.length() > 0) {
+            if (str.charAt(0) != '^')
+                str = "^" + str;
+            if (str.charAt(str.length() - 1) != '$')
+                str += "$";
+        }
 
         // Treat everything like regex now; will be simplified later if possible
         return new TextPatternRegex(str);
@@ -644,14 +646,14 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     return false;
   }
 
-  private boolean jj_3R_22() {
-    if (jj_scan_token(26)) return true;
-    if (jj_3R_27()) return true;
+  private boolean jj_3R_27() {
+    if (jj_3R_30()) return true;
     return false;
   }
 
-  private boolean jj_3R_27() {
-    if (jj_3R_30()) return true;
+  private boolean jj_3R_22() {
+    if (jj_scan_token(26)) return true;
+    if (jj_3R_27()) return true;
     return false;
   }
 

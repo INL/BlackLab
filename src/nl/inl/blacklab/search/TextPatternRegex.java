@@ -54,18 +54,20 @@ public class TextPatternRegex extends TextPatternTerm {
 		// Does the regex pattern begin with (?i) (case-insensitive search)?
 		boolean searchCaseInsensitively = false;
 
-		// Wildcard expressions always start at beginning
-		if (wildcard.charAt(0) == '^') {
-			wildcard = wildcard.substring(1);
-		} else {
-			wildcard = ".*" + wildcard;
-		}
+		if (wildcard.length() > 0) {
+			// Wildcard expressions always start at beginning
+			if (wildcard.charAt(0) == '^') {
+				wildcard = wildcard.substring(1);
+			} else {
+				wildcard = ".*" + wildcard;
+			}
 
-		// Wildcard expressions always end at end
-		if (wildcard.charAt(wildcard.length() - 1) == '$') {
-			wildcard = wildcard.substring(0, wildcard.length() - 1);
-		} else {
-			wildcard += ".*";
+			// Wildcard expressions always end at end
+			if (wildcard.charAt(wildcard.length() - 1) == '$') {
+				wildcard = wildcard.substring(0, wildcard.length() - 1);
+			} else {
+				wildcard += ".*";
+			}
 		}
 
 		// Mark asterisk and questionmark candidates
