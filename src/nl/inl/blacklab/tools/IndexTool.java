@@ -54,17 +54,24 @@ public class IndexTool {
 		formats.put("pagexml", DocIndexerPageXml.class);
 	}
 
+	static Map<String, String> indexerParam = new TreeMap<String, String>();
+
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
 
+		// If the current directory contains indexer.properties, read it
+		File propFile = new File(".", "indexer.properties");
+		if (propFile.canRead())
+			readParametersFromPropertiesFile(propFile);
+
+		// Parse command line
 		int maxDocs = 0;
 		File indexDir = null, inputDir = null;
 		String glob = "*";
-		String docIndexerName = null;
+		String fileFormat = null;
 		boolean createNewIndex = false;
 		String command = "";
 		Set<String> commands = new HashSet<String>(Arrays.asList("add", "create", "delete"));
-		Map<String, String> indexerParam = new TreeMap<String, String>();
 		boolean addingFiles = true;
 		String deleteQuery = null;
 		for (int i = 0; i < args.length; i++) {
@@ -104,16 +111,13 @@ public class IndexTool {
 						usage();
 						return;
 					}
-					File propFile = new File(args[i + 1]);
+					propFile = new File(args[i + 1]);
 					if (!propFile.canRead()) {
 						System.err.println("Cannot read " + propFile);
 						usage();
 						return;
 					}
-					Properties p = PropertiesUtil.readFromFile(propFile);
-					for (Map.Entry<Object, Object> e: p.entrySet()) {
-						indexerParam.put(e.getKey().toString(), e.getValue().toString());
-					}
+					readParametersFromPropertiesFile(propFile);
 					i++;
 				} else if (name.equals("help")) {
 					usage();
@@ -126,7 +130,7 @@ public class IndexTool {
 			} else {
 				if (command.length() == 0 && commands.contains(arg)) {
 					command = arg;
-					addingFiles = !command.equals("delete");
+					addingFiles = command.equals("add") || command.equals("create");
 				} else if (indexDir == null) {
 					indexDir = new File(arg);
 				} else if (addingFiles && inputDir == null) {
@@ -150,8 +154,8 @@ public class IndexTool {
 					} else {
 						inputDir = new File(arg);
 					}
-				} else if (addingFiles && docIndexerName == null) {
-					docIndexerName = arg;
+				} else if (addingFiles && fileFormat == null) {
+					fileFormat = arg;
 				} else if (command.equals("delete") && deleteQuery == null) {
 					deleteQuery = arg;
 				} else {
@@ -167,6 +171,7 @@ public class IndexTool {
 			return;
 		}
 
+		// Check the command
 		if (command.length() == 0) {
 			System.err.println("No command specified; assuming \"add\" (--help for details)");
 			command = "add";
@@ -177,19 +182,21 @@ public class IndexTool {
 		}
 		createNewIndex |= command.equals("create");
 
+		// We're adding files. Do we have an input dir/file and file format name?
 		if (inputDir == null) {
 			System.err.println("No input dir given.");
 			usage();
 			return;
 		}
-		if (docIndexerName == null) {
+		if (fileFormat == null) {
 			System.err.println("No DocIndexer class name given.");
 			usage();
 			return;
 		}
+
 		String op = createNewIndex ? "Creating new" : "Appending to";
 		System.out.println(op + " index in " + indexDir + " from " + inputDir + " ("
-				+ docIndexerName + ")");
+				+ fileFormat + ")");
 		if (indexerParam.size() > 0) {
 			System.out.println("Indexer parameters:");
 			for (Map.Entry<String,String> e: indexerParam.entrySet()) {
@@ -197,33 +204,46 @@ public class IndexTool {
 			}
 		}
 
+		// Init log4j
 		LogUtil.initLog4jBasic();
 
-		Class<? extends DocIndexer> docIndexerClass;
-		if (docIndexerName.equals("teip4")) {
-			System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
-			docIndexerName = "tei";
+		// If the input or index directory contains indexer.properties, read it
+		propFile = new File(indexDir, "indexer.properties");
+		if (propFile.canRead())
+			readParametersFromPropertiesFile(propFile);
+		if (inputDir.isDirectory()) {
+			propFile = new File(inputDir, "indexer.properties");
+			if (propFile.canRead())
+				readParametersFromPropertiesFile(propFile);
 		}
-		if (formats.containsKey(docIndexerName.toLowerCase())) {
+
+		// Determine DocIndexer class to use
+		Class<? extends DocIndexer> docIndexerClass;
+		if (fileFormat.equals("teip4")) {
+			System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
+			fileFormat = "tei";
+		}
+		if (formats.containsKey(fileFormat.toLowerCase())) {
 			// Predefined format.
-			docIndexerClass = formats.get(docIndexerName.toLowerCase());
+			docIndexerClass = formats.get(fileFormat.toLowerCase());
 		} else {
 			try {
 				// Is it a fully qualified class name?
-				docIndexerClass = (Class<? extends DocIndexer>) Class.forName(docIndexerName);
+				docIndexerClass = (Class<? extends DocIndexer>) Class.forName(fileFormat);
 			} catch (Exception e1) {
 				try {
 					// Is it relative to the indexers package?
 					docIndexerClass = (Class<? extends DocIndexer>) Class
-							.forName("nl.inl.blacklab.indexers." + docIndexerName);
+							.forName("nl.inl.blacklab.indexers." + fileFormat);
 				} catch (Exception e) {
-					System.err.println("DocIndexer class " + docIndexerName + " not found.");
+					System.err.println("DocIndexer class " + fileFormat + " not found.");
 					usage();
 					return;
 				}
 			}
 		}
 
+		// Create the indexer and index the files
 		Indexer indexer = new Indexer(indexDir, createNewIndex, docIndexerClass);
 		indexer.setIndexerParam(indexerParam);
 		if (maxDocs > 0)
@@ -236,6 +256,13 @@ public class IndexTool {
 		} finally {
 			// Close the index.
 			indexer.close();
+		}
+	}
+
+	private static void readParametersFromPropertiesFile(File propFile) {
+		Properties p = PropertiesUtil.readFromFile(propFile);
+		for (Map.Entry<Object, Object> e: p.entrySet()) {
+			indexerParam.put(e.getKey().toString(), e.getValue().toString());
 		}
 	}
 
@@ -264,6 +291,9 @@ public class IndexTool {
 						+ "Options:\n"
 						+ "  --maxdocs <n>        Stop after indexing <n> documents\n"
 						+ "  --indexparam <file>  Read properties file with parameters for DocIndexer\n"
+						+ "                       (NOTE: even without this option, if the current\n"
+						+ "                        directory, the input or index directory contain a file\n"
+						+ "                        named indexer.properties, these are passed to the indexer)\n"
 						+ "  ---<name> <value>    Pass parameter to DocIndexer class\n"
 						+ "\n"
 						+ "Valid formats:");
