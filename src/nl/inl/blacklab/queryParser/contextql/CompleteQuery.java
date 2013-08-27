@@ -1,17 +1,23 @@
 package nl.inl.blacklab.queryParser.contextql;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternDocLevelAnd;
+import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternDocLevelAndNot;
 import nl.inl.blacklab.search.TextPatternNot;
 import nl.inl.blacklab.search.TextPatternOr;
-import nl.inl.blacklab.search.TextPatternTerm;
+import nl.inl.blacklab.search.TextPatternProperty;
+import nl.inl.blacklab.search.TextPatternWildcard;
+import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.WildcardQuery;
 
 public class CompleteQuery {
 
@@ -24,12 +30,50 @@ public class CompleteQuery {
 		this.filterQuery = filterQuery;
 	}
 
-	public static CompleteQuery term(String field, String value) {
-		if (field == null || field.length() == 0 || field.equals("contents")) {
-			return new CompleteQuery(new TextPatternTerm(value), null);
+	public static CompleteQuery clause(String field, String value) {
+
+		boolean isContentsSearch = false;
+		String prop = "word";
+		if (field.equals("word") || field.equals("lemma") || field.equals("pos")) { // hack for common case...
+			isContentsSearch = true;
+			prop = field;
+		} else if (field.equals("contents")) {
+			isContentsSearch = true;
+		} else if (field.startsWith("contents.")) {
+			isContentsSearch = true;
+			prop = field.substring(9);
 		}
 
-		return new CompleteQuery(null, new TermQuery(new Term(field, value)));
+		String[] parts = value.trim().split("\\s+");
+		TextPattern tp = null;
+		Query q = null;
+		if (parts.length == 1) {
+			// Single term, possibly with wildcards
+			if (isContentsSearch)
+				tp = new TextPatternWildcard(value.trim());
+			else
+				q = new WildcardQuery(new Term(field, value));
+		} else {
+			// Phrase query
+			if (isContentsSearch) {
+				List<TextPattern> clauses = new ArrayList<TextPattern>();
+				for (int i = 0; i < parts.length; i++) {
+					clauses.add(new TextPatternWildcard(parts[i]));
+				}
+				tp = new TextPatternSequence(clauses.toArray(new TextPattern[0]));
+			}
+			else {
+				PhraseQuery pq = new PhraseQuery();
+				for (int i = 0; i < parts.length; i++) {
+					pq.add(new Term(field, parts[i]));
+				}
+				q = pq;
+			}
+		}
+
+		if (isContentsSearch)
+			return new CompleteQuery(new TextPatternProperty(prop, tp), null);
+		return new CompleteQuery(null, q);
 	}
 
 	public CompleteQuery and(CompleteQuery other) {
@@ -40,7 +84,7 @@ public class CompleteQuery {
 		a = contentsQuery;
 		b = other.contentsQuery;
 		if (a != null && b != null)
-			c = new TextPatternDocLevelAnd(a, b);
+			c = new TextPatternAnd(a, b); // NOTE: token-level and!
 		else
 			c = a == null ? b : a;
 

@@ -189,20 +189,24 @@ public class QueryTool {
 	}
 
 	/** Generic command parser interface */
-	interface Parser {
-		String getPrompt();
+	abstract class Parser {
+		public abstract String getPrompt();
 
-		String getName();
+		public abstract String getName();
 
-		TextPattern parse(String query) throws ParseException;
+		public abstract TextPattern parse(String query) throws ParseException;
 
-		void printHelp();
+		/** Get the filter query included in the last query, if any. Only used for ContextQL.
+		 * @return the filter query, or null if there was none */
+		Query getIncludedFilterQuery() { return null; }
 
-		Parser nextParser();
+		public abstract void printHelp();
+
+		public abstract Parser nextParser();
 	}
 
 	/** Parser for Corpus Query Language */
-	class ParserCorpusQl implements Parser {
+	class ParserCorpusQl extends Parser {
 
 		@Override
 		public String getPrompt() {
@@ -241,9 +245,9 @@ public class QueryTool {
 			outprintln("Corpus Query Language examples:");
 			outprintln("  \"stad\" | \"dorp\"                  # Find the word \"stad\" or the word \"dorp\"");
 			outprintln("  \"de\" \"sta.*\"                     # Find \"de\" followed by a word starting with \"sta\"");
-			outprintln("  [hw=\"zijn\" & pos=\"d.*\"]          # Find forms of the headword \"zijn\" as a posessive pronoun");
-			outprintln("  [hw=\"zijn\"] [hw=\"blijven\"]       # Find a form of \"zijn\" followed by a form of \"blijven\"");
-			outprintln("  \"der.*\"{2,}                      # Find two or more successive words starting with \"der\"");
+			outprintln("  [lemma=\"zijn\" & pos=\"d.*\"]       # Find forms of the verb \"zijn\" as a posessive pronoun");
+			outprintln("  [lemma=\"zijn\"] [lemma=\"blijven\"] # Find a form of \"zijn\" followed by a form of \"blijven\"");
+			outprintln("  \"der.*\"{2,}                        # Find two or more successive words starting with \"der\"");
 			outprintln("  [pos=\"a.*\"]+ \"man\"               # Find adjectives applied to \"man\"");
 			outprintln("  \"stad\" []{2,3} \"dorp\"            # Find \"stad\" followed within 2-3 words by \"dorp\"");
 		}
@@ -256,7 +260,9 @@ public class QueryTool {
 	}
 
 	/** Parser for Contextual Query Language */
-	class ParserContextQl implements Parser {
+	class ParserContextQl extends Parser {
+
+		Query includedFilterQuery = null;
 
 		@Override
 		public String getPrompt() {
@@ -282,6 +288,7 @@ public class QueryTool {
 			try {
 				outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
 				CompleteQuery q = ContextualQueryLanguageParser.parse(query);
+				includedFilterQuery = q.filterQuery;
 				return q.contentsQuery;
 			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
 				throw new ParseException(e.getMessage());
@@ -295,14 +302,18 @@ public class QueryTool {
 			*/
 		}
 
+		public Query getIncludedFilterQuery() {
+			return includedFilterQuery;
+		}
+
 		@Override
 		public void printHelp() {
 			outprintln("Contextual Query Language examples:");
 			outprintln("  stad or dorp            # Find the word \"stad\" or the word \"dorp\"");
+			outprintln("  \"de sta*\"               # Find \"de\" followed by a word starting with \"sta\"");
+			outprintln("  lemma=zijn and pos=d*      # Find forms of the verb \"zijn\" as a posessive pronoun");
 			outprintln("\nWARNING: THIS PARSER IS STILL VERY MUCH EXPERIMENTAL AND MOSTLY DOESN'T");
 			outprintln("WORK RIGHT YET. NOT SUITABLE FOR PRODUCTION.");
-			//outprintln("  \"de sta*\"               # Find \"de\" followed by a word starting with \"sta\"");
-			//outprintln("  hw=zijn and pos=d*      # Find forms of the headword \"zijn\" as a posessive pronoun");
 		}
 
 		@Override
@@ -313,7 +324,7 @@ public class QueryTool {
 	}
 
 	/** Parser for Lucene Query Language */
-	class ParserLucene implements Parser {
+	class ParserLucene extends Parser {
 
 		@Override
 		public String getPrompt() {
@@ -1002,8 +1013,10 @@ public class QueryTool {
 				outprintln("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
 
 			// Execute search
-			// Filter filter = null; // TODO: metadata search!
-			Filter filter = filterQuery == null ? null : new QueryWrapperFilter(filterQuery);
+			Query filterForThisQuery = currentParser.getIncludedFilterQuery();
+			if (filterForThisQuery == null)
+				filterForThisQuery = filterQuery;
+			Filter filter = filterForThisQuery == null ? null : new QueryWrapperFilter(filterForThisQuery);
 			SpanQuery spanQuery = searcher.createSpanQuery(pattern, filter);
 			if (verbose)
 				outprintln("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));

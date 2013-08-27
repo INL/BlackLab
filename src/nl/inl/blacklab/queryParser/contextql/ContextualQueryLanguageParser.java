@@ -46,10 +46,10 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
         if (relation == null)
             relation = "=";
         if (index == null)
-            index = "contents";
+            index = defaultProperty;
 
         if (relation.equals("=")) {
-            return CompleteQuery.term(index, term);
+            return CompleteQuery.clause(index, term);
         } else {
             throw new UnsupportedOperationException("Only contains (=) supported!");
         }
@@ -68,7 +68,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
         throw new UnsupportedOperationException("Unrecognized operator " + op);
     }
 
-    private String defaultProperty = "word";
+    private String defaultProperty = "contents.word";
 
     public void setDefaultProperty(IndexStructure structure, String fieldName) {
         defaultProperty = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
