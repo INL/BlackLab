@@ -397,6 +397,7 @@ public class QueryTool {
 	 */
 	public static void main(String[] args) throws IOException {
 
+		// Parse command line
 		File indexDir = null;
 		File inputFile = null;
 		String encoding = Charset.defaultCharset().name();
@@ -439,6 +440,71 @@ public class QueryTool {
 			return;
 		}
 
+		BasicConfigurator.configure();
+		run(indexDir, inputFile, encoding);
+	}
+
+	/**
+	 * Run the QueryTool in batch mode
+	 * @param indexDir the index to search
+	 * @param commandFile the command file to execute
+	 * @param encoding the output encoding
+	 * @throws UnsupportedEncodingException
+	 * @throws CorruptIndexException
+	 */
+	public static void runBatch(File indexDir, File commandFile, String encoding) throws UnsupportedEncodingException, CorruptIndexException {
+		run(indexDir, commandFile, encoding);
+	}
+
+	/**
+	 * Run the QueryTool in batch mode
+	 * @param indexDir the index to search
+	 * @param commandFile the command file to execute
+	 * @throws CorruptIndexException
+	 */
+	public static void runBatch(File indexDir, File commandFile) throws CorruptIndexException {
+		try {
+			run(indexDir, commandFile, Charset.defaultCharset().name());
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Run the QueryTool in interactive mode
+	 * @param indexDir the index to search
+	 * @param encoding the output encoding
+	 * @throws UnsupportedEncodingException
+	 * @throws CorruptIndexException
+	 */
+	public static void runInteractive(File indexDir, String encoding) throws UnsupportedEncodingException, CorruptIndexException {
+		run(indexDir, null, encoding);
+	}
+
+	/**
+	 * Run the QueryTool in interactive mode
+	 * @param indexDir the index to search
+	 * @throws CorruptIndexException
+	 */
+	public static void runInteractive(File indexDir) throws CorruptIndexException {
+		try {
+			run(indexDir, null, Charset.defaultCharset().name());
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Run the query tool.
+	 * @param indexDir the index to query
+	 * @param inputFile if specified, run in batch mode. If null, run in interactive mode
+	 * @param encoding the output encoding to use
+	 * @throws UnsupportedEncodingException
+	 * @throws CorruptIndexException
+	 * @throws IOException
+	 */
+	private static void run(File indexDir, File inputFile, String encoding)
+			throws UnsupportedEncodingException, CorruptIndexException {
 		if (!indexDir.exists() || !indexDir.isDirectory()) {
 			outprintln("Index dir " + indexDir.getPath() + " doesn't exist.");
 			return;
@@ -446,8 +512,6 @@ public class QueryTool {
 
 		// See if we can offer ContextQL or not (if the class is on the classpath)
 		determineContextQlAvailable();
-
-		BasicConfigurator.configure();
 
 		// Use correct output encoding
 		try {
@@ -475,7 +539,11 @@ public class QueryTool {
 			QueryTool c = new QueryTool(indexDir, in);
 			c.commandProcessor();
 		} finally {
-			in.close();
+			try {
+				in.close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
@@ -508,15 +576,18 @@ public class QueryTool {
 	 * @param in
 	 *      where to read commands from
 	 * @throws CorruptIndexException
-	 * @throws IOException
 	 */
-	public QueryTool(File indexDir, BufferedReader in) throws CorruptIndexException, IOException {
+	public QueryTool(File indexDir, BufferedReader in) throws CorruptIndexException {
 		printProgramHead();
 		outprintln("Opening index " + indexDir + "...");
 
 		// Create the BlackLab searcher object
 		Searcher.setAutoWarmForwardIndices(true);
-		searcher = Searcher.open(indexDir);
+		try {
+			searcher = Searcher.open(indexDir);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		this.in = in;
 
