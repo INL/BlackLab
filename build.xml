@@ -88,6 +88,25 @@ target).
         <replace file="${parser.lucene.dir}/Token.java" token="public" value='@SuppressWarnings("all") public' />
         <replace file="${parser.lucene.dir}/TokenMgrError.java" token="public" value='@SuppressWarnings("all") public' />
 
+        <!-- Remove old versions of generated files -->
+        <delete file="${parser.contextql.dir}/JavaCharStream.java" />
+        <delete file="${parser.contextql.dir}/ParseException.java" />
+        <delete file="${parser.contextql.dir}/ContextualQueryLanguageParser.java" />
+        <delete file="${parser.contextql.dir}/ContextualQueryLanguageParserConstants.java" />
+        <delete file="${parser.contextql.dir}/ContextualQueryLanguageParserTokenManager.java" />
+        <delete file="${parser.contextql.dir}/Token.java" />
+        <delete file="${parser.contextql.dir}/TokenMgrError.java" />
+        
+        <!-- Generate the parser -->
+        <javacc javacchome="${javacc.dir}" target="${parser.contextql.dir}/contextql.jj" />
+        
+        <!-- Add @SuppressWarnings("all") to prevent warnings in generated code showing up -->
+        <replace file="${parser.contextql.dir}/JavaCharStream.java" token="public" value='@SuppressWarnings("all") public' />
+        <replace file="${parser.contextql.dir}/ContextualQueryLanguageParserTokenManager.java" token="public" value='@SuppressWarnings("all") public' />
+        <replace file="${parser.contextql.dir}/ParseException.java" token="public" value='@SuppressWarnings("all") public' />
+        <replace file="${parser.contextql.dir}/Token.java" token="public" value='@SuppressWarnings("all") public' />
+        <replace file="${parser.contextql.dir}/TokenMgrError.java" token="public" value='@SuppressWarnings("all") public' />
+
 	</target>
 
 </project>

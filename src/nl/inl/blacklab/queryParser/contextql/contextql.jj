@@ -1,0 +1,342 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+/*
+
+Contextual Query Language (SRU CQL, http://www.loc.gov/standards/sru/) parser definition.
+
+Grammar based on BNF found here: http://srw.cheshire3.org/cql/bnf.html
+
+javacc is used to generate Java code from this parser definition.
+
+*/
+
+options 
+{
+	STATIC=false;
+	JAVA_UNICODE_ESCAPE=true;
+	//USER_CHAR_STREAM=true;
+}
+
+PARSER_BEGIN(ContextualQueryLanguageParser)
+
+package nl.inl.blacklab.queryParser.contextql;
+
+import java.util.Map;
+import java.util.HashMap;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.IndexStructure;
+import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.TextPatternAnd;
+import nl.inl.blacklab.search.TextPatternContaining;
+import nl.inl.blacklab.search.TextPatternEdge;
+import nl.inl.blacklab.search.TextPatternNot;
+import nl.inl.blacklab.search.TextPatternOr;
+import nl.inl.blacklab.search.TextPatternProperty;
+import nl.inl.blacklab.search.TextPatternRegex;
+import nl.inl.blacklab.search.TextPatternTags;
+import nl.inl.blacklab.search.TextPatternWithin;
+import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
+import nl.inl.blacklab.search.sequences.TextPatternRepetition;
+import nl.inl.blacklab.search.sequences.TextPatternSequence;
+
+@SuppressWarnings("all")
+
+public class ContextualQueryLanguageParser {
+
+    public static void main(String[] args) throws nl.inl.blacklab.queryParser.contextql.ParseException 
+    {
+		ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(args[0]));
+		parser.query();
+    }
+    
+    public static CompleteQuery parse(String query) throws nl.inl.blacklab.queryParser.contextql.ParseException 
+    {
+        ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(query));
+        return parser.query();
+    }
+    
+    private String chopEnds(String input)
+    {
+    	if (input.length() >= 2)
+    		return input.substring(1, input.length() - 1);
+    	throw new RuntimeException();
+    }
+    
+    private CompleteQuery tpClause(String index, String relation, String term) {
+        if (relation == null)
+            relation = "=";
+        if (index == null)
+            index = "contents";
+
+        if (relation.equals("=")) {
+            return CompleteQuery.term(index, term);
+        } else {
+            throw new UnsupportedOperationException("Only contains (=) supported!");
+        }
+    }
+
+    private CompleteQuery tpCombineClauses(CompleteQuery a, String op, CompleteQuery b) {
+        if (op.equalsIgnoreCase("and")) {
+            return a.and(b);
+        } else if (op.equalsIgnoreCase("or")) {
+            return a.or(b);
+        } else if (op.equalsIgnoreCase("not")) {
+            return a.not(b);
+        } else if (op.equalsIgnoreCase("prox")) {
+            return a.prox(b);
+        }
+        throw new UnsupportedOperationException("Unrecognized operator " + op);
+    }
+
+    private String defaultProperty = "word";
+    
+    public void setDefaultProperty(IndexStructure structure, String fieldName) {
+        defaultProperty = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
+    }
+
+    public void setDefaultProperty(String property) {
+        defaultProperty = property;
+    }
+
+    public String getDefaultProperty() {
+        return defaultProperty;
+    }
+
+}
+
+PARSER_END(ContextualQueryLanguageParser)
+
+// Skip whitespace and comment
+SKIP:  
+{
+	" " 
+|	"\t" 
+|	"\n" 
+|	"\r"
+}
+
+/* Comments are 'special tokens': they are not reported, but are available
+   for use by the next reported token */
+SPECIAL_TOKEN:
+{
+	<SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* ("\n"|"\r"|"\r\n")? >
+|	<MULTI_LINE_COMMENT: "/*" (~["*"] | "*" ~["/"])* "*/">
+}
+
+// Token definitions
+TOKEN [IGNORE_CASE]:
+{
+    <AND: "and" >
+|   <OR: "or" >
+|   <NOT: "not" >
+|   <PROX: "prox" >
+|   <IDENTIFIER: (["A"-"Z","a"-"z","_",".","-","0"-"9"])+ >
+|	<STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
+}
+
+// --- Grammar rules start here --- 
+
+/* a query */
+CompleteQuery query(): 
+{
+	CompleteQuery a = null;
+} 
+{
+    scope() a=query() <EOF>
+    {
+        return a;
+    }
+|   a=scopedClause()
+    {
+        return a;
+    }
+}
+
+void scope():
+{
+}
+{
+    ">" [ LOOKAHEAD(2) prefix() "=" ] uri()
+}
+
+String prefix():
+{
+    String a;
+}
+{
+    a=term()  { return a; }
+}
+
+String uri():
+{
+    String a;
+}
+{
+    a=term()  { return a; }
+}
+
+CompleteQuery scopedClause():
+{
+    CompleteQuery a, b = null;
+    String op = null;
+}
+{
+    a=searchClause() [ op=booleanGroup() b=scopedClause() ]
+    {
+        if (op == null)
+            return a;
+        return tpCombineClauses(a, op, b);
+    }
+}
+
+String booleanGroup():
+{
+    String a;
+}
+{
+    a=ruleBoolean() [ modifierList() ]   { return a; }
+}
+
+String ruleBoolean():
+{
+    Token a;
+}
+{
+    a=<AND>         {return a.toString();}
+|   a=<OR>          {return a.toString();}
+|   a=<NOT>         {return a.toString();}
+|   a=<PROX>        {return a.toString();}
+}
+
+CompleteQuery searchClause():
+{
+    CompleteQuery tp;
+    String i = null, r = null, t;
+}
+{
+    "(" tp=query() ")"                  { return tp; }
+|   [ LOOKAHEAD(2) i=index() r=relation() ] t=searchTerm()  { return tpClause(i, r, t); }
+}
+
+String index():
+{
+    String a;
+}
+{
+    a=term()  { return a; }
+}
+
+String relation():
+{
+    String a;
+}
+{
+    a=comparitor() [ modifierList() ]
+    {
+        return a;
+    }
+}
+
+String comparitor():
+{
+    String a;
+}
+{
+    a=comparitorSymbol() {return a;}
+|   a=namedComparitor()  {return a;}
+}
+
+String comparitorSymbol():
+{
+    Token a;
+}
+{
+    a="="   {return a.toString();}
+|   a=">"   {return a.toString();}
+|   a="<"   {return a.toString();}
+|   a=">="  {return a.toString();}
+|   a="<="  {return a.toString();}
+|   a="<>"  {return a.toString();}
+}
+
+String namedComparitor():
+{
+    String a;
+}
+{
+    a=identifier()  {return a;}
+}
+
+void modifierList():
+{
+}
+{
+    modifier() [ modifierList() ]
+}
+
+void modifier():
+{
+}
+{
+    "/" modifierName() [ comparitorSymbol() modifierValue() ]
+}
+
+String modifierName():
+{
+    String a;
+}
+{
+    a=term()  { return a; }
+}
+
+String modifierValue():
+{
+    String a;
+}
+{
+    a=term()  { return a; }
+}
+
+String searchTerm():
+{
+    String a;
+}
+{
+    a=term()  { return a; }
+}
+
+String term():
+{
+    String a;
+    Token t;
+}
+{
+    a=identifier()  {return a;}
+|   t=<AND>         {return t.toString();}
+|   t=<OR>          {return t.toString();}
+|   t=<NOT>         {return t.toString();}
+|   t=<PROX>        {return t.toString();}
+}
+
+String identifier():
+{
+    Token a;
+}
+{
+    a=<IDENTIFIER>   {return a.toString();}
+|   a=<STRING>       {return chopEnds(a.toString());}
+}
+

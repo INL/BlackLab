@@ -22,7 +22,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -35,6 +34,8 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nl.inl.blacklab.queryParser.contextql.CompleteQuery;
+import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
 import nl.inl.blacklab.queryParser.lucene.LuceneQueryParser;
@@ -167,8 +168,6 @@ public class QueryTool {
 	/** Lists of words read from file to choose random word from (for batch mode) */
 	private Map<String, List<String>> wordLists = new HashMap<String, List<String>>();
 
-	static boolean isContextQlAvailable = false;
-
 	/** Thrown when an error occurs during parsing */
 	class ParseException extends Exception {
 
@@ -251,19 +250,9 @@ public class QueryTool {
 
 		@Override
 		public Parser nextParser() {
-			return isContextQlAvailable ? new ParserContextQl() : new ParserLucene();
+			return new ParserLucene();
 		}
 
-	}
-
-	public static boolean determineContextQlAvailable() {
-		try {
-			Class.forName("nl.inl.clarinsd.xcqlparser.XCQLParser");
-			isContextQlAvailable = true;
-		} catch (ClassNotFoundException e) {
-			isContextQlAvailable = false;
-		}
-		return isContextQlAvailable;
 	}
 
 	/** Parser for Contextual Query Language */
@@ -276,7 +265,7 @@ public class QueryTool {
 
 		@Override
 		public String getName() {
-			return "Context Query Language";
+			return "Contextual Query Language";
 		}
 
 		/**
@@ -291,35 +280,34 @@ public class QueryTool {
 		public TextPattern parse(String query) throws ParseException {
 
 			try {
-				Class<?> classXCQLParser = Class.forName("nl.inl.clarinsd.xcqlparser.XCQLParser");
-				Method methodParse = classXCQLParser.getDeclaredMethod("parse", String.class);
-				Object returnValue = methodParse.invoke(classXCQLParser, query);
-				return (TextPattern) returnValue;
-			} catch (ClassNotFoundException e) {
-				throw new UnsupportedOperationException(e);
-			} catch (NoSuchMethodException e) {
-				errprintln("method not found");
-				throw new RuntimeException(e);
-			} catch (IllegalAccessException e) {
-				throw new RuntimeException(e);
-			} catch (IllegalArgumentException e) {
-				throw new RuntimeException(e);
-			} catch (InvocationTargetException e) {
-				throw new RuntimeException(e);
+				outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
+				CompleteQuery q = ContextualQueryLanguageParser.parse(query);
+				return q.contentsQuery;
+			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
+				throw new ParseException(e.getMessage());
 			}
+
+			/*
+			Class<?> classXCQLParser = Class.forName("nl.inl.clarinsd.xcqlparser.XCQLParser");
+			Method methodParse = classXCQLParser.getDeclaredMethod("parse", String.class);
+			Object returnValue = methodParse.invoke(classXCQLParser, query);
+			return (TextPattern) returnValue;
+			*/
 		}
 
 		@Override
 		public void printHelp() {
 			outprintln("Contextual Query Language examples:");
 			outprintln("  stad or dorp            # Find the word \"stad\" or the word \"dorp\"");
-			outprintln("  \"de sta*\"               # Find \"de\" followed by a word starting with \"sta\"");
-			outprintln("  hw=zijn and pos=d*      # Find forms of the headword \"zijn\" as a posessive pronoun");
+			outprintln("\nWARNING: THIS PARSER IS STILL VERY MUCH EXPERIMENTAL AND MOSTLY DOESN'T");
+			outprintln("WORK RIGHT YET. NOT SUITABLE FOR PRODUCTION.");
+			//outprintln("  \"de sta*\"               # Find \"de\" followed by a word starting with \"sta\"");
+			//outprintln("  hw=zijn and pos=d*      # Find forms of the headword \"zijn\" as a posessive pronoun");
 		}
 
 		@Override
 		public Parser nextParser() {
-			return new ParserLucene();
+			return new ParserCorpusQl();
 		}
 
 	}
@@ -368,7 +356,7 @@ public class QueryTool {
 
 		@Override
 		public Parser nextParser() {
-			return new ParserCorpusQl();
+			return new ParserContextQl();
 		}
 
 	}
@@ -509,9 +497,6 @@ public class QueryTool {
 			outprintln("Index dir " + indexDir.getPath() + " doesn't exist.");
 			return;
 		}
-
-		// See if we can offer ContextQL or not (if the class is on the classpath)
-		determineContextQlAvailable();
 
 		// Use correct output encoding
 		try {
@@ -931,7 +916,7 @@ public class QueryTool {
 	 * Print command and query help.
 	 */
 	private void printHelp() {
-		String langAvail = "Lucene, CorpusQL" + (isContextQlAvailable ? ", ContextQL" : "");
+		String langAvail = "CorpusQL, Lucene, ContextQL (EXPERIMENTAL)";
 
 		outprintln("Control commands:");
 		outprintln("  sw(itch)                           # Switch languages (" + langAvail + ")");
@@ -1008,6 +993,10 @@ public class QueryTool {
 			}
 
 			TextPattern pattern = currentParser.parse(query);
+			if (pattern == null) {
+				errprintln("No query to execute.");
+				return;
+			}
 			pattern = pattern.rewrite();
 			if (verbose)
 				outprintln("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
