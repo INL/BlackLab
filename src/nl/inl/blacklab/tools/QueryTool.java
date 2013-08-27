@@ -281,8 +281,8 @@ public class QueryTool {
 			try {
 				outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
 				CompleteQuery q = ContextualQueryLanguageParser.parse(query);
-				includedFilterQuery = q.filterQuery;
-				return q.contentsQuery;
+				includedFilterQuery = q.getFilterQuery();
+				return q.getContentsQuery();
 			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
 				throw new ParseException(e.getMessage());
 			}
