@@ -201,8 +201,6 @@ public class QueryTool {
 		Query getIncludedFilterQuery() { return null; }
 
 		public abstract void printHelp();
-
-		public abstract Parser nextParser();
 	}
 
 	/** Parser for Corpus Query Language */
@@ -250,11 +248,6 @@ public class QueryTool {
 			outprintln("  \"der.*\"{2,}                        # Find two or more successive words starting with \"der\"");
 			outprintln("  [pos=\"a.*\"]+ \"man\"               # Find adjectives applied to \"man\"");
 			outprintln("  \"stad\" []{2,3} \"dorp\"            # Find \"stad\" followed within 2-3 words by \"dorp\"");
-		}
-
-		@Override
-		public Parser nextParser() {
-			return new ParserLucene();
 		}
 
 	}
@@ -316,11 +309,6 @@ public class QueryTool {
 			outprintln("WORK RIGHT YET. NOT SUITABLE FOR PRODUCTION.");
 		}
 
-		@Override
-		public Parser nextParser() {
-			return new ParserCorpusQl();
-		}
-
 	}
 
 	/** Parser for Lucene Query Language */
@@ -365,15 +353,11 @@ public class QueryTool {
 			outprintln("  +stad -dorp                # Find documents containing \"stad\" but not \"dorp\"");
 		}
 
-		@Override
-		public Parser nextParser() {
-			return new ParserContextQl();
-		}
-
 	}
 
-	/** The current command parser object */
-	private Parser currentParser = new ParserCorpusQl();
+	private List<Parser> parsers = Arrays.asList(new ParserCorpusQl(), new ParserLucene(), new ParserContextQl());
+
+	private int currentParserIndex = 0;
 
 	/** Where to read commands from */
 	private BufferedReader in;
@@ -599,7 +583,8 @@ public class QueryTool {
 		printHelp();
 
 		while (true) {
-			String prompt = currentParser.getPrompt() + "> ";
+			Parser parser = parsers.get(currentParserIndex);
+			String prompt = parser.getPrompt() + "> ";
 			String cmd;
 			try {
 				cmd = readCommand(prompt);
@@ -787,8 +772,10 @@ public class QueryTool {
 					|| lcased.startsWith("colloc") || lcased.startsWith("group ")) {
 				changeShowSettings(cmd);
 			} else if (lcased.equals("switch") || lcased.equals("sw")) {
-				currentParser = currentParser.nextParser();
-				outprintln("Switching to " + currentParser.getName() + ".\n");
+				currentParserIndex++;
+				if (currentParserIndex >= parsers.size())
+					currentParserIndex = 0;
+				outprintln("Switching to " + parsers.get(currentParserIndex).getName() + ".\n");
 				printQueryHelp();
 			} else if (lcased.equals("help") || lcased.equals("?")) {
 				printHelp();
@@ -961,7 +948,7 @@ public class QueryTool {
 	 * Print some examples of the currently selected query language.
 	 */
 	private void printQueryHelp() {
-		currentParser.printHelp();
+		parsers.get(currentParserIndex).printHelp();
 		outprintln("");
 	}
 
@@ -1003,7 +990,8 @@ public class QueryTool {
 				query = resultString.toString();
 			}
 
-			TextPattern pattern = currentParser.parse(query);
+			Parser parser = parsers.get(currentParserIndex);
+			TextPattern pattern = parser.parse(query);
 			if (pattern == null) {
 				errprintln("No query to execute.");
 				return;
@@ -1012,11 +1000,13 @@ public class QueryTool {
 			if (verbose)
 				outprintln("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
 
-			// Execute search
-			Query filterForThisQuery = currentParser.getIncludedFilterQuery();
+			// If the query included filter clauses, use those. Otherwise use the global filter, if any.
+			Query filterForThisQuery = parser.getIncludedFilterQuery();
 			if (filterForThisQuery == null)
 				filterForThisQuery = filterQuery;
 			Filter filter = filterForThisQuery == null ? null : new QueryWrapperFilter(filterForThisQuery);
+
+			// Execute search
 			SpanQuery spanQuery = searcher.createSpanQuery(pattern, filter);
 			if (verbose)
 				outprintln("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
