@@ -16,9 +16,14 @@
 package nl.inl.util;
 
 import java.io.File;
+import java.util.Enumeration;
 import java.util.Properties;
 
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
 
 /**
@@ -77,6 +82,40 @@ public class LogUtil {
 				throw ExUtil.wrapRuntimeException(e);
 			}
 		}
+	}
+
+	/**
+	 * Will initialize a simple console appender
+	 * the root logger has no appenders set yet.
+	 *
+	 * This gives you a reasonable default if you don't want to create a
+	 * log4j.properties.
+	 *
+	 * @param level level to use for the console appender, if created
+	 */
+	public static void initLog4jIfNotAlready(Level level) {
+		Enumeration<?> allAppenders = Logger.getRootLogger().getAllAppenders();
+		if (allAppenders.hasMoreElements()) {
+			// Appender configured; nothing to do
+		} else {
+			ConsoleAppender consoleAppender = new ConsoleAppender();
+			consoleAppender.setLayout(new PatternLayout("%r [%t] %p %c %x - %m%n"));
+			consoleAppender.setTarget("System.out");
+			consoleAppender.setThreshold(level);
+			consoleAppender.activateOptions();
+			Logger.getRootLogger().addAppender(consoleAppender);
+		}
+	}
+
+	/**
+	 * Will initialize a simple console appender at level WARN if
+	 * the root logger has no appenders set yet.
+	 *
+	 * This gives you a reasonable default if you don't want to create a
+	 * log4j.properties.
+	 */
+	public static void initLog4jIfNotAlready() {
+		initLog4jIfNotAlready(Level.WARN); // Log warnings and up
 	}
 
 }

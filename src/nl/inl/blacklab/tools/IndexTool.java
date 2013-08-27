@@ -205,7 +205,7 @@ public class IndexTool {
 		}
 
 		// Init log4j
-		LogUtil.initLog4jBasic();
+		LogUtil.initLog4jIfNotAlready();
 
 		// If the input or index directory contains indexer.properties, read it
 		propFile = new File(indexDir, "indexer.properties");

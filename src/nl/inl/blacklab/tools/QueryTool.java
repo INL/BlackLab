@@ -63,12 +63,12 @@ import nl.inl.blacklab.search.grouping.RandomAccessGroup;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.util.FileUtil;
 import nl.inl.util.IoUtil;
+import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Fieldable;
@@ -440,7 +440,7 @@ public class QueryTool {
 			return;
 		}
 
-		BasicConfigurator.configure();
+		LogUtil.initLog4jIfNotAlready();
 		run(indexDir, inputFile, encoding);
 	}
 
