@@ -1093,8 +1093,10 @@ public class Searcher {
 	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
 	public void warmUpForwardIndices() throws InterruptedException {
+		logger.debug("Warming up " + forwardIndices.size() + " forward indices...");
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
 			e.getValue().warmUp();
+			logger.debug("Forward index " + e.getKey() + "warmed up.");
 		}
 	}
 
