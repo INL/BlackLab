@@ -400,6 +400,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	StringBuilder elementBuilder = new StringBuilder();
 
 	public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		// Call any hooks associated with this element
+		hookableHandler.startElement(uri, localName, qName, attributes);
+
 		elementBuilder.setLength(0); // clear
 		elementBuilder.append("<").append(qName);
 		for (int i = 0; i < attributes.getLength(); i++) {
@@ -419,9 +422,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		}
 		elementBuilder.append(">");
 		processContent(elementBuilder.toString());
-
-		// Call any hooks associated with this element
-		hookableHandler.startElement(uri, localName, qName, attributes);
 	}
 
 	/**
