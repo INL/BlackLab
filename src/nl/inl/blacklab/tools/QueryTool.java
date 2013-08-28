@@ -241,13 +241,13 @@ public class QueryTool {
 		@Override
 		public void printHelp() {
 			outprintln("Corpus Query Language examples:");
-			outprintln("  \"stad\" | \"dorp\"                  # Find the word \"stad\" or the word \"dorp\"");
-			outprintln("  \"de\" \"sta.*\"                     # Find \"de\" followed by a word starting with \"sta\"");
-			outprintln("  [lemma=\"zijn\" & pos=\"d.*\"]       # Find forms of the verb \"zijn\" as a posessive pronoun");
-			outprintln("  [lemma=\"zijn\"] [lemma=\"blijven\"] # Find a form of \"zijn\" followed by a form of \"blijven\"");
-			outprintln("  \"der.*\"{2,}                        # Find two or more successive words starting with \"der\"");
-			outprintln("  [pos=\"a.*\"]+ \"man\"               # Find adjectives applied to \"man\"");
-			outprintln("  \"stad\" []{2,3} \"dorp\"            # Find \"stad\" followed within 2-3 words by \"dorp\"");
+			outprintln("  \"city\" | \"town\"               # the word \"city\" or the word \"town\"");
+			outprintln("  \"the\" \"cit.*\"                 # \"the\" followed by word starting with \"cit\"");
+			outprintln("  [lemma=\"plan\" & pos=\"N.*\"]    # forms of the word \"plan\" as a noun");
+			outprintln("  [lemma=\"be\"] [lemma=\"stay\"]   # form of \"be\" followed by form of \"stay\"");
+			outprintln("  [lemma=\"be\"]{2,}              # two or more successive forms of \"to be\"");
+			outprintln("  [pos=\"J.*\"]+ \"man\"            # adjectives applied to \"man\"");
+			outprintln("  \"town\" []{,5} \"city\"          # \"city\" after \"town\", up to 5 words in between");
 		}
 
 	}
@@ -279,7 +279,7 @@ public class QueryTool {
 		public TextPattern parse(String query) throws ParseException {
 
 			try {
-				outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
+				//outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
 				CompleteQuery q = ContextualQueryLanguageParser.parse(query);
 				includedFilterQuery = q.getFilterQuery();
 				return q.getContentsQuery();
@@ -302,11 +302,13 @@ public class QueryTool {
 		@Override
 		public void printHelp() {
 			outprintln("Contextual Query Language examples:");
-			outprintln("  stad or dorp            # Find the word \"stad\" or the word \"dorp\"");
-			outprintln("  \"de sta*\"               # Find \"de\" followed by a word starting with \"sta\"");
-			outprintln("  lemma=zijn and pos=d*      # Find forms of the verb \"zijn\" as a posessive pronoun");
-			outprintln("\nWARNING: THIS PARSER IS STILL VERY MUCH EXPERIMENTAL AND MOSTLY DOESN'T");
-			outprintln("WORK RIGHT YET. NOT SUITABLE FOR PRODUCTION.");
+			outprintln("  city or town                  # Find the word \"city\" or the word \"town\"");
+			outprintln("  \"the cit*\"                    # Find \"the\" followed by a word starting with \"cit\"");
+			outprintln("  lemma=plan and pos=N*         # Find forms of \"plan\" as a noun");
+			outprintln("  lemma=\"be stay\"               # form of \"be\" followed by form of \"stay\"");
+			outprintln("  town prox//5//ordered city    # (NOTE: this is not supported yet!)");
+			outprintln("                                # \"city\" after \"town\", up to 5 words in between");
+			outprintln("\nWARNING: THIS PARSER IS STILL VERY MUCH EXPERIMENTAL. NOT SUITABLE FOR PRODUCTION.");
 		}
 
 	}
@@ -348,9 +350,9 @@ public class QueryTool {
 		@Override
 		public void printHelp() {
 			outprintln("Lucene Query Language examples:");
-			outprintln("  stad dorp                  # Find the word \"stad\" or the word \"dorp\"");
-			outprintln("  \"de stad\"                  # Find the word \"de\" followed by the word \"stad\"");
-			outprintln("  +stad -dorp                # Find documents containing \"stad\" but not \"dorp\"");
+			outprintln("  city town                     # Find the word \"city\" or the word \"town\"");
+			outprintln("  \"the city\"                    # Find the word \"the\" followed by the word \"city\"");
+			outprintln("  +city -town                   # Find documents containing \"city\" but not \"town\"");
 		}
 
 	}
@@ -888,10 +890,10 @@ public class QueryTool {
 				// Fetch and store the readLine method
 				jlineReadLineMethod = c.getMethod("readLine", String.class);
 
-				errprintln("Command line editing enabled.");
+				outprintln("Command line editing enabled.");
 			} catch (ClassNotFoundException e) {
 				// Can't init JLine; too bad, fall back to stdin
-				errprintln("Command line editing not available; to enable, place jline jar in classpath.");
+				outprintln("Command line editing not available; to enable, place jline jar in classpath.");
 			} catch (Exception e) {
 				throw new RuntimeException("Could not init JLine console reader", e);
 			}
@@ -917,7 +919,8 @@ public class QueryTool {
 		String langAvail = "CorpusQL, Lucene, ContextQL (EXPERIMENTAL)";
 
 		outprintln("Control commands:");
-		outprintln("  sw(itch)                           # Switch languages (" + langAvail + ")");
+		outprintln("  sw(itch)                           # Switch languages");
+		outprintln("                                     # (" + langAvail + ")");
 		outprintln("  p(rev) / n(ext) / page <n>         # Page through results");
 		outprintln("  sort {match|left|right} [prop]     # Sort query results  (left = left context, etc.)");
 		outprintln("  group {match|left|right} [prop]    # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
@@ -1200,6 +1203,12 @@ public class QueryTool {
 			return;
 
 		Timer t = new Timer();
+
+		if (!groupBy.equals("word") && !groupBy.equals("match") && !groupBy.equals("left") && !groupBy.equals("right")) {
+			// Assume we want to group by matched text if we don't specify it explicitly.
+			property = groupBy;
+			groupBy = "match";
+		}
 
 		// Group results
 		HitProperty crit = null;
