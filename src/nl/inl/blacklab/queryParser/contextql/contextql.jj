@@ -34,23 +34,8 @@ PARSER_BEGIN(ContextualQueryLanguageParser)
 
 package nl.inl.blacklab.queryParser.contextql;
 
-import java.util.Map;
-import java.util.HashMap;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.IndexStructure;
-import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternAnd;
-import nl.inl.blacklab.search.TextPatternContaining;
-import nl.inl.blacklab.search.TextPatternEdge;
-import nl.inl.blacklab.search.TextPatternNot;
-import nl.inl.blacklab.search.TextPatternOr;
-import nl.inl.blacklab.search.TextPatternProperty;
-import nl.inl.blacklab.search.TextPatternRegex;
-import nl.inl.blacklab.search.TextPatternTags;
-import nl.inl.blacklab.search.TextPatternWithin;
-import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
-import nl.inl.blacklab.search.sequences.TextPatternRepetition;
-import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 @SuppressWarnings("all")
 
@@ -75,32 +60,6 @@ public class ContextualQueryLanguageParser {
     	throw new RuntimeException();
     }
     
-    private CompleteQuery tpClause(String index, String relation, String term) {
-        if (relation == null)
-            relation = "=";
-        if (index == null)
-            index = defaultProperty;
-
-        if (relation.equals("=")) {
-            return CompleteQuery.clause(index, term);
-        } else {
-            throw new UnsupportedOperationException("Only contains (=) supported!");
-        }
-    }
-
-    private CompleteQuery tpCombineClauses(CompleteQuery a, String op, CompleteQuery b) {
-        if (op.equalsIgnoreCase("and")) {
-            return a.and(b);
-        } else if (op.equalsIgnoreCase("or")) {
-            return a.or(b);
-        } else if (op.equalsIgnoreCase("not")) {
-            return a.not(b);
-        } else if (op.equalsIgnoreCase("prox")) {
-            return a.prox(b);
-        }
-        throw new UnsupportedOperationException("Unrecognized operator " + op);
-    }
-
     private String defaultProperty = "contents.word";
     
     public void setDefaultProperty(IndexStructure structure, String fieldName) {
@@ -159,7 +118,7 @@ CompleteQuery query():
     {
         return a;
     }
-|   a=scopedClause()
+|   a=scopedClause() <EOF>
     {
         return a;
     }
@@ -198,7 +157,7 @@ CompleteQuery scopedClause():
     {
         if (op == null)
             return a;
-        return tpCombineClauses(a, op, b);
+        return ContextQlParseUtils.combineClauses(a, op, b);
     }
 }
 
@@ -228,7 +187,7 @@ CompleteQuery searchClause():
 }
 {
     "(" tp=query() ")"                  { return tp; }
-|   [ LOOKAHEAD(2) i=index() r=relation() ] t=searchTerm()  { return tpClause(i, r, t); }
+|   [ LOOKAHEAD(2) i=index() r=relation() ] t=searchTerm()  { return ContextQlParseUtils.clause(i, r, t, defaultProperty); }
 }
 
 String index():
@@ -294,6 +253,7 @@ void modifier():
 }
 {
     modifierName() [ comparitorSymbol() modifierValue() ]
+    { throw new UnsupportedOperationException("Relation modifiers not supported yet!"); }
 }
 
 String modifierName():

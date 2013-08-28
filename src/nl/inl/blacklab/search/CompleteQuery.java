@@ -1,22 +1,10 @@
-package nl.inl.blacklab.queryParser.contextql;
+package nl.inl.blacklab.search;
 
-import java.util.ArrayList;
-import java.util.List;
 
-import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternAnd;
-import nl.inl.blacklab.search.TextPatternNot;
-import nl.inl.blacklab.search.TextPatternOr;
-import nl.inl.blacklab.search.TextPatternProperty;
-import nl.inl.blacklab.search.TextPatternWildcard;
-import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.WildcardQuery;
 
 /**
  * Represents a combination of a contents query (a TextPattern) and a
@@ -47,64 +35,6 @@ public class CompleteQuery {
 	public CompleteQuery(TextPattern contentsQuery, Query filterQuery) {
 		this.contentsQuery = contentsQuery;
 		this.filterQuery = filterQuery;
-	}
-
-	/**
-	 * Return a clause meaning "field contains value".
-	 *
-	 * Depending on the field name, this will contain a contents query
-	 * or a filter query.
-	 *
-	 * @param field the field name. If it starts with "contents.", it is a contents
-	 * query. "contents" by itself means "contents.word". "word", "lemma" and "pos" by
-	 * themselves are interpreted as being prefixed with "contents."
-	 * @param value the value, optionally with wildcards, to search for
-	 * @return the query
-	 */
-	public static CompleteQuery clause(String field, String value) {
-
-		boolean isContentsSearch = false;
-		String prop = "word";
-		if (field.equals("word") || field.equals("lemma") || field.equals("pos")) { // hack for common case...
-			isContentsSearch = true;
-			prop = field;
-		} else if (field.equals("contents")) {
-			isContentsSearch = true;
-		} else if (field.startsWith("contents.")) {
-			isContentsSearch = true;
-			prop = field.substring(9);
-		}
-
-		String[] parts = value.trim().split("\\s+");
-		TextPattern tp = null;
-		Query q = null;
-		if (parts.length == 1) {
-			// Single term, possibly with wildcards
-			if (isContentsSearch)
-				tp = new TextPatternWildcard(value.trim());
-			else
-				q = new WildcardQuery(new Term(field, value));
-		} else {
-			// Phrase query
-			if (isContentsSearch) {
-				List<TextPattern> clauses = new ArrayList<TextPattern>();
-				for (int i = 0; i < parts.length; i++) {
-					clauses.add(new TextPatternWildcard(parts[i]));
-				}
-				tp = new TextPatternSequence(clauses.toArray(new TextPattern[0]));
-			}
-			else {
-				PhraseQuery pq = new PhraseQuery();
-				for (int i = 0; i < parts.length; i++) {
-					pq.add(new Term(field, parts[i]));
-				}
-				q = pq;
-			}
-		}
-
-		if (isContentsSearch)
-			return new CompleteQuery(new TextPatternProperty(prop, tp), null);
-		return new CompleteQuery(null, q);
 	}
 
 	/**
@@ -221,18 +151,5 @@ public class CompleteQuery {
 		}
 
 		return new CompleteQuery(c, f);
-	}
-
-	/**
-	 * Combine this query with another query using the prox operator.
-	 *
-	 * NOTE: this is not implemented yet!
-	 *
-	 * @param other the query to combine this query with
-	 * @return the resulting query
-	 * @throws UnsupportedOperationException because not implemented yet
-	 */
-	public CompleteQuery prox(CompleteQuery other) {
-		throw new UnsupportedOperationException("prox not supported");
 	}
 }
