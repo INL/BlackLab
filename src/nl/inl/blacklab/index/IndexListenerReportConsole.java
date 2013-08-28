@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
+import nl.inl.util.TimeUtil;
+
 /**
  * Used to report progress while indexing, so we can give feedback to the user.
  */
@@ -32,26 +34,22 @@ public class IndexListenerReportConsole extends IndexListener {
 	double curTokensSpeed = -1;
 
 	@Override
-	public synchronized void fileStarted(String name) {
-		super.fileStarted(name);
-		// System.out.println("File started: " + name);
-	}
-
-	@Override
-	public synchronized void fileDone(String name) {
-		super.fileDone(name);
-		// System.out.println("File done: " + name);
-	}
-
-	@Override
 	public synchronized void charsDone(long charsDone) {
 		super.charsDone(charsDone);
 
+		reportProgress();
+	}
+
+	private void reportProgress() {
+		reportProgress(false);
+	}
+
+	private void reportProgress(boolean force) {
 		double elapsed = getElapsed();
 		if (elapsed == 0)
 			elapsed = 0.1;
 		double secondsSinceLastReport = elapsed - prevReportTime;
-		if (secondsSinceLastReport >= REPORT_INTERVAL_SEC) {
+		if (force || secondsSinceLastReport >= REPORT_INTERVAL_SEC) {
 			long totalCharsDone = getCharsProcessed();
 			long charsDoneSinceLastReport = totalCharsDone - prevCharsDoneReported;
 
@@ -94,57 +92,10 @@ public class IndexListenerReportConsole extends IndexListener {
 	}
 
 	@Override
-	public void closeEnd() {
-		super.closeEnd();
-		System.out.println("Closing index complete.");
-	}
-
-	@Override
-	public void closeStart() {
-		super.closeStart();
-		System.out.println("Closing index...");
-	}
-
-	@Override
-	public synchronized void documentDone(String name) {
-		super.documentDone(name);
-		// System.out.println("Document done: " + name);
-	}
-
-	@Override
-	public synchronized void documentStarted(String name) {
-		super.documentStarted(name);
-		// System.out.println("Document started: " + name);
-	}
-
-	@Override
 	public void indexEnd() {
 		super.indexEnd();
-		System.out.println("Done indexing.");
-	}
-
-	@Override
-	public void indexerClosed() {
-		super.indexerClosed();
-		System.out.println("Indexer closed.");
-	}
-
-	@Override
-	public void indexerCreated(Indexer indexer) {
-		super.indexerCreated(indexer);
-		System.out.println("Indexer created.");
-	}
-
-	@Override
-	public void indexStart() {
-		super.indexStart();
-		System.out.println("Start indexing.");
-	}
-
-	@Override
-	public synchronized void luceneDocumentAdded() {
-		super.luceneDocumentAdded();
-		// System.out.println("Lucene doc added.");
+		reportProgress(true);
+		System.out.println("Done. Elapsed time: " + TimeUtil.describeInterval(System.currentTimeMillis() - indexStartTime));
 	}
 
 }

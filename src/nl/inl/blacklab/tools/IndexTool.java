@@ -195,7 +195,11 @@ public class IndexTool {
 		}
 
 		String op = createNewIndex ? "Creating new" : "Appending to";
-		System.out.println(op + " index in " + indexDir + " from " + inputDir + " ("
+		String strGlob = File.separator;
+		if (glob != null && glob.length() > 0 && !glob.equals("*")) {
+			strGlob += glob;
+		}
+		System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob + " ("
 				+ fileFormat + ")");
 		if (indexerParam.size() > 0) {
 			System.out.println("Indexer parameters:");

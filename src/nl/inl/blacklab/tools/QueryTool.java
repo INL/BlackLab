@@ -67,6 +67,7 @@ import nl.inl.util.IoUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
+import nl.inl.util.TimeUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
@@ -1275,7 +1276,7 @@ public class QueryTool {
 
 	private String describeInterval(long time1) {
 		if (timeDisplayHumanFriendly)
-			return Timer.describeInterval(time1);
+			return TimeUtil.describeInterval(time1);
 		return time1 + " ms";
 	}
 
