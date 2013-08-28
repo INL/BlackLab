@@ -324,19 +324,32 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
   }
 
   final public void modifierList() throws ParseException {
-    modifier();
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case 21:
-      modifierList();
-      break;
-    default:
-      jj_la1[8] = jj_gen;
-      ;
+    if (jj_2_3(2)) {
+      jj_consume_token(21);
+      modifier();
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case 21:
+        modifierList();
+        break;
+      default:
+        jj_la1[8] = jj_gen;
+        ;
+      }
+    } else {
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case 21:
+        jj_consume_token(21);
+        modifierList();
+        break;
+      default:
+        jj_la1[9] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
     }
   }
 
   final public void modifier() throws ParseException {
-    jj_consume_token(21);
     modifierName();
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case 13:
@@ -349,7 +362,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
       modifierValue();
       break;
     default:
-      jj_la1[9] = jj_gen;
+      jj_la1[10] = jj_gen;
       ;
     }
   }
@@ -401,7 +414,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
                      {if (true) return t.toString();}
       break;
     default:
-      jj_la1[10] = jj_gen;
+      jj_la1[11] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -420,7 +433,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
                       {if (true) return chopEnds(a.toString());}
       break;
     default:
-      jj_la1[11] = jj_gen;
+      jj_la1[12] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -441,12 +454,19 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     finally { jj_save(1, xla); }
   }
 
+  private boolean jj_2_3(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_3(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(2, xla); }
+  }
+
   private boolean jj_3R_1() {
-    if (jj_3R_4()) return true;
+    if (jj_3R_5()) return true;
     return false;
   }
 
-  private boolean jj_3R_23() {
+  private boolean jj_3R_25() {
     if (jj_scan_token(20)) return true;
     return false;
   }
@@ -457,45 +477,45 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     return false;
   }
 
-  private boolean jj_3R_22() {
+  private boolean jj_3R_24() {
     if (jj_scan_token(19)) return true;
     return false;
   }
 
-  private boolean jj_3R_21() {
+  private boolean jj_3R_23() {
     if (jj_scan_token(18)) return true;
     return false;
   }
 
-  private boolean jj_3R_20() {
+  private boolean jj_3R_22() {
     if (jj_scan_token(17)) return true;
     return false;
   }
 
-  private boolean jj_3R_19() {
+  private boolean jj_3R_21() {
     if (jj_scan_token(13)) return true;
     return false;
   }
 
-  private boolean jj_3R_18() {
+  private boolean jj_3R_20() {
     if (jj_scan_token(14)) return true;
     return false;
   }
 
-  private boolean jj_3R_14() {
+  private boolean jj_3R_16() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_18()) {
-    jj_scanpos = xsp;
-    if (jj_3R_19()) {
-    jj_scanpos = xsp;
     if (jj_3R_20()) {
     jj_scanpos = xsp;
     if (jj_3R_21()) {
     jj_scanpos = xsp;
     if (jj_3R_22()) {
     jj_scanpos = xsp;
-    if (jj_3R_23()) return true;
+    if (jj_3R_23()) {
+    jj_scanpos = xsp;
+    if (jj_3R_24()) {
+    jj_scanpos = xsp;
+    if (jj_3R_25()) return true;
     }
     }
     }
@@ -504,108 +524,124 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     return false;
   }
 
+  private boolean jj_3R_14() {
+    if (jj_3R_17()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_6() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_13()) {
+    jj_scanpos = xsp;
+    if (jj_3R_14()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3R_13() {
+    if (jj_3R_16()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_7() {
+    if (jj_3R_5()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_4() {
+    if (jj_3R_7()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_19() {
+    if (jj_scan_token(STRING)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_18() {
+    if (jj_scan_token(IDENTIFIER)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_15() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_18()) {
+    jj_scanpos = xsp;
+    if (jj_3R_19()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3R_3() {
+    if (jj_3R_6()) return true;
+    return false;
+  }
+
+  private boolean jj_3_3() {
+    if (jj_scan_token(21)) return true;
+    if (jj_3R_4()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_2() {
+    if (jj_3R_5()) return true;
+    return false;
+  }
+
   private boolean jj_3R_12() {
-    if (jj_3R_15()) return true;
+    if (jj_scan_token(PROX)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_11() {
+    if (jj_scan_token(NOT)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_10() {
+    if (jj_scan_token(OR)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_9() {
+    if (jj_scan_token(AND)) return true;
     return false;
   }
 
   private boolean jj_3R_5() {
     Token xsp;
     xsp = jj_scanpos;
+    if (jj_3R_8()) {
+    jj_scanpos = xsp;
+    if (jj_3R_9()) {
+    jj_scanpos = xsp;
+    if (jj_3R_10()) {
+    jj_scanpos = xsp;
     if (jj_3R_11()) {
     jj_scanpos = xsp;
     if (jj_3R_12()) return true;
     }
-    return false;
-  }
-
-  private boolean jj_3R_11() {
-    if (jj_3R_14()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_3() {
-    if (jj_3R_5()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_17() {
-    if (jj_scan_token(STRING)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_16() {
-    if (jj_scan_token(IDENTIFIER)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_13() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_16()) {
-    jj_scanpos = xsp;
-    if (jj_3R_17()) return true;
+    }
+    }
     }
     return false;
   }
 
-  private boolean jj_3R_2() {
-    if (jj_3R_4()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_10() {
-    if (jj_scan_token(PROX)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_9() {
-    if (jj_scan_token(NOT)) return true;
-    return false;
-  }
-
   private boolean jj_3R_8() {
-    if (jj_scan_token(OR)) return true;
+    if (jj_3R_15()) return true;
     return false;
   }
 
-  private boolean jj_3R_7() {
-    if (jj_scan_token(AND)) return true;
+  private boolean jj_3R_17() {
+    if (jj_3R_15()) return true;
     return false;
   }
 
   private boolean jj_3_2() {
     if (jj_3R_2()) return true;
     if (jj_3R_3()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_15() {
-    if (jj_3R_13()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_6() {
-    if (jj_3R_13()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_4() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_6()) {
-    jj_scanpos = xsp;
-    if (jj_3R_7()) {
-    jj_scanpos = xsp;
-    if (jj_3R_8()) {
-    jj_scanpos = xsp;
-    if (jj_3R_9()) {
-    jj_scanpos = xsp;
-    if (jj_3R_10()) return true;
-    }
-    }
-    }
-    }
     return false;
   }
 
@@ -620,15 +656,15 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
   private int jj_gen;
-  final private int[] jj_la1 = new int[12];
+  final private int[] jj_la1 = new int[13];
   static private int[] jj_la1_0;
   static {
       jj_la1_init_0();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0xbf80,0x780,0x200000,0x780,0x9f80,0x200000,0x1e7800,0x1e6000,0x200000,0x1e6000,0x1f80,0x1800,};
+      jj_la1_0 = new int[] {0xbf80,0x780,0x200000,0x780,0x9f80,0x200000,0x1e7800,0x1e6000,0x200000,0x200000,0x1e6000,0x1f80,0x1800,};
    }
-  final private JJCalls[] jj_2_rtns = new JJCalls[2];
+  final private JJCalls[] jj_2_rtns = new JJCalls[3];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
@@ -643,7 +679,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 12; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 13; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -658,7 +694,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 12; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 13; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -669,7 +705,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 12; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 13; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -680,7 +716,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 12; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 13; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -690,7 +726,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 12; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 13; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -700,7 +736,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 12; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 13; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -817,7 +853,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 13; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -853,7 +889,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
 
   private void jj_rescan_token() {
     jj_rescan = true;
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
     try {
       JJCalls p = jj_2_rtns[i];
       do {
@@ -862,6 +898,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
           switch (i) {
             case 0: jj_3_1(); break;
             case 1: jj_3_2(); break;
+            case 2: jj_3_3(); break;
           }
         }
         p = p.next;

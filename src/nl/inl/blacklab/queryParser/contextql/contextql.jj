@@ -284,14 +284,16 @@ void modifierList():
 {
 }
 {
-    modifier() [ modifierList() ]
+    LOOKAHEAD(2)
+    "/" modifier() [ modifierList() ]
+|   "/" modifierList()
 }
 
 void modifier():
 {
 }
 {
-    "/" modifierName() [ comparitorSymbol() modifierValue() ]
+    modifierName() [ comparitorSymbol() modifierValue() ]
 }
 
 String modifierName():
