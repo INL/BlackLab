@@ -88,7 +88,12 @@ public class QueryTool {
 	/**
 	 * Our output stream; System.out wrapped in a PrintStream to output Latin-1
 	 */
-	static PrintStream out = System.out;
+	public PrintStream out = System.out;
+
+	/**
+	 * Our error stream (if null, output errors to out as well)
+	 */
+	public PrintStream err = System.err;
 
 	static boolean batchMode = false;
 
@@ -248,7 +253,7 @@ public class QueryTool {
 			outprintln("  [lemma=\"be\"] [lemma=\"stay\"]   # form of \"be\" followed by form of \"stay\"");
 			outprintln("  [lemma=\"be\"]{2,}              # two or more successive forms of \"to be\"");
 			outprintln("  [pos=\"J.*\"]+ \"man\"            # adjectives applied to \"man\"");
-			outprintln("  \"town\" []{,5} \"city\"          # \"city\" after \"town\", up to 5 words in between");
+			outprintln("  \"town\" []{0,5} \"city\"         # \"city\" after \"town\", up to 5 words in between");
 		}
 
 	}
@@ -374,6 +379,9 @@ public class QueryTool {
 	/** Size of larger snippet */
 	private int snippetSize = 50;
 
+	/** Don't allow file operations in web mode */
+	private boolean webSafeOperationOnly = false;
+
 	/**
 	 * The main program.
 	 *
@@ -389,10 +397,10 @@ public class QueryTool {
 		String encoding = Charset.defaultCharset().name();
 		for (int i = 0; i < args.length; i++)  {
 			String arg = args[i].trim();
-			if (arg.charAt(0) == '-') {
+			if (arg.length() > 0 && arg.charAt(0) == '-') {
 				if (arg.equals("-e")) {
 					if (i + 1 == args.length) {
-						errprintln("-e option needs argument");
+						System.err.println("-e option needs argument");
 						usage();
 						return;
 					}
@@ -400,7 +408,7 @@ public class QueryTool {
 					i++;
 				} else if (arg.equals("-f")) {
 					if (i + 1 == args.length) {
-						errprintln("-f option needs argument");
+						System.err.println("-f option needs argument");
 						usage();
 						return;
 					}
@@ -408,13 +416,13 @@ public class QueryTool {
 					i++;
 					System.err.println("Batch mode; reading commands from " + inputFile);
 				} else {
-					errprintln("Unknown option: " + arg);
+					System.err.println("Unknown option: " + arg);
 					usage();
 					return;
 				}
 			} else {
 				if (indexDir != null) {
-					errprintln("Can only specify 1 index directory");
+					System.err.println("Can only specify 1 index directory");
 					usage();
 					return;
 				}
@@ -492,18 +500,19 @@ public class QueryTool {
 	private static void run(File indexDir, File inputFile, String encoding)
 			throws UnsupportedEncodingException, CorruptIndexException {
 		if (!indexDir.exists() || !indexDir.isDirectory()) {
-			outprintln("Index dir " + indexDir.getPath() + " doesn't exist.");
+			System.err.println("Index dir " + indexDir.getPath() + " doesn't exist.");
 			return;
 		}
 
 		// Use correct output encoding
+		PrintStream out;
 		try {
 			// Yes
 			out = new PrintStream(System.out, true, encoding);
-			outprintln("Using output encoding " + encoding + "\n");
+			out.println("Using output encoding " + encoding + "\n");
 		} catch (UnsupportedEncodingException e) {
 			// Nope; fall back to default
-			errprintln("Unknown encoding " + encoding + "; using default");
+			System.err.println("Unknown encoding " + encoding + "; using default");
 			out = System.out;
 		}
 
@@ -519,7 +528,7 @@ public class QueryTool {
 		}
 
 		try {
-			QueryTool c = new QueryTool(indexDir, in);
+			QueryTool c = new QueryTool(indexDir, in, out);
 			c.commandProcessor();
 		} finally {
 			try {
@@ -531,15 +540,14 @@ public class QueryTool {
 	}
 
 	private static void usage() {
-		errprintln("Usage: " + QueryTool.class.getName() + " [options] <indexDir>");
-		errprintln("");
-		errprintln("Options:");
-		errprintln("-e <encoding>   Specify what output encoding to use");
-		errprintln(
+		System.err.println(
+			"Usage: " + QueryTool.class.getName() + " [options] <indexDir>\n" +
+			"\n" +
+			"Options:\n" +
+			"-e <encoding>   Specify what output encoding to use\n" +
 			"-f <file>       Execute batch commands from file, print performance\n" +
-			"                info and exit");
-		errprintln("");
-		errprintln(
+			"                info and exit\n" +
+			"\n" +
 			"In batch mode, for every command executed, the command is printed\n" +
 			"to stdout with the elapsed time and (if applicable) the number of\n" +
 			"hits found (tab-separated). Non-query commands are preceded by @.\n" +
@@ -553,16 +561,51 @@ public class QueryTool {
 
 	/**
 	 * Construct the query tool object.
+	 * @param searcher the searcher object (our index)
+	 * @param in
+	 *      where to read commands from
+	 * @param out
+	 * 		where to write output to
+	 * @throws CorruptIndexException
+	 */
+	public QueryTool(Searcher searcher, BufferedReader in, PrintStream out) throws CorruptIndexException {
+		this.searcher = searcher;
+		shouldCloseSearcher = false;
+
+		this.in = in;
+		this.out = out;
+
+		if (in == null) {
+			webSafeOperationOnly = true; // don't allow file operations in web mode
+			err = out; // send errors to the same output stream in web mode
+		} else {
+			printProgramHead();
+		}
+
+		contextSize = searcher.getDefaultContextSize();
+
+		wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
+	}
+
+	/**
+	 * Construct the query tool object.
 	 *
 	 * @param indexDir
 	 *            directory our index is in
 	 * @param in
 	 *      where to read commands from
+	 * @param out
+	 * 		where to write output to
 	 * @throws CorruptIndexException
 	 */
-	public QueryTool(File indexDir, BufferedReader in) throws CorruptIndexException {
-		printProgramHead();
-		outprintln("Opening index " + indexDir + "...");
+	public QueryTool(File indexDir, BufferedReader in, PrintStream out) throws CorruptIndexException {
+		this.in = in;
+		this.out = out;
+
+		if (in != null) {
+			printProgramHead();
+			outprintln("Opening index " + indexDir + "...");
+		}
 
 		// Create the BlackLab searcher object
 		Searcher.setAutoWarmForwardIndices(true);
@@ -572,11 +615,26 @@ public class QueryTool {
 			throw new RuntimeException(e);
 		}
 
-		this.in = in;
+		if (in == null) {
+			webSafeOperationOnly = true; // don't allow file operations in web mode
+			err = out; // send errors to the same output stream in web mode
+		}
 
 		contextSize = searcher.getDefaultContextSize();
 
 		wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
+	}
+
+	/**
+	 * Construct the query tool object.
+	 *
+	 * @param indexDir
+	 *            directory our index is in
+	 * @param out the output stream to use
+	 * @throws CorruptIndexException
+	 */
+	public QueryTool(File indexDir, PrintStream out) throws CorruptIndexException {
+		this(indexDir, null, out);
 	}
 
 	/**
@@ -646,13 +704,13 @@ public class QueryTool {
 		}
 	}
 
-	private void processCommand(String fullCmd) {
+	public void processCommand(String fullCmd) {
 		fullCmd = fullCmd.trim();
-		if (fullCmd.charAt(0) == '#') // comment (batch mode)
+		if (fullCmd.length() > 0 && fullCmd.charAt(0) == '#') // comment (batch mode)
 			return;
 
 		// See if we want to loop a command
-		if (fullCmd.startsWith("repeat ")) {
+		if (!webSafeOperationOnly && fullCmd.startsWith("repeat ")) {
 			fullCmd = fullCmd.substring(7);
 			Pattern p = Pattern.compile("^\\d+\\s");
 			Matcher m = p.matcher(fullCmd);
@@ -782,7 +840,7 @@ public class QueryTool {
 				printQueryHelp();
 			} else if (lcased.equals("help") || lcased.equals("?")) {
 				printHelp();
-			} else if (lcased.startsWith("sleep")) {
+			} else if (!webSafeOperationOnly && lcased.startsWith("sleep")) {
 				try {
 					Thread.sleep((int)(Float.parseFloat(lcased.substring(6)) * 1000));
 				} catch (NumberFormatException e1) {
@@ -790,7 +848,7 @@ public class QueryTool {
 				} catch (InterruptedException e) {
 					// OK
 				}
-			} else if (lcased.startsWith("wordlist")) {
+			} else if (!webSafeOperationOnly && lcased.startsWith("wordlist")) {
 				if (cmd.length() == 8) {
 					// Show loaded wordlists
 					outprintln("Available word lists:");
@@ -866,7 +924,7 @@ public class QueryTool {
 	private void showIndexStructure() {
 		IndexStructure s = searcher.getIndexStructure();
 		outprintln("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
-		s.print(System.out);
+		s.print(out);
 	}
 
 	/** If JLine is available, this holds the ConsoleReader object */
@@ -936,13 +994,16 @@ public class QueryTool {
 		outprintln("  doctitle {on|off}                  # Show document titles between hits?");
 		outprintln("  struct                             # Show index structure");
 		outprintln("  help                               # This message");
-		outprintln("  exit                               # Exit program");
 
-		outprintln("\nBatch testing commands (start in batch mode with -f <commandfile>):");
-		outprintln("  wordlist <file> <listname>         # Load a list of words");
-		outprintln("  @@<listname>                       # Substitute a random word from list (use in query)");
-		outprintln("  repeat <n> <query>                 # Repeat a query n times (with different random words)");
-		outprintln("  sleep <f>                          # Sleep a number of seconds");
+		if (!webSafeOperationOnly) {
+			outprintln("  exit                               # Exit program");
+
+			outprintln("\nBatch testing commands (start in batch mode with -f <commandfile>):");
+			outprintln("  wordlist <file> <listname>         # Load a list of words");
+			outprintln("  @@<listname>                       # Substitute a random word from list (use in query)");
+			outprintln("  repeat <n> <query>                 # Repeat a query n times (with different random words)");
+			outprintln("  sleep <f>                          # Sleep a number of seconds");
+		}
 		outprintln("");
 
 		printQueryHelp();
@@ -1103,7 +1164,8 @@ public class QueryTool {
 
 		switch (showSetting) {
 		case COLLOC:
-			throw new UnsupportedOperationException();
+			errprintln("Sorting collocations not supported");
+			break;
 		case GROUPS:
 			sortGroups(sortBy);
 			break;
@@ -1116,10 +1178,11 @@ public class QueryTool {
 
 	final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
 
-	/**
-	 * Desired context size
-	 */
+	/** Desired context size */
 	private int contextSize;
+
+	/** Are we responsible for closing the Searcher? */
+	private boolean shouldCloseSearcher = true;
 
 	/**
 	 * Sort hits by the specified property.
@@ -1284,7 +1347,8 @@ public class QueryTool {
 	 * Close the Searcher object.
 	 */
 	private void cleanup() {
-		searcher.close();
+		if (shouldCloseSearcher)
+			searcher.close();
 	}
 
 	/**
@@ -1483,26 +1547,29 @@ public class QueryTool {
 		return hitsToShow;
 	}
 
-	public static void outprintln(String str) {
+	public void outprintln(String str) {
 		if (!batchMode)
 			out.println(str);
 	}
 
-	public static void outprint(String str) {
+	public void outprint(String str) {
 		if (!batchMode)
 			out.print(str);
 	}
 
-	public static void outprintf(String str, Object... args) {
+	public void outprintf(String str, Object... args) {
 		if (!batchMode)
 			out.printf(str, args);
 	}
 
-	public static void errprintln(String str) {
-		System.err.println(str);
+	public void errprintln(String str) {
+		if (err == null)
+			out.println(str);
+		else
+			err.println(str);
 	}
 
-	public static void statprintln(String str) {
+	public void statprintln(String str) {
 		if (batchMode)
 			out.println(str);
 	}
