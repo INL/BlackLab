@@ -11,6 +11,11 @@ import nl.inl.blacklab.search.Searcher;
 
 import org.apache.lucene.index.CorruptIndexException;
 
+/**
+ * Represents the backend for one tab in which the QueryTool page is open.
+ * Note that one user may be running multiple sessions (multiple tabs pointing
+ * to the same page); these sessions are independent of one another.
+ */
 public class QueryToolSession {
 
 	/** Sessions time out after an hour of inactivity. */
@@ -51,6 +56,7 @@ public class QueryToolSession {
 	        }
 	    });
 
+		// Construct the QueryTool object that can execute the commands
 		try {
 			queryTool = new QueryTool(searcher, null, out);
 		} catch (CorruptIndexException e) {
@@ -59,11 +65,13 @@ public class QueryToolSession {
 	}
 
 	public void handleRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		// Get the user's command
 		String command = req.getParameter("command");
 		if (command == null)
 			command = "";
 
-		buf.setLength(0); // clear output buffer
+		// Clear the output buffer
+		buf.setLength(0);
 
 		// See if we've timed out, and print a message if so
 		if (firstCommand && !command.equals("help")) {
@@ -74,10 +82,9 @@ public class QueryToolSession {
 		// Execute the command
 		queryTool.processCommand(command);
 
-		// Keep track of last activity in this session
+		// Keep track of last activity in this session,
+		// so we know when it times out.
 		lastActivityTime = System.currentTimeMillis();
-
-		//out.println("Number of active sessions: " + servlet.sessions.size());
 
 		// Print the response
 		resp.setContentType("text/plain");
@@ -86,6 +93,10 @@ public class QueryToolSession {
 
 	}
 
+	/**
+	 * Has this session not seen any activity for a long time?
+	 * @return true iff we timed out
+	 */
 	public boolean timedOut() {
 		return System.currentTimeMillis() - lastActivityTime >= TIMEOUT_SEC * 1000;
 	}
