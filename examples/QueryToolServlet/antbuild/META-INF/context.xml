@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context reloadable="true" crossContext="true" antiJARLocking="true" antiResourceLocking="true">
+	<WatchedResource>WEB-INF/web.xml</WatchedResource>
+	<WatchedResource>META-INF/context.xml</WatchedResource>
+</Context>
