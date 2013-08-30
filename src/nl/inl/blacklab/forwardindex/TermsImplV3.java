@@ -130,7 +130,7 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
-	public void buildTermIndex() {
+	public synchronized void buildTermIndex() {
 		if (termIndexBuilt)
 			return;
 		for (int i = 0; i < terms.length; i++) {

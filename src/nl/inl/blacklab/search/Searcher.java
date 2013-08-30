@@ -532,7 +532,7 @@ public class Searcher {
 	 * @param pattern
 	 *            the pattern to find
 	 * @param fieldName
-	 *            field to use for sorting and displaying resulting concordances.
+	 *            field to find pattern in
 	 * @param filter
 	 *            determines which documents to search
 	 *
@@ -1074,7 +1074,8 @@ public class Searcher {
 				@Override
 				public void run() {
 					try {
-						warmUpForwardIndices();
+						buildAllTermIndices(); // speed up first call to Terms.indexOf()
+						warmUpForwardIndices(); // speed up all forward index operations
 					} catch (InterruptedException e) {
 						// OK, just quit
 					}
@@ -1101,10 +1102,15 @@ public class Searcher {
 	}
 
 	/**
-	 * Makes sure the first call to Terms.indexOf() in search mode for all forward
-	 * indices will be fast. Subsequent calls are always fast. (Terms.indexOf() is
-	 * only used in search mode by HitPropValue.deserialize(), so if you're not sure if
-	 * you need to call this method in your application, you probably don't.
+	 * Builds index for Terms.indexOf() method.
+	 *
+	 * This makes sure the first call to Terms.indexOf() in search mode will be fast.
+	 * Subsequent calls are always fast. (Terms.indexOf() is only used in search mode
+	 * by HitPropValue.deserialize(), so if you're not sure if you need to call this
+	 * method in your application, you probably don't.
+	 *
+	 * Note that if you're using the automatic warmup, this method is called already
+	 * and you don't need to call it again manually.
 	 */
 	public void buildAllTermIndices() {
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
