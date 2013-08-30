@@ -19,7 +19,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -85,51 +86,33 @@ import org.apache.lucene.util.Version;
  * Simple command-line querying tool for BlackLab indices.
  */
 public class QueryTool {
-	/**
-	 * Our output stream; System.out wrapped in a PrintStream to output Latin-1
-	 */
-	public PrintStream out = System.out;
+	/** Our output writer. */
+	public PrintWriter out = new PrintWriter(System.out);
 
-	/**
-	 * Our error stream (if null, output errors to out as well)
-	 */
-	public PrintStream err = System.err;
+	/** Our error writer (if null, output errors to out as well) */
+	public PrintWriter err = new PrintWriter(System.err);
 
 	static boolean batchMode = false;
 
-	/**
-	 * Our BlackLab Searcher object.
-	 */
+	/** Our BlackLab Searcher object. */
 	private Searcher searcher;
 
-	/**
-	 * The hits that are the result of our query.
-	 */
+	/** The hits that are the result of our query. */
 	private Hits hits = null;
 
-	/**
-	 * The groups, or null if we haven't grouped our results.
-	 */
+	/** The groups, or null if we haven't grouped our results. */
 	private ResultsGrouper groups = null;
 
-	/**
-	 * The collocations, or null if we're not looking at collocations.
-	 */
+	/** The collocations, or null if we're not looking at collocations. */
 	private TokenFrequencyList collocations = null;
 
-	/**
-	 * What property to use for collocations (
-	 */
+	/** What property to use for collocations */
 	private String collocProperty = null;
 
-	/**
-	 * The first hit or group to show on the current results page.
-	 */
+	/** The first hit or group to show on the current results page. */
 	private int firstResult;
 
-	/**
-	 * Number of hits or groups to show per results page.
-	 */
+	/** Number of hits or groups to show per results page. */
 	private int resultsPerPage = 20;
 
 	/** Show document titles between hits? */
@@ -505,15 +488,15 @@ public class QueryTool {
 		}
 
 		// Use correct output encoding
-		PrintStream out;
+		PrintWriter out;
 		try {
 			// Yes
-			out = new PrintStream(System.out, true, encoding);
+			out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
 			out.println("Using output encoding " + encoding + "\n");
 		} catch (UnsupportedEncodingException e) {
 			// Nope; fall back to default
 			System.err.println("Unknown encoding " + encoding + "; using default");
-			out = System.out;
+			out = new PrintWriter(System.out);
 		}
 
 		BufferedReader in;
@@ -568,16 +551,16 @@ public class QueryTool {
 	 * 		where to write output to
 	 * @throws CorruptIndexException
 	 */
-	public QueryTool(Searcher searcher, BufferedReader in, PrintStream out) throws CorruptIndexException {
+	public QueryTool(Searcher searcher, BufferedReader in, PrintWriter out) throws CorruptIndexException {
 		this.searcher = searcher;
-		shouldCloseSearcher = false;
+		shouldCloseSearcher = false; // caller is responsible
 
 		this.in = in;
 		this.out = out;
 
 		if (in == null) {
 			webSafeOperationOnly = true; // don't allow file operations in web mode
-			err = out; // send errors to the same output stream in web mode
+			err = out; // send errors to the same output writer in web mode
 		} else {
 			printProgramHead();
 		}
@@ -585,6 +568,17 @@ public class QueryTool {
 		contextSize = searcher.getDefaultContextSize();
 
 		wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
+	}
+
+	/**
+	 * Switch to a different Searcher.
+	 * @param searcher the new Searcher to use
+	 */
+	public void setSearcher(Searcher searcher) {
+		if (shouldCloseSearcher)
+			searcher.close();
+		this.searcher = searcher;
+		shouldCloseSearcher = false; // caller is responsible
 	}
 
 	/**
@@ -598,7 +592,7 @@ public class QueryTool {
 	 * 		where to write output to
 	 * @throws CorruptIndexException
 	 */
-	public QueryTool(File indexDir, BufferedReader in, PrintStream out) throws CorruptIndexException {
+	public QueryTool(File indexDir, BufferedReader in, PrintWriter out) throws CorruptIndexException {
 		this.in = in;
 		this.out = out;
 
@@ -617,7 +611,7 @@ public class QueryTool {
 
 		if (in == null) {
 			webSafeOperationOnly = true; // don't allow file operations in web mode
-			err = out; // send errors to the same output stream in web mode
+			err = out; // send errors to the same output writer in web mode
 		}
 
 		contextSize = searcher.getDefaultContextSize();
@@ -630,10 +624,10 @@ public class QueryTool {
 	 *
 	 * @param indexDir
 	 *            directory our index is in
-	 * @param out the output stream to use
+	 * @param out the output writer to use
 	 * @throws CorruptIndexException
 	 */
-	public QueryTool(File indexDir, PrintStream out) throws CorruptIndexException {
+	public QueryTool(File indexDir, PrintWriter out) throws CorruptIndexException {
 		this(indexDir, null, out);
 	}
 

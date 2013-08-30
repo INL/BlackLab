@@ -2,6 +2,7 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -199,7 +200,12 @@ public class IndexStructure {
 					"No main property (with char. offsets) detected for complex field " + fieldName);
 		}
 
+		@Deprecated
 		public void print(PrintStream out) {
+			print (new PrintWriter(out));
+		}
+
+		public void print(PrintWriter out) {
 			for (PropertyDesc pr: props.values()) {
 				out.println("  * Property: " + pr.toString());
 			}
@@ -611,7 +617,21 @@ public class IndexStructure {
 		return fieldsFound.get(0);
 	}
 
+	/**
+	 * Print the index structure.
+	 * @param out where to print it
+	 * @deprecated use version that takes a PrintWriter
+	 */
+	@Deprecated
 	public void print(PrintStream out) {
+		print(new PrintWriter(out));
+	}
+
+	/**
+	 * Print the index structure.
+	 * @param out where to print it
+	 */
+	public void print(PrintWriter out) {
 		out.println("COMPLEX FIELDS");
 		for (ComplexFieldDesc cf: complexFields.values()) {
 			out.println("- " + cf.getName());

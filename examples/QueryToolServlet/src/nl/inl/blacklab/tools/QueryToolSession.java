@@ -1,15 +1,13 @@
 package nl.inl.blacklab.tools;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Writer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.blacklab.search.Searcher;
-
-import org.apache.lucene.index.CorruptIndexException;
 
 /**
  * Represents the backend for one tab in which the QueryTool page is open.
@@ -25,10 +23,10 @@ public class QueryToolSession {
 	private QueryTool queryTool;
 
 	/** Output buffer (used to reroute output to a string) */
-    StringBuilder buf = new StringBuilder();
+	StringBuilder buf;
 
-    /** Output stream (so we can flush it) */
-	private PrintStream out;
+    /** Output writer */
+	private PrintWriter out;
 
 	/** Time of last activity */
 	private long lastActivityTime = System.currentTimeMillis();
@@ -43,23 +41,27 @@ public class QueryToolSession {
 	public QueryToolSession(QueryToolServlet servlet, Searcher searcher) {
 		this.servlet = servlet;
 
-		// Route QueryTool output into StringBuilder
-		out = new PrintStream(new OutputStream() {
-	        @Override
-	        public void write(int b)  {
-	            buf.append((char) b );
-	        }
-
-	        @Override
-			public String toString(){
-	            return buf.toString();
-	        }
-	    });
-
-		// Construct the QueryTool object that can execute the commands
 		try {
+			// Route QueryTool output into StringBuilder
+			buf = new StringBuilder();
+			out = new PrintWriter(new Writer() {
+				@Override
+				public void write(char[] cbuf, int off, int len) {
+					buf.append(cbuf, off, len);
+				}
+
+				@Override
+				public void flush() {
+					// NOP
+				}
+
+				@Override
+				public void close() {
+					// NOP
+				}
+			}, true);
 			queryTool = new QueryTool(searcher, null, out);
-		} catch (CorruptIndexException e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -88,7 +90,7 @@ public class QueryToolSession {
 
 		// Print the response
 		resp.setContentType("text/plain");
-		out.flush(); // make sure all output was written to buf
+		resp.setCharacterEncoding("utf-8");
 		resp.getWriter().append(buf.toString());
 
 	}
