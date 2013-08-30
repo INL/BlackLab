@@ -87,10 +87,10 @@ import org.apache.lucene.util.Version;
  */
 public class QueryTool {
 	/** Our output writer. */
-	public PrintWriter out = new PrintWriter(System.out);
+	public PrintWriter out = new PrintWriter(System.out, true);
 
 	/** Our error writer (if null, output errors to out as well) */
-	public PrintWriter err = new PrintWriter(System.err);
+	public PrintWriter err = new PrintWriter(System.err, true);
 
 	static boolean batchMode = false;
 
