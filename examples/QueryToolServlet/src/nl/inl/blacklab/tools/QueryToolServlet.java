@@ -37,6 +37,9 @@ public class QueryToolServlet extends HttpServlet {
 	public QueryToolServlet() {
 
 		LogUtil.initLog4jIfNotAlready();
+		
+		// We'd like our forward indices nice and warm, please.
+		Searcher.setAutoWarmForwardIndices(true);
 
 		// Read which index to open from the properties file.
 		Properties prop;
