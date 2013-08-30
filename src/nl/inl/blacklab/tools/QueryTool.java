@@ -491,12 +491,12 @@ public class QueryTool {
 		PrintWriter out;
 		try {
 			// Yes
-			out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
+			out = new PrintWriter(new OutputStreamWriter(System.out, encoding), true);
 			out.println("Using output encoding " + encoding + "\n");
 		} catch (UnsupportedEncodingException e) {
 			// Nope; fall back to default
 			System.err.println("Unknown encoding " + encoding + "; using default");
-			out = new PrintWriter(System.out);
+			out = new PrintWriter(System.out, true);
 		}
 
 		BufferedReader in;
