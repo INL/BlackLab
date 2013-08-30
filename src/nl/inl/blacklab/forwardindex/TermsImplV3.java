@@ -24,8 +24,8 @@ import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
@@ -63,7 +63,7 @@ class TermsImplV3 extends Terms {
 	 * Mapping from term to its unique index number. We use a SortedMap because we wish to
 	 * store the sorted index numbers later (to speed up sorting). Only valid in indexMode.
 	 */
-	SortedMap<String, Integer> termIndex;
+	Map<String, Integer> termIndex;
 
 	/** If true, we're indexing data and adding terms. If false, we're searching and just retrieving terms. */
 	private boolean indexMode;
@@ -90,9 +90,15 @@ class TermsImplV3 extends Terms {
 		this.collatorInsensitive = (Collator)collator.clone();
 		collatorInsensitive.setStrength(Collator.PRIMARY);
 
-		// Create a SortedMap based on the specified Collator.
-
-		this.termIndex = new TreeMap<String, Integer>(this.collator);
+		if (indexMode) {
+			// Index mode: create a SortedMap based on the specified Collator.
+			// (used later to get the terms in sort order)
+			this.termIndex = new TreeMap<String, Integer>(this.collator);
+		} else {
+			// Search mode: create a HashMap so insertion is O(1) instead of O(n log n).
+			// We already have the sort order, so TreeMap is not necessary here.
+			this.termIndex = new HashMap<String, Integer>();
+		}
 		termIndexBuilt = true;
 	}
 
