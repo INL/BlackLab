@@ -194,6 +194,23 @@ public class IndexTool {
 			return;
 		}
 
+		// Init log4j
+		LogUtil.initLog4jIfNotAlready();
+
+		// If the input or index directory or the parent of the index directory
+		// contains indexer.properties, read it
+		propFile = new File(indexDir, "indexer.properties");
+		if (propFile.canRead())
+			readParametersFromPropertiesFile(propFile);
+		propFile = new File(indexDir.getParentFile(), "indexer.properties");
+		if (propFile.canRead())
+			readParametersFromPropertiesFile(propFile);
+		if (inputDir.isDirectory()) {
+			propFile = new File(inputDir, "indexer.properties");
+			if (propFile.canRead())
+				readParametersFromPropertiesFile(propFile);
+		}
+
 		String op = createNewIndex ? "Creating new" : "Appending to";
 		String strGlob = File.separator;
 		if (glob != null && glob.length() > 0 && !glob.equals("*")) {
@@ -206,19 +223,6 @@ public class IndexTool {
 			for (Map.Entry<String,String> e: indexerParam.entrySet()) {
 				System.out.println("  " + e.getKey() + ": " + e.getValue());
 			}
-		}
-
-		// Init log4j
-		LogUtil.initLog4jIfNotAlready();
-
-		// If the input or index directory contains indexer.properties, read it
-		propFile = new File(indexDir, "indexer.properties");
-		if (propFile.canRead())
-			readParametersFromPropertiesFile(propFile);
-		if (inputDir.isDirectory()) {
-			propFile = new File(inputDir, "indexer.properties");
-			if (propFile.canRead())
-				readParametersFromPropertiesFile(propFile);
 		}
 
 		// Determine DocIndexer class to use
@@ -296,8 +300,9 @@ public class IndexTool {
 						+ "  --maxdocs <n>        Stop after indexing <n> documents\n"
 						+ "  --indexparam <file>  Read properties file with parameters for DocIndexer\n"
 						+ "                       (NOTE: even without this option, if the current\n"
-						+ "                        directory, the input or index directory contain a file\n"
-						+ "                        named indexer.properties, these are passed to the indexer)\n"
+						+ "                        directory, the input or index directory (or its parent)\n"
+						+ "                        contain a file named indexer.properties, these are passed\n"
+						+ "                        to the indexer)\n"
 						+ "  ---<name> <value>    Pass parameter to DocIndexer class\n"
 						+ "\n"
 						+ "Valid formats:");
