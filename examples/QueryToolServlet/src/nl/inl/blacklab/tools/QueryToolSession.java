@@ -32,7 +32,6 @@ public class QueryToolSession {
 	private long lastActivityTime = System.currentTimeMillis();
 
 	/** Our servlet */
-	@SuppressWarnings("unused")
 	private QueryToolServlet servlet;
 
 	/** If first command is not "help", print "session timed out" msg */
@@ -81,8 +80,19 @@ public class QueryToolSession {
 		}
 		firstCommand = false;
 
-		// Execute the command
-		queryTool.processCommand(command);
+		if (command.startsWith("open ")) {
+			String indexName = command.substring(5).trim();
+			Searcher searcher = servlet.getSearcher(indexName);
+			if (searcher != null) {
+				queryTool.setSearcher(searcher);
+				buf.append("Opening index " + indexName);
+			} else {
+				buf.append("Index not found: " + indexName);
+			}
+		} else {
+			// Execute the command
+			queryTool.processCommand(command);
+		}
 
 		// Keep track of last activity in this session,
 		// so we know when it times out.

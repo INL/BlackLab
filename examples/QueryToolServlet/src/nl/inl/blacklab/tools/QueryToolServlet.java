@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -16,8 +17,6 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.LogUtil;
 import nl.inl.util.PropertiesUtil;
 
-import org.apache.lucene.index.CorruptIndexException;
-
 /**
  * The QueryTool servlet, which gives you command-driven access to
  * a BlackLab index (same as the nl.inl.blacklab.tools.QueryTool console
@@ -25,39 +24,66 @@ import org.apache.lucene.index.CorruptIndexException;
  */
 public class QueryToolServlet extends HttpServlet {
 
-	/** The index to search */
-	File indexDir;
+	/** The opened Searcher objects (shared by all users) */
+	Map<String, Searcher> searchers = new HashMap<String, Searcher>();
 
-	/** The Searcher object (shared by all users) */
-	Searcher searcher;
+	/** The default Searcher object (first corpus to activate) */
+	Searcher defaultSearcher;
 
 	/** The active user sessions */
 	Map<String, QueryToolSession> sessions = new HashMap<String, QueryToolSession>();
 
+	/** The available indices */
+	private String[] indexNames;
+
+	private Properties prop;
+
 	public QueryToolServlet() {
 
 		LogUtil.initLog4jIfNotAlready();
-		
+
 		// We'd like our forward indices nice and warm, please.
 		Searcher.setAutoWarmForwardIndices(true);
 
 		// Read which index to open from the properties file.
-		Properties prop;
 		try {
-			try {
-				prop = PropertiesUtil.getFromResource("QueryToolServlet.properties");
-				indexDir = PropertiesUtil.getFileProp(prop, "indexDir");
-			} catch (RuntimeException e) {
-				// Not found; try a default value.
-				indexDir = new File("/vol1/molechaser/data/gmc/index");
+			prop = PropertiesUtil.getFromResource("QueryToolServlet.properties");
+			indexNames = prop.getProperty("indexNames", "").trim().split("\\s+");
+			if (indexNames.length > 0) {
+				// Open default index in advance
+				openIndex(indexNames[0]);
+			} else {
+				// No properties file; try a default value
+				File indexDir = new File("/vol1/molechaser/data/gmc/index");
+				if (indexDir.exists()) {
+					defaultSearcher = Searcher.open(indexDir);
+					searchers.put("gmc", defaultSearcher);
+				}
 			}
-			searcher = Searcher.open(indexDir);
-		} catch (CorruptIndexException e) {
-			throw new RuntimeException(e);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 
+	}
+
+	private void openIndex(String indexName) {
+		File indexDir = PropertiesUtil.getFileProp(prop, indexName + "_dir");
+		if (indexDir == null || !indexDir.exists())
+			return;
+		try {
+			Searcher searcher = Searcher.open(indexDir);
+			searchers.put(indexName, searcher);
+			if (defaultSearcher == null)
+				defaultSearcher = searcher;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	Searcher getSearcher(String name) {
+		if (!searchers.containsKey(name))
+			openIndex(name);
+		return searchers.get(name);
 	}
 
 	/**
@@ -67,7 +93,7 @@ public class QueryToolServlet extends HttpServlet {
 	 * @throws IOException
 	 */
 	private void handleRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		
+
 		// See if there are any timed out sessions and remove them.
 		cleanupOldSessions();
 
@@ -90,13 +116,35 @@ public class QueryToolServlet extends HttpServlet {
 		if (sessions.containsKey(sessionId)) {
 			session = sessions.get(sessionId);
 		} else {
-			// New session
-			session = new QueryToolSession(this, searcher);
+			if (defaultSearcher == null) {
+				// No indices available! Give error message.
+				errorNoIndices(resp);
+				return;
+			}
+
+			// Start a new session with the default index
+			session = new QueryToolSession(this, defaultSearcher);
 			sessions.put(sessionId, session);
 		}
 
 		// Let the session object handle the request
 		session.handleRequest(req, resp);
+	}
+
+	private void errorNoIndices(HttpServletResponse resp) {
+		resp.setContentType("text/plain");
+		try {
+			ServletOutputStream os = resp.getOutputStream();
+			os.print(
+				"CONFIGURATION ERROR: no indices available!\n\n" +
+				"For this application to work, there should be a file named\n" +
+				"QueryToolServlet.properties on the classpath (e.g. in\n" +
+				"$TOMCAT/shared/classes) containing a property indexNames\n" +
+				"(a space-separated list of names) and for each name, a property\n" +
+				"<name>_dir containing the index directory.\n");
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/** Remove timed out sessions. */
