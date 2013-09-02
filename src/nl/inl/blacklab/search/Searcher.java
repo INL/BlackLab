@@ -1097,7 +1097,7 @@ public class Searcher {
 		logger.debug("Warming up " + forwardIndices.size() + " forward indices...");
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
 			e.getValue().warmUp();
-			logger.debug("Forward index " + e.getKey() + "warmed up.");
+			logger.debug("Forward index " + e.getKey() + " warmed up.");
 		}
 	}
 
