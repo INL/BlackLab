@@ -90,8 +90,12 @@ public class QueryToolSession {
 				buf.append("Index not found: " + indexName);
 			}
 		} else {
-			// Execute the command
-			queryTool.processCommand(command);
+			try {
+				// Execute the command
+				queryTool.processCommand(command);
+			} catch (Exception e) {
+				buf.append("AN UNEXPECTED ERROR OCCURRED!\n" + e.getMessage());
+			}
 		}
 
 		// Keep track of last activity in this session,
