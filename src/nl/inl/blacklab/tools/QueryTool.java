@@ -37,7 +37,6 @@ import java.util.regex.Pattern;
 
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
 import nl.inl.blacklab.queryParser.lucene.LuceneQueryParser;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
@@ -222,6 +221,8 @@ public class QueryTool {
 				return parser.query();
 			} catch (nl.inl.blacklab.queryParser.corpusql.ParseException e) {
 				throw new ParseException(e.getMessage());
+			} catch (nl.inl.blacklab.queryParser.corpusql.TokenMgrError e) {
+				throw new ParseException(e.getMessage());
 			} catch (Exception e) {
 				throw new ParseException("Fatale fout tijdens parsen: " + e.getMessage());
 			}
@@ -273,6 +274,8 @@ public class QueryTool {
 				includedFilterQuery = q.getFilterQuery();
 				return q.getContentsQuery();
 			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
+				throw new ParseException(e.getMessage());
+			} catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
 				throw new ParseException(e.getMessage());
 			}
 
@@ -330,6 +333,8 @@ public class QueryTool {
 						new WhitespaceAnalyzer(Version.LUCENE_36));
 				return parser.parse(query);
 			} catch (nl.inl.blacklab.queryParser.lucene.ParseException e) {
+				throw new ParseException(e.getMessage());
+			} catch (nl.inl.blacklab.queryParser.lucene.TokenMgrError e) {
 				throw new ParseException(e.getMessage());
 			} catch (Exception e) {
 				throw new ParseException("Fatale fout tijdens parsen: " + e.getMessage());
@@ -1087,10 +1092,6 @@ public class QueryTool {
 			else
 				statInfo = "?";
 			commandWasQuery = true;
-		} catch (TokenMgrError e) {
-			// Lexical error
-			errprintln("Invalid query: " + e.getMessage());
-			errprintln("(Type 'help' for examples or see accompanying documents)");
 		} catch (ParseException e) {
 			// Parse error
 			errprintln("Invalid query: " + e.getMessage());
