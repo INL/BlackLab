@@ -579,6 +579,11 @@ public class QueryTool {
 			searcher.close();
 		this.searcher = searcher;
 		shouldCloseSearcher = false; // caller is responsible
+
+		// Reset results
+		hits = null;
+		groups = null;
+		collocations = null;
 	}
 
 	/**
