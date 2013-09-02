@@ -50,10 +50,16 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 		final ComplexFieldProperty propPunct = getPropPunct();
 
 		// Add some extra properties
-		final boolean hasLemma = getParameter("hasLemma", true);
-		final boolean hasType  = getParameter("hasType", true);
-		final ComplexFieldProperty propLemma = hasLemma ? addProperty("lemma") : null;
-		final ComplexFieldProperty propPartOfSpeech = hasType ? addProperty("pos") : null;
+		final boolean hasLemma = getParameter("hasAttr_lemma", true);
+		final String indexLemmaAs = getParameter("attrPropName_lemma", "lemma");
+		final boolean hasType  = getParameter("hasAttr_type", true);
+		final String indexTypeAs = getParameter("attrPropName_type", "pos");
+		final boolean hasFunction = getParameter("hasAttr_function", false);
+		final String indexFunctionAs = getParameter("attrPropName_function", "function");
+
+		final ComplexFieldProperty propLemma = hasLemma ? addProperty(indexLemmaAs) : null;
+		final ComplexFieldProperty propType = hasType ? addProperty(indexTypeAs) : null;
+		final ComplexFieldProperty propFunction = hasFunction ? addProperty(indexFunctionAs) : null;
 
 		// Doc element: the individual documents to index
 		// Note that we add handlers for both TEI and TEI.2, to
@@ -166,7 +172,13 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 					String pos = attributes.getValue("type");
 					if (pos == null)
 						pos = "?";
-					propPartOfSpeech.addValue(pos);
+					propType.addValue(pos);
+				}
+				if (hasFunction) {
+					String func = attributes.getValue("function");
+					if (func == null)
+						func = "?";
+					propFunction.addValue(func);
 				}
 
 				// Add punctuation
