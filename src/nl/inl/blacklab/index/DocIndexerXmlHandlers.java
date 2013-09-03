@@ -657,7 +657,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		} catch (IOException e) {
 			throw e;
 		} catch (SAXException e) {
-			throw new InputFormatException();
+			throw new InputFormatException(e);
 		} catch (DocIndexer.MaxDocsReachedException e) {
 			// OK; just stop indexing prematurely
 		}
