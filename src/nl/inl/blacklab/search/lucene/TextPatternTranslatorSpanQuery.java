@@ -52,7 +52,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	@Override
 	public SpanQuery regex(QueryExecutionContext context, String value) {
 		return new BLSpanMultiTermQueryWrapper<RegexQuery>(new RegexQuery(
-				new Term(context.luceneField(), value)));
+				new Term(context.luceneField(), context.optDesensitize(value))));
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery fuzzy(QueryExecutionContext context, String value, float similarity, int prefixLength) {
-		return new SpanFuzzyQuery(new Term(context.luceneField(), value), similarity, prefixLength);
+		return new SpanFuzzyQuery(new Term(context.luceneField(), context.optDesensitize(value)), similarity, prefixLength);
 	}
 
 	@Override
@@ -116,7 +116,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,
 		// not the complete field name with the property.
-		return new BLSpanTermQuery(new Term(context.luceneField(), value));
+		return new BLSpanTermQuery(new Term(context.luceneField(), context.optDesensitize(value)));
 	}
 
 	@Override
@@ -137,13 +137,13 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	@Override
 	public SpanQuery wildcard(QueryExecutionContext context, String value) {
 		return new BLSpanMultiTermQueryWrapper<WildcardQuery>(new WildcardQuery(new Term(context.luceneField(),
-				value)));
+				context.optDesensitize(value))));
 	}
 
 	@Override
 	public SpanQuery prefix(QueryExecutionContext context, String value) {
 		return new BLSpanMultiTermQueryWrapper<PrefixQuery>(new PrefixQuery(new Term(context.luceneField(),
-				value)));
+				context.optDesensitize(value))));
 	}
 
 	@Override

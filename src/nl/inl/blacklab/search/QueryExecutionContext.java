@@ -4,6 +4,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.IndexStructure.AltDesc;
 import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
+import nl.inl.util.StringUtil;
 
 /**
  * Represents the current "execution context" for executing a TextPattern query.
@@ -62,6 +63,36 @@ public class QueryExecutionContext {
 
 	public QueryExecutionContext withSensitive(boolean caseSensitive_, boolean diacriticsSensitive_) {
 		return new QueryExecutionContext(searcher, fieldName, propName, caseSensitive_, diacriticsSensitive_);
+	}
+
+	public String optDesensitize(String value) {
+
+		final String s = ComplexFieldUtil.SENSITIVE_ALT_NAME;
+		final String i = ComplexFieldUtil.INSENSITIVE_ALT_NAME;
+		final String ci = ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME;
+		final String di = ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
+
+		String[] parts = ComplexFieldUtil.getNameComponents(luceneField());
+		String alt = parts[2];
+		if (alt.equals(s)) {
+			// Don't desensitize
+			return value;
+		}
+		if (alt.equals(i)) {
+			// Fully desensitize;
+			return StringUtil.removeAccents(value).toLowerCase();
+		}
+		if (alt.equals(ci)) {
+			// Only case-insensitive
+			return value.toLowerCase();
+		}
+		if (alt.equals(di)) {
+			// Only diacritics-insensitive
+			return StringUtil.removeAccents(value);
+		}
+
+		// Unknown alternative; don't change value
+		return value;
 	}
 
 	public String[] getAlternatives() {

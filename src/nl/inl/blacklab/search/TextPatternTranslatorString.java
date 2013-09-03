@@ -37,7 +37,7 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 
 	@Override
 	public String regex(QueryExecutionContext context, String value) {
-		return "REGEX(" + context.luceneField() + ", " + value + ")";
+		return "REGEX(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
 	}
 
 	@Override
@@ -52,7 +52,7 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 
 	@Override
 	public String fuzzy(QueryExecutionContext context, String value, float similarity, int prefixLength) {
-		return "FUZZY(" + context.luceneField() + ", " + value + ", " + similarity + ", " + prefixLength + ")";
+		return "FUZZY(" + context.luceneField() + ", " + context.optDesensitize(value) + ", " + similarity + ", " + prefixLength + ")";
 	}
 
 	@Override
@@ -82,7 +82,7 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 
 	@Override
 	public String term(QueryExecutionContext context, String value) {
-		return "TERM(" + context.luceneField() + ", " + value + ")";
+		return "TERM(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
 	}
 
 	@Override
@@ -102,12 +102,12 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 
 	@Override
 	public String wildcard(QueryExecutionContext context, String value) {
-		return "WILDCARD(" + context.luceneField() + ", " + value + ")";
+		return "WILDCARD(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
 	}
 
 	@Override
 	public String prefix(QueryExecutionContext context, String value) {
-		return "PREFIX(" + context.luceneField() + ", " + value + ")";
+		return "PREFIX(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
 	}
 
 	@Override

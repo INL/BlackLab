@@ -43,14 +43,16 @@ public class SpanQueryTags extends SpanQueryBase {
 		this.tagName = tagName;
 		clauses = new SpanQuery[2];
 		baseFieldName = context.fieldName;
-		String startTagFieldName = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME).luceneField();
-		String endTagFieldName = context.withProperty(ComplexFieldUtil.END_TAG_PROP_NAME).luceneField();
+		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
+		String startTagFieldName = startTagContext.luceneField();
+		QueryExecutionContext endTagContext = context.withProperty(ComplexFieldUtil.END_TAG_PROP_NAME);
+		String endTagFieldName = endTagContext.luceneField();
 
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,
 		// not the complete field name with the property.
-		clauses[0] = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
-		clauses[1] = new BLSpanTermQuery(new Term(endTagFieldName, tagName));
+		clauses[0] = new BLSpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));
+		clauses[1] = new BLSpanTermQuery(new Term(endTagFieldName, endTagContext.optDesensitize(tagName)));
 	}
 
 	@Override
