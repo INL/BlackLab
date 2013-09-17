@@ -50,7 +50,7 @@ public abstract class HitProperty implements Comparator<Object> {
 	/**
 	 * Retrieve context from which field(s) prior to sorting/grouping on this
 	 * property?
-	 * @return null if no context is required, the fieldname otherwise
+	 * @return null if no context is required, the fieldnames otherwise
 	 */
 	public List<String> needsContext() {
 		return null;

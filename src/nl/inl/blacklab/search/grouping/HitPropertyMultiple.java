@@ -40,6 +40,17 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	public HitPropertyMultiple(HitProperty... criteria) {
 		this.criteria = new ArrayList<HitProperty>(Arrays.asList(criteria));
 
+		determineContextNeeded();
+	}
+
+	/**
+	 * Determine what context we need for each property,
+	 * and let the properties know at what context index/indices
+	 * they can find the context(s) they need.
+	 *
+	 * Called whenever something about our criteria changes.
+	 */
+	private void determineContextNeeded() {
 		// Figure out what context(s) we need
 		List<String> result = new ArrayList<String>();
 		for (HitProperty prop : criteria) {
@@ -56,11 +67,13 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 		// Let criteria know what context number(s) they need
 		for (HitProperty prop : criteria) {
 			List<String> requiredContext = prop.needsContext();
-			List<Integer> contextNumbers = new ArrayList<Integer>();
-			for (String c: requiredContext) {
-				contextNumbers.add(contextNeeded.indexOf(c));
+			if (requiredContext != null) {
+				List<Integer> contextNumbers = new ArrayList<Integer>();
+				for (String c: requiredContext) {
+					contextNumbers.add(contextNeeded.indexOf(c));
+				}
+				prop.setContextIndices(contextNumbers);
 			}
-			prop.setContextIndices(contextNumbers);
 		}
 		contextNeeded = result.isEmpty() ? null : result;
 	}
@@ -82,6 +95,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
 	public void addCriterium(HitProperty crit) {
 		criteria.add(crit);
+		determineContextNeeded();
 	}
 
 	@Override
