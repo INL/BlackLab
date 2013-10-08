@@ -38,6 +38,7 @@ import nl.inl.util.StringUtil;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.NumericField;
@@ -588,7 +589,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	public void addMetadataField(String name, String value) {
-		currentLuceneDoc.add(new Field(name, value, Store.YES, indexAnalyzed,
+		currentLuceneDoc.add(new Field(name, value, Store.YES, getMetadataIndexSetting(name),
 				TermVector.WITH_POSITIONS_OFFSETS));
 		if (numericFields.contains(name)) {
 			// Index these fields as numeric too, for faster range queries
@@ -604,6 +605,11 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			nf.setIntValue(n);
 			currentLuceneDoc.add(nf);
 		}
+	}
+
+	protected Index getMetadataIndexSetting(String name) {
+		boolean analyzed = getParameter(name + "_analyzed", true);
+		return analyzed ? indexAnalyzed : indexNotAnalyzed;
 	}
 
 	public void startNewDocument() {
