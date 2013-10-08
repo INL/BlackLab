@@ -257,7 +257,14 @@ public class IndexTool {
 		if (maxDocs > 0)
 			indexer.setMaxDocs(maxDocs);
 		try {
-			indexer.index(inputDir, glob, true);
+			if (glob.contains("*") || glob.contains("?")) {
+				// Real wildcard glob
+				indexer.index(inputDir, glob);
+			} else {
+				// Single file; just index that, with no glob specified
+				// (so if it's an archive, we'll just process all .xml files within)
+				indexer.index(new File(inputDir, glob));
+			}
 		} catch (Exception e) {
 			System.err.println("An error occurred, aborting indexing. Error details follow.");
 			e.printStackTrace();

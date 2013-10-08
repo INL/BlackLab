@@ -39,8 +39,11 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.FileUtil;
+import nl.inl.util.TarGzipReader;
+import nl.inl.util.TarGzipReader.FileHandler;
 import nl.inl.util.UnicodeReader;
 
+import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 
@@ -48,6 +51,9 @@ import org.apache.lucene.index.CorruptIndexException;
  * Tool for indexing. Reports its progress to an IndexListener.
  */
 public class Indexer {
+
+	protected static final Logger logger = Logger.getLogger(Searcher.class);
+
 	/** Our index */
 	protected Searcher searcher;
 
@@ -65,9 +71,14 @@ public class Indexer {
 	protected boolean createAndIndexStartReported = false;
 
 	/**
-	 * When we encounter a zipfile, do we descend into it like it was a directory?
+	 * When we encounter a zip or tgz file, do we descend into it like it was a directory?
 	 */
-	protected boolean processZipFilesAsDirectories = true;
+	protected boolean processArchivesAsDirectories = true;
+
+	/**
+	 * Recursively index files inside a directory? (or archive file, if processArchivesAsDirectories == true)
+	 */
+	protected boolean recurseSubdirs = true;
 
 	/**
 	 * The class to instantiate for indexing documents. This class must be able to
@@ -108,9 +119,29 @@ public class Indexer {
 	 *
 	 * @param b
 	 *            if true, treats zipfiles like a directory and processes all the files inside
+	 * @deprecated renamed to setProcessArchivesAsDirectories()
 	 */
+	@Deprecated
 	public void setProcessZipFilesAsDirectories(boolean b) {
-		processZipFilesAsDirectories = b;
+		setProcessArchivesAsDirectories(b);
+	}
+
+	/**
+	 * When we encounter a zip or tgz file, do we descend into it like it was a directory?
+	 *
+	 * @param b
+	 *            if true, treats zipfiles like a directory and processes all the files inside
+	 */
+	public void setProcessArchivesAsDirectories(boolean b) {
+		processArchivesAsDirectories = b;
+	}
+
+	/**
+	 * Should we recursively index files in subdirectories (and archives files, if that setting is on)?
+	 * @param recurseSubdirs true if we should recurse into subdirs
+	 */
+	public void setRecurseSubdirs(boolean recurseSubdirs) {
+		this.recurseSubdirs = recurseSubdirs;
 	}
 
 	/**
@@ -183,9 +214,7 @@ public class Indexer {
 	 * @param e the exception
 	 */
 	protected void log(String msg, Exception e) {
-		// @@@ TODO write to file. log4j?
-		e.printStackTrace();
-		System.err.println(msg);
+		logger.error(msg, e);
 	}
 
 	/**
@@ -338,102 +367,113 @@ public class Indexer {
 
 	/**
 	 * Index the file or directory specified.
+
+	 * By default, indexes only .xml files in a directory.
 	 *
-	 * By default, recurses into subdirectories.
+	 * Recurses into subdirs only if that setting is enabled.
 	 *
 	 * @param file
 	 *            the input file or directory
 	 * @throws Exception
 	 */
 	public void index(File file) throws Exception {
-		index(file, true);
+		indexInternal(file, "*.xml", recurseSubdirs);
 	}
 
 	/**
 	 * Index the file or directory specified.
 	 *
+	 * By default, indexes only .xml files in a directory.
+	 *
 	 * @param fileToIndex
 	 *            the input file or directory
 	 * @param recurseSubdirs
-	 *            recursively index subdirectories?
+	 *            recursively index subdirectories? (overrides the setting)
 	 * @throws UnsupportedEncodingException
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 * @throws Exception
+	 * @deprecated recurseSubdirs is now a setting instead of a parameter (defaults to true)
 	 */
+	@Deprecated
 	public void index(File fileToIndex, boolean recurseSubdirs)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
+		 // default glob
+		index(fileToIndex, "*.xml", recurseSubdirs);
+	}
+
+	/**
+	 * Index a group of files in a directory or archive.
+	 *
+	 * Recurses into subdirs only if that setting is enabled.
+	 *
+	 * @param fileToIndex
+	 *            directory or archive to index
+	 * @param glob what files to index
+	 * @throws UnsupportedEncodingException
+	 * @throws FileNotFoundException
+	 * @throws Exception
+	 * @throws IOException
+	 */
+	public void index(File fileToIndex, String glob)
+			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
+		indexInternal(fileToIndex, glob, recurseSubdirs);
+	}
+
+	/**
+	 * Index a group of files in a directory or archive.
+	 *
+	 * @param fileToIndex
+	 *            directory or archive to index
+	 * @param glob what files to index
+	 * @param recurseSubdirs whether or not to index subdirectories (overrides the setting)
+	 * @throws UnsupportedEncodingException
+	 * @throws FileNotFoundException
+	 * @throws Exception
+	 * @throws IOException
+	 * @deprecated recurseSubdirs is now a setting instead of a parameter (defaults to true)
+	 */
+	@Deprecated
+	public void index(File fileToIndex, String glob, boolean recurseSubdirs)
+			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
+		indexInternal(fileToIndex, glob, recurseSubdirs);
+	}
+
+	/**
+	 * Index a group of files in a directory or archive.
+	 *
+	 * @param fileToIndex
+	 *            directory or archive to index
+	 * @param glob what files to index
+	 * @param recurseSubdirs whether or not to index subdirectories (overrides the setting)
+	 * @throws UnsupportedEncodingException
+	 * @throws FileNotFoundException
+	 * @throws Exception
+	 * @throws IOException
+	 */
+	private void indexInternal(File fileToIndex, String glob, boolean recurseSubdirs)
+			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
+		String fn = fileToIndex.getName();
 		if (fileToIndex.isDirectory()) {
-			if (recurseSubdirs)
-				indexDir(fileToIndex, recurseSubdirs);
-		} else if (fileToIndex.getName().endsWith(".zip")) {
-			if (recurseSubdirs && processZipFilesAsDirectories) {
-				indexZip(fileToIndex);
-			}
+			indexDir(fileToIndex, glob, recurseSubdirs);
 		} else {
-			if (!isSpecialOperatingSystemFile(fileToIndex)) { // skip special OS files
-				try {
-					indexFile(fileToIndex);
-				} catch (IOException e) {
-					log("*** Error indexing " + fileToIndex, e);
-					// continue trying other files!
+			if (fn.endsWith(".zip")) {
+				indexZip(fileToIndex, glob, recurseSubdirs);
+			} else {
+				if (!isSpecialOperatingSystemFile(fileToIndex)) { // skip special OS files
+					try {
+						FileInputStream is = new FileInputStream(fileToIndex);
+						try {
+							indexInputStream(fn, is, glob, recurseSubdirs);
+						} finally {
+							is.close();
+						}
+					} catch (IOException e) {
+						log("*** Error indexing " + fileToIndex, e);
+						// continue trying other files!
+					}
 				}
 			}
-		}
-	}
-
-	/**
-	 * Index a group of files in a directory.
-	 *
-	 * @param dir
-	 *            directory to index
-	 * @param glob what files to index
-	 * @param recurseSubdirs whether or not to index subdirectories
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws Exception
-	 * @throws IOException
-	 */
-	public void index(File dir, String glob, boolean recurseSubdirs)
-			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-		if (!dir.exists())
-			throw new FileNotFoundException("Input dir not found: " + dir);
-		if (!dir.isDirectory())
-			throw new IOException("Specified input dir is not a directory: " + dir);
-		Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
-		for (File fileToIndex: dir.listFiles()) {
-			boolean indexThis = fileToIndex.isDirectory();
-			if (fileToIndex.isFile()) {
-				// Regular file; does it match our glob expression?
-				Matcher m = pattGlob.matcher(fileToIndex.getName());
-				if (m.matches())
-					indexThis = true; // yes
-			}
-			if (indexThis)
-				index(fileToIndex, recurseSubdirs);
-
-			if (!continueIndexing())
-				break;
-		}
-	}
-
-	/**
-	 * Index a specific file using the specified type of DocIndexer
-	 *
-	 * @param file
-	 *            file to index
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws Exception
-	 * @throws IOException
-	 */
-	private void indexFile(File file) throws UnsupportedEncodingException, FileNotFoundException,
-			Exception, IOException {
-		FileInputStream is = new FileInputStream(file);
-		try {
-			indexInputStream(file.getName(), is);
-		} finally {
-			is.close();
 		}
 	}
 
@@ -444,23 +484,40 @@ public class Indexer {
 	 *            name for the InputStream (e.g. name of the file)
 	 * @param is
 	 *            the stream
+	 * @param glob what files to index inside an archive
+	 * @param recurseArchives whether or not to index archives inside archives
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private void indexInputStream(String name, InputStream is) throws IOException, Exception {
-		Reader reader = new BufferedReader(new UnicodeReader(is, "utf-8"));
+	private void indexInputStream(String name, InputStream is, String glob, boolean recurseArchives) {
 		try {
-			index(name, reader);
-		} finally {
-			reader.close();
+			if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
+				indexTarGzip(name, is, glob, recurseArchives);
+			} else if (name.endsWith(".zip")) {
+				// TODO InputStream version of zip, for zips inside another archive
+				logger.warn("Skipped " + name + ", ZIPs inside archives not yet supported");
+			} else {
+				Reader reader = new BufferedReader(new UnicodeReader(is, "utf-8"));
+				try {
+					index(name, reader);
+				} finally {
+					// NOTE: don't close the reader as the caller will close the stream when
+					// appropriate! When processing archive files, the stream may need to remain
+					// open for the next entry.
+					//reader.close();
+				}
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
 	/**
-	 * Index a specific file using the specified type of DocIndexer
+	 * Index a directory
 	 *
 	 * @param dir
 	 *            directory to index
+	 * @param glob what files in the dir to index
 	 * @param recurseSubdirs
 	 *            recursively process subdirectories?
 	 * @throws UnsupportedEncodingException
@@ -468,41 +525,60 @@ public class Indexer {
 	 * @throws Exception
 	 * @throws IOException
 	 */
-	private void indexDir(File dir, boolean recurseSubdirs) throws UnsupportedEncodingException,
+	private void indexDir(File dir, String glob, boolean recurseSubdirs) throws UnsupportedEncodingException,
 			FileNotFoundException, IOException, Exception {
-		index(dir, "*", recurseSubdirs);
+		if (!dir.exists())
+			throw new FileNotFoundException("Input dir not found: " + dir);
+		if (!dir.isDirectory())
+			throw new IOException("Specified input dir is not a directory: " + dir);
+		for (File fileToIndex: dir.listFiles()) {
+			indexInternal(fileToIndex, glob, recurseSubdirs);
+			if (!continueIndexing())
+				break;
+		}
 	}
 
 	/**
-	 * Index every file inside a zip file.
+	 * Index files inside a zip file.
 	 *
 	 * Note that directory structure inside the zip file is ignored; files are indexed as if they
 	 * are one large directory.
 	 *
 	 * @param zipFile
 	 *            the zip file
+	 * @param glob
+	 *            what files in the zip to process
+	 * @param recurseArchives whether to process archives inside archives
 	 * @throws Exception
 	 */
-	private void indexZip(File zipFile) throws Exception {
+	private void indexZip(File zipFile, String glob, boolean recurseArchives) throws Exception {
 		if (!zipFile.exists())
 			throw new FileNotFoundException("ZIP file not found: " + zipFile);
+		Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
 		try {
 			ZipFile z = new ZipFile(zipFile);
 			try {
 				Enumeration<? extends ZipEntry> es = z.entries();
 				while (es.hasMoreElements()) {
 					ZipEntry e = es.nextElement();
-					String xmlFileName = e.getName();
-					if (xmlFileName.endsWith(".xml")) {
+					String fileName = e.getName();
+					Matcher m = pattGlob.matcher(fileName);
+					boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz");
+					if (m.matches() || isArchive) {
 						try {
 							InputStream is = z.getInputStream(e);
 							try {
-								indexInputStream(xmlFileName, is);
+								if (isArchive) {
+									if (recurseArchives && processArchivesAsDirectories)
+										indexInputStream(fileName, is, glob, recurseArchives);
+								} else {
+									indexInputStream(fileName, is, glob, recurseArchives);
+								}
 							} finally {
 								is.close();
 							}
 						} catch (ZipException ex) {
-							log("*** Error indexing " + xmlFileName + " from " + zipFile, ex);
+							log("*** Error indexing " + fileName + " from " + zipFile, ex);
 							// continue trying other files!
 						}
 					}
@@ -516,6 +592,35 @@ public class Indexer {
 			log("*** Error opening zip file: " + zipFile, e);
 			// continue trying other files!
 		}
+	}
+
+	private void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
+		if (!TarGzipReader.canProcessTarGzip()) {
+			// Apache commons-compress not found, skip file
+			logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
+			return;
+		}
+		final Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
+		TarGzipReader.processTarGzip(tarGzipStream, new FileHandler() {
+			@Override
+			public boolean handle(String filePath, InputStream contents) {
+				File f = new File(filePath);
+				String fn = f.getName();
+				Matcher m = pattGlob.matcher(fn);
+				if (m.matches()) {
+					String entryName = tgzFileName + File.separator + filePath;
+					indexInputStream(entryName, contents, glob, recurseArchives);
+				} else {
+					boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".tar.gz") || fn.endsWith(".tgz");
+					if (isArchive) {
+						if (recurseArchives && processArchivesAsDirectories) {
+							indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
+						}
+					}
+				}
+				return continueIndexing();
+			}
+		});
 	}
 
 	/**
@@ -627,7 +732,8 @@ public class Indexer {
 		try {
 			if (maxDocs < 0)
 				return maxDocs;
-			return Math.max(0, maxDocs - searcher.getWriter().numDocs());
+			int docsDone = searcher.getWriter().numDocs();
+			return Math.max(0, maxDocs - docsDone);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
