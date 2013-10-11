@@ -71,7 +71,6 @@ import nl.inl.util.TimeUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.index.CorruptIndexException;
@@ -329,8 +328,7 @@ public class QueryTool {
 		@Override
 		public TextPattern parse(String query) throws ParseException {
 			try {
-				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_36, CONTENTS_FIELD,
-						new WhitespaceAnalyzer(Version.LUCENE_36));
+				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_36, CONTENTS_FIELD, searcher.getAnalyzer());
 				return parser.parse(query);
 			} catch (nl.inl.blacklab.queryParser.lucene.ParseException e) {
 				throw new ParseException(e.getMessage());
@@ -789,7 +787,7 @@ public class QueryTool {
 				} else {
 					String filterExpr = cmd.substring(7);
 					try {
-						filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, "title");
+						filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, searcher.getAnalyzer(), "title");
 						outprintln("Filter created: " + filterQuery);
 					} catch (org.apache.lucene.queryParser.ParseException e) {
 						errprintln("Error parsing filter query.");

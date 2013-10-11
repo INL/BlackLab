@@ -33,16 +33,15 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  */
 public class RemoveAllAccentsFilter extends TokenFilter {
 
+	/**
+	 * Removes accents
+	 * @param input input string
+	 * @return string with accents removed
+	 * @deprecated use StringUtil.removeAccents() directly
+	 */
+	@Deprecated
 	static String process(String input) {
 		return StringUtil.removeAccents(input);
-	}
-
-	/**
-	 * Test program
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		System.out.println(process("Hé jij daar!"));
 	}
 
 	private CharTermAttribute termAtt;
@@ -59,7 +58,7 @@ public class RemoveAllAccentsFilter extends TokenFilter {
 	public boolean incrementToken() throws IOException {
 		if (input.incrementToken()) {
 			String t = new String(termAtt.buffer(), 0, termAtt.length());
-			t = process(t);
+			t = StringUtil.removeAccents(t);
 			termAtt.copyBuffer(t.toCharArray(), 0, t.length());
 			return true;
 		}

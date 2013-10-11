@@ -7,7 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import nl.inl.blacklab.analysis.BLDutchAnalyzer;
+
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermEnum;
@@ -129,14 +131,29 @@ public class LuceneUtil {
 	 * Parse a query in the Lucene query language format (QueryParser supplied with Lucene).
 	 *
 	 * @param luceneQuery the query string
+	 * @param analyzer analyzer to use
+	 * @param defaultField default search field
+	 * @return the query
+	 * @throws ParseException on syntax error
+	 */
+	public static Query parseLuceneQuery(String luceneQuery, Analyzer analyzer, String defaultField) throws ParseException {
+		QueryParser qp = new QueryParser(Version.LUCENE_36, defaultField, analyzer);
+		return qp.parse(luceneQuery);
+	}
+
+	/**
+	 * Parse a query in the Lucene query language format (QueryParser supplied with Lucene).
+	 *
+	 * NOTE: this uses the default Dutch analyzer. Use the version of this method that takes an analyzer
+	 * if you need a different one.
+	 *
+	 * @param luceneQuery the query string
 	 * @param defaultField default search field
 	 * @return the query
 	 * @throws ParseException on syntax error
 	 */
 	public static Query parseLuceneQuery(String luceneQuery, String defaultField) throws ParseException {
-		QueryParser qp = new QueryParser(Version.LUCENE_36, defaultField,
-				new StandardAnalyzer(Version.LUCENE_36));
-		return qp.parse(luceneQuery);
+		return parseLuceneQuery(luceneQuery, new BLDutchAnalyzer(), defaultField);
 	}
 
 	/**

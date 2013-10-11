@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.externalstorage.ContentStoreDir;
@@ -37,7 +38,6 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
-import nl.inl.blacklab.index.BLDefaultAnalyzer;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
@@ -74,6 +74,7 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
+
 
 /**
  * The main interface into the BlackLab library. The Searcher object is instantiated with an open
@@ -222,6 +223,9 @@ public class Searcher {
 	/** Thread that automatically warms up the forward indices, if enabled. */
 	private Thread autoWarmThread;
 
+	/** Analyzer used for our metadata fields */
+	private Analyzer analyzer;
+
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).
 	 *
@@ -270,6 +274,9 @@ public class Searcher {
 		}
 
 		logger.debug("Constructing Searcher...");
+
+		// Instantiate analyzer used for metadata indexing and queries
+		analyzer = new BLDutchAnalyzer(); // TODO make configurable
 
 		if (indexMode) {
 			indexWriter = openIndexWriter(indexDir, createNewIndex);
@@ -1466,12 +1473,11 @@ public class Searcher {
 		return indexLocation.toString();
 	}
 
-	public static IndexWriter openIndexWriter(File indexDir, boolean create) throws IOException,
+	public IndexWriter openIndexWriter(File indexDir, boolean create) throws IOException,
 			CorruptIndexException, LockObtainFailedException {
 		if (!indexDir.exists() && create) {
 			indexDir.mkdir();
 		}
-		Analyzer analyzer = new BLDefaultAnalyzer(); // (Analyzer)analyzerClass.newInstance();
 		Directory indexLuceneDir = FSDirectory.open(indexDir);
 		IndexWriterConfig config = Utilities.getIndexWriterConfig(analyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
@@ -1574,6 +1580,10 @@ public class Searcher {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public Analyzer getAnalyzer() {
+		return analyzer;
 	}
 
 
