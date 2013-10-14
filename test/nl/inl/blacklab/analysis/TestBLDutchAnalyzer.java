@@ -29,13 +29,15 @@ public class TestBLDutchAnalyzer {
 
 	@Test
 	public void testBasics() throws IOException {
-		Reader r = new StringReader("\"hond, a.u.b.: bél(len); \t [pre]cursor \t\nzo'n 'Hij zij' ex-man -");
+		Reader r = new StringReader("1781 \"hond, a.u.b.: bél(len); \t [pre]cursor \t\nzo'n 'Hij zij' ex-man -");
 		BLDutchAnalyzer analyzer = new BLDutchAnalyzer();
 		try {
 			TokenStream ts = analyzer.tokenStream("contents", r);
 			try {
 				ts = new BLDutchTokenFilter(ts);
 				CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
+				Assert.assertTrue(ts.incrementToken());
+				Assert.assertEquals("1781", new String(ta.buffer(), 0, ta.length()));
 				Assert.assertTrue(ts.incrementToken());
 				Assert.assertEquals("hond", new String(ta.buffer(), 0, ta.length()));
 				Assert.assertTrue(ts.incrementToken());

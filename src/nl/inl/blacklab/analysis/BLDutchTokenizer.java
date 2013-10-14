@@ -36,7 +36,7 @@ public class BLDutchTokenizer extends CharTokenizer {
 		if (Character.isWhitespace(c))
 			return false;
 
-		if (Character.isLetter(c))
+		if (Character.isLetter(c) || Character.isDigit(c))
 			return true;
 
 		if (c == '\'' || c == '-' || c == '.' || c == '(' || c == '[' || c == ')' || c == ']') {

@@ -32,7 +32,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 public class BLDutchTokenFilter extends TokenFilter {
 	final static Pattern removePattern = Pattern.compile("[\\.\\(\\)\\[\\]]|^'|'$");
 
-	final static Pattern anyLetterPattern = Pattern.compile("[\\p{L}]");
+	final static Pattern anyLetterPattern = Pattern.compile("[\\p{L}\\d]");
 
 	/**
 	 * Perform filtering on the input string
