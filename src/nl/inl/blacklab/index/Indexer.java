@@ -129,6 +129,9 @@ public class Indexer {
 	/**
 	 * When we encounter a zip or tgz file, do we descend into it like it was a directory?
 	 *
+	 * Note that for accessing large ZIP files, you need Java 7 which supports the
+	 * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)" error.
+	 *
 	 * @param b
 	 *            if true, treats zipfiles like a directory and processes all the files inside
 	 */
@@ -544,6 +547,9 @@ public class Indexer {
 	 * Note that directory structure inside the zip file is ignored; files are indexed as if they
 	 * are one large directory.
 	 *
+	 * Also note that for accessing large ZIP files, you need Java 7 which supports the
+	 * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)" error.
+	 *
 	 * @param zipFile
 	 *            the zip file
 	 * @param glob
@@ -561,6 +567,8 @@ public class Indexer {
 				Enumeration<? extends ZipEntry> es = z.entries();
 				while (es.hasMoreElements()) {
 					ZipEntry e = es.nextElement();
+					if (e.isDirectory())
+						continue;
 					String fileName = e.getName();
 					Matcher m = pattGlob.matcher(fileName);
 					boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz");
