@@ -78,6 +78,14 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	public Field.Index indexNotAnalyzed = Field.Index.NOT_ANALYZED_NO_NORMS;
 
 	/**
+	 * Returns our Indexer object
+	 * @return the Indexer object
+	 */
+	public Indexer getIndexer() {
+		return indexer;
+	}
+
+	/**
 	 * Enables or disables norms. Norms are disabled by default.
 	 *
 	 * The method name was chosen to match Lucene's Field.setOmitNorms().

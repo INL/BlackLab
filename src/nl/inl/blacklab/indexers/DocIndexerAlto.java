@@ -116,7 +116,8 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
 		// Named entity tags: index as tags in the content
 		addHandler("//NE", new InlineTagHandler());
 
-		// Optionally read external metadata (KB dataset specific; normally not used)
+		// Optionally read external metadata
+		// (OLD; replaced by MetadataFetcher system. This will be removed soon)
 		if (!externalMetadataAvailable) {
 			String file = getParameter("metadataFile");
 			if (file != null && file.length() > 0)
@@ -128,12 +129,12 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
 	/* ---- NOTE: all the following is only used for a specific dataset, to merge external metadata
 	 *      with the input XML. Can safely be ignored. ---- */
 
-	/** Document titles by DPO num (KB dataset specific; normally not used) */
+	/** Document titles by DPO num (OLD; replaced by MetadataFetcher system. This will be removed soon) */
 	static Map<String, String> titles;
 	static Map<String, String> dates;
 	static Map<String, String> authors;
 
-	/** Read external metadatatfile (KB dataset specific; normally not used)
+	/** Read external metadatafile (OLD; replaced by MetadataFetcher system. This will be removed soon)
 	 * @param metadataFile the file */
 	private static void readMetadata(File metadataFile) {
 		titles = new HashMap<String, String>();
@@ -160,13 +161,13 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
 		externalMetadataAvailable = true;
 	}
 
-	/** Pattern for getting DPO number and page number from image file name (KB dataset specific; normally not used) */
+	/** Pattern for getting DPO number and page number from image file name (OLD. Will be removed soon) */
 	private final static Pattern PATT_DPO_AND_PAGE = Pattern.compile("^dpo_(\\d+)_(\\d+)_");
 
-	/** Whether or not the external metadata is available (KB dataset specific; normally not used) */
+	/** Whether or not the external metadata is available (OLD. Will be removed soon) */
 	static boolean externalMetadataAvailable = false;
 
-	/** Get metadata from filename (KB dataset specific; normally not used)
+	/** Get metadata from filename (OLD. Will be removed soon)
 	 * @param imageFileName the file name
 	 * @return the metadata (title, author, date, page) */
 	static String[] getInfoFromImageFileName(String imageFileName) {

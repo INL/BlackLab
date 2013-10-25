@@ -15,8 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -141,6 +143,14 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 						Store.YES, true).setIntValue(fiid));
 			}
 
+			// If there's an external metadata fetcher, call it now so it can
+			// add the metadata for this document and (optionally) store the metadata
+			// document in the content store (and the corresponding id in the Lucene doc)
+			MetadataFetcher m = getMetadataFetcher();
+			if (m != null) {
+				m.addMetadata();
+			}
+
 			try {
 				// Add Lucene doc to indexer
 				indexer.add(currentLuceneDoc);
@@ -165,8 +175,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	/** Stores metadata field with element name as name and element content as value. */
-	public class MetadataElementHandler extends ContentCapturingHandler {
-
+	public class MetadataElementHandler extends ContentCapturingHandler  {
 		/** Close tag: store the value of this metadata field */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
@@ -563,6 +572,60 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 	/** The end tag property */
 	ComplexFieldProperty propEndTag;
+
+	/**
+	 * A metadata fetcher can fetch the metadata for a document
+	 * from some external source (a file, the network, etc.) and
+	 * add it to the Lucene document.
+	 */
+	static abstract public class MetadataFetcher implements Closeable {
+
+		protected DocIndexer docIndexer;
+
+		public MetadataFetcher(DocIndexer docIndexer) {
+			this.docIndexer = docIndexer;
+		}
+
+		/**
+		 * Fetch the metadata for the document currently being indexed and add it
+		 * to the document as indexed fields.
+		 */
+		abstract public void addMetadata();
+
+		/** Close the fetcher, releasing any resources it holds */
+		@Override
+		public void close() throws IOException {
+			// Nothing, by default
+		}
+
+	}
+
+	/** Our external metadata fetcher (if any), responsible
+	 *  for looking up the metadata and adding it to the Lucene document. */
+	MetadataFetcher metadataFetcher;
+
+	/** Get the external metadata fetcher for this indexer, if any.
+	 *
+	 * The metadata fetcher can be configured through the "metadataFetcherClass" parameter.
+	 *
+	 * @return the metadata fetcher if any, or null if there is none.
+     */
+	MetadataFetcher getMetadataFetcher() {
+		if (metadataFetcher == null) {
+			String metadataFetcherClassName = getParameter("metadataFetcherClass");
+			if (metadataFetcherClassName != null) {
+				try {
+					Class<?> metadataFetcherClass = Class.forName(metadataFetcherClassName);
+					@SuppressWarnings("unchecked")
+					Constructor<MetadataFetcher> ctor = (Constructor<MetadataFetcher>) metadataFetcherClass.getConstructor(DocIndexer.class);
+					metadataFetcher = ctor.newInstance(this);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+		return metadataFetcher;
+	}
 
 	public ComplexFieldProperty getPropPunct() {
 		return propPunct;
