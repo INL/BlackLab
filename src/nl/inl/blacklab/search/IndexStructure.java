@@ -189,15 +189,25 @@ public class IndexStructure {
 		}
 
 		public void detectMainProperty(IndexReader reader) {
+			PropertyDesc firstProperty = null;
 			for (PropertyDesc pr: props.values()) {
+				if (firstProperty == null)
+					firstProperty = pr;
 				if (pr.detectOffsetsAlternative(reader, fieldName)) {
 					// This field has offsets stored. Must be the main prop field.
 					mainProperty = pr;
 					return;
 				}
 			}
-			throw new RuntimeException(
-					"No main property (with char. offsets) detected for complex field " + fieldName);
+
+			// None have offsets; just assume the first property is the main one
+			// (note that not having any offsets makes it impossible to highlight the
+			//  original content, but this may not be an issue. We probably need
+			//  a better way to keep track of the main property)
+			mainProperty = firstProperty;
+
+//			throw new RuntimeException(
+//					"No main property (with char. offsets) detected for complex field " + fieldName);
 		}
 
 		@Deprecated
