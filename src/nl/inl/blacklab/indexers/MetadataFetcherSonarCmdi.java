@@ -100,8 +100,11 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 		try {
 			ZipEntry e = metadataZipFile.getEntry(metadataPathInZip + metadataFile);
-			if (e == null)
-				throw new RuntimeException("Entry in zip not found: " + metadataPathInZip + metadataFile);
+			if (e == null) {
+				//throw new RuntimeException("Entry in zip not found: " + metadataPathInZip + metadataFile);
+				System.err.println("*** ERROR, metadata entry not found: " + metadataPathInZip + metadataFile);
+				return;
+			}
 			InputStream is = metadataZipFile.getInputStream(e);
 			CapturingReader capturingReader = new CapturingReader(new InputStreamReader(is, "utf-8"));
 			BufferedReader reader = new BufferedReader(capturingReader);
