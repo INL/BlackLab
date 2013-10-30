@@ -27,12 +27,6 @@ import nl.inl.blacklab.search.TextPatternTranslator;
 /**
  * A sequence of patterns. The patterns specified may be any pattern, and may themselves be
  * sequences if desired.
- *
- * Note, however, that translation to a Query only returns a correct query if the patterns in the
- * sequence are of type TextPatternTerm; otherwise it delivers a document-level AND Query.
- * Translation to a SpanQuery always works correctly.
- *
- * Translation to a Query, therefore, should only be used as a first filtering tool.
  */
 public class TextPatternSequence extends TextPatternAnd {
 	public TextPatternSequence(TextPattern... clauses) {

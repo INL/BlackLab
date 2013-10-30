@@ -25,11 +25,6 @@ import java.util.List;
  * two hits in the same document at the same start and end position will produce a match. This is
  * useful for e.g. selecting adjectives that start with a 'b' (queries on different property
  * (sub)fields that should apply to the same word).
- *
- * When generating a Query, a simple document-level AND is used, so in the above case, this would
- * generate the query "documents that contains an adjective and a word starting with
- * 'b'". As always, SpanQuery document results are the "most correct" and are a subset of the Query
- * results.
  */
 public class TextPatternAnd extends TextPatternCombiner {
 	public TextPatternAnd(TextPattern... clauses) {
