@@ -341,11 +341,16 @@ public class Indexer {
 	public void index(String documentName, Reader reader) throws Exception {
 		try {
 			getListener().fileStarted(documentName);
+			int docsDoneBefore = searcher.getWriter().numDocs();
 
 			DocIndexer docIndexer = createDocIndexer(documentName, reader);
 
 			docIndexer.index();
 			getListener().fileDone(documentName);
+			int docsDoneAfter = searcher.getWriter().numDocs();
+			if (docsDoneAfter == docsDoneBefore) {
+				System.err.println("*** Warning, couldn't index " + documentName + " ; wrong format?");
+			}
 		} catch (InputFormatException e) {
 			if (continueAfterInputError) {
 				System.err.println("Parsing " + documentName + " failed:");
