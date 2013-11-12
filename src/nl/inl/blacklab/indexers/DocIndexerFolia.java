@@ -99,8 +99,8 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
 			}
 		});
 
-		// t (token) element: contains the word form
-		addHandler("t", new ContentCapturingHandler() {
+		// t (token) element directly under w (word) element: contains the word form
+		addHandler("w/t", new ContentCapturingHandler() {
 
 			/** Tokens with a class attribute are (usually?) the original scanned token before correction,
 			 *  so we skip them */
