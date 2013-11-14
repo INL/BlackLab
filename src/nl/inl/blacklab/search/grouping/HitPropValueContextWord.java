@@ -38,13 +38,21 @@ public class HitPropValueContextWord extends HitPropValueContext {
 		String fieldPropName = parts[0];
 		boolean sensitive = parts[1].equals("s");
 		Terms termsObj = searcher.getForwardIndex(fieldPropName).getTerms();
-		int id = termsObj.indexOf(parts[2]);
+		int id;
+		if (parts[2].length() == 0)
+			id = -1; // no token
+		else
+			id = termsObj.indexOf(parts[2]);
 		return new HitPropValueContextWord(searcher, fieldPropName, id, sensitive);
 	}
 
 	@Override
 	public String serialize() {
-		String token = terms.get(valueTokenId);
+		String token;
+		if (valueTokenId < 0)
+			token = ""; // no token
+		else
+			token = terms.get(valueTokenId);
 		return "cwo:" + fieldPropName + SERIALIZATION_SEPARATOR + (sensitive ? "s" : "i") + SERIALIZATION_SEPARATOR + token;
 	}
 }

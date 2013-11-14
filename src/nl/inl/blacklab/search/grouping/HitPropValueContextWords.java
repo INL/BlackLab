@@ -54,7 +54,12 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		int[] ids = new int[parts.length - 2];
 		Terms termsObj = searcher.getForwardIndex(fieldPropName).getTerms();
 		for (int i = 2; i < parts.length; i++) {
-			ids[i - 2] = termsObj.indexOf(parts[i]);
+			int tokenId;
+			if (parts[i].length() == 0)
+				tokenId = -1; // no token
+			else
+				tokenId = termsObj.indexOf(parts[i]);
+			ids[i - 2] = tokenId;
 		}
 		return new HitPropValueContextWords(searcher, fieldPropName, ids, sensitive);
 	}
@@ -65,7 +70,12 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		for (int v: valueTokenId) {
 			if (b.length() > 0)
 				b.append(SERIALIZATION_SEPARATOR);
-			b.append(terms.get(v));
+			String token;
+			if (v < 0)
+				token = ""; // no token
+			else
+				token = terms.get(v);
+			b.append(token);
 		}
 		return "cws:" + fieldPropName + SERIALIZATION_SEPARATOR + (sensitive ? "s" : "i") + SERIALIZATION_SEPARATOR + b.toString();
 	}
