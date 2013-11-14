@@ -73,7 +73,8 @@ public class QueryExecutionContext {
 		final String di = ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
 
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneField());
-		String alt = parts[2];
+
+		String alt = parts.length >= 3 ? parts[2] : "";
 		if (alt.equals(s)) {
 			// Don't desensitize
 			return value;
