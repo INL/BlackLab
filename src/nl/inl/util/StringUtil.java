@@ -563,4 +563,16 @@ public class StringUtil {
 		}
 	}
 
+	/**
+	 * Escape double quote and backslash with a backslash character.
+	 *
+	 * Useful for putting strings between double quotes.
+	 *
+	 * @param str the string to escape
+	 * @return the escaped string
+	 */
+	public static String escapeDoubleQuotedString(String str) {
+		return str.replaceAll("[\"\\\\]", "\\\\$0");
+	}
+
 }

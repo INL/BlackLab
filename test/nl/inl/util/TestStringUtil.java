@@ -47,4 +47,10 @@ public class TestStringUtil {
 				StringUtil.escapeXmlChars("Test < & > \" test"));
 	}
 
+	@Test
+	public void testEscapeDoubleQuotedString() {
+		Assert.assertEquals("Test \\\" test \\\\ test",
+				StringUtil.escapeDoubleQuotedString("Test \" test \\ test"));
+	}
+
 }
