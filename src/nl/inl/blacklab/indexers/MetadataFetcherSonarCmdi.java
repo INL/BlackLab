@@ -19,7 +19,11 @@ import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
 import nl.inl.util.CapturingReader;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.Field.TermVector;
 import org.apache.lucene.document.NumericField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -85,8 +89,9 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 	public void addMetadata() {
 
 		String fromInputFile;
+		Document luceneDoc = ourDocIndexer.getCurrentLuceneDoc();
 		if (ourDocIndexer != null)
-			fromInputFile = ourDocIndexer.getCurrentLuceneDoc().get("fromInputFile");
+			fromInputFile = luceneDoc.get("fromInputFile");
 		else {
 			// TEST
 			fromInputFile = TEST_FROM_INPUT_FILE;
@@ -96,7 +101,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		int lastSlash = fromInputFile.lastIndexOf("/");
 		int penultimateSlash = fromInputFile.lastIndexOf("/", lastSlash - 1);
 		String metadataFile = fromInputFile.substring(penultimateSlash + 1);
-		metadataFile = metadataFile.replaceAll("\\.folia\\.", ".tst.cmdi.");
+		metadataFile = metadataFile.replaceAll("\\.folia\\.", ".cmdi.");
 
 		try {
 			ZipEntry e = metadataZipFile.getEntry(metadataPathInZip + metadataFile);
@@ -118,15 +123,32 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 				reader.close();
 			}
 
+			// Combine AuthorName and Pseudonym fields into
+			// fields AuthorNameOrPseudonym / AuthorNameOrPseudonymSearch
+			String authorName = luceneDoc.get("AuthorName");
+			if (authorName == null)
+				authorName = "";
+			String pseudonym = luceneDoc.get("Pseudonym");
+			if (pseudonym == null)
+				pseudonym = "";
+			String authorNameAndPseudonym = authorName + " " + pseudonym;
+			if (authorName.isEmpty()) {
+				authorName = pseudonym;
+			}
+			luceneDoc.add(new Field("AuthorNameOrPseudonym", authorName, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
+			luceneDoc.add(new Field("AuthorNameOrPseudonymSearch", authorNameAndPseudonym, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
+
 			if (ourDocIndexer != null) {
 				// Store metadata XML in content store and corresponding id in Lucene document
 				ContentStore cs = ourDocIndexer.getIndexer().getContentStore("metadata");
 				int id = cs.store(capturingReader.getContent());
-				ourDocIndexer.getCurrentLuceneDoc().add(new NumericField("metadataCid", Store.YES, true).setIntValue(id));
+				luceneDoc.add(new NumericField("metadataCid", Store.YES, true).setIntValue(id));
 			} else {
 				// TEST; print start of metadata file
 				System.out.println(capturingReader.getContent().substring(0, 1000));
 			}
+
+
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
