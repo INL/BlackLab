@@ -195,7 +195,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		@Override
 		public void endElement(String uri, String localName, String qName) throws SAXException {
 
-			if (!hasChild && fieldsToIndex.containsKey(localName)) {
+			if (!hasChild) {
 				String indexAs = fieldsToIndex.get(localName);
 				if (indexAs == null || indexAs.length() == 0)
 					indexAs = localName;
@@ -219,7 +219,6 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			if (!hasChild)
 				textContent.append(ch, start, length);
 		}
-
 	}
 
 	public static void main(String[] args) throws IOException {
