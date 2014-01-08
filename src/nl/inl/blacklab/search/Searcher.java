@@ -75,7 +75,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 
-
 /**
  * The main interface into the BlackLab library. The Searcher object is instantiated with an open
  * Lucene IndexReader and accesses that index through special methods.
@@ -122,7 +121,7 @@ public class Searcher {
 	 *
 	 * Indexed by property name.
 	 */
-	private Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
+	Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
 
 	/**
 	 * The Lucene index reader
@@ -373,14 +372,14 @@ public class Searcher {
 			}
 
 			// Close the forward indices
-			for (ForwardIndex fi : forwardIndices.values()) {
+			for (ForwardIndex fi: forwardIndices.values()) {
 				fi.close();
 			}
 
 			// Close the content accessor(s)
 			// (the ContentStore, and possibly other content accessors
 			// (although that feature is not used right now))
-			for (ContentAccessor ca : contentAccessors.values()) {
+			for (ContentAccessor ca: contentAccessors.values()) {
 				ca.close();
 			}
 
@@ -667,8 +666,8 @@ public class Searcher {
 	 *            document), a sane default value is chosen (in this case, the last character of the
 	 *            last word found). Otherwise, throws an exception.
 	 */
-	void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords,
-			int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
+	void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
+			boolean fillInDefaultsIfNotFound) {
 		String fieldPropName = ComplexFieldUtil.mainPropertyOffsetsField(indexStructure, fieldName);
 		TermFreqVector termFreqVector = getTermFreqVector(doc, fieldPropName);
 		if (!(termFreqVector instanceof TermPositionVector)) {
@@ -860,7 +859,8 @@ public class Searcher {
 	@Deprecated
 	public Set<String> getMatchingTermsFromIndex(String luceneName, Collection<String> searchTerms,
 			float similarity) {
-		return LuceneUtil.getMatchingTermsFromIndex(indexReader, luceneName, searchTerms, similarity);
+		return LuceneUtil.getMatchingTermsFromIndex(indexReader, luceneName, searchTerms,
+				similarity);
 	}
 
 	/**
@@ -989,8 +989,8 @@ public class Searcher {
 		ContentAccessor ca = contentAccessors.get(fieldName);
 		if (indexMode && ca == null) {
 			// Index mode. Create new content store.
-			ContentStore contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_" + fieldName),
-					createdNewIndex);
+			ContentStore contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_"
+					+ fieldName), createdNewIndex);
 			registerContentStore(fieldName, contentStore);
 			return contentStore;
 		}
@@ -1156,8 +1156,9 @@ public class Searcher {
 			}
 			// Open forward index
 			forwardIndex = ForwardIndex.open(dir, indexMode, collator, createdNewIndex);
-			forwardIndex.setIdTranslateInfo(indexReader, fieldPropName); // how to translate from Lucene
-																		// doc to fiid
+			forwardIndex.setIdTranslateInfo(indexReader, fieldPropName); // how to translate from
+																			// Lucene
+																			// doc to fiid
 			forwardIndices.put(fieldPropName, forwardIndex);
 		}
 		return forwardIndex;
@@ -1180,8 +1181,7 @@ public class Searcher {
 	 *
 	 * @return the list of concordances
 	 */
-	Map<Hit, Concordance> retrieveConcordances(Hits hits, int contextSize,
-			String fieldName) {
+	Map<Hit, Concordance> retrieveConcordances(Hits hits, int contextSize, String fieldName) {
 
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
@@ -1198,11 +1198,13 @@ public class Searcher {
 			// Yes, make 'em from the forward index (faster)
 			ForwardIndex forwardIndex = null;
 			if (concWordFI != null)
-				forwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, concWordFI));
+				forwardIndex = getForwardIndex(ComplexFieldUtil
+						.propertyField(fieldName, concWordFI));
 
 			ForwardIndex punctForwardIndex = null;
 			if (concPunctFI != null)
-				punctForwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName, concPunctFI));
+				punctForwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
+						concPunctFI));
 
 			Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
 			if (concAttrFI == null) {
@@ -1217,14 +1219,16 @@ public class Searcher {
 			} else {
 				// Specific list of attribute FIs
 				for (String p: concAttrFI) {
-					attrForwardIndices.put(p, getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
+					attrForwardIndices.put(p,
+							getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
 				}
 			}
 
 			Map<Hit, Concordance> conc1 = new HashMap<Hit, Concordance>();
 			for (List<Hit> l: hitsPerDocument.values()) {
 				Hits hitsInThisDoc = new Hits(this, l);
-				hitsInThisDoc.makeConcordancesSingleDocForwardIndex(forwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
+				hitsInThisDoc.makeConcordancesSingleDocForwardIndex(forwardIndex,
+						punctForwardIndex, attrForwardIndices, contextSize, conc1);
 			}
 			return conc1;
 		}
@@ -1305,7 +1309,8 @@ public class Searcher {
 	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
 	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
 	 */
-	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
+	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI,
+			Collection<String> attrFI) {
 		concWordFI = wordFI;
 		concPunctFI = punctFI;
 		concAttrFI = attrFI;
@@ -1454,8 +1459,8 @@ public class Searcher {
 		if (mainProperty == null)
 			throw new RuntimeException("Main property not found for " + fieldName);
 		String mainPropName = mainProperty.getName();
-		return new QueryExecutionContext(this, fieldName, mainPropName,
-				defaultCaseSensitive, defaultDiacriticsSensitive);
+		return new QueryExecutionContext(this, fieldName, mainPropName, defaultCaseSensitive,
+				defaultDiacriticsSensitive);
 	}
 
 	/**
@@ -1561,7 +1566,7 @@ public class Searcher {
 							ContentAccessor ca = e.getValue();
 							if (!(ca instanceof ContentAccessorContentStore))
 								continue; // can only delete from content store
-							ContentStore cs = ((ContentAccessorContentStore)ca).getContentStore();
+							ContentStore cs = ((ContentAccessorContentStore) ca).getContentStore();
 							int cid = Integer.parseInt(d.get(ComplexFieldUtil
 									.contentIdField((fieldName))));
 							cs.delete(cid);
@@ -1585,6 +1590,5 @@ public class Searcher {
 	public Analyzer getAnalyzer() {
 		return analyzer;
 	}
-
 
 }

@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -56,7 +57,14 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * NOTE: this will always be null if not all the hits have been retrieved.
 	 */
-	protected Map<Hit, Concordance> concordances;
+	/*protected Map<Hit, Concordance> concordances;*/
+
+	/**
+	 * The KWIC data, if it has been retrieved.
+	 *
+	 * NOTE: this will always be null if not all the hits have been retrieved.
+	 */
+	protected Map<Hit, Kwic> kwics;
 
 	/**
 	 * The searcher object.
@@ -280,7 +288,8 @@ public class Hits implements Iterable<Hit> {
 		// Reset context and concordances so we get the correct context size next time
 		currentContextSize = -1;
 		contextFieldsPropName = null;
-		concordances = null;
+		//concordances = null;
+		kwics = null;
 	}
 
 	/**
@@ -777,6 +786,21 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Return the KWIC for the specified hit.
+	 *
+	 * The first call to this method will fetch the KWICs for all the hits in this
+	 * Hits object. So make sure to select an appropriate HitsWindow first: don't call this
+	 * method on a Hits set with >1M hits unless you really want to display all of them in one
+	 * go.
+	 *
+	 * @param h the hit
+	 * @return KWIC for this hit
+	 */
+	public Kwic getKwic(Hit h) {
+		return getKwic(h, desiredContextSize);
+	}
+
+	/**
 	 * Retrieve a single concordance. Only use if you need a larger snippet around a single
 	 * hit. If you need concordances for a set of hits, just instantiate a HitsWindow and call
 	 * getConcordance() on that; it will fetch all concordances in the window in a batch, which
@@ -791,6 +815,25 @@ public class Hits implements Iterable<Hit> {
 		List<Hit> oneHit = Arrays.asList(hit);
 		Hits h = new Hits(searcher, oneHit);
 		Map<Hit, Concordance> oneConc = searcher.retrieveConcordances(h, contextSize, fieldName);
+		return oneConc.get(hit);
+	}
+
+	/**
+	 * Retrieve a single KWIC (KeyWord In Context). Only use if you need a larger
+	 * snippet around a single
+	 * hit. If you need KWICs for a set of hits, just instantiate a HitsWindow and call
+	 * getKwic() on that; it will fetch all KWICs in the window in a batch, which
+	 * is more efficient.
+	 *
+	 * @param fieldName field to use for building the KWIC
+	 * @param hit the hit for which we want a KWIC
+	 * @param contextSize the desired number of words around the hit
+	 * @return the KWIC
+	 */
+	public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
+		List<Hit> oneHit = Arrays.asList(hit);
+		Hits h = new Hits(searcher, oneHit);
+		Map<Hit, Kwic> oneConc = retrieveKwics(h, contextSize, fieldName);
 		return oneConc.get(hit);
 	}
 
@@ -811,6 +854,8 @@ public class Hits implements Iterable<Hit> {
 	 * @return concordance for this hit
 	 */
 	public synchronized Concordance getConcordance(Hit h, int contextSize) {
+		return getKwic(h, contextSize).toConcordance();
+		/*
 		if (contextSize != desiredContextSize) {
 			// Different context size than the default for the whole set;
 			// We probably want to show a hit with a larger snippet around it
@@ -836,7 +881,52 @@ public class Hits implements Iterable<Hit> {
 		Concordance conc = concordances.get(h);
 		if (conc == null)
 			throw new RuntimeException("Concordance for hit not found: " + h);
-		return conc;
+		return conc;*/
+	}
+
+	/**
+	 * Get a KWIC with a custom context size.
+	 *
+	 * Don't call this directly for displaying a list of results. In that case,
+	 * just instantiate a HitsWindow, call setContextSize() on it to set a
+	 * default context size and call getKwic(Hit) for each hit. That's
+	 * more efficient if you're dealing with many hits.
+	 *
+	 * This method is mostly just for getting a larger snippet around
+	 * a single hit.
+	 *
+	 * @param h the hit
+	 * @param contextSize the context size for this KWIC
+	 *   (only use if you want a different one than the preset preference)
+	 * @return KWIC for this hit
+	 */
+	public Kwic getKwic(Hit h, int contextSize) {
+		if (contextSize != desiredContextSize) {
+			// Different context size than the default for the whole set;
+			// We probably want to show a hit with a larger snippet around it
+			// (say, 50 words or so). Don't clobber the context of the other
+			// hits, just fetch this snippet separately.
+			return getKwic(concordanceFieldName, h, contextSize);
+		}
+
+		// Default context size. Read all hits and find concordances for all of them
+		// in batch.
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Just go ahead with the hits we did
+			// get, so at least we can return a valid concordance object and
+			// not break the calling method. It is responsible for checking
+			// for thread interruption (only some applications use this at all,
+			// so throwing exceptions from all methods is too inconvenient)
+		}
+		if (kwics == null) {
+			findKwics(); // just try to find the default concordances
+		}
+		Kwic kwic = kwics.get(h);
+		if (kwic == null)
+			throw new RuntimeException("KWIC for hit not found: " + h);
+		return kwic;
 	}
 
 	/**
@@ -846,7 +936,7 @@ public class Hits implements Iterable<Hit> {
 	 * you call getConcordance() for the first time.
 	 */
 	synchronized void findConcordances() {
-		try {
+		/*try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Just go ahead with the hits we did
@@ -859,6 +949,102 @@ public class Hits implements Iterable<Hit> {
 
 		// Get the concordances
 		concordances = searcher.retrieveConcordances(this, desiredContextSize, concordanceFieldName);
+		*/
+		findKwics();
+	}
+
+	/**
+	 * Retrieve KWICs for the hits.
+	 *
+	 * You shouldn't have to call this manually, as it's automatically called when
+	 * you call getKwic() for the first time.
+	 */
+	synchronized void findKwics() {
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Just go ahead with the hits we did
+			// get, so at least we'll have valid concordances.
+		}
+		// Make sure we don't have the desired concordances already
+		if (kwics != null) {
+			return;
+		}
+
+		// Get the concordances
+		kwics = retrieveKwics(this, desiredContextSize, concordanceFieldName);
+	}
+
+	/**
+	 * Retrieve KWICs for a (sub)list of hits.
+	 *
+	 * KWICs are the hit words 'centered' with a certain number of context words around them.
+	 *
+	 * The size of the left and right context (in words) may be set using
+	 * Searcher.setConcordanceContextSize().
+	 *
+	 * @param hits
+	 *            the hits for which to retrieve KWICs
+	 * @param contextSize
+	 *            how many words around the hit to retrieve
+	 * @param fieldName
+	 *            field to use for building KWICs
+	 *
+	 * @return the KWICs
+	 */
+	private Map<Hit, Kwic> retrieveKwics(Hits hits, int contextSize, String fieldName) {
+
+		// Group hits per document
+		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
+		for (Hit key: hits) {
+			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
+			if (hitsInDoc == null) {
+				hitsInDoc = new ArrayList<Hit>();
+				hitsPerDocument.put(key.doc, hitsInDoc);
+			}
+			hitsInDoc.add(key);
+		}
+
+		if (searcher.getMakeConcordancesFromForwardIndex()) {
+			// Yes, make 'em from the forward index (faster)
+			ForwardIndex forwardIndex = null;
+			if (searcher.concWordFI != null)
+				forwardIndex = searcher.getForwardIndex(ComplexFieldUtil
+						.propertyField(fieldName, searcher.concWordFI));
+
+			ForwardIndex punctForwardIndex = null;
+			if (searcher.concPunctFI != null)
+				punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
+						searcher.concPunctFI));
+
+			Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
+			if (searcher.concAttrFI == null) {
+				// All other FIs are attributes
+				for (String p: searcher.forwardIndices.keySet()) {
+					String[] components = ComplexFieldUtil.getNameComponents(p);
+					String propName = components[1];
+					if (propName.equals(searcher.concWordFI) || propName.equals(searcher.concPunctFI))
+						continue;
+					attrForwardIndices.put(propName, searcher.getForwardIndex(p));
+				}
+			} else {
+				// Specific list of attribute FIs
+				for (String p: searcher.concAttrFI) {
+					attrForwardIndices.put(p,
+							searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
+				}
+			}
+
+			Map<Hit, Kwic> conc1 = new HashMap<Hit, Kwic>();
+			for (List<Hit> l: hitsPerDocument.values()) {
+				Hits hitsInThisDoc = new Hits(searcher, l);
+				hitsInThisDoc.makeKwicsSingleDocForwardIndex(forwardIndex, punctForwardIndex,
+						attrForwardIndices, contextSize, conc1);
+			}
+			return conc1;
+		}
+
+		throw new RuntimeException("Cannot make KWICs without forward index!");
 	}
 
 	/**
@@ -911,7 +1097,8 @@ public class Hits implements Iterable<Hit> {
 	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
 	 */
 	public synchronized void clearConcordances() {
-		concordances = null;
+		//concordances = null;
+		kwics = null;
 	}
 
 	/**
@@ -1258,6 +1445,133 @@ public class Hits implements Iterable<Hit> {
 			String[] concStr = new String[] {part[0].toString(), part[1].toString(), part[2].toString()};
 			Concordance concordance = new Concordance(concStr);
 			conc.put(h, concordance);
+		}
+
+		if (oldContext != null) {
+			restoreContextInHits(oldContext);
+		}
+	}
+
+	/**
+	 * Retrieves the KWIC information (KeyWord In Context: left, hit and right context) for
+	 * a number of hits in the same document from the ContentStore.
+	 *
+	 * NOTE: the slowest part of this is getting the character offsets (retrieving large term
+	 * vectors takes time; subsequent hits from the same document are significantly faster,
+	 * presumably because of caching)
+	 *
+	 * @param forwardIndex
+	 *    Forward index for the words
+	 * @param punctForwardIndex
+	 *    Forward index for the punctuation
+	 * @param attrForwardIndices
+	 *    Forward indices for the attributes, or null if none
+	 * @param wordsAroundHit
+	 *            number of words left and right of hit to fetch
+	 * @param kwics
+	 *            where to add the KWICs
+	 */
+	synchronized void makeKwicsSingleDocForwardIndex(ForwardIndex forwardIndex,
+			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices, int wordsAroundHit,
+			Map<Hit, Kwic> kwics) {
+		if (hits.size() == 0)
+			return;
+
+		// Save existing context so we can restore it afterwards
+		int[][] oldContext = null;
+		if (hits.size() > 0 && hits.get(0).context != null)
+			oldContext = getContextFromHits();
+
+		// TODO: more efficient to get all contexts with one getContextWords() call!
+
+		// Get punctuation context
+		int[][] punctContext = null;
+		if (punctForwardIndex != null) {
+			getContextWords(wordsAroundHit, Arrays.asList(punctForwardIndex));
+			punctContext = getContextFromHits();
+		}
+		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
+
+		// Get attributes context
+		String[] attrName = null;
+		ForwardIndex[] attrFI = null;
+		Terms[] attrTerms = null;
+		int[][][] attrContext = null;
+		if (attrForwardIndices != null) {
+			int n = attrForwardIndices.size();
+			attrName = new String[n];
+			attrFI = new ForwardIndex[n];
+			attrTerms = new Terms[n];
+			attrContext = new int[n][][];
+			int i = 0;
+			for (Map.Entry<String, ForwardIndex> e: attrForwardIndices.entrySet()) {
+				attrName[i] = e.getKey();
+				attrFI[i] = e.getValue();
+				attrTerms[i] = attrFI[i].getTerms();
+				getContextWords(wordsAroundHit, Arrays.asList(attrFI[i]));
+				attrContext[i] = getContextFromHits();
+				i++;
+			}
+		}
+
+		// Get word context
+		if (forwardIndex != null)
+			getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
+		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
+
+		// Make the concordances from the context
+		for (int i = 0; i < hits.size(); i++) {
+			Hit h = hits.get(i);
+			List<List<String>> part = new ArrayList<List<String>>();
+			for (int j = 0; j < 3; j++) {
+				part.add(new ArrayList<String>());
+			}
+			int currentPart = 0;
+			List<String> current = part.get(currentPart);
+			for (int j = 0; j < h.context.length; j++) {
+
+				if (j == h.contextRightStart) {
+					currentPart = 2;
+					current = part.get(currentPart);
+				}
+
+				if (currentPart == 0 && j == h.contextHitStart) {
+					currentPart = 1;
+					current = part.get(currentPart);
+				}
+
+				// Add punctuation before word
+				// (Applications may choose to ignore punctuation before the first word)
+				if (punctTerms == null) {
+					// There is no punctuation forward index. Just put a space
+					// between every word.
+					current.add(" ");
+				}
+				else
+					current.add(punctTerms.get(punctContext[i][j]));
+
+				// Add extra attributes (e.g. lemma, pos)
+				if (attrContext != null) {
+					for (int k = 0; k < attrContext.length; k++) {
+						current.add(attrTerms[k].get(attrContext[k][i][j]));
+					}
+				}
+
+				// Add word
+				if (terms != null)
+					current.add(terms.get(h.context[j]));
+				else
+					current.add(""); // weird, but make sure the numbers add up at the end
+
+			}
+			List<String> properties = new ArrayList<String>();
+			properties.add(searcher.concPunctFI);
+			for (int k = 0; k < attrContext.length; k++) {
+				properties.add(attrName[k]);
+			}
+			properties.add(searcher.concWordFI);
+			Kwic kwic = new Kwic(properties, part.get(0), part.get(1), part.get(2));
+			kwics.put(h, kwic);
 		}
 
 		if (oldContext != null) {
