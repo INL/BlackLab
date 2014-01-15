@@ -99,9 +99,9 @@ public class CorpusQueryLanguageParser {
     }
 
     /** Allow strings to be quoted using single quotes? */
-    private boolean allowSingleQuotes = false;
+    private boolean allowSingleQuotes = true;
     
-    /** Allow strings to be quoted using single quotes? [default: no] */
+    /** Allow strings to be quoted using single quotes? [default: yes] */
     public void setAllowSingleQuotes(boolean b) {
         allowSingleQuotes = b;
     }
