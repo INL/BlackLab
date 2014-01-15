@@ -41,6 +41,19 @@ public abstract class RandomAccessGroups extends GroupsAbstract {
 
 	public abstract List<RandomAccessGroup> getGroups();
 
+	/**
+	 * Sort groups by some property.
+	 * @param prop the property to sort on
+	 */
+	public void sortGroups(GroupProperty prop) {
+		sortGroups(prop, false);
+	}
+
+	/**
+	 * Sort groups by some property, ascending or descending.
+	 * @param prop the property to sort on
+	 * @param sortReverse if true, reverse the natural sort of the specified property.
+	 */
 	public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
 
 	public RandomAccessGroup getGroup(HitPropValue identity) {
