@@ -12,7 +12,7 @@ More information:
 * [https://github.com/INL/BlackLab/wiki/Frequently-Asked-Questions Frequently Asked Questions]
 * [https://github.com/INL/BlackLab/wiki/Building-and-testing-BlackLab Build and test it yourself] (it's easy, promise!)
 * [https://github.com/INL/BlackLab/wiki/Example-application The example application explained in detail]
-* [https://github.com/INL/BlackLab/wiki/Building-and-testing-BlackLab Get the Javadoc]
+* [http://inl.github.io/BlackLab/javadoc/index.html Browse the Javadoc] (or [https://github.com/INL/BlackLab/wiki/Building-and-testing-BlackLab build the most recent one from source])
 * [https://github.com/INL/BlackLab/wiki/BlackLab-blog BlackLab blog]
 * Follow [https://twitter.com/BlackLabINL @BlackLabINL] on Twitter!
 * For technical questions, contact Jan Niestadt (jan.niestadt@inl.nl) or Valentijn Geirnaert (valentijn.geirnaert@inl.nl)
