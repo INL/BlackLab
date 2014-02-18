@@ -34,7 +34,7 @@ Ant build file for example QueryToolServlet. Just run 'ant' from this directory 
 
 	<!-- Compile the sources -->
 	<target name="compile" depends="init,BlackLab">
-		<javac encoding="utf-8" target="1.5" debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}/WEB-INF/classes">
+		<javac encoding="utf-8" debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}/WEB-INF/classes">
 			<!-- Classpath to use for compilation -->
 			<classpath>
 				<pathelement path="${java.class.path}/"/>

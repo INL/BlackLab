@@ -137,6 +137,7 @@ public class TextPatternSequence extends TextPatternAnd {
 	 * @param matchesEmptySeq whether each of the clauses matches the empty sequence
 	 * @return several alternatives combined with or
 	 */
+	@SuppressWarnings("unchecked")
 	public <T> T makeAlternatives(TextPatternTranslator<T> translator, QueryExecutionContext context,
 			List<T> chResults, List<Boolean> matchesEmptySeq) {
 		if (chResults.size() == 1) {
