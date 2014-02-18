@@ -124,6 +124,9 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
 		// Sentence tags: index as tags in the content
 		addHandler("s", new InlineTagHandler());
 
+		// Paragraph tags: index as tags in the content
+		addHandler("p", new InlineTagHandler());
+
 		// meta elements: metadata fields
 		addHandler("meta", new ContentCapturingHandler() {
 
@@ -142,8 +145,5 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
 				addMetadataField(metadataFieldName, getElementContent());
 			}
 		});
-
 	}
-
-
 }
