@@ -5,11 +5,11 @@ package nl.inl.blacklab.search;
  */
 public class TokenFrequency implements Comparable<TokenFrequency> {
 
-	/** What token this collocation is for */
+	/** What token this frequency is for */
 	public String token;
 
 	/** How many times the token occurs in the context */
-	public int frequency;
+	public long frequency;
 
 	/**
 	 * Construct a collocation
@@ -32,12 +32,13 @@ public class TokenFrequency implements Comparable<TokenFrequency> {
 	 */
 	@Override
 	public int compareTo(TokenFrequency o) {
-		return o.frequency - frequency;
+		long delta = o.frequency - frequency;
+		return delta == 0 ? 0 : (delta < 0 ? -1 : 1);
 	}
 
 	@Override
 	public int hashCode() {
-		return token.hashCode() + frequency;
+		return (int) (token.hashCode() + frequency);
 	}
 
 	@Override
