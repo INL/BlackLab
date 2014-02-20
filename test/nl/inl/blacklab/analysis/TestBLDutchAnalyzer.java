@@ -34,7 +34,6 @@ public class TestBLDutchAnalyzer {
 		try {
 			TokenStream ts = analyzer.tokenStream("contents", r);
 			try {
-				ts = new BLDutchTokenFilter(ts);
 				CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
 				Assert.assertTrue(ts.incrementToken());
 				Assert.assertEquals("1781", new String(ta.buffer(), 0, ta.length()));
