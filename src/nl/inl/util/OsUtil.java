@@ -17,7 +17,6 @@ package nl.inl.util;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.util.Date;
 
 /**
  * OS-specific utilities
@@ -30,24 +29,6 @@ public class OsUtil {
 	 */
 	public static boolean isWindows() {
 		return System.getProperty("os.name").toLowerCase().indexOf("windows") > -1;
-	}
-
-	/**
-	 * Find the (default) Tomcat log path.
-	 *
-	 * @return the (default) Tomcat log path.
-	 */
-	public static String getTomcat5LogPath() {
-		String path;
-		if (isWindows()) {
-			String logDir = "C:\\Program Files (x86)\\Apache Software Foundation\\Tomcat 5.5\\logs";
-			path = logDir + "\\stdout_" + DateUtil.getSortableDateString(new Date(), false)
-					+ ".log";
-		} else {
-			String logDir = "/var/log/tomcat5";
-			path = logDir + "/catalina.out";
-		}
-		return path;
 	}
 
 	/**
