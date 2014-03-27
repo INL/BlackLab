@@ -16,14 +16,17 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.QueryExecutionContext;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  *
@@ -36,6 +39,7 @@ import org.apache.lucene.search.spans.Spans;
  *
  */
 public class SpanQueryTags extends SpanQueryBase {
+
 	private String tagName;
 
 	public SpanQueryTags(QueryExecutionContext context, String tagName) {
@@ -56,10 +60,12 @@ public class SpanQueryTags extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans startTags = clauses[0].getSpans(reader);
-		Spans endTags = clauses[1].getSpans(reader);
-		return new SpansTags(startTags, endTags);
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
+		Spans startTags = clauses[0].getSpans(context, acceptDocs, termContexts);
+		Spans endTags = clauses[1].getSpans(context, acceptDocs, termContexts);
+		Spans result = new SpansTags(startTags, endTags);
+
+		return result;
 	}
 
 	@Override

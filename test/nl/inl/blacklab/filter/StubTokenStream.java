@@ -16,8 +16,8 @@
 package nl.inl.blacklab.filter;
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 
 public class StubTokenStream extends TokenStream {
 	private CharTermAttribute ta;

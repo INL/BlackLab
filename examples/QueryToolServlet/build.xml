@@ -42,9 +42,9 @@ Ant build file for example QueryToolServlet. Just run 'ant' from this directory 
                 <pathelement path="${lib}/tomcat5.5/servlet-api.jar" />
                 <pathelement path="${lib}/tomcat5.5/jsp-api.jar" />
                 <pathelement path="${lib}/tomcat5.5/jasper-runtime.jar" />
-		        <pathelement path="${lib}/lucene-3.6.0/lucene-core-3.6.0.jar" />
-		        <pathelement path="${lib}/lucene-3.6.0/lucene-highlighter-3.6.0.jar" />
-		        <pathelement path="${lib}/lucene-3.6.0/lucene-queries-3.6.0.jar" />
+		        <pathelement path="${lib}/lucene-core-4.2.1.jar" />
+		        <pathelement path="${lib}/lucene-highlighter-4.2.1.jar" />
+		        <pathelement path="${lib}/lucene-queries-4.2.1.jar" />
 				<pathelement path="${BlackLab.dir}/dist/BlackLab.jar" />
 			</classpath>
 		</javac>

@@ -51,8 +51,8 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	}
 
 	@Override
-	public String fuzzy(QueryExecutionContext context, String value, float similarity, int prefixLength) {
-		return "FUZZY(" + context.luceneField() + ", " + context.optDesensitize(value) + ", " + similarity + ", " + prefixLength + ")";
+	public String fuzzy(QueryExecutionContext context, String value, int maxEdits, int prefixLength) {
+		return "FUZZY(" + context.luceneField() + ", " + context.optDesensitize(value) + ", " + maxEdits + ", " + prefixLength + ")";
 	}
 
 	@Override

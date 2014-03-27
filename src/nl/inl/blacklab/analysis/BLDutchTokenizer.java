@@ -2,7 +2,7 @@ package nl.inl.blacklab.analysis;
 
 import java.io.Reader;
 
-import org.apache.lucene.analysis.CharTokenizer;
+import org.apache.lucene.analysis.util.CharTokenizer;
 import org.apache.lucene.util.AttributeSource;
 import org.apache.lucene.util.Version;
 
@@ -19,15 +19,15 @@ import org.apache.lucene.util.Version;
 public class BLDutchTokenizer extends CharTokenizer {
 
 	public BLDutchTokenizer(AttributeFactory factory, Reader input) {
-		super(Version.LUCENE_36, factory, input);
+		super(Version.LUCENE_42, factory, input);
 	}
 
 	public BLDutchTokenizer(AttributeSource source, Reader input) {
-		super(Version.LUCENE_36, source, input);
+		super(Version.LUCENE_42, source, input);
 	}
 
 	public BLDutchTokenizer(Reader input) {
-		super(Version.LUCENE_36, input);
+		super(Version.LUCENE_42, input);
 	}
 
 	@Override

@@ -23,6 +23,8 @@ import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTerm;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
+import org.apache.lucene.index.Term;
+
 /**
  * A text pattern matching a phrase, modeled after PhraseQuery. Used with the Lucene Query Language
  * parser.
@@ -38,6 +40,14 @@ public class TPPhrase extends TextPattern {
 			clauses.add(t.translate(translator, context));
 		}
 		return translator.sequence(context, clauses);
+	}
+
+	public void add(Term term, int position) {
+		add(term.text(), position);
+	}
+
+	public void add(Term term) {
+		add(term.text());
 	}
 
 	public void add(String term, int position) {

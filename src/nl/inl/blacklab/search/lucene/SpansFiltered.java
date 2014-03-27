@@ -17,7 +17,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Filter;
@@ -36,8 +36,8 @@ public class SpansFiltered extends BLSpans {
 
 	boolean more;
 
-	public SpansFiltered(Spans spans, Filter filter, IndexReader reader) throws IOException {
-		this(spans, filter.getDocIdSet(reader));
+	public SpansFiltered(Spans spans, Filter filter, AtomicReader reader) throws IOException {
+		this(spans, filter.getDocIdSet(reader.getContext(), reader.getLiveDocs()));
 	}
 
 	public SpansFiltered(Spans spans, DocIdSet filterDocs) throws IOException {

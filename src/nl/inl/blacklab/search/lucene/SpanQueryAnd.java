@@ -17,10 +17,14 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Combines SpanQueries using AND. Note that this means that only matches with the same document id,
@@ -40,12 +44,14 @@ public class SpanQueryAnd extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans combi = clauses[0].getSpans(reader);
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs,
+			Map<Term, TermContext> termContexts) throws IOException {
+		Spans combi = clauses[0].getSpans(context, acceptDocs, termContexts);
 		for (int i = 1; i < clauses.length; i++) {
-			Spans si = clauses[i].getSpans(reader);
+			Spans si = clauses[i].getSpans(context, acceptDocs, termContexts);
 			combi = new SpansAnd(combi, si);
 		}
+
 		return combi;
 	}
 

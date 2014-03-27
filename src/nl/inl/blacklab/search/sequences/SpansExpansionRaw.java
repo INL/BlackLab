@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -71,7 +71,7 @@ class SpansExpansionRaw extends BLSpans {
 	/** Used to get the field length in tokens for a document */
 	DocFieldLengthGetter lengthGetter;
 
-	public SpansExpansionRaw(IndexReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
+	public SpansExpansionRaw(AtomicReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
 		if (!expandToLeft) {
 			// We need to know document length to properly do expansion to the right
 			lengthGetter = new DocFieldLengthGetter(reader, fieldName);

@@ -25,8 +25,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
-import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
 
 
 /**
@@ -176,8 +175,7 @@ public class ComplexField {
 		// Add number of tokens in complex field as a stored field,
 		// because we need to be able to find this property quickly
 		// for SpanQueryNot.
-		doc.add(new Field(ComplexFieldUtil.lengthTokensField(fieldName),
-				"" + numberOfTokens(), Store.YES, Index.NOT_ANALYZED_NO_NORMS));
+		doc.add(new IntField(ComplexFieldUtil.lengthTokensField(fieldName), numberOfTokens(), Field.Store.YES));
 	}
 
 	public void clear() {

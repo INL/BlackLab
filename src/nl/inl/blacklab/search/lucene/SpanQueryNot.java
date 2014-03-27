@@ -17,10 +17,14 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Returns all tokens that do not occur in the matches
@@ -57,9 +61,11 @@ public class SpanQueryNot extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		SpanQuery query = clauses[0];
-		return new SpansNot(reader, baseFieldName, query == null ? null : query.getSpans(reader));
+		Spans result = new SpansNot(context.reader(), baseFieldName, query == null ? null : query.getSpans(context, acceptDocs, termContexts));
+
+		return result;
 	}
 
 	@Override

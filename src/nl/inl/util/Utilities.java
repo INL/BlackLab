@@ -83,7 +83,7 @@ public class Utilities {
 	}
 
 	public static IndexWriterConfig getIndexWriterConfig(Analyzer analyzer, boolean create) {
-		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_30, analyzer);
+		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_42, analyzer);
 		config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
 		config.setRAMBufferSizeMB(150); // faster indexing
 
@@ -92,8 +92,7 @@ public class Utilities {
 		MergePolicy mp = config.getMergePolicy();
 		if (mp instanceof LogMergePolicy) {
 			((LogMergePolicy) mp).setMergeFactor(40); // faster indexing
-		} else
-			throw new RuntimeException("Not using LogMergePolicy??");
+		}
 		return config;
 	}
 

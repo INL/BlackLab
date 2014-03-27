@@ -29,8 +29,8 @@ import nl.inl.blacklab.search.sequences.SpanQuerySequence;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.PrefixQuery;
+import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.regex.RegexQuery;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 
@@ -51,7 +51,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery regex(QueryExecutionContext context, String value) {
-		return new BLSpanMultiTermQueryWrapper<RegexQuery>(new RegexQuery(
+		return new BLSpanMultiTermQueryWrapper<RegexpQuery>(new RegexpQuery(
 				new Term(context.luceneField(), context.optDesensitize(value))));
 	}
 
@@ -66,8 +66,8 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	}
 
 	@Override
-	public SpanQuery fuzzy(QueryExecutionContext context, String value, float similarity, int prefixLength) {
-		return new SpanFuzzyQuery(new Term(context.luceneField(), context.optDesensitize(value)), similarity, prefixLength);
+	public SpanQuery fuzzy(QueryExecutionContext context, String value, int maxEdits, int prefixLength) {
+		return new SpanFuzzyQuery(new Term(context.luceneField(), context.optDesensitize(value)), maxEdits, prefixLength);
 	}
 
 	@Override

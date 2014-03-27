@@ -6,8 +6,9 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.TermFreqVector;
+import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.FieldCache;
 
 /**
@@ -18,7 +19,7 @@ import org.apache.lucene.search.FieldCache;
  */
 public class DocFieldLengthGetter {
 	/** The Lucene index reader, for querying field length */
-	private IndexReader reader;
+	private AtomicReader reader;
 
 	/** For testing, we don't have an IndexReader available, so we use test values */
 	private boolean useTestValues = false;
@@ -36,9 +37,9 @@ public class DocFieldLengthGetter {
 	private String lengthTokensFieldName;
 
 	/** Lengths may have been cached using FieldCache */
-	private int[] cachedFieldLengths;
+	private FieldCache.Ints cachedFieldLengths;
 
-	public DocFieldLengthGetter(IndexReader reader, String fieldName) {
+	public DocFieldLengthGetter(AtomicReader reader, String fieldName) {
 		this.reader = reader;
 		this.fieldName = fieldName;
 		lengthTokensFieldName = ComplexFieldUtil.lengthTokensField(fieldName);
@@ -46,12 +47,12 @@ public class DocFieldLengthGetter {
 		if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME)) {
 			// Cache the lengths for this field to speed things up
 			try {
-				cachedFieldLengths = FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName);
+				cachedFieldLengths = FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName, true);
 
 				// Check if the cache was retrieved OK
 				boolean allZeroes = true;
-				for (int i = 0; i < 1000 && i < cachedFieldLengths.length; i++) {
-					if (cachedFieldLengths[i] != 0) {
+				for (int i = 0; i < 1000 ; i++) {
+					if (cachedFieldLengths.get(i) != 0) {
 						allZeroes = false;
 						break;
 					}
@@ -90,7 +91,7 @@ public class DocFieldLengthGetter {
 			return 5; // while testing, all documents have same length
 
 		if (cachedFieldLengths != null) {
-			return cachedFieldLengths[doc];
+			return cachedFieldLengths.get(doc);
 		}
 
 		if (!lookedForLengthField || lengthFieldIsStored)  {
@@ -116,22 +117,33 @@ public class DocFieldLengthGetter {
 		// Calculate the total field length by adding all the term frequencies.
 		// (much slower)
 		try {
+			Terms vector = reader.getTermVector(doc, fieldName);
+			TermsEnum termsEnum = null;
+			termsEnum = vector.iterator(termsEnum);
+			int termFreq = 0;
+			while (termsEnum.next() != null) {
+			    termFreq += termsEnum.totalTermFreq();
+			}
+			return termFreq;
+
+			/* Versie MKS: (NB hier wordt doc parameter niet gebruikt!)
+			Term term = new Term(fieldName);
+			DocsEnum docEnum = MultiFields.getTermDocsEnum(reader, MultiFields.getLiveDocs(reader), term.field(), term.bytes());
+			int termFreq = 0;
+
+			while (docEnum.nextDoc() != DocsEnum.NO_MORE_DOCS) {
+			    termFreq += docEnum.freq();
+			}
+			return termFreq;
+			*/
+
+			/* Versie Luc3.6:
 			TermFreqVector tfv = reader.getTermFreqVector(doc, fieldName);
 			if (tfv == null) {
 
 				// No term frequency vector. We have to assume this is because no tokens were
 				// stored for this document (document is empty)
 				return 0;
-
-				/*
-				Document d = reader.document(doc);
-				for (Fieldable f: d.getFields()) {
-					System.err.println(f.name() + ": " + f.stringValue());
-				}
-
-				throw new RuntimeException("No term frequency vector found for field " + fieldName + " (doc " + doc + ")");
-				*/
-
 			}
 			int [] tfs = tfv.getTermFrequencies();
 			if (tfs == null)
@@ -141,6 +153,7 @@ public class DocFieldLengthGetter {
 				n += tf;
 			}
 			return n;
+			*/
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

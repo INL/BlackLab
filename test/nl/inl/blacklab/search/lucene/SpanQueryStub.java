@@ -15,9 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import org.apache.lucene.index.IndexReader;
+import java.io.IOException;
+import java.util.Map;
+
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Stub SpanQuery class for testing. Takes arrays and iterates through 'hits'
@@ -37,10 +43,10 @@ public class SpanQueryStub extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) {
+	public Spans getSpans(AtomicReaderContext arg0, Bits arg1, Map<Term, TermContext> arg2)
+			throws IOException {
 		return new SpansStub(doc, start, end);
 	}
-
 	@Override
 	public String toString(String field) {
 		return "SpanQueryStub()";
@@ -50,4 +56,5 @@ public class SpanQueryStub extends SpanQuery {
 	public String getField() {
 		return "stub";
 	}
+
 }

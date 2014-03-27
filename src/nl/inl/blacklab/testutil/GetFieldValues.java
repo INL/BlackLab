@@ -12,8 +12,7 @@ import java.util.TreeSet;
 import nl.inl.blacklab.search.Searcher;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldSelector;
-import org.apache.lucene.document.SetBasedFieldSelector;
+import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.IndexReader;
 
 public class GetFieldValues {
@@ -36,25 +35,21 @@ public class GetFieldValues {
 		try {
 			IndexReader r = searcher.getIndexReader();
 
-//			String[] values = FieldCache.DEFAULT.getStrings(r, fieldName);
-//			for (int i = 0; i < values.length; i++) {
-//				String value = values[i];
-//				if (value != null)
-//					uniq.add(value);
-//			}
-
-			HashSet<String> fieldsToLoad = new HashSet<String>();
+			Set<String> fieldsToLoad = new HashSet<String>();
 			for (String fieldToLoad: fieldNames) {
 				fieldsToLoad.add(fieldToLoad);
 			}
+			/* OLD:
 			HashSet<String> lazyFieldsToLoad = new HashSet<String>();
 			FieldSelector fieldSelector = new SetBasedFieldSelector(fieldsToLoad, lazyFieldsToLoad);
+			*/
+			DocumentStoredFieldVisitor fieldVisitor = new DocumentStoredFieldVisitor(fieldsToLoad);
 
 			int numDocs = r.numDocs();
 			for (int i = 1; i < numDocs; i++) {
-//				if (i % 1000 == 0)
-//					System.out.println(i + "...");
-				Document d = r.document(i, fieldSelector);
+				//Document d = r.document(i, fieldSelector);
+				r.document(i, fieldVisitor);
+				Document d = fieldVisitor.getDocument();
 				for (String fieldName: fieldNames) {
 					String value = d.get(fieldName);
 					if (value != null) {
@@ -68,20 +63,6 @@ public class GetFieldValues {
 					}
 				}
 			}
-
-//			TermEnum te = r.terms();
-//			boolean found = false;
-//			while (te.next()) {
-//				Term term = te.term();
-//				if (term.field().equals(fieldName)) {
-//					found = true;
-//					uniq.add(term.text());
-//				} else if (found) {
-//					// We've seen all values for the field we're interested in.
-//					break;
-//				}
-//			}
-//			te.close();
 		} finally {
 			searcher.close();
 		}

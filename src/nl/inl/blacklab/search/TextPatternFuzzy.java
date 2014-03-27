@@ -23,17 +23,17 @@ import org.apache.lucene.index.Term;
 public class TextPatternFuzzy extends TextPattern {
 	protected String value;
 
-	private float similarity;
+	private int maxEdits;
 
 	private int prefixLength;
 
-	public TextPatternFuzzy(String value, float similarity) {
-		this(value, similarity, 0);
+	public TextPatternFuzzy(String value, int maxEdits) {
+		this(value, maxEdits, 0);
 	}
 
-	public TextPatternFuzzy(String value, float similarity, int prefixLength) {
+	public TextPatternFuzzy(String value, int maxEdits, int prefixLength) {
 		this.value = value;
-		this.similarity = similarity;
+		this.maxEdits = maxEdits;
 		this.prefixLength = prefixLength;
 	}
 
@@ -43,7 +43,7 @@ public class TextPatternFuzzy extends TextPattern {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.fuzzy(context, value, similarity, prefixLength);
+		return translator.fuzzy(context, value, maxEdits, prefixLength);
 	}
 
 }

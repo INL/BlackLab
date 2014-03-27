@@ -17,9 +17,10 @@ target).
 	<!-- The classpath for compilation, copying into dist/lib and putting in the manifest file -->
 	<path id="classpath">
 		<pathelement path="${lib.dir}/log4j-1.2.15.jar" />
-        <pathelement path="${lib.dir}/lucene-core-3.6.0.jar" />
-        <pathelement path="${lib.dir}/lucene-highlighter-3.6.0.jar" />
-	    <pathelement path="${lib.dir}/lucene-queries-3.6.0.jar" />
+        <pathelement path="${lib.dir}/lucene-core-4.2.1.jar" />
+        <pathelement path="${lib.dir}/lucene-highlighter-4.2.1.jar" />
+        <pathelement path="${lib.dir}/lucene-queries-4.2.1.jar" />
+        <pathelement path="${lib.dir}/lucene-queryparser-4.2.1.jar" />
 	</path>
 	
 	<!-- The main class for running, and for the manifest file.

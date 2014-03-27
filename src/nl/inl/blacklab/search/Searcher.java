@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
@@ -54,13 +53,14 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermFreqVector;
-import org.apache.lucene.index.TermPositionVector;
-import org.apache.lucene.index.TermVectorOffsetInfo;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -127,7 +127,7 @@ public class Searcher {
 	/**
 	 * The Lucene index reader
 	 */
-	private IndexReader indexReader;
+	private DirectoryReader reader;
 
 	/**
 	 * The Lucene IndexSearcher, for dealing with non-Span queries (for per-document scoring)
@@ -283,15 +283,15 @@ public class Searcher {
 
 		if (indexMode) {
 			indexWriter = openIndexWriter(indexDir, createNewIndex);
-			indexReader = IndexReader.open(indexWriter, false);
+			reader = DirectoryReader.open(indexWriter, false);
 		} else {
 			// Open Lucene index
-			indexReader = IndexReader.open(FSDirectory.open(indexDir));
+			reader = DirectoryReader.open(FSDirectory.open(indexDir));
 		}
 		this.indexLocation = indexDir;
 
 		// Determine the index structure
-		indexStructure = new IndexStructure(indexReader);
+		indexStructure = new IndexStructure(reader);
 
 		// Detect and open the ContentStore for the contents field
 		if (!createNewIndex) {
@@ -323,7 +323,7 @@ public class Searcher {
 			}
 		}
 
-		indexSearcher = new IndexSearcher(indexReader);
+		indexSearcher = new IndexSearcher(reader);
 
 		// Make sure large wildcard/regex expansions succeed
 		BooleanQuery.setMaxClauseCount(100000);
@@ -354,10 +354,11 @@ public class Searcher {
 	 */
 	public void close() {
 		try {
-			indexSearcher.close();
-			indexReader.close();
-			if (indexWriter != null)
+			reader.close();
+			if (indexWriter != null) {
+				indexWriter.commit();
 				indexWriter.close();
+			}
 
 			// See if the forward index warmup thread is running, and if so, stop it
 			if (autoWarmThread != null && autoWarmThread.isAlive()) {
@@ -404,6 +405,10 @@ public class Searcher {
 	/**
 	 * Retrieve a Lucene Document object from the index.
 	 *
+	 * NOTE: you must check if the document isn't deleted using Search.isDeleted()
+	 * first! Lucene 4.0+ allows you to retrieve deleted documents, making you
+	 * responsible for checking whether documents are deleted or not.
+	 *
 	 * @param doc
 	 *            the document id
 	 * @return the Lucene Document
@@ -413,11 +418,9 @@ public class Searcher {
 		try {
 			if (doc < 0)
 				throw new RuntimeException("Negative document id");
-			if (doc >= indexReader.maxDoc())
+			if (doc >= reader.maxDoc())
 				throw new RuntimeException("Document id >= maxDoc");
-			if (indexReader.isDeleted(doc))
-				throw new RuntimeException("Document deleted");
-			return indexReader.document(doc);
+			return reader.document(doc);
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
@@ -429,7 +432,7 @@ public class Searcher {
 	 * @return true iff it has been deleted
 	 */
 	public boolean isDeleted(int doc) {
-		return indexReader.isDeleted(doc);
+		return !MultiFields.getLiveDocs(reader).get(doc);
 	}
 
 	/**
@@ -437,12 +440,13 @@ public class Searcher {
 	 * @return one more than the highest document id
 	 */
 	public int maxDoc() {
-		return indexReader.maxDoc();
+		return reader.maxDoc();
 	}
 
 	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
 		try {
-			return new SpanQueryFiltered(query, filter, indexReader);
+			SlowCompositeReaderWrapper srw = new SlowCompositeReaderWrapper(reader);
+			return new SpanQueryFiltered(query, filter, srw);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -464,7 +468,8 @@ public class Searcher {
 	 */
 	public Spans filterDocuments(Spans spans, Filter filter) {
 		try {
-			return new SpansFiltered(spans, filter, indexReader);
+			SlowCompositeReaderWrapper srw = new SlowCompositeReaderWrapper(reader);
+			return new SpansFiltered(spans, filter, srw);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -489,8 +494,9 @@ public class Searcher {
 
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
 		try {
+			SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
 			return createSpanQuery(pattern, fieldName,
-					filter == null ? null : filter.getDocIdSet(indexReader));
+					filter == null ? null : filter.getDocIdSet(scrw.getContext(), MultiFields.getLiveDocs(reader)));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -614,14 +620,10 @@ public class Searcher {
 	 */
 	public Scorer findDocScores(Query q) {
 		try {
-			IndexSearcher s = new IndexSearcher(indexReader); // TODO: cache in field?
-			try {
-				Weight w = s.createNormalizedWeight(q);
-				Scorer sc = w.scorer(indexReader, true, false);
-				return sc;
-			} finally {
-				s.close();
-			}
+			Weight w = indexSearcher.createNormalizedWeight(q);
+			SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
+			Scorer sc = w.scorer(scrw.getContext(), true, false, MultiFields.getLiveDocs(reader));
+			return sc;
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
@@ -639,12 +641,7 @@ public class Searcher {
 	 */
 	public TopDocs findTopDocs(Query q, int n) {
 		try {
-			IndexSearcher s = new IndexSearcher(indexReader);
-			try {
-				return s.search(q, n);
-			} finally {
-				s.close();
-			}
+			return indexSearcher.search(q, n);
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
@@ -672,101 +669,103 @@ public class Searcher {
 	 */
 	void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
 			boolean fillInDefaultsIfNotFound) {
-		String fieldPropName = ComplexFieldUtil.mainPropertyOffsetsField(indexStructure, fieldName);
-		TermFreqVector termFreqVector = getTermFreqVector(doc, fieldPropName);
-		if (!(termFreqVector instanceof TermPositionVector)) {
-			throw new RuntimeException("Field has no character position information!");
-		}
-		TermPositionVector termPositionVector = (TermPositionVector) termFreqVector;
 
-		int numStarts = startsOfWords.length;
-		int numEnds = endsOfWords.length;
-		int total = numStarts + numEnds;
-		int[] done = new int[total]; // NOTE: array is automatically initialized to zeroes!
+		try {
+			// Determine lowest and highest word position we'd like to know something about.
+			// This saves a little bit of time for large result sets.
+			int minP = -1, maxP = -1;
+			for (int i = 0; i < startsOfWords.length; i++) {
+				if (startsOfWords[i] < minP || minP == -1)
+					minP = startsOfWords[i];
+				if (startsOfWords[i] > maxP)
+					maxP = startsOfWords[i];
+			}
+			for (int i = 0; i < endsOfWords.length; i++) {
+				if (endsOfWords[i] < minP || minP == -1)
+					minP = endsOfWords[i];
+				if (endsOfWords[i] > maxP)
+					maxP = endsOfWords[i];
+			}
+			if (minP < 0 || maxP < 0)
+				throw new RuntimeException("Can't determine min and max positions");
 
-		// Vraag het array van terms (voor reconstructie text)
-		String[] docTerms = termPositionVector.getTerms();
+			String fieldPropName = ComplexFieldUtil.mainPropertyOffsetsField(indexStructure, fieldName);
 
-		// Determine lowest and highest word position we'd like to know something about.
-		// This saves a little bit of time for large result sets.
-		int minP = -1, maxP = -1;
-		for (int i = 0; i < startsOfWords.length; i++) {
-			if (startsOfWords[i] < minP || minP == -1)
-				minP = startsOfWords[i];
-			if (startsOfWords[i] > maxP)
-				maxP = startsOfWords[i];
-		}
-		for (int i = 0; i < endsOfWords.length; i++) {
-			if (endsOfWords[i] < minP || minP == -1)
-				minP = endsOfWords[i];
-			if (endsOfWords[i] > maxP)
-				maxP = endsOfWords[i];
-		}
-		if (minP < 0 || maxP < 0)
-			throw new RuntimeException("Can't determine min and max positions");
+			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, fieldPropName);
+			if (!terms.hasPositions())
+				throw new RuntimeException("Field has no character postion information");
 
-		// Verzamel concordantiewoorden uit term vector
-		int found = 0;
-		int lowestPos = -1, highestPos = -1;
-		int lowestPosFirstChar = -1, highestPosLastChar = -1;
-		for (int k = 0; k < docTerms.length && found < total; k++) {
-			int[] positions = termPositionVector.getTermPositions(k);
-			TermVectorOffsetInfo[] offsetInfo = termPositionVector.getOffsets(k);
-			for (int l = 0; l < positions.length; l++) {
-				int p = positions[l];
+			TermsEnum tenum = terms.iterator(null);
+			DocsAndPositionsEnum dpe = tenum.docsAndPositions(null, null);
 
-				// Keep track of the lowest and highest char pos, so
-				// we can fill in the character positions we didn't find
-				if (p < lowestPos || lowestPos == -1) {
-					lowestPos = p;
-					lowestPosFirstChar = offsetInfo[l].getStartOffset();
+			int lowestPos = -1, highestPos = -1;
+			int lowestPosFirstChar = -1, highestPosLastChar = -1;
+			int numStarts = startsOfWords.length;
+			int numEnds = endsOfWords.length;
+			int total = numStarts + numEnds;
+			int[] done = new int[total]; // NOTE: array is automatically initialized to zeroes!
+
+			// Verzamel concordantiewoorden uit term vector
+			int found = 0;
+			while (dpe.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+				int position = -1;
+				while ((position = dpe.nextPosition()) < dpe.freq() && position !=-1) {
+					// Keep track of the lowest and highest char pos, so
+					// we can fill in the character positions we didn't find
+					if (position < lowestPos || lowestPos == -1) {
+						lowestPos = position;
+						lowestPosFirstChar = dpe.startOffset();
+					}
+					if (position > highestPos) {
+						highestPos = position;
+						highestPosLastChar = dpe.endOffset();
+					}
+
+					// We've calculated the min and max word positions in advance, so
+					// we know we can skip this position if it's outside the range we're interested in.
+					// (Saves a little time for large result sets)
+					if (position < minP || position > maxP)
+						continue;
+
+					for (int m = 0; m < numStarts; m++) {
+						if (done[m] == 0 && position == startsOfWords[m]) {
+							done[m] = 1;
+							startsOfWords[m] = dpe.startOffset();
+							found++;
+						}
+					}
+					for (int m = 0; m < numEnds; m++) {
+						if (done[numStarts + m] == 0 && position == endsOfWords[m]) {
+							done[numStarts + m] = 1;
+							endsOfWords[m] = dpe.endOffset();
+							found++;
+						}
+					}
+
+					// NOTE: we might be tempted to break here if found == total,
+					// but that would foul up our calculation of highestPostLastChar and
+					// lowestPosFirstChar.
 				}
-				if (p > highestPos) {
-					highestPos = p;
-					highestPosLastChar = offsetInfo[l].getEndOffset();
-				}
+			}
+			if (found < total) {
+				if (!fillInDefaultsIfNotFound)
+					throw new RuntimeException("Could not find all character offsets!");
 
-				// We've calculated the min and max word positions in advance, so
-				// we know we can skip this position if it's outside the range we're interested in.
-				// (Saves a little time for large result sets)
-				if (p < minP || p > maxP)
-					continue;
+				if (lowestPosFirstChar < 0 || highestPosLastChar < 0)
+					throw new RuntimeException("Could not find default char positions!");
 
 				for (int m = 0; m < numStarts; m++) {
-					if (done[m] == 0 && p == startsOfWords[m]) {
-						done[m] = 1;
-						startsOfWords[m] = offsetInfo[l].getStartOffset();
-						found++;
-					}
+					if (done[m] == 0)
+						startsOfWords[m] = lowestPosFirstChar;
 				}
 				for (int m = 0; m < numEnds; m++) {
-					if (done[numStarts + m] == 0 && p == endsOfWords[m]) {
-						done[numStarts + m] = 1;
-						endsOfWords[m] = offsetInfo[l].getEndOffset();
-						found++;
-					}
+					if (done[numStarts + m] == 0)
+						endsOfWords[m] = highestPosLastChar;
 				}
-
-				// NOTE: we might be tempted to break here if found == total,
-				// but that would foul up our calculation of highestPostLastChar and
-				// lowestPosFirstChar.
 			}
-		}
-		if (found < total) {
-			if (!fillInDefaultsIfNotFound)
-				throw new RuntimeException("Could not find all character offsets!");
 
-			if (lowestPosFirstChar < 0 || highestPosLastChar < 0)
-				throw new RuntimeException("Could not find default char positions!");
-
-			for (int m = 0; m < numStarts; m++) {
-				if (done[m] == 0)
-					startsOfWords[m] = lowestPosFirstChar;
-			}
-			for (int m = 0; m < numEnds; m++) {
-				if (done[numStarts + m] == 0)
-					endsOfWords[m] = highestPosLastChar;
-			}
+		} catch (IOException e) {
+			throw ExUtil.wrapRuntimeException(e);
 		}
 	}
 
@@ -842,29 +841,8 @@ public class Searcher {
 	 *
 	 * @return the Lucene index reader
 	 */
-	public IndexReader getIndexReader() {
-		return indexReader;
-	}
-
-	/**
-	 * Get all the terms in the index with low edit distance from the supplied term
-	 *
-	 * @param luceneName
-	 *            the field to search in
-	 * @param searchTerms
-	 *            search terms
-	 * @param similarity
-	 *            measure of similarity we need
-	 * @return the set of terms in the index that are close to our search term
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if the expansion resulted in too many terms
-	 * @deprecated moved to LuceneUtil
-	 */
-	@Deprecated
-	public Set<String> getMatchingTermsFromIndex(String luceneName, Collection<String> searchTerms,
-			float similarity) {
-		return LuceneUtil.getMatchingTermsFromIndex(indexReader, luceneName, searchTerms,
-				similarity);
+	public DirectoryReader getIndexReader() {
+		return reader;
 	}
 
 	/**
@@ -912,6 +890,7 @@ public class Searcher {
 	 *            the field
 	 * @return the term vector
 	 */
+	/* OUD:
 	private TermFreqVector getTermFreqVector(int doc, String luceneName) {
 		try {
 			// Retrieve term position vector of the contents of this document
@@ -924,6 +903,19 @@ public class Searcher {
 			throw new RuntimeException(e);
 		}
 	}
+
+	// VERSIE MKS:
+
+	private org.apache.lucene.index.Terms getTermFreqFreqVector( int doc, String luceneName){
+		try{
+			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
+			return terms;
+		}
+		catch( IOException e){
+			throw new RuntimeException(e);
+		}
+	}*/
+
 
 	/**
 	 * Highlight field content with the specified hits.
@@ -1033,11 +1025,7 @@ public class Searcher {
 	 */
 	@Deprecated
 	public boolean termOccursInIndex(Term term) {
-		try {
-			return indexReader.docFreq(term) > 0;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		return LuceneUtil.termOccursInIndex(reader, term);
 	}
 
 	/**
@@ -1160,7 +1148,7 @@ public class Searcher {
 			}
 			// Open forward index
 			forwardIndex = ForwardIndex.open(dir, indexMode, collator, createdNewIndex);
-			forwardIndex.setIdTranslateInfo(indexReader, fieldPropName); // how to translate from
+			forwardIndex.setIdTranslateInfo(reader, fieldPropName); // how to translate from
 																			// Lucene
 																			// doc to fiid
 			forwardIndices.put(fieldPropName, forwardIndex);
@@ -1536,13 +1524,15 @@ public class Searcher {
 			throw new RuntimeException("Cannot delete documents, not in index mode");
 		try {
 			// Open a fresh reader to execute the query
-			IndexReader reader = IndexReader.open(indexWriter, false);
+			DirectoryReader reader = DirectoryReader.open(indexWriter, false);
 			try {
 				// Execute the query, iterate over the docs and delete from FI and CS.
 				IndexSearcher s = new IndexSearcher(reader);
+				Weight w = s.createNormalizedWeight(q);
+				SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
 				try {
-					Weight w = s.createNormalizedWeight(q);
-					Scorer sc = w.scorer(reader, true, false);
+					Scorer sc = w.scorer(scrw.getContext(), true, false, MultiFields.getLiveDocs(reader));
+
 					// Iterate over matching docs
 					while (true) {
 						int docId;
@@ -1577,7 +1567,7 @@ public class Searcher {
 						}
 					}
 				} finally {
-					s.close();
+					scrw.close();
 				}
 			} finally {
 				reader.close();

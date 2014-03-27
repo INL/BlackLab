@@ -19,10 +19,13 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.FuzzyQuery;
@@ -32,6 +35,7 @@ import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /*
  * This is my SpanFuzzyQuery. It is released under the Apache licensence. Just paste it in. (Karl
@@ -39,6 +43,7 @@ import org.apache.lucene.search.spans.Spans;
  *
  * Bugfix JN: FuzzyQuery sometimes returns a TermQuery instead of a BooleanQuery (when there are no
  * fuzzy alternatives).
+ * JN: ported to Lucene 4.0
  */
 
 /**
@@ -47,31 +52,29 @@ import org.apache.lucene.search.spans.Spans;
  * @author Karl Wettin <kalle@snigel.net>
  */
 public class SpanFuzzyQuery extends SpanQuery {
-	public final static float defaultMinSimilarity = 0.7f;
+	public final static int defaultMaxEdits = 2;
 
 	public final static int defaultPrefixLength = 0;
 
 	private final Term term;
 
-	private final float minimumSimilarity;
+	private final int maxEdits;
 
 	private final int prefixLength;
 
 	private Query rewrittenFuzzyQuery = null;
 
 	public SpanFuzzyQuery(Term term) {
-		this(term, defaultMinSimilarity, defaultPrefixLength);
+		this(term, defaultMaxEdits, defaultPrefixLength);
 	}
 
-	public SpanFuzzyQuery(Term term, float minimumSimilarity, int prefixLength) {
+	public SpanFuzzyQuery(Term term, int maxEdits, int prefixLength) {
 		this.term = term;
-		this.minimumSimilarity = minimumSimilarity;
+		this.maxEdits = maxEdits;
 		this.prefixLength = prefixLength;
 
-		if (minimumSimilarity >= 1.0f) {
-			throw new IllegalArgumentException("minimumSimilarity >= 1");
-		} else if (minimumSimilarity < 0.0f) {
-			throw new IllegalArgumentException("minimumSimilarity < 0");
+		if (maxEdits <= 0) {
+			throw new IllegalArgumentException("maxEdits <= 0");
 		}
 		if (prefixLength < 0) {
 			throw new IllegalArgumentException("prefixLength < 0");
@@ -81,7 +84,7 @@ public class SpanFuzzyQuery extends SpanQuery {
 
 	@Override
 	public Query rewrite(IndexReader reader) throws IOException {
-		FuzzyQuery fuzzyQuery = new FuzzyQuery(term, minimumSimilarity, prefixLength);
+		FuzzyQuery fuzzyQuery = new FuzzyQuery(term, maxEdits, prefixLength);
 
 		rewrittenFuzzyQuery = fuzzyQuery.rewrite(reader);
 		if (rewrittenFuzzyQuery instanceof BooleanQuery) {
@@ -116,12 +119,11 @@ public class SpanFuzzyQuery extends SpanQuery {
 	/**
 	 * Expert: Returns the matches for this query in an index. Used internally to search for spans.
 	 *
-	 * @param reader
-	 *            the Lucene indexreader
 	 * @return the spans object
 	 */
 	@Override
-	public Spans getSpans(IndexReader reader) {
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term, TermContext> termContexts)
+			throws IOException {
 		throw new UnsupportedOperationException("Query should have been rewritten");
 	}
 
@@ -150,7 +152,7 @@ public class SpanFuzzyQuery extends SpanQuery {
 		if (rewrittenFuzzyQuery instanceof BooleanQuery) {
 			// Extract terms from clauses
 			BooleanClause[] clauses = ((BooleanQuery) rewrittenFuzzyQuery).getClauses();
-			for (BooleanClause clause : clauses) {
+			for (BooleanClause clause: clauses) {
 				TermQuery termQuery = (TermQuery) clause.getQuery();
 				terms.add(termQuery.getTerm());
 			}

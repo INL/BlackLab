@@ -37,7 +37,6 @@ import nl.inl.util.LuceneUtil;
 import nl.inl.util.PropertiesUtil;
 
 import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.queryParser.ParseException;
 
 /**
  * The indexer class and main program for the ANW corpus.
@@ -282,7 +281,7 @@ public class IndexTool {
 	}
 
 	private static void commandDelete(File indexDir, String deleteQuery) throws IOException,
-			ParseException, CorruptIndexException {
+			org.apache.lucene.queryparser.classic.ParseException, CorruptIndexException {
 		if (deleteQuery == null) {
 			System.err.println("No delete query given.");
 			usage();

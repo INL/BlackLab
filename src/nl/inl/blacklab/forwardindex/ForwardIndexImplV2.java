@@ -36,7 +36,8 @@ import nl.inl.util.MemoryUtil;
 import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.search.FieldCache;
 
 /**
@@ -45,7 +46,10 @@ import org.apache.lucene.search.FieldCache;
  *
  * NOTE: version 2 will be phased out soon. Re-index your data if you're
  * still using it!
+ *
+ * @deprecated re-index your data if you're still on v2.
  */
+@Deprecated
 class ForwardIndexImplV2 extends ForwardIndex {
 
 	protected static final Logger logger = Logger.getLogger(ForwardIndexImplV2.class);
@@ -141,25 +145,26 @@ class ForwardIndexImplV2 extends ForwardIndex {
 	private long tokenFileEndPosition = 0;
 
 	/** Index reader, for getting documents (for translating from Lucene doc id to fiid) */
-	private IndexReader reader;
+	private DirectoryReader reader;
 
 	/** fiid field name in the Lucene index (for translating from Lucene doc id to fiid) */
 	private String fiidFieldName;
 
 	/** Cached fiid field */
-	private int[] cachedFiids;
+	private FieldCache.Ints cachedFiids;
 
 	@Override
-	public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
+	public void setIdTranslateInfo(DirectoryReader reader, String lucenePropFieldName) {
 		this.reader = reader;
 		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
 		try {
-			cachedFiids = FieldCache.DEFAULT.getInts(reader, fiidFieldName);
+			SlowCompositeReaderWrapper srw = new SlowCompositeReaderWrapper(reader);
+			cachedFiids = FieldCache.DEFAULT.getInts(srw, fiidFieldName, true);
 
 			// Check if the cache was retrieved OK
 			boolean allZeroes = true;
-			for (int i = 0; i < 1000 && i < cachedFiids.length; i++) {
-				if (cachedFiids[i] != 0) {
+			for (int i = 0; i < ForwardIndexImplV3.NUMBER_OF_CACHE_ENTRIES_TO_CHECK; i++) {
+				if (cachedFiids.get(i) != 0) {
 					allZeroes = false;
 					break;
 				}
@@ -177,7 +182,7 @@ class ForwardIndexImplV2 extends ForwardIndex {
 	@Override
 	public int luceneDocIdToFiid(int docId) {
 		if (cachedFiids != null)
-			return cachedFiids[docId];
+			return cachedFiids.get(docId);
 
 		// Not cached; find fiid by reading stored value from Document now
 		try {

@@ -16,12 +16,17 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.ToStringUtils;
 
 /**
@@ -96,15 +101,16 @@ public class SpanQueryAndNot extends SpanQuery {
 	 * contains all spans from the include clause in documents that don't contain the exclude
 	 * spans.
 	 *
-	 * @param reader
-	 *            the IndexReader
+	 * @param context the index reader context
+	 * @param acceptDocs document filter
+	 * @param termContexts the term contexts (?)
 	 * @return the Spans object, or null on error
 	 * @throws IOException
 	 */
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans includespans = clauses[0].getSpans(reader);
-		Spans excludespans = clauses[1].getSpans(reader);
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term, TermContext> termContexts)  throws IOException {
+		Spans includespans = clauses[0].getSpans(context, acceptDocs, termContexts);
+		Spans excludespans = clauses[1].getSpans(context, acceptDocs, termContexts);
 		Spans combi = new SpansAndNot(includespans, excludespans);
 		return combi;
 	}

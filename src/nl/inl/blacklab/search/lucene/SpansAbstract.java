@@ -59,7 +59,7 @@ public abstract class SpansAbstract extends Spans {
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
+	public boolean isPayloadAvailable() throws IOException {
 		return false;
 	}
 

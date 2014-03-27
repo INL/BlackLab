@@ -72,8 +72,8 @@ import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
@@ -328,7 +328,7 @@ public class QueryTool {
 		@Override
 		public TextPattern parse(String query) throws ParseException {
 			try {
-				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_36, CONTENTS_FIELD, searcher.getAnalyzer());
+				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_42, CONTENTS_FIELD, searcher.getAnalyzer());
 				return parser.parse(query);
 			} catch (nl.inl.blacklab.queryParser.lucene.ParseException e) {
 				throw new ParseException(e.getMessage());
@@ -789,7 +789,7 @@ public class QueryTool {
 					try {
 						filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, searcher.getAnalyzer(), "title");
 						outprintln("Filter created: " + filterQuery);
-					} catch (org.apache.lucene.queryParser.ParseException e) {
+					} catch (org.apache.lucene.queryparser.classic.ParseException e) {
 						errprintln("Error parsing filter query.");
 					}
 				}
@@ -915,7 +915,7 @@ public class QueryTool {
 		}
 		Document doc = searcher.document(docId);
 		Map<String, String> metadata = new TreeMap<String, String>(); // sort by key
-		for (Fieldable f: doc.getFields()) {
+		for (IndexableField f: doc.getFields()) {
 			metadata.put(f.name(), f.stringValue());
 		}
 		for (Map.Entry<String, String> e: metadata.entrySet()) {

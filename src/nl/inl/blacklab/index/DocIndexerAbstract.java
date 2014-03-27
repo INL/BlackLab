@@ -184,6 +184,19 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		return charsContentAlreadyStored + content.length();
 	}
 
+	/**
+	 * Provided for compatibility with Meertens' fork of BlackLab;
+	 * will eventually be removed in favor of an "official" way
+	 * to index content without storing in a ContentStore.
+	 *
+	 * @return the content length
+	 * @deprecated will be handled differently in the future
+	 */
+	@Deprecated
+	public int getContentPositionNoStore(){
+		return content.length();
+	}
+
 	public DocIndexerAbstract(Indexer indexer, String fileName, Reader reader) {
 		this.indexer = indexer;
 		this.fileName = fileName;

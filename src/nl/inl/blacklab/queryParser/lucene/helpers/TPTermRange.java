@@ -23,8 +23,14 @@ import nl.inl.blacklab.search.TextPatternTranslator;
 
 public class TPTermRange extends TextPattern {
 
+	@Deprecated
 	public TPTermRange(String field, String part1, String part2, boolean inclusive,
 			boolean inclusive2, Collator rangeCollator) {
+		throw new RuntimeException("Term Range is not supported");
+	}
+
+	public TPTermRange(String field, String part1, String part2, boolean inclusive,
+			boolean inclusive2) {
 		throw new RuntimeException("Term Range is not supported");
 	}
 

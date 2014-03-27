@@ -16,60 +16,44 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Map;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Filters a SpanQuery.
  */
-public class SpanQueryFiltered extends SpanQuery {
-
-	private SpanQuery source;
+public class SpanQueryFiltered extends SpanQueryBase {
 
 	private DocIdSet docIdSet;
 
-	public SpanQueryFiltered(SpanQuery source, Filter filter, IndexReader reader) throws IOException {
-		this(source, filter.getDocIdSet(reader));
+	public SpanQueryFiltered(SpanQuery source, Filter filter, AtomicReader reader) throws IOException {
+		this(source, filter.getDocIdSet(reader.getContext(), reader.getLiveDocs()));
 	}
 
 	public SpanQueryFiltered(SpanQuery source, DocIdSet docIdSet) {
-		this.source = source;
+		super(source);
 		this.docIdSet = docIdSet;
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans result = source.getSpans(reader);
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
+		Spans result = clauses[0].getSpans(context, acceptDocs, termContexts);
 		if (docIdSet != null)
 			result = new SpansFiltered(result, docIdSet);
 		return result;
 	}
 
 	@Override
-    public SpanQuery rewrite(IndexReader reader) throws IOException {
-		SpanQuery query = source == null ? null : (SpanQuery) source.rewrite(reader);
-		if (query != source) {
-			// clause rewritten: must clone
-			SpanQueryFiltered clone = null;
-			clone = (SpanQueryFiltered) clone();
-			clone.source = query;
-			return clone;
-		}
-
-		return this; // no clauses rewritten
-    }
-
-	@Override
 	public String toString(String field) {
-		return "SpanQueryFiltered(" + source + ", " + docIdSet + ")";
-	}
-
-	@Override
-	public String getField() {
-		return source.getField();
+		return "SpanQueryFiltered(" + clausesToString(field, " & ") + ", " + docIdSet + ")";
 	}
 }

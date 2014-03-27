@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TreeSet;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -35,7 +36,10 @@ import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
@@ -242,16 +246,25 @@ public class Hits implements Iterable<Hit> {
 		this(searcher, concordanceFieldPropName);
 
 		try {
-			IndexReader reader = null;
-			if (searcher != null) { // this may happen while testing with stub classes
+			DirectoryReader reader = null;
+			SlowCompositeReaderWrapper srw = null;
+			if (searcher != null) { // may happen while testing with stub classes; don't try to rewrite
 				reader = searcher.getIndexReader();
+				srw = new SlowCompositeReaderWrapper(searcher.getIndexReader());
 			}
 			SpanQuery spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
-			sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(reader));
+			Map<Term, TermContext> termContexts = new HashMap<Term, TermContext>();
+			TreeSet<Term> terms = new TreeSet<Term>();
+			spanQuery.extractTerms(terms);
+			for (Term term: terms) {
+				termContexts.put(term, TermContext.build(reader.getContext(), term, true));
+			}
+
+			sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw.getContext(),
+					srw.getLiveDocs(), termContexts));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-
 
 		// logger.debug("SPANS: " + sourceSpans);
 		sourceSpansFullyRead = false;
@@ -288,7 +301,7 @@ public class Hits implements Iterable<Hit> {
 		// Reset context and concordances so we get the correct context size next time
 		currentContextSize = -1;
 		contextFieldsPropName = null;
-		//concordances = null;
+		// concordances = null;
 		kwics = null;
 	}
 
@@ -354,7 +367,7 @@ public class Hits implements Iterable<Hit> {
 		if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
 			return;
 
-		synchronized(this) {
+		synchronized (this) {
 			boolean readAllHits = number < 0;
 			Thread currentThread = Thread.currentThread();
 			try {
@@ -362,7 +375,8 @@ public class Hits implements Iterable<Hit> {
 
 					// Check if the thread should terminate
 					if (currentThread.isInterrupted())
-						throw new InterruptedException("Thread was interrupted while gathering hits");
+						throw new InterruptedException(
+								"Thread was interrupted while gathering hits");
 
 					// Stop if we're at the maximum number of hits we want to count
 					if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
@@ -376,7 +390,8 @@ public class Hits implements Iterable<Hit> {
 						break;
 					}
 
-					// Count the hit and add it (unless we've reached the maximum number of hits we want)
+					// Count the hit and add it (unless we've reached the maximum number of hits we
+					// want)
 					hitsCounted++;
 					int hitDoc = sourceSpans.doc();
 					if (hitDoc != previousHitDoc) {
@@ -1009,13 +1024,13 @@ public class Hits implements Iterable<Hit> {
 			// Yes, make 'em from the forward index (faster)
 			ForwardIndex forwardIndex = null;
 			if (searcher.concWordFI != null)
-				forwardIndex = searcher.getForwardIndex(ComplexFieldUtil
-						.propertyField(fieldName, searcher.concWordFI));
+				forwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
+						searcher.concWordFI));
 
 			ForwardIndex punctForwardIndex = null;
 			if (searcher.concPunctFI != null)
-				punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
-						searcher.concPunctFI));
+				punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(
+						fieldName, searcher.concPunctFI));
 
 			Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
 			if (searcher.concAttrFI == null) {
@@ -1023,7 +1038,8 @@ public class Hits implements Iterable<Hit> {
 				for (String p: searcher.forwardIndices.keySet()) {
 					String[] components = ComplexFieldUtil.getNameComponents(p);
 					String propName = components[1];
-					if (propName.equals(searcher.concWordFI) || propName.equals(searcher.concPunctFI))
+					if (propName.equals(searcher.concWordFI)
+							|| propName.equals(searcher.concPunctFI))
 						continue;
 					attrForwardIndices.put(propName, searcher.getForwardIndex(p));
 				}
@@ -1097,7 +1113,7 @@ public class Hits implements Iterable<Hit> {
 	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
 	 */
 	public synchronized void clearConcordances() {
-		//concordances = null;
+		// concordances = null;
 		kwics = null;
 	}
 
@@ -1132,7 +1148,8 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the frequency of each occurring token
 	 */
-	public synchronized TokenFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
+	public synchronized TokenFrequencyList getCollocations(String propName,
+			QueryExecutionContext ctx) {
 		findContext(Arrays.asList(ctx.luceneField(false)));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
 		for (Hit hit: hits) {
@@ -1270,7 +1287,8 @@ public class Hits implements Iterable<Hit> {
 	 * @param contextField the field properties
 	 */
 	public void setContextField(List<String> contextField) {
-		this.contextFieldsPropName = contextField == null ? null : new ArrayList<String>(contextField);
+		this.contextFieldsPropName = contextField == null ? null : new ArrayList<String>(
+				contextField);
 	}
 
 	/** @return the default maximum number of hits to retrieve. */
@@ -1341,8 +1359,8 @@ public class Hits implements Iterable<Hit> {
 	 *            where to add the concordances
 	 */
 	synchronized void makeConcordancesSingleDocForwardIndex(ForwardIndex forwardIndex,
-			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices, int wordsAroundHit,
-			Map<Hit, Concordance> conc) {
+			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices,
+			int wordsAroundHit, Map<Hit, Concordance> conc) {
 		if (hits.size() == 0)
 			return;
 
@@ -1406,14 +1424,13 @@ public class Hits implements Iterable<Hit> {
 
 				// Add punctuation
 				// (NOTE: punctuation after match is added to right context;
-				//  punctuation before match is added to left context)
+				// punctuation before match is added to left context)
 				if (j > 0) {
 					if (punctTerms == null) {
 						// There is no punctuation forward index. Just put a space
 						// between every word.
 						current.append(" ");
-					}
-					else
+					} else
 						current.append(punctTerms.get(punctContext[i][j]));
 				}
 
@@ -1426,12 +1443,11 @@ public class Hits implements Iterable<Hit> {
 				current.append("<w");
 				if (attrContext != null) {
 					for (int k = 0; k < attrContext.length; k++) {
-						current
-						 	.append(" ")
-							.append(attrName[k])
-							.append("=\"")
-							.append(StringUtil.escapeXmlChars(attrTerms[k].get(attrContext[k][i][j])))
-							.append("\"");
+						current.append(" ")
+								.append(attrName[k])
+								.append("=\"")
+								.append(StringUtil.escapeXmlChars(attrTerms[k]
+										.get(attrContext[k][i][j]))).append("\"");
 					}
 				}
 				current.append(">");
@@ -1442,7 +1458,8 @@ public class Hits implements Iterable<Hit> {
 				// End word tag
 				current.append("</w>");
 			}
-			String[] concStr = new String[] {part[0].toString(), part[1].toString(), part[2].toString()};
+			String[] concStr = new String[] { part[0].toString(), part[1].toString(),
+					part[2].toString() };
 			Concordance concordance = new Concordance(concStr);
 			conc.put(h, concordance);
 		}
@@ -1472,8 +1489,8 @@ public class Hits implements Iterable<Hit> {
 	 *            where to add the KWICs
 	 */
 	synchronized void makeKwicsSingleDocForwardIndex(ForwardIndex forwardIndex,
-			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices, int wordsAroundHit,
-			Map<Hit, Kwic> kwics) {
+			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices,
+			int wordsAroundHit, Map<Hit, Kwic> kwics) {
 		if (hits.size() == 0)
 			return;
 
@@ -1546,8 +1563,7 @@ public class Hits implements Iterable<Hit> {
 					// There is no punctuation forward index. Just put a space
 					// between every word.
 					current.add(" ");
-				}
-				else
+				} else
 					current.add(punctTerms.get(punctContext[i][j]));
 
 				// Add extra attributes (e.g. lemma, pos)

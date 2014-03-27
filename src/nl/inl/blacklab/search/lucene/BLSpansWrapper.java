@@ -64,7 +64,7 @@ public class BLSpansWrapper extends BLSpans {
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
+	public boolean isPayloadAvailable() throws IOException {
 		return source.isPayloadAvailable();
 	}
 

@@ -23,11 +23,13 @@ import java.io.Reader;
 import java.io.StringReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import org.apache.lucene.analysis.ASCIIFoldingFilter;
+
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.util.Version;
 
@@ -38,15 +40,29 @@ import org.apache.lucene.util.Version;
  */
 public final class BLLatinAnalyzer extends Analyzer {
 	@Override
+	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
+		 Tokenizer source = new StandardTokenizerFactory().create(reader);
+		 TokenStream filter = null;
+		 if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+		 {
+			 filter = new LowerCaseFilter(Version.LUCENE_42, source);// lowercase all
+			 filter = new ASCIIFoldingFilter(filter); // remove accents
+
+		 }
+		 return new TokenStreamComponents(source, filter);
+
+	}
+
+	/*@Override
 	public TokenStream tokenStream(String fieldName, Reader reader) {
-		TokenStream ts = new StandardTokenizer(Version.LUCENE_30, reader);
+		TokenStream ts = new StandardTokenizer(Version.LUCENE_42, reader);
 		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
 		{
-			ts = new LowerCaseFilter(Version.LUCENE_36, ts); // lowercase all
+			ts = new LowerCaseFilter(Version.LUCENE_42, ts); // lowercase all
 			ts = new ASCIIFoldingFilter(ts); // remove accents
 		}
 		return ts;
-	}
+	}*/
 
 	public static void main(String[] args) throws IOException {
 		String TEST_STR = "Hé jij daar!";

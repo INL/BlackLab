@@ -16,10 +16,14 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Map;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Filters hits from a producer query based on the hit positions of a filter query.
@@ -60,8 +64,10 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		return new SpansPositionFilter(clauses[0].getSpans(reader), clauses[1].getSpans(reader), op);
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
+		Spans result = new SpansPositionFilter(clauses[0].getSpans(context, acceptDocs, termContexts), clauses[1].getSpans(context, acceptDocs, termContexts), op);
+
+		return result;
 	}
 
 	@Override

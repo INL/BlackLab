@@ -16,10 +16,14 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Map;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Makes sure the resulting hits do not contain consecutive duplicate hits. These may arise when
@@ -33,8 +37,8 @@ public class SpanQueryUnique extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans srcSpans = src.getSpans(reader);
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
+		Spans srcSpans = src.getSpans(context, acceptDocs, termContexts);
 		return new SpansUnique(srcSpans);
 	}
 

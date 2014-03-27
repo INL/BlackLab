@@ -17,15 +17,19 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
 import nl.inl.blacklab.search.lucene.SpansUnique;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -54,17 +58,16 @@ public class SpanQuerySequence extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		BLSpans combi = BLSpansWrapper.optWrap(clauses[0].getSpans(reader));
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
+		BLSpans combi = BLSpansWrapper.optWrap(clauses[0].getSpans(context, acceptDocs, termContexts));
 		for (int i = 1; i < clauses.length; i++) {
-			BLSpans si = BLSpansWrapper.optWrap(clauses[i].getSpans(reader));
+			BLSpans si = BLSpansWrapper.optWrap(clauses[i].getSpans(context, acceptDocs, termContexts));
 
 			// Note: the spans coming from SequenceSpansRaw are not sorted by end point.
 			// This is okay in this loop because combi is used as the left part of the next
 			// sequence (so it is explicitly sorted by end point when we put it back in
 			// SequenceSpansRaw for the next part of the sequence), but before returning the
 			// final spans, we wrap it in a per-document (start-point) sorter.
-
 			if (si.hitsStartPointSorted() && si.hitsHaveUniqueStart() &&
 					combi.hitsEndPointSorted() && combi.hitsHaveUniqueEnd()) {
 				// We can take a shortcut because of what we know about the Spans we're combining.

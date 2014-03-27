@@ -29,9 +29,10 @@ import nl.inl.blacklab.filter.RemovePunctuationFilter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
+import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.util.Version;
 
@@ -41,17 +42,31 @@ import org.apache.lucene.util.Version;
  * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
  */
 public final class BLDefaultAnalyzer extends Analyzer {
+
 	@Override
-	public TokenStream tokenStream(String fieldName, Reader reader) {
-		TokenStream ts = new StandardTokenizer(Version.LUCENE_30, reader);
+	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
+		Tokenizer source = new StandardTokenizerFactory().create(reader);
+		TokenStream filter = null;
 		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
 		{
-			ts = new LowerCaseFilter(Version.LUCENE_36, ts); // lowercase all
+			filter = new LowerCaseFilter(Version.LUCENE_42, source);// lowercase all
+			filter = new RemoveAllAccentsFilter(filter); // remove accents
+			filter = new RemovePunctuationFilter(filter); // remove punctuation
+		}
+		return new TokenStreamComponents(source, filter);
+	}
+
+	/*@Override
+	public TokenStream tokenStream(String fieldName, Reader reader) {
+		TokenStream ts = new StandardTokenizer(Version.LUCENE_42, reader);
+		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+		{
+			ts = new LowerCaseFilter(Version.LUCENE_42, ts); // lowercase all
 			ts = new RemoveAllAccentsFilter(ts); // remove accents
 			ts = new RemovePunctuationFilter(ts); // remove punctuation
 		}
 		return ts;
-	}
+	}*/
 
 	public static void main(String[] args) throws IOException {
 		String TEST_STR = "Hé jij И!  раскази и повѣсти. Ст]' Дѣдо  	Нисторъ. Ива";

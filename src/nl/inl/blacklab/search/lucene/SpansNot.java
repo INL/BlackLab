@@ -17,7 +17,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -43,13 +44,13 @@ class SpansNot extends BLSpans {
 	private int currentDoc;
 
 	/** Current document length */
-	private int currentDocLength;
+	private long currentDocLength;
 
-	/** Current document length */
+	/** Current token position */
 	private int currentToken;
 
 	/** The Lucene index reader, for querying field length */
-	private IndexReader reader;
+	private AtomicReader reader;
 
 	/** For testing, we don't have an IndexReader available, so we use test values */
 	private boolean useTestValues = false;
@@ -74,7 +75,7 @@ class SpansNot extends BLSpans {
 	 * @param fieldName the field name, for getting field lengths
 	 * @param clause the clause to invert, or null if we want all tokens
 	 */
-	public SpansNot(IndexReader reader, String fieldName, Spans clause) {
+	public SpansNot(AtomicReader reader, String fieldName, Spans clause) {
 		this.reader = reader;
 		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		this.clause = clause == null ? null : BLSpansWrapper.optWrap(clause);
@@ -190,7 +191,7 @@ class SpansNot extends BLSpans {
 		int maxDoc = useTestValues ? 3 : reader.maxDoc();
 		do {
 			currentDoc++;
-		} while (currentDoc < maxDoc && (useTestValues ? false : reader.isDeleted(currentDoc)) );
+ 		} while (currentDoc < maxDoc && (useTestValues ? false : MultiFields.getLiveDocs(reader).get(currentDoc)));
 
 		if (currentDoc == maxDoc) {
 			done = true;

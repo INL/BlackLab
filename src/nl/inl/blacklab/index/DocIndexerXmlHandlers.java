@@ -43,7 +43,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Field.TermVector;
-import org.apache.lucene.document.NumericField;
+import org.apache.lucene.document.IntField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
@@ -99,8 +99,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			// written because we write in chunks to save memory), retrieve the content id, and store
 			// that in Lucene.
 			int contentId = storeCapturedContent();
-			currentLuceneDoc.add(new NumericField(ComplexFieldUtil.contentIdField(contentsField.getName()),
-					Store.YES, true).setIntValue(contentId));
+			currentLuceneDoc.add(new IntField(ComplexFieldUtil.contentIdField(contentsField.getName()),
+					contentId, Store.YES));
 
 			// Make sure all the properties have an equal number of values.
 			// See what property has the highest position
@@ -139,8 +139,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				propName = prop.getName();
 				fieldName = ComplexFieldUtil.propertyField(contentsField.getName(), propName);
 				fiid = indexer.addToForwardIndex(fieldName, prop.getValues());
-				currentLuceneDoc.add(new NumericField(ComplexFieldUtil.forwardIndexIdField(fieldName),
-						Store.YES, true).setIntValue(fiid));
+				currentLuceneDoc.add(new IntField(ComplexFieldUtil.forwardIndexIdField(fieldName),
+						fiid, Store.YES));
 			}
 
 			// If there's an external metadata fetcher, call it now so it can
@@ -657,7 +657,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		if (numericFields.contains(name)) {
 			// Index these fields as numeric too, for faster range queries
 			// (we do both because fields sometimes aren't exclusively numeric)
-			NumericField nf = new NumericField(name + "Numeric", Store.YES, true);
 			int n = 0;
 			try {
 				n = Integer.parseInt(value);
@@ -665,7 +664,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				// This just happens sometimes, e.g. given multiple years, or
 				// descriptive text like "around 1900". OK to ignore.
 			}
-			nf.setIntValue(n);
+			IntField nf = new IntField(name + "Numeric", n, Store.YES);
 			currentLuceneDoc.add(nf);
 		}
 	}

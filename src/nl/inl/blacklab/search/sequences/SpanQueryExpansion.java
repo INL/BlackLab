@@ -16,14 +16,18 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
+import java.util.Map;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
 import nl.inl.blacklab.search.lucene.SpansUnique;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -67,8 +71,8 @@ public class SpanQueryExpansion extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		BLSpans spans = new SpansExpansionRaw(reader, clauses[0].getField(), clauses[0].getSpans(reader), expandToLeft, min, max);
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
+		BLSpans spans = new SpansExpansionRaw(context.reader(), clauses[0].getField(), clauses[0].getSpans(context, acceptDocs, termContexts), expandToLeft, min, max);
 
 		// Note: the spans coming from SpansExpansion are not sorted properly.
 		// Before returning the final spans, we wrap it in a per-document (start-point) sorter.

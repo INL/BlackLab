@@ -46,6 +46,8 @@ import nl.inl.util.UnicodeReader;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -283,6 +285,19 @@ public class Indexer {
 	 */
 	public void add(Document document) throws CorruptIndexException, IOException {
 		searcher.getWriter().addDocument(document);
+		getListener().luceneDocumentAdded();
+	}
+
+	/**
+	 * Updates the specified Document in the index.
+	 *
+	 * @param term how to find the document to update
+	 * @param document the updated document
+	 * @throws CorruptIndexException
+	 * @throws IOException
+	 */
+	public void update(Term term, Document document) throws CorruptIndexException, IOException {
+		searcher.getWriter().updateDocument(term, document);
 		getListener().luceneDocumentAdded();
 	}
 
@@ -788,4 +803,14 @@ public class Indexer {
 		return indexerParam;
 	}
 
+	/**
+	 * Get the IndexWriter we're using.
+	 *
+	 * Useful if e.g. you want to access FSDirectory.
+	 *
+	 * @return the IndexWriter
+	 */
+	protected IndexWriter getWriter(){
+		return searcher.getWriter();
+	}
 }

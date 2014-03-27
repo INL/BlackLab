@@ -21,8 +21,6 @@ import java.util.List;
 
 import junit.framework.Assert;
 
-import nl.inl.util.ChunkedIntList;
-
 import org.junit.Test;
 
 public class TestChunkedIntList {

@@ -6,7 +6,7 @@ import java.util.List;
 
 import nl.inl.util.VersionFile;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.DirectoryReader;
 
 /**
  * A component that can quickly tell you what word occurs at a specific position of a specific document.
@@ -29,7 +29,7 @@ public abstract class ForwardIndex {
 	 * @param reader the index
 	 * @param lucenePropFieldName the forward index if field
 	 */
-	public abstract void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName);
+	public abstract void setIdTranslateInfo(DirectoryReader reader, String lucenePropFieldName);
 
 	/**
 	 * Convert a Lucene document id to the corresponding forward index id.
@@ -231,6 +231,7 @@ public abstract class ForwardIndex {
 	 * @param create if true, create a new forward index
 	 * @return the forward index object
 	 */
+	@SuppressWarnings("deprecation")
 	public static ForwardIndex open(File dir, boolean indexMode, Collator collator,
 			boolean create) {
 

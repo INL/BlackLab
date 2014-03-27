@@ -98,7 +98,7 @@ public abstract class TextPatternTranslator<T> {
 
 	public abstract T docLevelAnd(QueryExecutionContext context, List<T> clauses);
 
-	public abstract T fuzzy(QueryExecutionContext context, String value, float similarity, int prefixLength);
+	public abstract T fuzzy(QueryExecutionContext context, String value, int maxEdits, int prefixLength);
 
 	public abstract T tags(QueryExecutionContext context, String elementName, Map<String, String> attr);
 

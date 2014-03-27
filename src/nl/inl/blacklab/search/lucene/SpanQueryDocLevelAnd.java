@@ -26,10 +26,14 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * A SpanQuery for and AND-construction at the document level.
@@ -51,19 +55,21 @@ public class SpanQueryDocLevelAnd extends SpanQueryBase {
 	 * Constructs a Spans object that contains all spans in all the documents that contain
 	 * both clauses.
 	 *
-	 * @param reader
-	 *            the IndexReader
+	 * @param context the index reader context
+	 * @param acceptDocs document filter
+	 * @param termContexts the term contexts (?)
 	 * @return the Spans object, or null on error
 	 * @throws IOException
 	 */
 	@Override
-	public Spans getSpans(IndexReader reader) throws IOException {
-		Spans s0 = clauses[0].getSpans(reader);
+	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
+		Spans s0 = clauses[0].getSpans(context, acceptDocs, termContexts);
 		Spans combi = s0;
 		for (int i = 1; i < clauses.length; i++) {
-			Spans si = clauses[i].getSpans(reader);
+			Spans si = clauses[i].getSpans(context, acceptDocs, termContexts);
 			combi = new SpansDocLevelAnd(combi, si);
 		}
+
 		return combi;
 	}
 

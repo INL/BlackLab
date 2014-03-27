@@ -24,8 +24,9 @@ import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.util.Version;
 
 /**
@@ -34,15 +35,28 @@ import org.apache.lucene.util.Version;
  * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
  */
 public final class BLDutchAnalyzer extends Analyzer {
+
 	@Override
+	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
+		Tokenizer source = new BLDutchTokenizer(reader);
+		TokenStream filter = new BLDutchTokenFilter(source);
+		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+		{
+			filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
+			filter = new RemoveAllAccentsFilter(filter); // remove accents
+		}
+		return new TokenStreamComponents(source, filter);
+	}
+
+	/*@Override
 	public TokenStream tokenStream(String fieldName, Reader reader) {
 		TokenStream ts = new BLDutchTokenizer(reader);
 		ts = new BLDutchTokenFilter(ts);
 		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
 		{
-			ts = new LowerCaseFilter(Version.LUCENE_36, ts); // lowercase all
+			ts = new LowerCaseFilter(Version.LUCENE_42, ts); // lowercase all
 			ts = new RemoveAllAccentsFilter(ts); // remove accents
 		}
 		return ts;
-	}
+	}*/
 }

@@ -21,7 +21,7 @@ import java.util.Stack;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.WhitespaceTokenizer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
@@ -78,7 +78,7 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		TokenStream ts = new WhitespaceTokenizer(Version.LUCENE_36, new StringReader(
+		TokenStream ts = new WhitespaceTokenizer(Version.LUCENE_42, new StringReader(
 				"Dit is een test"));
 		try {
 			ts = new AbstractSynonymFilter(ts) {
