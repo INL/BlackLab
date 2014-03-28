@@ -45,15 +45,23 @@ public final class BLDefaultAnalyzer extends Analyzer {
 
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		Tokenizer source = new StandardTokenizerFactory().create(reader);
-		TokenStream filter = null;
-		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
-		{
-			filter = new LowerCaseFilter(Version.LUCENE_42, source);// lowercase all
-			filter = new RemoveAllAccentsFilter(filter); // remove accents
-			filter = new RemovePunctuationFilter(filter); // remove punctuation
+		try {
+			Tokenizer source = new StandardTokenizerFactory().create(reader);
+			source.reset();
+			TokenStream filter = null;
+			if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+			{
+				filter = new LowerCaseFilter(Version.LUCENE_42, source);// lowercase all
+				filter.reset();
+				filter = new RemoveAllAccentsFilter(filter); // remove accents
+				filter.reset();
+				filter = new RemovePunctuationFilter(filter); // remove punctuation
+				filter.reset();
+			}
+			return new TokenStreamComponents(source, filter);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
-		return new TokenStreamComponents(source, filter);
 	}
 
 	/*@Override

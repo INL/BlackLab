@@ -20,6 +20,7 @@ import java.io.IOException;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Returns all tokens that do not occur in the matches
@@ -189,9 +190,10 @@ class SpansNot extends BLSpans {
 	 */
 	private boolean nextDoc() {
 		int maxDoc = useTestValues ? 3 : reader.maxDoc();
+		Bits liveDocs = MultiFields.getLiveDocs(reader);
 		do {
 			currentDoc++;
- 		} while (currentDoc < maxDoc && (useTestValues ? false : MultiFields.getLiveDocs(reader).get(currentDoc)));
+ 		} while (currentDoc < maxDoc && (useTestValues ? false : liveDocs == null || liveDocs.get(currentDoc)));
 
 		if (currentDoc == maxDoc) {
 			done = true;

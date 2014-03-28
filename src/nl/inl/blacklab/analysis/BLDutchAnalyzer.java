@@ -18,6 +18,7 @@
  */
 package nl.inl.blacklab.analysis;
 
+import java.io.IOException;
 import java.io.Reader;
 
 import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
@@ -38,14 +39,22 @@ public final class BLDutchAnalyzer extends Analyzer {
 
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		Tokenizer source = new BLDutchTokenizer(reader);
-		TokenStream filter = new BLDutchTokenFilter(source);
-		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
-		{
-			filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
-			filter = new RemoveAllAccentsFilter(filter); // remove accents
+		try {
+			Tokenizer source = new BLDutchTokenizer(reader);
+			source.reset();
+			TokenStream filter = new BLDutchTokenFilter(source);
+			filter.reset();
+			if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+			{
+				filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
+				filter.reset();
+				filter = new RemoveAllAccentsFilter(filter); // remove accents
+				filter.reset();
+			}
+			return new TokenStreamComponents(source, filter);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
-		return new TokenStreamComponents(source, filter);
 	}
 
 	/*@Override

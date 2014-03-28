@@ -41,16 +41,21 @@ import org.apache.lucene.util.Version;
 public final class BLLatinAnalyzer extends Analyzer {
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		 Tokenizer source = new StandardTokenizerFactory().create(reader);
-		 TokenStream filter = null;
-		 if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
-		 {
-			 filter = new LowerCaseFilter(Version.LUCENE_42, source);// lowercase all
-			 filter = new ASCIIFoldingFilter(filter); // remove accents
-
-		 }
-		 return new TokenStreamComponents(source, filter);
-
+		try {
+			Tokenizer source = new StandardTokenizerFactory().create(reader);
+			source.reset();
+			TokenStream filter = null;
+			if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+			{
+				filter = new LowerCaseFilter(Version.LUCENE_42, source);// lowercase all
+				filter.reset();
+				filter = new ASCIIFoldingFilter(filter); // remove accents
+				filter.reset();
+			}
+			return new TokenStreamComponents(source, filter);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/*@Override

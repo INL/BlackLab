@@ -31,6 +31,7 @@ public class TestBLDutchTokenizer {
 	public void testBasics() throws IOException {
 		Reader r = new StringReader("\"hond, a.u.b.: bél(len); \t [pre]cursor \t\nzo'n 'Hij zij' ex-man -");
 		TokenStream ts = new BLDutchTokenizer(r);
+		ts.reset();
 		try {
 			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
 			Assert.assertTrue(ts.incrementToken());

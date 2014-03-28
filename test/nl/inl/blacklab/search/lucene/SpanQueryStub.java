@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.Term;
@@ -56,5 +57,12 @@ public class SpanQueryStub extends SpanQuery {
 	public String getField() {
 		return "stub";
 	}
+
+	@Override
+	public void extractTerms(Set<Term> terms) {
+		// (no terms)
+	}
+
+
 
 }

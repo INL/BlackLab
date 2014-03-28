@@ -260,8 +260,8 @@ public class Hits implements Iterable<Hit> {
 				termContexts.put(term, TermContext.build(reader.getContext(), term, true));
 			}
 
-			sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw.getContext(),
-					srw.getLiveDocs(), termContexts));
+			sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw != null ? srw.getContext() : null,
+					srw != null ? srw.getLiveDocs() : null, termContexts));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

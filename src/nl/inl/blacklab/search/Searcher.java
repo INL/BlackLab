@@ -75,6 +75,7 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
+import org.apache.lucene.util.Bits;
 
 /**
  * The main interface into the BlackLab library. The Searcher object is instantiated with an open
@@ -432,7 +433,8 @@ public class Searcher {
 	 * @return true iff it has been deleted
 	 */
 	public boolean isDeleted(int doc) {
-		return !MultiFields.getLiveDocs(reader).get(doc);
+		Bits liveDocs = MultiFields.getLiveDocs(reader);
+		return liveDocs != null && !liveDocs.get(doc);
 	}
 
 	/**

@@ -314,7 +314,7 @@ public class IndexStructure {
 						alt.getName());
 				for (int n = 0; n < reader.maxDoc(); n++) {
 					//if (!reader.isDeleted(n)) {
-					if (liveDocs.get(n)) {
+					if (liveDocs == null || liveDocs.get(n)) {
 						try {
 							Terms terms = reader.getTermVector(n, luceneAltName);
 							if (terms == null) {
@@ -560,7 +560,7 @@ public class IndexStructure {
 		Bits bits = MultiFields.getLiveDocs(reader);
 		for (int n = 0; n < reader.maxDoc(); n++) {
 			//if (!reader.isDeleted(n)) {
-			if( bits.get(n)) {
+			if(bits == null || bits.get(n)) {
 				Document d;
 				try {
 					d = reader.document(n);
