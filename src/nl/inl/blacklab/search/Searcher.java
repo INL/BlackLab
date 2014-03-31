@@ -496,6 +496,7 @@ public class Searcher {
 
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
 		try {
+			@SuppressWarnings("resource") // Don't close SCRW because we don't want to close our reader
 			SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
 			return createSpanQuery(pattern, fieldName,
 					filter == null ? null : filter.getDocIdSet(scrw.getContext(), MultiFields.getLiveDocs(reader)));
@@ -623,6 +624,7 @@ public class Searcher {
 	public Scorer findDocScores(Query q) {
 		try {
 			Weight w = indexSearcher.createNormalizedWeight(q);
+			@SuppressWarnings("resource") // Don't close SCRW because we don't want to close our reader
 			SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
 			Scorer sc = w.scorer(scrw.getContext(), true, false, MultiFields.getLiveDocs(reader));
 			return sc;
