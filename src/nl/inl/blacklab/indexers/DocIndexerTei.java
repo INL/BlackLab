@@ -25,9 +25,6 @@ import nl.inl.util.StringUtil;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.Field.TermVector;
 import org.xml.sax.Attributes;
 
 /**
@@ -231,8 +228,8 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 				authorLevel2 = "";
 			}
 			String authorCombined = author + " " + authorLevel2;
-			myLuceneDoc.add(new Field("author", author, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
-			myLuceneDoc.add(new Field("authorCombined", authorCombined, Store.NO, Index.ANALYZED_NO_NORMS, TermVector.NO));
+			myLuceneDoc.add(new Field("author", author, getMetadataFieldType("author")));
+			myLuceneDoc.add(new Field("authorCombined", authorCombined, getMetadataFieldType("authorCombined")));
 		}
 
 		String title = myLuceneDoc.get("titleLevel1");
@@ -249,8 +246,8 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 				titleLevel2 = "";
 			}
 			String titleCombined = title + " " + titleLevel2;
-			myLuceneDoc.add(new Field("title", title, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
-			myLuceneDoc.add(new Field("titleCombined", titleCombined, Store.NO, Index.ANALYZED_NO_NORMS, TermVector.NO));
+			myLuceneDoc.add(new Field("title", title, getMetadataFieldType("title")));
+			myLuceneDoc.add(new Field("titleCombined", titleCombined, getMetadataFieldType("titleCombined")));
 		}
 	}
 

@@ -163,7 +163,8 @@ class ForwardIndexImplV2 extends ForwardIndex {
 
 			// Check if the cache was retrieved OK
 			boolean allZeroes = true;
-			for (int i = 0; i < ForwardIndexImplV3.NUMBER_OF_CACHE_ENTRIES_TO_CHECK; i++) {
+			int numToCheck = Math.min(ForwardIndexImplV3.NUMBER_OF_CACHE_ENTRIES_TO_CHECK, srw.maxDoc());
+			for (int i = 0; i < numToCheck; i++) {
 				if (cachedFiids.get(i) != 0) {
 					allZeroes = false;
 					break;

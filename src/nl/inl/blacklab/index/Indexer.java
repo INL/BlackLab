@@ -45,6 +45,7 @@ import nl.inl.util.UnicodeReader;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
@@ -96,6 +97,12 @@ public class Indexer {
 	 * Parameters we should pass to our DocIndexers upon instantiation.
 	 */
 	protected Map<String, String> indexerParam;
+
+	/** How to index metadata fields (tokenized) */
+	FieldType metadataFieldTypeTokenized;
+
+	/** How to index metadata fields (untokenized) */
+	FieldType metadataFieldTypeUntokenized;
 
 	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort?
@@ -182,6 +189,20 @@ public class Indexer {
 		this.docIndexerClass = docIndexerClass;
 
 		searcher = Searcher.openForWriting(directory, create);
+
+		metadataFieldTypeTokenized = new FieldType();
+		metadataFieldTypeTokenized.setStored(true);
+		metadataFieldTypeTokenized.setIndexed(true);
+		metadataFieldTypeTokenized.setTokenized(true);
+		metadataFieldTypeTokenized.setOmitNorms(true); // @@@ <-- depending on setting?
+		metadataFieldTypeTokenized.setStoreTermVectors(true);
+		metadataFieldTypeTokenized.setStoreTermVectorPositions(true);
+		metadataFieldTypeTokenized.setStoreTermVectorOffsets(true);
+		metadataFieldTypeTokenized.freeze();
+
+		metadataFieldTypeUntokenized = new FieldType(metadataFieldTypeTokenized);
+		metadataFieldTypeUntokenized.setTokenized(false);
+		metadataFieldTypeUntokenized.freeze();
 	}
 
 	/**

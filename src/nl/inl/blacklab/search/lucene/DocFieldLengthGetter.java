@@ -18,6 +18,8 @@ import org.apache.lucene.search.FieldCache;
  * we don't go beyond the document end.
  */
 public class DocFieldLengthGetter {
+	private static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
+
 	/** The Lucene index reader, for querying field length */
 	private AtomicReader reader;
 
@@ -51,7 +53,8 @@ public class DocFieldLengthGetter {
 
 				// Check if the cache was retrieved OK
 				boolean allZeroes = true;
-				for (int i = 0; i < 1000 ; i++) {
+				int numToCheck = Math.min(NUMBER_OF_CACHE_ENTRIES_TO_CHECK, reader.maxDoc());
+				for (int i = 0; i < numToCheck ; i++) {
 					if (cachedFieldLengths.get(i) != 0) {
 						allZeroes = false;
 						break;

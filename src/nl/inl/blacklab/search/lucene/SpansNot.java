@@ -190,7 +190,7 @@ class SpansNot extends BLSpans {
 	 */
 	private boolean nextDoc() {
 		int maxDoc = useTestValues ? 3 : reader.maxDoc();
-		Bits liveDocs = MultiFields.getLiveDocs(reader);
+		Bits liveDocs = useTestValues ? null : MultiFields.getLiveDocs(reader);
 		do {
 			currentDoc++;
  		} while (currentDoc < maxDoc && (useTestValues ? false : liveDocs == null || liveDocs.get(currentDoc)));

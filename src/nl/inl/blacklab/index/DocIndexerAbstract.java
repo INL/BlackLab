@@ -23,7 +23,7 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.CountingReader;
 
-import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
 
 /**
  * Abstract base class for a DocIndexer processing XML files.
@@ -65,17 +65,20 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
 	protected int nDocumentsSkipped = 0;
 
-	/**
-	 * The setting to use when creating Field objects that we want to be analyzed
-	 * (i.e., with or without norms; default is without)
-	 */
-	public Field.Index indexAnalyzed = Field.Index.ANALYZED_NO_NORMS;
+//	/**
+//	 * The setting to use when creating Field objects that we want to be analyzed
+//	 * (i.e., with or without norms; default is without)
+//	 */
+//	public Field.Index indexAnalyzed = Field.Index.ANALYZED_NO_NORMS;
+//
+//	/**
+//	 * The setting to use when creating Field objects that we don't want to be analyzed
+//	 * (i.e., with or without norms; default is without)
+//	 */
+//	public Field.Index indexNotAnalyzed = Field.Index.NOT_ANALYZED_NO_NORMS;
 
-	/**
-	 * The setting to use when creating Field objects that we don't want to be analyzed
-	 * (i.e., with or without norms; default is without)
-	 */
-	public Field.Index indexNotAnalyzed = Field.Index.NOT_ANALYZED_NO_NORMS;
+	/** Do we want to omit norms? (Default: yes) */
+	public boolean omitNorms = true;
 
 	/**
 	 * Returns our Indexer object
@@ -94,8 +97,9 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	 * @param b if true, doesn't store norms; if false, does store norms
 	 */
 	public void setOmitNorms(boolean b) {
-		indexAnalyzed = b ? Field.Index.ANALYZED_NO_NORMS : Field.Index.ANALYZED;
-		indexNotAnalyzed = b ? Field.Index.NOT_ANALYZED_NO_NORMS : Field.Index.NOT_ANALYZED;
+		omitNorms = b;
+//		indexAnalyzed = b ? Field.Index.ANALYZED_NO_NORMS : Field.Index.ANALYZED;
+//		indexNotAnalyzed = b ? Field.Index.NOT_ANALYZED_NO_NORMS : Field.Index.NOT_ANALYZED;
 	}
 
 	boolean continueIndexing() {
@@ -189,8 +193,12 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	 * will eventually be removed in favor of an "official" way
 	 * to index content without storing in a ContentStore.
 	 *
+	 * Not sure if this will always give the correct position because
+	 * the original input is used for highlighting, not the reconstructed
+	 * XML in the content variable.
+	 *
 	 * @return the content length
-	 * @deprecated will be handled differently in the future
+	 * @deprecated will be handled differently in the future.
 	 */
 	@Deprecated
 	public int getContentPositionNoStore(){
@@ -219,6 +227,11 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	 * Parameters passed to this indexer
 	 */
 	private Map<String, String> parameters = new HashMap<String, String>();
+
+	@Override
+	public boolean hasParameter(String name) {
+		return parameters.containsKey(name);
+	}
 
 	@Override
 	public void setParameter(String name, String value) {
@@ -263,5 +276,20 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 			return defaultValue;
 		}
 	}
+
+	protected boolean tokenizeField(String name) {
+		String parName = name + "_tokenized";
+		if (!hasParameter(name + "_tokenized")) {
+			parName = name + "_analyzed"; // Check the old (Lucene 3.x) term, "analyzed"
+		}
+
+		return getParameter(parName, true);
+	}
+
+	@Override
+	public FieldType getMetadataFieldType(String fieldName) {
+		return tokenizeField(fieldName) ? indexer.metadataFieldTypeTokenized: indexer.metadataFieldTypeUntokenized;
+	}
+
 
 }

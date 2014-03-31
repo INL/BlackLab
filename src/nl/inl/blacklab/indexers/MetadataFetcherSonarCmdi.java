@@ -21,10 +21,10 @@ import nl.inl.util.CapturingReader;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.Field.TermVector;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.StringField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -135,8 +135,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			if (authorName.isEmpty()) {
 				authorName = pseudonym;
 			}
-			luceneDoc.add(new Field("AuthorNameOrPseudonym", authorName, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
-			luceneDoc.add(new Field("AuthorNameOrPseudonymSearch", authorNameAndPseudonym, Store.YES, Index.ANALYZED_NO_NORMS, TermVector.WITH_POSITIONS_OFFSETS));
+			luceneDoc.add(new Field("AuthorNameOrPseudonym", authorName, docIndexer.getMetadataFieldType("AuthorNameOrPseudonym")));
+			luceneDoc.add(new Field("AuthorNameOrPseudonymSearch", authorNameAndPseudonym, docIndexer.getMetadataFieldType("AuthorNameOrPseudonymSearch")));
 
 			if (ourDocIndexer != null) {
 				// Store metadata XML in content store and corresponding id in Lucene document
@@ -252,6 +252,16 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			@Override
 			public String getParameter(String name) {
 				return getParameter(name, null);
+			}
+
+			@Override
+			public boolean hasParameter(String name) {
+				return getParameter(name) != null;
+			}
+
+			@Override
+			public FieldType getMetadataFieldType(String fieldName) {
+				return StringField.TYPE_STORED;
 			}
 		};
 

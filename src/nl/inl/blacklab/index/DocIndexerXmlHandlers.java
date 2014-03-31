@@ -40,9 +40,8 @@ import nl.inl.util.StringUtil;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.Field.TermVector;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -87,8 +86,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			for (int i = 0; i < attributes.getLength(); i++) {
 				addMetadataField(attributes.getLocalName(i), attributes.getValue(i));
 			}
-			currentLuceneDoc.add(new Field("fromInputFile", currentDocumentName, Store.YES, indexNotAnalyzed,
-					TermVector.NO));
+			currentLuceneDoc.add(new Field("fromInputFile", currentDocumentName, indexer.metadataFieldTypeUntokenized));
 			indexer.getListener().documentStarted(currentDocumentName);
 		}
 
@@ -652,8 +650,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	public void addMetadataField(String name, String value) {
-		currentLuceneDoc.add(new Field(name, value, Store.YES, getMetadataIndexSetting(name),
-				TermVector.WITH_POSITIONS_OFFSETS));
+		FieldType type = getMetadataFieldType(name);
+		currentLuceneDoc.add(new Field(name, value, type));
 		if (numericFields.contains(name)) {
 			// Index these fields as numeric too, for faster range queries
 			// (we do both because fields sometimes aren't exclusively numeric)
@@ -669,20 +667,10 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		}
 	}
 
-	protected Index getMetadataIndexSetting(String name) {
-		boolean analyzed = getParameter(name + "_analyzed", true);
-		return analyzed ? indexAnalyzed : indexNotAnalyzed;
-	}
-
-	public void startNewDocument() {
-		currentLuceneDoc = new Document();
-		currentDocumentName = fileName;
-		if (currentDocumentName == null)
-			currentDocumentName = "?";
-		currentLuceneDoc.add(new Field("fromInputFile", currentDocumentName, Store.YES, indexNotAnalyzed,
-				TermVector.NO));
-		indexer.getListener().documentStarted(currentDocumentName);
-	}
+//	protected Index getMetadataIndexSetting(String name) {
+//		boolean analyzed = getParameter(name + "_analyzed", true);
+//		return analyzed ? indexAnalyzed : indexNotAnalyzed;
+//	}
 
 	public void endElement(String uri, String localName, String qName) {
 		elementBuilder.setLength(0); // clear

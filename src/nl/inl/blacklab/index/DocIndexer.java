@@ -17,6 +17,8 @@ package nl.inl.blacklab.index;
 
 import java.util.Map;
 
+import org.apache.lucene.document.FieldType;
+
 /**
  * Indexes a file.
  */
@@ -63,4 +65,18 @@ public interface DocIndexer {
 	 * @return the parameter value (or null if it was not specified)
 	 */
 	public String getParameter(String name);
+
+	/**
+	 * Check if the specified parameter has a value
+	 * @param name parameter name
+	 * @return true iff the parameter has a value
+	 */
+	boolean hasParameter(String name);
+
+	/**
+	 * Return the fieldtype to use for the specified field.
+	 * @param fieldName the field name
+	 * @return the fieldtype
+	 */
+	public FieldType getMetadataFieldType(String fieldName);
 }

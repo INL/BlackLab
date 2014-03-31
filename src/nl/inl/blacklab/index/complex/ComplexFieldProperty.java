@@ -24,15 +24,37 @@ import java.util.Map;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.TermVector;
+import org.apache.lucene.document.FieldType;
 
 /**
  * A property in a complex field. See ComplexField for details.
  */
 public class ComplexFieldProperty {
 
+	/** The field type for properties without character offsets */
+	private static FieldType tokenStreamFieldNoOffsets;
+
+	/** The field type for properties with character offsets (the main alternative) */
+	private static FieldType tokenStreamFieldWithOffsets;
+
+	static {
+		FieldType type = tokenStreamFieldNoOffsets = new FieldType();
+		type.setIndexed(true);
+		type.setTokenized(true);
+		type.setOmitNorms(true); // @@@ <-- depending on setting?
+		type.setStored(false);
+		type.setStoreTermVectors(true);
+		type.setStoreTermVectorPositions(true);
+		type.setStoreTermVectorOffsets(false);
+		type.freeze();
+
+		type = tokenStreamFieldWithOffsets = new FieldType(tokenStreamFieldNoOffsets);
+		type.setStoreTermVectorOffsets(true);
+		type.freeze();
+	}
+
 	/** How a property is to be indexed with respect to case and diacritics sensitivity. */
-	public enum SensitivitySetting {
+	public static enum SensitivitySetting {
 		ONLY_SENSITIVE,                 // only index case- and diacritics-sensitively
 		ONLY_INSENSITIVE,               // only index case- and diacritics-insensitively
 		SENSITIVE_AND_INSENSITIVE,      // case+diac sensitive as well as case+diac insensitive
@@ -152,22 +174,23 @@ public class ComplexFieldProperty {
 		return ts;
 	}
 
-	TermVector getTermVectorOption(String altName) {
-		if (includeOffsets && altName.equals(mainAlternative)) {
-			// Main alternative of a property may get character offsets
-			// (if it's the main property of a complex field)
-			return TermVector.WITH_POSITIONS_OFFSETS;
-		}
+	FieldType getTermVectorOptionFieldType(String altName) {
+		// Main alternative of a property may get character offsets
+		// (if it's the main property of a complex field)
+		if (includeOffsets && altName.equals(mainAlternative))
+			return tokenStreamFieldWithOffsets;
 
 		// Named alternatives and additional properties don't get character offsets
-		return TermVector.WITH_POSITIONS;
+		return tokenStreamFieldNoOffsets;
 	}
 
 	public void addToLuceneDoc(Document doc, String fieldName, List<Integer> startChars,
 			List<Integer> endChars) {
 		for (String altName : alternatives.keySet()) {
+			//doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
+			//		getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
 			doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
-					getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
+					getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
 		}
 	}
 

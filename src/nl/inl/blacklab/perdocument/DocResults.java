@@ -278,7 +278,6 @@ public class DocResults implements Iterable<DocResult> {
 			DocResult dr = partialDocResult;
 			partialDocResult = null;
 
-			@SuppressWarnings("resource")
 			IndexReader indexReader = searcher == null ? null : searcher.getIndexReader();
 			Thread currentThread = Thread.currentThread();
 			while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
