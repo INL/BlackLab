@@ -39,7 +39,9 @@ public class TranscribeGermanAccentsSynonymFilter extends AbstractSynonymFilter 
 				"Aachen Düsseldorf Köln Berlin Österreich"));
 		try {
 			ts = new TranscribeGermanAccentsSynonymFilter(ts);
+			ts.reset();
 			ts = new RemoveAllAccentsFilter(ts);
+			ts.reset();
 
 			CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
 			while (ts.incrementToken()) {

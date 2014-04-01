@@ -15,12 +15,10 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
@@ -205,17 +203,17 @@ public class IndexStructure {
 
 			// None have offsets; just assume the first property is the main one
 			// (note that not having any offsets makes it impossible to highlight the
-			//  original content, but this may not be an issue. We probably need
-			//  a better way to keep track of the main property)
+			// original content, but this may not be an issue. We probably need
+			// a better way to keep track of the main property)
 			mainProperty = firstProperty;
 
-//			throw new RuntimeException(
-//					"No main property (with char. offsets) detected for complex field " + fieldName);
+			// throw new RuntimeException(
+			// "No main property (with char. offsets) detected for complex field " + fieldName);
 		}
 
 		@Deprecated
 		public void print(PrintStream out) {
-			print (new PrintWriter(out));
+			print(new PrintWriter(out));
 		}
 
 		public void print(PrintWriter out) {
@@ -308,31 +306,12 @@ public class IndexStructure {
 			// Iterate over the alternatives and for each alternative, find a term
 			// vector. If that has character offsets stored, it's our main property.
 			// If not, keep searching.
-			Bits liveDocs = MultiFields.getLiveDocs(reader);
 			for (AltDesc alt: alternatives.values()) {
 				String luceneAltName = ComplexFieldUtil.propertyField(fieldName, propName,
 						alt.getName());
-				for (int n = 0; n < reader.maxDoc(); n++) {
-					//if (!reader.isDeleted(n)) {
-					if (liveDocs == null || liveDocs.get(n)) {
-						try {
-							Terms terms = reader.getTermVector(n, luceneAltName);
-							if (terms == null) {
-								// No term vector; probably not stored in this document.
-								continue;
-							}
-							if (terms.hasOffsets()) {
-								// This field has offsets stored. Must be the main alternative.
-								offsetsAlternative = alt;
-								return true;
-							}
-							// This alternative has no offsets stored. Don't look at any more documents,
-							// go to the next alternative.
-							break;
-						} catch (IOException e) {
-							throw new RuntimeException(e);
-						}
-					}
+				if (hasOffsets(reader, luceneAltName)) {
+					offsetsAlternative = alt;
+					return true;
 				}
 			}
 
@@ -411,7 +390,7 @@ public class IndexStructure {
 
 		// Detect index naming scheme
 		// NOTE: defaults to most-used value for new indices!
-		//boolean isOldNamingScheme = false, avoidSpecialChars = false;
+		// boolean isOldNamingScheme = false, avoidSpecialChars = false;
 		int foundPercent = 0, foundDoubleUnderscore = 0;
 		boolean foundNoSpecialCharIndicator = false;
 		for (int i = 0; i < fis.size(); i++) {
@@ -501,50 +480,24 @@ public class IndexStructure {
 	 * @param fieldName the field name to determine the type for
 	 * @return type of the field (text or numeric)
 	 */
+//	@SuppressWarnings("resource")
 	private FieldType getFieldType(String fieldName) {
-		FieldType type = FieldType.TEXT;
 
+		/* NOTE: detecting the field type does not work well.
+		 * Querying values and deciding based on those is not the right way
+		 * (you can index ints as text too, after all). Lucene does not
+		 * store the information in the index (and querying the field type does
+		 * not return an IntField, DoubleField or such. In effect, it expects
+		 * the client to know.
+		 *
+		 * We have a simple, bad approach based on field name below.
+		 * The "right way" to do it is to keep a schema of field types during
+		 * indexing.
+		 */
+
+		FieldType type = FieldType.TEXT;
 		if (fieldName.endsWith("Numeric") || fieldName.endsWith("Num"))
 			type = FieldType.NUMERIC;
-
-		/*
-		TODO: Slow. Come up with a faster alternative or a better naming convention?
-
-		Bits bits = MultiFields.getLiveDocs(reader);
-
-		SlowCompositeReaderWrapper srw = null;
-		try{
-			srw = new SlowCompositeReaderWrapper(reader);
-		}
-		catch( Throwable t){
-			throw new RuntimeException( t);
-		}
-		bits = srw.getLiveDocs();
-		for (int n = 0; n < reader.maxDoc(); n++) {
-			//if (!reader.isDeleted(n)) {
-			//if( bits.get(n)) {
-				Document d;
-				try {
-					d = reader.document(n);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-				//Fieldable f = d.getFieldable(fieldName);
-				IndexableField f = d.getField(fieldName);
-				if (f != null) {
-					//if (f instanceof NumericField)
-					if( this.isNumbericField(f))
-						type = FieldType.NUMERIC;
-					break;
-				}
-			}
-		}
-	private boolean isNumbericField( IndexableField field){
-		return (field instanceof DoubleField || field instanceof FloatField || field instanceof IntField || field instanceof LongField);
-	}
-
-		*/
-
 		return type;
 	}
 
@@ -554,38 +507,37 @@ public class IndexStructure {
 	 * @return true if it has offsets, false if not
 	 */
 	public boolean hasOffsets(String luceneFieldName) {
+		return hasOffsets(reader, luceneFieldName);
+	}
+
+	static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
 		// Iterate over documents in the index until we find a property
 		// for this complex field that has stored character offsets. This is
 		// our main property.
-		Bits bits = MultiFields.getLiveDocs(reader);
+
+		// Note that we can't simply retrieve the field from a document and
+		// check the FieldType to see if it has offsets or not, as that information
+		// is incorrect at search time (always set to false, even if it has offsets).
+
+		Bits liveDocs = MultiFields.getLiveDocs(reader);
 		for (int n = 0; n < reader.maxDoc(); n++) {
-			//if (!reader.isDeleted(n)) {
-			if(bits == null || bits.get(n)) {
-				Document d;
+			if (liveDocs == null || liveDocs.get(n)) {
 				try {
-					d = reader.document(n);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-
-				IndexableField f = d.getField(luceneFieldName);
-				if (f != null)
-					return f.fieldType().storeTermVectorOffsets();
-
-				/* VERSION BEFORE LUCENE 4.0 BELOW; NOT SURE IF ABOVE WORKS CORRECTLY..?
-				try {
-					TermFreqVector tv = reader.getTermFreqVector(n, luceneFieldName);
-					if (tv == null) {
+					Terms terms = reader.getTermVector(n, luceneFieldName);
+					if (terms == null) {
 						// No term vector; probably not stored in this document.
 						continue;
 					}
-					if (tv instanceof TermPositionVector) {
-						// Check if there are offsets stored.
-						return ((TermPositionVector) tv).getOffsets(0) != null;
+					if (terms.hasOffsets()) {
+						// This field has offsets stored. Must be the main alternative.
+						return true;
 					}
+					// This alternative has no offsets stored. Don't look at any more
+					// documents, go to the next alternative.
+					break;
 				} catch (IOException e) {
 					throw new RuntimeException(e);
-				}*/
+				}
 			}
 		}
 		return false;

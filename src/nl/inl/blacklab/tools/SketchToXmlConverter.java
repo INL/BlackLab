@@ -173,7 +173,6 @@ public class SketchToXmlConverter {
 		out.append('\n');
 		linesDone++;
 		return shouldContinue;
-		// return maxDocs > 0 && docsDone < maxDocs;
 	}
 
 	public void convert(Reader in, File outDir, String outFn) throws IOException {

@@ -158,6 +158,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			boolean allZeroes = true;
 			int numToCheck = Math.min(NUMBER_OF_CACHE_ENTRIES_TO_CHECK, srw.maxDoc());
 			for (int i = 0; i < numToCheck; i++) {
+				// (NOTE: we don't check if document wasn't deleted, but that shouldn't matter here)
 				if (cachedFiids.get(i) != 0) {
 					allZeroes = false;
 					break;

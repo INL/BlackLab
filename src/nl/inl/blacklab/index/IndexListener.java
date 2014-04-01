@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
+import java.io.File;
+
 /**
  * Used to report progress while indexing, so we can give feedback to the user.
  */
@@ -46,6 +48,8 @@ public class IndexListener {
 	protected long createTime;
 
 	protected long totalTime;
+
+	protected int errors = 0;
 
 	/**
 	 * Started processing a file.
@@ -196,6 +200,27 @@ public class IndexListener {
 
 	public void tokensDone(int n) {
 		tokensProcessed += n;
+	}
+
+	/**
+	 * An index error occurred.
+	 *
+	 * Subclasses may override this method to perform any special error-related
+	 * action, such as moving the failed file to an error directory, etc.
+	 *
+	 * @param error type of error, i.e. "not found"
+	 * @param unitType type of indexing unit, i.e. "file", "zip", "tgz"
+	 * @param unit the indexing unit in which the error occurred
+	 * @param subunit optional subunit (i.e. which file inside zip, or null for regular files)
+	 * @return true if indexing should continue
+	 */
+	public boolean errorOccurred(String error, String unitType, File unit, File subunit) {
+		errors++;
+		return true;
+	}
+
+	public int getErrors() {
+		return errors;
 	}
 
 }

@@ -64,7 +64,7 @@ public class IndexTool {
 			readParametersFromPropertiesFile(propFile);
 
 		// Parse command line
-		int maxDocs = 0;
+		int maxDocsToIndex = 0;
 		File indexDir = null, inputDir = null;
 		String glob = "*";
 		String fileFormat = null;
@@ -94,7 +94,7 @@ public class IndexTool {
 						return;
 					}
 					try {
-						maxDocs = Integer.parseInt(args[i + 1]);
+						maxDocsToIndex = Integer.parseInt(args[i + 1]);
 						i++;
 					} catch (NumberFormatException e) {
 						System.err.println("--maxdocs option needs integer argument");
@@ -253,8 +253,8 @@ public class IndexTool {
 		// Create the indexer and index the files
 		Indexer indexer = new Indexer(indexDir, createNewIndex, docIndexerClass);
 		indexer.setIndexerParam(indexerParam);
-		if (maxDocs > 0)
-			indexer.setMaxDocs(maxDocs);
+		if (maxDocsToIndex > 0)
+			indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
 		try {
 			if (glob.contains("*") || glob.contains("?")) {
 				// Real wildcard glob

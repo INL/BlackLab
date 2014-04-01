@@ -31,6 +31,7 @@ public class TestBLDutchTokenFilter {
 		TokenStream ts = new StubTokenStream(new String[] { "hond", "a.u.b.", "bel(len)", "[pre]cursor", "zo'n", "'Hij", "zij'", "ex-man", "-"  });
 		try {
 			ts = new BLDutchTokenFilter(ts);
+			ts.reset();
 			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
 			Assert.assertTrue(ts.incrementToken());
 			Assert.assertEquals("hond", new String(ta.buffer(), 0, ta.length()));

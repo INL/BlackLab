@@ -191,9 +191,11 @@ class SpansNot extends BLSpans {
 	private boolean nextDoc() {
 		int maxDoc = useTestValues ? 3 : reader.maxDoc();
 		Bits liveDocs = useTestValues ? null : MultiFields.getLiveDocs(reader);
+		boolean currentDocIsDeletedDoc;
 		do {
 			currentDoc++;
- 		} while (currentDoc < maxDoc && (useTestValues ? false : liveDocs == null || liveDocs.get(currentDoc)));
+			currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
+ 		} while (currentDoc < maxDoc && currentDocIsDeletedDoc);
 
 		if (currentDoc == maxDoc) {
 			done = true;

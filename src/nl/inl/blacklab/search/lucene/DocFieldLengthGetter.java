@@ -55,6 +55,7 @@ public class DocFieldLengthGetter {
 				boolean allZeroes = true;
 				int numToCheck = Math.min(NUMBER_OF_CACHE_ENTRIES_TO_CHECK, reader.maxDoc());
 				for (int i = 0; i < numToCheck ; i++) {
+					// (NOTE: we don't check if document wasn't deleted, but that shouldn't matter here)
 					if (cachedFieldLengths.get(i) != 0) {
 						allZeroes = false;
 						break;
@@ -129,34 +130,6 @@ public class DocFieldLengthGetter {
 			}
 			return termFreq;
 
-			/* Versie MKS: (NB hier wordt doc parameter niet gebruikt!)
-			Term term = new Term(fieldName);
-			DocsEnum docEnum = MultiFields.getTermDocsEnum(reader, MultiFields.getLiveDocs(reader), term.field(), term.bytes());
-			int termFreq = 0;
-
-			while (docEnum.nextDoc() != DocsEnum.NO_MORE_DOCS) {
-			    termFreq += docEnum.freq();
-			}
-			return termFreq;
-			*/
-
-			/* Versie Luc3.6:
-			TermFreqVector tfv = reader.getTermFreqVector(doc, fieldName);
-			if (tfv == null) {
-
-				// No term frequency vector. We have to assume this is because no tokens were
-				// stored for this document (document is empty)
-				return 0;
-			}
-			int [] tfs = tfv.getTermFrequencies();
-			if (tfs == null)
-				throw new RuntimeException("No term frequencies found for field " + fieldName + " (doc " + doc + ")");
-			int n = 0;
-			for (int tf: tfs) {
-				n += tf;
-			}
-			return n;
-			*/
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -61,7 +61,10 @@ public class Indexer {
 	protected Searcher searcher;
 
 	/** Stop after indexing this number of docs. -1 if we shouldn't stop. */
-	protected int maxDocs = -1;
+	protected int maxNumberOfDocsToIndex = -1;
+
+	/** Should we terminate indexing? (e.g. because of an error) */
+	protected boolean terminateIndexing = false;
 
 	/**
 	 * Where to report indexing progress.
@@ -246,10 +249,21 @@ public class Indexer {
 	/**
 	 * Set number of documents after which we should stop.
 	 * Useful when testing.
-	 * @param maxDocs number of documents after which to stop
+	 * @param n number of documents after which to stop
 	 */
-	public void setMaxDocs(int maxDocs) {
-		this.maxDocs = maxDocs;
+	public void setMaxNumberOfDocsToIndex(int n) {
+		this.maxNumberOfDocsToIndex = n;
+	}
+
+	/**
+	 * Set number of documents after which we should stop.
+	 * Useful when testing.
+	 * @param n number of documents after which to stop
+	 * @deprecated renamed to setMaxNumberOfDocsToIndex
+	 */
+	@Deprecated
+	public void setMaxDocs(int n) {
+		setMaxNumberOfDocsToIndex(n);
 	}
 
 	/**
@@ -514,7 +528,7 @@ public class Indexer {
 						}
 					} catch (IOException e) {
 						log("*** Error indexing " + fileToIndex, e);
-						// continue trying other files!
+						terminateIndexing = !listener.errorOccurred(e.getMessage(), "file", fileToIndex, null);
 					}
 				}
 			}
@@ -548,7 +562,6 @@ public class Indexer {
 					// NOTE: don't close the reader as the caller will close the stream when
 					// appropriate! When processing archive files, the stream may need to remain
 					// open for the next entry.
-					//reader.close();
 				}
 			}
 		} catch (Exception e) {
@@ -628,7 +641,7 @@ public class Indexer {
 							}
 						} catch (ZipException ex) {
 							log("*** Error indexing " + fileName + " from " + zipFile, ex);
-							// continue trying other files!
+							terminateIndexing = !listener.errorOccurred(ex.getMessage(), "zip", zipFile, new File(fileName));
 						}
 					}
 					if (!continueIndexing())
@@ -653,19 +666,24 @@ public class Indexer {
 		TarGzipReader.processTarGzip(tarGzipStream, new FileHandler() {
 			@Override
 			public boolean handle(String filePath, InputStream contents) {
-				File f = new File(filePath);
-				String fn = f.getName();
-				Matcher m = pattGlob.matcher(fn);
-				if (m.matches()) {
-					String entryName = tgzFileName + File.separator + filePath;
-					indexInputStream(entryName, contents, glob, recurseArchives);
-				} else {
-					boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".tar.gz") || fn.endsWith(".tgz");
-					if (isArchive) {
-						if (recurseArchives && processArchivesAsDirectories) {
-							indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
+				try {
+					File f = new File(filePath);
+					String fn = f.getName();
+					Matcher m = pattGlob.matcher(fn);
+					if (m.matches()) {
+						String entryName = tgzFileName + File.separator + filePath;
+						indexInputStream(entryName, contents, glob, recurseArchives);
+					} else {
+						boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".tar.gz") || fn.endsWith(".tgz");
+						if (isArchive) {
+							if (recurseArchives && processArchivesAsDirectories) {
+								indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
+							}
 						}
 					}
+				} catch (Exception e) {
+					log("*** Error indexing tgz file: " + tgzFileName, e);
+					terminateIndexing = !listener.errorOccurred(e.getMessage(), "tgz", new File(tgzFileName), new File(filePath));
 				}
 				return continueIndexing();
 			}
@@ -761,12 +779,17 @@ public class Indexer {
 	}
 
 	/**
-	 * Should we continue indexing or stop (because maxDocs has been reached)?
+	 * Should we continue indexing or stop?
+	 *
+	 * We stop if we've reached the maximum that was set (if any),
+	 * or if a fatal error has occurred (indicated by terminateIndexing).
 	 *
 	 * @return true if we should continue, false if not
 	 */
 	public synchronized boolean continueIndexing() {
-		if (maxDocs >= 0) {
+		if (terminateIndexing)
+			return false;
+		if (maxNumberOfDocsToIndex >= 0) {
 			return docsToDoLeft() > 0;
 		}
 		return true;
@@ -779,10 +802,10 @@ public class Indexer {
 	 */
 	public synchronized int docsToDoLeft() {
 		try {
-			if (maxDocs < 0)
-				return maxDocs;
+			if (maxNumberOfDocsToIndex < 0)
+				return maxNumberOfDocsToIndex;
 			int docsDone = searcher.getWriter().numDocs();
-			return Math.max(0, maxDocs - docsDone);
+			return Math.max(0, maxNumberOfDocsToIndex - docsDone);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
