@@ -18,10 +18,10 @@
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry exported="true" kind="lib" path="lib/lucene-core-4.2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/lucene-highlighter-4.2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/lucene-queries-4.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-analyzers-common-4.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-queryparser-4.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-core-4.2.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

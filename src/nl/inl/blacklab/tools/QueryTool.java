@@ -775,6 +775,16 @@ public class QueryTool {
 					String right = XmlUtil.xmlToPlainText(conc.right);
 					outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
 				}
+			} else if (lcased.startsWith("highlight ")) {
+				int hitId = parseInt(lcased.substring(8), 1) - 1;
+				Hits currentHitSet = getCurrentHitSet();
+				if (hitId >= currentHitSet.size()) {
+					errprintln("Hit number out of range.");
+				} else {
+					int docid = currentHitSet.get(hitId).doc;
+					Hits hitsInDoc = hits.getHitsInDoc(docid);
+					outprintln(StringUtil.wrapText(searcher.highlightContent(docid, hitsInDoc), 80));
+				}
 			} else if (lcased.startsWith("snippetsize ")) {
 				snippetSize = parseInt(lcased.substring(12), 0);
 				outprintln("Snippets will show " + snippetSize + " words of context.");

@@ -1744,4 +1744,21 @@ public class Hits implements Iterable<Hit> {
 		}
 	}
 
+	/**
+	 * Convenience method to get all hits in a single doc from a larger hitset.
+	 *
+	 * Don't use this for grouping or per-document results as it's relatively inefficient.
+	 *
+	 * @param docid the doc id to get hits for
+	 * @return the list of hits in this doc (if any)
+	 */
+	public Hits getHitsInDoc(int docid) {
+		List<Hit> hitsInDoc = new ArrayList<Hit>();
+		for (Hit hit: hits) {
+			if (hit.doc == docid)
+				hitsInDoc.add(hit);
+		}
+		return new Hits(searcher, hitsInDoc);
+	}
+
 }

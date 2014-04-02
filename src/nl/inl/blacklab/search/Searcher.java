@@ -699,57 +699,71 @@ public class Searcher {
 			if (!terms.hasPositions())
 				throw new RuntimeException("Field has no character postion information");
 
-			TermsEnum tenum = terms.iterator(null);
-			DocsAndPositionsEnum dpe = tenum.docsAndPositions(null, null);
-
 			int lowestPos = -1, highestPos = -1;
 			int lowestPosFirstChar = -1, highestPosLastChar = -1;
 			int numStarts = startsOfWords.length;
 			int numEnds = endsOfWords.length;
 			int total = numStarts + numEnds;
 			int[] done = new int[total]; // NOTE: array is automatically initialized to zeroes!
-
-			// Verzamel concordantiewoorden uit term vector
 			int found = 0;
-			while (dpe.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-				int position = -1;
-				while ((position = dpe.nextPosition()) < dpe.freq() && position !=-1) {
-					// Keep track of the lowest and highest char pos, so
-					// we can fill in the character positions we didn't find
-					if (position < lowestPos || lowestPos == -1) {
-						lowestPos = position;
-						lowestPosFirstChar = dpe.startOffset();
-					}
-					if (position > highestPos) {
-						highestPos = position;
-						highestPosLastChar = dpe.endOffset();
-					}
 
-					// We've calculated the min and max word positions in advance, so
-					// we know we can skip this position if it's outside the range we're interested in.
-					// (Saves a little time for large result sets)
-					if (position < minP || position > maxP)
-						continue;
+			// Iterate over terms
+			TermsEnum tenum = terms.iterator(null);
+			while (tenum.next() != null) {
+				DocsAndPositionsEnum dpe = tenum.docsAndPositions(null, null);
 
-					for (int m = 0; m < numStarts; m++) {
-						if (done[m] == 0 && position == startsOfWords[m]) {
-							done[m] = 1;
-							startsOfWords[m] = dpe.startOffset();
-							found++;
+				// Iterate over docs containing this term (NOTE: should be only one doc!)
+				while (dpe.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+					int position = -1;
+
+					// Iterate over positions of this term in this doc
+					int positionsRead = 0;
+					int numberOfPositions = dpe.freq();
+					while (positionsRead < numberOfPositions) {
+						position = dpe.nextPosition();
+						if (position == -1)
+							break;
+						positionsRead++;
+
+						// Keep track of the lowest and highest char pos, so
+						// we can fill in the character positions we didn't find
+						if (position < lowestPos || lowestPos == -1) {
+							lowestPos = position;
+							lowestPosFirstChar = dpe.startOffset();
 						}
-					}
-					for (int m = 0; m < numEnds; m++) {
-						if (done[numStarts + m] == 0 && position == endsOfWords[m]) {
-							done[numStarts + m] = 1;
-							endsOfWords[m] = dpe.endOffset();
-							found++;
+						if (position > highestPos) {
+							highestPos = position;
+							highestPosLastChar = dpe.endOffset();
 						}
-					}
 
-					// NOTE: we might be tempted to break here if found == total,
-					// but that would foul up our calculation of highestPostLastChar and
-					// lowestPosFirstChar.
+						// We've calculated the min and max word positions in advance, so
+						// we know we can skip this position if it's outside the range we're interested in.
+						// (Saves a little time for large result sets)
+						if (position < minP || position > maxP) {
+							continue;
+						}
+
+						for (int m = 0; m < numStarts; m++) {
+							if (done[m] == 0 && position == startsOfWords[m]) {
+								done[m] = 1;
+								startsOfWords[m] = dpe.startOffset();
+								found++;
+							}
+						}
+						for (int m = 0; m < numEnds; m++) {
+							if (done[numStarts + m] == 0 && position == endsOfWords[m]) {
+								done[numStarts + m] = 1;
+								endsOfWords[m] = dpe.endOffset();
+								found++;
+							}
+						}
+
+						// NOTE: we might be tempted to break here if found == total,
+						// but that would foul up our calculation of highestPostLastChar and
+						// lowestPosFirstChar.
+					}
 				}
+
 			}
 			if (found < total) {
 				if (!fillInDefaultsIfNotFound)
