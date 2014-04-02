@@ -25,7 +25,7 @@ import org.junit.Test;
 public class TestSpansNot {
 
 	@Test
-	public void testAndSpans() throws IOException {
+	public void testSpansNot() throws IOException {
 		int[] aDoc = new int[]   { 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2 };
 		int[] aStart = new int[] { 0, 1, 2, 3, 0, 1, 2, 3, 4, 1, 3 };
 		int[] aEnd = new int[]   { 1, 2, 3, 4, 1, 2, 3, 4, 5, 2, 4 };
