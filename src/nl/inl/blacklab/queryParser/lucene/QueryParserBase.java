@@ -37,7 +37,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-// BL imports
 import nl.inl.blacklab.queryParser.lucene.helpers.TPMatchAllDocs;
 import nl.inl.blacklab.queryParser.lucene.helpers.TPMultiPhrase;
 import nl.inl.blacklab.queryParser.lucene.helpers.TPPhrase;
@@ -70,11 +69,12 @@ import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.Version;
+// BL imports
 
 /** This class is overridden by QueryParser in QueryParser.jj
  * and acts to separate the majority of the Java code from the .jj grammar file.
  */
-@SuppressWarnings({"deprecation", "javadoc", "resource"}) // BL: "resource" because of possible resource leak
+@SuppressWarnings({"deprecation", "javadoc", "resource", "unused"}) // BL: "resource" because of possible resource leak
 public abstract class QueryParserBase implements CommonQueryParserConfiguration {
 
   /** Do not catch this exception in your code, it means you are using methods that you should no longer use. */

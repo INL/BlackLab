@@ -16,7 +16,7 @@
 package nl.inl.blacklab.search.grouping;
 
 import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.Hits;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -31,19 +31,21 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
 	private String friendlyName;
 
-	public HitPropertyDocumentStoredField(String fieldName, Searcher searcher) {
-		this(fieldName, fieldName, searcher);
+	public HitPropertyDocumentStoredField(Hits hits, String fieldName) {
+		this(hits, fieldName, fieldName);
 	}
 
-	public HitPropertyDocumentStoredField(String fieldName, String friendlyName, Searcher searcher) {
-		reader = searcher.getIndexReader();
+	public HitPropertyDocumentStoredField(Hits hits, String fieldName, String friendlyName) {
+		super(hits);
+		reader = hits.getSearcher().getIndexReader();
 		this.fieldName = fieldName;
 		this.friendlyName = friendlyName;
 	}
 
 	@Override
-	public HitPropValueString get(Hit result) {
+	public HitPropValueString get(int hitNumber) {
 		try {
+			Hit result = hits.getByOriginalOrder(hitNumber);
 			Document d = reader.document(result.doc);
 			String value = d.get(fieldName);
 			if (value == null)
@@ -55,13 +57,15 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 	}
 
 	@Override
-	public int compare(Object a, Object b) {
+	public int compare(Object i, Object j) {
 		try {
-			Document d = reader.document(((Hit)a).doc);
+			Hit a = hits.getByOriginalOrder((Integer)i);
+			Hit b = hits.getByOriginalOrder((Integer)j);
+			Document d = reader.document(a.doc);
 			String va = d.get(fieldName);
 			if (va == null)
 				va = "";
-			d = reader.document(((Hit)b).doc);
+			d = reader.document(b.doc);
 			String vb = d.get(fieldName);
 			if (vb == null)
 				vb = "";

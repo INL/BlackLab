@@ -480,7 +480,7 @@ public class IndexStructure {
 	 * @param fieldName the field name to determine the type for
 	 * @return type of the field (text or numeric)
 	 */
-//	@SuppressWarnings("resource")
+	@SuppressWarnings("static-method") // might not be static in the future
 	private FieldType getFieldType(String fieldName) {
 
 		/* NOTE: detecting the field type does not work well.

@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TestSpanQueryAnd {
+	@SuppressWarnings("unused")
 	@Test(expected = RuntimeException.class)
 	public void testFieldMismatch() {
 		SpanTermQuery first = new SpanTermQuery(new Term("author", "bla"));

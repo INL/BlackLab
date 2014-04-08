@@ -16,7 +16,7 @@
 package nl.inl.blacklab.search.grouping;
 
 import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.Hits;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -30,18 +30,16 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
 	String fieldName;
 
-	public HitPropertyDocumentDecade(String fieldName, IndexReader reader) {
-		this.reader = reader;
+	public HitPropertyDocumentDecade(Hits hits, String fieldName) {
+		super(hits);
+		this.reader = hits.getSearcher().getIndexReader();
 		this.fieldName = fieldName;
 	}
 
-	public HitPropertyDocumentDecade(String fieldName, Searcher searcher) {
-		this(fieldName, searcher.getIndexReader());
-	}
-
 	@Override
-	public HitPropValueDecade get(Hit result) {
+	public HitPropValueDecade get(int hitNumber) {
 		try {
+			Hit result = hits.getByOriginalOrder(hitNumber);
 			Document d = reader.document(result.doc);
 			String strYear = d.get(fieldName);
 			int year = Integer.parseInt(strYear);
@@ -53,13 +51,15 @@ public class HitPropertyDocumentDecade extends HitProperty {
 	}
 
 	@Override
-	public int compare(Object a, Object b) {
+	public int compare(Object i, Object j) {
 		try {
-			Document d = reader.document(((Hit)a).doc);
+			Hit a = hits.getByOriginalOrder((Integer)i);
+			Hit b = hits.getByOriginalOrder((Integer)j);
+			Document d = reader.document(a.doc);
 			String strYearA = d.get(fieldName);
 			if (strYearA == null)
 				strYearA = "";
-			d = reader.document(((Hit)b).doc);
+			d = reader.document(b.doc);
 			String strYearB = d.get(fieldName);
 			if (strYearB == null)
 				strYearB = "";
@@ -78,19 +78,6 @@ public class HitPropertyDocumentDecade extends HitProperty {
 			throw new RuntimeException(e);
 		}
 	}
-
-//	@Override
-//	public String getHumanReadable(Hit result) {
-//		try {
-//			Document d = reader.document(result.doc);
-//			String strYear = d.get(fieldName);
-//			int year = Integer.parseInt(strYear);
-//			year -= year % 10;
-//			return year + "-" + (year + 9);
-//		} catch (Exception e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
 
 	@Override
 	public String getName() {

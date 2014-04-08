@@ -57,11 +57,29 @@ public class Hits implements Iterable<Hit> {
 	protected List<Hit> hits;
 
 	/**
-	 * The concordances, if they have been retrieved.
+	 * The hit contexts.
 	 *
-	 * NOTE: this will always be null if not all the hits have been retrieved.
+	 * There may be multiple contexts for each hit (see contextFieldsPropName).
+	 * Each int array starts with three bookkeeping integers, followed by the contexts information.
+	 * The bookkeeping integers are:
+	 * * 0 = hit start, index of the hit word (and length of the left context), counted from the start the context
+	 * * 1 = right start, start of the right context, counted from the start the context
+	 * * 2 = context length, length of 1 context. As stated above, there may be multiple contexts.
+	 *
+	 * The first context therefore starts at index 3.
+	 *
 	 */
-	/*protected Map<Hit, Concordance> concordances;*/
+	private int[][] contexts;
+
+	/**
+	 * The sort order, if we've sorted, or null if not
+	 */
+	Integer[] sortOrder;
+
+	public static final int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;
+	public static final int CONTEXTS_HIT_START_INDEX = 0;
+	public static final int CONTEXTS_RIGHT_START_INDEX = 1;
+	public static final int CONTEXTS_LENGTH_INDEX = 2;
 
 	/**
 	 * The KWIC data, if it has been retrieved.
@@ -335,7 +353,7 @@ public class Hits implements Iterable<Hit> {
 	 * Get the list of hits.
 	 *
 	 * @return the list of hits
-	 * @deprecated Breaks optimizations. Use iteration or window() instead.
+	 * @deprecated Slow, breaks optimizations. Iterate over the Hits object and/or Hits.window() instead.
 	 */
 	@Deprecated
 	public synchronized List<Hit> getHits() {
@@ -344,7 +362,13 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Interrupted; just return the hits we've gathered so far.
 		}
-		return new ArrayList<Hit>(hits);
+		// We do it this way because if we return (a copy of) the hits list,
+		// you get it unsorted.
+		List<Hit> list = new ArrayList<Hit>();
+		for (Hit h: this) {
+			list.add(h);
+		}
+		return list;
 	}
 
 	/**
@@ -507,6 +531,15 @@ public class Hits implements Iterable<Hit> {
 			return;
 		}
 
+		// Make sure we have a sort order array of sufficient size
+		if (sortOrder == null || sortOrder.length < hits.size()) {
+			sortOrder = new Integer[hits.size()];
+		}
+		// Fill the array with the original hit order (0, 1, 2, ...)
+		int n = hits.size();
+		for (int i = 0; i < n; i++)
+			sortOrder[i] = i;
+
 		// Do we need context and don't we have it yet?
 		List<String> requiredContext = sortProp.needsContext();
 		if (requiredContext != null
@@ -515,18 +548,24 @@ public class Hits implements Iterable<Hit> {
 			findContext(requiredContext);
 		}
 
-		Collections.sort(hits, sortProp);
+		Arrays.sort(sortOrder, sortProp);
+
 		if (reverseSort) {
 			// Instead of creating a new Comparator that reverses the order of the
 			// sort property (which adds an extra layer of indirection to each of the
 			// O(n log n) comparisons), just reverse the hits now (which runs
 			// in linear time).
-			Collections.reverse(hits);
+			//Collections.reverse(hits);
+			for (int i = 0; i < n / 2; i++) {
+				sortOrder[i] = sortOrder[n - i - 1];
+			}
 		}
 	}
 
 	/**
 	 * Add a hit to the list
+	 *
+	 * NOTE: if the hits were sorted, the sort is gone after this!
 	 *
 	 * @param hit
 	 *            the hit
@@ -540,6 +579,7 @@ public class Hits implements Iterable<Hit> {
 			return;
 		}
 		hits.add(hit);
+		sortOrder = null; // sortOrder not correct any more, and array is too short
 		hitsCounted++;
 		int hitDoc = hit.doc;
 		if (hitDoc != previousHitDoc) {
@@ -721,12 +761,27 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Return an iterator over these hits.
+	 * Iterate over the hits in the original (pre-sort) order.
+	 * @return an iterable object that will produce hits in the original order.
+	 */
+	public Iterable<Hit> hitsInOriginalOrder() {
+		return new Iterable<Hit>() {
+			@Override
+			public Iterator<Hit> iterator() {
+				return Hits.this.getIterator(true);
+			}
+		};
+	}
+
+	/**
+	 * Return an iterator over these hits that produces the
+	 * hits in their original order.
 	 *
+	 * @param originalOrder if true, returns hits in original order. If false,
+	 *   returns them in sorted order (if any)
 	 * @return the iterator
 	 */
-	@Override
-	public Iterator<Hit> iterator() {
+	public Iterator<Hit> getIterator(final boolean originalOrder) {
 		// Construct a custom iterator that iterates over the hits in the hits
 		// list, but can also take into account the Spans object that may not have
 		// been fully read. This ensures we don't instantiate Hit objects for all hits
@@ -753,7 +808,7 @@ public class Hits implements Iterable<Hit> {
 				// Check if there is a next, taking unread hits from Spans into account
 				if (hasNext()) {
 					index++;
-					return hits.get(index);
+					return hits.get( (originalOrder || sortOrder == null) ? index : sortOrder[index]);
 				}
 				throw new NoSuchElementException();
 			}
@@ -764,6 +819,39 @@ public class Hits implements Iterable<Hit> {
 			}
 
 		};
+	}
+
+	/**
+	 * Return an iterator over these hits.
+	 *
+	 * The order is the sorted order, not the original order. Use
+	 * hitsInOriginalOrder() to iterate in the original order.
+	 *
+	 * @return the iterator
+	 */
+	@Override
+	public Iterator<Hit> iterator() {
+		return getIterator(false);
+	}
+
+	/**
+	 * Return the specified hit number, based on the order they
+	 * were originally found (not the sorted order).
+	 *
+	 * @param i
+	 *            index of the desired hit
+	 * @return the hit, or null if it's beyond the last hit
+	 */
+	public Hit getByOriginalOrder(int i) {
+		try {
+			ensureHitsRead(i + 1);
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Required hit hasn't been gathered;
+			// we will just return null.
+		}
+		if (i >= hits.size())
+			return null;
+		return hits.get(i);
 	}
 
 	/**
@@ -782,7 +870,7 @@ public class Hits implements Iterable<Hit> {
 		}
 		if (i >= hits.size())
 			return null;
-		return hits.get(i);
+		return hits.get(sortOrder == null ? i : sortOrder[i]);
 	}
 
 	/**
@@ -1082,8 +1170,35 @@ public class Hits implements Iterable<Hit> {
 			return;
 		}
 
+		List<ForwardIndex> fis = new ArrayList<ForwardIndex>();
+		for (String fieldPropName: fieldProps) {
+			fis.add(searcher.getForwardIndex(fieldPropName));
+		}
+
 		// Get the context
 		// Group hits per document
+		List<Hit> hitsInSameDoc = new ArrayList<Hit>();
+		int currentDoc = -1;
+		int index = 0;
+		if (contexts == null || contexts.length < hits.size()) {
+			contexts = new int[hits.size()][];
+		}
+		for (Hit hit: hits) {
+			if (hit.doc != currentDoc) {
+				if (currentDoc >= 0) {
+					findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
+
+					// Reset hits list for next doc
+					hitsInSameDoc.clear();
+				}
+				currentDoc = hit.doc; // start a new document
+			}
+			hitsInSameDoc.add(hit);
+			index++;
+		}
+		if (hitsInSameDoc.size() > 0)
+			findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
+
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
 		for (Hit key: hits) {
 			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
@@ -1092,11 +1207,6 @@ public class Hits implements Iterable<Hit> {
 				hitsPerDocument.put(key.doc, hitsInDoc);
 			}
 			hitsInDoc.add(key);
-		}
-
-		List<ForwardIndex> fis = new ArrayList<ForwardIndex>();
-		for (String fieldPropName: fieldProps) {
-			fis.add(searcher.getForwardIndex(fieldPropName));
 		}
 
 		for (List<Hit> l: hitsPerDocument.values()) {
@@ -1110,23 +1220,30 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Helper method for findContext(). Finds the hits in a single document and adds
+	 * context to our contexts array.
+	 *
+	 * @param hitsInSameDoc the hits in one document
+	 * @param firstHitIndex index of the first hit
+	 * @param fis forward indices needed for contexts
+	 */
+	private void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
+		// Find context for the hits in the current document
+		Hits hitsObj = new Hits(searcher, hitsInSameDoc);
+		hitsObj.getContextWords(desiredContextSize, fis);
+
+		// Copy the contexts from the temporary Hits object to this one
+		for (int i = 0; i < hitsInSameDoc.size(); i++) {
+			contexts[firstHitIndex + i] = hitsObj.getHitContext(i);
+		}
+	}
+
+	/**
 	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
 	 */
 	public synchronized void clearConcordances() {
 		// concordances = null;
 		kwics = null;
-	}
-
-	/**
-	 * Clear any cached context so new one will be retrieved when necessary.
-	 * @deprecated not used, and not the client's concern
-	 */
-	@Deprecated
-	public synchronized void clearContext() {
-		for (Hit hit: hits) {
-			hit.context = null;
-		}
-		contextFieldsPropName = null;
 	}
 
 	/**
@@ -1152,14 +1269,22 @@ public class Hits implements Iterable<Hit> {
 			QueryExecutionContext ctx) {
 		findContext(Arrays.asList(ctx.luceneField(false)));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
-		for (Hit hit: hits) {
-			int[] context = hit.context;
+		//for (Hit hit: hits) {
+		//Iterator<Hit> hitIt = hits.iterator();
+		//Iterator<int[]> contextIt = contexts.iterator();
+		for (int j = 0; j < hits.size(); j++) {
+			//Hit hit = hitIt.next();
+			int[] context = contexts[j]; //It.next();
 
 			// Count words
-			for (int i = 0; i < context.length; i++) {
-				if (i >= hit.contextHitStart && i < hit.contextRightStart)
+			int contextHitStart = context[CONTEXTS_HIT_START_INDEX];
+			int contextRightStart = context[CONTEXTS_RIGHT_START_INDEX];
+			int contextLength = context[CONTEXTS_LENGTH_INDEX];
+			int indexInContent = CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+			for (int i = 0; i < contextLength; i++, indexInContent++) {
+				if (i >= contextHitStart && i < contextRightStart)
 					continue; // don't count words in hit itself, just around
-				int w = context[i];
+				int w = context[indexInContent];
 				Integer n = coll.get(w);
 				if (n == null)
 					n = 1;
@@ -1260,7 +1385,13 @@ public class Hits implements Iterable<Hit> {
 		}
 		if (toIndex > hits.size())
 			toIndex = hits.size();
-		return hits.subList(fromIndex, toIndex);
+
+		// Make sure we get sublist in sort order
+		List<Hit> result = new ArrayList<Hit>();
+		for (int i = fromIndex; i < toIndex; i++) {
+			result.add(get(i));
+		}
+		return result;
 	}
 
 	/**
@@ -1362,9 +1493,9 @@ public class Hits implements Iterable<Hit> {
 			return;
 
 		// Save existing context so we can restore it afterwards
-		int[][] oldContext = null;
-		if (hits.size() > 0 && hits.get(0).context != null)
-			oldContext = getContextFromHits();
+		int[][] oldContexts = null;
+		if (hits.size() > 0 && contexts != null)
+			oldContexts = saveContexts();
 
 		// TODO: more efficient to get all contexts with one getContextWords() call!
 
@@ -1372,7 +1503,7 @@ public class Hits implements Iterable<Hit> {
 		int[][] punctContext = null;
 		if (punctForwardIndex != null) {
 			getContextWords(wordsAroundHit, Arrays.asList(punctForwardIndex));
-			punctContext = getContextFromHits();
+			punctContext = saveContexts();
 		}
 		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
 
@@ -1393,7 +1524,7 @@ public class Hits implements Iterable<Hit> {
 				attrFI[i] = e.getValue();
 				attrTerms[i] = attrFI[i].getTerms();
 				getContextWords(wordsAroundHit, Arrays.asList(attrFI[i]));
-				attrContext[i] = getContextFromHits();
+				attrContext[i] = saveContexts();
 				i++;
 			}
 		}
@@ -1412,9 +1543,14 @@ public class Hits implements Iterable<Hit> {
 			}
 			int currentPart = 0;
 			StringBuilder current = part[currentPart];
-			for (int j = 0; j < h.context.length; j++) {
+			int[] context = contexts[i];
+			int contextLength = context[CONTEXTS_LENGTH_INDEX];
+			int contextRightStart = context[CONTEXTS_RIGHT_START_INDEX];
+			int contextHitStart = context[CONTEXTS_HIT_START_INDEX];
+			int indexInContext = CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+			for (int j = 0; j < contextLength; j++, indexInContext++) {
 
-				if (j == h.contextRightStart) {
+				if (j == contextRightStart) {
 					currentPart = 2;
 					current = part[currentPart];
 				}
@@ -1428,10 +1564,10 @@ public class Hits implements Iterable<Hit> {
 						// between every word.
 						current.append(" ");
 					} else
-						current.append(punctTerms.get(punctContext[i][j]));
+						current.append(punctTerms.get(punctContext[i][indexInContext]));
 				}
 
-				if (currentPart == 0 && j == h.contextHitStart) {
+				if (currentPart == 0 && j == contextHitStart) {
 					currentPart = 1;
 					current = part[currentPart];
 				}
@@ -1444,13 +1580,13 @@ public class Hits implements Iterable<Hit> {
 								.append(attrName[k])
 								.append("=\"")
 								.append(StringUtil.escapeXmlChars(attrTerms[k]
-										.get(attrContext[k][i][j]))).append("\"");
+										.get(attrContext[k][i][indexInContext]))).append("\"");
 					}
 				}
 				current.append(">");
 
 				if (terms != null)
-					current.append(terms.get(h.context[j]));
+					current.append(terms.get(contexts[i][indexInContext]));
 
 				// End word tag
 				current.append("</w>");
@@ -1461,8 +1597,8 @@ public class Hits implements Iterable<Hit> {
 			conc.put(h, concordance);
 		}
 
-		if (oldContext != null) {
-			restoreContextInHits(oldContext);
+		if (oldContexts != null) {
+			restoreContexts(oldContexts);
 		}
 	}
 
@@ -1488,9 +1624,9 @@ public class Hits implements Iterable<Hit> {
 			return;
 
 		// Save existing context so we can restore it afterwards
-		int[][] oldContext = null;
-		if (hits.size() > 0 && hits.get(0).context != null)
-			oldContext = getContextFromHits();
+		int[][] oldContexts = null;
+		if (hits.size() > 0 && contexts != null)
+			oldContexts = saveContexts();
 
 		// TODO: more efficient to get all contexts with one getContextWords() call!
 
@@ -1498,7 +1634,7 @@ public class Hits implements Iterable<Hit> {
 		int[][] punctContext = null;
 		if (punctForwardIndex != null) {
 			getContextWords(wordsAroundHit, Arrays.asList(punctForwardIndex));
-			punctContext = getContextFromHits();
+			punctContext = saveContexts();
 		}
 		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
 
@@ -1519,7 +1655,7 @@ public class Hits implements Iterable<Hit> {
 				attrFI[i] = e.getValue();
 				attrTerms[i] = attrFI[i].getTerms();
 				getContextWords(wordsAroundHit, Arrays.asList(attrFI[i]));
-				attrContext[i] = getContextFromHits();
+				attrContext[i] = saveContexts();
 				i++;
 			}
 		}
@@ -1538,14 +1674,19 @@ public class Hits implements Iterable<Hit> {
 			}
 			int currentPart = 0;
 			List<String> current = part.get(currentPart);
-			for (int j = 0; j < h.context.length; j++) {
+			int[] context = contexts[i];
+			int contextLength = context[CONTEXTS_LENGTH_INDEX];
+			int contextRightStart = context[CONTEXTS_RIGHT_START_INDEX];
+			int contextHitStart = context[CONTEXTS_HIT_START_INDEX];
+			int indexInContext = CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+			for (int j = 0; j < contextLength; j++, indexInContext++) {
 
-				if (j == h.contextRightStart) {
+				if (j == contextRightStart) {
 					currentPart = 2;
 					current = part.get(currentPart);
 				}
 
-				if (currentPart == 0 && j == h.contextHitStart) {
+				if (currentPart == 0 && j == contextHitStart) {
 					currentPart = 1;
 					current = part.get(currentPart);
 				}
@@ -1557,18 +1698,18 @@ public class Hits implements Iterable<Hit> {
 					// between every word.
 					current.add(" ");
 				} else
-					current.add(punctTerms.get(punctContext[i][j]));
+					current.add(punctTerms.get(punctContext[i][indexInContext]));
 
 				// Add extra attributes (e.g. lemma, pos)
 				if (attrContext != null) {
 					for (int k = 0; k < attrContext.length; k++) {
-						current.add(attrTerms[k].get(attrContext[k][i][j]));
+						current.add(attrTerms[k].get(attrContext[k][i][indexInContext]));
 					}
 				}
 
 				// Add word
 				if (terms != null)
-					current.add(terms.get(h.context[j]));
+					current.add(terms.get(context[indexInContext]));
 				else
 					current.add(""); // weird, but make sure the numbers add up at the end
 
@@ -1583,8 +1724,8 @@ public class Hits implements Iterable<Hit> {
 			kwics.put(h, kwic);
 		}
 
-		if (oldContext != null) {
-			restoreContextInHits(oldContext);
+		if (oldContexts != null) {
+			restoreContexts(oldContexts);
 		}
 	}
 
@@ -1626,24 +1767,27 @@ public class Hits implements Iterable<Hit> {
 
 			// Build the actual concordances
 			Iterator<int[]> wordsIt = words.iterator();
-			int j = 0;
+			int hitNum = 0;
+			if (contexts == null || contexts.length < hits.size()) {
+				contexts = new int[hits.size()][];
+			}
 			for (Hit hit: hits) {
 				int[] theseWords = wordsIt.next();
 
 				// Put the concordance in the Hit object
-				int firstWordIndex = startsOfSnippets[j];
+				int firstWordIndex = startsOfSnippets[hitNum];
 
 				if (fiNumber == 0) {
 					// Allocate context array and set hit and right start and context length
-					hit.context = new int[theseWords.length * contextSources.size()];
-					hit.contextHitStart = hit.start - firstWordIndex;
-					hit.contextRightStart = hit.end - firstWordIndex;
-					hit.contextLength = theseWords.length;
+					contexts[hitNum] = new int[CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS + theseWords.length * contextSources.size()];
+					contexts[hitNum][CONTEXTS_HIT_START_INDEX] = hit.start - firstWordIndex;
+					contexts[hitNum][CONTEXTS_RIGHT_START_INDEX] = hit.end - firstWordIndex;
+					contexts[hitNum][CONTEXTS_LENGTH_INDEX] = theseWords.length;
 				}
 				// Copy the context we just retrieved into the context array
-				int start = fiNumber * theseWords.length;
-				System.arraycopy(theseWords, 0, hit.context, start, theseWords.length);
-				j++;
+				int start = fiNumber * theseWords.length + CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+				System.arraycopy(theseWords, 0, contexts[hitNum], start, theseWords.length);
+				hitNum++;
 			}
 
 			fiNumber++;
@@ -1658,14 +1802,12 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the context
 	 */
-	private int[][] getContextFromHits() {
-		int[][] context = new int[hits.size()][];
-		int i = 0;
-		for (Hit h: hits) {
-			context[i] = h.context;
-			i++;
+	private int[][] saveContexts() {
+		int[][] saved = new int[contexts.length][];
+		for (int i = 0; i < contexts.length; i++) {
+			saved[i] = Arrays.copyOf(contexts[i], contexts[i].length);
 		}
-		return context;
+		return saved;
 	}
 
 	/**
@@ -1673,13 +1815,17 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * NOTE: not synchronized because only ever called from synchronized methods!
 	 *
-	 * @param context the context to restore
+	 * @param saved the context to restore
 	 */
-	private void restoreContextInHits(int[][] context) {
-		int i = 0;
-		for (Hit h: hits) {
-			h.context = context[i];
-			i++;
+	private void restoreContexts(int[][] saved) {
+		if (contexts == null || contexts.length != saved.length) {
+			contexts = new int[saved.length][];
+		}
+		for (int i = 0; i < saved.length; i++) {
+			if (contexts[i] == null || contexts[i].length != saved[i].length) {
+				contexts[i] = new int[saved[i].length];
+			}
+			System.arraycopy(saved[i], 0, contexts, 0, saved[i].length);
 		}
 	}
 
@@ -1752,6 +1898,15 @@ public class Hits implements Iterable<Hit> {
 				hitsInDoc.add(hit);
 		}
 		return new Hits(searcher, hitsInDoc);
+	}
+
+	/**
+	 * Return the context(s) for the specified hit number
+	 * @param hitNumber which hit we want the context(s) for
+	 * @return the context(s)
+	 */
+	public int[] getHitContext(int hitNumber) {
+		return contexts[hitNumber];
 	}
 
 }

@@ -20,7 +20,7 @@ import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 
 /**
@@ -37,22 +37,22 @@ public class HitPropertyWordLeft extends HitProperty {
 
 	private Searcher searcher;
 
-	public HitPropertyWordLeft(Searcher searcher, String field, String property) {
-		this(searcher, field, property, searcher.isDefaultSearchCaseSensitive());
+	public HitPropertyWordLeft(Hits hits, String field, String property) {
+		this(hits, field, property, hits.getSearcher().isDefaultSearchCaseSensitive());
 	}
 
-	public HitPropertyWordLeft(Searcher searcher, String field) {
-		this(searcher, field, null, searcher.isDefaultSearchCaseSensitive());
+	public HitPropertyWordLeft(Hits hits, String field) {
+		this(hits, field, null, hits.getSearcher().isDefaultSearchCaseSensitive());
 	}
 
-	public HitPropertyWordLeft(Searcher searcher) {
-		this(searcher, searcher.getContentsFieldMainPropName(), searcher
+	public HitPropertyWordLeft(Hits hits) {
+		this(hits, hits.getSearcher().getContentsFieldMainPropName(), hits.getSearcher()
 				.isDefaultSearchCaseSensitive());
 	}
 
-	public HitPropertyWordLeft(Searcher searcher, String field, String property, boolean sensitive) {
-		super();
-		this.searcher = searcher;
+	public HitPropertyWordLeft(Hits hits, String field, String property, boolean sensitive) {
+		super(hits);
+		this.searcher = hits.getSearcher();
 		if (property == null || property.length() == 0)
 			this.fieldName = ComplexFieldUtil
 					.mainPropertyField(searcher.getIndexStructure(), field);
@@ -62,42 +62,47 @@ public class HitPropertyWordLeft extends HitProperty {
 		this.sensitive = sensitive;
 	}
 
-	public HitPropertyWordLeft(Searcher searcher, String field, boolean sensitive) {
-		this(searcher, field, null, sensitive);
+	public HitPropertyWordLeft(Hits hits, String field, boolean sensitive) {
+		this(hits, field, null, sensitive);
 	}
 
-	public HitPropertyWordLeft(Searcher searcher, boolean sensitive) {
-		this(searcher, searcher.getContentsFieldMainPropName(), sensitive);
+	public HitPropertyWordLeft(Hits hits, boolean sensitive) {
+		this(hits, hits.getSearcher().getContentsFieldMainPropName(), sensitive);
 	}
 
 	@Override
-	public HitPropValueContextWord get(Hit result) {
-		if (result.context == null) {
-			throw new RuntimeException(
-					"Context not available in hits objects; cannot sort/group on context");
-		}
+	public HitPropValueContextWord get(int hitNumber) {
+		int[] context = hits.getHitContext(hitNumber);
+		int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
+		//int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
+		int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
 
-		if (result.contextHitStart <= 0)
+		if (contextHitStart <= 0)
 			return new HitPropValueContextWord(searcher, fieldName, -1, sensitive);
-		int contextStart = result.contextLength * contextIndices.get(0);
-		return new HitPropValueContextWord(searcher, fieldName, result.context[contextStart
-				+ result.contextHitStart - 1], sensitive);
+		int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+		return new HitPropValueContextWord(searcher, fieldName, context[contextStart
+				+ contextHitStart - 1], sensitive);
 	}
 
 	@Override
-	public int compare(Object oa, Object ob) {
-		Hit a = (Hit) oa, b = (Hit) ob;
+	public int compare(Object i, Object j) {
+		int[] ca = hits.getHitContext((Integer)i);
+		int caHitStart = ca[Hits.CONTEXTS_HIT_START_INDEX];
+		int caLength = ca[Hits.CONTEXTS_LENGTH_INDEX];
+		int[] cb = hits.getHitContext((Integer)j);
+		int cbHitStart = cb[Hits.CONTEXTS_HIT_START_INDEX];
+		int cbLength = cb[Hits.CONTEXTS_LENGTH_INDEX];
 
-		if (a.contextHitStart <= 0)
-			return b.contextHitStart <= 0 ? 0 : -1;
-		if (b.contextHitStart <= 0)
+		if (caHitStart <= 0)
+			return cbHitStart <= 0 ? 0 : -1;
+		if (cbHitStart <= 0)
 			return 1;
 		// Compare one word to the left of the hit
 		int contextIndex = contextIndices.get(0);
 
 		return terms.compareSortPosition(
-				a.context[contextIndex * a.contextLength + a.contextHitStart - 1],
-				b.context[contextIndex * b.contextLength + b.contextHitStart - 1],
+				ca[contextIndex * caLength + caHitStart - 1 + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
+				cb[contextIndex * cbLength + cbHitStart - 1 + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
 				sensitive);
 	}
 

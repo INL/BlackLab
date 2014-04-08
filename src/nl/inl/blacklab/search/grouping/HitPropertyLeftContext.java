@@ -20,7 +20,7 @@ import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 
 /**
@@ -37,21 +37,21 @@ public class HitPropertyLeftContext extends HitProperty {
 
 	private Searcher searcher;
 
-	public HitPropertyLeftContext(Searcher searcher, String field, String property) {
-		this(searcher, field, property, searcher.isDefaultSearchCaseSensitive());
+	public HitPropertyLeftContext(Hits hits, String field, String property) {
+		this(hits, field, property, hits.getSearcher().isDefaultSearchCaseSensitive());
 	}
 
-	public HitPropertyLeftContext(Searcher searcher, String field) {
-		this(searcher, field, null, searcher.isDefaultSearchCaseSensitive());
+	public HitPropertyLeftContext(Hits hits, String field) {
+		this(hits, field, null, hits.getSearcher().isDefaultSearchCaseSensitive());
 	}
 
-	public HitPropertyLeftContext(Searcher searcher) {
-		this(searcher, searcher.getContentsFieldMainPropName(), searcher.isDefaultSearchCaseSensitive());
+	public HitPropertyLeftContext(Hits hits) {
+		this(hits, hits.getSearcher().getContentsFieldMainPropName(), hits.getSearcher().isDefaultSearchCaseSensitive());
 	}
 
-	public HitPropertyLeftContext(Searcher searcher, String field, String property, boolean sensitive) {
-		super();
-		this.searcher = searcher;
+	public HitPropertyLeftContext(Hits hits, String field, String property, boolean sensitive) {
+		super(hits);
+		this.searcher = hits.getSearcher();
 		if (property == null || property.length() == 0)
 			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
 		else
@@ -60,27 +60,28 @@ public class HitPropertyLeftContext extends HitProperty {
 		this.sensitive = sensitive;
 	}
 
-	public HitPropertyLeftContext(Searcher searcher, String field, boolean sensitive) {
-		this(searcher, field, null, sensitive);
+	public HitPropertyLeftContext(Hits hits, String field, boolean sensitive) {
+		this(hits, field, null, sensitive);
 	}
 
-	public HitPropertyLeftContext(Searcher searcher, boolean sensitive) {
-		this(searcher, searcher.getContentsFieldMainPropName(), sensitive);
+	public HitPropertyLeftContext(Hits hits, boolean sensitive) {
+		this(hits, hits.getSearcher().getContentsFieldMainPropName(), sensitive);
 	}
 
 	@Override
-	public HitPropValueContextWords get(Hit result) {
-		if (result.context == null) {
-			throw new RuntimeException("Context not available in hits objects; cannot sort/group on context");
-		}
+	public HitPropValueContextWords get(int hitNumber) {
+		int[] context = hits.getHitContext(hitNumber);
+		int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
+		int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
+		int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
 
 		// Copy the desired part of the context
-		int n = result.contextRightStart - result.contextHitStart;
+		int n = contextRightStart - contextHitStart;
 		if (n <= 0)
 			return new HitPropValueContextWords(searcher, fieldName, new int[0], sensitive);
 		int[] dest = new int[n];
-		int contextStart = result.contextLength * contextIndices.get(0);
-		System.arraycopy(result.context, contextStart + result.contextHitStart, dest, 0, n);
+		int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+		System.arraycopy(context, contextStart + contextHitStart, dest, 0, n);
 
 		// Reverse the order of the array, because we want to sort from right to left
 		for (int i = 0; i < n / 2; i++) {
@@ -94,16 +95,23 @@ public class HitPropertyLeftContext extends HitProperty {
 	}
 
 	@Override
-	public int compare(Object oa, Object ob) {
-		Hit a = (Hit) oa, b = (Hit) ob;
+	public int compare(Object i, Object j) {
+		//Hit a = hits.getByOriginalOrder((Integer)i);
+		//Hit b = hits.getByOriginalOrder((Integer)j);
+		int[] ca = hits.getHitContext((Integer)i);
+		int caHitStart = ca[Hits.CONTEXTS_HIT_START_INDEX];
+		int caLength = ca[Hits.CONTEXTS_LENGTH_INDEX];
+		int[] cb = hits.getHitContext((Integer)j);
+		int cbHitStart = cb[Hits.CONTEXTS_HIT_START_INDEX];
+		int cbLength = cb[Hits.CONTEXTS_LENGTH_INDEX];
 
 		// Compare the left context for these two hits, starting at the end
 		int contextIndex = contextIndices.get(0);
-		int ai = a.contextHitStart - 1;
-		int bi = b.contextHitStart - 1;
+		int ai = caHitStart - 1;
+		int bi = cbHitStart - 1;
 		while (ai >= 0 && bi >= 0) {
-			int cmp = terms.compareSortPosition(a.context[contextIndex * a.contextLength + ai],
-					b.context[contextIndex * b.contextLength + bi], sensitive);
+			int cmp = terms.compareSortPosition(ca[contextIndex * caLength + ai + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
+					cb[contextIndex * cbLength + bi + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS], sensitive);
 			if (cmp != 0)
 				return cmp;
 			ai--;

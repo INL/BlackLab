@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 
@@ -103,7 +102,8 @@ public class ResultsGrouper extends RandomAccessGroups {
 		}
 		contextField = hits.getContextFieldPropName();
 		Thread currentThread = Thread.currentThread();
-		for (Hit hit : hits) {
+		for (int i = 0; i < hits.size(); i++) {
+		//for (Hit hit : hits) {
 			if (currentThread.isInterrupted()) {
 				// Thread was interrupted. Don't throw exception because not
 				// all client programs use this feature and we shouldn't force
@@ -113,7 +113,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 				// queries.
 				return;
 			}
-			addHit(hit);
+			addHit(hits, i);
 		}
 
 		// If the group identities are context words, we should possibly merge
@@ -125,11 +125,13 @@ public class ResultsGrouper extends RandomAccessGroups {
 	/**
 	 * Add a hit to the appropriate group.
 	 *
-	 * @param hit
-	 *            the hit to add
+	 * @param hits
+	 *    the hits object this hit is in
+	 * @param originalHitIndex
+	 *    original (before sorting) index of the hit
 	 */
-	public void addHit(Hit hit) {
-		HitPropValue identity = getGroupIdentity(hit);
+	public void addHit(Hits hits, int originalHitIndex) {
+		HitPropValue identity = getGroupIdentity(originalHitIndex);
 		RandomAccessGroup group = groups.get(identity);
 		if (group == null) {
 			group = new RandomAccessGroup(searcher, identity, defaultConcField);
@@ -137,7 +139,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 			groups.put(identity, group);
 			groupsOrdered.add(group);
 		}
-		group.add(hit);
+		group.add(hits.getByOriginalOrder(originalHitIndex));
 		if (group.size() > largestGroupSize)
 			largestGroupSize = group.size();
 		totalHits++;

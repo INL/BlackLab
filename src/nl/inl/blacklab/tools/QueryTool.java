@@ -54,6 +54,7 @@ import nl.inl.blacklab.search.grouping.GroupPropertyIdentity;
 import nl.inl.blacklab.search.grouping.GroupPropertySize;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyDocumentId;
+import nl.inl.blacklab.search.grouping.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.search.grouping.HitPropertyHitText;
 import nl.inl.blacklab.search.grouping.HitPropertyLeftContext;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
@@ -93,7 +94,7 @@ public class QueryTool {
 	static boolean batchMode = false;
 
 	/** Our BlackLab Searcher object. */
-	private Searcher searcher;
+	Searcher searcher;
 
 	/** The hits that are the result of our query. */
 	private Hits hits = null;
@@ -286,6 +287,7 @@ public class QueryTool {
 			*/
 		}
 
+		@Override
 		public Query getIncludedFilterQuery() {
 			return includedFilterQuery;
 		}
@@ -827,9 +829,9 @@ public class QueryTool {
 			} else if (lcased.equals("struct") || lcased.equals("structure")) {
 				showIndexStructure();
 			} else if (lcased.startsWith("sort by ")) {
-				sortBy(lcased.substring(8));
+				sortBy(cmd.substring(8));
 			} else if (lcased.startsWith("sort ")) {
-				sortBy(lcased.substring(5));
+				sortBy(cmd.substring(5));
 			} else if (lcased.startsWith("group by ")) {
 				String[] parts = lcased.substring(9).split("\\s+", 2);
 				groupBy(parts[0], parts.length > 1 ? parts[1] : null);
@@ -1176,11 +1178,13 @@ public class QueryTool {
 			errprintln("Sorting collocations not supported");
 			break;
 		case GROUPS:
-			sortGroups(sortBy);
+			sortGroups(sortBy.toLowerCase());
 			break;
 		default:
 			String[] parts = sortBy.split("\\s+", 2);
-			sortHits(parts[0], parts.length > 1 ? parts[1] : null);
+			String sortByPart = parts[0];
+			String propPart = parts.length > 1 ? parts[1] : null;
+			sortHits(sortByPart, propPart);
 			break;
 		}
 	}
@@ -1210,24 +1214,27 @@ public class QueryTool {
 		Hits hitsToSort = getCurrentHitSet();
 
 		HitProperty crit = null;
-		if (sortBy.equals("doc"))
-			crit = new HitPropertyDocumentId();
+		if (sortBy.equalsIgnoreCase("doc"))
+			crit = new HitPropertyDocumentId(hitsToSort);
 		else {
-			if (sortBy.equals("match") || sortBy.equals("word"))
-				crit = new HitPropertyHitText(searcher, CONTENTS_FIELD, property);
-			else if (sortBy.startsWith("left"))
-				crit = new HitPropertyLeftContext(searcher, CONTENTS_FIELD, property);
-			else if (sortBy.startsWith("right"))
-				crit = new HitPropertyRightContext(searcher, CONTENTS_FIELD, property);
-			else if (sortBy.equals("test")) {
-				HitProperty p1 = new HitPropertyHitText(searcher, CONTENTS_FIELD, "lemma");
-				HitProperty p2 = new HitPropertyHitText(searcher, CONTENTS_FIELD, "type");
+			if (sortBy.equalsIgnoreCase("match") || sortBy.equalsIgnoreCase("word"))
+				crit = new HitPropertyHitText(hitsToSort, CONTENTS_FIELD, property);
+			else if (sortBy.equalsIgnoreCase("left"))
+				crit = new HitPropertyLeftContext(hitsToSort, CONTENTS_FIELD, property);
+			else if (sortBy.equalsIgnoreCase("right"))
+				crit = new HitPropertyRightContext(hitsToSort, CONTENTS_FIELD, property);
+			else if (sortBy.equalsIgnoreCase("lempos")) {
+				HitProperty p1 = new HitPropertyHitText(hitsToSort, CONTENTS_FIELD, "lemma");
+				HitProperty p2 = new HitPropertyHitText(hitsToSort, CONTENTS_FIELD, "pos");
 				crit = new HitPropertyMultiple(p1, p2);
+			} else if (searcher.getIndexStructure().getMetadataFields().contains(sortBy)) {
+				crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
 			}
+
 		}
 		if (crit == null) {
 			errprintln("Invalid hit sort criterium: " + sortBy
-					+ " (valid are: match, left, right)");
+					+ " (valid are: match, left, right, doc, <metadatafield>)");
 		} else {
 			hitsToSort.sort(crit);
 			firstResult = 0;
@@ -1286,14 +1293,14 @@ public class QueryTool {
 		// Group results
 		HitProperty crit = null;
 		if (groupBy.equals("word") || groupBy.equals("match"))
-			crit = new HitPropertyHitText(searcher, CONTENTS_FIELD, property);
+			crit = new HitPropertyHitText(hits, CONTENTS_FIELD, property);
 		else if (groupBy.startsWith("left"))
-			crit = new HitPropertyWordLeft(searcher, CONTENTS_FIELD, property);
+			crit = new HitPropertyWordLeft(hits, CONTENTS_FIELD, property);
 		else if (groupBy.startsWith("right"))
-			crit = new HitPropertyWordRight(searcher, CONTENTS_FIELD, property);
+			crit = new HitPropertyWordRight(hits, CONTENTS_FIELD, property);
 		else if (groupBy.equals("test")) {
-			HitProperty p1 = new HitPropertyHitText(searcher, CONTENTS_FIELD, "lemma");
-			HitProperty p2 = new HitPropertyHitText(searcher, CONTENTS_FIELD, "type");
+			HitProperty p1 = new HitPropertyHitText(hits, CONTENTS_FIELD, "lemma");
+			HitProperty p2 = new HitPropertyHitText(hits, CONTENTS_FIELD, "type");
 			crit = new HitPropertyMultiple(p1, p2);
 		}
 		if (crit == null) {

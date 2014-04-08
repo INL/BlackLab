@@ -106,17 +106,17 @@ public class Hit implements Comparable<Hit>, Cloneable {
 	/** Start of this hit's span (in word positions) */
 	public int start;
 
-	/** Context information */
-	public int[] context;
-
-	/** Where in the context array the hit text starts */
-	public int contextHitStart;
-
-	/** Where in the context array the right context starts */
-	public int contextRightStart;
-
-	/** How many words one context takes up (context[] may contain multiple contexts) */
-	public int contextLength;
+//	/** Context information */
+//	public int[] context;
+//
+//	/** Where in the context array the hit text starts */
+//	public int contextHitStart;
+//
+//	/** Where in the context array the right context starts */
+//	public int contextRightStart;
+//
+//	/** How many words one context takes up (context[] may contain multiple contexts) */
+//	public int contextLength;
 
 	/**
 	 * Construct a hit object
@@ -147,10 +147,10 @@ public class Hit implements Comparable<Hit>, Cloneable {
 	@Override
 	protected Object clone() {
 		Hit hit = new Hit(doc, start, end);
-		hit.context = context;
-		hit.contextHitStart = contextHitStart;
-		hit.contextRightStart = contextRightStart;
-		hit.contextLength = contextLength;
+//		hit.context = context;
+//		hit.contextHitStart = contextHitStart;
+//		hit.contextRightStart = contextRightStart;
+//		hit.contextLength = contextLength;
 		return hit;
 	}
 

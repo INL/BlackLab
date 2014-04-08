@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-import nl.inl.blacklab.search.Hit;
 
 /**
  * A number of groups of hits, grouped on the basis of a list of criteria.
@@ -38,8 +37,8 @@ public abstract class GroupsAbstract implements Groups {
 		this.criteria = criteria;
 	}
 
-	protected HitPropValue getGroupIdentity(Hit result) {
-		return criteria.get(result);
+	protected HitPropValue getGroupIdentity(int index) {
+		return criteria.get(index);
 	}
 
 	@Override

@@ -34,7 +34,7 @@ public class TestResultsGrouper {
 	public void testGrouper() {
 		SpanQuery query = new SpanQueryStub(doc, start, end);
 		Hits hits = new Hits((Searcher)null, "contents%word", query);
-		HitProperty crit = new HitPropertyDocumentId();
+		HitProperty crit = new HitPropertyDocumentId(hits);
 		ResultsGrouper grouper = new ResultsGrouper(hits, crit);
 		Map<HitPropValue, RandomAccessGroup> groups = grouper.getGroupMap();
 

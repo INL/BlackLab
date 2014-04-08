@@ -38,6 +38,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	 *            the desired criteria
 	 */
 	public HitPropertyMultiple(HitProperty... criteria) {
+		super(criteria[0].hits);
 		this.criteria = new ArrayList<HitProperty>(Arrays.asList(criteria));
 
 		determineContextNeeded();
@@ -122,18 +123,20 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	}
 
 	@Override
-	public HitPropValueMultiple get(Hit result) {
+	public HitPropValueMultiple get(int hitNumber) {
 		HitPropValue[] rv = new HitPropValue[criteria.size()];
 		int i = 0;
 		for (HitProperty crit : criteria) {
-			rv[i] = crit.get(result);
+			rv[i] = crit.get(hitNumber);
 			i++;
 		}
 		return new HitPropValueMultiple(rv);
 	}
 
 	@Override
-	public int compare(Object a, Object b) {
+	public int compare(Object i, Object j) {
+		Hit a = hits.getByOriginalOrder((Integer)i);
+		Hit b = hits.getByOriginalOrder((Integer)j);
 		for (HitProperty crit : criteria) {
 			int cmp = crit.compare(a, b);
 			if (cmp != 0)

@@ -547,7 +547,7 @@ public class Indexer {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private void indexInputStream(String name, InputStream is, String glob, boolean recurseArchives) {
+	void indexInputStream(String name, InputStream is, String glob, boolean recurseArchives) {
 		try {
 			if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
 				indexTarGzip(name, is, glob, recurseArchives);

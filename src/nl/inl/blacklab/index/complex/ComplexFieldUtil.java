@@ -135,8 +135,9 @@ public class ComplexFieldUtil {
 			return BookkeepFieldType.FORWARD_INDEX_ID;
 		case 2:
 			return BookkeepFieldType.LENGTH_TOKENS;
+		default:
+			throw new RuntimeException();
 		}
-		throw new RuntimeException();
 	}
 
 	public static String contentIdField(String fieldName) {

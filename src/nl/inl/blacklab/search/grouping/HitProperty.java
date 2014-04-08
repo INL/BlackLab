@@ -19,19 +19,23 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Hits;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public abstract class HitProperty implements Comparator<Object> {
 
-	public HitProperty() {
+	/** The Hits object we're looking at */
+	protected Hits hits;
+
+	public HitProperty(Hits hits) {
+		this.hits = hits;
 		contextIndices = new ArrayList<Integer>();
 		contextIndices.add(0);
 	}
 
-	public abstract HitPropValue get(Hit result);
+	public abstract HitPropValue get(int result);
 
 	/**
 	 * Compares two hits on this property.

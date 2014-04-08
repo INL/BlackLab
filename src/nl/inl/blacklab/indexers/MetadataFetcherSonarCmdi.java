@@ -51,7 +51,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 	private String metadataPathInZip;
 
-	private DocIndexerXmlHandlers ourDocIndexer;
+	DocIndexerXmlHandlers ourDocIndexer;
 
 	public MetadataFetcherSonarCmdi(DocIndexer docIndexer) {
 		super(docIndexer);

@@ -177,6 +177,9 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 				case '"':
 					escapeBuilder.append("&quot;");
 					break;
+				default:
+					// Not possible
+					throw new RuntimeException();
 				}
 				start = i + 1;
 			}

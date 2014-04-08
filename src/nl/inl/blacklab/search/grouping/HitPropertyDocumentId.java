@@ -16,20 +16,22 @@
 package nl.inl.blacklab.search.grouping;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Hits;
 
 /**
  * A hit property for grouping per document.
  */
 public class HitPropertyDocumentId extends HitProperty {
-	@Override
-	public HitPropValueInt get(Hit result) {
-		return new HitPropValueInt(result.doc);
+
+	public HitPropertyDocumentId(Hits hits) {
+		super(hits);
 	}
 
-//	@Override
-//	public String getHumanReadable(Hit result) {
-//		return Integer.toString(result.doc);
-//	}
+	@Override
+	public HitPropValueInt get(int hitNumber) {
+		Hit result = hits.getByOriginalOrder(hitNumber);
+		return new HitPropValueInt(result.doc);
+	}
 
 	@Override
 	public String getName() {
@@ -37,8 +39,10 @@ public class HitPropertyDocumentId extends HitProperty {
 	}
 
 	@Override
-	public int compare(Object a, Object b) {
-		return ((Hit)a).doc - ((Hit)b).doc;
+	public int compare(Object i, Object j) {
+		Hit a = hits.getByOriginalOrder((Integer)i);
+		Hit b = hits.getByOriginalOrder((Integer)j);
+		return a.doc - b.doc;
 	}
 
 }
