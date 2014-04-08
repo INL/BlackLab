@@ -1341,18 +1341,15 @@ public class Hits implements Iterable<Hit> {
 
 	/**
 	 * Retrieves the concordance information (left, hit and right context) for a number of hits in
-	 * the same document from the ContentStore.
-	 *
-	 * NOTE: the slowest part of this is getting the character offsets (retrieving large term
-	 * vectors takes time; subsequent hits from the same document are significantly faster,
-	 * presumably because of caching)
+	 * the same document from the Forward Index.
 	 *
 	 * @param forwardIndex
 	 *    Forward index for the words
 	 * @param punctForwardIndex
 	 *    Forward index for the punctuation
 	 * @param attrForwardIndices
-	 *    Forward indices for the attributes, or null if none
+	 *    Forward indices for the XML attributes (i.e. lemma and pos, or other properties you've indexed),
+	 *    or null if none
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
 	 * @param conc
@@ -1472,10 +1469,6 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Retrieves the KWIC information (KeyWord In Context: left, hit and right context) for
 	 * a number of hits in the same document from the ContentStore.
-	 *
-	 * NOTE: the slowest part of this is getting the character offsets (retrieving large term
-	 * vectors takes time; subsequent hits from the same document are significantly faster,
-	 * presumably because of caching)
 	 *
 	 * @param forwardIndex
 	 *    Forward index for the words
