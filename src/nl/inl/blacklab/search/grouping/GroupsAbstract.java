@@ -30,7 +30,7 @@ package nl.inl.blacklab.search.grouping;
  * implementation if you can (that is, if your results are already ordered by the grouping you wish
  * to apply, such as when grouping on document), as it is faster and uses less memory.
  */
-public abstract class GroupsAbstract implements Groups {
+abstract class GroupsAbstract implements Groups {
 	protected HitProperty criteria;
 
 	public GroupsAbstract(HitProperty criteria) {

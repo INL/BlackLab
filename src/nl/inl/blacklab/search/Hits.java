@@ -29,8 +29,11 @@ import java.util.TreeSet;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
+import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.util.StringUtil;
@@ -183,6 +186,39 @@ public class Hits implements Iterable<Hit> {
 	private int currentContextSize;
 
 	/**
+	 * Construct a Hits object from an existing Hits object.
+	 *
+	 * The same hits list is reused. Context and sort order are
+	 * not copied. All other fields are.
+	 *
+	 * @param copyFrom the Hits object to copy
+	 */
+	public Hits(Hits copyFrom) {
+		try {
+			copyFrom.ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// (should be detected by the client)
+		}
+		searcher = copyFrom.searcher;
+		hits = copyFrom.hits;
+		kwics = copyFrom.kwics;
+		concordanceFieldName = copyFrom.concordanceFieldName;
+		sourceSpansFullyRead = copyFrom.sourceSpansFullyRead;
+		sourceSpans = copyFrom.sourceSpans;
+		maxHitsToRetrieve = copyFrom.maxHitsToRetrieve;
+		maxHitsToCount = copyFrom.maxHitsToCount;
+		maxHitsRetrieved = copyFrom.maxHitsRetrieved;
+		maxHitsCounted = copyFrom.maxHitsCounted;
+		hitsCounted = copyFrom.hitsCounted;
+		docsRetrieved = copyFrom.docsRetrieved;
+		docsCounted = copyFrom.docsCounted;
+		previousHitDoc = copyFrom.previousHitDoc;
+		desiredContextSize = copyFrom.desiredContextSize;
+
+		currentContextSize = -1; // context is not copied
+	}
+
+	/**
 	 * Construct an empty Hits object
 	 *
 	 * @param searcher
@@ -194,6 +230,8 @@ public class Hits implements Iterable<Hit> {
 
 	/**
 	 * Make a wrapper Hits object for a list of Hit objects.
+	 *
+	 * Does not copy the list, but reuses it.
 	 *
 	 * @param searcher
 	 *            the searcher object
@@ -560,6 +598,80 @@ public class Hits implements Iterable<Hit> {
 				sortOrder[i] = sortOrder[n - i - 1];
 			}
 		}
+	}
+
+	/**
+	 * Return a new Hits object with these hits sorted by the given property.
+	 *
+	 * This keeps the existing sort (or lack of one) intact and allows you to cache
+	 * different sorts of the same resultset. The hits themselves are reused between
+	 * the two Hits instances, so not too much additional memory is used.
+	 *
+	 * @param sortProp
+	 *            the hit property to sort on
+	 * @param reverseSort
+	 *            if true, sort in descending order
+	 * @param sensitive whether to sort case-sensitively or not
+	 * @return a new Hits object with the same hits, sorted in the specified way
+	 */
+	public Hits sortedBy(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+		Hits result = new Hits(this);
+		result.sort(sortProp, reverseSort, sensitive);
+		return result;
+	}
+
+	/**
+	 * Return a new Hits object with these hits sorted by the given property.
+	 *
+	 * This keeps the existing sort (or lack of one) intact and allows you to cache
+	 * different sorts of the same resultset. The hits themselves are reused between
+	 * the two Hits instances, so not too much additional memory is used.
+	 *
+	 * @param sortProp
+	 *            the hit property to sort on
+	 * @param reverseSort
+	 *            if true, sort in descending order
+	 * @return a new Hits object with the same hits, sorted in the specified way
+	 */
+	public Hits sortedBy(final HitProperty sortProp, boolean reverseSort) {
+		return sortedBy(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	/**
+	 * Return a new Hits object with these hits sorted by the given property.
+	 *
+	 * This keeps the existing sort (or lack of one) intact and allows you to cache
+	 * different sorts of the same resultset. The hits themselves are reused between
+	 * the two Hits instances, so not too much additional memory is used.
+	 *
+	 * @param sortProp
+	 *            the hit property to sort on
+	 * @return a new Hits object with the same hits, sorted in the specified way
+	 */
+	public Hits sortedBy(final HitProperty sortProp) {
+		return sortedBy(sortProp, false, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	/**
+	 * Group these hits by a criterium (or several criteria).
+	 *
+	 * @param criteria
+	 *            the hit property to group on
+	 * @return a HitGroups object representing the grouped hits
+	 */
+	@SuppressWarnings("deprecation") // ResultsGrouper constructor will be made package-private eventually
+	public HitGroups groupedBy(final HitProperty criteria) {
+		return new ResultsGrouper(this, criteria);
+	}
+
+	/**
+	 * Return a per-document view of these hits.
+	 *
+	 * @return the per-document view.
+	 */
+	@SuppressWarnings("deprecation") // DocResults constructor will be made package-private eventually
+	public DocResults perDocResults() {
+		return new DocResults(searcher, this);
 	}
 
 	/**
@@ -1409,6 +1521,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param windowSize size of the window
 	 * @return the window
 	 */
+	@SuppressWarnings("deprecation") // we'll make it package-private instead of removing the method
 	public HitsWindow window(int first, int windowSize) {
 		return new HitsWindow(this, first, windowSize);
 	}
@@ -1498,6 +1611,7 @@ public class Hits implements Iterable<Hit> {
 			oldContexts = saveContexts();
 
 		// TODO: more efficient to get all contexts with one getContextWords() call!
+		//    Also, don't overwrite 'contexts' but retrieve these in separate local variable.
 
 		// Get punctuation context
 		int[][] punctContext = null;

@@ -39,13 +39,18 @@ public class HitsWindow extends Hits {
 	/**
 	 * Construct a HitsWindow object.
 	 *
+	 * NOTE: this method will be made package-private in a future release.
+	 * Use Hits.window() to construct a HitsWindow instead.
+	 *
 	 * @param source
 	 *            the larger Hits object we would like a window into
 	 * @param first
 	 *            the first hit in our window
 	 * @param windowSize
 	 *            the size of our window
+	 * @deprecated use Hits.window(first, windowSize).
 	 */
+	@Deprecated
 	public HitsWindow(Hits source, int first, int windowSize) {
 		super(source.searcher, source.concordanceFieldName);
 		this.source = source;

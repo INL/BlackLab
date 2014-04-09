@@ -15,10 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import nl.inl.blacklab.search.Searcher;
 
 /**
@@ -27,82 +23,14 @@ import nl.inl.blacklab.search.Searcher;
  * Unlike its base class, this class also allows random access to the groups, and each group
  * provides random access to the hits. Note that this means that all hits found must be retrieved,
  * which may be unfeasible for large results sets.
+ *
+ * @deprecated renamed to HitGroups
  */
-public abstract class RandomAccessGroups extends GroupsAbstract {
-	Searcher searcher;
+@Deprecated
+public abstract class RandomAccessGroups extends HitGroups {
 
 	public RandomAccessGroups(Searcher searcher, HitProperty groupCriteria) {
-		super(groupCriteria);
-
-		this.searcher = searcher;
+		super(searcher, groupCriteria);
 	}
 
-	public abstract Map<HitPropValue, RandomAccessGroup> getGroupMap();
-
-	public abstract List<RandomAccessGroup> getGroups();
-
-	/**
-	 * Sort groups by some property.
-	 * @param prop the property to sort on
-	 */
-	public void sortGroups(GroupProperty prop) {
-		sortGroups(prop, false);
-	}
-
-	/**
-	 * Sort groups by some property, ascending or descending.
-	 * @param prop the property to sort on
-	 * @param sortReverse if true, reverse the natural sort of the specified property.
-	 */
-	public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
-
-	public RandomAccessGroup getGroup(HitPropValue identity) {
-		return getGroupMap().get(identity);
-	}
-
-	Iterator<RandomAccessGroup> currentIt;
-
-	@Override
-	public Iterator<Group> iterator() {
-		currentIt = getGroups().iterator();
-		return new Iterator<Group>() {
-
-			@Override
-			public boolean hasNext() {
-				return currentIt.hasNext();
-			}
-
-			@Override
-			public Group next() {
-				return currentIt.next();
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
-	}
-
-	/**
-	 * Get the total number of hits
-	 *
-	 * @return the number of hits
-	 */
-	public abstract int getTotalResults();
-
-	/**
-	 * Return the size of the largest group
-	 *
-	 * @return size of the largest group
-	 */
-	public abstract int getLargestGroupSize();
-
-	/**
-	 * Return the number of groups
-	 *
-	 * @return number of groups
-	 */
-	public abstract int numberOfGroups();
 }

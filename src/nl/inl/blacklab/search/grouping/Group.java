@@ -23,7 +23,7 @@ import org.apache.lucene.search.spans.Spans;
  * You can only iterate over the Hit objects. The subclass RandomAccessGroup does allow random
  * access to the hits.
  */
-public abstract class Group {
+abstract class Group {
 	protected HitPropValue groupIdentity;
 
 	public Group(HitPropValue groupIdentity) {

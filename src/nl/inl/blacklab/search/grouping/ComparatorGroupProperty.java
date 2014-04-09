@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.grouping;
 import java.text.Collator;
 import java.util.Comparator;
 
-public class ComparatorGroupProperty implements Comparator<Group> {
+class ComparatorGroupProperty implements Comparator<Group> {
 	private GroupProperty prop;
 
 	Collator collator;

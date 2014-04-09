@@ -35,16 +35,16 @@ import org.apache.lucene.search.spans.SpanQuery;
  * them and put each of them in a group. This takes more memory and time than if the spans to be
  * grouped are sequential (in which case you should use ResultsGrouperSequential).
  */
-public class ResultsGrouper extends RandomAccessGroups {
+public class ResultsGrouper extends HitGroups {
 	/**
 	 * The groups.
 	 */
-	Map<HitPropValue, RandomAccessGroup> groups = new HashMap<HitPropValue, RandomAccessGroup>();
+	Map<HitPropValue, HitGroup> groups = new HashMap<HitPropValue, HitGroup>();
 
 	/**
 	 * The groups, in sorted order.
 	 */
-	List<RandomAccessGroup> groupsOrdered = new ArrayList<RandomAccessGroup>();
+	List<HitGroup> groupsOrdered = new ArrayList<HitGroup>();
 
 	/**
 	 * Default field to make concordances from.
@@ -88,11 +88,16 @@ public class ResultsGrouper extends RandomAccessGroups {
 	/**
 	 * Construct a ResultsGrouper object, by grouping the supplied hits.
 	 *
+	 * NOTE: this will be made package-private in a future release.
+	 * Use Hits.groupedBy(criteria) instead.
+	 *
 	 * @param hits
 	 *            the hits to group
 	 * @param criteria
 	 *            the criteria to group on
+	 * @deprecated use Hits.groupedBy(criteria)
 	 */
+	@Deprecated
 	public ResultsGrouper(Hits hits, HitProperty criteria) {
 		super(hits.getSearcher(), criteria);
 		defaultConcField = hits.getConcordanceFieldName();
@@ -125,16 +130,20 @@ public class ResultsGrouper extends RandomAccessGroups {
 	/**
 	 * Add a hit to the appropriate group.
 	 *
+	 * NOTE: will be made private in a future release
+	 *
 	 * @param hits
 	 *    the hits object this hit is in
 	 * @param originalHitIndex
 	 *    original (before sorting) index of the hit
+	 * @deprecated use Hits.groupedBy instead of adding hits one by one.
 	 */
+	@Deprecated
 	public void addHit(Hits hits, int originalHitIndex) {
 		HitPropValue identity = getGroupIdentity(originalHitIndex);
-		RandomAccessGroup group = groups.get(identity);
+		HitGroup group = groups.get(identity);
 		if (group == null) {
-			group = new RandomAccessGroup(searcher, identity, defaultConcField);
+			group = new HitGroup(searcher, identity, defaultConcField);
 			group.setContextField(contextField);
 			groups.put(identity, group);
 			groupsOrdered.add(group);
@@ -161,7 +170,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 * @return a map of groups indexed by group property
 	 */
 	@Override
-	public Map<HitPropValue, RandomAccessGroup> getGroupMap() {
+	public Map<HitPropValue, HitGroup> getGroupMap() {
 		return Collections.unmodifiableMap(groups);
 	}
 
@@ -171,7 +180,7 @@ public class ResultsGrouper extends RandomAccessGroups {
 	 * @return the list of groups
 	 */
 	@Override
-	public List<RandomAccessGroup> getGroups() {
+	public List<HitGroup> getGroups() {
 		return Collections.unmodifiableList(groupsOrdered);
 	}
 

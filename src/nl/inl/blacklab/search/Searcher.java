@@ -38,6 +38,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
@@ -1601,6 +1602,16 @@ public class Searcher {
 
 	public Analyzer getAnalyzer() {
 		return analyzer;
+	}
+
+	/**
+	 * Perform a document query only (no hits)
+	 * @param documentFilterQuery the document-level query
+	 * @return the matching documents
+	 */
+	@SuppressWarnings("deprecation") // DocResults constructor will be made package-private eventually
+	public DocResults queryDocuments(Query documentFilterQuery) {
+		return new DocResults(this, documentFilterQuery);
 	}
 
 }

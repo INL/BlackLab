@@ -22,12 +22,12 @@ package nl.inl.blacklab.search.grouping;
 public class GroupPropertySize extends GroupProperty {
 	@Override
 	public HitPropValueInt get(Group result) {
-		return new HitPropValueInt(((RandomAccessGroup)result).size());
+		return new HitPropValueInt(((HitGroup)result).size());
 	}
 
 	@Override
 	public int compare(Group a, Group b) {
-		return ((RandomAccessGroup)a).size() - ((RandomAccessGroup)b).size();
+		return ((HitGroup)a).size() - ((HitGroup)b).size();
 	}
 
 	@Override

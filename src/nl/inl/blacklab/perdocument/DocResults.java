@@ -85,6 +85,13 @@ public class DocResults implements Iterable<DocResult> {
 		return sourceHits == null || !sourceHitsIterator.hasNext();
 	}
 
+	/**
+	 * Construct per-document results objects from a Hits object
+	 * @param searcher search object
+	 * @param hits the hits to view per-document
+	 * @deprecated use Hits.perDocResults()
+	 */
+	@Deprecated
 	public DocResults(Searcher searcher, Hits hits) {
 		this.searcher = searcher;
 		try {
@@ -95,11 +102,19 @@ public class DocResults implements Iterable<DocResult> {
 		}
 	}
 
+	/**
+	 *
+	 * @param searcher
+	 * @param field
+	 * @param query
+	 * @deprecated use Hits.perDocResults()
+	 */
+	@Deprecated
 	public DocResults(Searcher searcher, String field, SpanQuery query) {
 		this(searcher, new Hits(searcher, field, query));
 	}
 
-	public DocResults(Searcher searcher, Scorer sc) {
+	DocResults(Searcher searcher, Scorer sc) {
 		this.searcher = searcher;
 		if (sc == null)
 			return; // no matches, empty result set
@@ -124,11 +139,18 @@ public class DocResults implements Iterable<DocResult> {
 		}
 	}
 
+	/**
+	 * Find documents whose metadata matches the specified query
+	 * @param searcher searcher object
+	 * @param query metadata query
+	 * @deprecated use Searcher.queryDocuments()
+	 */
+	@Deprecated
 	public DocResults(Searcher searcher, Query query) {
 		this(searcher, searcher.findDocScores(query));
 	}
 
-	public DocResults(Searcher searcher) {
+	DocResults(Searcher searcher) {
 		this.searcher = searcher;
 	}
 
@@ -395,6 +417,16 @@ public class DocResults implements Iterable<DocResult> {
 		if (i >= results.size())
 			return null;
 		return results.get(i);
+	}
+
+	/**
+	 * Group these results by the specified document property
+	 * @param docProp the document property to group on (i.e. number of hits in doc, value of metadata field, etc.)
+	 * @return the grouped results
+	 */
+	@SuppressWarnings("deprecation") // DocGroups constructor will be made package private eventually
+	public DocGroups groupedBy(DocProperty docProp) {
+		return new DocGroups(this, docProp);
 	}
 
 }

@@ -35,12 +35,12 @@ public class TestResultsGrouper {
 		SpanQuery query = new SpanQueryStub(doc, start, end);
 		Hits hits = new Hits((Searcher)null, "contents%word", query);
 		HitProperty crit = new HitPropertyDocumentId(hits);
-		ResultsGrouper grouper = new ResultsGrouper(hits, crit);
-		Map<HitPropValue, RandomAccessGroup> groups = grouper.getGroupMap();
+		HitGroups grouper = hits.groupedBy(crit);
+		Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();
 
 		Assert.assertEquals(3, groups.size());
 		HitPropValueInt one = new HitPropValueInt(1);
-		RandomAccessGroup group1 = groups.get(one);
+		HitGroup group1 = groups.get(one);
 		Assert.assertEquals(one, group1.getIdentity());
 		Assert.assertEquals(3, group1.size());
 		Assert.assertEquals(1, group1.getHits().get(0).doc);

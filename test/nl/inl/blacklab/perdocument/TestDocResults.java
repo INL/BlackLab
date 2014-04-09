@@ -31,9 +31,9 @@ public class TestDocResults {
 		int[] aEnd = new int[] { 2, 3, 4, 5, 6 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("deprecation") // it's ok, we're professionals (don't try this at home though)
 		Hits hits = new Hits(null, null, a);
-		DocResults drs = new DocResults(null, hits);
+		DocResults drs = hits.perDocResults();
 
 		int[] expDoc = new int[] {1, 2, 3};
 		int[] expHits = new int[] {2, 1, 2};

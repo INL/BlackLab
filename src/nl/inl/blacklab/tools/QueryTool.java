@@ -52,6 +52,8 @@ import nl.inl.blacklab.search.TokenFrequencyList;
 import nl.inl.blacklab.search.grouping.GroupProperty;
 import nl.inl.blacklab.search.grouping.GroupPropertyIdentity;
 import nl.inl.blacklab.search.grouping.GroupPropertySize;
+import nl.inl.blacklab.search.grouping.HitGroup;
+import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyDocumentId;
 import nl.inl.blacklab.search.grouping.HitPropertyDocumentStoredField;
@@ -61,8 +63,6 @@ import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.grouping.HitPropertyRightContext;
 import nl.inl.blacklab.search.grouping.HitPropertyWordLeft;
 import nl.inl.blacklab.search.grouping.HitPropertyWordRight;
-import nl.inl.blacklab.search.grouping.RandomAccessGroup;
-import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.util.FileUtil;
 import nl.inl.util.IoUtil;
 import nl.inl.util.LogUtil;
@@ -100,7 +100,7 @@ public class QueryTool {
 	private Hits hits = null;
 
 	/** The groups, or null if we haven't grouped our results. */
-	private ResultsGrouper groups = null;
+	private HitGroups groups = null;
 
 	/** The collocations, or null if we're not looking at collocations. */
 	private TokenFrequencyList collocations = null;
@@ -1307,7 +1307,7 @@ public class QueryTool {
 			errprintln("Unknown criterium: " + groupBy);
 			return;
 		}
-		groups = new ResultsGrouper(hits, crit);
+		groups = hits.groupedBy(crit);
 		showSetting = ShowSetting.GROUPS;
 		sortGroups("size");
 		if (property == null)
@@ -1422,10 +1422,10 @@ public class QueryTool {
 	 * Show the current page of group results.
 	 */
 	private void showGroupsPage() {
-		List<RandomAccessGroup> listGroups = groups.getGroups();
+		List<HitGroup> listGroups = groups.getGroups();
 		int i;
 		for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
-			RandomAccessGroup g = listGroups.get(i);
+			HitGroup g = listGroups.get(i);
 			outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.getIdentity().toString()));
 		}
 
@@ -1557,7 +1557,7 @@ public class QueryTool {
 	private Hits getCurrentHitSet() {
 		Hits hitsToShow = hits;
 		if (showWhichGroup >= 0) {
-			RandomAccessGroup g = groups.getGroups().get(showWhichGroup);
+			HitGroup g = groups.getGroups().get(showWhichGroup);
 			hitsToShow = g.getHits();
 		}
 		return hitsToShow;
