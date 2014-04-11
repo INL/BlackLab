@@ -120,7 +120,8 @@ public abstract class SpanQueryBase extends SpanQuery {
 	@Override
 	public void extractTerms(Set terms) {
 		for (SpanQuery element : clauses) {
-			element.extractTerms(terms);
+			if (element != null) // <-- happens when searching for []
+				element.extractTerms(terms);
 		}
 	}
 
