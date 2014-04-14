@@ -195,8 +195,11 @@ public class PropertiesUtil {
 	 *             on illegal value
 	 */
 	public static boolean getBooleanProp(Properties properties, String name, boolean defaultValue) {
-		String s = properties.getProperty(name).trim();
-		if (s == null || s.length() == 0)
+		String s = properties.getProperty(name);
+		if (s == null)
+			return defaultValue;
+		s = s.trim();
+		if (s.length() == 0)
 			return defaultValue;
 		if (s.equalsIgnoreCase("true"))
 			return true;
