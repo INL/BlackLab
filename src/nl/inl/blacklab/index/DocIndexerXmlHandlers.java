@@ -722,7 +722,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			System.err.println("Skipped " + nDocumentsSkipped + " large documents");
 	}
 
-	protected String describePosition() {
+	public String describePosition() {
 		return saxParseHandler.describePosition();
 	}
 
