@@ -614,10 +614,11 @@ public class Hits implements Iterable<Hit> {
 	 * @param sensitive whether to sort case-sensitively or not
 	 * @return a new Hits object with the same hits, sorted in the specified way
 	 */
-	public Hits sortedBy(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
-		Hits result = new Hits(this);
-		result.sort(sortProp, reverseSort, sensitive);
-		return result;
+	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+		Hits hits = new Hits(this);
+		sortProp = sortProp.copyWithHits(hits);
+		hits.sort(sortProp, reverseSort, sensitive);
+		return hits;
 	}
 
 	/**
