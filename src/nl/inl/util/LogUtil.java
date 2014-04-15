@@ -100,7 +100,7 @@ public class LogUtil {
 		} else {
 			ConsoleAppender consoleAppender = new ConsoleAppender();
 			//consoleAppender.setLayout(new PatternLayout("%r [%t] %p %c %x - %m%n"));
-			consoleAppender.setLayout(new PatternLayout("%8r %-25c{2} %x - %m%n"));
+			consoleAppender.setLayout(new PatternLayout("%8r %-35c{2} %x %-5p %m%n"));
 			consoleAppender.setTarget("System.out");
 			consoleAppender.setThreshold(level);
 			consoleAppender.activateOptions();

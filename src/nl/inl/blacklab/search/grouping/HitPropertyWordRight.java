@@ -29,7 +29,9 @@ import nl.inl.blacklab.search.Searcher;
  */
 public class HitPropertyWordRight extends HitProperty {
 
-	private String fieldName;
+	private String luceneFieldName;
+
+	private String propName;
 
 	private Terms terms;
 
@@ -52,11 +54,14 @@ public class HitPropertyWordRight extends HitProperty {
 	public HitPropertyWordRight(Hits hits, String field, String property, boolean sensitive) {
 		super(hits);
 		this.searcher = hits.getSearcher();
-		if (property == null || property.length() == 0)
-			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
-		else
-			this.fieldName = ComplexFieldUtil.propertyField(field, property);
-		this.terms = searcher.getTerms(fieldName);
+		if (property == null || property.length() == 0) {
+			this.luceneFieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
+			this.propName = ComplexFieldUtil.getDefaultMainPropName();
+		} else {
+			this.luceneFieldName = ComplexFieldUtil.propertyField(field, property);
+			this.propName = property;
+		}
+		this.terms = searcher.getTerms(luceneFieldName);
 		this.sensitive = sensitive;
 	}
 
@@ -75,9 +80,9 @@ public class HitPropertyWordRight extends HitProperty {
 		int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
 
 		if (contextLength <= contextRightStart)
-			return new HitPropValueContextWord(searcher, fieldName, -1, sensitive);
+			return new HitPropValueContextWord(hits, propName, -1, sensitive);
 		int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-		return new HitPropValueContextWord(searcher, fieldName, context[contextStart + contextRightStart], sensitive);
+		return new HitPropValueContextWord(hits, propName, context[contextStart + contextRightStart], sensitive);
 	}
 
 	@Override
@@ -103,7 +108,7 @@ public class HitPropertyWordRight extends HitProperty {
 
 	@Override
 	public List<String> needsContext() {
-		return Arrays.asList(fieldName);
+		return Arrays.asList(luceneFieldName);
 	}
 
 	@Override
@@ -113,7 +118,7 @@ public class HitPropertyWordRight extends HitProperty {
 
 	@Override
 	public String serialize() {
-		String[] parts = ComplexFieldUtil.getNameComponents(fieldName);
+		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
 		String propName = parts.length > 1 ? parts[1] : "";
 		return "wordright:" + propName + ":" + (sensitive ? "s" : "i");
 	}

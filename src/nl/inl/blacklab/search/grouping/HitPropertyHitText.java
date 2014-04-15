@@ -29,7 +29,9 @@ import nl.inl.blacklab.search.Searcher;
  */
 public class HitPropertyHitText extends HitProperty {
 
-	private String fieldName;
+	private String luceneFieldName;
+
+	private String propName;
 
 	private Terms terms;
 
@@ -52,11 +54,15 @@ public class HitPropertyHitText extends HitProperty {
 	public HitPropertyHitText(Hits hits, String field, String property, boolean sensitive) {
 		super(hits);
 		this.searcher = hits.getSearcher();
-		if (property == null || property.length() == 0)
-			this.fieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
-		else
-			this.fieldName = ComplexFieldUtil.propertyField(field, property);
-		this.terms = searcher.getTerms(fieldName);
+		if (property == null || property.length() == 0) {
+			this.luceneFieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
+			this.propName = ComplexFieldUtil.getDefaultMainPropName();
+		} else {
+			this.luceneFieldName = ComplexFieldUtil.propertyField(field, property);
+			this.propName = property;
+		}
+
+		this.terms = searcher.getTerms(luceneFieldName);
 		this.sensitive = sensitive;
 	}
 
@@ -78,7 +84,7 @@ public class HitPropertyHitText extends HitProperty {
 		// Copy the desired part of the context
 		int n = contextRightStart - contextHitStart;
 		if (n <= 0)
-			return new HitPropValueContextWords(searcher, fieldName, new int[0], sensitive);
+			return new HitPropValueContextWords(hits, propName, new int[0], sensitive);
 		int[] dest = new int[n];
 		int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
 		try {
@@ -86,7 +92,7 @@ public class HitPropertyHitText extends HitProperty {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		return new HitPropValueContextWords(searcher, fieldName, dest, sensitive);
+		return new HitPropValueContextWords(hits, propName, dest, sensitive);
 	}
 
 	@Override
@@ -125,7 +131,7 @@ public class HitPropertyHitText extends HitProperty {
 
 	@Override
 	public List<String> needsContext() {
-		return Arrays.asList(fieldName);
+		return Arrays.asList(luceneFieldName);
 	}
 
 	@Override
@@ -135,8 +141,6 @@ public class HitPropertyHitText extends HitProperty {
 
 	@Override
 	public String serialize() {
-		String[] parts = ComplexFieldUtil.getNameComponents(fieldName);
-		String propName = parts.length > 1 ? parts[1] : "";
 		return "hit:" + propName + ":" + (sensitive ? "s" : "i");
 	}
 

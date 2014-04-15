@@ -15,7 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-interface Groups extends Iterable<Group> {
+interface Groups /*extends Iterable<Group>*/ {
 
 	public abstract HitProperty getGroupCriteria();
 

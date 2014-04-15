@@ -26,4 +26,12 @@ public abstract class GroupProperty {
 	public boolean defaultSortDescending() {
 		return false;
 	}
+
+	public abstract String serialize();
+
+	public static GroupProperty deserialize(String serialized) {
+		if (serialized.equalsIgnoreCase("identity"))
+			return new GroupPropertyIdentity();
+		return new GroupPropertySize();
+	}
 }

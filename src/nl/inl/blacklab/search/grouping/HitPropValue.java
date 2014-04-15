@@ -4,7 +4,7 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.Hits;
 import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 public abstract class HitPropValue implements Comparable<Object> {
 	protected static final Logger logger = Logger.getLogger(HitPropValue.class);
 
-	final static String SERIALIZATION_SEPARATOR = "|";
+	final static String SERIALIZATION_SEPARATOR = ":";
 
 	final static String SERIALIZATION_SEPARATOR_ESC_REGEX = StringUtil.escapeRegexCharacters(SERIALIZATION_SEPARATOR);
 
@@ -44,14 +44,14 @@ public abstract class HitPropValue implements Comparable<Object> {
 
 	/**
 	 * Convert the String representation of a HitPropValue back into the HitPropValue
-	 * @param searcher our searcher object (for context word related HitPropValues)
+	 * @param hits hits object (for context word related HitPropValues)
 	 * @param serialized the serialized object
 	 * @return the HitPropValue object, or null if it could not be deserialized
 	 */
-	public static HitPropValue deserialize(Searcher searcher, String serialized) {
+	public static HitPropValue deserialize(Hits hits, String serialized) {
 
 		if (serialized.contains(","))
-			return HitPropValueMultiple.deserialize(searcher, serialized);
+			return HitPropValueMultiple.deserialize(hits, serialized);
 
 		String[] parts = serialized.split(":", 2);
 		String type = parts[0].toLowerCase();
@@ -60,9 +60,9 @@ public abstract class HitPropValue implements Comparable<Object> {
 		int typeNum = types.indexOf(type);
 		switch (typeNum) {
 		case 0:
-			return HitPropValueContextWord.deserialize(searcher, info);
+			return HitPropValueContextWord.deserialize(hits, info);
 		case 1:
-			return HitPropValueContextWords.deserialize(searcher, info);
+			return HitPropValueContextWords.deserialize(hits, info);
 		case 2:
 			return HitPropValueDecade.deserialize(info);
 		case 3:

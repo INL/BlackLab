@@ -35,4 +35,9 @@ public class GroupPropertySize extends GroupProperty {
 		return true;
 	}
 
+	@Override
+	public String serialize() {
+		return "size";
+	}
+
 }

@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.grouping;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.Hits;
 import nl.inl.util.ArrayUtil;
 
 public class HitPropValueMultiple extends HitPropValue {
@@ -36,12 +36,12 @@ public class HitPropValueMultiple extends HitPropValue {
 		return b.toString();
 	}
 
-	public static HitPropValueMultiple deserialize(Searcher searcher, String info) {
+	public static HitPropValueMultiple deserialize(Hits hits, String info) {
 		String[] strValues = info.split(MULTIPLE_SERIALIZATION_SEPARATOR);
 		HitPropValue[] values = new HitPropValue[strValues.length];
 		int i = 0;
 		for (String strValue: strValues) {
-			values[i] = HitPropValue.deserialize(searcher, strValue);
+			values[i] = HitPropValue.deserialize(hits, strValue);
 			i++;
 		}
 		return new HitPropValueMultiple(values);

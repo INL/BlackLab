@@ -1,7 +1,8 @@
 package nl.inl.blacklab.search.grouping;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.Hits;
 import nl.inl.util.ArrayUtil;
 
 public class HitPropValueContextWords extends HitPropValueContext {
@@ -11,8 +12,8 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
 	boolean sensitive;
 
-	public HitPropValueContextWords(Searcher searcher, String fieldPropName, int[] value, boolean sensitive) {
-		super(searcher, fieldPropName);
+	public HitPropValueContextWords(Hits hits, String propName, int[] value, boolean sensitive) {
+		super(hits, propName);
 		this.valueTokenId = value;
 		this.sensitive = sensitive;
 		valueSortOrder = new int[value.length];
@@ -47,12 +48,13 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		return b.toString();
 	}
 
-	public static HitPropValue deserialize(Searcher searcher, String info) {
+	public static HitPropValue deserialize(Hits hits, String info) {
 		String[] parts = info.split(SERIALIZATION_SEPARATOR_ESC_REGEX);
-		String fieldPropName = parts[0];
-		boolean sensitive = parts[1].equals("s");
+		String fieldName = hits.getConcordanceFieldName();
+		String propName = parts[0];
+		boolean sensitive = parts[1].equalsIgnoreCase("s");
 		int[] ids = new int[parts.length - 2];
-		Terms termsObj = searcher.getForwardIndex(fieldPropName).getTerms();
+		Terms termsObj = hits.getSearcher().getForwardIndex(ComplexFieldUtil.propertyField(fieldName, propName)).getTerms();
 		for (int i = 2; i < parts.length; i++) {
 			int tokenId;
 			if (parts[i].length() == 0)
@@ -61,7 +63,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 				tokenId = termsObj.indexOf(parts[i]);
 			ids[i - 2] = tokenId;
 		}
-		return new HitPropValueContextWords(searcher, fieldPropName, ids, sensitive);
+		return new HitPropValueContextWords(hits, propName, ids, sensitive);
 	}
 
 	@Override
@@ -77,6 +79,6 @@ public class HitPropValueContextWords extends HitPropValueContext {
 				token = terms.get(v);
 			b.append(token);
 		}
-		return "cws:" + fieldPropName + SERIALIZATION_SEPARATOR + (sensitive ? "s" : "i") + SERIALIZATION_SEPARATOR + b.toString();
+		return "cws:" + propName + SERIALIZATION_SEPARATOR + (sensitive ? "s" : "i") + SERIALIZATION_SEPARATOR + b.toString();
 	}
 }

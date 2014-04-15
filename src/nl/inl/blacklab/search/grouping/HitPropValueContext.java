@@ -1,19 +1,20 @@
 package nl.inl.blacklab.search.grouping;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.Hits;
 
 public abstract class HitPropValueContext extends HitPropValue {
 
-	protected Searcher searcher;
-
-	protected String fieldPropName;
+	protected String fieldName;
 
 	protected Terms terms;
 
-	public HitPropValueContext(Searcher searcher, String fieldPropName) {
-		this.searcher = searcher;
-		this.fieldPropName = fieldPropName;
-		this.terms = searcher.getForwardIndex(fieldPropName).getTerms();
+	protected String propName;
+
+	public HitPropValueContext(Hits hits, String propName) {
+		this.fieldName = hits.getConcordanceFieldName();
+		this.propName = propName;
+		this.terms = hits.getSearcher().getForwardIndex(ComplexFieldUtil.propertyField(fieldName, propName)).getTerms();
 	}
 }

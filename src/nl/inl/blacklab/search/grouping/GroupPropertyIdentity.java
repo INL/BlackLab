@@ -36,4 +36,9 @@ public class GroupPropertyIdentity extends GroupProperty {
 		return false;
 	}
 
+	@Override
+	public String serialize() {
+		return "identity";
+	}
+
 }
