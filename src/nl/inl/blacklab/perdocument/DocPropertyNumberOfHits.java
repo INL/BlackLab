@@ -47,4 +47,14 @@ public class DocPropertyNumberOfHits extends DocProperty {
 	public String getName() {
 		return "number of hits";
 	}
+
+	public static DocPropertyNumberOfHits deserialize() {
+		return new DocPropertyNumberOfHits();
+	}
+
+	@Override
+	public String serialize() {
+		return "numhits";
+	}
+
 }

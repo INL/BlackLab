@@ -27,4 +27,9 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
 	public int compare(DocGroup a, DocGroup b) {
 		return a.getIdentity().compareTo(b.getIdentity());
 	}
+
+	@Override
+	public String serialize() {
+		return "identity";
+	}
 }

@@ -34,4 +34,12 @@ public abstract class DocGroupProperty {
 	public boolean defaultSortDescending() {
 		return false;
 	}
+
+	public abstract String serialize();
+
+	public static DocGroupProperty deserialize(String serialized) {
+		if (serialized.equalsIgnoreCase("identity"))
+			return new DocGroupPropertyIdentity();
+		return new DocGroupPropertySize();
+	}
 }

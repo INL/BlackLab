@@ -15,7 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.search.grouping.HitPropValue;
+
+import org.apache.log4j.Logger;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects. Subclasses implement
@@ -23,6 +28,8 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
  * ...)
  */
 public abstract class DocProperty {
+	protected static final Logger logger = Logger.getLogger(DocProperty.class);
+
 	/**
 	 * Get the desired grouping/sorting property from the DocResult object
 	 *
@@ -47,4 +54,27 @@ public abstract class DocProperty {
 	}
 
 	public abstract String getName();
+
+	public abstract String serialize();
+
+	public static DocProperty deserialize(String serialized) {
+		if (serialized.contains(","))
+			return DocPropertyMultiple.deserialize(serialized);
+
+		String[] parts = serialized.split(":", 2);
+		String type = parts[0].toLowerCase();
+		String info = parts.length > 1 ? parts[1] : "";
+		List<String> types = Arrays.asList("decade", "numhits", "field");
+		int typeNum = types.indexOf(type);
+		switch (typeNum) {
+		case 0:
+			return DocPropertyDecade.deserialize(info);
+		case 1:
+			return DocPropertyNumberOfHits.deserialize();
+		case 2:
+			return DocPropertyStoredField.deserialize(info);
+		}
+		logger.debug("Unknown DocProperty '" + type + "'");
+		return null;
+	}
 }

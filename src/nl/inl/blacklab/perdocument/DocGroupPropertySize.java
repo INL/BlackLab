@@ -32,4 +32,9 @@ public class DocGroupPropertySize extends DocGroupProperty {
 	public int compare(DocGroup a, DocGroup b) {
 		return a.size() - b.size();
 	}
+
+	@Override
+	public String serialize() {
+		return "size";
+	}
 }

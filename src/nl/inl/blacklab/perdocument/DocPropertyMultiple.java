@@ -115,4 +115,25 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 		return b.toString();
 	}
 
+	@Override
+	public String serialize() {
+		StringBuilder b = new StringBuilder();
+		for (DocProperty p: criteria) {
+			if (b.length() > 0)
+				b.append(","); // different separator than single DocProperty!
+			b.append(p.serialize());
+		}
+		return b.toString();
+	}
+
+	public static DocPropertyMultiple deserialize(String info) {
+		String[] strValues = info.split(",");
+		DocProperty[] values = new DocProperty[strValues.length];
+		int i = 0;
+		for (String strValue: strValues) {
+			values[i] = DocProperty.deserialize(strValue);
+			i++;
+		}
+		return new DocPropertyMultiple(values);
+	}
 }

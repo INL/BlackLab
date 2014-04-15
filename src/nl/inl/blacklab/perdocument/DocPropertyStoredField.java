@@ -65,4 +65,13 @@ public class DocPropertyStoredField extends DocProperty {
 		return friendlyName;
 	}
 
+	public static DocPropertyStoredField deserialize(String info) {
+		return new DocPropertyStoredField(info);
+	}
+
+	@Override
+	public String serialize() {
+		return "field:" + fieldName;
+	}
+
 }

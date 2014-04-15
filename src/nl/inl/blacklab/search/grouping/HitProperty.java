@@ -80,7 +80,6 @@ public abstract class HitProperty implements Comparator<Object> {
 	 * @return the HitProperty object, or null if it could not be deserialized
 	 */
 	public static HitProperty deserialize(Hits hits, String serialized) {
-
 		if (serialized.contains(","))
 			return HitPropertyMultiple.deserialize(hits, serialized);
 

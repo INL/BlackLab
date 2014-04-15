@@ -67,4 +67,13 @@ public class DocPropertyDecade extends DocProperty {
 		return "decade";
 	}
 
+	public static DocPropertyDecade deserialize(String info) {
+		return new DocPropertyDecade(info);
+	}
+
+	@Override
+	public String serialize() {
+		return "decade:" + fieldName;
+	}
+
 }
