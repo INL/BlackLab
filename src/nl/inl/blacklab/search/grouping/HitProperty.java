@@ -22,10 +22,13 @@ import java.util.List;
 
 import nl.inl.blacklab.search.Hits;
 
+import org.apache.log4j.Logger;
+
 /**
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public abstract class HitProperty implements Comparator<Object> {
+	protected static final Logger logger = Logger.getLogger(HitProperty.class);
 
 	/** The Hits object we're looking at */
 	protected Hits hits;
@@ -70,13 +73,20 @@ public abstract class HitProperty implements Comparator<Object> {
 	 */
 	public abstract String serialize();
 
+	/**
+	 * Convert the String representation of a HitProperty back into the HitProperty
+	 * @param hits our hits object (i.e. what we're trying to sort or group)
+	 * @param serialized the serialized object
+	 * @return the HitProperty object, or null if it could not be deserialized
+	 */
 	public static HitProperty deserialize(Hits hits, String serialized) {
 
 		if (serialized.contains(","))
 			return HitPropertyMultiple.deserialize(hits, serialized);
 
 		String[] parts = serialized.split(":", 2);
-		String type = parts[0], info = parts.length > 1 ? parts[1] : "";
+		String type = parts[0].toLowerCase();
+		String info = parts.length > 1 ? parts[1] : "";
 		List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright");
 		int typeNum = types.indexOf(type);
 		switch (typeNum) {
@@ -92,12 +102,13 @@ public abstract class HitProperty implements Comparator<Object> {
 			return HitPropertyLeftContext.deserialize(hits, info);
 		case 5:
 			return HitPropertyRightContext.deserialize(hits, info);
-		case 7:
+		case 6:
 			return HitPropertyWordLeft.deserialize(hits, info);
-		case 8:
+		case 7:
 			return HitPropertyWordRight.deserialize(hits, info);
 		}
-		throw new RuntimeException("Unknown HitPropValue type");
+		logger.debug("Unknown HitProperty '" + type + "'");
+		return null;
 	}
 
 	/**
@@ -121,8 +132,17 @@ public abstract class HitProperty implements Comparator<Object> {
 		this.hits = hits;
 	}
 
+	/**
+	 * Produce a copy of this HitProperty object with a different Hits object.
+	 *
+	 * Used by Hits.sortedBy(), to use the specified HitProperty on a different
+	 * Hits object than originally intended.
+	 *
+	 * @param newHits new Hits object to use
+	 * @return the new HitProperty object
+	 */
 	public HitProperty copyWithHits(Hits newHits) {
-		// ugly..
+		// A bit ugly, but it works..
 		return HitProperty.deserialize(newHits, serialize());
 	}
 }

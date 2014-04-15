@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 
 /**
@@ -136,10 +135,8 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
 	@Override
 	public int compare(Object i, Object j) {
-		Hit a = hits.getByOriginalOrder((Integer)i);
-		Hit b = hits.getByOriginalOrder((Integer)j);
 		for (HitProperty crit : criteria) {
-			int cmp = crit.compare(a, b);
+			int cmp = crit.compare(i, j);
 			if (cmp != 0)
 				return cmp;
 		}

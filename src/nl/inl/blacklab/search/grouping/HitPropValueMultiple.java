@@ -4,6 +4,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ArrayUtil;
 
 public class HitPropValueMultiple extends HitPropValue {
+	private static final String MULTIPLE_SERIALIZATION_SEPARATOR = ",";
 	HitPropValue[] value;
 
 	public HitPropValueMultiple(HitPropValue[] value) {
@@ -36,7 +37,7 @@ public class HitPropValueMultiple extends HitPropValue {
 	}
 
 	public static HitPropValueMultiple deserialize(Searcher searcher, String info) {
-		String[] strValues = info.split(";;");
+		String[] strValues = info.split(MULTIPLE_SERIALIZATION_SEPARATOR);
 		HitPropValue[] values = new HitPropValue[strValues.length];
 		int i = 0;
 		for (String strValue: strValues) {
@@ -51,9 +52,9 @@ public class HitPropValueMultiple extends HitPropValue {
 		StringBuilder b = new StringBuilder();
 		for (HitPropValue v: value) {
 			if (b.length() > 0)
-				b.append(";;"); // different separator than HitPropValueContext*!
+				b.append(MULTIPLE_SERIALIZATION_SEPARATOR); // different separator than HitPropValueContext*!
 			b.append(v.serialize());
 		}
-		return "mul:" + b.toString();
+		return b.toString();
 	}
 }
