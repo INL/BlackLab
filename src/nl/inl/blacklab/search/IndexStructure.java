@@ -93,6 +93,8 @@ public class IndexStructure {
 		 * @return the description
 		 */
 		public PropertyDesc getPropertyDesc(String name) {
+			if (!props.containsKey(name))
+				throw new RuntimeException("Property '" + name + "' not found!");
 			return props.get(name);
 		}
 
@@ -290,6 +292,8 @@ public class IndexStructure {
 		 * @return the description
 		 */
 		public AltDesc getAlternativeDesc(String name) {
+			if (!alternatives.containsKey(name))
+				throw new RuntimeException("Alternative '" + name + "' not found!");
 			return alternatives.get(name);
 		}
 
@@ -544,7 +548,9 @@ public class IndexStructure {
 	}
 
 	private ComplexFieldDesc getOrCreateComplexField(String name) {
-		ComplexFieldDesc cfd = getComplexFieldDesc(name);
+		ComplexFieldDesc cfd = null;
+		if (complexFields.containsKey(name))
+			cfd = getComplexFieldDesc(name);
 		if (cfd == null) {
 			cfd = new ComplexFieldDesc(name);
 			complexFields.put(name, cfd);
@@ -562,6 +568,8 @@ public class IndexStructure {
 	 * @param fieldName name of the field
 	 * @return the field description */
 	public ComplexFieldDesc getComplexFieldDesc(String fieldName) {
+		if (!complexFields.containsKey(fieldName))
+			throw new RuntimeException("Field '" + fieldName + "' not found!");
 		return complexFields.get(fieldName);
 	}
 
@@ -575,6 +583,8 @@ public class IndexStructure {
 	 * @param fieldName name of the field
 	 * @return the type of field */
 	public IndexStructure.FieldType getMetadataType(String fieldName) {
+		if (!metadataFields.containsKey(fieldName))
+			throw new RuntimeException("Metadata field '" + fieldName + "' not found!");
 		return metadataFields.get(fieldName);
 	}
 
