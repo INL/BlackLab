@@ -138,4 +138,23 @@ public class HitPropertyLeftContext extends HitProperty {
 		return "left context";
 	}
 
+	@Override
+	public String serialize() {
+		String[] parts = ComplexFieldUtil.getNameComponents(fieldName);
+		String propName = parts.length > 1 ? parts[1] : "";
+		return "left:" + propName + ":" + (sensitive ? "s" : "i");
+	}
+
+	public static HitPropertyLeftContext deserialize(Hits hits, String info) {
+		String[] parts = info.split(":");
+		String fieldName = hits.getConcordanceFieldName();
+		String propName = parts[0];
+		if (propName.length() == 0)
+			propName = ComplexFieldUtil.getDefaultMainPropName();
+		boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
+		if (fieldName == null || fieldName.length() == 0)
+			return new HitPropertyLeftContext(hits, sensitive);
+		return new HitPropertyLeftContext(hits, fieldName, propName, sensitive);
+	}
+
 }

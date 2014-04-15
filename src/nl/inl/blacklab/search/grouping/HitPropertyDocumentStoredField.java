@@ -84,4 +84,13 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 	public String getName() {
 		return friendlyName;
 	}
+
+	@Override
+	public String serialize() {
+		return "field:" + fieldName;
+	}
+
+	public static HitPropertyDocumentStoredField deserialize(Hits hits, String info) {
+		return new HitPropertyDocumentStoredField(hits, info);
+	}
 }

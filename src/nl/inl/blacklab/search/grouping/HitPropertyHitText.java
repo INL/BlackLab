@@ -132,4 +132,23 @@ public class HitPropertyHitText extends HitProperty {
 	public String getName() {
 		return "hit text";
 	}
+
+	@Override
+	public String serialize() {
+		String[] parts = ComplexFieldUtil.getNameComponents(fieldName);
+		String propName = parts.length > 1 ? parts[1] : "";
+		return "hit:" + propName + ":" + (sensitive ? "s" : "i");
+	}
+
+	public static HitPropertyHitText deserialize(Hits hits, String info) {
+		String[] parts = info.split(":");
+		String fieldName = hits.getConcordanceFieldName();
+		String propName = parts[0];
+		if (propName.length() == 0)
+			propName = ComplexFieldUtil.getDefaultMainPropName();
+		boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
+		if (fieldName == null || fieldName.length() == 0)
+			return new HitPropertyHitText(hits, sensitive);
+		return new HitPropertyHitText(hits, fieldName, propName, sensitive);
+	}
 }

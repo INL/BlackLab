@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Hits;
 
 /**
  * A collection of GroupProperty's identifying a particular group.
@@ -156,4 +157,26 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 		return b.toString();
 	}
 
+
+	@Override
+	public String serialize() {
+		StringBuilder b = new StringBuilder();
+		for (HitProperty p: criteria) {
+			if (b.length() > 0)
+				b.append(","); // different separator than single HitProperty!
+			b.append(p.serialize());
+		}
+		return b.toString();
+	}
+
+	public static HitPropertyMultiple deserialize(Hits hits, String info) {
+		String[] strValues = info.split(",");
+		HitProperty[] values = new HitProperty[strValues.length];
+		int i = 0;
+		for (String strValue: strValues) {
+			values[i] = HitProperty.deserialize(hits, strValue);
+			i++;
+		}
+		return new HitPropertyMultiple(values);
+	}
 }

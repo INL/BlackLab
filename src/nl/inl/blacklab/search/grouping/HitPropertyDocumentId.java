@@ -45,4 +45,12 @@ public class HitPropertyDocumentId extends HitProperty {
 		return a.doc - b.doc;
 	}
 
+	@Override
+	public String serialize() {
+		return "docid";
+	}
+
+	public static HitPropertyDocumentId deserialize(Hits hits) {
+		return new HitPropertyDocumentId(hits);
+	}
 }

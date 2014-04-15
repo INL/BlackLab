@@ -83,4 +83,13 @@ public class HitPropertyDocumentDecade extends HitProperty {
 	public String getName() {
 		return "decade";
 	}
+
+	@Override
+	public String serialize() {
+		return "decade:" + fieldName;
+	}
+
+	public static HitPropertyDocumentDecade deserialize(Hits hits, String info) {
+		return new HitPropertyDocumentDecade(hits, info);
+	}
 }

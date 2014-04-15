@@ -116,4 +116,23 @@ public class HitPropertyWordLeft extends HitProperty {
 		return "word left";
 	}
 
+	@Override
+	public String serialize() {
+		String[] parts = ComplexFieldUtil.getNameComponents(fieldName);
+		String propName = parts.length > 1 ? parts[1] : "";
+		return "wordleft:" + propName + ":" + (sensitive ? "s" : "i");
+	}
+
+	public static HitPropertyWordLeft deserialize(Hits hits, String info) {
+		String[] parts = info.split(":");
+		String fieldName = hits.getConcordanceFieldName();
+		String propName = parts[0];
+		if (propName.length() == 0)
+			propName = ComplexFieldUtil.getDefaultMainPropName();
+		boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
+		if (fieldName == null || fieldName.length() == 0)
+			return new HitPropertyWordLeft(hits, sensitive);
+		return new HitPropertyWordLeft(hits, fieldName, propName, sensitive);
+	}
+
 }
