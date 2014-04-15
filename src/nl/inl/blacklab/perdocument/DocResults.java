@@ -66,6 +66,9 @@ public class DocResults implements Iterable<DocResult> {
 	 */
 	private DocResult partialDocResult;
 
+	/** Hits we were created from */
+	private Hits hits = null;
+
 	public Searcher getSearcher() {
 		return searcher;
 	}
@@ -94,6 +97,7 @@ public class DocResults implements Iterable<DocResult> {
 	@Deprecated
 	public DocResults(Searcher searcher, Hits hits) {
 		this.searcher = searcher;
+		this.hits = hits;
 		try {
 			sourceHits = hits;
 			sourceHitsIterator = hits.iterator();
@@ -427,6 +431,21 @@ public class DocResults implements Iterable<DocResult> {
 	@SuppressWarnings("deprecation") // DocGroups constructor will be made package private eventually
 	public DocGroups groupedBy(DocProperty docProp) {
 		return new DocGroups(this, docProp);
+	}
+
+	/**
+	 * Get a window into the doc results
+	 * @param first first document result to include
+	 * @param number maximum number of document results to include
+	 * @return the window
+	 */
+	@SuppressWarnings("deprecation") // DocResultsWindow constructor will be made package private eventually
+	public DocResultsWindow window(int first, int number) {
+		return new DocResultsWindow(this, first, number);
+	}
+
+	public Hits getOriginalHits() {
+		return hits;
 	}
 
 }

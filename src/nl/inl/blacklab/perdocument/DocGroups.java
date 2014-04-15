@@ -44,6 +44,11 @@ public class DocGroups implements Iterable<DocGroup> {
 	private DocProperty groupBy;
 
 	/**
+	 * The DocResults we were created from
+	 */
+	private DocResults docResults;
+
+	/**
 	 * Constructor. Fills the groups from the given document results.
 	 *
 	 * @param docResults
@@ -54,6 +59,7 @@ public class DocGroups implements Iterable<DocGroup> {
 	 */
 	@Deprecated
 	public DocGroups(DocResults docResults, DocProperty groupBy) {
+		this.docResults = docResults;
 		searcher = docResults.getSearcher();
 		this.groupBy = groupBy;
 		Thread currentThread = Thread.currentThread();
@@ -115,6 +121,10 @@ public class DocGroups implements Iterable<DocGroup> {
 
 	public DocProperty getGroupCriteria() {
 		return groupBy;
+	}
+
+	public DocResults getOriginalDocResults() {
+		return docResults;
 	}
 
 }
