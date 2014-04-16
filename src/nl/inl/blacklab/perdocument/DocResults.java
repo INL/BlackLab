@@ -31,6 +31,7 @@ import nl.inl.util.ReverseComparator;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -146,12 +147,12 @@ public class DocResults implements Iterable<DocResult> {
 	/**
 	 * Find documents whose metadata matches the specified query
 	 * @param searcher searcher object
-	 * @param query metadata query
+	 * @param query metadata query, or null to match all documents
 	 * @deprecated use Searcher.queryDocuments()
 	 */
 	@Deprecated
 	public DocResults(Searcher searcher, Query query) {
-		this(searcher, searcher.findDocScores(query));
+		this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));
 	}
 
 	DocResults(Searcher searcher) {
