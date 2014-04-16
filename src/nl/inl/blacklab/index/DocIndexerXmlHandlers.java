@@ -47,6 +47,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
@@ -709,7 +710,11 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			throw new RuntimeException(e1);
 		}
 		try {
-			parser.parse(new InputSource(reader), saxParseHandler);
+			InputSource is = new InputSource(reader);
+			XMLReader xmlReader = parser.getXMLReader();
+			xmlReader.setEntityResolver(new DummyEntityResolver());
+			xmlReader.setContentHandler(saxParseHandler);
+			xmlReader.parse(is);
 		} catch (IOException e) {
 			throw e;
 		} catch (SAXException e) {
