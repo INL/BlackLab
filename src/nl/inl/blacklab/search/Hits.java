@@ -2007,6 +2007,14 @@ public class Hits implements Iterable<Hit> {
 	 * @return the list of hits in this doc (if any)
 	 */
 	public Hits getHitsInDoc(int docid) {
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Interrupted. Just return no hits;
+			// client should detect thread was interrupted if it
+			// wants to use background threads.
+			return new Hits(searcher);
+		}
 		List<Hit> hitsInDoc = new ArrayList<Hit>();
 		for (Hit hit: hits) {
 			if (hit.doc == docid)
