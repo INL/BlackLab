@@ -371,6 +371,9 @@ public class QueryTool {
 	/** Don't allow file operations in web mode */
 	private boolean webSafeOperationOnly = false;
 
+	/** Strip XML tags when displaying concordances? */
+	private boolean stripXML = true;
+
 	/**
 	 * The main program.
 	 *
@@ -772,15 +775,15 @@ public class QueryTool {
 				} else {
 					Hit h = currentHitSet.get(hitId);
 					Concordance conc = hits.getConcordance(h, snippetSize);
-					String left = XmlUtil.xmlToPlainText(conc.left);
-					String middle = XmlUtil.xmlToPlainText(conc.hit);
-					String right = XmlUtil.xmlToPlainText(conc.right);
+					String left = stripXML ? XmlUtil.xmlToPlainText(conc.left) : conc.left;
+					String middle = stripXML ? XmlUtil.xmlToPlainText(conc.hit) : conc.hit;
+					String right = stripXML ? XmlUtil.xmlToPlainText(conc.right) : conc.right;
 					outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
 				}
 			} else if (lcased.startsWith("highlight ")) {
 				int hitId = parseInt(lcased.substring(8), 1) - 1;
 				Hits currentHitSet = getCurrentHitSet();
-				if (hitId >= currentHitSet.size()) {
+				if (currentHitSet == null || hitId >= currentHitSet.size()) {
 					errprintln("Hit number out of range.");
 				} else {
 					int docid = currentHitSet.get(hitId).doc;
@@ -806,6 +809,18 @@ public class QueryTool {
 						errprintln("Error parsing filter query.");
 					}
 				}
+			} else if (lcased.startsWith("concfi ")) {
+				String v = lcased.substring(7);
+				boolean b = false;
+				if (v.equals("on") || v.equals("yes") || v.equals("true"))
+					b = true;
+				searcher.setMakeConcordancesFromForwardIndex(b);
+			} else if (lcased.startsWith("stripxml ")) {
+				String v = lcased.substring(9);
+				boolean b = false;
+				if (v.equals("on") || v.equals("yes") || v.equals("true"))
+					b = true;
+				stripXML = b;
 			} else if (lcased.startsWith("sensitive ")) {
 				String v = lcased.substring(10);
 				boolean caseSensitive = false, diacSensitive = false;
@@ -1490,9 +1505,9 @@ public class QueryTool {
 
 			// Filter out the XML tags
 			String left, hitText, right;
-			left = XmlUtil.xmlToPlainText(conc.left);
-			hitText = XmlUtil.xmlToPlainText(conc.hit);
-			right = XmlUtil.xmlToPlainText(conc.right);
+			left = stripXML ? XmlUtil.xmlToPlainText(conc.left) : conc.left;
+			hitText = stripXML ? XmlUtil.xmlToPlainText(conc.hit) : conc.hit;
+			right = stripXML ? XmlUtil.xmlToPlainText(conc.right) : conc.right;
 
 			toShow.add(new HitToShow(hit.doc, left, hitText, right));
 			if (leftContextMaxSize < left.length())

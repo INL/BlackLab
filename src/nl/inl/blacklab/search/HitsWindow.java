@@ -177,4 +177,12 @@ public class HitsWindow extends Hits {
 		return source.totalSize();
 	}
 
+	/**
+	 * Return the Hits object we were made from
+	 * @return the original Hits object
+	 */
+	public Hits getOriginalHits() {
+		return source;
+	}
+
 }

@@ -92,6 +92,16 @@ public class Hits implements Iterable<Hit> {
 	protected Map<Hit, Kwic> kwics;
 
 	/**
+	 * The concordances, if they have been retrieved.
+	 *
+	 * NOTE: when making concordances from the forward index, this will
+	 * always be null, because Kwics will be used internally. This is
+	 * only used when making concordances from the content store (the old
+	 * default).
+	 */
+	Map<Hit, Concordance> concordances;
+
+	/**
 	 * The searcher object.
 	 */
 	protected Searcher searcher;
@@ -357,7 +367,7 @@ public class Hits implements Iterable<Hit> {
 		// Reset context and concordances so we get the correct context size next time
 		currentContextSize = -1;
 		contextFieldsPropName = null;
-		// concordances = null;
+		concordances = null;
 		kwics = null;
 	}
 
@@ -1070,8 +1080,9 @@ public class Hits implements Iterable<Hit> {
 	 * @return concordance for this hit
 	 */
 	public synchronized Concordance getConcordance(Hit h, int contextSize) {
-		return getKwic(h, contextSize).toConcordance();
-		/*
+		if (searcher.getMakeConcordancesFromForwardIndex())
+			return getKwic(h, contextSize).toConcordance();
+
 		if (contextSize != desiredContextSize) {
 			// Different context size than the default for the whole set;
 			// We probably want to show a hit with a larger snippet around it
@@ -1097,7 +1108,7 @@ public class Hits implements Iterable<Hit> {
 		Concordance conc = concordances.get(h);
 		if (conc == null)
 			throw new RuntimeException("Concordance for hit not found: " + h);
-		return conc;*/
+		return conc;
 	}
 
 	/**
@@ -1152,7 +1163,12 @@ public class Hits implements Iterable<Hit> {
 	 * you call getConcordance() for the first time.
 	 */
 	synchronized void findConcordances() {
-		/*try {
+		if (searcher.getMakeConcordancesFromForwardIndex()) {
+			findKwics();
+			return;
+		}
+
+		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Just go ahead with the hits we did
@@ -1165,8 +1181,6 @@ public class Hits implements Iterable<Hit> {
 
 		// Get the concordances
 		concordances = searcher.retrieveConcordances(this, desiredContextSize, concordanceFieldName);
-		*/
-		findKwics();
 	}
 
 	/**
@@ -1355,7 +1369,7 @@ public class Hits implements Iterable<Hit> {
 	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
 	 */
 	public synchronized void clearConcordances() {
-		// concordances = null;
+		concordances = null;
 		kwics = null;
 	}
 
