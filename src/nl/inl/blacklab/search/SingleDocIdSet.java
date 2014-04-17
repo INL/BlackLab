@@ -19,7 +19,10 @@ import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
 
 /**
- * Used for finding hits in a single document (for highlighting).
+ * A DocIdSet with a single Lucene document id in it.
+ *
+ * Used by SingleDocIdFilter (or directly by Searcher.createSpanQuery) for
+ * finding hits in a single document (for highlighting).
  */
 public class SingleDocIdSet extends DocIdSet {
 	final int id;
