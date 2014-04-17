@@ -144,7 +144,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		content.setLength(0);
 	}
 
-	protected void appendContentInternal(String str) {
+	private void appendContentInternal(String str) {
 		content.append(str);
 	}
 
