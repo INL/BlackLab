@@ -431,7 +431,7 @@ public class StringUtil {
 	 * @return the wrapped text
 	 */
 	public static String wrapText(String message, int wrapAt) {
-		String wrapped = "";
+		StringBuilder wrapped = new StringBuilder();
 		String lines[] = message.split("\n");
 		for (String line : lines) {
 			if (line.length() > 0) {
@@ -448,14 +448,14 @@ public class StringUtil {
 							i = wrapAt + 1;
 					} else
 						i = line.length();
-					wrapped += line.substring(0, i).trim() + "\n";
+					wrapped.append(line.substring(0, i).trim()).append("\n");
 					line = line.substring(i).trim();
 				}
 			} else {
-				wrapped += "\n";
+				wrapped.append("\n");
 			}
 		}
-		return wrapped.trim();
+		return wrapped.toString().trim();
 	}
 
 	/**
