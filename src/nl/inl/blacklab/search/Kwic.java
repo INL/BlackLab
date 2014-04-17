@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.util.Collections;
 import java.util.List;
 
 import nl.inl.util.StringUtil;
@@ -45,19 +46,19 @@ import nl.inl.util.StringUtil;
 public class Kwic {
 
 	/** What properties are stored in what order for this Kwic (e.g. word, lemma, pos) */
-	public List<String> properties;
+	private List<String> properties;
 
 	/** Word properties for context left of match (properties.size() values per word;
 	 *  e.g. punct 1, lemma 1, pos 1, word 1, punct 2, lemma 2, pos 2, word 2, etc.) */
-	public List<String> left;
+	private List<String> left;
 
 	/** Word properties for matched text (properties.size() values per word).
         (see left for the order) */
-	public List<String> match;
+	private List<String> match;
 
 	/** Word properties for context right of match (properties.size() values per word).
         (see left for the order) */
-	public List<String> right;
+	private List<String> right;
 
 	/**
 	 * Construct a hit object
@@ -73,6 +74,22 @@ public class Kwic {
 		this.left = left;
 		this.match = match;
 		this.right = right;
+	}
+
+	public List<String> getProperties() {
+		return Collections.unmodifiableList(properties);
+	}
+
+	public List<String> getLeft() {
+		return Collections.unmodifiableList(left);
+	}
+
+	public List<String> getMatch() {
+		return Collections.unmodifiableList(match);
+	}
+
+	public List<String> getRight() {
+		return Collections.unmodifiableList(right);
 	}
 
 	/**
