@@ -16,6 +16,9 @@
 package nl.inl.util;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 
 /**
@@ -36,6 +39,24 @@ public class IoUtil {
 		if (reader instanceof BufferedReader)
 			return (BufferedReader) reader;
 		return new BufferedReader(reader);
+	}
+
+	/**
+	 * Read text from an input stream.
+	 * @param is the input stream
+	 * @return the text read
+	 * @throws IOException
+	 */
+	public static String readStream(InputStream is) throws IOException {
+		BufferedReader reader = makeBuffered(new InputStreamReader(is));
+		StringBuilder b = new StringBuilder();
+		while (true) {
+			String line = reader.readLine();
+			if (line == null)
+				break;
+			b.append(line);
+		}
+		return b.toString();
 	}
 
 }

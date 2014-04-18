@@ -286,4 +286,13 @@ public class FileUtil {
 		glob = glob.replaceAll("\\?", ".");
 		return "^" + glob + "$";
 	}
+
+	/**
+	 * Read an entire file into a String
+	 * @param file the file to read
+	 * @return the file's contents
+	 */
+	public static String readFile(File file) {
+		return StringUtil.join(readLines(file), "\n");
+	}
 }
