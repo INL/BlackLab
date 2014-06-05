@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,19 +47,19 @@ import nl.inl.util.StringUtil;
 public class Kwic {
 
 	/** What properties are stored in what order for this Kwic (e.g. word, lemma, pos) */
-	private List<String> properties;
+	List<String> properties;
 
 	/** Word properties for context left of match (properties.size() values per word;
 	 *  e.g. punct 1, lemma 1, pos 1, word 1, punct 2, lemma 2, pos 2, word 2, etc.) */
-	private List<String> left;
+	List<String> left;
 
 	/** Word properties for matched text (properties.size() values per word).
         (see left for the order) */
-	private List<String> match;
+	List<String> match;
 
 	/** Word properties for context right of match (properties.size() values per word).
         (see left for the order) */
-	private List<String> right;
+	List<String> right;
 
 	/**
 	 * Construct a hit object
@@ -90,6 +91,50 @@ public class Kwic {
 
 	public List<String> getRight() {
 		return Collections.unmodifiableList(right);
+	}
+
+	/**
+	 * Get the context of a specific property from the complete
+	 * context list.
+	 *
+	 * @param allContext the complete context list of all properties
+	 * @param property the property to get the context for
+	 * @return the context for this property
+	 */
+	private List<String> getSinglePropertyContext(final List<String> allContext, String property) {
+		final int nProp = properties.size();
+		final int size = allContext.size() / nProp;
+		final int propIndex = properties.indexOf(property);
+		if (propIndex == -1)
+			return null;
+		return new AbstractList<String>() {
+			@Override
+			public String get(int index) {
+				return allContext.get(propIndex + nProp * index);
+			}
+
+			@Override
+			public int size() {
+				return size;
+			}
+		};
+	}
+
+	/**
+	 * Get the left context of a specific property
+	 * @param property the property to get the context for
+	 * @return the context
+	 */
+	public List<String> getLeft(String property) {
+		return getSinglePropertyContext(left, property);
+	}
+
+	public List<String> getMatch(String property) {
+		return getSinglePropertyContext(match, property);
+	}
+
+	public List<String> getRight(String property) {
+		return getSinglePropertyContext(right, property);
 	}
 
 	/**
