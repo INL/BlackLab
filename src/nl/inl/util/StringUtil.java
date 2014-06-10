@@ -20,6 +20,7 @@ import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +42,9 @@ public class StringUtil {
 
 	/** Match een dubbele quote */
 	private final static Pattern PATT_DOUBLE_QUOTE = Pattern.compile("\"");
+
+	/** Match een enkele quote */
+	private final static Pattern PATT_SINGLE_QUOTE = Pattern.compile("'");
 
 	/** Matcht een niet-lege string die alleen whitespace bevat */
 	private final static Pattern PATT_ONLY_WHITESPACE = Pattern.compile("^\\s+$");
@@ -248,6 +252,47 @@ public class StringUtil {
 	}
 
 	/**
+	 * Escape a string for inclusion in JSON output.
+	 *
+	 * Conforms to the JSON.org spec for strings.
+	 *
+	 * @param input the input string
+	 * @return the JSON-escaped output string
+	 */
+	public static String escapeJson(String input) {
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < input.length(); i++) {
+			char c = input.charAt(i);
+			// One of the characters with its own escape?
+			int x = "\"\\\b\f\n\r\t".indexOf(c);
+			if (x < 0) {
+				// No; other control character?
+				if (c < 32) {
+					// Yes. Use numeric escape
+					result.append(String.format("\\u%04x", (int)c));
+				} else {
+					// No, normal char; no problem
+					result.append(c);
+				}
+			} else {
+				// Double quote, backslash, bell, form feed,
+				// newline, return or tab. Add special escape
+				// depending on the character.
+				switch (x) {
+				case 0: result.append("\\\""); break;
+				case 1: result.append("\\\\"); break;
+				case 2: result.append("\\b"); break;
+				case 3: result.append("\\f"); break;
+				case 4: result.append("\\n"); break;
+				case 5: result.append("\\r"); break;
+				case 6: result.append("\\t"); break;
+				}
+			}
+		}
+		return result.toString();
+	}
+
+	/**
 	 * Get the default collator.
 	 *
 	 * @return the default collator.
@@ -339,6 +384,50 @@ public class StringUtil {
 	}
 
 	/**
+	 * Join keys and values from a map to produce a string.
+	 *
+	 * @param map the map to join
+	 * @param delimiter how to delimit map entries
+	 * @param keyValueDelimiter what to put between key and value
+	 * @return the resulting string
+	 */
+	public static <T, U> String join(Map<T, U> map, String delimiter, String keyValueDelimiter) {
+		StringBuilder builder = new StringBuilder();
+		for (Map.Entry<T, U> e: map.entrySet()) {
+			if (builder.length() > 0)
+				builder.append(delimiter);
+			builder.append(e.getKey().toString()).append(keyValueDelimiter).append(e.getValue().toString());
+		}
+		return builder.toString();
+	}
+
+	/**
+	 * Join keys and values from a map to produce a string.
+	 *
+	 * Uses an equals sign between key and value.
+	 *
+	 * @param map the map to join
+	 * @param delimiter how to delimit map entries
+	 * @return the resulting string
+	 */
+	public static <T, U> String join(Map<T, U> map, String delimiter) {
+		return join(map, delimiter, "=");
+	}
+
+	/**
+	 * Join keys and values from a map to produce a string.
+	 *
+	 * Uses an equals sign between key and value and a semicolon and
+	 * space between entries.
+	 *
+	 * @param map the map to join
+	 * @return the resulting string
+	 */
+	public static <T, U> String join(Map<T, U> map) {
+		return join(map, "; ");
+	}
+
+	/**
 	 * Limit a string to a certain length, adding an ellipsis if desired.
 	 *
 	 * Tries to cut the string at a word boundary, but will cut through words if necessary.
@@ -389,9 +478,10 @@ public class StringUtil {
 	 * @param str
 	 *            the input string
 	 * @return the string with apostrophes removed.
+     * @deprecated was used for sorting; should be done with Collator instead.
 	 */
+	@Deprecated
 	public static String removeApostrophes(String str) {
-		// TODO why is this in the library...? Clarify or remove!
 		Matcher m = PATT_APOSTROPHE.matcher(str);
 		str = m.replaceAll("");
 		return str;
@@ -561,6 +651,41 @@ public class StringUtil {
 		} catch (ParseException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * Returns a new collator that sort digits at the end of the alphabet instead of the beginning.
+	 *
+	 * NOTE: the base collator must be a RuleBasedCollator, but the argument has type Collator for
+	 * convenience (not having to explicitly cast when calling)
+	 *
+	 * @param base
+	 *            the collator to base the new collator on.
+	 * @return the new collator
+	 */
+	public static RuleBasedCollator getSortDigitsAtEndCollator(Collator base) {
+		if (!(base instanceof RuleBasedCollator))
+			throw new RuntimeException("Base collator must be rule-based!");
+
+		try {
+			// Insert a collation rule to sort the space character before the underscore
+			RuleBasedCollator ruleBasedCollator = (RuleBasedCollator) base;
+			String rules = ruleBasedCollator.getRules();
+			rules = rules.replaceAll("<0<1<2<3<4<5<6<7<8<9", "");
+			rules += "<0<1<2<3<4<5<6<7<8<9";
+			return new RuleBasedCollator(rules);
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Escape any apostrophes in the string, for when we want to single-quote it.
+	 * @param str the string to escape
+	 * @return the escaped string
+	 */
+	public static String escapeApostrophe(String str) {
+		return PATT_SINGLE_QUOTE.matcher(str).replaceAll("\\\\'");
 	}
 
 	/**

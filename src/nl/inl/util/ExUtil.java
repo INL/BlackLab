@@ -40,15 +40,28 @@ public class ExUtil {
 	/**
 	 * Returns the stack trace of an exception in String form
 	 *
-	 * @param exception
-	 *            the exception
+	 * @param e the exception
 	 * @return the stack trace
 	 */
-	public static String getStackTraceAsString(Throwable exception) {
-		final StringWriter sw = new StringWriter();
-		exception.printStackTrace(new PrintWriter(sw));
-		String stackTrace_ = sw.toString();
-		return stackTrace_;
+	public static String getStackTraceAsString(Throwable e) {
+		return getStackTraceAsString(e, false);
+	}
+
+	/**
+	 * Returns the stack trace of an exception in String form
+	 *
+	 * @param e the exception
+	 * @param singleLine if true, put stack trace on single line with escaped newlines
+	 * @return the stack trace
+	 */
+	public static String getStackTraceAsString(Throwable e, boolean singleLine) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		e.printStackTrace(pw);
+		String trace = sw.toString();
+		if (singleLine)
+			trace = trace.replaceAll("[\r\n]+", "\\\\n");
+		return trace;
 	}
 
 }
