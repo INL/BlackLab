@@ -51,10 +51,11 @@ public class SpansFiltered extends BLSpans {
 
 	private boolean synchronize() throws IOException {
 		while (more && spans.doc() != docIdSetIter.docID()) {
-			if (spans.doc() < docIdSetIter.docID())
+			if (spans.doc() < docIdSetIter.docID()) {
 				more = spans.skipTo(docIdSetIter.docID());
-			else
-				more = (docIdSetIter.advance(spans.doc()) != DocIdSetIterator.NO_MORE_DOCS);
+			} else if (docIdSetIter.advance(spans.doc()) == DocIdSetIterator.NO_MORE_DOCS) {
+				more = false;
+			}
 		}
 		return more;
 	}
