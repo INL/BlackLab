@@ -37,6 +37,21 @@ public class HitGroup extends Group {
 		results = new Hits(searcher, defaultConcField);
 	}
 
+	/**
+	 * Wraps a list of Hit objects with the HitGroup interface.
+	 *
+	 * NOTE: the list is not copied!
+	 *
+	 * @param searcher the searcher that produced the hits
+	 * @param groupIdentity grouping identity of this group of hits
+	 * @param defaultConcField concordance field
+	 * @param hits the hits
+	 */
+	HitGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField, List<Hit> hits) {
+		super(groupIdentity);
+		results = new Hits(searcher, defaultConcField, hits);
+	}
+
 	public Hits getHits() {
 		return results;
 	}
@@ -45,6 +60,11 @@ public class HitGroup extends Group {
 		return results.size();
 	}
 
+	/**
+	 * @param result
+	 * @deprecated use constructor that takes a list of Hit objects instead
+	 */
+	@Deprecated
 	public void add(Hit result) {
 		results.add(result);
 	}

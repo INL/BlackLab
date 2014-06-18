@@ -61,11 +61,23 @@ public class DocResults implements Iterable<DocResult> {
 	 */
 	private Iterator<Hit> sourceHitsIterator;
 
+//	/**
+//	 * A partial DocResult, because we stopped iterating through the Hits.
+//	 * Pick this up when we continue iterating through it.
+//	 */
+//	private DocResult partialDocResult;
+
 	/**
-	 * A partial DocResult, because we stopped iterating through the Hits.
+	 * A partial list of hits in a doc, because we stopped iterating through the Hits.
+	 * (or null if we don't have partial doc hits)
 	 * Pick this up when we continue iterating through it.
 	 */
-	private DocResult partialDocResult;
+	private List<Hit> partialDocHits = null;
+
+	/** id of the partial doc we've done (because we stopped iterating through the Hits),
+	 * or -1 for no partial doc.
+	 */
+	private int partialDocId = -1;
 
 	/** Hits we were created from */
 	private Hits hits = null;
@@ -74,6 +86,11 @@ public class DocResults implements Iterable<DocResult> {
 		return searcher;
 	}
 
+	/**
+	 * @param r
+	 * @deprecated use constructor that takes a list of results instead
+	 */
+	@Deprecated
 	public void add(DocResult r) {
 		try {
 			ensureAllResultsRead();
@@ -86,7 +103,11 @@ public class DocResults implements Iterable<DocResult> {
 	}
 
 	boolean sourceHitsFullyRead() {
-		return sourceHits == null || !sourceHitsIterator.hasNext();
+		if (sourceHits == null)
+			return true;
+		synchronized(sourceHitsIterator) {
+			return !sourceHitsIterator.hasNext();
+		}
 	}
 
 	/**
@@ -119,16 +140,37 @@ public class DocResults implements Iterable<DocResult> {
 		this(searcher, new Hits(searcher, field, query));
 	}
 
-	DocResults(Searcher searcher, Scorer sc) {
+	/**
+	 * Wraps a list of DocResult objects with the DocResults interface.
+	 *
+	 * NOTE: the list is not copied but referenced!
+	 *
+	 * Used by DocGroups constructor.
+	 *
+	 * @param searcher the searcher that generated the results
+	 * @param results the list of results
+	 */
+	DocResults(Searcher searcher, List<DocResult> results) {
 		this.searcher = searcher;
-		if (sc == null)
+		this.results = results;
+	}
+
+	/**
+	 * Construct DocResults from a Scorer (Lucene document results).
+	 *
+	 * @param searcher the searcher that generated the results
+	 * @param scorer the scorer to read document results from
+	 */
+	DocResults(Searcher searcher, Scorer scorer) {
+		this.searcher = searcher;
+		if (scorer == null)
 			return; // no matches, empty result set
 		try {
 			IndexReader indexReader = searcher.getIndexReader();
 			while (true) {
 				int docId;
 				try {
-					docId = sc.nextDoc();
+					docId = scorer.nextDoc();
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -136,7 +178,7 @@ public class DocResults implements Iterable<DocResult> {
 					break;
 
 				Document d = indexReader.document(docId);
-				DocResult dr = new DocResult(searcher, null, docId, d, sc.score());
+				DocResult dr = new DocResult(searcher, null, docId, d, scorer.score());
 				results.add(dr);
 			}
 		} catch (Exception e) {
@@ -295,45 +337,55 @@ public class DocResults implements Iterable<DocResult> {
 	 * @param index the number of results we want to ensure have been read, or negative for all results
 	 * @throws InterruptedException
 	 */
-	void ensureResultsRead(int index) throws InterruptedException {
+	synchronized void ensureResultsRead(int index) throws InterruptedException {
 		if (sourceHitsFullyRead())
 			return;
 
 		try {
-			// Fill list of document results
-			int doc = partialDocResult == null ? -1 : partialDocResult.getDocId();
-			DocResult dr = partialDocResult;
-			partialDocResult = null;
+			synchronized(sourceHitsIterator) {
+				// Fill list of document results
+				int doc = partialDocId;
+				List<Hit> docHits = partialDocHits;
+				partialDocId = -1;
+				partialDocHits = null;
 
-			IndexReader indexReader = searcher == null ? null : searcher.getIndexReader();
-			Thread currentThread = Thread.currentThread();
-			while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
+				IndexReader indexReader = searcher == null ? null : searcher.getIndexReader();
+				Thread currentThread = Thread.currentThread();
+				while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
-				if (currentThread.isInterrupted())
-					throw new InterruptedException("Thread was interrupted while gathering hits");
+					if (currentThread.isInterrupted())
+						throw new InterruptedException("Thread was interrupted while gathering hits");
 
-				Hit hit = sourceHitsIterator.next();
-				if (hit.doc != doc) {
-					if (dr != null)
-						results.add(dr);
-					doc = hit.doc;
-					dr = new DocResult(searcher, sourceHits.getConcordanceFieldName(), hit.doc,
-							indexReader == null ? null : indexReader.document(hit.doc));
-					dr.setContextField(sourceHits.getContextFieldPropName()); // make sure we remember what kind of
-													// context we have, if any
+					Hit hit = sourceHitsIterator.next();
+					if (hit.doc != doc) {
+						if (docHits != null) {
+							addDocResultToList(doc, docHits, indexReader);
+						}
+						doc = hit.doc;
+						docHits = new ArrayList<Hit>();
+					}
+					docHits.add(hit);
 				}
-				dr.addHit(hit);
-			}
-			// add the final dr instance to the results collection
-			if (dr != null) {
-				if (sourceHitsIterator.hasNext())
-					partialDocResult = dr; // not done, continue from here later
-				else
-					results.add(dr); // done
+				// add the final dr instance to the results collection
+				if (docHits != null) {
+					if (sourceHitsIterator.hasNext()) {
+						partialDocId = doc;
+						partialDocHits = docHits; // not done, continue from here later
+					} else {
+						addDocResultToList(doc, docHits, indexReader);
+					}
+				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void addDocResultToList(int doc, List<Hit> docHits, IndexReader indexReader) throws IOException {
+		DocResult docResult = new DocResult(searcher, sourceHits.getConcordanceFieldName(), doc, indexReader == null ? null : indexReader.document(doc), docHits);
+		// Make sure we remember what kind of context we have, if any
+		docResult.setContextField(sourceHits.getContextFieldPropName());
+		results.add(docResult);
 	}
 
 	/**

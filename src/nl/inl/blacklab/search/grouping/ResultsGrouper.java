@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 
@@ -95,7 +96,7 @@ public class ResultsGrouper extends HitGroups {
 	 *            the hits to group
 	 * @param criteria
 	 *            the criteria to group on
-	 * @deprecated use Hits.groupedBy(criteria)
+	 * @deprecated use Hits.groupedBy(criteria). Constructor will be made package-private eventually.
 	 */
 	@Deprecated
 	public ResultsGrouper(Hits hits, HitProperty criteria) {
@@ -107,6 +108,7 @@ public class ResultsGrouper extends HitGroups {
 		}
 		contextField = hits.getContextFieldPropName();
 		Thread currentThread = Thread.currentThread();
+		Map<HitPropValue, List<Hit>> groupLists = new HashMap<HitPropValue, List<Hit>>();
 		for (int i = 0; i < hits.size(); i++) {
 		//for (Hit hit : hits) {
 			if (currentThread.isInterrupted()) {
@@ -118,7 +120,26 @@ public class ResultsGrouper extends HitGroups {
 				// queries.
 				return;
 			}
-			addHit(hits, i);
+
+			HitPropValue identity = getGroupIdentity(i);
+			List<Hit> group = groupLists.get(identity);
+			if (group == null) {
+				group = new ArrayList<Hit>();
+				groupLists.put(identity, group);
+			}
+			group.add(hits.getByOriginalOrder(i));
+			if (group.size() > largestGroupSize)
+				largestGroupSize = group.size();
+			totalHits++;
+			//addHit(hits, i);
+		}
+		for (Map.Entry<HitPropValue, List<Hit>> e: groupLists.entrySet()) {
+			HitPropValue groupId = e.getKey();
+			List<Hit> hitList = e.getValue();
+			HitGroup group = new HitGroup(searcher, groupId, defaultConcField, hitList);
+			group.setContextField(contextField);
+			groups.put(groupId, group);
+			groupsOrdered.add(group);
 		}
 
 		// If the group identities are context words, we should possibly merge
@@ -128,30 +149,17 @@ public class ResultsGrouper extends HitGroups {
 	}
 
 	/**
-	 * Add a hit to the appropriate group.
-	 *
-	 * NOTE: will be made private in a future release
+	 * Add a hit to the appropriate group. NO LONGER SUPPORTED, WILL THROW AN EXCEPTION!
 	 *
 	 * @param hits
 	 *    the hits object this hit is in
 	 * @param originalHitIndex
 	 *    original (before sorting) index of the hit
-	 * @deprecated use Hits.groupedBy instead of adding hits one by one.
+	 * @deprecated No longer supported, will throw an exception. Use Hits.groupedBy() instead.
 	 */
 	@Deprecated
 	public void addHit(Hits hits, int originalHitIndex) {
-		HitPropValue identity = getGroupIdentity(originalHitIndex);
-		HitGroup group = groups.get(identity);
-		if (group == null) {
-			group = new HitGroup(searcher, identity, defaultConcField);
-			group.setContextField(contextField);
-			groups.put(identity, group);
-			groupsOrdered.add(group);
-		}
-		group.add(hits.getByOriginalOrder(originalHitIndex));
-		if (group.size() > largestGroupSize)
-			largestGroupSize = group.size();
-		totalHits++;
+		throw new RuntimeException("Directly adding hits to ResultsGrouper no longer supported. Use Hits.groupedBy() instead.");
 	}
 
 	/**

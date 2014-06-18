@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import java.util.List;
+
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 
@@ -32,6 +34,16 @@ public class DocGroup {
 		results = new DocResults(searcher);
 	}
 
+	public DocGroup(Searcher searcher, HitPropValue groupIdentity, List<DocResult> resultList) {
+		this.groupIdentity = groupIdentity;
+		results = new DocResults(searcher, resultList);
+	}
+
+	/**
+	 * @param e
+	 * @deprecated use constructor that takes a list of results
+	 */
+	@Deprecated
 	public void add(DocResult e) {
 		results.add(e);
 	}

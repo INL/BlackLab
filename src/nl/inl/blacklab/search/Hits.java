@@ -257,6 +257,26 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
+	 * Make a wrapper Hits object for a list of Hit objects.
+	 *
+	 * Does not copy the list, but reuses it.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param concordanceFieldName
+	 *            field to use by default when finding concordances
+	 * @param hits the list of hits to wrap
+	 */
+	public Hits(Searcher searcher, String concordanceFieldName, List<Hit> hits) {
+		this.searcher = searcher;
+		this.hits = hits;
+		hitsCounted = hits.size();
+		this.concordanceFieldName = concordanceFieldName;
+		desiredContextSize = searcher.getDefaultContextSize();
+		currentContextSize = -1;
+	}
+
+	/**
 	 * Construct an empty Hits object
 	 *
 	 * @param searcher
@@ -692,7 +712,9 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @param hit
 	 *            the hit
+	 * @deprecated use constructor that takes a list of Hits instead
 	 */
+	@Deprecated
 	public synchronized void add(Hit hit) {
 		try {
 			ensureAllHitsRead();

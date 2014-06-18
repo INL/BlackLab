@@ -55,7 +55,8 @@ public class DocGroups implements Iterable<DocGroup> {
 	 *            the results to group.
 	 * @param groupBy
 	 *            the criterium to group on.
-	 * @deprecated use DocResults.groupedBy(docProperty)
+	 * @deprecated use DocResults.groupedBy(docProperty). This constructor
+	 *      	   will be made package private eventually.
 	 */
 	@Deprecated
 	public DocGroups(DocResults docResults, DocProperty groupBy) {
@@ -63,6 +64,7 @@ public class DocGroups implements Iterable<DocGroup> {
 		searcher = docResults.getSearcher();
 		this.groupBy = groupBy;
 		Thread currentThread = Thread.currentThread();
+		Map<HitPropValue, List<DocResult>> groupLists = new HashMap<HitPropValue, List<DocResult>>();
 		for (DocResult r : docResults) {
 			if (currentThread.isInterrupted()) {
 				// Thread was interrupted. Don't throw exception because not
@@ -75,16 +77,20 @@ public class DocGroups implements Iterable<DocGroup> {
 			}
 
 			HitPropValue groupId = groupBy.get(r);
-			DocGroup group = groups.get(groupId);
+			List<DocResult> group = groupLists.get(groupId);
 			if (group == null) {
-				group = new DocGroup(searcher, groupId);
-				groups.put(groupId, group);
-				orderedGroups.add(group);
+				group = new ArrayList<DocResult>();
+				groupLists.put(groupId, group);
 			}
 			group.add(r);
 			if (group.size() > largestGroupSize)
 				largestGroupSize = group.size();
 			totalResults++;
+		}
+		for (Map.Entry<HitPropValue, List<DocResult>> e: groupLists.entrySet()) {
+			DocGroup docGroup = new DocGroup(searcher, e.getKey(), e.getValue());
+			groups.put(e.getKey(), docGroup);
+			orderedGroups.add(docGroup);
 		}
 	}
 

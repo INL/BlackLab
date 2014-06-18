@@ -35,23 +35,33 @@ public class DocResult {
 
 	private float score;
 
-	public DocResult(Searcher searcher, String field, int docId, Document document) {
-		this(searcher, field, docId, document, 0.0f);
+	public DocResult(Searcher searcher, String concField, int docId, Document document) {
+		this(searcher, concField, docId, document, 0.0f);
 	}
 
-	public DocResult(Searcher searcher, String field, int docId, Document document, float score) {
+	public DocResult(Searcher searcher, String concField, int docId, Document document, float score) {
 		this.docId = docId;
 		this.document = document;
 		this.score = score;
-		hits = new Hits(searcher, field);
+		hits = new Hits(searcher, concField);
+	}
+
+	public DocResult(Searcher searcher, String concField, int doc, Document document,
+			List<Hit> docHits) {
+		this.docId = doc;
+		this.document = document;
+		this.score = 0.0f;
+		hits = new Hits(searcher, concField, docHits);
 	}
 
 	/**
 	 * Add a hit to the list of hits.
 	 *
 	 * @param hit
+	 * @deprecated use constructor that takes a list of hits instead
 	 */
-	public void addHit(Hit hit) {
+	@Deprecated
+	void addHit(Hit hit) {
 		hits.add(hit);
 	}
 
