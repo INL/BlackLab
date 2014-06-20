@@ -248,12 +248,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param hits the list of hits to wrap
 	 */
 	public Hits(Searcher searcher, List<Hit> hits) {
-		this.searcher = searcher;
-		this.hits = hits;
-		hitsCounted = hits.size();
-		setConcordanceField(searcher.getContentsFieldMainPropName());
-		desiredContextSize = searcher.getDefaultContextSize();
-		currentContextSize = -1;
+		this(searcher, searcher.getContentsFieldMainPropName(), hits);
 	}
 
 	/**
@@ -271,9 +266,18 @@ public class Hits implements Iterable<Hit> {
 		this.searcher = searcher;
 		this.hits = hits;
 		hitsCounted = hits.size();
-		this.concordanceFieldName = concordanceFieldName;
-		desiredContextSize = searcher.getDefaultContextSize();
+		setConcordanceField(concordanceFieldName);
+		desiredContextSize = searcher == null ? 5 : searcher.getDefaultContextSize();
 		currentContextSize = -1;
+		int prevDoc = -1;
+		docsRetrieved = docsCounted = 0;
+		for (Hit h: hits) {
+			if (h.doc != prevDoc) {
+				docsRetrieved++;
+				docsCounted++;
+				prevDoc = h.doc;
+			}
+		}
 	}
 
 	/**
