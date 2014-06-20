@@ -35,6 +35,9 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nl.inl.blacklab.perdocument.DocResult;
+import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.perdocument.DocResultsWindow;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.lucene.LuceneQueryParser;
@@ -99,6 +102,9 @@ public class QueryTool {
 	/** The hits that are the result of our query. */
 	private Hits hits = null;
 
+	/** The docs that are the result of our query. */
+	private DocResults docs = null;
+
 	/** The groups, or null if we haven't grouped our results. */
 	private HitGroups groups = null;
 
@@ -130,16 +136,12 @@ public class QueryTool {
 	 *  If false, just gives the number of milliseconds. */
 	boolean timeDisplayHumanFriendly = false;
 
-	/**
-	 * The filter query, if any.
-	 */
+	/** The filter query, if any. */
 	private Query filterQuery = null;
 
-	/**
-	 * What results view do we want to see?
-	 */
+	/** What results view do we want to see? */
 	enum ShowSetting {
-		HITS, GROUPS, COLLOC
+		HITS, DOCS, GROUPS, COLLOC
 	}
 
 	/**
@@ -750,7 +752,15 @@ public class QueryTool {
 
 		String lcased = cmd.toLowerCase();
 		if (lcased.length() > 0) {
-			if (lcased.equals("prev") || lcased.equals("p")) {
+			if (lcased.equals("clear") || lcased.equals("reset")) {
+				hits = null;
+				docs = null;
+				groups = null;
+				collocations = null;
+				filterQuery = null;
+				showSetting = ShowSetting.HITS;
+				outprintln("Query and results cleared.");
+			} else if (lcased.equals("prev") || lcased.equals("p")) {
 				prevPage();
 			} else if (lcased.equals("next") || lcased.equals("n")) {
 				nextPage();
@@ -806,9 +816,10 @@ public class QueryTool {
 						filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, searcher.getAnalyzer(), "title");
 						outprintln("Filter created: " + filterQuery);
 					} catch (org.apache.lucene.queryparser.classic.ParseException e) {
-						errprintln("Error parsing filter query.");
+						errprintln("Error parsing filter query: " + e.getMessage());
 					}
 				}
+				docs = null;
 			} else if (lcased.startsWith("concfi ")) {
 				String v = lcased.substring(7);
 				boolean b = false;
@@ -859,7 +870,7 @@ public class QueryTool {
 					String[] parts = lcased.substring(6).split("\\s+", 2);
 					groupBy(parts[0], parts.length > 1 ? parts[1] : null);
 				}
-			} else if (lcased.equals("groups") || lcased.equals("hits")
+			} else if (lcased.equals("groups") || lcased.equals("hits") || lcased.equals("docs")
 					|| lcased.startsWith("colloc") || lcased.startsWith("group ")) {
 				changeShowSettings(cmd);
 			} else if (lcased.equals("switch") || lcased.equals("sw")) {
@@ -1106,6 +1117,7 @@ public class QueryTool {
 			if (verbose)
 				outprintln("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
 			hits = searcher.find(spanQuery);
+			docs = null;
 			groups = null;
 			collocations = null;
 			showWhichGroup = -1;
@@ -1299,7 +1311,7 @@ public class QueryTool {
 
 		Timer t = new Timer();
 
-		if (!groupBy.equals("word") && !groupBy.equals("match") && !groupBy.equals("left") && !groupBy.equals("right")) {
+		if (!groupBy.equals("hit") && !groupBy.equals("word") && !groupBy.equals("match") && !groupBy.equals("left") && !groupBy.equals("right")) {
 			// Assume we want to group by matched text if we don't specify it explicitly.
 			property = groupBy;
 			groupBy = "match";
@@ -1307,16 +1319,21 @@ public class QueryTool {
 
 		// Group results
 		HitProperty crit = null;
-		if (groupBy.equals("word") || groupBy.equals("match"))
-			crit = new HitPropertyHitText(hits, CONTENTS_FIELD, property);
-		else if (groupBy.startsWith("left"))
-			crit = new HitPropertyWordLeft(hits, CONTENTS_FIELD, property);
-		else if (groupBy.startsWith("right"))
-			crit = new HitPropertyWordRight(hits, CONTENTS_FIELD, property);
-		else if (groupBy.equals("test")) {
-			HitProperty p1 = new HitPropertyHitText(hits, CONTENTS_FIELD, "lemma");
-			HitProperty p2 = new HitPropertyHitText(hits, CONTENTS_FIELD, "type");
-			crit = new HitPropertyMultiple(p1, p2);
+		try {
+			if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
+				crit = new HitPropertyHitText(hits, CONTENTS_FIELD, property);
+			else if (groupBy.startsWith("left"))
+				crit = new HitPropertyWordLeft(hits, CONTENTS_FIELD, property);
+			else if (groupBy.startsWith("right"))
+				crit = new HitPropertyWordRight(hits, CONTENTS_FIELD, property);
+			else if (groupBy.equals("test")) {
+				HitProperty p1 = new HitPropertyHitText(hits, CONTENTS_FIELD, "lemma");
+				HitProperty p2 = new HitPropertyHitText(hits, CONTENTS_FIELD, "type");
+				crit = new HitPropertyMultiple(p1, p2);
+			}
+		} catch (Exception e) {
+			errprintln("Unknown property: " + property);
+			return;
 		}
 		if (crit == null) {
 			errprintln("Unknown criterium: " + groupBy);
@@ -1338,6 +1355,8 @@ public class QueryTool {
 		if (showWhat.equals("hits")) {
 			showSetting = ShowSetting.HITS;
 			showWhichGroup = -1;
+		} else if (showWhat.equals("docs")) {
+			showSetting = ShowSetting.DOCS;
 		} else if (showWhat.startsWith("colloc") && hits != null) {
 			showSetting = ShowSetting.COLLOC;
 			if (showWhat.length() >= 7) {
@@ -1393,6 +1412,9 @@ public class QueryTool {
 		case GROUPS:
 			showGroupsPage();
 			break;
+		case DOCS:
+			showDocsPage();
+			break;
 		default:
 			showHitsPage();
 			break;
@@ -1446,6 +1468,47 @@ public class QueryTool {
 
 		// Summarize
 		String msg = groups.numberOfGroups() + " groups";
+		outprintln(msg);
+	}
+
+	private void showDocsPage() {
+		if (docs == null) {
+			Hits currentHitSet = getCurrentHitSet();
+			if (currentHitSet != null)
+				docs = currentHitSet.perDocResults();
+			else if (filterQuery != null) {
+				docs = searcher.queryDocuments(filterQuery);
+			} else {
+				System.out.println("No documents to show (set filterquery or search for hits first)");
+				return;
+			}
+		}
+
+		// Limit results to the current page
+		DocResultsWindow window = docs.window(firstResult, resultsPerPage);
+
+		// Compile hits display info and calculate necessary width of left context column
+		String titleField = searcher.getIndexStructure().getDocumentTitleField();
+		int hitNr = window.first() + 1;
+		for (DocResult result: window) {
+			int id = result.getDocId();
+			Document d = searcher.document(id);
+			String title = d.get(titleField);
+			if (title == null)
+				title = "(doc #" + id + ", no " + titleField + " given)";
+			else
+				title = title + " (doc #" + id + ")";
+			outprintf("%4d. %s\n", hitNr, title);
+			hitNr++;
+		}
+
+		// Summarize
+		String msg;
+		if (determineTotalNumberOfHits) {
+			msg = docs.totalSize() + " docs";
+		} else {
+			msg = docs.size() + " docs";
+		}
 		outprintln(msg);
 	}
 
