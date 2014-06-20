@@ -63,6 +63,7 @@ import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Filter;
@@ -1612,6 +1613,19 @@ public class Searcher {
 	@SuppressWarnings("deprecation") // DocResults constructor will be made package-private eventually
 	public DocResults queryDocuments(Query documentFilterQuery) {
 		return new DocResults(this, documentFilterQuery);
+	}
+
+	/**
+	 * Perform a document query and collect the results through a Collector.
+	 * @param query query to execute
+	 * @param collector object that receives each document hit
+	 */
+	public void collectDocuments(Query query, Collector collector) {
+		try {
+			indexSearcher.search(query, collector);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

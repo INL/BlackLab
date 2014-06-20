@@ -29,9 +29,10 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ReverseComparator;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -49,7 +50,7 @@ public class DocResults implements Iterable<DocResult> {
 	/**
 	 * Our searcher object
 	 */
-	private Searcher searcher;
+	Searcher searcher;
 
 	/**
 	 * Our source hits object
@@ -190,11 +191,37 @@ public class DocResults implements Iterable<DocResult> {
 	 * Find documents whose metadata matches the specified query
 	 * @param searcher searcher object
 	 * @param query metadata query, or null to match all documents
-	 * @deprecated use Searcher.queryDocuments()
+	 * @deprecated use Searcher.queryDocuments(); this constructor will be made package-private eventually
 	 */
 	@Deprecated
 	public DocResults(Searcher searcher, Query query) {
-		this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));
+
+		this.searcher = searcher;
+		searcher.collectDocuments(query, new Collector() {
+			AtomicReaderContext reader = null;
+
+			@Override
+			public boolean acceptsDocsOutOfOrder() {
+				return true;
+			}
+
+			@Override
+			public void collect(int docId) throws IOException {
+				results.add(new DocResult(DocResults.this.searcher, null, docId, reader.reader().document(docId)));
+			}
+
+			@Override
+			public void setNextReader(AtomicReaderContext reader) throws IOException {
+				this.reader = reader;
+			}
+
+			@Override
+			public void setScorer(Scorer scorer) throws IOException {
+				// (ignore)
+			}
+		});
+
+		//this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));
 	}
 
 	DocResults(Searcher searcher) {
