@@ -1,5 +1,10 @@
 package nl.inl.blacklab.search;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.IndexStructure.AltDesc;
 import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
@@ -96,7 +101,18 @@ public class QueryExecutionContext {
 		return value;
 	}
 
-	public String[] getAlternatives() {
+	/**
+	 * Return alternatives for the current field/prop that
+	 * exist and are appropriate for our current settings.
+	 *
+	 * @return the alternatives
+	 */
+	private String[] getAlternatives() {
+
+		if (searcher == null) {
+			// Testing
+			return new String[] {"i", "s"};
+		}
 
 		final String s = ComplexFieldUtil.SENSITIVE_ALT_NAME;
 		final String i = ComplexFieldUtil.INSENSITIVE_ALT_NAME;
@@ -115,15 +131,49 @@ public class QueryExecutionContext {
 			return new String[] {ci, s, i, ""}; // search diacritics-sensitive if available
 		}
 
-		// New alternative naming scheme (every alternative has a name)
-		if (!caseSensitive && !diacriticsSensitive)
-			return new String[] {i, s}; // insensitive
-		if (caseSensitive && diacriticsSensitive)
-			return new String[] {s, i}; // search fully-sensitive if available
-		if (!diacriticsSensitive)
-			return new String[] {di, s, i}; // search case-sensitive if available
+		Collection<String> availableAlternatives = Collections.emptyList();
+		ComplexFieldDesc cfd = searcher.getIndexStructure().getComplexFieldDesc(fieldName);
+		if (cfd == null)
+			return null;
 
-		return new String[] {ci, s, i}; // search diacritics-sensitive if available
+		// Find the property
+		PropertyDesc pd = cfd.getPropertyDesc(propName);
+		if (pd != null) {
+			availableAlternatives = pd.getAlternatives();
+		}
+
+		// New alternative naming scheme (every alternative has a name)
+		List<String> validAlternatives = new ArrayList<String>();
+		if (!caseSensitive && !diacriticsSensitive) {
+			// search insensitive if available
+			if (availableAlternatives.contains(i))
+				validAlternatives.add(i);
+			if (availableAlternatives.contains(s))
+				validAlternatives.add(s);
+		} else if (caseSensitive && diacriticsSensitive) {
+			// search fully-sensitive if available
+			if (availableAlternatives.contains(s))
+				validAlternatives.add(s);
+			if (availableAlternatives.contains(i))
+				validAlternatives.add(i);
+		} else if (!diacriticsSensitive) {
+			// search case-sensitive if available
+			if (availableAlternatives.contains(di))
+				validAlternatives.add(di);
+			if (availableAlternatives.contains(s))
+				validAlternatives.add(s);
+			if (availableAlternatives.contains(i))
+				validAlternatives.add(i);
+		} else {
+			// search diacritics-sensitive if available
+			if (availableAlternatives.contains(ci))
+				validAlternatives.add(ci);
+			if (availableAlternatives.contains(s))
+				validAlternatives.add(s);
+			if (availableAlternatives.contains(i))
+				validAlternatives.add(i);
+		}
+		return validAlternatives.toArray(new String[] {});
 	}
 
 	/**
@@ -186,6 +236,13 @@ public class QueryExecutionContext {
 		return ComplexFieldUtil.propertyField(fieldName, propName);
 	}
 
+	/**
+	 * Get a simple execution context for a field. Used for
+	 * testing/debugging purposes.
+	 *
+	 * @param fieldName field to get an execution context for
+	 * @return the context
+	 */
 	public static QueryExecutionContext getSimple(String fieldName) {
 		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
 		return new QueryExecutionContext(null, fieldName, mainPropName, false, false);
