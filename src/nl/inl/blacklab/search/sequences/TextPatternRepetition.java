@@ -75,4 +75,12 @@ public class TextPatternRepetition extends TextPattern {
 		return "TextPatternRepetition(" + base + ", " + min + ", " + max + ")";
 	}
 
+	@Override
+	public TextPattern rewrite() {
+		TextPattern baseRewritten = base.rewrite();
+		if (baseRewritten == base)
+			return this;
+		return new TextPatternRepetition(baseRewritten, min, max);
+	}
+
 }
