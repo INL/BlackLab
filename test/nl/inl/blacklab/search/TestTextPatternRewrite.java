@@ -80,6 +80,21 @@ public class TestTextPatternRewrite {
 		Assert.assertEquals("REGEX(contents%word@i, ^(?i)[ao]ppel$)", original.translate(stringifier));
 		TextPattern rewritten = original.rewrite();
 		String rewrittenStr = rewritten.translate(stringifier);
-		Assert.assertEquals("REGEX(contents%word@i, ^(?i)[ao]ppel$)", rewrittenStr);
+		Assert.assertEquals("REGEX(contents%word@i, ^[ao]ppel$)", rewrittenStr);
+	}
+
+	@Test
+	public void testRewriteSensitive() {
+		TextPattern original = getPatternFromCql("[word = '(?-i)Bla']");
+		Assert.assertEquals("REGEX(contents%word@i, ^(?-i)bla$)", original.translate(stringifier));
+		TextPattern rewritten = original.rewrite();
+		String rewrittenStr = rewritten.translate(stringifier);
+		Assert.assertEquals("TERM(contents%word@s, Bla)", rewrittenStr);
+
+		original = getPatternFromCql("[word = '(?c)Bla']");
+		Assert.assertEquals("REGEX(contents%word@i, ^(?c)bla$)", original.translate(stringifier));
+		rewritten = original.rewrite();
+		rewrittenStr = rewritten.translate(stringifier);
+		Assert.assertEquals("TERM(contents%word@s, Bla)", rewrittenStr);
 	}
 }

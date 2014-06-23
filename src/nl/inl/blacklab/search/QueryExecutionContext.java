@@ -110,7 +110,9 @@ public class QueryExecutionContext {
 	private String[] getAlternatives() {
 
 		if (searcher == null) {
-			// Testing
+			// Test
+			if (caseSensitive)
+				return new String[] {"s", "i"};
 			return new String[] {"i", "s"};
 		}
 

@@ -48,12 +48,29 @@ public class TextPatternRegex extends TextPatternTerm {
 	 */
 	@Override
 	public TextPattern rewrite() {
+		TextPattern result = this;
+
+        // If there's a case-sensitivity toggle flag after a
+        // start-of-string match, put the flag first so we can
+		// easily detect it below.
+		value = value.replaceAll("^\\^(\\(\\?\\-?\\w+\\))", "$1^");
+
+		// Do we want to force a case-sensitive search?
+		boolean forceCaseSensitive = false;
+		boolean forceCaseInsensitive = false;
+		if (value.startsWith("(?-i)")) {
+			forceCaseSensitive = true;
+			value = value.substring(5);
+		} else if (value.startsWith("(?c)")) {
+			forceCaseSensitive = true;
+			value = value.substring(4);
+		} else if (value.startsWith("(?i)")) {
+			forceCaseInsensitive = true;
+			value = value.substring(4);
+		}
+
 		// Try to convert to a wildcard query.
 		String wildcard = value;
-
-		// Does the regex pattern begin with (?i) (case-insensitive search)?
-		boolean searchCaseInsensitively = false;
-
 		if (wildcard.length() > 0) {
 			// Wildcard expressions always start at beginning
 			if (wildcard.charAt(0) == '^') {
@@ -79,8 +96,9 @@ public class TextPatternRegex extends TextPatternTerm {
 		wildcard = wildcard.replaceAll("\\.\\+", "##QUESTIONMARK####ASTERISK##"); // .+ -> ?*
 		wildcard = wildcard.replaceAll("\\.", "##QUESTIONMARK##"); // . -> ?
 
-		// See if we want case-insensitive search
-		if (wildcard.startsWith("(?i)")) {
+		// Does the regex pattern begin with (?i) (case-insensitive search)?
+		boolean searchCaseInsensitively = false;
+		if (wildcard.startsWith("(?i)")) { // not needed anymore?
 			searchCaseInsensitively = true;
 			wildcard = wildcard.substring(4);
 		}
@@ -101,11 +119,18 @@ public class TextPatternRegex extends TextPatternTerm {
 
 			// Let TextPatternWildcard sort out the rest
 			// (may be turned into a prefix or term query if possible).
-			return wildcardPattern.rewrite();
+			result = wildcardPattern.rewrite();
 		}
 
-		// Bummer, it's a real regex.
-		return this;
+		if (forceCaseSensitive) {
+			// Pattern started with (?-i) or (?c) to force it to be case sensitive
+			result = new TextPatternSensitive(true, true, result);
+		} else if (forceCaseInsensitive) {
+			// Pattern started with (?i) to force it to be case insensitive
+			result = new TextPatternSensitive(false, false, result);
+		}
+
+		return result;
 	}
 
 }
