@@ -95,9 +95,8 @@ public class LogUtil {
 	 */
 	public static void initLog4jIfNotAlready(Level level) {
 		Enumeration<?> allAppenders = Logger.getRootLogger().getAllAppenders();
-		if (allAppenders.hasMoreElements()) {
-			// Appender configured; nothing to do
-		} else {
+		if (!allAppenders.hasMoreElements()) {
+			// No appender yet; create simple console appender
 			ConsoleAppender consoleAppender = new ConsoleAppender();
 			//consoleAppender.setLayout(new PatternLayout("%r [%t] %p %c %x - %m%n"));
 			consoleAppender.setLayout(new PatternLayout("%8r %-35c{2} %x %-5p %m%n"));
