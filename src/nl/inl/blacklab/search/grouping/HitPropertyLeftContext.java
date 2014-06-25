@@ -77,16 +77,16 @@ public class HitPropertyLeftContext extends HitProperty {
 	public HitPropValueContextWords get(int hitNumber) {
 		int[] context = hits.getHitContext(hitNumber);
 		int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
-		int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
+		//int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
 		int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
 
 		// Copy the desired part of the context
-		int n = contextRightStart - contextHitStart;
+		int n = contextHitStart;
 		if (n <= 0)
 			return new HitPropValueContextWords(hits, propName, new int[0], sensitive);
 		int[] dest = new int[n];
 		int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-		System.arraycopy(context, contextStart + contextHitStart, dest, 0, n);
+		System.arraycopy(context, contextStart, dest, 0, n);
 
 		// Reverse the order of the array, because we want to sort from right to left
 		for (int i = 0; i < n / 2; i++) {
