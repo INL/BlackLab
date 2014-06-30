@@ -145,6 +145,9 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 		// Paragraph tags: index as tags in the content
 		addHandler("p", new InlineTagHandler());
 
+		// <event/> tags: index as tags in the content
+		addHandler("event", new InlineTagHandler());
+
 		// meta elements: metadata fields
 		addHandler("meta", new ContentCapturingHandler() {
 
