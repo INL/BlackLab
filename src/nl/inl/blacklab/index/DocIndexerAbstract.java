@@ -211,7 +211,9 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		this.reader = new CountingReader(reader);
 
 		// Get our parameters from the indexer
-		setParameters(indexer.getIndexerParameters());
+		Map<String, String> indexerParameters = indexer.getIndexerParameters();
+		if (indexerParameters != null)
+			setParameters(indexerParameters);
 	}
 
 	public void reportCharsProcessed() {

@@ -61,6 +61,10 @@ public class DocIndexerExample extends DocIndexerXmlHandlers {
 			}
 		});
 
+		// Sentence and entity tags: index as inline tags (used in tests)
+		addHandler("s", new InlineTagHandler());
+		addHandler("entity", new InlineTagHandler());
+
 	}
 
 

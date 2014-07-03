@@ -528,7 +528,7 @@ public class Indexer {
 						}
 					} catch (IOException e) {
 						log("*** Error indexing " + fileToIndex, e);
-						terminateIndexing = !listener.errorOccurred(e.getMessage(), "file", fileToIndex, null);
+						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "file", fileToIndex, null);
 					}
 				}
 			}
@@ -641,7 +641,7 @@ public class Indexer {
 							}
 						} catch (ZipException ex) {
 							log("*** Error indexing " + fileName + " from " + zipFile, ex);
-							terminateIndexing = !listener.errorOccurred(ex.getMessage(), "zip", zipFile, new File(fileName));
+							terminateIndexing = !getListener().errorOccurred(ex.getMessage(), "zip", zipFile, new File(fileName));
 						}
 					}
 					if (!continueIndexing())
@@ -683,7 +683,7 @@ public class Indexer {
 					}
 				} catch (Exception e) {
 					log("*** Error indexing tgz file: " + tgzFileName, e);
-					terminateIndexing = !listener.errorOccurred(e.getMessage(), "tgz", new File(tgzFileName), new File(filePath));
+					terminateIndexing = !getListener().errorOccurred(e.getMessage(), "tgz", new File(tgzFileName), new File(filePath));
 				}
 				return continueIndexing();
 			}
