@@ -19,9 +19,6 @@ import org.apache.lucene.search.spans.Spans;
 
 /**
  * A group of results, with its group identity and the results themselves.
- *
- * You can only iterate over the Hit objects. The subclass RandomAccessGroup does allow random
- * access to the hits.
  */
 abstract class Group {
 	protected HitPropValue groupIdentity;

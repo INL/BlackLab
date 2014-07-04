@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.Searcher;
 /**
  * Groups results on the basis of a list of criteria.
  *
- * Unlike its base class, this class also allows random access to the groups, and each group
+ * This class allows random access to the groups, and each group
  * provides random access to the hits. Note that this means that all hits found must be retrieved,
  * which may be unfeasible for large results sets.
  */
