@@ -392,6 +392,7 @@ public class Indexer {
 		try {
 			getListener().fileStarted(documentName);
 			int docsDoneBefore = searcher.getWriter().numDocs();
+			long tokensDoneBefore = getListener().getTokensProcessed();
 
 			DocIndexer docIndexer = createDocIndexer(documentName, reader);
 
@@ -399,7 +400,11 @@ public class Indexer {
 			getListener().fileDone(documentName);
 			int docsDoneAfter = searcher.getWriter().numDocs();
 			if (docsDoneAfter == docsDoneBefore) {
-				System.err.println("*** Warning, couldn't index " + documentName + " ; wrong format?");
+				System.err.println("*** Warning, couldn't index " + documentName + "; wrong format?");
+			}
+			long tokensDoneAfter = getListener().getTokensProcessed();
+			if (tokensDoneAfter == tokensDoneBefore) {
+				System.err.println("*** Warning, no words indexed in " + documentName + "; wrong format?");
 			}
 		} catch (InputFormatException e) {
 			if (continueAfterInputError) {
