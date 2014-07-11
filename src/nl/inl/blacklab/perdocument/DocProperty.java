@@ -77,4 +77,5 @@ public abstract class DocProperty {
 		logger.debug("Unknown DocProperty '" + type + "'");
 		return null;
 	}
+
 }

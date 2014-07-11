@@ -528,4 +528,16 @@ public class DocResults implements Iterable<DocResult> {
 		return hits;
 	}
 
+	/**
+	 * Count the number of results that have the same value for the specified
+	 * property. Basically a grouping operation without storing the results.
+	 * Used for e.g. faceted search.
+	 *
+	 * @param countBy property to count
+	 * @return the counts
+	 */
+	public DocCounts countBy(DocProperty countBy) {
+		return new DocCounts(this, countBy);
+	}
+
 }

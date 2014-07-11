@@ -15,32 +15,40 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 
 /**
- * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
+ * A value plus a count for a certain group of documents
+ * that have some property value in common. Used for faceted
+ * search.
  */
-public abstract class DocGroupProperty {
-	public abstract HitPropValue get(DocGroup result);
+public class DocCount extends DocGroup {
 
-	/**
-	 * Compares two groups on this property
-	 * @param a first group
-	 * @param b second group
-	 * @return 0 if equal, negative if a < b, positive if a > b.
-	 */
-	public abstract int compare(DocGroup a, DocGroup b);
+	private Integer count;
 
-	public boolean defaultSortDescending() {
-		return false;
+	public DocCount(Searcher searcher, HitPropValue groupIdentity) {
+		super(searcher, groupIdentity);
+		count = 0;
 	}
 
-	public abstract String serialize();
+	public DocCount(Searcher searcher, HitPropValue groupIdentity, int count) {
+		super(searcher, groupIdentity);
+		this.count = count;
+	}
 
-	public static DocGroupProperty deserialize(String serialized) {
-		if (serialized.equalsIgnoreCase("identity"))
-			return new DocGroupPropertyIdentity();
-		return new DocGroupPropertySize();
+	@Override
+	public DocResults getResults() {
+		throw new UnsupportedOperationException("DocCount has no results objects!");
+	}
+
+	@Override
+	public int size() {
+		return count;
+	}
+
+	public void increment() {
+		count++;
 	}
 
 }

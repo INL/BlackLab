@@ -93,4 +93,8 @@ public class DocResultsWindow extends DocResults {
 		return source.size();
 	}
 
+	public DocResults getOriginalDocs() {
+		return source;
+	}
+
 }
