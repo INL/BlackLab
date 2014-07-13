@@ -87,6 +87,9 @@ public class DocCounts implements Iterable<DocCount> {
 				largestGroupSize = count.size();
 			totalResults++;
 		}
+		for (DocCount c: counts.values()) {
+			orderedGroups.add(c);
+		}
 	}
 
 	public Collection<DocCount> getCounts() {
@@ -97,10 +100,14 @@ public class DocCounts implements Iterable<DocCount> {
 		return counts.get(groupId).size();
 	}
 
-	public void sortGroups(DocGroupProperty prop, boolean sortReverse) {
+	public void sort(DocGroupProperty prop, boolean sortReverse) {
 		Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse,
 				searcher.getCollator());
 		Collections.sort(orderedGroups, comparator);
+	}
+
+	public void sort(DocGroupProperty prop) {
+		sort(prop, false);
 	}
 
 	@Override

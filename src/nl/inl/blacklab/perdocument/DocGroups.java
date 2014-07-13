@@ -102,10 +102,32 @@ public class DocGroups implements Iterable<DocGroup> {
 		return groups.get(groupId);
 	}
 
+	/**
+	 * Order the groups based on the specified group property.
+	 *
+	 * @param prop the property to sort on
+	 * @param sortReverse if true, perform reverse sort
+	 * @deprecated renamed to sort()
+	 */
+	@Deprecated
 	public void sortGroups(DocGroupProperty prop, boolean sortReverse) {
+		sort(prop, sortReverse);
+	}
+
+	/**
+	 * Order the groups based on the specified group property.
+	 *
+	 * @param prop the property to sort on
+	 * @param sortReverse if true, perform reverse sort
+	 */
+	public void sort(DocGroupProperty prop, boolean sortReverse) {
 		Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse,
 				searcher.getCollator());
 		Collections.sort(orderedGroups, comparator);
+	}
+
+	public void sort(DocGroupProperty prop) {
+		sort(prop, false);
 	}
 
 	@Override

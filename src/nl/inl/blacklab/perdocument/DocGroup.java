@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
  * author name, the group identity might be the string "Harry Mulisch".
  */
 public class DocGroup {
-	private HitPropValue groupIdentity;
+	protected HitPropValue groupIdentity;
 
 	private DocResults results;
 
@@ -59,5 +59,12 @@ public class DocGroup {
 	public int size() {
 		return results.size();
 	}
+
+	@Override
+	public String toString() {
+		return groupIdentity + " (" + size() + ")";
+	}
+
+
 
 }

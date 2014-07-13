@@ -21,6 +21,15 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public abstract class DocGroupProperty {
+
+	static DocGroupPropertyIdentity propIdentity = new DocGroupPropertyIdentity();
+
+	static DocGroupPropertySize propSize = new DocGroupPropertySize();
+
+	public static DocGroupPropertyIdentity identity() { return propIdentity; }
+
+	public static DocGroupPropertySize size() { return propSize; }
+
 	public abstract HitPropValue get(DocGroup result);
 
 	/**
@@ -39,8 +48,8 @@ public abstract class DocGroupProperty {
 
 	public static DocGroupProperty deserialize(String serialized) {
 		if (serialized.equalsIgnoreCase("identity"))
-			return new DocGroupPropertyIdentity();
-		return new DocGroupPropertySize();
+			return propIdentity;
+		return propSize;
 	}
 
 }

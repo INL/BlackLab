@@ -15,10 +15,20 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+
 /**
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public abstract class GroupProperty {
+
+	static GroupPropertyIdentity propIdentity = new GroupPropertyIdentity();
+
+	static GroupPropertySize propSize = new GroupPropertySize();
+
+	public static GroupPropertyIdentity identity() { return propIdentity; }
+
+	public static GroupPropertySize size() { return propSize; }
+
 	public abstract HitPropValue get(Group result);
 
 	public abstract int compare(Group a, Group b);
