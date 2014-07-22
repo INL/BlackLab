@@ -151,7 +151,7 @@ public class HitPropertyLeftContext extends HitProperty {
 	}
 
 	public static HitPropertyLeftContext deserialize(Hits hits, String info) {
-		String[] parts = info.split(":");
+		String[] parts = info.split(":", -1);
 		String fieldName = hits.getConcordanceFieldName();
 		String propName = parts[0];
 		if (propName.length() == 0)

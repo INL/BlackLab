@@ -127,7 +127,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 	}
 
 	public static DocPropertyMultiple deserialize(String info) {
-		String[] strValues = info.split(",");
+		String[] strValues = info.split(",", -1);
 		DocProperty[] values = new DocProperty[strValues.length];
 		int i = 0;
 		for (String strValue: strValues) {

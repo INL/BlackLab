@@ -35,7 +35,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 	}
 
 	public static HitPropValue deserialize(Hits hits, String info) {
-		String[] parts = info.split(SERIALIZATION_SEPARATOR_ESC_REGEX);
+		String[] parts = info.split(SERIALIZATION_SEPARATOR_ESC_REGEX, -1);
 		String fieldName = hits.getConcordanceFieldName();
 		String propName = parts[0];
 		boolean sensitive = parts[1].equalsIgnoreCase("s");

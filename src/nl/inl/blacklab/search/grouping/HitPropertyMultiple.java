@@ -167,7 +167,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	}
 
 	public static HitPropertyMultiple deserialize(Hits hits, String info) {
-		String[] strValues = info.split(",");
+		String[] strValues = info.split(",", -1);
 		HitProperty[] values = new HitProperty[strValues.length];
 		int i = 0;
 		for (String strValue: strValues) {

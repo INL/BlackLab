@@ -37,7 +37,7 @@ public class HitPropValueMultiple extends HitPropValue {
 	}
 
 	public static HitPropValueMultiple deserialize(Hits hits, String info) {
-		String[] strValues = info.split(MULTIPLE_SERIALIZATION_SEPARATOR);
+		String[] strValues = info.split(MULTIPLE_SERIALIZATION_SEPARATOR, -1);
 		HitPropValue[] values = new HitPropValue[strValues.length];
 		int i = 0;
 		for (String strValue: strValues) {
