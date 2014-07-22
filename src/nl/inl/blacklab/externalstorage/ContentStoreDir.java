@@ -88,7 +88,7 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 		 * @return new TocEntry
 		 */
 		public static TocEntry deserialize(String line) {
-			String[] parts = line.trim().split("\t");
+			String[] parts = line.trim().split("\t", -1);
 			int id = Integer.parseInt(parts[0]);
 			int fileId = Integer.parseInt(parts[1]);
 			int offset = Integer.parseInt(parts[2]);

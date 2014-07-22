@@ -153,7 +153,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
 				break;
 			if (l.length() == 0)
 				continue;
-			String[] fields = l.split("\t");
+			String[] fields = l.split("\t", -1);
 			titles.put(fields[0].trim(), fields[1].trim());
 			dates.put(fields[0].trim(), fields[3].trim());
 			authors.put(fields[0].trim(), fields[4].trim());

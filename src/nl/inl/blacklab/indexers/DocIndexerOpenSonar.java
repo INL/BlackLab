@@ -16,6 +16,8 @@
 package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
+import java.util.Arrays;
+import java.util.List;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
@@ -149,7 +151,9 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 		addHandler("event", new InlineTagHandler());
 
 		// meta elements: metadata fields
+		// [NOT USED FOR OPENSONAR..?]
 		addHandler("meta", new ContentCapturingHandler() {
+
 
 			private String metadataFieldName;
 
@@ -163,8 +167,30 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 			@Override
 			public void endElement(String uri, String localName, String qName) {
 				super.endElement(uri, localName, qName);
-				addMetadataField(metadataFieldName, getElementContent());
+				String elementContent = getElementContent();
+				addMetadataField(metadataFieldName, elementContent);
 			}
 		});
 	}
+
+	List<String> untokenizedFields = Arrays.asList("Country", "LicentieCode", "CollectionName");
+
+	@Override
+	public void addMetadataField(String name, String value) {
+
+		// FIXME HACK: See if we need to substitute token-ending characters
+		if (untokenizedFields.contains(name)) {
+			// Yes; substitute token-ending characters for underscore in these fields!
+			value = value.replaceAll("[\\s\\./]", "_");
+		}
+
+		super.addMetadataField(name, value);
+	}
+
+	public static void main(String[] args) {
+		System.out.println("NL B".replaceAll("[\\s\\./]", "_"));
+		System.out.println("NL/B".replaceAll("[\\s\\./]", "_"));
+		System.out.println("a.b.c.d".replaceAll("[\\s\\./]", "_"));
+	}
+
 }

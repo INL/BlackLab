@@ -22,9 +22,7 @@ import nl.inl.util.CapturingReader;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntField;
-import org.apache.lucene.document.StringField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -90,9 +88,9 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 		String fromInputFile;
 		Document luceneDoc = ourDocIndexer.getCurrentLuceneDoc();
-		if (ourDocIndexer != null)
+		if (ourDocIndexer != null) {
 			fromInputFile = luceneDoc.get("fromInputFile");
-		else {
+		} else {
 			// TEST
 			fromInputFile = TEST_FROM_INPUT_FILE;
 		}
@@ -137,6 +135,15 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			}
 			luceneDoc.add(new Field("AuthorNameOrPseudonym", authorName, docIndexer.getMetadataFieldType("AuthorNameOrPseudonym")));
 			luceneDoc.add(new Field("AuthorNameOrPseudonymSearch", authorNameAndPseudonym, docIndexer.getMetadataFieldType("AuthorNameOrPseudonymSearch")));
+
+			String sex = luceneDoc.get("Sex");
+			if (sex == null || sex.length() == 0) {
+				luceneDoc.add(new Field("Sex", "unknown", docIndexer.getMetadataFieldType("Sex")));
+			}
+			String translated = luceneDoc.get("Translated");
+			if (translated == null || translated.length() == 0) {
+				luceneDoc.add(new Field("Translated", "unknown", docIndexer.getMetadataFieldType("Translated")));
+			}
 
 			if (ourDocIndexer != null) {
 				// Store metadata XML in content store and corresponding id in Lucene document
@@ -201,6 +208,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 					indexAs = localName;
 				String content = textContent.toString().trim();
 				if (content.length() > 0) {
+
 					// Leaf node with content; store as metadata field
 					if (ourDocIndexer != null)
 						ourDocIndexer.addMetadataField(indexAs, content);
@@ -219,55 +227,6 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			if (!hasChild)
 				textContent.append(ch, start, length);
 		}
-	}
-
-	public static void main(String[] args) throws IOException {
-		DocIndexer docIndexerTest = new DocIndexer() {
-			@Override
-			public void index() throws Exception {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public String getParameter(String name, String defaultValue) {
-				if (name.equals("metadataZipFile")) {
-					return "G:\\Jan_OpenSonar\\SONAR500TST.zip";
-				}
-				if (name.equals("metadataPathInZip")) {
-					return "SONAR500TST/DATA";
-				}
-				return defaultValue;
-			}
-
-			@Override
-			public void setParameter(String name, String value) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public void setParameters(Map<String, String> param) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public String getParameter(String name) {
-				return getParameter(name, null);
-			}
-
-			@Override
-			public boolean hasParameter(String name) {
-				return getParameter(name) != null;
-			}
-
-			@Override
-			public FieldType getMetadataFieldType(String fieldName) {
-				return StringField.TYPE_STORED;
-			}
-		};
-
-		MetadataFetcher fetcher = new MetadataFetcherSonarCmdi(docIndexerTest);
-		fetcher.addMetadata();
-		fetcher.close();
 	}
 
 }

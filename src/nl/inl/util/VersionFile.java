@@ -148,7 +148,7 @@ public class VersionFile {
 				throw new RuntimeException("Version file not found: " + file);
 			BufferedReader r = FileUtil.openForReading(file);
 			try {
-				String[] info = r.readLine().trim().split("\\|\\|");
+				String[] info = r.readLine().trim().split("\\|\\|", -1);
 				type = info[0];
 				if (info.length > 1)
 					version = info[1];
