@@ -1,0 +1,84 @@
+// indexconfig.json / indexmetadata.json - indexer options / info about index
+{
+    // Display name for the index and short description
+    // [manual; not used by BlackLab. None of the display name or description settings
+    //  are used by BlackLab directly; they exist for the benefit of applications]
+    "displayName": "OpenSonar",
+    "description": "The OpenSonar corpus.",
+ 
+    // Information about index format, index time, BlackLab version
+    // [automatically added by indexer]
+    "versionInfo": {
+        "blackLabBuildDate": "2014-07-18",  // Build date of the BlackLab.jar used
+        "indexFormat": "3",                 // Index format version number
+        "indexTime": "2014-07-18 12:43:00"  // Start of index creation
+    },
+ 
+    // About the fields in this index
+    // [manual; defaults are set by indexer if not specified]
+    "fieldInfo": {
+        "metadataFields": {
+            "author": {
+                "displayName": "author",
+                "description": "The author of the document.",
+                "type": "tokenized",          // ..or numeric, untokenized
+                "analyzer": "default",        // ..or (qualified) class name
+                "unknownValue": "unknown",    // what value to index if the value is unknown
+                "unknownCondition": "MISSING_OR_EMPTY" // ..or MISSING, EMPTY, NEVER. When is the value considered unknown?
+            }
+        },
+        "complexFields": {
+            "contents": {
+                "displayName": "contents",
+                "description": "The text contents of the document.",
+                "useAnnotation": "http://.../..frog..."
+            }
+        }
+    },
+ 
+    // What & how to index
+    // [manual; not stored in index]
+    "indexerConfig": {
+        "indexDocuments": {
+            "indexerClass": "nl.inl.blacklab.indexer.DocIndexerFoliaOpenSonar",
+            "dataToIndex": [
+                "/data/xml/newspapers/",
+                "/data/xml/magazines.tar.gz"
+            ],
+            "fieldSettings": {
+                "contents": {
+                    "attributes": {
+                        "word": {
+                            "sensitivity": "all"
+                        },
+                        "lemma": {
+                            "sensitivity": "si"
+                        },
+                        "pos": {
+                            "sensitivity": "i",
+                            "propName": "type" // (default: same)
+                        },
+                        "function": {
+                            "skip": "yes" // (default no)
+                        }
+                    }
+                },
+                "author": {
+                    "sensitivity": "i"   // kan dat..?
+                },
+                "bla": {
+                    "skip": "yes"
+                }
+            }
+        },
+        "skipDocuments": [
+            "id:ABC123",
+            "id:DEF456"
+        ],
+        "fetchMetadata": {
+            "fetcherClass": "nl.inl.blacklab.indexer.MetadataFetcherOpenSonarCmdi",
+            "pathToZip": "/data/meta/cmdi.zip",
+            "pathInZip": "SONAR-500/CMDI/"
+        }
+    }
+}
