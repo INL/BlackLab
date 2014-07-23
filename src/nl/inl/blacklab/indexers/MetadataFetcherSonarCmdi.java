@@ -154,9 +154,6 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 				// TEST; print start of metadata file
 				System.out.println(capturingReader.getContent().substring(0, 1000));
 			}
-
-
-
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -171,25 +168,11 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 		private boolean hasChild = false;
 
-		Map<String, String> fieldsToIndex = new HashMap<String, String>();
+		Map<String, String> indexFieldAs = new HashMap<String, String>();
 
 		public MetadataParser() {
-			fieldsToIndex.put("CollectionName", "");
-			fieldsToIndex.put("CollectionCode", "");
-			fieldsToIndex.put("TextTitle", "");
-			fieldsToIndex.put("TextSubTitle", "");
-			fieldsToIndex.put("TextDescription", "");
-			fieldsToIndex.put("TextType", "");
-			fieldsToIndex.put("TextClass", "");
-			fieldsToIndex.put("TextKeywords", "");
-			fieldsToIndex.put("LanguageName", "");
-			fieldsToIndex.put("iso-639-3-code", "Language-iso-code");
-			fieldsToIndex.put("SourceName", "");
-			fieldsToIndex.put("Continent", "");
-			fieldsToIndex.put("Country", "");
-			fieldsToIndex.put("Publisher", "");
-			fieldsToIndex.put("PublicationDate", "");
-			fieldsToIndex.put("Name", "AuthorName");
+			indexFieldAs.put("iso-639-3-code", "Language-iso-code");
+			indexFieldAs.put("Name", "AuthorName");
 		}
 
 		@Override
@@ -203,7 +186,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		public void endElement(String uri, String localName, String qName) throws SAXException {
 
 			if (!hasChild) {
-				String indexAs = fieldsToIndex.get(localName);
+				String indexAs = indexFieldAs.get(localName);
 				if (indexAs == null || indexAs.length() == 0)
 					indexAs = localName;
 				String content = textContent.toString().trim();

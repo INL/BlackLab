@@ -41,6 +41,20 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 
 	boolean lemPosProblemReported = false;
 
+	/**
+	 * If we have 1 PoS annotation, use pos tags without a set
+	 * attribute. If we have 2, we use pos tags with
+	 * set="http://ilk.uvt.nl/folia/sets/frog-mbpos-cgn"
+	 */
+	int numPosAnnotations = 0;
+
+	/**
+	 * If we have 1 lemma annotation, use lemma tags without a set
+	 * attribute. If we have 2, we use pos tags with
+	 * set="http://ilk.uvt.nl/folia/sets/frog-mblem-nl"
+	 */
+	int numLemmaAnnotations = 0;
+
 	public DocIndexerOpenSonar(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 
@@ -54,6 +68,26 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 
 		// Doc element: the individual documents to index
 		addHandler("/FoLiA", new DocumentElementHandler());
+
+		// PoS annotation metadata: see which annotation we need to use.
+		addHandler("pos-annotation", new ElementHandler() {
+			@Override
+			public void startElement(String uri, String localName,
+					String qName, Attributes attributes) {
+				super.startElement(uri, localName, qName, attributes);
+				numPosAnnotations++;
+			}
+		});
+
+		// Lemma annotation metadata: see which annotation we need to use.
+		addHandler("lemma-annotation", new ElementHandler() {
+			@Override
+			public void startElement(String uri, String localName,
+					String qName, Attributes attributes) {
+				super.startElement(uri, localName, qName, attributes);
+				numLemmaAnnotations++;
+			}
+		});
 
 		// Word elements: index as main contents
 		addHandler("w", new WordHandlerBase() {
@@ -94,8 +128,13 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 					Attributes attributes) {
 				super.startElement(uri, localName, qName, attributes);
 				String set = attributes.getValue("set");
-				if (set != null && set.equals("http://ilk.uvt.nl/folia/sets/frog-mblem-nl")) {
-					// Correct set attribute; use this lemma.
+				boolean isSetLess = set == null || set.length() == 0;
+				boolean isFrog = !isSetLess && set.equals("http://ilk.uvt.nl/folia/sets/frog-mblem-nl");
+				if (numLemmaAnnotations == 2 && isFrog ||
+					numLemmaAnnotations == 1 && isSetLess) {
+					// If there were 2 lemma annotation meta declarations,
+					// we should use the frog ones; if only 1, the ones
+					// without a "set" attribute.
 					lemma = attributes.getValue("class");
 					if (lemma == null)
 						lemma = "";
@@ -110,8 +149,13 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 					Attributes attributes) {
 				super.startElement(uri, localName, qName, attributes);
 				String set = attributes.getValue("set");
-				if (set != null && set.equals("http://ilk.uvt.nl/folia/sets/frog-mbpos-cgn")) {
-					// Correct set attribute; use this pos.
+				boolean isSetLess = set == null || set.length() == 0;
+				boolean isFrog = !isSetLess && set.equals("http://ilk.uvt.nl/folia/sets/frog-mbpos-cgn");
+				if (numPosAnnotations == 2 && isFrog ||
+					numPosAnnotations == 1 && isSetLess) {
+					// If there were 2 pos annotation meta declarations,
+					// we should use the frog ones; if only 1, the ones
+					// without a "set" attribute.
 					pos = attributes.getValue("class");
 					if (pos == null)
 						pos = "";
