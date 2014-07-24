@@ -217,7 +217,12 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 		});
 	}
 
-	List<String> untokenizedFields = Arrays.asList("Country", "LicentieCode", "CollectionName");
+	List<String> untokenizedFields = Arrays.asList(
+		"Country",
+		"LicentieCode",
+		"LicenseDetails",
+		"CollectionName"
+	);
 
 	@Override
 	public void addMetadataField(String name, String value) {
