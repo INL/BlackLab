@@ -600,19 +600,31 @@ public class StringUtil {
 	}
 
 	/**
-	 * Optionally 'pluralize' a singular noun by appending an s if the
-	 * number is not equal to 1.
+	 * Return the singular or the plural form of a noun depending on a number.
 	 *
-	 * Obviously, this doesn't take irregular plural forms (sheep/sheep, man/men)
-	 * into account.
+	 * This version of the method simply appends an "s" to form the plural.
+	 * For irregular plural forms, use the version that takes 3 parameters.
 	 *
 	 * @param singular the singular to 'pluralize'
 	 * @param number if this equals 1, no s is added
 	 * @return the possibly pluralized form
 	 */
 	public static String pluralize(String singular, long number) {
-		return singular + (number != 1 ? "s" : "");
+		return pluralize(singular, singular + "s", number);
 	}
+
+	/**
+	 * Return the singular or the plural form of a noun depending on a number.
+	 *
+	 * @param singular the singular form of the word
+	 * @param plural the plural form of the word
+	 * @param number if this equals 1, the sinular is returned, otherwise the plural
+	 * @return the possibly pluralized form
+	 */
+	public static String pluralize(String singular, String plural, long number) {
+		return number == 1 ? singular : plural;
+	}
+
 	/**
 	 * Convert the first character in a string to uppercase.
 	 * @param str the string to be capitalized

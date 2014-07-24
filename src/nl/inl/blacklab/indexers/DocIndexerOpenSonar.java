@@ -16,8 +16,6 @@
 package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
-import java.util.Arrays;
-import java.util.List;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
@@ -217,21 +215,25 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 		});
 	}
 
+	/*
 	List<String> untokenizedFields = Arrays.asList(
 		"Country",
 		"LicentieCode",
 		"LicenseDetails",
 		"CollectionName"
 	);
+	*/
 
 	@Override
 	public void addMetadataField(String name, String value) {
 
+		/*
 		// FIXME HACK: See if we need to substitute token-ending characters
 		if (untokenizedFields.contains(name)) {
 			// Yes; substitute token-ending characters for underscore in these fields!
 			value = value.replaceAll("[\\s\\./]", "_");
 		}
+		*/
 
 		super.addMetadataField(name, value);
 	}

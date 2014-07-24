@@ -38,7 +38,12 @@ public class TimeUtil {
 		long sec = intervalMsec / 1000;
 		long min = sec / 60;
 		sec %= 60;
+		long hours = min / 60;
+		min %= 60;
 		StringBuilder result = new StringBuilder();
+		if (hours > 0) {
+			result.append(hours).append(" ").append(StringUtil.pluralize("hour", hours)).append(", ");
+		}
 		if (min > 0) {
 			result.append(min).append(" ").append(StringUtil.pluralize("minute", min)).append(", ");
 		}
