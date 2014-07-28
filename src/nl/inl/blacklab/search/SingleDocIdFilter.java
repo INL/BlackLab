@@ -22,6 +22,7 @@ public class SingleDocIdFilter extends Filter {
 
 	@Override
 	public DocIdSet getDocIdSet(AtomicReaderContext arg0, Bits arg1) throws IOException {
+		// FIXME: shouldn't docIdSet be relative to the current reader context (arg0.docBase)?
 		return docIdSet;
 	}
 

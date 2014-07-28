@@ -207,7 +207,8 @@ public class DocResults implements Iterable<DocResult> {
 
 			@Override
 			public void collect(int docId) throws IOException {
-				results.add(new DocResult(DocResults.this.searcher, null, docId, reader.reader().document(docId)));
+				int globalDocId = docId + reader.docBase;
+				results.add(new DocResult(DocResults.this.searcher, null, globalDocId, reader.reader().document(docId)));
 			}
 
 			@Override
