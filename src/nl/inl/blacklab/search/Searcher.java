@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
+import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.externalstorage.ContentStoreDir;
@@ -226,8 +227,11 @@ public class Searcher {
 	/** Thread that automatically warms up the forward indices, if enabled. */
 	private Thread autoWarmThread;
 
-	/** Analyzer used for our metadata fields */
-	private Analyzer analyzer;
+	/** Analyzer used for indexing our metadata fields */
+	private Analyzer indexAnalyzer;
+
+	/** Analyzer used for parsing metadata field queries */
+	private Analyzer searchAnalyzer;
 
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).
@@ -282,7 +286,8 @@ public class Searcher {
 		logger.debug("Constructing Searcher...");
 
 		// Instantiate analyzer used for metadata indexing and queries
-		analyzer = new BLDutchAnalyzer(); // TODO make configurable
+		indexAnalyzer = new BLDutchAnalyzer(); // TODO make configurable
+		searchAnalyzer = new BLWhitespaceAnalyzer();
 
 		if (indexMode) {
 			indexWriter = openIndexWriter(indexDir, createNewIndex);
@@ -1496,7 +1501,7 @@ public class Searcher {
 			indexDir.mkdir();
 		}
 		Directory indexLuceneDir = FSDirectory.open(indexDir);
-		IndexWriterConfig config = Utilities.getIndexWriterConfig(analyzer, create);
+		IndexWriterConfig config = Utilities.getIndexWriterConfig(indexAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
 		if (create)
@@ -1601,8 +1606,31 @@ public class Searcher {
 		}
 	}
 
+	/**
+	 * @return the analyzer
+	 * @deprecated use getIndexAnalyzer() or getSearchAnalyzer()
+	 */
+	@Deprecated
 	public Analyzer getAnalyzer() {
-		return analyzer;
+		return getIndexAnalyzer();
+	}
+
+	/**
+	 * Get the analyzer to use for indexing.
+	 * (strips things like wildcards, etc.)
+	 * @return the analyzer
+	 */
+	public Analyzer getIndexAnalyzer() {
+		return indexAnalyzer;
+	}
+
+	/**
+	 * Get the analyzer to use for parsing document filters while searching.
+	 * (leaves wildcards alone)
+	 * @return the analyzer
+	 */
+	public Analyzer getSearchAnalyzer() {
+		return searchAnalyzer;
 	}
 
 	/**

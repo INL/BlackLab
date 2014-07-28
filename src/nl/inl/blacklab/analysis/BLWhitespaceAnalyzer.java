@@ -28,22 +28,22 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.util.Version;
 
 /**
- * A simple analyzer for indexing that isn't limited to Latin.
+ * Analyzer suitable for parsing (filter) queries.
  *
  * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
  */
-public final class BLDutchAnalyzer extends Analyzer {
+public final class BLWhitespaceAnalyzer extends Analyzer {
 
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
 		try {
-			Tokenizer source = new BLDutchTokenizer(reader);
+			Tokenizer source = new WhitespaceTokenizer(Version.LUCENE_42, reader);
 			source.reset();
-			TokenStream filter = new BLDutchTokenFilter(source);
-			filter.reset();
+			TokenStream filter = source;
 			if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
 			{
 				filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all

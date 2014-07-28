@@ -2,6 +2,7 @@ package nl.inl.blacklab.indexers;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,6 +48,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 	static private ZipFile metadataZipFile = null;
 
+	static private File metadataDir = null;
+
 	private String metadataPathInZip;
 
 	DocIndexerXmlHandlers ourDocIndexer;
@@ -61,17 +64,23 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 		if (metadataZipFile == null) {
 			String zipFilePath = docIndexer.getParameter("metadataZipFile");
-			if (zipFilePath == null)
-				throw new RuntimeException("For OpenSonar metadata, specify metadataZipFile in indexer.properties!");
-			File file = new File(zipFilePath);
-			try {
-				metadataZipFile = new ZipFile(file);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			if (zipFilePath == null) {
+				zipFilePath = docIndexer.getParameter("metadataDir");
+				if (zipFilePath == null)
+					throw new RuntimeException("For OpenSonar metadata, specify metadataZipFile or metadataDir in indexer.properties!");
+				metadataDir = new File(zipFilePath);
+			} else {
+				try {
+					metadataZipFile = new ZipFile(new File(zipFilePath));
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
 			}
 		}
 
-		metadataPathInZip = docIndexer.getParameter("metadataPathInZip", "");
+		metadataPathInZip = docIndexer.getParameter("metadataPath", "");
+		if (metadataPathInZip.length() == 0)
+			metadataPathInZip = docIndexer.getParameter("metadataPathInZip", "");
 		if (metadataPathInZip.length() > 0 && !metadataPathInZip.endsWith("/"))
 			metadataPathInZip += "/";
 	}
@@ -102,13 +111,20 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		metadataFile = metadataFile.replaceAll("\\.folia\\.", ".cmdi.");
 
 		try {
-			ZipEntry e = metadataZipFile.getEntry(metadataPathInZip + metadataFile);
-			if (e == null) {
-				//throw new RuntimeException("Entry in zip not found: " + metadataPathInZip + metadataFile);
-				System.err.println("*** ERROR, metadata entry not found: " + metadataPathInZip + metadataFile);
-				return;
+			InputStream is;
+			if (metadataZipFile != null) {
+				ZipEntry e = metadataZipFile.getEntry(metadataPathInZip + metadataFile);
+				if (e == null) {
+					//throw new RuntimeException("Entry in zip not found: " + metadataPathInZip + metadataFile);
+					System.err.println("*** ERROR, metadata entry not found: " + metadataPathInZip + metadataFile);
+					return;
+				}
+				is = metadataZipFile.getInputStream(e);
+			} else {
+				File f = new File(new File(metadataDir, metadataPathInZip), metadataFile);
+				is = new FileInputStream(f);
 			}
-			InputStream is = metadataZipFile.getInputStream(e);
+
 			CapturingReader capturingReader = new CapturingReader(new InputStreamReader(is, "utf-8"));
 			BufferedReader reader = new BufferedReader(capturingReader);
 			try {
@@ -154,6 +170,9 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 				// TEST; print start of metadata file
 				System.out.println(capturingReader.getContent().substring(0, 1000));
 			}
+
+			if (metadataZipFile == null)
+				is.close();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

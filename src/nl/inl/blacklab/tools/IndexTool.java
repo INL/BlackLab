@@ -290,7 +290,7 @@ public class IndexTool {
 		Searcher searcher = Searcher.openForWriting(indexDir, false);
 		try {
 			System.out.println("Doing delete: " + deleteQuery);
-			searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, searcher.getAnalyzer(), null));
+			searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, searcher.getSearchAnalyzer(), null));
 		} finally {
 			searcher.close();
 		}
