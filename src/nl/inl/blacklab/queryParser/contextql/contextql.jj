@@ -114,11 +114,22 @@ CompleteQuery query():
 	CompleteQuery a = null;
 } 
 {
-    scope() a=query() <EOF>
+    a=queryInternal() <EOF>
     {
         return a;
     }
-|   a=scopedClause() <EOF>
+}
+
+CompleteQuery queryInternal():
+{
+	CompleteQuery a = null;
+}
+{
+    scope() a=queryInternal()
+    {
+        return a;
+    }
+|   a=scopedClause()
     {
         return a;
     }
@@ -186,7 +197,7 @@ CompleteQuery searchClause():
     String i = null, r = null, t;
 }
 {
-    "(" tp=query() ")"                  { return tp; }
+    "(" tp=queryInternal() ")"                  { return tp; }
 |   [ LOOKAHEAD(2) i=index() r=relation() ] t=searchTerm()  { return ContextQlParseUtils.clause(i, r, t, defaultProperty); }
 }
 

@@ -46,11 +46,18 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
 /* a query */
   final public CompleteQuery query() throws ParseException {
         CompleteQuery a = null;
+    a = queryInternal();
+    jj_consume_token(0);
+        {if (true) return a;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public CompleteQuery queryInternal() throws ParseException {
+        CompleteQuery a = null;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case 13:
       scope();
-      a = query();
-      jj_consume_token(0);
+      a = queryInternal();
         {if (true) return a;}
       break;
     case AND:
@@ -61,7 +68,6 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     case STRING:
     case 15:
       a = scopedClause();
-      jj_consume_token(0);
         {if (true) return a;}
       break;
     default:
@@ -167,9 +173,9 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case 15:
       jj_consume_token(15);
-      tp = query();
+      tp = queryInternal();
       jj_consume_token(16);
-                                          {if (true) return tp;}
+                                                  {if (true) return tp;}
       break;
     case AND:
     case OR:
@@ -422,48 +428,6 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     finally { jj_save(2, xla); }
   }
 
-  private boolean jj_3R_23() {
-    if (jj_scan_token(18)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_22() {
-    if (jj_scan_token(17)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_21() {
-    if (jj_scan_token(13)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_20() {
-    if (jj_scan_token(14)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_16() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_20()) {
-    jj_scanpos = xsp;
-    if (jj_3R_21()) {
-    jj_scanpos = xsp;
-    if (jj_3R_22()) {
-    jj_scanpos = xsp;
-    if (jj_3R_23()) {
-    jj_scanpos = xsp;
-    if (jj_3R_24()) {
-    jj_scanpos = xsp;
-    if (jj_3R_25()) return true;
-    }
-    }
-    }
-    }
-    }
-    return false;
-  }
-
   private boolean jj_3R_14() {
     if (jj_3R_17()) return true;
     return false;
@@ -603,6 +567,48 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
 
   private boolean jj_3R_24() {
     if (jj_scan_token(19)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_23() {
+    if (jj_scan_token(18)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_22() {
+    if (jj_scan_token(17)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_21() {
+    if (jj_scan_token(13)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_20() {
+    if (jj_scan_token(14)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_16() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_20()) {
+    jj_scanpos = xsp;
+    if (jj_3R_21()) {
+    jj_scanpos = xsp;
+    if (jj_3R_22()) {
+    jj_scanpos = xsp;
+    if (jj_3R_23()) {
+    jj_scanpos = xsp;
+    if (jj_3R_24()) {
+    jj_scanpos = xsp;
+    if (jj_3R_25()) return true;
+    }
+    }
+    }
+    }
+    }
     return false;
   }
 
@@ -775,7 +781,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.List jj_expentries = new java.util.ArrayList();
+  private java.util.List<int[]> jj_expentries = new java.util.ArrayList<int[]>();
   private int[] jj_expentry;
   private int jj_kind = -1;
   private int[] jj_lasttokens = new int[100];
@@ -790,18 +796,21 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
       for (int i = 0; i < jj_endpos; i++) {
         jj_expentry[i] = jj_lasttokens[i];
       }
-      jj_entries_loop: for (java.util.Iterator it = jj_expentries.iterator(); it.hasNext();) {
+      boolean exists = false;
+      for (java.util.Iterator<?> it = jj_expentries.iterator(); it.hasNext();) {
+        exists = true;
         int[] oldentry = (int[])(it.next());
         if (oldentry.length == jj_expentry.length) {
           for (int i = 0; i < jj_expentry.length; i++) {
             if (oldentry[i] != jj_expentry[i]) {
-              continue jj_entries_loop;
+              exists = false;
+              break;
             }
           }
-          jj_expentries.add(jj_expentry);
-          break jj_entries_loop;
+          if (exists) break;
         }
       }
+      if (!exists) jj_expentries.add(jj_expentry);
       if (pos != 0) jj_lasttokens[(jj_endpos = pos) - 1] = kind;
     }
   }
@@ -835,7 +844,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     jj_add_error_token(0, 0);
     int[][] exptokseq = new int[jj_expentries.size()][];
     for (int i = 0; i < jj_expentries.size(); i++) {
-      exptokseq[i] = (int[])jj_expentries.get(i);
+      exptokseq[i] = jj_expentries.get(i);
     }
     return new ParseException(token, exptokseq, tokenImage);
   }
