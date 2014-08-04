@@ -14,16 +14,20 @@ import org.apache.lucene.util.Bits;
  */
 public class SingleDocIdFilter extends Filter {
 
-	private DocIdSet docIdSet;
+	private int luceneDocId;
 
 	public SingleDocIdFilter(int luceneDocId) {
-		docIdSet = new SingleDocIdSet(luceneDocId);
+		this.luceneDocId = luceneDocId;
 	}
 
 	@Override
-	public DocIdSet getDocIdSet(AtomicReaderContext arg0, Bits arg1) throws IOException {
-		// FIXME: shouldn't docIdSet be relative to the current reader context (arg0.docBase)?
-		return docIdSet;
+	public DocIdSet getDocIdSet(AtomicReaderContext ctx, Bits bits) throws IOException {
+		// Check that id could be in this segment, and bits allows this doc id
+		if (luceneDocId >= ctx.docBase && (bits == null || bits.get(luceneDocId - ctx.docBase))) {
+			// ctx is a single segment, so use docBase to adjust the id
+			return new SingleDocIdSet(luceneDocId - ctx.docBase);
+		}
+		return DocIdSet.EMPTY_DOCIDSET;
 	}
 
 }
