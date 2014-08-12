@@ -29,10 +29,6 @@ import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
  */
 public class ComplexFieldUtil {
 
-	/** Use the old field naming scheme?
-	 * (for compatibility with old indices; will be removed eventually) */
-	private static boolean oldFieldNames = true;
-
 	public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
 
 	private static final String CONTENT_ID_BOOKKEEP_NAME = "cid";
@@ -65,20 +61,6 @@ public class ComplexFieldUtil {
 	public static final String PART_OF_SPEECH_PROP_NAME = "pos";
 
 	/**
-	 * Is the main property of the field (the one containing word forms and character positions)
-	 * nameless, or does it have a property name like the other properties (e.g. "word" or "wf")?
-	 * In the old scheme, they were nameless, in the new scheme not.
-	 */
-	private static boolean MAIN_PROPERTY_NAMELESS;
-
-	/**
-	 * Is the main "alternative" of a property, or does it have a name like the other
-	 * alternatives? (e.g. "s", "i", "ci", "di")
-	 * In the old scheme, they were nameless, in the new scheme not.
-	 */
-	private static boolean MAIN_ALTERNATIVE_NAMELESS;
-
-	/**
 	 * String used to separate the base field name (say, contents) and the field property (pos,
 	 * lemma, etc.)
 	 */
@@ -107,7 +89,7 @@ public class ComplexFieldUtil {
 
 	static {
 		// Default: use new field naming scheme.
-		setFieldNameSeparators(false, false);
+		setFieldNameSeparators(false);
 	}
 
 	/** What are the names of the bookkeeping subfields (i.e. content id, forward index id, etc.) */
@@ -166,16 +148,35 @@ public class ComplexFieldUtil {
 	}
 
 	/** Are we using the old field names?
-	 * @return true if we are, false if not */
+	 * @return true if we are, false if not
+	 * @deprecated always returns false
+	 */
+	@Deprecated
 	public static boolean usingOldFieldNames() {
-		return oldFieldNames;
+		return false; //oldFieldNames;
 	}
 
 	/** Set what field name separators to use.
 	 * @param avoidSpecialChars if true, use only standard identifier characters for the separators. If false, use special chars %, @, #.
 	 */
 	public static void setFieldNameSeparators(boolean avoidSpecialChars) {
-		setFieldNameSeparators(avoidSpecialChars, false);
+		if (avoidSpecialChars) {
+			// Avoid using special characters in fieldnames, in case
+			// this clashes with other Lucene-based software (such as e.g. Solr)
+			PROP_SEP = "_PR_";
+			ALT_SEP = "_AL_";
+			BOOKKEEPING_SEP = "_BK_";
+		} else {
+			// Lucene doesn't have any restrictions on characters in field names;
+			// use the short, symbolic ones.
+			PROP_SEP = "%";
+			ALT_SEP = "@";
+			BOOKKEEPING_SEP = "#";
+		}
+
+		ALT_SEP_LEN = ALT_SEP.length();
+		PROP_SEP_LEN = PROP_SEP.length();
+		BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
 	}
 
 	/** Set what field name separators to use.
@@ -184,35 +185,16 @@ public class ComplexFieldUtil {
 	 *
 	 * @param avoidSpecialChars if true, use only standard identifier characters for the separators. If false, use special chars %, @, #.
 	 * @param oldVersion if true, use the old naming scheme.
+	 * @deprecated use version that takes a single parameter
 	 */
+	@Deprecated
 	public static void setFieldNameSeparators(boolean avoidSpecialChars, boolean oldVersion) {
-		oldFieldNames = oldVersion;
-		if (oldFieldNames) {
-			PROP_SEP = "__";
-			ALT_SEP = "_ALT_";
-			BOOKKEEPING_SEP = PROP_SEP;
-			MAIN_PROPERTY_NAMELESS = true;
-			MAIN_ALTERNATIVE_NAMELESS = true;
-		} else {
-			if (avoidSpecialChars) {
-				// Avoid using special characters in fieldnames, in case
-				// this clashes with other Lucene-based software (such as e.g. Solr)
-				PROP_SEP = "_PR_";
-				ALT_SEP = "_AL_";
-				BOOKKEEPING_SEP = "_BK_";
-			} else {
-				// Lucene doesn't have any restrictions on characters in field names;
-				// use the short ones.
-				PROP_SEP = "%";
-				ALT_SEP = "@";
-				BOOKKEEPING_SEP = "#";
-			}
-			MAIN_PROPERTY_NAMELESS = false;
-			MAIN_ALTERNATIVE_NAMELESS = false;
+
+		if (oldVersion) {
+			throw new RuntimeException("Your index was created with an old BlackLab version and cannot be opened with this version. Please re-index your data, or use a BlackLab version from before August 2014.");
 		}
-		ALT_SEP_LEN = ALT_SEP.length();
-		PROP_SEP_LEN = PROP_SEP.length();
-		BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
+
+		setFieldNameSeparators(avoidSpecialChars);
 	}
 
 	/**
@@ -270,7 +252,7 @@ public class ComplexFieldUtil {
 	public static String propertyField(String fieldName, String propName, String altName) {
 		String fieldPropName = "";
 		boolean propGiven = propName != null && propName.length() > 0;
-		if (!propGiven && !MAIN_PROPERTY_NAMELESS) {
+		if (!propGiven) {
 			throw new RuntimeException("Must specify a property name");
 		}
 		if (fieldName == null || fieldName.length() == 0) {
@@ -309,9 +291,7 @@ public class ComplexFieldUtil {
 	 */
 	public static String propertyAlternative(String fieldPropName, String altName) {
 		if (altName == null || altName.length() == 0) {
-			if (!MAIN_ALTERNATIVE_NAMELESS)
-				throw new RuntimeException("Must specify an alternative name");
-			return fieldPropName;
+			throw new RuntimeException("Must specify an alternative name");
 		}
 		return fieldPropName + ALT_SEP + altName;
 	}
@@ -411,7 +391,7 @@ public class ComplexFieldUtil {
 		(3) Property bookkeeping:  base%prop#fiid
 		(4) Property alternative:  base%prop@alt
 
-		Old style:
+		(Old style, now unsupported:)
 
 		(A) Main property:          base       (implicitly, "word")
 		(1) Additional property:    base__prop (e.g. lemma, pos)
@@ -425,7 +405,11 @@ public class ComplexFieldUtil {
 
 		int propSepPos = luceneFieldName.indexOf(PROP_SEP);
 		int altSepPos = luceneFieldName.indexOf(ALT_SEP);
-		int bookkeepingSepPos = oldFieldNames && propSepPos >= 0 ? luceneFieldName.indexOf(BOOKKEEPING_SEP, propSepPos + 1) : luceneFieldName.indexOf(BOOKKEEPING_SEP);
+		int bookkeepingSepPos;
+//		if (oldFieldNames && propSepPos >= 0)
+//			bookkeepingSepPos = luceneFieldName.indexOf(BOOKKEEPING_SEP, propSepPos + 1);
+//		else
+			bookkeepingSepPos = luceneFieldName.indexOf(BOOKKEEPING_SEP);
 
 		// Strip off property and possible alternative
 		if (propSepPos >= 0) {
@@ -449,25 +433,13 @@ public class ComplexFieldUtil {
 			}
 
 			// Plain property, no alternative or bookkeeping (1)
-			// NOTE: if old style, it might be bookkeeping anyway! Check for this
 			propName = luceneFieldName.substring(afterPropSepPos);
-			if (oldFieldNames) {
-				if (BOOKKEEPING_SUBFIELDS.contains(propName)) {
-					// Old-style main bookkeeping field (B)
-					return new String[] {baseName, null, null, propName};
-				}
-			}
 			return new String[] {baseName, propName};
 		}
 
 		// No property given. Alternative?
 		if (altSepPos >= 0) {
-			// Old-style basename+altname (C)
-			if (!MAIN_PROPERTY_NAMELESS)
-				throw new RuntimeException("Basename+altname is not a valid field name! (" + luceneFieldName + ")");
-			baseName = luceneFieldName.substring(0, altSepPos);
-			altName = luceneFieldName.substring(altSepPos + ALT_SEP_LEN);
-			return new String[] {baseName, "", altName};
+			throw new RuntimeException("Basename+altname is not a valid field name! (" + luceneFieldName + ")");
 		}
 
 		if (bookkeepingSepPos >= 0) {
@@ -478,8 +450,7 @@ public class ComplexFieldUtil {
 		}
 
 		// Just the base name given (A).
-		// This means it's either a metadata field, or it's an old-style
-		// nameless main property.
+		// This means it's a metadata field.
 		return new String[] {luceneFieldName};
 	}
 
@@ -503,12 +474,8 @@ public class ComplexFieldUtil {
 		}
 		pos = luceneFieldName.indexOf(ALT_SEP);
 		if (pos >= 0) {
-			if (!MAIN_PROPERTY_NAMELESS)
-				throw new RuntimeException("Illegal field name: " + luceneFieldName);
-			return luceneFieldName.substring(0, pos);
+			throw new RuntimeException("Illegal field name: " + luceneFieldName);
 		}
-		//if (!MAIN_PROPERTY_NAMELESS)
-		//	throw new RuntimeException("Already a base name: " + fieldName);
 		return luceneFieldName;
 	}
 
@@ -629,39 +596,29 @@ public class ComplexFieldUtil {
 	}
 
 	public static String getDefaultMainPropName() {
-		return MAIN_PROPERTY_NAMELESS ? "" : DEFAULT_MAIN_PROP_NAME;
+		return DEFAULT_MAIN_PROP_NAME;
 	}
 
+	/**
+	 * @return false
+	 * @deprecated main property can't be nameless anymore; always returns false
+	 */
+	@Deprecated
 	public static boolean isMainPropertyNameless() {
-		return MAIN_PROPERTY_NAMELESS;
+		return false;
 	}
 
 	public static String getDefaultMainAlternativeName() {
-		return MAIN_ALTERNATIVE_NAMELESS ? "" : DEFAULT_MAIN_ALT_NAME;
+		return DEFAULT_MAIN_ALT_NAME;
 	}
 
+	/**
+	 * @return false
+	 * @deprecated alternatives can't be nameless anymore; always returns false
+	 */
+	@Deprecated
 	public static boolean isMainAlternativeNameless() {
-		return MAIN_ALTERNATIVE_NAMELESS;
-	}
-
-	/**
-	 * Don't call this yourself. It is called by IndexStructure
-	 * in case it detects the index has nameless main properties. Will
-	 * eventually be removed.
-	 * @param b true iff main property is nameless
-	 */
-	public static void _setMainPropertyNameless(boolean b) {
-		MAIN_PROPERTY_NAMELESS = b;
-	}
-
-	/**
-	 * Don't call this yourself. It is called by IndexStructure
-	 * in case it detects the index has nameless alternatives. Will
-	 * eventually be removed.
-	 * @param b true iff main alternative is nameless
-	 */
-	public static void _setMainAlternativeNameless(boolean b) {
-		MAIN_ALTERNATIVE_NAMELESS = b;
+		return false;
 	}
 
 

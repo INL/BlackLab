@@ -263,6 +263,15 @@ public class Searcher {
 		return new Searcher(indexDir, false, false);
 	}
 
+	/**
+	 * Open an index.
+	 *
+	 * @param indexDir the index directory
+	 * @param indexMode if true, open in index mode; if false, open in search mode.
+	 * @param createNewIndex if true, delete existing index in this location if it exists.
+	 * @throws CorruptIndexException
+	 * @throws IOException
+	 */
 	private Searcher(File indexDir, boolean indexMode, boolean createNewIndex)
 			throws CorruptIndexException, IOException {
 		this.indexMode = indexMode;
@@ -299,7 +308,7 @@ public class Searcher {
 		this.indexLocation = indexDir;
 
 		// Determine the index structure
-		indexStructure = new IndexStructure(reader);
+		indexStructure = new IndexStructure(reader, indexDir, createNewIndex);
 
 		// Detect and open the ContentStore for the contents field
 		if (!createNewIndex) {
@@ -1651,6 +1660,22 @@ public class Searcher {
 	public void collectDocuments(Query query, Collector collector) {
 		try {
 			indexSearcher.search(query, collector);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Return the list of terms that occur in a field.
+	 *
+	 * @param fieldName the field
+	 * @param maxResults maximum number to return (or -1 for no limit)
+	 * @return the matching terms
+	 */
+	public List<String> getFieldTerms(String fieldName, int maxResults) {
+		try {
+			SlowCompositeReaderWrapper srw = new SlowCompositeReaderWrapper(reader);
+			return LuceneUtil.getFieldTerms(srw, fieldName, maxResults);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

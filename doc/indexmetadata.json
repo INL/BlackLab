@@ -24,7 +24,13 @@
                 "type": "tokenized",          // ..or numeric, untokenized
                 "analyzer": "default",        // ..or (qualified) class name
                 "unknownValue": "unknown",    // what value to index if the value is unknown
-                "unknownCondition": "MISSING_OR_EMPTY" // ..or MISSING, EMPTY, NEVER. When is the value considered unknown?
+                "unknownCondition": "MISSING_OR_EMPTY", // ..or MISSING, EMPTY, NEVER. When is the value considered unknown?
+                "values": [    // if field has less than 50 unique (fairly short) values, they're listed here
+                	"Jantje",
+                	"Pietje",
+                	"Klaasje"
+                ],
+                "value-list-complete": true // all values listed or not?
             }
         },
         "complexFields": {

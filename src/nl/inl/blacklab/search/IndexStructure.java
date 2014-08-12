@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -130,7 +131,7 @@ public class IndexStructure {
 		void processIndexField(String[] parts) {
 
 			// See if this is a builtin bookkeeping field or a property.
-			if (parts.length == 1 && !ComplexFieldUtil.isMainPropertyNameless())
+			if (parts.length == 1)
 				throw new RuntimeException("Complex field with just basename given, error!");
 
 			String propPart = parts.length == 1 ? "" : parts[1];
@@ -171,9 +172,8 @@ public class IndexStructure {
 					} else
 						throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
 				} else {
-					// No alternative specified; guess we have nameless alternatives.
-					ComplexFieldUtil._setMainAlternativeNameless(true);
-					pd.addAlternative("");
+					// No alternative specified; this is an error.
+					throw new RuntimeException("No alternative given!");
 				}
 			}
 		}
@@ -380,41 +380,62 @@ public class IndexStructure {
 	 *  or if that doesn't exist, the first complex field found. */
 	private ComplexFieldDesc mainContentsField;
 
+	/** Contents of the indexmetadata.json file */
+	private IndexMetadata indexMetadata;
+
+	/** Where the index is stored */
+	private File indexDir;
+
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
 	 * fields and their types.
 	 * @param reader the index of which we want to know the structure
+	 * @param indexDir where the index (and the metadata file) is stored
+	 * @param createNewIndex whether we're creating a new index
 	 */
-	public IndexStructure(DirectoryReader reader) {
+	public IndexStructure(DirectoryReader reader, File indexDir, boolean createNewIndex) {
 		this.reader = reader;
+		this.indexDir = indexDir;
+		File metadataFile = new File(indexDir, "indexmetadata.json");
+		if (createNewIndex || !metadataFile.exists()) {
+			indexMetadata = new IndexMetadata(indexDir.getName());
+		} else {
+			try {
+				indexMetadata = new IndexMetadata(metadataFile);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
 		metadataFields = new TreeMap<String, FieldType>();
 		complexFields = new TreeMap<String, ComplexFieldDesc>();
 
 		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
 
 		// Detect index naming scheme
-		// NOTE: defaults to most-used value for new indices!
-		// boolean isOldNamingScheme = false, avoidSpecialChars = false;
-		int foundPercent = 0, foundDoubleUnderscore = 0;
-		boolean foundNoSpecialCharIndicator = false;
+		// (old naming scheme is no longer supported; default scheme is the one
+		//  using %, # and @ as separators; alternative is the one using only
+		//  underscores and character codes for use with certain other software)
+		boolean hasNoFieldsYet = fis.size() == 0;
+		boolean usingSpecialCharsAsSeparators = hasNoFieldsYet;
+		boolean usingCharacterCodesAsSeparators = false;
 		for (int i = 0; i < fis.size(); i++) {
 			FieldInfo fi = fis.fieldInfo(i);
 			String name = fi.name;
-			if (name.contains("%")) {
-				foundPercent++;
+			if (name.contains("%") || name.contains("@") || name.contains("#")) {
+				usingSpecialCharsAsSeparators = true;
 			}
-			if (name.contains("__")) {
-				foundDoubleUnderscore++;
-			}
-			if (name.contains("_PR_")) {
-				foundNoSpecialCharIndicator = true;
+			if (name.contains("_PR_") || name.contains("_AL_") || name.contains("_BK_")) {
+				usingCharacterCodesAsSeparators = true;
 			}
 		}
-		boolean useNewNamingScheme = foundPercent >= foundDoubleUnderscore;
-		boolean avoidSpecialChars = useNewNamingScheme && foundNoSpecialCharIndicator;
-		ComplexFieldUtil.setFieldNameSeparators(avoidSpecialChars, !useNewNamingScheme);
+		if (!usingSpecialCharsAsSeparators && !usingCharacterCodesAsSeparators) {
+			throw new RuntimeException("Could not detect index naming scheme. If your index was created with an old version of BlackLab, it may use the old naming scheme and cannot be opened with this version. Please re-index your data, or use a BlackLab version from before August 2014.");
+		}
+		if (usingSpecialCharsAsSeparators && usingCharacterCodesAsSeparators) {
+			throw new RuntimeException("Your index seems to use two different naming schemes. Avoid using '%', '@', '#' or '_' in field names and re-index your data.");
+		}
+		ComplexFieldUtil.setFieldNameSeparators(usingCharacterCodesAsSeparators);
 
-		// reader.getFieldInfos();
 		for (int i = 0; i < fis.size(); i++) {
 			FieldInfo fi = fis.fieldInfo(i);
 			String name = fi.name;
@@ -436,19 +457,9 @@ public class IndexStructure {
 			} else {
 				// Part of complex field.
 				if (metadataFields.containsKey(parts[0])) {
-					// This complex field was incorrectly identified as a metadata field at first.
-					// Correct this now.
-					if (hasOffsets(parts[0])) {
-						// Must be a nameless main property. Change the setting if necessary.
-						ComplexFieldUtil._setMainPropertyNameless(true);
-					}
-					if (!ComplexFieldUtil.isMainPropertyNameless()) {
-						throw new RuntimeException(
-								"Complex field and metadata field with same name, error! ("
-										+ parts[0] + ")");
-					}
-
-					metadataFields.remove(parts[0]);
+					throw new RuntimeException(
+							"Complex field and metadata field with same name, error! ("
+									+ parts[0] + ")");
 				}
 
 				// Get or create descriptor object.

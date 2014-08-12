@@ -23,7 +23,7 @@ import org.junit.Test;
 
 public class TestComplexFieldUtil {
 
-	private boolean oldFieldNameSetting;
+	//private boolean oldFieldNameSetting;
 
 	@Test
 	public void testIsAlternative() {
@@ -71,33 +71,17 @@ public class TestComplexFieldUtil {
 
 	@Before
 	public void setup() {
-		oldFieldNameSetting = ComplexFieldUtil.usingOldFieldNames();
+		//oldFieldNameSetting = ComplexFieldUtil.usingOldFieldNames();
 	}
 
 	@After
 	public void shutdown() {
-		ComplexFieldUtil.setFieldNameSeparators(false, oldFieldNameSetting);
-	}
-
-	@Test
-	public void testGetNameComponentsOld() {
-		ComplexFieldUtil.setFieldNameSeparators(false, true);
-		testArray(new String[] { "contents" },
-				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
-		testArray(new String[] { "contents", "lemma" },
-				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", "lemma", null)));
-		testArray(new String[] { "contents", "lemma", "s" },
-				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", "lemma", "s")));
-
-		testArray(new String[] { "contents", null, null, "cid" },
-				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.bookkeepingField("contents", null, "cid")));
-		testArray(new String[] { "contents", "lemma", null, "fiid" },
-				ComplexFieldUtil.getNameComponents(ComplexFieldUtil.bookkeepingField("contents", "lemma", "fiid")));
+		ComplexFieldUtil.setFieldNameSeparators(false);
 	}
 
 	@Test
 	public void testGetNameComponents() {
-		ComplexFieldUtil.setFieldNameSeparators(false, false);
+		ComplexFieldUtil.setFieldNameSeparators(false);
 		//testArray(new String[] { "contents" },
 		//		ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
 		testArray(new String[] { "contents", "lemma" },

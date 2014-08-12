@@ -307,4 +307,8 @@ public class DateUtil {
 		return dfYearMonth.format(date);
 	}
 
+	public static String getSqlDateTimeString() {
+		return getSqlDateTimeString(new Date());
+	}
+
 }

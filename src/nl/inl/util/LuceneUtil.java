@@ -347,6 +347,27 @@ public class LuceneUtil {
 	}
 
 	/**
+	 * Return the list of terms that occur in a field.
+	 * @param index the index
+	 * @param fieldName the field
+	 * @return the matching terms
+	 */
+	public static List<String> getFieldTerms(AtomicReader index, String fieldName) {
+		return findTermsByPrefix(index, fieldName, null, true, -1);
+	}
+
+	/**
+	 * Return the list of terms that occur in a field.
+	 * @param index the index
+	 * @param fieldName the field
+	 * @param maxResults maximum number to return (or -1 for no limit)
+	 * @return the matching terms
+	 */
+	public static List<String> getFieldTerms(AtomicReader index, String fieldName, int maxResults) {
+		return findTermsByPrefix(index, fieldName, null, true, maxResults);
+	}
+
+	/**
 	 * Find terms in the index based on a prefix. Useful for autocomplete.
 	 * @param index the index
 	 * @param fieldName the field
@@ -356,6 +377,25 @@ public class LuceneUtil {
 	 */
 	public static List<String> findTermsByPrefix(AtomicReader index, String fieldName,
 			String prefix, boolean sensitive) {
+		return findTermsByPrefix(index, fieldName, prefix, sensitive, -1);
+	}
+
+	/**
+	 * Find terms in the index based on a prefix. Useful for autocomplete.
+	 * @param index the index
+	 * @param fieldName the field
+	 * @param prefix the prefix we're looking for (null or empty string for all terms)
+	 * @param sensitive match case-sensitively or not?
+	 * @param maxResults max. number of results to return (or -1 for all)
+	 * @return the matching terms
+	 */
+	public static List<String> findTermsByPrefix(AtomicReader index, String fieldName,
+			String prefix, boolean sensitive, int maxResults) {
+		boolean allTerms = prefix == null || prefix.length() == 0;
+		if (allTerms) {
+			prefix = "";
+			sensitive = true; // don't do unnecessary work in this case
+		}
 		try {
 			if (!sensitive)
 				prefix = StringUtil.removeAccents(prefix).toLowerCase();
@@ -364,18 +404,15 @@ public class LuceneUtil {
 			TermsEnum termsEnum = terms.iterator(null);
 			BytesRef brPrefix = new BytesRef(prefix.getBytes("utf-8"));
 			termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
-			while (true) {
+			while (maxResults < 0 || results.size() < maxResults) {
 				BytesRef term = termsEnum.next();
 				if (term == null)
 					break;
-				//Term term = termEnum.term();
-				//if (!term.field().equals(fieldName))
-				//	break;
 				String termText = term.utf8ToString();
 				String optDesensitized = termText;
 				if (!sensitive)
 					optDesensitized = StringUtil.removeAccents(termText).toLowerCase();
-				if (!optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
+				if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
 					// Doesn't match prefix or different field; no more matches
 					break;
 				}
@@ -387,5 +424,4 @@ public class LuceneUtil {
 			throw new RuntimeException(e);
 		}
 	}
-
 }

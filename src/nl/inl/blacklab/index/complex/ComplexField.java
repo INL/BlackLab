@@ -156,7 +156,6 @@ public class ComplexField {
 	}
 
 	public void addValue(String value, int posIncr) {
-		//ComplexFieldProperty p = properties.get(mainPropertyName);
 		mainProperty.addValue(value, posIncr);
 	}
 
@@ -230,7 +229,7 @@ public class ComplexField {
 	/**
 	 * Add a token value to the main property for this field.
 	 *
-	 * The main property is nameless and usually contains the word form.
+	 * The main property usually contains the word form.
 	 *
 	 * @param value the token value to add
 	 */

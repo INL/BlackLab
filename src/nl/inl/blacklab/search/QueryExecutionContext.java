@@ -121,18 +121,6 @@ public class QueryExecutionContext {
 		final String ci = ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME;
 		final String di = ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
 
-		if (ComplexFieldUtil.isMainAlternativeNameless())  {
-			// Old alternative naming scheme
-			if (!caseSensitive && !diacriticsSensitive)
-				return new String[] {i, ""}; // insensitive
-			if (caseSensitive && diacriticsSensitive)
-				return new String[] {s, ""}; // search fully-sensitive if available
-			if (!diacriticsSensitive)
-				return new String[] {di, s, i, ""}; // search case-sensitive if available
-
-			return new String[] {ci, s, i, ""}; // search diacritics-sensitive if available
-		}
-
 		Collection<String> availableAlternatives = Collections.emptyList();
 		ComplexFieldDesc cfd = searcher.getIndexStructure().getComplexFieldDesc(fieldName);
 		if (cfd == null)
