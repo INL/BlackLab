@@ -17,12 +17,19 @@
     // About the fields in this index
     // [manual; defaults are set by indexer if not specified]
     "fieldInfo": {
+    	"namingScheme": "DEFAULT",       // ..or "NO_SPECIAL_CHARS" (the alternate naming scheme)
+    	                                 // (usually omitted, in which case DEFAULT is used)
+    	"documentTitleField": "title",   // (detected if omitted; may be used by application)
+    	"documentAuthorField": "author", // (may be used by application)
+    	"documentDateField": "date",     // (may be used by application)
+    	"pidField": "id",                // (may be used by application)
+    	
         "metadataFields": {
             "author": {
                 "displayName": "author",
                 "description": "The author of the document.",
-                "type": "tokenized",          // ..or numeric, untokenized
-                "analyzer": "default",        // ..or (qualified) class name
+                "type": "tokenized",          // ..or text, numeric, untokenized [tokenized]
+                "analyzer": "default",        // ..or (qualified) class name [default]
                 "unknownValue": "unknown",    // what value to index if the value is unknown
                 "unknownCondition": "MISSING_OR_EMPTY", // ..or MISSING, EMPTY, NEVER. When is the value considered unknown?
                 "values": [    // if field has less than 50 unique (fairly short) values, they're listed here
@@ -30,7 +37,7 @@
                 	"Pietje",
                 	"Klaasje"
                 ],
-                "value-list-complete": true // all values listed or not?
+                "valueListComplete": true // all values listed or not?
             }
         },
         "complexFields": {

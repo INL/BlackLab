@@ -7,13 +7,17 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
+import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
+import nl.inl.util.json.JSONArray;
+import nl.inl.util.json.JSONObject;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.DirectoryReader;
@@ -32,7 +36,7 @@ public class IndexStructure {
 
 	/** Possible types of metadata fields. */
 	public enum FieldType {
-		TEXT, NUMERIC
+		TEXT, NUMERIC, UNTOKENIZED
 	}
 
 	/** Types of property alternatives */
@@ -40,11 +44,165 @@ public class IndexStructure {
 		UNKNOWN, SENSITIVE
 	}
 
-	/** Description of a complex field */
-	public static class ComplexFieldDesc {
+	/** Conditions for using the unknown value */
+	public enum UnknownCondition {
+		NEVER,            // never use unknown value
+		MISSING,          // use unknown value when field is missing (not when empty)
+		EMPTY,            // use unknown value when field is empty (not when missing)
+		MISSING_OR_EMPTY  // use unknown value when field is empty or missing
+	}
+
+	public static abstract class BaseFieldDesc {
+		/** Complex field's name */
+		protected String fieldName;
 
 		/** Complex field's name */
-		private String fieldName;
+		protected String displayName;
+
+		/** Complex field's name */
+		protected String description = "";
+
+		public BaseFieldDesc(String fieldName) {
+			this(fieldName, null);
+		}
+
+		public BaseFieldDesc(String fieldName, String displayName) {
+			this.fieldName = fieldName;
+			this.displayName = displayName == null ? fieldName : displayName;
+		}
+
+		/** Get this complex field's name
+		 * @return this field's name */
+		public String getName() {
+			return fieldName;
+		}
+
+		public void setDisplayName(String displayName) {
+			this.displayName = displayName;
+		}
+
+		/** Get this complex field's display name
+		 * @return this field's display name */
+		public String getDisplayName() {
+			return displayName;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
+		/** Get this complex field's display name
+		 * @return this field's display name */
+		public String getDescription() {
+			return description;
+		}
+
+	}
+
+	public static class MetadataFieldDesc extends BaseFieldDesc {
+
+		protected FieldType type;
+
+		private String analyzer;
+
+		private String unknownValue;
+
+		private UnknownCondition unknownCondition;
+
+		private List<String> values;
+
+		private boolean valueListComplete;
+
+		public MetadataFieldDesc(String fieldName, FieldType type) {
+			super(fieldName);
+			this.type = type;
+		}
+
+		public MetadataFieldDesc(String fieldName, String typeName) {
+			super(fieldName);
+			if (typeName.equals("untokenized")) {
+				this.type = FieldType.UNTOKENIZED;
+			} else if (typeName.equals("tokenized") || typeName.equals("text")) {
+				this.type = FieldType.TEXT;
+			} else if (typeName.equals("numeric")) {
+				this.type = FieldType.NUMERIC;
+			} else {
+				throw new RuntimeException("Unknown field type name: " + typeName);
+			}
+		}
+
+		public FieldType getType() {
+			return type;
+		}
+
+		public void setAnalyzer(String analyzer) {
+			this.analyzer = analyzer;
+		}
+
+		public void setUnknownValue(String unknownValue) {
+			this.unknownValue = unknownValue;
+		}
+
+		public void setUnknownCondition(String unknownCondition) {
+			if (unknownCondition.equals("NEVER")) {
+				this.unknownCondition = UnknownCondition.NEVER;
+			} else if (unknownCondition.equals("MISSING")) {
+				this.unknownCondition = UnknownCondition.MISSING;
+			} else if (unknownCondition.equals("EMPTY")) {
+				this.unknownCondition = UnknownCondition.EMPTY;
+			} else if (unknownCondition.equals("MISSING_OR_EMPTY")) {
+				this.unknownCondition = UnknownCondition.MISSING_OR_EMPTY;
+			} else {
+				throw new RuntimeException("Unknown unknown condition: " + unknownCondition);
+			}
+		}
+
+		public void setUnknownCondition(UnknownCondition unknownCondition) {
+			this.unknownCondition = unknownCondition;
+		}
+
+		public void setValues(JSONArray values) {
+			this.values = new ArrayList<String>(values.length());
+			for (int i = 0; i < values.length(); i++) {
+				this.values.add(values.getString(i));
+			}
+		}
+
+		public void setValues(Collection<String> values) {
+			this.values = new ArrayList<String>(values.size());
+			for (String value: values) {
+				this.values.add(value);
+			}
+		}
+
+		public void setValueListComplete(boolean valueListComplete) {
+			this.valueListComplete = valueListComplete;
+		}
+
+		public String getAnalyzer() {
+			return analyzer;
+		}
+
+		public String getUnknownValue() {
+			return unknownValue;
+		}
+
+		public UnknownCondition getUnknownCondition() {
+			return unknownCondition;
+		}
+
+		public List<String> getValues() {
+			return values;
+		}
+
+		public boolean isValueListComplete() {
+			return valueListComplete;
+		}
+
+	}
+
+	/** Description of a complex field */
+	public static class ComplexFieldDesc extends BaseFieldDesc {
 
 		/** This complex field's properties */
 		private Map<String, PropertyDesc> props;
@@ -62,7 +220,7 @@ public class IndexStructure {
 		private boolean xmlTags;
 
 		public ComplexFieldDesc(String name) {
-			fieldName = name;
+			super(name);
 			props = new TreeMap<String, PropertyDesc>();
 			contentStore = false;
 			lengthInTokens = false;
@@ -73,12 +231,6 @@ public class IndexStructure {
 		@Override
 		public String toString() {
 			return fieldName + " [" + StringUtil.join(props.values(), ", ") + "]";
-		}
-
-		/** Get this complex field's name
-		 * @return this field's name */
-		public String getName() {
-			return fieldName;
 		}
 
 		/** Get the set of property names for this complex field
@@ -371,7 +523,7 @@ public class IndexStructure {
 	private DirectoryReader reader;
 
 	/** All non-complex fields in our index (metadata fields) and their types. */
-	private Map<String, FieldType> metadataFields;
+	private Map<String, MetadataFieldDesc> metadataFieldInfos;
 
 	/** The complex fields in our index */
 	private Map<String, ComplexFieldDesc> complexFields;
@@ -398,44 +550,95 @@ public class IndexStructure {
 		this.indexDir = indexDir;
 		File metadataFile = new File(indexDir, "indexmetadata.json");
 		if (createNewIndex || !metadataFile.exists()) {
+			// No metadata file yet; start with a blank one
 			indexMetadata = new IndexMetadata(indexDir.getName());
 		} else {
+			// Read the metadata file
 			try {
 				indexMetadata = new IndexMetadata(metadataFile);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 		}
-		metadataFields = new TreeMap<String, FieldType>();
+		//metadataFields = new TreeMap<String, FieldType>();
+		metadataFieldInfos = new TreeMap<String, MetadataFieldDesc>();
 		complexFields = new TreeMap<String, ComplexFieldDesc>();
 
 		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
+		setNamingScheme(fis);
+		if (indexMetadata.hasFieldInfo()) {
+			getFieldInfoFromMetadata(fis);
+		} else {
+			detectFields(fis);
+		}
 
-		// Detect index naming scheme
-		// (old naming scheme is no longer supported; default scheme is the one
-		//  using %, # and @ as separators; alternative is the one using only
-		//  underscores and character codes for use with certain other software)
-		boolean hasNoFieldsYet = fis.size() == 0;
-		boolean usingSpecialCharsAsSeparators = hasNoFieldsYet;
-		boolean usingCharacterCodesAsSeparators = false;
-		for (int i = 0; i < fis.size(); i++) {
-			FieldInfo fi = fis.fieldInfo(i);
-			String name = fi.name;
-			if (name.contains("%") || name.contains("@") || name.contains("#")) {
-				usingSpecialCharsAsSeparators = true;
-			}
-			if (name.contains("_PR_") || name.contains("_AL_") || name.contains("_BK_")) {
-				usingCharacterCodesAsSeparators = true;
-			}
+		// Detect the main properties for all complex fields
+		// (looks for fields with char offset information stored)
+		mainContentsField = null;
+		for (ComplexFieldDesc d: complexFields.values()) {
+			if (mainContentsField == null || d.getName().equals("contents"))
+				mainContentsField = d;
+			d.detectMainProperty(reader);
 		}
-		if (!usingSpecialCharsAsSeparators && !usingCharacterCodesAsSeparators) {
-			throw new RuntimeException("Could not detect index naming scheme. If your index was created with an old version of BlackLab, it may use the old naming scheme and cannot be opened with this version. Please re-index your data, or use a BlackLab version from before August 2014.");
-		}
-		if (usingSpecialCharsAsSeparators && usingCharacterCodesAsSeparators) {
-			throw new RuntimeException("Your index seems to use two different naming schemes. Avoid using '%', '@', '#' or '_' in field names and re-index your data.");
-		}
-		ComplexFieldUtil.setFieldNameSeparators(usingCharacterCodesAsSeparators);
+	}
 
+	/**
+	 * Get field information from the index metadata file.
+	 *
+	 * @param fis the Lucene field infos
+	 */
+	@SuppressWarnings("unchecked")
+	private void getFieldInfoFromMetadata(FieldInfos fis) {
+
+		// Metadata fields
+		Iterator<String> it = indexMetadata.getMetaFieldConfigs().keys();
+		while (it.hasNext()) {
+			String fieldName = it.next();
+			JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
+			String displayName = Json.str(fieldConfig, "displayName", fieldName);
+			String description = Json.str(fieldConfig, "description", "");
+			String type = Json.str(fieldConfig, "type", "tokenized");
+			String analyzer = Json.str(fieldConfig, "analyzer", "default");
+			String unknownValue = Json.str(fieldConfig, "unknownValue", "unknown");
+			String unknownCondition = Json.str(fieldConfig, "unknownCondition", "NEVER");
+			JSONArray values = null;
+			if (fieldConfig.has("values")) {
+				values = fieldConfig.getJSONArray("values");
+			}
+			boolean valueListComplete = Json.bool(fieldConfig, "valueListComplete", false);
+
+			MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
+			fieldDesc.setDescription(description);
+			fieldDesc.setDisplayName(displayName);
+			fieldDesc.setAnalyzer(analyzer);
+			fieldDesc.setUnknownValue(unknownValue);
+			fieldDesc.setUnknownCondition(unknownCondition);
+			fieldDesc.setValues(values);
+			fieldDesc.setValueListComplete(valueListComplete);
+			metadataFieldInfos.put(fieldName, fieldDesc);
+		}
+
+		// Complex fields
+		it = indexMetadata.getComplexFieldConfigs().keys();
+		while (it.hasNext()) {
+			String fieldName = it.next();
+			JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
+			String displayName = Json.str(fieldConfig, "displayName", fieldName);
+			String description = Json.str(fieldConfig, "description", "");
+			ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
+			fieldDesc.setDisplayName(displayName);
+			fieldDesc.setDescription(description);
+			complexFields.put(fieldName, fieldDesc);
+		}
+	}
+
+	/**
+	 * Try to detect field information from the Lucene index.
+	 * Will not be perfect.
+	 *
+	 * @param fis the Lucene field infos
+	 */
+	private void detectFields(FieldInfos fis) {
 		for (int i = 0; i < fis.size(); i++) {
 			FieldInfo fi = fis.fieldInfo(i);
 			String name = fi.name;
@@ -453,10 +656,12 @@ public class IndexStructure {
 			if (parts.length == 1 && !complexFields.containsKey(parts[0])) {
 				// Probably a metadata field (or, if using old style, the main field
 				// of a complex field; if so, we'll figure that out later)
-				metadataFields.put(name, getFieldType(name));
+				FieldType type = getFieldType(name);
+				//metadataFields.put(name, type);
+				metadataFieldInfos.put(name, new MetadataFieldDesc(name, type));
 			} else {
 				// Part of complex field.
-				if (metadataFields.containsKey(parts[0])) {
+				if (metadataFieldInfos.containsKey(parts[0])) {
 					throw new RuntimeException(
 							"Complex field and metadata field with same name, error! ("
 									+ parts[0] + ")");
@@ -467,16 +672,52 @@ public class IndexStructure {
 				cfd.processIndexField(parts);
 			}
 		}
+	}
 
-		// Detect the main properties for all complex fields
-		// (looks for fields with char offset information stored)
-		mainContentsField = null;
-		for (ComplexFieldDesc d: complexFields.values()) {
-			if (mainContentsField == null || d.getName().equals("contents"))
-				mainContentsField = d;
-			d.detectMainProperty(reader);
+	/**
+	 * Detect which field naming scheme our index uses.
+	 *
+	 * Either gets the naming scheme from the index metadata file,
+	 * or tries to detect it in the index.
+	 *
+	 * There was an old naming scheme which is no longer supported;
+	 * the default scheme is the one using %, # and @ as separators;
+	 * alternative is the one using only underscores and character
+	 * codes for use with certain other software that doesn't like
+	 * special characters in field names.
+	 *
+	 * @param fis field infos
+	 */
+	private void setNamingScheme(FieldInfos fis) {
+		// Specified in index metadata file?
+		String namingScheme = indexMetadata.getFieldNamingScheme();
+		if (namingScheme != null) {
+			// Yes.
+			ComplexFieldUtil.setFieldNameSeparators(namingScheme.equals("NO_SPECIAL_CHARS"));
+			return;
 		}
 
+		// Not specified; detect it.
+		boolean hasNoFieldsYet = fis.size() == 0;
+		boolean usingSpecialCharsAsSeparators = hasNoFieldsYet;
+		boolean usingCharacterCodesAsSeparators = false;
+		for (int i = 0; i < fis.size(); i++) {
+			FieldInfo fi = fis.fieldInfo(i);
+			String name = fi.name;
+			if (name.contains("%") || name.contains("@") || name.contains("#")) {
+				usingSpecialCharsAsSeparators = true;
+			}
+			if (name.contains("_PR_") || name.contains("_AL_") || name.contains("_BK_")) {
+				usingCharacterCodesAsSeparators = true;
+			}
+		}
+		if (!usingSpecialCharsAsSeparators && !usingCharacterCodesAsSeparators) {
+			throw new RuntimeException("Could not detect index naming scheme. If your index was created with an old version of BlackLab, it may use the old naming scheme and cannot be opened with this version. Please re-index your data, or use a BlackLab version from before August 2014.");
+		}
+		if (usingSpecialCharsAsSeparators && usingCharacterCodesAsSeparators) {
+			throw new RuntimeException("Your index seems to use two different naming schemes. Avoid using '%', '@', '#' or '_' in (metadata) field names and re-index your data.");
+		}
+		ComplexFieldUtil.setFieldNameSeparators(usingCharacterCodesAsSeparators);
 	}
 
 	/**
@@ -580,27 +821,34 @@ public class IndexStructure {
 	 * @return the field description */
 	public ComplexFieldDesc getComplexFieldDesc(String fieldName) {
 		if (!complexFields.containsKey(fieldName))
-			throw new RuntimeException("Field '" + fieldName + "' not found!");
+			throw new RuntimeException("Complex field '" + fieldName + "' not found!");
 		return complexFields.get(fieldName);
 	}
 
 	/** Get the names of all the metadata fields in our index
 	 * @return the names */
 	public Collection<String> getMetadataFields() {
-		return metadataFields.keySet();
+		return metadataFieldInfos.keySet();
+	}
+
+	public MetadataFieldDesc getMetadataFieldDesc(String fieldName) {
+		if (!metadataFieldInfos.containsKey(fieldName))
+			throw new RuntimeException("Metadata field '" + fieldName + "' not found!");
+		return metadataFieldInfos.get(fieldName);
 	}
 
 	/** Get the type of one metadata field
 	 * @param fieldName name of the field
-	 * @return the type of field */
+	 * @return the type of field
+	 * @deprecated use getMetadataFieldDesc(fieldName).getType() instead
+	 */
+	@Deprecated
 	public IndexStructure.FieldType getMetadataType(String fieldName) {
-		if (!metadataFields.containsKey(fieldName))
-			throw new RuntimeException("Metadata field '" + fieldName + "' not found!");
-		return metadataFields.get(fieldName);
+		return getMetadataFieldDesc(fieldName).getType();
 	}
 
 	public String getDocumentTitleField() {
-		// Find documents with title, name or desc in the field name
+		// Find metadata fields with title, name or desc in the field name
 		String field;
 		field = findTextField("title");
 		if (field == null)
@@ -611,8 +859,8 @@ public class IndexStructure {
 			return field;
 
 		// Return the first text field we can find.
-		for (Map.Entry<String, FieldType> e: metadataFields.entrySet()) {
-			if (e.getValue() == FieldType.TEXT) {
+		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
+			if (e.getValue().getType() == FieldType.TEXT) {
 				return e.getKey();
 			}
 		}
@@ -622,8 +870,8 @@ public class IndexStructure {
 	public String findTextField(String search) {
 		// Find documents with title in the name
 		List<String> fieldsFound = new ArrayList<String>();
-		for (Map.Entry<String, FieldType> e: metadataFields.entrySet()) {
-			if (e.getValue() == FieldType.TEXT && e.getKey().toLowerCase().contains(search)) {
+		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
+			if (e.getValue().getType() == FieldType.TEXT && e.getKey().toLowerCase().contains(search)) {
 				fieldsFound.add(e.getKey());
 			}
 		}
@@ -658,10 +906,10 @@ public class IndexStructure {
 
 		out.println("\nMETADATA FIELDS");
 		String titleField = getDocumentTitleField();
-		for (Map.Entry<String, FieldType> e: metadataFields.entrySet()) {
+		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
 			if (e.getKey().endsWith("Numeric"))
 				continue; // special case, will probably be removed later
-			FieldType type = e.getValue();
+			FieldType type = e.getValue().getType();
 			out.println("- " + e.getKey() + (type == FieldType.TEXT ? "" : " (" + type + ")")
 					+ (e.getKey().equals(titleField) ? " (TITLEFIELD)" : ""));
 		}

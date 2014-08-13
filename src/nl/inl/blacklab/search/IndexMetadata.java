@@ -49,26 +49,6 @@ public class IndexMetadata {
 	}
 
 	/**
-	 * Get or create a JSONObject child of the specified parent.
-	 *
-	 * @param parent parent node to get the object from
-	 * @param name name of the JSONObject to get
-	 * @return the object
-	 * @throws RuntimeException if a non-JSONObject child with this name exists
-	 */
-	protected JSONObject getJSONObject(JSONObject parent, String name) {
-		Object object = parent.get(name);
-		if (object != null) {
-			if (!(object instanceof JSONObject))
-				throw new RuntimeException("Not a JSONObject: " + name);
-		} else {
-			object = new JSONObject();
-			parent.put(name, object);
-		}
-		return (JSONObject) object;
-	}
-
-	/**
 	 * Write the index metadata to a JSON file.
 	 * @param metadataFile the file to write
 	 */
@@ -77,29 +57,104 @@ public class IndexMetadata {
 	}
 
 	/**
-	 * Get the configuration for a metadata field
+	 * Get the field info (metadata and complex fields).
+	 * @return the configuration
+	 */
+	public JSONObject getFieldInfo() {
+		return Json.obj(jsonRoot, "fieldInfo");
+	}
+
+	/**
+	 * Get the configuration for all metadata fields.
+	 * @return the configuration
+	 */
+	public JSONObject getMetaFieldConfigs() {
+		return Json.obj(getFieldInfo(), "metadataFields");
+	}
+
+	/**
+	 * Get the configuration for a metadata field.
 	 * @param name field name
 	 * @return the configuration
 	 */
 	public JSONObject getMetaFieldConfig(String name) {
-		return getJSONObject(getJSONObject(getJSONObject(jsonRoot, "fieldInfo"), "metadataFields"), name);
+		return Json.obj(getMetaFieldConfigs(), name);
 	}
 
 	/**
-	 * Get the configuration for a complex field
+	 * Get the configuration for all complex fields.
+	 * @return the configuration
+	 */
+	public JSONObject getComplexFieldConfigs() {
+		return Json.obj(getFieldInfo(), "complexFields");
+	}
+
+	/**
+	 * Get the configuration for a complex field.
 	 * @param name field name
 	 * @return the configuration
 	 */
 	public JSONObject getComplexFieldConfig(String name) {
-		return getJSONObject(getJSONObject(getJSONObject(jsonRoot, "fieldInfo"), "complexFields"), name);
+		return Json.obj(getComplexFieldConfigs(), name);
 	}
 
 	/**
-	 * Get the configuration for the indexer
+	 * Get version information about the index.
+	 *
+	 * Includes indexFormat (3 or higher), indexTime (time of index creation,
+	 * YYY-MM-DD hh:mm:ss), lastModified (optional) and
+	 * blackLabBuildDate (optional; YYY-MM-DD hh:mm:ss).
+	 *
+	 * @return the configuration
+	 */
+	public JSONObject getVersionInfo() {
+		return Json.obj(jsonRoot, "versionInfo");
+	}
+
+	public String getDisplayName() {
+		if (!jsonRoot.has("displayName"))
+			return "";
+		return jsonRoot.getString("displayName");
+	}
+
+	public String getDescription() {
+		if (!jsonRoot.has("description"))
+			return "";
+		return jsonRoot.getString("description");
+	}
+
+	/**
+	 * Get the configuration for the indexer.
 	 * @return the configuration
 	 */
 	public JSONObject getIndexerConfig() {
-		return getJSONObject(jsonRoot, "indexerConfig");
+		return Json.obj(jsonRoot, "indexerConfig");
+	}
+
+	/**
+	 * Get the field naming scheme if specified.
+	 * @return the field naming scheme, or null if not specified.
+	 */
+	public String getFieldNamingScheme() {
+		JSONObject metaFieldInfo = getFieldInfo();
+		if (metaFieldInfo.has("namingScheme")) {
+			String namingScheme = metaFieldInfo.getString("namingScheme");
+			if (!namingScheme.equals("DEFAULT") && !namingScheme.equals("NO_SPECIAL_CHARS")) {
+				throw new RuntimeException("Unknown value for namingScheme: " + namingScheme);
+			}
+			return namingScheme;
+		}
+		return null;
+	}
+
+	/**
+	 * Is there field info in this index metadata file?
+	 * @return true if there is, false if not
+	 */
+	public boolean hasFieldInfo() {
+		boolean hasMetaFields = getMetaFieldConfigs().length() > 0;
+		boolean hasComplexFields = getComplexFieldConfigs().length() > 0;
+		return hasMetaFields || hasComplexFields;
 	}
 
 
