@@ -14,6 +14,8 @@ import java.util.TreeMap;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
+import nl.inl.util.DateUtil;
+import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
 import nl.inl.util.json.JSONArray;
@@ -33,6 +35,8 @@ import org.apache.lucene.util.Bits;
  */
 public class IndexStructure {
 	protected static final Logger logger = Logger.getLogger(IndexStructure.class);
+
+	private static final String METADATA_FILE_NAME = "indexmetadata.json";
 
 	/** Possible types of metadata fields. */
 	public enum FieldType {
@@ -191,12 +195,22 @@ public class IndexStructure {
 			return unknownCondition;
 		}
 
-		public List<String> getValues() {
+		public Collection<String> getValues() {
 			return values;
 		}
 
 		public boolean isValueListComplete() {
 			return valueListComplete;
+		}
+
+		/**
+		 * Reset the information that is dependent on input data
+		 * (i.e. list of values, etc.) because we're going to
+		 * (re-)index the data.
+		 */
+		public void resetForIndexing() {
+			this.values.clear();
+			valueListComplete = true;
 		}
 
 	}
@@ -209,6 +223,9 @@ public class IndexStructure {
 
 		/** The field's main property */
 		private PropertyDesc mainProperty;
+
+		/** The field's main property name (for storing the main prop name before we have the prop. descriptions) */
+		private String mainPropertyName;
 
 		/** Does the field have an associated content store? */
 		private boolean contentStore;
@@ -344,6 +361,15 @@ public class IndexStructure {
 		}
 
 		public void detectMainProperty(IndexReader reader) {
+			if (mainPropertyName != null && mainPropertyName.length() > 0) {
+				// Main property name was set from index metadata before we
+				// had the property desc. available; use that now and don't do
+				// any actual detecting.
+				mainProperty = getPropertyDesc(mainPropertyName);
+				mainPropertyName = null;
+				return;
+			}
+
 			PropertyDesc firstProperty = null;
 			for (PropertyDesc pr: props.values()) {
 				if (firstProperty == null)
@@ -377,6 +403,10 @@ public class IndexStructure {
 			out.println("  * " + (contentStore ? "Includes" : "No") + " content store");
 			out.println("  * " + (xmlTags ? "Includes" : "No") + " XML tag index");
 			out.println("  * " + (lengthInTokens ? "Includes" : "No") + " document length field");
+		}
+
+		public void setMainPropertyName(String mainPropertyName) {
+			this.mainPropertyName = mainPropertyName;
 		}
 
 	}
@@ -519,9 +549,6 @@ public class IndexStructure {
 		}
 	}
 
-	/** Our index */
-	private DirectoryReader reader;
-
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, MetadataFieldDesc> metadataFieldInfos;
 
@@ -532,11 +559,41 @@ public class IndexStructure {
 	 *  or if that doesn't exist, the first complex field found. */
 	private ComplexFieldDesc mainContentsField;
 
-	/** Contents of the indexmetadata.json file */
-	private IndexMetadata indexMetadata;
-
-	/** Where the index is stored */
+	/** Where to save indexmetadata.json */
 	private File indexDir;
+
+	/** Index display name */
+	private String displayName;
+
+	/** Index description */
+	private String description;
+
+	/** When BlackLab.jar was built */
+	private String blackLabBuildDate;
+
+	/** Format the index uses */
+	private String indexFormat;
+
+	/** Time at which index was created */
+	private String timeCreated;
+
+	/** Time at which index was created */
+	private String timeModified;
+
+	/** Metadata field containing document title */
+	private String titleField;
+
+	/** Metadata field containing document author */
+	private String authorField;
+
+	/** Metadata field containing document date */
+	private String dateField;
+
+	/** Metadata field containing document pid */
+	private String pidField;
+
+	/** The index reader */
+	private DirectoryReader reader;
 
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
@@ -548,29 +605,11 @@ public class IndexStructure {
 	public IndexStructure(DirectoryReader reader, File indexDir, boolean createNewIndex) {
 		this.reader = reader;
 		this.indexDir = indexDir;
-		File metadataFile = new File(indexDir, "indexmetadata.json");
-		if (createNewIndex || !metadataFile.exists()) {
-			// No metadata file yet; start with a blank one
-			indexMetadata = new IndexMetadata(indexDir.getName());
-		} else {
-			// Read the metadata file
-			try {
-				indexMetadata = new IndexMetadata(metadataFile);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-		//metadataFields = new TreeMap<String, FieldType>();
+
 		metadataFieldInfos = new TreeMap<String, MetadataFieldDesc>();
 		complexFields = new TreeMap<String, ComplexFieldDesc>();
 
-		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
-		setNamingScheme(fis);
-		if (indexMetadata.hasFieldInfo()) {
-			getFieldInfoFromMetadata(fis);
-		} else {
-			detectFields(fis);
-		}
+		readMetadata(reader, createNewIndex);
 
 		// Detect the main properties for all complex fields
 		// (looks for fields with char offset information stored)
@@ -583,29 +622,148 @@ public class IndexStructure {
 	}
 
 	/**
+	 * Read the indexmetadata.json, if it exists.
+	 *
+	 * @param reader
+	 * @param indexDir
+	 * @param createNewIndex
+	 */
+	private void readMetadata(DirectoryReader reader, boolean createNewIndex) {
+		// Read and interpret index metadata file
+		File metadataFile = new File(indexDir, METADATA_FILE_NAME);
+		IndexMetadata indexMetadata;
+		if (createNewIndex || !metadataFile.exists()) {
+			// No metadata file yet; start with a blank one
+			indexMetadata = new IndexMetadata(indexDir.getName());
+		} else {
+			// Read the metadata file
+			try {
+				indexMetadata = new IndexMetadata(metadataFile);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		displayName = indexMetadata.getDisplayName();
+		description = indexMetadata.getDescription();
+		JSONObject versionInfo = indexMetadata.getVersionInfo();
+		blackLabBuildDate = Json.getString(versionInfo, "blackLabBuildDate", "");
+		indexFormat = Json.getString(versionInfo, "indexFormat", "");
+		timeCreated = Json.getString(versionInfo, "timeCreated", "");
+		timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
+		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
+		setNamingScheme(indexMetadata, fis);
+		if (indexMetadata.hasFieldInfo()) {
+			getFieldInfoFromMetadata(indexMetadata, fis);
+		}
+		detectFields(fis); // even if we have metadata, we still have to detect props/alts
+		determineDocumentsFields(indexMetadata);
+	}
+
+	/**
+	 * Indicate that the index was modified, so that fact
+	 * will be recorded in the metadata file.
+	 */
+	public void setModified() {
+		timeModified = DateUtil.getSqlDateTimeString();
+	}
+
+	public void writeMetadata() {
+		File metadataFile = new File(indexDir, METADATA_FILE_NAME);
+		IndexMetadata indexMetadata = new IndexMetadata(indexDir.getName());
+		JSONObject root = indexMetadata.getRoot();
+		root.put("displayName", displayName);
+		root.put("description", description);
+		root.put("versionInfo", Json.object(
+			"blackLabBuildDate", blackLabBuildDate,
+			"indexFormat", indexFormat,
+			"timeCreated", timeCreated,
+			"timeModified", timeModified
+		));
+		JSONObject metadataFields = new JSONObject();
+		JSONObject jsonComplexFields = new JSONObject();
+		root.put("fieldInfo", Json.object(
+			"namingScheme", ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS": "DEFAULT",
+			"titleField", titleField,
+			"authorField", authorField,
+			"dateField", dateField,
+			"pidField", pidField,
+			"metadataFields", metadataFields,
+			"complexFields", jsonComplexFields
+		));
+
+		// Add metadata field info
+		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
+			UnknownCondition unknownCondition = f.getUnknownCondition();
+			JSONObject fieldInfo = Json.object(
+				"displayName", f.getDisplayName(),
+				"description", f.getDescription(),
+				"type", f.getType().toString().toLowerCase(),
+				"analyzer", "default",
+				"unknownValue", f.getUnknownValue(),
+				"unknownCondition", unknownCondition == null ? "NEVER" : unknownCondition.toString(),
+				"valueListComplete", f.isValueListComplete()
+			);
+			JSONArray jsonValues = new JSONArray();
+			Collection<String> values = f.getValues();
+			if (values != null) {
+				for (String value: values) {
+					jsonValues.put(value);
+				}
+				fieldInfo.put("values", jsonValues);
+			}
+			metadataFields.put(f.getName(), fieldInfo);
+		}
+
+		// Add complex field info
+		for (ComplexFieldDesc f: complexFields.values()) {
+
+			/*
+			JSONObject jsonProperties = new JSONObject();
+			for (String propName: f.getProperties()) {
+				PropertyDesc prop = f.getPropertyDesc(propName);
+				jsonProperties.put(propName, Json.object(
+					// (we might want to store per-property information in the future)
+				));
+			}
+			*/
+
+			jsonComplexFields.put(f.getName(), Json.object(
+				"displayName", f.getDisplayName(),
+				"description", f.getDescription(),
+				"mainProperty", f.getMainProperty().getName()
+				//, "properties", jsonProperties
+			));
+		}
+
+		// Write the file
+		indexMetadata.write(metadataFile);
+	}
+
+	/**
 	 * Get field information from the index metadata file.
 	 *
+	 * @param indexMetadata the metadata information
 	 * @param fis the Lucene field infos
 	 */
 	@SuppressWarnings("unchecked")
-	private void getFieldInfoFromMetadata(FieldInfos fis) {
+	private void getFieldInfoFromMetadata(IndexMetadata indexMetadata, FieldInfos fis) {
 
 		// Metadata fields
 		Iterator<String> it = indexMetadata.getMetaFieldConfigs().keys();
 		while (it.hasNext()) {
 			String fieldName = it.next();
 			JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
-			String displayName = Json.str(fieldConfig, "displayName", fieldName);
-			String description = Json.str(fieldConfig, "description", "");
-			String type = Json.str(fieldConfig, "type", "tokenized");
-			String analyzer = Json.str(fieldConfig, "analyzer", "default");
-			String unknownValue = Json.str(fieldConfig, "unknownValue", "unknown");
-			String unknownCondition = Json.str(fieldConfig, "unknownCondition", "NEVER");
+			String displayName = Json.getString(fieldConfig, "displayName", fieldName);
+			String description = Json.getString(fieldConfig, "description", "");
+			String type = Json.getString(fieldConfig, "type", "tokenized");
+			String analyzer = Json.getString(fieldConfig, "analyzer", "default");
+			String unknownValue = Json.getString(fieldConfig, "unknownValue", "unknown");
+			String unknownCondition = Json.getString(fieldConfig, "unknownCondition", "NEVER");
 			JSONArray values = null;
 			if (fieldConfig.has("values")) {
 				values = fieldConfig.getJSONArray("values");
 			}
-			boolean valueListComplete = Json.bool(fieldConfig, "valueListComplete", false);
+			boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
 
 			MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
 			fieldDesc.setDescription(description);
@@ -613,7 +771,8 @@ public class IndexStructure {
 			fieldDesc.setAnalyzer(analyzer);
 			fieldDesc.setUnknownValue(unknownValue);
 			fieldDesc.setUnknownCondition(unknownCondition);
-			fieldDesc.setValues(values);
+			if (values != null)
+				fieldDesc.setValues(values);
 			fieldDesc.setValueListComplete(valueListComplete);
 			metadataFieldInfos.put(fieldName, fieldDesc);
 		}
@@ -622,12 +781,16 @@ public class IndexStructure {
 		it = indexMetadata.getComplexFieldConfigs().keys();
 		while (it.hasNext()) {
 			String fieldName = it.next();
-			JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
-			String displayName = Json.str(fieldConfig, "displayName", fieldName);
-			String description = Json.str(fieldConfig, "description", "");
+			JSONObject fieldConfig = indexMetadata.getComplexFieldConfig(fieldName);
+			String displayName = Json.getString(fieldConfig, "displayName", fieldName);
+			String description = Json.getString(fieldConfig, "description", "");
+			String mainProperty = Json.getString(fieldConfig, "mainProperty", "");
+			// TODO: useAnnotation..?
 			ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
 			fieldDesc.setDisplayName(displayName);
 			fieldDesc.setDescription(description);
+			if (mainProperty.length() > 0)
+				fieldDesc.setMainPropertyName(mainProperty);
 			complexFields.put(fieldName, fieldDesc);
 		}
 	}
@@ -654,11 +817,11 @@ public class IndexStructure {
 				parts = ComplexFieldUtil.getNameComponents(name);
 			}
 			if (parts.length == 1 && !complexFields.containsKey(parts[0])) {
-				// Probably a metadata field (or, if using old style, the main field
-				// of a complex field; if so, we'll figure that out later)
-				FieldType type = getFieldType(name);
-				//metadataFields.put(name, type);
-				metadataFieldInfos.put(name, new MetadataFieldDesc(name, type));
+				if (!metadataFieldInfos.containsKey(name)) {
+					// Metadata field, not found in metadata JSON file
+					FieldType type = getFieldType(name);
+					metadataFieldInfos.put(name, new MetadataFieldDesc(name, type));
+				}
 			} else {
 				// Part of complex field.
 				if (metadataFieldInfos.containsKey(parts[0])) {
@@ -686,9 +849,10 @@ public class IndexStructure {
 	 * codes for use with certain other software that doesn't like
 	 * special characters in field names.
 	 *
+	 * @param indexMetadata the metadata
 	 * @param fis field infos
 	 */
-	private void setNamingScheme(FieldInfos fis) {
+	private void setNamingScheme(IndexMetadata indexMetadata, FieldInfos fis) {
 		// Specified in index metadata file?
 		String namingScheme = indexMetadata.getFieldNamingScheme();
 		if (namingScheme != null) {
@@ -761,9 +925,12 @@ public class IndexStructure {
 	 *
 	 * @param luceneFieldName the field name to inspect
 	 * @return true if it has offsets, false if not
+	 * @deprecated throws an exception. Shouldn't be used directly by applications; main property is detected automatically
 	 */
+	@Deprecated
 	public boolean hasOffsets(String luceneFieldName) {
-		return hasOffsets(reader, luceneFieldName);
+		throw new RuntimeException("hasOffsets() shouldn't be called directly by application; main property is detected automatically");
+		//return hasOffsets(reader, luceneFieldName);
 	}
 
 	static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
@@ -847,32 +1014,123 @@ public class IndexStructure {
 		return getMetadataFieldDesc(fieldName).getType();
 	}
 
-	public String getDocumentTitleField() {
-		// Find metadata fields with title, name or desc in the field name
-		String field;
-		field = findTextField("title");
-		if (field == null)
-			field = findTextField("name");
-		if (field == null)
-			field = findTextField("desc");
-		if (field != null)
-			return field;
+	/**
+	 * Read document field names (title, author, date, pid)
+	 * from indexmetadata.json file.
+	 * If the title field wasn't specified, we'll make an educated
+	 * guess. (we don't try to guess at the other fields)
+	 *
+	 * @param indexMetadata the metadata
+	 */
+	private void determineDocumentsFields(IndexMetadata indexMetadata) {
+		titleField = authorField = dateField = pidField = null;
+		JSONObject fi = indexMetadata.getFieldInfo();
 
-		// Return the first text field we can find.
-		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
-			if (e.getValue().getType() == FieldType.TEXT) {
-				return e.getKey();
+		if (fi.has("titleField")) {
+			titleField = fi.getString("titleField");
+		}
+		if (titleField == null) {
+			titleField = findTextField("title");
+			if (titleField == null) {
+				// Use the first text field we can find.
+				for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
+					if (e.getValue().getType() == FieldType.TEXT) {
+						titleField = e.getKey();
+						return;
+					}
+				}
 			}
 		}
-		return null;
+		if (fi.has("authorField"))
+			authorField = fi.getString("authorField");
+		if (fi.has("dateField"))
+			dateField = fi.getString("dateField");
+		if (fi.has("pidField"))
+			pidField = fi.getString("pidField");
 	}
 
+	/**
+	 * Returns the metadata field containing the document title, if any.
+	 *
+	 * This field can be configured in the indexmetadata.json file.
+	 * If it wasn't specified there, an intelligent guess is used.
+	 *
+	 * @return name of the title field, or null if none found
+	 */
+	public String titleField() {
+		return titleField;
+	}
+
+	/**
+	 * Returns the metadata field containing the document author, if any.
+	 *
+	 * This field can be configured in the indexmetadata.json file.
+	 * If it wasn't specified there, an intelligent guess is used.
+	 *
+	 * @return name of the author field, or null if none found
+	 */
+	public String authorField() {
+		return authorField;
+	}
+
+	/**
+	 * Returns the metadata field containing the document date, if any.
+	 *
+	 * This field can be configured in the indexmetadata.json file.
+	 * If it wasn't specified there, an intelligent guess is used.
+	 *
+	 * @return name of the date field, or null if none found
+	 */
+	public String dateField() {
+		return dateField;
+	}
+
+	/**
+	 * Returns the metadata field containing the document pid, if any.
+	 *
+	 * This field can be configured in the indexmetadata.json file.
+	 * If it wasn't specified there, an intelligent guess is used.
+	 *
+	 * @return name of the pid field, or null if none found
+	 */
+	public String pidField() {
+		return pidField;
+	}
+
+	/**
+	 * @return the title field
+	 * @deprecated renamed to titleField()
+	 */
+	@Deprecated
+	public String getDocumentTitleField() {
+		return titleField();
+	}
+
+	/**
+	 * Find the first (alphabetically) field whose name contains the search string.
+	 *
+	 * @param search the string to search for
+	 * @return the field name, or null if no fields matched
+	 */
 	public String findTextField(String search) {
+		return findTextField(search, true);
+	}
+
+	/**
+	 * Find the first (alphabetically) field matching the search string.
+	 *
+	 * @param search the string to search for
+	 * @param partialMatchOkay if false, only field names identical to the search
+	 *  string match; if true, all field names containing the search string match.
+	 * @return the field name, or null if no fields matched
+	 */
+	public String findTextField(String search, boolean partialMatchOkay) {
 		// Find documents with title in the name
 		List<String> fieldsFound = new ArrayList<String>();
 		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
 			if (e.getValue().getType() == FieldType.TEXT && e.getKey().toLowerCase().contains(search)) {
-				fieldsFound.add(e.getKey());
+				if (partialMatchOkay || e.getKey().toLowerCase().equals(search))
+					fieldsFound.add(e.getKey());
 			}
 		}
 		if (fieldsFound.size() == 0)
@@ -910,9 +1168,103 @@ public class IndexStructure {
 			if (e.getKey().endsWith("Numeric"))
 				continue; // special case, will probably be removed later
 			FieldType type = e.getValue().getType();
+			String special = "";
+			if (e.getKey().equals(titleField))
+				special = "TITLEFIELD";
+			else if (e.getKey().equals(authorField))
+				special = "AUTHORFIELD";
+			else if (e.getKey().equals(dateField))
+				special = "DATEFIELD";
+			else if (e.getKey().equals(pidField))
+				special = "PIDFIELD";
+			if (special.length() > 0)
+				special = " (" + special + ")";
 			out.println("- " + e.getKey() + (type == FieldType.TEXT ? "" : " (" + type + ")")
-					+ (e.getKey().equals(titleField) ? " (TITLEFIELD)" : ""));
+					+ special);
 		}
 	}
 
+	/**
+	 * Get the display name for the index.
+	 *
+	 * If no display name was specified, returns the name of the index directory.
+	 *
+	 * @return the display name
+	 */
+	public String getDisplayName() {
+		if (displayName != null && displayName.length() != 0)
+			return displayName;
+		return indexDir.getName();
+	}
+
+	/**
+	 * Get a description of the index, if specified
+	 * @return the description
+	 */
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * What version of the index format is this?
+	 * @return the index format version
+	 */
+	public String getIndexFormat() {
+		return indexFormat;
+	}
+
+	/**
+	 * When was this index created?
+	 * @return date/time stamp
+	 */
+	public String getTimeCreated() {
+		return timeCreated;
+	}
+
+	/**
+	 * When was this index last modified?
+	 * @return date/time stamp
+	 */
+	public String getTimeModified() {
+		return timeCreated;
+	}
+
+	/**
+	 * When was the BlackLab.jar used built?
+	 * @return date/time stamp
+	 */
+	public String getBlackLabBuildDate() {
+		return blackLabBuildDate;
+	}
+
+	/**
+	 * Set the template for the indexmetadata.json file for a new index.
+	 *
+	 * The template determines whether and how fields are tokenized/analyzed,
+	 * indicates which fields are title/author/date/pid fields, and provides
+	 * extra (optional) information like display names and descriptions.
+	 *
+	 * This method should be called just after creating the new index. It cannot
+	 * be used on existing indices; if you need to change something about your
+	 * index metadata, edit the file directly (but be careful, as it of course
+	 * will not affect already-indexed data).
+	 *
+	 * @param indexTemplateFile the JSON file to use as a template.
+	 */
+	public void setNewIndexMetadataTemplate(File indexTemplateFile) {
+		// Copy the template file to the index dir and read the metadata again.
+		File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME);
+		FileUtil.writeFile(indexMetadataFile, FileUtil.readFile(indexTemplateFile));
+		readMetadata(reader, false);
+
+		// Reset version info
+		blackLabBuildDate = ""; // TODO: figure out BlackLab build date and record it here
+		indexFormat = "3";
+		timeModified = timeCreated = DateUtil.getSqlDateTimeString();
+
+		// Clear any recorded values in metadata fields
+		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
+			f.resetForIndexing();
+		}
+	}
 }

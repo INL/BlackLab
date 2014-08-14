@@ -621,5 +621,13 @@ public class ComplexFieldUtil {
 		return false;
 	}
 
+	/**
+	 * Are we using the naming scheme with longer separation codes with no special characters in them?
+	 * @return true if we are, false if not
+	 */
+	public static boolean avoidSpecialCharsInFieldNames() {
+		return PROP_SEP_LEN > 1;
+	}
+
 
 }

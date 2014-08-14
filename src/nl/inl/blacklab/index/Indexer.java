@@ -192,6 +192,8 @@ public class Indexer {
 		this.docIndexerClass = docIndexerClass;
 
 		searcher = Searcher.openForWriting(directory, create);
+		if (!create)
+			searcher.getIndexStructure().setModified();
 
 		metadataFieldTypeTokenized = new FieldType();
 		metadataFieldTypeTokenized.setStored(true);
@@ -278,6 +280,8 @@ public class Indexer {
 		// while)
 		getListener().indexEnd();
 		getListener().closeStart();
+
+		searcher.getIndexStructure().writeMetadata();
 
 		searcher.close();
 
@@ -861,5 +865,23 @@ public class Indexer {
 	 */
 	protected IndexWriter getWriter(){
 		return searcher.getWriter();
+	}
+
+	/**
+	 * Set the template for the indexmetadata.json file for a new index.
+	 *
+	 * The template determines whether and how fields are tokenized/analyzed,
+	 * indicates which fields are title/author/date/pid fields, and provides
+	 * extra (optional) information like display names and descriptions.
+	 *
+	 * This method should be called just after creating the new index. It cannot
+	 * be used on existing indices; if you need to change something about your
+	 * index metadata, edit the file directly (but be careful, as it of course
+	 * will not affect already-indexed data).
+	 *
+	 * @param indexTemplateFile the JSON file to use as a template.
+	 */
+	public void setNewIndexMetadataTemplate(File indexTemplateFile) {
+		searcher.getIndexStructure().setNewIndexMetadataTemplate(indexTemplateFile);
 	}
 }

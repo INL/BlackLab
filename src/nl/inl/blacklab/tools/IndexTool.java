@@ -179,7 +179,8 @@ public class IndexTool {
 			commandDelete(indexDir, deleteQuery);
 			return;
 		}
-		createNewIndex |= command.equals("create");
+		if (command.equals("create"))
+			createNewIndex = true;
 
 		// We're adding files. Do we have an input dir/file and file format name?
 		if (inputDir == null) {
@@ -196,18 +197,13 @@ public class IndexTool {
 		// Init log4j
 		LogUtil.initLog4jIfNotAlready();
 
-		// If the input or index directory or the parent of the index directory
-		// contains indexer.properties, read it
-		propFile = new File(indexDir, "indexer.properties");
-		if (propFile.canRead())
+		propFile = findFile("indexer.properties", indexDir, inputDir);
+		if (propFile != null && propFile.canRead())
 			readParametersFromPropertiesFile(propFile);
-		propFile = new File(indexDir.getParentFile(), "indexer.properties");
-		if (propFile.canRead())
-			readParametersFromPropertiesFile(propFile);
-		if (inputDir.isDirectory()) {
-			propFile = new File(inputDir, "indexer.properties");
-			if (propFile.canRead())
-				readParametersFromPropertiesFile(propFile);
+
+		File indexTemplateFile = null;
+		if (createNewIndex) {
+			indexTemplateFile = findFile("indextemplate.json", indexDir, inputDir);
 		}
 
 		String op = createNewIndex ? "Creating new" : "Appending to";
@@ -252,6 +248,9 @@ public class IndexTool {
 
 		// Create the indexer and index the files
 		Indexer indexer = new Indexer(indexDir, createNewIndex, docIndexerClass);
+		if (createNewIndex && indexTemplateFile != null && indexTemplateFile.canRead()) {
+			indexer.setNewIndexMetadataTemplate(indexTemplateFile);
+		}
 		indexer.setIndexerParam(indexerParam);
 		if (maxDocsToIndex > 0)
 			indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
@@ -271,6 +270,23 @@ public class IndexTool {
 			// Close the index.
 			indexer.close();
 		}
+	}
+
+	private static File findFile(String fileName, File indexDir, File inputDir) {
+		// If the input or index directory or the parent of the index directory
+		// contains indexer.properties, read it
+		File propFile = new File(indexDir, fileName);
+		if (propFile.canRead())
+			return propFile;
+		propFile = new File(indexDir.getParentFile(), fileName);
+		if (propFile.canRead())
+			return propFile;
+		if (inputDir.isDirectory()) {
+			propFile = new File(inputDir, fileName);
+			if (propFile.canRead())
+				return propFile;
+		}
+		return null;
 	}
 
 	private static void readParametersFromPropertiesFile(File propFile) {

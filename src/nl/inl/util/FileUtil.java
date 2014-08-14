@@ -427,4 +427,18 @@ public class FileUtil {
 	public static String readFile(File file) {
 		return StringUtil.join(readLines(file), "\n");
 	}
+
+	/**
+	 * Write a String to a file.
+	 * @param file the file to write
+	 * @param data what to write to the file
+	 */
+	public static void writeFile(File file, String data) {
+		PrintWriter out = openForWriting(file);
+		try {
+			out.print(data);
+		} finally {
+			out.close();
+		}
+	}
 }

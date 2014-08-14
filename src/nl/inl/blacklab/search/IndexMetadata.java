@@ -32,20 +32,17 @@ public class IndexMetadata {
 	 * @param indexName name of the index
 	 */
 	public IndexMetadata(String indexName) {
-		jsonRoot = new JSONObject();
-		jsonRoot.put("displayName", indexName);
-		jsonRoot.put("description", indexName);
-		JSONObject versionInfo = new JSONObject();
-		jsonRoot.put("versionInfo", versionInfo);
-		//versionInfo.put("blackLabBuildDate", "2014-01-01 00:00:00"); // TODO: use actual build date
-		versionInfo.put("indexFormat", "3");
-		versionInfo.put("indexTime", DateUtil.getSqlDateTimeString());
-		JSONObject fieldInfo = new JSONObject();
-		jsonRoot.put("fieldInfo", fieldInfo);
-		JSONObject metadataFields = new JSONObject();
-		fieldInfo.put("metadataFields", metadataFields);
-		JSONObject complexFields = new JSONObject();
-		fieldInfo.put("complexFields", complexFields);
+		jsonRoot = Json.object(
+			"displayName", indexName,
+			"description", "",
+			"versionInfo", Json.object(
+				//"blackLabBuildDate", "2014-01-01 00:00:00"  // TODO: add correct build date
+				"indexFormat", "3",
+				"indexTime", DateUtil.getSqlDateTimeString()),
+			"fieldInfo", Json.object(
+				"metadataFields", new JSONObject(),
+				"complexFields", new JSONObject())
+		);
 	}
 
 	/**
@@ -61,7 +58,7 @@ public class IndexMetadata {
 	 * @return the configuration
 	 */
 	public JSONObject getFieldInfo() {
-		return Json.obj(jsonRoot, "fieldInfo");
+		return Json.getObject(jsonRoot, "fieldInfo");
 	}
 
 	/**
@@ -69,7 +66,7 @@ public class IndexMetadata {
 	 * @return the configuration
 	 */
 	public JSONObject getMetaFieldConfigs() {
-		return Json.obj(getFieldInfo(), "metadataFields");
+		return Json.getObject(getFieldInfo(), "metadataFields");
 	}
 
 	/**
@@ -78,7 +75,7 @@ public class IndexMetadata {
 	 * @return the configuration
 	 */
 	public JSONObject getMetaFieldConfig(String name) {
-		return Json.obj(getMetaFieldConfigs(), name);
+		return Json.getObject(getMetaFieldConfigs(), name);
 	}
 
 	/**
@@ -86,7 +83,7 @@ public class IndexMetadata {
 	 * @return the configuration
 	 */
 	public JSONObject getComplexFieldConfigs() {
-		return Json.obj(getFieldInfo(), "complexFields");
+		return Json.getObject(getFieldInfo(), "complexFields");
 	}
 
 	/**
@@ -95,7 +92,7 @@ public class IndexMetadata {
 	 * @return the configuration
 	 */
 	public JSONObject getComplexFieldConfig(String name) {
-		return Json.obj(getComplexFieldConfigs(), name);
+		return Json.getObject(getComplexFieldConfigs(), name);
 	}
 
 	/**
@@ -108,7 +105,7 @@ public class IndexMetadata {
 	 * @return the configuration
 	 */
 	public JSONObject getVersionInfo() {
-		return Json.obj(jsonRoot, "versionInfo");
+		return Json.getObject(jsonRoot, "versionInfo");
 	}
 
 	public String getDisplayName() {
@@ -128,7 +125,7 @@ public class IndexMetadata {
 	 * @return the configuration
 	 */
 	public JSONObject getIndexerConfig() {
-		return Json.obj(jsonRoot, "indexerConfig");
+		return Json.getObject(jsonRoot, "indexerConfig");
 	}
 
 	/**
@@ -155,6 +152,10 @@ public class IndexMetadata {
 		boolean hasMetaFields = getMetaFieldConfigs().length() > 0;
 		boolean hasComplexFields = getComplexFieldConfigs().length() > 0;
 		return hasMetaFields || hasComplexFields;
+	}
+
+	public JSONObject getRoot() {
+		return jsonRoot;
 	}
 
 

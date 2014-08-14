@@ -167,6 +167,13 @@ public class DateUtil {
 		return dfSqlDateTime.format(d);
 	}
 
+	/**
+	 * Format a date according to the SQL date convention (YYYY-MM-DD).
+	 *
+	 * @param date
+	 *            the date to format
+	 * @return a string representation, e.g. "1980-02-01"
+	 */
 	public static String getSqlDateString(Date date) {
 		return getSortableDateString(date, true);
 	}
@@ -291,6 +298,13 @@ public class DateUtil {
 	static DateFormat apacheDateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z",
 			englishLocale);
 
+	/**
+	 * Parse a date and time in Apache web server log format (dd/MMM/yyyy:HH:mm:ss Z)
+	 *
+	 * @param dateStr the date/time string to parse
+	 * @return the date and time
+	 * @throws ParseException if the date/time couldn't be parsed
+	 */
 	public static Date parseApacheLogDate(String dateStr) throws ParseException {
 		return apacheDateFormat.parse(dateStr);
 	}
@@ -303,10 +317,21 @@ public class DateUtil {
 
 	static DateFormat dfYearMonth = new SimpleDateFormat("yyyy-MM");
 
+	/**
+	 * Format the current year and month (YYYY-MM).
+	 *
+	 * @param date the date to format
+	 * @return a string representation, e.g. "1980-02"
+	 */
 	public static String getYearMonthString(Date date) {
 		return dfYearMonth.format(date);
 	}
 
+	/**
+	 * Format the current date and time according to the SQL datetime convention.
+	 *
+	 * @return a string representation, e.g. "1980-02-01 00:00:00"
+	 */
 	public static String getSqlDateTimeString() {
 		return getSqlDateTimeString(new Date());
 	}

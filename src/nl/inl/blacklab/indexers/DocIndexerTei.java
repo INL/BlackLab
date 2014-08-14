@@ -33,13 +33,14 @@ import org.xml.sax.Attributes;
  */
 public class DocIndexerTei extends DocIndexerXmlHandlers {
 
-	/** If true, we should capture metadata fields (interpGrp/interp) */
+	/** If true, we are inside a listBibl element where we
+	 *  should capture metadata fields (interpGrp/interp) */
 	boolean captureMetadata = false;
 
 	/** Value of the type attribute of the interpGrp we're in (or null) */
 	String interpGrpType;
 
-	public DocIndexerTei(Indexer indexer, String fileName, Reader reader) {
+	public DocIndexerTei(Indexer indexer, String fileName, Reader reader, String contentElement) {
 		super(indexer, fileName, reader);
 
 		// Get handles to the default properties (the main one & punct)
@@ -77,8 +78,12 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 		addHandler("TEI", documentElementHandler);
 		addHandler("TEI.2", documentElementHandler);
 
-		// Body element: clear character content at the beginning
-		final ElementHandler body = addHandler("body", new ElementHandler() {
+		// Content element: the main text contents.
+		// We use the body element by default, but a subclass can change this default by
+		// calling superconstructor with extra param, see DocIndexerTeiText.
+		//
+		// This handler clears captured character content at the beginning to start afresh.
+		final ElementHandler body = addHandler(contentElement, new ElementHandler() {
 			@Override
 			public void startElement(String uri, String localName, String qName,
 					Attributes attributes) {
@@ -97,7 +102,7 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 
 		});
 
-		// listBibl element: keep track of id attribute
+		// listBibl element (metadata): keep track of id attribute
 		addHandler("listBibl", new ElementHandler() {
 
 			@Override
@@ -192,7 +197,7 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 
 		});
 
-		// Sentence tags: index as tags in the content
+		// Sentence tags: index as tags in the content (only inside body element)
 		addHandler("s", new InlineTagHandler() {
 
 			@Override
@@ -212,6 +217,15 @@ public class DocIndexerTei extends DocIndexerXmlHandlers {
 
 	}
 
+	public DocIndexerTei(Indexer indexer, String fileName, Reader reader) {
+		this(indexer, fileName, reader, "body");
+	}
+
+
+	/**
+	 * Make author and authorCombined fields, which allow easier searching thatn
+	 * with authorLevel1 and/or authorLevel2 separately.
+	 */
 	void combineAuthorAndTitleFields() {
 		Document myLuceneDoc = getCurrentLuceneDoc();
 		String author = myLuceneDoc.get("authorLevel1");

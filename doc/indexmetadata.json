@@ -9,20 +9,21 @@
     // Information about index format, index time, BlackLab version
     // [automatically added by indexer]
     "versionInfo": {
-        "blackLabBuildDate": "2014-07-18",  // Build date of the BlackLab.jar used
-        "indexFormat": "3",                 // Index format version number
-        "indexTime": "2014-07-18 12:43:00"  // Start of index creation
+        "blackLabBuildDate": "2014-07-18",    // Build date of the BlackLab.jar used
+        "indexFormat": "3",                   // Index format version number
+        "timeCreated": "2014-07-18 12:43:00"  // Start of index creation
+        "timeModified": "2014-07-18 12:43:00" // Start of index creation
     },
  
     // About the fields in this index
     // [manual; defaults are set by indexer if not specified]
     "fieldInfo": {
-    	"namingScheme": "DEFAULT",       // ..or "NO_SPECIAL_CHARS" (the alternate naming scheme)
-    	                                 // (usually omitted, in which case DEFAULT is used)
-    	"documentTitleField": "title",   // (detected if omitted; may be used by application)
-    	"documentAuthorField": "author", // (may be used by application)
-    	"documentDateField": "date",     // (may be used by application)
-    	"pidField": "id",                // (may be used by application)
+    	"namingScheme": "DEFAULT",   // ..or "NO_SPECIAL_CHARS" (the alternate naming scheme)
+    	                             // (usually omitted, in which case DEFAULT is used)
+    	"titleField":  "title",  // (detected if omitted; may be used by application)
+    	"authorField": "author", // (may be used by application)
+    	"dateField":   "date",   // (may be used by application)
+    	"pidField":    "id",     // (may be used by application)
     	
         "metadataFields": {
             "author": {
@@ -42,56 +43,10 @@
         },
         "complexFields": {
             "contents": {
+            	"mainProperty": "word", // used for concordances; contains char. offsets
                 "displayName": "contents",
-                "description": "The text contents of the document.",
-                "useAnnotation": "http://.../..frog..."
+                "description": "The text contents of the document."
             }
-        }
-    },
- 
-    // What & how to index
-    // [manual; not stored in index]
-    "indexerConfig": {
-        "indexDocuments": {
-            "indexerClass": "nl.inl.blacklab.indexer.DocIndexerFoliaOpenSonar",
-            "dataToIndex": [
-                "/data/xml/newspapers/",
-                "/data/xml/magazines.tar.gz"
-            ],
-            "fieldSettings": {
-                "contents": {
-                    "attributes": {
-                        "word": {
-                            "sensitivity": "all"
-                        },
-                        "lemma": {
-                            "sensitivity": "si"
-                        },
-                        "pos": {
-                            "sensitivity": "i",
-                            "propName": "type" // (default: same)
-                        },
-                        "function": {
-                            "skip": "yes" // (default no)
-                        }
-                    }
-                },
-                "author": {
-                    "sensitivity": "i"   // kan dat..?
-                },
-                "bla": {
-                    "skip": "yes"
-                }
-            }
-        },
-        "skipDocuments": [
-            "id:ABC123",
-            "id:DEF456"
-        ],
-        "fetchMetadata": {
-            "fetcherClass": "nl.inl.blacklab.indexer.MetadataFetcherOpenSonarCmdi",
-            "pathToZip": "/data/meta/cmdi.zip",
-            "pathInZip": "SONAR-500/CMDI/"
         }
     }
 }

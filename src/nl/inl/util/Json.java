@@ -91,6 +91,22 @@ public class Json {
 		return b.toString();
 	}
 
+	public static JSONObject object(Object... keyValues) {
+		JSONObject obj = new JSONObject();
+		if (keyValues.length % 2 != 0) {
+			throw new RuntimeException("Odd number of parameters");
+		}
+		for (int i = 0; i < keyValues.length; i += 2) {
+			if (!(keyValues[i] instanceof String)) {
+				throw new RuntimeException("Non-string key");
+			}
+			String key = (String)keyValues[i];
+			Object value = keyValues[i + 1];
+			obj.put(key, value);
+		}
+		return obj;
+	}
+
 	/**
 	 * Get or create a JSONObject child of the specified parent.
 	 *
@@ -99,8 +115,10 @@ public class Json {
 	 * @return the object
 	 * @throws RuntimeException if a non-JSONObject child with this name exists
 	 */
-	public static JSONObject obj(JSONObject parent, String name) {
-		Object object = parent.get(name);
+	public static JSONObject getObject(JSONObject parent, String name) {
+		Object object = null;
+		if (parent.has(name))
+			object = parent.get(name);
 		if (object != null) {
 			if (!(object instanceof JSONObject))
 				throw new RuntimeException("Not a JSONObject: " + name);
@@ -120,7 +138,7 @@ public class Json {
 	 * @param defVal value to use if key doesn't exist
 	 * @return the string value
 	 */
-	public static String str(JSONObject parent, String name, String defVal) {
+	public static String getString(JSONObject parent, String name, String defVal) {
 		if (parent.has(name))
 			return parent.getString(name);
 		return defVal;
@@ -135,7 +153,7 @@ public class Json {
 	 * @param defVal value to use if key doesn't exist
 	 * @return the boolean value
 	 */
-	public static boolean bool(JSONObject parent, String name, boolean defVal) {
+	public static boolean getBoolean(JSONObject parent, String name, boolean defVal) {
 		if (parent.has(name))
 			return parent.getBoolean(name);
 		return defVal;
