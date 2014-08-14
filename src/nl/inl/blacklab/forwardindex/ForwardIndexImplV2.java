@@ -260,7 +260,6 @@ class ForwardIndexImplV2 extends ForwardIndex {
 					// Memory-map the file (sometimes fails on Windows with large files..? Increase
 					// direct buffer size with cmdline option?)
 					// NOTE: we can't add to the file this way! We only use this in search mode.
-					// @@@ add support for mapped write (need to re-map as the file grows in size)
 					memoryMapTokensFile(false);
 
 				} else {

@@ -59,46 +59,6 @@ public class ComplexField {
 
 	private ComplexFieldProperty mainProperty;
 
-	/** @param name
-	 * @param filterAdder
-	 * @deprecated use constructor with sensitivity parameter */
-	@Deprecated
-	public ComplexField(String name, TokenFilterAdder filterAdder) {
-		this(name, null, filterAdder, true);
-	}
-
-	/** @param name
-	 * @param mainProperty
-	 * @param filterAdder
-	 * @deprecated use constructor with sensitivity parameter */
-	@Deprecated
-	public ComplexField(String name, String mainProperty, TokenFilterAdder filterAdder) {
-		this(name, mainProperty, filterAdder, true);
-	}
-
-	/** @param name
-	 * @param filterAdder
-	 * @param includeOffsets
-	 * @deprecated use constructor with sensitivity parameter */
-	@Deprecated
-	public ComplexField(String name, TokenFilterAdder filterAdder, boolean includeOffsets) {
-		this(name, null, filterAdder, includeOffsets);
-	}
-
-	/** @param name
-	 * @param mainPropertyName
-	 * @param filterAdder
-	 * @param includeOffsets
-	 * @deprecated use constructor with sensitivity parameter */
-	@Deprecated
-	public ComplexField(String name, String mainPropertyName, TokenFilterAdder filterAdder, boolean includeOffsets) {
-		fieldName = name;
-		if (mainPropertyName == null)
-			mainPropertyName = ComplexFieldUtil.getDefaultMainPropName();
-		mainProperty = new ComplexFieldPropertyImplLargeDoc(mainPropertyName, filterAdder, includeOffsets);
-		properties.put(mainPropertyName, mainProperty);
-	}
-
 	/**
 	 * Construct a ComplexField object with a main property
 	 * @param name field name
@@ -119,12 +79,6 @@ public class ComplexField {
 		return start.size();
 	}
 
-	@Deprecated
-	public void addProperty(String name, TokenFilterAdder filterAdder) {
-		ComplexFieldProperty p = new ComplexFieldProperty(name, filterAdder, false);
-		properties.put(name, p);
-	}
-
 	public ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity) {
 		ComplexFieldProperty p = new ComplexFieldProperty(name, sensitivity, false);
 		properties.put(name, p);
@@ -140,11 +94,6 @@ public class ComplexField {
 		if (p == null)
 			throw new RuntimeException("Undefined property '" + propName + "'");
 		p.addAlternative(altName, filterAdder);
-	}
-
-	@Deprecated
-	public void addProperty(String name) {
-		addProperty(name, (TokenFilterAdder)null);
 	}
 
 	public void addStartChar(int startChar) {

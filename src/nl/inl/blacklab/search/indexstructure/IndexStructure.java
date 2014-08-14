@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.indexstructure;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,12 +13,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
 import nl.inl.util.DateUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
-import nl.inl.util.StringUtil;
-import nl.inl.util.json.JSONArray;
 import nl.inl.util.json.JSONObject;
 
 import org.apache.log4j.Logger;
@@ -37,517 +34,6 @@ public class IndexStructure {
 	protected static final Logger logger = Logger.getLogger(IndexStructure.class);
 
 	private static final String METADATA_FILE_NAME = "indexmetadata.json";
-
-	/** Possible types of metadata fields. */
-	public enum FieldType {
-		TEXT, NUMERIC, UNTOKENIZED
-	}
-
-	/** Types of property alternatives */
-	public enum AltType {
-		UNKNOWN, SENSITIVE
-	}
-
-	/** Conditions for using the unknown value */
-	public enum UnknownCondition {
-		NEVER,            // never use unknown value
-		MISSING,          // use unknown value when field is missing (not when empty)
-		EMPTY,            // use unknown value when field is empty (not when missing)
-		MISSING_OR_EMPTY  // use unknown value when field is empty or missing
-	}
-
-	public static abstract class BaseFieldDesc {
-		/** Complex field's name */
-		protected String fieldName;
-
-		/** Complex field's name */
-		protected String displayName;
-
-		/** Complex field's name */
-		protected String description = "";
-
-		public BaseFieldDesc(String fieldName) {
-			this(fieldName, null);
-		}
-
-		public BaseFieldDesc(String fieldName, String displayName) {
-			this.fieldName = fieldName;
-			this.displayName = displayName == null ? fieldName : displayName;
-		}
-
-		/** Get this complex field's name
-		 * @return this field's name */
-		public String getName() {
-			return fieldName;
-		}
-
-		public void setDisplayName(String displayName) {
-			this.displayName = displayName;
-		}
-
-		/** Get this complex field's display name
-		 * @return this field's display name */
-		public String getDisplayName() {
-			return displayName;
-		}
-
-		public void setDescription(String description) {
-			this.description = description;
-		}
-
-		/** Get this complex field's display name
-		 * @return this field's display name */
-		public String getDescription() {
-			return description;
-		}
-
-	}
-
-	public static class MetadataFieldDesc extends BaseFieldDesc {
-
-		protected FieldType type;
-
-		private String analyzer;
-
-		private String unknownValue;
-
-		private UnknownCondition unknownCondition;
-
-		private List<String> values;
-
-		private boolean valueListComplete;
-
-		public MetadataFieldDesc(String fieldName, FieldType type) {
-			super(fieldName);
-			this.type = type;
-		}
-
-		public MetadataFieldDesc(String fieldName, String typeName) {
-			super(fieldName);
-			if (typeName.equals("untokenized")) {
-				this.type = FieldType.UNTOKENIZED;
-			} else if (typeName.equals("tokenized") || typeName.equals("text")) {
-				this.type = FieldType.TEXT;
-			} else if (typeName.equals("numeric")) {
-				this.type = FieldType.NUMERIC;
-			} else {
-				throw new RuntimeException("Unknown field type name: " + typeName);
-			}
-		}
-
-		public FieldType getType() {
-			return type;
-		}
-
-		public void setAnalyzer(String analyzer) {
-			this.analyzer = analyzer;
-		}
-
-		public void setUnknownValue(String unknownValue) {
-			this.unknownValue = unknownValue;
-		}
-
-		public void setUnknownCondition(String unknownCondition) {
-			if (unknownCondition.equals("NEVER")) {
-				this.unknownCondition = UnknownCondition.NEVER;
-			} else if (unknownCondition.equals("MISSING")) {
-				this.unknownCondition = UnknownCondition.MISSING;
-			} else if (unknownCondition.equals("EMPTY")) {
-				this.unknownCondition = UnknownCondition.EMPTY;
-			} else if (unknownCondition.equals("MISSING_OR_EMPTY")) {
-				this.unknownCondition = UnknownCondition.MISSING_OR_EMPTY;
-			} else {
-				throw new RuntimeException("Unknown unknown condition: " + unknownCondition);
-			}
-		}
-
-		public void setUnknownCondition(UnknownCondition unknownCondition) {
-			this.unknownCondition = unknownCondition;
-		}
-
-		public void setValues(JSONArray values) {
-			this.values = new ArrayList<String>(values.length());
-			for (int i = 0; i < values.length(); i++) {
-				this.values.add(values.getString(i));
-			}
-		}
-
-		public void setValues(Collection<String> values) {
-			this.values = new ArrayList<String>(values.size());
-			for (String value: values) {
-				this.values.add(value);
-			}
-		}
-
-		public void setValueListComplete(boolean valueListComplete) {
-			this.valueListComplete = valueListComplete;
-		}
-
-		public String getAnalyzer() {
-			return analyzer;
-		}
-
-		public String getUnknownValue() {
-			return unknownValue;
-		}
-
-		public UnknownCondition getUnknownCondition() {
-			return unknownCondition;
-		}
-
-		public Collection<String> getValues() {
-			return values;
-		}
-
-		public boolean isValueListComplete() {
-			return valueListComplete;
-		}
-
-		/**
-		 * Reset the information that is dependent on input data
-		 * (i.e. list of values, etc.) because we're going to
-		 * (re-)index the data.
-		 */
-		public void resetForIndexing() {
-			this.values.clear();
-			valueListComplete = true;
-		}
-
-	}
-
-	/** Description of a complex field */
-	public static class ComplexFieldDesc extends BaseFieldDesc {
-
-		/** This complex field's properties */
-		private Map<String, PropertyDesc> props;
-
-		/** The field's main property */
-		private PropertyDesc mainProperty;
-
-		/** The field's main property name (for storing the main prop name before we have the prop. descriptions) */
-		private String mainPropertyName;
-
-		/** Does the field have an associated content store? */
-		private boolean contentStore;
-
-		/** Is the field length in tokens stored? */
-		private boolean lengthInTokens;
-
-		/** Are there XML tag locations stored for this field? */
-		private boolean xmlTags;
-
-		public ComplexFieldDesc(String name) {
-			super(name);
-			props = new TreeMap<String, PropertyDesc>();
-			contentStore = false;
-			lengthInTokens = false;
-			xmlTags = false;
-			mainProperty = null;
-		}
-
-		@Override
-		public String toString() {
-			return fieldName + " [" + StringUtil.join(props.values(), ", ") + "]";
-		}
-
-		/** Get the set of property names for this complex field
-		 * @return the set of properties
-		 */
-		public Collection<String> getProperties() {
-			return props.keySet();
-		}
-
-		/**
-		 * Get a property description.
-		 * @param name name of the property
-		 * @return the description
-		 */
-		public PropertyDesc getPropertyDesc(String name) {
-			if (!props.containsKey(name))
-				throw new RuntimeException("Property '" + name + "' not found!");
-			return props.get(name);
-		}
-
-		public boolean hasContentStore() {
-			return contentStore;
-		}
-
-		public boolean hasLengthTokens() {
-			return lengthInTokens;
-		}
-
-		public boolean hasXmlTags() {
-			return xmlTags;
-		}
-
-		/**
-		 * Checks if this field has a "punctuation" forward index, storing all the
-		 * intra-word characters (whitespace and punctuation) so we can build concordances
-		 * directly from the forward indices.
-		 * @return true iff there's a punctuation forward index.
-		 */
-		public boolean hasPunctuation() {
-			PropertyDesc pd = props.get(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
-			return pd != null && pd.hasForwardIndex();
-		}
-
-		/**
-		 * An index field was found and split into parts, and belongs
-		 * to this complex field. See what type it is and update our
-		 * fields accordingly.
-		 * @param parts parts of the Lucene index field name
-		 */
-		void processIndexField(String[] parts) {
-
-			// See if this is a builtin bookkeeping field or a property.
-			if (parts.length == 1)
-				throw new RuntimeException("Complex field with just basename given, error!");
-
-			String propPart = parts.length == 1 ? "" : parts[1];
-
-			if (propPart == null && parts.length >= 3) {
-				// Bookkeeping field
-				BookkeepFieldType bookkeepingFieldIndex = ComplexFieldUtil
-						.whichBookkeepingSubfield(parts[3]);
-				switch (bookkeepingFieldIndex) {
-				case CONTENT_ID:
-					// Complex field has content store
-					contentStore = true;
-					return;
-				case FORWARD_INDEX_ID:
-					// Main property has forward index
-					getOrCreateProperty("").setForwardIndex(true);
-					return;
-				case LENGTH_TOKENS:
-					// Complex field has length in tokens
-					lengthInTokens = true;
-					return;
-				}
-				throw new RuntimeException();
-			}
-
-			// Not a bookkeeping field; must be a property (alternative).
-			PropertyDesc pd = getOrCreateProperty(propPart);
-			if (pd.getName().equals(ComplexFieldUtil.START_TAG_PROP_NAME))
-				xmlTags = true;
-			if (parts.length > 2) {
-				if (parts[2] != null) {
-					// Alternative
-					pd.addAlternative(parts[2]);
-				} else if (parts.length >= 3) {
-					// Property bookkeeping field
-					if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
-						pd.setForwardIndex(true);
-					} else
-						throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
-				} else {
-					// No alternative specified; this is an error.
-					throw new RuntimeException("No alternative given!");
-				}
-			}
-		}
-
-		private PropertyDesc getOrCreateProperty(String name) {
-			PropertyDesc pd = props.get(name);
-			if (pd == null) {
-				pd = new PropertyDesc(name);
-				props.put(name, pd);
-			}
-			return pd;
-		}
-
-		public PropertyDesc getMainProperty() {
-			return mainProperty;
-		}
-
-		public void detectMainProperty(IndexReader reader) {
-			if (mainPropertyName != null && mainPropertyName.length() > 0) {
-				// Main property name was set from index metadata before we
-				// had the property desc. available; use that now and don't do
-				// any actual detecting.
-				mainProperty = getPropertyDesc(mainPropertyName);
-				mainPropertyName = null;
-				return;
-			}
-
-			PropertyDesc firstProperty = null;
-			for (PropertyDesc pr: props.values()) {
-				if (firstProperty == null)
-					firstProperty = pr;
-				if (pr.detectOffsetsAlternative(reader, fieldName)) {
-					// This field has offsets stored. Must be the main prop field.
-					mainProperty = pr;
-					return;
-				}
-			}
-
-			// None have offsets; just assume the first property is the main one
-			// (note that not having any offsets makes it impossible to highlight the
-			// original content, but this may not be an issue. We probably need
-			// a better way to keep track of the main property)
-			mainProperty = firstProperty;
-
-			// throw new RuntimeException(
-			// "No main property (with char. offsets) detected for complex field " + fieldName);
-		}
-
-		@Deprecated
-		public void print(PrintStream out) {
-			print(new PrintWriter(out));
-		}
-
-		public void print(PrintWriter out) {
-			for (PropertyDesc pr: props.values()) {
-				out.println("  * Property: " + pr.toString());
-			}
-			out.println("  * " + (contentStore ? "Includes" : "No") + " content store");
-			out.println("  * " + (xmlTags ? "Includes" : "No") + " XML tag index");
-			out.println("  * " + (lengthInTokens ? "Includes" : "No") + " document length field");
-		}
-
-		public void setMainPropertyName(String mainPropertyName) {
-			this.mainPropertyName = mainPropertyName;
-		}
-
-	}
-
-	/** Description of a property */
-	public static class PropertyDesc {
-		/** The property name */
-		private String propName;
-
-		/** Any alternatives this property may have */
-		private Map<String, AltDesc> alternatives;
-
-		private boolean forwardIndex;
-
-		/** Which of the alternatives is the main one (containing the offset info, if present) */
-		private AltDesc offsetsAlternative;
-
-		public PropertyDesc(String name) {
-			propName = name;
-			alternatives = new TreeMap<String, AltDesc>();
-			forwardIndex = false;
-		}
-
-		@Override
-		public String toString() {
-			String altDesc = "";
-			String altList = StringUtil.join(alternatives.values(), "\", \"");
-			if (alternatives.size() > 1)
-				altDesc = ", with alternatives \"" + altList + "\"";
-			else if (alternatives.size() == 1)
-				altDesc = ", with alternative \"" + altList + "\"";
-			return (propName.length() == 0 ? "(default)" : propName)
-					+ (forwardIndex ? " (+FI)" : "") + altDesc;
-		}
-
-		public boolean hasForwardIndex() {
-			return forwardIndex;
-		}
-
-		public void addAlternative(String name) {
-			AltDesc altDesc = new AltDesc(name);
-			alternatives.put(name, altDesc);
-		}
-
-		void setForwardIndex(boolean b) {
-			forwardIndex = b;
-		}
-
-		/** Get this property's name
-		 * @return the name */
-		public String getName() {
-			return propName;
-		}
-
-		/** Get the set of names of alternatives for this property
-		 * @return the names
-		 */
-		public Collection<String> getAlternatives() {
-			return alternatives.keySet();
-		}
-
-		/**
-		 * Get an alternative's description.
-		 * @param name name of the alternative
-		 * @return the description
-		 */
-		public AltDesc getAlternativeDesc(String name) {
-			if (!alternatives.containsKey(name))
-				throw new RuntimeException("Alternative '" + name + "' not found!");
-			return alternatives.get(name);
-		}
-
-		/**
-		 * Detect which alternative is the one containing character offsets.
-		 *
-		 * Note that there may not be such an alternative.
-		 *
-		 * @param reader the index reader
-		 * @param fieldName the field this property belongs under
-		 * @return true if found, false if not
-		 */
-		public boolean detectOffsetsAlternative(IndexReader reader, String fieldName) {
-			// Iterate over the alternatives and for each alternative, find a term
-			// vector. If that has character offsets stored, it's our main property.
-			// If not, keep searching.
-			for (AltDesc alt: alternatives.values()) {
-				String luceneAltName = ComplexFieldUtil.propertyField(fieldName, propName,
-						alt.getName());
-				if (hasOffsets(reader, luceneAltName)) {
-					offsetsAlternative = alt;
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		/**
-		 * Return which alternative contains character offset information.
-		 *
-		 * Note that there may not be such an alternative.
-		 *
-		 * @return the alternative, or null if there is none.
-		 */
-		public AltDesc getOffsetsAlternative() {
-			return offsetsAlternative;
-		}
-	}
-
-	/** Description of a property alternative */
-	public static class AltDesc {
-		/** name of this alternative */
-		private String altName;
-
-		/** type of this alternative */
-		private AltType type;
-
-		public AltDesc(String name) {
-			altName = name;
-			type = name.equals("s") ? AltType.SENSITIVE : AltType.UNKNOWN;
-		}
-
-		@Override
-		public String toString() {
-			return altName;
-		}
-
-		/** Get the name of this alternative
-		 * @return the name
-		 */
-		public String getName() {
-			return altName;
-		}
-
-		/** Get the type of this alternative
-		 * @return the type
-		 */
-		public AltType getType() {
-			return type;
-		}
-	}
 
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, MetadataFieldDesc> metadataFieldInfos;
@@ -693,21 +179,21 @@ public class IndexStructure {
 
 		// Add metadata field info
 		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
-			UnknownCondition unknownCondition = f.getUnknownCondition();
+			MetadataFieldDesc.UnknownCondition unknownCondition = f.getUnknownCondition();
 			JSONObject fieldInfo = Json.object(
 				"displayName", f.getDisplayName(),
 				"description", f.getDescription(),
 				"type", f.getType().toString().toLowerCase(),
-				"analyzer", "default",
+				"analyzer", "DEFAULT",
 				"unknownValue", f.getUnknownValue(),
 				"unknownCondition", unknownCondition == null ? "NEVER" : unknownCondition.toString(),
 				"valueListComplete", f.isValueListComplete()
 			);
-			JSONArray jsonValues = new JSONArray();
-			Collection<String> values = f.getValues();
+			JSONObject jsonValues = new JSONObject();
+			Map<String, Integer> values = f.getValueDistribution();
 			if (values != null) {
-				for (String value: values) {
-					jsonValues.put(value);
+				for (Map.Entry<String, Integer> e: values.entrySet()) {
+					jsonValues.put(e.getKey(), e.getValue());
 				}
 				fieldInfo.put("values", jsonValues);
 			}
@@ -756,12 +242,12 @@ public class IndexStructure {
 			String displayName = Json.getString(fieldConfig, "displayName", fieldName);
 			String description = Json.getString(fieldConfig, "description", "");
 			String type = Json.getString(fieldConfig, "type", "tokenized");
-			String analyzer = Json.getString(fieldConfig, "analyzer", "default");
+			String analyzer = Json.getString(fieldConfig, "analyzer", "DEFAULT");
 			String unknownValue = Json.getString(fieldConfig, "unknownValue", "unknown");
 			String unknownCondition = Json.getString(fieldConfig, "unknownCondition", "NEVER");
-			JSONArray values = null;
+			JSONObject values = null;
 			if (fieldConfig.has("values")) {
-				values = fieldConfig.getJSONArray("values");
+				values = fieldConfig.getJSONObject("values");
 			}
 			boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
 
@@ -1010,7 +496,7 @@ public class IndexStructure {
 	 * @deprecated use getMetadataFieldDesc(fieldName).getType() instead
 	 */
 	@Deprecated
-	public IndexStructure.FieldType getMetadataType(String fieldName) {
+	public FieldType getMetadataType(String fieldName) {
 		return getMetadataFieldDesc(fieldName).getType();
 	}
 
@@ -1266,5 +752,31 @@ public class IndexStructure {
 		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
 			f.resetForIndexing();
 		}
+	}
+
+	/**
+	 * While indexing, check if a complex field is already registered in the
+	 * metadata, and if not, add it now.
+	 *
+	 * @param fieldName field name
+	 * @param mainPropName main property name
+	 */
+	public void registerComplexField(String fieldName, String mainPropName) {
+		if (complexFields.containsKey(fieldName))
+			return;
+		// Not registered yet; do so now. Note that we only add the main property,
+		// not the other properties, but that's okay; they're not needed at index
+		// time and will be detected at search time.
+		ComplexFieldDesc cf = getOrCreateComplexField(fieldName);
+		cf.getOrCreateProperty(mainPropName); // create main property
+		cf.setMainPropertyName(mainPropName); // set main property
+	}
+
+	public void registerMetadataField(String fieldName) {
+		if (metadataFieldInfos.containsKey(fieldName))
+			return;
+		// Not registered yet; do so now.
+		MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TEXT);
+		metadataFieldInfos.put(fieldName, mf);
 	}
 }

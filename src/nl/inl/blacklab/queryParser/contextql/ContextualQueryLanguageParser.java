@@ -2,7 +2,7 @@
 package nl.inl.blacklab.queryParser.contextql;
 
 import nl.inl.blacklab.search.CompleteQuery;
-import nl.inl.blacklab.search.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
 
 @SuppressWarnings("all")
 

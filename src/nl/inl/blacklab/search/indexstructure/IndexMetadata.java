@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.indexstructure;
 
 import java.io.File;
 import java.io.IOException;

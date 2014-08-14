@@ -18,10 +18,10 @@ package nl.inl.blacklab.index.complex;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.IndexStructure;
-import nl.inl.blacklab.search.IndexStructure.AltDesc;
-import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
+import nl.inl.blacklab.search.indexstructure.AltDesc;
+import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 
 
 /**

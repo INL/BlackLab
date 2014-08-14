@@ -714,4 +714,26 @@ public class StringUtil {
 		return str;
 	}
 
+	/**
+	 * A lowercase letter followed by an uppercase one,
+	 * both matched in groups.
+	 */
+	static Pattern lcaseUcase = Pattern.compile("(\\p{Ll})(\\p{Lu})");
+
+	/**
+	 * Convert a string from a camel-case "identifier" style to
+	 * a human-readable version, by putting spaces between words,
+	 * uppercasing the first letter and lowercasing the rest.
+	 *
+	 * E.g. myCamelCaseString becomes "My camel case string".
+	 *
+	 * @param camelCaseString a string in camel case, i.e. multiple capitalized
+	 *   words glued together.
+	 * @return a human-readable version of the input string
+	 */
+	public static String camelCaseToDisplayable(String camelCaseString) {
+		String spacified = lcaseUcase.matcher(camelCaseString).replaceAll("$1 $2");
+		return capitalizeFirst(spacified.toLowerCase());
+	}
+
 }

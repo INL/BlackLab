@@ -241,7 +241,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 					// Memory-map the file
 					// NOTE: We only use this in search mode right now.
-					// @@@ add support for mapped write (need to re-map as the file grows in size)
+					// @@@ add support for mapped write? (need to re-map as the file grows in size)
 					memoryMapTokensFile(false);
 
 				} else {

@@ -21,9 +21,8 @@ import java.util.Map;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.util.CountingReader;
-
-import org.apache.lucene.document.FieldType;
 
 /**
  * Abstract base class for a DocIndexer processing XML files.
@@ -288,10 +287,31 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		return getParameter(parName, true);
 	}
 
+	/*
 	@Override
 	public FieldType getMetadataFieldType(String fieldName) {
 		return tokenizeField(fieldName) ? indexer.metadataFieldTypeTokenized: indexer.metadataFieldTypeUntokenized;
 	}
+	*/
 
+	@Override
+	public FieldType getMetadataFieldTypeFromIndexerProperties(String fieldName) {
+		if (tokenizeField(fieldName))
+			return FieldType.TEXT;
+		return FieldType.UNTOKENIZED;
+	}
+
+	protected org.apache.lucene.document.FieldType luceneTypeFromIndexStructType(FieldType type) {
+		switch (type) {
+		case NUMERIC:
+			throw new RuntimeException("Numeric types should be indexed using IntField, etc.");
+		case TEXT:
+			return indexer.metadataFieldTypeTokenized;
+		case UNTOKENIZED:
+			return indexer.metadataFieldTypeUntokenized;
+		default:
+			throw new RuntimeException("Unknown field type");
+		}
+	}
 
 }

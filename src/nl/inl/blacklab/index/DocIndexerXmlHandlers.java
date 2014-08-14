@@ -35,13 +35,15 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexstructure.FieldType;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -51,13 +53,15 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * Abstract base class for a DocIndexer processing XML files using
- * the hookable SAX parser.
+ * Abstract base class for a DocIndexer processing XML files using the hookable
+ * SAX parser.
  */
 public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
-	/** Max. length of captured character content.
-	 *  Should only be used for short strings, such as a word, or the value of a metadata field. */
+	/**
+	 * Max. length of captured character content. Should only be used for short
+	 * strings, such as a word, or the value of a metadata field.
+	 */
 	private static final int MAX_CHARACTER_CONTENT_CAPTURE_LENGTH = 4000;
 
 	private HookableSaxHandler hookableHandler = new HookableSaxHandler();
@@ -65,18 +69,22 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	private SaxParseHandler saxParseHandler = new SaxParseHandler();
 
 	/**
-	 * What namespace prefix mappings have we encountered but not output in a start tag
-	 * yet? (used to make sure the stored XML contains all the required mappings)
+	 * What namespace prefix mappings have we encountered but not output in a
+	 * start tag yet? (used to make sure the stored XML contains all the
+	 * required mappings)
 	 */
-	protected static Map<String,String> outputPrefixMapping = new HashMap<String, String>();
+	protected static Map<String, String> outputPrefixMapping = new HashMap<String, String>();
 
-	/** Handle Document element. Starts a new Lucene document and adds the attributes of this
-	 *  element (if any) as metadata fields. */
+	/**
+	 * Handle Document element. Starts a new Lucene document and adds the
+	 * attributes of this element (if any) as metadata fields.
+	 */
 	public class DocumentElementHandler extends ElementHandler {
 
 		/** Open tag: start indexing this document */
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) {
 			startCaptureContent(contentsField.getName());
 
 			currentLuceneDoc = new Document();
@@ -85,33 +93,38 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				currentDocumentName = "?";
 			// Store attribute values from the tag as metadata fields
 			for (int i = 0; i < attributes.getLength(); i++) {
-				addMetadataField(attributes.getLocalName(i), attributes.getValue(i));
+				addMetadataField(attributes.getLocalName(i),
+						attributes.getValue(i));
 			}
-			currentLuceneDoc.add(new Field("fromInputFile", currentDocumentName, indexer.metadataFieldTypeUntokenized));
+			currentLuceneDoc.add(new Field("fromInputFile",
+					currentDocumentName, indexer.metadataFieldTypeUntokenized));
 			indexer.getListener().documentStarted(currentDocumentName);
 		}
 
 		/** Open tag: end indexing the document */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
-			// Finish storing the document in the document store (parts of it may already have been
-			// written because we write in chunks to save memory), retrieve the content id, and store
+			// Finish storing the document in the document store (parts of it
+			// may already have been
+			// written because we write in chunks to save memory), retrieve the
+			// content id, and store
 			// that in Lucene.
 			int contentId = storeCapturedContent();
-			currentLuceneDoc.add(new IntField(ComplexFieldUtil.contentIdField(contentsField.getName()),
-					contentId, Store.YES));
+			currentLuceneDoc.add(new IntField(ComplexFieldUtil
+					.contentIdField(contentsField.getName()), contentId,
+					Store.YES));
 
 			// Make sure all the properties have an equal number of values.
 			// See what property has the highest position
 			// (in practice, only starttags and endtags should be able to have
-			//  a position one higher than the rest)
+			// a position one higher than the rest)
 			int lastValuePos = 0;
-			for (ComplexFieldProperty prop: contentsField.getProperties()) {
+			for (ComplexFieldProperty prop : contentsField.getProperties()) {
 				if (prop.lastValuePosition() > lastValuePos)
 					lastValuePos = prop.lastValuePosition();
 			}
 			// Add empty values to all lagging properties
-			for (ComplexFieldProperty prop: contentsField.getProperties()) {
+			for (ComplexFieldProperty prop : contentsField.getProperties()) {
 				while (prop.lastValuePosition() < lastValuePos) {
 					prop.addValue("");
 					if (prop == contentsField.getMainProperty()) {
@@ -121,7 +134,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				}
 			}
 
-			// Store the different properties of the complex contents field that were gathered in
+			// Store the different properties of the complex contents field that
+			// were gathered in
 			// lists while parsing.
 			contentsField.addToLuceneDoc(currentLuceneDoc);
 
@@ -129,22 +143,26 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			int fiid;
 
 			// Add all properties to forward index
-			for (ComplexFieldProperty prop: contentsField.getProperties()) {
+			for (ComplexFieldProperty prop : contentsField.getProperties()) {
 
 				if (!prop.hasForwardIndex())
 					continue;
 
-				// Add property (case-sensitive tokens) to forward index and add id to Lucene doc
+				// Add property (case-sensitive tokens) to forward index and add
+				// id to Lucene doc
 				propName = prop.getName();
-				fieldName = ComplexFieldUtil.propertyField(contentsField.getName(), propName);
+				fieldName = ComplexFieldUtil.propertyField(
+						contentsField.getName(), propName);
 				fiid = indexer.addToForwardIndex(fieldName, prop.getValues());
-				currentLuceneDoc.add(new IntField(ComplexFieldUtil.forwardIndexIdField(fieldName),
-						fiid, Store.YES));
+				currentLuceneDoc.add(new IntField(ComplexFieldUtil
+						.forwardIndexIdField(fieldName), fiid, Store.YES));
 			}
 
 			// If there's an external metadata fetcher, call it now so it can
-			// add the metadata for this document and (optionally) store the metadata
-			// document in the content store (and the corresponding id in the Lucene doc)
+			// add the metadata for this document and (optionally) store the
+			// metadata
+			// document in the content store (and the corresponding id in the
+			// Lucene doc)
 			MetadataFetcher m = getMetadataFetcher();
 			if (m != null) {
 				m.addMetadata();
@@ -173,14 +191,18 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		}
 	}
 
-	/** Stores metadata field with element name as name and element content as value. */
-	public class MetadataElementHandler extends ContentCapturingHandler  {
+	/**
+	 * Stores metadata field with element name as name and element content as
+	 * value.
+	 */
+	public class MetadataElementHandler extends ContentCapturingHandler {
 		/** Close tag: store the value of this metadata field */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			super.endElement(uri, localName, qName);
 
-			// Header element ended; index the element with the character content captured
+			// Header element ended; index the element with the character
+			// content captured
 			// (this is stuff like title, yearFrom, yearTo, etc.)
 			addMetadataField(localName, getElementContent().trim());
 		}
@@ -191,25 +213,32 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 		/** Open tag: add attributes as metadata */
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) {
 			super.startElement(uri, localName, qName, attributes);
 
 			// Store attribute values from the tag as fields
 			for (int i = 0; i < attributes.getLength(); i++) {
-				addMetadataField(attributes.getLocalName(i), attributes.getValue(i));
+				addMetadataField(attributes.getLocalName(i),
+						attributes.getValue(i));
 			}
 		}
 	}
 
-	/** Add a metadatafield based on two attributes of an element, a name attribute
-	 *  (giving the field name) and a value attribute (giving the field value). */
-	public class MetadataNameValueAttributeHandler extends ContentCapturingHandler {
+	/**
+	 * Add a metadatafield based on two attributes of an element, a name
+	 * attribute (giving the field name) and a value attribute (giving the field
+	 * value).
+	 */
+	public class MetadataNameValueAttributeHandler extends
+			ContentCapturingHandler {
 
 		private String nameAttribute;
 
 		private String valueAttribute;
 
-		public MetadataNameValueAttributeHandler(String nameAttribute, String valueAttribute) {
+		public MetadataNameValueAttributeHandler(String nameAttribute,
+				String valueAttribute) {
 			this.nameAttribute = nameAttribute;
 			this.valueAttribute = valueAttribute;
 		}
@@ -220,7 +249,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 		/** Open tag: add metadata field */
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) {
 			super.startElement(uri, localName, qName, attributes);
 			String name = attributes.getValue(nameAttribute);
 			String value = attributes.getValue(valueAttribute);
@@ -233,16 +263,20 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 		/** Open tag: store the start tag location and the attribute values */
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) {
 			int lastStartTagPos = propStartTag.lastValuePosition();
-			int currentPos = contentsField.getMainProperty().lastValuePosition();
+			int currentPos = contentsField.getMainProperty()
+					.lastValuePosition();
 			int posIncrement = currentPos - lastStartTagPos + 1;
 			propStartTag.addValue(localName, posIncrement);
 			for (int i = 0; i < attributes.getLength(); i++) {
 				// Index element attribute values
 				String name = attributes.getLocalName(i);
 				String value = attributes.getValue(i);
-				propStartTag.addValue("@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
+				propStartTag.addValue(
+						"@" + name.toLowerCase() + "__" + value.toLowerCase(),
+						0);
 			}
 		}
 
@@ -250,23 +284,31 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			int lastEndTagPos = propEndTag.lastValuePosition();
-			int currentPos = contentsField.getMainProperty().lastValuePosition();
+			int currentPos = contentsField.getMainProperty()
+					.lastValuePosition();
 			int posIncrement = currentPos - lastEndTagPos + 1;
 			propEndTag.addValue(localName, posIncrement);
 		}
 	}
 
-	/** Base handler for word tags: adds start and end positions around the element. */
+	/**
+	 * Base handler for word tags: adds start and end positions around the
+	 * element.
+	 */
 	public class WordHandlerBase extends ElementHandler {
 
 		/** Open tag: save start character position */
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) {
 			super.startElement(uri, localName, qName, attributes);
 			contentsField.addStartChar(getContentPosition());
 		}
 
-		/** Close tag: save end character position, add token to contents field and report progress. */
+		/**
+		 * Close tag: save end character position, add token to contents field
+		 * and report progress.
+		 */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			super.endElement(uri, localName, qName);
@@ -288,12 +330,17 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 		/** Open tag: save start character position */
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) {
 			super.startElement(uri, localName, qName, attributes);
-			propPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
+			propPunct.addValue(StringUtil
+					.normalizeWhitespace(consumeCharacterContent()));
 		}
 
-		/** Close tag: save end character position, add token to contents field and report progress. */
+		/**
+		 * Close tag: save end character position, add token to contents field
+		 * and report progress.
+		 */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			super.endElement(uri, localName, qName);
@@ -319,7 +366,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 		/** Open tag: get word from attribute value */
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) {
 			super.startElement(uri, localName, qName, attributes);
 			currentWord = attributes.getValue(attName);
 			if (currentWord == null)
@@ -335,8 +383,11 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 	/**
 	 * Encountered a prefix to namespace mapping; now in effect.
-	 * @param prefix the prefix that is now in effect
-	 * @param uri the namespace the prefix refers to
+	 *
+	 * @param prefix
+	 *            the prefix that is now in effect
+	 * @param uri
+	 *            the namespace the prefix refers to
 	 */
 	public void startPrefixMapping(String prefix, String uri) {
 		outputPrefixMapping.put(prefix, uri);
@@ -344,10 +395,12 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 	/**
 	 * A previously encountered namespace prefix mapping is no longer in effect.
-	 * @param prefix the prefix that's no longer in effect.
+	 *
+	 * @param prefix
+	 *            the prefix that's no longer in effect.
 	 */
 	public void endPrefixMapping(String prefix) {
-		//System.out.println("END PREFIX MAPPING: " + prefix);
+		// System.out.println("END PREFIX MAPPING: " + prefix);
 	}
 
 	SensitivitySetting getSensitivitySetting(String propName) {
@@ -364,8 +417,10 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				return SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
 		}
 
-		// Not in parameter (or unrecognized value), use default based on propName
-		if (propName.equals(ComplexFieldUtil.getDefaultMainPropName()) || propName.equals(ComplexFieldUtil.LEMMA_PROP_NAME)) {
+		// Not in parameter (or unrecognized value), use default based on
+		// propName
+		if (propName.equals(ComplexFieldUtil.getDefaultMainPropName())
+				|| propName.equals(ComplexFieldUtil.LEMMA_PROP_NAME)) {
 			// Word: default to sensitive/insensitive
 			return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
 		}
@@ -373,7 +428,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			// Punctuation: default to only insensitive
 			return SensitivitySetting.ONLY_INSENSITIVE;
 		}
-		if (propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME) || propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME)) {
+		if (propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME)
+				|| propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME)) {
 			// XML tag properties: default to only sensitive
 			return SensitivitySetting.ONLY_SENSITIVE;
 		}
@@ -383,7 +439,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	protected ComplexFieldProperty addProperty(String propName) {
-		return contentsField.addProperty(propName, getSensitivitySetting(propName));
+		return contentsField.addProperty(propName,
+				getSensitivitySetting(propName));
 	}
 
 	public DocIndexerXmlHandlers(Indexer indexer, String fileName, Reader reader) {
@@ -391,12 +448,20 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 		// Define the properties that make up our complex field
 		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
-		contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName, getSensitivitySetting(mainPropName));
+		contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME,
+				mainPropName, getSensitivitySetting(mainPropName));
 		propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
-		propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start tag positions
+		propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start
+																			// tag
+																			// positions
 		propStartTag.setForwardIndex(false);
-		propEndTag = addProperty(ComplexFieldUtil.END_TAG_PROP_NAME); // end tag positions
+		propEndTag = addProperty(ComplexFieldUtil.END_TAG_PROP_NAME); // end tag
+																		// positions
 		propEndTag.setForwardIndex(false);
+		indexer.getSearcher()
+				.getIndexStructure()
+				.registerComplexField(contentsField.getName(),
+						contentsField.getMainProperty().getName());
 	}
 
 	public void addNumericFields(Collection<String> fields) {
@@ -404,11 +469,13 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	/**
-	 * StringBuffer re-used for building start/end tags and processing instructions.
+	 * StringBuffer re-used for building start/end tags and processing
+	 * instructions.
 	 */
 	StringBuilder elementBuilder = new StringBuilder();
 
-	public void startElement(String uri, String localName, String qName, Attributes attributes) {
+	public void startElement(String uri, String localName, String qName,
+			Attributes attributes) {
 		// Call any hooks associated with this element
 		hookableHandler.startElement(uri, localName, qName, attributes);
 
@@ -416,18 +483,21 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		elementBuilder.append("<").append(qName);
 		for (int i = 0; i < attributes.getLength(); i++) {
 			String value = escapeXmlChars(attributes.getValue(i));
-			elementBuilder.append(" ").append(attributes.getQName(i)).append("=\"")
-					.append(value).append("\"");
+			elementBuilder.append(" ").append(attributes.getQName(i))
+					.append("=\"").append(value).append("\"");
 		}
 		// Append any namespace mapping not yet outputted
 		if (outputPrefixMapping.size() > 0) {
-			for (Map.Entry<String, String> e: outputPrefixMapping.entrySet()) {
+			for (Map.Entry<String, String> e : outputPrefixMapping.entrySet()) {
 				if (e.getKey().length() == 0)
-					elementBuilder.append(" xmlns=\"").append(e.getValue()).append("\"");
+					elementBuilder.append(" xmlns=\"").append(e.getValue())
+							.append("\"");
 				else
-					elementBuilder.append(" xmlns:").append(e.getKey()).append("=\"").append(e.getValue()).append("\"");
+					elementBuilder.append(" xmlns:").append(e.getKey())
+							.append("=\"").append(e.getValue()).append("\"");
 			}
-			outputPrefixMapping.clear(); // outputted all prefix mappings for now
+			outputPrefixMapping.clear(); // outputted all prefix mappings for
+											// now
 		}
 		elementBuilder.append(">");
 		processContent(elementBuilder.toString());
@@ -439,10 +509,11 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	StringBuilder escapeBuilder = new StringBuilder();
 
 	/**
-	 * Escape the special XML chars (<, >, &, ") with their named entity equivalents.
+	 * Escape the special XML chars (<, >, &, ") with their named entity
+	 * equivalents.
 	 *
-	 * NOTE: copy of StringUtil.escapeXmlChars that re-uses its StringBuilder for increased memory
-	 * efficiency.
+	 * NOTE: copy of StringUtil.escapeXmlChars that re-uses its StringBuilder
+	 * for increased memory efficiency.
 	 *
 	 * @param source
 	 *            the source string
@@ -457,7 +528,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		for (int i = 0; i < end; i++) {
 			char c = srcArr[i]; // source.charAt(i);
 			if (c == '<' || c == '>' || c == '&' || c == '"') {
-				escapeBuilder.append(srcArr, start, i - start); // source.substring(start, i));
+				escapeBuilder.append(srcArr, start, i - start); // source.substring(start,
+																// i));
 				switch (c) {
 				case '<':
 					escapeBuilder.append("&lt;");
@@ -480,15 +552,18 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	/**
-	 * Escape the special XML chars (<, >, &, ") with their named entity equivalents.
+	 * Escape the special XML chars (<, >, &, ") with their named entity
+	 * equivalents.
 	 *
-	 * NOTE: copy of StringUtil.escapeXmlChars that re-uses its StringBuilder for increased memory
-	 * efficiency.
+	 * NOTE: copy of StringUtil.escapeXmlChars that re-uses its StringBuilder
+	 * for increased memory efficiency.
 	 *
 	 * @param source
 	 *            the source string
-	 * @param start start index of the string to escape
-	 * @param length length of the string to escape
+	 * @param start
+	 *            start index of the string to escape
+	 * @param length
+	 *            length of the string to escape
 	 * @return the escaped string
 	 */
 	public String escapeXmlChars(char[] source, int start, int length) {
@@ -519,11 +594,16 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		return escapeBuilder.toString();
 	}
 
-	/** Character content encountered in the XML document since the last call to consumeCharacterContent(). */
+	/**
+	 * Character content encountered in the XML document since the last call to
+	 * consumeCharacterContent().
+	 */
 	StringBuilder characterContent = new StringBuilder();
 
 	/**
-	 * Returns and resets the character content captured since the last call to this method.
+	 * Returns and resets the character content captured since the last call to
+	 * this method.
+	 *
 	 * @return the captured character content.
 	 */
 	public String consumeCharacterContent() {
@@ -544,7 +624,10 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		hookableHandler.characters(buffer, start, length);
 	}
 
-	/** The Lucene Document we're currently constructing (corresponds to the document we're indexing) */
+	/**
+	 * The Lucene Document we're currently constructing (corresponds to the
+	 * document we're indexing)
+	 */
 	Document currentLuceneDoc;
 
 	public Document getCurrentLuceneDoc() {
@@ -556,8 +639,10 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 	Set<String> numericFields = new HashSet<String>();
 
-	/** Complex field where different aspects (word form, named entity status, etc.) of the main
-	 * content of the document are captured for indexing. */
+	/**
+	 * Complex field where different aspects (word form, named entity status,
+	 * etc.) of the main content of the document are captured for indexing.
+	 */
 	ComplexField contentsField;
 
 	/** Number of words processed (for reporting progress) */
@@ -573,9 +658,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	ComplexFieldProperty propEndTag;
 
 	/**
-	 * A metadata fetcher can fetch the metadata for a document
-	 * from some external source (a file, the network, etc.) and
-	 * add it to the Lucene document.
+	 * A metadata fetcher can fetch the metadata for a document from some
+	 * external source (a file, the network, etc.) and add it to the Lucene
+	 * document.
 	 */
 	static abstract public class MetadataFetcher implements Closeable {
 
@@ -586,8 +671,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		}
 
 		/**
-		 * Fetch the metadata for the document currently being indexed and add it
-		 * to the document as indexed fields.
+		 * Fetch the metadata for the document currently being indexed and add
+		 * it to the document as indexed fields.
 		 */
 		abstract public void addMetadata();
 
@@ -599,24 +684,30 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 	}
 
-	/** Our external metadata fetcher (if any), responsible
-	 *  for looking up the metadata and adding it to the Lucene document. */
+	/**
+	 * Our external metadata fetcher (if any), responsible for looking up the
+	 * metadata and adding it to the Lucene document.
+	 */
 	MetadataFetcher metadataFetcher;
 
-	/** Get the external metadata fetcher for this indexer, if any.
+	/**
+	 * Get the external metadata fetcher for this indexer, if any.
 	 *
-	 * The metadata fetcher can be configured through the "metadataFetcherClass" parameter.
+	 * The metadata fetcher can be configured through the "metadataFetcherClass"
+	 * parameter.
 	 *
 	 * @return the metadata fetcher if any, or null if there is none.
-     */
+	 */
 	MetadataFetcher getMetadataFetcher() {
 		if (metadataFetcher == null) {
 			String metadataFetcherClassName = getParameter("metadataFetcherClass");
 			if (metadataFetcherClassName != null) {
 				try {
-					Class<?> metadataFetcherClass = Class.forName(metadataFetcherClassName);
+					Class<?> metadataFetcherClass = Class
+							.forName(metadataFetcherClassName);
 					@SuppressWarnings("unchecked")
-					Constructor<MetadataFetcher> ctor = (Constructor<MetadataFetcher>) metadataFetcherClass.getConstructor(DocIndexer.class);
+					Constructor<MetadataFetcher> ctor = (Constructor<MetadataFetcher>) metadataFetcherClass
+							.getConstructor(DocIndexer.class);
 					metadataFetcher = ctor.newInstance(this);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
@@ -646,14 +737,37 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		return contentsField;
 	}
 
-	public ComplexFieldProperty addProperty(String propName, SensitivitySetting sensitivity) {
+	public ComplexFieldProperty addProperty(String propName,
+			SensitivitySetting sensitivity) {
 		return contentsField.addProperty(propName, sensitivity);
 	}
 
 	public void addMetadataField(String name, String value) {
-		FieldType type = getMetadataFieldType(name);
-		currentLuceneDoc.add(new Field(name, value, type));
-		if (numericFields.contains(name)) {
+
+		IndexStructure struct = indexer.getSearcher().getIndexStructure();
+		struct.registerMetadataField(name);
+
+		MetadataFieldDesc desc = struct.getMetadataFieldDesc(name);
+		FieldType type = desc.getType();
+		desc.addValue(value);
+
+		// @@@ TODO: customize how fields are analyzed (using per-field analyzer)
+
+		FieldType shouldBeType = getMetadataFieldTypeFromIndexerProperties(name);
+		if (type == FieldType.TEXT
+				&& shouldBeType != FieldType.TEXT) {
+			// indexer.properties overriding default type
+			type = shouldBeType;
+		}
+		if (type != FieldType.NUMERIC) {
+			currentLuceneDoc.add(new Field(name, value,
+					luceneTypeFromIndexStructType(type)));
+		}
+		if (type == FieldType.NUMERIC || numericFields.contains(name)) {
+			String numFieldName = name;
+			if (type != FieldType.NUMERIC) {
+				numFieldName += "Numeric";
+			}
 			// Index these fields as numeric too, for faster range queries
 			// (we do both because fields sometimes aren't exclusively numeric)
 			int n = 0;
@@ -663,15 +777,15 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				// This just happens sometimes, e.g. given multiple years, or
 				// descriptive text like "around 1900". OK to ignore.
 			}
-			IntField nf = new IntField(name + "Numeric", n, Store.YES);
+			IntField nf = new IntField(numFieldName, n, Store.YES);
 			currentLuceneDoc.add(nf);
 		}
 	}
 
-//	protected Index getMetadataIndexSetting(String name) {
-//		boolean analyzed = getParameter(name + "_analyzed", true);
-//		return analyzed ? indexAnalyzed : indexNotAnalyzed;
-//	}
+	// protected Index getMetadataIndexSetting(String name) {
+	// boolean analyzed = getParameter(name + "_analyzed", true);
+	// return analyzed ? indexAnalyzed : indexNotAnalyzed;
+	// }
 
 	public void endElement(String uri, String localName, String qName) {
 		elementBuilder.setLength(0); // clear
@@ -684,12 +798,15 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 	public void processingInstruction(String target, String data) {
 		elementBuilder.setLength(0); // clear
-		elementBuilder.append("<?").append(target).append(" ").append(data).append("?>");
+		elementBuilder.append("<?").append(target).append(" ").append(data)
+				.append("?>");
 		processContent(elementBuilder.toString());
 	}
 
-	public ElementHandler addHandler(String condition, boolean callHandlerForAllDescendants, ElementHandler handler) {
-		hookableHandler.addHook(condition, handler, callHandlerForAllDescendants);
+	public ElementHandler addHandler(String condition,
+			boolean callHandlerForAllDescendants, ElementHandler handler) {
+		hookableHandler.addHook(condition, handler,
+				callHandlerForAllDescendants);
 		return handler;
 	}
 
@@ -699,7 +816,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	@Override
-	public void index() throws IOException, InputFormatException  {
+	public void index() throws IOException, InputFormatException {
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);
 		SAXParser parser;
@@ -724,7 +841,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		}
 
 		if (nDocumentsSkipped > 0)
-			System.err.println("Skipped " + nDocumentsSkipped + " large documents");
+			System.err.println("Skipped " + nDocumentsSkipped
+					+ " large documents");
 	}
 
 	public String describePosition() {
@@ -741,32 +859,37 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		}
 
 		@Override
-		public void characters(char[] buffer, int start, int length) throws SAXException {
+		public void characters(char[] buffer, int start, int length)
+				throws SAXException {
 			super.characters(buffer, start, length);
 			DocIndexerXmlHandlers.this.characters(buffer, start, length);
 		}
 
 		@Override
-		public void endElement(String uri, String localName, String qName) throws SAXException {
+		public void endElement(String uri, String localName, String qName)
+				throws SAXException {
 			super.endElement(uri, localName, qName);
 			DocIndexerXmlHandlers.this.endElement(uri, localName, qName);
 		}
 
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes)
-				throws SAXException {
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) throws SAXException {
 			super.startElement(uri, localName, qName, attributes);
-			DocIndexerXmlHandlers.this.startElement(uri, localName, qName, attributes);
+			DocIndexerXmlHandlers.this.startElement(uri, localName, qName,
+					attributes);
 		}
 
 		@Override
-		public void processingInstruction(String target, String data) throws SAXException {
+		public void processingInstruction(String target, String data)
+				throws SAXException {
 			super.processingInstruction(target, data);
 			DocIndexerXmlHandlers.this.processingInstruction(target, data);
 		}
 
 		@Override
-		public void startPrefixMapping(String prefix, String uri) throws SAXException {
+		public void startPrefixMapping(String prefix, String uri)
+				throws SAXException {
 			super.startPrefixMapping(prefix, uri);
 			DocIndexerXmlHandlers.this.startPrefixMapping(prefix, uri);
 		}
@@ -778,7 +901,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		}
 
 		public String describePosition() {
-			return "line " + locator.getLineNumber() + ", position " + locator.getColumnNumber();
+			return "line " + locator.getLineNumber() + ", position "
+					+ locator.getColumnNumber();
 		}
 
 	}

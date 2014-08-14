@@ -884,4 +884,8 @@ public class Indexer {
 	public void setNewIndexMetadataTemplate(File indexTemplateFile) {
 		searcher.getIndexStructure().setNewIndexMetadataTemplate(indexTemplateFile);
 	}
+
+	Searcher getSearcher() {
+		return searcher;
+	}
 }

@@ -110,10 +110,10 @@ public class DateUtil {
 	 */
 	public static Date parseDate(String input, final String pattern) throws ParseException {
 		Locale locale = LocaleUtil.getDutchLocale();
-		DateFormat df = new SimpleDateFormat(pattern, locale); // @@@ NOTE: building
+		DateFormat df = new SimpleDateFormat(pattern, locale); // NOTE: building
 																// SimpleDateFormat is really
 																// expensive qua CPU/memory! Cache
-																// common patterns!
+																// common patterns?
 		return df.parse(input);
 	}
 

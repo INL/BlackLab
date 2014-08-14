@@ -21,7 +21,6 @@ import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
 import nl.inl.util.CapturingReader;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.xml.sax.Attributes;
@@ -149,16 +148,16 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			if (authorName.isEmpty()) {
 				authorName = pseudonym;
 			}
-			luceneDoc.add(new Field("AuthorNameOrPseudonym", authorName, docIndexer.getMetadataFieldType("AuthorNameOrPseudonym")));
-			luceneDoc.add(new Field("AuthorNameOrPseudonymSearch", authorNameAndPseudonym, docIndexer.getMetadataFieldType("AuthorNameOrPseudonymSearch")));
+			ourDocIndexer.addMetadataField("AuthorNameOrPseudonym", authorName);
+			ourDocIndexer.addMetadataField("AuthorNameOrPseudonymSearch", authorNameAndPseudonym);
 
 			String sex = luceneDoc.get("Sex");
 			if (sex == null || sex.length() == 0) {
-				luceneDoc.add(new Field("Sex", "unknown", docIndexer.getMetadataFieldType("Sex")));
+				ourDocIndexer.addMetadataField("Sex", "unknown");
 			}
 			String translated = luceneDoc.get("Translated");
 			if (translated == null || translated.length() == 0) {
-				luceneDoc.add(new Field("Translated", "unknown", docIndexer.getMetadataFieldType("Translated")));
+				ourDocIndexer.addMetadataField("Translated", "unknown");
 			}
 
 			if (ourDocIndexer != null) {

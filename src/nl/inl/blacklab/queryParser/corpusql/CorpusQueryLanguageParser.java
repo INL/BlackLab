@@ -4,7 +4,6 @@ package nl.inl.blacklab.queryParser.corpusql;
 import java.util.HashMap;
 import java.util.Map;
 
-import nl.inl.blacklab.search.IndexStructure;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternContaining;
@@ -15,6 +14,7 @@ import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternTags;
 import nl.inl.blacklab.search.TextPatternWithin;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
 import nl.inl.blacklab.search.sequences.TextPatternRepetition;
 import nl.inl.blacklab.search.sequences.TextPatternSequence;

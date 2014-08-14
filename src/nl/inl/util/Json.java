@@ -85,7 +85,31 @@ public class Json {
 			String line = reader.readLine();
 			if (line == null)
 				break;
-			line = line.replaceAll("//.+$", "").trim();
+			int n = line.length();
+			boolean inString = false;
+			boolean done = false;
+			for (int i = 0; i < n && !done; i++) {
+				switch(line.charAt(i)) {
+				case '\\':
+					if (inString) {
+						// Escape: skip the next character
+						i++;
+					}
+					break;
+				case '"':
+					// Keep track of whether we're in a string or not
+					inString = inString ? false : true;
+					break;
+				case '/':
+					// Start of end-of-line comment?
+					if (!inString && i < n - 1 && line.charAt(i + 1) == '/') {
+						// Yes, strip and break from loop
+						line = line.substring(0, i).trim();
+						done = true;
+					}
+					break;
+				}
+			}
 			b.append(line).append("\n");
 		}
 		return b.toString();

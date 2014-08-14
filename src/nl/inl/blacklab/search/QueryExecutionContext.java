@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.IndexStructure.AltDesc;
-import nl.inl.blacklab.search.IndexStructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.IndexStructure.PropertyDesc;
+import nl.inl.blacklab.search.indexstructure.AltDesc;
+import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.util.StringUtil;
 
 /**

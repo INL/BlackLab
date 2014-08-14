@@ -146,7 +146,7 @@ public class SketchToXmlConverter {
 
 						// Check that that fixed it
 						if (!line.matches("<doc(\\s+\\w+\\s*=\\s*\"[^<>\"]*\")*\\s*>\\s*")) {
-							System.err.println("@@@ Failed: " + line);
+							System.err.println("!!! Failed: " + line);
 						} else {
 							System.err.println("    Fixed: " + line);
 						}

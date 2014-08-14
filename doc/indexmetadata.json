@@ -33,11 +33,11 @@
                 "analyzer": "default",        // ..or (qualified) class name [default]
                 "unknownValue": "unknown",    // what value to index if the value is unknown
                 "unknownCondition": "MISSING_OR_EMPTY", // ..or MISSING, EMPTY, NEVER. When is the value considered unknown?
-                "values": [    // if field has less than 50 unique (fairly short) values, they're listed here
-                	"Jantje",
-                	"Pietje",
-                	"Klaasje"
-                ],
+                "values": }    // if field has less than 50 unique (fairly short) values, they're listed here
+                	"Jantje": 4,
+                	"Pietje": 10,
+                	"Klaasje": 1
+                },
                 "valueListComplete": true // all values listed or not?
             }
         },

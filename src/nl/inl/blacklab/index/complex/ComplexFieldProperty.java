@@ -41,7 +41,7 @@ public class ComplexFieldProperty {
 		FieldType type = tokenStreamFieldNoOffsets = new FieldType();
 		type.setIndexed(true);
 		type.setTokenized(true);
-		type.setOmitNorms(true); // @@@ <-- depending on setting?
+		type.setOmitNorms(true);
 		type.setStored(false);
 		type.setStoreTermVectors(true);
 		type.setStoreTermVectorPositions(true);
@@ -101,33 +101,6 @@ public class ComplexFieldProperty {
 
 	/** To keep memory usage down, we make sure we only store 1 copy of each string value */
 	private Map<String, String> storedValues = new HashMap<String, String>();
-
-	/**
-	 * Construct a ComplexFieldProperty object with the default alternative
-	 * @param name property name
-	 * @param includeOffsets whether to include character offsets in the main alternative
-	 * @deprecated Use constructor with SensitivitySetting parameter
-	 */
-	@Deprecated
-	public ComplexFieldProperty(String name, boolean includeOffsets) {
-		this(name, (TokenFilterAdder)null, includeOffsets);
-	}
-
-	/**
-	 * Construct a ComplexFieldProperty object with the default alternative
-	 * @param name property name
-	 * @param filterAdder what filter(s) to add, or null if none
-	 * @param includeOffsets whether to include character offsets in the main alternative
-	 * @deprecated Use constructor with SensitivitySetting parameter
-	 */
-	@Deprecated
-	public ComplexFieldProperty(String name, TokenFilterAdder filterAdder,
-			boolean includeOffsets) {
-		super();
-		propName = name;
-		alternatives.put(ComplexFieldUtil.getDefaultMainAlternativeName(), filterAdder);
-		this.includeOffsets = includeOffsets;
-	}
 
 	/**
 	 * Construct a ComplexFieldProperty object with the default alternative
