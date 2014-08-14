@@ -19,7 +19,7 @@ public abstract class BaseFieldDesc {
 	public BaseFieldDesc(String fieldName, String displayName) {
 		this.fieldName = fieldName;
 		if (displayName == null)
-			this.displayName = StringUtil.camelCaseToDisplayable(fieldName);
+			this.displayName = StringUtil.camelCaseToDisplayable(fieldName, true);
 		else
 			this.displayName = displayName;
 	}

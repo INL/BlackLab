@@ -732,8 +732,26 @@ public class StringUtil {
 	 * @return a human-readable version of the input string
 	 */
 	public static String camelCaseToDisplayable(String camelCaseString) {
-		String spacified = lcaseUcase.matcher(camelCaseString).replaceAll("$1 $2");
-		return capitalizeFirst(spacified.toLowerCase());
+		return camelCaseToDisplayable(camelCaseString, false);
+	}
+
+	/**
+	 * Convert a string from a camel-case "identifier" style to
+	 * a human-readable version, by putting spaces between words,
+	 * uppercasing the first letter and lowercasing the rest.
+	 *
+	 * E.g. myCamelCaseString becomes "My camel case string".
+	 *
+	 * @param camelCaseString a string in camel case, i.e. multiple capitalized
+	 *   words glued together.
+	 * @param dashesToSpaces if true, also converts dashes to spaces
+	 * @return a human-readable version of the input string
+	 */
+	public static String camelCaseToDisplayable(String camelCaseString, boolean dashesToSpaces) {
+		String spaceified = lcaseUcase.matcher(camelCaseString).replaceAll("$1 $2");
+		if (dashesToSpaces)
+			spaceified = spaceified.replace('-', ' ');
+		return capitalizeFirst(spaceified.toLowerCase());
 	}
 
 }
