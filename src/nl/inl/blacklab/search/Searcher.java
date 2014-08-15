@@ -55,6 +55,7 @@ import nl.inl.util.VersionFile;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsAndPositionsEnum;
@@ -464,7 +465,7 @@ public class Searcher {
 
 	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
 		try {
-			SlowCompositeReaderWrapper srw = new SlowCompositeReaderWrapper(reader);
+			AtomicReader srw = new SlowCompositeReaderWrapper(reader);
 			return new SpanQueryFiltered(query, filter, srw);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -487,7 +488,7 @@ public class Searcher {
 	 */
 	public Spans filterDocuments(Spans spans, Filter filter) {
 		try {
-			SlowCompositeReaderWrapper srw = new SlowCompositeReaderWrapper(reader);
+			AtomicReader srw = new SlowCompositeReaderWrapper(reader);
 			return new SpansFiltered(spans, filter, srw);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -514,7 +515,7 @@ public class Searcher {
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
 		try {
 			@SuppressWarnings("resource") // Don't close SCRW because we don't want to close our reader
-			SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
+			AtomicReader scrw = new SlowCompositeReaderWrapper(reader);
 			return createSpanQuery(pattern, fieldName,
 					filter == null ? null : filter.getDocIdSet(scrw.getContext(), MultiFields.getLiveDocs(reader)));
 		} catch (IOException e) {
@@ -642,7 +643,7 @@ public class Searcher {
 		try {
 			Weight w = indexSearcher.createNormalizedWeight(q);
 			@SuppressWarnings("resource") // Don't close SCRW because we don't want to close our reader
-			SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
+			AtomicReader scrw = new SlowCompositeReaderWrapper(reader);
 			Scorer sc = w.scorer(scrw.getContext(), true, false, MultiFields.getLiveDocs(reader));
 			return sc;
 		} catch (IOException e) {
@@ -1564,7 +1565,7 @@ public class Searcher {
 				// Execute the query, iterate over the docs and delete from FI and CS.
 				IndexSearcher s = new IndexSearcher(reader);
 				Weight w = s.createNormalizedWeight(q);
-				SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
+				AtomicReader scrw = new SlowCompositeReaderWrapper(reader);
 				try {
 					Scorer sc = w.scorer(scrw.getContext(), true, false, MultiFields.getLiveDocs(reader));
 
@@ -1675,7 +1676,7 @@ public class Searcher {
 	 */
 	public List<String> getFieldTerms(String fieldName, int maxResults) {
 		try {
-			SlowCompositeReaderWrapper srw = new SlowCompositeReaderWrapper(reader);
+			AtomicReader srw = new SlowCompositeReaderWrapper(reader);
 			return LuceneUtil.getFieldTerms(srw, fieldName, maxResults);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

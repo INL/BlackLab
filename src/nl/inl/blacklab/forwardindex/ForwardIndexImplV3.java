@@ -38,6 +38,7 @@ import nl.inl.util.ExUtil;
 import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.search.FieldCache;
@@ -151,7 +152,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		this.reader = reader;
 		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
 		try {
-			SlowCompositeReaderWrapper srw = new SlowCompositeReaderWrapper(reader);
+			AtomicReader srw = new SlowCompositeReaderWrapper(reader);
 			cachedFiids = FieldCache.DEFAULT.getInts(srw, fiidFieldName, true);
 
 			// Check if the cache was retrieved OK

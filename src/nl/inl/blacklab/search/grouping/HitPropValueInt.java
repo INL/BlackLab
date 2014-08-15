@@ -4,6 +4,10 @@ package nl.inl.blacklab.search.grouping;
 public class HitPropValueInt extends HitPropValue {
 	int value;
 
+	public int getValue() {
+		return value;
+	}
+
 	public HitPropValueInt(int value) {
 		this.value = value;
 	}

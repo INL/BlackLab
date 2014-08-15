@@ -26,6 +26,7 @@ import java.util.NoSuchElementException;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.grouping.HitPropValueInt;
 import nl.inl.util.ReverseComparator;
 
 import org.apache.lucene.document.Document;
@@ -541,4 +542,29 @@ public class DocResults implements Iterable<DocResult> {
 		return new DocCounts(this, countBy);
 	}
 
+	/**
+	 * Sum a property for all the documents.
+	 *
+	 * Can be used to calculate the total number of tokens in a subcorpus, for example.
+	 * Note that this does retrieve all results, so it may be slow for large sets.
+	 * In particular, you should try to call this method only for DocResults created with
+	 * Searcher.queryDocuments() (and not ones created with Hits.perDocResults()) to avoid
+	 * the overhead of fetching hits.
+	 *
+	 * @param numProp a numeric property to sum
+	 * @return the sum
+	 */
+	public int intSum(DocProperty numProp) {
+		try {
+			ensureAllResultsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted; just process the results we have.
+			// Let caller detect and deal with interruption.
+		}
+		int sum = 0;
+		for (DocResult result: results) {
+			sum += ((HitPropValueInt)numProp.get(result)).getValue();
+		}
+		return sum;
+	}
 }

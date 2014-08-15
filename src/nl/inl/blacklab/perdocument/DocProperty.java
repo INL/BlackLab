@@ -64,7 +64,7 @@ public abstract class DocProperty {
 		String[] parts = serialized.split(":", 2);
 		String type = parts[0].toLowerCase();
 		String info = parts.length > 1 ? parts[1] : "";
-		List<String> types = Arrays.asList("decade", "numhits", "field");
+		List<String> types = Arrays.asList("decade", "numhits", "field", "fieldlen");
 		int typeNum = types.indexOf(type);
 		switch (typeNum) {
 		case 0:
@@ -73,6 +73,8 @@ public abstract class DocProperty {
 			return DocPropertyNumberOfHits.deserialize();
 		case 2:
 			return DocPropertyStoredField.deserialize(info);
+		case 3:
+			return DocPropertyComplexFieldLength.deserialize(info);
 		}
 		logger.debug("Unknown DocProperty '" + type + "'");
 		return null;

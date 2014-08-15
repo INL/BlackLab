@@ -39,6 +39,7 @@ import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
@@ -337,7 +338,7 @@ public class Hits implements Iterable<Hit> {
 
 		try {
 			DirectoryReader reader = null;
-			SlowCompositeReaderWrapper srw = null;
+			AtomicReader srw = null;
 			if (searcher != null) { // may happen while testing with stub classes; don't try to rewrite
 				reader = searcher.getIndexReader();
 				srw = new SlowCompositeReaderWrapper(searcher.getIndexReader());
