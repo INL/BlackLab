@@ -17,9 +17,15 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		MISSING_OR_EMPTY  // use unknown value when field is empty or missing
 	}
 
+	public enum ValueListComplete {
+		UNKNOWN,
+		YES,
+		NO
+	}
+
 	protected FieldType type = FieldType.TEXT;
 
-	private String analyzer = "default";
+	private String analyzer = "DEFAULT";
 
 	private String unknownValue = "unknown";
 
@@ -27,7 +33,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 
 	private Map<String, Integer> values = new HashMap<String, Integer>();
 
-	private boolean valueListComplete = true;
+	private ValueListComplete valueListComplete = ValueListComplete.UNKNOWN;
 
 	public MetadataFieldDesc(String fieldName, FieldType type) {
 		super(fieldName);
@@ -94,7 +100,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	}
 
 	public void setValueListComplete(boolean valueListComplete) {
-		this.valueListComplete = valueListComplete;
+		this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
 	}
 
 	public String getAnalyzer() {
@@ -114,7 +120,11 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	}
 
 	public boolean isValueListComplete() {
-		return valueListComplete;
+		// NOTE: UNKNOWN means addValue() hasn't been called. This is reported as NO
+		//  because some indices may not have values stored. Fields that actually don't
+		//  have any values should be rare and aren't very useful, so this seems like
+		//  an okay choice.
+		return valueListComplete == ValueListComplete.YES;
 	}
 
 	/**
@@ -124,7 +134,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	 */
 	public void resetForIndexing() {
 		this.values.clear();
-		valueListComplete = true;
+		valueListComplete = ValueListComplete.UNKNOWN;
 	}
 
 	/**
@@ -133,6 +143,17 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	 * @param value field value
 	 */
 	public void addValue(String value) {
+		// If we've seen a value, assume we'll get to see all values;
+		// when it turns out there's too many or they're too long,
+		// we'll change the value to NO.
+		if (valueListComplete == ValueListComplete.UNKNOWN)
+			valueListComplete = ValueListComplete.YES;
+
+		if (value.length() > 100) {
+			// Value too long to store.
+			valueListComplete = ValueListComplete.NO;
+			return;
+		}
 		if (values.containsKey(value))  {
 			// Seen this value before; increment frequency
 			values.put(value, values.get(value) + 1);
@@ -141,7 +162,8 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 			if (values.size() >= 50) {
 				// We can't store thousands of unique values;
 				// Stop storing now and indicate that there's more.
-				valueListComplete = false;
+				valueListComplete = ValueListComplete.NO;
+				return;
 			}
 			values.put(value, 1);
 		}
