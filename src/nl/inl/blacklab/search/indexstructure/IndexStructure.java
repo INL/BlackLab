@@ -241,6 +241,7 @@ public class IndexStructure {
 			JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
 			String displayName = Json.getString(fieldConfig, "displayName", fieldName);
 			String description = Json.getString(fieldConfig, "description", "");
+			String group = Json.getString(fieldConfig, "group", "");
 			String type = Json.getString(fieldConfig, "type", "tokenized");
 			String analyzer = Json.getString(fieldConfig, "analyzer", "DEFAULT");
 			String unknownValue = Json.getString(fieldConfig, "unknownValue", "unknown");
@@ -252,8 +253,9 @@ public class IndexStructure {
 			boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
 
 			MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
-			fieldDesc.setDescription(description);
 			fieldDesc.setDisplayName(displayName);
+			fieldDesc.setDescription(description);
+			fieldDesc.setGroup(group);
 			fieldDesc.setAnalyzer(analyzer);
 			fieldDesc.setUnknownValue(unknownValue);
 			fieldDesc.setUnknownCondition(unknownCondition);

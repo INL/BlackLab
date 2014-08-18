@@ -17,23 +17,50 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		MISSING_OR_EMPTY  // use unknown value when field is empty or missing
 	}
 
+	/** Possible value for valueListComplete */
 	public enum ValueListComplete {
-		UNKNOWN,
+		UNKNOWN, // not known yet; is treated as 'no'
 		YES,
 		NO
 	}
 
+	/**
+	 * The field type: text, untokenized or numeric.
+	 */
 	protected FieldType type = FieldType.TEXT;
 
+	/**
+	 * The analyzer to use for indexing and querying this field.
+	 */
 	private String analyzer = "DEFAULT";
 
+	/**
+	 * When value is missing or empty this value may be used instead
+	 * (whether it is depends or unknownCondition).
+	 */
 	private String unknownValue = "unknown";
 
+	/**
+	 * When is the unknown value for this field used?
+	 */
 	private UnknownCondition unknownCondition = UnknownCondition.NEVER;
 
+	/**
+	 * The values this field can have. Note that this may not be the complete list;
+	 * check valueListComplete.
+	 */
 	private Map<String, Integer> values = new HashMap<String, Integer>();
 
+	/**
+	 * Whether or not all values are stored here.
+	 */
 	private ValueListComplete valueListComplete = ValueListComplete.UNKNOWN;
+
+	/**
+	 * The field group this field belongs to. Can be used by a generic
+	 * search application to generate metadata search interface.
+	 */
+	private String group;
 
 	public MetadataFieldDesc(String fieldName, FieldType type) {
 		super(fieldName);
@@ -167,5 +194,13 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 			}
 			values.put(value, 1);
 		}
+	}
+
+	public void setGroup(String group) {
+		this.group = group;
+	}
+
+	public String getGroup() {
+		return group;
 	}
 }

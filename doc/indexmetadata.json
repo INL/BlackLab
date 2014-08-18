@@ -29,6 +29,7 @@
             "author": {
                 "displayName": "author",
                 "description": "The author of the document.",
+                "group": "authorRelated",     // can be used to group fields in interface
                 "type": "tokenized",          // ..or text, numeric, untokenized [tokenized]
                 "analyzer": "default",        // ..or (qualified) class name [default]
                 "unknownValue": "unknown",    // what value to index if the value is unknown
