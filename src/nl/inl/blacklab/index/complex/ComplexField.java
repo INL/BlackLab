@@ -85,10 +85,23 @@ public class ComplexField {
 		return p;
 	}
 
+	/**
+	 * @param propName
+	 * @param altName
+	 * @deprecated use SensitivitySetting, or create additional properties
+	 */
+	@Deprecated
 	public void addPropertyAlternative(String propName, String altName) {
 		addPropertyAlternative(propName, altName, null);
 	}
 
+	/**
+	 * @param propName
+	 * @param altName
+	 * @param filterAdder
+	 * @deprecated use SensitivitySetting, or create additional properties
+	 */
+	@Deprecated
 	public void addPropertyAlternative(String propName, String altName, TokenFilterAdder filterAdder) {
 		ComplexFieldProperty p = properties.get(propName);
 		if (p == null)
@@ -134,10 +147,21 @@ public class ComplexField {
 		}
 	}
 
+	/**
+	 * @param altName
+	 * @deprecated use SensitivitySetting, or create additional properties
+	 */
+	@Deprecated
 	public void addAlternative(String altName) {
 		mainProperty.addAlternative(altName, null);
 	}
 
+	/**
+	 * @param altName
+	 * @param filterAdder
+	 * @deprecated use SensitivitySetting, or create additional properties
+	 */
+	@Deprecated
 	public void addAlternative(String altName, TokenFilterAdder filterAdder) {
 		mainProperty.addAlternative(altName, filterAdder);
 	}

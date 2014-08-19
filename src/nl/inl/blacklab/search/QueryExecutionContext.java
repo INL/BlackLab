@@ -1,12 +1,10 @@
 package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.indexstructure.AltDesc;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.util.StringUtil;
@@ -105,7 +103,7 @@ public class QueryExecutionContext {
 	 * Return alternatives for the current field/prop that
 	 * exist and are appropriate for our current settings.
 	 *
-	 * @return the alternatives
+	 * @return the alternatives that exist, in order of appropriateness
 	 */
 	private String[] getAlternatives() {
 
@@ -121,47 +119,48 @@ public class QueryExecutionContext {
 		final String ci = ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME;
 		final String di = ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
 
-		Collection<String> availableAlternatives = Collections.emptyList();
 		ComplexFieldDesc cfd = searcher.getIndexStructure().getComplexFieldDesc(fieldName);
 		if (cfd == null)
 			return null;
 
 		// Find the property
 		PropertyDesc pd = cfd.getPropertyDesc(propName);
-		if (pd != null) {
-			availableAlternatives = pd.getAlternatives();
-		}
+		SensitivitySetting sensitivity = pd.getSensitivity();
+//		Collection<String> availableAlternatives = Collections.emptyList();
+//		if (pd != null) {
+//			availableAlternatives = pd.getAlternatives();
+//		}
 
 		// New alternative naming scheme (every alternative has a name)
 		List<String> validAlternatives = new ArrayList<String>();
 		if (!caseSensitive && !diacriticsSensitive) {
 			// search insensitive if available
-			if (availableAlternatives.contains(i))
+			if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)
 				validAlternatives.add(i);
-			if (availableAlternatives.contains(s))
+			if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE)
 				validAlternatives.add(s);
 		} else if (caseSensitive && diacriticsSensitive) {
 			// search fully-sensitive if available
-			if (availableAlternatives.contains(s))
+			if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE)
 				validAlternatives.add(s);
-			if (availableAlternatives.contains(i))
+			if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)
 				validAlternatives.add(i);
 		} else if (!diacriticsSensitive) {
 			// search case-sensitive if available
-			if (availableAlternatives.contains(di))
+			if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE)
 				validAlternatives.add(di);
-			if (availableAlternatives.contains(s))
+			if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE)
 				validAlternatives.add(s);
-			if (availableAlternatives.contains(i))
+			if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)
 				validAlternatives.add(i);
 		} else {
 			// search diacritics-sensitive if available
-			if (availableAlternatives.contains(ci))
+			if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE)
 				validAlternatives.add(ci);
-			if (availableAlternatives.contains(s))
-				validAlternatives.add(s);
-			if (availableAlternatives.contains(i))
+			if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)
 				validAlternatives.add(i);
+			if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE)
+				validAlternatives.add(s);
 		}
 		return validAlternatives.toArray(new String[] {});
 	}
@@ -184,7 +183,7 @@ public class QueryExecutionContext {
 	 */
 	public String luceneField(boolean includeAlternative) {
 
-		// Determine preferred alternatives based on sensitivity preferences.
+		// Determine available alternatives based on sensitivity preferences.
 		String[] alternatives = includeAlternative ? getAlternatives() : null;
 
 		if (searcher == null) {
@@ -217,12 +216,17 @@ public class QueryExecutionContext {
 
 		// Find the first available alternative to use
 		for (String alt: alternatives) {
-			AltDesc ad = pd.getAlternativeDesc(alt);
-			if (ad != null)
+			if (pd.hasAlternative(alt)) {
+				// NOTE: is this loop necessary at all? getAlternatives() only
+				//  returns available alternatives, so the first one should always
+				//  be okay, right?
 				return ComplexFieldUtil.propertyField(fieldName, propName, alt);
+			}
 		}
 
 		// No valid alternative found. Use plain property.
+		// NOTE: should never happen, and doesn't make sense anymore as there are
+		// no 'plain properties' anymore.
 		return ComplexFieldUtil.propertyField(fieldName, propName);
 	}
 

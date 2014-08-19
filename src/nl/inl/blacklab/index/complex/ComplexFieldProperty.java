@@ -167,6 +167,12 @@ public class ComplexFieldProperty {
 		}
 	}
 
+	/**
+	 * @param altName
+	 * @param filterAdder
+	 * @deprecated use SensitivitySetting, or create additional properties
+	 */
+	@Deprecated
 	public void addAlternative(String altName, TokenFilterAdder filterAdder) {
 		alternatives.put(altName, filterAdder);
 	}

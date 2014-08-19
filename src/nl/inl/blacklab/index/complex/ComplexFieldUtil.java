@@ -18,7 +18,6 @@ package nl.inl.blacklab.index.complex;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.indexstructure.AltDesc;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
@@ -332,7 +331,7 @@ public class ComplexFieldUtil {
 	 * Split a complex field name into its component parts: base name, property name, and
 	 * alternative. The last two are both optional; either or both may be present.
 	 *
-	 * Example: the name "contents__lemma_ALT_s" will be split into "contents", "lemma" and "s".
+	 * Example: the name "contents%lemma@s" will be split into "contents", "lemma" and "s".
 	 *
 	 * @param fieldPropAltName
 	 *            the field name
@@ -456,7 +455,7 @@ public class ComplexFieldUtil {
 
 	/**
 	 * Gets the base complex field name from a Lucene index field name. So "contents" and
-	 * "contents__pos" would both yield "contents".
+	 * "contents%pos" would both yield "contents".
 	 *
 	 * @param luceneFieldName
 	 *            the Lucene index field name, with possibly a property added
@@ -481,8 +480,8 @@ public class ComplexFieldUtil {
 
 	/**
 	 * Get the "alternative" part of the complex field property. An alternative of a property is,
-	 * for example, a case-sensitive version of the property. For the alternatives "contents_ALT_s"
-	 * or "contents__lemma_ALT_s" this method produces "s".
+	 * for example, a case-sensitive version of the property. For the alternatives "contents@s"
+	 * or "contents%lemma@s" this method produces "s".
 	 *
 	 * @param fieldPropAltName
 	 *            the field plus property plus alternative name we want to get the alternative from
@@ -499,7 +498,7 @@ public class ComplexFieldUtil {
 
 	/**
 	 * Get the "property" part of the complex field property. For the field name "contents_lemma" or
-	 * "contents__lemma_ALT_s" this method produces "lemma".
+	 * "contents%lemma@s" this method produces "lemma".
 	 *
 	 * @param fieldPropAltName
 	 *            the field plus property plus alternative name we want to get the alternative from
@@ -523,7 +522,7 @@ public class ComplexFieldUtil {
 	 * Checks if the given fieldName actually points to an alternative property (for example, a
 	 * case-sensitive version of a property).
 	 *
-	 * Example: the fieldName "contents__lemma_ALT_s" indicates the "s" alternative of the "lemma"
+	 * Example: the fieldName "contents%lemma@s" indicates the "s" alternative of the "lemma"
 	 * property of the "contents" complex field.
 	 *
 	 * @param fieldPropAltName
@@ -547,11 +546,11 @@ public class ComplexFieldUtil {
 	 * Checks if the given fieldName actually points to the specified property (for example, the
 	 * lemma or the POS of the original token).
 	 *
-	 * Example: the fieldName "contents__lemma" indicates the "lemma" property of the "contents"
+	 * Example: the fieldName "contents%lemma" indicates the "lemma" property of the "contents"
 	 * complex field.
 	 *
 	 * Field names may also include an "alternative", for example a case-sensitive version. For
-	 * example, "contents__lemma_ALT_s" is the "s" alternative of the "lemma" property. However,
+	 * example, "contents%lemma@s" is the "s" alternative of the "lemma" property. However,
 	 * alternatives are not tested for in this method, just the property name.
 	 *
 	 * @param fieldPropAltName
@@ -591,8 +590,7 @@ public class ComplexFieldUtil {
 	public static String mainPropertyOffsetsField(IndexStructure structure, String fieldName) {
 		ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
 		PropertyDesc pr = cf.getMainProperty();
-		AltDesc alt = pr.getOffsetsAlternative();
-		return propertyField(fieldName, pr.getName(), alt.getName());
+		return propertyField(fieldName, pr.getName(), pr.offsetsAlternative());
 	}
 
 	public static String getDefaultMainPropName() {

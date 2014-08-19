@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.util.StringUtil;
 
 import org.apache.lucene.index.IndexReader;
 
@@ -19,6 +19,9 @@ public class PropertyDesc {
 
 	private boolean forwardIndex;
 
+	/** What sensitivity alternatives (sensitive/insensitive for case & diacritics) are present */
+	private SensitivitySetting sensitivity = SensitivitySetting.ONLY_SENSITIVE;
+
 	/** Which of the alternatives is the main one (containing the offset info, if present) */
 	private AltDesc offsetsAlternative;
 
@@ -30,23 +33,55 @@ public class PropertyDesc {
 
 	@Override
 	public String toString() {
-		String altDesc = "";
-		String altList = StringUtil.join(alternatives.values(), "\", \"");
-		if (alternatives.size() > 1)
-			altDesc = ", with alternatives \"" + altList + "\"";
-		else if (alternatives.size() == 1)
-			altDesc = ", with alternative \"" + altList + "\"";
+//		String altDesc = "";
+//		String altList = StringUtil.join(alternatives.values(), "\", \"");
+//		if (alternatives.size() > 1)
+//			altDesc = ", with alternatives \"" + altList + "\"";
+//		else if (alternatives.size() == 1)
+//			altDesc = ", with alternative \"" + altList + "\"";
+		String sensitivityDesc = "";
+		switch (sensitivity) {
+		case ONLY_SENSITIVE:
+			sensitivityDesc = "sensitive only";
+			break;
+		case ONLY_INSENSITIVE:
+			sensitivityDesc = "insensitive only";
+			break;
+		case SENSITIVE_AND_INSENSITIVE:
+			sensitivityDesc = "sensitive and insensitive";
+			break;
+		case CASE_AND_DIACRITICS_SEPARATE:
+			sensitivityDesc = "case/diacritics sensitivity separate";
+			break;
+		default:
+			throw new RuntimeException("Unknown sensitivity " + sensitivity.toString());
+		}
 		return (propName.length() == 0 ? "(default)" : propName)
-				+ (forwardIndex ? " (+FI)" : "") + altDesc;
+				+ (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
 	}
 
 	public boolean hasForwardIndex() {
 		return forwardIndex;
 	}
 
-	public void addAlternative(String name) {
+	void addAlternative(String name) {
 		AltDesc altDesc = new AltDesc(name);
 		alternatives.put(name, altDesc);
+
+		// Update the sensitivity settings based on the alternatives we've seen so far.
+		if (alternatives.containsKey("s")) {
+			if (alternatives.containsKey("i")) {
+				if (alternatives.containsKey("ci")) {
+					sensitivity = SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
+				} else {
+					sensitivity = SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+				}
+			} else {
+				sensitivity = SensitivitySetting.ONLY_SENSITIVE;
+			}
+		} else {
+			sensitivity = SensitivitySetting.ONLY_INSENSITIVE;
+		}
 	}
 
 	void setForwardIndex(boolean b) {
@@ -59,9 +94,19 @@ public class PropertyDesc {
 		return propName;
 	}
 
+	/**
+	 * What sensitivity alternatives were indexed for this property?
+	 * @return the sensitivity setting
+	 */
+	public SensitivitySetting getSensitivity() {
+		return sensitivity;
+	}
+
 	/** Get the set of names of alternatives for this property
 	 * @return the names
+	 * @deprecated use getSensitivity
 	 */
+	@Deprecated
 	public Collection<String> getAlternatives() {
 		return alternatives.keySet();
 	}
@@ -70,7 +115,9 @@ public class PropertyDesc {
 	 * Get an alternative's description.
 	 * @param name name of the alternative
 	 * @return the description
+	 * @deprecated use getSensitivity instead of querying individual alternatives
 	 */
+	@Deprecated
 	public AltDesc getAlternativeDesc(String name) {
 		if (!alternatives.containsKey(name))
 			throw new RuntimeException("Alternative '" + name + "' not found!");
@@ -108,8 +155,37 @@ public class PropertyDesc {
 	 * Note that there may not be such an alternative.
 	 *
 	 * @return the alternative, or null if there is none.
+	 * @deprecated use offsetsAlternative()
 	 */
+	@Deprecated
 	public AltDesc getOffsetsAlternative() {
 		return offsetsAlternative;
+	}
+
+	/**
+	 * Return which alternative contains character offset information.
+	 *
+	 * Note that there may not be such an alternative.
+	 *
+	 * @return the alternative, or null if there is none.
+	 */
+	public String offsetsAlternative() {
+		return offsetsAlternative == null ? null : offsetsAlternative.getName();
+	}
+
+	/**
+	 * Does this property have the sensitivity alternative specified?
+	 * @param alt name of the sensitivity alternative: s, i, ci, di.
+	 * @return true if it exists, false if not
+	 */
+	public boolean hasAlternative(String alt) {
+		if (alt.equals("s")) {
+			return sensitivity != SensitivitySetting.ONLY_INSENSITIVE;
+		} else if (alt.equals("i")) {
+			return sensitivity != SensitivitySetting.ONLY_SENSITIVE;
+		} else if (alt.equals("ci") || alt.equals("di")) {
+			return sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
+		}
+		throw new RuntimeException("Unknown sensitivity alternative ' " + alt + "'! Valid: s, i, ci, di");
 	}
 }
