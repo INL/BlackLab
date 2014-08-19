@@ -48,13 +48,24 @@ public final class BLDefaultAnalyzer extends Analyzer {
 		try {
 			Tokenizer source = new StandardTokenizerFactory().create(reader);
 			source.reset();
-			TokenStream filter = null;
-			if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+			TokenStream filter = source;
+			boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+			if (!caseSensitive)
 			{
-				filter = new LowerCaseFilter(Version.LUCENE_42, source);// lowercase all
+				filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
 				filter.reset();
+			}
+			boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+			if (!diacSensitive)
+			{
 				filter = new RemoveAllAccentsFilter(filter); // remove accents
 				filter.reset();
+			}
+			if (!(caseSensitive && diacSensitive))
+			{
+				// Is this necessary and does it do what we want?
+				// e.g. do we want "zon" to ever match "zo'n"? Or are there examples
+				//      where this is useful/required?
 				filter = new RemovePunctuationFilter(filter); // remove punctuation
 				filter.reset();
 			}

@@ -627,5 +627,33 @@ public class ComplexFieldUtil {
 		return PROP_SEP_LEN > 1;
 	}
 
+	/**
+	 * Does this Lucene field name refer to a case-sensitive alternative?
+	 *
+	 * Case-sensitive alternatives are "s" (case- and diacritics-sensitive)
+	 * and "di" (diacritics-insensitive but case-sensitive).
+	 *
+	 * @param fieldPropAltName Lucene field name including property and alt name
+	 * @return true if the field name refers to a case-sensitive alternative
+	 */
+	public static boolean isCaseSensitive(String fieldPropAltName) {
+		// both-sensitive or diacritics-insensitive
+		return fieldPropAltName.endsWith(ALT_SEP + "s") || fieldPropAltName.endsWith(ALT_SEP + "di");
+	}
+
+	/**
+	 * Does this Lucene field name refer to a diacritics-sensitive alternative?
+	 *
+	 * Diacritics-sensitive alternatives are "s" (case- and diacritics-sensitive)
+	 * and "ci" (case-insensitive but diacritics-sensitive).
+	 *
+	 * @param fieldPropAltName Lucene field name including property and alt name
+	 * @return true if the field name refers to a diacritics-sensitive alternative
+	 */
+	public static boolean isDiacriticsSensitive(String fieldPropAltName) {
+		// both-sensitive or case-insensitive
+		return fieldPropAltName.endsWith(ALT_SEP + "s") || fieldPropAltName.endsWith(ALT_SEP + "ci");
+	}
+
 
 }

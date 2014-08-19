@@ -36,8 +36,9 @@ import org.apache.lucene.util.Version;
 /**
  * A Latin-specific analyzer.
  *
- * Use BLDefaultAnalyzer instead, it's more generic.
+ * @deprecated use BLDefaultAnalyzer instead, it's more generic.
  */
+@Deprecated
 public final class BLLatinAnalyzer extends Analyzer {
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {

@@ -44,10 +44,15 @@ public final class BLWhitespaceAnalyzer extends Analyzer {
 			Tokenizer source = new WhitespaceTokenizer(Version.LUCENE_42, reader);
 			source.reset();
 			TokenStream filter = source;
-			if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+			boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+			if (!caseSensitive)
 			{
 				filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
 				filter.reset();
+			}
+			boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+			if (!diacSensitive)
+			{
 				filter = new RemoveAllAccentsFilter(filter); // remove accents
 				filter.reset();
 			}
