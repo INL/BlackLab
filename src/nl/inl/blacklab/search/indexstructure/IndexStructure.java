@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.DateUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -55,7 +56,7 @@ public class IndexStructure {
 	private String description;
 
 	/** When BlackLab.jar was built */
-	private String blackLabBuildDate;
+	private String blackLabBuildTime;
 
 	/** Format the index uses */
 	private String indexFormat;
@@ -118,9 +119,11 @@ public class IndexStructure {
 		// Read and interpret index metadata file
 		File metadataFile = new File(indexDir, METADATA_FILE_NAME);
 		IndexMetadata indexMetadata;
+		boolean initTimestamps = false;
 		if (createNewIndex || !metadataFile.exists()) {
 			// No metadata file yet; start with a blank one
 			indexMetadata = new IndexMetadata(indexDir.getName());
+			initTimestamps = true;
 		} else {
 			// Read the metadata file
 			try {
@@ -132,10 +135,15 @@ public class IndexStructure {
 		displayName = indexMetadata.getDisplayName();
 		description = indexMetadata.getDescription();
 		JSONObject versionInfo = indexMetadata.getVersionInfo();
-		blackLabBuildDate = Json.getString(versionInfo, "blackLabBuildDate", "");
 		indexFormat = Json.getString(versionInfo, "indexFormat", "");
-		timeCreated = Json.getString(versionInfo, "timeCreated", "");
-		timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
+		if (initTimestamps) {
+			blackLabBuildTime = Searcher.getBlackLabBuildTime();
+			timeModified = timeCreated = DateUtil.getSqlDateTimeString();
+		} else {
+			blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
+			timeCreated = Json.getString(versionInfo, "timeCreated", "");
+			timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
+		}
 		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
 		setNamingScheme(indexMetadata, fis);
 		if (indexMetadata.hasFieldInfo()) {
@@ -160,7 +168,7 @@ public class IndexStructure {
 		root.put("displayName", displayName);
 		root.put("description", description);
 		root.put("versionInfo", Json.object(
-			"blackLabBuildDate", blackLabBuildDate,
+			"blackLabBuildTime", blackLabBuildTime,
 			"indexFormat", indexFormat,
 			"timeCreated", timeCreated,
 			"timeModified", timeModified
@@ -718,11 +726,11 @@ public class IndexStructure {
 	}
 
 	/**
-	 * When was the BlackLab.jar used built?
+	 * When was the BlackLab.jar used for indexing built?
 	 * @return date/time stamp
 	 */
-	public String getBlackLabBuildDate() {
-		return blackLabBuildDate;
+	public String getIndexBlackLabBuildTime() {
+		return blackLabBuildTime;
 	}
 
 	/**
@@ -746,7 +754,7 @@ public class IndexStructure {
 		readMetadata(reader, false);
 
 		// Reset version info
-		blackLabBuildDate = ""; // TODO: figure out BlackLab build date and record it here
+		blackLabBuildTime = Searcher.getBlackLabBuildTime();
 		indexFormat = "3";
 		timeModified = timeCreated = DateUtil.getSqlDateTimeString();
 

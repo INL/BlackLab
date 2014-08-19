@@ -9,7 +9,7 @@
     // Information about index format, index time, BlackLab version
     // [automatically added by indexer]
     "versionInfo": {
-        "blackLabBuildDate": "2014-07-18",    // Build date of the BlackLab.jar used
+        "blackLabBuildTime": "2014-07-18",    // Build time of the BlackLab.jar used
         "indexFormat": "3",                   // Index format version number
         "timeCreated": "2014-07-18 12:43:00"  // Start of index creation
         "timeModified": "2014-07-18 12:43:00" // Start of index creation

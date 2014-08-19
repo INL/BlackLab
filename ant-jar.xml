@@ -23,7 +23,10 @@ the defaults).
 	<available file="${test.src.dir}" property="test.dir.exists" />
 	
 	<!-- Make sure we know the current year, for the copyright clause in the javadocs -->
-	<tstamp><format property="CURRENT_YEAR" pattern="yyyy" /></tstamp>
+	<tstamp>
+		<format property="CURRENT_YEAR" pattern="yyyy" />
+		<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss" />
+	</tstamp>
 	
 	<!-- The extra files to include in the JAR (all non-Java source files in the src dir) -->
 	<fileset id="jar.resources" dir="${src.dir}">
@@ -91,6 +94,8 @@ the defaults).
 				<attribute name="Manifest-Version" value="1.0" />
 				<attribute name="Main-Class" value="${jar.mainclass}" />
 				<attribute name="Class-Path" value="${jar.manifest.classpath}" />
+				<attribute name="Build-By" value="${user.name}" />
+				<attribute name="Build-Date" value="${TODAY}" />
 			</manifest>
 
 			<!-- Extra stuff to put in the JAR (propertyfiles, images, etc.) -->

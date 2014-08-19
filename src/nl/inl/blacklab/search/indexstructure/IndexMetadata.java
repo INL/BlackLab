@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexstructure;
 import java.io.File;
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.DateUtil;
 import nl.inl.util.Json;
 import nl.inl.util.json.JSONException;
@@ -36,7 +37,7 @@ public class IndexMetadata {
 			"displayName", indexName,
 			"description", "",
 			"versionInfo", Json.object(
-				//"blackLabBuildDate", "2014-01-01 00:00:00"  // TODO: add correct build date
+				"blackLabBuildTime", Searcher.getBlackLabBuildTime(),
 				"indexFormat", "3",
 				"indexTime", DateUtil.getSqlDateTimeString()),
 			"fieldInfo", Json.object(
@@ -100,7 +101,7 @@ public class IndexMetadata {
 	 *
 	 * Includes indexFormat (3 or higher), indexTime (time of index creation,
 	 * YYY-MM-DD hh:mm:ss), lastModified (optional) and
-	 * blackLabBuildDate (optional; YYY-MM-DD hh:mm:ss).
+	 * blackLabBuildTime (optional; YYY-MM-DD hh:mm:ss).
 	 *
 	 * @return the configuration
 	 */

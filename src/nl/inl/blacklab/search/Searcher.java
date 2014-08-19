@@ -17,6 +17,9 @@ package nl.inl.blacklab.search;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +28,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
@@ -1680,6 +1685,31 @@ public class Searcher {
 			return LuceneUtil.getFieldTerms(srw, fieldName, maxResults);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Return a timestamp for when BlackLab was built.
+	 *
+	 * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if
+	 *   the timestamp could not be found for some reason (i.e. not running from a
+	 *   JAR, or JAR was not created with the Ant buildscript).
+	 */
+	public static String getBlackLabBuildTime() {
+		try {
+			URL res = Searcher.class.getResource(Searcher.class.getSimpleName() + ".class");
+			URLConnection conn = res.openConnection();
+			if (!(conn instanceof JarURLConnection)) {
+				// Not running from a JAR, no manifest to read
+				return "UNKNOWN";
+			}
+			JarURLConnection jarConn = (JarURLConnection) res.openConnection();
+			Manifest mf = jarConn.getManifest();
+			Attributes atts = mf.getMainAttributes();
+			String value = atts.getValue("Build-Date");
+			return value == null ? "UNKNOWN" : value;
+		} catch (IOException e) {
+			throw new RuntimeException("Could not read build date from manifest", e);
 		}
 	}
 
