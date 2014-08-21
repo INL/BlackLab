@@ -130,9 +130,18 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
 	}
 
-	public String getAnalyzer() {
+	public String getAnalyzerName() {
 		return analyzer;
 	}
+
+	/*
+	public String getAnalyzerClass() {
+		if (analyzer.equalsIgnoreCase("DEFAULT")) {
+			return
+		}
+		return analyzer;
+	}
+	*/
 
 	public String getUnknownValue() {
 		return unknownValue;

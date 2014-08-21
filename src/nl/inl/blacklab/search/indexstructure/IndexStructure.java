@@ -192,7 +192,7 @@ public class IndexStructure {
 				"displayName", f.getDisplayName(),
 				"description", f.getDescription(),
 				"type", f.getType().toString().toLowerCase(),
-				"analyzer", "DEFAULT",
+				"analyzer", f.getAnalyzerName(),
 				"unknownValue", f.getUnknownValue(),
 				"unknownCondition", unknownCondition == null ? "NEVER" : unknownCondition.toString(),
 				"valueListComplete", f.isValueListComplete()
