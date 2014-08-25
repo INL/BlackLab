@@ -10,10 +10,12 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
 
+import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 /** Description of a complex field */
 public class ComplexFieldDesc extends BaseFieldDesc {
+	protected static final Logger logger = Logger.getLogger(ComplexFieldDesc.class);
 
 	/** This complex field's properties */
 	private Map<String, PropertyDesc> props;
@@ -173,7 +175,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 			// any actual detecting.
 			mainProperty = getPropertyDesc(mainPropertyName);
 			mainPropertyName = null;
-			return;
+			//return;
 		}
 
 		PropertyDesc firstProperty = null;
@@ -182,7 +184,14 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 				firstProperty = pr;
 			if (pr.detectOffsetsAlternative(reader, fieldName)) {
 				// This field has offsets stored. Must be the main prop field.
-				mainProperty = pr;
+				if (mainProperty == null) {
+					mainProperty = pr;
+				} else {
+					// Was already set from metadata file; same..?
+					if (mainProperty != pr) {
+						logger.warn("Metadata says main property for field " + getName() + " is " + mainProperty.getName() + ", but offsets are stored in " + pr.getName());
+					}
+				}
 				return;
 			}
 		}
@@ -191,6 +200,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 		// (note that not having any offsets makes it impossible to highlight the
 		// original content, but this may not be an issue. We probably need
 		// a better way to keep track of the main property)
+		logger.warn("No property with offsets found; assume first property (" + firstProperty.getName() + ") is main property");
 		mainProperty = firstProperty;
 
 		// throw new RuntimeException(

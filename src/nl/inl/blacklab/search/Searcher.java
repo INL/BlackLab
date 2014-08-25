@@ -719,8 +719,10 @@ public class Searcher {
 			String fieldPropName = ComplexFieldUtil.mainPropertyOffsetsField(indexStructure, fieldName);
 
 			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, fieldPropName);
+			if (terms == null)
+				throw new RuntimeException("Field " + fieldPropName + " in doc " + doc + " has no term vector");
 			if (!terms.hasPositions())
-				throw new RuntimeException("Field has no character postion information");
+				throw new RuntimeException("Field " + fieldPropName + " in doc " + doc + " has no character postion information");
 
 			int lowestPos = -1, highestPos = -1;
 			int lowestPosFirstChar = -1, highestPosLastChar = -1;
