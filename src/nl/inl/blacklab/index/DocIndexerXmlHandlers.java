@@ -127,7 +127,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			for (ComplexFieldProperty prop : contentsField.getProperties()) {
 				while (prop.lastValuePosition() < lastValuePos) {
 					prop.addValue("");
-					if (prop == contentsField.getMainProperty()) {
+					if (prop == propMain) {
 						contentsField.addStartChar(getContentPosition());
 						contentsField.addEndChar(getContentPosition());
 					}
@@ -266,8 +266,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		public void startElement(String uri, String localName, String qName,
 				Attributes attributes) {
 			int lastStartTagPos = propStartTag.lastValuePosition();
-			int currentPos = contentsField.getMainProperty()
-					.lastValuePosition();
+			int currentPos = propMain.lastValuePosition();
 			int posIncrement = currentPos - lastStartTagPos + 1;
 			propStartTag.addValue(localName, posIncrement);
 			for (int i = 0; i < attributes.getLength(); i++) {
@@ -284,8 +283,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			int lastEndTagPos = propEndTag.lastValuePosition();
-			int currentPos = contentsField.getMainProperty()
-					.lastValuePosition();
+			int currentPos = propMain.lastValuePosition();
 			int posIncrement = currentPos - lastEndTagPos + 1;
 			propEndTag.addValue(localName, posIncrement);
 		}
@@ -344,7 +342,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			super.endElement(uri, localName, qName);
-			contentsField.addValue(getWord());
+			propMain.addValue(getWord());
 		}
 
 		protected String getWord() {
@@ -450,6 +448,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
 		contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME,
 				mainPropName, getSensitivitySetting(mainPropName));
+		propMain = contentsField.getMainProperty();
 		propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
 		propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start
 																			// tag
@@ -461,7 +460,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		indexer.getSearcher()
 				.getIndexStructure()
 				.registerComplexField(contentsField.getName(),
-						contentsField.getMainProperty().getName());
+						propMain.getName());
 	}
 
 	public void addNumericFields(Collection<String> fields) {
@@ -648,6 +647,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	/** Number of words processed (for reporting progress) */
 	int wordsDone;
 
+	/** The main property (usually "word") */
+	ComplexFieldProperty propMain;
+
 	/** The punctuation property */
 	ComplexFieldProperty propPunct;
 
@@ -730,7 +732,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	public ComplexFieldProperty getMainProperty() {
-		return contentsField.getMainProperty();
+		return propMain;
 	}
 
 	public ComplexField getContentsField() {

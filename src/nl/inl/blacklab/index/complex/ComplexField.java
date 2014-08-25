@@ -117,6 +117,26 @@ public class ComplexField {
 		end.add(endChar);
 	}
 
+	/**
+	 * Add a token value to the main property for this field.
+	 *
+	 * The main property usually contains the word form.
+	 *
+	 * @param value the token value to add
+	 * @deprecated use getMainProperty().addValue()
+	 */
+	@Deprecated
+	public void addValue(String value) {
+		addValue(value, 1);
+	}
+
+	/**
+	 * Add a value to the main property.
+	 * @param value the value
+	 * @param posIncr the position increment.
+	 * @deprecated use getMainProperty().addValue()
+	 */
+	@Deprecated
 	public void addValue(String value, int posIncr) {
 		mainProperty.addValue(value, posIncr);
 	}
@@ -197,17 +217,6 @@ public class ComplexField {
 
 	public Collection<ComplexFieldProperty> getProperties() {
 		return properties.values();
-	}
-
-	/**
-	 * Add a token value to the main property for this field.
-	 *
-	 * The main property usually contains the word form.
-	 *
-	 * @param value the token value to add
-	 */
-	public void addValue(String value) {
-		addValue(value, 1);
 	}
 
 	public void addPropertyValue(String name, String value) {
