@@ -61,14 +61,6 @@ public class ComplexFieldProperty {
 		CASE_AND_DIACRITICS_SEPARATE	// all four combinations (sens, insens, case-insens, diac-insens)
 	}
 
-	/**
-	 * Add a value to the property.
-	 * @param value value to add
-	 */
-	final public void addValue(String value) {
-		addValue(value, 1);
-	}
-
 	protected boolean includeOffsets;
 
 	/**
@@ -82,7 +74,7 @@ public class ComplexFieldProperty {
 
 	/** Position of the last value added
 	 */
-	protected int position = -1;
+	protected int lastValuePosition = -1;
 
 	/**
 	 * A property may be indexed in different ways (alternatives). This specifies names and filters
@@ -186,7 +178,7 @@ public class ComplexFieldProperty {
 	}
 
 	public int lastValuePosition() {
-		return position;
+		return lastValuePosition;
 	}
 
 	public String getName() {
@@ -201,6 +193,20 @@ public class ComplexFieldProperty {
 		hasForwardIndex = b;
 	}
 
+	/**
+	 * Add a value to the property.
+	 * @param value value to add
+	 */
+	final public void addValue(String value) {
+		addValue(value, 1);
+	}
+
+	/**
+	 * Add a value to the property.
+	 *
+	 * @param value the value to add
+	 * @param increment number of tokens distance from the last token added
+	 */
 	public void addValue(String value, int increment) {
 		// Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
 		String storedValue = storedValues.get(value);
@@ -223,14 +229,63 @@ public class ComplexFieldProperty {
 
 		values.add(storedValue);
 		increments.add(increment);
-		position += increment; // keep track of position of last token
+		lastValuePosition += increment; // keep track of position of last token
 
+	}
+
+	/**
+	 * Add a value to the property at a specific position.
+	 *
+	 * Please note that if you add a value beyond the current position,
+	 * the next call to addValue() will add from this new position! This
+	 * is not an issue if you add a value at a lower position (that
+	 * operation doesn't change the current last token position used
+	 * for addValue()).
+	 *
+	 * @param value the value to add
+	 * @param position the position to put it at
+	 * @return new position of the last token, in case it changed.
+	 */
+	public int addValueAtPosition(String value, int position) {
+		// Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
+		String storedValue = storedValues.get(value);
+		if (storedValue == null) {
+			storedValues.put(value, value);
+			storedValue = value;
+		}
+
+		if (position >= lastValuePosition) {
+			// Beyond the last position; regular addValue()
+			addValue(value, position - lastValuePosition);
+		} else {
+			// Before the last position.
+			// Find the index where the value should be inserted.
+			int curPos = this.lastValuePosition;
+			for (int i = values.size() - 1; i >= 0; i--) {
+				if (curPos <= position)  {
+					// Value should be inserted after this index.
+					int n = i + 1;
+					values.add(n, storedValue);
+					int incr = position - curPos;
+					increments.add(n, incr);
+					if (increments.size() > n + 1 && incr > 0) {
+						// Inserted value wasn't the last value, so the
+						// increment for the value after this is now wrong;
+						// correct it.
+						increments.set(n + 1, increments.get(n + 1) - incr);
+					}
+				}
+				curPos -= increments.get(i); // go to previous value position
+			}
+		}
+
+		return lastValuePosition;
 	}
 
 	public void clear() {
 		values.clear();
 		increments.clear();
-		position = -1;
+		lastValuePosition = -1;
 
 		// In theory, we don't need to clear the cached values between documents, but
 		// for large data sets, this would keep getting larger and larger, so we do
