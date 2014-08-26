@@ -247,10 +247,12 @@ public class IndexTool {
 		}
 
 		// Create the indexer and index the files
-		Indexer indexer = new Indexer(indexDir, createNewIndex, docIndexerClass);
-		if (createNewIndex && indexTemplateFile != null && indexTemplateFile.canRead()) {
+		if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
+			indexTemplateFile = null;
+		}/* else {
 			indexer.setNewIndexMetadataTemplate(indexTemplateFile);
-		}
+		}*/
+		Indexer indexer = new Indexer(indexDir, createNewIndex, docIndexerClass, indexTemplateFile);
 		indexer.setIndexerParam(indexerParam);
 		if (maxDocsToIndex > 0)
 			indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
@@ -306,7 +308,7 @@ public class IndexTool {
 		Searcher searcher = Searcher.openForWriting(indexDir, false);
 		try {
 			System.out.println("Doing delete: " + deleteQuery);
-			searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, searcher.getSearchAnalyzer(), null));
+			searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, searcher.getAnalyzer(), null));
 		} finally {
 			searcher.close();
 		}

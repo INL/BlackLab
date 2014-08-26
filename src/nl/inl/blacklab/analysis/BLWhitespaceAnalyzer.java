@@ -32,7 +32,7 @@ import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.util.Version;
 
 /**
- * Analyzer suitable for parsing (filter) queries.
+ * Simple whitespace analyzer.
  *
  * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
  */

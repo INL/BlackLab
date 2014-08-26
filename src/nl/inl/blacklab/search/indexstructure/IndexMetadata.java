@@ -146,6 +146,18 @@ public class IndexMetadata {
 	}
 
 	/**
+	 * Get the name of the default analyzer to use
+	 * @return the analyzer name (DEFAULT if not specified)
+	 */
+	public String getDefaultAnalyzer() {
+		JSONObject metaFieldInfo = getFieldInfo();
+		if (metaFieldInfo.has("defaultAnalyzer")) {
+			return metaFieldInfo.getString("defaultAnalyzer");
+		}
+		return "DEFAULT";
+	}
+
+	/**
 	 * Is there field info in this index metadata file?
 	 * @return true if there is, false if not
 	 */

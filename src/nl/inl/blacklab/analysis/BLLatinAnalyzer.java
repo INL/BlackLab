@@ -16,57 +16,41 @@
 /**
  *
  */
-package nl.inl.blacklab.index;
+package nl.inl.blacklab.analysis;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
-import nl.inl.blacklab.filter.RemovePunctuationFilter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.util.Version;
 
 /**
- * A simple analyzer that isn't limited to Latin.
+ * A Latin-specific analyzer.
  *
- * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
+ * @deprecated use BLDefaultAnalyzer instead, it's more generic.
  */
-public final class BLDefaultAnalyzer extends Analyzer {
-
+@Deprecated
+public final class BLLatinAnalyzer extends Analyzer {
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
 		try {
 			Tokenizer source = new StandardTokenizerFactory().create(reader);
 			source.reset();
-			TokenStream filter = source;
-			boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
-			if (!caseSensitive)
+			TokenStream filter = null;
+			if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
 			{
-				filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
+				filter = new LowerCaseFilter(Version.LUCENE_42, source);// lowercase all
 				filter.reset();
-			}
-			boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
-			if (!diacSensitive)
-			{
-				filter = new RemoveAllAccentsFilter(filter); // remove accents
-				filter.reset();
-			}
-			if (!(caseSensitive && diacSensitive))
-			{
-				// Is this necessary and does it do what we want?
-				// e.g. do we want "zon" to ever match "zo'n"? Or are there examples
-				//      where this is useful/required?
-				filter = new RemovePunctuationFilter(filter); // remove punctuation
+				filter = new ASCIIFoldingFilter(filter); // remove accents
 				filter.reset();
 			}
 			return new TokenStreamComponents(source, filter);
@@ -81,16 +65,15 @@ public final class BLDefaultAnalyzer extends Analyzer {
 		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
 		{
 			ts = new LowerCaseFilter(Version.LUCENE_42, ts); // lowercase all
-			ts = new RemoveAllAccentsFilter(ts); // remove accents
-			ts = new RemovePunctuationFilter(ts); // remove punctuation
+			ts = new ASCIIFoldingFilter(ts); // remove accents
 		}
 		return ts;
 	}*/
 
 	public static void main(String[] args) throws IOException {
-		String TEST_STR = "Hé jij И!  раскази и повѣсти. Ст]' Дѣдо  	Нисторъ. Ива";
+		String TEST_STR = "Hé jij daar!";
 
-		Analyzer a = new BLDefaultAnalyzer();
+		Analyzer a = new BLLatinAnalyzer();
 		try {
 			TokenStream ts = a.tokenStream("test", new StringReader(TEST_STR));
 			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
@@ -106,32 +89,5 @@ public final class BLDefaultAnalyzer extends Analyzer {
 		} finally {
 			a.close();
 		}
-	}
-
-	/* CODE JESSE: */
-	static Pattern prePunctuationPattern = Pattern.compile("(^|\\s)\\p{P}+");
-	static Pattern postPunctuationPattern = Pattern.compile("\\p{P}+($|\\s)");
-
-	public String prePunctuation = "";
-	public String postPunctuation = "";
-	public String trimmedToken = "";
-
-	public void tokenize(String t) {
-		Matcher m1 = prePunctuationPattern.matcher(t);
-		Matcher m2 = postPunctuationPattern.matcher(t);
-
-		int s = 0;
-		int e = t.length();
-
-		if (m1.find())
-			s = m1.end();
-		if (m2.find())
-			e = m2.start();
-
-		if (e < s)
-			e = s;
-		trimmedToken = t.substring(s, e);
-		prePunctuation = t.substring(0, s);
-		postPunctuation = t.substring(e, t.length());
 	}
 }

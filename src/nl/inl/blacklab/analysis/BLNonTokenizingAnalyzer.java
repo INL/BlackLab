@@ -31,22 +31,18 @@ import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.util.Version;
 
 /**
- * A simple analyzer that isn't limited to Latin. Designed for
- * Dutch texts, but should also work pretty well for English and
- * most other languages using Latin charset.
+ * Analyzer that doesn't tokenize but returns a single token.
  *
- * Has the option of analyzing case-/accent-sensitive or -insensitive,
- * depending on the field name.
+ * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
  */
-public final class BLDutchAnalyzer extends Analyzer {
+public final class BLNonTokenizingAnalyzer extends Analyzer {
 
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
 		try {
-			Tokenizer source = new BLDutchTokenizer(reader);
+			Tokenizer source = new BLNonTokenizer(reader);
 			source.reset();
-			TokenStream filter = new BLDutchTokenFilter(source);
-			filter.reset();
+			TokenStream filter = source;
 			boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
 			if (!caseSensitive)
 			{

@@ -32,6 +32,9 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
+import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
+import nl.inl.blacklab.analysis.BLStandardAnalyzer;
+import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.externalstorage.ContentStoreDir;
@@ -46,6 +49,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpansFiltered;
@@ -58,6 +62,7 @@ import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.CorruptIndexException;
@@ -234,7 +239,7 @@ public class Searcher {
 	private Thread autoWarmThread;
 
 	/** Analyzer used for indexing our metadata fields */
-	private Analyzer indexAnalyzer;
+	private Analyzer analyzer;
 
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).
@@ -251,7 +256,25 @@ public class Searcher {
 	 */
 	public static Searcher openForWriting(File indexDir, boolean createNewIndex)
 			throws CorruptIndexException, IOException {
-		return new Searcher(indexDir, true, createNewIndex);
+		return new Searcher(indexDir, true, createNewIndex, (File)null);
+	}
+
+	/**
+	 * Open an index for writing ("index mode": adding/deleting documents).
+	 *
+	 * Note that in index mode, searching operations may not take the latest
+	 * changes into account. It is wisest to only use index mode for indexing,
+	 * then close the Searcher and create a regular one for searching.
+	 *
+	 * @param indexDir the index directory
+	 * @param createNewIndex if true, create a new index even if one existed there
+	 * @param indexTemplateFile JSON template to use for index structure / metadata
+	 * @return the searcher in index mode
+	 * @throws IOException
+	 */
+	public static Searcher openForWriting(File indexDir, boolean createNewIndex,
+			File indexTemplateFile) throws IOException {
+		return new Searcher(indexDir, true, createNewIndex, indexTemplateFile);
 	}
 
 	/**
@@ -263,7 +286,7 @@ public class Searcher {
 	 * @throws IOException
 	 */
 	public static Searcher open(File indexDir) throws CorruptIndexException, IOException {
-		return new Searcher(indexDir, false, false);
+		return new Searcher(indexDir, false, false, (File)null);
 	}
 
 	/**
@@ -272,11 +295,12 @@ public class Searcher {
 	 * @param indexDir the index directory
 	 * @param indexMode if true, open in index mode; if false, open in search mode.
 	 * @param createNewIndex if true, delete existing index in this location if it exists.
-	 * @throws CorruptIndexException
+	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
+	 *   (if creating new index)
 	 * @throws IOException
 	 */
-	private Searcher(File indexDir, boolean indexMode, boolean createNewIndex)
-			throws CorruptIndexException, IOException {
+	private Searcher(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile)
+			throws IOException {
 		this.indexMode = indexMode;
 
 		if (!indexMode && createNewIndex)
@@ -297,9 +321,6 @@ public class Searcher {
 
 		logger.debug("Constructing Searcher...");
 
-		// Instantiate analyzer used for metadata indexing and queries
-		indexAnalyzer = new BLDutchAnalyzer(); // TODO make configurable
-
 		if (indexMode) {
 			indexWriter = openIndexWriter(indexDir, createNewIndex);
 			reader = DirectoryReader.open(indexWriter, false);
@@ -310,7 +331,9 @@ public class Searcher {
 		this.indexLocation = indexDir;
 
 		// Determine the index structure
-		indexStructure = new IndexStructure(reader, indexDir, createNewIndex);
+		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
+
+		createAnalyzers();
 
 		// Detect and open the ContentStore for the contents field
 		if (!createNewIndex) {
@@ -351,6 +374,39 @@ public class Searcher {
 		if (!createNewIndex)
 			openForwardIndices();
 		logger.debug("Done.");
+	}
+
+	/**
+	 * Open an index.
+	 *
+	 * @param indexDir the index directory
+	 * @param indexMode if true, open in index mode; if false, open in search mode.
+	 * @param createNewIndex if true, delete existing index in this location if it exists.
+	 * @throws CorruptIndexException
+	 * @throws IOException
+	 */
+	private Searcher(File indexDir, boolean indexMode, boolean createNewIndex)
+			throws CorruptIndexException, IOException {
+		this(indexDir, indexMode, createNewIndex, (File)null);
+	}
+
+	private void createAnalyzers() {
+		Map<String, Analyzer> fieldAnalyzers = new HashMap<String, Analyzer>();
+		for (String fieldName: indexStructure.getMetadataFields()) {
+			MetadataFieldDesc fd = indexStructure.getMetadataFieldDesc(fieldName);
+			String analyzerName = fd.getAnalyzerName();
+			if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("DEFAULT")) {
+				Analyzer fieldAnalyzer = createAnalyzer(analyzerName);
+				if (fieldAnalyzer == null) {
+					logger.error("Unknown analyzer name " + analyzerName + " for field " + fieldName);
+				} else {
+					fieldAnalyzers.put(fieldName, fieldAnalyzer);
+				}
+			}
+		}
+
+		Analyzer baseAnalyzer = createAnalyzer(indexStructure.getDefaultAnalyzerName());
+		analyzer = new PerFieldAnalyzerWrapper(baseAnalyzer, fieldAnalyzers);
 	}
 
 	/**
@@ -1514,7 +1570,8 @@ public class Searcher {
 			indexDir.mkdir();
 		}
 		Directory indexLuceneDir = FSDirectory.open(indexDir);
-		IndexWriterConfig config = Utilities.getIndexWriterConfig(indexAnalyzer, create);
+		BLDutchAnalyzer defaultAnalyzer = new BLDutchAnalyzer(); // NOTE: not actually used, we override this
+		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
 		if (create)
@@ -1624,7 +1681,7 @@ public class Searcher {
 	 * @return the analyzer
 	 */
 	public Analyzer getAnalyzer() {
-		return indexAnalyzer;
+		return analyzer;
 	}
 
 	/**
@@ -1712,5 +1769,26 @@ public class Searcher {
 			throw new RuntimeException("Could not read build date from manifest", e);
 		}
 	}
+
+	/**
+	 * Instantiate analyzer based on an analyzer alias.
+	 *
+	 * @param analyzerName the classname, optionally preceded by the package name
+	 * @return the analyzer, or null if the name wasn't recognized
+	 */
+	static Analyzer createAnalyzer(String analyzerName) {
+		analyzerName = analyzerName.toLowerCase();
+		if (analyzerName.equals("whitespace")) {
+			return new BLWhitespaceAnalyzer();
+		} else if (analyzerName.equals("default")) {
+			return new BLDutchAnalyzer();
+		} else if (analyzerName.equals("standard")) {
+			return new BLStandardAnalyzer();
+		} else if (analyzerName.equals("nontokenizing")) {
+			return new BLNonTokenizingAnalyzer();
+		}
+		return null;
+	}
+
 
 }

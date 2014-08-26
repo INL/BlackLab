@@ -114,14 +114,13 @@ public class LuceneUtil {
 	/**
 	 * Parse a query in the Lucene query language format (QueryParser supplied with Lucene).
 	 *
-	 * NOTE: this uses the default Dutch analyzer. Use the version of this method that takes an analyzer
-	 * if you need a different one.
-	 *
 	 * @param luceneQuery the query string
 	 * @param defaultField default search field
 	 * @return the query
 	 * @throws ParseException on syntax error
+	 * @deprecated use version that takes analyzer
 	 */
+	@Deprecated
 	public static Query parseLuceneQuery(String luceneQuery, String defaultField)
 			throws ParseException {
 		return parseLuceneQuery(luceneQuery, new BLDutchAnalyzer(), defaultField);
@@ -424,4 +423,5 @@ public class LuceneUtil {
 			throw new RuntimeException(e);
 		}
 	}
+
 }

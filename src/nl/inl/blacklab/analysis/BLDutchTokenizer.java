@@ -7,8 +7,8 @@ import org.apache.lucene.util.AttributeSource;
 import org.apache.lucene.util.Version;
 
 /**
- * A simple tokenizer for Dutch texts. Basically the whitespace tokenizer with
- * a few exceptional punctuation characters that are included in tokens.
+ * A simple tokenizer for Dutch texts. Basically the whitespace tokenizer
+ * with a few exceptional punctuation characters that are included in tokens.
  *
  * These are the exceptions:
  * * apostrophes (e.g. zo'n, da's: apostrophes at the beginning or end of a token will be filtered out later)

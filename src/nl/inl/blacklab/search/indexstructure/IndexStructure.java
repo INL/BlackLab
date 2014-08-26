@@ -79,8 +79,11 @@ public class IndexStructure {
 	/** Metadata field containing document pid */
 	private String pidField;
 
-	/** The index reader */
-	private DirectoryReader reader;
+	/** Default analyzer to use for metadata fields */
+	private String defaultAnalyzerName;
+
+	///** The index reader */
+	//private DirectoryReader reader;
 
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
@@ -90,37 +93,63 @@ public class IndexStructure {
 	 * @param createNewIndex whether we're creating a new index
 	 */
 	public IndexStructure(DirectoryReader reader, File indexDir, boolean createNewIndex) {
-		this.reader = reader;
+		this(reader, indexDir, createNewIndex, (File)null);
+	}
+
+	/**
+	 * Construct an IndexStructure object, querying the index for the available
+	 * fields and their types.
+	 * @param reader the index of which we want to know the structure
+	 * @param indexDir where the index (and the metadata file) is stored
+	 * @param createNewIndex whether we're creating a new index
+	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
+	 *   (if creating new index)
+	 */
+	public IndexStructure(DirectoryReader reader, File indexDir,
+			boolean createNewIndex, File indexTemplateFile) {
+		//this.reader = reader;
 		this.indexDir = indexDir;
 
 		metadataFieldInfos = new TreeMap<String, MetadataFieldDesc>();
 		complexFields = new TreeMap<String, ComplexFieldDesc>();
 
-		readMetadata(reader, createNewIndex);
+		readMetadata(reader, createNewIndex, indexTemplateFile);
 
-		// Detect the main properties for all complex fields
-		// (looks for fields with char offset information stored)
-		mainContentsField = null;
-		for (ComplexFieldDesc d: complexFields.values()) {
-			if (mainContentsField == null || d.getName().equals("contents"))
-				mainContentsField = d;
-			d.detectMainProperty(reader);
+		if (!createNewIndex) { // new index doesn't have this information yet
+			// Detect the main properties for all complex fields
+			// (looks for fields with char offset information stored)
+			mainContentsField = null;
+			for (ComplexFieldDesc d: complexFields.values()) {
+				if (mainContentsField == null || d.getName().equals("contents"))
+					mainContentsField = d;
+				d.detectMainProperty(reader);
+			}
 		}
 	}
 
 	/**
-	 * Read the indexmetadata.json, if it exists.
+	 * Read the indexmetadata.json, if it exists, or the template, if supplied.
 	 *
-	 * @param reader
-	 * @param indexDir
-	 * @param createNewIndex
+	 * @param reader the index of which we want to know the structure
+	 * @param indexDir where the index (and the metadata file) is stored
+	 * @param createNewIndex whether we're creating a new index
+	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
+	 *   (only if creating a new index)
 	 */
-	private void readMetadata(DirectoryReader reader, boolean createNewIndex) {
-		// Read and interpret index metadata file
+	private void readMetadata(DirectoryReader reader, boolean createNewIndex, File indexTemplateFile) {
+
 		File metadataFile = new File(indexDir, METADATA_FILE_NAME);
+		boolean usedTemplate = false;
+		if (createNewIndex && indexTemplateFile != null) {
+			// Copy the template file to the index dir and read the metadata again.
+			FileUtil.writeFile(metadataFile, FileUtil.readFile(indexTemplateFile));
+			usedTemplate = true;
+		}
+
+		// Read and interpret index metadata file
 		IndexMetadata indexMetadata;
 		boolean initTimestamps = false;
-		if (createNewIndex || !metadataFile.exists()) {
+		if ((createNewIndex && !usedTemplate) || !metadataFile.exists()) {
 			// No metadata file yet; start with a blank one
 			indexMetadata = new IndexMetadata(indexDir.getName());
 			initTimestamps = true;
@@ -150,7 +179,23 @@ public class IndexStructure {
 			getFieldInfoFromMetadata(indexMetadata, fis);
 		}
 		detectFields(fis); // even if we have metadata, we still have to detect props/alts
-		determineDocumentsFields(indexMetadata);
+		defaultAnalyzerName = indexMetadata.getDefaultAnalyzer();
+		determineDocumentFields(indexMetadata);
+
+		if (usedTemplate) {
+			// Update / clear possible old values that were in the template file
+			// (template file may simply be the metadata file copied from a previous version)
+
+			// Reset version info
+			blackLabBuildTime = Searcher.getBlackLabBuildTime();
+			indexFormat = "3";
+			timeModified = timeCreated = DateUtil.getSqlDateTimeString();
+
+			// Clear any recorded values in metadata fields
+			for (MetadataFieldDesc f: metadataFieldInfos.values()) {
+				f.resetForIndexing();
+			}
+		}
 	}
 
 	/**
@@ -177,6 +222,7 @@ public class IndexStructure {
 		JSONObject jsonComplexFields = new JSONObject();
 		root.put("fieldInfo", Json.object(
 			"namingScheme", ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS": "DEFAULT",
+			"defaultAnalyzer", defaultAnalyzerName,
 			"titleField", titleField,
 			"authorField", authorField,
 			"dateField", dateField,
@@ -518,7 +564,7 @@ public class IndexStructure {
 	 *
 	 * @param indexMetadata the metadata
 	 */
-	private void determineDocumentsFields(IndexMetadata indexMetadata) {
+	private void determineDocumentFields(IndexMetadata indexMetadata) {
 		titleField = authorField = dateField = pidField = null;
 		JSONObject fi = indexMetadata.getFieldInfo();
 
@@ -600,6 +646,14 @@ public class IndexStructure {
 	@Deprecated
 	public String getDocumentTitleField() {
 		return titleField();
+	}
+
+	/**
+	 * Name of the default analyzer to use for metadata fields.
+	 * @return the analyzer name (or DEFAULT for the BlackLab default)
+	 */
+	public String getDefaultAnalyzerName() {
+		return defaultAnalyzerName;
 	}
 
 	/**
@@ -733,36 +787,36 @@ public class IndexStructure {
 		return blackLabBuildTime;
 	}
 
-	/**
-	 * Set the template for the indexmetadata.json file for a new index.
-	 *
-	 * The template determines whether and how fields are tokenized/analyzed,
-	 * indicates which fields are title/author/date/pid fields, and provides
-	 * extra (optional) information like display names and descriptions.
-	 *
-	 * This method should be called just after creating the new index. It cannot
-	 * be used on existing indices; if you need to change something about your
-	 * index metadata, edit the file directly (but be careful, as it of course
-	 * will not affect already-indexed data).
-	 *
-	 * @param indexTemplateFile the JSON file to use as a template.
-	 */
-	public void setNewIndexMetadataTemplate(File indexTemplateFile) {
-		// Copy the template file to the index dir and read the metadata again.
-		File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME);
-		FileUtil.writeFile(indexMetadataFile, FileUtil.readFile(indexTemplateFile));
-		readMetadata(reader, false);
-
-		// Reset version info
-		blackLabBuildTime = Searcher.getBlackLabBuildTime();
-		indexFormat = "3";
-		timeModified = timeCreated = DateUtil.getSqlDateTimeString();
-
-		// Clear any recorded values in metadata fields
-		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
-			f.resetForIndexing();
-		}
-	}
+//	/**
+//	 * Set the template for the indexmetadata.json file for a new index.
+//	 *
+//	 * The template determines whether and how fields are tokenized/analyzed,
+//	 * indicates which fields are title/author/date/pid fields, and provides
+//	 * extra (optional) information like display names and descriptions.
+//	 *
+//	 * This method should be called just after creating the new index. It cannot
+//	 * be used on existing indices; if you need to change something about your
+//	 * index metadata, edit the file directly (but be careful, as it of course
+//	 * will not affect already-indexed data).
+//	 *
+//	 * @param indexTemplateFile the JSON file to use as a template.
+//	 */
+//	public void setNewIndexMetadataTemplate(File indexTemplateFile) {
+//		// Copy the template file to the index dir and read the metadata again.
+//		File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME);
+//		FileUtil.writeFile(indexMetadataFile, FileUtil.readFile(indexTemplateFile));
+//		readMetadata(reader, false);
+//
+//		// Reset version info
+//		blackLabBuildTime = Searcher.getBlackLabBuildTime();
+//		indexFormat = "3";
+//		timeModified = timeCreated = DateUtil.getSqlDateTimeString();
+//
+//		// Clear any recorded values in metadata fields
+//		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
+//			f.resetForIndexing();
+//		}
+//	}
 
 	/**
 	 * While indexing, check if a complex field is already registered in the

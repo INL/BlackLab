@@ -189,9 +189,26 @@ public class Indexer {
 	 */
 	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
 			throws IOException {
+		this(directory, create, docIndexerClass, (File)null);
+	}
+
+	/**
+	 * Construct Indexer
+	 *
+	 * @param directory
+	 *            the main BlackLab index directory
+	 * @param create
+	 *            if true, creates a new index; otherwise, appends to existing index
+	 * @param docIndexerClass how to index the files
+	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
+	 *   (if creating new index)
+	 * @throws IOException
+	 */
+	public Indexer(File directory, boolean create,
+			Class<? extends DocIndexer> docIndexerClass, File indexTemplateFile) throws IOException {
 		this.docIndexerClass = docIndexerClass;
 
-		searcher = Searcher.openForWriting(directory, create);
+		searcher = Searcher.openForWriting(directory, create, indexTemplateFile);
 		if (!create)
 			searcher.getIndexStructure().setModified();
 
@@ -323,7 +340,7 @@ public class Indexer {
 	 * @throws IOException
 	 */
 	public void add(Document document) throws CorruptIndexException, IOException {
-		searcher.getWriter().addDocument(document);
+		searcher.getWriter().addDocument(document, searcher.getAnalyzer());
 		getListener().luceneDocumentAdded();
 	}
 
@@ -867,23 +884,23 @@ public class Indexer {
 		return searcher.getWriter();
 	}
 
-	/**
-	 * Set the template for the indexmetadata.json file for a new index.
-	 *
-	 * The template determines whether and how fields are tokenized/analyzed,
-	 * indicates which fields are title/author/date/pid fields, and provides
-	 * extra (optional) information like display names and descriptions.
-	 *
-	 * This method should be called just after creating the new index. It cannot
-	 * be used on existing indices; if you need to change something about your
-	 * index metadata, edit the file directly (but be careful, as it of course
-	 * will not affect already-indexed data).
-	 *
-	 * @param indexTemplateFile the JSON file to use as a template.
-	 */
-	public void setNewIndexMetadataTemplate(File indexTemplateFile) {
-		searcher.getIndexStructure().setNewIndexMetadataTemplate(indexTemplateFile);
-	}
+//	/**
+//	 * Set the template for the indexmetadata.json file for a new index.
+//	 *
+//	 * The template determines whether and how fields are tokenized/analyzed,
+//	 * indicates which fields are title/author/date/pid fields, and provides
+//	 * extra (optional) information like display names and descriptions.
+//	 *
+//	 * This method should be called just after creating the new index. It cannot
+//	 * be used on existing indices; if you need to change something about your
+//	 * index metadata, edit the file directly (but be careful, as it of course
+//	 * will not affect already-indexed data).
+//	 *
+//	 * @param indexTemplateFile the JSON file to use as a template.
+//	 */
+//	public void setNewIndexMetadataTemplate(File indexTemplateFile) {
+//		searcher.getIndexStructure().setNewIndexMetadataTemplate(indexTemplateFile);
+//	}
 
 	Searcher getSearcher() {
 		return searcher;

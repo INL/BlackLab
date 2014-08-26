@@ -332,7 +332,7 @@ public class QueryTool {
 		@Override
 		public TextPattern parse(String query) throws ParseException {
 			try {
-				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_42, CONTENTS_FIELD, searcher.getSearchAnalyzer());
+				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_42, CONTENTS_FIELD, searcher.getAnalyzer());
 				parser.setAllowLeadingWildcard(true);
 				return parser.parse(query);
 			} catch (nl.inl.blacklab.queryParser.lucene.ParseException e) {
@@ -813,7 +813,7 @@ public class QueryTool {
 				} else {
 					String filterExpr = cmd.substring(7);
 					try {
-						filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, searcher.getSearchAnalyzer(), "title");
+						filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, searcher.getAnalyzer(), "title");
 						outprintln("Filter created: " + filterQuery);
 						if (verbose)
 							outprintln(filterQuery.getClass().getName());
