@@ -537,7 +537,7 @@ public class Indexer {
 	 */
 	private void indexInternal(File fileToIndex, String glob, boolean recurseSubdirs)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-		String fn = fileToIndex.getAbsolutePath(); //Name();
+		String fn = fileToIndex.getCanonicalPath(); //Name();
 		if (fileToIndex.isDirectory()) {
 			indexDir(fileToIndex, glob, recurseSubdirs);
 		} else {

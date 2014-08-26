@@ -50,7 +50,7 @@ public class PropertiesUtil {
 	public static Properties readFromFile(File file) {
 		try {
 			if (!file.isFile()) {
-				throw new RuntimeException("Property file " + file.getAbsolutePath()
+				throw new RuntimeException("Property file " + file.getCanonicalPath()
 						+ " does not exist or is not a regular file!");
 			}
 

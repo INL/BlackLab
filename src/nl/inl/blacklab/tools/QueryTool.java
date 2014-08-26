@@ -614,7 +614,11 @@ public class QueryTool {
 
 		if (in != null) {
 			printProgramHead();
-			outprintln("Opening index " + indexDir.getAbsolutePath() + "...");
+			try {
+				outprintln("Opening index " + indexDir.getCanonicalPath() + "...");
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		// Create the BlackLab searcher object
