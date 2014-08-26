@@ -32,7 +32,6 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
-import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.externalstorage.ContentStoreDir;
@@ -237,9 +236,6 @@ public class Searcher {
 	/** Analyzer used for indexing our metadata fields */
 	private Analyzer indexAnalyzer;
 
-	/** Analyzer used for parsing metadata field queries */
-	private Analyzer searchAnalyzer;
-
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).
 	 *
@@ -303,7 +299,6 @@ public class Searcher {
 
 		// Instantiate analyzer used for metadata indexing and queries
 		indexAnalyzer = new BLDutchAnalyzer(); // TODO make configurable
-		searchAnalyzer = new BLWhitespaceAnalyzer();
 
 		if (indexMode) {
 			indexWriter = openIndexWriter(indexDir, createNewIndex);
@@ -1625,30 +1620,33 @@ public class Searcher {
 	}
 
 	/**
+	 * Get the analyzer for indexing and searching.
 	 * @return the analyzer
-	 * @deprecated use getIndexAnalyzer() or getSearchAnalyzer()
 	 */
-	@Deprecated
 	public Analyzer getAnalyzer() {
-		return getIndexAnalyzer();
+		return indexAnalyzer;
 	}
 
 	/**
 	 * Get the analyzer to use for indexing.
 	 * (strips things like wildcards, etc.)
 	 * @return the analyzer
+	 * @deprecated use getAnalyzer() (we can use the same analyzer for indexing and searching after all because wildcard queries are never analyzed)
 	 */
+	@Deprecated
 	public Analyzer getIndexAnalyzer() {
-		return indexAnalyzer;
+		return getAnalyzer();
 	}
 
 	/**
 	 * Get the analyzer to use for parsing document filters while searching.
 	 * (leaves wildcards alone)
 	 * @return the analyzer
+	 * @deprecated use getAnalyzer() (we can use the same analyzer for indexing and searching after all because wildcard queries are never analyzed)
 	 */
+	@Deprecated
 	public Analyzer getSearchAnalyzer() {
-		return searchAnalyzer;
+		return getAnalyzer();
 	}
 
 	/**
