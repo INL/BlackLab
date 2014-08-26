@@ -115,6 +115,26 @@ public class Searcher {
 	/** The collator to use for sorting. Defaults to English collator. */
 	private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
 
+	/** Analyzer based on WhitespaceTokenizer */
+	private static BLWhitespaceAnalyzer whitespaceAnalyzer;
+
+	/** Analyzer for Dutch and other Latin script languages */
+	private static BLDutchAnalyzer defaultAnalyzer;
+
+	/** Analyzer based on StandardTokenizer */
+	private static BLStandardAnalyzer standardAnalyzer;
+
+	/** Analyzer that doesn't tokenize */
+	private static BLNonTokenizingAnalyzer nonTokenizingAnalyzer;
+
+	static {
+		// Create the various analyzer objects we'll be using for metadata fields.
+		whitespaceAnalyzer = new BLWhitespaceAnalyzer();
+		defaultAnalyzer = new BLDutchAnalyzer();
+		standardAnalyzer = new BLStandardAnalyzer();
+		nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
+	}
+
 	/** The collator to use for sorting. Defaults to English collator. */
 	private Collator collator = defaultCollator;
 
@@ -392,20 +412,22 @@ public class Searcher {
 
 	private void createAnalyzers() {
 		Map<String, Analyzer> fieldAnalyzers = new HashMap<String, Analyzer>();
+		fieldAnalyzers.put("fromInputFile", getAnalyzerInstance("nontokenizing"));
+		Analyzer baseAnalyzer = getAnalyzerInstance(indexStructure.getDefaultAnalyzerName());
 		for (String fieldName: indexStructure.getMetadataFields()) {
 			MetadataFieldDesc fd = indexStructure.getMetadataFieldDesc(fieldName);
 			String analyzerName = fd.getAnalyzerName();
 			if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("DEFAULT")) {
-				Analyzer fieldAnalyzer = createAnalyzer(analyzerName);
+				Analyzer fieldAnalyzer = getAnalyzerInstance(analyzerName);
 				if (fieldAnalyzer == null) {
 					logger.error("Unknown analyzer name " + analyzerName + " for field " + fieldName);
 				} else {
-					fieldAnalyzers.put(fieldName, fieldAnalyzer);
+					if (fieldAnalyzer != baseAnalyzer)
+						fieldAnalyzers.put(fieldName, fieldAnalyzer);
 				}
 			}
 		}
 
-		Analyzer baseAnalyzer = createAnalyzer(indexStructure.getDefaultAnalyzerName());
 		analyzer = new PerFieldAnalyzerWrapper(baseAnalyzer, fieldAnalyzers);
 	}
 
@@ -1776,16 +1798,16 @@ public class Searcher {
 	 * @param analyzerName the classname, optionally preceded by the package name
 	 * @return the analyzer, or null if the name wasn't recognized
 	 */
-	static Analyzer createAnalyzer(String analyzerName) {
+	static Analyzer getAnalyzerInstance(String analyzerName) {
 		analyzerName = analyzerName.toLowerCase();
 		if (analyzerName.equals("whitespace")) {
-			return new BLWhitespaceAnalyzer();
+			return whitespaceAnalyzer;
 		} else if (analyzerName.equals("default")) {
-			return new BLDutchAnalyzer();
+			return defaultAnalyzer;
 		} else if (analyzerName.equals("standard")) {
-			return new BLStandardAnalyzer();
-		} else if (analyzerName.equals("nontokenizing")) {
-			return new BLNonTokenizingAnalyzer();
+			return standardAnalyzer;
+		} else if (analyzerName.matches("(non|un)tokeniz(ing|ed)")) {
+			return nonTokenizingAnalyzer;
 		}
 		return null;
 	}
