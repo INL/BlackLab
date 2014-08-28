@@ -174,11 +174,11 @@ public class Example {
 		for (Hit hit : hits) {
 			Concordance conc = hits.getConcordance(hit);
 			// Strip out XML tags for display.
-			String left = XmlUtil.xmlToPlainText(conc.left);
-			String hitText = XmlUtil.xmlToPlainText(conc.hit);
-			String right = XmlUtil.xmlToPlainText(conc.right);
+			String left = XmlUtil.xmlToPlainText(conc.left());
+			String match = XmlUtil.xmlToPlainText(conc.match());
+			String right = XmlUtil.xmlToPlainText(conc.right());
 
-			System.out.printf("[%05d:%06d] %45s[%s]%s\n", hit.doc, hit.start, left, hitText, right);
+			System.out.printf("[%05d:%06d] %45s[%s]%s\n", hit.doc, hit.start, left, match, right);
 		}
 	}
 

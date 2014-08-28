@@ -9,18 +9,49 @@ import org.junit.Test;
 
 public class TestKwic {
 
+	List<String> props = Arrays.asList("punct", "lemma", "pos", "word");
+	List<String> tokens = Arrays.asList(
+			" ", "de", "lw", "De",
+			" ", "snel", "bn", "snelle",
+			" ", "bruin", "bn", "bruine",
+			" ", "vos", "zn", "vos");
+	List<String> left = Arrays.asList(" ", "de", "lw", "De", " ", "snel", "bn", "snelle");
+	List<String> match = Arrays.asList(" ", "bruin", "bn", "bruine");
+	List<String> right = Arrays.asList(" ", "vos", "zn", "vos");
+	String expLeft = "<w lemma=\"de\" pos=\"lw\">De</w> <w lemma=\"snel\" pos=\"bn\">snelle</w> ";
+	String expMatch = "<w lemma=\"bruin\" pos=\"bn\">bruine</w>";
+	String expRight = " <w lemma=\"vos\" pos=\"zn\">vos</w>";
+
 	@Test
 	public void testKwicToConcordance() {
-		List<String> props = Arrays.asList("punct", "lemma", "pos", "word");
-		List<String> left = Arrays.asList(" ", "de", "lw", "De", " ", "snel", "bn", "snelle");
-		List<String> match = Arrays.asList(" ", "bruin", "bn", "bruine");
-		List<String> right = Arrays.asList(" ", "vos", "zn", "vos");
-
-		Kwic kwic = new Kwic(props, left, match, right);
+		Kwic kwic = new Kwic(props, tokens, 2, 3);
 		Concordance conc = kwic.toConcordance();
 
-		Assert.assertEquals("<w lemma=\"de\" pos=\"lw\">De</w> <w lemma=\"snel\" pos=\"bn\">snelle</w> ", conc.left);
-		Assert.assertEquals("<w lemma=\"bruin\" pos=\"bn\">bruine</w>", conc.hit);
-		Assert.assertEquals(" <w lemma=\"vos\" pos=\"zn\">vos</w>", conc.right);
+		Assert.assertEquals(expLeft, conc.left());
+		Assert.assertEquals(expMatch, conc.match());
+		Assert.assertEquals(expRight, conc.right());
+	}
+
+	@SuppressWarnings("deprecation")
+	@Test
+	public void testKwicOldConstructor() {
+		Kwic kwic = new Kwic(props, left, match, right);
+
+		Assert.assertEquals(expLeft + expMatch + expRight, kwic.getStringContents());
+		Assert.assertEquals(left, kwic.getLeft());
+		Assert.assertEquals(match, kwic.getMatch());
+		Assert.assertEquals(right, kwic.getRight());
+		Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.getLeft("word"));
+	}
+
+	@Test
+	public void testKwicNewConstructor() {
+		Kwic kwic = new Kwic(props, tokens, 2, 3);
+
+		Assert.assertEquals(expLeft + expMatch + expRight, kwic.getStringContents());
+		Assert.assertEquals(left, kwic.getLeft());
+		Assert.assertEquals(match, kwic.getMatch());
+		Assert.assertEquals(right, kwic.getRight());
+		Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.getLeft("word"));
 	}
 }

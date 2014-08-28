@@ -22,30 +22,103 @@ package nl.inl.blacklab.search;
  */
 public class Concordance {
 
-	/** Left side of concordance */
+	/** Document fragment to use to create concordance */
+	String fragment;
+
+	/** Where in content the match starts */
+	int matchStart;
+
+	/** Where in content the match ends */
+	int matchEnd;
+
+	/**
+	 * @deprecated use method left()
+	 */
+	@Deprecated
 	public String left;
 
-	/** Hit text of concordance */
+	/**
+	 * @deprecated use method match()
+	 */
+	@Deprecated
 	public String hit;
 
-	/** Right side of concordance */
+	/**
+	 * @deprecated use method right()
+	 */
+	@Deprecated
 	public String right;
 
 	/**
-	 * Construct a hit object
+	 * Construct a concordance.
 	 *
-	 * @param conc
-	 *            concordance information
+	 * @param conc array containing left part, match part and right part of the concordance
 	 */
 	public Concordance(String[] conc) {
-		this.left = conc[0];
-		this.hit = conc[1];
-		this.right = conc[2];
+		fragment = conc[0] + conc[1] + conc[2];
+		matchStart = conc[0].length();
+		matchEnd = matchStart + conc[1].length();
+		left = left();
+		hit = match();
+		right = right();
+	}
+
+	/**
+	 * Construct a concordance.
+	 *
+	 * Note that if it not guarantueed that each parts will be well-formed XML;
+	 * if you require that, you should use XmlHighlighter to do this yourself.
+	 *
+	 * @param contents part of the document content to use as concordance
+	 * @param matchStart where the match starts
+	 * @param matchEnd where the match ends
+	 */
+	public Concordance(String contents, int matchStart, int matchEnd) {
+		fragment = contents;
+		this.matchStart = matchStart;
+		this.matchEnd = matchEnd;
+		left = left();
+		hit = match();
+		right = right();
 	}
 
 	@Override
 	public String toString() {
-		return String.format("conc: %s [%s] %s", left, hit, right);
+		return String.format("conc: %s[%s]%s", left(), match(), right());
+	}
+
+	/**
+	 * Return the part of the content to the left of the matched part.
+	 * @return the left context
+	 */
+	public String left() {
+		return fragment.substring(0, matchStart);
+	}
+
+	/**
+	 * Return the matched part of the content.
+	 * @return the matched text.
+	 */
+	public String match() {
+		return fragment.substring(matchStart, matchEnd);
+	}
+
+	/**
+	 * Return the matched part of the content.
+	 * @return the matched part of the content.
+	 * @deprecated renamed to match()
+	 */
+	@Deprecated
+	public String hit() {
+		return match();
+	}
+
+	/**
+	 * Return the part of the content to the right of the matched part.
+	 * @return the right context
+	 */
+	public String right() {
+		return fragment.substring(matchEnd);
 	}
 
 }

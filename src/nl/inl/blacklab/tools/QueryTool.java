@@ -790,9 +790,9 @@ public class QueryTool {
 				} else {
 					Hit h = currentHitSet.get(hitId);
 					Concordance conc = hits.getConcordance(h, snippetSize);
-					String left = stripXML ? XmlUtil.xmlToPlainText(conc.left) : conc.left;
-					String middle = stripXML ? XmlUtil.xmlToPlainText(conc.hit) : conc.hit;
-					String right = stripXML ? XmlUtil.xmlToPlainText(conc.right) : conc.right;
+					String left = stripXML ? XmlUtil.xmlToPlainText(conc.left()) : conc.left();
+					String middle = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
+					String right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 					outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
 				}
 			} else if (lcased.startsWith("highlight ")) {
@@ -1575,9 +1575,9 @@ public class QueryTool {
 
 			// Filter out the XML tags
 			String left, hitText, right;
-			left = stripXML ? XmlUtil.xmlToPlainText(conc.left) : conc.left;
-			hitText = stripXML ? XmlUtil.xmlToPlainText(conc.hit) : conc.hit;
-			right = stripXML ? XmlUtil.xmlToPlainText(conc.right) : conc.right;
+			left = stripXML ? XmlUtil.xmlToPlainText(conc.left()) : conc.left();
+			hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
+			right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
 			toShow.add(new HitToShow(hit.doc, left, hitText, right));
 			if (leftContextMaxSize < left.length())

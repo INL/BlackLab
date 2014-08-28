@@ -61,16 +61,4 @@ public final class BLWhitespaceAnalyzer extends Analyzer {
 			throw new RuntimeException(e);
 		}
 	}
-
-	/*@Override
-	public TokenStream tokenStream(String fieldName, Reader reader) {
-		TokenStream ts = new BLDutchTokenizer(reader);
-		ts = new BLDutchTokenFilter(ts);
-		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
-		{
-			ts = new LowerCaseFilter(Version.LUCENE_42, ts); // lowercase all
-			ts = new RemoveAllAccentsFilter(ts); // remove accents
-		}
-		return ts;
-	}*/
 }

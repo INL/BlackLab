@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,71 +27,78 @@ import nl.inl.util.StringUtil;
  * A "keyword in context" for a hit
  * (left context, hit text, right context).
  *
- * The context lists in this class store all the properties for each word,
- * in this order:
- * - punctuation before this word ("punct")
- * - all other properties except punctuation and word (e.g. "lemma", "pos")
- * - the word itself ("word")
- *
- * So if you had "lemma" and "pos" as extra properties in addition to "punct"
- * and "word", and you had 10 words of context, the List size would be 40.
- *
- * (The reason for the specific ordering is ease of converting it to XML, with
- * the extra properties being attributes and the word itself being the element
- * content of the word tags)
- *
  * The Hits class matches this to the Hit.
  *
- * This object may be converted to the old-style Concordance object (with XML strings)
+ * This object may be converted to a Concordance object (with XML strings)
  * by calling Kwic.toConcordance().
  */
 public class Kwic {
 
-	/** What properties are stored in what order for this Kwic (e.g. word, lemma, pos) */
-	List<String> properties;
+	DocContentsFromForwardIndex fragment;
 
-	/** Word properties for context left of match (properties.size() values per word;
-	 *  e.g. punct 1, lemma 1, pos 1, word 1, punct 2, lemma 2, pos 2, word 2, etc.) */
-	List<String> left;
+	int hitStart;
 
-	/** Word properties for matched text (properties.size() values per word).
-        (see left for the order) */
-	List<String> match;
-
-	/** Word properties for context right of match (properties.size() values per word).
-        (see left for the order) */
-	List<String> right;
+	int hitEnd;
 
 	/**
-	 * Construct a hit object
+	 * Construct a Kwic object
 	 *
 	 * @param properties
 	 *            What properties are stored in what order for this Kwic (e.g. word, lemma, pos)
 	 * @param left
 	 * @param match
 	 * @param right
+	 * @deprecated use contructor that takes a single list of tokens and two offsets
 	 */
+	@Deprecated
 	public Kwic(List<String> properties, List<String> left, List<String> match, List<String> right) {
-		this.properties = properties;
-		this.left = left;
-		this.match = match;
-		this.right = right;
+		List<String> tokens = new ArrayList<String>();
+		tokens.addAll(left);
+		tokens.addAll(match);
+		tokens.addAll(right);
+		fragment = new DocContentsFromForwardIndex(properties, tokens);
+		hitStart = left.size() / properties.size();
+		hitEnd = hitStart + match.size() / properties.size();
 	}
 
-	public List<String> getProperties() {
-		return Collections.unmodifiableList(properties);
+	/**
+	 * Construct a Kwic object
+	 *
+	 * @param properties
+	 *            What properties are stored in what order for this Kwic (e.g. word, lemma, pos)
+	 * @param tokens the contents
+	 * @param matchStart where the match starts, in word positions
+	 * @param matchEnd where the match ends, in word positions
+	 */
+	public Kwic(List<String> properties, List<String> tokens, int matchStart, int matchEnd) {
+		fragment = new DocContentsFromForwardIndex(properties, tokens);
+		this.hitStart = matchStart;
+		this.hitEnd = matchEnd;
+	}
+
+	/**
+	 * Construct a Kwic object
+	 *
+	 * @param fragment the content fragment to make the Kwic from
+	 * @param matchStart where the match starts, in word positions
+	 * @param matchEnd where the match ends, in word positions
+	 */
+	public Kwic(DocContentsFromForwardIndex fragment, int matchStart, int matchEnd) {
+		this.fragment = fragment;
+		this.hitStart = matchStart;
+		this.hitEnd = matchEnd;
 	}
 
 	public List<String> getLeft() {
-		return Collections.unmodifiableList(left);
+		return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.properties.size()));
 	}
 
 	public List<String> getMatch() {
-		return Collections.unmodifiableList(match);
+		return Collections.unmodifiableList(fragment.tokens.subList(hitStart * fragment.properties.size(), hitEnd * fragment.properties.size()));
 	}
 
 	public List<String> getRight() {
-		return Collections.unmodifiableList(right);
+		return Collections.unmodifiableList(fragment.tokens.subList(hitEnd * fragment.properties.size(), fragment.tokens.size()));
 	}
 
 	/**
@@ -99,18 +107,23 @@ public class Kwic {
 	 *
 	 * @param allContext the complete context list of all properties
 	 * @param property the property to get the context for
+	 * @param start first word position to get the property context for
+	 * @param end word position after the last to get the property context for
 	 * @return the context for this property
 	 */
-	private List<String> getSinglePropertyContext(final List<String> allContext, String property) {
-		final int nProp = properties.size();
-		final int size = allContext.size() / nProp;
-		final int propIndex = properties.indexOf(property);
+	private List<String> getSinglePropertyContext(String property, int start, int end) {
+		final int nProp = fragment.properties.size();
+		final int size = end - start;
+		final int propIndex = fragment.properties.indexOf(property);
+		final int startIndex = start * nProp + propIndex;
 		if (propIndex == -1)
 			return null;
 		return new AbstractList<String>() {
 			@Override
 			public String get(int index) {
-				return allContext.get(propIndex + nProp * index);
+				if (index >= size)
+					throw new IndexOutOfBoundsException();
+				return fragment.tokens.get(startIndex + nProp * index);
 			}
 
 			@Override
@@ -126,15 +139,15 @@ public class Kwic {
 	 * @return the context
 	 */
 	public List<String> getLeft(String property) {
-		return getSinglePropertyContext(left, property);
+		return getSinglePropertyContext(property, 0, hitStart);
 	}
 
 	public List<String> getMatch(String property) {
-		return getSinglePropertyContext(match, property);
+		return getSinglePropertyContext(property, hitStart, hitEnd);
 	}
 
 	public List<String> getRight(String property) {
-		return getSinglePropertyContext(right, property);
+		return getSinglePropertyContext(property, hitEnd, fragment.tokens.size() / fragment.properties.size());
 	}
 
 	/**
@@ -143,10 +156,11 @@ public class Kwic {
 	 */
 	public Concordance toConcordance() {
 		String[] conc = new String[3];
+		List<String> match = getMatch();
 		String addPunctAfter = match.size() > 0 ? match.get(0) : "";
-		conc[0] = xmlString(left, addPunctAfter, true);
+		conc[0] = xmlString(getLeft(), addPunctAfter, true);
 		conc[1] = xmlString(match, null, true);
-		conc[2] = xmlString(right, null, false);
+		conc[2] = xmlString(getRight(), null, false);
 		return new Concordance(conc);
 	}
 
@@ -159,7 +173,7 @@ public class Kwic {
 	 * @return the XML string
 	 */
 	private String xmlString(List<String> context, String addPunctAfter, boolean leavePunctBefore) {
-		int valuesPerWord = properties.size();
+		int valuesPerWord = fragment.properties.size();
 		int numberOfWords = context.size() / valuesPerWord;
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < numberOfWords; i++) {
@@ -168,8 +182,8 @@ public class Kwic {
 			if (i > 0 || !leavePunctBefore)
 				b.append(StringUtil.escapeXmlChars(context.get(vIndex)));
 			b.append("<w");
-			for (int k = 1; k < properties.size() - 1; k++) {
-				String name = properties.get(k);
+			for (int k = 1; k < fragment.properties.size() - 1; k++) {
+				String name = fragment.properties.get(k);
 				String value = context.get(vIndex + 1 + j);
 				b.append(" ").append(name).append("=\"").append(StringUtil.escapeXmlChars(value)).append("\"");
 				j++;
@@ -181,6 +195,14 @@ public class Kwic {
 		if (addPunctAfter != null)
 			b.append(addPunctAfter);
 		return b.toString();
+	}
+
+	public List<String> getProperties() {
+		return fragment.getProperties();
+	}
+
+	public String getStringContents() {
+		return fragment.getStringContents();
 	}
 
 }

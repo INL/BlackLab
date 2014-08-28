@@ -1118,8 +1118,13 @@ public class Hits implements Iterable<Hit> {
 	public synchronized Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
 		Hits h = new Hits(searcher, oneHit); // FIXME: doesn't copy all Hits-specific settings
-		Map<Hit, Concordance> oneConc = h.retrieveConcordances(concsType == ConcordanceType.FORWARD_INDEX, contextSize, fieldName);
-		return oneConc.get(hit);
+		if (concsType == ConcordanceType.FORWARD_INDEX) {
+			Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, fieldName);
+			return oneKwic.get(hit).toConcordance();
+		} else {
+			Map<Hit, Concordance> oneConc = h.retrieveConcordancesFromContentStore(contextSize, fieldName);
+			return oneConc.get(hit);
+		}
 	}
 
 	/**
@@ -1258,7 +1263,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = retrieveConcordances(false, desiredContextSize, concordanceFieldName);
+		concordances = retrieveConcordancesFromContentStore(desiredContextSize, concordanceFieldName);
 	}
 
 	/**
@@ -1675,139 +1680,6 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Retrieves the concordance information (left, hit and right context) for a number of hits in
-	 * the same document from the Forward Index.
-	 *
-	 * @param forwardIndex
-	 *    Forward index for the words
-	 * @param punctForwardIndex
-	 *    Forward index for the punctuation
-	 * @param attrForwardIndices
-	 *    Forward indices for the XML attributes (i.e. lemma and pos, or other properties you've indexed),
-	 *    or null if none
-	 * @param wordsAroundHit
-	 *            number of words left and right of hit to fetch
-	 * @param conc
-	 *            where to add the concordances
-	 */
-	synchronized void makeConcordancesSingleDocForwardIndex(ForwardIndex forwardIndex,
-			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices,
-			int wordsAroundHit, Map<Hit, Concordance> conc) {
-		if (hits.size() == 0)
-			return;
-
-		// Save existing context so we can restore it afterwards
-		int[][] oldContexts = null;
-		if (hits.size() > 0 && contexts != null)
-			oldContexts = saveContexts();
-
-		// TODO: more efficient to get all contexts with one getContextWords() call!
-		//    Also, don't overwrite 'contexts' but retrieve these in separate local variable.
-
-		// Get punctuation context
-		int[][] punctContext = null;
-		if (punctForwardIndex != null) {
-			getContextWords(wordsAroundHit, Arrays.asList(punctForwardIndex));
-			punctContext = saveContexts();
-		}
-		Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
-
-		// Get attributes context
-		String[] attrName = null;
-		ForwardIndex[] attrFI = null;
-		Terms[] attrTerms = null;
-		int[][][] attrContext = null;
-		if (attrForwardIndices != null) {
-			int n = attrForwardIndices.size();
-			attrName = new String[n];
-			attrFI = new ForwardIndex[n];
-			attrTerms = new Terms[n];
-			attrContext = new int[n][][];
-			int i = 0;
-			for (Map.Entry<String, ForwardIndex> e: attrForwardIndices.entrySet()) {
-				attrName[i] = e.getKey();
-				attrFI[i] = e.getValue();
-				attrTerms[i] = attrFI[i].getTerms();
-				getContextWords(wordsAroundHit, Arrays.asList(attrFI[i]));
-				attrContext[i] = saveContexts();
-				i++;
-			}
-		}
-
-		// Get word context
-		if (forwardIndex != null)
-			getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
-		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
-
-		// Make the concordances from the context
-		for (int i = 0; i < hits.size(); i++) {
-			Hit h = hits.get(i);
-			StringBuilder[] part = new StringBuilder[3];
-			for (int j = 0; j < 3; j++) {
-				part[j] = new StringBuilder();
-			}
-			int currentPart = 0;
-			StringBuilder current = part[currentPart];
-			int[] context = contexts[i];
-			int contextLength = context[CONTEXTS_LENGTH_INDEX];
-			int contextRightStart = context[CONTEXTS_RIGHT_START_INDEX];
-			int contextHitStart = context[CONTEXTS_HIT_START_INDEX];
-			int indexInContext = CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-			for (int j = 0; j < contextLength; j++, indexInContext++) {
-
-				if (j == contextRightStart) {
-					currentPart = 2;
-					current = part[currentPart];
-				}
-
-				// Add punctuation
-				// (NOTE: punctuation after match is added to right context;
-				// punctuation before match is added to left context)
-				if (j > 0) {
-					if (punctTerms == null) {
-						// There is no punctuation forward index. Just put a space
-						// between every word.
-						current.append(" ");
-					} else
-						current.append(punctTerms.get(punctContext[i][indexInContext]));
-				}
-
-				if (currentPart == 0 && j == contextHitStart) {
-					currentPart = 1;
-					current = part[currentPart];
-				}
-
-				// Make word tag with lemma and pos attributes
-				current.append("<w");
-				if (attrContext != null) {
-					for (int k = 0; k < attrContext.length; k++) {
-						current.append(" ")
-								.append(attrName[k])
-								.append("=\"")
-								.append(StringUtil.escapeXmlChars(attrTerms[k]
-										.get(attrContext[k][i][indexInContext]))).append("\"");
-					}
-				}
-				current.append(">");
-
-				if (terms != null)
-					current.append(terms.get(contexts[i][indexInContext]));
-
-				// End word tag
-				current.append("</w>");
-			}
-			String[] concStr = new String[] { part[0].toString(), part[1].toString(),
-					part[2].toString() };
-			Concordance concordance = new Concordance(concStr);
-			conc.put(h, concordance);
-		}
-
-		if (oldContexts != null) {
-			restoreContexts(oldContexts);
-		}
-	}
-
-	/**
 	 * Retrieves the KWIC information (KeyWord In Context: left, hit and right context) for
 	 * a number of hits in the same document from the ContentStore.
 	 *
@@ -1873,12 +1745,7 @@ public class Hits implements Iterable<Hit> {
 		// Make the concordances from the context
 		for (int i = 0; i < hits.size(); i++) {
 			Hit h = hits.get(i);
-			List<List<String>> part = new ArrayList<List<String>>();
-			for (int j = 0; j < 3; j++) {
-				part.add(new ArrayList<String>());
-			}
-			int currentPart = 0;
-			List<String> current = part.get(currentPart);
+			List<String> tokens = new ArrayList<String>();
 			int[] context = contexts[i];
 			int contextLength = context[CONTEXTS_LENGTH_INDEX];
 			int contextRightStart = context[CONTEXTS_RIGHT_START_INDEX];
@@ -1886,37 +1753,27 @@ public class Hits implements Iterable<Hit> {
 			int indexInContext = CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
 			for (int j = 0; j < contextLength; j++, indexInContext++) {
 
-				if (j == contextRightStart) {
-					currentPart = 2;
-					current = part.get(currentPart);
-				}
-
-				if (currentPart == 0 && j == contextHitStart) {
-					currentPart = 1;
-					current = part.get(currentPart);
-				}
-
 				// Add punctuation before word
 				// (Applications may choose to ignore punctuation before the first word)
 				if (punctTerms == null) {
 					// There is no punctuation forward index. Just put a space
 					// between every word.
-					current.add(" ");
+					tokens.add(" ");
 				} else
-					current.add(punctTerms.get(punctContext[i][indexInContext]));
+					tokens.add(punctTerms.get(punctContext[i][indexInContext]));
 
 				// Add extra attributes (e.g. lemma, pos)
 				if (attrContext != null) {
 					for (int k = 0; k < attrContext.length; k++) {
-						current.add(attrTerms[k].get(attrContext[k][i][indexInContext]));
+						tokens.add(attrTerms[k].get(attrContext[k][i][indexInContext]));
 					}
 				}
 
 				// Add word
 				if (terms != null)
-					current.add(terms.get(context[indexInContext]));
+					tokens.add(terms.get(context[indexInContext]));
 				else
-					current.add(""); // weird, but make sure the numbers add up at the end
+					tokens.add(""); // weird, but make sure the numbers add up at the end
 
 			}
 			List<String> properties = new ArrayList<String>();
@@ -1925,7 +1782,7 @@ public class Hits implements Iterable<Hit> {
 				properties.add(attrName[k]);
 			}
 			properties.add(searcher.concWordFI);
-			Kwic kwic = new Kwic(properties, part.get(0), part.get(1), part.get(2));
+			Kwic kwic = new Kwic(properties, tokens, contextHitStart, contextRightStart);
 			kwics.put(h, kwic);
 		}
 
@@ -2137,26 +1994,6 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Retrieve concordancs for a list of hits.
-	 *
-	 * Concordances are the hit words 'centered' with a certain number of context words around them.
-	 *
-	 * The size of the left and right context (in words) may be set using
-	 * Searcher.setConcordanceContextSize().
-	 *
-	 * @param useForwardIndex true to use forward index, false to use content store
-	 * @param hits the hits for which to retrieve concordances
-	 * @param contextSize how many words around the hit to retrieve
-	 * @param fieldName field to use for building concordances
-	 * @return the concordances
-	 */
-	Map<Hit, Concordance> retrieveConcordances(boolean useForwardIndex, int contextSize, String fieldName) {
-		if (useForwardIndex)
-			return retrieveConcordancesFromForwardIndex(contextSize, fieldName);
-		return retrieveConcordancesFromContentStore(contextSize, fieldName);
-	}
-
-	/**
 	 * Generate concordances from content store (slower).
 	 *
 	 * @param hits the hits for which to retrieve concordances
@@ -2174,56 +2011,6 @@ public class Hits implements Iterable<Hit> {
 			hitsInThisDoc.makeConcordancesSingleDocContentStore(fieldName, contextSize, conc, hl);
 		}
 		return conc;
-	}
-
-	/**
-	 * Generate concordances from forward index (faster).
-	 *
-	 * @param hits the hits for which to retrieve concordances
-	 * @param contextSize how many words around the hit to retrieve
-	 * @param fieldName field to use for building concordances
-	 * @return the concordances
-	 */
-	private Map<Hit, Concordance> retrieveConcordancesFromForwardIndex(int contextSize,
-			String fieldName) {
-		Map<Integer, List<Hit>> hitsPerDocument = perDocumentGroupedHits();
-
-		// Yes, make 'em from the forward index (faster)
-		ForwardIndex forwardIndex = null;
-		if (concWordFI != null)
-			forwardIndex = searcher.getForwardIndex(ComplexFieldUtil
-					.propertyField(fieldName, concWordFI));
-
-		ForwardIndex punctForwardIndex = null;
-		if (concPunctFI != null)
-			punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
-					concPunctFI));
-
-		Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
-		if (concAttrFI == null) {
-			// All other FIs are attributes
-			for (String p: searcher.forwardIndices.keySet()) {
-				String[] components = ComplexFieldUtil.getNameComponents(p);
-				String propName = components[1];
-				if (propName.equals(concWordFI) || propName.equals(concPunctFI))
-					continue;
-				attrForwardIndices.put(propName, searcher.getForwardIndex(p));
-			}
-		} else {
-			// Specific list of attribute FIs
-			for (String p: concAttrFI) {
-				attrForwardIndices.put(p,
-						searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
-			}
-		}
-
-		Map<Hit, Concordance> conc1 = new HashMap<Hit, Concordance>();
-		for (List<Hit> l: hitsPerDocument.values()) {
-			Hits hitsInThisDoc = new Hits(searcher, l);
-			hitsInThisDoc.makeConcordancesSingleDocForwardIndex(forwardIndex,
-					punctForwardIndex, attrForwardIndices, contextSize, conc1);
-		}
-		return conc1;
 	}
 
 	/**

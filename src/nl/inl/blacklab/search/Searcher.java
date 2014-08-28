@@ -1340,7 +1340,7 @@ public class Searcher {
 			String leftContext = currentContent.substring(0, relHitLeft);
 			String rightContext = currentContent.substring(relHitRight, absRight - absLeft);
 
-			// Make fragments well-formed
+			// Make each fragment well-formed
 			hitText = hl.makeWellFormed(hitText);
 			leftContext = hl.makeWellFormed(leftContext);
 			rightContext = hl.makeWellFormed(rightContext);
