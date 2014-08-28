@@ -240,13 +240,13 @@ public class Hits implements Iterable<Hit> {
 		docsCounted = copyFrom.docsCounted;
 		previousHitDoc = copyFrom.previousHitDoc;
 
-		copySettingsFromHits(copyFrom);
+		searcher = copyFrom.searcher;
+		copySettingsFrom(copyFrom);
 
 		currentContextSize = -1; // context is not copied
 	}
 
-	void copySettingsFromHits(Hits copyFrom) {
-		searcher = copyFrom.searcher;
+	public void copySettingsFrom(Hits copyFrom) {
 		concordanceFieldName = copyFrom.concordanceFieldName;
 		maxHitsToRetrieve = copyFrom.maxHitsToRetrieve;
 		maxHitsToCount = copyFrom.maxHitsToCount;

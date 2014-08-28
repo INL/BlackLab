@@ -388,7 +388,9 @@ public class DocResults implements Iterable<DocResult> {
 					Hit hit = sourceHitsIterator.next();
 					if (hit.doc != doc) {
 						if (docHits != null) {
-							addDocResultToList(doc, docHits, indexReader);
+							Hits hits = new Hits(searcher, docHits);
+							hits.copySettingsFrom(sourceHits); // concordance type, etc.
+							addDocResultToList(doc, hits, indexReader);
 						}
 						doc = hit.doc;
 						docHits = new ArrayList<Hit>();
@@ -401,7 +403,9 @@ public class DocResults implements Iterable<DocResult> {
 						partialDocId = doc;
 						partialDocHits = docHits; // not done, continue from here later
 					} else {
-						addDocResultToList(doc, docHits, indexReader);
+						Hits hits = new Hits(searcher, docHits);
+						hits.copySettingsFrom(sourceHits); // concordance type, etc.
+						addDocResultToList(doc, hits, indexReader);
 					}
 				}
 			}
@@ -410,7 +414,7 @@ public class DocResults implements Iterable<DocResult> {
 		}
 	}
 
-	private void addDocResultToList(int doc, List<Hit> docHits, IndexReader indexReader) throws IOException {
+	private void addDocResultToList(int doc, Hits docHits, IndexReader indexReader) throws IOException {
 		DocResult docResult = new DocResult(searcher, sourceHits.getConcordanceFieldName(), doc, indexReader == null ? null : indexReader.document(doc), docHits);
 		// Make sure we remember what kind of context we have, if any
 		docResult.setContextField(sourceHits.getContextFieldPropName());

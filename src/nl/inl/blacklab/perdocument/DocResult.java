@@ -46,6 +46,17 @@ public class DocResult {
 		hits = new Hits(searcher, concField);
 	}
 
+	/**
+	 * Construct a DocResult.
+	 *
+	 * @param searcher the index we searched
+	 * @param concField concordance field (e.g. "contents")
+	 * @param doc the Lucene document id
+	 * @param document the Lucene document
+	 * @param docHits hits in the document
+	 * @deprecated use the version that takes a Hits object
+	 */
+	@Deprecated
 	public DocResult(Searcher searcher, String concField, int doc, Document document,
 			List<Hit> docHits) {
 		this.docId = doc;
@@ -55,10 +66,27 @@ public class DocResult {
 	}
 
 	/**
+	 * Construct a DocResult.
+	 *
+	 * @param searcher the index we searched
+	 * @param concField concordance field (e.g. "contents")
+	 * @param doc the Lucene document id
+	 * @param document the Lucene document
+	 * @param docHits hits in the document
+	 */
+	public DocResult(Searcher searcher, String concField, int doc, Document document,
+			Hits docHits) {
+		this.docId = doc;
+		this.document = document;
+		this.score = 0.0f;
+		hits = docHits;
+	}
+
+	/**
 	 * Add a hit to the list of hits.
 	 *
 	 * @param hit
-	 * @deprecated use constructor that takes a list of hits instead
+	 * @deprecated use constructor that takes a Hits object instead
 	 */
 	@Deprecated
 	void addHit(Hit hit) {
