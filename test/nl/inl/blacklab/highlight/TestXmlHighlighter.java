@@ -20,6 +20,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
+import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class TestXmlHighlighter {
 
 		List<HitSpan> hits = new ArrayList<HitSpan>();
 		hits.add(new HitSpan(4, 49));
-		Assert.assertEquals("The <hl>quick</hl></i><hl> brown <b>fox</b> jumps over </hl><em><hl>the</hl> lazy dog.", hl.highlight(xmlContent, hits));
+		Assert.assertEquals("<i>The <hl>quick</hl></i><hl> brown <b>fox</b> jumps over </hl><em><hl>the</hl> lazy dog.</em>", hl.highlight(xmlContent, hits));
 	}
 
 	@Test
@@ -104,6 +105,32 @@ public class TestXmlHighlighter {
 		List<HitSpan> hits = new ArrayList<HitSpan>();
 		hits.add(new HitSpan(10, 45));
 		Assert.assertEquals("The quick <hl>brown <word content='fox' / > jumps</hl> over the lazy dog.", hl.highlight(xmlContent, hits));
+	}
+
+	@Test
+	public void testMakeWellFormedAddCloseTag() {
+		String xmlContent = "The <word content='fox'>jumps over";
+		Assert.assertEquals("The <word content='fox'>jumps over</word>", hl.makeWellFormed(xmlContent));
+	}
+
+	@Test
+	public void testMakeWellFormedAddOpenTag() {
+		String xmlContent = "The fox</word> jumps over";
+		Assert.assertEquals("<word>The fox</word> jumps over", hl.makeWellFormed(xmlContent));
+	}
+
+	@Test
+	public void testMakeWellFormedRemoveOpenTag() {
+		hl.setUnbalancedTagsStrategy(UnbalancedTagsStrategy.REMOVE_TAG);
+		String xmlContent = "The <word content='fox'>jumps over";
+		Assert.assertEquals("The jumps over", hl.makeWellFormed(xmlContent));
+	}
+
+	@Test
+	public void testMakeWellFormedRemoveCloseTag() {
+		hl.setUnbalancedTagsStrategy(UnbalancedTagsStrategy.REMOVE_TAG);
+		String xmlContent = "The fox</word> jumps over";
+		Assert.assertEquals("The fox jumps over", hl.makeWellFormed(xmlContent));
 	}
 
 

@@ -29,12 +29,23 @@ import nl.inl.util.StringUtil;
  * NOTE: this class is not threadsafe. Use a separate instance per thread.
  */
 public class XmlHighlighter {
+	/**
+	 * How to deal with non-well-formed snippets: by e.g. adding
+	 * an open tag at the beginning for an unmatched closing tag,
+	 * or by removing the unmatched closing tag.
+	 */
+	public static enum UnbalancedTagsStrategy {
+		ADD_TAG,
+		REMOVE_TAG
+	}
+
 	static enum TagType {
-		EXISTING_TAG,    // an existing tag
-		HIGHLIGHT_START, // insert <hl> tag here
-		HIGHLIGHT_END,   // insert </hl> tag here
-		FIX_START,       // insert start tag here to fix well-formedness
-		FIX_END          // insert end tag here to fix well-formedness
+		EXISTING_TAG,       // an existing tag
+		HIGHLIGHT_START,    // insert <hl> tag here
+		HIGHLIGHT_END,      // insert </hl> tag here
+		FIX_START,          // insert start tag here to fix well-formedness
+		FIX_END,            // insert end tag here to fix well-formedness
+		REMOVE_EXISTING_TAG // remove an unbalanced tag to fix well-formedness
 	}
 
 	/**
@@ -138,6 +149,10 @@ public class XmlHighlighter {
 	/** Remove empty <hl></hl> tags after highlighting? */
 	private boolean removeEmptyHlTags = true;
 
+	/** How to fix well-formedness problems? If true, we remove the unbalanced tags;
+	 *  if false (the default) we add extra tags at the start or end to rebalance it. */
+	private UnbalancedTagsStrategy unbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
+
 	/** The outer (usually, only) highlight tag we're inside of, or null if we're not highlighting. */
 	private TagLocation outerHighlightTag = null;
 
@@ -223,6 +238,9 @@ public class XmlHighlighter {
 			break;
 		case FIX_END:
 			existingTag(tag, "</" + tag.name + ">");
+			break;
+		case REMOVE_EXISTING_TAG:
+			// Simply don't add the tag
 			break;
 		}
 	}
@@ -323,7 +341,7 @@ public class XmlHighlighter {
 	 *            the XML content
 	 * @return the list of tag locations, each with type EXISTING_TAG.
 	 */
-	private static List<TagLocation> makeTagList(String elementContent) {
+	private List<TagLocation> makeTagList(String elementContent) {
 		List<TagLocation> tags = new ArrayList<TagLocation>();
 
 		// Regex for finding all XML tags.
@@ -351,22 +369,31 @@ public class XmlHighlighter {
 				}
 			} else {
 				// Close tag. Did we encounter a matching open tag?
-				TagLocation openTag;
+				TagLocation openTag = null;
 				if (openTagStack.size() > 0) {
 					// Yes, this tag is matched. Find matching tag and link them.
 					openTag = openTagStack.remove(openTagStack.size() - 1);
 					openTag.name = null; // no longer necessary to remember tag name
 				} else {
-					// Unmatched closing tag. Insert a dummy open tag at the start
-					// of the content to maintain well-formedness
-					openTag = new TagLocation(TagType.FIX_START, 0, 0);
-					openTag.name = m.group(2);
-					openTag.objectNum = fixStartTagObjectNum; // to fix sorting
-					fixStartTagObjectNum--;
-					tags.add(openTag);
+					// Unmatched closing tag.
+					if (unbalancedTagsStrategy == UnbalancedTagsStrategy.REMOVE_TAG) {
+						// Remove it.
+						tagLocation.type = TagType.REMOVE_EXISTING_TAG;
+					} else {
+						// Insert a dummy open tag at the start
+						// of the content to maintain well-formedness
+						openTag = new TagLocation(TagType.FIX_START, 0, 0);
+						openTag.name = m.group(2); // we need to know what tag to insert
+						openTag.objectNum = fixStartTagObjectNum; // to fix sorting
+						fixStartTagObjectNum--;
+						tags.add(openTag);
+					}
 				}
-				openTag.matchingTagStart = tagLocation.start;
-				tagLocation.matchingTagStart = openTag.start;
+				if (openTag != null) {
+					// Link the matching tags together
+					openTag.matchingTagStart = tagLocation.start;
+					tagLocation.matchingTagStart = openTag.start;
+				}
 			}
 
 			// Add tag to the tag list
@@ -374,9 +401,15 @@ public class XmlHighlighter {
 		}
 		// Close any tags still open, in the correct order (for well-formedness)
 		for (int i = openTagStack.size() - 1; i >= 0; i--) {
-			TagLocation tagLocation = new TagLocation(TagType.FIX_END, elementContent.length(), elementContent.length());
-			tagLocation.name = openTagStack.get(i).name; // we remembered this for this case
-			tags.add(tagLocation);
+			if (unbalancedTagsStrategy == UnbalancedTagsStrategy.REMOVE_TAG) {
+				// Remove the unbalanced tag
+				openTagStack.get(i).type = TagType.REMOVE_EXISTING_TAG;
+			} else {
+				// Add a close tag at the end to fix the unbalanced tag
+				TagLocation tagLocation = new TagLocation(TagType.FIX_END, elementContent.length(), elementContent.length());
+				tagLocation.name = openTagStack.get(i).name; // we remembered this for this case
+				tags.add(tagLocation);
+			}
 		}
 		return tags;
 	}
@@ -520,4 +553,21 @@ public class XmlHighlighter {
 	public String makeWellFormed(String xmlFragment) {
 		return highlight(xmlFragment, null, 0);
 	}
+
+	/**
+	 * Get how well-formedness problems are fixed
+	 * @return the strategy we're using now.
+	 */
+	public UnbalancedTagsStrategy getUnbalancedTagsStrategy() {
+		return unbalancedTagsStrategy;
+	}
+
+	/**
+	 * Set how to fix well-formedness problems.
+	 * @param strategy what to do when encountering unbalanced tags.
+	 */
+	public void setUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy) {
+		this.unbalancedTagsStrategy = strategy;
+	}
+
 }

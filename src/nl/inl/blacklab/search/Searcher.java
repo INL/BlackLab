@@ -45,6 +45,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
+import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
@@ -213,6 +214,25 @@ public class Searcher {
 
 	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
 	Collection<String> concAttrFI = null; // all other FIs are attributes
+
+	/** How we fix well-formedness for snippets of XML: by adding or removing unbalanced tags */
+	UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
+
+	/**
+	 * How do we fix well-formedness for snippets of XML?
+	 * @return the setting: either adding or removing unbalanced tags
+	 */
+	public UnbalancedTagsStrategy getDefaultUnbalancedTagsStrategy() {
+		return defaultUnbalancedTagsStrategy;
+	}
+
+	/**
+	 * Set how to fix well-formedness for snippets of XML.
+	 * @param strategy the setting: either adding or removing unbalanced tags
+	 */
+	public void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy) {
+		this.defaultUnbalancedTagsStrategy = strategy;
+	}
 
 	/**
 	 * Are we making concordances using the forward index (true) or using
@@ -1039,6 +1059,7 @@ public class Searcher {
 
 		// Iterate over the concordances and display
 		XmlHighlighter hl = new XmlHighlighter();
+		hl.setUnbalancedTagsStrategy(defaultUnbalancedTagsStrategy);
 
 		// Find the character offsets
 		List<HitSpan> hitspans = getCharacterOffsets(docId, fieldName, hits);

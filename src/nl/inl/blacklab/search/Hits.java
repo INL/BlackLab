@@ -279,7 +279,7 @@ public class Hits implements Iterable<Hit> {
 	 * @param hits the list of hits to wrap
 	 */
 	public Hits(Searcher searcher, List<Hit> hits) {
-		this(searcher, searcher.getContentsFieldMainPropName(), hits);
+		this(searcher, searcher == null ? "contents" : searcher.getContentsFieldMainPropName(), hits);
 	}
 
 	/**
@@ -309,10 +309,16 @@ public class Hits implements Iterable<Hit> {
 				prevDoc = h.doc;
 			}
 		}
-		concWordFI = searcher.concWordFI;
-		concPunctFI = searcher.concPunctFI;
-		concAttrFI = searcher.concAttrFI;
-		concsType = searcher.getDefaultConcordanceType();
+		if (searcher == null) { // (test)
+			concWordFI = concPunctFI = null;
+			concAttrFI = null;
+			concsType = ConcordanceType.FORWARD_INDEX;
+		} else {
+			concWordFI = searcher.concWordFI;
+			concPunctFI = searcher.concPunctFI;
+			concAttrFI = searcher.concAttrFI;
+			concsType = searcher.getDefaultConcordanceType();
+		}
 	}
 
 	/**
@@ -328,13 +334,20 @@ public class Hits implements Iterable<Hit> {
 		hits = new ArrayList<Hit>();
 		hitsCounted = 0;
 		setConcordanceField(concordanceFieldPropName);
-		desiredContextSize = searcher == null ? 0 /* only for test */: searcher
-				.getDefaultContextSize();
 		currentContextSize = -1;
-		concWordFI = searcher.concWordFI;
-		concPunctFI = searcher.concPunctFI;
-		concAttrFI = searcher.concAttrFI;
-		concsType = searcher.getDefaultConcordanceType();
+
+		if (searcher == null) { // (test)
+			desiredContextSize = 0;
+			concWordFI = concPunctFI = null;
+			concAttrFI = null;
+			concsType = ConcordanceType.FORWARD_INDEX;
+		} else {
+			desiredContextSize = searcher.getDefaultContextSize();
+			concWordFI = searcher.concWordFI;
+			concPunctFI = searcher.concPunctFI;
+			concAttrFI = searcher.concAttrFI;
+			concsType = searcher.getDefaultConcordanceType();
+		}
 	}
 
 	/**
@@ -2153,6 +2166,7 @@ public class Hits implements Iterable<Hit> {
 	 */
 	private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, String fieldName) {
 		XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
+		hl.setUnbalancedTagsStrategy(searcher.defaultUnbalancedTagsStrategy);
 		Map<Integer, List<Hit>> hitsPerDocument = perDocumentGroupedHits();
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l: hitsPerDocument.values()) {
