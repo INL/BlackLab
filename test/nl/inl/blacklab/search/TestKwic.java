@@ -37,7 +37,7 @@ public class TestKwic {
 	public void testKwicOldConstructor() {
 		Kwic kwic = new Kwic(props, left, match, right);
 
-		Assert.assertEquals(expLeft + expMatch + expRight, kwic.getStringContents());
+		Assert.assertEquals(expLeft + expMatch + expRight, kwic.getFullXml());
 		Assert.assertEquals(left, kwic.getLeft());
 		Assert.assertEquals(match, kwic.getMatch());
 		Assert.assertEquals(right, kwic.getRight());
@@ -48,7 +48,7 @@ public class TestKwic {
 	public void testKwicNewConstructor() {
 		Kwic kwic = new Kwic(props, tokens, 2, 3);
 
-		Assert.assertEquals(expLeft + expMatch + expRight, kwic.getStringContents());
+		Assert.assertEquals(expLeft + expMatch + expRight, kwic.getFullXml());
 		Assert.assertEquals(left, kwic.getLeft());
 		Assert.assertEquals(match, kwic.getMatch());
 		Assert.assertEquals(right, kwic.getRight());

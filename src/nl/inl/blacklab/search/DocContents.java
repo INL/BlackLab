@@ -7,9 +7,9 @@ public abstract class DocContents {
 
 	@Override
 	public String toString() {
-		return "DocContents: " + getStringContents();
+		return "DocContents: " + getXml();
 	}
 
-	public abstract String getStringContents();
+	public abstract String getXml();
 
 }

@@ -53,9 +53,11 @@ public class ContentAccessorContentStore extends ContentAccessor {
 	 * @param d
 	 *            the Lucene document (contains the file name)
 	 * @param start
-	 *            start positions of the substrings
+	 *            start positions of the substrings.
+	 *            -1 means start of document.
 	 * @param end
-	 *            end positions of the substrings
+	 *            end positions of the substrings.
+	 *            -1 means end of document.
 	 * @return the requested substrings from this document
 	 */
 	@Override

@@ -201,8 +201,20 @@ public class Kwic {
 		return fragment.getProperties();
 	}
 
-	public String getStringContents() {
-		return fragment.getStringContents();
+	public List<String> getTokens() {
+		return fragment.getTokens();
+	}
+
+	public List<String> getTokens(String property) {
+		return fragment.getTokens(property);
+	}
+
+	public String getFullXml() {
+		return fragment.getXml();
+	}
+
+	public DocContentsFromForwardIndex getDocContents() {
+		return fragment;
 	}
 
 }

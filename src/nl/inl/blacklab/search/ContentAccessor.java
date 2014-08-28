@@ -21,7 +21,9 @@ import org.apache.lucene.document.Document;
  * Defines a way to access the original indexed content.
  *
  * NOTE: this class is very simple and has only 1 implementation. Maybe we should fold it into
- * ContentStore or Searcher to simplify things.
+ * ContentStore or Searcher to simplify things. We might want to have a content accessor
+ * that talks to a website or database later, but this functionality could also be in ContentStore,
+ * right?
  *
  */
 public abstract class ContentAccessor {
@@ -43,9 +45,11 @@ public abstract class ContentAccessor {
 	 * @param d
 	 *            the Lucene document (contains the file name)
 	 * @param start
-	 *            start positions of the substrings
+	 *            start positions of the substrings.
+	 *            -1 means start of document.
 	 * @param end
-	 *            end positions of the substrings
+	 *            end positions of the substrings.
+	 *            -1 means end of document.
 	 * @return the requested substrings from this document
 	 */
 	public abstract String[] getSubstringsFromDocument(Document d, int[] start, int[] end);

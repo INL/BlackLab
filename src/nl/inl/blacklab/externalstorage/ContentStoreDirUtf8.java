@@ -701,9 +701,11 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 	 * @param contentId
 	 *            id of the entry to get substrings from
 	 * @param start
-	 *            the starting points of the substrings (in characters)
+	 *            the starting points of the substrings (in characters).
+	 *            -1 means "start of document"
 	 * @param end
-	 *            the end points of the substrings (in characters)
+	 *            the end points of the substrings (in characters).
+	 *            -1 means "end of document"
 	 * @return the parts
 	 */
 	@Override
@@ -731,11 +733,16 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 				for (int i = 0; i < n; i++) {
 					int a = start[i];
 					int b = end[i];
-					if (a == -1 && b == -1) {
-						// This means "retrieve whole content"
+
+//					if (a == -1 && b == -1) {
+//						// This means "retrieve whole content"
+//						a = 0;
+//						b = e.entryLengthCharacters;
+//					}
+					if (a == -1)
 						a = 0;
+					if (b == -1)
 						b = e.entryLengthCharacters;
-					}
 
 					// Check values
 					if (a < 0 || b < 0) {

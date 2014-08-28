@@ -61,7 +61,7 @@ public class DocContentsFromForwardIndex extends DocContents {
 	}
 
 	@Override
-	public String getStringContents() {
+	public String getXml() {
 		int valuesPerWord = properties.size();
 		int numberOfWords = tokens.size() / valuesPerWord;
 		StringBuilder b = new StringBuilder();

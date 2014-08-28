@@ -22,6 +22,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -954,10 +955,136 @@ public class Searcher {
 		return hitspans;
 	}
 
+	public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord, int endAtWord) {
+		Hit hit = new Hit(docId, startAtWord, endAtWord);
+		Hits hits = new Hits(this, Arrays.asList(hit));
+		Kwic kwic = hits.getKwic(hit, 0);
+		return kwic.getDocContents();
+	}
+
+	/**
+	 * Get part of the contents of a field from a Lucene Document.
+	 *
+	 * This takes into account that some fields are stored externally in content stores
+	 * instead of in the Lucene index.
+	 *
+	 * @param docId
+	 *            the Lucene Document id
+	 * @param fieldName
+	 *            the name of the field
+	 * @param startAtWord where to start getting the content (-1 for start of document, 0 for first word)
+	 * @param endAtWord where to end getting the content (-1 for end of document)
+	 * @return the field content
+	 */
+	public String getContent(int docId, String fieldName, int startAtWord, int endAtWord) {
+		Document d = document(docId);
+		ContentAccessor ca = contentAccessors.get(fieldName);
+		if (ca == null) {
+			// No special content accessor set; assume a stored field
+			return getWordsFromString(d.get(fieldName), startAtWord, endAtWord);
+		}
+
+		int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord,
+				endAtWord);
+		return ca.getSubstringFromDocument(d, startEnd[0], startEnd[1]);
+	}
+
+	/**
+	 * Convert start/end word positions to char positions.
+	 *
+	 * @param docId     Lucene Document id
+	 * @param fieldName name of the field
+	 * @param startAtWord where to start getting the content (-1 for start of document, 0 for first word)
+	 * @param endAtWord where to end getting the content (-1 for end of document)
+	 * @return the start and end char position as a two element int array
+	 *   (with any -1's preserved)
+	 */
+	private int[] startEndWordToCharPos(int docId, String fieldName,
+			int startAtWord, int endAtWord) {
+		if (startAtWord == -1 && endAtWord == -1) {
+			// No need to translate anything
+			return new int[] {-1, -1};
+		}
+
+		// Translate word pos to char pos and retrieve content
+		// NOTE: this boolean stuff is a bit iffy, but is necessary because
+		// getCharacterOffsets doesn't handle -1 to mean start/end of doc.
+		// We should probably fix that some time.
+		boolean startAtStartOfDoc = startAtWord == -1;
+		boolean endAtEndOfDoc = endAtWord == -1;
+		int[] starts = new int[] {startAtStartOfDoc ? 0 : startAtWord};
+		int[] ends = new int[] {endAtEndOfDoc ? starts[0] : endAtWord};
+		getCharacterOffsets(docId, fieldName, starts, ends, true);
+		if (startAtStartOfDoc)
+			starts[0] = -1;
+		if (endAtEndOfDoc)
+			ends[0] = -1;
+		int[] startEnd = new int[] {starts[0], ends[0]};
+		return startEnd;
+	}
+
+	/**
+	 * Get part of the contents of a field from a Lucene Document.
+	 *
+	 * This takes into account that some fields are stored externally in content stores
+	 * instead of in the Lucene index.
+	 *
+	 * @param docId
+	 *            the Lucene Document id
+	 * @param fieldName
+	 *            the name of the field
+	 * @param startAtChar where to start getting the content (-1 for start of document, 0 for first char)
+	 * @param endAtChar where to end getting the content (-1 for end of document)
+	 * @return the field content
+	 */
+	public String getContentByCharPos(int docId, String fieldName, int startAtChar, int endAtChar) {
+		Document d = document(docId);
+		ContentAccessor ca = contentAccessors.get(fieldName);
+		if (ca == null) {
+			// No special content accessor set; assume a stored field
+			return d.get(fieldName).substring(startAtChar, endAtChar);
+		}
+
+		return ca.getSubstringFromDocument(d, startAtChar, endAtChar);
+	}
+
+	/**
+	 * Cut a few words from a string.
+	 *
+	 * Note, this just splits on whitespace and glues words
+	 * back with space. Might not work very well in all cases,
+	 * but it's not likely to be used anyway (we generally don't
+	 * cut a few words from a metadata field).
+	 *
+	 * @param content the string to cut from
+	 * @param startAtWord first word to include
+	 * @param endAtWord first word not to include
+	 * @return the cut string
+	 */
+	private String getWordsFromString(String content, int startAtWord,
+			int endAtWord) {
+		if (startAtWord == -1 && endAtWord == -1)
+			return content;
+		// We want specific words from the field; quick-n-dirty way to do this
+		// (will probably never be used, but let's try to be generic)
+		String[] words = content.split("\\s+");
+		if (startAtWord == -1)
+			startAtWord = 0;
+		if (endAtWord == -1)
+			endAtWord = words.length;
+		StringBuilder b = new StringBuilder();
+		for (int i = startAtWord; i < endAtWord; i++) {
+			if (b.length() > 0)
+				b.append(" ");
+			b.append(words[i]);
+		}
+		return b.toString();
+	}
+
 	/**
 	 * Get the contents of a field from a Lucene Document.
 	 *
-	 * This takes into account that some fields are stored externally in a fixed-length encoding
+	 * This takes into account that some fields are stored externally in content stores
 	 * instead of in the Lucene index.
 	 *
 	 * @param d
@@ -965,7 +1092,9 @@ public class Searcher {
 	 * @param fieldName
 	 *            the name of the field
 	 * @return the field content
+	 * @deprecated use version that takes a docId
 	 */
+	@Deprecated
 	public String getContent(Document d, String fieldName) {
 		ContentAccessor ca = contentAccessors.get(fieldName);
 		String content;
@@ -985,9 +1114,38 @@ public class Searcher {
 	 * @param d
 	 *            the Document
 	 * @return the field content
+	 * @deprecated use version that takes a docId
 	 */
+	@Deprecated
 	public String getContent(Document d) {
 		return getContent(d, mainContentsFieldName);
+	}
+
+	/**
+	 * Get the contents of a field from a Lucene Document.
+	 *
+	 * This takes into account that some fields are stored externally in content stores
+	 * instead of in the Lucene index.
+	 *
+	 * @param docId
+	 *            the Document id
+	 * @param fieldName
+	 *            the name of the field
+	 * @return the field content
+	 */
+	public String getContent(int docId, String fieldName) {
+		return getContent(docId, fieldName, -1, -1);
+	}
+
+	/**
+	 * Get the document contents (original XML).
+	 *
+	 * @param docId
+	 *            the Document id
+	 * @return the field content
+	 */
+	public String getContent(int docId) {
+		return getContent(docId, mainContentsFieldName, -1, -1);
 	}
 
 	/**
@@ -1036,6 +1194,46 @@ public class Searcher {
 	}
 
 	/**
+	 * Highlight part of field content with the specified hits,
+	 * and make sure it's well-formed.
+	 *
+	 * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
+	 *
+	 * @param docId
+	 *            document to highlight a field from
+	 * @param fieldName
+	 *            field to highlight
+	 * @param hits
+	 *            the hits
+	 * @param startAtWord where to start highlighting
+	 * @param endAtWord where to end highlighting
+	 * @return the highlighted content
+	 */
+	public String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord) {
+		// Get the field content
+		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord);
+		int startAtChar = startEndCharPos[0];
+		int endAtChar = startEndCharPos[1];
+		String content = getContentByCharPos(docId, fieldName, startAtChar, endAtChar);
+
+		if (hits == null && startAtWord == -1 && endAtWord == -1) {
+			// No hits to highlight, and we've fetched the whole document, so it is
+			// well-formed already. Just return as-is.
+			return content;
+		}
+
+		// Find the character offsets for the hits and highlight
+		List<HitSpan> hitspans = null;
+		if (hits != null) // if hits == null, we still want the highlighter to make it well-formed
+			hitspans = getCharacterOffsets(docId, fieldName, hits);
+		XmlHighlighter hl = new XmlHighlighter();
+		hl.setUnbalancedTagsStrategy(defaultUnbalancedTagsStrategy);
+		if (startAtChar == -1)
+			startAtChar = 0;
+		return hl.highlight(content, hitspans, startAtChar);
+	}
+
+	/**
 	 * Highlight field content with the specified hits.
 	 *
 	 * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
@@ -1049,22 +1247,7 @@ public class Searcher {
 	 * @return the highlighted content
 	 */
 	public String highlightContent(int docId, String fieldName, Hits hits) {
-		// Get the field content
-		Document doc = document(docId);
-		String content = getContent(doc, fieldName);
-
-		// Nothing to highlight?
-		if (hits == null || hits.size() == 0)
-			return content;
-
-		// Iterate over the concordances and display
-		XmlHighlighter hl = new XmlHighlighter();
-		hl.setUnbalancedTagsStrategy(defaultUnbalancedTagsStrategy);
-
-		// Find the character offsets
-		List<HitSpan> hitspans = getCharacterOffsets(docId, fieldName, hits);
-
-		return hl.highlight(content, hitspans);
+		return highlightContent(docId, fieldName, hits, -1, -1);
 	}
 
 	/**
@@ -1079,7 +1262,7 @@ public class Searcher {
 	 * @return the highlighted content
 	 */
 	public String highlightContent(int docId, Hits hits) {
-		return highlightContent(docId, mainContentsFieldName, hits);
+		return highlightContent(docId, mainContentsFieldName, hits, -1, -1);
 	}
 
 	/**
@@ -1772,6 +1955,10 @@ public class Searcher {
 			return nonTokenizingAnalyzer;
 		}
 		return null;
+	}
+
+	public String getMainContentsFieldName() {
+		return mainContentsFieldName;
 	}
 
 
