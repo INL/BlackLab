@@ -43,6 +43,7 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.lucene.LuceneQueryParser;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
@@ -831,7 +832,7 @@ public class QueryTool {
 				boolean b = false;
 				if (v.equals("on") || v.equals("yes") || v.equals("true"))
 					b = true;
-				searcher.setMakeConcordancesFromForwardIndex(b);
+				searcher.setDefaultConcordanceType(b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE);
 			} else if (lcased.startsWith("stripxml ")) {
 				String v = lcased.substring(9);
 				boolean b = false;

@@ -30,7 +30,11 @@ import nl.inl.util.StringUtil;
  */
 public class XmlHighlighter {
 	static enum TagType {
-		EXISTING_TAG, HIGHLIGHT_START, HIGHLIGHT_END,
+		EXISTING_TAG,    // an existing tag
+		HIGHLIGHT_START, // insert <hl> tag here
+		HIGHLIGHT_END,   // insert </hl> tag here
+		FIX_START,       // insert start tag here to fix well-formedness
+		FIX_END          // insert end tag here to fix well-formedness
 	}
 
 	/**
@@ -69,6 +73,12 @@ public class XmlHighlighter {
 		 * always follow their start tags
 		 */
 		public long objectNum;
+
+		/**
+		 * For FIX_START/END tags, indicate the tag name to use when insert.
+		 * For other types, not used.
+		 */
+		String name;
 
 		public TagLocation(TagType type, int start, int end) {
 			this.type = type;
@@ -143,12 +153,15 @@ public class XmlHighlighter {
 	 *            the XML content to highlight
 	 * @param tags
 	 *            the existing tags and highlight tags to add. This list must be sorted!
-	 * @param preferredLength
-	 *            after how many characters of text content to cut this fragment. Just set to
-	 *            xmlContent.length() if you don't want to do any cutting.
+	 * @param stopAfterChars
+	 *            after how many characters of text content to cut this fragment.
+	 *            -1 = no cutting.
+	 * @param offset
 	 * @return the highlighted XML content.
 	 */
-	private String highlightInternal(String xmlContent, List<TagLocation> tags, int preferredLength) {
+	private String highlightInternal(String xmlContent, List<TagLocation> tags, int stopAfterChars) {
+		if (stopAfterChars < 0)
+			stopAfterChars = xmlContent.length();
 		int positionInContent = 0;
 		b = new StringBuilder();
 		inHighlightTag = 0;
@@ -164,8 +177,8 @@ public class XmlHighlighter {
 			}
 			if (addVisibleChars) {
 				String visibleChars = xmlContent.substring(positionInContent, tag.start);
-				if (visibleCharsAdded + visibleChars.length() >= preferredLength) {
-					visibleChars = StringUtil.abbreviate(visibleChars, preferredLength
+				if (visibleCharsAdded + visibleChars.length() >= stopAfterChars) {
+					visibleChars = StringUtil.abbreviate(visibleChars, stopAfterChars
 							- visibleCharsAdded, OVERSHOOT_ALLOWED, false);
 					if (visibleChars.length() < tag.start - positionInContent)
 						wasCut = true;
@@ -204,6 +217,12 @@ public class XmlHighlighter {
 			break;
 		case HIGHLIGHT_END:
 			endHighlight();
+			break;
+		case FIX_START:
+			existingTag(tag, "<" + tag.name + ">");
+			break;
+		case FIX_END:
+			existingTag(tag, "</" + tag.name + ">");
 			break;
 		}
 	}
@@ -273,12 +292,14 @@ public class XmlHighlighter {
 		}
 	}
 
-	private static void addHitPositionsToTagList(List<TagLocation> tags, List<HitSpan> hitSpans) {
+	private static void addHitPositionsToTagList(List<TagLocation> tags, List<HitSpan> hitSpans, int offset, int length) {
 		for (HitSpan hit : hitSpans) {
-			final int a = hit.getStartChar();
-			if (a < 0) // non-highlighting element, for example: searching for example date range
-				continue;
-			final int b = hit.getEndChar();
+			final int a = hit.getStartChar() - offset;
+			if (a < 0)
+				continue; // outside highlighting range, or non-highlighting element (e.g. searching for example date range)
+			final int b = hit.getEndChar() - offset;
+			if (b > length)
+				continue; // outside highlighting range
 			TagLocation start = new TagLocation(TagType.HIGHLIGHT_START, a, a);
 			start.matchingTagStart = b;
 			tags.add(start);
@@ -304,9 +325,15 @@ public class XmlHighlighter {
 	 */
 	private static List<TagLocation> makeTagList(String elementContent) {
 		List<TagLocation> tags = new ArrayList<TagLocation>();
-		Pattern xmlTags = Pattern.compile("<\\s*(/?)[^>]+>"); // group 1 indicates if this is an open or close tag
+
+		// Regex for finding all XML tags.
+		// Group 1 indicates if this is an open or close tag
+		// Group 2 is the tag name
+		Pattern xmlTags = Pattern.compile("<\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>");
+
 		Matcher m = xmlTags.matcher(elementContent);
 		List<TagLocation> openTagStack = new ArrayList<TagLocation>(); // keep track of open tags
+		int fixStartTagObjectNum = -1; // when adding start tags to fix well-formedness, number backwards (for correct sorting)
 		while (m.find()) {
 			TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, m.start(), m.end());
 
@@ -317,21 +344,38 @@ public class XmlHighlighter {
 				if (!isSelfClosing) {
 					// Open tag. Add to the stack.
 					openTagStack.add(tagLocation);
+					tagLocation.name = m.group(2); // remember in case there's no close tag
 				} else {
 					// Self-closing tag. Don't add to stack, link to self
 					tagLocation.matchingTagStart = tagLocation.start;
 				}
 			} else {
 				// Close tag. Did we encounter a matching open tag?
+				TagLocation openTag;
 				if (openTagStack.size() > 0) {
 					// Yes, this tag is matched. Find matching tag and link them.
-					TagLocation openTag = openTagStack.remove(openTagStack.size() - 1);
-					openTag.matchingTagStart = tagLocation.start;
-					tagLocation.matchingTagStart = openTag.start;
+					openTag = openTagStack.remove(openTagStack.size() - 1);
+					openTag.name = null; // no longer necessary to remember tag name
+				} else {
+					// Unmatched closing tag. Insert a dummy open tag at the start
+					// of the content to maintain well-formedness
+					openTag = new TagLocation(TagType.FIX_START, 0, 0);
+					openTag.name = m.group(2);
+					openTag.objectNum = fixStartTagObjectNum; // to fix sorting
+					fixStartTagObjectNum--;
+					tags.add(openTag);
 				}
+				openTag.matchingTagStart = tagLocation.start;
+				tagLocation.matchingTagStart = openTag.start;
 			}
 
 			// Add tag to the tag list
+			tags.add(tagLocation);
+		}
+		// Close any tags still open, in the correct order (for well-formedness)
+		for (int i = openTagStack.size() - 1; i >= 0; i--) {
+			TagLocation tagLocation = new TagLocation(TagType.FIX_END, elementContent.length(), elementContent.length());
+			tagLocation.name = openTagStack.get(i).name; // we remembered this for this case
 			tags.add(tagLocation);
 		}
 		return tags;
@@ -370,7 +414,39 @@ public class XmlHighlighter {
 	 * @return the highlighted string
 	 */
 	public String highlight(String elementContent, List<HitSpan> hits) {
-		String highlighted = highlightAndCut(elementContent, hits, elementContent.length());
+		return highlight(elementContent, hits, 0);
+	}
+
+	/**
+	 * Highlight part of an XML document.
+	 *
+	 * You cut the XML yourself and supply the part you wish to highlight,
+	 * along with the offset of where you cut (so we know where the highlight
+	 * tags should go).
+	 *
+	 * Missing tags at the beginning or end of the part will be corrected.
+	 * As long as you cut at tag boundaries (i.e. not within a tag), the result
+	 * of this method will still be well-formed XML.
+	 *
+	 * @param partialContent the (partial) XML to cut and highlight.
+	 * @param hits the hits to use for highlighting, or null for no highlighting
+	 * @param offset position of the first character in the string (i.e. what to subtract
+	 *   from Hit positions to highlight)
+	 * @return the highlighted (part of the) XML string
+	 */
+	public String highlight(String partialContent, List<HitSpan> hits, int offset) {
+
+		// Find all tags in the content and put their positions in a list
+		List<TagLocation> tags = makeTagList(partialContent);
+
+		// 2. Put the positions of our hits in the same list and sort it
+		if (hits != null)
+			addHitPositionsToTagList(tags, hits, offset, partialContent.length());
+		Collections.sort(tags);
+
+		// Add all the highlight tags in the list into the content,
+		// taking care to mainting well-formedness around existing tags
+		String highlighted = highlightInternal(partialContent, tags, -1);
 
 		if (removeEmptyHlTags) {
 			// Because of the way the highlighting (and maintaining of well-formedness) occurs,
@@ -382,44 +458,66 @@ public class XmlHighlighter {
 		return highlighted;
 	}
 
-	private String highlightAndCut(String elementContent, List<HitSpan> hits, int preferredLength) {
-		// Find all tags in the content and put their positions in a list
-		List<TagLocation> tags = makeTagList(elementContent);
-
-		// 2. Put the positions of our hits in the same list and sort it
-		addHitPositionsToTagList(tags, hits);
-		Collections.sort(tags);
-
-		// Add all the highlight tags in the list into the content,
-		// taking care to mainting well-formedness around existing tags
-		return highlightInternal(elementContent, tags, preferredLength);
-	}
-
 	/**
 	 * Cut a string after a specified number of non-tag characters, preferably at a word boundary,
 	 * keeping all tags after the cut intact. The result is still well-formed XML.
 	 *
+	 * You might use this to show the first few lines of an XML document on the results page.
+	 *
 	 * @param elementContent
 	 *            the string to cut
-	 * @param preferredLength
-	 *            the preferred length of the string
+	 * @param stopAfterChars
+	 *            after how many non-tag characters we should stop (-1 for no limit)
 	 * @return the cut string
 	 */
-	public String cutAroundTags(String elementContent, int preferredLength) {
-		// "Abuse" the highlighting function to safely cut the content down to the preferred length
-		return highlightAndCut(elementContent, new ArrayList<HitSpan>(), preferredLength);
+	public String cutAroundTags(String elementContent, int stopAfterChars) {
+		// Find all tags in the content and put their positions in a list
+		List<TagLocation> tags = makeTagList(elementContent);
+		Collections.sort(tags);
+
+		// Add all the highlight tags in the list into the content,
+		// taking care to mainting well-formedness around existing tags
+		return highlightInternal(elementContent, tags, stopAfterChars);
 	}
 
 	public static void main(String[] args) {
 		XmlHighlighter h = new XmlHighlighter();
-		System.out
-				.println(h
-						.cutAroundTags(
-								"<lidwoord>The</lidwoord> <adjectief>quick</adjectief> <adjectief>brown</adjectief> <substantief>fox</substantief>",
-								9));
+		String xml = "<zin><lidwoord>The</lidwoord> <adjectief>quick</adjectief> <adjectief>brown</adjectief> <substantief>fox</substantief></zin>";
+		List<HitSpan> hitSpans = new ArrayList<HitSpan>();
+		hitSpans.add(new HitSpan(41, 46));
+		hitSpans.add(new HitSpan(101, 124));
+		String result = h.highlight(xml, hitSpans, 0);
+		System.out.println(result);
 	}
 
+	/**
+	 * Set whether or not to remove empty <hl></hl> tags
+	 * at the end of highlighting (which can form due to
+	 * the process).
+	 *
+	 * @param c true iff empty hl tags should be removed
+	 */
 	public void setRemoveEmptyHlTags(boolean c) {
 		removeEmptyHlTags = c;
+	}
+
+	/**
+	 * Make a cut XML fragment well-formed.
+	 *
+	 * The only requirement is that tags are intact (i.e.
+	 * xmlFragment doesn't start with "able cellpadding='3'>"
+	 * or end with "</bod".
+	 *
+	 * The fragment is made well-formed by adding open tags to
+	 * the beginning or close tags to the end. It is therefore
+	 * not a generic way of making any non-well-formed document
+	 * well-formed, it just works for cutting out part of a
+	 * well-formed document.
+	 *
+	 * @param xmlFragment
+	 * @return a well-formed fragment
+	 */
+	public String makeWellFormed(String xmlFragment) {
+		return highlight(xmlFragment, null, 0);
 	}
 }

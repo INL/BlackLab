@@ -77,6 +77,8 @@ public class HitsWindow extends Hits {
 		for (int i = first; i < first + number; i++) {
 			hits.add((Hit)source.get(i).clone());
 		}
+
+		copySettingsFromHits(source); // type of concordances to make, etc.
 	}
 
 	/**

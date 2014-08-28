@@ -259,6 +259,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void warmUp() throws InterruptedException {
 		int fiid = 0;

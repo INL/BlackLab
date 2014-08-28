@@ -41,7 +41,10 @@ public abstract class ForwardIndex {
 	/**
 	 * Perform a series of reads on the forward index to get (most of) it into disk cache.
 	 * @throws InterruptedException if the thread was interrupted during this operation
+	 * @deprecated use vmtouch tool, documented here:
+	 *    https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache
 	 */
+	@Deprecated
 	public abstract void warmUp() throws InterruptedException;
 
 	/**

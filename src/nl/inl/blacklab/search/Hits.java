@@ -18,6 +18,7 @@ package nl.inl.blacklab.search;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,6 +29,7 @@ import java.util.TreeSet;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.grouping.HitGroups;
@@ -80,9 +82,16 @@ public class Hits implements Iterable<Hit> {
 	 */
 	Integer[] sortOrder;
 
+	/** In context arrays, how many bookkeeping ints are stored at the start? */
 	public static final int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;
+
+	/** In context arrays, what index after the bookkeeping units indicates the hit start? */
 	public static final int CONTEXTS_HIT_START_INDEX = 0;
+
+	/** In context arrays, what index indicates the hit end (start of right part)? */
 	public static final int CONTEXTS_RIGHT_START_INDEX = 1;
+
+	/** In context arrays, what index indicates the length of the context? */
 	public static final int CONTEXTS_LENGTH_INDEX = 2;
 
 	/**
@@ -196,6 +205,18 @@ public class Hits implements Iterable<Hit> {
 	 */
 	private int currentContextSize;
 
+	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
+	String concWordFI;
+
+	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
+	String concPunctFI;
+
+	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
+	Collection<String> concAttrFI; // all other FIs are attributes
+
+	/** What to use to make concordances: forward index or content store */
+	ConcordanceType concsType;
+
 	/**
 	 * Construct a Hits object from an existing Hits object.
 	 *
@@ -210,23 +231,32 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// (should be detected by the client)
 		}
-		searcher = copyFrom.searcher;
 		hits = copyFrom.hits;
 		kwics = copyFrom.kwics;
-		concordanceFieldName = copyFrom.concordanceFieldName;
 		sourceSpansFullyRead = copyFrom.sourceSpansFullyRead;
 		sourceSpans = copyFrom.sourceSpans;
-		maxHitsToRetrieve = copyFrom.maxHitsToRetrieve;
-		maxHitsToCount = copyFrom.maxHitsToCount;
-		maxHitsRetrieved = copyFrom.maxHitsRetrieved;
-		maxHitsCounted = copyFrom.maxHitsCounted;
 		hitsCounted = copyFrom.hitsCounted;
 		docsRetrieved = copyFrom.docsRetrieved;
 		docsCounted = copyFrom.docsCounted;
 		previousHitDoc = copyFrom.previousHitDoc;
-		desiredContextSize = copyFrom.desiredContextSize;
+
+		copySettingsFromHits(copyFrom);
 
 		currentContextSize = -1; // context is not copied
+	}
+
+	void copySettingsFromHits(Hits copyFrom) {
+		searcher = copyFrom.searcher;
+		concordanceFieldName = copyFrom.concordanceFieldName;
+		maxHitsToRetrieve = copyFrom.maxHitsToRetrieve;
+		maxHitsToCount = copyFrom.maxHitsToCount;
+		maxHitsRetrieved = copyFrom.maxHitsRetrieved;
+		maxHitsCounted = copyFrom.maxHitsCounted;
+		desiredContextSize = copyFrom.desiredContextSize;
+		concWordFI = copyFrom.concWordFI;
+		concPunctFI = copyFrom.concPunctFI;
+		concAttrFI = copyFrom.concAttrFI;
+		concsType = copyFrom.concsType;
 	}
 
 	/**
@@ -279,6 +309,10 @@ public class Hits implements Iterable<Hit> {
 				prevDoc = h.doc;
 			}
 		}
+		concWordFI = searcher.concWordFI;
+		concPunctFI = searcher.concPunctFI;
+		concAttrFI = searcher.concAttrFI;
+		concsType = searcher.getDefaultConcordanceType();
 	}
 
 	/**
@@ -297,6 +331,10 @@ public class Hits implements Iterable<Hit> {
 		desiredContextSize = searcher == null ? 0 /* only for test */: searcher
 				.getDefaultContextSize();
 		currentContextSize = -1;
+		concWordFI = searcher.concWordFI;
+		concPunctFI = searcher.concPunctFI;
+		concAttrFI = searcher.concAttrFI;
+		concsType = searcher.getDefaultConcordanceType();
 	}
 
 	/**
@@ -1066,8 +1104,8 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public synchronized Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
-		Hits h = new Hits(searcher, oneHit);
-		Map<Hit, Concordance> oneConc = searcher.retrieveConcordances(h, contextSize, fieldName);
+		Hits h = new Hits(searcher, oneHit); // FIXME: doesn't copy all Hits-specific settings
+		Map<Hit, Concordance> oneConc = h.retrieveConcordances(concsType == ConcordanceType.FORWARD_INDEX, contextSize, fieldName);
 		return oneConc.get(hit);
 	}
 
@@ -1085,8 +1123,8 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
-		Hits h = new Hits(searcher, oneHit);
-		Map<Hit, Kwic> oneConc = retrieveKwics(h, contextSize, fieldName);
+		Hits h = new Hits(searcher, oneHit); // FIXME: doesn't copy all Hits-specific settings
+		Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, fieldName);
 		return oneConc.get(hit);
 	}
 
@@ -1107,7 +1145,7 @@ public class Hits implements Iterable<Hit> {
 	 * @return concordance for this hit
 	 */
 	public synchronized Concordance getConcordance(Hit h, int contextSize) {
-		if (searcher.getMakeConcordancesFromForwardIndex())
+		if (concsType == ConcordanceType.FORWARD_INDEX)
 			return getKwic(h, contextSize).toConcordance();
 
 		if (contextSize != desiredContextSize) {
@@ -1190,7 +1228,7 @@ public class Hits implements Iterable<Hit> {
 	 * you call getConcordance() for the first time.
 	 */
 	synchronized void findConcordances() {
-		if (searcher.getMakeConcordancesFromForwardIndex()) {
+		if (concsType == ConcordanceType.FORWARD_INDEX) {
 			findKwics();
 			return;
 		}
@@ -1207,7 +1245,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		concordances = searcher.retrieveConcordances(this, desiredContextSize, concordanceFieldName);
+		concordances = retrieveConcordances(false, desiredContextSize, concordanceFieldName);
 	}
 
 	/**
@@ -1229,7 +1267,7 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		// Get the concordances
-		kwics = retrieveKwics(this, desiredContextSize, concordanceFieldName);
+		kwics = retrieveKwics(desiredContextSize, concordanceFieldName);
 	}
 
 	/**
@@ -1240,8 +1278,6 @@ public class Hits implements Iterable<Hit> {
 	 * The size of the left and right context (in words) may be set using
 	 * Searcher.setConcordanceContextSize().
 	 *
-	 * @param hits
-	 *            the hits for which to retrieve KWICs
 	 * @param contextSize
 	 *            how many words around the hit to retrieve
 	 * @param fieldName
@@ -1249,11 +1285,11 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the KWICs
 	 */
-	private Map<Hit, Kwic> retrieveKwics(Hits hits, int contextSize, String fieldName) {
+	private Map<Hit, Kwic> retrieveKwics(int contextSize, String fieldName) {
 
 		// Group hits per document
 		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
-		for (Hit key: hits) {
+		for (Hit key: this) {
 			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
 			if (hitsInDoc == null) {
 				hitsInDoc = new ArrayList<Hit>();
@@ -1262,7 +1298,7 @@ public class Hits implements Iterable<Hit> {
 			hitsInDoc.add(key);
 		}
 
-		if (searcher.getMakeConcordancesFromForwardIndex()) {
+		if (concsType == ConcordanceType.FORWARD_INDEX) {
 			// Yes, make 'em from the forward index (faster)
 			ForwardIndex forwardIndex = null;
 			if (searcher.concWordFI != null)
@@ -1990,16 +2026,16 @@ public class Hits implements Iterable<Hit> {
 	 * the same document from the ContentStore.
 	 *
 	 * NOTE1: it is assumed that all hits in this Hits object are in the same document!
-	 *
 	 * @param fieldName
 	 *            Lucene index field to make conc for
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
 	 * @param conc
 	 *            where to add the concordances
+	 * @param hl
 	 */
-	synchronized void makeConcordancesSingleDoc(String fieldName, int wordsAroundHit,
-			Map<Hit, Concordance> conc) {
+	private synchronized void makeConcordancesSingleDocContentStore(String fieldName, int wordsAroundHit, Map<Hit, Concordance> conc,
+			XmlHighlighter hl) {
 		if (hits.size() == 0)
 			return;
 		int doc = hits.get(0).doc;
@@ -2032,8 +2068,8 @@ public class Hits implements Iterable<Hit> {
 		searcher.getCharacterOffsets(doc, fieldName, startsOfWords, endsOfWords, true);
 
 		// Make all the concordances
-		List<Concordance> newConcs = searcher.makeFieldConcordances(doc, fieldName, startsOfWords,
-				endsOfWords);
+		List<Concordance> newConcs = searcher.makeConcordancesFromContentStore(doc, fieldName, startsOfWords,
+				endsOfWords, hl);
 		for (int i = 0; i < hits.size(); i++) {
 			conc.put(hits.get(i), newConcs.get(i));
 		}
@@ -2071,6 +2107,153 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public int[] getHitContext(int hitNumber) {
 		return contexts[hitNumber];
+	}
+
+	/**
+	 * Indicate how to use the forward indices to build concordances.
+	 *
+	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
+	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
+	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
+	 */
+	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI,
+			Collection<String> attrFI) {
+		concWordFI = wordFI;
+		concPunctFI = punctFI;
+		concAttrFI = attrFI;
+	}
+
+	/**
+	 * Retrieve concordancs for a list of hits.
+	 *
+	 * Concordances are the hit words 'centered' with a certain number of context words around them.
+	 *
+	 * The size of the left and right context (in words) may be set using
+	 * Searcher.setConcordanceContextSize().
+	 *
+	 * @param useForwardIndex true to use forward index, false to use content store
+	 * @param hits the hits for which to retrieve concordances
+	 * @param contextSize how many words around the hit to retrieve
+	 * @param fieldName field to use for building concordances
+	 * @return the concordances
+	 */
+	Map<Hit, Concordance> retrieveConcordances(boolean useForwardIndex, int contextSize, String fieldName) {
+		if (useForwardIndex)
+			return retrieveConcordancesFromForwardIndex(contextSize, fieldName);
+		return retrieveConcordancesFromContentStore(contextSize, fieldName);
+	}
+
+	/**
+	 * Generate concordances from content store (slower).
+	 *
+	 * @param hits the hits for which to retrieve concordances
+	 * @param contextSize how many words around the hit to retrieve
+	 * @param fieldName field to use for building concordances
+	 * @return the concordances
+	 */
+	private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, String fieldName) {
+		XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
+		Map<Integer, List<Hit>> hitsPerDocument = perDocumentGroupedHits();
+		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
+		for (List<Hit> l: hitsPerDocument.values()) {
+			Hits hitsInThisDoc = new Hits(searcher, l);
+			hitsInThisDoc.makeConcordancesSingleDocContentStore(fieldName, contextSize, conc, hl);
+		}
+		return conc;
+	}
+
+	/**
+	 * Generate concordances from forward index (faster).
+	 *
+	 * @param hits the hits for which to retrieve concordances
+	 * @param contextSize how many words around the hit to retrieve
+	 * @param fieldName field to use for building concordances
+	 * @return the concordances
+	 */
+	private Map<Hit, Concordance> retrieveConcordancesFromForwardIndex(int contextSize,
+			String fieldName) {
+		Map<Integer, List<Hit>> hitsPerDocument = perDocumentGroupedHits();
+
+		// Yes, make 'em from the forward index (faster)
+		ForwardIndex forwardIndex = null;
+		if (concWordFI != null)
+			forwardIndex = searcher.getForwardIndex(ComplexFieldUtil
+					.propertyField(fieldName, concWordFI));
+
+		ForwardIndex punctForwardIndex = null;
+		if (concPunctFI != null)
+			punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
+					concPunctFI));
+
+		Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
+		if (concAttrFI == null) {
+			// All other FIs are attributes
+			for (String p: searcher.forwardIndices.keySet()) {
+				String[] components = ComplexFieldUtil.getNameComponents(p);
+				String propName = components[1];
+				if (propName.equals(concWordFI) || propName.equals(concPunctFI))
+					continue;
+				attrForwardIndices.put(propName, searcher.getForwardIndex(p));
+			}
+		} else {
+			// Specific list of attribute FIs
+			for (String p: concAttrFI) {
+				attrForwardIndices.put(p,
+						searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
+			}
+		}
+
+		Map<Hit, Concordance> conc1 = new HashMap<Hit, Concordance>();
+		for (List<Hit> l: hitsPerDocument.values()) {
+			Hits hitsInThisDoc = new Hits(searcher, l);
+			hitsInThisDoc.makeConcordancesSingleDocForwardIndex(forwardIndex,
+					punctForwardIndex, attrForwardIndices, contextSize, conc1);
+		}
+		return conc1;
+	}
+
+	/**
+	 * Group hits in a map per document. Used by the retrieveConcordances methods.
+	 *
+	 * @param hits the hits to group.
+	 * @return the grouped hits
+	 */
+	private Map<Integer, List<Hit>> perDocumentGroupedHits() {
+		// Group hits per document
+		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
+		for (Hit key: hits) {
+			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
+			if (hitsInDoc == null) {
+				hitsInDoc = new ArrayList<Hit>();
+				hitsPerDocument.put(key.doc, hitsInDoc);
+			}
+			hitsInDoc.add(key);
+		}
+		return hitsPerDocument;
+	}
+
+	/**
+	 * Are we making concordances using the forward index (true) or using
+	 * the content store (false)? Forward index is more efficient but returns
+	 * concordances that don't include XML tags.
+	 *
+	 * @return true iff we use the forward index for making concordances.
+	 */
+	public ConcordanceType getConcordanceType() {
+		return concsType;
+	}
+
+	/**
+	 * Do we want to retrieve concordances from the forward index or from the
+	 * content store? Forward index is more efficient but doesn't exactly reproduces the
+	 * original XML.
+	 *
+	 * The default type can be set by calling Searcher.setDefaultConcordanceType().
+	 *
+	 * @param type the type of concordances to make
+	 */
+	public void setConcordanceType(ConcordanceType type) {
+		this.concsType = type;
 	}
 
 }

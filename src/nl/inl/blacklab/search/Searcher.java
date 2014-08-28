@@ -172,7 +172,7 @@ public class Searcher {
 	/**
 	 * Name of the main contents field (used as default parameter value for many methods)
 	 */
-	public String fieldNameContents;
+	public String mainContentsFieldName;
 
 	/** Default number of words around a hit */
 	private int defaultContextSize = 5;
@@ -192,12 +192,18 @@ public class Searcher {
 	private IndexStructure indexStructure;
 
 	/** Do we want to retrieve concordances from the forward index instead of from the
-	 *  content store? This may be more efficient, particularly for small result sets
-	 *  (because it eliminates seek time and decompression time).
+	 *  content store? Generating them from the forward index is more
+	 *  efficient.
 	 *
-	 *  By default, this is set to true iff a punctuation forward index is present.
+	 *  This is set to true for all modern indices.
+	 *  (to be precise, it's set to true iff a punctuation forward index is present)
+	 *
+	 *  This setting controls the default. You don't have to set this to false if you
+	 *  sometimes want concordances from the content store; you can specifically request
+	 *  those when you need them.
 	 */
-	private boolean concordancesFromForwardIndex = false;
+	private ConcordanceType defaultConcsType = ConcordanceType.CONTENT_STORE;
+	//private boolean concordancesFromForwardIndex = false;
 
 	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
 	String concWordFI = "word";
@@ -214,9 +220,19 @@ public class Searcher {
 	 * concordances that don't include XML tags.
 	 *
 	 * @return true iff we use the forward index for making concordances.
+	 * @deprecated use getDefaultConcordanceType
 	 */
+	@Deprecated
 	public boolean getMakeConcordancesFromForwardIndex() {
-		return concordancesFromForwardIndex;
+		return getDefaultConcordanceType() == ConcordanceType.FORWARD_INDEX;
+	}
+
+	public ConcordanceType getDefaultConcordanceType() {
+		return defaultConcsType;
+	}
+
+	public void setDefaultConcordanceType(ConcordanceType type) {
+		defaultConcsType = type;
 	}
 
 	/**
@@ -241,9 +257,11 @@ public class Searcher {
 	 *
 	 * @param concordancesFromForwardIndex true if we want to use the forward index to make
 	 * concordances.
+	 * @deprecated use setDefaultConcordanceType()
 	 */
+	@Deprecated
 	public void setMakeConcordancesFromForwardIndex(boolean concordancesFromForwardIndex) {
-		this.concordancesFromForwardIndex = concordancesFromForwardIndex;
+		setDefaultConcordanceType(concordancesFromForwardIndex ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE);
 	}
 
 	/** If true, we want to add/delete documents. If false, we're just searching. */
@@ -362,12 +380,12 @@ public class Searcher {
 				if (!indexMode)
 					throw new RuntimeException("Could not detect main contents field");
 			} else {
-				this.fieldNameContents = mainContentsField.getName();
+				this.mainContentsFieldName = mainContentsField.getName();
 
 				// See if we have a punctuation forward index. If we do,
 				// default to creating concordances using that.
 				if (mainContentsField.hasPunctuation()) {
-					concordancesFromForwardIndex = true;
+					defaultConcsType = ConcordanceType.FORWARD_INDEX;
 				}
 			}
 
@@ -379,7 +397,7 @@ public class Searcher {
 						dir = new File(indexDir, "xml"); // OLD, should eventually be removed
 					}
 					if (dir.exists()) {
-						registerContentStore(fieldNameContents, openContentStore(dir));
+						registerContentStore(cfn, openContentStore(dir));
 					}
 				}
 			}
@@ -587,7 +605,7 @@ public class Searcher {
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, DocIdSet docIdSet) {
-		return createSpanQuery(pattern, fieldNameContents, docIdSet);
+		return createSpanQuery(pattern, mainContentsFieldName, docIdSet);
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
@@ -602,7 +620,7 @@ public class Searcher {
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, Filter filter) {
-		return createSpanQuery(pattern, fieldNameContents, filter);
+		return createSpanQuery(pattern, mainContentsFieldName, filter);
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
@@ -610,7 +628,7 @@ public class Searcher {
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern) {
-		return createSpanQuery(pattern, fieldNameContents, (DocIdSet) null);
+		return createSpanQuery(pattern, mainContentsFieldName, (DocIdSet) null);
 	}
 
 	/**
@@ -638,7 +656,7 @@ public class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses {
-		return new Hits(this, fieldNameContents, query);
+		return new Hits(this, mainContentsFieldName, query);
 	}
 
 	/**
@@ -673,7 +691,7 @@ public class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(TextPattern pattern, Filter filter) throws BooleanQuery.TooManyClauses {
-		return find(pattern, fieldNameContents, filter);
+		return find(pattern, mainContentsFieldName, filter);
 	}
 
 	/**
@@ -703,7 +721,7 @@ public class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses {
-		return find(pattern, fieldNameContents, null);
+		return find(pattern, mainContentsFieldName, null);
 	}
 
 	/**
@@ -949,7 +967,7 @@ public class Searcher {
 	 * @return the field content
 	 */
 	public String getContent(Document d) {
-		return getContent(d, fieldNameContents);
+		return getContent(d, mainContentsFieldName);
 	}
 
 	/**
@@ -998,42 +1016,6 @@ public class Searcher {
 	}
 
 	/**
-	 * Get a term frequency vector for a certain field in a certain document.
-	 *
-	 * @param doc
-	 *            the document
-	 * @param luceneName
-	 *            the field
-	 * @return the term vector
-	 */
-	/* OUD:
-	private TermFreqVector getTermFreqVector(int doc, String luceneName) {
-		try {
-			// Retrieve term position vector of the contents of this document
-			TermFreqVector termFreqVector = indexReader.getTermFreqVector(doc, luceneName);
-			if (termFreqVector == null) {
-				throw new RuntimeException("Field has no term vector!");
-			}
-			return termFreqVector;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	// VERSIE MKS:
-
-	private org.apache.lucene.index.Terms getTermFreqFreqVector( int doc, String luceneName){
-		try{
-			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
-			return terms;
-		}
-		catch( IOException e){
-			throw new RuntimeException(e);
-		}
-	}*/
-
-
-	/**
 	 * Highlight field content with the specified hits.
 	 *
 	 * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
@@ -1076,7 +1058,7 @@ public class Searcher {
 	 * @return the highlighted content
 	 */
 	public String highlightContent(int docId, Hits hits) {
-		return highlightContent(docId, fieldNameContents, hits);
+		return highlightContent(docId, mainContentsFieldName, hits);
 	}
 
 	/**
@@ -1093,7 +1075,8 @@ public class Searcher {
 	}
 
 	/**
-	 * Get the content store for a field name
+	 * Get the content store for a field name.
+	 *
 	 * @param fieldName the field name
 	 * @return the content store, or null if there is no content store for this field
 	 */
@@ -1183,14 +1166,17 @@ public class Searcher {
 			}
 		}
 
-		if (!indexMode && autoWarmForwardIndices) {
-			// Start a background thread to warm up the forward indices
+		if (!indexMode || autoWarmForwardIndices) {
+			final boolean callWarmup = autoWarmForwardIndices;
+			// Start a background thread to build term indices and/or
+			// warm up the forward indices
 			autoWarmThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
 					try {
 						buildAllTermIndices(); // speed up first call to Terms.indexOf()
-						warmUpForwardIndices(); // speed up all forward index operations
+						if (callWarmup)
+							warmUpForwardIndices(); // speed up all forward index operations
 					} catch (InterruptedException e) {
 						// OK, just quit
 					}
@@ -1207,7 +1193,10 @@ public class Searcher {
 	 * Not that this is done automatically in a background thread at startup, so you
 	 * shouldn't need to call this unless you've specifically switched this behaviour off.
 	 * @throws InterruptedException if the thread was interrupted during this operation
+	 * @deprecated use the external tool vmtouch, described here:
+	 *   https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache
 	 */
+	@Deprecated
 	public void warmUpForwardIndices() throws InterruptedException {
 		logger.debug("Warming up " + forwardIndices.size() + " forward indices...");
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
@@ -1224,9 +1213,10 @@ public class Searcher {
 	 * by HitPropValue.deserialize(), so if you're not sure if you need to call this
 	 * method in your application, you probably don't.
 	 *
-	 * Note that if you're using the automatic warmup, this method is called already
-	 * and you don't need to call it again manually.
+	 * @deprecated called automatically now in search mode, no need to call it manually. This
+	 *   method will be made private eventually.
 	 */
+	@Deprecated
 	public void buildAllTermIndices() {
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
 			e.getValue().getTerms().buildTermIndex();
@@ -1251,7 +1241,7 @@ public class Searcher {
 
 			// Special case for old BL index with "forward" as the name of the single forward index
 			// (this should be removed eventually)
-			if (!createdNewIndex && fieldPropName.equals(fieldNameContents) && !dir.exists()) {
+			if (!createdNewIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
 				// Default forward index used to be called "forward". Look for that instead.
 				File alt = new File(indexLocation, "forward");
 				if (alt.exists())
@@ -1270,84 +1260,6 @@ public class Searcher {
 			forwardIndices.put(fieldPropName, forwardIndex);
 		}
 		return forwardIndex;
-	}
-
-	/**
-	 * Retrieve concordancs for a list of hits.
-	 *
-	 * Concordances are the hit words 'centered' with a certain number of context words around them.
-	 *
-	 * The size of the left and right context (in words) may be set using
-	 * Searcher.setConcordanceContextSize().
-	 *
-	 * @param hits
-	 *            the hits for which to retrieve concordances
-	 * @param contextSize
-	 *            how many words around the hit to retrieve
-	 * @param fieldName
-	 *            field to use for building concordances
-	 *
-	 * @return the list of concordances
-	 */
-	Map<Hit, Concordance> retrieveConcordances(Hits hits, int contextSize, String fieldName) {
-
-		// Group hits per document
-		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
-		for (Hit key: hits) {
-			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
-			if (hitsInDoc == null) {
-				hitsInDoc = new ArrayList<Hit>();
-				hitsPerDocument.put(key.doc, hitsInDoc);
-			}
-			hitsInDoc.add(key);
-		}
-
-		if (concordancesFromForwardIndex) {
-			// Yes, make 'em from the forward index (faster)
-			ForwardIndex forwardIndex = null;
-			if (concWordFI != null)
-				forwardIndex = getForwardIndex(ComplexFieldUtil
-						.propertyField(fieldName, concWordFI));
-
-			ForwardIndex punctForwardIndex = null;
-			if (concPunctFI != null)
-				punctForwardIndex = getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
-						concPunctFI));
-
-			Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
-			if (concAttrFI == null) {
-				// All other FIs are attributes
-				for (String p: forwardIndices.keySet()) {
-					String[] components = ComplexFieldUtil.getNameComponents(p);
-					String propName = components[1];
-					if (propName.equals(concWordFI) || propName.equals(concPunctFI))
-						continue;
-					attrForwardIndices.put(propName, getForwardIndex(p));
-				}
-			} else {
-				// Specific list of attribute FIs
-				for (String p: concAttrFI) {
-					attrForwardIndices.put(p,
-							getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
-				}
-			}
-
-			Map<Hit, Concordance> conc1 = new HashMap<Hit, Concordance>();
-			for (List<Hit> l: hitsPerDocument.values()) {
-				Hits hitsInThisDoc = new Hits(this, l);
-				hitsInThisDoc.makeConcordancesSingleDocForwardIndex(forwardIndex,
-						punctForwardIndex, attrForwardIndices, contextSize, conc1);
-			}
-			return conc1;
-		}
-
-		// Not from forward index; make 'em from the content store (slower)
-		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
-		for (List<Hit> l: hitsPerDocument.values()) {
-			Hits hitsInThisDoc = new Hits(this, l);
-			hitsInThisDoc.makeConcordancesSingleDoc(fieldName, contextSize, conc);
-		}
-		return conc;
 	}
 
 	/**
@@ -1370,10 +1282,11 @@ public class Searcher {
 	 *            the array of starts of words ([A] and [B] positions)
 	 * @param endsOfWords
 	 *            the array of ends of words ([C] and [D] positions)
+	 * @param hl
 	 * @return the list of concordances
 	 */
-	List<Concordance> makeFieldConcordances(int doc, String fieldName, int[] startsOfWords,
-			int[] endsOfWords) {
+	List<Concordance> makeConcordancesFromContentStore(int doc, String fieldName, int[] startsOfWords,
+			int[] endsOfWords, XmlHighlighter hl) {
 		// Determine starts and ends
 		int n = startsOfWords.length / 2;
 		int[] starts = new int[n];
@@ -1405,6 +1318,12 @@ public class Searcher {
 					relHitRight);
 			String leftContext = currentContent.substring(0, relHitLeft);
 			String rightContext = currentContent.substring(relHitRight, absRight - absLeft);
+
+			// Make fragments well-formed
+			hitText = hl.makeWellFormed(hitText);
+			leftContext = hl.makeWellFormed(leftContext);
+			rightContext = hl.makeWellFormed(rightContext);
+
 			rv.add(new Concordance(new String[] { leftContext, hitText, rightContext }));
 		}
 		return rv;
@@ -1413,11 +1332,33 @@ public class Searcher {
 	/**
 	 * Indicate how to use the forward indices to build concordances.
 	 *
+	 * Call this method to set the default for hit sets; call the method in Hits
+	 * to change it for a single hit set.
+	 *
+	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
+	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
+	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
+	 * @deprecated renamed to setConcordanceXmlProperties
+	 */
+	@Deprecated
+	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI,
+			Collection<String> attrFI) {
+		setConcordanceXmlProperties(wordFI, punctFI, attrFI);
+	}
+
+	/**
+	 * Indicate how to use the forward indices to build concordances.
+	 *
+	 * Only applies if you're building concordances from the forward index.
+	 *
+	 * Call this method to set the default for hit sets; call the method in Hits
+	 * to change it for a single hit set.
+	 *
 	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
 	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
 	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
 	 */
-	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI,
+	public void setConcordanceXmlProperties(String wordFI, String punctFI,
 			Collection<String> attrFI) {
 		concWordFI = wordFI;
 		concPunctFI = punctFI;
@@ -1528,11 +1469,11 @@ public class Searcher {
 	 *             if this field does not have a forward index, and hence no Terms object.
 	 */
 	public Terms getTerms() {
-		return getTerms(ComplexFieldUtil.mainPropertyField(indexStructure, fieldNameContents));
+		return getTerms(ComplexFieldUtil.mainPropertyField(indexStructure, mainContentsFieldName));
 	}
 
 	public String getContentsFieldMainPropName() {
-		return fieldNameContents;
+		return mainContentsFieldName;
 	}
 
 	public boolean isDefaultSearchCaseSensitive() {
@@ -1579,7 +1520,7 @@ public class Searcher {
 	 * @return the query execution context
 	 */
 	public QueryExecutionContext getDefaultExecutionContext() {
-		return getDefaultExecutionContext(fieldNameContents);
+		return getDefaultExecutionContext(mainContentsFieldName);
 	}
 
 	public String getIndexName() {
