@@ -1117,7 +1117,8 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public synchronized Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
-		Hits h = new Hits(searcher, oneHit); // FIXME: doesn't copy all Hits-specific settings
+		Hits h = new Hits(searcher, oneHit);
+		h.copySettingsFrom(this); // concordance type, etc.
 		if (concsType == ConcordanceType.FORWARD_INDEX) {
 			Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, fieldName);
 			return oneKwic.get(hit).toConcordance();
@@ -1141,7 +1142,8 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
-		Hits h = new Hits(searcher, oneHit); // FIXME: doesn't copy all Hits-specific settings
+		Hits h = new Hits(searcher, oneHit);
+		h.copySettingsFrom(this); // concordance type, etc.
 		Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, fieldName);
 		return oneConc.get(hit);
 	}
