@@ -1205,13 +1205,13 @@ public class Searcher {
 	 *            field to highlight
 	 * @param hits
 	 *            the hits
-	 * @param startAtWord where to start highlighting
-	 * @param endAtWord where to end highlighting
+	 * @param startAtWord where to start highlighting (first word returned)
+	 * @param endAtWord where to end highlighting (first word not returned)
 	 * @return the highlighted content
 	 */
 	public String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord) {
 		// Get the field content
-		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord);
+		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord - 1);
 		int startAtChar = startEndCharPos[0];
 		int endAtChar = startEndCharPos[1];
 		String content = getContentByCharPos(docId, fieldName, startAtChar, endAtChar);
