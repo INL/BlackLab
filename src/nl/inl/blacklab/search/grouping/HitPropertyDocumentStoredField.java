@@ -70,11 +70,11 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 			if (vb == null)
 				vb = "";
 			if (va.length() == 0) // sort empty string at the end
-				return vb.length() == 0 ? 0 : 1;
+				return vb.length() == 0 ? 0 : (reverse ? -1 : 1);
 			if (vb.length() == 0) // sort empty string at the end
-				return -1;
+				return reverse ? 1 : -1;
 
-			return HitPropValue.collator.compare(va, vb);
+			return reverse ? HitPropValue.collator.compare(vb, va) : HitPropValue.collator.compare(va, vb);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -87,7 +87,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
 	@Override
 	public String serialize() {
-		return "field:" + fieldName;
+		return serializeReverse() + "field:" + fieldName;
 	}
 
 	public static HitPropertyDocumentStoredField deserialize(Hits hits, String info) {

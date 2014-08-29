@@ -118,7 +118,7 @@ public class HitPropertyLeftContext extends HitProperty {
 			int cmp = terms.compareSortPosition(ca[contextIndex * caLength + ai + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
 					cb[contextIndex * cbLength + bi + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS], sensitive);
 			if (cmp != 0)
-				return cmp;
+				return reverse ? -cmp : cmp;
 			ai--;
 			bi--;
 		}
@@ -126,11 +126,11 @@ public class HitPropertyLeftContext extends HitProperty {
 		if (ai < 0) {
 			if (bi >= 0) {
 				// b longer than a => a < b
-				return -1;
+				return reverse ? 1 : -1;
 			}
 			return 0; // same length; a == b
 		}
-		return 1; // a longer than b => a > b
+		return reverse ? -1 : 1; // a longer than b => a > b
 	}
 
 	@Override
@@ -147,7 +147,7 @@ public class HitPropertyLeftContext extends HitProperty {
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
 		String propName = parts.length > 1 ? parts[1] : "";
-		return "left:" + propName + ":" + (sensitive ? "s" : "i");
+		return serializeReverse() + "left:" + propName + ":" + (sensitive ? "s" : "i");
 	}
 
 	public static HitPropertyLeftContext deserialize(Hits hits, String info) {

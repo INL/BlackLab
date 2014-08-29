@@ -42,12 +42,12 @@ public class HitPropertyDocumentId extends HitProperty {
 	public int compare(Object i, Object j) {
 		Hit a = hits.getByOriginalOrder((Integer)i);
 		Hit b = hits.getByOriginalOrder((Integer)j);
-		return a.doc - b.doc;
+		return reverse ? b.doc - a.doc : a.doc - b.doc;
 	}
 
 	@Override
 	public String serialize() {
-		return "docid";
+		return serializeReverse() + "docid";
 	}
 
 	public static HitPropertyDocumentId deserialize(Hits hits) {

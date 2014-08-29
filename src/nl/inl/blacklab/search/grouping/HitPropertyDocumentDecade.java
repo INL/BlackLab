@@ -64,15 +64,15 @@ public class HitPropertyDocumentDecade extends HitProperty {
 			if (strYearB == null)
 				strYearB = "";
 			if (strYearA.length() == 0) // sort missing year at the end
-				return strYearB.length() == 0 ? 0 : 1;
+				return strYearB.length() == 0 ? 0 : (reverse ? -1 : 1);
 			if (strYearB.length() == 0) // sort missing year at the end
-				return -1;
+				return reverse ? 1 : -1;
 			int aYear = Integer.parseInt(strYearA);
 			aYear -= aYear % 10;
 			int bYear = Integer.parseInt(strYearB);
 			bYear -= bYear % 10;
 
-			return aYear - bYear;
+			return reverse ? bYear - aYear : aYear - bYear;
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -86,7 +86,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
 	@Override
 	public String serialize() {
-		return "decade:" + fieldName;
+		return serializeReverse() + "decade:" + fieldName;
 	}
 
 	public static HitPropertyDocumentDecade deserialize(Hits hits, String info) {

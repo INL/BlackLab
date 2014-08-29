@@ -33,10 +33,13 @@ public abstract class HitProperty implements Comparator<Object> {
 	/** The Hits object we're looking at */
 	protected Hits hits;
 
+	/** Reverse comparison result or not? */
+	protected boolean reverse = false;
+
 	public HitProperty(Hits hits) {
 		this.hits = hits;
 		contextIndices = new ArrayList<Integer>();
-		contextIndices.add(0);
+		contextIndices.add(0); // in case it's accidentally not set, set a default value
 	}
 
 	public abstract HitPropValue get(int result);
@@ -74,6 +77,14 @@ public abstract class HitProperty implements Comparator<Object> {
 	public abstract String serialize();
 
 	/**
+	 * Used by subclasses to add a dash for reverse when serializing
+	 * @return either a dash or the empty string
+	 */
+	protected String serializeReverse() {
+		return reverse ? "-" : "";
+	}
+
+	/**
 	 * Convert the String representation of a HitProperty back into the HitProperty
 	 * @param hits our hits object (i.e. what we're trying to sort or group)
 	 * @param serialized the serialized object
@@ -85,29 +96,47 @@ public abstract class HitProperty implements Comparator<Object> {
 
 		String[] parts = serialized.split(":", 2);
 		String type = parts[0].toLowerCase();
+		boolean reverse = false;
+		if (type.charAt(0) == '-') {
+			reverse = true;
+			type = type.substring(1);
+		}
 		String info = parts.length > 1 ? parts[1] : "";
 		List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright");
 		int typeNum = types.indexOf(type);
+		HitProperty result;
 		switch (typeNum) {
 		case 0:
-			return HitPropertyDocumentDecade.deserialize(hits, info);
+			result = HitPropertyDocumentDecade.deserialize(hits, info);
+			break;
 		case 1:
-			return HitPropertyDocumentId.deserialize(hits);
+			result = HitPropertyDocumentId.deserialize(hits);
+			break;
 		case 2:
-			return HitPropertyDocumentStoredField.deserialize(hits, info);
+			result = HitPropertyDocumentStoredField.deserialize(hits, info);
+			break;
 		case 3:
-			return HitPropertyHitText.deserialize(hits, info);
+			result = HitPropertyHitText.deserialize(hits, info);
+			break;
 		case 4:
-			return HitPropertyLeftContext.deserialize(hits, info);
+			result = HitPropertyLeftContext.deserialize(hits, info);
+			break;
 		case 5:
-			return HitPropertyRightContext.deserialize(hits, info);
+			result = HitPropertyRightContext.deserialize(hits, info);
+			break;
 		case 6:
-			return HitPropertyWordLeft.deserialize(hits, info);
+			result = HitPropertyWordLeft.deserialize(hits, info);
+			break;
 		case 7:
-			return HitPropertyWordRight.deserialize(hits, info);
+			result = HitPropertyWordRight.deserialize(hits, info);
+			break;
+		default:
+			logger.debug("Unknown HitProperty '" + type + "'");
+			return null;
 		}
-		logger.debug("Unknown HitProperty '" + type + "'");
-		return null;
+		if (reverse)
+			result.setReverse(true);
+		return result;
 	}
 
 	/**
@@ -144,4 +173,21 @@ public abstract class HitProperty implements Comparator<Object> {
 		// A bit ugly, but it works..
 		return HitProperty.deserialize(newHits, serialize());
 	}
+
+	/**
+	 * Is the comparison reversed?
+	 * @return true if it is, false if not
+	 */
+	public boolean isReverse() {
+		return reverse;
+	}
+
+	/**
+	 * Set whether to reverse the comparison.
+	 * @param reverse if true, reverses comparison
+	 */
+	public void setReverse(boolean reverse) {
+		this.reverse = reverse;
+	}
+
 }

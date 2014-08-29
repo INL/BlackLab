@@ -95,15 +95,16 @@ public class HitPropertyWordRight extends HitProperty {
 		int cbLength = cb[Hits.CONTEXTS_LENGTH_INDEX];
 
 		if (caLength <= caRightStart)
-			return cbLength <= cbRightStart ? 0 : -1;
+			return cbLength <= cbRightStart ? 0 : (reverse ? 1 : -1);
 		if (cbLength <= cbRightStart)
-			return 1;
+			return reverse ? -1 : 1;
 		// Compare one word to the right of the hit
 		int contextIndex = contextIndices.get(0);
-		return terms.compareSortPosition(
+		int cmp = terms.compareSortPosition(
 				ca[contextIndex * caLength + caRightStart + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
 				cb[contextIndex * cbLength + cbRightStart + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
 				sensitive);
+		return reverse ? -cmp : cmp;
 	}
 
 	@Override
@@ -120,7 +121,7 @@ public class HitPropertyWordRight extends HitProperty {
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
 		String propName = parts.length > 1 ? parts[1] : "";
-		return "wordright:" + propName + ":" + (sensitive ? "s" : "i");
+		return serializeReverse() + "wordright:" + propName + ":" + (sensitive ? "s" : "i");
 	}
 
 	public static HitPropertyWordRight deserialize(Hits hits, String info) {

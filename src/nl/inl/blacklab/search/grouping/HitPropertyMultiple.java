@@ -138,7 +138,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 		for (HitProperty crit : criteria) {
 			int cmp = crit.compare(i, j);
 			if (cmp != 0)
-				return cmp;
+				return reverse ? -cmp : cmp;
 		}
 		return 0;
 	}
@@ -163,7 +163,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 				b.append(","); // different separator than single HitProperty!
 			b.append(p.serialize());
 		}
-		return b.toString();
+		return serializeReverse() + b.toString();
 	}
 
 	public static HitPropertyMultiple deserialize(Hits hits, String info) {
