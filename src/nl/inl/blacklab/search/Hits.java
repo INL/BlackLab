@@ -1459,7 +1459,8 @@ public class Hits implements Iterable<Hit> {
 	/**
 	 * Count occurrences of context words around hit.
 	 *
-	 * Uses the default contents field for collocations.
+	 * Uses the default contents field for collocations, and the default
+	 * sensitivity settings.
 	 *
 	 * @return the frequency of each occurring token
 	 */
@@ -1477,14 +1478,15 @@ public class Hits implements Iterable<Hit> {
 	 */
 	public synchronized TokenFrequencyList getCollocations(String propName,
 			QueryExecutionContext ctx) {
+		if (propName == null)
+			propName = searcher.getIndexStructure().getMainContentsField().getMainProperty().getName();
+		if (ctx == null)
+			ctx = searcher.getDefaultExecutionContext(concordanceFieldName);
+		ctx = ctx.withProperty(propName);
 		findContext(Arrays.asList(ctx.luceneField(false)));
 		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
-		//for (Hit hit: hits) {
-		//Iterator<Hit> hitIt = hits.iterator();
-		//Iterator<int[]> contextIt = contexts.iterator();
 		for (int j = 0; j < hits.size(); j++) {
-			//Hit hit = hitIt.next();
-			int[] context = contexts[j]; //It.next();
+			int[] context = contexts[j];
 
 			// Count words
 			int contextHitStart = context[CONTEXTS_HIT_START_INDEX];
@@ -1493,7 +1495,7 @@ public class Hits implements Iterable<Hit> {
 			int indexInContent = CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
 			for (int i = 0; i < contextLength; i++, indexInContent++) {
 				if (i >= contextHitStart && i < contextRightStart)
-					continue; // don't count words in hit itself, just around
+					continue; // don't count words in hit itself, just around [option..?]
 				int w = context[indexInContent];
 				Integer n = coll.get(w);
 				if (n == null)
