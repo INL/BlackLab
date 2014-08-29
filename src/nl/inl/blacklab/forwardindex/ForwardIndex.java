@@ -149,8 +149,10 @@ public abstract class ForwardIndex {
 	 *            forward index document id
 	 * @param start
 	 *            the starting points of the parts to retrieve (in words)
+	 *            (-1 for start of document)
 	 * @param end
 	 *            the end points (i.e. first token beyond) of the parts to retrieve (in words)
+	 *            (-1 for end of document)
 	 * @return the parts
 	 */
 	public abstract List<int[]> retrievePartsInt(int fiid, int[] start, int[] end);

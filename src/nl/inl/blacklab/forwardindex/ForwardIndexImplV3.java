@@ -696,11 +696,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			List<int[]> result = new ArrayList<int[]>(n);
 
 			for (int i = 0; i < n; i++) {
-				if (start[i] == -1 && end[i] == -1) {
-					// whole content
+				if (start[i] == -1)
 					start[i] = 0;
+				if (end[i] == -1)
 					end[i] = e.length;
-				}
 				if (start[i] < 0 || end[i] < 0) {
 					throw new RuntimeException("Illegal values, start = " + start[i] + ", end = "
 							+ end[i]);
