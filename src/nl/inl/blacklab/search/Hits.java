@@ -1352,6 +1352,7 @@ public class Hits implements Iterable<Hit> {
 			Map<Hit, Kwic> conc1 = new HashMap<Hit, Kwic>();
 			for (List<Hit> l: hitsPerDocument.values()) {
 				Hits hitsInThisDoc = new Hits(searcher, l);
+				hitsInThisDoc.copySettingsFrom(this);
 				hitsInThisDoc.makeKwicsSingleDocForwardIndex(forwardIndex, punctForwardIndex,
 						attrForwardIndices, contextSize, conc1);
 			}
@@ -1422,6 +1423,7 @@ public class Hits implements Iterable<Hit> {
 		for (List<Hit> l: hitsPerDocument.values()) {
 			if (l.size() > 0) {
 				Hits hitsInThisDoc = new Hits(searcher, l);
+				hitsInThisDoc.copySettingsFrom(this);
 				hitsInThisDoc.getContextWords(desiredContextSize, fis);
 			}
 		}
@@ -1440,6 +1442,7 @@ public class Hits implements Iterable<Hit> {
 	private void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
 		// Find context for the hits in the current document
 		Hits hitsObj = new Hits(searcher, hitsInSameDoc);
+		hitsObj.copySettingsFrom(this);
 		hitsObj.getContextWords(desiredContextSize, fis);
 
 		// Copy the contexts from the temporary Hits object to this one
@@ -1971,7 +1974,9 @@ public class Hits implements Iterable<Hit> {
 			if (hit.doc == docid)
 				hitsInDoc.add(hit);
 		}
-		return new Hits(searcher, hitsInDoc);
+		Hits result = new Hits(searcher, hitsInDoc);
+		result.copySettingsFrom(this);
+		return result;
 	}
 
 	/**
@@ -2012,6 +2017,7 @@ public class Hits implements Iterable<Hit> {
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l: hitsPerDocument.values()) {
 			Hits hitsInThisDoc = new Hits(searcher, l);
+			hitsInThisDoc.copySettingsFrom(this);
 			hitsInThisDoc.makeConcordancesSingleDocContentStore(fieldName, contextSize, conc, hl);
 		}
 		return conc;
