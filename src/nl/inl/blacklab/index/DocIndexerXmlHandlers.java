@@ -153,7 +153,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				propName = prop.getName();
 				fieldName = ComplexFieldUtil.propertyField(
 						contentsField.getName(), propName);
-				fiid = indexer.addToForwardIndex(fieldName, prop.getValues());
+				fiid = indexer.addToForwardIndex(fieldName, prop.getValues(), prop.getPositionIncrements());
 				currentLuceneDoc.add(new IntField(ComplexFieldUtil
 						.forwardIndexIdField(fieldName), fiid, Store.YES));
 			}
