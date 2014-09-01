@@ -128,8 +128,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				while (prop.lastValuePosition() < lastValuePos) {
 					prop.addValue("");
 					if (prop == propMain) {
-						contentsField.addStartChar(getContentPosition());
-						contentsField.addEndChar(getContentPosition());
+						contentsField.addStartChar(getCharacterPosition());
+						contentsField.addEndChar(getCharacterPosition());
 					}
 				}
 			}
@@ -300,7 +300,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		public void startElement(String uri, String localName, String qName,
 				Attributes attributes) {
 			super.startElement(uri, localName, qName, attributes);
-			contentsField.addStartChar(getContentPosition());
+			contentsField.addStartChar(getCharacterPosition());
 		}
 
 		/**
@@ -310,7 +310,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			super.endElement(uri, localName, qName);
-			contentsField.addEndChar(getContentPosition());
+			contentsField.addEndChar(getCharacterPosition());
 
 			// Report progress regularly but not too often
 			wordsDone++;
@@ -737,6 +737,17 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 	public ComplexField getContentsField() {
 		return contentsField;
+	}
+
+	/**
+	 * Returns the current word in the content.
+	 *
+	 * This is the position the next word will be stored at.
+	 *
+	 * @return the current word position
+	 */
+	public int getWordPosition() {
+		return propMain.lastValuePosition() + 1;
 	}
 
 	public ComplexFieldProperty addProperty(String propName,

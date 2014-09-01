@@ -247,17 +247,17 @@ public class ComplexFieldProperty {
 	 * @return new position of the last token, in case it changed.
 	 */
 	public int addValueAtPosition(String value, int position) {
-		// Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
-		String storedValue = storedValues.get(value);
-		if (storedValue == null) {
-			storedValues.put(value, value);
-			storedValue = value;
-		}
-
 		if (position >= lastValuePosition) {
 			// Beyond the last position; regular addValue()
 			addValue(value, position - lastValuePosition);
 		} else {
+			// Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
+			String storedValue = storedValues.get(value);
+			if (storedValue == null) {
+				storedValues.put(value, value);
+				storedValue = value;
+			}
+
 			// Before the last position.
 			// Find the index where the value should be inserted.
 			int curPos = this.lastValuePosition;

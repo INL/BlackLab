@@ -183,7 +183,21 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 			appendContent(contentToProcess);
 	}
 
+	/**
+	 * Returns the current position in the original XML content in chars.
+	 * @return the current char position.
+	 * @deprecated renamed to getCharacterPositionInContent() for clarity
+	 */
+	@Deprecated
 	public int getContentPosition() {
+		return charsContentAlreadyStored + content.length();
+	}
+
+	/**
+	 * Returns the current position in the original XML content in chars.
+	 * @return the current char position
+	 */
+	public int getCharacterPosition() {
 		return charsContentAlreadyStored + content.length();
 	}
 
