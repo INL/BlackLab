@@ -57,7 +57,7 @@ public class DocPropertyComplexFieldLength extends DocProperty {
 		try {
 			int ia = Integer.parseInt(a.getDocument().get(fieldName));
 			int ib = Integer.parseInt(b.getDocument().get(fieldName));
-			return ia - ib;
+			return reverse ? ib - ia : ia - ib;
 		} catch (NumberFormatException e) {
 			return 0;
 		}
@@ -74,7 +74,7 @@ public class DocPropertyComplexFieldLength extends DocProperty {
 
 	@Override
 	public String serialize() {
-		return "fieldlen:" + fieldName;
+		return serializeReverse() + "fieldlen:" + fieldName;
 	}
 
 }

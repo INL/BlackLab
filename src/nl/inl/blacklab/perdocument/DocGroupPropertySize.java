@@ -25,16 +25,16 @@ public class DocGroupPropertySize extends DocGroupProperty {
 
 	@Override
 	public boolean defaultSortDescending() {
-		return true;
+		return !reverse;
 	}
 
 	@Override
 	public int compare(DocGroup a, DocGroup b) {
-		return a.size() - b.size();
+		return reverse ? b.size() - a.size() : a.size() - b.size();
 	}
 
 	@Override
 	public String serialize() {
-		return "size";
+		return serializeReverse() + "size";
 	}
 }

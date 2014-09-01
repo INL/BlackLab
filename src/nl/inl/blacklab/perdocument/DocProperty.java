@@ -30,6 +30,9 @@ import org.apache.log4j.Logger;
 public abstract class DocProperty {
 	protected static final Logger logger = Logger.getLogger(DocProperty.class);
 
+	/** Reverse comparison result or not? */
+	protected boolean reverse = false;
+
 	/**
 	 * Get the desired grouping/sorting property from the DocResult object
 	 *
@@ -57,27 +60,73 @@ public abstract class DocProperty {
 
 	public abstract String serialize();
 
+	/**
+	 * Used by subclasses to add a dash for reverse when serializing
+	 * @return either a dash or the empty string
+	 */
+	protected String serializeReverse() {
+		return reverse ? "-" : "";
+	}
+
 	public static DocProperty deserialize(String serialized) {
-		if (serialized.contains(","))
-			return DocPropertyMultiple.deserialize(serialized);
+		if (serialized.contains(",")) {
+			boolean reverse = false;
+			if (serialized.startsWith("-(")) {
+				reverse = true;
+				serialized = serialized.substring(2, serialized.length() - 1);
+			}
+			DocPropertyMultiple result = DocPropertyMultiple.deserialize(serialized);
+			result.setReverse(reverse);
+			return result;
+		}
+
+		boolean reverse = false;
+		if (serialized.charAt(0) == '-') {
+			reverse = true;
+			serialized = serialized.substring(1);
+		}
 
 		String[] parts = serialized.split(":", 2);
 		String type = parts[0].toLowerCase();
 		String info = parts.length > 1 ? parts[1] : "";
 		List<String> types = Arrays.asList("decade", "numhits", "field", "fieldlen");
 		int typeNum = types.indexOf(type);
+		DocProperty result;
 		switch (typeNum) {
 		case 0:
-			return DocPropertyDecade.deserialize(info);
+			result = DocPropertyDecade.deserialize(info);
+			break;
 		case 1:
-			return DocPropertyNumberOfHits.deserialize();
+			result = DocPropertyNumberOfHits.deserialize();
+			break;
 		case 2:
-			return DocPropertyStoredField.deserialize(info);
+			result = DocPropertyStoredField.deserialize(info);
+			break;
 		case 3:
-			return DocPropertyComplexFieldLength.deserialize(info);
+			result = DocPropertyComplexFieldLength.deserialize(info);
+			break;
+		default:
+			logger.debug("Unknown DocProperty '" + type + "'");
+			return null;
 		}
-		logger.debug("Unknown DocProperty '" + type + "'");
-		return null;
+		result.setReverse(reverse);
+		return result;
+	}
+
+	/**
+	 * Is the comparison reversed?
+	 * @return true if it is, false if not
+	 */
+	public boolean isReverse() {
+		return reverse;
+	}
+
+	/**
+	 * Set whether to reverse the comparison.
+	 * @param reverse if true, reverses comparison
+	 */
+	public void setReverse(boolean reverse) {
+		this.reverse = reverse;
 	}
 
 }

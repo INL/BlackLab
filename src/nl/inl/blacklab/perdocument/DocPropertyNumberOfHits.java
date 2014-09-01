@@ -35,12 +35,14 @@ public class DocPropertyNumberOfHits extends DocProperty {
 	 */
 	@Override
 	public int compare(DocResult a, DocResult b) {
+		if (reverse)
+			return b.getNumberOfHits() - a.getNumberOfHits();
 		return a.getNumberOfHits() - b.getNumberOfHits();
 	}
 
 	@Override
 	public boolean defaultSortDescending() {
-		return true;
+		return !reverse;
 	}
 
 	@Override
@@ -54,7 +56,7 @@ public class DocPropertyNumberOfHits extends DocProperty {
 
 	@Override
 	public String serialize() {
-		return "numhits";
+		return serializeReverse() + "numhits";
 	}
 
 }

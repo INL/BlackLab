@@ -25,11 +25,13 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
 
 	@Override
 	public int compare(DocGroup a, DocGroup b) {
+		if (reverse)
+			return b.getIdentity().compareTo(a.getIdentity());
 		return a.getIdentity().compareTo(b.getIdentity());
 	}
 
 	@Override
 	public String serialize() {
-		return "identity";
+		return serializeReverse() + "identity";
 	}
 }

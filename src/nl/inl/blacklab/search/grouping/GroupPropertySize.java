@@ -27,17 +27,19 @@ public class GroupPropertySize extends GroupProperty {
 
 	@Override
 	public int compare(Group a, Group b) {
+		if (reverse)
+			return ((HitGroup)b).size() - ((HitGroup)a).size();
 		return ((HitGroup)a).size() - ((HitGroup)b).size();
 	}
 
 	@Override
 	public boolean defaultSortDescending() {
-		return true;
+		return !reverse;
 	}
 
 	@Override
 	public String serialize() {
-		return "size";
+		return serializeReverse() + "size";
 	}
 
 }

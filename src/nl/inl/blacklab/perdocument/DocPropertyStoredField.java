@@ -54,10 +54,10 @@ public class DocPropertyStoredField extends DocProperty {
 		if (sb == null)
 			sb = "";
 		if (sa.length() == 0) // sort empty string at the end
-			return sb.length() == 0 ? 0 : 1;
+			return sb.length() == 0 ? 0 : (reverse ? -1 : 1);
 		if (sb.length() == 0) // sort empty string at the end
-			return -1;
-		return sa.compareTo(sb);
+			return reverse ? 1 : -1;
+		return reverse ? sb.compareTo(sa) : sa.compareTo(sb);
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class DocPropertyStoredField extends DocProperty {
 
 	@Override
 	public String serialize() {
-		return "field:" + fieldName;
+		return serializeReverse() + "field:" + fieldName;
 	}
 
 }

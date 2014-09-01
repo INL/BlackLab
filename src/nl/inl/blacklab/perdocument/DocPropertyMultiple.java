@@ -99,7 +99,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 		for (DocProperty crit : criteria) {
 			int cmp = crit.compare(a, b);
 			if (cmp != 0)
-				return cmp;
+				return reverse ? -cmp : cmp;
 		}
 		return 0;
 	}
@@ -123,7 +123,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 				b.append(","); // different separator than single DocProperty!
 			b.append(p.serialize());
 		}
-		return b.toString();
+		return (reverse ? "-(" : "") + b.toString() + (reverse ? ")" : "");
 	}
 
 	public static DocPropertyMultiple deserialize(String info) {

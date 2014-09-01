@@ -30,6 +30,9 @@ public abstract class DocGroupProperty {
 
 	public static DocGroupPropertySize size() { return propSize; }
 
+	/** Reverse comparison result or not? */
+	protected boolean reverse = false;
+
 	public abstract HitPropValue get(DocGroup result);
 
 	/**
@@ -41,15 +44,47 @@ public abstract class DocGroupProperty {
 	public abstract int compare(DocGroup a, DocGroup b);
 
 	public boolean defaultSortDescending() {
-		return false;
+		return reverse;
 	}
 
 	public abstract String serialize();
 
-	public static DocGroupProperty deserialize(String serialized) {
-		if (serialized.equalsIgnoreCase("identity"))
-			return propIdentity;
-		return propSize;
+	/**
+	 * Used by subclasses to add a dash for reverse when serializing
+	 * @return either a dash or the empty string
+	 */
+	protected String serializeReverse() {
+		return reverse ? "-" : "";
 	}
 
+	public static DocGroupProperty deserialize(String serialized) {
+		boolean reverse = false;
+		if (serialized.charAt(0) == '-') {
+			reverse = true;
+			serialized = serialized.substring(1);
+		}
+		DocGroupProperty result;
+		if (serialized.equalsIgnoreCase("identity"))
+			result = propIdentity;
+		else
+			result = propSize;
+		result.setReverse(reverse);
+		return result;
+	}
+
+	/**
+	 * Is the comparison reversed?
+	 * @return true if it is, false if not
+	 */
+	public boolean isReverse() {
+		return reverse;
+	}
+
+	/**
+	 * Set whether to reverse the comparison.
+	 * @param reverse if true, reverses comparison
+	 */
+	public void setReverse(boolean reverse) {
+		this.reverse = reverse;
+	}
 }

@@ -51,15 +51,15 @@ public class DocPropertyDecade extends DocProperty {
 		if (strYearB == null)
 			strYearB = "";
 		if (strYearA.length() == 0) // sort missing year at the end
-			return strYearB.length() == 0 ? 0 : 1;
+			return strYearB.length() == 0 ? 0 : (reverse ? -1 : 1);
 		if (strYearB.length() == 0) // sort missing year at the end
-			return -1;
+			return reverse ? 1 : -1;
 		int year1 = Integer.parseInt(strYearB);
 		year1 -= year1 % 10;
 		int year2 = Integer.parseInt(strYearB);
 		year2 -= year2 % 10;
 
-		return year1 - year2;
+		return reverse ? year2 - year1 : year1 - year2;
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class DocPropertyDecade extends DocProperty {
 
 	@Override
 	public String serialize() {
-		return "decade:" + fieldName;
+		return serializeReverse() + "decade:" + fieldName;
 	}
 
 }

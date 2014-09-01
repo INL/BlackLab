@@ -29,19 +29,55 @@ public abstract class GroupProperty {
 
 	public static GroupPropertySize size() { return propSize; }
 
+	/** Reverse comparison result or not? */
+	protected boolean reverse = false;
+
 	public abstract HitPropValue get(Group result);
 
 	public abstract int compare(Group a, Group b);
 
 	public boolean defaultSortDescending() {
-		return false;
+		return reverse;
 	}
 
 	public abstract String serialize();
 
+	/**
+	 * Used by subclasses to add a dash for reverse when serializing
+	 * @return either a dash or the empty string
+	 */
+	protected String serializeReverse() {
+		return reverse ? "-" : "";
+	}
+
 	public static GroupProperty deserialize(String serialized) {
+		boolean reverse = false;
+		if (serialized.charAt(0) == '-') {
+			reverse = true;
+			serialized = serialized.substring(1);
+		}
+		GroupProperty result;
 		if (serialized.equalsIgnoreCase("identity"))
-			return new GroupPropertyIdentity();
-		return new GroupPropertySize();
+			result = new GroupPropertyIdentity();
+		else
+			result = new GroupPropertySize();
+		result.setReverse(reverse);
+		return result;
+	}
+
+	/**
+	 * Is the comparison reversed?
+	 * @return true if it is, false if not
+	 */
+	public boolean isReverse() {
+		return reverse;
+	}
+
+	/**
+	 * Set whether to reverse the comparison.
+	 * @param reverse if true, reverses comparison
+	 */
+	public void setReverse(boolean reverse) {
+		this.reverse = reverse;
 	}
 }

@@ -163,7 +163,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 				b.append(","); // different separator than single HitProperty!
 			b.append(p.serialize());
 		}
-		return serializeReverse() + b.toString();
+		return (reverse ? "-(" : "") + b.toString() + (reverse ? ")" : "");
 	}
 
 	public static HitPropertyMultiple deserialize(Hits hits, String info) {

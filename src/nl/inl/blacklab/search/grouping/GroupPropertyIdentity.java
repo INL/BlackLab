@@ -28,17 +28,14 @@ public class GroupPropertyIdentity extends GroupProperty {
 
 	@Override
 	public int compare(Group a, Group b) {
+		if (reverse)
+			return -a.getIdentity().compareTo(b.getIdentity());
 		return a.getIdentity().compareTo(b.getIdentity());
 	}
 
 	@Override
-	public boolean defaultSortDescending() {
-		return false;
-	}
-
-	@Override
 	public String serialize() {
-		return "identity";
+		return serializeReverse() + "identity";
 	}
 
 }

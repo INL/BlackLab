@@ -91,8 +91,16 @@ public abstract class HitProperty implements Comparator<Object> {
 	 * @return the HitProperty object, or null if it could not be deserialized
 	 */
 	public static HitProperty deserialize(Hits hits, String serialized) {
-		if (serialized.contains(","))
-			return HitPropertyMultiple.deserialize(hits, serialized);
+		if (serialized.contains(",")) {
+			boolean reverse = false;
+			if (serialized.startsWith("-(")) {
+				reverse = true;
+				serialized = serialized.substring(2, serialized.length() - 1);
+			}
+			HitPropertyMultiple result = HitPropertyMultiple.deserialize(hits, serialized);
+			result.setReverse(reverse);
+			return result;
+		}
 
 		String[] parts = serialized.split(":", 2);
 		String type = parts[0].toLowerCase();
@@ -134,8 +142,7 @@ public abstract class HitProperty implements Comparator<Object> {
 			logger.debug("Unknown HitProperty '" + type + "'");
 			return null;
 		}
-		if (reverse)
-			result.setReverse(true);
+		result.setReverse(reverse);
 		return result;
 	}
 
