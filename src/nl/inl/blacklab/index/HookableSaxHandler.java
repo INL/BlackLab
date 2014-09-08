@@ -159,11 +159,17 @@ public class HookableSaxHandler extends DefaultHandler {
 			// Split into parts
 			String[] parts = expr.split("/");
 			int numberOfElementParts = parts.length;
+			if (parts[numberOfElementParts - 1].length() == 0) {
+				throw new RuntimeException("Double slash in simple-xpath expression");
+			}
 			if (parts[numberOfElementParts - 1].charAt(0) == '@') {
 				throw new RuntimeException("Cannot match on attribute");
 			}
 			elementNames = new ArrayList<String>();
 			for (int i = 0; i < numberOfElementParts; i++) {
+				if (parts[i].length() == 0) {
+					throw new RuntimeException("Double slash in simple-xpath expression");
+				}
 				if (parts[i].charAt(0) == '@') {
 					//throw new RuntimeException("Attribute can only be last path part");
 					throw new RuntimeException("Cannot match on attribute");

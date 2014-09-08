@@ -105,7 +105,7 @@ public abstract class HitProperty implements Comparator<Object> {
 		String[] parts = serialized.split(":", 2);
 		String type = parts[0].toLowerCase();
 		boolean reverse = false;
-		if (type.charAt(0) == '-') {
+		if (type.length() > 0 && type.charAt(0) == '-') {
 			reverse = true;
 			type = type.substring(1);
 		}

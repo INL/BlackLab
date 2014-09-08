@@ -81,7 +81,7 @@ public abstract class DocProperty {
 		}
 
 		boolean reverse = false;
-		if (serialized.charAt(0) == '-') {
+		if (serialized.length() > 0 && serialized.charAt(0) == '-') {
 			reverse = true;
 			serialized = serialized.substring(1);
 		}
