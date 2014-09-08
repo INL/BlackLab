@@ -38,6 +38,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 
@@ -139,21 +140,18 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			// lists while parsing.
 			contentsField.addToLuceneDoc(currentLuceneDoc);
 
-			String fieldName, propName;
-			int fiid;
 
 			// Add all properties to forward index
 			for (ComplexFieldProperty prop : contentsField.getProperties()) {
-
 				if (!prop.hasForwardIndex())
 					continue;
 
 				// Add property (case-sensitive tokens) to forward index and add
 				// id to Lucene doc
-				propName = prop.getName();
-				fieldName = ComplexFieldUtil.propertyField(
+				String propName = prop.getName();
+				String fieldName = ComplexFieldUtil.propertyField(
 						contentsField.getName(), propName);
-				fiid = indexer.addToForwardIndex(fieldName, prop.getValues(), prop.getPositionIncrements());
+				int fiid = indexer.addToForwardIndex(fieldName, prop.getValues(), prop.getPositionIncrements());
 				currentLuceneDoc.add(new IntField(ComplexFieldUtil
 						.forwardIndexIdField(fieldName), fiid, Store.YES));
 			}
@@ -166,6 +164,37 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			MetadataFetcher m = getMetadataFetcher();
 			if (m != null) {
 				m.addMetadata();
+			}
+
+			// See what metadatafields are missing or empty and add unknown value
+			// if desired.
+			IndexStructure struct = indexer.getSearcher().getIndexStructure();
+			for (String fieldName: struct.getMetadataFields()) {
+				MetadataFieldDesc fd = struct.getMetadataFieldDesc(fieldName);
+				boolean missing = false, empty = false;
+				String currentValue = currentLuceneDoc.get(fieldName);
+				if (currentValue == null)
+					missing = true;
+				else if (currentValue.length() == 0)
+					empty = true;
+				UnknownCondition cond = fd.getUnknownCondition();
+				boolean useUnknownValue = false;
+				switch(cond) {
+				case EMPTY:
+					useUnknownValue = empty;
+					break;
+				case MISSING:
+					useUnknownValue = missing;
+					break;
+				case MISSING_OR_EMPTY:
+					useUnknownValue = missing | empty;
+					break;
+				case NEVER:
+					useUnknownValue = false;
+					break;
+				}
+				if (useUnknownValue)
+					addMetadataField(fieldName, fd.getUnknownValue());
 			}
 
 			try {
@@ -763,8 +792,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		MetadataFieldDesc desc = struct.getMetadataFieldDesc(name);
 		FieldType type = desc.getType();
 		desc.addValue(value);
-
-		// @@@ TODO: customize how fields are analyzed (using per-field analyzer)
 
 		FieldType shouldBeType = getMetadataFieldTypeFromIndexerProperties(name);
 		if (type == FieldType.TEXT

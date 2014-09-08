@@ -151,6 +151,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			ourDocIndexer.addMetadataField("AuthorNameOrPseudonym", authorName);
 			ourDocIndexer.addMetadataField("AuthorNameOrPseudonymSearch", authorNameAndPseudonym);
 
+			/*
+			// DISABLED because this can be specified in indextemplate.json now
 			String sex = luceneDoc.get("Sex");
 			if (sex == null || sex.length() == 0) {
 				ourDocIndexer.addMetadataField("Sex", "unknown");
@@ -159,6 +161,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			if (translated == null || translated.length() == 0) {
 				ourDocIndexer.addMetadataField("Translated", "unknown");
 			}
+			*/
 
 			if (ourDocIndexer != null) {
 				// Store metadata XML in content store and corresponding id in Lucene document
