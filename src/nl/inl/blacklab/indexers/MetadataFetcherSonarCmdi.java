@@ -6,7 +6,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -191,6 +193,34 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 		Map<String, String> indexFieldAs = new HashMap<String, String>();
 
+		List<String> elementStack = new ArrayList<String>();
+
+		/**
+		 * Push the current element name onto the element stack
+		 * @param localName the current element name
+		 */
+		private void stackPush(String localName) {
+			elementStack.add(localName);
+		}
+
+		/**
+		 * Pop the current element name off of the element stack
+		 */
+		private void stackPop() {
+			elementStack.remove(elementStack.size() - 1);
+		}
+
+		/**
+		 * Get the name of the current element's parent element
+		 * from the element stack.
+		 * @return the parent element name
+		 */
+		private String getParentElName() {
+			if (elementStack.size() < 2)
+				return "";
+			return elementStack.get(elementStack.size() - 2);
+		}
+
 		public MetadataParser() {
 			indexFieldAs.put("iso-639-3-code", "Language-iso-code");
 			indexFieldAs.put("Name", "AuthorName");
@@ -199,6 +229,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes)
 				throws SAXException {
+			stackPush(localName);
 			hasChild = false; // we haven't seen a child for this element yet
 			textContent.setLength(0); // clear buffer
 		}
@@ -207,16 +238,31 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		public void endElement(String uri, String localName, String qName) throws SAXException {
 
 			if (!hasChild) {
-				String indexAs = indexFieldAs.get(localName);
-				if (indexAs == null || indexAs.length() == 0)
-					indexAs = localName;
+				// See if we captured any text content
 				String content = textContent.toString().trim();
 				if (content.length() > 0) {
+					// Yes, leaf element with text content.
+					// Index the value of this element as a metadata field.
 
-					// Leaf node with content; store as metadata field
-					if (ourDocIndexer != null)
+					// Check the parent element name to see if we need to
+					// add a prefix to distinguish elements with the same name.
+					// (e.g. Source/Country and ResidencePlace/Country)
+					String parentElName = getParentElName();
+					if (localName.equals("Country") && !parentElName.equals("Source")) {
+						// Add prefix to distinguish Country under Source from other Country els
+						// (so Country under ResidencePlace becomes ResidencePlace_Country, etc.)
+						localName = parentElName + "_Country";
+					}
+
+					// See if we want to index this element under a different name.
+					String indexAs = indexFieldAs.get(localName);
+					if (indexAs == null || indexAs.length() == 0)
+						indexAs = localName;
+
+					// Leaf node with content; store as metadata field.
+					if (ourDocIndexer != null) {
 						ourDocIndexer.addMetadataField(indexAs, content);
-					else {
+					} else {
 						// TEST; print metadata value
 						System.out.println(indexAs + ": " + content);
 					}
@@ -224,6 +270,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			}
 
 			hasChild = true; // our parent has at least one child
+			stackPop();
 		}
 
 		@Override
