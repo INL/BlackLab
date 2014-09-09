@@ -1211,7 +1211,8 @@ public class Searcher {
 	 */
 	public String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord) {
 		// Get the field content
-		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord - 1);
+		int endAtWordForCharPos = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
+		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWordForCharPos);
 		int startAtChar = startEndCharPos[0];
 		int endAtChar = startEndCharPos[1];
 		String content = getContentByCharPos(docId, fieldName, startAtChar, endAtChar);
