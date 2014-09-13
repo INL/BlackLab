@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -1602,7 +1603,7 @@ public class Hits implements Iterable<Hit> {
 	public Map<String, Span> getCapturedGroupMap(Hit hit) {
 		if (capturedGroups == null)
 			return null;
-		Map<String, Span> result = new HashMap<String, Span>();
+		Map<String, Span> result = new TreeMap<String, Span>(); // TreeMap to maintain group ordering
 		List<String> names = getCapturedGroupNames();
 		Span[] groups = capturedGroups.get(hit);
 		for (int i = 0; i < names.size(); i++) {
