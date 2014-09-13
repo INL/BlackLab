@@ -40,7 +40,7 @@ import nl.inl.util.ExUtil;
  * Store string content by id in a directory of compound files with a TOC file. Quickly retrieve
  * (parts of) the string content.
  *
- * This implementation stores the strings in UTF-8 encoding to save disk space. To guarantuee
+ * This implementation stores the strings in UTF-8 encoding to save disk space. To guarantee
  * reasonably fast random access times, we keep track of "block offsets", which are byte offsets to
  * the start of (fixed char size) blocks. Block size in bytes can be slightly larger than char size
  * because some UTF-8 characters take up more than 1 byte. If the block size is 1000 chars, block

@@ -172,4 +172,7 @@ public abstract class TextPatternTranslator<T> {
 			value = value.toLowerCase();
 		return value;
 	}
+
+	/** Mark a clause as a capture group */
+	public abstract T captureGroup(T clause, String name);
 }

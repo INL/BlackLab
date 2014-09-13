@@ -61,6 +61,11 @@ public class HelpersForTests {
 		public Hit getHit() {
 			return current;
 		}
+
+		@Override
+		public void setHitQueryContext(HitQueryContext context) {
+			// just ignore this here
+		}
 	}
 
 	public static Spans getSimpleResults(int n) {

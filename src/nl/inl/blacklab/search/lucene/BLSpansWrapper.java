@@ -21,11 +21,12 @@ import java.util.Collection;
 import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
 
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 
 
 /**
  * Wrap a "simple" Spans object in a BLSpans object. It will
- * give the guarantuess appropriate for single-term Spans like
+ * give the guarantees appropriate for single-term Spans like
  * that of SpanTermQuery, SpanRegexQuery, etc.
  */
 public class BLSpansWrapper extends BLSpans {
@@ -35,6 +36,16 @@ public class BLSpansWrapper extends BLSpans {
 	public BLSpansWrapper(Spans source) {
 		if (source == null)
 			throw new RuntimeException("Cannot wrap null Spans!");
+
+		if (!(source instanceof TermSpans)) {
+			// For anything but the very basic TermSpans,
+			// this wrapper shouldn't be used anymore because everything is already BLSpans.
+			// (which is needed for token tagging)
+			// Just to make sure, print an error for now (will upgrade to
+			// throwing an exception in the future)
+			System.err.println("### BLSpansWrapper: " + source + " ###");
+		}
+
 		this.source = source;
 	}
 
@@ -114,6 +125,12 @@ public class BLSpansWrapper extends BLSpans {
 		if (!result.hitsStartPointSorted() || !result.hitsAreUnique())
 			result = new PerDocumentSortedSpans(result, false, !result.hitsAreUnique());
 		return result;
+	}
+
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		if (source instanceof BLSpans) // shouldn't happen, but ok
+			((BLSpans) source).setHitQueryContext(context);
 	}
 
 }

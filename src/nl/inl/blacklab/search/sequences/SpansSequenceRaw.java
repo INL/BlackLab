@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -279,6 +280,12 @@ class SpansSequenceRaw extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		left.setHitQueryContext(context);
+		origRight.setHitQueryContext(context);
 	}
 
 }

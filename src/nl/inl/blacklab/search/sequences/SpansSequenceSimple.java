@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 /**
  * Simple version of sequence Spans. Assumes that:
@@ -224,6 +225,12 @@ class SpansSequenceSimple extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		left.setHitQueryContext(context);
+		right.setHitQueryContext(context);
 	}
 
 }

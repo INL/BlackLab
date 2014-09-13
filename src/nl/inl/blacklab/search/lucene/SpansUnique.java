@@ -130,5 +130,10 @@ public class SpansUnique extends BLSpans {
 		return true;
 	}
 
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		src.setHitQueryContext(context);
+	}
+
 
 }

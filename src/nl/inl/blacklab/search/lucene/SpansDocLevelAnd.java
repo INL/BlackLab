@@ -265,5 +265,11 @@ public class SpansDocLevelAnd extends BLSpans {
 		return false;
 	}
 
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		spans[0].setHitQueryContext(context);
+		spans[1].setHitQueryContext(context);
+	}
+
 
 }

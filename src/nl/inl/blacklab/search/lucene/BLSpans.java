@@ -16,11 +16,12 @@
 package nl.inl.blacklab.search.lucene;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Span;
 
 
 /**
  * Will be the base class for all our own Spans classes. Is able to give extra
- * guarantuees about the hits in this Spans object, such as if every
+ * guarantees about the hits in this Spans object, such as if every
  * hit is equal in length, if there may be duplicates, etc. This information
  * will help us optimize certain operations, such as sequence queries, in certain
  * cases.
@@ -94,12 +95,37 @@ public abstract class BLSpans extends SpansAbstract {
 	 * Makes a new Hit object from the document id, start and end positions.
 	 *
 	 * Subclasses that already have a Hit object available should override this and return the
-	 * existing Hit object, to avoid excessive Hit instantiations.
-	 *
+	 * existing Hit object, to avoid excessive Hit instantiations.	 *
 	 * @return the Hit object for the current hit
 	 */
 	public Hit getHit() {
 		return new Hit(doc(), start(), end());
 	}
+
+	/**
+	 * Makes a new HitSpan object from the start and end positions (no document id).
+	 *
+	 * Subclasses that already have a HitSpan object available could override this
+	 * and return the existing HitSpan object, to avoid excessive HitSpan instantiations.
+	 * (Right now, no classes use HitSpan internally, however)
+	 *
+	 * @return the HitSpan object for the current hit
+	 */
+	public Span getSpan() {
+		return new Span(start(), end());
+	}
+
+	/**
+	 * Give the BLSpans tree a way to access capture groups, and the capture
+	 * groups themselves a way to register themselves..
+	 *
+	 * subclasses should override this method, pass the context to their child
+	 * clauses (if any), and either:
+	 * - register the capture group they represent with the context (SpansCaptureGroup does this), OR
+	 * - store the context so they can later use it to access capture groups (SpansBackreference does this)
+	 *
+	 * @param context the hit query context, that e.g. keeps track of capture groups
+	 */
+	abstract public void setHitQueryContext(HitQueryContext context);
 
 }

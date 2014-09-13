@@ -113,4 +113,9 @@ public class SpansStub extends BLSpans {
 		return false;
 	}
 
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		// just ignore this here
+	}
+
 }

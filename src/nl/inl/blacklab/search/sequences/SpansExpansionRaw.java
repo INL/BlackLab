@@ -20,6 +20,7 @@ import java.io.IOException;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.search.spans.Spans;
@@ -272,5 +273,10 @@ class SpansExpansionRaw extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return clause.hitsAreUnique() && min == max;
+	}
+
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		clause.setHitQueryContext(context);
 	}
 }

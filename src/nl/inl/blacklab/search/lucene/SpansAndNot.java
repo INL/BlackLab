@@ -180,5 +180,11 @@ public class SpansAndNot extends BLSpans {
 		return includeSpans.hitsAreUnique();
 	}
 
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		includeSpans.setHitQueryContext(context);
+		excludeSpans.setHitQueryContext(context);
+	}
+
 
 }

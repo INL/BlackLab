@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Represents a subset of a Hits object, for example a page of hits.
@@ -71,11 +72,15 @@ public class HitsWindow extends Hits {
 			number = source.size() - first;
 
 		// Copy the hits we're interested in.
-		// (we make a copy because we might want to change the context, which would
-		//  affect the original Hits object if we didn't clone)
 		hits = new ArrayList<Hit>();
+		if (source.hasCaptureGroups())
+			captureGroups = new HashMap<Hit, Span[]>();
 		for (int i = first; i < first + number; i++) {
-			hits.add((Hit)source.get(i).clone());
+			Hit hit = source.get(i);
+			hits.add(hit);
+			if (captureGroups != null)
+				captureGroups.put(hit, source.getCaptureGroups(hit));
+			// OPT: copy context as well..?
 		}
 
 		copySettingsFrom(source); // type of concordances to make, etc.

@@ -22,6 +22,7 @@ import java.util.Comparator;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -171,5 +172,10 @@ public class PerDocumentSortedSpans extends BLSpans {
 	@Override
 	public boolean hitsStartPointSorted() {
 		return sortByEndPoint ? hitsAllSameLength() : true;
+	}
+
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		source.setHitQueryContext(context);
 	}
 }

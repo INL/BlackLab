@@ -31,9 +31,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
@@ -44,6 +42,7 @@ import org.apache.lucene.util.Bits;
  * Bugfix JN: FuzzyQuery sometimes returns a TermQuery instead of a BooleanQuery (when there are no
  * fuzzy alternatives).
  * JN: ported to Lucene 4.0
+ *     replaced SpanOrQuery with BLSpanOrQuery
  */
 
 /**
@@ -97,19 +96,19 @@ public class SpanFuzzyQuery extends SpanQuery {
 				TermQuery termQuery = (TermQuery) clause.getQuery();
 
 				// ONLY DIFFERENCE WITH SpanFuzzyQuery:
-				// Use a BlackLabSpanTermQuery instead of default Lucene one
+				// Use a BLSpanTermQuery instead of default Lucene one
 				// because we need to override getField() to only return the base field name,
 				// not the complete field name with the property.
 				spanQueries[i] = new BLSpanTermQuery(termQuery.getTerm());
 				spanQueries[i].setBoost(termQuery.getBoost());
 			}
-			SpanQuery query = new SpanOrQuery(spanQueries);
+			SpanQuery query = new BLSpanOrQuery(spanQueries);
 			query.setBoost(fuzzyQuery.getBoost());
 			return query;
 		}
 
 		// Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
-		SpanQuery query = new SpanOrQuery(new SpanTermQuery(
+		SpanQuery query = new BLSpanOrQuery(new BLSpanTermQuery(
 				((TermQuery) rewrittenFuzzyQuery).getTerm()));
 		query.setBoost(fuzzyQuery.getBoost());
 		return query;

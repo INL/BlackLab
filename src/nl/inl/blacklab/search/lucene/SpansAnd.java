@@ -195,4 +195,10 @@ class SpansAnd extends BLSpans {
 		return spans[0].hitsAreUnique() || spans[1].hitsAreUnique();
 	}
 
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		spans[0].setHitQueryContext(context);
+		spans[1].setHitQueryContext(context);
+	}
+
 }

@@ -287,4 +287,9 @@ class SpansNot extends BLSpans {
 		return true;
 	}
 
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		clause.setHitQueryContext(context);
+	}
+
 }

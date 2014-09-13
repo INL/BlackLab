@@ -48,6 +48,7 @@ import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TokenFrequency;
 import nl.inl.blacklab.search.TokenFrequencyList;
@@ -1550,12 +1551,15 @@ public class QueryTool {
 
 			public String left, hitText, right;
 
-			public HitToShow(int doc, String left, String hitText, String right) {
+			public Map<String, Span> captureGroups;
+
+			public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> captureGroups) {
 				super();
 				this.doc = doc;
 				this.left = left;
 				this.hitText = hitText;
 				this.right = right;
+				this.captureGroups = captureGroups;
 			}
 		}
 
@@ -1579,7 +1583,7 @@ public class QueryTool {
 			hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
 			right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
-			toShow.add(new HitToShow(hit.doc, left, hitText, right));
+			toShow.add(new HitToShow(hit.doc, left, hitText, right, window.getCaptureGroupMap(hit)));
 			if (leftContextMaxSize < left.length())
 				leftContextMaxSize = left.length();
 		}
@@ -1609,6 +1613,8 @@ public class QueryTool {
 			else
 				outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
 			hitNr++;
+			if (hit.captureGroups != null)
+				outprintln("CAP: " + hit.captureGroups.toString());
 		}
 
 		// Summarize

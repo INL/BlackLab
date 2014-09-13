@@ -20,8 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits. Allow us to retrieve
@@ -143,6 +146,14 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	@Override
 	public Hit getHit(int index) {
 		return new Hit(doc(), start(index), end(index));
+	}
+
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		if (source instanceof BLSpans)
+			((BLSpans) source).setHitQueryContext(context);
+		else if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
+			System.err.println("### SpansInBucketsAbstract: " + source + ", not a BLSpans ###");
 	}
 
 

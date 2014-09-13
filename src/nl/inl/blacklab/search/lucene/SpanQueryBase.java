@@ -34,7 +34,7 @@ import org.apache.lucene.util.ToStringUtils;
 public abstract class SpanQueryBase extends SpanQuery {
 	/**
 	 * The field name for this query. The "base" part is only applicable when dealing with complex
-	 * fields: the base field name of "contents" and "contents__pos" would both be "contents".
+	 * fields: the base field name of "contents" and "contents%pos" would both be "contents".
 	 */
 	String baseFieldName = "";
 

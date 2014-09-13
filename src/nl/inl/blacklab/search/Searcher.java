@@ -45,7 +45,7 @@ import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
-import nl.inl.blacklab.highlight.XmlHighlighter.HitSpan;
+import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
 import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.perdocument.DocResults;
@@ -935,7 +935,7 @@ public class Searcher {
 	 *            the hits for which we wish to find character positions
 	 * @return a list of HitSpan objects containing the character positions for the hits.
 	 */
-	private List<HitSpan> getCharacterOffsets(int doc, String fieldName, Hits hits) {
+	private List<HitCharSpan> getCharacterOffsets(int doc, String fieldName, Hits hits) {
 		int[] starts = new int[hits.size()];
 		int[] ends = new int[hits.size()];
 		Iterator<Hit> hitsIt = hits.iterator();
@@ -948,9 +948,9 @@ public class Searcher {
 
 		getCharacterOffsets(doc, fieldName, starts, ends, true);
 
-		List<HitSpan> hitspans = new ArrayList<HitSpan>(starts.length);
+		List<HitCharSpan> hitspans = new ArrayList<HitCharSpan>(starts.length);
 		for (int i = 0; i < starts.length; i++) {
-			hitspans.add(new HitSpan(starts[i], ends[i]));
+			hitspans.add(new HitCharSpan(starts[i], ends[i]));
 		}
 		return hitspans;
 	}
@@ -1224,7 +1224,7 @@ public class Searcher {
 		}
 
 		// Find the character offsets for the hits and highlight
-		List<HitSpan> hitspans = null;
+		List<HitCharSpan> hitspans = null;
 		if (hits != null) // if hits == null, we still want the highlighter to make it well-formed
 			hitspans = getCharacterOffsets(docId, fieldName, hits);
 		XmlHighlighter hl = new XmlHighlighter();

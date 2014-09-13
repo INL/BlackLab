@@ -20,26 +20,27 @@ import java.io.IOException;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Returns either the left edge or right edge of the specified query.
+ * Captures its clause as a capture group.
  *
- * Note that the results of this query are zero-length spans.
+ * Registers itself with the HitQueryContext so others can
+ * access its start() and end() when they want to.
  */
-class SpansEdge extends BLSpans {
+class SpansCaptureGroup extends BLSpans {
 
-	/** query the query to determine edges from */
+	/** clause to capture as a group */
 	private BLSpans clause;
 
-	/** if true, return the right edges; if false, the left */
-	private boolean rightEdge;
+	/** group name */
+	private String name;
 
 	/**
-	 * Constructs a SpansEdge.
-	 * @param clause the clause to get an edge from
-	 * @param rightEdge whether or not to get the right edge
+	 * Constructs a SpansCaptureGroup.
+	 * @param clause the clause to capture
+	 * @param name group name
 	 */
-	public SpansEdge(Spans clause, boolean rightEdge) {
+	public SpansCaptureGroup(Spans clause, String name) {
 		this.clause = BLSpansWrapper.optWrap(clause);
-		this.rightEdge = rightEdge;
+		this.name = name;
 	}
 
 	/**
@@ -55,7 +56,7 @@ class SpansEdge extends BLSpans {
 	 */
 	@Override
 	public int start() {
-		return rightEdge ? clause.end() : clause.start();
+		return clause.start();
 	}
 
 	/**
@@ -63,7 +64,7 @@ class SpansEdge extends BLSpans {
 	 */
 	@Override
 	public int end() {
-		return rightEdge ? clause.end() : clause.start();
+		return clause.end();
 	}
 
 	/**
@@ -92,47 +93,48 @@ class SpansEdge extends BLSpans {
 
 	@Override
 	public String toString() {
-		return "SpansEdge(" + clause + ", " + (rightEdge ? "RIGHT" : "LEFT") + ")";
-	}
-
-	@Override
-	public boolean hitsEndPointSorted() {
-		return hitsStartPointSorted();
+		return "SpansCaptureGroup(" + clause + ", " + name + ")";
 	}
 
 	@Override
 	public boolean hitsStartPointSorted() {
-		return rightEdge ? clause.hitsEndPointSorted() : clause.hitsStartPointSorted();
+		return clause.hitsStartPointSorted();
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return clause.hitsEndPointSorted();
 	}
 
 	@Override
 	public boolean hitsAllSameLength() {
-		return true;
+		return clause.hitsAllSameLength();
 	}
 
 	@Override
 	public int hitsLength() {
-		return 0;
+		return clause.hitsLength();
 	}
 
 	@Override
 	public boolean hitsHaveUniqueStart() {
-		return rightEdge ? clause.hitsHaveUniqueEnd() : clause.hitsHaveUniqueStart();
+		return clause.hitsHaveUniqueStart();
 	}
 
 	@Override
 	public boolean hitsHaveUniqueEnd() {
-		return hitsHaveUniqueStart();
+		return clause.hitsHaveUniqueEnd();
 	}
 
 	@Override
 	public boolean hitsAreUnique() {
-		return hitsHaveUniqueStart();
+		return clause.hitsAreUnique();
 	}
 
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		clause.setHitQueryContext(context);
+		context.registerCaptureGroup(name, clause);
 	}
 
 

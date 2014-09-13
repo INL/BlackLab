@@ -126,4 +126,9 @@ public class SpansFiltered extends BLSpans {
 		return spans.hitsAreUnique();
 	}
 
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		spans.setHitQueryContext(context);
+	}
+
 }

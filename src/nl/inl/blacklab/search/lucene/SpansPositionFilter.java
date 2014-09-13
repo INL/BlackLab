@@ -261,4 +261,10 @@ class SpansPositionFilter extends BLSpans {
 		return producer.hitsAreUnique();
 	}
 
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		producer.setHitQueryContext(context);
+		filter.setHitQueryContext(context);
+	}
+
 }
