@@ -173,6 +173,6 @@ public abstract class TextPatternTranslator<T> {
 		return value;
 	}
 
-	/** Mark a clause as a capture group */
+	/** Mark a clause as a captured group */
 	public abstract T captureGroup(T clause, String name);
 }

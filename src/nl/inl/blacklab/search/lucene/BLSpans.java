@@ -116,15 +116,15 @@ public abstract class BLSpans extends SpansAbstract {
 	}
 
 	/**
-	 * Give the BLSpans tree a way to access capture groups, and the capture
+	 * Give the BLSpans tree a way to access captured groups, and the capture
 	 * groups themselves a way to register themselves..
 	 *
 	 * subclasses should override this method, pass the context to their child
 	 * clauses (if any), and either:
-	 * - register the capture group they represent with the context (SpansCaptureGroup does this), OR
-	 * - store the context so they can later use it to access capture groups (SpansBackreference does this)
+	 * - register the captured group they represent with the context (SpansCaptureGroup does this), OR
+	 * - store the context so they can later use it to access captured groups (SpansBackreference does this)
 	 *
-	 * @param context the hit query context, that e.g. keeps track of capture groups
+	 * @param context the hit query context, that e.g. keeps track of captured groups
 	 */
 	abstract public void setHitQueryContext(HitQueryContext context);
 

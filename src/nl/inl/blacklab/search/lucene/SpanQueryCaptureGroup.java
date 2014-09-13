@@ -26,7 +26,7 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
 /**
- * Captures its clause as a capture group.
+ * Captures its clause as a captured group.
  */
 public class SpanQueryCaptureGroup extends SpanQueryBase {
 
@@ -35,7 +35,7 @@ public class SpanQueryCaptureGroup extends SpanQueryBase {
 	/**
 	 * Construct SpanQueryCaptureGroup object.
 	 * @param query the query to determine edges from
-	 * @param name capture group name
+	 * @param name captured group name
 	 */
 	public SpanQueryCaptureGroup(SpanQuery query, String name) {
 		super(query);

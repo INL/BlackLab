@@ -9,95 +9,95 @@ import java.util.Map;
 import nl.inl.blacklab.search.Span;
 
 /**
- * Provides per-hit query-wide context, such as capture groups.
+ * Provides per-hit query-wide context, such as captured groups.
  *
  * This object is passed to the whole BLSpans tree before iterating
- * over the hits. Capture groups will register themselves here and
- * BLSpans objects that need access to capture groups will store a
+ * over the hits. Captured groups will register themselves here and
+ * BLSpans objects that need access to captured groups will store a
  * reference to this context and use it later.
  */
 public class HitQueryContext {
 
-	/** Capture group names for our query, in index order */
+	/** Captured group names for our query, in index order */
 	List<String> groupNames = new ArrayList<String>();
 
-	/** Capture group BLSpans objects for our query, in index order */
+	/** Captured group BLSpans objects for our query, in index order */
 	List<BLSpans> groups = new ArrayList<BLSpans>();
 
-	/** Mapping from capture group names to their index */
+	/** Mapping from captured group names to their index */
 	Map<String, Integer> groupNameToIndex = new HashMap<String, Integer>();
 
 	/**
-	 * Register a capture group.
+	 * Register a captured group.
 	 *
 	 * @param name the group's name
 	 * @param spans the group's BLSpans object.
 	 */
-	public void registerCaptureGroup(String name, BLSpans spans) {
+	public void registerCapturedGroup(String name, BLSpans spans) {
 		groupNameToIndex.put(name, groups.size());
 		groupNames.add(name);
 		groups.add(spans);
 	}
 
 	/**
-	 * Get the number of capture groups
-	 * @return number of capture groups
+	 * Get the number of captured groups
+	 * @return number of captured groups
 	 */
-	public int numberOfCaptureGroups() {
+	public int numberOfCapturedGroups() {
 		return groups.size();
 	}
 
 	/**
-	 * Get the BLSpans object for a capture group, by index
+	 * Get the BLSpans object for a captured group, by index
 	 * @param index the group's index
 	 * @return the BLSpans object
 	 */
-	public BLSpans captureGroup(int index) {
+	public BLSpans capturedGroup(int index) {
 		return groups.get(index);
 	}
 
 	/**
-	 * Get the BLSpans object for a capture group, by name
+	 * Get the BLSpans object for a captured group, by name
 	 * @param name group name
 	 * @return the BLSpans object
 	 */
-	public BLSpans captureGroup(String name) {
-		return captureGroup(captureGroupIndex(name));
+	public BLSpans capturedGroup(String name) {
+		return capturedGroup(capturedGroupIndex(name));
 	}
 
 	/**
-	 * Get the index of a named capture group.
+	 * Get the index of a named captured group.
 	 *
 	 * @param name group name
 	 * @return the group's index
 	 */
-	public int captureGroupIndex(String name) {
+	public int capturedGroupIndex(String name) {
 		return groupNameToIndex.get(name);
 	}
 
 	/**
-	 * Retrieve all the capture group information.
+	 * Retrieve all the captured group information.
 	 *
 	 * Used by Hits.
 	 *
-	 * @return the capture group information
+	 * @return the captured group information
 	 */
-	public Span[] getCaptureGroups() {
-		Span[] captureGroups = new Span[groups.size()];
+	public Span[] getCapturedGroups() {
+		Span[] capturedGroups = new Span[groups.size()];
 		int i = 0;
 		for (BLSpans groupSpans: groups) {
-			captureGroups[i] = groupSpans.getSpan();
+			capturedGroups[i] = groupSpans.getSpan();
 			i++;
 		}
-		return captureGroups;
+		return capturedGroups;
 	}
 
 	/**
-	 * Get the names of the capture groups, in index order.
+	 * Get the names of the captured groups, in index order.
 	 *
 	 * @return the list of names
 	 */
-	public List<String> getCaptureGroupNames() {
+	public List<String> getCapturedGroupNames() {
 		return Collections.unmodifiableList(groupNames);
 	}
 

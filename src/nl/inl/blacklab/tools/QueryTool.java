@@ -1551,15 +1551,15 @@ public class QueryTool {
 
 			public String left, hitText, right;
 
-			public Map<String, Span> captureGroups;
+			public Map<String, Span> capturedGroups;
 
-			public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> captureGroups) {
+			public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> capturedGroups) {
 				super();
 				this.doc = doc;
 				this.left = left;
 				this.hitText = hitText;
 				this.right = right;
-				this.captureGroups = captureGroups;
+				this.capturedGroups = capturedGroups;
 			}
 		}
 
@@ -1583,7 +1583,7 @@ public class QueryTool {
 			hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
 			right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
-			toShow.add(new HitToShow(hit.doc, left, hitText, right, window.getCaptureGroupMap(hit)));
+			toShow.add(new HitToShow(hit.doc, left, hitText, right, window.getCapturedGroupMap(hit)));
 			if (leftContextMaxSize < left.length())
 				leftContextMaxSize = left.length();
 		}
@@ -1613,8 +1613,8 @@ public class QueryTool {
 			else
 				outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
 			hitNr++;
-			if (hit.captureGroups != null)
-				outprintln("CAP: " + hit.captureGroups.toString());
+			if (hit.capturedGroups != null)
+				outprintln("CAP: " + hit.capturedGroups.toString());
 		}
 
 		// Summarize

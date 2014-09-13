@@ -20,7 +20,7 @@ import java.io.IOException;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Captures its clause as a capture group.
+ * Captures its clause as a captured group.
  *
  * Registers itself with the HitQueryContext so others can
  * access its start() and end() when they want to.
@@ -134,7 +134,7 @@ class SpansCaptureGroup extends BLSpans {
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		clause.setHitQueryContext(context);
-		context.registerCaptureGroup(name, clause);
+		context.registerCapturedGroup(name, clause);
 	}
 
 

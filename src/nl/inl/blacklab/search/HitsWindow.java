@@ -73,13 +73,13 @@ public class HitsWindow extends Hits {
 
 		// Copy the hits we're interested in.
 		hits = new ArrayList<Hit>();
-		if (source.hasCaptureGroups())
-			captureGroups = new HashMap<Hit, Span[]>();
+		if (source.hasCapturedGroups())
+			capturedGroups = new HashMap<Hit, Span[]>();
 		for (int i = first; i < first + number; i++) {
 			Hit hit = source.get(i);
 			hits.add(hit);
-			if (captureGroups != null)
-				captureGroups.put(hit, source.getCaptureGroups(hit));
+			if (capturedGroups != null)
+				capturedGroups.put(hit, source.getCapturedGroups(hit));
 			// OPT: copy context as well..?
 		}
 

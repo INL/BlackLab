@@ -64,9 +64,9 @@ public class Hits implements Iterable<Hit> {
 	protected List<Hit> hits;
 
 	/**
-	 * The capture groups, if we have any.
+	 * The captured groups, if we have any.
 	 */
-	protected Map<Hit, Span[]> captureGroups;
+	protected Map<Hit, Span[]> capturedGroups;
 
 	/**
 	 * The hit contexts.
@@ -223,7 +223,7 @@ public class Hits implements Iterable<Hit> {
 	/** What to use to make concordances: forward index or content store */
 	ConcordanceType concsType;
 
-	/** To keep track of capture groups, etc. */
+	/** To keep track of captured groups, etc. */
 	private HitQueryContext hitQueryContext;
 
 	/**
@@ -414,10 +414,10 @@ public class Hits implements Iterable<Hit> {
 
 			sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw != null ? srw.getContext() : null,
 					srw != null ? srw.getLiveDocs() : null, termContexts));
-			hitQueryContext = new HitQueryContext(); // to keep track of capture groups, etc.
+			hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
 			sourceSpans.setHitQueryContext(hitQueryContext);
-			if (hitQueryContext.numberOfCaptureGroups() > 0) {
-				captureGroups = new HashMap<Hit, Span[]>();
+			if (hitQueryContext.numberOfCapturedGroups() > 0) {
+				capturedGroups = new HashMap<Hit, Span[]>();
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -567,8 +567,8 @@ public class Hits implements Iterable<Hit> {
 					if (!maxHitsRetrieved) {
 						Hit hit = sourceSpans.getHit();
 						hits.add(hit);
-						if (captureGroups != null) {
-							captureGroups.put(hit, hitQueryContext.getCaptureGroups());
+						if (capturedGroups != null) {
+							capturedGroups.put(hit, hitQueryContext.getCapturedGroups());
 						}
 					}
 				}
@@ -1561,50 +1561,50 @@ public class Hits implements Iterable<Hit> {
 		return collocations;
 	}
 
-	public boolean hasCaptureGroups() {
-		return captureGroups != null;
+	public boolean hasCapturedGroups() {
+		return capturedGroups != null;
 	}
 
 	/**
-	 * Get the capture group information for this hit, if any.
+	 * Get the captured group information for this hit, if any.
 	 *
-	 * The names of the capture groups can be obtained through
-	 * the getCaptureGroupNames() method.
+	 * The names of the captured groups can be obtained through
+	 * the getCapturedGroupNames() method.
 	 *
-	 * @param hit the hit to get capture group information for
-	 * @return the capture group information, or null if none
+	 * @param hit the hit to get captured group information for
+	 * @return the captured group information, or null if none
 	 */
-	public Span[] getCaptureGroups(Hit hit) {
-		if (captureGroups == null)
+	public Span[] getCapturedGroups(Hit hit) {
+		if (capturedGroups == null)
 			return null;
-		return captureGroups.get(hit);
+		return capturedGroups.get(hit);
 	}
 
 	/**
-	 * Get the capture group name information.
+	 * Get the captured group name information.
 	 *
-	 * @return the capture group names, in index order
+	 * @return the captured group names, in index order
 	 */
-	public List<String> getCaptureGroupNames() {
+	public List<String> getCapturedGroupNames() {
 		if (hitQueryContext == null)
 			return null;
-		return hitQueryContext.getCaptureGroupNames();
+		return hitQueryContext.getCapturedGroupNames();
 	}
 
 	/**
-	 * Get the capture group information in map form.
+	 * Get the captured group information in map form.
 	 *
-	 * Relatively slow; use getCaptureGroups() and getCaptureGroupNames()
+	 * Relatively slow; use getCapturedGroups() and getCapturedGroupNames()
 	 * for a faster alternative.
 	 *
-	 * @return the capture group information map
+	 * @return the captured group information map
 	 */
-	public Map<String, Span> getCaptureGroupMap(Hit hit) {
-		if (captureGroups == null)
+	public Map<String, Span> getCapturedGroupMap(Hit hit) {
+		if (capturedGroups == null)
 			return null;
 		Map<String, Span> result = new HashMap<String, Span>();
-		List<String> names = getCaptureGroupNames();
-		Span[] groups = captureGroups.get(hit);
+		List<String> names = getCapturedGroupNames();
+		Span[] groups = capturedGroups.get(hit);
 		for (int i = 0; i < names.size(); i++) {
 			result.put(names.get(i), groups[i]);
 		}
