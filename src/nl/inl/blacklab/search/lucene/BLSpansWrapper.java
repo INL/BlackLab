@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
 
 import org.apache.lucene.search.spans.Spans;
@@ -131,6 +132,12 @@ public class BLSpansWrapper extends BLSpans {
 	public void setHitQueryContext(HitQueryContext context) {
 		if (source instanceof BLSpans) // shouldn't happen, but ok
 			((BLSpans) source).setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		if (source instanceof BLSpans) // shouldn't happen, but ok
+			((BLSpans) source).getCapturedGroups(capturedGroups);
 	}
 
 }

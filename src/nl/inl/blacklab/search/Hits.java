@@ -415,8 +415,8 @@ public class Hits implements Iterable<Hit> {
 
 			sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw != null ? srw.getContext() : null,
 					srw != null ? srw.getLiveDocs() : null, termContexts));
-			hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
-			sourceSpans.setHitQueryContext(hitQueryContext);
+			hitQueryContext = new HitQueryContext(sourceSpans); // to keep track of captured groups, etc.
+			sourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
 			if (hitQueryContext.numberOfCapturedGroups() > 0) {
 				capturedGroups = new HashMap<Hit, Span[]>();
 			}

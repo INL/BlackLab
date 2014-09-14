@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nl.inl.blacklab.search.Span;
+
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -348,6 +350,13 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 			public void setHitQueryContext(HitQueryContext context) {
 				for (BLSpans spans: clauseList) {
 					spans.setHitQueryContext(context);
+				}
+			}
+
+			@Override
+			public void getCapturedGroups(Span[] capturedGroups) {
+				for (BLSpans spans: clauseList) {
+					spans.getCapturedGroups(capturedGroups);
 				}
 			}
 

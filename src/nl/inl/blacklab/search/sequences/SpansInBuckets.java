@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 /**
@@ -84,4 +85,10 @@ public interface SpansInBuckets {
 	 */
 	void setHitQueryContext(HitQueryContext context);
 
+	/**
+	 * Get the captured groups information for the current hit.
+	 *
+	 * @param capturedGroups where to add the captured group information
+	 */
+	void getCapturedGroups(int index, Span[] capturedGroups);
 }

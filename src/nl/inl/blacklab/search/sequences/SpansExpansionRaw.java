@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
@@ -278,5 +279,10 @@ class SpansExpansionRaw extends BLSpans {
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		clause.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		clause.getCapturedGroups(capturedGroups);
 	}
 }

@@ -17,6 +17,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
+
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -133,6 +135,11 @@ class SpansEdge extends BLSpans {
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		clause.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		clause.getCapturedGroups(capturedGroups);
 	}
 
 

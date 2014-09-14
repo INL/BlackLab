@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
@@ -39,12 +40,16 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 
 	private List<Integer> endPoints = new ArrayList<Integer>();
 
+	private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<Span[]>();
+
 	private int bucketSize = 0;
 
 	/**
 	 * Does the source Spans have more hits?
 	 */
 	protected boolean moreInSource = true;
+
+	private HitQueryContext hitQueryContext;
 
 	public SpansInBucketsPerStartPoint(Spans source) {
 		this.source = source;
@@ -81,10 +86,16 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 
 		// NOTE: we don't call clear() to avoid holding on to a lot of memory indefinitely
 		endPoints = new ArrayList<Integer>();
+		capturedGroupsPerEndpoint = new ArrayList<Span[]>();
 
 		bucketSize = 0;
 		while (moreInSource && source.doc() == currentDoc && source.start() == currentStart) {
 			endPoints.add(source.end());
+			if (source instanceof BLSpans && hitQueryContext.numberOfCapturedGroups() > 0) {
+				Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
+				((BLSpans)source).getCapturedGroups(capturedGroups);
+				capturedGroupsPerEndpoint.add(capturedGroups);
+			}
 			bucketSize++;
 			moreInSource = source.next();
 		}
@@ -134,27 +145,39 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	}
 
 	@Override
-	public int start(int index) {
+	public int start(int indexInBucket) {
 		return currentStart;
 	}
 
 	@Override
-	public int end(int index) {
-		return endPoints.get(index);
+	public int end(int indexInBucket) {
+		return endPoints.get(indexInBucket);
 	}
 
 	@Override
-	public Hit getHit(int index) {
-		return new Hit(doc(), start(index), end(index));
+	public Hit getHit(int indexInBucket) {
+		return new Hit(doc(), start(indexInBucket), end(indexInBucket));
 	}
 
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
+		this.hitQueryContext = context;
 		if (source instanceof BLSpans)
 			((BLSpans) source).setHitQueryContext(context);
 		else if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
 			System.err.println("### SpansInBucketsAbstract: " + source + ", not a BLSpans ###");
 	}
 
-
+	@Override
+	public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
+		if (capturedGroupsPerEndpoint.size() == 0)
+			return;
+		Span[] previouslyCapturedGroups = capturedGroupsPerEndpoint.get(indexInBucket);
+		if (previouslyCapturedGroups != null) {
+			for (int i = 0; i < capturedGroups.length; i++) {
+				if (previouslyCapturedGroups[i] != null)
+					capturedGroups[i] = previouslyCapturedGroups[i];
+			}
+		}
+	}
 }

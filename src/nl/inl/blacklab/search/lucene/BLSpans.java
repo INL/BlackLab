@@ -128,4 +128,13 @@ public abstract class BLSpans extends SpansAbstract {
 	 */
 	abstract public void setHitQueryContext(HitQueryContext context);
 
+	/**
+	 * Get the start and end position for the captured groups contained in
+	 * this BLSpans (sub)tree.
+	 *
+	 * @param capturedGroups an array the size of the total number of groups in the query;
+	 *   the start and end positions for the groups in this subtree will be placed in here.
+	 */
+	abstract public void getCapturedGroups(Span[] capturedGroups);
+
 }

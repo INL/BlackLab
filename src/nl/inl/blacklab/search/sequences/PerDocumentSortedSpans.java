@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Comparator;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -176,6 +177,11 @@ public class PerDocumentSortedSpans extends BLSpans {
 
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
-		source.setHitQueryContext(context);
+		bucketedSpans.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		bucketedSpans.getCapturedGroups(indexInBucket, capturedGroups);
 	}
 }

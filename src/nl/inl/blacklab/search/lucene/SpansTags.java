@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
 
 import org.apache.lucene.search.spans.Spans;
@@ -280,5 +281,10 @@ class SpansTags extends BLSpans {
 	public void setHitQueryContext(HitQueryContext context) {
 		spans[0].setHitQueryContext(context);
 		spans[1].setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		// Cannot capture groups within the tag part of queries
 	}
 }

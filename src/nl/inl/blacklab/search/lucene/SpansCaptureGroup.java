@@ -17,6 +17,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
+
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -32,6 +34,9 @@ class SpansCaptureGroup extends BLSpans {
 
 	/** group name */
 	private String name;
+
+	/** group index (where in the Spans[] to place our start/end position in getCapturedGroups()) */
+	private int groupIndex;
 
 	/**
 	 * Constructs a SpansCaptureGroup.
@@ -134,8 +139,15 @@ class SpansCaptureGroup extends BLSpans {
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		clause.setHitQueryContext(context);
-		context.registerCapturedGroup(name, clause);
+		this.groupIndex = context.registerCapturedGroup(name);
 	}
 
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		clause.getCapturedGroups(capturedGroups);
+
+		// Place our start and end position at the correct index in the array
+		capturedGroups[groupIndex] = this.getSpan();
+	}
 
 }

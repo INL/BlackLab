@@ -18,25 +18,30 @@ import nl.inl.blacklab.search.Span;
  */
 public class HitQueryContext {
 
+	/** Root of the BLSpans tree for this query. */
+	private BLSpans rootSpans;
+
 	/** Captured group names for our query, in index order */
 	List<String> groupNames = new ArrayList<String>();
-
-	/** Captured group BLSpans objects for our query, in index order */
-	List<BLSpans> groups = new ArrayList<BLSpans>();
 
 	/** Mapping from captured group names to their index */
 	Map<String, Integer> groupNameToIndex = new HashMap<String, Integer>();
 
+	public HitQueryContext(BLSpans rootSpans) {
+		this.rootSpans = rootSpans;
+	}
+
 	/**
-	 * Register a captured group.
+	 * Register a captured group, assigning it a unique index number.
 	 *
 	 * @param name the group's name
-	 * @param spans the group's BLSpans object.
+	 * @return the group's assigned index
 	 */
-	public void registerCapturedGroup(String name, BLSpans spans) {
-		groupNameToIndex.put(name, groups.size());
+	public int registerCapturedGroup(String name) {
 		groupNames.add(name);
-		groups.add(spans);
+		int index = groupNames.size() - 1;
+		groupNameToIndex.put(name, index);
+		return index;
 	}
 
 	/**
@@ -44,25 +49,7 @@ public class HitQueryContext {
 	 * @return number of captured groups
 	 */
 	public int numberOfCapturedGroups() {
-		return groups.size();
-	}
-
-	/**
-	 * Get the BLSpans object for a captured group, by index
-	 * @param index the group's index
-	 * @return the BLSpans object
-	 */
-	public BLSpans capturedGroup(int index) {
-		return groups.get(index);
-	}
-
-	/**
-	 * Get the BLSpans object for a captured group, by name
-	 * @param name group name
-	 * @return the BLSpans object
-	 */
-	public BLSpans capturedGroup(String name) {
-		return capturedGroup(capturedGroupIndex(name));
+		return groupNames.size();
 	}
 
 	/**
@@ -83,12 +70,8 @@ public class HitQueryContext {
 	 * @return the captured group information
 	 */
 	public Span[] getCapturedGroups() {
-		Span[] capturedGroups = new Span[groups.size()];
-		int i = 0;
-		for (BLSpans groupSpans: groups) {
-			capturedGroups[i] = groupSpans.getSpan();
-			i++;
-		}
+		Span[] capturedGroups = new Span[groupNames.size()];
+		rootSpans.getCapturedGroups(capturedGroups);
 		return capturedGroups;
 	}
 

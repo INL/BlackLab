@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -285,7 +286,13 @@ class SpansSequenceRaw extends BLSpans {
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		left.setHitQueryContext(context);
-		origRight.setHitQueryContext(context);
+		right.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		left.getCapturedGroups(capturedGroups);
+		right.getCapturedGroups(indexInBucket, capturedGroups);
 	}
 
 }

@@ -18,6 +18,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
+
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -269,6 +271,12 @@ public class SpansDocLevelAnd extends BLSpans {
 	public void setHitQueryContext(HitQueryContext context) {
 		spans[0].setHitQueryContext(context);
 		spans[1].setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		spans[0].getCapturedGroups(capturedGroups);
+		spans[1].getCapturedGroups(capturedGroups);
 	}
 
 

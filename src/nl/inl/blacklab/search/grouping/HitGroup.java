@@ -21,6 +21,7 @@ import java.util.List;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
@@ -148,6 +149,11 @@ public class HitGroup extends Group {
 
 			@Override
 			public void setHitQueryContext(HitQueryContext context) {
+				// just ignore this here
+			}
+
+			@Override
+			public void getCapturedGroups(Span[] capturedGroups) {
 				// just ignore this here
 			}
 
