@@ -74,7 +74,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	protected void addHitFromSource() {
 		Hit hit = new Hit(source.doc(), source.start(), source.end());
 		bucket.add(hit);
-		if (source instanceof BLSpans && hitQueryContext.numberOfCapturedGroups() > 0) {
+		if (source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0) {
 			// Store captured group information
 			Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
 			((BLSpans)source).getCapturedGroups(capturedGroups);

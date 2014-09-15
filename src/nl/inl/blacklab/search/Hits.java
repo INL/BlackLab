@@ -1598,6 +1598,7 @@ public class Hits implements Iterable<Hit> {
 	 * Relatively slow; use getCapturedGroups() and getCapturedGroupNames()
 	 * for a faster alternative.
 	 *
+	 * @param hit hit to get the captured group map for
 	 * @return the captured group information map
 	 */
 	public Map<String, Span> getCapturedGroupMap(Hit hit) {

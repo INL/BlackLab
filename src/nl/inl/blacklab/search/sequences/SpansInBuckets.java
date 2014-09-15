@@ -88,7 +88,8 @@ public interface SpansInBuckets {
 	/**
 	 * Get the captured groups information for the current hit.
 	 *
+	 * @param indexInBucket what hit in the current bucket to get the information for
 	 * @param capturedGroups where to add the captured group information
 	 */
-	void getCapturedGroups(int index, Span[] capturedGroups);
+	void getCapturedGroups(int indexInBucket, Span[] capturedGroups);
 }

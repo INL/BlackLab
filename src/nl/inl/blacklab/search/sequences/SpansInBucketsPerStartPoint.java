@@ -91,7 +91,7 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 		bucketSize = 0;
 		while (moreInSource && source.doc() == currentDoc && source.start() == currentStart) {
 			endPoints.add(source.end());
-			if (source instanceof BLSpans && hitQueryContext.numberOfCapturedGroups() > 0) {
+			if (source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0) {
 				Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
 				((BLSpans)source).getCapturedGroups(capturedGroups);
 				capturedGroupsPerEndpoint.add(capturedGroups);
