@@ -343,9 +343,10 @@ TextPattern sequencePart():
 	TextPattern m = null;
 	Integer[] rep = null;
 	Token captureName = null;
+	Token captureNum = null;
 }
 {
-	(captureName=<NAME> ":")? ( m=tag() | m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+	( ( captureName=<NAME> | captureNum=<NUMBER> ) ":")? ( m=tag() | m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
 	{
 		if (rep != null)
 		{
@@ -356,8 +357,9 @@ TextPattern sequencePart():
             } else
                 m = new TextPatternRepetition(m, rep[0], rep[1]);
 		}
-		if (captureName != null) {
-		    m = new TextPatternCaptureGroup(m, captureName.toString());
+		if (captureName != null || captureNum != null) {
+			String name = captureName != null ? captureName.toString() : captureNum.toString();
+		    m = new TextPatternCaptureGroup(m, name);
 		}
 		return m;
 	}
