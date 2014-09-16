@@ -176,7 +176,7 @@ public class PerDocumentSortedSpans extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		bucketedSpans.setHitQueryContext(context);
 	}
 

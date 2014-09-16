@@ -290,13 +290,15 @@ class SpansNot extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		if (clause != null)
 			clause.setHitQueryContext(context);
 	}
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
 		if (clause != null)
 			clause.getCapturedGroups(capturedGroups);
 	}

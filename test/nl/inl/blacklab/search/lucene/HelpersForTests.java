@@ -64,7 +64,7 @@ public class HelpersForTests {
 		}
 
 		@Override
-		public void setHitQueryContext(HitQueryContext context) {
+		public void passHitQueryContextToClauses(HitQueryContext context) {
 			// just ignore this here
 		}
 

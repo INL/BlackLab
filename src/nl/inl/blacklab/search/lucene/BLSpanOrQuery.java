@@ -347,7 +347,7 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 			}
 
 			@Override
-			public void setHitQueryContext(HitQueryContext context) {
+			public void passHitQueryContextToClauses(HitQueryContext context) {
 				for (BLSpans spans: clauseList) {
 					spans.setHitQueryContext(context);
 				}
@@ -355,6 +355,8 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 
 			@Override
 			public void getCapturedGroups(Span[] capturedGroups) {
+				if (!childClausesCaptureGroups)
+					return;
 				for (BLSpans spans: clauseList) {
 					spans.getCapturedGroups(capturedGroups);
 				}

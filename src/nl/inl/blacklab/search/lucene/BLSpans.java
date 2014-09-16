@@ -31,6 +31,12 @@ import nl.inl.blacklab.search.Span;
  */
 public abstract class BLSpans extends SpansAbstract {
 
+	/** Should we ask our clauses for captured groups?
+	 *  If the clauses don't capture any groups, this will be set to false
+	 *  to improve performance.
+	 */
+	protected boolean childClausesCaptureGroups = true;
+
 	/**
 	 * When hit B follows hit A, is it guaranteed that B.end &gt;= A.end?
 	 * Also, if A.end == B.end, is B.start &gt; A.start?
@@ -126,7 +132,21 @@ public abstract class BLSpans extends SpansAbstract {
 	 *
 	 * @param context the hit query context, that e.g. keeps track of captured groups
 	 */
-	abstract public void setHitQueryContext(HitQueryContext context);
+	public void setHitQueryContext(HitQueryContext context) {
+		int before = context.numberOfCapturedGroups();
+		passHitQueryContextToClauses(context);
+		if (context.numberOfCapturedGroups() == before) {
+			// Our clauses don't capture any groups; optimize
+			childClausesCaptureGroups = false;
+		}
+	}
+
+	/**
+	 * Called by setHitQueryContext() to pass the context to child clauses.
+	 *
+	 * @param context the hit query context, that e.g. keeps track of captured groups
+	 */
+	abstract protected void passHitQueryContextToClauses(HitQueryContext context);
 
 	/**
 	 * Get the start and end position for the captured groups contained in

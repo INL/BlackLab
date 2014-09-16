@@ -51,6 +51,12 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 
 	private HitQueryContext hitQueryContext;
 
+	/** Do we have a hitQueryContext and does it contain captured groups? */
+	private boolean doCapturedGroups = true;
+
+	/** Does our clause capture any groups? If not, we don't need to mess with those */
+	protected boolean clauseCapturesGroups = true;
+
 	public SpansInBucketsPerStartPoint(Spans source) {
 		this.source = source;
 	}
@@ -88,10 +94,12 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 		endPoints = new ArrayList<Integer>();
 		capturedGroupsPerEndpoint = new ArrayList<Span[]>();
 
+		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
+
 		bucketSize = 0;
 		while (moreInSource && source.doc() == currentDoc && source.start() == currentStart) {
 			endPoints.add(source.end());
-			if (source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0) {
+			if (doCapturedGroups) {
 				Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
 				((BLSpans)source).getCapturedGroups(capturedGroups);
 				capturedGroupsPerEndpoint.add(capturedGroups);
@@ -162,15 +170,20 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		this.hitQueryContext = context;
+		int before = context.numberOfCapturedGroups();
 		if (source instanceof BLSpans)
 			((BLSpans) source).setHitQueryContext(context);
 		else if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
 			System.err.println("### SpansInBucketsAbstract: " + source + ", not a BLSpans ###");
+		if (context.numberOfCapturedGroups() == before) {
+			// Our clause doesn't capture any groups; optimize
+			clauseCapturesGroups = false;
+		}
 	}
 
 	@Override
 	public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
-		if (capturedGroupsPerEndpoint.size() == 0)
+		if (!doCapturedGroups || capturedGroupsPerEndpoint.size() == 0)
 			return;
 		Span[] previouslyCapturedGroups = capturedGroupsPerEndpoint.get(indexInBucket);
 		if (previouslyCapturedGroups != null) {

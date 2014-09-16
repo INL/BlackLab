@@ -129,13 +129,15 @@ public class BLSpansWrapper extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		if (source instanceof BLSpans) // shouldn't happen, but ok
 			((BLSpans) source).setHitQueryContext(context);
 	}
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
 		if (source instanceof BLSpans) // shouldn't happen, but ok
 			((BLSpans) source).getCapturedGroups(capturedGroups);
 	}

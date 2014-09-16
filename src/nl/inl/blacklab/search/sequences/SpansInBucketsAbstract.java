@@ -71,10 +71,16 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 	private HitQueryContext hitQueryContext;
 
+	/** Is there captured group information for each hit that we need to store? */
+	private boolean doCapturedGroups;
+
+	/** Does our clause capture any groups? If not, we don't need to mess with those */
+	protected boolean clauseCapturesGroups = true;
+
 	protected void addHitFromSource() {
 		Hit hit = new Hit(source.doc(), source.start(), source.end());
 		bucket.add(hit);
-		if (source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0) {
+		if (doCapturedGroups) {
 			// Store captured group information
 			Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
 			((BLSpans)source).getCapturedGroups(capturedGroups);
@@ -168,6 +174,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 		capturedGroupsPerHit = new HashMap<Hit, Span[]>();
 
 		bucketSize = 0;
+		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
 		gatherHits();
 	}
 
@@ -184,14 +191,21 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		this.hitQueryContext = context;
+		int before = context.numberOfCapturedGroups();
 		if (source instanceof BLSpans)
 			((BLSpans) source).setHitQueryContext(context);
 		else if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
 			System.err.println("### SpansInBucketsAbstract: " + source + ", not a BLSpans ###");
+		if (context.numberOfCapturedGroups() == before) {
+			// Our clause doesn't capture any groups; optimize
+			clauseCapturesGroups = false;
+		}
 	}
 
 	@Override
 	public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
+		if (!doCapturedGroups)
+			return;
 		Span[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.get(indexInBucket));
 		if (previouslyCapturedGroups != null) {
 			for (int i = 0; i < capturedGroups.length; i++) {

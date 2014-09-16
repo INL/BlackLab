@@ -133,12 +133,14 @@ public class SpansUnique extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		src.setHitQueryContext(context);
 	}
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
 		src.getCapturedGroups(capturedGroups);
 	}
 

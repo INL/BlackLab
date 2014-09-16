@@ -138,13 +138,19 @@ class SpansCaptureGroup extends BLSpans {
 
 	@Override
 	public void setHitQueryContext(HitQueryContext context) {
-		clause.setHitQueryContext(context);
+		super.setHitQueryContext(context);
 		this.groupIndex = context.registerCapturedGroup(name);
 	}
 
 	@Override
+	protected void passHitQueryContextToClauses(HitQueryContext context) {
+		clause.setHitQueryContext(context);
+	}
+
+	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
-		clause.getCapturedGroups(capturedGroups);
+		if (childClausesCaptureGroups)
+			clause.getCapturedGroups(capturedGroups);
 
 		// Place our start and end position at the correct index in the array
 		capturedGroups[groupIndex] = this.getSpan();

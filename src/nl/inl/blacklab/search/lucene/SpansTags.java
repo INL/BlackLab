@@ -278,7 +278,7 @@ class SpansTags extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		spans[0].setHitQueryContext(context);
 		spans[1].setHitQueryContext(context);
 	}

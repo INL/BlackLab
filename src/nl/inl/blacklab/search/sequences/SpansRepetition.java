@@ -208,7 +208,7 @@ class SpansRepetition extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		source.setHitQueryContext(context);
 	}
 

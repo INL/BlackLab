@@ -129,12 +129,14 @@ public class SpansFiltered extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		spans.setHitQueryContext(context);
 	}
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
 		spans.getCapturedGroups(capturedGroups);
 	}
 

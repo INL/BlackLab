@@ -148,7 +148,7 @@ public class HitGroup extends Group {
 			}
 
 			@Override
-			public void setHitQueryContext(HitQueryContext context) {
+			public void passHitQueryContextToClauses(HitQueryContext context) {
 				// just ignore this here
 			}
 

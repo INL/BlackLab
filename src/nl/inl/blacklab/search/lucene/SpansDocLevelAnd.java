@@ -268,13 +268,15 @@ public class SpansDocLevelAnd extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		spans[0].setHitQueryContext(context);
 		spans[1].setHitQueryContext(context);
 	}
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
 		spans[0].getCapturedGroups(capturedGroups);
 		spans[1].getCapturedGroups(capturedGroups);
 	}

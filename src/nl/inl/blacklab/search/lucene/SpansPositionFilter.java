@@ -270,13 +270,15 @@ class SpansPositionFilter extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		producer.setHitQueryContext(context);
 		filter.setHitQueryContext(context);
 	}
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
 		producer.getCapturedGroups(capturedGroups);
 		filter.getCapturedGroups(filterIndex, capturedGroups);
 	}

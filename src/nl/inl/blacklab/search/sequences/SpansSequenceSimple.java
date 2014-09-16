@@ -229,13 +229,15 @@ class SpansSequenceSimple extends BLSpans {
 	}
 
 	@Override
-	public void setHitQueryContext(HitQueryContext context) {
+	public void passHitQueryContextToClauses(HitQueryContext context) {
 		left.setHitQueryContext(context);
 		right.setHitQueryContext(context);
 	}
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
 		left.getCapturedGroups(capturedGroups);
 		right.getCapturedGroups(capturedGroups);
 	}

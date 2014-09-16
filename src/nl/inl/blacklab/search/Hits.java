@@ -569,7 +569,9 @@ public class Hits implements Iterable<Hit> {
 						Hit hit = sourceSpans.getHit();
 						hits.add(hit);
 						if (capturedGroups != null) {
-							capturedGroups.put(hit, hitQueryContext.getCapturedGroups());
+							Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
+							hitQueryContext.getCapturedGroups(groups);
+							capturedGroups.put(hit, groups);
 						}
 					}
 				}
