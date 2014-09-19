@@ -22,6 +22,9 @@ public class HitQueryContext {
 	/** Captured group names for our query, in index order */
 	List<String> groupNames = new ArrayList<String>();
 
+	/** We use this to check if subclauses capture groups or not */
+	private int numberOfTimesGroupRegistered = 0;
+
 	public HitQueryContext(BLSpans rootSpans) {
 		this.rootSpans = rootSpans;
 	}
@@ -33,6 +36,9 @@ public class HitQueryContext {
 	 * @return the group's assigned index
 	 */
 	public int registerCapturedGroup(String name) {
+		numberOfTimesGroupRegistered++;
+		if (groupNames.contains(name))
+			return groupNames.indexOf(name); // already registered
 		groupNames.add(name);
 		return groupNames.size() - 1; // index in array
 	}
@@ -63,6 +69,10 @@ public class HitQueryContext {
 	 */
 	public List<String> getCapturedGroupNames() {
 		return Collections.unmodifiableList(groupNames);
+	}
+
+	public int getCaptureRegisterNumber() {
+		return numberOfTimesGroupRegistered;
 	}
 
 }

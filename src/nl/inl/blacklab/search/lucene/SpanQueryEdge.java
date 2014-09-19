@@ -54,6 +54,6 @@ public class SpanQueryEdge extends SpanQueryBase {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryNot(" + clausesToString(field, " & ") + ")";
+		return "SpanQueryEdge(" + clausesToString(field, " & ") + ")";
 	}
 }

@@ -956,6 +956,7 @@ public class Searcher {
 	}
 
 	public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord, int endAtWord) {
+		// FIXME: use fieldName
 		Hit hit = new Hit(docId, startAtWord, endAtWord);
 		Hits hits = new Hits(this, Arrays.asList(hit));
 		Kwic kwic = hits.getKwic(hit, 0);
@@ -981,7 +982,10 @@ public class Searcher {
 		ContentAccessor ca = contentAccessors.get(fieldName);
 		if (ca == null) {
 			// No special content accessor set; assume a stored field
-			return getWordsFromString(d.get(fieldName), startAtWord, endAtWord);
+			String content = d.get(fieldName);
+			if (content == null)
+				throw new RuntimeException("Field not found: " + fieldName);
+			return getWordsFromString(content, startAtWord, endAtWord);
 		}
 
 		int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord,

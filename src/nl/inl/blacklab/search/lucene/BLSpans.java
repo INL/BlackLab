@@ -133,9 +133,9 @@ public abstract class BLSpans extends SpansAbstract {
 	 * @param context the hit query context, that e.g. keeps track of captured groups
 	 */
 	public void setHitQueryContext(HitQueryContext context) {
-		int before = context.numberOfCapturedGroups();
+		int before = context.getCaptureRegisterNumber();
 		passHitQueryContextToClauses(context);
-		if (context.numberOfCapturedGroups() == before) {
+		if (context.getCaptureRegisterNumber() == before) {
 			// Our clauses don't capture any groups; optimize
 			childClausesCaptureGroups = false;
 		}

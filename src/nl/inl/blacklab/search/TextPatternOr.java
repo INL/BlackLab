@@ -38,6 +38,15 @@ public class TextPatternOr extends TextPatternCombiner {
 		return translator.or(context, chResults);
 	}
 
+	@Override
+	public boolean matchesEmptySequence() {
+		for (TextPattern cl: clauses) {
+			if (cl.matchesEmptySequence())
+				return true;
+		}
+		return false;
+	}
+
 	/*
 
 	NOTE: this code rewrites OR queries containing one or more NOT children

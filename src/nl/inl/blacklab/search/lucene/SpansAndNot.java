@@ -185,7 +185,6 @@ public class SpansAndNot extends BLSpans {
 	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		includeSpans.setHitQueryContext(context);
-		excludeSpans.setHitQueryContext(context);
 	}
 
 	@Override
@@ -193,6 +192,5 @@ public class SpansAndNot extends BLSpans {
 		if (!childClausesCaptureGroups)
 			return;
 		includeSpans.getCapturedGroups(capturedGroups);
-		excludeSpans.getCapturedGroups(capturedGroups);
 	}
 }

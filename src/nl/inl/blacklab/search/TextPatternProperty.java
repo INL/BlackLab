@@ -44,4 +44,11 @@ public class TextPatternProperty extends TextPattern {
 			return this; // Nothing to rewrite
 		return new TextPatternProperty(propertyName, rewritten);
 	}
+
+	@Override
+	public boolean matchesEmptySequence() {
+		return input.matchesEmptySequence();
+	}
+
+
 }

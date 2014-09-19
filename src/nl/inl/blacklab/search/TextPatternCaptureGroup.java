@@ -47,4 +47,9 @@ public class TextPatternCaptureGroup extends TextPattern {
 			return this; // Nothing to rewrite
 		return new TextPatternCaptureGroup(rewritten, groupName);
 	}
+
+	@Override
+	public boolean matchesEmptySequence() {
+		return input.matchesEmptySequence();
+	}
 }

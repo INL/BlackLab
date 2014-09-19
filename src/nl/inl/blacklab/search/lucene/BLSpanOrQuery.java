@@ -158,13 +158,13 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 		return h;
 	}
 
-	private class SpanQueue extends PriorityQueue<Spans> {
+	private class SpanQueue extends PriorityQueue<BLSpans> {
 		public SpanQueue(int size) {
 			super(size);
 		}
 
 		@Override
-		protected final boolean lessThan(Spans spans1, Spans spans2) {
+		protected final boolean lessThan(BLSpans spans1, BLSpans spans2) {
 			if (spans1.doc() == spans2.doc()) {
 				if (spans1.start() == spans2.start()) {
 					return spans1.end() < spans2.end();
@@ -185,6 +185,9 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 			return BLSpansWrapper.optWrap((clauses.get(0)).getSpans(context, acceptDocs, termContexts)); // BL: wrapped in BLSpans
 
 		return new BLSpans() { // BL: was Spans
+
+			private boolean initClauseListCalled = false;
+
 			private SpanQueue queue = null;
 
 			private boolean clausesAllSameLength; // BL: are all clauses the same length?
@@ -193,21 +196,17 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 
 			private List<BLSpans> clauseList = new ArrayList<BLSpans>(); // BL: we need to iterate over clauses in setHitQueryContext()
 
-			private boolean initSpanQueue(int target) throws IOException {
+			private void initClauseList() throws IOException {
+				initClauseListCalled = true;
 
 				// BL: keep track of hit length guarantee while adding Spans
 				clauseLength = -1;
 				clausesAllSameLength = true;
 
-				queue = new SpanQueue(clauses.size());
 				Iterator<SpanQuery> i = clauses.iterator();
 				while (i.hasNext()) {
 					BLSpans spans = BLSpansWrapper.optWrap(i.next().getSpans(context, acceptDocs,
 							termContexts)); // BL: was regular Spans
-					if (((target == -1) && spans.next())
-							|| ((target != -1) && spans.skipTo(target))) {
-						queue.add(spans);
-					}
 
 					// BL: see if hit length guarantees hold up
 					if (spans.hitsAllSameLength() && (clauseLength == -1 || clauseLength == spans.hitsLength())) {
@@ -218,6 +217,20 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 						clausesAllSameLength = false;
 					}
 					clauseList.add(spans); // for setHitQueryContext(), see below
+				}
+			}
+
+			private boolean initSpanQueue(int target) throws IOException {
+				if (!initClauseListCalled)
+					initClauseList();
+
+				queue = new SpanQueue(clauseList.size());
+				for (BLSpans spans: clauseList) {
+
+					if (((target == -1) && spans.next())
+							|| ((target != -1) && spans.skipTo(target))) {
+						queue.add(spans);
+					}
 				}
 
 				return queue.size() != 0;
@@ -242,7 +255,7 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 				return queue.size() != 0;
 			}
 
-			private Spans top() {
+			private BLSpans top() {
 				return queue.top();
 			}
 
@@ -348,6 +361,13 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 
 			@Override
 			public void passHitQueryContextToClauses(HitQueryContext context) {
+				if (!initClauseListCalled) {
+					try {
+						initClauseList();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				}
 				for (BLSpans spans: clauseList) {
 					spans.setHitQueryContext(context);
 				}
@@ -357,9 +377,7 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 			public void getCapturedGroups(Span[] capturedGroups) {
 				if (!childClausesCaptureGroups)
 					return;
-				for (BLSpans spans: clauseList) {
-					spans.getCapturedGroups(capturedGroups);
-				}
+				top().getCapturedGroups(capturedGroups);
 			}
 
 		};

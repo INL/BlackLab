@@ -277,8 +277,7 @@ public class SpansDocLevelAnd extends BLSpans {
 	public void getCapturedGroups(Span[] capturedGroups) {
 		if (!childClausesCaptureGroups)
 			return;
-		spans[0].getCapturedGroups(capturedGroups);
-		spans[1].getCapturedGroups(capturedGroups);
+		spans[currentSpansIndex].getCapturedGroups(capturedGroups);
 	}
 
 
