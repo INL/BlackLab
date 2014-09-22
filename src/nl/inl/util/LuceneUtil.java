@@ -178,7 +178,7 @@ public class LuceneUtil {
 				throw new RuntimeException("Field " + luceneName + " has no Terms");
 			}
 			if (!terms.hasPositions())
-				throw new RuntimeException("Field has no character postion information");
+				throw new RuntimeException("Field " + luceneName + " has no character postion information");
 			// String[] docTerms = new String[(int) terms.size()];
 			// final List<BytesRef> termsList = new ArrayList<BytesRef>();
 			TermsEnum termsEnum = terms.iterator(null);
