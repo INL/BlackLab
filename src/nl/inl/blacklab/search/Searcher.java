@@ -159,7 +159,7 @@ public class Searcher {
 	 *
 	 * Indexed by property name.
 	 */
-	Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
+	private Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
 
 	/**
 	 * The Lucene index reader
@@ -208,16 +208,16 @@ public class Searcher {
 	//private boolean concordancesFromForwardIndex = false;
 
 	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
-	String concWordFI = "word";
+	private String concWordFI = "word";
 
 	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
-	String concPunctFI = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
+	private String concPunctFI = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
 
 	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
-	Collection<String> concAttrFI = null; // all other FIs are attributes
+	private Collection<String> concAttrFI = null; // all other FIs are attributes
 
 	/** How we fix well-formedness for snippets of XML: by adding or removing unbalanced tags */
-	UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
+	private UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
 
 	/**
 	 * How do we fix well-formedness for snippets of XML?
@@ -1960,6 +1960,22 @@ public class Searcher {
 
 	public String getMainContentsFieldName() {
 		return mainContentsFieldName;
+	}
+
+	public String getConcWordFI() {
+		return concWordFI;
+	}
+
+	public String getConcPunctFI() {
+		return concPunctFI;
+	}
+
+	public Collection<String> getConcAttrFI() {
+		return concAttrFI;
+	}
+
+	public Map<String, ForwardIndex> getForwardIndices() {
+		return forwardIndices;
 	}
 
 
