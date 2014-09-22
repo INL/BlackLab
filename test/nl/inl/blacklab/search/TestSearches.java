@@ -29,22 +29,35 @@ public class TestSearches {
 	 * Some test XML data to index.
 	 */
 	static String[] testData = {
-			"<doc>" + "<s><entity><w l='the'   p='art' >The</w> "
-					+ "<w l='quick' p='adj'>quick</w> "
-					+ "<w l='brown' p='adj'>brown</w> "
-					+ "<w l='fox'   p='nou'>fox</w></entity> "
-					+ "<w l='jump'  p='vrb' >jumps</w> "
-					+ "<w l='over'  p='pre' >over</w> "
-					+ "<entity><w l='the'   p='art' >the</w> "
-					+ "<w l='lazy'  p='adj'>lazy</w> "
-					+ "<w l='dog'   p='nou'>dog</w></entity>" + ".</s></doc>",
+		"<doc><s><entity><w l='the'   p='art' >The</w> "
+		+ "<w l='quick' p='adj'>quick</w> "
+		+ "<w l='brown' p='adj'>brown</w> "
+		+ "<w l='fox'   p='nou'>fox</w></entity> "
+		+ "<w l='jump'  p='vrb' >jumps</w> "
+		+ "<w l='over'  p='pre' >over</w> "
+		+ "<entity><w l='the'   p='art' >the</w> "
+		+ "<w l='lazy'  p='adj'>lazy</w> "
+		+ "<w l='dog'   p='nou'>dog</w></entity>" + ".</s></doc>",
 
-			"<doc> " + "<s><w l='may' p='vrb'>May</w> "
-					+ "<entity><w l='the' p='art'>the</w> "
-					+ "<w l='force' p='nou'>Force</w></entity> "
-					+ "<w l='be' p='vrb'>be</w> "
-					+ "<w l='with' p='pre'>with</w> "
-					+ "<w l='you' p='pro'>you</w>" + ".</s></doc>", };
+		"<doc> <s><w l='may' p='vrb'>May</w> "
+		+ "<entity><w l='the' p='art'>the</w> "
+		+ "<w l='force' p='nou'>Force</w></entity> "
+		+ "<w l='be' p='vrb'>be</w> "
+		+ "<w l='with' p='pre'>with</w> "
+		+ "<w l='you' p='pro'>you</w>" + ".</s></doc>",
+
+		"<doc> <s><w l='to' p='pre'>To</w> "
+		+ "<w l='find' p='vrb'>find</w> "
+		+ "<w l='or' p='con'>or</w> "
+		+ "<w l='be' p='adv'>not</w> "
+		+ "<w l='to' p='pre'>to</w> "
+		+ "<w l='find' p='vrb'>find</w>.</s>"
+		+ "<s><w l='that' p='pro'>That</w> "
+		+ "<w l='be' p='vrb'>is</w> "
+		+ "<w l='the' p='art'>the</w> "
+		+ "<w l='question' p='nou'>question</w>."
+		+ "</s></doc>",
+	};
 
 	private File indexDir;
 
@@ -99,18 +112,21 @@ public class TestSearches {
 		List<String> expected = Arrays.asList(
 				"[The] quick",
 				"over [the] lazy",
-				"May [the] Force");
+				"May [the] Force",
+				"is [the] question");
 		Assert.assertEquals(expected, find(" 'the' "));
 
 		expected = Arrays.asList(
 				"over [the] lazy",
-				"May [the] Force");
+				"May [the] Force",
+				"is [the] question");
 		Assert.assertEquals(expected, find(" '(?-i)the' "));
 
 		expected = Arrays.asList(
 				"brown [fox] jumps",
 				"lazy [dog]",
-				"the [Force] be");
+				"the [Force] be",
+				"the [question]");
 		Assert.assertEquals(expected, find(" [pos='nou'] "));
 
 		expected = Arrays.asList(
@@ -131,20 +147,16 @@ public class TestSearches {
 
 		expected = Arrays.asList(
 				"brown [fox jumps] over",
-				"lazy [dog ]", // <-- TODO: fix dummy token added at the end matching this as well
-				"the [Force be] with");
+				"lazy [dog ]", // <-- FIXME: dummy token added at the end matches this as well
+				"the [Force be] with",
+				"the [question ]"); // <-- same problem
 		Assert.assertEquals(expected, find(" [pos='nou'] [] "));
 
 		expected = Arrays.asList(
 				"quick [brown fox] jumps",
 				"the [lazy dog]",
-				"May [the Force] be");
-		Assert.assertEquals(expected, find(" [] [pos='nou'] "));
-
-		expected = Arrays.asList(
-				"quick [brown fox] jumps",
-				"the [lazy dog]",
-				"May [the Force] be");
+				"May [the Force] be",
+				"is [the question]");
 		Assert.assertEquals(expected, find(" [] [pos='nou'] "));
 
 		expected = Arrays.asList(
