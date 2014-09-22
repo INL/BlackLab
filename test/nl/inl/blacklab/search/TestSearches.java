@@ -26,6 +26,11 @@ public class TestSearches {
 	static Searcher searcher;
 
 	/**
+	 * Expected search results;
+	 */
+	List<String> expected;
+
+	/**
 	 * Some test XML data to index.
 	 */
 	static String[] testData = {
@@ -107,85 +112,6 @@ public class TestSearches {
 		dir.delete();
 	}
 
-	@Test
-	public void testSearches() throws ParseException {
-		List<String> expected = Arrays.asList(
-				"[The] quick",
-				"over [the] lazy",
-				"May [the] Force",
-				"is [the] question");
-		Assert.assertEquals(expected, find(" 'the' "));
-
-		expected = Arrays.asList(
-				"over [the] lazy",
-				"May [the] Force",
-				"is [the] question");
-		Assert.assertEquals(expected, find(" '(?-i)the' "));
-
-		expected = Arrays.asList(
-				"brown [fox] jumps",
-				"lazy [dog]",
-				"the [Force] be",
-				"the [question]");
-		Assert.assertEquals(expected, find(" [pos='nou'] "));
-
-		expected = Arrays.asList(
-				"quick [brown fox] jumps",
-				"the [lazy dog]");
-		Assert.assertEquals(expected, find(" [pos='adj'] [pos='nou'] "));
-
-		expected = Arrays.asList(
-				"The [quick brown] fox");
-		Assert.assertEquals(expected, find(" [pos='adj']{2} "));
-
-		expected = Arrays.asList(
-				"The [quick] brown",
-				"The [quick brown] fox",
-				"quick [brown] fox",
-				"the [lazy] dog");
-		Assert.assertEquals(expected, find(" [pos='adj']{1,} "));
-
-		expected = Arrays.asList(
-				"brown [fox jumps] over",
-				"lazy [dog ]", // <-- FIXME: dummy token added at the end matches this as well
-				"the [Force be] with",
-				"the [question ]"); // <-- same problem
-		Assert.assertEquals(expected, find(" [pos='nou'] [] "));
-
-		expected = Arrays.asList(
-				"quick [brown fox] jumps",
-				"the [lazy dog]",
-				"May [the Force] be",
-				"is [the question]");
-		Assert.assertEquals(expected, find(" [] [pos='nou'] "));
-
-		expected = Arrays.asList(
-				"quick [brown] fox",
-				"Force [be] with");
-		Assert.assertEquals(expected, find(" 'b.*' "));
-
-		expected = Arrays.asList(
-				"brown [fox] jumps",
-				"the [Force] be");
-		Assert.assertEquals(expected, find(" 'fo[xr].*' "));
-
-		expected = Arrays.asList(
-				"quick [brown] fox");
-		Assert.assertEquals(expected, find(" 'b.*' within <entity/> "));
-
-		expected = Arrays.asList(
-				"[The quick brown fox] jumps");
-		Assert.assertEquals(expected, find(" <entity/> containing 'b.*' "));
-
-		expected = Arrays.asList(
-				"[The] quick");
-		Assert.assertEquals(expected, find(" <s> 'the' "));
-
-		expected = Arrays.asList(
-				"lazy [dog]");
-		Assert.assertEquals(expected, find(" 'dog' </s> "));
-	}
-
 	/**
 	 * Parse a Corpus Query Language query
 	 *
@@ -223,6 +149,134 @@ public class TestSearches {
 			results.add(conc.trim());
 		}
 		return results;
+	}
+
+	@Test
+	public void testSearches() throws ParseException {
+		testSimple();
+		testSequences();
+		testMatchAll();
+		testOptional();
+		testRepetition();
+		testStringRegexes();
+		testTags();
+	}
+
+	public void testSimple() throws ParseException {
+		expected = Arrays.asList(
+				"[The] quick",
+				"over [the] lazy",
+				"May [the] Force",
+				"is [the] question");
+		Assert.assertEquals(expected, find(" 'the' "));
+
+		expected = Arrays.asList(
+				"over [the] lazy",
+				"May [the] Force",
+				"is [the] question");
+		Assert.assertEquals(expected, find(" '(?-i)the' "));
+
+		expected = Arrays.asList(
+				"brown [fox] jumps",
+				"lazy [dog]",
+				"the [Force] be",
+				"the [question]");
+		Assert.assertEquals(expected, find(" [pos='nou'] "));
+	}
+
+	public void testSequences() throws ParseException {
+		expected = Arrays.asList(
+				"quick [brown fox] jumps",
+				"the [lazy dog]");
+		Assert.assertEquals(expected, find(" [pos='adj'] [pos='nou'] "));
+	}
+
+	public void testMatchAll() throws ParseException {
+		expected = Arrays.asList(
+				"brown [fox jumps] over",
+				"lazy [dog ]", // <-- FIXME: dummy token added at the end matches this as well
+				"the [Force be] with",
+				"the [question ]"); // <-- same problem
+		Assert.assertEquals(expected, find(" [pos='nou'] [] "));
+
+		expected = Arrays.asList(
+				"quick [brown fox] jumps",
+				"the [lazy dog]",
+				"May [the Force] be",
+				"is [the question]");
+		Assert.assertEquals(expected, find(" [] [pos='nou'] "));
+	}
+
+	public void testOptional() throws ParseException {
+		expected = Arrays.asList(
+				"be [with you]",
+				"with [you]",
+				"to [find That] is",
+				"find [That] is"
+				);
+		Assert.assertEquals(expected, find(" []? [pos='pro'] "));
+
+		expected = Arrays.asList(
+				"with [you]",
+				"with [you ]",
+				"find [That] is",
+				"find [That is] the"
+				);
+		Assert.assertEquals(expected, find(" [pos='pro'] []? "));
+
+		expected = Arrays.asList(
+				"be [with] you",
+				"be [with you]",
+				"with [you]",
+				"To [find] or",
+				"to [find] That",
+				"to [find That] is",
+				"find [That] is"
+				);
+		Assert.assertEquals(expected, find(" 'with|find'? [pos='pro']? "));
+	}
+
+	public void testRepetition() throws ParseException {
+		expected = Arrays.asList(
+				"The [quick brown] fox");
+		Assert.assertEquals(expected, find(" [pos='adj']{2} "));
+
+		expected = Arrays.asList(
+				"The [quick] brown",
+				"The [quick brown] fox",
+				"quick [brown] fox",
+				"the [lazy] dog");
+		Assert.assertEquals(expected, find(" [pos='adj']{1,} "));
+	}
+
+	public void testStringRegexes() throws ParseException {
+		expected = Arrays.asList(
+				"quick [brown] fox",
+				"Force [be] with");
+		Assert.assertEquals(expected, find(" 'b.*' "));
+
+		expected = Arrays.asList(
+				"brown [fox] jumps",
+				"the [Force] be");
+		Assert.assertEquals(expected, find(" 'fo[xr].*' "));
+	}
+
+	public void testTags() throws ParseException {
+		expected = Arrays.asList(
+				"quick [brown] fox");
+		Assert.assertEquals(expected, find(" 'b.*' within <entity/> "));
+
+		expected = Arrays.asList(
+				"[The quick brown fox] jumps");
+		Assert.assertEquals(expected, find(" <entity/> containing 'b.*' "));
+
+		expected = Arrays.asList(
+				"[The] quick");
+		Assert.assertEquals(expected, find(" <s> 'the' "));
+
+		expected = Arrays.asList(
+				"lazy [dog]");
+		Assert.assertEquals(expected, find(" 'dog' </s> "));
 	}
 
 }

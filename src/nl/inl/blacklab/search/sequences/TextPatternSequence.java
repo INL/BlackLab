@@ -154,15 +154,38 @@ public class TextPatternSequence extends TextPatternAnd {
 		List<T> resultsRest = chResults.subList(1, chResults.size());
 		List<Boolean> emptyRest = matchesEmptySeq.subList(1, matchesEmptySeq.size());
 		T rest = makeAlternatives(translator, context, resultsRest, emptyRest);
+		boolean restMatchesEmpty = true;
+		for (int i = 1; i < matchesEmptySeq.size(); i++) {
+			if (!matchesEmptySeq.get(i)) {
+				restMatchesEmpty = false;
+				break;
+			}
+		}
 
 		// Now, add the head part and check if it could match the empty sequence
 		T firstPart = chResults.get(0);
 		boolean firstPartMatchesEmpty = matchesEmptySeq.get(0);
 		T result = translator.sequence(context, Arrays.asList(firstPart, rest));
 		if (firstPartMatchesEmpty) {
-			// Yes, head matches empty sequence. Also include sequence without the head.
-			List<T> alternatives = Arrays.asList(result,
-					translator.sequence(context, Arrays.asList(rest)));
+			List<T> alternatives;
+			if (restMatchesEmpty) {
+				// Both can match empty sequence. Generate 2 additional alternatives
+				// (only the first part, only the rest part (both empty doesn't make sense))
+				alternatives = Arrays.asList(
+					result,
+					translator.sequence(context, Arrays.asList(rest)),
+					translator.sequence(context, Arrays.asList(firstPart)));
+			} else {
+				// Yes, head matches empty sequence. Also include sequence without the head.
+				alternatives = Arrays.asList(result,
+						translator.sequence(context, Arrays.asList(rest)));
+			}
+			result = translator.or(context, alternatives);
+		} else if (restMatchesEmpty) {
+			// Yes, rest matches empty sequence. Also include sequence without the rest.
+			List<T> alternatives = Arrays.asList(
+				result,
+				translator.sequence(context, Arrays.asList(firstPart)));
 			result = translator.or(context, alternatives);
 		}
 		return result;
