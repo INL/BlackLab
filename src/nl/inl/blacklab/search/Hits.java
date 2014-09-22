@@ -41,14 +41,14 @@ import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Represents a list of Hit objects. Also maintains information about the context (concordance)
@@ -127,15 +127,44 @@ public class Hits implements Iterable<Hit> {
 	 */
 	protected String concordanceFieldName;
 
+	/////////////////////////////////////////////
+
+	/**
+	 * Our SpanQuery, for getting the next Spans when the current one's done.
+	 */
+	protected SpanQuery spanQuery;
+
+	/**
+	 * The AtomicReaderContexts we should query in succession.
+	 */
+	protected List<AtomicReaderContext> atomicReaderContexts;
+
+	/**
+	 * What AtomicReaderContext we're querying now.
+	 */
+	protected int atomicReaderContextIndex = -1;
+
+	/**
+	 * Term contexts for the terms in the query.
+	 */
+	private Map<Term, TermContext> termContexts;
+
+	/**
+	 * docBase of the segment we're currently in
+	 */
+	protected int currentDocBase;
+
+	/**
+	 * Our Spans object, which may not have been fully read yet.
+	 */
+	protected BLSpans currentSourceSpans;
+
 	/**
 	 * Did we completely read our Spans object?
 	 */
 	protected boolean sourceSpansFullyRead = true;
 
-	/**
-	 * Our Spans object, which may not have been fully read yet.
-	 */
-	protected BLSpans sourceSpans;
+	/////////////////////////////////////////////
 
 	/**
 	 * Stop retrieving hits after this number.
@@ -233,8 +262,8 @@ public class Hits implements Iterable<Hit> {
 		}
 		hits = copyFrom.hits;
 		kwics = copyFrom.kwics;
-		sourceSpansFullyRead = copyFrom.sourceSpansFullyRead;
-		sourceSpans = copyFrom.sourceSpans;
+		sourceSpansFullyRead = true; //copyFrom.sourceSpansFullyRead;
+		//sourceSpans = copyFrom.sourceSpans;
 		hitsCounted = copyFrom.hitsCounted;
 		docsRetrieved = copyFrom.docsRetrieved;
 		docsCounted = copyFrom.docsCounted;
@@ -314,9 +343,9 @@ public class Hits implements Iterable<Hit> {
 			concAttrFI = null;
 			concsType = ConcordanceType.FORWARD_INDEX;
 		} else {
-			concWordFI = searcher.concWordFI;
-			concPunctFI = searcher.concPunctFI;
-			concAttrFI = searcher.concAttrFI;
+			concWordFI = searcher.getConcWordFI();
+			concPunctFI = searcher.getConcPunctFI();
+			concAttrFI = searcher.getConcAttrFI();
 			concsType = searcher.getDefaultConcordanceType();
 		}
 	}
@@ -343,9 +372,9 @@ public class Hits implements Iterable<Hit> {
 			concsType = ConcordanceType.FORWARD_INDEX;
 		} else {
 			desiredContextSize = searcher.getDefaultContextSize();
-			concWordFI = searcher.concWordFI;
-			concPunctFI = searcher.concPunctFI;
-			concAttrFI = searcher.concAttrFI;
+			concWordFI = searcher.getConcWordFI();
+			concPunctFI = searcher.getConcPunctFI();
+			concAttrFI = searcher.getConcAttrFI();
 			concsType = searcher.getDefaultConcordanceType();
 		}
 	}
@@ -368,7 +397,7 @@ public class Hits implements Iterable<Hit> {
 	public Hits(Searcher searcher, String concordanceFieldPropName, Spans source) {
 		this(searcher, concordanceFieldPropName);
 
-		sourceSpans = BLSpansWrapper.optWrap(source);
+		currentSourceSpans = BLSpansWrapper.optWrap(source);
 		sourceSpansFullyRead = false;
 	}
 
@@ -388,22 +417,19 @@ public class Hits implements Iterable<Hit> {
 		this(searcher, concordanceFieldPropName);
 
 		try {
-			DirectoryReader reader = null;
-			AtomicReader srw = null;
-			if (searcher != null) { // may happen while testing with stub classes; don't try to rewrite
-				reader = searcher.getIndexReader();
-				srw = new SlowCompositeReaderWrapper(searcher.getIndexReader());
-			}
-			SpanQuery spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
-			Map<Term, TermContext> termContexts = new HashMap<Term, TermContext>();
+			DirectoryReader reader = searcher == null ? null : searcher.getIndexReader();
+			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
+			termContexts = new HashMap<Term, TermContext>();
 			TreeSet<Term> terms = new TreeSet<Term>();
 			spanQuery.extractTerms(terms);
 			for (Term term: terms) {
 				termContexts.put(term, TermContext.build(reader.getContext(), term, true));
 			}
 
-			sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw != null ? srw.getContext() : null,
-					srw != null ? srw.getLiveDocs() : null, termContexts));
+			currentSourceSpans = null;
+			atomicReaderContexts = reader == null ? null : reader.leaves();
+			atomicReaderContextIndex = -1;
+			//sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw != null ? srw.getContext() : null, srw != null ? srw.getLiveDocs() : null, termContexts));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -532,16 +558,53 @@ public class Hits implements Iterable<Hit> {
 						break;
 					}
 
-					// Advance to next hit
-					if (!sourceSpans.next()) {
-						sourceSpansFullyRead = true;
-						break;
+					// Get the next hit from the spans, moving to the next
+					// segment when necessary.
+					while (true) {
+						if (currentSourceSpans == null) {
+
+							if (spanQuery == null) {
+								// We started from a Spans, not a SpanQuery. We're done now.
+								// (only used in deprecated methods or while testing)
+								return;
+							}
+
+							atomicReaderContextIndex++;
+							if (atomicReaderContexts != null && atomicReaderContextIndex >= atomicReaderContexts.size()) {
+								sourceSpansFullyRead = true;
+								return;
+							}
+							if (atomicReaderContexts != null) {
+								// Get the atomic reader context and get the next Spans from it.
+								AtomicReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
+								currentDocBase = context.docBase;
+								Bits liveDocs = context.reader().getLiveDocs();
+								currentSourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(context, liveDocs, termContexts));
+							} else {
+								// TESTING
+								currentDocBase = 0;
+								if (atomicReaderContextIndex > 0) {
+									sourceSpansFullyRead = true;
+									return;
+								}
+								currentSourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(null, null, termContexts));
+							}
+						}
+
+						// Advance to next hit
+						if (currentSourceSpans.next()) {
+							// We're at the next hit.
+							break;
+						} else {
+							// This one is exhausted; go to the next one.
+							currentSourceSpans = null;
+						}
 					}
 
 					// Count the hit and add it (unless we've reached the maximum number of hits we
 					// want)
 					hitsCounted++;
-					int hitDoc = sourceSpans.doc();
+					int hitDoc = currentSourceSpans.doc() + currentDocBase;
 					if (hitDoc != previousHitDoc) {
 						docsCounted++;
 						if (!maxHitsRetrieved)
@@ -549,8 +612,12 @@ public class Hits implements Iterable<Hit> {
 						previousHitDoc = hitDoc;
 					}
 					maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
-					if (!maxHitsRetrieved)
-						hits.add(sourceSpans.getHit());
+					if (!maxHitsRetrieved) {
+						Hit h = currentSourceSpans.getHit();
+						//System.out.println("doc: " + h.doc + " + " + currentDocBase + " = " + (h.doc + currentDocBase));
+						h.doc += currentDocBase;
+						hits.add(h);
+					}
 				}
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -1321,29 +1388,29 @@ public class Hits implements Iterable<Hit> {
 		if (concsType == ConcordanceType.FORWARD_INDEX) {
 			// Yes, make 'em from the forward index (faster)
 			ForwardIndex forwardIndex = null;
-			if (searcher.concWordFI != null)
+			if (searcher.getConcWordFI() != null)
 				forwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
-						searcher.concWordFI));
+						searcher.getConcWordFI()));
 
 			ForwardIndex punctForwardIndex = null;
-			if (searcher.concPunctFI != null)
+			if (searcher.getConcPunctFI() != null)
 				punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(
-						fieldName, searcher.concPunctFI));
+						fieldName, searcher.getConcPunctFI()));
 
 			Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
-			if (searcher.concAttrFI == null) {
+			if (searcher.getConcAttrFI() == null) {
 				// All other FIs are attributes
-				for (String p: searcher.forwardIndices.keySet()) {
+				for (String p: searcher.getForwardIndices().keySet()) {
 					String[] components = ComplexFieldUtil.getNameComponents(p);
 					String propName = components[1];
-					if (propName.equals(searcher.concWordFI)
-							|| propName.equals(searcher.concPunctFI))
+					if (propName.equals(searcher.getConcWordFI())
+							|| propName.equals(searcher.getConcPunctFI()))
 						continue;
 					attrForwardIndices.put(propName, searcher.getForwardIndex(p));
 				}
 			} else {
 				// Specific list of attribute FIs
-				for (String p: searcher.concAttrFI) {
+				for (String p: searcher.getConcAttrFI()) {
 					attrForwardIndices.put(p,
 							searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
 				}
@@ -1784,11 +1851,11 @@ public class Hits implements Iterable<Hit> {
 
 			}
 			List<String> properties = new ArrayList<String>();
-			properties.add(searcher.concPunctFI);
+			properties.add(searcher.getConcPunctFI());
 			for (int k = 0; k < attrContext.length; k++) {
 				properties.add(attrName[k]);
 			}
-			properties.add(searcher.concWordFI);
+			properties.add(searcher.getConcWordFI());
 			Kwic kwic = new Kwic(properties, tokens, contextHitStart, contextRightStart);
 			kwics.put(h, kwic);
 		}
@@ -2012,7 +2079,7 @@ public class Hits implements Iterable<Hit> {
 	 */
 	private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, String fieldName) {
 		XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
-		hl.setUnbalancedTagsStrategy(searcher.defaultUnbalancedTagsStrategy);
+		hl.setUnbalancedTagsStrategy(searcher.getDefaultUnbalancedTagsStrategy());
 		Map<Integer, List<Hit>> hitsPerDocument = perDocumentGroupedHits();
 		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
 		for (List<Hit> l: hitsPerDocument.values()) {
