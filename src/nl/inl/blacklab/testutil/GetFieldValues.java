@@ -30,7 +30,6 @@ public class GetFieldValues {
 		}
 
 		Map<String, Set<String>> fieldValues = new HashMap<String, Set<String>>();
-		Searcher.setAutoWarmForwardIndices(false);
 		Searcher searcher = Searcher.open(indexDir);
 		try {
 			IndexReader r = searcher.getIndexReader();

@@ -623,7 +623,6 @@ public class QueryTool {
 		}
 
 		// Create the BlackLab searcher object
-		Searcher.setAutoWarmForwardIndices(true);
 		try {
 			searcher = Searcher.open(indexDir);
 		} catch (IOException e) {
