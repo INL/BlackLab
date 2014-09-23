@@ -177,6 +177,7 @@ class TermsImplV3 extends Terms {
 					terms[id] = str;
 				}
 				if (indexMode) {
+					termIndexBuilt = false;
 					buildTermIndex(); // We need to find id for term while indexing
 					terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
 				} else {
@@ -292,8 +293,9 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
-	public String get(Integer integer) {
-		return terms[integer];
+	public String get(Integer index) {
+		assert index >= 0 && index < terms.length : "Term index out of range (" + index + ", numterms = " + terms.length + ")";
+		return terms[index];
 	}
 
 	@Override
