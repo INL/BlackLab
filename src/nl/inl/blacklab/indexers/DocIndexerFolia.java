@@ -142,7 +142,8 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
 			@Override
 			public void endElement(String uri, String localName, String qName) {
 				super.endElement(uri, localName, qName);
-				addMetadataField(metadataFieldName, getElementContent());
+				if (metadataFieldName != null)
+					addMetadataField(metadataFieldName, getElementContent());
 			}
 		});
 	}

@@ -837,6 +837,8 @@ public class IndexStructure {
 	}
 
 	public void registerMetadataField(String fieldName) {
+		if (fieldName == null)
+			throw new RuntimeException("Tried to register a metadata field with null as name");
 		if (metadataFieldInfos.containsKey(fieldName))
 			return;
 		// Not registered yet; do so now.

@@ -209,8 +209,8 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 			@Override
 			public void endElement(String uri, String localName, String qName) {
 				super.endElement(uri, localName, qName);
-				String elementContent = getElementContent();
-				addMetadataField(metadataFieldName, elementContent);
+				if (metadataFieldName != null)
+					addMetadataField(metadataFieldName, getElementContent());
 			}
 		});
 	}

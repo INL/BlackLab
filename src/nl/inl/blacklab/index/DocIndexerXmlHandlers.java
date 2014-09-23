@@ -283,7 +283,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			super.startElement(uri, localName, qName, attributes);
 			String name = attributes.getValue(nameAttribute);
 			String value = attributes.getValue(valueAttribute);
-			addMetadataField(name, value);
+			if (name != null && value != null)
+				addMetadataField(name, value);
 		}
 	}
 
