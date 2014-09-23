@@ -44,22 +44,32 @@ import org.apache.lucene.search.spans.Spans;
  * and eliminates duplicates.
  */
 class SpansExpansionRaw extends BLSpans {
+
+	/** The clause to expand */
 	private BLSpans clause;
 
+	/** Whether or not there's more hits in the clause */
 	private boolean more = true;
 
+	/** Whether or not we've called clause.next() yet */
 	private boolean clauseNexted;
 
+	/** Whether to expand to left (true) or right (false) */
 	private boolean expandToLeft;
 
+	/** Minimum number of tokens to expand */
 	private int min;
 
+	/** Maximum number of tokens to expand (-1 = infinite) */
 	private int max;
 
+	/** Start of the current expanded hit */
 	private int start;
 
+	/** End of the current expanded hit */
 	private int end;
 
+	/** Number of expansion steps left to do for current clause hit */
 	private int expandStepsLeft = 0;
 
 	/** For which document do we have the token length? */
@@ -71,9 +81,14 @@ class SpansExpansionRaw extends BLSpans {
 	/** Used to get the field length in tokens for a document */
 	DocFieldLengthGetter lengthGetter;
 
-	public SpansExpansionRaw(AtomicReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
+	/** How much to subtract from length (for ignoring closing token) */
+	private int subtractFromLength;
+
+	public SpansExpansionRaw(boolean ignoreLastToken, AtomicReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
+		subtractFromLength = ignoreLastToken ? 1 : 0;
 		if (!expandToLeft) {
 			// We need to know document length to properly do expansion to the right
+			// TODO: cache this in Searcher..?
 			lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		}
 		this.clause = BLSpansWrapper.optWrap(clause);
@@ -203,7 +218,7 @@ class SpansExpansionRaw extends BLSpans {
 				if (clause.doc() != tokenLengthDocId) {
 					// No, determine length now
 					tokenLengthDocId = clause.doc();
-					tokenLength = lengthGetter.getFieldLength(tokenLengthDocId);
+					tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - subtractFromLength;
 				}
 				maxExpandSteps = tokenLength - end;
 			}

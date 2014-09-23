@@ -59,6 +59,9 @@ class SpansNot extends BLSpans {
 	/** Used to get the field length in tokens for a document */
 	DocFieldLengthGetter lengthGetter;
 
+	/** How much to subtract from length (for ignoring closing token) */
+	private int subtractFromLength;
+
 	/** For testing, we don't have an IndexReader available, so we use test values.
 	 *
 	 *  The test values are: there are 3 documents (0, 1 and 2) and each is 5 tokens long.
@@ -72,12 +75,14 @@ class SpansNot extends BLSpans {
 
 	/**
 	 * Constructs a SpansNot.
+	 * @param ignoreLastToken if true, we assume the last token is always a special closing token and ignore it
 	 * @param reader the index reader, for getting field lengths
 	 * @param fieldName the field name, for getting field lengths
 	 * @param clause the clause to invert, or null if we want all tokens
 	 */
-	public SpansNot(AtomicReader reader, String fieldName, Spans clause) {
+	public SpansNot(boolean ignoreLastToken, AtomicReader reader, String fieldName, Spans clause) {
 		this.reader = reader;
+		subtractFromLength = ignoreLastToken ? 1 : 0;
 		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		this.clause = clause == null ? null : BLSpansWrapper.optWrap(clause);
 
@@ -201,7 +206,7 @@ class SpansNot extends BLSpans {
 			done = true;
 			return false; // no more docs; we're done
 		}
-		currentDocLength = lengthGetter.getFieldLength(currentDoc);
+		currentDocLength = lengthGetter.getFieldLength(currentDoc) - subtractFromLength;
 		currentToken = 0;
 		return true;
 	}

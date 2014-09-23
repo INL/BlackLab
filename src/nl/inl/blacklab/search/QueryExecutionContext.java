@@ -242,5 +242,9 @@ public class QueryExecutionContext {
 		return new QueryExecutionContext(null, fieldName, mainPropName, false, false);
 	}
 
+	public boolean alwaysHasClosingToken() {
+		return searcher.getIndexStructure().alwaysHasClosingToken();
+	}
+
 
 }

@@ -31,7 +31,7 @@ public class TestSpansExpansion {
 		int[] aEnd = new int[] { 2, 3 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-		SpansExpansionRaw spans = new SpansExpansionRaw(null, "test", a, false, 1, 2);
+		SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, false, 1, 2);
 		spans.setTest(true); // for test, all documents are 5 long
 
 		Assert.assertTrue(spans.next());
@@ -65,7 +65,7 @@ public class TestSpansExpansion {
 		int[] aEnd = new int[] { 1, 4, 5 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-		SpansExpansionRaw spans = new SpansExpansionRaw(null, "test", a, false, 1, -1);
+		SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, false, 1, -1);
 		spans.setTest(true); // for test, all documents are 5 long
 
 		Assert.assertTrue(spans.next());
@@ -104,7 +104,7 @@ public class TestSpansExpansion {
 		int[] aEnd = new int[] { 2, 3 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-		SpansExpansionRaw spans = new SpansExpansionRaw(null, "test", a, true, 2, 3);
+		SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, true, 2, 3);
 
 		// NOTE: first hit cannot be expanded at all (minimum expansion would set start to -1),
 		// second hit can only be expanded once.

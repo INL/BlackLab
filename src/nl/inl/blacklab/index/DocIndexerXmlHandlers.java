@@ -124,6 +124,13 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				if (prop.lastValuePosition() > lastValuePos)
 					lastValuePos = prop.lastValuePosition();
 			}
+
+			// Make sure we always have one more token than the number of
+			// words, so there's room for any tags after the last word, and we
+			// know we should always skip the last token when matching.
+			if (propMain.lastValuePosition() == lastValuePos)
+				lastValuePos++;
+
 			// Add empty values to all lagging properties
 			for (ComplexFieldProperty prop : contentsField.getProperties()) {
 				while (prop.lastValuePosition() < lastValuePos) {

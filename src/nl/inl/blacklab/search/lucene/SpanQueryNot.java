@@ -34,6 +34,9 @@ import org.apache.lucene.util.Bits;
  */
 public class SpanQueryNot extends SpanQueryBase {
 
+	/** if true, we assume the last token is always a special closing token and ignore it */
+	boolean ignoreLastToken = false;
+
 	public SpanQueryNot(SpanQuery query) {
 		super(query);
 	}
@@ -56,14 +59,16 @@ public class SpanQueryNot extends SpanQueryBase {
 		baseFieldName = matchAllTokensFieldName;
 	}
 
-	public static SpanQuery matchAllTokens(String fieldName) {
-		return new SpanQueryNot(fieldName);
+	public static SpanQuery matchAllTokens(boolean ignoreLastToken, String fieldName) {
+		SpanQueryNot spanQueryNot = new SpanQueryNot(fieldName);
+		spanQueryNot.setIgnoreLastToken(ignoreLastToken);
+		return spanQueryNot;
 	}
 
 	@Override
 	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		SpanQuery query = clauses[0];
-		Spans result = new SpansNot(context.reader(), baseFieldName, query == null ? null : query.getSpans(context, acceptDocs, termContexts));
+		Spans result = new SpansNot(ignoreLastToken, context.reader(), baseFieldName, query == null ? null : query.getSpans(context, acceptDocs, termContexts));
 
 		return result;
 	}
@@ -72,4 +77,13 @@ public class SpanQueryNot extends SpanQueryBase {
 	public String toString(String field) {
 		return "SpanQueryNot(" + (clauses[0] == null ? "" : clausesToString(field, " & ")) + ")";
 	}
+
+	/** Set whether to ignore the last token.
+	 *
+	 * @param ignoreLastToken if true, we assume the last token is always a special closing token and ignore it
+	 */
+	public void setIgnoreLastToken(boolean ignoreLastToken) {
+		this.ignoreLastToken = ignoreLastToken;
+	}
+
 }

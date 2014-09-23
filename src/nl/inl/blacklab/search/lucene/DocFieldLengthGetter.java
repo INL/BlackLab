@@ -18,6 +18,9 @@ import org.apache.lucene.search.FieldCache;
  * we don't go beyond the document end.
  */
 public class DocFieldLengthGetter {
+	/** We check some cache entries to see if document lengths were saved in the index or not.
+	 * (These days, they should always be saved, but we do this in case someone uses an old index)
+	 */
 	private static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
 
 	/** The Lucene index reader, for querying field length */

@@ -31,7 +31,7 @@ public class TestSpansNot {
 		int[] aEnd = new int[]   { 1, 2, 3, 4, 1, 2, 3, 4, 5, 2, 4 };
 		Spans a = new SpansStub(aDoc, aStart, aEnd);
 
-		SpansNot spans = new SpansNot(null, "test", a);
+		SpansNot spans = new SpansNot(false, null, "test", a);
 		spans.setTest(true); // no IndexReader available
 
 		// First hit

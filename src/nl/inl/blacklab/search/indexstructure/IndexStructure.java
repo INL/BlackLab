@@ -82,8 +82,10 @@ public class IndexStructure {
 	/** Default analyzer to use for metadata fields */
 	private String defaultAnalyzerName;
 
-	///** The index reader */
-	//private DirectoryReader reader;
+	/** Do we always have words+1 tokens (before we sometimes did, if an XML tag
+	 *  occurred after the last word; now we always make sure we have it, so we
+	 *  can always skip the last token when matching) */
+	private boolean alwaysHasClosingToken = false;
 
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
@@ -173,6 +175,7 @@ public class IndexStructure {
 			timeCreated = Json.getString(versionInfo, "timeCreated", "");
 			timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
 		}
+		alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
 		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
 		setNamingScheme(indexMetadata, fis);
 		if (indexMetadata.hasFieldInfo()) {
@@ -216,7 +219,8 @@ public class IndexStructure {
 			"blackLabBuildTime", blackLabBuildTime,
 			"indexFormat", indexFormat,
 			"timeCreated", timeCreated,
-			"timeModified", timeModified
+			"timeModified", timeModified,
+			"alwaysAddClosingToken", true // Indicates that we always index words+1 tokens (last token is for XML tags after the last word)
 		));
 		JSONObject metadataFields = new JSONObject();
 		JSONObject jsonComplexFields = new JSONObject();
@@ -845,4 +849,16 @@ public class IndexStructure {
 		MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TEXT);
 		metadataFieldInfos.put(fieldName, mf);
 	}
+
+	/**
+	 * Do we always have words+1 tokens (before we sometimes did, if an XML tag
+	 * occurred after the last word; now we always make sure we have it, so we
+	 * can always skip the last token when matching)
+	 *
+	 * @return true if we do, false if we don't
+	 */
+	public boolean alwaysHasClosingToken() {
+		return alwaysHasClosingToken;
+	}
+
 }

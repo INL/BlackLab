@@ -44,11 +44,18 @@ import org.apache.lucene.util.Bits;
  * duplicates generated will be discarded.
  */
 public class SpanQueryExpansion extends SpanQueryBase {
+
+	/** Whether to expand to left (true) or right (false) */
 	private boolean expandToLeft;
 
+	/** Minimum number of tokens to expand */
 	private int min;
 
+	/** Maximum number of tokens to expand (-1 = infinite) */
 	private int max;
+
+	/** if true, we assume the last token is always a special closing token and ignore it */
+	boolean ignoreLastToken = false;
 
 	public SpanQueryExpansion(SpanQuery clause, boolean expandToLeft, int min, int max) {
 		super(clause);
@@ -72,7 +79,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 
 	@Override
 	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
-		BLSpans spans = new SpansExpansionRaw(context.reader(), clauses[0].getField(), clauses[0].getSpans(context, acceptDocs, termContexts), expandToLeft, min, max);
+		BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses[0].getField(), clauses[0].getSpans(context, acceptDocs, termContexts), expandToLeft, min, max);
 
 		// Note: the spans coming from SpansExpansion are not sorted properly.
 		// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
@@ -106,4 +113,13 @@ public class SpanQueryExpansion extends SpanQueryBase {
 		return "SpanQueryExpansion(" + clauses[0] + ", " + expandToLeft + ", " + min + ", " + max
 				+ ")";
 	}
+
+	/** Set whether to ignore the last token.
+	 *
+	 * @param ignoreLastToken if true, we assume the last token is always a special closing token and ignore it
+	 */
+	public void setIgnoreLastToken(boolean ignoreLastToken) {
+		this.ignoreLastToken = ignoreLastToken;
+	}
+
 }

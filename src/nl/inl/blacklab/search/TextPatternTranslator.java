@@ -117,6 +117,8 @@ public abstract class TextPatternTranslator<T> {
 	 *
 	 * This is used to implement wilcard tokens.
 	 *
+	 * @param context
+	 *            the current query translation context
 	 * @param clause
 	 *            the clause to expand
 	 * @param expandToLeft
@@ -127,7 +129,7 @@ public abstract class TextPatternTranslator<T> {
 	 *            maximum number of tokens to expand the clause
 	 * @return the resulting clause
 	 */
-	public abstract T expand(T clause, boolean expandToLeft, int min, int max);
+	public abstract T expand(QueryExecutionContext context, T clause, boolean expandToLeft, int min, int max);
 
 	/**
 	 * Repetition of a clause.
@@ -160,7 +162,7 @@ public abstract class TextPatternTranslator<T> {
 	/**
 	 * Any token in field.
 	 * @param context
-	 *            the current query execution context
+	 *            the current query translation context
 	 * @return the resulting any-token clause
 	 */
 	public abstract T any(QueryExecutionContext context);

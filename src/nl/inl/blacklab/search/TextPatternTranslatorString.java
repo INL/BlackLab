@@ -86,7 +86,7 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	}
 
 	@Override
-	public String expand(String clause, boolean expandToLeft, int min, int max) {
+	public String expand(QueryExecutionContext context, String clause, boolean expandToLeft, int min, int max) {
 		return "EXPAND(" + clause + ", " + expandToLeft + ", " + min + ", " + max + ")";
 	}
 

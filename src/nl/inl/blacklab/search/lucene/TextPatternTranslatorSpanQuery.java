@@ -121,8 +121,10 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	}
 
 	@Override
-	public SpanQuery expand(SpanQuery clause, boolean expandToLeft, int min, int max) {
-		return new SpanQueryExpansion(clause, expandToLeft, min, max);
+	public SpanQuery expand(QueryExecutionContext context, SpanQuery clause, boolean expandToLeft, int min, int max) {
+		SpanQueryExpansion spanQueryExpansion = new SpanQueryExpansion(clause, expandToLeft, min, max);
+		spanQueryExpansion.setIgnoreLastToken(context.alwaysHasClosingToken());
+		return spanQueryExpansion;
 	}
 
 	@Override
@@ -149,12 +151,14 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery not(QueryExecutionContext context, SpanQuery clause) {
-		return new SpanQueryNot(clause);
+		SpanQueryNot spanQueryNot = new SpanQueryNot(clause);
+		spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
+		return spanQueryNot;
 	}
 
 	@Override
 	public SpanQuery any(QueryExecutionContext context) {
-		return SpanQueryNot.matchAllTokens(context.luceneField());
+		return SpanQueryNot.matchAllTokens(context.alwaysHasClosingToken(), context.luceneField());
 	}
 
 	@Override

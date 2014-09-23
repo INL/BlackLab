@@ -62,7 +62,7 @@ public class TextPatternSequence extends TextPatternAnd {
 					// Yes, we have a query to the right. Use that.
 					T rightNeighbour = chResults.remove(0);
 					boolean rightNeighbourMatchesEmpty = matchesEmptySeq.remove(0);
-					T result = translator.expand(rightNeighbour, true, any.min, any.max);
+					T result = translator.expand(context, rightNeighbour, true, any.min, any.max);
 					chResults.add(0, result);
 					matchesEmptySeq
 							.add(0, rightNeighbourMatchesEmpty && any.matchesEmptySequence());
@@ -94,7 +94,7 @@ public class TextPatternSequence extends TextPatternAnd {
 			// expand this part to the right. This only happens if the AnyToken part is
 			// at the end of the sequence.
 			if (previousAnyTokensPart != null) {
-				translated = translator.expand(translated, false, previousAnyTokensPart.min,
+				translated = translator.expand(context, translated, false, previousAnyTokensPart.min,
 						previousAnyTokensPart.max);
 				if (translatedMatchesEmpty)
 					translatedMatchesEmpty = previousAnyTokensPart.matchesEmptySequence();

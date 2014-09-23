@@ -131,7 +131,6 @@ public class TestSearches {
 
 		expected = Arrays.asList(
 				"brown [fox jumps] over",
-				"lazy [dog ]", // <-- TODO: fix dummy token added at the end matching this as well
 				"the [Force be] with");
 		Assert.assertEquals(expected, find(" [pos='nou'] [] "));
 
