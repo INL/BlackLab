@@ -17,9 +17,11 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.search.spans.Spans;
@@ -287,5 +289,17 @@ class SpansExpansionRaw extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return clause.hitsAreUnique() && min == max;
+	}
+
+	@Override
+	public void passHitQueryContextToClauses(HitQueryContext context) {
+		clause.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
+		clause.getCapturedGroups(capturedGroups);
 	}
 }

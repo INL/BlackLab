@@ -19,11 +19,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 
 /**
  * Wrap a Spans to retrieve sequences of certain matches (in "buckets"), so we can process the
@@ -48,17 +54,43 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 	protected int currentDoc = -1;
 
-	private List<Hit> hits = new ArrayList<Hit>();
+	private List<Hit> bucket = new ArrayList<Hit>();
+
+	/**
+	 * For each hit we fetched, store the captured groups, so we don't
+	 * lose this information.
+	 */
+	private Map<Hit, Span[]> capturedGroupsPerHit = new HashMap<Hit, Span[]>();
 
 	private int bucketSize = 0;
 
-	protected void addHit(int doc, int start, int end) {
-		hits.add(new Hit(doc, start, end));
+	/**
+	 * Does the source Spans have more hits?
+	 */
+	protected boolean more = true;
+
+	private HitQueryContext hitQueryContext;
+
+	/** Is there captured group information for each hit that we need to store? */
+	private boolean doCapturedGroups;
+
+	/** Does our clause capture any groups? If not, we don't need to mess with those */
+	protected boolean clauseCapturesGroups = true;
+
+	protected void addHitFromSource() {
+		Hit hit = new Hit(source.doc(), source.start(), source.end());
+		bucket.add(hit);
+		if (doCapturedGroups) {
+			// Store captured group information
+			Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
+			((BLSpans)source).getCapturedGroups(capturedGroups);
+			capturedGroupsPerHit.put(hit, capturedGroups);
+		}
 		bucketSize++;
 	}
 
 	protected void sortHits(Comparator<Hit> hitComparator) {
-		Collections.sort(hits, hitComparator);
+		Collections.sort(bucket, hitComparator);
 	}
 
 	@Override
@@ -67,24 +99,19 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	}
 
 	@Override
-	public int start(int index) {
-		return hits.get(index).start;
+	public int start(int indexInBucket) {
+		return bucket.get(indexInBucket).start;
 	}
 
 	@Override
-	public int end(int index) {
-		return hits.get(index).end;
+	public int end(int indexInBucket) {
+		return bucket.get(indexInBucket).end;
 	}
 
 	@Override
-	public Hit getHit(int index) {
-		return hits.get(index);
+	public Hit getHit(int indexInBucket) {
+		return bucket.get(indexInBucket);
 	}
-
-	/**
-	 * Does the source Spans have more hits?
-	 */
-	protected boolean more = true;
 
 	public SpansInBucketsAbstract(Spans source) {
 		this.source = source;
@@ -143,9 +170,11 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 		// NOTE: we could call .clear() here, but we don't want to hold on to
 		// a lot of memory indefinitely after encountering one huge bucket.
-		hits = new ArrayList<Hit>();
+		bucket = new ArrayList<Hit>();
+		capturedGroupsPerHit = new HashMap<Hit, Span[]>();
 
 		bucketSize = 0;
+		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
 		gatherHits();
 	}
 
@@ -157,6 +186,33 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	@Override
 	public String toString() {
 		return source.toString();
+	}
+
+	@Override
+	public void setHitQueryContext(HitQueryContext context) {
+		this.hitQueryContext = context;
+		int before = context.getCaptureRegisterNumber();
+		if (source instanceof BLSpans)
+			((BLSpans) source).setHitQueryContext(context);
+		else if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
+			System.err.println("### SpansInBucketsAbstract: " + source + ", not a BLSpans ###");
+		if (context.getCaptureRegisterNumber() == before) {
+			// Our clause doesn't capture any groups; optimize
+			clauseCapturesGroups = false;
+		}
+	}
+
+	@Override
+	public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
+		if (!doCapturedGroups)
+			return;
+		Span[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.get(indexInBucket));
+		if (previouslyCapturedGroups != null) {
+			for (int i = 0; i < capturedGroups.length; i++) {
+				if (previouslyCapturedGroups[i] != null)
+					capturedGroups[i] = previouslyCapturedGroups[i];
+			}
+		}
 	}
 
 }

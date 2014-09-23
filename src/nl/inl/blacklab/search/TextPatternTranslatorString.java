@@ -125,4 +125,9 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 		return "EDGE(" + clause + ", " + rightEdge + ")";
 	}
 
+	@Override
+	public String captureGroup(String clause, String name) {
+		return "CAPTURE(" + clause + ", " + name + ")";
+	}
+
 }

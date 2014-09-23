@@ -16,25 +16,28 @@
 package nl.inl.blacklab.search;
 
 /**
- * TextPattern for wrapping another TextPattern so that it applies to a certain word property.
- *
- * For example, to find lemmas starting with "bla": <code>
- * TextPattern tp = new TextPatternProperty("lemma", new TextPatternWildcard("bla*"));
- * </code>
+ * TextPattern for capturing a subclause as a named "group".
  */
-public class TextPatternProperty extends TextPattern {
+public class TextPatternCaptureGroup extends TextPattern {
+
 	private TextPattern input;
 
-	private String propertyName;
+	private String groupName;
 
-	public TextPatternProperty(String propertyName, TextPattern input) {
-		this.propertyName = propertyName == null ? "" : propertyName;
+	/**
+	 * Indicate that we want to use a different list of alternatives for this
+	 * part of the query.
+	 * @param input the clause to tag with this name
+	 * @param groupName the tag name
+	 */
+	public TextPatternCaptureGroup(TextPattern input, String groupName) {
 		this.input = input;
+		this.groupName = groupName;
 	}
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return input.translate(translator, context.withProperty(propertyName));
+		return translator.captureGroup(input.translate(translator, context), groupName);
 	}
 
 	@Override
@@ -42,13 +45,11 @@ public class TextPatternProperty extends TextPattern {
 		TextPattern rewritten = input.rewrite();
 		if (rewritten == input)
 			return this; // Nothing to rewrite
-		return new TextPatternProperty(propertyName, rewritten);
+		return new TextPatternCaptureGroup(rewritten, groupName);
 	}
 
 	@Override
 	public boolean matchesEmptySequence() {
 		return input.matchesEmptySequence();
 	}
-
-
 }

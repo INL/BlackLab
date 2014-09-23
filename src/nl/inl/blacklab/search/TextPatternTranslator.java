@@ -174,4 +174,11 @@ public abstract class TextPatternTranslator<T> {
 			value = value.toLowerCase();
 		return value;
 	}
+
+	/** Mark a clause as a captured group
+	 * @param clause the clause to mark
+	 * @param name the group name
+	 * @return the resulting clause
+	 */
+	public abstract T captureGroup(T clause, String name);
 }

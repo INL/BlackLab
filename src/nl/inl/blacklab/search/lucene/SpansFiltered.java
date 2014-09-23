@@ -17,6 +17,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
+
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -124,6 +126,18 @@ public class SpansFiltered extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return spans.hitsAreUnique();
+	}
+
+	@Override
+	public void passHitQueryContextToClauses(HitQueryContext context) {
+		spans.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
+		spans.getCapturedGroups(capturedGroups);
 	}
 
 }

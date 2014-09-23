@@ -40,11 +40,12 @@ public class TextPatternRepetition extends TextPattern {
 	}
 
 	/**
-	 * Repetition query matches the empty sequence iff min == 0.
+	 * Repetition query matches the empty sequence iff min == 0 or its
+	 * base clause matches the empty sequence.
 	 */
 	@Override
 	public boolean matchesEmptySequence() {
-		return min == 0;
+		return min == 0 || base.matchesEmptySequence();
 	}
 
 	@Override

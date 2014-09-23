@@ -33,7 +33,7 @@ class SpansInBucketsConsecutive extends SpansInBucketsAbstract {
 	protected void gatherHits() throws IOException {
 		int lastEnd = source.start();
 		while (more && source.doc() == currentDoc && source.start() == lastEnd) {
-			addHit(source.doc(), source.start(), source.end());
+			addHitFromSource();
 			lastEnd = source.end();
 			more = source.next();
 		}

@@ -17,6 +17,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
+
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.Spans;
@@ -290,6 +292,20 @@ class SpansNot extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return true;
+	}
+
+	@Override
+	public void passHitQueryContextToClauses(HitQueryContext context) {
+		if (clause != null)
+			clause.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
+		if (clause != null)
+			clause.getCapturedGroups(capturedGroups);
 	}
 
 }

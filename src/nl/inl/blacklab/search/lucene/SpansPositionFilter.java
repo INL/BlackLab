@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Filter;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
@@ -38,6 +39,9 @@ class SpansPositionFilter extends BLSpans {
 	private boolean stillValidContainers = true;
 
 	private SpansInBucketsPerDocument filter;
+
+	/** Which index in the filter bucket did we use? (needed for getting captured groups) */
+	private int filterIndex = -1;
 
 	private boolean stillValidSearch = true;
 
@@ -141,6 +145,7 @@ class SpansPositionFilter extends BLSpans {
 					for (int i = 0; i < filter.bucketSize(); i++) {
 						if (filter.start(i) >= producer.start() && filter.end(i) <= producer.end()) {
 							// Yes, this filter hit is contained in the current producer hit.
+							filterIndex = i; // remember for captured groups
 							return true;
 						}
 					}
@@ -150,6 +155,7 @@ class SpansPositionFilter extends BLSpans {
 					for (int i = 0; i < filter.bucketSize(); i++) {
 						if (filter.start(i) <= producer.start() && filter.end(i) >= producer.end()) {
 							// Yes, this filter hit contains the current producer hit.
+							filterIndex = i; // remember for captured groups
 							return true;
 						}
 					}
@@ -159,6 +165,7 @@ class SpansPositionFilter extends BLSpans {
 					for (int i = 0; i < filter.bucketSize(); i++) {
 						if (filter.start(i) == producer.start()) {
 							// Yes, this filter hit starts at the current producer hit.
+							filterIndex = i; // remember for captured groups
 							return true;
 						}
 					}
@@ -168,6 +175,7 @@ class SpansPositionFilter extends BLSpans {
 					for (int i = 0; i < filter.bucketSize(); i++) {
 						if (filter.end(i) == producer.end()) {
 							// Yes, this filter hit ends at the current producer hit.
+							filterIndex = i; // remember for captured groups
 							return true;
 						}
 					}
@@ -259,6 +267,20 @@ class SpansPositionFilter extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return producer.hitsAreUnique();
+	}
+
+	@Override
+	public void passHitQueryContextToClauses(HitQueryContext context) {
+		producer.setHitQueryContext(context);
+		filter.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		if (!childClausesCaptureGroups)
+			return;
+		producer.getCapturedGroups(capturedGroups);
+		filter.getCapturedGroups(filterIndex, capturedGroups);
 	}
 
 }

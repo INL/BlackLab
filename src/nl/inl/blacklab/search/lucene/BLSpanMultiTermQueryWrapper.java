@@ -20,7 +20,7 @@ package nl.inl.blacklab.search.lucene;
 /**
  * BL-specific version to use BLSpanTermQuery instead of SpanTermQuery,
  * and changed getField() to return base name of complex field.
- * 
+ *
  * Changes are marked with "// BL"
  */
 
@@ -38,7 +38,6 @@ import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoringRewrite;
 import org.apache.lucene.search.TopTermsRewrite;
-import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
@@ -47,7 +46,7 @@ import org.apache.lucene.util.Bits;
  * Wraps any {@link MultiTermQuery} as a {@link SpanQuery},
  * so it can be nested within other SpanQuery classes.
  * <p>
- * The query is rewritten by default to a {@link SpanOrQuery} containing
+ * The query is rewritten by default to a {@link BLSpanOrQuery} containing
  * the expanded terms, but this can be customized.
  * <p>
  * Example:
@@ -153,6 +152,8 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQ
     public abstract SpanQuery rewrite(IndexReader reader, MultiTermQuery query) throws IOException;
   }
 
+  // BL: in the two following SpanRewriteMethods, SpanOrQuery was replaced with BLSpanOrQuery.
+
   /**
    * A rewrite method that first translates each term into a SpanTermQuery in a
    * {@link Occur#SHOULD} clause in a BooleanQuery, and keeps the
@@ -161,21 +162,21 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQ
    * @see #setRewriteMethod
    */
   public final static SpanRewriteMethod SCORING_SPAN_QUERY_REWRITE = new SpanRewriteMethod() {
-    private final ScoringRewrite<SpanOrQuery> delegate = new ScoringRewrite<SpanOrQuery>() {
+    private final ScoringRewrite<BLSpanOrQuery> delegate = new ScoringRewrite<BLSpanOrQuery>() {
       @Override
-      protected SpanOrQuery getTopLevelQuery() {
-        return new SpanOrQuery();
+      protected BLSpanOrQuery getTopLevelQuery() {
+        return new BLSpanOrQuery();
       }
 
       @Override
       protected void checkMaxClauseCount(int count) {
-        // we accept all terms as SpanOrQuery has no limits
+        // we accept all terms as BLSpanOrQuery has no limits
       }
 
       @Override
-      protected void addClause(SpanOrQuery topLevel, Term term, int docCount, float boost, TermContext states) {
+      protected void addClause(BLSpanOrQuery topLevel, Term term, int docCount, float boost, TermContext states) {
         // TODO: would be nice to not lose term-state here.
-        // we could add a hack option to SpanOrQuery, but the hack would only work if this is the top-level Span
+        // we could add a hack option to BLSpanOrQuery, but the hack would only work if this is the top-level Span
         // (if you put this thing in another span query, it would extractTerms/double-seek anyway)
 		final BLSpanTermQuery q = new BLSpanTermQuery(term); // BL was: SpanTermQuery
         q.setBoost(boost);
@@ -201,26 +202,26 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQ
    * @see #setRewriteMethod
    */
   public static final class TopTermsSpanBooleanQueryRewrite extends SpanRewriteMethod  {
-    private final TopTermsRewrite<SpanOrQuery> delegate;
+    private final TopTermsRewrite<BLSpanOrQuery> delegate;
 
     /**
      * Create a TopTermsSpanBooleanQueryRewrite for
      * at most <code>size</code> terms.
      */
     public TopTermsSpanBooleanQueryRewrite(int size) {
-      delegate = new TopTermsRewrite<SpanOrQuery>(size) {
+      delegate = new TopTermsRewrite<BLSpanOrQuery>(size) {
         @Override
         protected int getMaxSize() {
           return Integer.MAX_VALUE;
         }
 
         @Override
-        protected SpanOrQuery getTopLevelQuery() {
-          return new SpanOrQuery();
+        protected BLSpanOrQuery getTopLevelQuery() {
+          return new BLSpanOrQuery();
         }
 
         @Override
-        protected void addClause(SpanOrQuery topLevel, Term term, int docFreq, float boost, TermContext states) {
+        protected void addClause(BLSpanOrQuery topLevel, Term term, int docFreq, float boost, TermContext states) {
           final BLSpanTermQuery q = new BLSpanTermQuery(term); // BL was: SpanTermQuery
           q.setBoost(boost);
           topLevel.addClause(q);

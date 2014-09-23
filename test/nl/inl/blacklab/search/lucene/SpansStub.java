@@ -20,6 +20,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.util.Collection;
 
+import nl.inl.blacklab.search.Span;
+
 /**
  * Stub Spans class for testing. Takes arrays and iterates through 'hits'
  * from these arrays.
@@ -111,6 +113,16 @@ public class SpansStub extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return false;
+	}
+
+	@Override
+	public void passHitQueryContextToClauses(HitQueryContext context) {
+		// just ignore this here
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		// just ignore this here
 	}
 
 }

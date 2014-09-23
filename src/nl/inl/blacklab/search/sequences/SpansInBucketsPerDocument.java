@@ -35,8 +35,9 @@ public class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
 	@Override
 	protected void gatherHits() throws IOException {
 		while (more && source.doc() == currentDoc) {
-			addHit(source.doc(), source.start(), source.end());
+			addHitFromSource();
 			more = source.next();
 		}
 	}
+
 }

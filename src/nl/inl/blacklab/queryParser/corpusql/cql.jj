@@ -35,7 +35,6 @@ package nl.inl.blacklab.queryParser.corpusql;
 import java.util.Map;
 import java.util.HashMap;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.IndexStructure;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternContaining;
@@ -46,6 +45,8 @@ import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternTags;
 import nl.inl.blacklab.search.TextPatternWithin;
+import nl.inl.blacklab.search.TextPatternCaptureGroup;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
 import nl.inl.blacklab.search.sequences.TextPatternRepetition;
 import nl.inl.blacklab.search.sequences.TextPatternSequence;
@@ -341,9 +342,11 @@ TextPattern sequencePart():
 {
 	TextPattern m = null;
 	Integer[] rep = null;
+	Token captureName = null;
+	Token captureNum = null;
 }
 {
-	( m=tag() | m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+	( ( captureName=<NAME> | captureNum=<NUMBER> ) ":")? ( m=tag() | m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
 	{
 		if (rep != null)
 		{
@@ -353,6 +356,10 @@ TextPattern sequencePart():
                 m = any.repeat(rep[0], rep[1]);
             } else
                 m = new TextPatternRepetition(m, rep[0], rep[1]);
+		}
+		if (captureName != null || captureNum != null) {
+			String name = captureName != null ? captureName.toString() : captureNum.toString();
+		    m = new TextPatternCaptureGroup(m, name);
 		}
 		return m;
 	}

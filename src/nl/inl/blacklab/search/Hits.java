@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -38,6 +39,7 @@ import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
@@ -61,6 +63,11 @@ public class Hits implements Iterable<Hit> {
 	 * The hits.
 	 */
 	protected List<Hit> hits;
+
+	/**
+	 * The captured groups, if we have any.
+	 */
+	protected Map<Hit, Span[]> capturedGroups;
 
 	/**
 	 * The hit contexts.
@@ -246,6 +253,9 @@ public class Hits implements Iterable<Hit> {
 	/** What to use to make concordances: forward index or content store */
 	ConcordanceType concsType;
 
+	/** To keep track of captured groups, etc. */
+	private HitQueryContext hitQueryContext;
+
 	/**
 	 * Construct a Hits object from an existing Hits object.
 	 *
@@ -286,6 +296,7 @@ public class Hits implements Iterable<Hit> {
 		concPunctFI = copyFrom.concPunctFI;
 		concAttrFI = copyFrom.concAttrFI;
 		concsType = copyFrom.concsType;
+		hitQueryContext = copyFrom.hitQueryContext;
 	}
 
 	/**
@@ -429,6 +440,7 @@ public class Hits implements Iterable<Hit> {
 			currentSourceSpans = null;
 			atomicReaderContexts = reader == null ? null : reader.leaves();
 			atomicReaderContextIndex = -1;
+			hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
 			//sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw != null ? srw.getContext() : null, srw != null ? srw.getLiveDocs() : null, termContexts));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -589,6 +601,20 @@ public class Hits implements Iterable<Hit> {
 								}
 								currentSourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(null, null, termContexts));
 							}
+
+							// Update the hit query context with our new spans,
+							// and notify the spans of the hit query context
+							// (TODO: figure out if we need to call setHitQueryContext()
+							//    for each segment or not; if it's just about capture groups
+							//    registering themselves, we only need that for the first Spans.
+							//    But it's probably required for backreferences, etc. anyway,
+							//    and there won't be that many segments, so it's probably ok)
+							hitQueryContext.setSpans(currentSourceSpans);
+							currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
+							if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
+								capturedGroups = new HashMap<Hit, Span[]>();
+							}
+
 						}
 
 						// Advance to next hit
@@ -613,10 +639,15 @@ public class Hits implements Iterable<Hit> {
 					}
 					maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
 					if (!maxHitsRetrieved) {
-						Hit h = currentSourceSpans.getHit();
+						Hit hit = currentSourceSpans.getHit();
 						//System.out.println("doc: " + h.doc + " + " + currentDocBase + " = " + (h.doc + currentDocBase));
-						h.doc += currentDocBase;
-						hits.add(h);
+						hit.doc += currentDocBase;
+						if (capturedGroups != null) {
+							Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
+							hitQueryContext.getCapturedGroups(groups);
+							capturedGroups.put(hit, groups);
+						}
+						hits.add(hit);
 					}
 				}
 			} catch (IOException e) {
@@ -1606,6 +1637,57 @@ public class Hits implements Iterable<Hit> {
 			collocations.add(new TokenFrequency(e.getKey(), e.getValue()));
 		}
 		return collocations;
+	}
+
+	public boolean hasCapturedGroups() {
+		return capturedGroups != null;
+	}
+
+	/**
+	 * Get the captured group information for this hit, if any.
+	 *
+	 * The names of the captured groups can be obtained through
+	 * the getCapturedGroupNames() method.
+	 *
+	 * @param hit the hit to get captured group information for
+	 * @return the captured group information, or null if none
+	 */
+	public Span[] getCapturedGroups(Hit hit) {
+		if (capturedGroups == null)
+			return null;
+		return capturedGroups.get(hit);
+	}
+
+	/**
+	 * Get the captured group name information.
+	 *
+	 * @return the captured group names, in index order
+	 */
+	public List<String> getCapturedGroupNames() {
+		if (hitQueryContext == null)
+			return null;
+		return hitQueryContext.getCapturedGroupNames();
+	}
+
+	/**
+	 * Get the captured group information in map form.
+	 *
+	 * Relatively slow; use getCapturedGroups() and getCapturedGroupNames()
+	 * for a faster alternative.
+	 *
+	 * @param hit hit to get the captured group map for
+	 * @return the captured group information map
+	 */
+	public Map<String, Span> getCapturedGroupMap(Hit hit) {
+		if (capturedGroups == null)
+			return null;
+		Map<String, Span> result = new TreeMap<String, Span>(); // TreeMap to maintain group ordering
+		List<String> names = getCapturedGroupNames();
+		Span[] groups = capturedGroups.get(hit);
+		for (int i = 0; i < names.size(); i++) {
+			result.put(names.get(i), groups[i]);
+		}
+		return result;
 	}
 
 	/**

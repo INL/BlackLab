@@ -26,34 +26,29 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
 /**
- * Returns either the left edge or right edge of the specified query.
- *
- * Note that the results of this query are zero-length spans.
+ * Captures its clause as a captured group.
  */
-public class SpanQueryEdge extends SpanQueryBase {
+public class SpanQueryCaptureGroup extends SpanQueryBase {
 
-	/** if true, return the right edges; if false, the left */
-	private boolean rightEdge;
+	private String name;
 
 	/**
-	 * Construct SpanQueryEdge object.
+	 * Construct SpanQueryCaptureGroup object.
 	 * @param query the query to determine edges from
-	 * @param rightEdge if true, return the right edges; if false, the left
+	 * @param name captured group name
 	 */
-	public SpanQueryEdge(SpanQuery query, boolean rightEdge) {
+	public SpanQueryCaptureGroup(SpanQuery query, String name) {
 		super(query);
-		this.rightEdge = rightEdge;
+		this.name = name;
 	}
 
 	@Override
 	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans result = new SpansEdge(clauses[0].getSpans(context, acceptDocs, termContexts), rightEdge);
-
-		return result;
+		return new SpansCaptureGroup(clauses[0].getSpans(context, acceptDocs, termContexts), name);
 	}
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryEdge(" + clausesToString(field, " & ") + ")";
+		return "SpanQueryCaptureGroup(" + clausesToString(field, " & ") + ", " + name + ")";
 	}
 }

@@ -2,7 +2,6 @@
 package nl.inl.blacklab.queryParser.corpusql;
 import java.util.Map;
 import java.util.HashMap;
-
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
@@ -14,6 +13,7 @@ import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternTags;
 import nl.inl.blacklab.search.TextPatternWithin;
+import nl.inl.blacklab.search.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
 import nl.inl.blacklab.search.sequences.TextPatternRepetition;
@@ -50,16 +50,16 @@ private int jjMoveStringLiteralDfa0_0()
          jjmatchedKind = 1;
          return jjMoveNfa_0(0, 0);
       case 33:
-         jjmatchedKind = 30;
-         return jjMoveStringLiteralDfa1_0(0x80000000L);
+         jjmatchedKind = 31;
+         return jjMoveStringLiteralDfa1_0(0x100000000L);
       case 38:
          jjmatchedKind = 24;
          return jjMoveNfa_0(0, 0);
       case 40:
-         jjmatchedKind = 26;
+         jjmatchedKind = 27;
          return jjMoveNfa_0(0, 0);
       case 41:
-         jjmatchedKind = 27;
+         jjmatchedKind = 28;
          return jjMoveNfa_0(0, 0);
       case 42:
          jjmatchedKind = 18;
@@ -74,6 +74,9 @@ private int jjMoveStringLiteralDfa0_0()
          return jjMoveStringLiteralDfa1_0(0x2000000L);
       case 47:
          jjmatchedKind = 15;
+         return jjMoveNfa_0(0, 0);
+      case 58:
+         jjmatchedKind = 26;
          return jjMoveNfa_0(0, 0);
       case 60:
          jjmatchedKind = 14;
@@ -92,10 +95,10 @@ private int jjMoveStringLiteralDfa0_0()
       case 87:
          return jjMoveStringLiteralDfa1_0(0x80L);
       case 91:
-         jjmatchedKind = 28;
+         jjmatchedKind = 29;
          return jjMoveNfa_0(0, 0);
       case 93:
-         jjmatchedKind = 29;
+         jjmatchedKind = 30;
          return jjMoveNfa_0(0, 0);
       case 99:
          return jjMoveStringLiteralDfa1_0(0x100L);
@@ -123,9 +126,9 @@ private int jjMoveStringLiteralDfa1_0(long active0)
    switch(curChar)
    {
       case 61:
-         if ((active0 & 0x80000000L) != 0L)
+         if ((active0 & 0x100000000L) != 0L)
          {
-            jjmatchedKind = 31;
+            jjmatchedKind = 32;
             jjmatchedPos = 1;
          }
          break;
@@ -622,14 +625,14 @@ private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, lo
 @SuppressWarnings("all") public static final String[] jjstrLiteralImages = {
 "", null, null, null, null, null, null, null, null, null, null, null, null, 
 "\174", "\74", "\57", "\76", "\75", "\52", "\53", "\77", "\173", "\175", "\54", "\46", 
-"\55\76", "\50", "\51", "\133", "\135", "\41", "\41\75", };
+"\55\76", "\72", "\50", "\51", "\133", "\135", "\41", "\41\75", };
 
 /** Lexer state names. */
 @SuppressWarnings("all") public static final String[] lexStateNames = {
    "DEFAULT",
 };
 static final long[] jjtoToken = {
-   0xffffff81L, 
+   0x1ffffff81L, 
 };
 static final long[] jjtoSkip = {
    0x7eL, 

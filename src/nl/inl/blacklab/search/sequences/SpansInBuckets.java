@@ -18,6 +18,8 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets") instead of individual
@@ -76,4 +78,18 @@ public interface SpansInBuckets {
 	 */
 	boolean skipTo(int target) throws IOException;
 
+	/**
+	 * Pass the hit query context to the underlying BLSpans.
+	 *
+	 * @param context the hit query context
+	 */
+	void setHitQueryContext(HitQueryContext context);
+
+	/**
+	 * Get the captured groups information for the current hit.
+	 *
+	 * @param indexInBucket what hit in the current bucket to get the information for
+	 * @param capturedGroups where to add the captured group information
+	 */
+	void getCapturedGroups(int indexInBucket, Span[] capturedGroups);
 }

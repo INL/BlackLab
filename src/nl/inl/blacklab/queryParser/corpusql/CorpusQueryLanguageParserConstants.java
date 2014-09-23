@@ -58,6 +58,7 @@ public interface CorpusQueryLanguageParserConstants {
     "\",\"",
     "\"&\"",
     "\"->\"",
+    "\":\"",
     "\"(\"",
     "\")\"",
     "\"[\"",

@@ -31,7 +31,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 
 /**
@@ -46,7 +45,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery or(QueryExecutionContext context, List<SpanQuery> clauses) {
-		return new SpanOrQuery(clauses.toArray(new SpanQuery[] {}));
+		return new BLSpanOrQuery(clauses.toArray(new SpanQuery[] {}));
 	}
 
 	@Override
@@ -164,6 +163,11 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	@Override
 	public SpanQuery edge(SpanQuery clause, boolean rightEdge) {
 		return new SpanQueryEdge(clause, rightEdge);
+	}
+
+	@Override
+	public SpanQuery captureGroup(SpanQuery clause, String name) {
+		return new SpanQueryCaptureGroup(clause, name);
 	}
 
 }

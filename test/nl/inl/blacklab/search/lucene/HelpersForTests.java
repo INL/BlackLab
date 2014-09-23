@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Span;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -60,6 +61,16 @@ public class HelpersForTests {
 		@Override
 		public Hit getHit() {
 			return current;
+		}
+
+		@Override
+		public void passHitQueryContextToClauses(HitQueryContext context) {
+			// just ignore this here
+		}
+
+		@Override
+		public void getCapturedGroups(Span[] capturedGroups) {
+			// just ignore this here
 		}
 	}
 

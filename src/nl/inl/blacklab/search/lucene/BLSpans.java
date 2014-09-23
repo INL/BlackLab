@@ -16,11 +16,12 @@
 package nl.inl.blacklab.search.lucene;
 
 import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Span;
 
 
 /**
  * Will be the base class for all our own Spans classes. Is able to give extra
- * guarantuees about the hits in this Spans object, such as if every
+ * guarantees about the hits in this Spans object, such as if every
  * hit is equal in length, if there may be duplicates, etc. This information
  * will help us optimize certain operations, such as sequence queries, in certain
  * cases.
@@ -29,6 +30,12 @@ import nl.inl.blacklab.search.Hit;
  * single-term hits.
  */
 public abstract class BLSpans extends SpansAbstract {
+
+	/** Should we ask our clauses for captured groups?
+	 *  If the clauses don't capture any groups, this will be set to false
+	 *  to improve performance.
+	 */
+	protected boolean childClausesCaptureGroups = true;
 
 	/**
 	 * When hit B follows hit A, is it guaranteed that B.end &gt;= A.end?
@@ -94,12 +101,60 @@ public abstract class BLSpans extends SpansAbstract {
 	 * Makes a new Hit object from the document id, start and end positions.
 	 *
 	 * Subclasses that already have a Hit object available should override this and return the
-	 * existing Hit object, to avoid excessive Hit instantiations.
-	 *
+	 * existing Hit object, to avoid excessive Hit instantiations.	 *
 	 * @return the Hit object for the current hit
 	 */
 	public Hit getHit() {
 		return new Hit(doc(), start(), end());
 	}
+
+	/**
+	 * Makes a new HitSpan object from the start and end positions (no document id).
+	 *
+	 * Subclasses that already have a HitSpan object available could override this
+	 * and return the existing HitSpan object, to avoid excessive HitSpan instantiations.
+	 * (Right now, no classes use HitSpan internally, however)
+	 *
+	 * @return the HitSpan object for the current hit
+	 */
+	public Span getSpan() {
+		return new Span(start(), end());
+	}
+
+	/**
+	 * Give the BLSpans tree a way to access captured groups, and the capture
+	 * groups themselves a way to register themselves..
+	 *
+	 * subclasses should override this method, pass the context to their child
+	 * clauses (if any), and either:
+	 * - register the captured group they represent with the context (SpansCaptureGroup does this), OR
+	 * - store the context so they can later use it to access captured groups (SpansBackreference does this)
+	 *
+	 * @param context the hit query context, that e.g. keeps track of captured groups
+	 */
+	public void setHitQueryContext(HitQueryContext context) {
+		int before = context.getCaptureRegisterNumber();
+		passHitQueryContextToClauses(context);
+		if (context.getCaptureRegisterNumber() == before) {
+			// Our clauses don't capture any groups; optimize
+			childClausesCaptureGroups = false;
+		}
+	}
+
+	/**
+	 * Called by setHitQueryContext() to pass the context to child clauses.
+	 *
+	 * @param context the hit query context, that e.g. keeps track of captured groups
+	 */
+	abstract protected void passHitQueryContextToClauses(HitQueryContext context);
+
+	/**
+	 * Get the start and end position for the captured groups contained in
+	 * this BLSpans (sub)tree.
+	 *
+	 * @param capturedGroups an array the size of the total number of groups in the query;
+	 *   the start and end positions for the groups in this subtree will be placed in here.
+	 */
+	abstract public void getCapturedGroups(Span[] capturedGroups);
 
 }

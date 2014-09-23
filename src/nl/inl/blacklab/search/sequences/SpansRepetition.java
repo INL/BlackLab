@@ -17,8 +17,10 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -203,6 +205,17 @@ class SpansRepetition extends BLSpans {
 	@Override
 	public boolean hitsAreUnique() {
 		return true;
+	}
+
+	@Override
+	public void passHitQueryContextToClauses(HitQueryContext context) {
+		source.setHitQueryContext(context);
+	}
+
+	@Override
+	public void getCapturedGroups(Span[] capturedGroups) {
+		int index = firstToken + tokenLength - 1; // use the last match for captured groups
+		source.getCapturedGroups(index, capturedGroups);
 	}
 
 

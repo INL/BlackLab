@@ -18,7 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.spans.SpanTermQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,8 +25,8 @@ public class TestSpanQueryAnd {
 	@SuppressWarnings("unused")
 	@Test(expected = RuntimeException.class)
 	public void testFieldMismatch() {
-		SpanTermQuery first = new SpanTermQuery(new Term("author", "bla"));
-		SpanTermQuery second = new SpanTermQuery(new Term("contents", "bla"));
+		BLSpanTermQuery first = new BLSpanTermQuery(new Term("author", "bla"));
+		BLSpanTermQuery second = new BLSpanTermQuery(new Term("contents", "bla"));
 
 		// Different fields; will throw exception
 		new SpanQueryAnd(first, second);
@@ -35,9 +34,9 @@ public class TestSpanQueryAnd {
 
 	@Test
 	public void testComplexFieldDifferentProperties() {
-		SpanTermQuery first = new SpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
+		BLSpanTermQuery first = new BLSpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
 				"prop1"), "bla"));
-		SpanTermQuery second = new SpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
+		BLSpanTermQuery second = new BLSpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
 				"prop2"), "bla"));
 
 		// No exception here because both are properties of complex field "field"

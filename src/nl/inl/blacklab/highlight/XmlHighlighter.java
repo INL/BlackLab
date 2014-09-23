@@ -293,7 +293,7 @@ public class XmlHighlighter {
 	/**
 	 * The start and end character position of a hit, used for highlighting the content.
 	 */
-	public static class HitSpan {
+	public static class HitCharSpan {
 		private int startChar, endChar;
 
 		public int getStartChar() {
@@ -304,14 +304,14 @@ public class XmlHighlighter {
 			return endChar;
 		}
 
-		public HitSpan(int startChar, int endChar) {
+		public HitCharSpan(int startChar, int endChar) {
 			this.startChar = startChar;
 			this.endChar = endChar;
 		}
 	}
 
-	private static void addHitPositionsToTagList(List<TagLocation> tags, List<HitSpan> hitSpans, int offset, int length) {
-		for (HitSpan hit : hitSpans) {
+	private static void addHitPositionsToTagList(List<TagLocation> tags, List<HitCharSpan> hitSpans, int offset, int length) {
+		for (HitCharSpan hit : hitSpans) {
 			final int a = hit.getStartChar() - offset;
 			if (a < 0)
 				continue; // outside highlighting range, or non-highlighting element (e.g. searching for example date range)
@@ -446,7 +446,7 @@ public class XmlHighlighter {
 	 *            where the highlighting tags should go
 	 * @return the highlighted string
 	 */
-	public String highlight(String elementContent, List<HitSpan> hits) {
+	public String highlight(String elementContent, List<HitCharSpan> hits) {
 		return highlight(elementContent, hits, 0);
 	}
 
@@ -467,7 +467,7 @@ public class XmlHighlighter {
 	 *   from Hit positions to highlight)
 	 * @return the highlighted (part of the) XML string
 	 */
-	public String highlight(String partialContent, List<HitSpan> hits, int offset) {
+	public String highlight(String partialContent, List<HitCharSpan> hits, int offset) {
 
 		// Find all tags in the content and put their positions in a list
 		List<TagLocation> tags = makeTagList(partialContent);
@@ -516,9 +516,9 @@ public class XmlHighlighter {
 	public static void main(String[] args) {
 		XmlHighlighter h = new XmlHighlighter();
 		String xml = "<zin><lidwoord>The</lidwoord> <adjectief>quick</adjectief> <adjectief>brown</adjectief> <substantief>fox</substantief></zin>";
-		List<HitSpan> hitSpans = new ArrayList<HitSpan>();
-		hitSpans.add(new HitSpan(41, 46));
-		hitSpans.add(new HitSpan(101, 124));
+		List<HitCharSpan> hitSpans = new ArrayList<HitCharSpan>();
+		hitSpans.add(new HitCharSpan(41, 46));
+		hitSpans.add(new HitCharSpan(101, 124));
 		String result = h.highlight(xml, hitSpans, 0);
 		System.out.println(result);
 	}

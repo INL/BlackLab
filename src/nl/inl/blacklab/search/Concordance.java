@@ -66,7 +66,7 @@ public class Concordance {
 	/**
 	 * Construct a concordance.
 	 *
-	 * Note that if it not guarantueed that each parts will be well-formed XML;
+	 * Note that if it not guaranteed that each parts will be well-formed XML;
 	 * if you require that, you should use XmlHighlighter to do this yourself.
 	 *
 	 * @param contents part of the document content to use as concordance
