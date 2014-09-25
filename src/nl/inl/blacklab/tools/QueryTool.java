@@ -50,8 +50,8 @@ import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TokenFrequency;
-import nl.inl.blacklab.search.TokenFrequencyList;
+import nl.inl.blacklab.search.TermFrequency;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.grouping.GroupProperty;
 import nl.inl.blacklab.search.grouping.GroupPropertyIdentity;
 import nl.inl.blacklab.search.grouping.GroupPropertySize;
@@ -111,7 +111,7 @@ public class QueryTool {
 	private HitGroups groups = null;
 
 	/** The collocations, or null if we're not looking at collocations. */
-	private TokenFrequencyList collocations = null;
+	private TermFrequencyList collocations = null;
 
 	/** What property to use for collocations */
 	private String collocProperty = null;
@@ -1447,10 +1447,10 @@ public class QueryTool {
 		}
 
 		int i = 0;
-		for (TokenFrequency coll : collocations) {
+		for (TermFrequency coll : collocations) {
 			if (i >= firstResult && i < firstResult + resultsPerPage) {
 				int j = i - firstResult + 1;
-				outprintln(String.format("%4d %7d %s", j, coll.frequency, coll.token));
+				outprintln(String.format("%4d %7d %s", j, coll.frequency, coll.term));
 			}
 			i++;
 		}

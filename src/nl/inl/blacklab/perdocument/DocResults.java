@@ -63,12 +63,6 @@ public class DocResults implements Iterable<DocResult> {
 	 */
 	private Iterator<Hit> sourceHitsIterator;
 
-//	/**
-//	 * A partial DocResult, because we stopped iterating through the Hits.
-//	 * Pick this up when we continue iterating through it.
-//	 */
-//	private DocResult partialDocResult;
-
 	/**
 	 * A partial list of hits in a doc, because we stopped iterating through the Hits.
 	 * (or null if we don't have partial doc hits)
@@ -198,6 +192,20 @@ public class DocResults implements Iterable<DocResult> {
 	public DocResults(Searcher searcher, Query query) {
 
 		this.searcher = searcher;
+
+		// FIXME: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
+		//    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
+//		IndexSearcher indexSearcher = searcher.getIndexSearcher();
+//		IndexReader reader = indexSearcher.getIndexReader();
+//		Weight weight = indexSearcher.createNormalizedWeight(query);
+//		Map<String, Integer> freq = new HashMap<String, Integer>();
+//		for (AtomicReaderContext arc: reader.leaves()) {
+//			Scorer scorer = weight.scorer(arc, true, false, arc.reader().getLiveDocs());
+//			while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+//				//ddd
+//			}
+//		}
+
 		searcher.collectDocuments(query, new Collector() {
 			AtomicReaderContext reader = null;
 

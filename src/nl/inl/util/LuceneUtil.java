@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
@@ -13,6 +14,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsAndPositionsEnum;
+import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
@@ -229,113 +231,43 @@ public class LuceneUtil {
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
-
-		/* Lucene 3 version:
-		try {
-			TermPositionVector termPositionVector = (TermPositionVector) indexReader
-					.getTermFreqVector(doc, luceneName);
-			if (termPositionVector == null) {
-				throw new RuntimeException("Field " + luceneName + " has no TermPositionVector");
-			}
-
-			// Vraag het array van terms (voor reconstructie text)
-			String[] docTerms = termPositionVector.getTerms();
-
-			// Verzamel concordantiewoorden uit term vector
-			String[] concordanceWords = new String[end - start + 1];
-			int numFound = 0;
-			for (int k = 0; k < docTerms.length; k++) {
-				int[] positions = termPositionVector.getTermPositions(k);
-				for (int l = 0; l < positions.length; l++) {
-					int p = positions[l];
-					if (p >= start && p <= end) {
-						concordanceWords[p - start] = docTerms[k];
-						numFound++;
-					}
-				}
-				if (numFound == concordanceWords.length)
-					return concordanceWords;
-			}
-			if (numFound < concordanceWords.length) {
-				String[] partial = new String[numFound];
-				for (int i = 0; i < numFound; i++) {
-					partial[i] = concordanceWords[i];
-					if (partial[i] == null) {
-						throw new RuntimeException("Not all words found (" + numFound + " out of "
-								+ concordanceWords.length
-								+ "); missing words in the middle of concordance!");
-					}
-				}
-				return partial;
-			}
-			return concordanceWords;
-		} catch (Exception e) {
-			throw ExUtil.wrapRuntimeException(e);
-		}*/
 	}
 
-// Still broken. TODO: fix the same way as the above single-snippet version
-//	/**
-//	 * Get all words between the specified start and end positions from the term vector.
-//	 *
-//	 * NOTE: this may return an array of less than the size requested, if the document ends before
-//	 * the requested end position.
-//	 * @param reader the index
-//	 * @param doc
-//	 *            doc id
-//	 * @param luceneName
-//	 *            the index field from which to use the term vector
-//	 * @param start
-//	 *            start position (first word we want to request)
-//	 * @param end
-//	 *            end position (last word we want to request)
-//	 * @return the words found, in order
-//	 */
-//	public static List<String[]> getWordsFromTermVector(DirectoryReader reader, int doc,
-//			String luceneName, int[] start, int[] end) {
-//		try {
-//			// Get the term position vector of the requested field
-//			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
-//			if (terms == null) {
-//				throw new RuntimeException("Field " + luceneName + " has no Terms");
-//			}
-//			if (!terms.hasPositions())
-//				throw new RuntimeException("Field has no character postion information");
-//			DocsAndPositionsEnum dpe = terms.iterator(null).docsAndPositions(null, null);
-//			List<String[]> results = new ArrayList<String[]>(start.length);
-//			for (int i = 0; i < start.length; i++) {
-//				while (dpe.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-//					String[] concordanceWords = new String[end[i] - start[i] + 1];
-//					int position = -1;
-//					int numFound = 0;
-//
-//					while ((position = dpe.nextPosition()) < dpe.freq() && position != -1) {
-//						if (position > start[i] && position <= end[i]) {
-//							concordanceWords[position - start[i]] = dpe.getPayload().utf8ToString();
-//							numFound++;
-//						}
-//					}
-//					if (numFound < concordanceWords.length) {
-//						String[] partial = new String[numFound];
-//						for (int j = 0; j < numFound; j++) {
-//							partial[j] = concordanceWords[j];
-//							if (partial[j] == null) {
-//								throw new RuntimeException("Not all words found (" + numFound
-//										+ " out of " + concordanceWords.length
-//										+ "); missing words in the middle of concordance!");
-//							}
-//						}
-//						results.add(partial);
-//					} else {
-//						results.add(concordanceWords);
-//					}
-//				}
-//			}
-//			return results;
-//		} catch (Exception e) {
-//			throw ExUtil.wrapRuntimeException(e);
-//		}
-//	}
+	/**
+	 * Add term frequencies for a single document to a frequency map.
+	 *
+	 * @param reader the index
+	 * @param doc doc id
+	 * @param luceneName the index field from which to use the term vector
+	 * @param freq where to add to the token frequencies
+	 */
+	public static void getFrequenciesFromTermVector(DirectoryReader reader, int doc,
+			String luceneName, Map<String, Integer> freq) {
+		try {
+			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
+			if (terms == null) {
+				throw new RuntimeException("Field " + luceneName + " has no Terms");
+			}
+			TermsEnum termsEnum = terms.iterator(null);
+
+			// Verzamel concordantiewoorden uit term vector
+			DocsEnum docPosEnum = null;
+			while (termsEnum.next() != null) {
+				docPosEnum = termsEnum.docs(null, docPosEnum);
+				String term = termsEnum.term().utf8ToString();
+				Integer n = freq.get(term);
+				if (n == null) {
+					n = 0;
+				}
+				while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+					n += termsEnum.docFreq();
+				}
+				freq.put(term, n);
+			}
+		} catch (Exception e) {
+			throw ExUtil.wrapRuntimeException(e);
+		}
+	}
 
 	/**
 	 * Return the list of terms that occur in a field.

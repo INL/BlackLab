@@ -216,7 +216,6 @@ public class TestSearches {
 
 		expected = Arrays.asList(
 				"with [you]",
-				"with [you ]",
 				"find [That] is",
 				"find [That is] the"
 				);

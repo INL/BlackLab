@@ -67,6 +67,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsAndPositionsEnum;
@@ -1889,6 +1890,31 @@ public class Searcher {
 	}
 
 	/**
+	 * Determine the term frequencies in a set of documents (defined by the filter query)
+	 *
+	 * @param documentFilterQuery what set of documents to get the term frequencies for
+	 * @param fieldName complex field name, i.e. contents
+	 * @param propName property name, i.e. word, lemma, pos, etc.
+	 * @return
+	 */
+	public Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName) {
+		try {
+			String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, altName);
+			Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery);
+			Map<String, Integer> freq = new HashMap<String, Integer>();
+			for (AtomicReaderContext arc: reader.leaves()) {
+				Scorer scorer = weight.scorer(arc, true, false, arc.reader().getLiveDocs());
+				while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+					LuceneUtil.getFrequenciesFromTermVector(reader, scorer.docID() + arc.docBase, luceneField, freq);
+				}
+			}
+			return freq;
+		} catch (IOException e) {
+			throw ExUtil.wrapRuntimeException(e);
+		}
+	}
+
+	/**
 	 * Perform a document query and collect the results through a Collector.
 	 * @param query query to execute
 	 * @param collector object that receives each document hit
@@ -1980,6 +2006,10 @@ public class Searcher {
 
 	public Map<String, ForwardIndex> getForwardIndices() {
 		return forwardIndices;
+	}
+
+	public IndexSearcher getIndexSearcher() {
+		return indexSearcher;
 	}
 
 

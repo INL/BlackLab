@@ -14,8 +14,8 @@ import java.util.List;
  * entries have been added) if you want to calculate relative frequencies
  * based on a different total.
  */
-public class TokenFrequencyList extends AbstractList<TokenFrequency> {
-	List<TokenFrequency> list;
+public class TermFrequencyList extends AbstractList<TermFrequency> {
+	List<TermFrequency> list;
 
 	long totalFrequency = 0;
 
@@ -25,17 +25,17 @@ public class TokenFrequencyList extends AbstractList<TokenFrequency> {
 	}
 
 	@Override
-	public Iterator<TokenFrequency> iterator() {
+	public Iterator<TermFrequency> iterator() {
 		return list.iterator();
 	}
 
 	@Override
-	public TokenFrequency get(int index) {
+	public TermFrequency get(int index) {
 		return list.get(index);
 	}
 
 	@Override
-	public boolean add(TokenFrequency e) {
+	public boolean add(TermFrequency e) {
 		totalFrequency += e.frequency;
 		return list.add(e);
 	}
@@ -52,21 +52,21 @@ public class TokenFrequencyList extends AbstractList<TokenFrequency> {
 	 */
 	public long getFrequency(String token) {
 		// TODO: maybe speed this up by keeping a map of tokens and frequencies?
-		for (TokenFrequency tf: list) {
-			if (tf.token.equals(token))
+		for (TermFrequency tf: list) {
+			if (tf.term.equals(token))
 				return tf.frequency;
 		}
 		return 0;
 	}
 
-	public TokenFrequencyList() {
+	public TermFrequencyList() {
 		super();
-		list = new ArrayList<TokenFrequency>();
+		list = new ArrayList<TermFrequency>();
 	}
 
-	public TokenFrequencyList(int capacity) {
+	public TermFrequencyList(int capacity) {
 		super();
-		list = new ArrayList<TokenFrequency>(capacity);
+		list = new ArrayList<TermFrequency>(capacity);
 	}
 
 	public long getTotalFrequency() {

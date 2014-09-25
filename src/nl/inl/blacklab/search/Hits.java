@@ -1565,7 +1565,7 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the frequency of each occurring token
 	 */
-	public TokenFrequencyList getCollocations() {
+	public TermFrequencyList getCollocations() {
 		return getCollocations(null, null);
 	}
 
@@ -1577,7 +1577,7 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the frequency of each occurring token
 	 */
-	public synchronized TokenFrequencyList getCollocations(String propName,
+	public synchronized TermFrequencyList getCollocations(String propName,
 			QueryExecutionContext ctx) {
 		if (propName == null)
 			propName = searcher.getIndexStructure().getMainContentsField().getMainProperty().getName();
@@ -1610,7 +1610,7 @@ public class Hits implements Iterable<Hit> {
 		// Get the actual words from the sort positions
 		boolean caseSensitive = searcher.isDefaultSearchCaseSensitive();
 		boolean diacSensitive = searcher.isDefaultSearchDiacriticsSensitive();
-		TokenFrequencyList collocations = new TokenFrequencyList(coll.size());
+		TermFrequencyList collocations = new TermFrequencyList(coll.size());
 		// TODO: get collocations for multiple contexts?
 		Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
 		Map<String, Integer> wordFreq = new HashMap<String, Integer>();
@@ -1634,7 +1634,7 @@ public class Hits implements Iterable<Hit> {
 
 		// Transfer from map to list
 		for (Map.Entry<String, Integer> e: wordFreq.entrySet()) {
-			collocations.add(new TokenFrequency(e.getKey(), e.getValue()));
+			collocations.add(new TermFrequency(e.getKey(), e.getValue()));
 		}
 		return collocations;
 	}
