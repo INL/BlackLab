@@ -75,6 +75,16 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 		return lengthInTokens;
 	}
 
+	/**
+	 * Returns the Lucene field that contains the length (in tokens)
+	 * of this field, or null if there is no such field.
+	 *
+	 * @return the field name or null if lengths weren't stored
+	 */
+	public String getTokenLengthField() {
+		return lengthInTokens ? ComplexFieldUtil.lengthTokensField(fieldName) : null;
+	}
+
 	public boolean hasXmlTags() {
 		return xmlTags;
 	}
