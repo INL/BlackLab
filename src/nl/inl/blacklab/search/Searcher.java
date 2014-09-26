@@ -1752,6 +1752,8 @@ public class Searcher {
 				AtomicReader scrw = new SlowCompositeReaderWrapper(reader);
 				try {
 					Scorer sc = w.scorer(scrw.getContext(), true, false, MultiFields.getLiveDocs(reader));
+					if (sc == null)
+						return; // no matching documents
 
 					// Iterate over matching docs
 					while (true) {
@@ -1863,8 +1865,10 @@ public class Searcher {
 				if (arc.reader() == null)
 					throw new RuntimeException("arc.reader() == null");
 				Scorer scorer = weight.scorer(arc, true, false, arc.reader().getLiveDocs());
-				while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-					LuceneUtil.getFrequenciesFromTermVector(reader, scorer.docID() + arc.docBase, luceneField, freq);
+				if (scorer != null) {
+					while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+						LuceneUtil.getFrequenciesFromTermVector(reader, scorer.docID() + arc.docBase, luceneField, freq);
+					}
 				}
 			}
 			return freq;
