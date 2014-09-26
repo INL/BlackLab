@@ -18,11 +18,9 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
@@ -33,27 +31,21 @@ import org.apache.lucene.util.Bits;
  */
 public class SpanQueryFiltered extends SpanQueryBase {
 
-	private DocIdSet docIdSet;
+	private Filter filter;
 
-	public SpanQueryFiltered(SpanQuery source, Filter filter, AtomicReader reader) throws IOException {
-		this(source, filter.getDocIdSet(reader.getContext(), reader.getLiveDocs()));
-	}
-
-	public SpanQueryFiltered(SpanQuery source, DocIdSet docIdSet) {
+	public SpanQueryFiltered(SpanQuery source, Filter filter) {
 		super(source);
-		this.docIdSet = docIdSet;
+		this.filter = filter;
 	}
 
 	@Override
 	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		Spans result = clauses[0].getSpans(context, acceptDocs, termContexts);
-		if (docIdSet != null)
-			result = new SpansFiltered(result, docIdSet);
-		return result;
+		return new SpansFiltered(result, filter.getDocIdSet(context, acceptDocs));
 	}
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryFiltered(" + clausesToString(field, " & ") + ", " + docIdSet + ")";
+		return "SpanQueryFiltered(" + clausesToString(field, " & ") + ", " + filter + ")";
 	}
 }

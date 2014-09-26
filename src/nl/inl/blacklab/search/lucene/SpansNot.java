@@ -52,8 +52,8 @@ class SpansNot extends BLSpans {
 	/** Current token position */
 	private int currentToken;
 
-	/** The Lucene index reader, for querying field length */
-	private AtomicReader reader;
+	///** The Lucene index reader, for querying field length */
+	//private AtomicReader reader;
 
 	/** For testing, we don't have an IndexReader available, so we use test values */
 	private boolean useTestValues = false;
@@ -64,6 +64,12 @@ class SpansNot extends BLSpans {
 	/** How much to subtract from length (for ignoring closing token) */
 	private int subtractFromLength;
 
+	/** Highest document id plus one */
+	private int maxDoc;
+
+	/** Documents that haven't been deleted */
+	private Bits liveDocs;
+
 	/** For testing, we don't have an IndexReader available, so we use test values.
 	 *
 	 *  The test values are: there are 3 documents (0, 1 and 2) and each is 5 tokens long.
@@ -71,7 +77,9 @@ class SpansNot extends BLSpans {
 	 *  @param test whether or not we want to use test values
 	 */
 	void setTest(boolean test) {
-		this.useTestValues = test;
+		useTestValues = test;
+		if (useTestValues)
+			maxDoc = 3;
 		lengthGetter.setTest(test);
 	}
 
@@ -83,7 +91,9 @@ class SpansNot extends BLSpans {
 	 * @param clause the clause to invert, or null if we want all tokens
 	 */
 	public SpansNot(boolean ignoreLastToken, AtomicReader reader, String fieldName, Spans clause) {
-		this.reader = reader;
+		//this.reader = reader;
+		maxDoc = reader == null ? -1 : reader.maxDoc();
+		liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);
 		subtractFromLength = ignoreLastToken ? 1 : 0;
 		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		this.clause = clause == null ? null : BLSpansWrapper.optWrap(clause);
@@ -196,14 +206,15 @@ class SpansNot extends BLSpans {
 	 * @return true if next document was found, false if there are no more documents.
 	 */
 	private boolean nextDoc() {
-		int maxDoc = useTestValues ? 3 : reader.maxDoc();
-		Bits liveDocs = useTestValues ? null : MultiFields.getLiveDocs(reader);
+		if (currentDoc >= maxDoc)
+			return false;
 		boolean currentDocIsDeletedDoc;
 		do {
 			currentDoc++;
 			currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
  		} while (currentDoc < maxDoc && currentDocIsDeletedDoc);
-
+		if (currentDoc > maxDoc)
+			throw new RuntimeException("currentDoc > maxDoc!!");
 		if (currentDoc == maxDoc) {
 			done = true;
 			return false; // no more docs; we're done
@@ -223,6 +234,14 @@ class SpansNot extends BLSpans {
 	 */
 	@Override
 	public boolean skipTo(int doc) throws IOException {
+		if (currentDoc >= maxDoc || doc >= maxDoc) {
+			currentDoc = maxDoc;
+			moreHitsInClause = false;
+			if (doc >= maxDoc)
+				System.err.println("SpansNot.skipTo: tried to skip to " + doc + ", but maxDoc = " + maxDoc);
+			return false;
+		}
+
 		// If it's not already (past) there, skip clause
 		// to doc (or beyond if there's no hits in doc)
 		if (moreHitsInClause && (!clauseIterationStarted || clause.doc() < doc)) {
@@ -236,7 +255,6 @@ class SpansNot extends BLSpans {
 			return next();
 		}
 
-		// Position currentDoc at doc or first valid doc after
 		currentDoc = doc - 1;
 		if (!nextDoc())
 			return false;

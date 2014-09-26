@@ -19,10 +19,8 @@ import java.io.IOException;
 
 import nl.inl.blacklab.search.Span;
 
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -34,13 +32,10 @@ import org.apache.lucene.search.spans.Spans;
 public class SpansFiltered extends BLSpans {
 	BLSpans spans;
 
+	/** Set of accepted docs. NOTE: this is not segment-based, but for the whole index! */
 	DocIdSetIterator docIdSetIter;
 
 	boolean more;
-
-	public SpansFiltered(Spans spans, Filter filter, AtomicReader reader) throws IOException {
-		this(spans, filter.getDocIdSet(reader.getContext(), reader.getLiveDocs()));
-	}
 
 	public SpansFiltered(Spans spans, DocIdSet filterDocs) throws IOException {
 		this.spans = BLSpansWrapper.optWrap(spans);

@@ -54,7 +54,6 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.lucene.SpansFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.ExUtil;
 import nl.inl.util.LogUtil;
@@ -79,7 +78,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
@@ -88,7 +86,6 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
@@ -582,63 +579,18 @@ public class Searcher {
 	}
 
 	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
-		try {
-			AtomicReader srw = new SlowCompositeReaderWrapper(reader);
-			return new SpanQueryFiltered(query, filter, srw);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		return new SpanQueryFiltered(query, filter);
 	}
 
-	public SpanQuery filterDocuments(SpanQuery query, DocIdSet docIdSet) {
-		return new SpanQueryFiltered(query, docIdSet);
-	}
-
-	/**
-	 * Filter a Spans object (collection of hits), only keeping hits in a subset of documents,
-	 * described by a Filter. All other hits are discarded.
-	 *
-	 * @param spans
-	 *            the collection of hits
-	 * @param filter
-	 *            the document filter
-	 * @return the resulting Spans
-	 */
-	public Spans filterDocuments(Spans spans, Filter filter) {
-		try {
-			AtomicReader srw = new SlowCompositeReaderWrapper(reader);
-			return new SpansFiltered(spans, filter, srw);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, DocIdSet docIdSet) {
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
 		// Convert to SpanQuery
 		pattern = pattern.rewrite();
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
 		SpanQuery spanQuery = pattern.translate(spanQueryTranslator,
 				getDefaultExecutionContext(fieldName));
-
-		if (docIdSet != null) {
-			spanQuery = new SpanQueryFiltered(spanQuery, docIdSet);
-		}
+		if (filter != null)
+			spanQuery = new SpanQueryFiltered(spanQuery, filter);
 		return spanQuery;
-	}
-
-	public SpanQuery createSpanQuery(TextPattern pattern, DocIdSet docIdSet) {
-		return createSpanQuery(pattern, mainContentsFieldName, docIdSet);
-	}
-
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
-		try {
-			@SuppressWarnings("resource") // Don't close SCRW because we don't want to close our reader
-			AtomicReader scrw = new SlowCompositeReaderWrapper(reader);
-			return createSpanQuery(pattern, fieldName,
-					filter == null ? null : filter.getDocIdSet(scrw.getContext(), MultiFields.getLiveDocs(reader)));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, Filter filter) {
@@ -646,11 +598,11 @@ public class Searcher {
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
-		return createSpanQuery(pattern, fieldName, (DocIdSet) null);
+		return createSpanQuery(pattern, fieldName, (Filter)null);
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern) {
-		return createSpanQuery(pattern, mainContentsFieldName, (DocIdSet) null);
+		return createSpanQuery(pattern, mainContentsFieldName, (Filter)null);
 	}
 
 	/**
@@ -1895,7 +1847,8 @@ public class Searcher {
 	 * @param documentFilterQuery what set of documents to get the term frequencies for
 	 * @param fieldName complex field name, i.e. contents
 	 * @param propName property name, i.e. word, lemma, pos, etc.
-	 * @return
+	 * @param altName alternative name, i.e. s, i (case-sensitivity)
+	 * @return the term frequency map
 	 */
 	public Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName) {
 		try {
@@ -1903,6 +1856,12 @@ public class Searcher {
 			Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery);
 			Map<String, Integer> freq = new HashMap<String, Integer>();
 			for (AtomicReaderContext arc: reader.leaves()) {
+				if (weight == null)
+					throw new RuntimeException("weight == null");
+				if (arc == null)
+					throw new RuntimeException("arc == null");
+				if (arc.reader() == null)
+					throw new RuntimeException("arc.reader() == null");
 				Scorer scorer = weight.scorer(arc, true, false, arc.reader().getLiveDocs());
 				while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 					LuceneUtil.getFrequenciesFromTermVector(reader, scorer.docID() + arc.docBase, luceneField, freq);
