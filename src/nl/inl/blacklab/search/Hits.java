@@ -621,10 +621,9 @@ public class Hits implements Iterable<Hit> {
 						if (currentSourceSpans.next()) {
 							// We're at the next hit.
 							break;
-						} else {
-							// This one is exhausted; go to the next one.
-							currentSourceSpans = null;
 						}
+						// This one is exhausted; go to the next one.
+						currentSourceSpans = null;
 					}
 
 					// Count the hit and add it (unless we've reached the maximum number of hits we
@@ -1220,10 +1219,9 @@ public class Hits implements Iterable<Hit> {
 		if (concsType == ConcordanceType.FORWARD_INDEX) {
 			Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, fieldName);
 			return oneKwic.get(hit).toConcordance();
-		} else {
-			Map<Hit, Concordance> oneConc = h.retrieveConcordancesFromContentStore(contextSize, fieldName);
-			return oneConc.get(hit);
 		}
+		Map<Hit, Concordance> oneConc = h.retrieveConcordancesFromContentStore(contextSize, fieldName);
+		return oneConc.get(hit);
 	}
 
 	/**

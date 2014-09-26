@@ -118,13 +118,12 @@ public class BLSpanTermQuery extends SpanTermQuery {
 
 		if (postings != null) {
 			return new TermSpans(postings, term);
-		} else {
-			// term does exist, but has no positions
-			throw new IllegalStateException(
-					"field \""
-							+ term.field()
-							+ "\" was indexed without position data; cannot run SpanTermQuery (term="
-							+ term.text() + ")");
 		}
+		// term does exist, but has no positions
+		throw new IllegalStateException(
+				"field \""
+						+ term.field()
+						+ "\" was indexed without position data; cannot run SpanTermQuery (term="
+						+ term.text() + ")");
 	}
 }

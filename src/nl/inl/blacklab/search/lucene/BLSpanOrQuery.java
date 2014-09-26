@@ -111,9 +111,8 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 		}
 		if (clone != null) {
 			return clone; // some clauses rewrote
-		} else {
-			return this; // no clauses rewrote
 		}
+		return this; // no clauses rewrote
 	}
 
 	@Override
@@ -168,12 +167,10 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 			if (spans1.doc() == spans2.doc()) {
 				if (spans1.start() == spans2.start()) {
 					return spans1.end() < spans2.end();
-				} else {
-					return spans1.start() < spans2.start();
 				}
-			} else {
-				return spans1.doc() < spans2.doc();
+				return spans1.start() < spans2.start();
 			}
+			return spans1.doc() < spans2.doc();
 		}
 	}
 

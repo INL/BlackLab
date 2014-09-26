@@ -74,7 +74,7 @@ import org.apache.lucene.util.Version;
 /** This class is overridden by QueryParser in QueryParser.jj
  * and acts to separate the majority of the Java code from the .jj grammar file.
  */
-@SuppressWarnings({"deprecation", "javadoc", "resource", "unused"}) // BL: "resource" because of possible resource leak
+@SuppressWarnings({"all"}) // BL: "resource" because of possible resource leak
 public abstract class QueryParserBase implements CommonQueryParserConfiguration {
 
   /** Do not catch this exception in your code, it means you are using methods that you should no longer use. */
