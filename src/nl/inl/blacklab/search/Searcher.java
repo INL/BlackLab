@@ -766,13 +766,15 @@ public class Searcher {
 			// Determine lowest and highest word position we'd like to know something about.
 			// This saves a little bit of time for large result sets.
 			int minP = -1, maxP = -1;
-			for (int i = 0; i < startsOfWords.length; i++) {
+			int numStarts = startsOfWords.length;
+			int numEnds = endsOfWords.length;
+			for (int i = 0; i < numStarts; i++) {
 				if (startsOfWords[i] < minP || minP == -1)
 					minP = startsOfWords[i];
 				if (startsOfWords[i] > maxP)
 					maxP = startsOfWords[i];
 			}
-			for (int i = 0; i < endsOfWords.length; i++) {
+			for (int i = 0; i < numEnds; i++) {
 				if (endsOfWords[i] < minP || minP == -1)
 					minP = endsOfWords[i];
 				if (endsOfWords[i] > maxP)
@@ -789,18 +791,16 @@ public class Searcher {
 			if (!terms.hasPositions())
 				throw new RuntimeException("Field " + fieldPropName + " in doc " + doc + " has no character postion information");
 
-			int lowestPos = -1, highestPos = -1;
+			//int lowestPos = -1, highestPos = -1;
 			int lowestPosFirstChar = -1, highestPosLastChar = -1;
-			int numStarts = startsOfWords.length;
-			int numEnds = endsOfWords.length;
 			int total = numStarts + numEnds;
-			int[] done = new int[total]; // NOTE: array is automatically initialized to zeroes!
+			boolean[] done = new boolean[total]; // NOTE: array is automatically initialized to zeroes!
 			int found = 0;
 
 			// Iterate over terms
-			TermsEnum tenum = terms.iterator(null);
-			while (tenum.next() != null) {
-				DocsAndPositionsEnum dpe = tenum.docsAndPositions(null, null);
+			TermsEnum termsEnum = terms.iterator(null);
+			while (termsEnum.next() != null) {
+				DocsAndPositionsEnum dpe = termsEnum.docsAndPositions(null, null);
 
 				// Iterate over docs containing this term (NOTE: should be only one doc!)
 				while (dpe.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
@@ -817,13 +817,13 @@ public class Searcher {
 
 						// Keep track of the lowest and highest char pos, so
 						// we can fill in the character positions we didn't find
-						if (position < lowestPos || lowestPos == -1) {
-							lowestPos = position;
-							lowestPosFirstChar = dpe.startOffset();
+						int startOffset = dpe.startOffset();
+						if (startOffset < lowestPosFirstChar || lowestPosFirstChar == -1) {
+							lowestPosFirstChar = startOffset;
 						}
-						if (position > highestPos) {
-							highestPos = position;
-							highestPosLastChar = dpe.endOffset();
+						int endOffset = dpe.endOffset();
+						if (endOffset > highestPosLastChar) {
+							highestPosLastChar = endOffset;
 						}
 
 						// We've calculated the min and max word positions in advance, so
@@ -834,22 +834,22 @@ public class Searcher {
 						}
 
 						for (int m = 0; m < numStarts; m++) {
-							if (done[m] == 0 && position == startsOfWords[m]) {
-								done[m] = 1;
-								startsOfWords[m] = dpe.startOffset();
+							if (!done[m] && position == startsOfWords[m]) {
+								done[m] = true;
+								startsOfWords[m] = startOffset;
 								found++;
 							}
 						}
 						for (int m = 0; m < numEnds; m++) {
-							if (done[numStarts + m] == 0 && position == endsOfWords[m]) {
-								done[numStarts + m] = 1;
-								endsOfWords[m] = dpe.endOffset();
+							if (!done[numStarts + m] && position == endsOfWords[m]) {
+								done[numStarts + m] = true;
+								endsOfWords[m] = endOffset;
 								found++;
 							}
 						}
 
 						// NOTE: we might be tempted to break here if found == total,
-						// but that would foul up our calculation of highestPostLastChar and
+						// but that would foul up our calculation of highestPosLastChar and
 						// lowestPosFirstChar.
 					}
 				}
@@ -863,11 +863,11 @@ public class Searcher {
 					throw new RuntimeException("Could not find default char positions!");
 
 				for (int m = 0; m < numStarts; m++) {
-					if (done[m] == 0)
+					if (!done[m])
 						startsOfWords[m] = lowestPosFirstChar;
 				}
 				for (int m = 0; m < numEnds; m++) {
-					if (done[numStarts + m] == 0)
+					if (!done[numStarts + m])
 						endsOfWords[m] = highestPosLastChar;
 				}
 			}
