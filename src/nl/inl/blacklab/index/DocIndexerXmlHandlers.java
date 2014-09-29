@@ -105,16 +105,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		/** Open tag: end indexing the document */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
-			// Finish storing the document in the document store (parts of it
-			// may already have been
-			// written because we write in chunks to save memory), retrieve the
-			// content id, and store
-			// that in Lucene.
-			int contentId = storeCapturedContent();
-			currentLuceneDoc.add(new IntField(ComplexFieldUtil
-					.contentIdField(contentsField.getName()), contentId,
-					Store.YES));
-
 			// Make sure all the properties have an equal number of values.
 			// See what property has the highest position
 			// (in practice, only starttags and endtags should be able to have
@@ -141,6 +131,16 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 					}
 				}
 			}
+
+			// Finish storing the document in the document store (parts of it
+			// may already have been written because we write in chunks to save memory),
+			// retrieve the content id, and store that in Lucene.
+			// (Note that we do this after adding the dummy token, so the character
+			//  positions for the dummy token still make (some) sense)
+			int contentId = storeCapturedContent();
+			currentLuceneDoc.add(new IntField(ComplexFieldUtil
+					.contentIdField(contentsField.getName()), contentId,
+					Store.YES));
 
 			// Store the different properties of the complex contents field that
 			// were gathered in
