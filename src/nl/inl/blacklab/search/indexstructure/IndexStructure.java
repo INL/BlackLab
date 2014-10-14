@@ -87,6 +87,9 @@ public class IndexStructure {
 	 *  can always skip the last token when matching) */
 	private boolean alwaysHasClosingToken = false;
 
+	/** May all users freely retrieve the full content of documents, or is that restricted? */
+	private boolean contentViewable = false;
+
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
 	 * fields and their types.
@@ -165,6 +168,7 @@ public class IndexStructure {
 		}
 		displayName = indexMetadata.getDisplayName();
 		description = indexMetadata.getDescription();
+		contentViewable = indexMetadata.getContentViewable();
 		JSONObject versionInfo = indexMetadata.getVersionInfo();
 		indexFormat = Json.getString(versionInfo, "indexFormat", "");
 		if (initTimestamps) {
@@ -215,6 +219,7 @@ public class IndexStructure {
 		JSONObject root = indexMetadata.getRoot();
 		root.put("displayName", displayName);
 		root.put("description", description);
+		root.put("contentViewable", contentViewable);
 		root.put("versionInfo", Json.object(
 			"blackLabBuildTime", blackLabBuildTime,
 			"indexFormat", indexFormat,
@@ -760,6 +765,14 @@ public class IndexStructure {
 	}
 
 	/**
+	 * Is the content freely viewable by all users, or is it restricted?
+	 * @return true if the full content may be retrieved by anyone
+	 */
+	public boolean contentViewable() {
+		return contentViewable;
+	}
+
+	/**
 	 * What version of the index format is this?
 	 * @return the index format version
 	 */
@@ -873,6 +886,20 @@ public class IndexStructure {
 	@Deprecated
 	public void _setPidField(String newPidField) {
 		this.pidField = newPidField;
+	}
+
+	/**
+	 * Change the content viewable setting. Do not use this method.
+	 *
+	 * This exists only to support a deprecated configuration setting in BlackLab Server
+	 * and will eventually be removed.
+	 *
+	 * @param b whether content may be freely viewed
+	 * @deprecated method only exists to support deprecated setting, will be removed soon
+	 */
+	@Deprecated
+	public void _setContentViewable(boolean b) {
+		this.contentViewable = b;
 	}
 
 }

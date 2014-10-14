@@ -121,6 +121,12 @@ public class IndexMetadata {
 		return jsonRoot.getString("description");
 	}
 
+	public boolean getContentViewable() {
+		if (!jsonRoot.has("contentViewable"))
+			return false;
+		return jsonRoot.getBoolean("contentViewable");
+	}
+
 	/**
 	 * Get the configuration for the indexer.
 	 * @return the configuration
