@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -366,10 +367,10 @@ public class Searcher {
 		createdNewIndex = createNewIndex;
 		if (!createNewIndex) {
 			if (!indexMode || VersionFile.exists(indexDir)) {
-				if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1")
-						&& !VersionFile.isTypeVersion(indexDir, "blacklab", "2"))
+				if (!isIndex(indexDir)) {
 					throw new RuntimeException("BlackLab index has wrong type or version! "
 							+ VersionFile.report(indexDir));
+				}
 			}
 		}
 
@@ -431,6 +432,20 @@ public class Searcher {
 		if (!createNewIndex)
 			openForwardIndices();
 		logger.debug("Done.");
+	}
+
+	public static boolean isIndex(File indexDir) {
+		try {
+			if (VersionFile.exists(indexDir)) {
+				VersionFile vf = VersionFile.read(indexDir);
+				String version = vf.getVersion();
+				if (vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2")))
+					return true;
+			}
+			return false;
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -1702,8 +1717,7 @@ public class Searcher {
 		if (create)
 			VersionFile.write(indexDir, "blacklab", "2");
 		else {
-			if (!VersionFile.isTypeVersion(indexDir, "blacklab", "1")
-					&& !VersionFile.isTypeVersion(indexDir, "blacklab", "2")) {
+			if (!isIndex(indexDir)) {
 				throw new RuntimeException("BlackLab index has wrong type or version! "
 						+ VersionFile.report(indexDir));
 			}
