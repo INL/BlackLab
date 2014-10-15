@@ -35,6 +35,7 @@ PARSER_BEGIN(ContextualQueryLanguageParser)
 package nl.inl.blacklab.queryParser.contextql;
 
 import nl.inl.blacklab.search.CompleteQuery;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 
 @SuppressWarnings("all")
@@ -47,6 +48,26 @@ public class ContextualQueryLanguageParser {
 		parser.query();
     }
     
+    /**
+     * Parse a Contextual Query Language query.
+     
+     * @param searcher our index
+     * @param query our query
+     * @return the parsed query
+     */
+    public static CompleteQuery parse(Searcher searcher, String query) throws nl.inl.blacklab.queryParser.contextql.ParseException 
+    {
+        ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(query));
+        parser.setSearcher(searcher);
+        return parser.query();
+    }
+    
+    /**
+     * @param query our query
+     * @return the parsed query
+     * @deprecated use version that also takes a Searcher, so we can tell the properties from the metadata fields
+     */
+    @Deprecated
     public static CompleteQuery parse(String query) throws nl.inl.blacklab.queryParser.contextql.ParseException 
     {
         ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(query));
@@ -58,6 +79,12 @@ public class ContextualQueryLanguageParser {
     	if (input.length() >= 2)
     		return input.substring(1, input.length() - 1);
     	throw new RuntimeException();
+    }
+    
+    private Searcher searcher;
+    
+    public void setSearcher(Searcher searcher) {
+    	this.searcher = searcher;
     }
     
     private String defaultProperty = "contents.word";
@@ -198,7 +225,7 @@ CompleteQuery searchClause():
 }
 {
     "(" tp=queryInternal() ")"                  { return tp; }
-|   [ LOOKAHEAD(2) i=index() r=relation() ] t=searchTerm()  { return ContextQlParseUtils.clause(i, r, t, defaultProperty); }
+|   [ LOOKAHEAD(2) i=index() r=relation() ] t=searchTerm()  { return ContextQlParseUtils.clause(searcher, i, r, t, defaultProperty); }
 }
 
 String index():

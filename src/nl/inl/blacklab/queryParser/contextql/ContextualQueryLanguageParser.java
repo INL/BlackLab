@@ -2,6 +2,7 @@
 package nl.inl.blacklab.queryParser.contextql;
 
 import nl.inl.blacklab.search.CompleteQuery;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 
 @SuppressWarnings("all")
@@ -14,6 +15,26 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
                 parser.query();
     }
 
+    /**
+     * Parse a Contextual Query Language query.
+     
+     * @param searcher our index
+     * @param query our query
+     * @return the parsed query
+     */
+    public static CompleteQuery parse(Searcher searcher, String query) throws nl.inl.blacklab.queryParser.contextql.ParseException
+    {
+        ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(query));
+        parser.setSearcher(searcher);
+        return parser.query();
+    }
+
+    /**
+     * @param query our query
+     * @return the parsed query
+     * @deprecated use version that also takes a Searcher, so we can tell the properties from the metadata fields
+     */
+    @Deprecated
     public static CompleteQuery parse(String query) throws nl.inl.blacklab.queryParser.contextql.ParseException
     {
         ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(query));
@@ -25,6 +46,12 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
         if (input.length() >= 2)
                 return input.substring(1, input.length() - 1);
         throw new RuntimeException();
+    }
+
+    private Searcher searcher;
+
+    public void setSearcher(Searcher searcher) {
+        this.searcher = searcher;
     }
 
     private String defaultProperty = "contents.word";
@@ -190,7 +217,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
         ;
       }
       t = searchTerm();
-                                                              {if (true) return ContextQlParseUtils.clause(i, r, t, defaultProperty);}
+                                                              {if (true) return ContextQlParseUtils.clause(searcher, i, r, t, defaultProperty);}
       break;
     default:
       jj_la1[4] = jj_gen;
@@ -428,6 +455,69 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     finally { jj_save(2, xla); }
   }
 
+  private boolean jj_3R_1() {
+    if (jj_3R_5()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_25() {
+    if (jj_scan_token(20)) return true;
+    return false;
+  }
+
+  private boolean jj_3_1() {
+    if (jj_3R_1()) return true;
+    if (jj_scan_token(14)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_24() {
+    if (jj_scan_token(19)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_23() {
+    if (jj_scan_token(18)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_22() {
+    if (jj_scan_token(17)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_21() {
+    if (jj_scan_token(13)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_20() {
+    if (jj_scan_token(14)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_16() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_20()) {
+    jj_scanpos = xsp;
+    if (jj_3R_21()) {
+    jj_scanpos = xsp;
+    if (jj_3R_22()) {
+    jj_scanpos = xsp;
+    if (jj_3R_23()) {
+    jj_scanpos = xsp;
+    if (jj_3R_24()) {
+    jj_scanpos = xsp;
+    if (jj_3R_25()) return true;
+    }
+    }
+    }
+    }
+    }
+    return false;
+  }
+
   private boolean jj_3R_14() {
     if (jj_3R_17()) return true;
     return false;
@@ -546,69 +636,6 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
   private boolean jj_3_2() {
     if (jj_3R_2()) return true;
     if (jj_3R_3()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_1() {
-    if (jj_3R_5()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_25() {
-    if (jj_scan_token(20)) return true;
-    return false;
-  }
-
-  private boolean jj_3_1() {
-    if (jj_3R_1()) return true;
-    if (jj_scan_token(14)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_24() {
-    if (jj_scan_token(19)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_23() {
-    if (jj_scan_token(18)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_22() {
-    if (jj_scan_token(17)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_21() {
-    if (jj_scan_token(13)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_20() {
-    if (jj_scan_token(14)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_16() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_20()) {
-    jj_scanpos = xsp;
-    if (jj_3R_21()) {
-    jj_scanpos = xsp;
-    if (jj_3R_22()) {
-    jj_scanpos = xsp;
-    if (jj_3R_23()) {
-    jj_scanpos = xsp;
-    if (jj_3R_24()) {
-    jj_scanpos = xsp;
-    if (jj_3R_25()) return true;
-    }
-    }
-    }
-    }
-    }
     return false;
   }
 

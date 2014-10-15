@@ -49,9 +49,9 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.GroupProperty;
 import nl.inl.blacklab.search.grouping.GroupPropertyIdentity;
 import nl.inl.blacklab.search.grouping.GroupPropertySize;
@@ -274,7 +274,7 @@ public class QueryTool {
 
 			try {
 				//outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
-				CompleteQuery q = ContextualQueryLanguageParser.parse(query);
+				CompleteQuery q = ContextualQueryLanguageParser.parse(searcher, query);
 				includedFilterQuery = q.getFilterQuery();
 				return q.getContentsQuery();
 			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {

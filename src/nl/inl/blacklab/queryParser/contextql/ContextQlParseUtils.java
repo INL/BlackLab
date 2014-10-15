@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.search.CompleteQuery;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternWildcard;
@@ -16,14 +17,14 @@ import org.apache.lucene.search.WildcardQuery;
 
 public class ContextQlParseUtils {
 
-    public static CompleteQuery clause(String index, String relation, String term, String defaultProperty) {
+    public static CompleteQuery clause(Searcher searcher, String index, String relation, String term, String defaultProperty) {
         if (relation == null)
             relation = "=";
         if (index == null)
             index = defaultProperty;
 
         if (relation.equals("=")) {
-            return contains(index, term);
+            return contains(searcher, index, term);
         } else if (relation.equals("any")) {
         	throw new UnsupportedOperationException("any not yet supported");
         } else if (relation.equals("all")) {
@@ -56,17 +57,23 @@ public class ContextQlParseUtils {
 	 * Depending on the field name, this will contain a contents query
 	 * or a filter query.
 	 *
+	 * @param searcher our index
 	 * @param field the field name. If it starts with "contents.", it is a contents
 	 * query. "contents" by itself means "contents.word". "word", "lemma" and "pos" by
 	 * themselves are interpreted as being prefixed with "contents."
 	 * @param value the value, optionally with wildcards, to search for
 	 * @return the query
 	 */
-	public static CompleteQuery contains(String field, String value) {
+	public static CompleteQuery contains(Searcher searcher, String field, String value) {
 
 		boolean isContentsSearch = false;
 		String prop = "word";
-		if (field.equals("word") || field.equals("lemma") || field.equals("pos")) { // hack for common case...
+		boolean isProperty;
+		if (searcher != null)
+			isProperty = searcher.getIndexStructure().getMainContentsField().getProperties().contains(field);
+		else
+			isProperty = field.equals("word") || field.equals("lemma") || field.equals("pos"); // common case
+		if (isProperty) {
 			isContentsSearch = true;
 			prop = field;
 		} else if (field.equals("contents")) {
