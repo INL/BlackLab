@@ -307,11 +307,17 @@ class TermsImplV3 extends Terms {
 	public void toSortOrder(int[] tokenId, int[] sortOrder, boolean sensitive) {
 		if (sensitive) {
 			for (int i = 0; i < tokenId.length; i++) {
-				sortOrder[i] = sortPositionPerId[tokenId[i]];
+				if (tokenId[i] == -1)
+					sortOrder[i] = -1;
+				else
+					sortOrder[i] = sortPositionPerId[tokenId[i]];
 			}
 		} else {
 			for (int i = 0; i < tokenId.length; i++) {
-				sortOrder[i] = sortPositionPerIdInsensitive[tokenId[i]];
+				if (tokenId[i] == -1)
+					sortOrder[i] = -1;
+				else
+					sortOrder[i] = sortPositionPerIdInsensitive[tokenId[i]];
 			}
 		}
 	}

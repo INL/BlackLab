@@ -121,11 +121,11 @@ public class HitPropertyWordRight extends HitProperty {
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
 		String propName = parts.length > 1 ? parts[1] : "";
-		return serializeReverse() + "wordright:" + propName + ":" + (sensitive ? "s" : "i");
+		return serializeReverse() + PropValSerializeUtil.combineParts("wordright", propName, sensitive ? "s" : "i");
 	}
 
 	public static HitPropertyWordRight deserialize(Hits hits, String info) {
-		String[] parts = info.split(":", -1);
+		String[] parts = PropValSerializeUtil.splitParts(info);
 		String fieldName = hits.getConcordanceFieldName();
 		String propName = parts[0];
 		if (propName.length() == 0)

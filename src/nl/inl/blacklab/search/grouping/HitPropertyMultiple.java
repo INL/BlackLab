@@ -157,17 +157,15 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
 	@Override
 	public String serialize() {
-		StringBuilder b = new StringBuilder();
-		for (HitProperty p: criteria) {
-			if (b.length() > 0)
-				b.append(","); // different separator than single HitProperty!
-			b.append(p.serialize());
+		String[] values = new String[criteria.size()];
+		for (int i = 0; i < criteria.size(); i++) {
+			values[i] = criteria.get(i).serialize();
 		}
-		return (reverse ? "-(" : "") + b.toString() + (reverse ? ")" : "");
+		return (reverse ? "-(" : "") + PropValSerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
 	}
 
 	public static HitPropertyMultiple deserialize(Hits hits, String info) {
-		String[] strValues = info.split(",", -1);
+		String[] strValues = PropValSerializeUtil.splitMultiple(info);
 		HitProperty[] values = new HitProperty[strValues.length];
 		int i = 0;
 		for (String strValue: strValues) {

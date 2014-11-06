@@ -22,6 +22,7 @@ import java.util.List;
 
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitPropValueMultiple;
+import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
 
 /**
  * A collection of GroupProperty's identifying a particular group.
@@ -117,17 +118,15 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 
 	@Override
 	public String serialize() {
-		StringBuilder b = new StringBuilder();
-		for (DocProperty p: criteria) {
-			if (b.length() > 0)
-				b.append(","); // different separator than single DocProperty!
-			b.append(p.serialize());
+		String[] values = new String[criteria.size()];
+		for (int i = 0; i < criteria.size(); i++) {
+			values[i] = criteria.get(i).serialize();
 		}
-		return (reverse ? "-(" : "") + b.toString() + (reverse ? ")" : "");
+		return (reverse ? "-(" : "") + PropValSerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
 	}
 
 	public static DocPropertyMultiple deserialize(String info) {
-		String[] strValues = info.split(",", -1);
+		String[] strValues = PropValSerializeUtil.splitMultiple(info);
 		DocProperty[] values = new DocProperty[strValues.length];
 		int i = 0;
 		for (String strValue: strValues) {

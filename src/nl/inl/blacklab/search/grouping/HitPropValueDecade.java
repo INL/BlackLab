@@ -18,6 +18,6 @@ public class HitPropValueDecade extends HitPropValueInt {
 
 	@Override
 	public String serialize() {
-		return "dec:" + value;
+		return PropValSerializeUtil.combineParts("dec", "" + value);
 	}
 }

@@ -35,7 +35,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 	}
 
 	public static HitPropValue deserialize(Hits hits, String info) {
-		String[] parts = info.split(SERIALIZATION_SEPARATOR_ESC_REGEX, -1);
+		String[] parts = PropValSerializeUtil.splitParts(info);
 		String fieldName = hits.getConcordanceFieldName();
 		String propName = parts[0];
 		boolean sensitive = parts[1].equalsIgnoreCase("s");
@@ -55,6 +55,9 @@ public class HitPropValueContextWord extends HitPropValueContext {
 			token = ""; // no token
 		else
 			token = terms.get(valueTokenId);
-		return "cwo:" + propName + SERIALIZATION_SEPARATOR + (sensitive ? "s" : "i") + SERIALIZATION_SEPARATOR + token;
+		return PropValSerializeUtil.combineParts(
+			"cwo:" + propName,
+			(sensitive ? "s" : "i"),
+			token);
 	}
 }

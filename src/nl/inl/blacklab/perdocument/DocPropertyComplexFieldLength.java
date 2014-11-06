@@ -17,6 +17,7 @@ package nl.inl.blacklab.perdocument;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
+import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
 
 /**
  * Retrieves the length of a complex field (i.e. the main "contents" field)
@@ -74,7 +75,7 @@ public class DocPropertyComplexFieldLength extends DocProperty {
 
 	@Override
 	public String serialize() {
-		return serializeReverse() + "fieldlen:" + fieldName;
+		return serializeReverse() + PropValSerializeUtil.combineParts("fieldlen", fieldName);
 	}
 
 }

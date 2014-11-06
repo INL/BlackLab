@@ -16,6 +16,7 @@
 package nl.inl.blacklab.perdocument;
 
 import nl.inl.blacklab.search.grouping.HitPropValueDecade;
+import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
 
 /**
  * For grouping DocResult objects by decade based on a
@@ -73,7 +74,7 @@ public class DocPropertyDecade extends DocProperty {
 
 	@Override
 	public String serialize() {
-		return serializeReverse() + "decade:" + fieldName;
+		return serializeReverse() + PropValSerializeUtil.combineParts("decade", fieldName);
 	}
 
 }

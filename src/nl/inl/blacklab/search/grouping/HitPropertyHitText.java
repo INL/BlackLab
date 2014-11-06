@@ -141,11 +141,11 @@ public class HitPropertyHitText extends HitProperty {
 
 	@Override
 	public String serialize() {
-		return serializeReverse() + "hit:" + propName + ":" + (sensitive ? "s" : "i");
+		return serializeReverse() + PropValSerializeUtil.combineParts("hit", propName, sensitive ? "s" : "i");
 	}
 
 	public static HitPropertyHitText deserialize(Hits hits, String info) {
-		String[] parts = info.split(":", -1);
+		String[] parts = PropValSerializeUtil.splitParts(info);
 		String fieldName = hits.getConcordanceFieldName();
 		String propName = parts[0];
 		if (propName.length() == 0)

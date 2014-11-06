@@ -16,6 +16,7 @@
 package nl.inl.blacklab.perdocument;
 
 import nl.inl.blacklab.search.grouping.HitPropValueString;
+import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
 
 /**
  * For grouping DocResult objects by the value of a stored field in the Lucene documents. The field
@@ -71,7 +72,7 @@ public class DocPropertyStoredField extends DocProperty {
 
 	@Override
 	public String serialize() {
-		return serializeReverse() + "field:" + fieldName;
+		return serializeReverse() + PropValSerializeUtil.combineParts("field", fieldName);
 	}
 
 }

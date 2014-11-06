@@ -19,10 +19,6 @@ import org.apache.log4j.Logger;
 public abstract class HitPropValue implements Comparable<Object> {
 	protected static final Logger logger = Logger.getLogger(HitPropValue.class);
 
-	final static String SERIALIZATION_SEPARATOR = ":";
-
-	final static String SERIALIZATION_SEPARATOR_ESC_REGEX = StringUtil.escapeRegexCharacters(SERIALIZATION_SEPARATOR);
-
 	/**
 	 * Collator to use for string comparison while sorting/grouping
 	 */
@@ -50,10 +46,10 @@ public abstract class HitPropValue implements Comparable<Object> {
 	 */
 	public static HitPropValue deserialize(Hits hits, String serialized) {
 
-		if (serialized.contains(","))
+		if (PropValSerializeUtil.isMultiple(serialized))
 			return HitPropValueMultiple.deserialize(hits, serialized);
 
-		String[] parts = serialized.split(":", 2);
+		String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
 		String type = parts[0].toLowerCase();
 		String info = parts[1];
 		List<String> types = Arrays.asList("cwo", "cws", "dec", "int", "str"/*, "mul"*/);

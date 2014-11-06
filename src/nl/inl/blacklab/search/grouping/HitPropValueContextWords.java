@@ -49,7 +49,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 	}
 
 	public static HitPropValue deserialize(Hits hits, String info) {
-		String[] parts = info.split(SERIALIZATION_SEPARATOR_ESC_REGEX, -1);
+		String[] parts = PropValSerializeUtil.splitParts(info);
 		String fieldName = hits.getConcordanceFieldName();
 		String propName = parts[0];
 		boolean sensitive = parts[1].equalsIgnoreCase("s");
@@ -68,17 +68,17 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
 	@Override
 	public String serialize() {
-		StringBuilder b = new StringBuilder();
-		for (int v: valueTokenId) {
-			if (b.length() > 0)
-				b.append(SERIALIZATION_SEPARATOR);
-			String token;
+		String[] parts = new String[valueTokenId.length + 3];
+		parts[0] = "cws";
+		parts[1] = propName;
+		parts[2] = (sensitive ? "s" : "i");
+		for (int i = 0; i < valueTokenId.length; i++) {
+			int v = valueTokenId[i];
 			if (v < 0)
-				token = ""; // no token
+				parts[i + 3] = ""; // no token
 			else
-				token = terms.get(v);
-			b.append(token);
+				parts[i + 3] = terms.get(v);
 		}
-		return "cws:" + propName + SERIALIZATION_SEPARATOR + (sensitive ? "s" : "i") + SERIALIZATION_SEPARATOR + b.toString();
+		return PropValSerializeUtil.combineParts(parts);
 	}
 }

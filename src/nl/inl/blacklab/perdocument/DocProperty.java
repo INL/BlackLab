@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.grouping.HitPropValue;
+import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
 
 import org.apache.log4j.Logger;
 
@@ -69,9 +70,9 @@ public abstract class DocProperty {
 	}
 
 	public static DocProperty deserialize(String serialized) {
-		if (serialized.contains(",")) {
+		if (PropValSerializeUtil.isMultiple(serialized)) {
 			boolean reverse = false;
-			if (serialized.startsWith("-(")) {
+			if (serialized.startsWith("-(") && serialized.endsWith(")")) {
 				reverse = true;
 				serialized = serialized.substring(2, serialized.length() - 1);
 			}
@@ -86,7 +87,7 @@ public abstract class DocProperty {
 			serialized = serialized.substring(1);
 		}
 
-		String[] parts = serialized.split(":", 2);
+		String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
 		String type = parts[0].toLowerCase();
 		String info = parts.length > 1 ? parts[1] : "";
 		List<String> types = Arrays.asList("decade", "numhits", "field", "fieldlen");

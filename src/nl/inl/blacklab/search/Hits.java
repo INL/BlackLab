@@ -306,7 +306,7 @@ public class Hits implements Iterable<Hit> {
 	 *            the searcher object
 	 */
 	public Hits(Searcher searcher) {
-		this(searcher, searcher.getContentsFieldMainPropName());
+		this(searcher, searcher == null ? "word" : searcher.getContentsFieldMainPropName());
 	}
 
 	/**
@@ -1455,7 +1455,7 @@ public class Hits implements Iterable<Hit> {
 			return conc1;
 		}
 
-		throw new RuntimeException("Cannot make KWICs without forward index!");
+		throw new RuntimeException("Concordance type is set to CONTENT_STORE, but you can only make KWICs from the forward index. NOTE: if your index has no 'punct' property, concordance type will default to CONTENT_STORE instead of FORWARD_INDEX.");
 	}
 
 	/**

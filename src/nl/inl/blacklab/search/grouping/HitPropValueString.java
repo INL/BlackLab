@@ -33,7 +33,7 @@ public class HitPropValueString extends HitPropValue {
 
 	@Override
 	public String serialize() {
-		return "str:" + value;
+		return PropValSerializeUtil.combineParts("str", value);
 	}
 
 }

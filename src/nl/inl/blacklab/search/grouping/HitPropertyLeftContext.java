@@ -147,11 +147,11 @@ public class HitPropertyLeftContext extends HitProperty {
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
 		String propName = parts.length > 1 ? parts[1] : "";
-		return serializeReverse() + "left:" + propName + ":" + (sensitive ? "s" : "i");
+		return serializeReverse() + PropValSerializeUtil.combineParts("left", propName, sensitive ? "s" : "i");
 	}
 
 	public static HitPropertyLeftContext deserialize(Hits hits, String info) {
-		String[] parts = info.split(":", -1);
+		String[] parts = PropValSerializeUtil.splitParts(info);
 		String fieldName = hits.getConcordanceFieldName();
 		String propName = parts[0];
 		if (propName.length() == 0)

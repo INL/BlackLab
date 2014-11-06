@@ -86,7 +86,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
 	@Override
 	public String serialize() {
-		return serializeReverse() + "decade:" + fieldName;
+		return serializeReverse() + PropValSerializeUtil.combineParts("decade", fieldName);
 	}
 
 	public static HitPropertyDocumentDecade deserialize(Hits hits, String info) {

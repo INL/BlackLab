@@ -87,7 +87,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
 	@Override
 	public String serialize() {
-		return serializeReverse() + "field:" + fieldName;
+		return serializeReverse() + PropValSerializeUtil.combineParts("field", fieldName);
 	}
 
 	public static HitPropertyDocumentStoredField deserialize(Hits hits, String info) {
