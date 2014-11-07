@@ -309,11 +309,10 @@ public class Searcher {
 	 * @param indexDir the index directory
 	 * @param createNewIndex if true, create a new index even if one existed there
 	 * @return the searcher in index mode
-	 * @throws CorruptIndexException
 	 * @throws IOException
 	 */
 	public static Searcher openForWriting(File indexDir, boolean createNewIndex)
-			throws CorruptIndexException, IOException {
+			throws IOException {
 		return new Searcher(indexDir, true, createNewIndex, (File)null);
 	}
 
@@ -333,6 +332,10 @@ public class Searcher {
 	public static Searcher openForWriting(File indexDir, boolean createNewIndex,
 			File indexTemplateFile) throws IOException {
 		return new Searcher(indexDir, true, createNewIndex, indexTemplateFile);
+	}
+
+	public static Searcher createIndex(File indexDir) throws IOException {
+		return openForWriting(indexDir, true);
 	}
 
 	/**

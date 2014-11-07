@@ -753,7 +753,10 @@ public class IndexStructure {
 	public String getDisplayName() {
 		if (displayName != null && displayName.length() != 0)
 			return displayName;
-		return indexDir.getName();
+		String dirName = indexDir.getName();
+		if (dirName.equals("index"))
+			dirName = indexDir.getParentFile().getName();
+		return dirName;
 	}
 
 	/**
