@@ -56,7 +56,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 		else
 			token = terms.get(valueTokenId);
 		return PropValSerializeUtil.combineParts(
-			"cwo:" + propName,
+			"cwo", propName,
 			(sensitive ? "s" : "i"),
 			token);
 	}
