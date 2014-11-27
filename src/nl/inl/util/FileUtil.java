@@ -227,6 +227,10 @@ public class FileUtil {
 	/**
 	 * Replaces illegal characters (/, \, :, *, ?, ", <, > and |) in a filename with an underscore.
 	 *
+	 * NOTE: this is not intended for security use, just to make sure filenames aren't
+	 * invalid! For security with untrusted input, allow only a conservative set of characters
+	 * (i.e. [a-zA-Z0-9_\-\.], and forbid "." and "..").
+	 *
 	 * @param filename
 	 *            the filename to sanitize
 	 * @return the sanitized filename
@@ -236,8 +240,12 @@ public class FileUtil {
 	}
 
 	/**
-	 * Replaces illegal characters (/, \, :, *, ?, ", <, > and |) in a filename with the specified
+	 * Replaces illegal characters (\t, \r, \n, /, \, :, *, ?, ", <, > and |) in a filename with the specified
 	 * character.
+	 *
+	 * NOTE: this is not intended for security use, just to make sure filenames aren't
+	 * invalid! For security with untrusted input, allow only a conservative set of characters
+	 * (i.e. [a-zA-Z0-9_\-\.], and forbid "." and "..").
 	 *
 	 * @param filename
 	 *            the filename to sanitize
