@@ -102,6 +102,25 @@ public class Kwic {
 	}
 
 	/**
+	 * Get all the properties of all the tokens in the hit's context fragment.
+	 * @return the token properties
+	 */
+	public List<String> getTokens() {
+		return fragment.getTokens();
+	}
+
+	/**
+	 * Get all values for a single property for all the tokens in the
+	 * hit's context fragment.
+	 *
+	 * @param property the property to get
+	 * @return the values of this property for all tokens
+	 */
+	public List<String> getTokens(String property) {
+		return fragment.getTokens(property);
+	}
+
+	/**
 	 * Get the context of a specific property from the complete
 	 * context list.
 	 *
@@ -142,10 +161,21 @@ public class Kwic {
 		return getSinglePropertyContext(property, 0, hitStart);
 	}
 
+	/**
+	 * Get the match context of a specific property
+	 * @param property the property to get the context for
+	 * @return the context
+	 */
 	public List<String> getMatch(String property) {
 		return getSinglePropertyContext(property, hitStart, hitEnd);
 	}
 
+
+	/**
+	 * Get the right context of a specific property
+	 * @param property the property to get the context for
+	 * @return the context
+	 */
 	public List<String> getRight(String property) {
 		return getSinglePropertyContext(property, hitEnd, fragment.tokens.size() / fragment.properties.size());
 	}
@@ -197,16 +227,29 @@ public class Kwic {
 		return b.toString();
 	}
 
+	/**
+	 * Get the names of the properties in the order they occur in the context array.
+	 * @return the property names
+	 */
 	public List<String> getProperties() {
 		return fragment.getProperties();
 	}
 
-	public List<String> getTokens() {
-		return fragment.getTokens();
+	/**
+	 * Return the index of the token after the last hit token
+	 * in the context fragment.
+	 * @return the hit end index
+	 */
+	public int getHitEnd() {
+		return hitEnd;
 	}
 
-	public List<String> getTokens(String property) {
-		return fragment.getTokens(property);
+	/**
+	 * Return the index of the first hit token in the context fragment.
+	 * @return the hit start index
+	 */
+	public int getHitStart() {
+		return hitStart;
 	}
 
 	public String getFullXml() {
