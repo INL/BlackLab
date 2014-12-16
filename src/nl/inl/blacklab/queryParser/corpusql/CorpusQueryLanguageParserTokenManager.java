@@ -53,7 +53,7 @@ private int jjMoveStringLiteralDfa0_0()
          jjmatchedKind = 31;
          return jjMoveStringLiteralDfa1_0(0x100000000L);
       case 38:
-         jjmatchedKind = 24;
+         jjmatchedKind = 23;
          return jjMoveNfa_0(0, 0);
       case 40:
          jjmatchedKind = 27;
@@ -62,33 +62,33 @@ private int jjMoveStringLiteralDfa0_0()
          jjmatchedKind = 28;
          return jjMoveNfa_0(0, 0);
       case 42:
-         jjmatchedKind = 18;
+         jjmatchedKind = 17;
          return jjMoveNfa_0(0, 0);
       case 43:
-         jjmatchedKind = 19;
+         jjmatchedKind = 18;
          return jjMoveNfa_0(0, 0);
       case 44:
-         jjmatchedKind = 23;
+         jjmatchedKind = 22;
          return jjMoveNfa_0(0, 0);
       case 45:
          return jjMoveStringLiteralDfa1_0(0x2000000L);
       case 47:
-         jjmatchedKind = 15;
+         jjmatchedKind = 14;
          return jjMoveNfa_0(0, 0);
       case 58:
          jjmatchedKind = 26;
          return jjMoveNfa_0(0, 0);
       case 60:
-         jjmatchedKind = 14;
+         jjmatchedKind = 13;
          return jjMoveNfa_0(0, 0);
       case 61:
-         jjmatchedKind = 17;
-         return jjMoveNfa_0(0, 0);
-      case 62:
          jjmatchedKind = 16;
          return jjMoveNfa_0(0, 0);
+      case 62:
+         jjmatchedKind = 15;
+         return jjMoveNfa_0(0, 0);
       case 63:
-         jjmatchedKind = 20;
+         jjmatchedKind = 19;
          return jjMoveNfa_0(0, 0);
       case 67:
          return jjMoveStringLiteralDfa1_0(0x100L);
@@ -105,13 +105,13 @@ private int jjMoveStringLiteralDfa0_0()
       case 119:
          return jjMoveStringLiteralDfa1_0(0x80L);
       case 123:
-         jjmatchedKind = 21;
+         jjmatchedKind = 20;
          return jjMoveNfa_0(0, 0);
       case 124:
-         jjmatchedKind = 13;
+         jjmatchedKind = 24;
          return jjMoveNfa_0(0, 0);
       case 125:
-         jjmatchedKind = 22;
+         jjmatchedKind = 21;
          return jjMoveNfa_0(0, 0);
       default :
          return jjMoveNfa_0(0, 0);
@@ -624,8 +624,8 @@ private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, lo
 /** Token literal values. */
 @SuppressWarnings("all") public static final String[] jjstrLiteralImages = {
 "", null, null, null, null, null, null, null, null, null, null, null, null, 
-"\174", "\74", "\57", "\76", "\75", "\52", "\53", "\77", "\173", "\175", "\54", "\46", 
-"\55\76", "\72", "\50", "\51", "\133", "\135", "\41", "\41\75", };
+"\74", "\57", "\76", "\75", "\52", "\53", "\77", "\173", "\175", "\54", "\46", 
+"\174", "\55\76", "\72", "\50", "\51", "\133", "\135", "\41", "\41\75", };
 
 /** Lexer state names. */
 @SuppressWarnings("all") public static final String[] lexStateNames = {

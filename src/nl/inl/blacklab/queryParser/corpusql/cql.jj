@@ -214,14 +214,18 @@ Token queryOperator():
 TextPattern simpleQuery(): 
 {
     TextPattern query = null, rest = null;
+    Token b = null;
 } 
 {
-    query=sequence() [ "|" rest=simpleQuery() ]
+    query=sequence() [ b=booleanOperator() rest=simpleQuery() ]
     {
-        if (rest != null) {
-            return new TextPatternOr(query, rest);
-        }
-        return query;
+		if (b == null)
+			return query;
+        if (b.toString().equals("->"))
+            throw new UnsupportedOperationException("Implication operator not yet supported");
+		if (b.toString().equals("&"))
+			return new TextPatternAnd(query, rest);
+		return new TextPatternOr(query, rest);
     }
 }
 
