@@ -26,6 +26,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +40,18 @@ public class FileUtil {
 	 * The default encoding for opening files.
 	 */
 	private static String defaultEncoding = "utf-8";
+
+	/**
+	 * Sorts File objects alphabetically, case-insensitively,
+	 * subdirectories first. Used by listFilesSorted(). */
+	final public static Comparator<File> LIST_FILES_COMPARATOR = new Comparator<File>() {
+		@Override
+		public int compare(File a, File b) {
+			int ad = a.isDirectory() ? 0 : 1;
+			int bd = b.isDirectory() ? 0 : 1;
+			return ad != bd ? (ad - bd) : a.getName().compareToIgnoreCase(b.getName());
+		}
+	};
 
 	/**
 	 * Get the default encoding for opening files.
@@ -289,7 +303,10 @@ public class FileUtil {
 	}
 
 	/**
-	 * Perform an operation on all files in a tree
+	 * Perform an operation on all files in a tree.
+	 *
+	 * Sorts the files alphabetically, with directories first,
+	 * so they are always processed in the same order.
 	 *
 	 * @param root
 	 *            the directory to start in (all subdirs are processed)
@@ -300,7 +317,7 @@ public class FileUtil {
 		if (!root.isDirectory())
 			throw new RuntimeException("FileUtil.processTree: must be called with a directory! "
 					+ root);
-		for (File f : root.listFiles()) {
+		for (File f : listFilesSorted(root)) {
 			if (f.isFile())
 				task.process(f);
 			else if (f.isDirectory()) {
@@ -310,7 +327,10 @@ public class FileUtil {
 	}
 
 	/**
-	 * Perform an operation on some files in a tree
+	 * Perform an operation on some files in a tree.
+	 *
+	 * Sorts the files alphabetically, with directories first,
+	 * so they are always processed in the same order.
 	 *
 	 * @param dir
 	 *            the directory to start in
@@ -323,7 +343,7 @@ public class FileUtil {
 	 */
 	public void processTree(File dir, String glob, boolean recurseSubdirs, FileTask task) {
 		Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
-		for (File file : dir.listFiles()) {
+		for (File file : listFilesSorted(dir)) {
 			if (file.isDirectory()) {
 				// Process subdir?
 				if (recurseSubdirs)
@@ -336,6 +356,20 @@ public class FileUtil {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Returns files in a directory, sorted.
+	 *
+	 * Sorts alphabetically, case-insensitively, and puts subdirectories first.
+	 *
+	 * @param dir the directory to list files in
+	 * @return the sorted array of files
+	 */
+	public static File[] listFilesSorted(File dir) {
+		File[] files = dir.listFiles();
+		Arrays.sort(files, LIST_FILES_COMPARATOR);
+		return files;
 	}
 
 	/**

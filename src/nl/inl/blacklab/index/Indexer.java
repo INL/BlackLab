@@ -614,7 +614,7 @@ public class Indexer {
 			throw new FileNotFoundException("Input dir not found: " + dir);
 		if (!dir.isDirectory())
 			throw new IOException("Specified input dir is not a directory: " + dir);
-		for (File fileToIndex: dir.listFiles()) {
+		for (File fileToIndex : FileUtil.listFilesSorted(dir)) {
 			indexInternal(fileToIndex, glob, recurseSubdirs);
 			if (!continueIndexing())
 				break;
