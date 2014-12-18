@@ -41,7 +41,9 @@ public class DocPropertyComplexFieldLength extends DocProperty {
 	@Override
 	public HitPropValueInt get(DocResult result) {
 		try {
-			return new HitPropValueInt(Integer.parseInt(result.getDocument().get(fieldName)));
+			int subtractFromLength = 1; // TODO: check IndexStructure.alwaysHasClosingToken() to see if we really should subtract 1
+			int length = Integer.parseInt(result.getDocument().get(fieldName)) - subtractFromLength;
+			return new HitPropValueInt(length);
 		} catch (NumberFormatException e) {
 			return new HitPropValueInt(0);
 		}

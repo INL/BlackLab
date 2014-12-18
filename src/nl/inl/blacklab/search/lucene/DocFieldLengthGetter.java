@@ -89,6 +89,10 @@ public class DocFieldLengthGetter {
 	 *
 	 * Used to produce all tokens that aren't hits in our clause.
 	 *
+	 * NOTE: this includes the "dummy" token at the end that may contain punctuation
+	 * after the last word! You must subtract 1 for indices that have these dummy
+	 * tokens (all recent indices do).
+	 *
 	 * @param doc the document
 	 * @return the number of tokens
 	 */
