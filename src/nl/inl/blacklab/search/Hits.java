@@ -21,12 +21,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -41,6 +42,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.StringUtil;
+import nl.inl.util.ThreadEtiquette;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.AtomicReaderContext;
@@ -57,6 +59,7 @@ import org.apache.lucene.util.Bits;
  * information stored in the Hit objects.
  */
 public class Hits implements Iterable<Hit> {
+
 	protected static final Logger logger = Logger.getLogger(Hits.class);
 
 	/**
@@ -431,9 +434,19 @@ public class Hits implements Iterable<Hit> {
 			DirectoryReader reader = searcher == null ? null : searcher.getIndexReader();
 			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
 			termContexts = new HashMap<Term, TermContext>();
-			TreeSet<Term> terms = new TreeSet<Term>();
+			Set<Term> terms = new HashSet<Term>();
 			spanQuery.extractTerms(terms);
+			ThreadEtiquette etiquette = new ThreadEtiquette();
 			for (Term term: terms) {
+				try {
+					etiquette.behave();
+				} catch (InterruptedException e) {
+					// Taking too long, break it off.
+					// Not a very graceful way to do it... but at least it won't
+					// be stuck forever.
+					Thread.currentThread().interrupt(); // client can check this
+					throw new RuntimeException("Query matches too many terms; aborted.");
+				}
 				termContexts.put(term, TermContext.build(reader.getContext(), term, true));
 			}
 
@@ -446,7 +459,6 @@ public class Hits implements Iterable<Hit> {
 			throw new RuntimeException(e);
 		}
 
-		// logger.debug("SPANS: " + sourceSpans);
 		sourceSpansFullyRead = false;
 	}
 
@@ -554,15 +566,13 @@ public class Hits implements Iterable<Hit> {
 			return;
 
 		synchronized (this) {
+			ThreadEtiquette etiquette = new ThreadEtiquette();
 			boolean readAllHits = number < 0;
-			Thread currentThread = Thread.currentThread();
 			try {
 				while (readAllHits || hits.size() < number) {
 
-					// Check if the thread should terminate
-					if (currentThread.isInterrupted())
-						throw new InterruptedException(
-								"Thread was interrupted while gathering hits");
+					// Don't hog the CPU, don't take too long
+					etiquette.behave();
 
 					// Stop if we're at the maximum number of hits we want to count
 					if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
@@ -749,6 +759,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted; don't complete the operation but return
 			// and let the caller detect and deal with the interruption.
+			Thread.currentThread().interrupt();
 			return;
 		}
 
@@ -874,6 +885,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted; don't complete the operation but return
 			// and let the caller detect and deal with the interruption.
+			Thread.currentThread().interrupt();
 			return;
 		}
 		hits.add(hit);
@@ -908,6 +920,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted; abort operation
 			// and let client decide what to do
+			Thread.currentThread().interrupt();
 		}
 
 		return hits.size() >= lowerBound;
@@ -933,6 +946,7 @@ public class Hits implements Iterable<Hit> {
 			// Returned value is probably not the correct total number of hits,
 			// but will not cause any crashes. The thread was interrupted anyway,
 			// the value should never be presented to the user.
+			Thread.currentThread().interrupt();
 		}
 		return hits.size();
 	}
@@ -957,6 +971,7 @@ public class Hits implements Iterable<Hit> {
 			// Returned value is probably not the correct total number of hits,
 			// but will not cause any crashes. The thread was interrupted anyway,
 			// the value should never be presented to the user.
+			Thread.currentThread().interrupt();
 		}
 		return hitsCounted;
 	}
@@ -975,6 +990,7 @@ public class Hits implements Iterable<Hit> {
 			// Returned value is probably not the correct total number of hits,
 			// but will not cause any crashes. The thread was interrupted anyway,
 			// the value should never be presented to the user.
+			Thread.currentThread().interrupt();
 		}
 		return docsRetrieved;
 	}
@@ -994,6 +1010,7 @@ public class Hits implements Iterable<Hit> {
 			// Returned value is probably not the correct total number of hits,
 			// but will not cause any crashes. The thread was interrupted anyway,
 			// the value should never be presented to the user.
+			Thread.currentThread().interrupt();
 		}
 		return docsCounted;
 	}
@@ -1097,6 +1114,7 @@ public class Hits implements Iterable<Hit> {
 					// Thread was interrupted. Don't finish reading hits and accept possibly wrong
 					// answer.
 					// Client must detect the interruption and stop the thread.
+					Thread.currentThread().interrupt();
 				}
 				return hits.size() >= index + 2;
 			}
@@ -1146,6 +1164,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Required hit hasn't been gathered;
 			// we will just return null.
+			Thread.currentThread().interrupt();
 		}
 		if (i >= hits.size())
 			return null;
@@ -1165,6 +1184,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Required hit hasn't been gathered;
 			// we will just return null.
+			Thread.currentThread().interrupt();
 		}
 		if (i >= hits.size())
 			return null;
@@ -1282,6 +1302,7 @@ public class Hits implements Iterable<Hit> {
 			// not break the calling method. It is responsible for checking
 			// for thread interruption (only some applications use this at all,
 			// so throwing exceptions from all methods is too inconvenient)
+			Thread.currentThread().interrupt();
 		}
 		if (concordances == null) {
 			findConcordances(); // just try to find the default concordances
@@ -1327,6 +1348,7 @@ public class Hits implements Iterable<Hit> {
 			// not break the calling method. It is responsible for checking
 			// for thread interruption (only some applications use this at all,
 			// so throwing exceptions from all methods is too inconvenient)
+			Thread.currentThread().interrupt();
 		}
 		if (kwics == null) {
 			findKwics(); // just try to find the default concordances
@@ -1354,6 +1376,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Just go ahead with the hits we did
 			// get, so at least we'll have valid concordances.
+			Thread.currentThread().interrupt();
 		}
 		// Make sure we don't have the desired concordances already
 		if (concordances != null) {
@@ -1376,6 +1399,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Just go ahead with the hits we did
 			// get, so at least we'll have valid concordances.
+			Thread.currentThread().interrupt();
 		}
 		// Make sure we don't have the desired concordances already
 		if (kwics != null) {
@@ -1470,6 +1494,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted. Just go ahead with the hits we did
 			// get, so at least we can return with valid context.
+			Thread.currentThread().interrupt();
 		}
 		// Make sure we don't have the desired context already
 		if (contextFieldsPropName != null && fieldProps.equals(contextFieldsPropName)
@@ -1743,6 +1768,7 @@ public class Hits implements Iterable<Hit> {
 		} catch (InterruptedException e) {
 			// Thread was interrupted. We may not even have read
 			// the first hit in the sublist, so just return an empty list.
+			Thread.currentThread().interrupt();
 			return Collections.emptyList();
 		}
 		if (toIndex > hits.size())
@@ -2114,6 +2140,7 @@ public class Hits implements Iterable<Hit> {
 			// Interrupted. Just return no hits;
 			// client should detect thread was interrupted if it
 			// wants to use background threads.
+			Thread.currentThread().interrupt();
 			return new Hits(searcher);
 		}
 		List<Hit> hitsInDoc = new ArrayList<Hit>();

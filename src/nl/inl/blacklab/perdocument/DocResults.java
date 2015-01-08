@@ -28,6 +28,7 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 import nl.inl.util.ReverseComparator;
+import nl.inl.util.ThreadEtiquette;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReaderContext;
@@ -387,11 +388,12 @@ public class DocResults implements Iterable<DocResult> {
 				partialDocHits = null;
 
 				IndexReader indexReader = searcher == null ? null : searcher.getIndexReader();
-				Thread currentThread = Thread.currentThread();
+				//Thread currentThread = Thread.currentThread();
+				ThreadEtiquette etiquette = new ThreadEtiquette();
 				while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
-					if (currentThread.isInterrupted())
-						throw new InterruptedException("Thread was interrupted while gathering hits");
+					// Don't hog the CPU, don't take too long
+					etiquette.behave();
 
 					Hit hit = sourceHitsIterator.next();
 					if (hit.doc != doc) {

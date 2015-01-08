@@ -26,6 +26,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValue;
+import nl.inl.util.ThreadEtiquette;
 
 /**
  * Applies grouping to the results in a DocResults object.
@@ -63,13 +64,17 @@ public class DocGroups implements Iterable<DocGroup> {
 		this.docResults = docResults;
 		searcher = docResults.getSearcher();
 		this.groupBy = groupBy;
-		Thread currentThread = Thread.currentThread();
+		//Thread currentThread = Thread.currentThread();
+		ThreadEtiquette etiquette = new ThreadEtiquette();
 		Map<HitPropValue, List<DocResult>> groupLists = new HashMap<HitPropValue, List<DocResult>>();
 		for (DocResult r : docResults) {
-			if (currentThread.isInterrupted()) {
+			try {
+				// Don't hog the CPU, don't take too long
+				etiquette.behave();
+			} catch (InterruptedException e) {
 				// Thread was interrupted. Don't throw exception because not
 				// all client programs use this feature and we shouldn't force
-				// them to catch a useless exception.
+				// them to catch a (to them) useless exception.
 				// This does mean that it's the client's responsibility to detect
 				// thread interruption if it wants to be able to break off long-running
 				// queries.

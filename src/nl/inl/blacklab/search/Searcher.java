@@ -780,6 +780,8 @@ public class Searcher {
 	void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
 			boolean fillInDefaultsIfNotFound) {
 
+		if (startsOfWords.length == 0)
+			return; // nothing to do
 		try {
 			// Determine lowest and highest word position we'd like to know something about.
 			// This saves a little bit of time for large result sets.
