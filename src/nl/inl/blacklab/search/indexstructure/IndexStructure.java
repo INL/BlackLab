@@ -905,4 +905,15 @@ public class IndexStructure {
 		this.contentViewable = b;
 	}
 
+	/**
+	 * Is this a new, empty index?
+	 *
+	 * An empty index is one that doesn't have a main contents field yet.
+	 *
+	 * @return true if it is, false if not.
+	 */
+	public boolean isNewIndex() {
+		return mainContentsField == null;
+	}
+
 }

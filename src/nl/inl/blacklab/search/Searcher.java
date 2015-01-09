@@ -288,7 +288,7 @@ public class Searcher {
 	private boolean indexMode = false;
 
 	/** If true, we've just created a new index. Only valid in indexMode */
-	private boolean createdNewIndex = false;
+	private boolean isNewIndex = false;
 
 	/** The index writer. Only valid in indexMode. */
 	private IndexWriter indexWriter = null;
@@ -367,7 +367,6 @@ public class Searcher {
 		if (!indexMode && createNewIndex)
 			throw new RuntimeException("Cannot create new index, not in index mode");
 
-		createdNewIndex = createNewIndex;
 		if (!createNewIndex) {
 			if (!indexMode || VersionFile.exists(indexDir)) {
 				if (!isIndex(indexDir)) {
@@ -393,6 +392,7 @@ public class Searcher {
 
 		// Determine the index structure
 		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
+		isNewIndex = indexStructure.isNewIndex();
 
 		createAnalyzers();
 
@@ -1267,7 +1267,7 @@ public class Searcher {
 		if (indexMode && ca == null) {
 			// Index mode. Create new content store.
 			ContentStore contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_"
-					+ fieldName), createdNewIndex);
+					+ fieldName), isNewIndex);
 			registerContentStore(fieldName, contentStore);
 			return contentStore;
 		}
@@ -1423,19 +1423,19 @@ public class Searcher {
 
 			// Special case for old BL index with "forward" as the name of the single forward index
 			// (this should be removed eventually)
-			if (!createdNewIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
+			if (!isNewIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
 				// Default forward index used to be called "forward". Look for that instead.
 				File alt = new File(indexLocation, "forward");
 				if (alt.exists())
 					dir = alt;
 			}
 
-			if (!createdNewIndex && !dir.exists()) {
+			if (!isNewIndex && !dir.exists()) {
 				// Forward index doesn't exist
 				return null;
 			}
 			// Open forward index
-			forwardIndex = ForwardIndex.open(dir, indexMode, collator, createdNewIndex);
+			forwardIndex = ForwardIndex.open(dir, indexMode, collator, isNewIndex);
 			forwardIndex.setIdTranslateInfo(reader, fieldPropName); // how to translate from
 																			// Lucene
 																			// doc to fiid
