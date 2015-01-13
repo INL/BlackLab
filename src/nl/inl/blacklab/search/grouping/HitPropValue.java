@@ -51,7 +51,7 @@ public abstract class HitPropValue implements Comparable<Object> {
 
 		String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
 		String type = parts[0].toLowerCase();
-		String info = parts[1];
+		String info = parts.length > 1 ? parts[1] : "";
 		List<String> types = Arrays.asList("cwo", "cws", "dec", "int", "str"/*, "mul"*/);
 		int typeNum = types.indexOf(type);
 		switch (typeNum) {
