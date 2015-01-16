@@ -787,7 +787,6 @@ public class Hits implements Iterable<Hit> {
 			// sort property (which adds an extra layer of indirection to each of the
 			// O(n log n) comparisons), just reverse the hits now (which runs
 			// in linear time).
-			//Collections.reverse(hits);
 			for (int i = 0; i < n / 2; i++) {
 				sortOrder[i] = sortOrder[n - i - 1];
 			}
@@ -1515,9 +1514,18 @@ public class Hits implements Iterable<Hit> {
 		if (contexts == null || contexts.length < hits.size()) {
 			contexts = new int[hits.size()][];
 		}
+		ThreadEtiquette etiquette = new ThreadEtiquette();
 		for (Hit hit: hits) {
 			if (hit.doc != currentDoc) {
 				if (currentDoc >= 0) {
+					try {
+						etiquette.behave();
+					} catch (InterruptedException e) {
+						// Thread was interrupted. Just go ahead with the hits we did
+						// get, so at least we can return with valid context.
+						Thread.currentThread().interrupt();
+					}
+
 					findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
 
 					// Reset hits list for next doc
@@ -1531,23 +1539,6 @@ public class Hits implements Iterable<Hit> {
 		if (hitsInSameDoc.size() > 0)
 			findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
 
-		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
-		for (Hit key: hits) {
-			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
-			if (hitsInDoc == null) {
-				hitsInDoc = new ArrayList<Hit>();
-				hitsPerDocument.put(key.doc, hitsInDoc);
-			}
-			hitsInDoc.add(key);
-		}
-
-		for (List<Hit> l: hitsPerDocument.values()) {
-			if (l.size() > 0) {
-				Hits hitsInThisDoc = new Hits(searcher, l);
-				hitsInThisDoc.copySettingsFrom(this);
-				hitsInThisDoc.getContextWords(desiredContextSize, fis);
-			}
-		}
 		currentContextSize = desiredContextSize;
 		contextFieldsPropName = new ArrayList<String>(fieldProps);
 	}

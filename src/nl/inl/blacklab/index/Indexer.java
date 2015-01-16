@@ -682,7 +682,7 @@ public class Indexer {
 		}
 	}
 
-	private void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
+	public void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
 		if (!TarGzipReader.canProcessTarGzip()) {
 			// Apache commons-compress not found, skip file
 			logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
