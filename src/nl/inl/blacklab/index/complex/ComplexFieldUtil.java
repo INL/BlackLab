@@ -214,7 +214,7 @@ public class ComplexFieldUtil {
 			if (propGiven) {
 				fieldPropName = propName;
 			} else
-				throw new RuntimeException("Must specify a base name, a property name or both");
+				throw new RuntimeException("Must specify a base name, a property name or both: " + fieldName + ", " + propName + ", " + bookkeepName);
 		} else {
 			fieldPropName = fieldName + (propGiven ? PROP_SEP + propName : "");
 		}

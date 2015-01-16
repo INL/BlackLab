@@ -186,7 +186,10 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQ
 
     @Override
     public SpanQuery rewrite(IndexReader reader, MultiTermQuery query) throws IOException {
-      return delegate.rewrite(reader, query);
+      BLSpanOrQuery rewritten = delegate.rewrite(reader, query);
+      if (rewritten.getField() == null)
+    	  rewritten.setField(query.getField()); // rewritten to or query without clauses
+      return rewritten;
     }
   };
 
@@ -236,7 +239,10 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQ
 
     @Override
     public SpanQuery rewrite(IndexReader reader, MultiTermQuery query) throws IOException {
-      return delegate.rewrite(reader, query);
+        BLSpanOrQuery rewritten = delegate.rewrite(reader, query);
+        if (rewritten.getField() == null)
+      	  rewritten.setField(query.getField()); // rewritten to or query without clauses
+        return rewritten;
     }
 
     @Override

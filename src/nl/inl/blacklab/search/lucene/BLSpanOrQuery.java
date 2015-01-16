@@ -380,4 +380,15 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 		};
 	}
 
+	/**
+	 * Explicitly set the field for this query. Required because some queries
+	 * rewrite to 0-clause or queries, and we need to be able to call getField()
+	 * later.
+	 *
+	 * @param field the field for this query
+	 */
+	public void setField(String field) {
+		this.field = field;
+	}
+
 }
