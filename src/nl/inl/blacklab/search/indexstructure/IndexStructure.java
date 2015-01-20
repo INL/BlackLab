@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.DateUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
+import nl.inl.util.StringUtil;
 import nl.inl.util.json.JSONObject;
 
 import org.apache.log4j.Logger;
@@ -90,6 +91,9 @@ public class IndexStructure {
 	/** May all users freely retrieve the full content of documents, or is that restricted? */
 	private boolean contentViewable = false;
 
+	/** Application-specific indication of the document format(s) in this index. */
+	private String documentFormat;
+
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
 	 * fields and their types.
@@ -156,7 +160,10 @@ public class IndexStructure {
 		boolean initTimestamps = false;
 		if ((createNewIndex && !usedTemplate) || !metadataFile.exists()) {
 			// No metadata file yet; start with a blank one
-			indexMetadata = new IndexMetadata(indexDir.getName());
+			String name = indexDir.getName();
+			if (name.equals("index"))
+				name = indexDir.getParentFile().getName();
+			indexMetadata = new IndexMetadata(name);
 			initTimestamps = true;
 		} else {
 			// Read the metadata file
@@ -169,6 +176,7 @@ public class IndexStructure {
 		displayName = indexMetadata.getDisplayName();
 		description = indexMetadata.getDescription();
 		contentViewable = indexMetadata.getContentViewable();
+		documentFormat = indexMetadata.getDocumentFormat();
 		JSONObject versionInfo = indexMetadata.getVersionInfo();
 		indexFormat = Json.getString(versionInfo, "indexFormat", "");
 		if (initTimestamps) {
@@ -220,6 +228,7 @@ public class IndexStructure {
 		root.put("displayName", displayName);
 		root.put("description", description);
 		root.put("contentViewable", contentViewable);
+		root.put("documentFormat", documentFormat);
 		root.put("versionInfo", Json.object(
 			"blackLabBuildTime", blackLabBuildTime,
 			"indexFormat", indexFormat,
@@ -751,12 +760,14 @@ public class IndexStructure {
 	 * @return the display name
 	 */
 	public String getDisplayName() {
+		String dispName = "index";
 		if (displayName != null && displayName.length() != 0)
-			return displayName;
-		String dirName = indexDir.getName();
-		if (dirName.equals("index"))
-			dirName = indexDir.getParentFile().getName();
-		return dirName;
+			dispName = displayName;
+		if (dispName.equalsIgnoreCase("index"))
+			dispName = StringUtil.capitalizeFirst(indexDir.getName());
+		if (dispName.equalsIgnoreCase("index"))
+			dispName = StringUtil.capitalizeFirst(indexDir.getParentFile().getName());
+		return dispName;
 	}
 
 	/**
@@ -773,6 +784,18 @@ public class IndexStructure {
 	 */
 	public boolean contentViewable() {
 		return contentViewable;
+	}
+
+	/**
+	 * What format(s) is/are the documents in?
+	 *
+	 * NOTE: the return value for this function is not standardized
+	 * and may differ per application.
+	 *
+	 * @return the document format(s)
+	 */
+	public String getDocumentFormat() {
+		return documentFormat;
 	}
 
 	/**
@@ -914,6 +937,34 @@ public class IndexStructure {
 	 */
 	public boolean isNewIndex() {
 		return mainContentsField == null;
+	}
+
+	/**
+	 * Set the display name for this index. Only makes
+	 * sense in index mode where the change will be saved.
+	 * Usually called when creating an index.
+	 *
+	 * @param displayName the display name to set.
+	 */
+	public void setDisplayName(String displayName) {
+		if (displayName.length() > 80)
+			displayName = StringUtil.abbreviate(displayName, 75);
+		this.displayName = displayName;
+	}
+
+	/**
+	 * Set a document format (or formats) for this index.
+	 *
+	 * Only makes sense in index mode where this change
+	 * will be saved.
+	 *
+	 * Note that the contents of this setting are not used
+	 * by BlackLab and are application-specific.
+	 *
+	 * @param documentFormat the document format to store
+	 */
+	public void setDocumentFormat(String documentFormat) {
+		this.documentFormat = documentFormat;
 	}
 
 }

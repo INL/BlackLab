@@ -127,6 +127,12 @@ public class IndexMetadata {
 		return jsonRoot.getBoolean("contentViewable");
 	}
 
+	public String getDocumentFormat() {
+		if (!jsonRoot.has("documentFormat"))
+			return "";
+		return jsonRoot.getString("documentFormat");
+	}
+
 	/**
 	 * Get the configuration for the indexer.
 	 * @return the configuration

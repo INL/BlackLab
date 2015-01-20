@@ -287,8 +287,8 @@ public class Searcher {
 	/** If true, we want to add/delete documents. If false, we're just searching. */
 	private boolean indexMode = false;
 
-	/** If true, we've just created a new index. Only valid in indexMode */
-	private boolean isNewIndex = false;
+	/** If true, we've just created a new index. New indices cannot be searched, only added to. */
+	private boolean isEmptyIndex = false;
 
 	/** The index writer. Only valid in indexMode. */
 	private IndexWriter indexWriter = null;
@@ -334,8 +334,56 @@ public class Searcher {
 		return new Searcher(indexDir, true, createNewIndex, indexTemplateFile);
 	}
 
+	/**
+	 * Create an empty index.
+	 *
+	 * @param indexDir where to create the index
+	 * @return a Searcher for the new index, in index mode
+	 * @throws IOException
+	 */
 	public static Searcher createIndex(File indexDir) throws IOException {
-		return openForWriting(indexDir, true);
+		return createIndex(indexDir, null, null);
+	}
+
+	/**
+	 * Create an empty index.
+	 *
+	 * @param indexDir where to create the index
+	 * @param displayName the display name for the new index, or null to
+	 *   assign one automatically (based on the directory name)
+	 * @return a Searcher for the new index, in index mode
+	 * @throws IOException
+	 */
+	public static Searcher createIndex(File indexDir, String displayName) throws IOException {
+		return createIndex(indexDir, displayName, null);
+	}
+
+	/**
+	 * Create an empty index.
+	 *
+	 * @param indexDir where to create the index
+	 * @param displayName the display name for the new index, or null to
+	 *   assign one automatically (based on the directory name)
+	 * @param documentFormat a string to store as the document format,
+	 *   or null for none. Note that this is not used by BlackLab but may
+	 *   be used by your application.
+	 * @return a Searcher for the new index, in index mode
+	 * @throws IOException
+	 */
+	public static Searcher createIndex(File indexDir, String displayName, String documentFormat) throws IOException {
+		Searcher rv = openForWriting(indexDir, true);
+		boolean changed = false;
+		if (displayName != null && displayName.length() > 0) {
+			rv.getIndexStructure().setDisplayName(displayName);
+			changed = true;
+		}
+		if (documentFormat != null) {
+			rv.getIndexStructure().setDocumentFormat(documentFormat);
+			changed = true;
+		}
+		if (changed)
+			rv.getIndexStructure().writeMetadata();
+		return rv;
 	}
 
 	/**
@@ -392,7 +440,7 @@ public class Searcher {
 
 		// Determine the index structure
 		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
-		isNewIndex = indexStructure.isNewIndex();
+		isEmptyIndex = indexStructure.isNewIndex();
 
 		createAnalyzers();
 
@@ -400,8 +448,14 @@ public class Searcher {
 		if (!createNewIndex) {
 			ComplexFieldDesc mainContentsField = indexStructure.getMainContentsField();
 			if (mainContentsField == null) {
-				if (!indexMode)
-					throw new RuntimeException("Could not detect main contents field");
+				if (!indexMode) {
+					if (!isEmptyIndex)
+						throw new RuntimeException("Could not detect main contents field");
+
+					// Empty index. Set a default name for the contents field.
+					// Searching an empty index will fail and should not be attempted.
+					this.mainContentsFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
+				}
 			} else {
 				this.mainContentsFieldName = mainContentsField.getName();
 
@@ -437,6 +491,19 @@ public class Searcher {
 		logger.debug("Done.");
 	}
 
+	/**
+	 * Is this a newly created, empty index?
+	 * @return true if it is, false if not
+	 */
+	public boolean isEmpty() {
+		return isEmptyIndex;
+	}
+
+	/**
+	 * Does the specified directory contain a BlackLab index?
+	 * @param indexDir the directory
+	 * @return true if it's a BlackLab index, false if not.
+	 */
 	public static boolean isIndex(File indexDir) {
 		try {
 			if (VersionFile.exists(indexDir)) {
@@ -1267,7 +1334,7 @@ public class Searcher {
 		if (indexMode && ca == null) {
 			// Index mode. Create new content store.
 			ContentStore contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_"
-					+ fieldName), isNewIndex);
+					+ fieldName), isEmptyIndex);
 			registerContentStore(fieldName, contentStore);
 			return contentStore;
 		}
@@ -1423,19 +1490,19 @@ public class Searcher {
 
 			// Special case for old BL index with "forward" as the name of the single forward index
 			// (this should be removed eventually)
-			if (!isNewIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
+			if (!isEmptyIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
 				// Default forward index used to be called "forward". Look for that instead.
 				File alt = new File(indexLocation, "forward");
 				if (alt.exists())
 					dir = alt;
 			}
 
-			if (!isNewIndex && !dir.exists()) {
+			if (!isEmptyIndex && !dir.exists()) {
 				// Forward index doesn't exist
 				return null;
 			}
 			// Open forward index
-			forwardIndex = ForwardIndex.open(dir, indexMode, collator, isNewIndex);
+			forwardIndex = ForwardIndex.open(dir, indexMode, collator, isEmptyIndex);
 			forwardIndex.setIdTranslateInfo(reader, fieldPropName); // how to translate from
 																			// Lucene
 																			// doc to fiid
