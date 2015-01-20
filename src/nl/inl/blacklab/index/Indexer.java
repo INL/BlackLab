@@ -96,6 +96,11 @@ public class Indexer {
 	 *  try to continue indexing, or abort? */
 	protected boolean continueAfterInputError = true;
 
+	/** If an error occurs (e.g. an XML parse error), and we don't
+	 * continue indexing, should we re-throw it, or assume the client
+	 * picked it up in the listener and return normally? */
+	protected boolean rethrowInputError = true;
+
 	/**
 	 * Parameters we should pass to our DocIndexers upon instantiation.
 	 */
@@ -113,6 +118,15 @@ public class Indexer {
 	 */
 	public void setContinueAfterInputError(boolean b) {
 		continueAfterInputError = b;
+	}
+
+	/** If an error occurs (e.g. an XML parse error), and we don't
+	 * continue indexing, should we re-throw it, or assume the client
+	 * picked it up in the listener and return normally?
+	 *  @param b if true, re-throw it; if false, return as normal
+	 */
+	public void setRethrowInputError(boolean b) {
+		rethrowInputError = b;
 	}
 
 	/**
@@ -420,25 +434,42 @@ public class Indexer {
 	 *            where to index from
 	 * @throws Exception
 	 */
+	private void indexReader(String documentName, Reader reader) throws Exception {
+		getListener().fileStarted(documentName);
+		int docsDoneBefore = searcher.getWriter().numDocs();
+		long tokensDoneBefore = getListener().getTokensProcessed();
+
+		DocIndexer docIndexer = createDocIndexer(documentName, reader);
+
+		docIndexer.index();
+		getListener().fileDone(documentName);
+		int docsDoneAfter = searcher.getWriter().numDocs();
+		if (docsDoneAfter == docsDoneBefore) {
+			System.err.println("*** Warning, couldn't index " + documentName + "; wrong format?");
+		}
+		long tokensDoneAfter = getListener().getTokensProcessed();
+		if (tokensDoneAfter == tokensDoneBefore) {
+			System.err.println("*** Warning, no words indexed in " + documentName + "; wrong format?");
+		}
+	}
+
+	/**
+	 * Index a document from a Reader, using the specified type of DocIndexer
+	 *
+	 * Catches and reports any errors that occur.
+	 *
+	 * @param documentName
+	 *            some (preferably unique) name for this document (for example, the file
+	 *            name or path)
+	 * @param reader
+	 *            where to index from
+	 * @throws Exception
+	 */
 	public void index(String documentName, Reader reader) throws Exception {
 		try {
-			getListener().fileStarted(documentName);
-			int docsDoneBefore = searcher.getWriter().numDocs();
-			long tokensDoneBefore = getListener().getTokensProcessed();
-
-			DocIndexer docIndexer = createDocIndexer(documentName, reader);
-
-			docIndexer.index();
-			getListener().fileDone(documentName);
-			int docsDoneAfter = searcher.getWriter().numDocs();
-			if (docsDoneAfter == docsDoneBefore) {
-				System.err.println("*** Warning, couldn't index " + documentName + "; wrong format?");
-			}
-			long tokensDoneAfter = getListener().getTokensProcessed();
-			if (tokensDoneAfter == tokensDoneBefore) {
-				System.err.println("*** Warning, no words indexed in " + documentName + "; wrong format?");
-			}
+			indexReader(documentName, reader);
 		} catch (InputFormatException e) {
+			listener.errorOccurred(e.getMessage(), "reader", new File(documentName), null);
 			if (continueAfterInputError) {
 				System.err.println("Parsing " + documentName + " failed:");
 				e.printStackTrace();
@@ -446,16 +477,21 @@ public class Indexer {
 			} else {
 				// Don't continue; re-throw the exception so we eventually abort
 				System.err.println("Input error while processing " + documentName);
-				throw e;
+				if (rethrowInputError)
+					throw e;
+				e.printStackTrace();
 			}
 		} catch (Exception e) {
+			listener.errorOccurred(e.getMessage(), "reader", new File(documentName), null);
 			if (continueAfterInputError) {
 				System.err.println("Parsing " + documentName + " failed:");
 				e.printStackTrace();
 				System.err.println("(continuing indexing)");
 			} else {
 				System.err.println("Exception while processing " + documentName);
-				throw e;
+				if (rethrowInputError)
+					throw e;
+				e.printStackTrace();
 			}
 		}
 	}
@@ -594,7 +630,7 @@ public class Indexer {
 			} else {
 				Reader reader = new BufferedReader(new UnicodeReader(is, "utf-8"));
 				try {
-					index(name, reader);
+					indexReader(name, reader);
 				} finally {
 					// NOTE: don't close the reader as the caller will close the stream when
 					// appropriate! When processing archive files, the stream may need to remain

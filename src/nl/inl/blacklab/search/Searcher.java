@@ -575,6 +575,7 @@ public class Searcher {
 	public void rollback() {
 		try {
 			indexWriter.rollback();
+			indexWriter = null;
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
