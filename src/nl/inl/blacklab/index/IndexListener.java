@@ -223,4 +223,16 @@ public class IndexListener {
 		return errors;
 	}
 
+	/**
+	 * Changes will be rolled back (called after an error).
+	 */
+	public void rollbackStart() {
+	}
+
+	/**
+	 * Changes have been rolled back (called after an error).
+	 */
+	public void rollbackEnd() {
+	}
+
 }

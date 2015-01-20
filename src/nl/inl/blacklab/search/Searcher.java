@@ -568,6 +568,19 @@ public class Searcher {
 	}
 
 	/**
+	 * Call this to roll back any changes made to the index this session.
+	 * Calling close() will automatically commit any changes. If you call this
+	 * method, then call close(), no changes will be committed.
+	 */
+	public void rollback() {
+		try {
+			indexWriter.rollback();
+		} catch (IOException e) {
+			throw ExUtil.wrapRuntimeException(e);
+		}
+	}
+
+	/**
 	 * Finalize the Searcher object. This closes the IndexSearcher and (depending on the constructor
 	 * used) may also close the index reader.
 	 */

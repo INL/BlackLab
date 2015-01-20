@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
+import java.io.File;
+
 import nl.inl.util.TimeUtil;
 
 /**
@@ -96,6 +98,23 @@ public class IndexListenerReportConsole extends IndexListener {
 		super.indexEnd();
 		reportProgress(true);
 		System.out.println("Done. Elapsed time: " + TimeUtil.describeInterval(System.currentTimeMillis() - indexStartTime));
+	}
+
+	/**
+	 * An index error occurred. Report it.
+	 *
+	 * @param error type of error, i.e. "not found"
+	 * @param unitType type of indexing unit, i.e. "file", "zip", "tgz"
+	 * @param unit the indexing unit in which the error occurred
+	 * @param subunit optional subunit (i.e. which file inside zip, or null for regular files)
+	 * @return true if indexing should continue
+	 */
+	@Override
+	public boolean errorOccurred(String error, String unitType, File unit, File subunit) {
+		System.out.println("An error occurred during indexing!");
+		System.out.println("error: " + error + ", unitType: " + unitType +
+				", unit: " + unit + ", subunit: " + subunit);
+		return super.errorOccurred(error, unitType, unit, subunit);
 	}
 
 }

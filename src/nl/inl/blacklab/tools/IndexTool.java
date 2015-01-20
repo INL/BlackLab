@@ -266,8 +266,9 @@ public class IndexTool {
 				indexer.index(new File(inputDir, glob));
 			}
 		} catch (Exception e) {
-			System.err.println("An error occurred, aborting indexing. Error details follow.");
+			System.err.println("An error occurred, aborting indexing (changes will be rolled back). Error details follow.");
 			e.printStackTrace();
+			indexer.rollback();
 		} finally {
 			// Close the index.
 			indexer.close();

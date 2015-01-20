@@ -286,6 +286,17 @@ public class Indexer {
 	}
 
 	/**
+	 * Call this to roll back any changes made to the index this session.
+	 * Calling close() will automatically commit any changes. If you call this
+	 * method, then call close(), no changes will be committed.
+	 */
+	public void rollback() {
+		getListener().rollbackStart();
+		searcher.rollback();
+		getListener().rollbackEnd();
+	}
+
+	/**
 	 * Close the index
 	 *
 	 * @throws IOException
@@ -685,7 +696,8 @@ public class Indexer {
 	public void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
 		if (!TarGzipReader.canProcessTarGzip()) {
 			// Apache commons-compress not found, skip file
-			logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
+			terminateIndexing = !getListener().errorOccurred("Cannot index .tar.gz, Apache common-compress not on classpath", "tgz", new File(tgzFileName), null);
+			//logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
 			return;
 		}
 		final Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
