@@ -21,35 +21,37 @@ import java.io.File;
  * Used to report progress while indexing, so we can give feedback to the user.
  */
 public class IndexListener {
-	protected long indexStartTime;
+	private long indexStartTime;
 
-	protected long optimizeStartTime;
+	public long getIndexStartTime() {
+		return indexStartTime;
+	}
 
-	protected long closeStartTime;
+	private long closeStartTime;
 
-	protected long indexTime = 0;
+	private long indexTime = 0;
 
-	protected long optimizeTime = 0;
+	private long optimizeTime = 0;
 
-	protected long closeTime = 0;
+	private long closeTime = 0;
 
-	// / How many documents have been processed?
-	protected int docsDone = 0;
+	/** How many documents have been processed? */
+	private int docsDone = 0;
 
-	// / How many characters have been processed?
-	protected long charsProcessed = 0;
+	/** How many characters have been processed? */
+	private long charsProcessed = 0;
 
-	// / How many tokens (words) have been processed?
-	protected long tokensProcessed = 0;
+	/** How many tokens (words) have been processed? */
+	private long tokensProcessed = 0;
 
-	// / How many files have been processed?
-	protected long filesProcessed = 0;
+	/** How many files have been processed? */
+	private long filesProcessed = 0;
 
-	protected long createTime;
+	private long createTime;
 
-	protected long totalTime;
+	private long totalTime;
 
-	protected int errors = 0;
+	private int errors = 0;
 
 	/**
 	 * Started processing a file.

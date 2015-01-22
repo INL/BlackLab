@@ -94,6 +94,8 @@ public class IndexStructure {
 	/** Application-specific indication of the document format(s) in this index. */
 	private String documentFormat;
 
+	private long tokenCount = 0;
+
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
 	 * fields and their types.
@@ -177,6 +179,7 @@ public class IndexStructure {
 		description = indexMetadata.getDescription();
 		contentViewable = indexMetadata.getContentViewable();
 		documentFormat = indexMetadata.getDocumentFormat();
+		tokenCount = indexMetadata.getTokenCount();
 		JSONObject versionInfo = indexMetadata.getVersionInfo();
 		indexFormat = Json.getString(versionInfo, "indexFormat", "");
 		if (initTimestamps) {
@@ -229,6 +232,7 @@ public class IndexStructure {
 		root.put("description", description);
 		root.put("contentViewable", contentViewable);
 		root.put("documentFormat", documentFormat);
+		root.put("tokenCount", tokenCount);
 		root.put("versionInfo", Json.object(
 			"blackLabBuildTime", blackLabBuildTime,
 			"indexFormat", indexFormat,
@@ -965,6 +969,14 @@ public class IndexStructure {
 	 */
 	public void setDocumentFormat(String documentFormat) {
 		this.documentFormat = documentFormat;
+	}
+
+	public void addToTokenCount(long tokensProcessed) {
+		tokenCount += tokensProcessed;
+	}
+
+	public long getTokenCount() {
+		return tokenCount;
 	}
 
 }

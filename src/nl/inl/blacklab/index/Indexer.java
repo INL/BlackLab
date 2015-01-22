@@ -55,56 +55,56 @@ import org.apache.lucene.index.Term;
  */
 public class Indexer {
 
-	protected static final Logger logger = Logger.getLogger(Searcher.class);
+	static final Logger logger = Logger.getLogger(Searcher.class);
 
 	/** Our index */
-	protected Searcher searcher;
+	Searcher searcher;
 
 	/** Stop after indexing this number of docs. -1 if we shouldn't stop. */
-	protected int maxNumberOfDocsToIndex = -1;
+	int maxNumberOfDocsToIndex = -1;
 
 	/** Should we terminate indexing? (e.g. because of an error) */
-	protected boolean terminateIndexing = false;
+	boolean terminateIndexing = false;
 
 	/**
 	 * Where to report indexing progress.
 	 */
-	protected IndexListener listener = null;
+	IndexListener listener = null;
 
 	/**
 	 * Have we reported our creation and the start of indexing to the listener yet?
 	 */
-	protected boolean createAndIndexStartReported = false;
+	boolean createAndIndexStartReported = false;
 
 	/**
 	 * When we encounter a zip or tgz file, do we descend into it like it was a directory?
 	 */
-	protected boolean processArchivesAsDirectories = true;
+	boolean processArchivesAsDirectories = true;
 
 	/**
 	 * Recursively index files inside a directory? (or archive file, if processArchivesAsDirectories == true)
 	 */
-	protected boolean recurseSubdirs = true;
+	boolean recurseSubdirs = true;
 
 	/**
 	 * The class to instantiate for indexing documents. This class must be able to
 	 * deal with the file format of the input files.
 	 */
-	protected Class<? extends DocIndexer> docIndexerClass;
+	Class<? extends DocIndexer> docIndexerClass;
 
 	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort? */
-	protected boolean continueAfterInputError = true;
+	boolean continueAfterInputError = true;
 
 	/** If an error occurs (e.g. an XML parse error), and we don't
 	 * continue indexing, should we re-throw it, or assume the client
 	 * picked it up in the listener and return normally? */
-	protected boolean rethrowInputError = true;
+	boolean rethrowInputError = true;
 
 	/**
 	 * Parameters we should pass to our DocIndexers upon instantiation.
 	 */
-	protected Map<String, String> indexerParam;
+	Map<String, String> indexerParam;
 
 	/** How to index metadata fields (tokenized) */
 	FieldType metadataFieldTypeTokenized;
@@ -323,6 +323,7 @@ public class Indexer {
 		getListener().indexEnd();
 		getListener().closeStart();
 
+		searcher.getIndexStructure().addToTokenCount(getListener().getTokensProcessed());
 		searcher.getIndexStructure().writeMetadata();
 
 		searcher.close();

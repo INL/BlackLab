@@ -80,7 +80,7 @@ public class IndexListenerReportConsole extends IndexListener {
 
 			System.out
 					.printf("%d docs done (%d MB, %dk tokens). Average speed %.1fk tokens/s (%.1f MB/s), currently %.1fk tokens/s (%.1f MB/s)\n",
-							docsDone, (int) mbDone, (int) kTokensDone, overallTokenSpeed,
+							getDocsDone(), (int) mbDone, (int) kTokensDone, overallTokenSpeed,
 							overallSpeed, curTokensSpeed, curSpeed);
 
 			prevCharsDoneReported = totalCharsDone;
@@ -90,14 +90,14 @@ public class IndexListenerReportConsole extends IndexListener {
 	}
 
 	private double getElapsed() {
-		return (System.currentTimeMillis() - indexStartTime) / 1000.0;
+		return (System.currentTimeMillis() - getIndexStartTime()) / 1000.0;
 	}
 
 	@Override
 	public void indexEnd() {
 		super.indexEnd();
 		reportProgress(true);
-		System.out.println("Done. Elapsed time: " + TimeUtil.describeInterval(System.currentTimeMillis() - indexStartTime));
+		System.out.println("Done. Elapsed time: " + TimeUtil.describeInterval(System.currentTimeMillis() - getIndexStartTime()));
 	}
 
 	/**

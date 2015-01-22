@@ -42,7 +42,7 @@ public class IndexListenerReportConsoleVerbose extends IndexListener {
 	}
 
 	private long getElapsed() {
-		return (System.currentTimeMillis() - indexStartTime) / 1000;
+		return (System.currentTimeMillis() - getIndexStartTime()) / 1000;
 	}
 
 	@Override

@@ -133,6 +133,12 @@ public class IndexMetadata {
 		return jsonRoot.getString("documentFormat");
 	}
 
+	public long getTokenCount() {
+		if (!jsonRoot.has("tokenCount"))
+			return 0;
+		return jsonRoot.getLong("tokenCount");
+	}
+
 	/**
 	 * Get the configuration for the indexer.
 	 * @return the configuration
