@@ -951,7 +951,7 @@ public class Indexer {
 //		searcher.getIndexStructure().setNewIndexMetadataTemplate(indexTemplateFile);
 //	}
 
-	Searcher getSearcher() {
+	public Searcher getSearcher() {
 		return searcher;
 	}
 }
