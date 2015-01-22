@@ -34,10 +34,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.tools.DocumentFormats;
 import nl.inl.util.FileUtil;
 import nl.inl.util.TarGzipReader;
 import nl.inl.util.TarGzipReader.FileHandler;
@@ -183,11 +185,12 @@ public class Indexer {
 	 * @param docIndexerClass how to index the files
 	 * @param contentsFieldName name of the main contents field
 	 * @throws IOException
+	 * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
 	 * @deprecated use version without contents field name
 	 */
 	@Deprecated
 	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass,
-			String contentsFieldName) throws IOException {
+			String contentsFieldName) throws IOException, DocumentFormatException {
 		this(directory, create, docIndexerClass);
 	}
 
@@ -198,11 +201,12 @@ public class Indexer {
 	 *            the main BlackLab index directory
 	 * @param create
 	 *            if true, creates a new index; otherwise, appends to existing index
-	 * @param docIndexerClass how to index the files
+	 * @param docIndexerClass how to index the files, or null to autodetect
 	 * @throws IOException
+	 * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
 	 */
 	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
-			throws IOException {
+			throws IOException, DocumentFormatException {
 		this(directory, create, docIndexerClass, (File)null);
 	}
 
@@ -213,18 +217,45 @@ public class Indexer {
 	 *            the main BlackLab index directory
 	 * @param create
 	 *            if true, creates a new index; otherwise, appends to existing index
-	 * @param docIndexerClass how to index the files
+	 * @throws IOException
+	 * @throws DocumentFormatException if autodetection of the document format failed
+	 */
+	public Indexer(File directory, boolean create)
+			throws IOException, DocumentFormatException {
+		this(directory, create, null, (File)null);
+	}
+
+	/**
+	 * Construct Indexer
+	 *
+	 * @param directory
+	 *            the main BlackLab index directory
+	 * @param create
+	 *            if true, creates a new index; otherwise, appends to existing index
+	 * @param docIndexerClass how to index the files, or null to autodetect
 	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
 	 *   (if creating new index)
+	 * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
 	 * @throws IOException
 	 */
 	public Indexer(File directory, boolean create,
-			Class<? extends DocIndexer> docIndexerClass, File indexTemplateFile) throws IOException {
+			Class<? extends DocIndexer> docIndexerClass, File indexTemplateFile) throws DocumentFormatException, IOException {
 		this.docIndexerClass = docIndexerClass;
 
 		searcher = Searcher.openForWriting(directory, create, indexTemplateFile);
 		if (!create)
 			searcher.getIndexStructure().setModified();
+
+		if (this.docIndexerClass == null) {
+			// No DocIndexer supplied; try to detect it from the index
+			// metadata.
+			String formatId = searcher.getIndexStructure().getDocumentFormat();
+			if (formatId != null && formatId.length() > 0)
+				setDocIndexer(DocumentFormats.getIndexerClass(formatId));
+			else {
+				throw new DocumentFormatException("Cannot detect document format for index!");
+			}
+		}
 
 		metadataFieldTypeTokenized = new FieldType();
 		metadataFieldTypeTokenized.setStored(true);

@@ -78,9 +78,9 @@ public class Example {
 		}
 
 		// Instantiate the BlackLab indexer, supplying our DocIndexer class
-		Indexer indexer = new Indexer(indexDir, true, DocIndexerExample.class);
+		Indexer indexer = null;
 		try {
-
+			indexer = new Indexer(indexDir, true, DocIndexerExample.class);
 			// Index each of our test "documents".
 			for (int i = 0; i < testData.length; i++) {
 				indexer.index("test" + (i + 1), new StringReader(testData[i]));

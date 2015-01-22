@@ -364,9 +364,8 @@ public class Searcher {
 	 * @param indexDir where to create the index
 	 * @param displayName the display name for the new index, or null to
 	 *   assign one automatically (based on the directory name)
-	 * @param documentFormat a string to store as the document format,
-	 *   or null for none. Note that this is not used by BlackLab but may
-	 *   be used by your application.
+	 * @param documentFormat a format identifier to store as the document format,
+	 *   or null for none. See the DocumentFormats class.
 	 * @return a Searcher for the new index, in index mode
 	 * @throws IOException
 	 */

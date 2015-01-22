@@ -24,13 +24,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.indexers.DocIndexerAlto;
-import nl.inl.blacklab.indexers.DocIndexerFolia;
-import nl.inl.blacklab.indexers.DocIndexerPageXml;
-import nl.inl.blacklab.indexers.DocIndexerTei;
-import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
@@ -42,20 +38,9 @@ import org.apache.lucene.index.CorruptIndexException;
  * The indexer class and main program for the ANW corpus.
  */
 public class IndexTool {
-	/** Predefined input formats */
-	static Map<String, Class<? extends DocIndexer>> formats = new TreeMap<String, Class<? extends DocIndexer>>();
-
-	static {
-		formats.put("tei", DocIndexerTei.class);
-		formats.put("sketchxml", DocIndexerXmlSketch.class);
-		formats.put("alto", DocIndexerAlto.class);
-		formats.put("folia", DocIndexerFolia.class);
-		formats.put("pagexml", DocIndexerPageXml.class);
-	}
 
 	static Map<String, String> indexerParam = new TreeMap<String, String>();
 
-	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
 
 		// If the current directory contains indexer.properties, read it
@@ -67,7 +52,7 @@ public class IndexTool {
 		int maxDocsToIndex = 0;
 		File indexDir = null, inputDir = null;
 		String glob = "*";
-		String fileFormat = null;
+		String docFormat = null;
 		boolean createNewIndex = false;
 		String command = "";
 		Set<String> commands = new HashSet<String>(Arrays.asList("add", "create", "delete"));
@@ -153,8 +138,8 @@ public class IndexTool {
 					} else {
 						inputDir = new File(arg);
 					}
-				} else if (addingFiles && fileFormat == null) {
-					fileFormat = arg;
+				} else if (addingFiles && docFormat == null) {
+					docFormat = arg;
 				} else if (command.equals("delete") && deleteQuery == null) {
 					deleteQuery = arg;
 				} else {
@@ -188,10 +173,13 @@ public class IndexTool {
 			usage();
 			return;
 		}
-		if (fileFormat == null) {
-			System.err.println("No DocIndexer class name given.");
-			usage();
-			return;
+		boolean autoDetectFormat = false;
+		if (docFormat == null) {
+			System.err.println("No DocIndexer class name given; trying to detect it from the index...");
+			docFormat = "autodetect format";
+			autoDetectFormat = true;
+			//usage();
+			//return;
 		}
 
 		// Init log4j
@@ -212,7 +200,7 @@ public class IndexTool {
 			strGlob += glob;
 		}
 		System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob + " ("
-				+ fileFormat + ")");
+				+ docFormat + ")");
 		if (indexerParam.size() > 0) {
 			System.out.println("Indexer parameters:");
 			for (Map.Entry<String,String> e: indexerParam.entrySet()) {
@@ -221,38 +209,37 @@ public class IndexTool {
 		}
 
 		// Determine DocIndexer class to use
-		Class<? extends DocIndexer> docIndexerClass;
-		if (fileFormat.equals("teip4")) {
-			System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
-			fileFormat = "tei";
-		}
-		if (formats.containsKey(fileFormat.toLowerCase())) {
-			// Predefined format.
-			docIndexerClass = formats.get(fileFormat.toLowerCase());
-		} else {
-			try {
-				// Is it a fully qualified class name?
-				docIndexerClass = (Class<? extends DocIndexer>) Class.forName(fileFormat);
-			} catch (Exception e1) {
-				try {
-					// Is it relative to the indexers package?
-					docIndexerClass = (Class<? extends DocIndexer>) Class
-							.forName("nl.inl.blacklab.indexers." + fileFormat);
-				} catch (Exception e) {
-					System.err.println("DocIndexer class " + fileFormat + " not found.");
-					usage();
-					return;
-				}
+		Class<? extends DocIndexer> docIndexerClass = null;
+		if (!autoDetectFormat) {
+			if (docFormat.equals("teip4")) {
+				System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
+				docFormat = "tei";
+			}
+			docIndexerClass = DocumentFormats.getIndexerClass(docFormat);
+			if (docIndexerClass == null) {
+				System.err.println("DocIndexer class " + docFormat + " not found.");
+				usage();
+				return;
 			}
 		}
 
 		// Create the indexer and index the files
 		if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
 			indexTemplateFile = null;
-		}/* else {
-			indexer.setNewIndexMetadataTemplate(indexTemplateFile);
-		}*/
-		Indexer indexer = new Indexer(indexDir, createNewIndex, docIndexerClass, indexTemplateFile);
+		}
+		Indexer indexer = null;
+		try {
+			indexer = new Indexer(indexDir, createNewIndex, docIndexerClass, indexTemplateFile);
+		} catch (DocumentFormatException e1) {
+			if (e1.getMessage().contains("document format")) { // ARGH, UGLY..
+				System.err.println("Failed to detect document format. Please specify it on the command line.");
+				usage();
+				return;
+			}
+			throw e1;
+		}
+		if (createNewIndex)
+			indexer.getSearcher().getIndexStructure().setDocumentFormat(docFormat);
 		indexer.setIndexerParam(indexerParam);
 		if (maxDocsToIndex > 0)
 			indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
@@ -331,7 +318,7 @@ public class IndexTool {
 						+ "  ---<name> <value>    Pass parameter to DocIndexer class\n"
 						+ "\n"
 						+ "Valid formats:");
-		for (String format: formats.keySet()) {
+		for (String format: DocumentFormats.list()) {
 			System.out.println("  " + format);
 		}
 		System.out.println("  (or specify your own DocIndexer class)");

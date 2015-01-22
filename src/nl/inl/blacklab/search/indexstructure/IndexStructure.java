@@ -91,7 +91,12 @@ public class IndexStructure {
 	/** May all users freely retrieve the full content of documents, or is that restricted? */
 	private boolean contentViewable = false;
 
-	/** Application-specific indication of the document format(s) in this index. */
+	/** Indication of the document format(s) in this index.
+	 *
+	 * This is in the form of a format identifier as understood
+	 * by the DocumentFormats class (either an abbreviation or a
+	 * (qualified) class name).
+	 */
 	private String documentFormat;
 
 	private long tokenCount = 0;
@@ -793,8 +798,9 @@ public class IndexStructure {
 	/**
 	 * What format(s) is/are the documents in?
 	 *
-	 * NOTE: the return value for this function is not standardized
-	 * and may differ per application.
+	 * This is in the form of a format identifier as understood
+	 * by the DocumentFormats class (either an abbreviation or a
+	 * (qualified) class name).
 	 *
 	 * @return the document format(s)
 	 */
@@ -959,11 +965,12 @@ public class IndexStructure {
 	/**
 	 * Set a document format (or formats) for this index.
 	 *
-	 * Only makes sense in index mode where this change
-	 * will be saved.
+	 * This should be a format identifier as understood by the
+	 * DocumentFormats class (either an abbreviation or a
+	 * (qualified) class name).
 	 *
-	 * Note that the contents of this setting are not used
-	 * by BlackLab and are application-specific.
+	 * It only makes sense to call this in index mode, where
+	 * this change will be saved.
 	 *
 	 * @param documentFormat the document format to store
 	 */
