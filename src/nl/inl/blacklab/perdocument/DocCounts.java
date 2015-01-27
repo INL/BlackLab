@@ -26,7 +26,6 @@ import java.util.Map;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValue;
-import nl.inl.util.ThreadEtiquette;
 
 /**
  * Counts the number of documents that have a certain property.
@@ -66,21 +65,7 @@ public class DocCounts implements Iterable<DocCount> {
 		searcher = docResults.getSearcher();
 		this.countBy = countBy;
 		//Thread currentThread = Thread.currentThread();
-		ThreadEtiquette etiquette = new ThreadEtiquette();
 		for (DocResult r : docResults) {
-
-			try {
-				// Don't hog the CPU, don't take too long
-				etiquette.behave();
-			} catch (InterruptedException e) {
-				// Thread was interrupted. Don't throw exception because not
-				// all client programs use this feature and we shouldn't force
-				// them to catch a (to them) useless exception.
-				// This does mean that it's the client's responsibility to detect
-				// thread interruption if it wants to be able to break off long-running
-				// queries.
-				return;
-			}
 
 			HitPropValue groupId = countBy.get(r);
 			DocCount count = counts.get(groupId);

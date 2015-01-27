@@ -259,6 +259,24 @@ public class Hits implements Iterable<Hit> {
 	/** To keep track of captured groups, etc. */
 	private HitQueryContext hitQueryContext;
 
+	private ThreadEtiquette etiquette;
+
+	public void setLowPrio(boolean b) {
+		etiquette.setLowPrio(b);
+	}
+
+	public void setPaused(boolean b) {
+		etiquette.setPaused(b);
+	}
+
+	public boolean isLowPrio() {
+		return etiquette.isLowPrio();
+	}
+
+	public boolean isPaused() {
+		return etiquette.isPaused();
+	}
+
 	/**
 	 * Construct a Hits object from an existing Hits object.
 	 *
@@ -286,6 +304,7 @@ public class Hits implements Iterable<Hit> {
 		copySettingsFrom(copyFrom);
 
 		currentContextSize = -1; // context is not copied
+		etiquette = new ThreadEtiquette();
 	}
 
 	public void copySettingsFrom(Hits copyFrom) {
@@ -362,6 +381,7 @@ public class Hits implements Iterable<Hit> {
 			concAttrFI = searcher.getConcAttrFI();
 			concsType = searcher.getDefaultConcordanceType();
 		}
+		etiquette = new ThreadEtiquette();
 	}
 
 	/**
@@ -391,6 +411,7 @@ public class Hits implements Iterable<Hit> {
 			concAttrFI = searcher.getConcAttrFI();
 			concsType = searcher.getDefaultConcordanceType();
 		}
+		etiquette = new ThreadEtiquette();
 	}
 
 	/**
@@ -436,7 +457,7 @@ public class Hits implements Iterable<Hit> {
 			termContexts = new HashMap<Term, TermContext>();
 			Set<Term> terms = new HashSet<Term>();
 			spanQuery.extractTerms(terms);
-			ThreadEtiquette etiquette = new ThreadEtiquette();
+			etiquette = new ThreadEtiquette();
 			for (Term term: terms) {
 				try {
 					etiquette.behave();
@@ -566,7 +587,6 @@ public class Hits implements Iterable<Hit> {
 			return;
 
 		synchronized (this) {
-			ThreadEtiquette etiquette = new ThreadEtiquette();
 			boolean readAllHits = number < 0;
 			try {
 				while (readAllHits || hits.size() < number) {
@@ -1514,7 +1534,6 @@ public class Hits implements Iterable<Hit> {
 		if (contexts == null || contexts.length < hits.size()) {
 			contexts = new int[hits.size()][];
 		}
-		ThreadEtiquette etiquette = new ThreadEtiquette();
 		for (Hit hit: hits) {
 			if (hit.doc != currentDoc) {
 				if (currentDoc >= 0) {

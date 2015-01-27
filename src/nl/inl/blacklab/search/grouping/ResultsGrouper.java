@@ -25,7 +25,6 @@ import java.util.Map;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.ThreadEtiquette;
 
 import org.apache.lucene.search.spans.SpanQuery;
 
@@ -109,22 +108,8 @@ public class ResultsGrouper extends HitGroups {
 		}
 		contextField = hits.getContextFieldPropName();
 		//Thread currentThread = Thread.currentThread();
-		ThreadEtiquette etiquette = new ThreadEtiquette();
 		Map<HitPropValue, List<Hit>> groupLists = new HashMap<HitPropValue, List<Hit>>();
 		for (int i = 0; i < hits.size(); i++) {
-
-			try {
-				// Don't hog the CPU, don't take too long
-				etiquette.behave();
-			} catch (InterruptedException e) {
-				// Thread was interrupted. Don't throw exception because not
-				// all client programs use this feature and we shouldn't force
-				// them to catch a (to them) useless exception.
-				// This does mean that it's the client's responsibility to detect
-				// thread interruption if it wants to be able to break off long-running
-				// queries.
-				return;
-			}
 
 			HitPropValue identity = getGroupIdentity(i);
 			List<Hit> group = groupLists.get(identity);
