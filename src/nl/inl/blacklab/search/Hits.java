@@ -42,7 +42,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.StringUtil;
-import nl.inl.util.ThreadEtiquette;
+import nl.inl.util.ThreadPriority;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.AtomicReaderContext;
@@ -259,22 +259,28 @@ public class Hits implements Iterable<Hit> {
 	/** To keep track of captured groups, etc. */
 	private HitQueryContext hitQueryContext;
 
-	private ThreadEtiquette etiquette;
+	private ThreadPriority etiquette;
 
-	public void setLowPrio(boolean b) {
-		etiquette.setLowPrio(b);
+	/**
+	 * Set the thread priority level for this Hits object.
+	 *
+	 * Allows us to set a query to low-priority, or to (almost) pause it.
+	 *
+	 * @param level the desired priority level
+	 */
+	public void setPriorityLevel(ThreadPriority.Level level) {
+		etiquette.setPriorityLevel(level);
 	}
 
-	public void setPaused(boolean b) {
-		etiquette.setPaused(b);
-	}
-
-	public boolean isLowPrio() {
-		return etiquette.isLowPrio();
-	}
-
-	public boolean isPaused() {
-		return etiquette.isPaused();
+	/**
+	 * Get the thread priority level for this Hits object.
+	 *
+	 * Can be normal, low-priority, or (almost) paused.
+	 *
+	 * @return the current priority level
+	 */
+	public ThreadPriority.Level getPriorityLevel() {
+		return etiquette.getPriorityLevel();
 	}
 
 	/**
@@ -304,7 +310,7 @@ public class Hits implements Iterable<Hit> {
 		copySettingsFrom(copyFrom);
 
 		currentContextSize = -1; // context is not copied
-		etiquette = new ThreadEtiquette();
+		etiquette = new ThreadPriority();
 	}
 
 	public void copySettingsFrom(Hits copyFrom) {
@@ -381,7 +387,7 @@ public class Hits implements Iterable<Hit> {
 			concAttrFI = searcher.getConcAttrFI();
 			concsType = searcher.getDefaultConcordanceType();
 		}
-		etiquette = new ThreadEtiquette();
+		etiquette = new ThreadPriority();
 	}
 
 	/**
@@ -411,7 +417,7 @@ public class Hits implements Iterable<Hit> {
 			concAttrFI = searcher.getConcAttrFI();
 			concsType = searcher.getDefaultConcordanceType();
 		}
-		etiquette = new ThreadEtiquette();
+		etiquette = new ThreadPriority();
 	}
 
 	/**
@@ -457,7 +463,7 @@ public class Hits implements Iterable<Hit> {
 			termContexts = new HashMap<Term, TermContext>();
 			Set<Term> terms = new HashSet<Term>();
 			spanQuery.extractTerms(terms);
-			etiquette = new ThreadEtiquette();
+			etiquette = new ThreadPriority();
 			for (Term term: terms) {
 				try {
 					etiquette.behave();

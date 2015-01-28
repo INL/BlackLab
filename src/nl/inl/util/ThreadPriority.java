@@ -2,11 +2,25 @@ package nl.inl.util;
 
 import org.apache.log4j.Logger;
 
-/** Makes sure threads behave nicely towards others, by sleeping
- *  occasionally and optionally interrupting long operations. */
-public class ThreadEtiquette {
+/** Allows us to lower thread priority and/or pause thread.
+ *
+ * The thread must cooperate by calling behave() regularly.
+ * We don't use Java's own thread priority system because
+ * it's not particularly portable / practical to use (differences
+ * in priority between OS'es, needs root on Linux, etc.)
+ */
+public class ThreadPriority {
 
-	protected static final Logger logger = Logger.getLogger(ThreadEtiquette.class);
+	/**
+	 * The different priorities a thread can have in our system.
+	 */
+	public static enum Level {
+		PAUSED,
+		LOW,
+		NORMAL
+	}
+
+	protected static final Logger logger = Logger.getLogger(ThreadPriority.class);
 
 	private static final int WAKE_SLEEP_CYCLE = 500;
 
@@ -19,17 +33,14 @@ public class ThreadEtiquette {
 
 	/** @param enabled Do we want to enable this functionality? (default: false) */
 	public static void setEnabled(boolean enabled) {
-		ThreadEtiquette.enabled = enabled;
+		ThreadPriority.enabled = enabled;
 	}
 
 	/** The thread we're running in. */
 	Thread currentThread;
 
-	/** Should this thread be low-priority? */
-	private boolean lowPrio = false;
-
-	/** Should we pause this thread? */
-	private boolean paused = false;
+	/** What's the intended priority level? */
+	private Level level;
 
 	/** Last call to Thread.sleep(), if any */
 	private long lastSleepTimeMs;
@@ -37,24 +48,16 @@ public class ThreadEtiquette {
 	/**
 	 * Create a ThreadEtiquette object.
 	 */
-	public ThreadEtiquette() {
+	public ThreadPriority() {
 		reset();
 	}
 
-	public void setLowPrio(boolean lowPrio) {
-		this.lowPrio = lowPrio;
+	public void setPriorityLevel(Level level) {
+		this.level = level;
 	}
 
-	public void setPaused(boolean paused) {
-		this.paused = paused;
-	}
-
-	public boolean isLowPrio() {
-		return lowPrio;
-	}
-
-	public boolean isPaused() {
-		return paused;
+	public Level getPriorityLevel() {
+		return level;
 	}
 
 	public void reset() {
@@ -84,10 +87,10 @@ public class ThreadEtiquette {
 		// If we're either low-priority or paused, sleep from time to time
 		// (the difference is how long we sleep; when paused, we sleep almost
 		//  100% of the time)
-		if (lowPrio || paused) {
+		if (level != Level.NORMAL) {
 			// The longer the query takes, the more it will sleep,
 			// to a certain maximum (default 50%) of the time.
-			double sleepPart = paused ? PAUSED_SLEEP_PART : LOW_PRIO_SLEEP_PART;
+			double sleepPart = level == Level.PAUSED ? PAUSED_SLEEP_PART : LOW_PRIO_SLEEP_PART;
 			int sleepTimeMs = (int)(WAKE_SLEEP_CYCLE * sleepPart);
 			int wakeTimeMs = WAKE_SLEEP_CYCLE - sleepTimeMs;
 			long now = System.currentTimeMillis();

@@ -28,6 +28,7 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 import nl.inl.util.ReverseComparator;
+import nl.inl.util.ThreadPriority.Level;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReaderContext;
@@ -75,9 +76,6 @@ public class DocResults implements Iterable<DocResult> {
 	 */
 	private int partialDocId = -1;
 
-	/** Hits we were created from */
-	private Hits hits = null;
-
 	public Searcher getSearcher() {
 		return searcher;
 	}
@@ -115,7 +113,6 @@ public class DocResults implements Iterable<DocResult> {
 	@Deprecated
 	public DocResults(Searcher searcher, Hits hits) {
 		this.searcher = searcher;
-		this.hits = hits;
 		try {
 			sourceHits = hits;
 			sourceHitsIterator = hits.iterator();
@@ -536,7 +533,7 @@ public class DocResults implements Iterable<DocResult> {
 	}
 
 	public Hits getOriginalHits() {
-		return hits;
+		return sourceHits;
 	}
 
 	/**
@@ -575,5 +572,11 @@ public class DocResults implements Iterable<DocResult> {
 			sum += ((HitPropValueInt)numProp.get(result)).getValue();
 		}
 		return sum;
+	}
+
+	public void setPriorityLevel(Level level) {
+		if (sourceHits != null) {
+			sourceHits.setPriorityLevel(level);
+		}
 	}
 }
