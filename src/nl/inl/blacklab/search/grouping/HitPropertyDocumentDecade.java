@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.io.IOException;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 
@@ -42,10 +44,15 @@ public class HitPropertyDocumentDecade extends HitProperty {
 			Hit result = hits.getByOriginalOrder(hitNumber);
 			Document d = reader.document(result.doc);
 			String strYear = d.get(fieldName);
-			int year = Integer.parseInt(strYear);
+			int year;
+			try {
+				year = Integer.parseInt(strYear);
+			} catch (NumberFormatException e) {
+				year = 0;
+			}
 			year -= year % 10;
 			return new HitPropValueDecade(year);
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -67,14 +74,24 @@ public class HitPropertyDocumentDecade extends HitProperty {
 				return strYearB.length() == 0 ? 0 : (reverse ? -1 : 1);
 			if (strYearB.length() == 0) // sort missing year at the end
 				return reverse ? 1 : -1;
-			int aYear = Integer.parseInt(strYearA);
+			int aYear;
+			try {
+				aYear = Integer.parseInt(strYearA);
+			} catch (NumberFormatException e) {
+				aYear = 0;
+			}
 			aYear -= aYear % 10;
-			int bYear = Integer.parseInt(strYearB);
+			int bYear;
+			try {
+				bYear = Integer.parseInt(strYearB);
+			} catch (NumberFormatException e) {
+				bYear = 0;
+			}
 			bYear -= bYear % 10;
 
 			return reverse ? bYear - aYear : aYear - bYear;
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

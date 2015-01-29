@@ -579,4 +579,12 @@ public class DocResults implements Iterable<DocResult> {
 			sourceHits.setPriorityLevel(level);
 		}
 	}
+
+	public int countSoFarDocsCounted() {
+		return sourceHits == null ? results.size() : sourceHits.countSoFarDocsCounted();
+	}
+
+	public int countSoFarDocsRetrieved() {
+		return sourceHits == null ? results.size() : sourceHits.countSoFarDocsRetrieved();
+	}
 }

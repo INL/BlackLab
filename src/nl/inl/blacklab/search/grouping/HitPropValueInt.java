@@ -33,7 +33,13 @@ public class HitPropValueInt extends HitPropValue {
 	}
 
 	public static HitPropValue deserialize(String info) {
-		return new HitPropValueInt(Integer.parseInt(info));
+		int v;
+		try {
+			v = Integer.parseInt(info);
+		} catch (NumberFormatException e) {
+			v = 0;
+		}
+		return new HitPropValueInt(v);
 	}
 
 	@Override

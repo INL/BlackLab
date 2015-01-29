@@ -32,7 +32,12 @@ public class DocPropertyDecade extends DocProperty {
 	@Override
 	public HitPropValueDecade get(DocResult result) {
 		String strYear = result.getDocument().get(fieldName);
-		int year = Integer.parseInt(strYear);
+		int year;
+		try {
+			year = Integer.parseInt(strYear);
+		} catch (NumberFormatException e) {
+			year = 0;
+		}
 		year -= year % 10;
 		return new HitPropValueDecade(year);
 	}

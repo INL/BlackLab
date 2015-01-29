@@ -13,7 +13,13 @@ public class HitPropValueDecade extends HitPropValueInt {
 	}
 
 	public static HitPropValue deserialize(String info) {
-		return new HitPropValueDecade(Integer.parseInt(info));
+		int decade;
+		try {
+			decade = Integer.parseInt(info);
+		} catch (NumberFormatException e) {
+			decade = 0;
+		}
+		return new HitPropValueDecade(decade);
 	}
 
 	@Override
