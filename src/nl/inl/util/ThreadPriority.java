@@ -40,7 +40,7 @@ public class ThreadPriority {
 	Thread currentThread;
 
 	/** What's the intended priority level? */
-	private Level level;
+	private Level level = Level.NORMAL;
 
 	/** Last call to Thread.sleep(), if any */
 	private long lastSleepTimeMs;
@@ -87,7 +87,7 @@ public class ThreadPriority {
 		// If we're either low-priority or paused, sleep from time to time
 		// (the difference is how long we sleep; when paused, we sleep almost
 		//  100% of the time)
-		if (level != Level.NORMAL) {
+		if (level != Level.NORMAL && level != null) {
 			// The longer the query takes, the more it will sleep,
 			// to a certain maximum (default 50%) of the time.
 			double sleepPart = level == Level.PAUSED ? PAUSED_SLEEP_PART : LOW_PRIO_SLEEP_PART;
