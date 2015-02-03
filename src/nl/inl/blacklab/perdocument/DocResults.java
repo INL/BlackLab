@@ -580,6 +580,10 @@ public class DocResults implements Iterable<DocResult> {
 		}
 	}
 
+	public Level getPriorityLevel() {
+		return sourceHits.getPriorityLevel();
+	}
+
 	public int countSoFarDocsCounted() {
 		return sourceHits == null ? results.size() : sourceHits.countSoFarDocsCounted();
 	}

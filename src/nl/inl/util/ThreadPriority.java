@@ -24,7 +24,7 @@ public class ThreadPriority {
 
 	private static final int WAKE_SLEEP_CYCLE = 500;
 
-	private static final double LOW_PRIO_SLEEP_PART = 0.5;
+	private static final double LOW_PRIO_SLEEP_PART = 0.66;
 
 	private static final double PAUSED_SLEEP_PART = 0.99;
 
@@ -91,16 +91,20 @@ public class ThreadPriority {
 			// The longer the query takes, the more it will sleep,
 			// to a certain maximum (default 50%) of the time.
 			double sleepPart = level == Level.PAUSED ? PAUSED_SLEEP_PART : LOW_PRIO_SLEEP_PART;
-			int sleepTimeMs = (int)(WAKE_SLEEP_CYCLE * sleepPart);
-			int wakeTimeMs = WAKE_SLEEP_CYCLE - sleepTimeMs;
+			double sleepTimeMs = WAKE_SLEEP_CYCLE * sleepPart;
+			double wakeTimeMs = WAKE_SLEEP_CYCLE - sleepTimeMs;
 			long now = System.currentTimeMillis();
-			int timeSinceSleepMs = (int)(now - lastSleepTimeMs);
-			boolean shouldSleepNow = timeSinceSleepMs > wakeTimeMs;
-			if (shouldSleepNow) {
+			double timeSinceSleepMs = now - lastSleepTimeMs;
+			double sleepFactor = timeSinceSleepMs / wakeTimeMs;
+			if (sleepFactor >= 1) {
 				//logger.debug("Sleep for " + sleepTimeMs);
 				// Zzzz...
+				if (sleepFactor > 10) {
+					// Don't sleep TOO long..
+					sleepFactor = 10;
+				}
 				try {
-					Thread.sleep(sleepTimeMs);
+					Thread.sleep((long)(sleepTimeMs * sleepFactor));
 				} catch (InterruptedException e) {
 					// Set the interrupted flag so the caller may ignore this
 					// exception and the client may manually check the flag to see
