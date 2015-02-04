@@ -16,17 +16,11 @@ public class ThreadPriority {
 	 */
 	public static enum Level {
 		PAUSED,
-		LOW,
-		NORMAL
+		RUNNING_LOW_PRIO,
+		RUNNING
 	}
 
 	protected static final Logger logger = Logger.getLogger(ThreadPriority.class);
-
-	private static final int WAKE_SLEEP_CYCLE = 500;
-
-	private static final double LOW_PRIO_SLEEP_PART = 0.66;
-
-	private static final double PAUSED_SLEEP_PART = 0.99;
 
 	/** Do we want to enable this functionality? (default: false) */
 	private static boolean enabled = false;
@@ -40,10 +34,7 @@ public class ThreadPriority {
 	Thread currentThread;
 
 	/** What's the intended priority level? */
-	private Level level = Level.NORMAL;
-
-	/** Last call to Thread.sleep(), if any */
-	private long lastSleepTimeMs;
+	private Level level = Level.RUNNING;
 
 	/**
 	 * Create a ThreadEtiquette object.
@@ -62,7 +53,6 @@ public class ThreadPriority {
 
 	public void reset() {
 		currentThread = Thread.currentThread();
-		lastSleepTimeMs = System.currentTimeMillis();
 	}
 
 	/**
@@ -84,38 +74,8 @@ public class ThreadPriority {
 			throw new InterruptedException("Operation aborted");
 		}
 
-		// If we're either low-priority or paused, sleep from time to time
-		// (the difference is how long we sleep; when paused, we sleep almost
-		//  100% of the time)
-		if (level != Level.NORMAL && level != null) {
-			// The longer the query takes, the more it will sleep,
-			// to a certain maximum (default 50%) of the time.
-			double sleepPart = level == Level.PAUSED ? PAUSED_SLEEP_PART : LOW_PRIO_SLEEP_PART;
-			double sleepTimeMs = WAKE_SLEEP_CYCLE * sleepPart;
-			double wakeTimeMs = WAKE_SLEEP_CYCLE - sleepTimeMs;
-			long now = System.currentTimeMillis();
-			double timeSinceSleepMs = now - lastSleepTimeMs;
-			double sleepFactor = timeSinceSleepMs / wakeTimeMs;
-			if (sleepFactor >= 1) {
-				//logger.debug("Sleep for " + sleepTimeMs);
-				// Zzzz...
-				if (sleepFactor > 10) {
-					// Don't sleep TOO long..
-					sleepFactor = 10;
-				}
-				try {
-					Thread.sleep((long)(sleepTimeMs * sleepFactor));
-				} catch (InterruptedException e) {
-					// Set the interrupted flag so the caller may ignore this
-					// exception and the client may manually check the flag to see
-					// if the thread was interrupted (because not all clients interrupt
-					// threads, and we shouldn't force clients who don't to catch this
-					// exception anyway).
-					currentThread.interrupt();
-					throw e;
-				}
-				lastSleepTimeMs = now;
-			}
+		while (level != Level.RUNNING) {
+			Thread.sleep(100);
 		}
 	}
 }
