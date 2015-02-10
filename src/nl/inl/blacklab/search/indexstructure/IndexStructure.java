@@ -986,4 +986,8 @@ public class IndexStructure {
 		return tokenCount;
 	}
 
+	public void setContentViewable(boolean contentViewable) {
+		this.contentViewable = contentViewable;
+	}
+
 }

@@ -342,7 +342,7 @@ public class Searcher {
 	 * @throws IOException
 	 */
 	public static Searcher createIndex(File indexDir) throws IOException {
-		return createIndex(indexDir, null, null);
+		return createIndex(indexDir, null, null, false);
 	}
 
 	/**
@@ -355,7 +355,7 @@ public class Searcher {
 	 * @throws IOException
 	 */
 	public static Searcher createIndex(File indexDir, String displayName) throws IOException {
-		return createIndex(indexDir, displayName, null);
+		return createIndex(indexDir, displayName, null, false);
 	}
 
 	/**
@@ -366,22 +366,20 @@ public class Searcher {
 	 *   assign one automatically (based on the directory name)
 	 * @param documentFormat a format identifier to store as the document format,
 	 *   or null for none. See the DocumentFormats class.
+	 * @param contentViewable is viewing of the document contents allowed?
 	 * @return a Searcher for the new index, in index mode
 	 * @throws IOException
 	 */
-	public static Searcher createIndex(File indexDir, String displayName, String documentFormat) throws IOException {
+	public static Searcher createIndex(File indexDir, String displayName, String documentFormat, boolean contentViewable) throws IOException {
 		Searcher rv = openForWriting(indexDir, true);
-		boolean changed = false;
 		if (displayName != null && displayName.length() > 0) {
 			rv.getIndexStructure().setDisplayName(displayName);
-			changed = true;
 		}
 		if (documentFormat != null) {
 			rv.getIndexStructure().setDocumentFormat(documentFormat);
-			changed = true;
 		}
-		if (changed)
-			rv.getIndexStructure().writeMetadata();
+		rv.getIndexStructure().setContentViewable(contentViewable);
+		rv.getIndexStructure().writeMetadata();
 		return rv;
 	}
 
