@@ -39,7 +39,6 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.tools.DocumentFormats;
 import nl.inl.util.FileUtil;
 import nl.inl.util.TarGzipReader;
 import nl.inl.util.TarGzipReader.FileHandler;

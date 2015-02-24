@@ -20,21 +20,13 @@ import java.io.Reader;
 import nl.inl.blacklab.index.Indexer;
 
 /**
- * Index a TEI P4/P5 file.
+ * Index a TEI P4/P5 file with the PoS in the "function" attribute.
  *
  * For information about TEI, see http://www.tei-c.org/
- *
- * Note: this class assumes that PoS information is in the "type" attribute.
- * For data that has the PoS information in the "function" attribute, use
- * DocIndexerTeiPosInFunctionAttr (or set the appropriate configuration parameters).
  */
-public class DocIndexerTei extends DocIndexerTeiBase {
+public class DocIndexerTeiPosInFunctionAttr extends DocIndexerTeiBase {
 
-	public DocIndexerTei(Indexer indexer, String fileName, Reader reader, String contentElement) {
-		super(indexer, fileName, reader, contentElement, true);
-	}
-
-	public DocIndexerTei(Indexer indexer, String fileName, Reader reader) {
-		this(indexer, fileName, reader, "body");
+	public DocIndexerTeiPosInFunctionAttr(Indexer indexer, String fileName, Reader reader) {
+		super(indexer, fileName, reader, "body", false);
 	}
 }

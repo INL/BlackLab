@@ -25,9 +25,9 @@ import nl.inl.blacklab.index.Indexer;
  *
  * For information about TEI, see http://www.tei-c.org/
  */
-public class DocIndexerTeiText extends DocIndexerTei {
+public class DocIndexerTeiText extends DocIndexerTeiBase {
 
 	public DocIndexerTeiText(Indexer indexer, String fileName, Reader reader) {
-		super(indexer, fileName, reader, "text");
+		super(indexer, fileName, reader, "text", true);
 	}
 }

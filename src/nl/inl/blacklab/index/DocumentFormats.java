@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools;
+package nl.inl.blacklab.index;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.indexers.DocIndexerAlto;
 import nl.inl.blacklab.indexers.DocIndexerFolia;
 import nl.inl.blacklab.indexers.DocIndexerPageXml;
 import nl.inl.blacklab.indexers.DocIndexerTei;
+import nl.inl.blacklab.indexers.DocIndexerTeiPosInFunctionAttr;
+import nl.inl.blacklab.indexers.DocIndexerTeiText;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 
 /**
@@ -30,8 +31,16 @@ public class DocumentFormats {
 		register("alto", DocIndexerAlto.class);
 		register("folia", DocIndexerFolia.class);
 		register("pagexml", DocIndexerPageXml.class);
-		register("tei", DocIndexerTei.class);
 		register("sketchxml", DocIndexerXmlSketch.class);
+
+		// TEI has a number of variants
+		// By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
+		// By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
+		register("tei", DocIndexerTei.class);
+		register("tei-element-body", DocIndexerTei.class);
+		register("tei-element-text", DocIndexerTeiText.class);
+		register("tei-pos-type", DocIndexerTei.class);
+		register("tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
 	}
 
 	/**
