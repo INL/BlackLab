@@ -17,12 +17,12 @@ package nl.inl.blacklab.search.grouping;
 
 import java.util.Map;
 
-import junit.framework.Assert;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.lucene.SpanQueryStub;
 
 import org.apache.lucene.search.spans.SpanQuery;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestResultsGrouper {

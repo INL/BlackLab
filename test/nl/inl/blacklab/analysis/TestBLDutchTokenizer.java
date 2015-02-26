@@ -19,10 +19,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestBLDutchTokenizer {

@@ -1,11 +1,11 @@
 package nl.inl.blacklab.search.grouping;
 
-import junit.framework.Assert;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyDecade;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestHitProperties {

@@ -15,12 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.sequences;
 
-import junit.framework.Assert;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTerm;
 import nl.inl.blacklab.search.TextPatternTranslatorString;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestTextPatternSequence {

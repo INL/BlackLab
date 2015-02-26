@@ -17,10 +17,9 @@ package nl.inl.blacklab.filter;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestRemoveAllAccentsFilter {

@@ -15,10 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
-
 
 public class TestTextPatternRegex {
 

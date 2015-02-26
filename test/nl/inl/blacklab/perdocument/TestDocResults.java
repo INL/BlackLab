@@ -15,11 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
-import junit.framework.Assert;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.lucene.SpansStub;
 
 import org.apache.lucene.search.spans.Spans;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestDocResults {

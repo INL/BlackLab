@@ -17,10 +17,10 @@ package nl.inl.blacklab.externalstorage;
 
 import java.io.File;
 
-import junit.framework.Assert;
 import nl.inl.util.Utilities;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 

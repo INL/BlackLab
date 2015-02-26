@@ -17,9 +17,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.search.spans.Spans;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestSpansPositionFilter {
