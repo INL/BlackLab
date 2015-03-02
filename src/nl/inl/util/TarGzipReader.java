@@ -112,6 +112,23 @@ public class TarGzipReader {
 	}
 
 	/**
+	 * Process a .gz file and call the file handler for its contents.
+	 * @param filePath
+	 * @param gzipStream the .gz input stream to decompress
+	 * @param fileHandler the handler to call
+	 */
+	public static void processGzip(String filePath, InputStream gzipStream, FileHandler fileHandler) {
+		if (!tarGzLibsAvailable)
+			throw new UnsupportedOperationException("Cannot process .gz file; Apache commons-compress not found on the classpath.");
+		try {
+			InputStream unzipped = ctorGzip.newInstance(gzipStream);
+			fileHandler.handle(filePath.replaceAll("\\.gz$", ""), unzipped);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
 	 * Process a .tar file and call the handler for each normal file in the archive.
 	 * @param tarStream the .tar input stream to decompress
 	 * @param fileHandler the handler to call for each regular file

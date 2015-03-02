@@ -655,6 +655,8 @@ public class Indexer {
 		try {
 			if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
 				indexTarGzip(name, is, glob, recurseArchives);
+			} else if (name.endsWith(".gz")) {
+				indexGzip(name, is);
 			} else if (name.endsWith(".zip")) {
 				// TODO InputStream version of zip, for zips inside another archive
 				logger.warn("Skipped " + name + ", ZIPs inside archives not yet supported");
@@ -729,7 +731,7 @@ public class Indexer {
 						continue;
 					String fileName = e.getName();
 					Matcher m = pattGlob.matcher(fileName);
-					boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz");
+					boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".gz") || fileName.endsWith(".tgz");
 					if (m.matches() || isArchive) {
 						try {
 							InputStream is = z.getInputStream(e);
@@ -760,6 +762,27 @@ public class Indexer {
 		}
 	}
 
+	public void indexGzip(final String gzFileName, InputStream gzipStream) {
+		if (!TarGzipReader.canProcessTarGzip()) {
+			// Apache commons-compress not found, skip file
+			terminateIndexing = !getListener().errorOccurred("Cannot index .gz, Apache common-compress not on classpath", "tgz", new File(gzFileName), null);
+			//logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
+			return;
+		}
+		TarGzipReader.processGzip(gzFileName, gzipStream, new FileHandler() {
+			@Override
+			public boolean handle(String filePath, InputStream contents) {
+				try {
+					indexInputStream(filePath, contents, "*", false);
+				} catch (Exception e) {
+					log("*** Error indexing .gz file: " + filePath, e);
+					terminateIndexing = !getListener().errorOccurred(e.getMessage(), "gz", new File(filePath), new File(filePath));
+				}
+				return continueIndexing();
+			}
+		});
+	}
+
 	public void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
 		if (!TarGzipReader.canProcessTarGzip()) {
 			// Apache commons-compress not found, skip file
@@ -779,7 +802,7 @@ public class Indexer {
 						String entryName = tgzFileName + File.separator + filePath;
 						indexInputStream(entryName, contents, glob, recurseArchives);
 					} else {
-						boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".tar.gz") || fn.endsWith(".tgz");
+						boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".gz") || fn.endsWith(".tgz");
 						if (isArchive) {
 							if (recurseArchives && processArchivesAsDirectories) {
 								indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
