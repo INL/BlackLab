@@ -47,7 +47,7 @@ pomExtra :=
     </developer>
   </developers>
 
-PublishTo.sonatype
+PublishTo.ai2Public
 
 releaseSettings
 
