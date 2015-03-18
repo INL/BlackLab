@@ -76,3 +76,9 @@ nextVersion := { ver =>
   }
 }
 
+javacOptions in doc := Seq(
+  "-source", "1.7",
+  "-group", "Core", "nl.inl.blacklab.search:nl.inl.blacklab.search.*:nl.inl.blacklab.tools:nl.inl.blacklab.index:nl.inl.blacklab.index.*:nl.inl.blacklab.highlight:nl.inl.blacklab.queryParser.*:nl.inl.blacklab.perdocument",
+  "-group", "Examples and tests", "nl.inl.blacklab.example:nl.inl.blacklab.indexers.*",
+  "-group", "Supporting classes", "nl.inl.blacklab.filter:nl.inl.blacklab.forwardindex:nl.inl.blacklab.externalstorage:nl.inl.blacklab.suggest:nl.inl.util",
+  "-Xdoclint:none")
