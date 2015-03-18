@@ -47,3 +47,4 @@ pomExtra :=
 
 PublishTo.sonatype
 
+releaseSettings
