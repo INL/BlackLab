@@ -1,4 +1,6 @@
 import org.allenai.plugins.CoreDependencies._
+import sbtrelease._
+import sbtrelease.ReleasePlugin.ReleaseKeys._
 
 name := "BlackLab"
 
@@ -48,3 +50,29 @@ pomExtra :=
 PublishTo.sonatype
 
 releaseSettings
+
+releaseVersion := { ver =>
+  val snapshot = "(.*-ALLENAI-\\d+)-SNAPSHOT".r
+  ver match {
+    case snapshot(v) => v
+    case _ => versionFormatError
+  }
+}
+
+nextVersion := { ver =>
+  val release = "(.*-ALLENAI)-(\\d+)".r
+  // pattern matching on Int
+  object Int {
+    def unapply(s: String): Option[Int] = try {
+      Some(s.toInt)
+    } catch {
+      case _: java.lang.NumberFormatException => None
+    }
+  }
+
+  ver match {
+    case release(prefix, Int(number)) => s"$prefix-${number+1}-SNAPSHOT"
+    case _ => versionFormatError
+  }
+}
+
