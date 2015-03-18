@@ -47,4 +47,3 @@ pomExtra :=
 
 PublishTo.sonatype
 
-enablePlugins(LibraryPlugin)
