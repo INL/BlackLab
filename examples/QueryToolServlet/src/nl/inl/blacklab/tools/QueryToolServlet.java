@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.LogUtil;
 import nl.inl.util.PropertiesUtil;
 
 /**
@@ -39,8 +38,6 @@ public class QueryToolServlet extends HttpServlet {
 	private Properties prop;
 
 	public QueryToolServlet() {
-
-		LogUtil.initLog4jIfNotAlready();
 
 		// We'd like our forward indices nice and warm, please.
 		Searcher.setAutoWarmForwardIndices(true);

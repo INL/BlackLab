@@ -70,7 +70,6 @@ import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.util.FileUtil;
 import nl.inl.util.IoUtil;
-import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.TimeUtil;
@@ -430,7 +429,6 @@ public class QueryTool {
 			return;
 		}
 
-		LogUtil.initLog4jIfNotAlready();
 		run(indexDir, inputFile, encoding);
 	}
 
