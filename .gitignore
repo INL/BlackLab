@@ -1,5 +1,1 @@
-/build
-/dist
-/bin
-/javadoc
-/.codepro
+/target/

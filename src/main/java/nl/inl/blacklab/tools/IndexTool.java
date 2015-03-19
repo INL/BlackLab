@@ -29,7 +29,6 @@ import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.PropertiesUtil;
 
@@ -182,9 +181,6 @@ public class IndexTool {
 			//usage();
 			//return;
 		}
-
-		// Init log4j
-		LogUtil.initLog4jIfNotAlready();
 
 		propFile = findFile("indexer.properties", indexDir, inputDir);
 		if (propFile != null && propFile.canRead())

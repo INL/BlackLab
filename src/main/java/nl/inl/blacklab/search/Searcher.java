@@ -57,7 +57,6 @@ import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.ExUtil;
-import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
@@ -420,9 +419,6 @@ public class Searcher {
 				}
 			}
 		}
-
-		// If we didn't provide log4j.properties on the classpath, initialise it using default settings.
-		LogUtil.initLog4jIfNotAlready();
 
 		logger.debug("Constructing Searcher...");
 
