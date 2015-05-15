@@ -181,46 +181,37 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 		if (clauses.size() == 1) // optimize 1-clause case
 			return BLSpansWrapper.optWrap((clauses.get(0)).getSpans(context, acceptDocs, termContexts)); // BL: wrapped in BLSpans
 
-		return new BLSpans() { // BL: was Spans
+		// Create a clauseList and compute clauseLength and clausesAllSameLength for the
+		// anonymous BLSpan class
+		boolean clausesAllSameLengthSetter = true;
+		int clauseLengthSetter = -1;
+		final ArrayList<BLSpans> clauseList = new ArrayList<BLSpans>(clauses.size());
+		for(SpanQuery spanQuery : clauses) {
+			BLSpans spans = BLSpansWrapper.optWrap(spanQuery.getSpans(context, acceptDocs,
+					termContexts));
+			if (spans.hitsAllSameLength() &&
+					(clauseLengthSetter == -1 || clauseLengthSetter == spans.hitsLength())) {
+				// This clause doesn't violate the all-same-length requirements
+				clauseLengthSetter = spans.hitsLength();
+			} else {
+				// This clause does violate the all-same-length requirements
+				clausesAllSameLengthSetter = false;
+			}
+			clauseList.add(spans);
+		}
+		final boolean clausesAllSameLength = clausesAllSameLengthSetter;
+		final int clauseLength;
+		if (clausesAllSameLength) {
+			clauseLength = clauseLengthSetter;
+		} else {
+			clauseLength = -1;
+		}
 
-			private boolean initClauseListCalled = false;
+		return new BLSpans() { // BL: was Spans
 
 			private SpanQueue queue = null;
 
-			private boolean clausesAllSameLength; // BL: are all clauses the same length?
-
-			private int clauseLength; // BL: length of the clauses if all same length
-
-			private List<BLSpans> clauseList = new ArrayList<BLSpans>(); // BL: we need to iterate over clauses in setHitQueryContext()
-
-			private void initClauseList() throws IOException {
-				initClauseListCalled = true;
-
-				// BL: keep track of hit length guarantee while adding Spans
-				clauseLength = -1;
-				clausesAllSameLength = true;
-
-				Iterator<SpanQuery> i = clauses.iterator();
-				while (i.hasNext()) {
-					BLSpans spans = BLSpansWrapper.optWrap(i.next().getSpans(context, acceptDocs,
-							termContexts)); // BL: was regular Spans
-
-					// BL: see if hit length guarantees hold up
-					if (spans.hitsAllSameLength() && (clauseLength == -1 || clauseLength == spans.hitsLength())) {
-						// This clause doesn't violate the all-same-length requirements
-						clauseLength = spans.hitsLength();
-					} else {
-						// This clause does violate the all-same-length requirements
-						clausesAllSameLength = false;
-					}
-					clauseList.add(spans); // for setHitQueryContext(), see below
-				}
-			}
-
 			private boolean initSpanQueue(int target) throws IOException {
-				if (!initClauseListCalled)
-					initClauseList();
-
 				queue = new SpanQueue(clauseList.size());
 				for (BLSpans spans: clauseList) {
 
@@ -358,13 +349,6 @@ public class BLSpanOrQuery extends SpanQuery implements Cloneable {
 
 			@Override
 			public void passHitQueryContextToClauses(HitQueryContext context) {
-				if (!initClauseListCalled) {
-					try {
-						initClauseList();
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-				}
 				for (BLSpans spans: clauseList) {
 					spans.setHitQueryContext(context);
 				}
