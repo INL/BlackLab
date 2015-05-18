@@ -675,14 +675,13 @@ public class Hits implements Iterable<Hit> {
 					maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
 					if (!maxHitsRetrieved) {
 						Hit hit = currentSourceSpans.getHit();
-						//System.out.println("doc: " + h.doc + " + " + currentDocBase + " = " + (h.doc + currentDocBase));
-						hit.doc += currentDocBase;
+						Hit offsetHit = new Hit(hit.doc + currentDocBase, hit.start, hit.end);
 						if (capturedGroups != null) {
 							Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
 							hitQueryContext.getCapturedGroups(groups);
-							capturedGroups.put(hit, groups);
+							capturedGroups.put(offsetHit, groups);
 						}
-						hits.add(hit);
+						hits.add(offsetHit);
 					}
 				}
 			} catch (IOException e) {
