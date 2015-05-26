@@ -16,6 +16,7 @@
 package nl.inl.blacklab.perdocument;
 
 import nl.inl.blacklab.search.grouping.HitPropValueDecade;
+import nl.inl.blacklab.search.grouping.HitPropertyDocumentDecade;
 import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
 
 /**
@@ -23,6 +24,7 @@ import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
  * stored field containing a year.
  */
 public class DocPropertyDecade extends DocProperty {
+
 	private String fieldName;
 
 	public DocPropertyDecade(String fieldName) {
@@ -35,10 +37,10 @@ public class DocPropertyDecade extends DocProperty {
 		int year;
 		try {
 			year = Integer.parseInt(strYear);
+			year -= year % 10;
 		} catch (NumberFormatException e) {
-			year = 0;
+			year = HitPropertyDocumentDecade.UNKNOWN_VALUE;
 		}
-		year -= year % 10;
 		return new HitPropValueDecade(year);
 	}
 
@@ -60,10 +62,20 @@ public class DocPropertyDecade extends DocProperty {
 			return strYearB.length() == 0 ? 0 : (reverse ? -1 : 1);
 		if (strYearB.length() == 0) // sort missing year at the end
 			return reverse ? 1 : -1;
-		int year1 = Integer.parseInt(strYearB);
-		year1 -= year1 % 10;
-		int year2 = Integer.parseInt(strYearB);
-		year2 -= year2 % 10;
+		int year1;
+		try {
+			year1 = Integer.parseInt(strYearB);
+			year1 -= year1 % 10;
+		} catch (NumberFormatException e) {
+			year1 = HitPropertyDocumentDecade.UNKNOWN_VALUE;
+		}
+		int year2;
+		try {
+			year2 = Integer.parseInt(strYearB);
+			year2 -= year2 % 10;
+		} catch (NumberFormatException e) {
+			year2 = HitPropertyDocumentDecade.UNKNOWN_VALUE;
+		}
 
 		return reverse ? year2 - year1 : year1 - year2;
 	}
