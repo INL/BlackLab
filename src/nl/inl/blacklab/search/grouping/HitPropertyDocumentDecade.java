@@ -28,6 +28,10 @@ import org.apache.lucene.index.IndexReader;
  * in the corresponding Lucene document containing a year.
  */
 public class HitPropertyDocumentDecade extends HitProperty {
+
+	/** The value we store when the decade is unknown */
+	public static final int UNKNOWN_VALUE = 10000000;
+
 	IndexReader reader;
 
 	String fieldName;
@@ -47,10 +51,10 @@ public class HitPropertyDocumentDecade extends HitProperty {
 			int year;
 			try {
 				year = Integer.parseInt(strYear);
+				year -= year % 10;
 			} catch (NumberFormatException e) {
-				year = 0;
+				year = UNKNOWN_VALUE;
 			}
-			year -= year % 10;
 			return new HitPropValueDecade(year);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -77,17 +81,17 @@ public class HitPropertyDocumentDecade extends HitProperty {
 			int aYear;
 			try {
 				aYear = Integer.parseInt(strYearA);
+				aYear -= aYear % 10;
 			} catch (NumberFormatException e) {
-				aYear = 0;
+				aYear = UNKNOWN_VALUE;
 			}
-			aYear -= aYear % 10;
 			int bYear;
 			try {
 				bYear = Integer.parseInt(strYearB);
+				bYear -= bYear % 10;
 			} catch (NumberFormatException e) {
-				bYear = 0;
+				bYear = UNKNOWN_VALUE;
 			}
-			bYear -= bYear % 10;
 
 			return reverse ? bYear - aYear : aYear - bYear;
 
