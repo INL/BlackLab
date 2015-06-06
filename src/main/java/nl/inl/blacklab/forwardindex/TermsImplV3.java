@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.gs.collections.impl.factory.Maps;
 import org.apache.log4j.Logger;
 
 /**
@@ -95,9 +96,8 @@ class TermsImplV3 extends Terms {
 			// (used later to get the terms in sort order)
 			this.termIndex = new TreeMap<String, Integer>(this.collator);
 		} else {
-			// Search mode: create a HashMap so insertion is O(1) instead of O(n log n).
 			// We already have the sort order, so TreeMap is not necessary here.
-			this.termIndex = new HashMap<String, Integer>();
+			this.termIndex = Maps.mutable.empty();
 		}
 		termIndexBuilt = true;
 	}
