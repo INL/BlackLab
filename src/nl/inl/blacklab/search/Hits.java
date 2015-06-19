@@ -1465,17 +1465,17 @@ public class Hits implements Iterable<Hit> {
 		if (concsType == ConcordanceType.FORWARD_INDEX) {
 			// Yes, make 'em from the forward index (faster)
 			ForwardIndex forwardIndex = null;
-			if (searcher.getConcWordFI() != null)
+			if (concWordFI != null)
 				forwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
-						searcher.getConcWordFI()));
+						concWordFI));
 
 			ForwardIndex punctForwardIndex = null;
-			if (searcher.getConcPunctFI() != null)
+			if (concPunctFI != null)
 				punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(
-						fieldName, searcher.getConcPunctFI()));
+						fieldName, concPunctFI));
 
 			Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
-			if (searcher.getConcAttrFI() == null) {
+			if (concAttrFI == null) {
 				// All other FIs are attributes
 				for (String p: searcher.getForwardIndices().keySet()) {
 					String[] components = ComplexFieldUtil.getNameComponents(p);
@@ -1487,7 +1487,7 @@ public class Hits implements Iterable<Hit> {
 				}
 			} else {
 				// Specific list of attribute FIs
-				for (String p: searcher.getConcAttrFI()) {
+				for (String p: concAttrFI) {
 					attrForwardIndices.put(p,
 							searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
 				}
