@@ -229,12 +229,14 @@ public class IndexListener {
 	 * Changes will be rolled back (called after an error).
 	 */
 	public void rollbackStart() {
+		// (subclass may override this)
 	}
 
 	/**
 	 * Changes have been rolled back (called after an error).
 	 */
 	public void rollbackEnd() {
+		// (subclass may override this)
 	}
 
 }

@@ -140,7 +140,7 @@ public class TarGzipReader {
 			InputStream untarred = ctorTar.newInstance(tarStream);
 			InputStream uncloseableInputStream = new FilterInputStream(untarred) {
 				@Override
-				public void close() throws IOException {
+				public void close() {
 					// Don't close!
 					// (when Reader is GC'ed, closes stream prematurely..?)
 				}

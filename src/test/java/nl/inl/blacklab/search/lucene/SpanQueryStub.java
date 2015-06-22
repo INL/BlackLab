@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,8 +43,7 @@ public class SpanQueryStub extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(AtomicReaderContext arg0, Bits arg1, Map<Term, TermContext> arg2)
-			throws IOException {
+	public Spans getSpans(AtomicReaderContext arg0, Bits arg1, Map<Term, TermContext> arg2) {
 		return new SpansStub(doc, start, end);
 	}
 	@Override

@@ -715,7 +715,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		 */
 		abstract public void addMetadata();
 
-		/** Close the fetcher, releasing any resources it holds */
+		/** Close the fetcher, releasing any resources it holds
+		 * @throws IOException if closing caused an error
+		 */
 		@Override
 		public void close() throws IOException {
 			// Nothing, by default

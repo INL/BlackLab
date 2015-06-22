@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search;
 
-import java.io.IOException;
-
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Filter;
@@ -21,7 +19,7 @@ public class SingleDocIdFilter extends Filter {
 	}
 
 	@Override
-	public DocIdSet getDocIdSet(AtomicReaderContext ctx, Bits bits) throws IOException {
+	public DocIdSet getDocIdSet(AtomicReaderContext ctx, Bits bits) {
 		// Check that id could be in this segment, and bits allows this doc id
 		if (luceneDocId >= ctx.docBase && (bits == null || bits.get(luceneDocId - ctx.docBase))) {
 			// ctx is a single segment, so use docBase to adjust the id

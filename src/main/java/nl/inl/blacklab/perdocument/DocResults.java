@@ -218,12 +218,12 @@ public class DocResults implements Iterable<DocResult> {
 			}
 
 			@Override
-			public void setNextReader(AtomicReaderContext reader) throws IOException {
+			public void setNextReader(AtomicReaderContext reader) {
 				this.reader = reader;
 			}
 
 			@Override
-			public void setScorer(Scorer scorer) throws IOException {
+			public void setScorer(Scorer scorer) {
 				// (ignore)
 			}
 		});

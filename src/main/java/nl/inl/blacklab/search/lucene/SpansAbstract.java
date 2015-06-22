@@ -50,14 +50,16 @@ public abstract class SpansAbstract extends Spans {
 	public abstract int end();
 
 	/**
-	 * @throws IOException
-	 *             on IO error
+	 * @throws IOException on IO error
 	 */
 	@Override
 	public Collection<byte[]> getPayload() throws IOException {
 		return null;
 	}
 
+	/**
+	 * @throws IOException on IO error 
+	 */
 	@Override
 	public boolean isPayloadAvailable() throws IOException {
 		return false;

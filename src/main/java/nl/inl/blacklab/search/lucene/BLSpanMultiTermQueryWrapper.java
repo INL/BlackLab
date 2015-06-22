@@ -104,7 +104,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQ
   }
 
   @Override
-  public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
+  public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) {
     throw new UnsupportedOperationException("Query should have been rewritten");
   }
 

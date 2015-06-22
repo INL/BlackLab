@@ -173,9 +173,9 @@ public class RunTermQuery {
 		searcher.search(query, new Collector() {
 			private int docBase;
 
-			// ignore scorer
 			@Override
 			public void setScorer(Scorer scorer) {
+				// ignore scorer
 			}
 
 			// accept docs out of order (for a BitSet it doesn't matter)

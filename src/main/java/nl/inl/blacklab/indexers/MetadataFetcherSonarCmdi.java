@@ -3,7 +3,6 @@ package nl.inl.blacklab.indexers;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -27,7 +26,6 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
@@ -87,7 +85,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		// TODO: make sure zip file is properly closed when done
 		//   (change structure so metadata fetcher isn't instantiated for each document separately)
 		//metadataZipFile.close();
@@ -227,15 +225,14 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		}
 
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes)
-				throws SAXException {
+		public void startElement(String uri, String localName, String qName, Attributes attributes) {
 			stackPush(localName);
 			hasChild = false; // we haven't seen a child for this element yet
 			textContent.setLength(0); // clear buffer
 		}
 
 		@Override
-		public void endElement(String uri, String localName, String qName) throws SAXException {
+		public void endElement(String uri, String localName, String qName) {
 
 			if (!hasChild) {
 				// See if we captured any text content
@@ -274,7 +271,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		}
 
 		@Override
-		public void characters(char[] ch, int start, int length) throws SAXException {
+		public void characters(char[] ch, int start, int length) {
 			if (!hasChild)
 				textContent.append(ch, start, length);
 		}
