@@ -1,5 +1,5 @@
-/build
-/dist
-/bin
-/javadoc
-/.codepro
+target
+*.swp
+.settings
+.project
+.classpath
