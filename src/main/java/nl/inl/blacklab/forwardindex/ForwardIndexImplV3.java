@@ -99,10 +99,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private long writeBufOffset;
 
 	/** The table of contents (where documents start in the tokens file and how long they are) */
-	private List<TocEntry> toc;
+	private ArrayList<TocEntry> toc;
 
 	/** Deleted TOC entries. Always sorted by size. */
-	private List<TocEntry> deletedTocEntries;
+	private ArrayList<TocEntry> deletedTocEntries;
 
 	/** The table of contents (TOC) file, docs.dat */
 	private File tocFile;
@@ -414,6 +414,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
+		toc.trimToSize();
+		deletedTocEntries.trimToSize();
 	}
 
 	private void sortDeletedTocEntries() {

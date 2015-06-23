@@ -29,11 +29,12 @@ import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.gs.collections.api.map.MutableMap;
+import com.gs.collections.impl.factory.Maps;
 import nl.inl.util.ExUtil;
 
 /**
@@ -311,7 +312,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 				f.delete();
 			}
 		}
-		toc = new HashMap<Integer, TocEntry>();
+		toc = Maps.mutable.empty();
 		if (tocFile.exists())
 			readToc();
 		tocModified = false;
