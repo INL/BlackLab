@@ -1,6 +1,14 @@
+# Maven build output
 target
-*.swp
+
+# Eclipse project settings
 .settings
 .project
 .classpath
-blacklab.iml
+
+# IntelliJ IDEA project settings (old and new)
+*.iml
+.idea
+
+# vi temporary files
+*.swp
