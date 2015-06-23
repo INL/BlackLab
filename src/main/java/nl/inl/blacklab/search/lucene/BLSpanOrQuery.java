@@ -43,7 +43,7 @@ import org.apache.lucene.util.ToStringUtils;
  * BL-specific version (search for "// BL") that produces a BLSpans.
  */
 @SuppressWarnings({"javadoc"}) // BL: suppress some innocent warnings
-public class BLSpanOrQuery extends SpanQuery implements Cloneable {
+public class BLSpanOrQuery extends SpanQuery {
 	List<SpanQuery> clauses; // BL: changed from private because accessed by inner class
 	private String field;
 

@@ -24,12 +24,12 @@ import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.gs.collections.impl.factory.Maps;
 import org.apache.log4j.Logger;
+
+import com.gs.collections.impl.factory.Maps;
 
 /**
  * Keeps a first-come-first-serve list of unique terms.
