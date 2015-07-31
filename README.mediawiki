@@ -3,7 +3,7 @@
 BlackLab is a corpus retrieval engine built on top of [http://lucene.apache.org/ Apache Lucene]. It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast and feature-rich search
 interface on our historical and contemporary text corpora.
 
-We're also working on BlackLab Server, a web service interface to BlackLab, so you can access it from any programming language. See the ALPHA version here: https://github.com/INL/BlackLab-server
+We're also working on BlackLab Server, a web service interface to BlackLab, so you can access it from any programming language. See the BETA version here: https://github.com/INL/BlackLab-server
 
 BlackLab is licensed under the [http://www.apache.org/licenses/LICENSE-2.0 Apache License 2.0].
 
@@ -14,7 +14,8 @@ More information:
 * [https://github.com/INL/BlackLab/wiki/Frequently-Asked-Questions Frequently Asked Questions]
 * [https://github.com/INL/BlackLab/wiki/Building-and-testing-BlackLab Build and test it yourself] (it's easy, promise!)
 * [https://github.com/INL/BlackLab/wiki/Example-application The example application explained in detail]
-* [http://inl.github.io/BlackLab/javadoc/index.html Browse the Javadoc] (or [https://github.com/INL/BlackLab/wiki/Building-and-testing-BlackLab build the most recent one from source])
+* [http://inl.github.io/BlackLab/apidocs/index.html Browse the Javadoc]
+* [http://inl.github.io/BlackLab/ Project information site, code analysis reports]
 * [https://github.com/INL/BlackLab/wiki/BlackLab-blog BlackLab blog]
 * Follow [https://twitter.com/BlackLabINL @BlackLabINL] on Twitter!
 * For technical questions, contact Jan Niestadt (jan.niestadt@inl.nl)
