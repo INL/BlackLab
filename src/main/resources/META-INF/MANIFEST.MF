@@ -1,1 +1,0 @@
-Build-Time: ${build.time}
