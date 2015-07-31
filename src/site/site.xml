@@ -1,0 +1,46 @@
+<project>
+
+	<!-- <bannerLeft>
+		<name>Project Name</name>
+		<src>http://maven.apache.org/images/apache-maven-project-2.png</src>
+		<href>http://maven.apache.org/</href>
+	</bannerLeft> -->
+
+	<bannerRight>
+		<src>images/logo-inl.png</src>
+	</bannerRight>
+
+	<skin>
+		<groupId>org.apache.maven.skins</groupId>
+		<artifactId>maven-fluido-skin</artifactId>
+		<version>1.4</version>
+	</skin>
+
+	<body>
+
+		<menu ref="reports" />
+
+		<!-- <footer>(C) Copyright 2010-2015, Instituut voor Nederlandse Lexicologie</footer> -->
+
+	</body>
+	
+	<custom>
+		<fluidoSkin>
+			<sourceLineNumbersEnabled>true</sourceLineNumbersEnabled>
+			<!-- <googleSearch>
+				<sitesearch/>
+			</googleSearch> -->
+		</fluidoSkin>
+		<gitHub>
+			<projectId>INL/BlackLab</projectId>
+			<ribbonOrientation>right</ribbonOrientation>
+			<ribbonColor>black</ribbonColor>
+		</gitHub>
+		<twitter>
+			<user>BlackLabINL</user>
+			<showUser>true</showUser>
+			<showFollowers>true</showFollowers>
+		</twitter>
+	</custom>
+
+</project>
