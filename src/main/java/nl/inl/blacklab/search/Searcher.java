@@ -2020,8 +2020,15 @@ public class Searcher {
 			}
 			JarURLConnection jarConn = (JarURLConnection) res.openConnection();
 			Manifest mf = jarConn.getManifest();
-			Attributes atts = mf.getMainAttributes();
-			String value = atts.getValue("Build-Date");
+			String value = null;
+			if (mf != null) {
+				Attributes atts = mf.getMainAttributes();
+				if (atts != null) {
+					value = atts.getValue("Build-Time");
+					if (value == null)
+						value = atts.getValue("Build-Date"); // Old name for this info
+				}
+			}
 			return value == null ? "UNKNOWN" : value;
 		} catch (IOException e) {
 			throw new RuntimeException("Could not read build date from manifest", e);
