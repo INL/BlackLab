@@ -1,0 +1,6 @@
+<FindBugsFilter>
+	<!-- Exclude generated code in queryParsers packages -->  
+	<Match>
+		<Package name="~nl\.inl\.blacklab\.queryParser.*" />
+	</Match>
+</FindBugsFilter>

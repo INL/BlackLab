@@ -231,6 +231,13 @@
 				</configuration>
 			</plugin>
 
+			<!-- Project info -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>2.8</version>
+			</plugin>
+	
 		</plugins>
 
 	</build>
@@ -350,13 +357,16 @@
 				<artifactId>maven-jxr-plugin</artifactId>
 				<version>2.5</version>
 			</plugin>
-
+			
 			<!-- Report on (possible) bugs -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>findbugs-maven-plugin</artifactId>
 				<version>3.0.1</version>
-			</plugin>
+				<configuration>
+          			<excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
+        		</configuration>
+        	</plugin>
 
 			<!-- Report on possible bugs/style problems -->
 			<plugin>
