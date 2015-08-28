@@ -46,12 +46,8 @@
 			<item name="Change Log" href="changelog.html" />
 			<item name="Road Map" href="roadmap.html" />
 		</menu>
-
-		<menu ref="reports" />
 		
 		<menu ref="reports" />
-
-		<!-- <footer>(C) Copyright 2010-2015, Instituut voor Nederlandse Lexicologie</footer> -->
 
 	</body>
 	

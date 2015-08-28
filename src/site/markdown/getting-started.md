@@ -2,11 +2,16 @@
 
 If you just want to see an example of what you can do with BlackLab, see [here](blacklab-in-action.html).
 
-To start searching your own data, we'll need to:
+To start searching your own data, you'll need to:
 
-- Choose your flavour of BlackLab (the web service BlackLab Server or the Java library BlackLab Core) and download it
-- Convert your data to a supported format (or use our test data for now) and index it
-- Write a simple search application
+- [Choose between BlackLab Server and Core](#server-or-core)<br/>
+- [Obtain BlackLab](#getting-blacklab)<br/>
+- [Prepare your data](#preparing-your-data)<br/>
+- [Write a simple application](#anatomy-of-a-blacklab-application)<br/>
+
+Let's go over these one by one.
+
+<a id="server-or-core"></a>
 
 ## Server or Core?
 
@@ -16,25 +21,25 @@ For now, this guide will focus on BlackLab Core and Java, but we'll expand it to
 
 First you need to get the BlackLab library JAR, either by downloading a prebuilt binary, or by building it yourself (it's easy, promise!).
 
-## Downloading a prebuilt binary
+<a id="getting-blacklab"></a>
+
+## Getting BlackLab
+
+### Downloading a prebuilt binary
 
 A prebuilt binary JAR for BlackLab is available from the [Downloads](downloads.html) page. Note that this may not include the most recent improvements.
 
 **NOTE**: we are working towards releasing BlackLab to Maven Central, so you can simply add it to your project configuration file and have it be automatically downloaded when you build your project.
 
-## Building from source
+### Building from source
 
 If you want the very latest version of BlackLab, you should build it from source code.
-
-### Getting the source code
 
 First, you need to download the source code from GitHub. You can download it from there in a .zip file, but a better way to get it is by cloning it using Git. [Install a Git client](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) (we'll give command line examples here, but it should translate easily to GUI clients like TortoiseGit), change to a directory where you keep your projects, and clone BlackLab:
 
 	git clone git://github.com/INL/BlackLab.git
 
 Git will download the project and place it in a subdirectory "BlackLab".
-
-### Building the library
 
 BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build tool. [Install Maven](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html), change into the BlackLab directory, and build the library:
 
@@ -43,6 +48,8 @@ BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build 
 ("install" refers to the fact that the library is "installed" to your private Maven repository after it is built)
 
 After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab library should be under target/BlackLab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.2-SNAPSHOT")
+
+<a id="preparing-your-data"></a>
 
 ## Preparing your data
 
@@ -105,6 +112,8 @@ See also:
 - [Using the query tool](query-tool.html)
 - [Corpus Query Language](corpus-query-language.html)
 
+<a id="anatomy-of-a-blacklab-application"></a>
+
 ## Anatomy of a BlackLab application
 
 Finally, let's look at an example Java application.
@@ -159,3 +168,4 @@ The above in code:
 See also:
 
 - [API reference](apidocs/index.html)
+- [The included example application](example-application.html)

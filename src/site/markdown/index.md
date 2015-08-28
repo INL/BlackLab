@@ -1,6 +1,6 @@
 # Introduction
 
-## What is it?
+## What is BlackLab?
 
 BlackLab is an open source corpus search engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text.
 
