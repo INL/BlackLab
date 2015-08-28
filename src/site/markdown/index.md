@@ -1,30 +1,33 @@
-# Blacklab
+# Introduction
 
-### What is BlackLab?
+## What is it?
 
-BlackLab is a corpus retrieval engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast and feature-rich search interface on our historical and contemporary text corpora.
+BlackLab is an open source corpus search engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text.
 
-We're also working on BlackLab Server, a web service interface to BlackLab, so you can access it from any programming language. See the beta version here: https://github.com/INL/BlackLab-server
+* [More information](corpus-search-engine.html)
 
-BlackLab is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+## Who is it for?
 
-- [View the Project on GitHub](https://github.com/INL/BlackLab)
-- [Download ZIP File](https://github.com/INL/BlackLab/zipball/master)
-- [Download TAR Ball](https://github.com/INL/BlackLab/tarball/master)
+BlackLab was designed primarily for linguists who want to search for (potentially complex) patterns in large bodies of text annotated with linguistic properties (headword, part-of-speech, paragraphs, sentences, named entities, etc.). Apart from that, BlackLab is also being used for other purposes, including historical research and artifical intelligence.
 
-Releases:
+* [List of features](features.html)
+* [See BlackLab in action](blacklab-in-action.html)
+* [Who is using BlackLab?](who-uses-blacklab.html)
+* [Frequently Asked Questions](faq.html)
 
-- [v1.1, June 2015](https://github.com/INL/BlackLab/releases/tag/v1.1.0) (Lucene 4.2)
-- [v1.0](https://github.com/INL/BlackLab/releases/tag/v1.0) (Lucene 3.6)
+## How do I use it?
 
-More information:
+If you want to use BlackLab in your own projects, it's available both as a web service (BlackLab Server) and a Java library (BlackLab Core). It's easy to use BlackLab from your favourite programming language.
 
-- [List of features](https://github.com/INL/BlackLab/wiki/Features)
-- [Try an online demo](https://github.com/INL/BlackLab/wiki/Try-BlackLab-online)
-- [Frequently Asked Questions](https://github.com/INL/BlackLab/wiki/Frequently-Asked-Questions)
-- [Build and test it yourself](https://github.com/INL/BlackLab/wiki/Building-and-testing-BlackLab) (it's easy, promise!)
-- [The example application explained in detail](https://github.com/INL/BlackLab/wiki/Example-application)
-- [Browse the Javadoc](apidocs/index.html)
-- [BlackLab blog](https://github.com/INL/BlackLab/wiki/BlackLab-blog)
-- Follow [@BlackLabINL](https://twitter.com/BlackLabINL) on Twitter!
-- For technical questions, contact [Jan Niestadt](mailto:jan.niestadt@inl.nl)
+* [Getting started](getting-started.html)
+* Projects on GitHub: [BlackLab Server](https://github.com/INL/BlackLab-server) and [BlackLab Core](https://github.com/INL/BlackLab) 
+* [API reference](apidocs/index.html)
+
+## Who made BlackLab?
+
+BlackLab was developed at the [Institute of Dutch Lexicology (INL)](http://www.inl.nl/) to provide a fast and feature-rich search interface on our historical and contemporary text corpora. It was released as open source (Apache License 2.0) in 2012 and has since gathered a number of users and contributors. It is still in active development at INL.
+
+* [BlackLab blog](blog.html)
+* [Release history](changelog.html)
+* Follow [@BlackLabINL](https://twitter.com/BlackLabINL) on Twitter (low activity)
+* For technical questions, contact [Jan Niestadt](mailto:jan.niestadt@inl.nl)

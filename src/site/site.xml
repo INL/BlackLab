@@ -1,13 +1,17 @@
 <project>
 
-	<!-- <bannerLeft>
-		<name>Project Name</name>
-		<src>http://maven.apache.org/images/apache-maven-project-2.png</src>
-		<href>http://maven.apache.org/</href>
-	</bannerLeft> -->
+	<publishDate position="right" />
+	<version position="right" />
+	
+	<bannerLeft>
+		<name>BlackLab</name>
+		<src>images/logo-blacklab.png</src>
+	</bannerLeft>
 
 	<bannerRight>
+		<name>INL</name>
 		<src>images/logo-inl.png</src>
+		<href>http://www.inl.nl/</href>
 	</bannerRight>
 
 	<skin>
@@ -17,7 +21,34 @@
 	</skin>
 
 	<body>
+	
+		<head>
+			<link href='http://fonts.googleapis.com/css?family=Nunito:300' rel='stylesheet' type='text/css' />
+		</head>
+	
+		<breadcrumbs>
+			<item name="INL" href="http://www.inl.nl/"/>
+			<item name="BlackLab" href="index.html"/>
+	    </breadcrumbs>
+	
+		<menu name="BlackLab">
+			<item name="Introduction" href="index.html"/>
+			<item name="Learn" href="learn.html">
+				<item name="Getting Started" href="getting-started.html" />
+				<item name="Corpus Query Language" href="corpus-query-language.html" />
+				<item name="The Example Application" href="example-application.html" />
+				<item name="Add An Input Format" href="add-input-format.html" />
+				<item name="Improve Search Speed" href="improve-search-speed.html" />
+				<item name="API reference" href="apidocs/index.html" />
+			</item>
+			<item name="Downloads" href="downloads.html"/>
+			<item name="FAQ" href="faq.html"/>
+			<item name="Change Log" href="changelog.html" />
+			<item name="Road Map" href="roadmap.html" />
+		</menu>
 
+		<menu ref="reports" />
+		
 		<menu ref="reports" />
 
 		<!-- <footer>(C) Copyright 2010-2015, Instituut voor Nederlandse Lexicologie</footer> -->
@@ -26,7 +57,7 @@
 	
 	<custom>
 		<fluidoSkin>
-			<sourceLineNumbersEnabled>true</sourceLineNumbersEnabled>
+			<sourceLineNumbersEnabled>false</sourceLineNumbersEnabled>
 			<!-- <googleSearch>
 				<sitesearch/>
 			</googleSearch> -->
