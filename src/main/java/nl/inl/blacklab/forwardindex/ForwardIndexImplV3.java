@@ -152,7 +152,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		this.reader = reader;
 		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
 		try {
-			AtomicReader srw = new SlowCompositeReaderWrapper(reader);
+			AtomicReader srw = SlowCompositeReaderWrapper.wrap(reader);
 			cachedFiids = FieldCache.DEFAULT.getInts(srw, fiidFieldName, true);
 
 			// Check if the cache was retrieved OK

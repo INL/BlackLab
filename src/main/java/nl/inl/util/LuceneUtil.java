@@ -28,7 +28,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.highlight.QueryTermExtractor;
 import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.Version;
 
 public class LuceneUtil {
 
@@ -109,7 +108,7 @@ public class LuceneUtil {
 	 */
 	public static Query parseLuceneQuery(String luceneQuery, Analyzer analyzer, String defaultField)
 			throws ParseException {
-		QueryParser qp = new QueryParser(Version.LUCENE_42, defaultField, analyzer);
+		QueryParser qp = new QueryParser(defaultField, analyzer);
 		return qp.parse(luceneQuery);
 	}
 

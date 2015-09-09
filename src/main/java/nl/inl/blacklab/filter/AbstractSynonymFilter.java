@@ -26,7 +26,6 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 import org.apache.lucene.util.AttributeSource;
-import org.apache.lucene.util.Version;
 
 /**
  * Abstract base class for implementing synonym filters.
@@ -78,8 +77,7 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		TokenStream ts = new WhitespaceTokenizer(Version.LUCENE_42, new StringReader(
-				"Dit is een test"));
+		TokenStream ts = new WhitespaceTokenizer(new StringReader("Dit is een test"));
 		try {
 			ts = new AbstractSynonymFilter(ts) {
 				@Override

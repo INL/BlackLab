@@ -3,8 +3,7 @@ package nl.inl.blacklab.analysis;
 import java.io.Reader;
 
 import org.apache.lucene.analysis.util.CharTokenizer;
-import org.apache.lucene.util.AttributeSource;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.util.AttributeFactory;
 
 /**
  * A simple tokenizer for Dutch texts. Basically the whitespace tokenizer
@@ -19,15 +18,15 @@ import org.apache.lucene.util.Version;
 public class BLDutchTokenizer extends CharTokenizer {
 
 	public BLDutchTokenizer(AttributeFactory factory, Reader input) {
-		super(Version.LUCENE_42, factory, input);
+		super(factory, input);
 	}
 
-	public BLDutchTokenizer(AttributeSource source, Reader input) {
-		super(Version.LUCENE_42, source, input);
-	}
+//	public BLDutchTokenizer(AttributeSource source, Reader input) {
+//		super(source, input);
+//	}
 
 	public BLDutchTokenizer(Reader input) {
-		super(Version.LUCENE_42, input);
+		super(input);
 	}
 
 	@Override

@@ -334,7 +334,7 @@ public class QueryTool {
 		@Override
 		public TextPattern parse(String query) throws ParseException {
 			try {
-				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_42, CONTENTS_FIELD, searcher.getAnalyzer());
+				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_4_10_4, CONTENTS_FIELD, searcher.getAnalyzer());
 				parser.setAllowLeadingWildcard(true);
 				return parser.parse(query);
 			} catch (nl.inl.blacklab.queryParser.lucene.ParseException e) {

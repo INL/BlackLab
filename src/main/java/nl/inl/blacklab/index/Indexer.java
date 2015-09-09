@@ -396,7 +396,7 @@ public class Indexer {
 	 * @throws IOException
 	 */
 	public void add(Document document) throws CorruptIndexException, IOException {
-		searcher.getWriter().addDocument(document, searcher.getAnalyzer());
+		searcher.getWriter().addDocument(document);
 		getListener().luceneDocumentAdded();
 	}
 

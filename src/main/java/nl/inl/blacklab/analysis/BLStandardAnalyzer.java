@@ -21,6 +21,7 @@ package nl.inl.blacklab.analysis;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,7 +35,6 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.util.Version;
 
 /**
  * A simple analyzer based on StandardTokenizer that isn't limited to Latin.
@@ -45,47 +45,27 @@ public class BLStandardAnalyzer extends Analyzer {
 
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		try {
-			Tokenizer source = new StandardTokenizerFactory().create(reader);
-			source.reset();
-			TokenStream filter = source;
-			boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
-			if (!caseSensitive)
-			{
-				filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
-				filter.reset();
-			}
-			boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
-			if (!diacSensitive)
-			{
-				filter = new RemoveAllAccentsFilter(filter); // remove accents
-				filter.reset();
-			}
-			if (!(caseSensitive && diacSensitive))
-			{
-				// Is this necessary and does it do what we want?
-				// e.g. do we want "zon" to ever match "zo'n"? Or are there examples
-				//      where this is useful/required?
-				filter = new RemovePunctuationFilter(filter); // remove punctuation
-				filter.reset();
-			}
-			return new TokenStreamComponents(source, filter);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/*@Override
-	public TokenStream tokenStream(String fieldName, Reader reader) {
-		TokenStream ts = new StandardTokenizer(Version.LUCENE_42, reader);
-		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+		Tokenizer source = new StandardTokenizerFactory(Collections.<String,String>emptyMap()).create(reader);
+		TokenStream filter = source;
+		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+		if (!caseSensitive)
 		{
-			ts = new LowerCaseFilter(Version.LUCENE_42, ts); // lowercase all
-			ts = new RemoveAllAccentsFilter(ts); // remove accents
-			ts = new RemovePunctuationFilter(ts); // remove punctuation
+			filter = new LowerCaseFilter(filter);// lowercase all
 		}
-		return ts;
-	}*/
+		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+		if (!diacSensitive)
+		{
+			filter = new RemoveAllAccentsFilter(filter); // remove accents
+		}
+		if (!(caseSensitive && diacSensitive))
+		{
+			// Is this necessary and does it do what we want?
+			// e.g. do we want "zon" to ever match "zo'n"? Or are there examples
+			//      where this is useful/required?
+			filter = new RemovePunctuationFilter(filter); // remove punctuation
+		}
+		return new TokenStreamComponents(source, filter);
+	}
 
 	public static void main(String[] args) throws IOException {
 		String TEST_STR = "Hé jij И!  раскази и повѣсти. Ст]' Дѣдо  	Нисторъ. Ива";

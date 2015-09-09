@@ -10,6 +10,7 @@ import java.util.TreeSet;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsAndPositionsEnum;
@@ -111,7 +112,7 @@ public class RunTermQuery {
 				"  Has positions:       " + terms.hasPositions() + "\n");
 
 			TermsEnum termsEnum = terms.iterator(null);
-			if (!termsEnum.seekExact(term.bytes(), true)) {
+			if (!termsEnum.seekExact(term.bytes())) {
 				System.out.println("Term " + word + " not found.");
 				return;
 			}
@@ -210,7 +211,7 @@ public class RunTermQuery {
 		TreeSet<Term> terms = new TreeSet<Term>();
 		spanQuery.extractTerms(terms);
 		for (Term termForContext: terms) {
-			termContexts.put(termForContext, TermContext.build(reader.getContext(), termForContext, true));
+			termContexts.put(termForContext, TermContext.build(reader.getContext(), termForContext));
 		}
 
 		System.out.println("SPANQUERY");
@@ -230,8 +231,7 @@ public class RunTermQuery {
 		System.out.println("");
 
 		System.out.println("USING SLOWCOMPOSITEREADERWRAPPER:");
-		@SuppressWarnings("resource")
-		SlowCompositeReaderWrapper scrw = new SlowCompositeReaderWrapper(reader);
+		AtomicReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 		Spans spans = spanQuery.getSpans(scrw.getContext(), scrw.getLiveDocs(), termContexts);
 		hitsFound = false;
 		while(spans.next()) {

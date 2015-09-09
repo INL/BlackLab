@@ -18,7 +18,6 @@
  */
 package nl.inl.blacklab.analysis;
 
-import java.io.IOException;
 import java.io.Reader;
 
 import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
@@ -28,7 +27,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
-import org.apache.lucene.util.Version;
 
 /**
  * A simple analyzer that isn't limited to Latin. Designed for
@@ -42,38 +40,19 @@ public final class BLDutchAnalyzer extends Analyzer {
 
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		try {
-			Tokenizer source = new BLDutchTokenizer(reader);
-			source.reset();
-			TokenStream filter = new BLDutchTokenFilter(source);
-			filter.reset();
-			boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
-			if (!caseSensitive)
-			{
-				filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
-				filter.reset();
-			}
-			boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
-			if (!diacSensitive)
-			{
-				filter = new RemoveAllAccentsFilter(filter); // remove accents
-				filter.reset();
-			}
-			return new TokenStreamComponents(source, filter);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/*@Override
-	public TokenStream tokenStream(String fieldName, Reader reader) {
-		TokenStream ts = new BLDutchTokenizer(reader);
-		ts = new BLDutchTokenFilter(ts);
-		if (!ComplexFieldUtil.isAlternative(fieldName, "s")) // not case- and accent-sensitive?
+		Tokenizer source = new BLDutchTokenizer(reader);
+		TokenStream filter = new BLDutchTokenFilter(source);
+		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+		if (!caseSensitive)
 		{
-			ts = new LowerCaseFilter(Version.LUCENE_42, ts); // lowercase all
-			ts = new RemoveAllAccentsFilter(ts); // remove accents
+			filter = new LowerCaseFilter(filter);// lowercase all
 		}
-		return ts;
-	}*/
+		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+		if (!diacSensitive)
+		{
+			filter = new RemoveAllAccentsFilter(filter); // remove accents
+		}
+		return new TokenStreamComponents(source, filter);
+	}
+	
 }

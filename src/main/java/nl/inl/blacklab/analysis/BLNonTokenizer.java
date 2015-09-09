@@ -3,8 +3,7 @@ package nl.inl.blacklab.analysis;
 import java.io.Reader;
 
 import org.apache.lucene.analysis.util.CharTokenizer;
-import org.apache.lucene.util.AttributeSource;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.util.AttributeFactory;
 
 /**
  * A tokenizer that doesn't tokenize (returns the whole
@@ -13,15 +12,15 @@ import org.apache.lucene.util.Version;
 public class BLNonTokenizer extends CharTokenizer {
 
 	public BLNonTokenizer(AttributeFactory factory, Reader input) {
-		super(Version.LUCENE_42, factory, input);
+		super(factory, input);
 	}
 
-	public BLNonTokenizer(AttributeSource source, Reader input) {
-		super(Version.LUCENE_42, source, input);
-	}
+//	public BLNonTokenizer(AttributeSource source, Reader input) {
+//		super(source, input);
+//	}
 
 	public BLNonTokenizer(Reader input) {
-		super(Version.LUCENE_42, input);
+		super(input);
 	}
 
 	@Override

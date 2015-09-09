@@ -59,6 +59,11 @@ public class SingleDocIdSet extends DocIdSet {
 					return NO_MORE_DOCS;
 				return id;
 			}
+
+			@Override
+			public long cost() {
+				return 100; // (we don't use this)
+			}
 		};
 	}
 }

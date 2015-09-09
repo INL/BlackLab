@@ -18,7 +18,6 @@
  */
 package nl.inl.blacklab.analysis;
 
-import java.io.IOException;
 import java.io.Reader;
 
 import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
@@ -29,7 +28,6 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
-import org.apache.lucene.util.Version;
 
 /**
  * Simple whitespace analyzer.
@@ -40,25 +38,18 @@ public final class BLWhitespaceAnalyzer extends Analyzer {
 
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		try {
-			Tokenizer source = new WhitespaceTokenizer(Version.LUCENE_42, reader);
-			source.reset();
-			TokenStream filter = source;
-			boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
-			if (!caseSensitive)
-			{
-				filter = new LowerCaseFilter(Version.LUCENE_42, filter);// lowercase all
-				filter.reset();
-			}
-			boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
-			if (!diacSensitive)
-			{
-				filter = new RemoveAllAccentsFilter(filter); // remove accents
-				filter.reset();
-			}
-			return new TokenStreamComponents(source, filter);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		Tokenizer source = new WhitespaceTokenizer(reader);
+		TokenStream filter = source;
+		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+		if (!caseSensitive)
+		{
+			filter = new LowerCaseFilter(filter);// lowercase all
 		}
+		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+		if (!diacSensitive)
+		{
+			filter = new RemoveAllAccentsFilter(filter); // remove accents
+		}
+		return new TokenStreamComponents(source, filter);
 	}
 }

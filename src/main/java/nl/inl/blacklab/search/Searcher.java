@@ -427,7 +427,7 @@ public class Searcher {
 		logger.debug("Constructing Searcher...");
 
 		if (indexMode) {
-			indexWriter = openIndexWriter(indexDir, createNewIndex);
+			indexWriter = openIndexWriter(indexDir, createNewIndex, null);
 			reader = DirectoryReader.open(indexWriter, false);
 		} else {
 			// Open Lucene index
@@ -439,7 +439,21 @@ public class Searcher {
 		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
 		isEmptyIndex = indexStructure.isNewIndex();
 
+		// TODO: we need to create the analyzer before opening the index, because 
+		//   we can't change the analyzer attached to the IndexWriter (and passing a different
+		//   analyzer in addDocument() is going away in Lucene 5.x).
+		//   For now, if we're in index mode, we re-open the index with the analyzer we determined.
 		createAnalyzers();
+		
+		if (indexMode) {
+			// Re-open the IndexWriter with the analyzer we've created above (see comment above)
+			reader.close();
+			reader = null;
+			indexWriter.close();
+			indexWriter = null;
+			indexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
+			reader = DirectoryReader.open(indexWriter, false);
+		}
 
 		// Detect and open the ContentStore for the contents field
 		if (!createNewIndex) {
@@ -808,9 +822,8 @@ public class Searcher {
 	public Scorer findDocScores(Query q) {
 		try {
 			Weight w = indexSearcher.createNormalizedWeight(q);
-			@SuppressWarnings("resource") // Don't close SCRW because we don't want to close our reader
-			AtomicReader scrw = new SlowCompositeReaderWrapper(reader);
-			Scorer sc = w.scorer(scrw.getContext(), true, false, MultiFields.getLiveDocs(reader));
+			AtomicReader scrw = SlowCompositeReaderWrapper.wrap(reader);
+			Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
 			return sc;
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -1787,13 +1800,14 @@ public class Searcher {
 		return indexLocation.toString();
 	}
 
-	public IndexWriter openIndexWriter(File indexDir, boolean create) throws IOException,
+	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer analyzer) throws IOException,
 			CorruptIndexException, LockObtainFailedException {
 		if (!indexDir.exists() && create) {
 			indexDir.mkdir();
 		}
 		Directory indexLuceneDir = FSDirectory.open(indexDir);
-		BLDutchAnalyzer defaultAnalyzer = new BLDutchAnalyzer(); // NOTE: not actually used, we override this
+		@SuppressWarnings("resource")
+		Analyzer defaultAnalyzer = analyzer == null ? new BLDutchAnalyzer() : analyzer;
 		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
@@ -1846,9 +1860,9 @@ public class Searcher {
 				// Execute the query, iterate over the docs and delete from FI and CS.
 				IndexSearcher s = new IndexSearcher(reader);
 				Weight w = s.createNormalizedWeight(q);
-				AtomicReader scrw = new SlowCompositeReaderWrapper(reader);
+				AtomicReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 				try {
-					Scorer sc = w.scorer(scrw.getContext(), true, false, MultiFields.getLiveDocs(reader));
+					Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
 					if (sc == null)
 						return; // no matching documents
 
@@ -1961,7 +1975,7 @@ public class Searcher {
 					throw new RuntimeException("arc == null");
 				if (arc.reader() == null)
 					throw new RuntimeException("arc.reader() == null");
-				Scorer scorer = weight.scorer(arc, true, false, arc.reader().getLiveDocs());
+				Scorer scorer = weight.scorer(arc, arc.reader().getLiveDocs());
 				if (scorer != null) {
 					while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 						LuceneUtil.getFrequenciesFromTermVector(reader, scorer.docID() + arc.docBase, luceneField, freq);
@@ -1996,7 +2010,7 @@ public class Searcher {
 	 */
 	public List<String> getFieldTerms(String fieldName, int maxResults) {
 		try {
-			AtomicReader srw = new SlowCompositeReaderWrapper(reader);
+			AtomicReader srw = SlowCompositeReaderWrapper.wrap(reader);
 			return LuceneUtil.getFieldTerms(srw, fieldName, maxResults);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

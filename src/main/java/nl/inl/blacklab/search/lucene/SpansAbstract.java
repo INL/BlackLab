@@ -57,6 +57,12 @@ public abstract class SpansAbstract extends Spans {
 		return null;
 	}
 
+	@Override
+	public long cost() {
+		// returns a completely arbitrary constant value, but it's for optimizing scoring and we don't generally use that
+		return 100;
+	}
+
 	/**
 	 * @throws IOException on IO error 
 	 */

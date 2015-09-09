@@ -25,7 +25,7 @@ public class SingleDocIdFilter extends Filter {
 			// ctx is a single segment, so use docBase to adjust the id
 			return new SingleDocIdSet(luceneDocId - ctx.docBase);
 		}
-		return DocIdSet.EMPTY_DOCIDSET;
+		return DocIdSet.EMPTY;
 	}
 
 }

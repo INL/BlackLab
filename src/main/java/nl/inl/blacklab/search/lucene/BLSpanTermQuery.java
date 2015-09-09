@@ -90,7 +90,7 @@ public class BLSpanTermQuery extends SpanTermQuery {
 				final Terms terms = fields.terms(term.field());
 				if (terms != null) {
 					final TermsEnum termsEnum = terms.iterator(null);
-					if (termsEnum.seekExact(term.bytes(), true)) {
+					if (termsEnum.seekExact(term.bytes())) {
 						state = termsEnum.termState();
 					} else {
 						state = null;

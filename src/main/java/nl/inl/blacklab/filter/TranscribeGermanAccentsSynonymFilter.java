@@ -21,7 +21,6 @@ import java.io.StringReader;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.util.Version;
 
 /**
  * Adds alternative German spellings for words with special and accented characters.
@@ -35,8 +34,7 @@ public class TranscribeGermanAccentsSynonymFilter extends AbstractSynonymFilter 
 	}
 
 	public static void main(String[] args) throws IOException {
-		TokenStream ts = new WhitespaceTokenizer(Version.LUCENE_42, new StringReader(
-				"Aachen Düsseldorf Köln Berlin Österreich"));
+		TokenStream ts = new WhitespaceTokenizer(new StringReader("Aachen Düsseldorf Köln Berlin Österreich"));
 		try {
 			ts = new TranscribeGermanAccentsSynonymFilter(ts);
 			ts.reset();

@@ -474,7 +474,7 @@ public class Hits implements Iterable<Hit> {
 					Thread.currentThread().interrupt(); // client can check this
 					throw new RuntimeException("Query matches too many terms; aborted.");
 				}
-				termContexts.put(term, TermContext.build(reader.getContext(), term, true));
+				termContexts.put(term, TermContext.build(reader.getContext(), term));
 			}
 
 			currentSourceSpans = null;
