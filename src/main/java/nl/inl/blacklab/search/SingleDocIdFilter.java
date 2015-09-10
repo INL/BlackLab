@@ -28,4 +28,9 @@ public class SingleDocIdFilter extends Filter {
 		return DocIdSet.EMPTY;
 	}
 
+	@Override
+	public String toString(String field) {
+		return "SingleDocIdFilter(" + luceneDocId + ")";
+	}
+
 }

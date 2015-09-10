@@ -82,6 +82,7 @@ public class TextPatternBoolean extends TextPattern {
 
 	public void add(TPBooleanClause clause) {
 		switch (clause.getOccur()) {
+		case FILTER: // same as MUST, but does not participate in scoring
 		case MUST:
 			must.add(clause.getQuery());
 			break;

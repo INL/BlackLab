@@ -11,11 +11,10 @@ import java.util.Set;
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.DocsAndPositionsEnum;
-import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -185,11 +184,11 @@ public class LuceneUtil {
 			TermsEnum termsEnum = terms.iterator(null);
 
 			// Verzamel concordantiewoorden uit term vector
-			DocsAndPositionsEnum docPosEnum = null;
+			PostingsEnum docPosEnum = null;
 			int numFound = 0;
 			String[] concordanceWords = new String[end - start + 1];
 			while (termsEnum.next() != null) {
-				docPosEnum = termsEnum.docsAndPositions(null, docPosEnum);
+				docPosEnum = termsEnum.postings(null, docPosEnum, PostingsEnum.POSITIONS);
 				while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 					// NOTE: .docId() will always return 0 in this case
 					//if (docPosEnum.docID() != doc)
@@ -250,15 +249,15 @@ public class LuceneUtil {
 			TermsEnum termsEnum = terms.iterator(null);
 
 			// Verzamel concordantiewoorden uit term vector
-			DocsEnum docPosEnum = null;
+			PostingsEnum postingsEnum = null;
 			while (termsEnum.next() != null) {
-				docPosEnum = termsEnum.docs(null, docPosEnum);
+				postingsEnum = termsEnum.postings(null, postingsEnum, PostingsEnum.FREQS);
 				String term = termsEnum.term().utf8ToString();
 				Integer n = freq.get(term);
 				if (n == null) {
 					n = 0;
 				}
-				while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+				while (postingsEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 					n += termsEnum.docFreq();
 				}
 				freq.put(term, n);

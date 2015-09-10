@@ -216,6 +216,11 @@ public class DocResults implements Iterable<DocResult> {
 			public void setScorer(Scorer scorer) {
 				// (ignore)
 			}
+
+			@Override
+			public boolean needsScores() {
+				return false;
+			}
 		});
 
 		//this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));

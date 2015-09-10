@@ -23,9 +23,9 @@ import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.Fields;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.index.TermState;
@@ -113,8 +113,7 @@ public class BLSpanTermQuery extends SpanTermQuery {
 				.iterator(null);
 		termsEnum.seekExact(term.bytes(), state);
 
-		final DocsAndPositionsEnum postings = termsEnum.docsAndPositions(
-				acceptDocs, null, DocsAndPositionsEnum.FLAG_PAYLOADS);
+		PostingsEnum postings = termsEnum.postings(acceptDocs, null, PostingsEnum.POSITIONS | PostingsEnum.OFFSETS);
 
 		if (postings != null) {
 			return new TermSpans(postings, term);

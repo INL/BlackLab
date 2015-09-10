@@ -66,14 +66,14 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
@@ -821,7 +821,7 @@ public class Searcher {
 	 */
 	public Scorer findDocScores(Query q) {
 		try {
-			Weight w = indexSearcher.createNormalizedWeight(q);
+			Weight w = indexSearcher.createNormalizedWeight(q, true);
 			LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 			Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
 			return sc;
@@ -911,7 +911,7 @@ public class Searcher {
 			// Iterate over terms
 			TermsEnum termsEnum = terms.iterator(null);
 			while (termsEnum.next() != null) {
-				DocsAndPositionsEnum dpe = termsEnum.docsAndPositions(null, null);
+				PostingsEnum dpe = termsEnum.postings(null, null, PostingsEnum.POSITIONS);
 
 				// Iterate over docs containing this term (NOTE: should be only one doc!)
 				while (dpe.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
@@ -1859,7 +1859,7 @@ public class Searcher {
 			try {
 				// Execute the query, iterate over the docs and delete from FI and CS.
 				IndexSearcher s = new IndexSearcher(reader);
-				Weight w = s.createNormalizedWeight(q);
+				Weight w = s.createNormalizedWeight(q, false);
 				LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 				try {
 					Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
@@ -1966,7 +1966,7 @@ public class Searcher {
 	public Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName) {
 		try {
 			String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, altName);
-			Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery);
+			Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
 			Map<String, Integer> freq = new HashMap<String, Integer>();
 			for (LeafReaderContext arc: reader.leaves()) {
 				if (weight == null)

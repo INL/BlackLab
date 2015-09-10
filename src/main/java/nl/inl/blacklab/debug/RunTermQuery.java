@@ -11,10 +11,9 @@ import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.DocsAndPositionsEnum;
-import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -125,7 +124,7 @@ public class RunTermQuery {
 
 			if (terms.hasPositions()) {
 				// Verzamel concordantiewoorden uit term vector
-				DocsAndPositionsEnum docPosEnum = termsEnum.docsAndPositions(null, null);
+				PostingsEnum docPosEnum = termsEnum.postings(null, null, PostingsEnum.POSITIONS);
 				System.out.println("    POSITIONS:");
 				while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 
@@ -150,12 +149,12 @@ public class RunTermQuery {
 				}
 			} else {
 				// No positions
-				DocsEnum docsEnum = termsEnum.docs(null, null);
+				PostingsEnum postingsEnum = termsEnum.postings(null, null, PostingsEnum.FREQS);
 				System.out.println("\n    DOCS:");
-				while (docsEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+				while (postingsEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 					System.out.println(
-							"      Doc id: " + docsEnum.docID() + "\n" +
-							"      Freq:   " + docsEnum.freq() + "\n");
+							"      Doc id: " + postingsEnum.docID() + "\n" +
+							"      Freq:   " + postingsEnum.freq() + "\n");
 				}
 			}
 		} catch (Exception e) {
@@ -185,6 +184,11 @@ public class RunTermQuery {
 				System.out.println(String.format("  doc %7d", doc + docBase));
 				matchingDoc = doc + docBase;
 				docsFound = true;
+			}
+
+			@Override
+			public boolean needsScores() {
+				return false;
 			}
 		});
 		if (!docsFound)
