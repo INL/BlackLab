@@ -18,8 +18,6 @@
  */
 package nl.inl.blacklab.analysis;
 
-import java.io.Reader;
-
 import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
@@ -37,8 +35,8 @@ import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 public final class BLWhitespaceAnalyzer extends Analyzer {
 
 	@Override
-	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		Tokenizer source = new WhitespaceTokenizer(reader);
+	protected TokenStreamComponents createComponents(String fieldName) {
+		Tokenizer source = new WhitespaceTokenizer();
 		TokenStream filter = source;
 		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
 		if (!caseSensitive)

@@ -236,7 +236,6 @@ public abstract class ForwardIndex {
 	 * @param create if true, create a new forward index
 	 * @return the forward index object
 	 */
-	@SuppressWarnings("deprecation")
 	public static ForwardIndex open(File dir, boolean indexMode, Collator collator,
 			boolean create) {
 
@@ -264,7 +263,8 @@ public abstract class ForwardIndex {
 		}
 
 		if (isVersion2)
-			return new ForwardIndexImplV2(dir, indexMode, collator, create);
+			throw new RuntimeException("Forward index version (2) too old for this BlackLab version. Please re-index.");
+			//return new ForwardIndexImplV2(dir, indexMode, collator, create);
 		return new ForwardIndexImplV3(dir, indexMode, collator, create);
 	}
 

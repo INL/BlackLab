@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,7 +29,8 @@ public class TestBLDutchTokenizer {
 	@Test
 	public void testBasics() throws IOException {
 		Reader r = new StringReader("\"hond, a.u.b.: bél(len); \t [pre]cursor \t\nzo'n 'Hij zij' ex-man -");
-		TokenStream ts = new BLDutchTokenizer(r);
+		Tokenizer ts = new BLDutchTokenizer();
+		ts.setReader(r);
 		ts.reset();
 		try {
 			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);

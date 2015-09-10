@@ -20,6 +20,7 @@ import java.io.StringReader;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
@@ -52,10 +53,10 @@ public class TranscribeGermanAccentsFilter extends TokenFilter {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		TokenStream ts = new WhitespaceTokenizer(new StringReader("Aachen Düsseldorf Köln Berlin Österreich"));
+		Tokenizer t = new WhitespaceTokenizer();
+		t.setReader(new StringReader("Aachen Düsseldorf Köln Berlin Österreich"));
+		TokenStream ts = new TranscribeGermanAccentsFilter(t);
 		try {
-			ts = new TranscribeGermanAccentsFilter(ts);
-
 			CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
 			while (ts.incrementToken()) {
 				System.out.println(new String(term.buffer(), 0, term.length()));

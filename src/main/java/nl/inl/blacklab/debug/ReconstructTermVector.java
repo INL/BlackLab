@@ -1,6 +1,6 @@
 package nl.inl.blacklab.debug;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
@@ -33,7 +33,7 @@ public class ReconstructTermVector {
 		// Open the index
 		DirectoryReader reader = null;
 		try {
-			reader = DirectoryReader.open(FSDirectory.open(new File(".")));
+			reader = DirectoryReader.open(FSDirectory.open(Paths.get(".")));
 		} catch (Exception e) {
 			System.err.println("Error opening index; is the current directory a Lucene index?");
 			usage();

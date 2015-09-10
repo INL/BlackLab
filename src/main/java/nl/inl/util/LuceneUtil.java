@@ -11,7 +11,7 @@ import java.util.Set;
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.DocsEnum;
@@ -274,7 +274,7 @@ public class LuceneUtil {
 	 * @param fieldName the field
 	 * @return the matching terms
 	 */
-	public static List<String> getFieldTerms(AtomicReader index, String fieldName) {
+	public static List<String> getFieldTerms(LeafReader index, String fieldName) {
 		return findTermsByPrefix(index, fieldName, null, true, -1);
 	}
 
@@ -285,7 +285,7 @@ public class LuceneUtil {
 	 * @param maxResults maximum number to return (or -1 for no limit)
 	 * @return the matching terms
 	 */
-	public static List<String> getFieldTerms(AtomicReader index, String fieldName, int maxResults) {
+	public static List<String> getFieldTerms(LeafReader index, String fieldName, int maxResults) {
 		return findTermsByPrefix(index, fieldName, null, true, maxResults);
 	}
 
@@ -297,7 +297,7 @@ public class LuceneUtil {
 	 * @param sensitive match case-sensitively or not?
 	 * @return the matching terms
 	 */
-	public static List<String> findTermsByPrefix(AtomicReader index, String fieldName,
+	public static List<String> findTermsByPrefix(LeafReader index, String fieldName,
 			String prefix, boolean sensitive) {
 		return findTermsByPrefix(index, fieldName, prefix, sensitive, -1);
 	}
@@ -311,7 +311,7 @@ public class LuceneUtil {
 	 * @param maxResults max. number of results to return (or -1 for all)
 	 * @return the matching terms
 	 */
-	public static List<String> findTermsByPrefix(AtomicReader index, String fieldName,
+	public static List<String> findTermsByPrefix(LeafReader index, String fieldName,
 			String prefix, boolean sensitive, int maxResults) {
 		boolean allTerms = prefix == null || prefix.length() == 0;
 		if (allTerms) {

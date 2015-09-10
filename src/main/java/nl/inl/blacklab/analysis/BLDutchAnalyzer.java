@@ -18,8 +18,6 @@
  */
 package nl.inl.blacklab.analysis;
 
-import java.io.Reader;
-
 import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
@@ -39,8 +37,8 @@ import org.apache.lucene.analysis.core.LowerCaseFilter;
 public final class BLDutchAnalyzer extends Analyzer {
 
 	@Override
-	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		Tokenizer source = new BLDutchTokenizer(reader);
+	protected TokenStreamComponents createComponents(String fieldName) {
+		Tokenizer source = new BLDutchTokenizer();
 		TokenStream filter = new BLDutchTokenFilter(source);
 		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
 		if (!caseSensitive)

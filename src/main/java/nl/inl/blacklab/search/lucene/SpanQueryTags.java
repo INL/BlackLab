@@ -21,7 +21,7 @@ import java.util.Map;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.QueryExecutionContext;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -60,7 +60,7 @@ public class SpanQueryTags extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
+	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		Spans startTags = clauses[0].getSpans(context, acceptDocs, termContexts);
 		Spans endTags = clauses[1].getSpans(context, acceptDocs, termContexts);
 		Spans result = new SpansTags(startTags, endTags);

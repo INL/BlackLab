@@ -66,4 +66,9 @@ public class SingleDocIdSet extends DocIdSet {
 			}
 		};
 	}
+
+	@Override
+	public long ramBytesUsed() {
+		return Integer.SIZE / 8;
+	}
 }

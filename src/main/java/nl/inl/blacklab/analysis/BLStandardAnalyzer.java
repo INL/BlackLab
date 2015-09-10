@@ -19,7 +19,6 @@
 package nl.inl.blacklab.analysis;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -44,8 +43,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 public class BLStandardAnalyzer extends Analyzer {
 
 	@Override
-	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-		Tokenizer source = new StandardTokenizerFactory(Collections.<String,String>emptyMap()).create(reader);
+	protected TokenStreamComponents createComponents(String fieldName) {
+		Tokenizer source = new StandardTokenizerFactory(Collections.<String,String>emptyMap()).create();
 		TokenStream filter = source;
 		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
 		if (!caseSensitive)

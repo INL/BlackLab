@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import nl.inl.blacklab.search.Span;
 
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
@@ -53,7 +53,7 @@ class SpansNot extends BLSpans {
 	private int currentToken;
 
 	///** The Lucene index reader, for querying field length */
-	//private AtomicReader reader;
+	//private LeafReader reader;
 
 	/** For testing, we don't have an IndexReader available, so we use test values */
 	private boolean useTestValues = false;
@@ -90,7 +90,7 @@ class SpansNot extends BLSpans {
 	 * @param fieldName the field name, for getting field lengths
 	 * @param clause the clause to invert, or null if we want all tokens
 	 */
-	public SpansNot(boolean ignoreLastToken, AtomicReader reader, String fieldName, Spans clause) {
+	public SpansNot(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause) {
 		//this.reader = reader;
 		maxDoc = reader == null ? -1 : reader.maxDoc();
 		liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);

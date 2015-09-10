@@ -258,7 +258,7 @@ public class Indexer {
 
 		metadataFieldTypeTokenized = new FieldType();
 		metadataFieldTypeTokenized.setStored(true);
-		metadataFieldTypeTokenized.setIndexed(true);
+		//metadataFieldTypeTokenized.setIndexed(true);
 		metadataFieldTypeTokenized.setTokenized(true);
 		metadataFieldTypeTokenized.setOmitNorms(true); // @@@ <-- depending on setting?
 		metadataFieldTypeTokenized.setStoreTermVectors(true);
@@ -268,6 +268,9 @@ public class Indexer {
 
 		metadataFieldTypeUntokenized = new FieldType(metadataFieldTypeTokenized);
 		metadataFieldTypeUntokenized.setTokenized(false);
+		metadataFieldTypeUntokenized.setStoreTermVectors(false);
+		metadataFieldTypeUntokenized.setStoreTermVectorPositions(false);
+		metadataFieldTypeUntokenized.setStoreTermVectorOffsets(false);
 		metadataFieldTypeUntokenized.freeze();
 	}
 

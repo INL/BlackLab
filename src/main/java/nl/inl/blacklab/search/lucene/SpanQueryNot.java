@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -66,7 +66,7 @@ public class SpanQueryNot extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
+	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		SpanQuery query = clauses[0];
 		Spans result = new SpansNot(ignoreLastToken, context.reader(), baseFieldName, query == null ? null : query.getSpans(context, acceptDocs, termContexts));
 

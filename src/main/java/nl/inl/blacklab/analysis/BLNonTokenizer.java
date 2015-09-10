@@ -1,7 +1,5 @@
 package nl.inl.blacklab.analysis;
 
-import java.io.Reader;
-
 import org.apache.lucene.analysis.util.CharTokenizer;
 import org.apache.lucene.util.AttributeFactory;
 
@@ -11,16 +9,12 @@ import org.apache.lucene.util.AttributeFactory;
  */
 public class BLNonTokenizer extends CharTokenizer {
 
-	public BLNonTokenizer(AttributeFactory factory, Reader input) {
-		super(factory, input);
+	public BLNonTokenizer(AttributeFactory factory) {
+		super(factory);
 	}
 
-//	public BLNonTokenizer(AttributeSource source, Reader input) {
-//		super(source, input);
-//	}
-
-	public BLNonTokenizer(Reader input) {
-		super(input);
+	public BLNonTokenizer() {
+		super();
 	}
 
 	@Override

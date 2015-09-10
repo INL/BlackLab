@@ -27,7 +27,7 @@ import java.util.Set;
 
 import nl.inl.blacklab.search.Span;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -175,7 +175,7 @@ public class BLSpanOrQuery extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(final AtomicReaderContext context,
+	public Spans getSpans(final LeafReaderContext context,
 			final Bits acceptDocs, final Map<Term, TermContext> termContexts)
 			throws IOException {
 		if (clauses.size() == 1) // optimize 1-clause case

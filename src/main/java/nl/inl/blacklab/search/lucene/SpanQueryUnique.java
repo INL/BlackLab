@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -37,7 +37,7 @@ public class SpanQueryUnique extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
+	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		Spans srcSpans = src.getSpans(context, acceptDocs, termContexts);
 		return new SpansUnique(srcSpans);
 	}

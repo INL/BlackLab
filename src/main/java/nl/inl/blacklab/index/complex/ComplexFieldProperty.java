@@ -25,6 +25,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.IndexOptions;
 
 /**
  * A property in a complex field. See ComplexField for details.
@@ -39,7 +40,7 @@ public class ComplexFieldProperty {
 
 	static {
 		FieldType type = tokenStreamFieldNoOffsets = new FieldType();
-		type.setIndexed(true);
+		type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
 		type.setTokenized(true);
 		type.setOmitNorms(true);
 		type.setStored(false);
@@ -49,6 +50,7 @@ public class ComplexFieldProperty {
 		type.freeze();
 
 		type = tokenStreamFieldWithOffsets = new FieldType(tokenStreamFieldNoOffsets);
+		type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
 		type.setStoreTermVectorOffsets(true);
 		type.freeze();
 	}

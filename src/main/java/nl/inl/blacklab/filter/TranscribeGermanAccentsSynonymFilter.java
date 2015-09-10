@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
@@ -34,9 +35,10 @@ public class TranscribeGermanAccentsSynonymFilter extends AbstractSynonymFilter 
 	}
 
 	public static void main(String[] args) throws IOException {
-		TokenStream ts = new WhitespaceTokenizer(new StringReader("Aachen Düsseldorf Köln Berlin Österreich"));
+		Tokenizer t = new WhitespaceTokenizer();
+		t.setReader(new StringReader("Aachen Düsseldorf Köln Berlin Österreich"));
+		TokenStream ts = new TranscribeGermanAccentsSynonymFilter(t);
 		try {
-			ts = new TranscribeGermanAccentsSynonymFilter(ts);
 			ts.reset();
 			ts = new RemoveAllAccentsFilter(ts);
 			ts.reset();

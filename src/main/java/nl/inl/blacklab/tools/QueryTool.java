@@ -84,6 +84,14 @@ import nl.inl.util.TimeUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
+import org.apache.lucene.search.spans.SpanQuery;
+
 /**
  * Simple command-line querying tool for BlackLab indices.
  */

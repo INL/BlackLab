@@ -66,8 +66,8 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsAndPositionsEnum;
@@ -431,7 +431,7 @@ public class Searcher {
 			reader = DirectoryReader.open(indexWriter, false);
 		} else {
 			// Open Lucene index
-			reader = DirectoryReader.open(FSDirectory.open(indexDir));
+			reader = DirectoryReader.open(FSDirectory.open(indexDir.toPath()));
 		}
 		this.indexLocation = indexDir;
 
@@ -822,7 +822,7 @@ public class Searcher {
 	public Scorer findDocScores(Query q) {
 		try {
 			Weight w = indexSearcher.createNormalizedWeight(q);
-			AtomicReader scrw = SlowCompositeReaderWrapper.wrap(reader);
+			LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 			Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
 			return sc;
 		} catch (IOException e) {
@@ -1805,7 +1805,7 @@ public class Searcher {
 		if (!indexDir.exists() && create) {
 			indexDir.mkdir();
 		}
-		Directory indexLuceneDir = FSDirectory.open(indexDir);
+		Directory indexLuceneDir = FSDirectory.open(indexDir.toPath());
 		@SuppressWarnings("resource")
 		Analyzer defaultAnalyzer = analyzer == null ? new BLDutchAnalyzer() : analyzer;
 		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
@@ -1860,7 +1860,7 @@ public class Searcher {
 				// Execute the query, iterate over the docs and delete from FI and CS.
 				IndexSearcher s = new IndexSearcher(reader);
 				Weight w = s.createNormalizedWeight(q);
-				AtomicReader scrw = SlowCompositeReaderWrapper.wrap(reader);
+				LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 				try {
 					Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
 					if (sc == null)
@@ -1968,7 +1968,7 @@ public class Searcher {
 			String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, altName);
 			Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery);
 			Map<String, Integer> freq = new HashMap<String, Integer>();
-			for (AtomicReaderContext arc: reader.leaves()) {
+			for (LeafReaderContext arc: reader.leaves()) {
 				if (weight == null)
 					throw new RuntimeException("weight == null");
 				if (arc == null)
@@ -2010,7 +2010,7 @@ public class Searcher {
 	 */
 	public List<String> getFieldTerms(String fieldName, int maxResults) {
 		try {
-			AtomicReader srw = SlowCompositeReaderWrapper.wrap(reader);
+			LeafReader srw = SlowCompositeReaderWrapper.wrap(reader);
 			return LuceneUtil.getFieldTerms(srw, fieldName, maxResults);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

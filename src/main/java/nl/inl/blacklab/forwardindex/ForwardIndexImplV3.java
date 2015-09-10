@@ -30,18 +30,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.ExUtil;
 import nl.inl.util.VersionFile;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
-import org.apache.lucene.search.FieldCache;
+import org.apache.lucene.uninverting.UninvertingReader;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question
@@ -142,18 +145,23 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private String fiidFieldName;
 
 	/** Cached fiid field */
-	private FieldCache.Ints cachedFiids;
+	private NumericDocValues cachedFiids;
 
 	/** Are we in index mode (i.e. writing to forward index) or not? */
 	private boolean indexMode;
+
+	private UninvertingReader uninv;
 
 	@Override
 	public void setIdTranslateInfo(DirectoryReader reader, String lucenePropFieldName) {
 		this.reader = reader;
 		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
 		try {
-			AtomicReader srw = SlowCompositeReaderWrapper.wrap(reader);
-			cachedFiids = FieldCache.DEFAULT.getInts(srw, fiidFieldName, true);
+			LeafReader srw = SlowCompositeReaderWrapper.wrap(reader);
+			Map<String, UninvertingReader.Type> fields = new HashMap<String, UninvertingReader.Type>();
+			fields.put(fiidFieldName, UninvertingReader.Type.INTEGER);
+			uninv = new UninvertingReader(srw, fields);
+			cachedFiids = uninv.getNumericDocValues(fiidFieldName);
 
 			// Check if the cache was retrieved OK
 			boolean allZeroes = true;
@@ -178,7 +186,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	@Override
 	public int luceneDocIdToFiid(int docId) {
 		if (cachedFiids != null)
-			return cachedFiids.get(docId);
+			return (int)cachedFiids.get(docId);
 
 		// Not cached; find fiid by reading stored value from Document now
 		try {

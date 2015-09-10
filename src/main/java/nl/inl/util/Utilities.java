@@ -26,7 +26,6 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.LogMergePolicy;
 import org.apache.lucene.index.MergePolicy;
-import org.apache.lucene.util.Version;
 
 /**
  * Misc. utilities that haven't yet found a place in InlJavaLib.
@@ -83,7 +82,7 @@ public class Utilities {
 	}
 
 	public static IndexWriterConfig getIndexWriterConfig(Analyzer analyzer, boolean create) {
-		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_4, analyzer);
+		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
 		config.setRAMBufferSizeMB(150); // faster indexing
 

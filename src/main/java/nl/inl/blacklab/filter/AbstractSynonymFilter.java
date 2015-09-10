@@ -21,6 +21,7 @@ import java.util.Stack;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
@@ -77,19 +78,19 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		TokenStream ts = new WhitespaceTokenizer(new StringReader("Dit is een test"));
+		Tokenizer t = new WhitespaceTokenizer();
+		t.setReader(new StringReader("Dit is een test"));
+		TokenStream ts = new AbstractSynonymFilter(t) {
+			@Override
+			public String[] getSynonyms(String s) {
+				if (s.equals("test"))
+					return new String[] { "testje" };
+				if (s.equals("is"))
+					return new String[] { "zijn" };
+				return null;
+			}
+		};
 		try {
-			ts = new AbstractSynonymFilter(ts) {
-				@Override
-				public String[] getSynonyms(String s) {
-					if (s.equals("test"))
-						return new String[] { "testje" };
-					if (s.equals("is"))
-						return new String[] { "zijn" };
-					return null;
-				}
-			};
-
 			CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
 			while (ts.incrementToken()) {
 				System.out.println(new String(term.buffer(), 0, term.length()));

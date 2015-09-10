@@ -45,7 +45,7 @@ import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -145,12 +145,12 @@ public class Hits implements Iterable<Hit> {
 	protected SpanQuery spanQuery;
 
 	/**
-	 * The AtomicReaderContexts we should query in succession.
+	 * The LeafReaderContexts we should query in succession.
 	 */
-	protected List<AtomicReaderContext> atomicReaderContexts;
+	protected List<LeafReaderContext> atomicReaderContexts;
 
 	/**
-	 * What AtomicReaderContext we're querying now.
+	 * What LeafReaderContext we're querying now.
 	 */
 	protected int atomicReaderContextIndex = -1;
 
@@ -624,7 +624,7 @@ public class Hits implements Iterable<Hit> {
 							}
 							if (atomicReaderContexts != null) {
 								// Get the atomic reader context and get the next Spans from it.
-								AtomicReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
+								LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
 								currentDocBase = context.docBase;
 								Bits liveDocs = context.reader().getLiveDocs();
 								currentSourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(context, liveDocs, termContexts));

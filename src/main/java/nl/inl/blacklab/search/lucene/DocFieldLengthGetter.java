@@ -1,15 +1,19 @@
 package nl.inl.blacklab.search.lucene;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.FieldCache;
+import org.apache.lucene.uninverting.UninvertingReader;
 
 /**
  * Used to get the field length in tokens for a document.
@@ -17,14 +21,14 @@ import org.apache.lucene.search.FieldCache;
  * This is used by SpanQueryNot and SpanQueryExpansion to make sure
  * we don't go beyond the document end.
  */
-public class DocFieldLengthGetter {
+public class DocFieldLengthGetter implements Closeable {
 	/** We check some cache entries to see if document lengths were saved in the index or not.
 	 * (These days, they should always be saved, but we do this in case someone uses an old index)
 	 */
 	private static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
 
 	/** The Lucene index reader, for querying field length */
-	private AtomicReader reader;
+	private LeafReader reader;
 
 	/** For testing, we don't have an IndexReader available, so we use test values */
 	private boolean useTestValues = false;
@@ -42,9 +46,11 @@ public class DocFieldLengthGetter {
 	private String lengthTokensFieldName;
 
 	/** Lengths may have been cached using FieldCache */
-	private FieldCache.Ints cachedFieldLengths;
+	private NumericDocValues cachedFieldLengths;
 
-	public DocFieldLengthGetter(AtomicReader reader, String fieldName) {
+	private UninvertingReader uninv;
+
+	public DocFieldLengthGetter(LeafReader reader, String fieldName) {
 		this.reader = reader;
 		this.fieldName = fieldName;
 		lengthTokensFieldName = ComplexFieldUtil.lengthTokensField(fieldName);
@@ -52,7 +58,10 @@ public class DocFieldLengthGetter {
 		if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME)) {
 			// Cache the lengths for this field to speed things up
 			try {
-				cachedFieldLengths = FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName, true);
+				Map<String, UninvertingReader.Type> fields = new HashMap<String, UninvertingReader.Type>();
+				fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER);
+				uninv = new UninvertingReader(reader, fields);
+				cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName); //FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName, true);
 
 				// Check if the cache was retrieved OK
 				boolean allZeroes = true;
@@ -68,6 +77,17 @@ public class DocFieldLengthGetter {
 					// Tokens lengths weren't saved in the index, skip cache
 					cachedFieldLengths = null;
 				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+	
+	@Override
+	public void close() {
+		if (uninv != null) {
+			try {
+				uninv.close();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -102,7 +122,7 @@ public class DocFieldLengthGetter {
 			return 5; // while testing, all documents have same length
 
 		if (cachedFieldLengths != null) {
-			return cachedFieldLengths.get(doc);
+			return (int)cachedFieldLengths.get(doc);
 		}
 
 		if (!lookedForLengthField || lengthFieldIsStored)  {

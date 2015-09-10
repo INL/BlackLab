@@ -29,7 +29,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -104,7 +104,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQ
   }
 
   @Override
-  public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) {
+  public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) {
     throw new UnsupportedOperationException("Query should have been rewritten");
   }
 

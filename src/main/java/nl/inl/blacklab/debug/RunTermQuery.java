@@ -1,7 +1,7 @@
 package nl.inl.blacklab.debug;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,20 +10,20 @@ import java.util.TreeSet;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 
-import org.apache.lucene.index.AtomicReader;
-import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.DocsEnum;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
@@ -49,7 +49,7 @@ public class RunTermQuery {
 		// Open the index
 		DirectoryReader reader = null;
 		try {
-			reader = DirectoryReader.open(FSDirectory.open(new File(".")));
+			reader = DirectoryReader.open(FSDirectory.open(Paths.get(".")));
 		} catch (Exception e) {
 			System.err.println("Error opening index; is the current directory a Lucene index?");
 			usage();
@@ -171,18 +171,12 @@ public class RunTermQuery {
 		IndexSearcher searcher = new IndexSearcher(reader);
 		final BitSet bits = new BitSet(reader.maxDoc());
 		docsFound = false;
-		searcher.search(query, new Collector() {
+		searcher.search(query, new SimpleCollector() {
 			private int docBase;
 
 			@Override
 			public void setScorer(Scorer scorer) {
 				// ignore scorer
-			}
-
-			// accept docs out of order (for a BitSet it doesn't matter)
-			@Override
-			public boolean acceptsDocsOutOfOrder() {
-				return true;
 			}
 
 			@Override
@@ -191,11 +185,6 @@ public class RunTermQuery {
 				System.out.println(String.format("  doc %7d", doc + docBase));
 				matchingDoc = doc + docBase;
 				docsFound = true;
-			}
-
-			@Override
-			public void setNextReader(AtomicReaderContext context) {
-				this.docBase = context.docBase;
 			}
 		});
 		if (!docsFound)
@@ -218,7 +207,7 @@ public class RunTermQuery {
 
 		System.out.println("USING LEAVES:");
 		boolean hitsFound = false;
-		for (AtomicReaderContext arc: reader.leaves()) {
+		for (LeafReaderContext arc: reader.leaves()) {
 			Spans spans = spanQuery.getSpans(arc, arc.reader().getLiveDocs(), termContexts);
 			while(spans.next()) {
 				int doc = arc.docBase + spans.doc();
@@ -231,7 +220,7 @@ public class RunTermQuery {
 		System.out.println("");
 
 		System.out.println("USING SLOWCOMPOSITEREADERWRAPPER:");
-		AtomicReader scrw = SlowCompositeReaderWrapper.wrap(reader);
+		LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 		Spans spans = spanQuery.getSpans(scrw.getContext(), scrw.getLiveDocs(), termContexts);
 		hitsFound = false;
 		while(spans.next()) {

@@ -23,7 +23,7 @@ import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -86,7 +86,7 @@ class SpansExpansionRaw extends BLSpans {
 	/** How much to subtract from length (for ignoring closing token) */
 	private int subtractFromLength;
 
-	public SpansExpansionRaw(boolean ignoreLastToken, AtomicReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
+	public SpansExpansionRaw(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
 		subtractFromLength = ignoreLastToken ? 1 : 0;
 		if (!expandToLeft) {
 			// We need to know document length to properly do expansion to the right

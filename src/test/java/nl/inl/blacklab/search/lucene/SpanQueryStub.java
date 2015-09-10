@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -43,7 +43,7 @@ public class SpanQueryStub extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(AtomicReaderContext arg0, Bits arg1, Map<Term, TermContext> arg2) {
+	public Spans getSpans(LeafReaderContext arg0, Bits arg1, Map<Term, TermContext> arg2) {
 		return new SpansStub(doc, start, end);
 	}
 	@Override

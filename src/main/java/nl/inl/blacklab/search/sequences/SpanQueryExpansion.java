@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
 import nl.inl.blacklab.search.lucene.SpansUnique;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -78,7 +78,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(AtomicReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
+	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
 		BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses[0].getField(), clauses[0].getSpans(context, acceptDocs, termContexts), expandToLeft, min, max);
 
 		// Note: the spans coming from SpansExpansion are not sorted properly.

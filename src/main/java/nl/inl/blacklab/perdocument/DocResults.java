@@ -31,12 +31,12 @@ import nl.inl.util.ReverseComparator;
 import nl.inl.util.ThreadPriority.Level;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.Collector;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.spans.SpanQuery;
 
 /**
@@ -196,30 +196,20 @@ public class DocResults implements Iterable<DocResult> {
 //		IndexReader reader = indexSearcher.getIndexReader();
 //		Weight weight = indexSearcher.createNormalizedWeight(query);
 //		Map<String, Integer> freq = new HashMap<String, Integer>();
-//		for (AtomicReaderContext arc: reader.leaves()) {
+//		for (LeafReaderContext arc: reader.leaves()) {
 //			Scorer scorer = weight.scorer(arc, true, false, arc.reader().getLiveDocs());
 //			while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 //				//ddd
 //			}
 //		}
 
-		searcher.collectDocuments(query, new Collector() {
-			AtomicReaderContext reader = null;
-
-			@Override
-			public boolean acceptsDocsOutOfOrder() {
-				return true;
-			}
+		searcher.collectDocuments(query, new SimpleCollector() {
+			LeafReaderContext reader = null;
 
 			@Override
 			public void collect(int docId) throws IOException {
 				int globalDocId = docId + reader.docBase;
 				results.add(new DocResult(DocResults.this.searcher, null, globalDocId, reader.reader().document(docId)));
-			}
-
-			@Override
-			public void setNextReader(AtomicReaderContext reader) {
-				this.reader = reader;
 			}
 
 			@Override

@@ -23,7 +23,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.Term;
@@ -76,7 +76,7 @@ public class BLSpanTermQuery extends SpanTermQuery {
 	 * Overridden frmo SpanTermQuery to return a BLSpans instead.
 	 */
 	@Override
-	public Spans getSpans(final AtomicReaderContext context, Bits acceptDocs,
+	public Spans getSpans(final LeafReaderContext context, Bits acceptDocs,
 			Map<Term, TermContext> termContexts) throws IOException {
 		TermContext termContext = termContexts.get(term);
 		final TermState state;
