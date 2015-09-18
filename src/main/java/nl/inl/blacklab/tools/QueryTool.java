@@ -35,12 +35,19 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
+import org.apache.lucene.search.spans.SpanQuery;
+
 import nl.inl.blacklab.perdocument.DocResult;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.perdocument.DocResultsWindow;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.lucene.LuceneQueryParser;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -76,15 +83,6 @@ import nl.inl.util.StringUtil;
 import nl.inl.util.TimeUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryWrapperFilter;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.util.Version;
 
 /**
  * Simple command-line querying tool for BlackLab indices.
@@ -310,53 +308,7 @@ public class QueryTool {
 
 	}
 
-	/** Parser for Lucene Query Language */
-	class ParserLucene extends Parser {
-
-		@Override
-		public String getPrompt() {
-			return "Lucene";
-		}
-
-		@Override
-		public String getName() {
-			return "Lucene Query Language";
-		}
-
-		/**
-		 * Parse a Corpus Query Language query to produce a TextPattern
-		 *
-		 * @param query
-		 *            the query
-		 * @return the corresponding TextPattern
-		 * @throws ParseException
-		 */
-		@Override
-		public TextPattern parse(String query) throws ParseException {
-			try {
-				LuceneQueryParser parser = new LuceneQueryParser(Version.LUCENE_4_10_4, CONTENTS_FIELD, searcher.getAnalyzer());
-				parser.setAllowLeadingWildcard(true);
-				return parser.parse(query);
-			} catch (nl.inl.blacklab.queryParser.lucene.ParseException e) {
-				throw new ParseException(e.getMessage());
-			} catch (nl.inl.blacklab.queryParser.lucene.TokenMgrError e) {
-				throw new ParseException(e.getMessage());
-			} catch (Exception e) {
-				throw new ParseException("Fatale fout tijdens parsen: " + e.getMessage());
-			}
-		}
-
-		@Override
-		public void printHelp() {
-			outprintln("Lucene Query Language examples:");
-			outprintln("  city town                     # Find the word \"city\" or the word \"town\"");
-			outprintln("  \"the city\"                    # Find the word \"the\" followed by the word \"city\"");
-			outprintln("  +city -town                   # Find documents containing \"city\" but not \"town\"");
-		}
-
-	}
-
-	private List<Parser> parsers = Arrays.asList(new ParserCorpusQl(), new ParserLucene(), new ParserContextQl());
+	private List<Parser> parsers = Arrays.asList(new ParserCorpusQl(), new ParserContextQl());
 
 	private int currentParserIndex = 0;
 
