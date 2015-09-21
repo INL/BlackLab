@@ -42,8 +42,8 @@ public class SpansAndNot extends BLSpans {
 	private boolean moreExcludeSpans;
 
 	public SpansAndNot(Spans includeSpans, Spans excludeSpans) {
-		this.includeSpans = BLSpansWrapper.optWrap(includeSpans);
-		this.excludeSpans = BLSpansWrapper.optWrap(excludeSpans);
+		this.includeSpans = BLSpansWrapper.optWrapSort(includeSpans);
+		this.excludeSpans = BLSpansWrapper.optWrapSort(excludeSpans);
 		excludeSpansNexted = false;
 		moreIncludeSpans = true;
 		moreExcludeSpans = true;

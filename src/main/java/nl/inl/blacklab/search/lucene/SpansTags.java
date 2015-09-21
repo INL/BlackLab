@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
+import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -28,6 +30,8 @@ import org.apache.lucene.search.spans.Spans;
  * Gets spans for a certain XML element.
  */
 class SpansTags extends BLSpans {
+	static SpanComparatorStartPoint cmpStartPoint = new SpanComparatorStartPoint();
+
 	/** The two sets of hits to combine */
 	private SpansInBucketsPerDocument[] spans = new SpansInBucketsPerDocument[2];
 
@@ -44,8 +48,18 @@ class SpansTags extends BLSpans {
 	private List<Integer> ends = new ArrayList<Integer>();
 
 	public SpansTags(Spans startTags, Spans endTags) {
-		spans[0] = new SpansInBucketsPerDocument(startTags);
-		spans[1] = new SpansInBucketsPerDocument(endTags);
+		Spans[] origSpans = { startTags, endTags };
+		for (int i = 0; i < 2; i++) {
+			boolean sorted = false;
+			if (origSpans[i] instanceof BLSpans)
+				sorted = ((BLSpans) origSpans[i]).hitsStartPointSorted();
+			else
+				startTags = BLSpansWrapper.optWrap(origSpans[i]);
+			if (sorted)
+				spans[i] = new SpansInBucketsPerDocument(origSpans[i]);
+			else
+				spans[i] = new SpansInBucketsPerDocumentSorted(origSpans[i], cmpStartPoint);
+		}
 		stillValidSpans[1] = true;
 		stillValidSpans[0] = true;
 	}
