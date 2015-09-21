@@ -158,8 +158,11 @@ public class IndexTool {
 
 		// Check the command
 		if (command.length() == 0) {
-			System.err.println("No command specified; assuming \"add\" (--help for details)");
-			command = "add";
+			System.err.println("No command specified; specify 'create' or 'add'. (--help for details)");
+			usage();
+			return;
+			//System.err.println("No command specified; assuming \"add\" (--help for details)");
+			//command = "add";
 		}
 		if (command.equals("delete")) {
 			commandDelete(indexDir, deleteQuery);

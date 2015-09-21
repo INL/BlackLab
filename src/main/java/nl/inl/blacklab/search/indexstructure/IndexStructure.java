@@ -169,7 +169,7 @@ public class IndexStructure {
 			// No metadata file yet; start with a blank one
 			String name = indexDir.getName();
 			if (name.equals("index"))
-				name = indexDir.getParentFile().getName();
+				name = indexDir.getAbsoluteFile().getParentFile().getName();
 			indexMetadata = new IndexMetadata(name);
 			initTimestamps = true;
 		} else {

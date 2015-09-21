@@ -48,6 +48,7 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 
@@ -259,6 +260,7 @@ public class Indexer {
 		metadataFieldTypeTokenized = new FieldType();
 		metadataFieldTypeTokenized.setStored(true);
 		//metadataFieldTypeTokenized.setIndexed(true);
+		metadataFieldTypeTokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
 		metadataFieldTypeTokenized.setTokenized(true);
 		metadataFieldTypeTokenized.setOmitNorms(true); // @@@ <-- depending on setting?
 		metadataFieldTypeTokenized.setStoreTermVectors(true);
@@ -267,6 +269,7 @@ public class Indexer {
 		metadataFieldTypeTokenized.freeze();
 
 		metadataFieldTypeUntokenized = new FieldType(metadataFieldTypeTokenized);
+		metadataFieldTypeUntokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
 		metadataFieldTypeUntokenized.setTokenized(false);
 		metadataFieldTypeUntokenized.setStoreTermVectors(false);
 		metadataFieldTypeUntokenized.setStoreTermVectorPositions(false);
