@@ -32,6 +32,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
@@ -373,6 +374,19 @@ public class BLSpanOrQuery extends SpanQuery {
 	 */
 	public void setField(String field) {
 		this.field = field;
+	}
+
+	/**
+	 * Convert a SpanOrQuery to a BLSpanOrQuery
+	 * @param soq
+	 * @return
+	 */
+	public static BLSpanOrQuery from(SpanOrQuery soq) {
+    	BLSpanOrQuery blsoq = new BLSpanOrQuery(soq.getClauses());
+    	blsoq.setBoost(soq.getBoost());
+        if (blsoq.getField() == null)
+        	blsoq.setField(soq.getField()); // rewritten to or query without clauses
+        return blsoq;
 	}
 
 }

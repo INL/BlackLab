@@ -24,13 +24,10 @@ import java.util.Set;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
@@ -50,11 +47,16 @@ public class BLSpanTermQuery extends SpanQuery {
 	
 	SpanTermQuery q;
 
-	/**
-	 * @param term
-	 */
 	public BLSpanTermQuery(Term term) {
 		q = new SpanTermQuery(term);
+	}
+
+	/**
+	 * Wrap a SpanTermQuery (see BLSpanTermQuery.from())
+	 * @param q query to wrap
+	 */
+	BLSpanTermQuery(SpanTermQuery q) {
+		this.q = q;
 	}
 
 	/**
@@ -87,7 +89,7 @@ public class BLSpanTermQuery extends SpanQuery {
 
 	@Override
 	public String toString(String arg0) {
-		return q.toString();
+		return "BL" + q.toString();
 	}
 	
 	@Override
@@ -124,7 +126,14 @@ public class BLSpanTermQuery extends SpanQuery {
 		}
 		return false;
 	}
-	
-	
+
+	/**
+	 * Wrap a SpanTermQuery.
+	 * @param q query to wrap
+	 * @return wrapped query
+	 */
+	static BLSpanTermQuery from (SpanTermQuery q) {
+		return new BLSpanTermQuery(q);
+	}
 
 }
