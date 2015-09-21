@@ -20,20 +20,20 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
-import org.apache.lucene.index.Fields;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.index.TermState;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
 import org.apache.lucene.util.Bits;
 
 /**
@@ -46,13 +46,15 @@ import org.apache.lucene.util.Bits;
  * BL-derived because we need to have BL-specific methods available on them
  * (i.e. for token tagging).
  */
-public class BLSpanTermQuery extends SpanTermQuery {
+public class BLSpanTermQuery extends SpanQuery {
+	
+	SpanTermQuery q;
 
 	/**
 	 * @param term
 	 */
 	public BLSpanTermQuery(Term term) {
-		super(term);
+		q = new SpanTermQuery(term);
 	}
 
 	/**
@@ -69,7 +71,7 @@ public class BLSpanTermQuery extends SpanTermQuery {
 	 */
 	@Override
 	public String getField() {
-		return ComplexFieldUtil.getBaseName(term.field());
+		return ComplexFieldUtil.getBaseName(q.getField());
 	}
 
 	/**
@@ -78,51 +80,51 @@ public class BLSpanTermQuery extends SpanTermQuery {
 	@Override
 	public Spans getSpans(final LeafReaderContext context, Bits acceptDocs,
 			Map<Term, TermContext> termContexts) throws IOException {
-		TermContext termContext = termContexts.get(term);
-		final TermState state;
-		if (termContext == null) {
-			// this happens with span-not query, as it doesn't include the NOT
-			// side in extractTerms()
-			// so we seek to the term now in this segment..., this sucks because
-			// its ugly mostly!
-			final Fields fields = context.reader().fields();
-			if (fields != null) {
-				final Terms terms = fields.terms(term.field());
-				if (terms != null) {
-					final TermsEnum termsEnum = terms.iterator(null);
-					if (termsEnum.seekExact(term.bytes())) {
-						state = termsEnum.termState();
-					} else {
-						state = null;
-					}
-				} else {
-					state = null;
-				}
-			} else {
-				state = null;
-			}
-		} else {
-			state = termContext.get(context.ord);
-		}
-
-		if (state == null) { // term is not present in that reader
-			return TermSpans.EMPTY_TERM_SPANS;
-		}
-
-		final TermsEnum termsEnum = context.reader().terms(term.field())
-				.iterator(null);
-		termsEnum.seekExact(term.bytes(), state);
-
-		PostingsEnum postings = termsEnum.postings(acceptDocs, null, PostingsEnum.POSITIONS | PostingsEnum.OFFSETS);
-
-		if (postings != null) {
-			return new TermSpans(postings, term);
-		}
-		// term does exist, but has no positions
-		throw new IllegalStateException(
-				"field \""
-						+ term.field()
-						+ "\" was indexed without position data; cannot run SpanTermQuery (term="
-						+ term.text() + ")");
+		
+		Spans spans = q.getSpans(context, acceptDocs, termContexts);
+		return new BLSpansWrapper(spans);
 	}
+
+	@Override
+	public String toString(String arg0) {
+		return q.toString();
+	}
+	
+	@Override
+	public void extractTerms(Set<Term> terms) {
+		q.extractTerms(terms);
+	}
+
+	@Override
+	public void setBoost(float b) {
+		q.setBoost(b);
+	}
+
+	@Override
+	public float getBoost() {
+		return q.getBoost();
+	}
+
+	@Override
+	public Query clone() {
+		BLSpanTermQuery cl = new BLSpanTermQuery(q.getTerm());
+		cl.setBoost(q.getBoost());
+		return cl;
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() ^ q.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (super.equals(obj)) {
+			return q.equals(((BLSpanTermQuery)obj).q);
+		}
+		return false;
+	}
+	
+	
+
 }
