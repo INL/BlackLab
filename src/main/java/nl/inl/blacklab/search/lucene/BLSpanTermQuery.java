@@ -27,7 +27,6 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
@@ -105,13 +104,6 @@ public class BLSpanTermQuery extends SpanQuery {
 	@Override
 	public float getBoost() {
 		return q.getBoost();
-	}
-
-	@Override
-	public Query clone() {
-		BLSpanTermQuery cl = new BLSpanTermQuery(q.getTerm());
-		cl.setBoost(q.getBoost());
-		return cl;
 	}
 
 	@Override
