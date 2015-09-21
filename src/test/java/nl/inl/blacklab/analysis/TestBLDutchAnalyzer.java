@@ -32,6 +32,7 @@ public class TestBLDutchAnalyzer {
 		BLDutchAnalyzer analyzer = new BLDutchAnalyzer();
 		try {
 			TokenStream ts = analyzer.tokenStream("contents", r);
+			ts.reset();
 			try {
 				CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
 				Assert.assertTrue(ts.incrementToken());
