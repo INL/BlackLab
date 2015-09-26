@@ -15,11 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.lucene.SpansStub;
-
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.blacklab.MockSpans;
 
 public class TestHits {
 
@@ -28,7 +28,7 @@ public class TestHits {
 		int[] aDoc = new int[] { 1, 2 };
 		int[] aStart = new int[] { 1, 2 };
 		int[] aEnd = new int[] { 2, 3 };
-		Spans a = new SpansStub(aDoc, aStart, aEnd);
+		Spans a = new MockSpans(aDoc, aStart, aEnd);
 
 		@SuppressWarnings("deprecation")
 		Hits hits = new Hits(null, null, a);

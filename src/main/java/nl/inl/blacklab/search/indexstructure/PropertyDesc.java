@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.lucene.index.IndexReader;
+
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-
-import org.apache.lucene.index.IndexReader;
 
 /** Description of a property */
 public class PropertyDesc {

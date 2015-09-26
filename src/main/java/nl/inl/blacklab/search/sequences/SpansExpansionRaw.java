@@ -17,14 +17,14 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -50,11 +50,11 @@ class SpansExpansionRaw extends BLSpans {
 	/** The clause to expand */
 	private BLSpans clause;
 
-	/** Whether or not there's more hits in the clause */
-	private boolean more = true;
+	/** Whether or not there's more docs in the clause */
+	private int currentDoc = -1;
 
-	/** Whether or not we've called clause.next() yet */
-	private boolean clauseNexted;
+	/** Current startPosition() in the clause */
+	private int clauseStart = -1;
 
 	/** Whether to expand to left (true) or right (false) */
 	private boolean expandToLeft;
@@ -66,10 +66,10 @@ class SpansExpansionRaw extends BLSpans {
 	private int max;
 
 	/** Start of the current expanded hit */
-	private int start;
+	private int start = -1;
 
 	/** End of the current expanded hit */
-	private int end;
+	private int end = -1;
 
 	/** Number of expansion steps left to do for current clause hit */
 	private int expandStepsLeft = 0;
@@ -86,6 +86,8 @@ class SpansExpansionRaw extends BLSpans {
 	/** How much to subtract from length (for ignoring closing token) */
 	private int subtractFromLength;
 
+	private boolean alreadyAtFirstHit;
+
 	public SpansExpansionRaw(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
 		subtractFromLength = ignoreLastToken ? 1 : 0;
 		if (!expandToLeft) {
@@ -94,7 +96,6 @@ class SpansExpansionRaw extends BLSpans {
 			lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		}
 		this.clause = BLSpansWrapper.optWrap(clause);
-		clauseNexted = false;
 		this.expandToLeft = expandToLeft;
 		this.min = min;
 		this.max = max;
@@ -111,32 +112,44 @@ class SpansExpansionRaw extends BLSpans {
 			lengthGetter.setTest(b);
 	}
 
-	/**
-	 * @return the Lucene document id of the current hit
-	 */
 	@Override
-	public int doc() {
-		return clause.doc();
+	public int docID() {
+		return currentDoc;
 	}
 
-	/**
-	 * @return end position of current hit
-	 */
 	@Override
-	public int end() {
+	public int endPosition() {
+		if (alreadyAtFirstHit)
+			return -1; // .nextStartPosition() not called yet
 		return end;
 	}
 
-	/**
-	 * Go to the next match.
-	 *
-	 * @return true if we're on a valid match, false if we're done.
-	 * @throws IOException
-	 */
 	@Override
-	public boolean next() throws IOException {
-		if (!more)
-			return false;
+	public int nextDoc() throws IOException {
+		alreadyAtFirstHit = false;
+		if (currentDoc != NO_MORE_DOCS) {
+			do {
+				currentDoc = clause.nextDoc();
+				if (currentDoc == NO_MORE_DOCS)
+					return NO_MORE_DOCS;
+				clauseStart = start = end = -1;
+				clauseStart = goToNextClauseSpan();
+			} while (clauseStart == NO_MORE_POSITIONS);
+			alreadyAtFirstHit = true;
+		}
+		return currentDoc;
+	}
+
+	@Override
+	public int nextStartPosition() throws IOException {
+		if (alreadyAtFirstHit) {
+			alreadyAtFirstHit = false;
+			return start;
+		}
+		if (currentDoc == NO_MORE_DOCS)
+			return NO_MORE_POSITIONS;
+		if (clauseStart == NO_MORE_POSITIONS)
+			return NO_MORE_POSITIONS;
 
 		if (expandStepsLeft > 0) {
 			expandStepsLeft--;
@@ -145,64 +158,66 @@ class SpansExpansionRaw extends BLSpans {
 
 				// Valid expansion?
 				if (start >= 0)
-					return true;
+					return start;
 
 				// Can't finish the expansion because we're at the start
 				// of the document; go to next hit.
 			} else {
-				// We can't validate the end expansion because we don't know the length of the
-				// content of this field. So expansion to the right always succeeds, and may
-				// yield invalid hits. If a query ends with wildcard tokens, you should be aware of
-				// this and take steps to eliminate these invalid hits.
 				end++;
-				return true;
+				return start;
 			}
 		}
 
-		more = clause.next();
-		clauseNexted = true;
-		if (more)
-			return resetExpand();
-		return false;
+		clauseStart = goToNextClauseSpan();
+		return clauseStart;
 	}
 
-	/**
-	 * Go to the specified document, if it has hits. If not, go to the next document containing
-	 * hits.
-	 *
-	 * @param doc
-	 *            the document number to skip to / over
-	 * @return true if we're at a valid hit, false if not
-	 * @throws IOException
-	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
-		if (!more)
-			return false;
-		if (!clauseNexted || clause.doc() < doc) {
-			more = clause.skipTo(doc);
-			if (more)
-				return resetExpand();
-			return false;
+	public int advance(int doc) throws IOException {
+		alreadyAtFirstHit = false;
+		if (currentDoc != NO_MORE_DOCS) {
+			if (currentDoc < doc) {
+				currentDoc = clause.advance(doc);
+				if (currentDoc != NO_MORE_DOCS) {
+					while (true) {
+						clauseStart = start = end = -1;
+						clauseStart = goToNextClauseSpan();
+						if (clauseStart != NO_MORE_POSITIONS) {
+							alreadyAtFirstHit = true;
+							return currentDoc;
+						}
+						currentDoc = clause.nextDoc();
+						if (currentDoc == NO_MORE_DOCS)
+							return NO_MORE_DOCS;
+					}
+				}
+			} else {
+				nextDoc(); // per Lucene's specification, always at least go to the next doc
+			}
 		}
-		return next(); // per Lucene's specification, always at least go to the next hit
+		return currentDoc;
 	}
 
 	/**
-	 * The source clause is at a new hit. Reset the expansion process.
+	 * Go to the next position in the source clause and reset the expansion process.
 	 *
 	 * Note that we may discover we can't do the minimum expansion (because the hit is at the start
 	 * of the document, for example), so we may have to advance the clause again, and may actually
 	 * run out of hits while doing so.
 	 *
-	 * @return true if we're at a valid hit and have reset the expansion, false if we're done
+	 * @return the start position if we're at a valid hit and have reset the expansion, NO_MORE_POSITIONS if we're done
 	 * @throws IOException
 	 */
-	private boolean resetExpand() throws IOException {
+	private int goToNextClauseSpan() throws IOException {
+		clauseStart = clause.nextStartPosition();
+		if (clauseStart == NO_MORE_POSITIONS) {
+			start = end = NO_MORE_POSITIONS;
+			return NO_MORE_POSITIONS;
+		}
 		while (true) {
 			// Attempt to do the initial expansion and reset the counter
-			start = clause.start();
-			end = clause.end();
+			start = clauseStart;
+			end = clause.endPosition();
 			if (expandToLeft)
 				start -= min;
 			else
@@ -217,9 +232,9 @@ class SpansExpansionRaw extends BLSpans {
 				// Can only expand to the right until last token in document.
 
 				// Do we know this document's length already?
-				if (clause.doc() != tokenLengthDocId) {
+				if (currentDoc != tokenLengthDocId) {
 					// No, determine length now
-					tokenLengthDocId = clause.doc();
+					tokenLengthDocId = currentDoc;
 					tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - subtractFromLength;
 				}
 				maxExpandSteps = tokenLength - end;
@@ -234,12 +249,14 @@ class SpansExpansionRaw extends BLSpans {
 			}
 
 			// Valid expansion?   [shouldn't be necessary anymore because we calculated max]
-			if (/*start >= 0 &&*/ expandStepsLeft >= 0)
-				return true; // Yes, return
+			if (expandStepsLeft >= 0)
+				return start; // Yes, return
 
 			// No, try the next hit, if there one
-			if (!next())
-				return false; // No hits left, we're done
+			if (nextStartPosition() == NO_MORE_POSITIONS) {
+				start = end = NO_MORE_POSITIONS;
+				return NO_MORE_POSITIONS; // No hits left, we're done
+			}
 		}
 	}
 
@@ -247,7 +264,9 @@ class SpansExpansionRaw extends BLSpans {
 	 * @return start of the current hit
 	 */
 	@Override
-	public int start() {
+	public int startPosition() {
+		if (alreadyAtFirstHit)
+			return -1; // .nextStartPosition() not called yet
 		return start;
 	}
 

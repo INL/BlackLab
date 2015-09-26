@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.perdocument.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.perdocument.DocResults;
@@ -11,9 +14,6 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.util.LuceneUtil;
-
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.search.Query;
 
 /**
  * Determine the number of tokens in the subcorpus defined by each of the metadatafield values.

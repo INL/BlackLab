@@ -18,9 +18,9 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * "AND NOT"-combination of two Spans objects.
@@ -37,32 +37,62 @@ public class SpansAndNot extends BLSpans {
 
 	private boolean excludeSpansNexted;
 
-	private boolean moreIncludeSpans;
+	private boolean moreIncludeSpansDocs;
+	
+	private boolean moreIncludeSpansPos;
 
-	private boolean moreExcludeSpans;
+	private boolean moreExcludeSpansDocs;
 
 	public SpansAndNot(Spans includeSpans, Spans excludeSpans) {
 		this.includeSpans = BLSpansWrapper.optWrapSort(includeSpans);
 		this.excludeSpans = BLSpansWrapper.optWrapSort(excludeSpans);
 		excludeSpansNexted = false;
-		moreIncludeSpans = true;
-		moreExcludeSpans = true;
+		moreIncludeSpansDocs = true;
+		moreExcludeSpansDocs = true;
+		moreIncludeSpansPos = false;
 	}
 
 	/**
 	 * @return current document number
 	 */
 	@Override
-	public int doc() {
-		return includeSpans.doc();
+	public int docID() {
+		return includeSpans.docID();
 	}
 
 	/**
 	 * @return end of current span
 	 */
 	@Override
-	public int end() {
-		return includeSpans.end();
+	public int endPosition() {
+		return includeSpans.endPosition();
+	}
+
+	@Override
+	public int nextDoc() throws IOException {
+		// This has to be done right away, but we don't want it in the
+		// constructor because it may throw an exception
+		if (!excludeSpansNexted) {
+			moreExcludeSpansDocs = excludeSpans.nextDoc() != NO_MORE_DOCS;
+			excludeSpansNexted = true;
+		}
+
+		boolean done = false;
+		int newDocId = -1;
+		do {
+			if (moreIncludeSpansDocs && includeSpans.nextDoc() != NO_MORE_DOCS) {
+				// Voldoet deze?
+				newDocId = includeSpans.docID();
+				if (moreExcludeSpansDocs && excludeSpans.docID() < newDocId) {
+					moreExcludeSpansDocs = excludeSpans.advance(newDocId) != NO_MORE_DOCS;
+				}
+			} else {
+				// Geen spans meer over!
+				return NO_MORE_DOCS;
+			}
+		} while (!done && moreExcludeSpansDocs && includeSpans.docID() == excludeSpans.docID());
+		moreIncludeSpansPos = true;
+		return includeSpans.docID();
 	}
 
 	/**
@@ -72,29 +102,11 @@ public class SpansAndNot extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean next() throws IOException {
-		// This has to be done right away, but we don't want it in the
-		// constructor because it may throw an exception
-		if (!excludeSpansNexted) {
-			moreExcludeSpans = excludeSpans.next();
-			excludeSpansNexted = true;
-		}
-
-		boolean done = false;
-		int newDocId = -1;
-		do {
-			if (moreIncludeSpans && includeSpans.next()) {
-				// Voldoet deze?
-				newDocId = includeSpans.doc();
-				if (moreExcludeSpans && excludeSpans.doc() < newDocId) {
-					moreExcludeSpans = excludeSpans.skipTo(newDocId);
-				}
-			} else {
-				// Geen spans meer over!
-				done = true;
-			}
-		} while (!done && moreExcludeSpans && includeSpans.doc() == excludeSpans.doc());
-		return !done;
+	public int nextStartPosition() throws IOException {
+		if (!moreIncludeSpansPos)
+			return NO_MORE_POSITIONS;
+		moreIncludeSpansPos = includeSpans.nextStartPosition() != NO_MORE_POSITIONS;
+		return includeSpans.startPosition();
 	}
 
 	/**
@@ -107,29 +119,30 @@ public class SpansAndNot extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
-		if (moreIncludeSpans)
-			moreIncludeSpans = includeSpans.skipTo(doc);
-		if (!moreIncludeSpans)
-			return false;
+	public int advance(int doc) throws IOException {
+		if (moreIncludeSpansDocs)
+			moreIncludeSpansDocs = includeSpans.advance(doc) != NO_MORE_DOCS;
+		if (!moreIncludeSpansDocs)
+			return NO_MORE_DOCS;
 
-		if (moreExcludeSpans) {
-			moreExcludeSpans = excludeSpans.skipTo(doc);
+		if (moreExcludeSpansDocs) {
+			moreExcludeSpansDocs = excludeSpans.advance(doc) != NO_MORE_DOCS;
 			excludeSpansNexted = true;
-			if (moreExcludeSpans && includeSpans.doc() == excludeSpans.doc()) {
-				return next();
+			if (moreExcludeSpansDocs && includeSpans.docID() == excludeSpans.docID()) {
+				return nextDoc();
 			}
 		}
 
-		return true;
+		moreIncludeSpansPos = true;
+		return includeSpans.docID();
 	}
 
 	/**
 	 * @return start of current span
 	 */
 	@Override
-	public int start() {
-		return includeSpans.start();
+	public int startPosition() {
+		return includeSpans.startPosition();
 	}
 
 	@Override
@@ -138,13 +151,13 @@ public class SpansAndNot extends BLSpans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		return null;
+	public Collection<byte[]> getPayload() throws IOException {
+		return includeSpans.getPayload();
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
-		return false;
+	public boolean isPayloadAvailable() throws IOException {
+		return includeSpans.isPayloadAvailable();
 	}
 
 	@Override

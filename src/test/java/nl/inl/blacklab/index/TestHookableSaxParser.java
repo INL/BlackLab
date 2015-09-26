@@ -6,14 +6,14 @@ import java.io.StringReader;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 
 public class TestHookableSaxParser {
 

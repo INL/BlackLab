@@ -17,11 +17,11 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Apply a Filter to a Spans.
@@ -42,50 +42,57 @@ public class SpansFiltered extends BLSpans {
 		docIdSetIter = filterDocs.iterator();
 		more = false;
 		if (docIdSetIter != null) {
-			more = (docIdSetIter.nextDoc() != DocIdSetIterator.NO_MORE_DOCS);
+			more = (docIdSetIter.nextDoc() != NO_MORE_DOCS);
 		}
 	}
 
-	private boolean synchronize() throws IOException {
-		while (more && spans.doc() != docIdSetIter.docID()) {
-			if (spans.doc() < docIdSetIter.docID()) {
-				more = spans.skipTo(docIdSetIter.docID());
-			} else if (docIdSetIter.advance(spans.doc()) == DocIdSetIterator.NO_MORE_DOCS) {
+	private int synchronize() throws IOException {
+		while (more && spans.docID() != docIdSetIter.docID()) {
+			if (spans.docID() < docIdSetIter.docID()) {
+				more = spans.advance(docIdSetIter.docID()) != NO_MORE_DOCS;
+			} else if (docIdSetIter.advance(spans.docID()) == NO_MORE_DOCS) {
 				more = false;
 			}
 		}
-		return more;
+		return more ? spans.docID() : NO_MORE_DOCS;
 	}
 
 	@Override
-	public boolean next() throws IOException {
+	public int nextDoc() throws IOException {
 		if (!more)
-			return false;
-		more = spans.next();
+			return NO_MORE_DOCS;
+		more = spans.nextDoc() != NO_MORE_DOCS;
 		return synchronize();
 	}
 
 	@Override
-	public boolean skipTo(int target) throws IOException {
+	public int nextStartPosition() throws IOException {
 		if (!more)
-			return false;
-		more = spans.skipTo(target);
+			return NO_MORE_POSITIONS;
+		return spans.nextStartPosition();
+	}
+
+	@Override
+	public int advance(int target) throws IOException {
+		if (!more)
+			return NO_MORE_DOCS;
+		more = spans.advance(target) != NO_MORE_DOCS;
 		return synchronize();
 	}
 
 	@Override
-	public int doc() {
-		return spans.doc();
+	public int docID() {
+		return spans.docID();
 	}
 
 	@Override
-	public int end() {
-		return spans.end();
+	public int endPosition() {
+		return spans.endPosition();
 	}
 
 	@Override
-	public int start() {
-		return spans.start();
+	public int startPosition() {
+		return spans.startPosition();
 	}
 
 	@Override

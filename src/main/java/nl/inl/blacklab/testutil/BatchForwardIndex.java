@@ -2,11 +2,11 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 
+import org.apache.log4j.BasicConfigurator;
+
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
-
-import org.apache.log4j.BasicConfigurator;
 
 /**
  * Executes a batch of fetch operations on a forward index.
@@ -25,38 +25,33 @@ public class BatchForwardIndex {
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i].trim();
 			if (arg.charAt(0) == '-') {
-				if (arg.equals("-m")) {
-					ForwardIndex.setKeepInMemory(false);
-				} else {
-					System.err.println("Illegal option: " + arg);
-					usage();
-					return;
-				}
-			} else {
-				switch (fileArgNumber) {
-				case 0:
-					indexDir = new File(arg);
-					if (!indexDir.exists() || !indexDir.isDirectory()) {
-						System.err.println("Index directory not found: " + arg);
-						usage();
-						return;
-					}
-					break;
-				case 1:
-					inputFile = new File(arg);
-					if (!inputFile.exists()) {
-						System.err.println("Input file not found: " + arg);
-						usage();
-						return;
-					}
-					break;
-				default:
-					System.err.println("Too many file arguments (supply index dir and input file)");
-					usage();
-					return;
-				}
-				fileArgNumber++;
+				System.err.println("Illegal option: " + arg);
+				usage();
+				return;
 			}
+			switch (fileArgNumber) {
+			case 0:
+				indexDir = new File(arg);
+				if (!indexDir.exists() || !indexDir.isDirectory()) {
+					System.err.println("Index directory not found: " + arg);
+					usage();
+					return;
+				}
+				break;
+			case 1:
+				inputFile = new File(arg);
+				if (!inputFile.exists()) {
+					System.err.println("Input file not found: " + arg);
+					usage();
+					return;
+				}
+				break;
+			default:
+				System.err.println("Too many file arguments (supply index dir and input file)");
+				usage();
+				return;
+			}
+			fileArgNumber++;
 		}
 		if (fileArgNumber < 2) {
 			System.err.println("Too few file arguments (supply index dir and input file)");

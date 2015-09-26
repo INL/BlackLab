@@ -21,11 +21,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
+
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 
 
 /**

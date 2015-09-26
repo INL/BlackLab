@@ -17,11 +17,11 @@ package nl.inl.blacklab.search.grouping;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Hits;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+
+import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.Hits;
 
 /**
  * A hit property for grouping on by decade based on a stored field

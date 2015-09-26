@@ -18,68 +18,48 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.Spans;
-import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.TestUtil;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Filter;
+
 public class TestSpansPositionFilter {
+	
+	private SpansPositionFilter getSpans(boolean swap, Filter type) {
+		Spans a = MockSpans.fromLists(
+			new int[] {  1,  1,  2,  2,  2,  3 },
+			new int[] { 10, 20, 10, 10, 30, 20 },
+			new int[] { 15, 25, 15, 20, 35, 25 }
+		);
+		Spans b = MockSpans.fromLists(
+			new int[] {  1,  2,  3 }, 
+			new int[] { 11, 22, 20 }, 
+			new int[] { 12, 23, 25 }
+		);
+		return new SpansPositionFilter(swap ? b : a, swap ? a : b, type);
+	}
+
 	@Test
 	public void testContaining() throws IOException {
-		int[] aDoc = new int[] { 1, 1, 2, 2, 2, 3 };
-		int[] aStart = new int[] { 10, 20, 10, 10, 30, 20 };
-		int[] aEnd = new int[] { 15, 25, 15, 20, 35, 25 };
-		Spans a = new SpansStub(aDoc, aStart, aEnd);
-
-		int[] bDoc = new int[] { 1, 2, 3 };
-		int[] bStart = new int[] { 11, 22, 20 };
-		int[] bEnd = new int[] { 12, 23, 25 };
-		Spans b = new SpansStub(bDoc, bStart, bEnd);
-
-		SpansPositionFilter spansContaining = new SpansPositionFilter(a, b);
-
-		// First hit
-		Assert.assertTrue(spansContaining.next());
-		Assert.assertEquals(1, spansContaining.doc());
-		Assert.assertEquals(10, spansContaining.start());
-		Assert.assertEquals(15, spansContaining.end());
-
-		// Second hit
-		Assert.assertTrue(spansContaining.next());
-		Assert.assertEquals(3, spansContaining.doc());
-		Assert.assertEquals(20, spansContaining.start());
-		Assert.assertEquals(25, spansContaining.end());
-
-		// Done
-		Assert.assertFalse(spansContaining.next());
+		SpansPositionFilter spans = getSpans(false, Filter.CONTAINING);
+		Spans exp = MockSpans.fromLists(
+			new int[] { 1,  3},
+			new int[] {10, 20}, 
+			new int[] {15, 25}
+		);
+		TestUtil.assertEquals(exp, spans);
 	}
 
 	@Test
 	public void testWithin() throws IOException {
-		int[] aDoc = new int[] { 1, 1, 2, 2, 2, 3 };
-		int[] aStart = new int[] { 10, 20, 10, 10, 30, 20 };
-		int[] aEnd = new int[] { 15, 25, 15, 20, 35, 25 };
-		Spans a = new SpansStub(aDoc, aStart, aEnd);
-
-		int[] bDoc = new int[] { 1, 2, 3 };
-		int[] bStart = new int[] { 11, 22, 20 };
-		int[] bEnd = new int[] { 12, 23, 25 };
-		Spans b = new SpansStub(bDoc, bStart, bEnd);
-
-		SpansPositionFilter spansContaining = new SpansPositionFilter(b, a, SpanQueryPositionFilter.Filter.WITHIN);
-
-		// First hit
-		Assert.assertTrue(spansContaining.next());
-		Assert.assertEquals(1, spansContaining.doc());
-		Assert.assertEquals(11, spansContaining.start());
-		Assert.assertEquals(12, spansContaining.end());
-
-		// Second hit
-		Assert.assertTrue(spansContaining.next());
-		Assert.assertEquals(3, spansContaining.doc());
-		Assert.assertEquals(20, spansContaining.start());
-		Assert.assertEquals(25, spansContaining.end());
-
-		// Done
-		Assert.assertFalse(spansContaining.next());
+		SpansPositionFilter spans = getSpans(true, Filter.WITHIN);
+		Spans exp = MockSpans.fromLists(
+			new int[] {  1,  3 },
+			new int[] { 11, 20 },
+			new int[] { 12, 25 }
+		);
+		TestUtil.assertEquals(exp, spans);
 	}
 
 }

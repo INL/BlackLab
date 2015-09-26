@@ -105,7 +105,7 @@ public abstract class BLSpans extends SpansAbstract {
 	 * @return the Hit object for the current hit
 	 */
 	public Hit getHit() {
-		return new Hit(doc(), start(), end());
+		return new Hit(docID(), startPosition(), endPosition());
 	}
 
 	/**
@@ -118,7 +118,7 @@ public abstract class BLSpans extends SpansAbstract {
 	 * @return the HitSpan object for the current hit
 	 */
 	public Span getSpan() {
-		return new Span(start(), end());
+		return new Span(startPosition(), endPosition());
 	}
 
 	/**

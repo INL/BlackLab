@@ -24,6 +24,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.lucene.index.CorruptIndexException;
+
 import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -32,8 +34,6 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.PropertiesUtil;
-
-import org.apache.lucene.index.CorruptIndexException;
 
 /**
  * The indexer class and main program for the ANW corpus.

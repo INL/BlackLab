@@ -16,7 +16,9 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -50,5 +52,20 @@ public class SpanQueryUnique extends SpanQuery {
 	@Override
 	public String getField() {
 		return src.getField();
+	}
+
+	@Override
+	protected void extractTerms(Set<Term> terms) {
+		try {
+			// FIXME: temporary extractTerms hack
+			Method methodExtractTerms = SpanQuery.class.
+			        getDeclaredMethod("extractTerms", Set.class);
+			methodExtractTerms.setAccessible(true);
+			
+		    methodExtractTerms.invoke(src, terms);
+			//src.extractTerms(terms);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

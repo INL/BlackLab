@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search.lucene;
+package nl.inl.blacklab;
 
 import java.util.Map;
 import java.util.Set;
@@ -29,23 +29,31 @@ import org.apache.lucene.util.Bits;
  * Stub SpanQuery class for testing. Takes arrays and iterates through 'hits'
  * from these arrays.
  */
-public class SpanQueryStub extends SpanQuery {
+public class MockSpanQuery extends SpanQuery {
 	private int[] doc;
 
 	private int[] start;
 
 	private int[] end;
+	
+	boolean isSimple;
 
-	public SpanQueryStub(int[] doc, int[] start, int[] end) {
+	public MockSpanQuery(int[] doc, int[] start, int[] end, boolean isSimple) {
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
+		this.isSimple = isSimple;
+	}
+
+	public MockSpanQuery(int[] doc, int[] start, int[] end) {
+		this(doc, start, end, false);
 	}
 
 	@Override
 	public Spans getSpans(LeafReaderContext arg0, Bits arg1, Map<Term, TermContext> arg2) {
-		return new SpansStub(doc, start, end);
+		return new MockSpans(doc, start, end);
 	}
+	
 	@Override
 	public String toString(String field) {
 		return "SpanQueryStub()";

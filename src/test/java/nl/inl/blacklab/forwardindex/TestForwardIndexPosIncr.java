@@ -18,11 +18,11 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.util.Arrays;
 
-import nl.inl.util.Utilities;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.util.Utilities;
 
 public class TestForwardIndexPosIncr {
 	private ForwardIndex fi;

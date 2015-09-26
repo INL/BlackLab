@@ -19,12 +19,12 @@ import java.io.File;
 import java.text.Collator;
 import java.util.Locale;
 
-import nl.inl.util.Utilities;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import nl.inl.util.Utilities;
 
 public class TestTermsV2 {
 	private Terms t;

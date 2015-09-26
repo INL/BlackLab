@@ -18,13 +18,13 @@
  */
 package nl.inl.blacklab.analysis;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
+
+import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * A simple analyzer that isn't limited to Latin. Designed for

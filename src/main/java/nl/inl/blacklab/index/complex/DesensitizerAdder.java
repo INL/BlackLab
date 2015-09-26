@@ -1,8 +1,8 @@
 package nl.inl.blacklab.index.complex;
 
-import nl.inl.blacklab.filter.DesensitizeFilter;
-
 import org.apache.lucene.analysis.TokenStream;
+
+import nl.inl.blacklab.filter.DesensitizeFilter;
 
 public class DesensitizerAdder implements TokenFilterAdder {
 

@@ -17,11 +17,11 @@ package nl.inl.blacklab.perdocument;
 
 import java.util.List;
 
+import org.apache.lucene.document.Document;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
-
-import org.apache.lucene.document.Document;
 
 /**
  * A document result, containing a Lucene document from the index and a collection of Hit objects.

@@ -17,12 +17,12 @@ package nl.inl.blacklab.analysis;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.filter.StubTokenStream;
-
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.blacklab.filter.StubTokenStream;
 
 public class TestBLDutchTokenFilter {
 

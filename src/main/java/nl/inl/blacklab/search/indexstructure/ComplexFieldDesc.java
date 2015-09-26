@@ -1,17 +1,16 @@
 package nl.inl.blacklab.search.indexstructure;
 
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
+import org.apache.lucene.index.IndexReader;
+
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
-
-import org.apache.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
 
 /** Description of a complex field */
 public class ComplexFieldDesc extends BaseFieldDesc {
@@ -215,11 +214,6 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 
 		// throw new RuntimeException(
 		// "No main property (with char. offsets) detected for complex field " + fieldName);
-	}
-
-	@Deprecated
-	public void print(PrintStream out) {
-		print(new PrintWriter(out));
 	}
 
 	public void print(PrintWriter out) {

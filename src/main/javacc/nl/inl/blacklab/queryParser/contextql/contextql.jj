@@ -62,18 +62,6 @@ public class ContextualQueryLanguageParser {
         return parser.query();
     }
     
-    /**
-     * @param query our query
-     * @return the parsed query
-     * @deprecated use version that also takes a Searcher, so we can tell the properties from the metadata fields
-     */
-    @Deprecated
-    public static CompleteQuery parse(String query) throws nl.inl.blacklab.queryParser.contextql.ParseException 
-    {
-        ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(query));
-        return parser.query();
-    }
-    
     private String chopEnds(String input)
     {
     	if (input.length() >= 2)

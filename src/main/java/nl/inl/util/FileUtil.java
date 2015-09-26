@@ -175,34 +175,6 @@ public class FileUtil {
 	/**
 	 * Read a file into a list of lines
 	 *
-	 * @param filePath
-	 *            the file to read
-	 * @return list of lines
-	 * @deprecated use File version instead
-	 */
-	@Deprecated
-	public static List<String> readLines(String filePath) {
-		return readLines(new File(filePath));
-	}
-
-	/**
-	 * Read a file into a list of lines
-	 *
-	 * @param filePath
-	 *            the file to read
-	 * @param encoding
-	 *            the encoding to use, e.g. "utf-8"
-	 * @return list of lines
-	 * @deprecated use File version instead
-	 */
-	@Deprecated
-	public static List<String> readLines(String filePath, String encoding) {
-		return readLines(new File(filePath), encoding);
-	}
-
-	/**
-	 * Read a file into a list of lines
-	 *
 	 * @param inputFile
 	 *            the file to read
 	 * @return list of lines

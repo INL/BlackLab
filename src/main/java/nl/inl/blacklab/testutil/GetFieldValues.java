@@ -9,11 +9,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import nl.inl.blacklab.search.Searcher;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.IndexReader;
+
+import nl.inl.blacklab.search.Searcher;
 
 public class GetFieldValues {
 	public static void main(String[] args) throws Exception {

@@ -16,10 +16,11 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-
-import nl.inl.blacklab.search.Span;
+import java.util.Collection;
 
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Combines two Spans using AND. Note that this means that only matches with the same document id,
@@ -29,140 +30,173 @@ class SpansAnd extends BLSpans {
 	/** The two sets of hits to combine */
 	private BLSpans[] spans = new BLSpans[2];
 
-	/** Do the Spans objects still point to valid hits? */
-	private boolean stillValidSpans[] = new boolean[2];
+	/** -1 = not started, NO_MORE_DOCS = done, otherwise = docID */
+	private int currentDoc[] = new int[2];
+
+	/** -1 = not started, NO_MORE_POSITIONS = done, otherwise = start position */
+	private int currentStart[] = new int[2];
+
+	private boolean alreadyAtFirstMatch = false;
 
 	public SpansAnd(Spans leftClause, Spans rightClause) {
 		spans[0] = BLSpansWrapper.optWrapSort(leftClause);
 		spans[1] = BLSpansWrapper.optWrapSort(rightClause);
-		stillValidSpans[1] = true;
-		stillValidSpans[0] = true;
+		currentDoc[0] = currentDoc[1] = -1;
+		currentStart[0] = currentStart[1] = -1;
 	}
 
-	/**
-	 * @return the Lucene document id of the current hit
-	 */
 	@Override
-	public int doc() {
-		return spans[0].doc();
+	public int docID() {
+		if (currentDoc[1] == NO_MORE_DOCS)
+			return NO_MORE_DOCS;
+		return currentDoc[0];
 	}
 
-	/**
-	 * @return end position of current hit
-	 */
 	@Override
-	public int end() {
-		return spans[0].end();
+	public int startPosition() {
+		if (alreadyAtFirstMatch)
+			return -1; // .nextStartPosition() not called yet
+		if (currentStart[1] == NO_MORE_POSITIONS)
+			return NO_MORE_POSITIONS;
+		return currentStart[0];
 	}
 
-	/**
-	 * Go to next span.
-	 *
-	 * @return true if we're at the next span, false if we're done
-	 * @throws IOException
-	 */
 	@Override
-	public boolean next() throws IOException {
+	public int endPosition() {
+		if (alreadyAtFirstMatch)
+			return -1; // .nextStartPosition() not called yet
+		if (currentStart[1] == NO_MORE_POSITIONS)
+			return NO_MORE_POSITIONS;
+		return spans[0].endPosition();
+	}
+	
+	@Override
+	public int nextDoc() throws IOException {
+		alreadyAtFirstMatch = false;
+		if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
+			return NO_MORE_DOCS;
+		int laggingSpans = currentDoc[0] < currentDoc[1] ? 0 : 1;
+		catchUpSpan(laggingSpans);
+		return synchronizeDoc();
+	}
+	
+	@Override
+	public int nextStartPosition() throws IOException {
+		if (alreadyAtFirstMatch) {
+			alreadyAtFirstMatch = false;
+			return currentStart[0];
+		}
+		if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
+			return NO_MORE_POSITIONS;
 		// Waren we al klaar?
-		if (!stillValidSpans[0] || !stillValidSpans[1])
-			return false;
+		if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS)
+			return NO_MORE_POSITIONS;
 
 		// Draai beide Spans door
-		stillValidSpans[0] = spans[0].next();
-		stillValidSpans[1] = spans[1].next();
+		currentStart[0] = spans[0].nextStartPosition();
+		currentStart[1] = spans[1].nextStartPosition();
 
-		return synchronize();
-
+		return synchronizePosition();
 	}
-
-	private boolean synchronize() throws IOException {
+	
+	private int synchronizePosition() throws IOException {
 		// Synchronise spans
-		boolean synched = false;
-		while (!synched && stillValidSpans[0] && stillValidSpans[1]) {
-			// Synch at document level
-			if (spans[0].doc() != spans[1].doc()) {
-				if (spans[0].doc() < spans[1].doc())
-					synchDoc(0);
-				else
-					synchDoc(1);
-				continue;
-			}
-
+		while (true) {
+			
+			if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS)
+				return NO_MORE_POSITIONS;
+			
 			// Synch at match start level
-			if (spans[0].start() != spans[1].start()) {
-				if (spans[0].start() < spans[1].start())
-					synchMatchStart(0);
-				else
-					synchMatchStart(1);
-				continue; // restart synching at doc level
+			if (currentStart[0] == -1 && currentStart[1] == -1 || currentStart[0] != currentStart[1]) {
+				int laggingSpans = currentStart[0] < currentStart[1] ? 0 : 1;
+				catchUpMatchStart(laggingSpans);
+				continue; // restart synching
 			}
 
 			// Synch at match end level
-			if (spans[0].end() != spans[1].end()) {
-				if (spans[0].end() < spans[1].end())
-					synchMatchEnd(0);
-				else
-					synchMatchEnd(1);
+			if (spans[0].endPosition() != spans[1].endPosition()) {
+				int laggingSpans = spans[0].endPosition() < spans[1].endPosition() ? 0 : 1;
+				catchUpMatchEnd(laggingSpans);
+				continue; // restart synching
+			}
+
+			// Are we done?
+			if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS) {
+				// Yes, one of the Spans was exhausted
+				return NO_MORE_POSITIONS;
+			}
+
+			// No, we are synched on a new hit
+			return currentStart[0];
+		}
+
+	}
+
+	/**
+	 * Put both spans in the same doc.
+	 * @return the doc id if succesful, or NO_MORE_DOCS if we're done
+	 * @throws IOException
+	 */
+	private int synchronizeDoc() throws IOException {
+		while (true) {
+			
+			// Are we done?
+			if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS) {
+				// Yes, one of the Spans was exhausted
+				return NO_MORE_DOCS;
+			}
+			
+			// Synch at document level
+			if (currentDoc[0] != currentDoc[1]) {
+				int laggingSpans = currentDoc[0] < currentDoc[1] ? 0 : 1;
+				catchUpSpan(laggingSpans);
+				continue;
+			}
+			
+			if (synchronizePosition() == NO_MORE_POSITIONS) {
+				// This doc doesn't match; try next doc.
+				currentDoc[0] = spans[0].nextDoc();
+				currentStart[0] = -1;
+				if (currentDoc[0] == NO_MORE_DOCS)
+					return NO_MORE_DOCS;
 				continue;
 			}
 
-			synched = true;
+			// We are synched on a new hit
+			alreadyAtFirstMatch = true;
+			return currentDoc[0];
 		}
 
-		// Are we done?
-		if (!stillValidSpans[0] || !stillValidSpans[1]) {
-			// Yes, one of the Spans was exhausted
-			return false;
-		}
-
-		// No, we are synched on a new hit
-		return true;
 	}
 
-	private void synchDoc(int laggingSpans) throws IOException {
-		stillValidSpans[laggingSpans] = spans[laggingSpans].skipTo(spans[1 - laggingSpans].doc());
+	private void catchUpSpan(int laggingSpans) throws IOException {
+		currentDoc[laggingSpans] = spans[laggingSpans].advance(currentDoc[1 - laggingSpans]);
+		currentStart[laggingSpans] = -1;
 	}
 
-	private void synchMatchStart(int laggingSpans) throws IOException {
-		int doc = spans[laggingSpans].doc();
-		int catchUpTo = spans[1 - laggingSpans].start();
-		while (stillValidSpans[laggingSpans] && spans[laggingSpans].start() < catchUpTo && spans[laggingSpans].doc() == doc) {
-			stillValidSpans[laggingSpans] = spans[laggingSpans].next();
+	private void catchUpMatchStart(int laggingSpans) throws IOException {
+		int catchUpTo = currentStart[1 - laggingSpans];
+		while (currentStart[laggingSpans] != NO_MORE_POSITIONS && currentStart[laggingSpans] < catchUpTo || currentStart[laggingSpans] == -1) {
+			currentStart[laggingSpans] = spans[laggingSpans].nextStartPosition();
 		}
 	}
 
-	private void synchMatchEnd(int laggingSpans) throws IOException {
-		int doc = spans[laggingSpans].doc();
-		int start = spans[laggingSpans].start();
-		int catchUpTo = spans[1 - laggingSpans].end();
-		while (stillValidSpans[laggingSpans] && spans[laggingSpans].end() < catchUpTo && spans[laggingSpans].doc() == doc
-				&& spans[laggingSpans].start() == start) {
-			stillValidSpans[laggingSpans] = spans[laggingSpans].next();
+	private void catchUpMatchEnd(int laggingSpans) throws IOException {
+		int start = currentStart[laggingSpans];
+		int catchUpTo = spans[1 - laggingSpans].endPosition();
+		while (currentStart[laggingSpans] == start && spans[laggingSpans].endPosition() < catchUpTo || currentStart[laggingSpans] == -1) {
+			currentStart[laggingSpans] = spans[laggingSpans].nextStartPosition();
 		}
 	}
 
-	/**
-	 * Skip to the specified document (or the first document after it containing hits)
-	 *
-	 * @param doc
-	 *            the doc number to skip to (or past)
-	 * @return true if we're still pointing to a valid hit, false if we're done
-	 * @throws IOException
-	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
+	public int advance(int doc) throws IOException {
 		// Skip beiden tot aan doc
-		stillValidSpans[0] = spans[0].skipTo(doc);
-		stillValidSpans[1] = spans[1].skipTo(doc);
-		return synchronize();
-	}
-
-	/**
-	 * @return start of current span
-	 */
-	@Override
-	public int start() {
-		return spans[0].start();
+		currentDoc[0] = spans[0].advance(doc);
+		currentStart[0] = -1; // not started yet
+		currentDoc[1] = spans[1].advance(doc);
+		currentStart[1] = -1; // not started yet
+		return synchronizeDoc();
 	}
 
 	@Override
@@ -210,5 +244,20 @@ class SpansAnd extends BLSpans {
 		spans[0].getCapturedGroups(capturedGroups);
 		spans[1].getCapturedGroups(capturedGroups);
 	}
+
+	@Override
+	public Collection<byte[]> getPayload() throws IOException {
+		Collection<byte[]> payload = spans[0].getPayload();
+		if (payload == null)
+			payload = spans[1].getPayload();
+		return payload;
+	}
+
+	@Override
+	public boolean isPayloadAvailable() throws IOException {
+		return spans[0].isPayloadAvailable() || spans[1].isPayloadAvailable();
+	}
+	
+	
 
 }

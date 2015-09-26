@@ -26,13 +26,13 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import nl.inl.util.StringUtil;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import nl.inl.util.StringUtil;
 
 /**
  * SAX parser with the ability to attach "SAX-path hooks" to process specific elements/attributes in

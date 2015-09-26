@@ -17,47 +17,55 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.lucene.SpansStub;
-
 import org.apache.lucene.search.spans.Spans;
-import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.TestUtil;
+import nl.inl.blacklab.search.lucene.BLSpans;
+
 public class TestSpansSequence {
+	
+	@Test
+	public void testSequenceSpansBasic() throws IOException {
+		int[] aDoc   = { 1, 1, 1 };
+		int[] aStart = { 1, 1, 2 };
+		int[] aEnd   = { 2, 3, 4 };
+		Spans a = new MockSpans(aDoc, aStart, aEnd);
+
+		int[] bDoc   = { 1, 1, 1 };
+		int[] bStart = { 2, 2, 3 };
+		int[] bEnd   = { 4, 5, 4 };
+		Spans b = new MockSpans(bDoc, bStart, bEnd);
+
+		Spans spans = new SpansSequenceRaw(a, b);
+
+		int[] expDoc   = { 1, 1, 1 };
+		int[] expStart = { 1, 1, 1 };
+		int[] expEnd   = { 4, 5, 4 };
+		Spans exp = new MockSpans(expDoc, expStart, expEnd);
+		TestUtil.assertEquals(exp, spans);
+	}
+
 	@Test
 	public void testSequenceSpansSimple() throws IOException {
-		int[] aDoc = new int[] { 1, 1, 1 };
-		int[] aStart = new int[] { 1, 1, 2 };
-		int[] aEnd = new int[] { 2, 3, 4 };
-		Spans a = new SpansStub(aDoc, aStart, aEnd);
+		int[] aDoc   = { 1, 1, 1 };
+		int[] aStart = { 1, 2, 4 };
+		int[] aEnd   = { 2, 3, 5 };
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
-		int[] bDoc = new int[] { 1, 1, 1 };
-		int[] bStart = new int[] { 2, 2, 3 };
-		int[] bEnd = new int[] { 4, 5, 4 };
-		Spans b = new SpansStub(bDoc, bStart, bEnd);
+		int[] bDoc   = { 1, 1, 1 };
+		int[] bStart = { 2, 4, 5 };
+		int[] bEnd   = { 3, 5, 6 };
+		BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
-		SpansSequenceRaw spans = new SpansSequenceRaw(a, b);
+		Spans spans = new SpansSequenceSimple(a, b);
 
-		// First hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(1, spans.doc());
-		Assert.assertEquals(1, spans.start());
-		Assert.assertEquals(4, spans.end());
-
-		// Second hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(1, spans.doc());
-		Assert.assertEquals(1, spans.start());
-		Assert.assertEquals(5, spans.end());
-
-		// Third hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(1, spans.doc());
-		Assert.assertEquals(1, spans.start());
-		Assert.assertEquals(4, spans.end());
-
-		// Done
-		Assert.assertFalse(spans.next());
+		int[] expDoc   = { 1, 1 };
+		int[] expStart = { 1, 4 };
+		int[] expEnd   = { 3, 6 };
+		Spans exp = new MockSpans(expDoc, expStart, expEnd);
+		TestUtil.assertEquals(exp, spans);
 	}
 
 	/**
@@ -71,25 +79,22 @@ public class TestSpansSequence {
 	 */
 	@Test
 	public void testSequenceSpansAdvanceBeyondDocError() throws IOException {
-		int[] aDoc = new int[] { 1, 2, 2 };
-		int[] aStart = new int[] { 1, 2, 4 };
-		int[] aEnd = new int[] { 2, 3, 5 };
-		Spans a = new SpansStub(aDoc, aStart, aEnd);
+		int[] aDoc   = { 1, 2, 2 };
+		int[] aStart = { 1, 2, 4 };
+		int[] aEnd   = { 2, 3, 5 };
+		Spans a = new MockSpans(aDoc, aStart, aEnd);
 
-		int[] bDoc = new int[] { 1, 2 };
-		int[] bStart = new int[] { 5, 3 };
-		int[] bEnd = new int[] { 6, 4 };
-		Spans b = new SpansStub(bDoc, bStart, bEnd);
+		int[] bDoc   = { 1, 2 };
+		int[] bStart = { 5, 3 };
+		int[] bEnd   = { 6, 4 };
+		Spans b = new MockSpans(bDoc, bStart, bEnd);
 
-		SpansSequenceRaw spans = new SpansSequenceRaw(a, b);
+		Spans spans = new SpansSequenceRaw(a, b);
 
-		// First hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(2, spans.doc());
-		Assert.assertEquals(2, spans.start());
-		Assert.assertEquals(4, spans.end());
-
-		// Done
-		Assert.assertFalse(spans.next());
+		int[] expDoc   = { 2 };
+		int[] expStart = { 2 };
+		int[] expEnd   = { 4 };
+		Spans exp = new MockSpans(expDoc, expStart, expEnd);
+		TestUtil.assertEquals(exp, spans);
 	}
 }

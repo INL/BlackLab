@@ -17,11 +17,11 @@ package nl.inl.blacklab.filter;
 
 import java.io.IOException;
 
-import nl.inl.util.StringUtil;
-
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+
+import nl.inl.util.StringUtil;
 
 /**
  * Lowercases and/or removes any accents from the input.

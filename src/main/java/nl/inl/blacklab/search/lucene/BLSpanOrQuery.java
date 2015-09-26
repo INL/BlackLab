@@ -18,80 +18,77 @@ package nl.inl.blacklab.search.lucene;
  */
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.search.Span;
-
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.DisiPriorityQueue;
+import org.apache.lucene.search.DisiWrapper;
+import org.apache.lucene.search.DisjunctionDISIApproximation;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.PriorityQueue;
-import org.apache.lucene.util.ToStringUtils;
 
-/** Matches the union of its clauses.
+import nl.inl.blacklab.search.Span;
+
+/**
+ * Matches the union of its clauses.
  *
  * BL-specific version (search for "// BL") that produces a BLSpans.
  */
-@SuppressWarnings({"javadoc"}) // BL: suppress some innocent warnings
-public class BLSpanOrQuery extends SpanQuery {
-	List<SpanQuery> clauses; // BL: changed from private because accessed by inner class
+@SuppressWarnings({ "javadoc" })
+// BL: suppress some innocent warnings
+public class BLSpanOrQuery extends SpanOrQuery {
+
 	private String field;
 
 	/** Construct a BLSpanOrQuery merging the provided clauses. */
 	public BLSpanOrQuery(SpanQuery... clauses) {
-
-		// copy clauses array into an ArrayList
-		this.clauses = new ArrayList<SpanQuery>(clauses.length);
-		for (int i = 0; i < clauses.length; i++) {
-			addClause(clauses[i]);
-		}
-	}
-
-	/** Adds a clause to this query */
-	public final void addClause(SpanQuery clause) {
-		if (field == null) {
-			field = clause.getField();
-		} else if (!clause.getField().equals(field)) {
-			throw new IllegalArgumentException("Clauses must have same field.");
-		}
-		this.clauses.add(clause);
-	}
-
-	/** Return the clauses whose spans are matched. */
-	public SpanQuery[] getClauses() {
-		return clauses.toArray(new SpanQuery[clauses.size()]);
+		super(clauses);
+		field = getField();
 	}
 
 	@Override
 	public String getField() {
-		return field;
+		return field; // may be overridden in setField in case of 0-clause or
+						// query
+		// (I believe this was a workaround to an old Lucene bug which may not
+		// be needed anymore..)
 	}
 
 	@Override
 	public void extractTerms(Set<Term> terms) {
-		for (final SpanQuery clause : clauses) {
-			clause.extractTerms(terms);
+		try {
+			// FIXME: temporary extractTerms hack
+			Method methodExtractTerms = SpanQuery.class.
+			        getDeclaredMethod("extractTerms", Set.class);
+			methodExtractTerms.setAccessible(true);
+			
+			for (final SpanQuery clause : getClauses()) {
+			    methodExtractTerms.invoke(clause, terms);
+				//clause.extractTerms(terms);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
 	public BLSpanOrQuery clone() {
-		int sz = clauses.size();
-		SpanQuery[] newClauses = new SpanQuery[sz];
-
-		for (int i = 0; i < sz; i++) {
-			newClauses[i] = (SpanQuery) clauses.get(i).clone();
+		SpanQuery[] clauses = getClauses();
+		SpanQuery[] newClauses = new SpanQuery[clauses.length];
+		for (int i = 0; i < clauses.length; i++) {
+			newClauses[i] = (SpanQuery) clauses[i].clone();
 		}
 		BLSpanOrQuery soq = new BLSpanOrQuery(newClauses);
 		soq.setBoost(getBoost());
@@ -100,17 +97,30 @@ public class BLSpanOrQuery extends SpanQuery {
 
 	@Override
 	public Query rewrite(IndexReader reader) throws IOException {
-		BLSpanOrQuery clone = null;
-		for (int i = 0; i < clauses.size(); i++) {
-			SpanQuery c = clauses.get(i);
+		SpanQuery[] clauses = getClauses();
+		SpanQuery[] cloneClauses = null;
+		for (int i = 0; i < clauses.length; i++) {
+			SpanQuery c = clauses[i];
 			SpanQuery query = (SpanQuery) c.rewrite(reader);
 			if (query != c) { // clause rewrote: must clone
-				if (clone == null)
-					clone = this.clone();
-				clone.clauses.set(i, query);
+				if (cloneClauses == null) {
+					cloneClauses = new SpanQuery[clauses.length];
+					for (int j = 0; j < i; j++) {
+						cloneClauses[j] = clauses[j];
+					}
+				}
+				cloneClauses[i] = query;
+			} else {
+				if (cloneClauses != null)
+					cloneClauses[i] = c; // original clause
 			}
 		}
-		if (clone != null) {
+		if (cloneClauses != null) {
+			BLSpanOrQuery clone = null;
+			clone = new BLSpanOrQuery(cloneClauses);
+			clone.setBoost(getBoost());
+			if (clone.getField() == null)
+				clone.setField(field);
 			return clone; // some clauses rewrote
 		}
 		return this; // no clauses rewrote
@@ -118,88 +128,76 @@ public class BLSpanOrQuery extends SpanQuery {
 
 	@Override
 	public String toString(String field) {
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("spanOr([");
-		Iterator<SpanQuery> i = clauses.iterator();
-		while (i.hasNext()) {
-			SpanQuery clause = i.next();
-			buffer.append(clause.toString(field));
-			if (i.hasNext()) {
-				buffer.append(", ");
-			}
-		}
-		buffer.append("])");
-		buffer.append(ToStringUtils.boost(getBoost()));
-		return buffer.toString();
+		return "BL" + super.toString(field);
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-
-		final BLSpanOrQuery that = (BLSpanOrQuery) o;
-
-		if (!clauses.equals(that.clauses))
-			return false;
-		if (!clauses.isEmpty() && !field.equals(that.field))
-			return false;
-
-		return getBoost() == that.getBoost();
+		return super.equals(o) && field.equals(((BLSpanOrQuery) o).field);
 	}
 
 	@Override
 	public int hashCode() {
-		int h = clauses.hashCode();
-		h ^= (h << 10) | (h >>> 23);
-		h ^= Float.floatToRawIntBits(getBoost());
-		return h;
-	}
-
-	private class SpanQueue extends PriorityQueue<BLSpans> {
-		public SpanQueue(int size) {
-			super(size);
-		}
-
-		@Override
-		protected final boolean lessThan(BLSpans spans1, BLSpans spans2) {
-			if (spans1.doc() == spans2.doc()) {
-				if (spans1.start() == spans2.start()) {
-					return spans1.end() < spans2.end();
-				}
-				return spans1.start() < spans2.start();
-			}
-			return spans1.doc() < spans2.doc();
-		}
+		return super.hashCode() ^ field.hashCode();
 	}
 
 	@Override
 	public Spans getSpans(final LeafReaderContext context,
 			final Bits acceptDocs, final Map<Term, TermContext> termContexts)
 			throws IOException {
-		if (clauses.size() == 1) // optimize 1-clause case
-			return BLSpansWrapper.optWrap((clauses.get(0)).getSpans(context, acceptDocs, termContexts)); // BL: wrapped in BLSpans
-
-		// Create a clauseList and compute clauseLength and clausesAllSameLength for the
-		// anonymous BLSpan class
+		SpanQuery[] clauses = getClauses();
+		// Create a clauseList and compute clauseLength and clausesAllSameLength
+		// for the anonymous BLSpan class
 		boolean clausesAllSameLengthSetter = true;
 		int clauseLengthSetter = -1;
-		final ArrayList<BLSpans> clauseList = new ArrayList<BLSpans>(clauses.size());
-		for(SpanQuery spanQuery : clauses) {
-			BLSpans spans = BLSpansWrapper.optWrap(spanQuery.getSpans(context, acceptDocs,
-					termContexts));
-			if (spans.hitsAllSameLength() &&
-					(clauseLengthSetter == -1 || clauseLengthSetter == spans.hitsLength())) {
-				// This clause doesn't violate the all-same-length requirements
-				clauseLengthSetter = spans.hitsLength();
-			} else {
-				// This clause does violate the all-same-length requirements
-				clausesAllSameLengthSetter = false;
+		final ArrayList<BLSpans> subSpans = new ArrayList<BLSpans>(
+				clauses.length);
+		for (SpanQuery sq : clauses) {
+			BLSpans spans = BLSpansWrapper.optWrap(sq.getSpans(context,
+					acceptDocs, termContexts));
+			if (spans != null) {
+				subSpans.add(spans);
+				if (spans.hitsAllSameLength()
+						&& (clauseLengthSetter == -1 || clauseLengthSetter == spans
+								.hitsLength())) {
+					// This clause doesn't violate the all-same-length
+					// requirements
+					clauseLengthSetter = spans.hitsLength();
+				} else {
+					// This clause does violate the all-same-length requirements
+					clausesAllSameLengthSetter = false;
+				}
 			}
-			clauseList.add(spans);
 		}
+		if (subSpans.size() == 0)
+			return null;
+		else if (subSpans.size() == 1)
+			return BLSpansWrapper.optWrap(subSpans.get(0));
+
+		final DisiPriorityQueue<Spans> byDocQueue = new DisiPriorityQueue<>(
+				subSpans.size());
+		for (Spans spans : subSpans) {
+			byDocQueue.add(new DisiWrapper<>(spans));
+		}
+
+		/* BL: Class copied from Lucene because package-private */
+		class SpanPositionQueue extends PriorityQueue<Spans> {
+			SpanPositionQueue(int maxSize) {
+				super(maxSize, false); // do not prepopulate
+			}
+
+			@Override
+			protected boolean lessThan(Spans s1, Spans s2) {
+				int start1 = s1.startPosition();
+				int start2 = s2.startPosition();
+				return (start1 < start2) ? true : (start1 == start2) ? s1
+						.endPosition() < s2.endPosition() : false;
+			}
+		}
+
+		final SpanPositionQueue byPositionQueue = new SpanPositionQueue(
+				subSpans.size()); // when empty use -1
+
 		final boolean clausesAllSameLength = clausesAllSameLengthSetter;
 		final int clauseLength;
 		if (clausesAllSameLength) {
@@ -210,117 +208,195 @@ public class BLSpanOrQuery extends SpanQuery {
 
 		return new BLSpans() { // BL: was Spans
 
-			private SpanQueue queue = null;
+			Spans topPositionSpans = null;
 
-			private boolean initSpanQueue(int target) throws IOException {
-				queue = new SpanQueue(clauseList.size());
-				for (BLSpans spans: clauseList) {
+			@Override
+			public int nextDoc() throws IOException {
+				topPositionSpans = null;
+				DisiWrapper<Spans> topDocSpans = byDocQueue.top();
+				int currentDoc = topDocSpans.doc;
+				do {
+					topDocSpans.doc = topDocSpans.iterator.nextDoc();
+					topDocSpans = byDocQueue.updateTop();
+				} while (topDocSpans.doc == currentDoc);
+				return topDocSpans.doc;
+			}
 
-					if (((target == -1) && spans.next())
-							|| ((target != -1) && spans.skipTo(target))) {
-						queue.add(spans);
+			@Override
+			public int advance(int target) throws IOException {
+				topPositionSpans = null;
+				DisiWrapper<Spans> topDocSpans = byDocQueue.top();
+				do {
+					topDocSpans.doc = topDocSpans.iterator.advance(target);
+					topDocSpans = byDocQueue.updateTop();
+				} while (topDocSpans.doc < target);
+				return topDocSpans.doc;
+			}
+
+			@Override
+			public int docID() {
+				DisiWrapper<Spans> topDocSpans = byDocQueue.top();
+				return topDocSpans.doc;
+			}
+
+			@Override
+			public TwoPhaseIterator asTwoPhaseIterator() {
+				boolean hasApproximation = false;
+				for (DisiWrapper<Spans> w : byDocQueue) {
+					if (w.twoPhaseView != null) {
+						hasApproximation = true;
+						break;
 					}
 				}
 
-				return queue.size() != 0;
-			}
-
-			@Override
-			public boolean next() throws IOException {
-				if (queue == null) {
-					return initSpanQueue(-1);
+				if (!hasApproximation) { // none of the sub spans supports
+											// approximations
+					return null;
 				}
 
-				if (queue.size() == 0) { // all done
-					return false;
-				}
-
-				if (top().next()) { // move to next
-					queue.updateTop();
-					return true;
-				}
-
-				queue.pop(); // exhausted a clause
-				return queue.size() != 0;
-			}
-
-			private BLSpans top() {
-				return queue.top();
-			}
-
-			@Override
-			public boolean skipTo(int target) throws IOException {
-				if (queue == null) {
-					return initSpanQueue(target);
-				}
-
-				boolean skipCalled = false;
-				while (queue.size() != 0 && top().doc() < target) {
-					if (top().skipTo(target)) {
-						queue.updateTop();
-					} else {
-						queue.pop();
+				return new TwoPhaseIterator(
+						new DisjunctionDISIApproximation<Spans>(byDocQueue)) {
+					@Override
+					public boolean matches() throws IOException {
+						return twoPhaseCurrentDocMatches();
 					}
-					skipCalled = true;
+				};
+			}
+
+			int lastDocTwoPhaseMatched = -1;
+
+			boolean twoPhaseCurrentDocMatches() throws IOException {
+				DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
+				// remove the head of the list as long as it does not match
+				final int currentDoc = listAtCurrentDoc.doc;
+				while (listAtCurrentDoc.twoPhaseView != null) {
+					if (listAtCurrentDoc.twoPhaseView.matches()) {
+						// use this spans for positions at current doc:
+						listAtCurrentDoc.lastApproxMatchDoc = currentDoc;
+						break;
+					}
+					// do not use this spans for positions at current doc:
+					listAtCurrentDoc.lastApproxNonMatchDoc = currentDoc;
+					listAtCurrentDoc = listAtCurrentDoc.next;
+					if (listAtCurrentDoc == null) {
+						return false;
+					}
 				}
+				lastDocTwoPhaseMatched = currentDoc;
+				topPositionSpans = null;
+				return true;
+			}
 
-				if (skipCalled) {
-					return queue.size() != 0;
+			void fillPositionQueue() throws IOException { // called at first
+															// nextStartPosition
+				assert byPositionQueue.size() == 0;
+				// add all matching Spans at current doc to byPositionQueue
+				DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
+				while (listAtCurrentDoc != null) {
+					Spans spansAtDoc = listAtCurrentDoc.iterator;
+					if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc) { // matched
+																			// by
+																			// DisjunctionDisiApproximation
+						if (listAtCurrentDoc.twoPhaseView != null) { // matched
+																		// by
+																		// approximation
+							if (listAtCurrentDoc.lastApproxNonMatchDoc == listAtCurrentDoc.doc) { // matches()
+																									// returned
+																									// false
+								spansAtDoc = null;
+							} else {
+								if (listAtCurrentDoc.lastApproxMatchDoc != listAtCurrentDoc.doc) {
+									if (!listAtCurrentDoc.twoPhaseView
+											.matches()) {
+										spansAtDoc = null;
+									}
+								}
+							}
+						}
+					}
+
+					if (spansAtDoc != null) {
+						assert spansAtDoc.docID() == listAtCurrentDoc.doc;
+						assert spansAtDoc.startPosition() == -1;
+						spansAtDoc.nextStartPosition();
+						assert spansAtDoc.startPosition() != NO_MORE_POSITIONS;
+						byPositionQueue.add(spansAtDoc);
+					}
+					listAtCurrentDoc = listAtCurrentDoc.next;
 				}
-				return next();
+				assert byPositionQueue.size() > 0;
 			}
 
 			@Override
-			public int doc() {
-				return top().doc();
+			public int nextStartPosition() throws IOException {
+				if (topPositionSpans == null) {
+					byPositionQueue.clear();
+					fillPositionQueue(); // fills byPositionQueue at first
+											// position
+					topPositionSpans = byPositionQueue.top();
+				} else {
+					topPositionSpans.nextStartPosition();
+					topPositionSpans = byPositionQueue.updateTop();
+				}
+				return topPositionSpans.startPosition();
 			}
 
 			@Override
-			public int start() {
-				return top().start();
+			public int startPosition() {
+				return topPositionSpans == null ? -1 : topPositionSpans
+						.startPosition();
 			}
 
 			@Override
-			public int end() {
-				return top().end();
+			public int endPosition() {
+				return topPositionSpans == null ? -1 : topPositionSpans
+						.endPosition();
 			}
 
 			@Override
 			public Collection<byte[]> getPayload() throws IOException {
-				ArrayList<byte[]> result = null;
-				Spans theTop = top();
-				if (theTop != null && theTop.isPayloadAvailable()) {
-					result = new ArrayList<byte[]>(theTop.getPayload());
-				}
-				return result;
+				return topPositionSpans == null ? null : topPositionSpans
+						.isPayloadAvailable() ? new ArrayList<>(
+						topPositionSpans.getPayload()) : null;
 			}
 
 			@Override
 			public boolean isPayloadAvailable() throws IOException {
-				Spans top = top();
-				return top != null && top.isPayloadAvailable();
+				return (topPositionSpans != null)
+						&& topPositionSpans.isPayloadAvailable();
 			}
 
 			@Override
 			public String toString() {
-				return "spans("
-						+ BLSpanOrQuery.this
-						+ ")@"
-						+ ((queue == null) ? "START"
-								: (queue.size() > 0 ? (doc() + ":" + start()
-										+ "-" + end()) : "END"));
+				return "BLspanOr(" + BLSpanOrQuery.this + ")@" + docID() + ": "
+						+ startPosition() + " - " + endPosition();
+			}
+
+			long cost = -1;
+
+			@Override
+			public long cost() {
+				if (cost == -1) {
+					cost = 0;
+					for (Spans spans : subSpans) {
+						cost += spans.cost();
+					}
+				}
+				return cost;
 			}
 
 			// BL: added guarantee-methods
 
 			@Override
 			public boolean hitsEndPointSorted() {
-				return false; // cannot guarantee because we're merging from different sources
+				return false; // cannot guarantee because we're merging from
+								// different sources
 			}
 
 			@Override
 			public boolean hitsStartPointSorted() {
-				return true;  // our way of merging guarantees this, as it should for almost all BLSpans
+				return true; // our way of merging guarantees this, as it should
+								// for almost all BLSpans
 			}
 
 			@Override
@@ -335,22 +411,25 @@ public class BLSpanOrQuery extends SpanQuery {
 
 			@Override
 			public boolean hitsHaveUniqueStart() {
-				return false; // cannot guarantee because we're merging from different sources
+				return false; // cannot guarantee because we're merging from
+								// different sources
 			}
 
 			@Override
 			public boolean hitsHaveUniqueEnd() {
-				return false; // cannot guarantee because we're merging from different sources
+				return false; // cannot guarantee because we're merging from
+								// different sources
 			}
 
 			@Override
 			public boolean hitsAreUnique() {
-				return false; // cannot guarantee because we're merging from different sources
+				return false; // cannot guarantee because we're merging from
+								// different sources
 			}
 
 			@Override
 			public void passHitQueryContextToClauses(HitQueryContext context) {
-				for (BLSpans spans: clauseList) {
+				for (BLSpans spans : subSpans) {
 					spans.setHitQueryContext(context);
 				}
 			}
@@ -359,7 +438,7 @@ public class BLSpanOrQuery extends SpanQuery {
 			public void getCapturedGroups(Span[] capturedGroups) {
 				if (!childClausesCaptureGroups)
 					return;
-				top().getCapturedGroups(capturedGroups);
+				((BLSpans) topPositionSpans).getCapturedGroups(capturedGroups);
 			}
 
 		};
@@ -370,7 +449,8 @@ public class BLSpanOrQuery extends SpanQuery {
 	 * rewrite to 0-clause or queries, and we need to be able to call getField()
 	 * later.
 	 *
-	 * @param field the field for this query
+	 * @param field
+	 *            the field for this query
 	 */
 	public void setField(String field) {
 		this.field = field;
@@ -378,15 +458,17 @@ public class BLSpanOrQuery extends SpanQuery {
 
 	/**
 	 * Convert a SpanOrQuery to a BLSpanOrQuery
+	 * 
 	 * @param soq
 	 * @return
 	 */
 	public static BLSpanOrQuery from(SpanOrQuery soq) {
-    	BLSpanOrQuery blsoq = new BLSpanOrQuery(soq.getClauses());
-    	blsoq.setBoost(soq.getBoost());
-        if (blsoq.getField() == null)
-        	blsoq.setField(soq.getField()); // rewritten to or query without clauses
-        return blsoq;
+		BLSpanOrQuery blsoq = new BLSpanOrQuery(soq.getClauses());
+		blsoq.setBoost(soq.getBoost());
+		if (blsoq.getField() == null)
+			blsoq.setField(soq.getField()); // rewritten to or query without
+											// clauses
+		return blsoq;
 	}
 
 }

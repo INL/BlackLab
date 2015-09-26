@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.indexstructure;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,14 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.DateUtil;
-import nl.inl.util.FileUtil;
-import nl.inl.util.Json;
-import nl.inl.util.StringUtil;
-import nl.inl.util.json.JSONObject;
-
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.FieldInfo;
@@ -28,6 +19,14 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.Searcher;
+import nl.inl.util.DateUtil;
+import nl.inl.util.FileUtil;
+import nl.inl.util.Json;
+import nl.inl.util.StringUtil;
+import nl.inl.util.json.JSONObject;
 
 /**
  * Determines the structure of a BlackLab index.
@@ -716,16 +715,6 @@ public class IndexStructure {
 		// Sort (so we get titleLevel1 not titleLevel2 for example)
 		Collections.sort(fieldsFound);
 		return fieldsFound.get(0);
-	}
-
-	/**
-	 * Print the index structure.
-	 * @param out where to print it
-	 * @deprecated use version that takes a PrintWriter
-	 */
-	@Deprecated
-	public void print(PrintStream out) {
-		print(new PrintWriter(out));
 	}
 
 	/**

@@ -17,9 +17,9 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Returns either the left edge or right edge of the specified query.
@@ -44,52 +44,39 @@ class SpansEdge extends BLSpans {
 		this.rightEdge = rightEdge;
 	}
 
-	/**
-	 * @return the Lucene document id of the current hit
-	 */
 	@Override
-	public int doc() {
-		return clause.doc();
+	public int docID() {
+		return clause.docID();
 	}
 
-	/**
-	 * @return start position of current hit
-	 */
 	@Override
-	public int start() {
-		return rightEdge ? clause.end() : clause.start();
+	public int startPosition() {
+		return rightEdge ? clause.endPosition() : clause.startPosition();
 	}
 
-	/**
-	 * @return end position of current hit
-	 */
 	@Override
-	public int end() {
-		return rightEdge ? clause.end() : clause.start();
+	public int endPosition() {
+		return rightEdge ? clause.endPosition() : clause.startPosition();
 	}
 
-	/**
-	 * Go to next span.
-	 *
-	 * @return true if we're at the next span, false if we're done
-	 * @throws IOException
-	 */
 	@Override
-	public boolean next() throws IOException {
-		return clause.next();
+	public int nextDoc() throws IOException {
+		return clause.nextDoc();
 	}
 
-	/**
-	 * Skip to the specified document (or the first document after it containing hits).
-	 *
-	 * @param doc
-	 *            the doc number to skip to (or past)
-	 * @return true if we're still pointing to a valid hit, false if we're done
-	 * @throws IOException
-	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
-		return clause.skipTo(doc);
+	public int nextStartPosition() throws IOException {
+		if (rightEdge) {
+			if (clause.nextStartPosition() == NO_MORE_POSITIONS)
+				return NO_MORE_POSITIONS;
+			return clause.endPosition();
+		}
+		return clause.nextStartPosition();
+	}
+
+	@Override
+	public int advance(int doc) throws IOException {
+		return clause.advance(doc);
 	}
 
 	@Override

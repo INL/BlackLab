@@ -15,8 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-import org.apache.lucene.search.spans.Spans;
-
 /**
  * A group of results, with its group identity and the results themselves.
  */
@@ -29,9 +27,6 @@ abstract class Group {
 
 	public HitPropValue getIdentity() {
 		return groupIdentity;
-	}
-
-	@Deprecated
-	public abstract Spans getSpans();
+	}	
 
 }

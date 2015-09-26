@@ -4,10 +4,10 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import nl.inl.blacklab.search.Hits;
 import nl.inl.util.StringUtil;
-
-import org.apache.log4j.Logger;
 
 /**
  * A concrete value of a HitProperty of a Hit

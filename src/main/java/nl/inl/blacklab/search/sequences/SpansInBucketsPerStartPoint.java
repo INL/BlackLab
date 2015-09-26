@@ -17,37 +17,39 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
-
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits. Allow us to retrieve
  * all hits that start at a certain point.
+ * 
+ * The reason we don't use SpansInBucketsAbstract here is that it's more efficient to just save the
+ * endpoints for the current start point (the source spans is normally startpoint-sorted already).
  */
-class SpansInBucketsPerStartPoint implements SpansInBuckets {
+class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuckets {
 	protected Spans source;
 
 	protected int currentDoc = -1;
 
-	protected int currentStart = -1;
+	protected int currentBucketStart = -1;
+
+	protected int currentSpansStart = -1;
 
 	private List<Integer> endPoints = new ArrayList<Integer>();
 
 	private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<Span[]>();
 
 	private int bucketSize = 0;
-
-	/**
-	 * Does the source Spans have more hits?
-	 */
-	protected boolean moreInSource = true;
 
 	private HitQueryContext hitQueryContext;
 
@@ -62,34 +64,32 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	}
 
 	@Override
-	public int doc() {
+	public int docID() {
 		return currentDoc;
 	}
 
-	/**
-	 * Go to the next bucket.
-	 *
-	 * @return true if we're at the next valid group, false if we're done
-	 * @throws IOException
-	 */
 	@Override
-	public boolean next() throws IOException {
-		if (!moreInSource)
-			return false;
-
-		if (currentDoc < 0)
-			moreInSource = source.next(); // first next()
-		if (!moreInSource)
-			return false;
-
-		gatherEndPointsAtStartPoint();
-		return true;
+	public int nextDoc() throws IOException {
+		if (currentDoc != NO_MORE_DOCS) {
+			currentDoc = source.nextDoc();
+			currentSpansStart = source.nextStartPosition();
+		}
+		return currentDoc;
 	}
 
-	protected void gatherEndPointsAtStartPoint() throws IOException {
-		currentDoc = source.doc();
-		currentStart = source.start();
+	@Override
+	public int nextBucket() throws IOException {
+		if (currentDoc < 0) {
+			// Not nexted yet, no bucket
+			return -1;
+		}
+		if (currentSpansStart == Spans.NO_MORE_POSITIONS)
+			return NO_MORE_BUCKETS;
 
+		return gatherEndPointsAtStartPoint();
+	}
+
+	protected int gatherEndPointsAtStartPoint() throws IOException {
 		// NOTE: we don't call clear() to avoid holding on to a lot of memory indefinitely
 		endPoints = new ArrayList<Integer>();
 		capturedGroupsPerEndpoint = new ArrayList<Span[]>();
@@ -97,49 +97,35 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
 
 		bucketSize = 0;
-		while (moreInSource && source.doc() == currentDoc && source.start() == currentStart) {
-			endPoints.add(source.end());
+		currentBucketStart = currentSpansStart;
+		while (currentSpansStart != Spans.NO_MORE_POSITIONS && currentSpansStart == currentBucketStart) {
+			endPoints.add(source.endPosition());
 			if (doCapturedGroups) {
 				Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
 				((BLSpans)source).getCapturedGroups(capturedGroups);
 				capturedGroupsPerEndpoint.add(capturedGroups);
 			}
 			bucketSize++;
-			moreInSource = source.next();
+			currentSpansStart = source.nextStartPosition();
 		}
+		return currentDoc;
 	}
 
-	/**
-	 * Skip to specified document id. NOTE: if we're already at the target document, don't advance.
-	 * This differs from how Spans.skipTo() is defined, which always advances at least one hit.
-	 *
-	 * @param target
-	 *            document id to skip to
-	 * @return true if we're at a valid group, false if we're done
-	 * @throws IOException
-	 */
 	@Override
-	public boolean skipTo(int target) throws IOException {
-		if (currentDoc >= target)
-			return true;
-
-		if (!moreInSource)
-			return false;
-
-		if (currentDoc < 0) {
-			if (!next())
-				return false;
-			if (currentDoc >= target)
-				return true;
+	public int advance(int target) throws IOException {
+		if (currentDoc >= target) {
+			return nextDoc();
 		}
+		
+		if (currentDoc == NO_MORE_DOCS)
+			return DocIdSetIterator.NO_MORE_DOCS;
 
-		if (source.doc() < target) {
-			moreInSource = source.skipTo(target);
-			if (!moreInSource)
-				return false;
+		if (currentDoc < target) {
+			currentDoc = source.advance(target);
+			currentSpansStart = source.nextStartPosition();
 		}
-		gatherEndPointsAtStartPoint();
-		return true;
+		
+		return currentDoc;
 	}
 
 	@Override
@@ -153,18 +139,18 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 	}
 
 	@Override
-	public int start(int indexInBucket) {
-		return currentStart;
+	public int startPosition(int indexInBucket) {
+		return currentBucketStart;
 	}
 
 	@Override
-	public int end(int indexInBucket) {
+	public int endPosition(int indexInBucket) {
 		return endPoints.get(indexInBucket);
 	}
 
 	@Override
 	public Hit getHit(int indexInBucket) {
-		return new Hit(doc(), start(indexInBucket), end(indexInBucket));
+		return new Hit(docID(), startPosition(indexInBucket), endPosition(indexInBucket));
 	}
 
 	@Override
@@ -192,5 +178,22 @@ class SpansInBucketsPerStartPoint implements SpansInBuckets {
 					capturedGroups[i] = previouslyCapturedGroups[i];
 			}
 		}
+	}
+
+	@Override
+	public long cost() {
+		return 300; // (arbitrary value. This is used for scoring, which we don't use yet)
+	}
+
+	@Override
+	public Collection<byte[]> getPayload(int indexInBucket) {
+		// FIXME implement (optional) getPayload() here
+		return null;
+	}
+
+	@Override
+	public boolean isPayloadAvailable(int indexInBucket) {
+		// FIXME implement (optional) isPayloadAvailable() here
+		return false;
 	}
 }

@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.util.ExUtil;
-
 import com.gs.collections.impl.factory.Maps;
+
+import nl.inl.util.ExUtil;
 
 /**
  * Store string content by id in a directory of compound files with a TOC file. Quickly retrieve

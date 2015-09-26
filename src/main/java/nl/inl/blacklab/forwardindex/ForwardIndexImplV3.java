@@ -35,16 +35,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.util.ExUtil;
-import nl.inl.util.VersionFile;
-
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.uninverting.UninvertingReader;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.util.ExUtil;
+import nl.inl.util.VersionFile;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question
@@ -264,30 +264,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 		if (create) {
 			clear();
-		}
-	}
-
-	@Deprecated
-	@Override
-	public void warmUp() throws InterruptedException {
-		int fiid = 0;
-		int oneReadPerHowManyChars = 4000;
-		for (TocEntry e: toc) {
-			int n = e.length / oneReadPerHowManyChars;
-
-			int[] starts = new int[n];
-			int[] ends = new int[n];
-			for (int i = 0; i < n; i++) {
-				starts[i] = i * oneReadPerHowManyChars;
-				ends[i] = starts[i] + 10;
-			}
-			retrievePartsInt(fiid, starts, ends);
-			fiid++;
-			if (fiid % 100 == 0) {
-				// Allow a little bit of other processing to go on,
-				// and check for thread interruption
-				Thread.sleep(1);
-			}
 		}
 	}
 

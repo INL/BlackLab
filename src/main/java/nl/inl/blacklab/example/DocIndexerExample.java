@@ -17,12 +17,12 @@ package nl.inl.blacklab.example;
 
 import java.io.Reader;
 
+import org.xml.sax.Attributes;
+
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-
-import org.xml.sax.Attributes;
 
 /**
  * Example indexer. See Example for the file format.

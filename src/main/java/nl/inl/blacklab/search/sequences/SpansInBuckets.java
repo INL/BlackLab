@@ -16,6 +16,9 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
+import java.util.Collection;
+
+import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
@@ -40,6 +43,9 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
  * Note that SpansInBuckets assumes all hits in a bucket are from a single document.
  */
 public interface SpansInBuckets {
+
+	final static int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
+
 	public static interface BucketSpanComparator {
 		abstract public int compare(int start1, int end1, int start2, int end2);
 	}
@@ -49,34 +55,49 @@ public interface SpansInBuckets {
 	 *
 	 * @return Document id of current bucket
 	 */
-	int doc();
+	int docID();
 
 	int bucketSize();
 
-	int start(int index);
+	int startPosition(int index);
 
-	int end(int index);
+	int endPosition(int index);
 
 	Hit getHit(int index);
 
+	Collection<byte[]> getPayload(int indexInBucket);
+
+	boolean isPayloadAvailable(int indexInBucket);
+	
 	/**
-	 * Go to the next bucket.
+	 * Go to the next document.
+	 * 
+	 * You still have to call nextBucket() to get to the first valid bucket.
 	 *
-	 * @return true if we're at the next valid group, false if we're done
+	 * @return docID if we're at the next valid doc, NO_MORE_DOCS if we're done
 	 * @throws IOException
 	 */
-	boolean next() throws IOException;
+	int nextDoc() throws IOException;
+	
+	/**
+	 * Go to the next bucket in this doc.
+	 *
+	 * @return docID if we're at the next valid bucket, NO_MORE_BUCKETS if we're done
+	 * @throws IOException
+	 */
+	int nextBucket() throws IOException;
 
 	/**
-	 * Skip to specified document id. NOTE: if we're already at the target document, don't advance.
-	 * This differs from how Spans.skipTo() is defined, which always advances at least one hit.
+	 * Skip to specified document id.
 	 *
+	 * If we're already at the target id, go to the next document (just like Spans).
+	 * 
 	 * @param target
 	 *            document id to skip to
-	 * @return true if we're at a valid group, false if we're done
+	 * @return docID if we're at a valid document, NO_MORE_DOCS if we're done
 	 * @throws IOException
 	 */
-	boolean skipTo(int target) throws IOException;
+	int advance(int target) throws IOException;
 
 	/**
 	 * Pass the hit query context to the underlying BLSpans.
@@ -92,4 +113,5 @@ public interface SpansInBuckets {
 	 * @param capturedGroups where to add the captured group information
 	 */
 	void getCapturedGroups(int indexInBucket, Span[] capturedGroups);
+
 }

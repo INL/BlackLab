@@ -49,8 +49,6 @@ public class StringUtil {
 	/** Matcht een niet-lege string die alleen whitespace bevat */
 	private final static Pattern PATT_ONLY_WHITESPACE = Pattern.compile("^\\s+$");
 
-	private static final Pattern PATT_APOSTROPHE = Pattern.compile("'");
-
 	/** Pattern matching nbsp character (decimal 160 = hex A0) */
 	private static final Pattern PATT_NON_BREAKING_SPACE = Pattern.compile(STR_NON_BREAKING_SPACE);
 
@@ -473,21 +471,6 @@ public class StringUtil {
 	}
 
 	/**
-	 * Removes apostrophes from a string
-	 *
-	 * @param str
-	 *            the input string
-	 * @return the string with apostrophes removed.
-     * @deprecated was used for sorting; should be done with Collator instead.
-	 */
-	@Deprecated
-	public static String removeApostrophes(String str) {
-		Matcher m = PATT_APOSTROPHE.matcher(str);
-		str = m.replaceAll("");
-		return str;
-	}
-
-	/**
 	 * Remove XML tags from a string
 	 *
 	 * @param s
@@ -752,6 +735,22 @@ public class StringUtil {
 		if (dashesToSpaces)
 			spaceified = spaceified.replace('-', ' ');
 		return capitalizeFirst(spaceified.toLowerCase());
+	}
+
+	/**
+	 * For a number n, return a string like "nth".
+	 * 
+	 * So 1 returns "1st", 2 returns "2nd", and so on. 
+	 * 
+	 * @param docNumber number
+	 * @return ordinal for that number
+	 */
+	public static String ordinal(int docNumber) {
+		final String[] ordSuffix = {"th", "st", "nd", "rd"};
+		int i = docNumber;
+		if (i < 1 || i > 3)
+			i = 0;
+		return docNumber + ordSuffix[i];
 	}
 
 }

@@ -18,12 +18,12 @@ package nl.inl.blacklab.highlight;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
-import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
+import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 
 public class TestXmlHighlighter {
 

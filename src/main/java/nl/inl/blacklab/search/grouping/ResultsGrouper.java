@@ -22,11 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.search.spans.SpanQuery;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
-
-import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * Groups results on the basis of a list of criteria, and provide random access to the resulting

@@ -19,12 +19,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
+import nl.inl.blacklab.search.sequences.SpansInBuckets;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
-
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Gets spans for a certain XML element.
@@ -36,7 +37,7 @@ class SpansTags extends BLSpans {
 	private SpansInBucketsPerDocument[] spans = new SpansInBucketsPerDocument[2];
 
 	/** Do the Spans objects still point to valid hits? */
-	private boolean stillValidSpans[] = new boolean[2];
+	private int currentDoc[] = new int[2];
 
 	/** The current hit (index into starts and ends lists) */
 	private int currentHit = -1;
@@ -60,93 +61,83 @@ class SpansTags extends BLSpans {
 			else
 				spans[i] = new SpansInBucketsPerDocumentSorted(origSpans[i], cmpStartPoint);
 		}
-		stillValidSpans[1] = true;
-		stillValidSpans[0] = true;
+		currentDoc[0] = currentDoc[1] = -1;
 	}
 
-	/**
-	 * @return the Lucene document id of the current hit
-	 */
 	@Override
-	public int doc() {
-		return spans[0].doc();
+	public int docID() {
+		return spans[0].docID();
 	}
 
-	/**
-	 * @return start of current span
-	 */
 	@Override
-	public int start() {
+	public int startPosition() {
+		if (currentHit < 0)
+			return -1;
+		if (currentHit >= starts.size())
+			return NO_MORE_POSITIONS;
 		return starts.get(currentHit);
 	}
 
-	/**
-	 * @return end position of current hit
-	 */
 	@Override
-	public int end() {
+	public int endPosition() {
+		if (currentHit < 0)
+			return -1;
+		if (currentHit >= starts.size())
+			return NO_MORE_POSITIONS;
 		return ends.get(currentHit);
 	}
 
-	/**
-	 * Go to next span.
-	 *
-	 * @return true if we're at the next span, false if we're done
-	 * @throws IOException
-	 */
 	@Override
-	public boolean next() throws IOException {
+	public int nextDoc() throws IOException {
+		// Hit list in current document exhausted. Are there more documents to do?
+		if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
+			return NO_MORE_DOCS;
+
+		// Move to the next document
+		currentDoc[0] = spans[0].nextDoc();
+		currentDoc[1] = spans[1].nextDoc();
+		if (currentDoc[0] != currentDoc[1])
+			throw new RuntimeException("Error, start and end tags not in synch");
+		if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
+			return NO_MORE_DOCS;
+		gatherHits();
+		return currentDoc[0];
+	}
+	
+	@Override
+	public int nextStartPosition() throws IOException {
 		// Do we have more hits in the list?
 		currentHit++;
 		if (currentHit < starts.size()) {
 			// Yep, we're at the next hit in the list.
-			return true;
+			return starts.get(currentHit);
 		}
-
-		// Hit list in current document exhausted. Are there more documents to do?
-		if (!stillValidSpans[0] || !stillValidSpans[1])
-			return false;
-
-		// Move to the next document
-		stillValidSpans[0] = spans[0].next();
-		stillValidSpans[1] = spans[1].next();
-
-		if (!stillValidSpans[0] || !stillValidSpans[1]) {
-			if (stillValidSpans[0] != stillValidSpans[1]) {
-				throw new RuntimeException(
-						"Error, start and end tags not in synch (start and end Spans ended up inside different documents)");
-			}
-			return false;
-		}
-
-		if (spans[0].doc() != spans[1].doc())
-			throw new RuntimeException(
-					"Error, start and end tags not in synch (start and end Spans ended up inside different documents)");
-
-		gatherHits();
-		return true;
+		return NO_MORE_POSITIONS;
 	}
 
-	private void gatherHits() {
+	private void gatherHits() throws IOException {
 		// Put the start and end tag positions in one list (ends negative)
 		// (Note that we add 2 to the tag position to avoid the problem of x == -x for x == 0;
 		//  below we subtract it again)
 		// The list will be sorted by tag position.
 		List<Integer> startsAndEnds = new ArrayList<Integer>();
-
+		if (spans[0].nextBucket() == SpansInBuckets.NO_MORE_BUCKETS ||
+			spans[1].nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
+			throw new RuntimeException("Both spans must have exactly one bucket per document");
+		}
 		int startIndex = 0, endIndex = 0;
 		boolean startDone = false, endDone = false;
 		int startBucketSize = spans[0].bucketSize();
 		int endBucketSize = spans[1].bucketSize();
 		while(!startDone || !endDone) {
 			// Which comes first, the current start tag or end tag?
-			int endTagPos = endDone ? -1 : spans[1].start(endIndex);
+			int endTagPos = endDone ? -1 : spans[1].startPosition(endIndex);
 			boolean addEndTag = false;
 			int startTagPos = -1;
 			if (startDone)
 				addEndTag = true;
 			else {
-				startTagPos = spans[0].start(startIndex);
+				startTagPos = spans[0].startPosition(startIndex);
 				if (!endDone && startTagPos >= endTagPos)
 					addEndTag = true;
 			}
@@ -177,7 +168,7 @@ class SpansTags extends BLSpans {
 		starts = new ArrayList<Integer>();
 		ends = new ArrayList<Integer>();
 
-		currentHit = 0; // first hit
+		currentHit = -1; // before first hit
 		for (Integer tag: startsAndEnds) {
 			if (tag > 0) {
 				int startPositionToStore = tag - 2;  // subtract 2 again to get original position (see above)
@@ -232,20 +223,16 @@ class SpansTags extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
+	public int advance(int doc) throws IOException {
 		// Skip both
-		stillValidSpans[0] = spans[0].skipTo(doc);
-		stillValidSpans[1] = spans[1].skipTo(doc);
-		if (!stillValidSpans[0] || !stillValidSpans[1]) {
-			if (stillValidSpans[0] != stillValidSpans[1]) {
-				throw new RuntimeException(
-						"Error, start and end tags not in synch (start and end Spans ended up inside different documents)");
-			}
-			return false;
-		}
-
+		currentDoc[0] = spans[0].advance(doc);
+		currentDoc[1] = spans[1].advance(doc);
+		if (currentDoc[0] != currentDoc[1])
+			throw new RuntimeException("Error, start and end tags not in synch");
+		if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
+			return NO_MORE_DOCS;
 		gatherHits();
-		return true;
+		return currentDoc[0];
 	}
 
 	@Override

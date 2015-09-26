@@ -18,9 +18,9 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 import java.util.Comparator;
 
-import nl.inl.blacklab.search.Hit;
-
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.Hit;
 
 /**
  * Wrap a Spans to retrieve hits per document, so we can process all matches in a document

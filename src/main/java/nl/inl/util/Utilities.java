@@ -19,13 +19,13 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.UUID;
 
-import nl.inl.util.FileUtil.FileTask;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.LogMergePolicy;
 import org.apache.lucene.index.MergePolicy;
+
+import nl.inl.util.FileUtil.FileTask;
 
 /**
  * Misc. utilities that haven't yet found a place in InlJavaLib.

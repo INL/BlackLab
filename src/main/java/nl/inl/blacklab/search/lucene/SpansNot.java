@@ -17,12 +17,12 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Returns all tokens that do not occur in the matches
@@ -34,26 +34,22 @@ class SpansNot extends BLSpans {
 	/** The spans to invert */
 	private BLSpans clause;
 
-	/** Have we called next() or skipTo on the clause yet? */
-	private boolean clauseIterationStarted;
+	private int clauseDoc = -1;
 
-	/** Are there more hits in our spans? */
-	private boolean moreHitsInClause;
-
-	/** Are we completely done? */
-	private boolean done;
+	/** Current token position in clause */
+	private int clauseStart = -1;
 
 	/** Current document */
-	private int currentDoc;
+	private int currentDoc = -1;
 
 	/** Current document length */
-	private long currentDocLength;
+	private long currentDocLength = -1;
 
-	/** Current token position */
-	private int currentToken;
+	/** Current hit start position */
+	private int currentStart = -1;
 
-	///** The Lucene index reader, for querying field length */
-	//private LeafReader reader;
+	/** Current hit end position */
+	private int currentEnd = -1;
 
 	/** For testing, we don't have an IndexReader available, so we use test values */
 	private boolean useTestValues = false;
@@ -70,16 +66,18 @@ class SpansNot extends BLSpans {
 	/** Documents that haven't been deleted */
 	private Bits liveDocs;
 
+	private boolean alreadyAtFirstMatch = false;
+
 	/** For testing, we don't have an IndexReader available, so we use test values.
 	 *
 	 *  The test values are: there are 3 documents (0, 1 and 2) and each is 5 tokens long.
 	 *
 	 *  @param test whether or not we want to use test values
 	 */
-	void setTest(boolean test) {
+	void setTest(boolean test, int maxDoc) {
 		useTestValues = test;
 		if (useTestValues)
-			maxDoc = 3;
+			this.maxDoc = maxDoc;
 		lengthGetter.setTest(test);
 	}
 
@@ -91,26 +89,18 @@ class SpansNot extends BLSpans {
 	 * @param clause the clause to invert, or null if we want all tokens
 	 */
 	public SpansNot(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause) {
-		//this.reader = reader;
 		maxDoc = reader == null ? -1 : reader.maxDoc();
 		liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);
 		subtractFromLength = ignoreLastToken ? 1 : 0;
 		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
-		this.clause = clause == null ? null : BLSpansWrapper.optWrap(clause);
-
-		done = false;
-		moreHitsInClause = true;
-		clauseIterationStarted = false;
-		currentDoc = -1;
-		currentDocLength = -1;
-		currentToken = -1;
+		this.clause = clause == null ? null : BLSpansWrapper.optWrapSort(clause);
 	}
 
 	/**
 	 * @return the Lucene document id of the current hit
 	 */
 	@Override
-	public int doc() {
+	public int docID() {
 		return currentDoc;
 	}
 
@@ -118,8 +108,42 @@ class SpansNot extends BLSpans {
 	 * @return end position of current hit
 	 */
 	@Override
-	public int end() {
-		return currentToken + 1;
+	public int endPosition() {
+		if (alreadyAtFirstMatch)
+			return -1; // .nextStartPosition() not called yet by client
+		return currentEnd;
+	}
+
+	@Override
+	public int nextDoc() throws IOException {
+		alreadyAtFirstMatch = false;
+		do {
+			if (currentDoc >= maxDoc) {
+				currentDoc = NO_MORE_DOCS;
+				currentStart = currentEnd = clauseStart = NO_MORE_POSITIONS;
+				return NO_MORE_DOCS;
+			}
+			boolean currentDocIsDeletedDoc;
+			do {
+				currentDoc++;
+				currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
+	 		} while (currentDoc < maxDoc && currentDocIsDeletedDoc);
+			if (currentDoc > maxDoc)
+				throw new RuntimeException("currentDoc > maxDoc!!");
+			if (currentDoc == maxDoc) {
+				currentDoc = NO_MORE_DOCS;
+				currentStart = currentEnd = clauseStart = NO_MORE_POSITIONS;
+				return NO_MORE_DOCS; // no more docs; we're done
+			}
+			// FIXME: we should check that this doc actually has matches, i.e. that clause doesn't match all tokens in doc
+			clauseDoc = clause == null ? NO_MORE_DOCS : clause.advance(currentDoc);
+			clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
+			currentDocLength = lengthGetter.getFieldLength(currentDoc) - subtractFromLength;
+			currentStart = currentEnd = -1;
+		} while (nextStartPosition() == NO_MORE_POSITIONS);
+		alreadyAtFirstMatch = true;
+		
+		return currentDoc;
 	}
 
 	/**
@@ -129,50 +153,51 @@ class SpansNot extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean next() throws IOException {
-		if (done)
-			return false;
+	public int nextStartPosition() throws IOException {
+		if (alreadyAtFirstMatch) {
+			alreadyAtFirstMatch = false;
+			return currentStart;
+		}
+		
+		if (currentDoc == NO_MORE_DOCS || currentStart == NO_MORE_POSITIONS) {
+			return NO_MORE_POSITIONS;
+		}
 
 		// Advance token
-		currentToken++;
+		currentStart++;
+		currentEnd = currentStart + 1;
 
 		boolean foundValidToken = false;
 		while (!foundValidToken) {
 
 			// Which of 3 situations are we in?
 			if (currentDoc < 0) {
+				
 				// A - We haven't started yet.
-				//     Go to first document and first hit in clause.
-				if (!nextDoc()) {
-					return false;
-				}
-				moreHitsInClause = clause == null ? false : clause.next();
-				clauseIterationStarted = true;
-
-				// Loop again to determine if we are at a valid token or not.
-
-			} else if (moreHitsInClause && clause.doc() == currentDoc)  {
+				return -1;
+				
+			} else if (clauseDoc == currentDoc && clauseStart != NO_MORE_POSITIONS)  {
 
 				// B - Spans is at currentDoc.
 				//     Look at hit, adjust currentToken
 
 				// Current hit beyond currentToken?
-				if (clause.start() > currentToken) {
+				if (clauseStart > currentStart) {
 
 					// Yes. currentToken is fine to produce.
 					foundValidToken = true;
 
 				} else {
 					// No; advance currentToken past this hit if necessary
-					if (clause.end() > currentToken) {
+					if (clause.endPosition() > currentStart) {
 						// (note that end is the first word not in the hit)
-						currentToken = clause.end();
+						currentStart = clause.endPosition();
+						currentEnd = currentStart + 1;
 					}
 
 					// Now go to next hit and loop again, until we hit the
 					// then-part above.
-					moreHitsInClause = clause.next();
-					clauseIterationStarted = true;
+					clauseStart = clause.nextStartPosition();
 				}
 
 			} else {
@@ -180,48 +205,19 @@ class SpansNot extends BLSpans {
 				// C - Spans is depleted or is pointing beyond current doc.
 				//     Either produce next token (because it's obviously not in
 				//     the spans matches), or move to next doc if we're done with this doc.
-				if (currentToken < currentDocLength) {
+				if (currentStart < currentDocLength) {
 
 					// Token is fine to produce.
 					foundValidToken = true;
 
 				} else {
-					// We're done in this document, on to the next
-					if (!nextDoc()) {
-						// Done with all documents.
-						return false;
-					}
+					// We're done in this document
+					currentStart = currentEnd = NO_MORE_POSITIONS;
+					return NO_MORE_POSITIONS;
 				}
 			}
 		}
-		return true;
-	}
-
-	/**
-	 * Go to the next document in the index.
-	 *
-	 * Advances currentDoc until it finds a non-deleted document,
-	 * then determines length and sets currentToken to 0.
-	 *
-	 * @return true if next document was found, false if there are no more documents.
-	 */
-	private boolean nextDoc() {
-		if (currentDoc >= maxDoc)
-			return false;
-		boolean currentDocIsDeletedDoc;
-		do {
-			currentDoc++;
-			currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
- 		} while (currentDoc < maxDoc && currentDocIsDeletedDoc);
-		if (currentDoc > maxDoc)
-			throw new RuntimeException("currentDoc > maxDoc!!");
-		if (currentDoc == maxDoc) {
-			done = true;
-			return false; // no more docs; we're done
-		}
-		currentDocLength = lengthGetter.getFieldLength(currentDoc) - subtractFromLength;
-		currentToken = 0;
-		return true;
+		return currentStart;
 	}
 
 	/**
@@ -233,43 +229,43 @@ class SpansNot extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
-		if (currentDoc >= maxDoc || doc >= maxDoc) {
-			currentDoc = maxDoc;
-			moreHitsInClause = false;
-			if (doc >= maxDoc)
-				System.err.println("SpansNot.skipTo: tried to skip to " + doc + ", but maxDoc = " + maxDoc);
-			return false;
+	public int advance(int doc) throws IOException {
+		alreadyAtFirstMatch = false;
+		if (currentDoc == NO_MORE_DOCS)
+			return NO_MORE_DOCS;
+		if (doc >= maxDoc) {
+			currentDoc = NO_MORE_DOCS;
+			currentStart = currentEnd = clauseStart = NO_MORE_POSITIONS;
+			return NO_MORE_DOCS;
 		}
-
-		// If it's not already (past) there, skip clause
-		// to doc (or beyond if there's no hits in doc)
-		if (moreHitsInClause && (!clauseIterationStarted || clause.doc() < doc)) {
-			moreHitsInClause = clause == null ? false : clause.skipTo(doc);
-			clauseIterationStarted = true;
-		}
-
+		
 		if (currentDoc >= doc) {
 			// We can't skip to it because we're already there or beyond.
-			// But, as per spec, skipTo always at least advances to the next match.
-			return next();
+			// But, as per spec, skipTo always at least advances to the next document.
+			return nextDoc();
 		}
 
-		currentDoc = doc - 1;
-		if (!nextDoc())
-			return false;
+//		// If it's not already (past) there, skip clause
+//		// to doc (or beyond if there's no hits in doc)
+//		if (clauseStart != NO_MORE_POSITIONS && (clauseStart == -1 || clauseDoc < doc)) {
+//			clauseDoc = clause.advance(doc);
+//			clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
+//		}
 
-		// Put us at first valid hit
-		currentToken = -1;
-		return next();
+		// Advance to first livedoc containing matches at or after requested docID
+		currentDoc = doc - 1;
+		nextDoc();
+		return currentDoc;
 	}
 
 	/**
 	 * @return start of current span
 	 */
 	@Override
-	public int start() {
-		return currentToken;
+	public int startPosition() {
+		if (alreadyAtFirstMatch)
+			return -1; // .nextStartPosition() not called yet by client
+		return currentStart;
 	}
 
 	@Override

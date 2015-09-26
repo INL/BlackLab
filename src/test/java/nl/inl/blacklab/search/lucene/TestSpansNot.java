@@ -17,47 +17,78 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.TestUtil;
+
 public class TestSpansNot {
+
+	private SpansNot getSpans() {
+		// NOTE: in doc 1, all tokens except 0-1 match; in doc 3, all tokens match
+		Spans a = MockSpans.fromLists(
+			new int[] { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3 },
+			new int[] { 0, 1, 2, 3, 1, 2, 3, 4, 1, 3, 0, 1, 2, 3, 4 },
+			new int[] { 1, 2, 3, 4, 2, 3, 4, 5, 2, 4, 1, 2, 3, 4, 5 }
+		);
+		SpansNot spans = new SpansNot(false, null, "test", a);
+		spans.setTest(true, 4); // no IndexReader available
+		return spans;
+	}
 
 	@Test
 	public void testSpansNot() throws IOException {
-		int[] aDoc = new int[]   { 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2 };
-		int[] aStart = new int[] { 0, 1, 2, 3, 0, 1, 2, 3, 4, 1, 3 };
-		int[] aEnd = new int[]   { 1, 2, 3, 4, 1, 2, 3, 4, 5, 2, 4 };
-		Spans a = new SpansStub(aDoc, aStart, aEnd);
-
-		SpansNot spans = new SpansNot(false, null, "test", a);
-		spans.setTest(true); // no IndexReader available
-
-		// First hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(0, spans.doc());
-		Assert.assertEquals(4, spans.start());
-		Assert.assertEquals(5, spans.end());
-
-		// Second hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(2, spans.doc());
-		Assert.assertEquals(0, spans.start());
-		Assert.assertEquals(1, spans.end());
-
-		// Third hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(2, spans.doc());
-		Assert.assertEquals(2, spans.start());
-		Assert.assertEquals(3, spans.end());
-
-		// Fourth hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(2, spans.doc());
-		Assert.assertEquals(4, spans.start());
-		Assert.assertEquals(5, spans.end());
-
-		// Done
-		Assert.assertFalse(spans.next());
+		Spans exp = MockSpans.fromLists(
+			new int[] {0, 1, 2, 2, 2},
+			new int[] {4, 0, 0, 2, 4},
+			new int[] {5, 1, 1, 3, 5}
+		);
+		TestUtil.assertEquals(exp, getSpans());
 	}
+
+	@Test
+	public void testSpansNotAdvance() throws IOException {
+		Spans exp = MockSpans.fromLists(
+			new int[] {2, 2, 2},
+			new int[] {0, 2, 4},
+			new int[] {1, 3, 5}
+		);
+		SpansNot spans = getSpans();
+		spans.advance(2);
+		TestUtil.assertEquals(exp, spans, true);
+	}
+
+	@Test
+	public void testSpansNotAdvanceToCurrent() throws IOException {
+		Spans exp = MockSpans.fromLists(
+			new int[] {1, 2, 2, 2},
+			new int[] {0, 0, 2, 4},
+			new int[] {1, 1, 3, 5}
+		);
+		SpansNot spans = getSpans();
+		Assert.assertEquals(0, spans.nextDoc());
+		Assert.assertEquals(1, spans.advance(0));
+		TestUtil.assertEquals(exp, spans, true);
+	}
+
+	@Test
+	public void testSpansNotAdvanceNoResults() throws IOException {
+		Spans exp = MockSpans.emptySpans();
+		SpansNot spans = getSpans();
+		Assert.assertEquals(DocIdSetIterator.NO_MORE_DOCS, spans.advance(3));
+		TestUtil.assertEquals(exp, spans, true);
+	}
+
+	@Test
+	public void testSpansNotAdvanceBeyond() throws IOException {
+		Spans exp = MockSpans.emptySpans();
+		SpansNot spans = getSpans();
+		Assert.assertEquals(DocIdSetIterator.NO_MORE_DOCS, spans.advance(1000));
+		TestUtil.assertEquals(exp, spans, true);
+	}
+
+
 }

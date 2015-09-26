@@ -17,79 +17,75 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Remove consecutive duplicate hits from a source spans.
  */
 public class SpansUnique extends BLSpans {
-	private int prevDoc = -1;
-
-	private int prevStart = -1;
-
-	private int prevEnd = -1;
 
 	private BLSpans src;
 
-	private boolean more = true;
+	private int currentDoc = -1;
 
-	private boolean nexted = false;
+	private int currentStart = Spans.NO_MORE_POSITIONS;
 
 	public SpansUnique(Spans src) {
 		this.src = BLSpansWrapper.optWrapSort(src);
 	}
 
 	@Override
-	public int doc() {
-		return src.doc();
+	public int docID() {
+		return currentDoc;
 	}
 
 	@Override
-	public int start() {
-		return src.start();
+	public int startPosition() {
+		return currentStart;
 	}
 
 	@Override
-	public int end() {
-		return src.end();
+	public int endPosition() {
+		return src.endPosition();
 	}
 
 	@Override
-	public boolean next() throws IOException {
-		if (!more)
-			return false;
-		do {
-			if (nexted) {
-				// Save previous hit
-				prevDoc = src.doc();
-				prevStart = src.start();
-				prevEnd = src.end();
-			}
-			more = src.next();
-			nexted = true;
-			if (!more)
-				return false;
-		} while (prevDoc >= 0 && prevDoc == src.doc()
-				&& prevStart == src.start() && prevEnd == src.end());
-		return true;
-	}
-
-	@Override
-	public boolean skipTo(int target) throws IOException {
-		if (!more)
-			return false;
-
-		if (prevDoc >= 0 && target == src.doc()) {
-			// We're already in the target doc. Just go to the next hit.
-			return next();
+	public int nextDoc() throws IOException {
+		if (currentDoc != NO_MORE_DOCS) {
+			currentDoc = src.nextDoc();
+			currentStart = -1;
 		}
+		return currentDoc;
+	}
 
-		// Just skip to the target doc
-		more = src.skipTo(target);
-		nexted = true;
-		return more;
+	@Override
+	public int nextStartPosition() throws IOException {
+		int prevStart, prevEnd;
+		if (currentStart != NO_MORE_POSITIONS) {
+			do {
+				prevStart = currentStart;
+				prevEnd = src.endPosition();
+				currentStart = src.nextStartPosition();
+			} while (prevStart == currentStart && prevEnd == src.endPosition());
+		}
+		return currentStart;
+	}
+
+	@Override
+	public int advance(int target) throws IOException {
+		if (currentDoc != NO_MORE_DOCS) {
+			if (target > currentDoc) {
+				// Skip to the target doc
+				currentDoc = src.advance(target);
+				currentStart = -1;
+			} else {
+				// We're already in or past the target doc. Just go to the next doc.
+				nextDoc();
+			}
+		}
+		return currentDoc;
 	}
 
 	@Override

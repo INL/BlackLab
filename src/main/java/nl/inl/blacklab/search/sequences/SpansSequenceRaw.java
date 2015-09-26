@@ -17,12 +17,12 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -75,13 +75,17 @@ class SpansSequenceRaw extends BLSpans {
 
 	int indexInBucket = -2; // -2 == not started yet; -1 == just started a bucket
 
+	int currentDoc = -1;
+
 	int leftStart = -1;
 
 	int rightEnd = -1;
 
-	boolean more = true;
-
-	int currentDoc = -1;
+	/**
+	 * Are we already a the first match in the document, even if .nextStartPosition() hasn't been called?
+	 * Required because we need to test for matches in the document in .nextDoc()/.advance().
+	 */
+	private boolean alreadyAtFirstMatch = false;
 
 	public SpansSequenceRaw(Spans leftClause, Spans rightClause) {
 		// Sort the left spans by (1) document (2) end point (3) start point
@@ -89,157 +93,219 @@ class SpansSequenceRaw extends BLSpans {
 
 		// From the right spans, let us extract all end points belonging with a start point.
 		// Already start point sorted.
-		origRight = BLSpansWrapper.optWrap(rightClause);
+		origRight = BLSpansWrapper.optWrapSort(rightClause);
 		right = new SpansInBucketsPerStartPoint(origRight);
 	}
 
-	/**
-	 * @return the Lucene document id of the current hit
-	 */
 	@Override
-	public int doc() {
+	public int docID() {		
 		return currentDoc;
 	}
 
-	/**
-	 * @return end position of current hit
-	 */
 	@Override
-	public int end() {
+	public int endPosition() {
+		if (alreadyAtFirstMatch)
+			return -1; // .nextStartPosition() not called yet
 		return rightEnd;
+	}
+	
+	@Override
+	public int nextDoc() throws IOException {
+		alreadyAtFirstMatch = false;
+		if (currentDoc != NO_MORE_DOCS) {
+			currentDoc = left.nextDoc();
+			if (currentDoc != NO_MORE_DOCS) {
+				right.nextDoc();
+				rightEnd = -1;
+				indexInBucket = -2;
+				realignDoc();
+			}
+		}
+		return currentDoc;
+	}
+
+	@Override
+	public int nextStartPosition() throws IOException {
+		if (alreadyAtFirstMatch) {
+			alreadyAtFirstMatch = false;
+			return leftStart;
+		}
+		
+		/*
+		 * Go to the next match.
+		 *
+		 * This is done around the 'mid point', the word position where the left match ends and the
+		 * right match begins.
+		 *
+		 * The left Spans are sorted by end point. The matches from this Spans are iterated through, and
+		 * for each match, the end point will be the 'mid point' of the resulting match. Note that there
+		 * may be multiple matches from the left with the same end point.
+		 *
+		 * The right Spans are sorted by start point (no sorting required, as this is Lucene's default).
+		 * For each 'mid point', all matches starting at that point are collected from the right spans.
+		 *
+		 * Each match from the left is then combined with all the collected matches from the right. The
+		 * collected matches from the right may be used for multiple matches from the left (if there are
+		 * multiple matches from the left with the same end point).
+		 */
+		
+		if (currentDoc == NO_MORE_DOCS || leftStart == NO_MORE_POSITIONS) {
+			leftStart = rightEnd = NO_MORE_POSITIONS;
+			return NO_MORE_POSITIONS;
+		}
+
+		if (indexInBucket == -2 || indexInBucket == right.bucketSize() - 1) {
+			// We're out of end points (right matches). Advance the left Spans and realign both
+			// spans to the mid point.
+			leftStart = left.nextStartPosition();
+			if (leftStart == NO_MORE_POSITIONS) {
+				rightEnd = NO_MORE_POSITIONS;
+			} else {
+				if (right.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS)
+					leftStart = rightEnd = NO_MORE_POSITIONS;
+				else {
+					rightEnd = -1;
+					indexInBucket = -1;
+					realignPos();
+				}
+			}
+		} else {
+			// Go to the next end point
+			indexInBucket++;
+			rightEnd = right.endPosition(indexInBucket);
+		}
+		return leftStart;
 	}
 
 	/**
-	 * Go to the next match.
-	 *
-	 * This is done around the 'mid point', the word position where the left match ends and the
-	 * right match begins.
-	 *
-	 * The left Spans are sorted by end point. The matches from this Spans are iterated through, and
-	 * for each match, the end point will be the 'mid point' of the resulting match. Note that there
-	 * may be multiple matches from the left with the same end point.
-	 *
-	 * The right Spans are sorted by start point (no sorting required, as this is Lucene's default).
-	 * For each 'mid point', all matches starting at that point are collected from the right spans.
-	 *
-	 * Each match from the left is then combined with all the collected matches from the right. The
-	 * collected matches from the right may be used for multiple matches from the left (if there are
-	 * multiple matches from the left with the same end point).
-	 *
-	 * @return true if we're on a valid match, false if we're done.
+	 * Puts both spans in the next doc (possibly the current one)
+	 * that has a match in it. 
+	 * 
+	 * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
 	 * @throws IOException
 	 */
-	@Override
-	public boolean next() throws IOException {
-		if (!more)
-			return false;
+	private int realignDoc() throws IOException {
+		while (true) {
+			// Put in same doc if necessary
+			while (currentDoc != right.docID()) {
+				while (currentDoc < right.docID()) {
+					currentDoc = left.advance(right.docID());
+					if (currentDoc == NO_MORE_DOCS)
+						return NO_MORE_DOCS;
+				}
+				while (right.docID() < currentDoc) {
+					int rightDoc = right.advance(currentDoc);
+					if (rightDoc == NO_MORE_DOCS) {
+						currentDoc = NO_MORE_DOCS;
+						return NO_MORE_DOCS;
+					}
+					rightEnd = -1;
+					indexInBucket = -2;
+				}
+			}
 
-		if (indexInBucket == -2 || indexInBucket == right.bucketSize() - 1) {
-			/*
-			 * We're out of end points (right matches). Advance the left Spans and realign both
-			 * spans to the mid point.
-			 */
-			more = left.next();
-			if (!more)
-				return false;
-			return realign();
+			// See if this doc has any matches
+			leftStart = left.nextStartPosition();
+			if (leftStart != NO_MORE_POSITIONS) {
+				if (right.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS)
+					leftStart = rightEnd = NO_MORE_POSITIONS;
+				else {
+					rightEnd = -1;
+					indexInBucket = -1;
+					realignPos();
+				}
+			}
+			if (leftStart == NO_MORE_POSITIONS) {
+				rightEnd = NO_MORE_POSITIONS;
+			} else {
+				// Reset the end point iterator (end points of right matches starting at this mid point)
+				// and save current end position.
+				alreadyAtFirstMatch = true;
+				return currentDoc;
+			}
+			
+			// No matches in this doc; on to the next
+			currentDoc = left.nextDoc();
+			if (currentDoc == NO_MORE_DOCS) {
+				leftStart = rightEnd = NO_MORE_POSITIONS;
+				return NO_MORE_DOCS;
+			}
 		}
-
-		indexInBucket++;
-		rightEnd = right.end(indexInBucket);
-		return true;
 	}
 
 	/**
 	 * Restores the property that the current left match ends where the current right matches begin.
 	 *
-	 * This is called whenever the left and right spans may be out of alignment (after left has been
-	 * advanced in next(), or after skipTo() has been called)
+	 * The spans are assumed to be already in the same doc.
 	 *
 	 * If they're already aligned, this function does nothing. If they're out of alignment (that is,
 	 * left.end() != right.start()), advance the spans that is lagging. Repeat until they are
 	 * aligned, or one of the spans run out.
 	 *
-	 * After this function, we're on the first valid match found.
+	 * After this function, we're on the first valid match found, or we're out of matches for this document.
 	 *
-	 * @return true if we're on a valid match, false if we're done.
+	 * @return startPosition if we're on a valid match, NO_MORE_POSITIONS if we're done with this doc.
 	 * @throws IOException
 	 */
-	private boolean realign() throws IOException {
-		do {
-			// Put in same doc if necessary
-			while (left.doc() != right.doc()) {
-				while (left.doc() < right.doc()) {
-					more = left.skipTo(right.doc());
-					if (!more)
-						return false;
-				}
-				while (right.doc() < left.doc()) {
-					more = right.skipTo(left.doc());
-					if (!more)
-						return false;
-				}
-			}
-
-			// Synchronize within doc
-			int rightStart = right.start(0);
-			while (left.doc() == right.doc() && left.end() != rightStart) {
-				if (rightStart < left.end()) {
-					// Advance right if necessary
-					while (left.doc() == right.doc() && rightStart < left.end()) {
-						more = right.next();
-						rightStart = right.start(0);
-						if (!more)
-							return false;
-					}
-				} else {
-					// Advance left if necessary
-					while (left.doc() == right.doc() && left.end() < rightStart) {
-						more = left.next();
-						if (!more)
-							return false;
-					}
-				}
-			}
-		} while (left.doc() != right.doc()); // Repeat until left and right align.
-
-		// Save doc, start and end positions.
-		// Reset the end point iterator (end points of right matches starting at this mid point)
-		currentDoc = right.doc();
-		leftStart = left.start();
+	private void realignPos() throws IOException {
+		// Synchronize within doc
+		int leftEnd = left.endPosition();
+		int rightStart = right.startPosition(0);
+		rightEnd = right.endPosition(0);
 		indexInBucket = 0;
-		rightEnd = right.end(indexInBucket);
-		return true;
+		while (leftEnd != rightStart) {
+			if (rightStart < leftEnd) {
+				// Advance right if necessary
+				while (rightStart < leftEnd) {
+					int rightDoc = right.nextBucket();
+					if (rightDoc == SpansInBuckets.NO_MORE_BUCKETS) {
+						leftStart = rightEnd = NO_MORE_POSITIONS;
+						return;
+					}
+					rightStart = right.startPosition(0);
+					rightEnd = right.endPosition(0);
+					indexInBucket = 0;
+				}
+			} else {
+				// Advance left if necessary
+				while (leftEnd < rightStart) {
+					leftStart = left.nextStartPosition();
+					leftEnd = left.endPosition();
+					if (leftStart == NO_MORE_POSITIONS) {
+						rightEnd = NO_MORE_POSITIONS;
+						return;
+					}
+				}
+			}
+		}
 	}
 
-	/**
-	 * Go to the specified document, if it has hits. If not, go to the next document containing
-	 * hits.
-	 *
-	 * @param doc
-	 *            the document number to skip to / over
-	 * @return true if we're at a valid hit, false if not
-	 * @throws IOException
-	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
-		if (!more)
-			return false;
-		more = left.skipTo(doc);
-		if (!more)
-			return false;
-		more = right.skipTo(doc);
-		if (!more)
-			return false;
-
-		return realign();
+	public int advance(int doc) throws IOException {
+		alreadyAtFirstMatch = false;
+		if (currentDoc != NO_MORE_DOCS) {
+			currentDoc = left.advance(doc);
+			if (currentDoc != NO_MORE_DOCS) {
+				int rightDoc = right.advance(doc);
+				if (rightDoc == NO_MORE_DOCS)
+					currentDoc = NO_MORE_DOCS;
+				else {
+					rightEnd = -1;
+					indexInBucket = -2;
+					realignDoc();
+				}
+			}
+		}
+		return currentDoc;
 	}
 
 	/**
 	 * @return start of the current hit
 	 */
 	@Override
-	public int start() {
+	public int startPosition() {
+		if (alreadyAtFirstMatch)
+			return -1; // .nextStartPosition() not called yet
 		return leftStart;
 	}
 

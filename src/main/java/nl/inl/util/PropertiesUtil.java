@@ -27,18 +27,6 @@ import java.util.Properties;
  * Utilities for property files
  */
 public class PropertiesUtil {
-	/**
-	 * Read Properties from the specified file
-	 *
-	 * @param path
-	 *            path to the file
-	 * @return the Properties read
-	 * @deprecated use version that takes a File
-	 */
-	@Deprecated
-	public static Properties readFromFile(String path) {
-		return readFromFile(new File(path));
-	}
 
 	/**
 	 * Read Properties from the specified file

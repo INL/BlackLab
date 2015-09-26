@@ -17,11 +17,11 @@ package nl.inl.blacklab.filter;
 
 import java.io.IOException;
 
-import nl.inl.util.StringUtil;
-
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+
+import nl.inl.util.StringUtil;
 
 /**
  * Removes any accents from the input.
@@ -32,17 +32,6 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  * RemoveDutchAccentsFilter.
  */
 public class RemoveAllAccentsFilter extends TokenFilter {
-
-	/**
-	 * Removes accents
-	 * @param input input string
-	 * @return string with accents removed
-	 * @deprecated use StringUtil.removeAccents() directly
-	 */
-	@Deprecated
-	static String process(String input) {
-		return StringUtil.removeAccents(input);
-	}
 
 	private CharTermAttribute termAtt;
 

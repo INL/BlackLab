@@ -146,15 +146,6 @@ public class ComplexFieldUtil {
 		return propertyField(fieldName, END_TAG_PROP_NAME);
 	}
 
-	/** Are we using the old field names?
-	 * @return true if we are, false if not
-	 * @deprecated always returns false
-	 */
-	@Deprecated
-	public static boolean usingOldFieldNames() {
-		return false; //oldFieldNames;
-	}
-
 	/** Set what field name separators to use.
 	 * @param avoidSpecialChars if true, use only standard identifier characters for the separators. If false, use special chars %, @, #.
 	 */
@@ -176,24 +167,6 @@ public class ComplexFieldUtil {
 		ALT_SEP_LEN = ALT_SEP.length();
 		PROP_SEP_LEN = PROP_SEP.length();
 		BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
-	}
-
-	/** Set what field name separators to use.
-	 *
-	 * Used for backwards compatibility; will eventually be removed.
-	 *
-	 * @param avoidSpecialChars if true, use only standard identifier characters for the separators. If false, use special chars %, @, #.
-	 * @param oldVersion if true, use the old naming scheme.
-	 * @deprecated use version that takes a single parameter
-	 */
-	@Deprecated
-	public static void setFieldNameSeparators(boolean avoidSpecialChars, boolean oldVersion) {
-
-		if (oldVersion) {
-			throw new RuntimeException("Your index was created with an old BlackLab version and cannot be opened with this version. Please re-index your data, or use a BlackLab version from before August 2014.");
-		}
-
-		setFieldNameSeparators(avoidSpecialChars);
 	}
 
 	/**
@@ -597,26 +570,8 @@ public class ComplexFieldUtil {
 		return DEFAULT_MAIN_PROP_NAME;
 	}
 
-	/**
-	 * @return false
-	 * @deprecated main property can't be nameless anymore; always returns false
-	 */
-	@Deprecated
-	public static boolean isMainPropertyNameless() {
-		return false;
-	}
-
 	public static String getDefaultMainAlternativeName() {
 		return DEFAULT_MAIN_ALT_NAME;
-	}
-
-	/**
-	 * @return false
-	 * @deprecated alternatives can't be nameless anymore; always returns false
-	 */
-	@Deprecated
-	public static boolean isMainAlternativeNameless() {
-		return false;
 	}
 
 	/**

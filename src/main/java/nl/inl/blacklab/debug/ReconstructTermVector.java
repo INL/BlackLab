@@ -2,11 +2,11 @@ package nl.inl.blacklab.debug;
 
 import java.nio.file.Paths;
 
-import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
-
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.store.FSDirectory;
+
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 
 public class ReconstructTermVector {
 

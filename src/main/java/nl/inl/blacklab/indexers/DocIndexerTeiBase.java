@@ -17,15 +17,15 @@ package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.xml.sax.Attributes;
+
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.util.StringUtil;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.xml.sax.Attributes;
 
 /**
  * Index a TEI P4/P5 file.

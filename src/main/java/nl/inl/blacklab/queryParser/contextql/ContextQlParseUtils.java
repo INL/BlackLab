@@ -3,17 +3,17 @@ package nl.inl.blacklab.queryParser.contextql;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.PhraseQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.WildcardQuery;
+
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternWildcard;
 import nl.inl.blacklab.search.sequences.TextPatternSequence;
-
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.PhraseQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.WildcardQuery;
 
 public class ContextQlParseUtils {
 

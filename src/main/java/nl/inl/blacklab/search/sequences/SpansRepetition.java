@@ -17,12 +17,12 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Finds all sequences of consecutive hits from the source spans of the specified min and max
@@ -36,12 +36,13 @@ import org.apache.lucene.search.spans.Spans;
 class SpansRepetition extends BLSpans {
 	private SpansInBuckets source;
 
+	/**
+	 * If -1: not started yet. If NO_MORE_DOCS: done. Otherwise: doc id.
+	 */
 	private int currentDoc = -1;
 
-	boolean sourceNexted = false;
-
-	boolean more = true;
-
+	boolean moreBuckets = false;
+	
 	private int min;
 
 	private int max;
@@ -51,6 +52,8 @@ class SpansRepetition extends BLSpans {
 	private int tokenLength;
 
 	private BLSpans spansSource;
+
+	private boolean alreadyAtFirstMatch = false;
 
 	public SpansRepetition(Spans source, int min, int max) {
 		// Find all consecutive matches in this Spans
@@ -63,21 +66,83 @@ class SpansRepetition extends BLSpans {
 		if (min < 1)
 			throw new RuntimeException("min < 1");
 	}
-
-	/**
-	 * @return the Lucene document id of the current hit
-	 */
+	
 	@Override
-	public int doc() {
+	public int docID() {
+		return currentDoc;
+	}
+
+	@Override
+	public int endPosition() {
+		if (alreadyAtFirstMatch)
+			return -1; // .nextStartPosition() not called yet
+		if (!moreBuckets)
+			return NO_MORE_POSITIONS;
+		return source.endPosition(firstToken + tokenLength - 1);
+	}
+
+	@Override
+	public int nextDoc() throws IOException {
+		alreadyAtFirstMatch = false;
+		
+		if (currentDoc == NO_MORE_DOCS)
+			return NO_MORE_DOCS;
+
+		// Go to next doc (we don't know if it has a match)
+		currentDoc = source.nextDoc();
+		if (currentDoc != NO_MORE_DOCS) {
+			// From here, find next match in this or further doc
+			currentDoc = findDocWithMatchingBucket();
+			if (currentDoc != NO_MORE_DOCS)
+				// findDocWithMatchingBucket places us at the first match.
+				alreadyAtFirstMatch = true;
+		}
 		return currentDoc;
 	}
 
 	/**
-	 * @return end position of current hit
+	 * Go to the next matching bucket, not necessarily in the current doc.
+	 * @return the doc id, or NO_MORE_DOCS if there's no more buckets.
+	 * @throws IOException
 	 */
-	@Override
-	public int end() {
-		return source.end(firstToken + tokenLength - 1);
+	private int findDocWithMatchingBucket() throws IOException {
+		while (currentDoc != NO_MORE_DOCS) {
+			
+			// Another bucket in this doc?
+			int startPos = nextBucket();
+			moreBuckets = startPos != SpansInBuckets.NO_MORE_BUCKETS;
+			if (moreBuckets) {
+				// Yes, found one.
+				break;
+			}
+			
+			// No more matching buckets; try next doc 
+			currentDoc = source.nextDoc();
+		}
+		return currentDoc;
+	}
+
+	/**
+	 * Go to the next matching bucket in the current doc, if it has any.
+	 * 
+	 * @return the start position of the bucket, or NO_MORE_BUCKETS if there's no more matching buckets
+	 * @throws IOException
+	 */
+	private int nextBucket() throws IOException {
+		moreBuckets = source.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
+		while (moreBuckets) {
+			if (source.bucketSize() >= min) {
+				// This stretch is large enough to get a repetition hit;
+				// Position us at the first hit and remember we're already there.
+				firstToken = 0;
+				tokenLength = min;
+				currentDoc = source.docID();
+				return source.startPosition(firstToken);
+			}
+			// Not large enough; try next bucket
+			moreBuckets = source.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
+		}
+		return SpansInBuckets.NO_MORE_BUCKETS;
 	}
 
 	/**
@@ -87,38 +152,41 @@ class SpansRepetition extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean next() throws IOException {
-		if (!more)
-			return false;
-
-		if (sourceNexted) {
-			// We have a bucket.
-
-			// Go to the next hit length for this start point.
-			tokenLength++;
-
-			// Find the first valid hit in the bucket
-			if ((max != -1 && tokenLength > max) || firstToken + tokenLength > source.bucketSize()) {
-				// On to the next start point.
-				firstToken++;
-				tokenLength = min;
-			}
-
-			if (firstToken + tokenLength <= source.bucketSize()) {
-				// Still a valid rep. hit.
-				return true;
-			}
-
-			// No valid hits left; on to the next bucket
+	public int nextStartPosition() throws IOException {
+		if (currentDoc == NO_MORE_DOCS || !moreBuckets)
+			return NO_MORE_POSITIONS;
+		
+		if (alreadyAtFirstMatch) {
+			// We're already at the first match in the document, because
+			// we needed to check if there were matches at all. Return it now.
+			alreadyAtFirstMatch = false;
+			return source.startPosition(firstToken);
 		}
 
-		// Next bucket
-		more = source.next();
-		sourceNexted = true;
-		if (more) {
-			return resetRepeat();
+		// Go to the next hit length for this start point in the current bucket.
+		tokenLength++;
+
+		// Find the first valid hit in the bucket
+		if ((max != -1 && tokenLength > max) || firstToken + tokenLength > source.bucketSize()) {
+			// On to the next start point.
+			firstToken++;
+			tokenLength = min;
 		}
-		return false;
+
+		if (firstToken + tokenLength <= source.bucketSize()) {
+			// Still a valid rep. hit.
+			return source.startPosition(firstToken);
+		}
+
+		// No valid hits left; on to the next matching bucket
+		int startPos = nextBucket();
+		moreBuckets = startPos != SpansInBuckets.NO_MORE_BUCKETS;
+		if (moreBuckets) {
+			return startPos;
+		}
+		
+		// No more matching buckets.
+		return NO_MORE_POSITIONS;
 	}
 
 	/**
@@ -131,40 +199,32 @@ class SpansRepetition extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
-		if (!more)
-			return false;
-		more = source.skipTo(doc);
-		sourceNexted = true;
-		if (more)
-			return resetRepeat();
-		return false;
-	}
-
-	private boolean resetRepeat() throws IOException {
-		while (true) {
-			if (source.bucketSize() >= min) {
-				// This stretch is large enough to get a repetition hit!
-				firstToken = 0;
-				tokenLength = min;
-				currentDoc = source.doc();
-				return true;
+	public int advance(int doc) throws IOException {
+		alreadyAtFirstMatch = false;
+		
+		if (currentDoc != NO_MORE_DOCS) {
+			// Go to first doc at or after target that has a match.
+			currentDoc = source.advance(doc);
+			if (currentDoc != NO_MORE_DOCS) {
+				// From here, find next match in this or further doc
+				currentDoc = findDocWithMatchingBucket();
+				if (currentDoc != NO_MORE_DOCS)
+					alreadyAtFirstMatch = true;
 			}
-
-			// Not large enough; next bucket
-			more = source.next();
-			sourceNexted = true;
-			if (!more)
-				return false;
 		}
+		return currentDoc;
 	}
 
 	/**
 	 * @return start of the current hit
 	 */
 	@Override
-	public int start() {
-		return source.start(firstToken);
+	public int startPosition() {
+		if (alreadyAtFirstMatch)
+			return -1; // .nextStartPosition() not called yet
+		if (!moreBuckets)
+			return NO_MORE_POSITIONS;
+		return source.startPosition(firstToken);
 	}
 
 	@Override

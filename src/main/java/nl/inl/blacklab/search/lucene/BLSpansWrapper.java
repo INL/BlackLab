@@ -18,11 +18,11 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
-import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
-
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.TermSpans;
+
+import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
 
 
 /**
@@ -51,16 +51,6 @@ public class BLSpansWrapper extends BLSpans {
 	}
 
 	@Override
-	public int doc() {
-		return source.doc();
-	}
-
-	@Override
-	public int end() {
-		return source.end();
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		return source.equals(obj);
 	}
@@ -78,21 +68,6 @@ public class BLSpansWrapper extends BLSpans {
 	@Override
 	public boolean isPayloadAvailable() throws IOException {
 		return source.isPayloadAvailable();
-	}
-
-	@Override
-	public boolean next() throws IOException {
-		return source.next();
-	}
-
-	@Override
-	public boolean skipTo(int arg0) throws IOException {
-		return source.skipTo(arg0);
-	}
-
-	@Override
-	public int start() {
-		return source.start();
 	}
 
 	@Override
@@ -140,6 +115,31 @@ public class BLSpansWrapper extends BLSpans {
 			return;
 		if (source instanceof BLSpans) // shouldn't happen, but ok
 			((BLSpans) source).getCapturedGroups(capturedGroups);
+	}
+
+	@Override
+	public int nextDoc() throws IOException {
+		return source.nextDoc();
+	}
+
+	@Override
+	public int docID() {
+		return source.docID();
+	}
+
+	@Override
+	public int nextStartPosition() throws IOException {
+		return source.nextStartPosition();
+	}
+
+	@Override
+	public int startPosition() {
+		return source.startPosition();
+	}
+
+	@Override
+	public int endPosition() {
+		return source.endPosition();
 	}
 
 }

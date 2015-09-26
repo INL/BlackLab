@@ -18,10 +18,10 @@ package nl.inl.blacklab.perdocument;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
-
-import org.apache.log4j.Logger;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects. Subclasses implement

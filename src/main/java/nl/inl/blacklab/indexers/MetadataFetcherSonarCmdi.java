@@ -15,18 +15,18 @@ import java.util.zip.ZipFile;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocIndexerXmlHandlers;
-import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
-import nl.inl.util.CapturingReader;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.helpers.DefaultHandler;
+
+import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
+import nl.inl.util.CapturingReader;
 
 /**
  * Example of a metadata fetcher, a class used to fetch metadata

@@ -17,7 +17,11 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
 
@@ -61,8 +65,10 @@ public class Hit implements Comparable<Hit>, Cloneable {
 	public static List<Hit> hitList(BLSpans spans) {
 		List<Hit> result = new ArrayList<Hit>();
 		try {
-			while (spans.next()) {
-				result.add(spans.getHit());
+			while (spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+				while(spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
+					result.add(spans.getHit());
+				}
 			}
 			return result;
 		} catch (IOException e) {
@@ -154,5 +160,13 @@ public class Hit implements Comparable<Hit>, Cloneable {
 		return hit;
 	}
 
+	public Collection<byte[]> getPayload() {
+		// FIXME: option to store payload in Hit, probably using subclass
+		return null;
+	}
+
+	public boolean isPayloadAvailable() {
+		return false;
+	}
 
 }

@@ -34,6 +34,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import org.apache.log4j.Logger;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
+
 import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -43,14 +51,6 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.TarGzipReader;
 import nl.inl.util.TarGzipReader.FileHandler;
 import nl.inl.util.UnicodeReader;
-
-import org.apache.log4j.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.Term;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -822,83 +822,6 @@ public class Indexer {
 				return continueIndexing();
 			}
 		});
-	}
-
-	/**
-	 * Index a list of files.
-	 *
-	 * If the list contains a directory, the whole directory is indexed, including subdirs.
-	 *
-	 * @param listFile
-	 *            list of files to index (assumed to reside in or under basedir)
-	 * @throws Exception
-	 * @throws IOException
-	 * @throws FileNotFoundException
-	 * @throws UnsupportedEncodingException
-	 * @deprecated not really used, implement your own if required
-	 */
-	@Deprecated
-	public void indexFileList(File listFile) throws UnsupportedEncodingException,
-			FileNotFoundException, IOException, Exception {
-		indexFileList(listFile, null);
-	}
-
-	/**
-	 * Index a list of files.
-	 *
-	 * If the list contains a directory, the whole directory is indexed, including subdirs.
-	 *
-	 * @param listFile
-	 *            list of files to index (assumed to reside in or under basedir)
-	 * @param inputDir
-	 *            basedir for the files to index, or null if the list file contains absolute paths
-	 * @throws Exception
-	 * @throws IOException
-	 * @throws FileNotFoundException
-	 * @throws UnsupportedEncodingException
-	 * @deprecated not really used, implement your own if required
-	 */
-	@Deprecated
-	public void indexFileList(File listFile, File inputDir) throws UnsupportedEncodingException,
-			FileNotFoundException, IOException, Exception {
-		if (!listFile.exists())
-			throw new FileNotFoundException("List file not found: " + listFile);
-		if (inputDir != null && !inputDir.isDirectory())
-			throw new FileNotFoundException("Dir not found: " + inputDir);
-		List<String> filesToRead = FileUtil.readLines(listFile);
-		for (String filePath: filesToRead) {
-			File fileToIndex;
-			if (inputDir == null)
-				fileToIndex = new File(filePath);
-			else
-				fileToIndex = new File(inputDir, filePath);
-			index(fileToIndex);
-			if (!continueIndexing())
-				break;
-		}
-	}
-
-	/**
-	 * Index a list of files.
-	 *
-	 * If the list contains a directory, the whole directory is indexed, including subdirs.
-	 *
-	 * @param list
-	 *            the list of files
-	 * @throws Exception
-	 * @throws IOException
-	 * @throws FileNotFoundException
-	 * @throws UnsupportedEncodingException
-	 * @deprecated not really used, implement your own if required
-	 */
-	@Deprecated
-	public void indexFileList(List<File> list) throws UnsupportedEncodingException,
-			FileNotFoundException, IOException, Exception {
-		for (File fileToIndex: list) {
-			index(fileToIndex);
-			if (!continueIndexing())
-				break;
-		}
 	}
 
 	/**

@@ -17,58 +17,37 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.lucene.SpansStub;
-
 import org.apache.lucene.search.spans.Spans;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import nl.inl.blacklab.MockSpansInBuckets;
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.TestUtil;
 
 public class TestSpansInBucketsPerStartPoint {
 	private SpansInBuckets hpd;
 
 	@Before
 	public void setUp() {
-		int[] doc = { 1, 1, 1, 2, 2, 2 }, start = { 1, 1, 3, 3, 5, 5 }, end = { 2, 3, 4, 5, 6, 7 };
-		Spans spans = new SpansStub(doc, start, end);
+		int[] doc   = { 1, 1, 1, 2, 2, 2 };
+		int[] start = { 1, 1, 3, 3, 5, 5 };
+		int[] end   = { 2, 3, 4, 5, 6, 7 };
+		Spans spans = new MockSpans(doc, start, end);
 		hpd = new SpansInBucketsPerStartPoint(spans);
 	}
 
 	@Test
 	public void testListInterface() throws IOException {
-		Assert.assertTrue(hpd.next());
-		//List<Hit> l = hpd.getHits();
-		Assert.assertEquals(1, hpd.doc());
-		Assert.assertEquals(2, hpd.bucketSize());
-		Assert.assertEquals(1, hpd.start(0));
-		Assert.assertEquals(2, hpd.end(0));
-		Assert.assertEquals(1, hpd.start(1));
-		Assert.assertEquals(3, hpd.end(1));
-
-		Assert.assertTrue(hpd.next());
-		//l = hpd.getHits();
-		Assert.assertEquals(1, hpd.doc());
-		Assert.assertEquals(1, hpd.bucketSize());
-		Assert.assertEquals(3, hpd.start(0));
-		Assert.assertEquals(4, hpd.end(0));
-
-		Assert.assertTrue(hpd.next());
-		//l = hpd.getHits();
-		Assert.assertEquals(2, hpd.doc());
-		Assert.assertEquals(1, hpd.bucketSize());
-		Assert.assertEquals(3, hpd.start(0));
-		Assert.assertEquals(5, hpd.end(0));
-
-		Assert.assertTrue(hpd.next());
-		//l = hpd.getHits();
-		Assert.assertEquals(2, hpd.doc());
-		Assert.assertEquals(2, hpd.bucketSize());
-		Assert.assertEquals(5, hpd.start(0));
-		Assert.assertEquals(6, hpd.end(0));
-		Assert.assertEquals(5, hpd.start(1));
-		Assert.assertEquals(7, hpd.end(1));
-
-		Assert.assertFalse(hpd.next());
+		
+		int[] bDoc   = {1, 1, 2, 2};
+		int[] bStart = {0, 2, 3, 4};
+		
+		int[] hStart = {1, 1, 3, 3, 5, 5};
+		int[] hEnd   = {2, 3, 4, 5, 6, 7};
+		
+		SpansInBuckets exp = new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);
+		TestUtil.assertEquals(exp, hpd);
 	}
 
 }

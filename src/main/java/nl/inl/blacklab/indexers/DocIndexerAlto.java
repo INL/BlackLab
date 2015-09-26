@@ -24,13 +24,13 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.xml.sax.Attributes;
+
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.util.FileUtil;
 import nl.inl.util.StringUtil;
-
-import org.xml.sax.Attributes;
 
 /**
  * Index a Alto (OCR'ed text) file.

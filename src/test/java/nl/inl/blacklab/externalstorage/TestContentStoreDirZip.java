@@ -17,12 +17,12 @@ package nl.inl.blacklab.externalstorage;
 
 import java.io.File;
 
-import nl.inl.util.Utilities;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import nl.inl.util.Utilities;
 
 public class TestContentStoreDirZip {
 	private ContentStore store;

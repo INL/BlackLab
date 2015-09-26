@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.analysis.BLDutchAnalyzer;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -112,21 +110,6 @@ public class LuceneUtil {
 	}
 
 	/**
-	 * Parse a query in the Lucene query language format (QueryParser supplied with Lucene).
-	 *
-	 * @param luceneQuery the query string
-	 * @param defaultField default search field
-	 * @return the query
-	 * @throws ParseException on syntax error
-	 * @deprecated use version that takes analyzer
-	 */
-	@Deprecated
-	public static Query parseLuceneQuery(String luceneQuery, String defaultField)
-			throws ParseException {
-		return parseLuceneQuery(luceneQuery, new BLDutchAnalyzer(), defaultField);
-	}
-
-	/**
 	 * Get all words between the specified start and end positions from the term vector.
 	 *
 	 * NOTE: this may return an array of less than the size requested, if the document ends before
@@ -181,7 +164,7 @@ public class LuceneUtil {
 				throw new RuntimeException("Field " + luceneName + " has no character postion information");
 			// String[] docTerms = new String[(int) terms.size()];
 			// final List<BytesRef> termsList = new ArrayList<BytesRef>();
-			TermsEnum termsEnum = terms.iterator(null);
+			TermsEnum termsEnum = terms.iterator();
 
 			// Verzamel concordantiewoorden uit term vector
 			PostingsEnum docPosEnum = null;
@@ -246,7 +229,7 @@ public class LuceneUtil {
 			if (terms == null) {
 				throw new RuntimeException("Field " + luceneName + " has no Terms");
 			}
-			TermsEnum termsEnum = terms.iterator(null);
+			TermsEnum termsEnum = terms.iterator();
 
 			// Verzamel concordantiewoorden uit term vector
 			PostingsEnum postingsEnum = null;
@@ -322,7 +305,7 @@ public class LuceneUtil {
 				prefix = StringUtil.removeAccents(prefix).toLowerCase();
 			org.apache.lucene.index.Terms terms = index.terms(fieldName);
 			List<String> results = new ArrayList<String>();
-			TermsEnum termsEnum = terms.iterator(null);
+			TermsEnum termsEnum = terms.iterator();
 			BytesRef brPrefix = new BytesRef(prefix.getBytes("utf-8"));
 			termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
 			while (maxResults < 0 || results.size() < maxResults) {

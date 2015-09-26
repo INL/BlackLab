@@ -17,19 +17,21 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
 
 /**
  * Wrap a Spans to retrieve sequences of certain matches (in "buckets"), so we can process the
@@ -64,11 +66,6 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 	private int bucketSize = 0;
 
-	/**
-	 * Does the source Spans have more hits?
-	 */
-	protected boolean more = true;
-
 	private HitQueryContext hitQueryContext;
 
 	/** Is there captured group information for each hit that we need to store? */
@@ -78,7 +75,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	protected boolean clauseCapturesGroups = true;
 
 	protected void addHitFromSource() {
-		Hit hit = new Hit(source.doc(), source.start(), source.end());
+		Hit hit = new Hit(source.docID(), source.startPosition(), source.endPosition());
 		bucket.add(hit);
 		if (doCapturedGroups) {
 			// Store captured group information
@@ -99,12 +96,12 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	}
 
 	@Override
-	public int start(int indexInBucket) {
+	public int startPosition(int indexInBucket) {
 		return bucket.get(indexInBucket).start;
 	}
 
 	@Override
-	public int end(int indexInBucket) {
+	public int endPosition(int indexInBucket) {
 		return bucket.get(indexInBucket).end;
 	}
 
@@ -112,62 +109,72 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	public Hit getHit(int indexInBucket) {
 		return bucket.get(indexInBucket);
 	}
+	
+	@Override
+	public Collection<byte[]> getPayload(int indexInBucket) {
+		return bucket.get(indexInBucket).getPayload();
+	}
+
+	@Override
+	public boolean isPayloadAvailable(int indexInBucket) {
+		return bucket.get(indexInBucket).isPayloadAvailable();
+	}
 
 	public SpansInBucketsAbstract(Spans source) {
 		this.source = source;
 	}
 
 	@Override
-	public boolean next() throws IOException {
-		if (!more)
-			return false;
+	public int nextDoc() throws IOException {
+		if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
+			currentDoc = source.nextDoc();
+			if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
+				source.nextStartPosition(); // start gathering at the first hit
+				//gatherHitsInternal();
+			}
+		}
+		return currentDoc;
+	}
 
-		if (currentDoc < 0)
-			more = source.next(); // first next()
-		if (!more)
-			return false;
-
-		gatherHitsInternal();
-
-		return true;
+	@Override
+	public int nextBucket() throws IOException {
+		if (currentDoc < 0) {
+			// Not nexted yet, no bucket
+			return -1;
+		}
+		if (currentDoc == DocIdSetIterator.NO_MORE_DOCS || source.startPosition() == Spans.NO_MORE_POSITIONS)
+			return NO_MORE_BUCKETS;
+		return gatherHitsInternal();
 	}
 
 	/**
 	 * Subclasses should override this to gather the hits they wish to put in the next bucket.
+	 * 
+	 * Upon entering this method, the source spans is at the last unused hit (or the first hit in a 
+	 * new document). At the end, it should be at the first hit that doesn't fit in the bucket (or
+	 * beyond the last hit, i.e. Spans.NO_MORE_POSITIONS).
 	 *
 	 * @throws IOException
 	 */
 	protected abstract void gatherHits() throws IOException;
 
 	@Override
-	public boolean skipTo(int target) throws IOException {
-		if (currentDoc >= target) {
-			return true;
-		}
-
-		if (currentDoc < 0) {
-			next();
+	public int advance(int target) throws IOException {
+		if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
 			if (currentDoc >= target)
-				return true;
+				nextDoc();
+			else {
+				currentDoc = source.advance(target);
+				if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
+					source.nextStartPosition(); // start gathering at the first hit
+					//gatherHitsInternal();
+				}
+			}
 		}
-
-		if (!more)
-			return false;
-
-		if (source.doc() < target) {
-			more = source.skipTo(target);
-			if (!more)
-				return false;
-		}
-
-		gatherHitsInternal();
-
-		return true;
+		return currentDoc;
 	}
 
-	private void gatherHitsInternal() throws IOException {
-		currentDoc = source.doc();
-
+	private int gatherHitsInternal() throws IOException {
 		// NOTE: we could call .clear() here, but we don't want to hold on to
 		// a lot of memory indefinitely after encountering one huge bucket.
 		bucket = new ArrayList<Hit>();
@@ -176,10 +183,11 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 		bucketSize = 0;
 		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
 		gatherHits();
+		return currentDoc;
 	}
 
 	@Override
-	public int doc() {
+	public int docID() {
 		return currentDoc;
 	}
 

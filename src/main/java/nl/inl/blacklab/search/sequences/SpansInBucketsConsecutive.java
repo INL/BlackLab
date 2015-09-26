@@ -31,12 +31,12 @@ class SpansInBucketsConsecutive extends SpansInBucketsAbstract {
 
 	@Override
 	protected void gatherHits() throws IOException {
-		int lastEnd = source.start();
-		while (more && source.doc() == currentDoc && source.start() == lastEnd) {
+		int lastEnd = source.startPosition();
+		while (source.startPosition() == lastEnd) {
 			addHitFromSource();
-			lastEnd = source.end();
-			more = source.next();
+			lastEnd = source.endPosition();
+			if (source.nextStartPosition() == Spans.NO_MORE_POSITIONS)
+				break;
 		}
 	}
-
 }

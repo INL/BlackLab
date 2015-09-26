@@ -24,16 +24,16 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
-import nl.inl.blacklab.filter.RemovePunctuationFilter;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+
+import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
+import nl.inl.blacklab.filter.RemovePunctuationFilter;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * A simple analyzer based on StandardTokenizer that isn't limited to Latin.

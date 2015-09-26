@@ -4,9 +4,9 @@ import java.io.File;
 import java.text.Collator;
 import java.util.List;
 
-import nl.inl.util.VersionFile;
-
 import org.apache.lucene.index.DirectoryReader;
+
+import nl.inl.util.VersionFile;
 
 /**
  * A component that can quickly tell you what word occurs at a specific position of a specific document.
@@ -37,15 +37,6 @@ public abstract class ForwardIndex {
 	 * @return the forward index id
 	 */
 	public abstract int luceneDocIdToFiid(int docId);
-
-	/**
-	 * Perform a series of reads on the forward index to get (most of) it into disk cache.
-	 * @throws InterruptedException if the thread was interrupted during this operation
-	 * @deprecated use vmtouch tool, documented here:
-	 *    https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache
-	 */
-	@Deprecated
-	public abstract void warmUp() throws InterruptedException;
 
 	/**
 	 * Close the forward index.
@@ -266,29 +257,6 @@ public abstract class ForwardIndex {
 			throw new RuntimeException("Forward index version (2) too old for this BlackLab version. Please re-index.");
 			//return new ForwardIndexImplV2(dir, indexMode, collator, create);
 		return new ForwardIndexImplV3(dir, indexMode, collator, create);
-	}
-
-	/**
-	 * @param b true iff we want to keep FI in memory
-	 * @deprecated keeping forward index in memory is 'never' a good idea (better to use OS caching)
-	 */
-	@Deprecated
-	public static void setKeepInMemory(boolean b) {
-		//
-	}
-
-	/**
-	 * Sets the options for keeping forward indices in memory.
-	 *
-	 * Default and recommended setting is false, as it takes advantage of OS caching.
-	 *
-	 * @param keepInMemory if true, tries to keep the forward index in memory
-	 * @param keepFree how much of the maximum heap to keep free (only used if keepInMemory == true)
-	 * @deprecated keeping forward index in memory is 'never' a good idea (better to use OS caching)
-	 */
-	@Deprecated
-	public static void setKeepInMemory(boolean keepInMemory, long keepFree) {
-		//
 	}
 
 }

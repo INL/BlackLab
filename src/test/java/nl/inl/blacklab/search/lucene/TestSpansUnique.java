@@ -18,38 +18,25 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.Spans;
-import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.TestUtil;
 
 public class TestSpansUnique {
 	@Test
 	public void test() throws IOException {
-		int[] aDoc = new int[] { 1, 1, 2, 3, 3 };
-		int[] aStart = new int[] { 10, 10, 10, 1, 1 };
-		int[] aEnd = new int[] { 11, 11, 11, 2, 2 };
-		Spans a = new SpansStub(aDoc, aStart, aEnd);
+		int[] aDoc   = {  1,  1,  2,  3,  3 };
+		int[] aStart = { 10, 10, 10,  1,  1 };
+		int[] aEnd   = { 11, 11, 11,  2,  2 };
+		Spans a = new MockSpans(aDoc, aStart, aEnd);
 
 		Spans spans = new SpansUnique(a);
 
-		// First hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(1, spans.doc());
-		Assert.assertEquals(10, spans.start());
-		Assert.assertEquals(11, spans.end());
-
-		// Second hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(2, spans.doc());
-		Assert.assertEquals(10, spans.start());
-		Assert.assertEquals(11, spans.end());
-
-		// Third hit
-		Assert.assertTrue(spans.next());
-		Assert.assertEquals(3, spans.doc());
-		Assert.assertEquals(1, spans.start());
-		Assert.assertEquals(2, spans.end());
-
-		// Done
-		Assert.assertFalse(spans.next());
+		int[] expDoc   = { 1,  2,  3};
+		int[] expStart = {10, 10,  1};
+		int[] expEnd   = {11, 11,  2};
+		Spans exp = new MockSpans(expDoc, expStart, expEnd);
+		TestUtil.assertEquals(exp, spans);
 	}
 }

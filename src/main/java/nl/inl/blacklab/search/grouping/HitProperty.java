@@ -20,9 +20,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-import nl.inl.blacklab.search.Hits;
-
 import org.apache.log4j.Logger;
+
+import nl.inl.blacklab.search.Hits;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.

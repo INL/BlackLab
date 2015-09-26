@@ -16,6 +16,8 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +30,17 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
+
+import org.apache.log4j.Logger;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.BooleanQuery.TooManyClauses;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -44,21 +57,11 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
 
-import org.apache.log4j.Logger;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.BooleanQuery.TooManyClauses;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
-
 /**
  * Represents a list of Hit objects. Also maintains information about the context (concordance)
  * information stored in the Hit objects.
  */
-public class Hits implements Iterable<Hit> {
+public class Hits extends AbstractList<Hit> {
 
 	protected static final Logger logger = Logger.getLogger(Hits.class);
 
@@ -439,7 +442,11 @@ public class Hits implements Iterable<Hit> {
 		this(searcher, concordanceFieldPropName);
 
 		currentSourceSpans = BLSpansWrapper.optWrap(source);
-		sourceSpansFullyRead = false;
+		try {
+			sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -462,7 +469,7 @@ public class Hits implements Iterable<Hit> {
 			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
 			termContexts = new HashMap<Term, TermContext>();
 			Set<Term> terms = new HashSet<Term>();
-			spanQuery.extractTerms(terms);
+			extractTermsFromSpanQuery(terms);
 			etiquette = new ThreadPriority();
 			for (Term term: terms) {
 				try {
@@ -487,6 +494,18 @@ public class Hits implements Iterable<Hit> {
 		}
 
 		sourceSpansFullyRead = false;
+	}
+
+	private void extractTermsFromSpanQuery(Set<Term> terms) {
+		try {
+			// FIXME: temporary extractTerms hack
+			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
+			methodExtractTerms.setAccessible(true);
+		    methodExtractTerms.invoke(spanQuery, terms);
+			//spanQuery.extractTerms(terms);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -609,7 +628,8 @@ public class Hits implements Iterable<Hit> {
 					// Get the next hit from the spans, moving to the next
 					// segment when necessary.
 					while (true) {
-						if (currentSourceSpans == null) {
+						while (currentSourceSpans == null) {
+							// Exhausted (or not started yet); get next segment spans.
 
 							if (spanQuery == null) {
 								// We started from a Spans, not a SpanQuery. We're done now.
@@ -650,22 +670,34 @@ public class Hits implements Iterable<Hit> {
 							if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
 								capturedGroups = new HashMap<Hit, Span[]>();
 							}
-
+							
+							int doc = currentSourceSpans.nextDoc();
+							if (doc == DocIdSetIterator.NO_MORE_DOCS)
+								currentSourceSpans = null; // no matching docs in this segment, try next
 						}
 
 						// Advance to next hit
-						if (currentSourceSpans.next()) {
+						int start = currentSourceSpans.nextStartPosition();
+						if (start == Spans.NO_MORE_POSITIONS) {
+							int doc = currentSourceSpans.nextDoc();
+							if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+								// Go to first hit in doc
+								start = currentSourceSpans.nextStartPosition();
+							} else {
+								// This one is exhausted; go to the next one.
+								currentSourceSpans = null;
+							}
+						}
+						if (currentSourceSpans != null) {
 							// We're at the next hit.
 							break;
 						}
-						// This one is exhausted; go to the next one.
-						currentSourceSpans = null;
 					}
 
 					// Count the hit and add it (unless we've reached the maximum number of hits we
 					// want)
 					hitsCounted++;
-					int hitDoc = currentSourceSpans.doc() + currentDocBase;
+					int hitDoc = currentSourceSpans.docID() + currentDocBase;
 					if (hitDoc != previousHitDoc) {
 						docsCounted++;
 						if (!maxHitsRetrieved)
@@ -894,36 +926,6 @@ public class Hits implements Iterable<Hit> {
 	}
 
 	/**
-	 * Add a hit to the list
-	 *
-	 * NOTE: if the hits were sorted, the sort is gone after this!
-	 *
-	 * @param hit
-	 *            the hit
-	 * @deprecated use constructor that takes a list of Hits instead
-	 */
-	@Deprecated
-	public synchronized void add(Hit hit) {
-		try {
-			ensureAllHitsRead();
-		} catch (InterruptedException e) {
-			// Thread was interrupted; don't complete the operation but return
-			// and let the caller detect and deal with the interruption.
-			Thread.currentThread().interrupt();
-			return;
-		}
-		hits.add(hit);
-		sortOrder = null; // sortOrder not correct any more, and array is too short
-		hitsCounted++;
-		int hitDoc = hit.doc;
-		if (hitDoc != previousHitDoc) {
-			docsCounted++;
-			docsRetrieved++;
-			previousHitDoc = hitDoc;
-		}
-	}
-
-	/**
 	 * Determines if there are at least a certain number of hits
 	 *
 	 * This may be used if we don't want to process all hits (which
@@ -960,6 +962,7 @@ public class Hits implements Iterable<Hit> {
 	 *
 	 * @return the number of hits available
 	 */
+	@Override
 	public int size() {
 		try {
 			// Probably not all hits have been seen yet. Collect them all.
@@ -1202,6 +1205,7 @@ public class Hits implements Iterable<Hit> {
 	 *            index of the desired hit
 	 * @return the hit, or null if it's beyond the last hit
 	 */
+	@Override
 	public Hit get(int i) {
 		try {
 			ensureHitsRead(i + 1);
@@ -1776,6 +1780,7 @@ public class Hits implements Iterable<Hit> {
 	 * @return the sublist
 	 * @deprecated use window()
 	 */
+	@Override
 	@Deprecated
 	public List<Hit> subList(int fromIndex, int toIndex) {
 		try {

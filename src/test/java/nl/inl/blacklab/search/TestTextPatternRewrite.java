@@ -17,11 +17,11 @@ package nl.inl.blacklab.search;
 
 import java.io.StringReader;
 
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.ParseException;
 
 public class TestTextPatternRewrite {
 

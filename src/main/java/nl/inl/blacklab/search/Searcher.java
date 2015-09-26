@@ -33,6 +33,35 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+import org.apache.log4j.Logger;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.LockObtainFailedException;
+import org.apache.lucene.util.Bits;
+
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
@@ -62,36 +91,6 @@ import nl.inl.util.LuceneUtil;
 import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
 
-import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.LockObtainFailedException;
-import org.apache.lucene.util.Bits;
-
 /**
  * The main interface into the BlackLab library. The Searcher object is instantiated with an open
  * Lucene IndexReader and accesses that index through special methods.
@@ -109,9 +108,6 @@ public class Searcher {
 
 	/** Complex field name for default contents field */
 	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
-
-	/** Whether or not to automatically warm up the forward indices in a background thread at startup */
-	private static boolean autoWarmForwardIndices = false;
 
 	/** The collator to use for sorting. Defaults to English collator. */
 	private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
@@ -256,17 +252,6 @@ public class Searcher {
 	}
 
 	/**
-	 * Do our concordances include the original XML tags, or are they stripped out?
-	 *
-	 * @return true iff our concordances include XML tags.
-	 * @deprecated always returns true now
-	 */
-	@Deprecated
-	public boolean concordancesIncludeXmlTags() {
-		return true;
-	}
-
-	/**
 	 * Do we want to retrieve concordances from the forward index instead of from the
 	 * content store? This may be more efficient, particularly for small result sets
 	 * (because it eliminates seek time and decompression time), but concordances won't
@@ -294,7 +279,7 @@ public class Searcher {
 	private IndexWriter indexWriter = null;
 
 	/** Thread that automatically warms up the forward indices, if enabled. */
-	private Thread autoWarmThread;
+	private Thread buildTermIndicesThread;
 
 	/** Analyzer used for indexing our metadata fields */
 	private Analyzer analyzer;
@@ -605,12 +590,12 @@ public class Searcher {
 			}
 
 			// See if the forward index warmup thread is running, and if so, stop it
-			if (autoWarmThread != null && autoWarmThread.isAlive()) {
-				autoWarmThread.interrupt();
+			if (buildTermIndicesThread != null && buildTermIndicesThread.isAlive()) {
+				buildTermIndicesThread.interrupt();
 
 				// Wait for a maximum of a second for the thread to close down gracefully
 				int i = 0;
-				while (autoWarmThread.isAlive() && i < 10) {
+				while (buildTermIndicesThread.isAlive() && i < 10) {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
@@ -909,7 +894,7 @@ public class Searcher {
 			int found = 0;
 
 			// Iterate over terms
-			TermsEnum termsEnum = terms.iterator(null);
+			TermsEnum termsEnum = terms.iterator();
 			while (termsEnum.next() != null) {
 				PostingsEnum dpe = termsEnum.postings(null, null, PostingsEnum.POSITIONS);
 
@@ -1388,19 +1373,6 @@ public class Searcher {
 	}
 
 	/**
-	 * Test if a term occurs in the index
-	 *
-	 * @param term
-	 *            the term
-	 * @return true iff it occurs in the index
-	 * @deprecated moved to LuceneUtil
-	 */
-	@Deprecated
-	public boolean termOccursInIndex(Term term) {
-		return LuceneUtil.termOccursInIndex(reader, term);
-	}
-
-	/**
 	 * Set the collator used for sorting.
 	 *
 	 * The default collator is for English.
@@ -1439,42 +1411,15 @@ public class Searcher {
 			}
 		}
 
-		if (!indexMode || autoWarmForwardIndices) {
-			final boolean callWarmup = autoWarmForwardIndices;
-			// Start a background thread to build term indices and/or
-			// warm up the forward indices
-			autoWarmThread = new Thread(new Runnable() {
+		if (!indexMode) {
+			// Start a background thread to build term indices
+			buildTermIndicesThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
-					try {
-						buildAllTermIndices(); // speed up first call to Terms.indexOf()
-						if (callWarmup)
-							warmUpForwardIndices(); // speed up all forward index operations
-					} catch (InterruptedException e) {
-						// OK, just quit
-					}
+					buildAllTermIndices(); // speed up first call to Terms.indexOf()
 				}
 			});
-			autoWarmThread.start();
-		}
-	}
-
-	/**
-	 * "Warm up" the forward indices by performing a large number of reads on them,
-	 * getting them into disk cache.
-	 *
-	 * Not that this is done automatically in a background thread at startup, so you
-	 * shouldn't need to call this unless you've specifically switched this behaviour off.
-	 * @throws InterruptedException if the thread was interrupted during this operation
-	 * @deprecated use the external tool vmtouch, described here:
-	 *   https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache
-	 */
-	@Deprecated
-	public void warmUpForwardIndices() throws InterruptedException {
-		logger.debug("Warming up " + forwardIndices.size() + " forward indices...");
-		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
-			e.getValue().warmUp();
-			logger.debug("Forward index " + e.getKey() + " warmed up.");
+			buildTermIndicesThread.start();
 		}
 	}
 
@@ -1486,11 +1431,10 @@ public class Searcher {
 	 * by HitPropValue.deserialize(), so if you're not sure if you need to call this
 	 * method in your application, you probably don't.
 	 *
-	 * @deprecated called automatically now in search mode, no need to call it manually. This
-	 *   method will be made private eventually.
+	 * This used to be public, but it's called automatically now in search mode, so 
+	 * there's no need to call it manually anymore.
 	 */
-	@Deprecated
-	public void buildAllTermIndices() {
+	void buildAllTermIndices() {
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
 			e.getValue().getTerms().buildTermIndex();
 		}
@@ -1829,12 +1773,6 @@ public class Searcher {
 
 	public static void setDefaultCollator(Collator defaultCollator) {
 		Searcher.defaultCollator = defaultCollator;
-	}
-
-	/** Set whether or not to automatically warm up the forward indices in a background thread in Searcher constructor
-	 * @param b if true, automatically warm up forward indices in Searcher constructor */
-	public static void setAutoWarmForwardIndices(boolean b) {
-		autoWarmForwardIndices = b;
 	}
 
 	public IndexWriter getWriter() {

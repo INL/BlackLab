@@ -1,14 +1,13 @@
 package nl.inl.blacklab.debug;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
-
-import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
@@ -28,6 +27,9 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
+
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 
 public class RunTermQuery {
 
@@ -110,7 +112,7 @@ public class RunTermQuery {
 				"  Has payloads:        " + terms.hasPayloads() + "\n" +
 				"  Has positions:       " + terms.hasPositions() + "\n");
 
-			TermsEnum termsEnum = terms.iterator(null);
+			TermsEnum termsEnum = terms.iterator();
 			if (!termsEnum.seekExact(term.bytes())) {
 				System.out.println("Term " + word + " not found.");
 				return;
@@ -202,7 +204,7 @@ public class RunTermQuery {
 
 		Map<Term, TermContext> termContexts = new HashMap<Term, TermContext>();
 		TreeSet<Term> terms = new TreeSet<Term>();
-		spanQuery.extractTerms(terms);
+		extractTermsFromSpanQuery(spanQuery, terms);
 		for (Term termForContext: terms) {
 			termContexts.put(termForContext, TermContext.build(reader.getContext(), termForContext));
 		}
@@ -213,10 +215,12 @@ public class RunTermQuery {
 		boolean hitsFound = false;
 		for (LeafReaderContext arc: reader.leaves()) {
 			Spans spans = spanQuery.getSpans(arc, arc.reader().getLiveDocs(), termContexts);
-			while(spans.next()) {
-				int doc = arc.docBase + spans.doc();
-				System.out.println(String.format("  doc %7d, pos %4d-%4d", doc, spans.start(), spans.end()));
-				hitsFound = true;
+			while(spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+				while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
+					int doc = arc.docBase + spans.docID();
+					System.out.println(String.format("  doc %7d, pos %4d-%4d", doc, spans.startPosition(), spans.endPosition()));
+					hitsFound = true;
+				}
 			}
 		}
 		if (!hitsFound)
@@ -227,13 +231,29 @@ public class RunTermQuery {
 		LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 		Spans spans = spanQuery.getSpans(scrw.getContext(), scrw.getLiveDocs(), termContexts);
 		hitsFound = false;
-		while(spans.next()) {
-			System.out.println(String.format("  doc %7d, pos %4d-%4d", spans.doc(), spans.start(), spans.end()));
-			hitsFound = true;
+		while(spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+			while(spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
+				System.out.println(String.format("  doc %7d, pos %4d-%4d", spans.docID(), spans.startPosition(), spans.endPosition()));
+				hitsFound = true;
+			}
 		}
 		if (!hitsFound)
 			System.out.println("  (no hits)");
 		System.out.println("");
+	}
+
+	private static void extractTermsFromSpanQuery(SpanQuery spanQuery,
+			TreeSet<Term> terms) {
+		try {
+			// FIXME: temporary extractTerms hack
+			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
+			methodExtractTerms.setAccessible(true);
+		    methodExtractTerms.invoke(spanQuery, terms);
+			//spanQuery.extractTerms(terms);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		
 	}
 
 	private static void usage() {

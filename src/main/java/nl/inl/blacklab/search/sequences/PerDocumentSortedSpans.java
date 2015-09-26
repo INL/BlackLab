@@ -19,22 +19,22 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
 
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
-import org.apache.lucene.search.spans.Spans;
-
 /**
  * Sort the given Spans per document, according to the given comparator.
  */
 public class PerDocumentSortedSpans extends BLSpans {
 
-	static Comparator<Hit> cmpStartPoint = new SpanComparatorStartPoint();
+	final static Comparator<Hit> cmpStartPoint = new SpanComparatorStartPoint();
 
-	static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
+	final static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
 
 	protected BLSpans source;
 
@@ -46,7 +46,7 @@ public class PerDocumentSortedSpans extends BLSpans {
 
 	private int prevStart, prevEnd;
 
-	private int indexInBucket = -2; // -2 == not started yet; -1 == just started a bucket
+	private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
 	/** Sort hits by end point instead of by start point? */
 	private boolean sortByEndPoint;
@@ -70,69 +70,105 @@ public class PerDocumentSortedSpans extends BLSpans {
 	}
 
 	@Override
-	public int doc() {
+	public int docID() {
 		return curDoc;
 	}
 
 	@Override
-	public int start() {
+	public int startPosition() {
+		if (indexInBucket < 0)
+			return -1;
+		if (indexInBucket >= bucketedSpans.bucketSize())
+			return NO_MORE_POSITIONS;
 		return curStart;
 	}
 
 	@Override
-	public int end() {
+	public int endPosition() {
+		if (indexInBucket < 0)
+			return -1;
+		if (indexInBucket >= bucketedSpans.bucketSize())
+			return NO_MORE_POSITIONS;
 		return curEnd;
 	}
 
 	@Override
-	public Hit getHit() {
-		return bucketedSpans.getHit(indexInBucket);
-	}
-
-	@Override
-	public boolean next() throws IOException {
-		do {
-			if (indexInBucket >= 0) {
-				prevStart = bucketedSpans.start(indexInBucket);
-				prevEnd = bucketedSpans.end(indexInBucket);
-			} else {
-				prevStart = prevEnd = -1;
-			}
-			if (indexInBucket == -2 || indexInBucket == bucketedSpans.bucketSize() - 1) {
-				if (!bucketedSpans.next())
-					return false;
-				prevStart = prevEnd = -1;
-				indexInBucket = -1;
-			}
-			indexInBucket++;
-			curDoc = bucketedSpans.doc();
-			curStart = bucketedSpans.start(indexInBucket);
-			curEnd = bucketedSpans.end(indexInBucket);
-		} while (eliminateDuplicates && prevStart == curStart && prevEnd == curEnd);
-		return true;
-	}
-
-	@Override
-	public boolean skipTo(int target) throws IOException {
-		int oldDoc = bucketedSpans.doc();
-		if (!bucketedSpans.skipTo(target))
-			return false;
-		if (oldDoc != bucketedSpans.doc())
-			prevStart = prevEnd = -1;
-		indexInBucket = -1;
-		return next();
-	}
-
-	@Override
 	public Collection<byte[]> getPayload() {
-		// not used
-		return null;
+		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
+			return null;
+		return bucketedSpans.getPayload(indexInBucket);
 	}
 
 	@Override
 	public boolean isPayloadAvailable() {
-		// not used
-		return false;
+		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
+			return false;
+		return bucketedSpans.isPayloadAvailable(indexInBucket);
+	}
+
+	@Override
+	public Hit getHit() {
+		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
+			return null;
+		return bucketedSpans.getHit(indexInBucket);
+	}
+	
+	@Override
+	public int nextDoc() throws IOException {
+		curDoc = bucketedSpans.nextDoc();
+		indexInBucket = -2;
+		curStart = -1;
+		curEnd = -1;
+		return curDoc;
+	}
+
+	@Override
+	public int nextStartPosition() throws IOException {
+		if (!eliminateDuplicates) {
+			// No need to eliminate duplicates
+			if (indexInBucket == -2 || indexInBucket >= bucketedSpans.bucketSize() - 1) {
+				// Bucket exhausted or no bucket yet; get one
+				if (bucketedSpans.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
+					indexInBucket = SpansInBuckets.NO_MORE_BUCKETS;
+					return NO_MORE_POSITIONS;
+				}
+				indexInBucket = -1;
+			}
+			indexInBucket++;
+			curStart = bucketedSpans.startPosition(indexInBucket);
+			curEnd = bucketedSpans.endPosition(indexInBucket);
+		} else {
+			// Eliminate any duplicates
+			do {
+				if (indexInBucket == -2 || indexInBucket >= bucketedSpans.bucketSize() - 1) {
+					// Bucket exhausted or no bucket yet; get one
+					if (bucketedSpans.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
+						indexInBucket = SpansInBuckets.NO_MORE_BUCKETS;
+						return NO_MORE_POSITIONS;
+					}
+					indexInBucket = -1;
+				}
+				if (indexInBucket >= 0) {
+					prevStart = bucketedSpans.startPosition(indexInBucket);
+					prevEnd = bucketedSpans.endPosition(indexInBucket);
+				} else {
+					prevStart = prevEnd = -1;
+				}
+				indexInBucket++;
+				curStart = bucketedSpans.startPosition(indexInBucket);
+				curEnd = bucketedSpans.endPosition(indexInBucket);
+			} while (prevStart == curStart && prevEnd == curEnd);
+		}
+		return curStart;
+	}
+
+	@Override
+	public int advance(int target) throws IOException {
+		curDoc = bucketedSpans.advance(target);
+		indexInBucket = -2;
+		curStart = -1;
+		curEnd = -1;
+		return curDoc;
 	}
 
 	@Override
@@ -182,6 +218,8 @@ public class PerDocumentSortedSpans extends BLSpans {
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
+		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
+			return;
 		bucketedSpans.getCapturedGroups(indexInBucket, capturedGroups);
 	}
 }

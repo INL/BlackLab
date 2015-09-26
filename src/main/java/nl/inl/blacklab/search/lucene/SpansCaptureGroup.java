@@ -17,9 +17,9 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Captures its clause as a captured group.
@@ -52,35 +52,34 @@ class SpansCaptureGroup extends BLSpans {
 	 * @return the Lucene document id of the current hit
 	 */
 	@Override
-	public int doc() {
-		return clause.doc();
+	public int docID() {
+		return clause.docID();
 	}
 
 	/**
 	 * @return start position of current hit
 	 */
 	@Override
-	public int start() {
-		return clause.start();
+	public int startPosition() {
+		return clause.startPosition();
 	}
 
 	/**
 	 * @return end position of current hit
 	 */
 	@Override
-	public int end() {
-		return clause.end();
+	public int endPosition() {
+		return clause.endPosition();
 	}
 
-	/**
-	 * Go to next span.
-	 *
-	 * @return true if we're at the next span, false if we're done
-	 * @throws IOException
-	 */
 	@Override
-	public boolean next() throws IOException {
-		return clause.next();
+	public int nextDoc() throws IOException {
+		return clause.nextDoc();
+	}
+
+	@Override
+	public int nextStartPosition() throws IOException {
+		return clause.nextStartPosition();
 	}
 
 	/**
@@ -92,8 +91,8 @@ class SpansCaptureGroup extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
-		return clause.skipTo(doc);
+	public int advance(int doc) throws IOException {
+		return clause.advance(doc);
 	}
 
 	@Override

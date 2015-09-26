@@ -16,11 +16,12 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.Query;
@@ -30,8 +31,9 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.ToStringUtils;
 
 /**
- * A SpanQuery for an AND NOT query: <code>[word = "look" & pos != "VERB"]</code>
- * (find occurrences of the word "look" but exclude the verb form)
+ * A SpanQuery for a document-level AND NOT query.
+ * Produces all spans from the "include" part, except for those
+ * in documents that occur in the "exclude" part.
  */
 public class SpanQueryAndNot extends SpanQuery {
 	private SpanQuery[] clauses = null;
@@ -119,8 +121,18 @@ public class SpanQueryAndNot extends SpanQuery {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void extractTerms(Set terms) {
-		for (SpanQuery element : clauses) {
-			element.extractTerms(terms);
+		try {
+			// FIXME: temporary extractTerms hack
+			Method methodExtractTerms = SpanQuery.class.
+			        getDeclaredMethod("extractTerms", Set.class);
+			methodExtractTerms.setAccessible(true);
+			
+			for (final SpanQuery clause : getClauses()) {
+			    methodExtractTerms.invoke(clause, terms);
+				//clause.extractTerms(terms);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 

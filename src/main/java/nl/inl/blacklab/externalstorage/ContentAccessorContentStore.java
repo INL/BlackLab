@@ -15,10 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.externalstorage;
 
+import org.apache.lucene.document.Document;
+
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.ContentAccessor;
-
-import org.apache.lucene.document.Document;
 
 /**
  * Defines a way to access the original indexed content.

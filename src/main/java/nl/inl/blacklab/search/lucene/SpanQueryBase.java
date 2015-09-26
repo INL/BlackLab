@@ -16,15 +16,16 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Set;
-
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.util.ToStringUtils;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * A base class for a SpanQuery with an array of clauses. Provides default implementations of some
@@ -119,9 +120,20 @@ public abstract class SpanQueryBase extends SpanQuery {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void extractTerms(Set terms) {
-		for (SpanQuery element : clauses) {
-			if (element != null) // <-- happens when searching for []
-				element.extractTerms(terms);
+		try {
+			// FIXME: temporary extractTerms hack
+			Method methodExtractTerms = SpanQuery.class.
+			        getDeclaredMethod("extractTerms", Set.class);
+			methodExtractTerms.setAccessible(true);
+			
+			for (final SpanQuery clause : clauses) {
+				if (clause != null) { // <-- happens when searching for []
+					methodExtractTerms.invoke(clause, terms);
+					//clause.extractTerms(terms);
+				}
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 

@@ -5,15 +5,15 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Searcher;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.uninverting.UninvertingReader;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.Searcher;
 
 /**
  * Used to get the field length in tokens for a document.
@@ -150,7 +150,7 @@ public class DocFieldLengthGetter implements Closeable {
 		try {
 			Terms vector = reader.getTermVector(doc, fieldName);
 			TermsEnum termsEnum = null;
-			termsEnum = vector.iterator(termsEnum);
+			termsEnum = vector.iterator();
 			int termFreq = 0;
 			while (termsEnum.next() != null) {
 			    termFreq += termsEnum.totalTermFreq();

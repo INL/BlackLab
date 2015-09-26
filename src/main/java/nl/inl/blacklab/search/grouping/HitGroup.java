@@ -15,17 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-import java.util.Iterator;
 import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * A group of results, with its group identity and the results themselves, that you can access
@@ -74,90 +68,6 @@ public class HitGroup extends Group {
 	@Override
 	public String toString() {
 		return "GroupOfHits, identity = " + groupIdentity + ", size = " + results.size();
-	}
-
-	@Deprecated
-	@Override
-	public Spans getSpans() {
-		return new BLSpans() {
-			Iterator<Hit> it = results.iterator();
-
-			Hit currentHit = null;
-
-			@Override
-			public int doc() {
-				return currentHit.doc;
-			}
-
-			@Override
-			public int end() {
-				return currentHit.end;
-			}
-
-			@Override
-			public boolean next() {
-				if (!it.hasNext())
-					return false;
-				currentHit = it.next();
-				return true;
-			}
-
-			@Override
-			public int start() {
-				return currentHit.start;
-			}
-
-			@Override
-			public Hit getHit() {
-				return currentHit;
-			}
-
-			@Override
-			public boolean hitsEndPointSorted() {
-				return false;
-			}
-
-			@Override
-			public boolean hitsStartPointSorted() {
-				return false;
-			}
-
-			@Override
-			public boolean hitsAllSameLength() {
-				return false;
-			}
-
-			@Override
-			public int hitsLength() {
-				return -1;
-			}
-
-			@Override
-			public boolean hitsHaveUniqueStart() {
-				return false;
-			}
-
-			@Override
-			public boolean hitsHaveUniqueEnd() {
-				return false;
-			}
-
-			@Override
-			public boolean hitsAreUnique() {
-				return false;
-			}
-
-			@Override
-			public void passHitQueryContextToClauses(HitQueryContext context) {
-				// just ignore this here
-			}
-
-			@Override
-			public void getCapturedGroups(Span[] capturedGroups) {
-				// just ignore this here
-			}
-
-		};
 	}
 
 	public void setContextField(List<String> contextField) {

@@ -19,17 +19,17 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.BLSpansWrapper;
-import nl.inl.blacklab.search.lucene.SpanQueryBase;
-import nl.inl.blacklab.search.lucene.SpansUnique;
-
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.BLSpansWrapper;
+import nl.inl.blacklab.search.lucene.SpanQueryBase;
+import nl.inl.blacklab.search.lucene.SpansUnique;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is

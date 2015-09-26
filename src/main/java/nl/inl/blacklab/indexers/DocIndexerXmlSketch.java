@@ -17,12 +17,12 @@ package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
 
+import org.xml.sax.Attributes;
+
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-
-import org.xml.sax.Attributes;
 
 /**
  * Index a Sketch XML file.

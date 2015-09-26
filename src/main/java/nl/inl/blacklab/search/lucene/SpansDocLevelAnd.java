@@ -17,20 +17,22 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-
-import nl.inl.blacklab.search.Span;
+import java.util.Collection;
 
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * "AND"-combination of two Spans objects.
  *
  * Behave as a boolean AND at the document level and as a boolean
  * OR within each document.
+ * 
+ * (NOTE: we don't use SpanNearQuery with "infinite" slop because
+ *  we need access to the sub-spans for capture group functionality)
  */
 public class SpansDocLevelAnd extends BLSpans {
-	/** Current document id */
-	private int currentDocId;
 
 	/** Index of spans object that contains the current hit */
 	private int currentSpansIndex;
@@ -38,165 +40,113 @@ public class SpansDocLevelAnd extends BLSpans {
 	/** The spans objects we're producing hits from */
 	private BLSpans[] spans;
 
-	/** Did we go past the last hit? */
-	private boolean stillValidSpans[];
+	/** What doc is span in? */
+	private int currentDoc[] = new int[2];
 
-	/** Have the spans iterations been started? */
-	private boolean spansNexted[];
+	/** What start pos is span at? */
+	private int currentStart[] = new int[2];
 
 	public SpansDocLevelAnd(Spans leftClause, Spans rightClause) {
 		spans = new BLSpans[2];
 		spans[0] = BLSpansWrapper.optWrapSort(leftClause);
 		spans[1] = BLSpansWrapper.optWrapSort(rightClause);
-		currentDocId = -1; // no current document yet
-		stillValidSpans = new boolean[2];
-		spansNexted = new boolean[2];
-		spansNexted[0] = false;
-		spansNexted[1] = false;
-		stillValidSpans[1] = true;
-		stillValidSpans[0] = true;
+		currentDoc[0] = currentDoc[1] = -1;
+		currentStart[0] = currentStart[1] = -1;
 		currentSpansIndex = 0;
 	}
 
-	/**
-	 * Returns document id of current hit
-	 *
-	 * @return current document id
-	 */
 	@Override
-	public int doc() {
-		return spans[currentSpansIndex].doc();
+	public int docID() {
+		return currentDoc[0];
 	}
 
-	/**
-	 * Checks if the specified spans still points to the current document, or if it points to a
-	 * different document (or is depleted).
-	 *
-	 * @param spansNumber
-	 *            index in the spans[] array
-	 * @return true if this spans still points to current document, false if not
-	 */
-	private boolean doesSpansPointToCurrentDoc(int spansNumber) {
-		return stillValidSpans[spansNumber] && spansNexted[spansNumber] && spans[spansNumber].doc() == currentDocId;
+	@Override
+	public int endPosition() {
+		return spans[currentSpansIndex].endPosition();
 	}
 
-	/**
-	 * @return end of current hit
-	 */
 	@Override
-	public int end() {
-		return spans[currentSpansIndex].end();
+	public int nextDoc() throws IOException {
+		// Both spans are in the same doc. Advance both now and re-synchronize.
+		currentDoc[0] = spans[0].nextDoc();
+		currentDoc[1] = spans[1].nextDoc();
+		return synchronize();
 	}
 
-	/**
-	 * Go to next hit.
-	 *
-	 * @return true if we're on a valid hit, false if we're done.
-	 * @throws IOException
-	 */
 	@Override
-	public boolean next() throws IOException {
-		// We must do this right away, but not in the constructor because of exceptions
-		if (!spansNexted[1]) {
-			stillValidSpans[1] = spans[1].next();
-			spansNexted[1] = true;
-		}
-
+	public int nextStartPosition() throws IOException {
+		if (currentDoc[currentSpansIndex] == NO_MORE_DOCS)
+			return NO_MORE_POSITIONS;
+		
 		// Advance the spans from which the last hit was produced,
 		// so that both spans[0] and spans[1] point to a 'fresh' hit.
 		// (Of course one or both might become depleted at some point;
 		// we keep track of this in validspans[])
 
-		stillValidSpans[currentSpansIndex] = spans[currentSpansIndex].next();
-		spansNexted[currentSpansIndex] = true;
+		currentStart[currentSpansIndex] = spans[currentSpansIndex].nextStartPosition();
 
-		// If we didn't have a current document yet, or we're done with the current doc:
-		// advance to next document
-		if (currentDocId == -1
-				|| ((!stillValidSpans[0] || !spansNexted[0] || spans[0].doc() != currentDocId) && (!stillValidSpans[1] || !spansNexted[1] || spans[1]
-						.doc() != currentDocId))) {
-			boolean ok = synchronize();
-			if (!ok)
-				return false;
+		// Are we done with the current doc?
+		if (currentStart[0] == NO_MORE_POSITIONS && currentStart[1] == NO_MORE_POSITIONS) {
+			return NO_MORE_POSITIONS;
 		}
 
-		// When we arrive here, we know we have a valid document.
-		// It's still possible that one of the spans is depleted while the other one still has
-		// hits in it.
-
-		boolean spansPointsToCurrentDoc[] = new boolean[2];
-		spansPointsToCurrentDoc[0] = doesSpansPointToCurrentDoc(0);
-		spansPointsToCurrentDoc[1] = doesSpansPointToCurrentDoc(1);
-		if (spansPointsToCurrentDoc[0] && spansPointsToCurrentDoc[1]) {
+		if (currentStart[0] != NO_MORE_POSITIONS && currentStart[1] != NO_MORE_POSITIONS) {
 			// Two spans to choose from; choose the hit occurring first in the document.
 			// (if equal starts, choose the one that ends first)
-			if (spans[0].start() == spans[1].start()) {
-				currentSpansIndex = (spans[0].end() < spans[1].end()) ? 0 : 1;
+			if (spans[0].startPosition() == spans[1].startPosition()) {
+				currentSpansIndex = spans[0].endPosition() < spans[1].endPosition() ? 0 : 1;
+			} else {
+				currentSpansIndex = currentStart[0] < currentStart[1] ? 0 : 1;
 			}
-			else {
-				currentSpansIndex = (spans[0].start() < spans[1].start()) ? 0 : 1;
-			}
-		} else if (spansPointsToCurrentDoc[0]) {
+		} else if (currentStart[0] != NO_MORE_POSITIONS) {
 			// Only spans[0] still has hits in the current document.
 			currentSpansIndex = 0;
-		} else if (spansPointsToCurrentDoc[1]) {
+		} else if (currentStart[1] != NO_MORE_POSITIONS) {
 			// Only spans[1] still has hits in the current document.
 			currentSpansIndex = 1;
 		} else {
-			// not possible (checks at the top of the method make this impossible,
-			// we would be in a new document or be all done)
-			assert (false);
+			// not possible (checks at the top of the method make this impossible)
+			throw new RuntimeException();
 		}
 
 		// Found new hit
-		return true;
+		return currentStart[currentSpansIndex];
 	}
 
 	/**
 	 * If spans[0] and spans[1] are at different document ids, this method will
 	 * advance them until they're in the same document again.
 	 *
-	 * @return true if a next document has been found, false if we're done
+	 * @return document id if a next document has been found, NO_MORE_DOCS if we're done
 	 * @throws IOException
 	 */
-	private boolean synchronize() throws IOException {
+	private int synchronize() throws IOException {
 		// Were we done already?
-		if (!stillValidSpans[0] || !stillValidSpans[1]) {
+		if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS) {
 			// Yes
-			return false;
+			return NO_MORE_DOCS;
 		}
 
 		// Loop until we match up spans[0] and spans[1]
-		int doc1, doc2;
-		doc1 = spansNexted[0] ? spans[0].doc() : -1;
-		doc2 = spansNexted[1] ? spans[1].doc() : -1;
-		while (doc1 != doc2) {
+		while (currentDoc[0] != currentDoc[1]) {
 			// Which of the two should we advance?
-			if (doc1 < doc2) {
+			if (currentDoc[0] < currentDoc[1]) {
 				// spans[0] is behind spans[1]; skip spans[0] to spans[1]'s position
-				stillValidSpans[0] = spans[0].skipTo(doc2);
-				spansNexted[0] = true;
-				if (!stillValidSpans[0]) {
+				currentDoc[0] = spans[0].advance(currentDoc[1]);
+				if (currentDoc[0] == NO_MORE_DOCS) {
 					// spans[0] is depleted; we're done
-					return false;
+					return NO_MORE_DOCS;
 				}
-				doc1 = spans[0].doc();
 			} else {
 				// spans[1] is behind spans[0]; skip spans[1] to spans[0]'s position
-				stillValidSpans[1] = spans[1].skipTo(doc1);
-				spansNexted[1] = true;
-				if (!stillValidSpans[1]) {
+				currentDoc[1] = spans[1].advance(currentDoc[0]);
+				if (currentDoc[1] == NO_MORE_DOCS) {
 					// spans[1] is depleted; we're done
-					return false;
+					return NO_MORE_DOCS;
 				}
-				doc2 = spans[1].doc();
 			}
 		}
-
-		// Found a match; this is new current doc.
-		// spans[0] and spans[1] are at their first hits in the document.
-		currentDocId = doc1;
-		return true;
+		return currentDoc[0];
 	}
 
 	/**
@@ -209,11 +159,10 @@ public class SpansDocLevelAnd extends BLSpans {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean skipTo(int doc) throws IOException {
+	public int advance(int doc) throws IOException {
 		// Skip beiden tot aan doc
-		stillValidSpans[0] = spans[0].skipTo(doc);
-		stillValidSpans[1] = spans[1].skipTo(doc);
-		spansNexted[0] = spansNexted[1] = true;
+		currentDoc[0] = spans[0].advance(doc);
+		currentDoc[1] = spans[1].advance(doc);
 		return synchronize();
 	}
 
@@ -221,8 +170,8 @@ public class SpansDocLevelAnd extends BLSpans {
 	 * @return start of current hit
 	 */
 	@Override
-	public int start() {
-		return spans[currentSpansIndex].start();
+	public int startPosition() {
+		return currentStart[currentSpansIndex];
 	}
 
 	@Override
@@ -280,5 +229,14 @@ public class SpansDocLevelAnd extends BLSpans {
 		spans[currentSpansIndex].getCapturedGroups(capturedGroups);
 	}
 
+	@Override
+	public Collection<byte[]> getPayload() throws IOException {
+		return spans[currentSpansIndex].getPayload();
+	}
+
+	@Override
+	public boolean isPayloadAvailable() throws IOException {
+		return spans[currentSpansIndex].isPayloadAvailable();
+	}
 
 }
