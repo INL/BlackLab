@@ -37,6 +37,8 @@ import nl.inl.blacklab.search.sequences.SpanQuerySequence;
  * Translates a TextPattern to a Lucene SpanQuery object.
  */
 public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQuery> {
+	
+	final static boolean USE_TAGS_WITH_PAYLOAD = true;
 
 	@Override
 	public SpanQuery and(QueryExecutionContext context, List<SpanQuery> clauses) {
@@ -72,7 +74,11 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
-		SpanQueryTags allTags = new SpanQueryTags(context, elementName);
+		SpanQuery allTags;
+		if (USE_TAGS_WITH_PAYLOAD)
+			allTags = new SpanQueryTagsPayload(context, elementName);
+		else
+			allTags = new SpanQueryTags(context, elementName);
 		if (attr == null || attr.size() == 0)
 			return allTags;
 

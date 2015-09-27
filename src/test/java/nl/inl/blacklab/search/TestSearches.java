@@ -98,7 +98,8 @@ public class TestSearches {
 
 	@After
 	public void tearDown() {
-		searcher.close();
+		if (searcher != null)
+			searcher.close();
 		deleteTree(indexDir);
 	}
 

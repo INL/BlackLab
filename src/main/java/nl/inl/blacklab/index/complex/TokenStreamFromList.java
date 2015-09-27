@@ -24,7 +24,9 @@ import java.util.Iterator;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.PayloadAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+import org.apache.lucene.util.BytesRef;
 
 /**
  * Takes an Iterable<String> and iterates through it as a TokenStream.
@@ -39,6 +41,9 @@ class TokenStreamFromList extends TokenStream {
 	/** Iterator over the position increments */
 	private Iterator<Integer> incrementIt;
 
+	/** Iterator over the payloads, if any */
+	private Iterator<BytesRef> payloadIt = null;
+
 	/**
 	 * Term text of the current token
 	 */
@@ -49,7 +54,16 @@ class TokenStreamFromList extends TokenStream {
 	 */
 	protected PositionIncrementAttribute positionIncrementAttr;
 
+	/**
+	 * Payload of the current token
+	 */
+	protected PayloadAttribute payloadAttr = null;
+
 	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments) {
+		this(tokens, increments, null);
+	}
+	
+	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments, Iterable<BytesRef> payload) {
 		clearAttributes();
 		termAttr = addAttribute(CharTermAttribute.class);
 		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
@@ -57,6 +71,10 @@ class TokenStreamFromList extends TokenStream {
 
 		iterator = tokens.iterator();
 		incrementIt = increments.iterator();
+		if (payload != null) {
+			payloadAttr = addAttribute(PayloadAttribute.class);
+			payloadIt = payload.iterator();
+		}
 	}
 
 	@Override
@@ -66,6 +84,9 @@ class TokenStreamFromList extends TokenStream {
 			String word = iterator.next();
 			termAttr.copyBuffer(word.toCharArray(), 0, word.length());
 			positionIncrementAttr.setPositionIncrement(incrementIt.next());
+			if (payloadAttr != null) {
+				payloadAttr.setPayload(payloadIt.next());
+			}
 			return true;
 		}
 		return false;

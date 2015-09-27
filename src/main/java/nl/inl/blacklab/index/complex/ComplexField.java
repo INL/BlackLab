@@ -65,13 +65,14 @@ public class ComplexField {
 	 * @param mainPropertyName main property name
 	 * @param sensitivity ways to index main property, with respect to case- and
 	 *   diacritics-sensitivity.
+	 * @param mainPropHasPayloads does the main property have payloads? 
 	 */
-	public ComplexField(String name, String mainPropertyName, SensitivitySetting sensitivity) {
+	public ComplexField(String name, String mainPropertyName, SensitivitySetting sensitivity, boolean mainPropHasPayloads) {
 		boolean includeOffsets = true;
 		fieldName = name;
 		if (mainPropertyName == null)
 			mainPropertyName = ComplexFieldUtil.getDefaultMainPropName();
-		mainProperty = new ComplexFieldProperty(mainPropertyName, sensitivity, includeOffsets);
+		mainProperty = new ComplexFieldProperty(mainPropertyName, sensitivity, includeOffsets, mainPropHasPayloads);
 		properties.put(mainPropertyName, mainProperty);
 	}
 
@@ -79,10 +80,14 @@ public class ComplexField {
 		return start.size();
 	}
 
-	public ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity) {
-		ComplexFieldProperty p = new ComplexFieldProperty(name, sensitivity, false);
+	public ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity, boolean includePayloads) {
+		ComplexFieldProperty p = new ComplexFieldProperty(name, sensitivity, false, includePayloads);
 		properties.put(name, p);
 		return p;
+	}
+
+	public ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity) {
+		return addProperty(name, sensitivity, false);
 	}
 
 	/**
@@ -141,13 +146,6 @@ public class ComplexField {
 		mainProperty.addValue(value, posIncr);
 	}
 
-	public void addPropertyValue(String name, String value, int posIncr) {
-		ComplexFieldProperty p = properties.get(name);
-		if (p == null)
-			throw new RuntimeException("Undefined property '" + name + "'");
-		p.addValue(value, posIncr);
-	}
-
 	public void addToLuceneDoc(Document doc) {
 		for (ComplexFieldProperty p : properties.values()) {
 			p.addToLuceneDoc(doc, fieldName, start, end);
@@ -196,6 +194,13 @@ public class ComplexField {
 		return p;
 	}
 
+	/**
+	 * Get the list of values for a property
+	 * @param name property name
+	 * @return list of values
+	 * @deprecated ask the property object itself instead
+	 */
+	@Deprecated
 	public List<String> getPropertyValues(String name) {
 		ComplexFieldProperty p = properties.get(name);
 		if (p == null)
@@ -203,6 +208,13 @@ public class ComplexField {
 		return p.getValues();
 	}
 
+	/**
+	 * Get the list of position increments for a property
+	 * @param name property name
+	 * @return list of increments
+	 * @deprecated ask the property object itself instead
+	 */
+	@Deprecated
 	public List<Integer> getPropertyPositionIncrements(String name) {
 		ComplexFieldProperty p = properties.get(name);
 		if (p == null)
@@ -222,6 +234,28 @@ public class ComplexField {
 		return properties.values();
 	}
 
+	/**
+	 * Add a value to a property
+	 * @param name property name
+	 * @param value the value to add
+	 * @param posIncr position increment
+	 * @deprecated keep a reference to the property object and add values to that. 
+	 */
+	@Deprecated
+	public void addPropertyValue(String name, String value, int posIncr) {
+		ComplexFieldProperty p = properties.get(name);
+		if (p == null)
+			throw new RuntimeException("Undefined property '" + name + "'");
+		p.addValue(value, posIncr);
+	}
+
+	/**
+	 * Add a value to a property
+	 * @param name property name
+	 * @param value the value to add
+	 * @deprecated keep a reference to the property object and add values to that. 
+	 */
+	@Deprecated
 	public void addPropertyValue(String name, String value) {
 		addPropertyValue(name, value, 1);
 	}

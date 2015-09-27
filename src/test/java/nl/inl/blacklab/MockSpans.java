@@ -19,9 +19,9 @@
 package nl.inl.blacklab;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collection;
-
-import org.apache.lucene.search.spans.Spans;
+import java.util.Collections;
 
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -49,6 +49,8 @@ public class MockSpans extends BLSpans {
 	private boolean sortedSpans;
 
 	private boolean uniqueSpans;
+
+	private byte[][] payloads = null;
 
 	public MockSpans(int[] doc, int[] start, int[] end) {
 		this.doc = doc;
@@ -83,7 +85,7 @@ public class MockSpans extends BLSpans {
 	public int docID() {
 		return currentDoc;
 	}
-
+	
 	@Override
 	public int endPosition() {
 		if (currentHit < 0 || alreadyAtFirstMatch)
@@ -93,14 +95,27 @@ public class MockSpans extends BLSpans {
 		return end[currentHit];
 	}
 
+	private void setPayloadsInt(int[] aEnd) {
+		this.payloads = new byte[aEnd.length][];
+		for (int i = 0; i < aEnd.length; i++) {
+			this.payloads[i] = ByteBuffer.allocate(4).putInt(aEnd[i]).array();
+		}
+	}
+
 	@Override
 	public Collection<byte[]> getPayload() {
-		return null;
+		if (payloads == null)
+			return null;
+		if (currentHit < 0 || alreadyAtFirstMatch)
+			return null;
+		if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
+			return null;
+		return Collections.singleton(payloads[currentHit]);
 	}
 
 	@Override
 	public boolean isPayloadAvailable() {
-		return false;
+		return payloads != null;
 	}
 	
 	@Override
@@ -206,12 +221,26 @@ public class MockSpans extends BLSpans {
 		return new MockSpans(new int[0], new int[0], new int[0]);
 	}
 
-	public static Spans single(int doc, int start, int end) {
+	public static MockSpans single(int doc, int start, int end) {
 		return new MockSpans(new int[] {doc}, new int[] {start}, new int[] {end});
 	}
 
-	public static Spans fromLists(int[] doc, int[] start, int[] end) {
+	public static MockSpans fromLists(int[] doc, int[] start, int[] end) {
 		return new MockSpans(doc, start, end);
+	}
+
+	public static MockSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd) {
+		MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
+		spans.setPayloadsInt(aEnd);
+		return spans;
+	}
+
+	private static MockSpans singleWordSpans(int[] aDoc, int[] aStart) {
+		int[] aEnd = new int[aStart.length];
+		for (int i = 0; i < aStart.length; i++) {
+			aEnd[i] = aStart[i] + 1;
+		}
+		return fromLists(aDoc, aStart, aEnd);
 	}
 
 }

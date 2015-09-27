@@ -19,9 +19,12 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +35,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
+import org.apache.lucene.util.BytesRef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
@@ -125,6 +129,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			for (ComplexFieldProperty prop : contentsField.getProperties()) {
 				while (prop.lastValuePosition() < lastValuePos) {
 					prop.addValue("");
+					if (prop.hasPayload())
+						prop.addPayload(null);
 					if (prop == propMain) {
 						contentsField.addStartChar(getCharacterPosition());
 						contentsField.addEndChar(getCharacterPosition());
@@ -294,7 +300,18 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				addMetadataField(name, value);
 		}
 	}
-
+	
+	/* Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
+	class OpenTagInfo {
+		public int position;
+		public int index;
+		public OpenTagInfo(int position, int index) {
+			this.position = position;
+			this.index = index;
+		}
+	}
+	List<OpenTagInfo> openTags = new ArrayList<OpenTagInfo>();
+	
 	/** Handle tags. */
 	public class InlineTagHandler extends ElementHandler {
 
@@ -303,9 +320,12 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		public void startElement(String uri, String localName, String qName,
 				Attributes attributes) {
 			int lastStartTagPos = propStartTag.lastValuePosition();
-			int currentPos = propMain.lastValuePosition();
-			int posIncrement = currentPos - lastStartTagPos + 1;
+			int currentPos = propMain.lastValuePosition() + 1;
+			int posIncrement = currentPos - lastStartTagPos;
 			propStartTag.addValue(localName, posIncrement);
+			propStartTag.addPayload(null);
+			int startTagIndex = propStartTag.getLastValueIndex();
+			openTags.add(new OpenTagInfo(currentPos, startTagIndex));
 			for (int i = 0; i < attributes.getLength(); i++) {
 				// Index element attribute values
 				String name = attributes.getLocalName(i);
@@ -320,9 +340,14 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		@Override
 		public void endElement(String uri, String localName, String qName) {
 			int lastEndTagPos = propEndTag.lastValuePosition();
-			int currentPos = propMain.lastValuePosition();
-			int posIncrement = currentPos - lastEndTagPos + 1;
+			int currentPos = propMain.lastValuePosition() + 1;
+			int posIncrement = currentPos - lastEndTagPos;
 			propEndTag.addValue(localName, posIncrement);
+			
+			// Add payload to start tag property indicating end position
+			OpenTagInfo openTag = openTags.remove(openTags.size() - 1);
+			byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
+			propStartTag.setPayloadAtIndex(openTag.index, new BytesRef(payload));
 		}
 	}
 
@@ -474,8 +499,12 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	}
 
 	protected ComplexFieldProperty addProperty(String propName) {
+		return addProperty(propName, false);
+	}
+
+	protected ComplexFieldProperty addProperty(String propName, boolean includePayloads) {
 		return contentsField.addProperty(propName,
-				getSensitivitySetting(propName));
+				getSensitivitySetting(propName), includePayloads);
 	}
 
 	public DocIndexerXmlHandlers(Indexer indexer, String fileName, Reader reader) {
@@ -484,10 +513,10 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		// Define the properties that make up our complex field
 		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
 		contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME,
-				mainPropName, getSensitivitySetting(mainPropName));
+				mainPropName, getSensitivitySetting(mainPropName), false);
 		propMain = contentsField.getMainProperty();
 		propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
-		propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME); // start
+		propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, true); // start
 																			// tag
 																			// positions
 		propStartTag.setForwardIndex(false);

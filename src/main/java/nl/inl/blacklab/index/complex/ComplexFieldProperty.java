@@ -26,6 +26,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.util.BytesRef;
 
 /**
  * A property in a complex field. See ComplexField for details.
@@ -73,6 +74,11 @@ public class ComplexFieldProperty {
 	/** Token position increments. This allows us to index multiple terms at a single token position (just
 	 *  set the token increments of the additional tokens to 0). */
 	protected List<Integer> increments = new ArrayList<Integer>();
+	
+	/**
+	 * Payloads for this property, if any.
+	 */
+	protected List<BytesRef> payloads = null;
 
 	/** Position of the last value added
 	 */
@@ -102,9 +108,10 @@ public class ComplexFieldProperty {
 	 * @param sensitivity ways to index this property, with respect to case- and
 	 *   diacritics-sensitivity.
 	 * @param includeOffsets whether to include character offsets in the main alternative
+	 * @param includePayloads will this property include payloads?
 	 */
 	public ComplexFieldProperty(String name, SensitivitySetting sensitivity,
-			boolean includeOffsets) {
+			boolean includeOffsets, boolean includePayloads) {
 		super();
 		propName = name;
 
@@ -127,14 +134,18 @@ public class ComplexFieldProperty {
 		}
 
 		this.includeOffsets = includeOffsets;
+		if (includePayloads)
+			payloads = new ArrayList<BytesRef>();
 	}
 
 	TokenStream getTokenStream(String altName, List<Integer> startChars, List<Integer> endChars) {
 		TokenStream ts;
-		if (includeOffsets)
+		if (includeOffsets) {
+			// FIXME: make TokenStreamWithOffsets work with payloads as well
 			ts = new TokenStreamWithOffsets(values, increments, startChars, endChars);
-		else
-			ts = new TokenStreamFromList(values, increments);
+		} else {
+			ts = new TokenStreamFromList(values, increments, payloads);
+		}
 		TokenFilterAdder filterAdder = alternatives.get(altName);
 		if (filterAdder != null)
 			return filterAdder.addFilters(ts);
@@ -283,6 +294,18 @@ public class ComplexFieldProperty {
 
 		return lastValuePosition;
 	}
+	
+	public void addPayload(BytesRef payload) {
+		payloads.add(payload);
+	}
+	
+	public int getLastValueIndex() {
+		return values.size() - 1;
+	}
+
+	public void setPayloadAtIndex(int i, BytesRef payload) {
+		payloads.set(i, payload);
+	}
 
 	public void clear() {
 		values.clear();
@@ -293,5 +316,9 @@ public class ComplexFieldProperty {
 		// for large data sets, this would keep getting larger and larger, so we do
 		// it anyway.
 		storedValues.clear();
+	}
+
+	public boolean hasPayload() {
+		return payloads != null;
 	}
 }
