@@ -76,7 +76,7 @@ class SpansAnd extends BLSpans {
 		if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
 			return NO_MORE_DOCS;
 		int laggingSpans = currentDoc[0] < currentDoc[1] ? 0 : 1;
-		catchUpSpan(laggingSpans);
+		catchUpDoc(laggingSpans);
 		return synchronizeDoc();
 	}
 	
@@ -149,7 +149,7 @@ class SpansAnd extends BLSpans {
 			// Synch at document level
 			if (currentDoc[0] != currentDoc[1]) {
 				int laggingSpans = currentDoc[0] < currentDoc[1] ? 0 : 1;
-				catchUpSpan(laggingSpans);
+				catchUpDoc(laggingSpans);
 				continue;
 			}
 			
@@ -169,7 +169,7 @@ class SpansAnd extends BLSpans {
 
 	}
 
-	private void catchUpSpan(int laggingSpans) throws IOException {
+	private void catchUpDoc(int laggingSpans) throws IOException {
 		currentDoc[laggingSpans] = spans[laggingSpans].advance(currentDoc[1 - laggingSpans]);
 		currentStart[laggingSpans] = -1;
 	}

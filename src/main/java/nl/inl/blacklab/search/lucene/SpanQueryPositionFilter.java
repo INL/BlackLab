@@ -48,39 +48,65 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 		STARTS_AT,
 
 		/** Producer hit ends at filter hit */
-		ENDS_AT
+		ENDS_AT,
+		
+		/** Producer hit exactly matches filter hit */
+		MATCHES
 	}
 
 	/** Filter operation to apply */
 	private Filter op;
+	
+	/** Return producer spans that DON'T match the filter instead? */
+	private boolean invert;
 
-	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, Filter op) {
+	/**
+	 * Produce hits that match filter hits.
+	 * 
+	 * @param producer hits we may be interested in
+	 * @param filter how we determine what producer hits we're interested in
+	 * @param op operation used to determine what producer hits we're interested in (containing, within, startsat, endsat) 
+	 * @param invert produce hits that don't match filter instead?
+	 */
+	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, Filter op, boolean invert) {
 		super(producer, filter);
 		this.op = op;
+		this.invert = invert;
 	}
 
-	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter) {
-		this(producer, filter, Filter.CONTAINING);
+	/**
+	 * Produce hits containing filter hits.
+	 * 
+	 * @param producer hits we may be interested in
+	 * @param filter how we determine what producer hits we're interested in
+	 * @param invert produce hits that don't match filter instead?
+	 * @deprecated specify operation explicitly
+	 */
+	@Deprecated
+	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, boolean invert) {
+		this(producer, filter, Filter.CONTAINING, invert);
 	}
 
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans result = new SpansPositionFilter(clauses[0].getSpans(context, acceptDocs, termContexts), clauses[1].getSpans(context, acceptDocs, termContexts), op);
-
+		Spans result = new SpansPositionFilter(clauses[0].getSpans(context, acceptDocs, termContexts), clauses[1].getSpans(context, acceptDocs, termContexts), op, invert);
 		return result;
 	}
 
 	@Override
 	public String toString(String field) {
+		String not = invert ? "not " : "";
 		switch(op) {
 		case WITHIN:
-			return "SpanQueryContaining(" + clausesToString(field, " within ") + ")";
+			return "SpanQueryContaining(" + clausesToString(field, " " + not + "within ") + ")";
 		case CONTAINING:
-			return "SpanQueryContaining(" + clausesToString(field, " contains ") + ")";
+			return "SpanQueryContaining(" + clausesToString(field, " " + not + "contains ") + ")";
 		case ENDS_AT:
-			return "SpanQueryContaining(" + clausesToString(field, " ends at ") + ")";
+			return "SpanQueryContaining(" + clausesToString(field, " " + not + "ends at ") + ")";
 		case STARTS_AT:
-			return "SpanQueryContaining(" + clausesToString(field, " start at ") + ")";
+			return "SpanQueryContaining(" + clausesToString(field, " " + not + "start at ") + ")";
+		case MATCHES:
+			return "SpanQueryContaining(" + clausesToString(field, " " + not + "matches ") + ")";
 		default:
 			throw new RuntimeException("Unknown filter operation " + op);
 		}

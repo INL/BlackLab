@@ -35,6 +35,9 @@ public class TextPatternSequence extends TextPatternAnd {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
+		if (clausesNot.size() > 0)
+			throw new RuntimeException("clausesNot not empty!");
+		
 		List<T> chResults = new ArrayList<T>();
 
 		// Keep track of which clauses can match the empty sequence. Use this to build alternatives
@@ -213,6 +216,8 @@ public class TextPatternSequence extends TextPatternAnd {
 
 	@Override
 	public TextPattern rewrite() {
+		if (clausesNot.size() > 0)
+			throw new RuntimeException("clausesNot not empty!");
 
 		// Flatten nested sequences.
 		// This doesn't change the query because the sequence operator is associative.

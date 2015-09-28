@@ -86,13 +86,4 @@ public abstract class TextPatternCombiner extends TextPattern {
 		return this;
 	}
 
-//	public boolean hasOnlyNotClauseChildren() {
-//		boolean result = true;
-//		for (TextPattern child: clauses) {
-//			if (!(child instanceof TextPatternNot))
-//				result = false;
-//		}
-//		return result;
-//	}
-
 }

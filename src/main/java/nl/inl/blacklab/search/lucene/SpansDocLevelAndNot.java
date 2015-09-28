@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.Span;
  * Determines new spans, based on two spans-objects: one with documents to include, and one with
  * documents to exclude.
  */
-public class SpansAndNot extends BLSpans {
+public class SpansDocLevelAndNot extends BLSpans {
 	/** AND part (include documents in this spans unless they're also in the exclude part) */
 	private BLSpans includeSpans;
 
@@ -43,7 +43,7 @@ public class SpansAndNot extends BLSpans {
 
 	private boolean moreExcludeSpansDocs;
 
-	public SpansAndNot(Spans includeSpans, Spans excludeSpans) {
+	public SpansDocLevelAndNot(Spans includeSpans, Spans excludeSpans) {
 		this.includeSpans = BLSpansWrapper.optWrapSort(includeSpans);
 		this.excludeSpans = BLSpansWrapper.optWrapSort(excludeSpans);
 		excludeSpansNexted = false;

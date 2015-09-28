@@ -26,9 +26,30 @@ import java.util.List;
  * useful for e.g. selecting adjectives that start with a 'b' (queries on different property
  * (sub)fields that should apply to the same word).
  */
-public class TextPatternAnd extends TextPatternCombiner {
+public class TextPatternAnd extends TextPattern {
+	
+	protected List<TextPattern> clauses = new ArrayList<TextPattern>();
+	
+	protected List<TextPattern> clausesNot = new ArrayList<TextPattern>();
+
 	public TextPatternAnd(TextPattern... clauses) {
-		super(clauses);
+		for (TextPattern clause : clauses) {
+			this.clauses.add(clause);
+		}
+	}
+
+	public void replaceClause(TextPattern oldClause, TextPattern... newClauses) {
+		int i = clauses.indexOf(oldClause);
+		clauses.remove(i);
+		for (TextPattern newChild: newClauses) {
+			clauses.add(i, newChild);
+			i++;
+		}
+	}
+
+	public TextPatternAnd(List<TextPattern> includeClauses, List<TextPattern> excludeClauses) {
+		clauses.addAll(includeClauses);
+		clausesNot.addAll(excludeClauses);
 	}
 
 	@Override
@@ -37,38 +58,82 @@ public class TextPatternAnd extends TextPatternCombiner {
 		for (TextPattern cl : clauses) {
 			chResults.add(cl.translate(translator, context));
 		}
-		if (chResults.size() == 1)
+		List<T> chResultsNot = new ArrayList<T>(clausesNot.size());
+		for (TextPattern cl : clausesNot) {
+			chResultsNot.add(cl.translate(translator, context));
+		}
+		if (chResults.size() == 1 && chResultsNot.size() == 0) {
+			// Single positive clause
 			return chResults.get(0);
-		return translator.and(context, chResults);
+		} else if (chResults.size() == 0) {
+			// All negative clauses; should have been rewritten, but ok
+			return translator.not(context, translator.and(context, chResultsNot)); 
+		}
+		// Combination of positive and possibly negative clauses
+		T include = chResults.size() == 1 ? chResults.get(0) : translator.and(context, chResults);
+		if (chResultsNot.size() == 0)
+			return include;
+		T exclude = chResultsNot.size() == 1 ? chResultsNot.get(0) : translator.and(context, chResultsNot);
+		return translator.andNot(context, include, exclude);
 	}
+	
+	@Override
+	public Object clone() {
+		try {
+			TextPatternAnd clone = (TextPatternAnd) super.clone();
 
-	/*
+			// copy list of children so we can modify it independently
+			clone.clauses = new ArrayList<TextPattern>(clauses);
+			clone.clausesNot = new ArrayList<TextPattern>(clausesNot);
 
-	NOTE: this code rewrites AND queries containing only NOT children
-	into OR queries. It is not currently used but we may want to use something
-	like this in the future to better optimize certain queries, so we'll leave
-	it here for now.
+			return clone;
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException("Clone not supported: " + e.getMessage());
+		}
+	}
 
 	@Override
 	public TextPattern rewrite() {
-		boolean hasOnlyNotChildren = true;
-		for (TextPattern child: clauses) {
-			if (!(child instanceof TextPatternNot)) {
-				hasOnlyNotChildren = false;
-				break;
+		// Rewrites AND queries containing only NOT children into "NOR" queries.
+		// This helps us isolate problematic subclauses which we can then rewrite to
+		// more efficient NOTCONTAINING clauses.
+		boolean anyRewritten = false;
+		List<TextPattern> rewritten = new ArrayList<TextPattern>();
+		List<TextPattern> rewrittenNot = new ArrayList<TextPattern>();
+		for (int i = 0; i < clauses.size(); i++) {
+			TextPattern child = clauses.get(i);
+			TextPattern r = child.rewrite();
+			if (r != child)
+				anyRewritten = true;
+			if (r instanceof TextPatternNot ) {
+				rewrittenNot.add(r.inverted());
+			} else {
+				rewritten.add(r);
 			}
 		}
-		if (hasOnlyNotChildren) {
-			// Node should be rewritten to OR
-			TextPattern[] rewrittenAndInv = new TextPattern[clauses.size()];
-			for (int i = 0; i < clauses.size(); i++) {
-				rewrittenAndInv[i] = clauses.get(i).rewrite().inverted();
+		for (int i = 0; i < clausesNot.size(); i++) {
+			TextPattern child = clauses.get(i);
+			TextPattern r = child.rewrite();
+			if (r != child)
+				anyRewritten = true;
+			if (r instanceof TextPatternNot ) {
+				rewritten.add(r.inverted());
+			} else {
+				rewrittenNot.add(r);
 			}
-			return new TextPatternNot(new TextPatternOr(rewrittenAndInv));
 		}
-		// Node need not be rewritten
+		if (rewritten.size() == 0) {
+			// Node should be rewritten to OR.
+			return new TextPatternNot(new TextPatternOr(rewrittenNot.toArray(new TextPattern[0])));
+		}
+		
+		if (anyRewritten) {
+			// Some clauses were rewritten.
+			return new TextPatternAnd(rewritten, rewrittenNot);
+		}
+		
+		// Node need not be rewritten; return as-is
 		return this;
 	}
 
-	*/
 }

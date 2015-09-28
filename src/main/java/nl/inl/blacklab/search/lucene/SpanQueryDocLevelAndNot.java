@@ -35,23 +35,23 @@ import org.apache.lucene.util.ToStringUtils;
  * Produces all spans from the "include" part, except for those
  * in documents that occur in the "exclude" part.
  */
-public class SpanQueryAndNot extends SpanQuery {
+public class SpanQueryDocLevelAndNot extends SpanQuery {
 	private SpanQuery[] clauses = null;
 
-	public SpanQueryAndNot(SpanQuery include, SpanQuery exclude) {
+	public SpanQueryDocLevelAndNot(SpanQuery include, SpanQuery exclude) {
 		clauses = new SpanQuery[] { include, exclude };
 	}
 
 	@Override
 	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQueryAndNot clone = null;
+		SpanQueryDocLevelAndNot clone = null;
 
 		for (int i = 0; i < clauses.length; i++) {
 			SpanQuery c = clauses[i];
 			SpanQuery query = (SpanQuery) c.rewrite(reader);
 			if (query != c) { // clause rewrote: must clone
 				if (clone == null)
-					clone = (SpanQueryAndNot) clone();
+					clone = (SpanQueryDocLevelAndNot) clone();
 				clone.clauses[i] = query;
 			}
 		}
@@ -68,7 +68,7 @@ public class SpanQueryAndNot extends SpanQuery {
 		if (o == null || this.getClass() != o.getClass())
 			return false;
 
-		final SpanQueryAndNot that = (SpanQueryAndNot) o;
+		final SpanQueryDocLevelAndNot that = (SpanQueryDocLevelAndNot) o;
 
 		if (!clauses.equals(that.clauses))
 			return false;
@@ -108,7 +108,7 @@ public class SpanQueryAndNot extends SpanQuery {
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term, TermContext> termContexts)  throws IOException {
 		Spans includespans = clauses[0].getSpans(context, acceptDocs, termContexts);
 		Spans excludespans = clauses[1].getSpans(context, acceptDocs, termContexts);
-		Spans combi = new SpansAndNot(includespans, excludespans);
+		Spans combi = new SpansDocLevelAndNot(includespans, excludespans);
 		return combi;
 	}
 

@@ -20,16 +20,30 @@ package nl.inl.blacklab.search;
  * used to search for sentences containing a certain word, etc.
  */
 public class TextPatternContaining extends TextPatternCombiner {
+	
+	boolean invert;
 
 	public TextPatternContaining(TextPattern containers, TextPattern search) {
+		this(containers, search, false);
+	}
+
+	public TextPatternContaining(TextPattern containers, TextPattern search, boolean invert) {
 		super(containers, search);
+		this.invert = invert;
 	}
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		T trContainers = clauses.get(0).translate(translator, context);
 		T trSearch = clauses.get(1).translate(translator, context);
-		return translator.containing(context, trContainers, trSearch);
+		return translator.containing(context, trContainers, trSearch, invert);
+	}
+
+	@Override
+	public TextPattern inverted() {
+		TextPatternWithin cl = (TextPatternWithin)clone();
+		cl.invert = !cl.invert;
+		return cl;
 	}
 
 }

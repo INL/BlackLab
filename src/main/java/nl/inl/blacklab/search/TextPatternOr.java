@@ -47,23 +47,21 @@ public class TextPatternOr extends TextPatternCombiner {
 		return false;
 	}
 
-	/*
-
-	NOTE: this code rewrites OR queries containing one or more NOT children
-	into AND queries. It is not currently used but we may want to use something
-	like this in the future to better optimize certain queries, so we'll leave
-	it here for now.
-
 	@Override
 	public TextPattern rewrite() {
+		// Rewrites OR queries containing some NOT children into "NAND" queries.
+		// This helps us isolate problematic subclauses which we can then rewrite to
+		// more efficient NOTCONTAINING clauses.
 		boolean hasNotChild = false;
+		boolean anyRewritten = false;
 		TextPattern[] rewritten = new TextPattern[clauses.size()];
 		for (int i = 0; i < clauses.size(); i++) {
 			TextPattern child = clauses.get(i);
 			rewritten[i] = child.rewrite();
+			if (rewritten[i] != child)
+				anyRewritten = true;
 			if (rewritten[i] instanceof TextPatternNot) {
 				hasNotChild = true;
-				break;
 			}
 		}
 		if (hasNotChild) {
@@ -74,9 +72,13 @@ public class TextPatternOr extends TextPatternCombiner {
 			}
 			return new TextPatternNot(new TextPatternAnd(rewritten));
 		}
+		
+		if (anyRewritten) {
+			// Some clauses were rewritten.
+			return new TextPatternOr(rewritten);
+		}
+		
 		// Node need not be rewritten; return as-is
 		return this;
 	}
-
-	 */
 }

@@ -64,6 +64,17 @@ public abstract class TextPatternTranslator<T> {
 	public abstract T and(QueryExecutionContext context, List<T> clauses);
 
 	/**
+	 * Token-level AND NOT.
+	 *
+	 * @param context
+	 *            the current query execution context
+	 * @param include the clauses to combine using AND (must have at least 1)
+	 * @param exclude the clauses to combine using AND NOT
+	 * @return result of the query execution
+	 */
+	public abstract T andNot(QueryExecutionContext context, T include, T exclude);
+	
+	/**
 	 * Token-level OR.
 	 *
 	 * @param context
@@ -104,9 +115,9 @@ public abstract class TextPatternTranslator<T> {
 
 	public abstract T edge(T clause, boolean rightEdge);
 
-	public abstract T containing(QueryExecutionContext context, T containers, T search);
+	public abstract T containing(QueryExecutionContext context, T containers, T search, boolean invert);
 
-	public abstract T within(QueryExecutionContext context, T search, T containers);
+	public abstract T within(QueryExecutionContext context, T search, T containers, boolean invert);
 
 	public abstract T startsAt(QueryExecutionContext context, T producer, T filter);
 
@@ -181,4 +192,5 @@ public abstract class TextPatternTranslator<T> {
 	 * @return the resulting clause
 	 */
 	public abstract T captureGroup(T clause, String name);
+
 }

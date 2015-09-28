@@ -46,6 +46,11 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	}
 
 	@Override
+	public SpanQuery andNot(QueryExecutionContext context, SpanQuery include, SpanQuery exclude) {
+		return new SpanQueryPositionFilter(include, exclude, SpanQueryPositionFilter.Filter.MATCHES, true);
+	}
+
+	@Override
 	public SpanQuery or(QueryExecutionContext context, List<SpanQuery> clauses) {
 		return new BLSpanOrQuery(clauses.toArray(new SpanQuery[] {}));
 	}
@@ -94,27 +99,27 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		// (NOTE: only works for start tags and full elements because attribute values
 		//  are indexed at the start tag!)
 		SpanQuery filter = new SpanQueryAnd(attrFilters);
-		return new SpanQueryPositionFilter(allTags, filter, Filter.STARTS_AT);
+		return new SpanQueryPositionFilter(allTags, filter, Filter.STARTS_AT, false);
 	}
 
 	@Override
-	public SpanQuery containing(QueryExecutionContext context, SpanQuery containers, SpanQuery search) {
-		return new SpanQueryPositionFilter(containers, search, SpanQueryPositionFilter.Filter.CONTAINING);
+	public SpanQuery containing(QueryExecutionContext context, SpanQuery containers, SpanQuery search, boolean invert) {
+		return new SpanQueryPositionFilter(containers, search, SpanQueryPositionFilter.Filter.CONTAINING, invert);
 	}
 
 	@Override
-	public SpanQuery within(QueryExecutionContext context, SpanQuery search, SpanQuery containers) {
-		return new SpanQueryPositionFilter(search, containers, SpanQueryPositionFilter.Filter.WITHIN);
+	public SpanQuery within(QueryExecutionContext context, SpanQuery search, SpanQuery containers, boolean invert) {
+		return new SpanQueryPositionFilter(search, containers, SpanQueryPositionFilter.Filter.WITHIN, invert);
 	}
 
 	@Override
 	public SpanQuery startsAt(QueryExecutionContext context, SpanQuery producer, SpanQuery filter) {
-		return new SpanQueryPositionFilter(producer, filter, SpanQueryPositionFilter.Filter.STARTS_AT);
+		return new SpanQueryPositionFilter(producer, filter, SpanQueryPositionFilter.Filter.STARTS_AT, false);
 	}
 
 	@Override
 	public SpanQuery endsAt(QueryExecutionContext context, SpanQuery producer, SpanQuery filter) {
-		return new SpanQueryPositionFilter(producer, filter, SpanQueryPositionFilter.Filter.ENDS_AT);
+		return new SpanQueryPositionFilter(producer, filter, SpanQueryPositionFilter.Filter.ENDS_AT, false);
 	}
 
 	@Override
@@ -139,7 +144,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery docLevelAndNot(SpanQuery include, SpanQuery exclude) {
-		return new SpanQueryAndNot(include, exclude);
+		return new SpanQueryDocLevelAndNot(include, exclude);
 	}
 
 	@Override

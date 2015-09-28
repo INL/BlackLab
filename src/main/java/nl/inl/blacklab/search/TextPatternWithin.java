@@ -21,15 +21,29 @@ package nl.inl.blacklab.search;
  */
 public class TextPatternWithin extends TextPatternCombiner {
 
+	boolean invert;
+
 	public TextPatternWithin(TextPattern search, TextPattern containers) {
+		this(search, containers, false);
+	}
+
+	public TextPatternWithin(TextPattern search, TextPattern containers, boolean invert) {
 		super(search, containers);
+		this.invert = invert;
 	}
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		T trSearch = clauses.get(0).translate(translator, context);
 		T trContainers = clauses.get(1).translate(translator, context);
-		return translator.within(context, trSearch, trContainers);
+		return translator.within(context, trSearch, trContainers, invert);
+	}
+
+	@Override
+	public TextPattern inverted() {
+		TextPatternWithin cl = (TextPatternWithin)clone();
+		cl.invert = !cl.invert;
+		return cl;
 	}
 
 }

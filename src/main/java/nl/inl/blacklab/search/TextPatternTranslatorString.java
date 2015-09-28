@@ -31,6 +31,11 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	}
 
 	@Override
+	public String andNot(QueryExecutionContext context, String include, String exclude) {
+		return "ANDNOT(" + include + ", " + exclude + ")";
+	}
+
+	@Override
 	public String or(QueryExecutionContext context, List<String> clauses) {
 		return "OR(" + StringUtil.join(clauses, ", ") + ")";
 	}
@@ -61,13 +66,13 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	}
 
 	@Override
-	public String containing(QueryExecutionContext context, String containers, String search) {
-		return "CONTAINING(" + containers + ", " + search + ")";
+	public String containing(QueryExecutionContext context, String containers, String search, boolean invert) {
+		return (invert ? "NOT" : "") + "CONTAINING(" + containers + ", " + search + ")";
 	}
 
 	@Override
-	public String within(QueryExecutionContext context, String search, String containers) {
-		return "WITHIN(" + search + ", " + containers + ")";
+	public String within(QueryExecutionContext context, String search, String containers, boolean invert) {
+		return (invert ? "NOT" : "") + "WITHIN(" + search + ", " + containers + ")";
 	}
 
 	@Override

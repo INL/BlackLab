@@ -61,15 +61,22 @@ class SpansPositionFilter extends BLSpans {
 	private boolean alreadyAtFirstMatch = false;
 
 	/**
-	 * Find hits containing other hits, or contained by other hits.
+	 * If true, produce hits that DON'T match the filter instead.		
+	 */
+	private boolean invert;
+
+	/**
+	 * Find hits from producer, filtered by the filter according to the specified op
 	 *
 	 * @param producer the hits we may be interested in
 	 * @param filter the hits used to filter the producer hits
 	 * @param op filter operation to use
+	 * @param invert if true, produce hits that DON'T match the filter instead
 	 */
-	public SpansPositionFilter(Spans producer, Spans filter, SpanQueryPositionFilter.Filter op) {
+	public SpansPositionFilter(Spans producer, Spans filter, SpanQueryPositionFilter.Filter op, boolean invert) {
 		this.producer = BLSpansWrapper.optWrapSort(producer);
 		this.op = op;
+		this.invert = invert;
 		if (!(filter instanceof BLSpans) || (filter instanceof BLSpans && ((BLSpans)filter).hitsStartPointSorted())) {
 			// Already start point sorted; no need to sort buckets again
 			this.filter = new SpansInBucketsPerDocument(filter);
@@ -85,9 +92,12 @@ class SpansPositionFilter extends BLSpans {
 	 *
 	 * @param containers the containers we may be interested in.
 	 * @param filter we only want containers that contain at least on hit from this filter.
+	 * @deprecated specify op explicitly
+	 * @param invert if true, produce hits that don't match the filter instead
 	 */
-	public SpansPositionFilter(Spans containers, Spans filter) {
-		this(containers, filter, Filter.CONTAINING);
+	@Deprecated
+	public SpansPositionFilter(Spans containers, Spans filter, boolean invert) {
+		this(containers, filter, Filter.CONTAINING, invert);
 	}
 
 	@Override
@@ -134,11 +144,6 @@ class SpansPositionFilter extends BLSpans {
 		// Are we done yet?
 		if (producerStart == NO_MORE_POSITIONS)
 			return NO_MORE_POSITIONS;
-
-		// Advance container
-		producerStart = producer.nextStartPosition();
-		if (producerStart == NO_MORE_POSITIONS)
-			return NO_MORE_POSITIONS; // no more producer spans; we're done.
 
 		// Find first matching producer span from here
 		return synchronizePos();
@@ -188,13 +193,21 @@ class SpansPositionFilter extends BLSpans {
 	private int synchronizePos() throws IOException {
 		// Find the next "valid" producer spans, if there is one.
 		while (producerStart != NO_MORE_POSITIONS) {
+			producerStart = producer.nextStartPosition();
+			
 			// We're at the first unchecked producer spans. Does it match our filter?
+			boolean invertedMatch = invert; // if looking for non-matches, keep track if there have been any matches.
 			switch(op) {
 			case CONTAINING:
 				// Looking for producer hits with a filter hit inside
 				for (int i = 0; i < filter.bucketSize(); i++) {
 					if (filter.startPosition(i) >= producerStart && filter.endPosition(i) <= producer.endPosition()) {
-						// Yes, this filter hit is contained in the current producer hit.
+						if (invert) {
+							// This producer hit is no good; on to the next.
+							invertedMatch = false;
+							break;
+						}
+						// Yes, this producer hit contains this filter hit
 						filterIndex = i; // remember for captured groups
 						return producerStart;
 					}
@@ -204,7 +217,12 @@ class SpansPositionFilter extends BLSpans {
 				// Looking for producer hits contained by a filter hit
 				for (int i = 0; i < filter.bucketSize(); i++) {
 					if (filter.startPosition(i) <= producerStart && filter.endPosition(i) >= producer.endPosition()) {
-						// Yes, this filter hit contains the current producer hit.
+						if (invert) {
+							// This producer hit is no good; on to the next.
+							invertedMatch = false;
+							break;
+						}
+						// Yes, this producer hit is contained within this filter hit
 						filterIndex = i; // remember for captured groups
 						return producerStart;
 					}
@@ -214,7 +232,12 @@ class SpansPositionFilter extends BLSpans {
 				// Looking for producer hits starting at a filter hit
 				for (int i = 0; i < filter.bucketSize(); i++) {
 					if (filter.startPosition(i) == producerStart) {
-						// Yes, this filter hit starts at the current producer hit.
+						if (invert) {
+							// This producer hit is no good; on to the next.
+							invertedMatch = false;
+							break;
+						}
+						// Yes, this producer hit starts at this filter hit
 						filterIndex = i; // remember for captured groups
 						return producerStart;
 					}
@@ -224,7 +247,27 @@ class SpansPositionFilter extends BLSpans {
 				// Looking for producer hits ending at a filter hit
 				for (int i = 0; i < filter.bucketSize(); i++) {
 					if (filter.endPosition(i) == producer.endPosition()) {
-						// Yes, this filter hit ends at the current producer hit.
+						if (invert) {
+							// This producer hit is no good; on to the next.
+							invertedMatch = false;
+							break;
+						}
+						// Yes, this producer hit ends at this filter hit
+						filterIndex = i; // remember for captured groups
+						return producerStart;
+					}
+				}
+				break;
+			case MATCHES:
+				// Looking for producer hits exactly matching a filter hit
+				for (int i = 0; i < filter.bucketSize(); i++) {
+					if (filter.startPosition(i) == producerStart && filter.endPosition(i) == producer.endPosition()) {
+						if (invert) {
+							// This producer hit is no good; on to the next.
+							invertedMatch = false;
+							break;
+						}
+						// Yes, this producer hit exactly matches this filter hit
 						filterIndex = i; // remember for captured groups
 						return producerStart;
 					}
@@ -233,9 +276,11 @@ class SpansPositionFilter extends BLSpans {
 			default:
 				throw new RuntimeException("Unknown filter operation " + op);
 			}
-
+			// Were we looking for non-matching producer hits, and have we not found any?
+			if (invertedMatch) {
+				return producerStart;
+			}
 			// Didn't match filter; go to the next position.
-			producerStart = producer.nextStartPosition();
 		}
 		return producerStart;
 	}
@@ -273,15 +318,18 @@ class SpansPositionFilter extends BLSpans {
 
 	@Override
 	public String toString() {
+		String not = invert ? "not " : "";
 		switch (op) {
 		case CONTAINING:
-			return "SpansContaining(" + producer + " containing " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "containing " + filter + ")";
 		case WITHIN:
-			return "SpansContaining(" + producer + " within " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "within " + filter + ")";
 		case STARTS_AT:
-			return "SpansContaining(" + producer + " starts at " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "starts at " + filter + ")";
 		case ENDS_AT:
-			return "SpansContaining(" + producer + " ends at " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "ends at " + filter + ")";
+		case MATCHES:
+			return "SpansContaining(" + producer + " " + not + "matches " + filter + ")";
 		default:
 			throw new RuntimeException("Unknown filter operation " + op);
 		}

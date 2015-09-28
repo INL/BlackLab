@@ -19,7 +19,9 @@ package nl.inl.blacklab.search;
 
 
 /**
- * NOT operator for TextPattern queries at token and sequence level
+ * NOT operator for TextPattern queries at token and sequence level.
+ * Really only makes sense for 1-token clauses, as it produces all tokens
+ * that don't match the clause.
  */
 public class TextPatternNot extends TextPatternCombiner {
 	public TextPatternNot(TextPattern clause) {
