@@ -38,6 +38,17 @@ public class TextPatternNot extends TextPatternCombiner {
 	public TextPattern inverted() {
 		return clauses.get(0); // Just return our clause, dropping the NOT operation
 	}
+	
+	@Override
+	boolean okayToInvertForOptimization() {
+		// Yes, inverting is actually an improvement
+		return true;
+	}
+	
+	@Override
+	public boolean isNegativeOnly() {
+		return true;
+	}
 
 	/**
 	 * Rewrites NOT queries by returning the inverted rewritten clause.
@@ -48,7 +59,7 @@ public class TextPatternNot extends TextPatternCombiner {
 	@Override
 	public TextPattern rewrite() {
 		TextPattern rewritten = clauses.get(0).rewrite();
-		if (rewritten == clauses.get(0) && !(rewritten instanceof TextPatternNot))
+		if (rewritten == clauses.get(0) && !rewritten.okayToInvertForOptimization())
 			return this; // Nothing to rewrite
 		return rewritten.inverted();
 	}

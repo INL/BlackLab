@@ -64,7 +64,7 @@ public class TextPatternOr extends TextPatternCombiner {
 				rewrittenCl.addAll(((TextPatternOr)rewritten).clauses);
 				anyRewritten = true;
 			} else {
-				if (rewritten instanceof TextPatternNot)
+				if (rewritten.isNegativeOnly())
 					hasNotChild = true;
 				// Just add it.
 				rewrittenCl.add(rewritten);
@@ -82,7 +82,8 @@ public class TextPatternOr extends TextPatternCombiner {
 			for (int i = 0; i < rewrittenCl.size(); i++) {
 				rewrittenCl.set(i, rewrittenCl.get(i).inverted());
 			}
-			return new TextPatternNot(new TextPatternAnd(rewrittenCl.toArray(new TextPattern[0])));
+			// Note extra rewrite at the end to make sure AND NOT structure is correctly built.
+			return ((new TextPatternAnd(rewrittenCl.toArray(new TextPattern[0]))).inverted()).rewrite();
 		}
 		
 		if (anyRewritten) {

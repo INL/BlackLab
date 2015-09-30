@@ -46,4 +46,10 @@ public class TextPatternWithin extends TextPatternCombiner {
 		return cl;
 	}
 
+	@Override
+	boolean okayToInvertForOptimization() {
+		// Inverting is "free"
+		return true;
+	}
+	
 }

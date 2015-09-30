@@ -53,7 +53,7 @@ public class TextPatternSequence extends TextPatternAnd {
 			TextPattern cl = clauses.get(i);
 
 			if (cl instanceof TextPatternAnyToken) {
-				// These are a special case, because we cannot translate these into a
+				// These are a special case, because we shouldn't translate these into a
 				// query by themselves. We need to combine them with a query to the left
 				// or to the right.
 				// (We used to prefer the query to the right, as this prevented us from
@@ -233,7 +233,7 @@ public class TextPatternSequence extends TextPatternAnd {
 				if (flattenSequence) {
 					// Child sequence we want to flatten into this sequence.
 					// Replace the child, incorporating the child sequence into the rewritten sequence
-					result.replaceClause(child, ((TextPatternSequence)rewritten).clauses.toArray(new TextPattern[] {}));
+					result.replaceClause(child, ((TextPatternSequence)rewritten).clauses.toArray(new TextPattern[0]));
 				} else {
 					// Replace the child with the rewritten version
 					result.replaceClause(child, rewritten);
@@ -262,15 +262,15 @@ public class TextPatternSequence extends TextPatternAnd {
 				TextPattern child = result.clauses.get(i);
 
 				// NOT-query with adjacent positive query?
-				if (child instanceof TextPatternNot) {
+				if (child.isNegativeOnly()) {
 					TextPattern leftNeighbour = i > 0 ? result.clauses.get(i - 1) : null;
-					if (leftNeighbour != null && !(leftNeighbour instanceof TextPatternNot)) {
+					if (leftNeighbour != null && !leftNeighbour.isNegativeOnly()) {
 						// Combine with left query
 						TextPattern combined = new TextPatternSequence(leftNeighbour, child);
 						result.clauses.remove(i - 1);
 						result.replaceClause(child, combined);
 						changesMade = true;
-					} else if (!(result.clauses.get(i + 1) instanceof TextPatternNot)){
+					} else if (!result.clauses.get(i + 1).isNegativeOnly()){
 						// Combine with right query
 						TextPattern combined = new TextPatternSequence(child, result.clauses.get(i + 1));
 						result.clauses.remove(i + 1);
@@ -294,7 +294,7 @@ public class TextPatternSequence extends TextPatternAnd {
 //			// This can only happen if the sequence consists of all NOT queries, because
 //			// that's the only situation in which we can't combine any of them.
 //			throw new RuntimeException("Cannot process sequence consisting of all NOT queries");
-//		} else if (result.clauses.size() == 2 && result.clauses.get(0) instanceof TextPatternNot && result.clauses.get(1) instanceof TextPatternNot) {
+//		} else if (result.clauses.size() == 2 && result.clauses.get(0).isNegativeOnly() && result.clauses.get(1).isNegativeOnly()) {
 //			// TextPatternSequence of 2 (correct) which consists of two NOT queries (incorrect, we can't execute this)
 //			throw new RuntimeException("Cannot process sequence consisting of all NOT queries");
 //		}

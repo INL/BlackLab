@@ -75,7 +75,7 @@ public class TextPatternAnd extends TextPattern {
 			// Single positive clause
 			return chResults.get(0);
 		} else if (chResults.size() == 0) {
-			// All negative clauses; should have been rewritten, but ok
+			// All negative clauses, so it's really just a NOT query. Should've been rewritten, but ok.
 			return translator.not(context, translator.and(context, chResultsNot)); 
 		}
 		// Combination of positive and possibly negative clauses
@@ -100,6 +100,27 @@ public class TextPatternAnd extends TextPattern {
 			throw new RuntimeException("Clone not supported: " + e.getMessage());
 		}
 	}
+	
+	@Override
+	public TextPattern inverted() {
+		if (clausesNot.size() == 0) {
+			// In this case, it's better to just wrap this in TextPatternNot,
+			// so it will be recognized by other rewrite()s.
+			return super.inverted();
+		}
+		return new TextPatternAnd(clausesNot, clauses);
+	}
+	
+	@Override
+	boolean okayToInvertForOptimization() {
+		// Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
+		return clausesNot.size() > 0;
+	}
+	
+	@Override
+	boolean isNegativeOnly() {
+		return clauses.size() == 0;
+	}
 
 	@Override
 	public TextPattern rewrite() {
@@ -118,7 +139,7 @@ public class TextPatternAnd extends TextPattern {
 				rewrittenCl.addAll(((TextPatternAnd)rewritten).clauses);
 				rewrittenNotCl.addAll(((TextPatternAnd)rewritten).clausesNot);
 				anyRewritten = true;
-			} else if (rewritten instanceof TextPatternNot) {
+			} else if (rewritten.okayToInvertForOptimization()) {
 				// "Switch sides"
 				rewrittenNotCl.add(rewritten.inverted());
 				anyRewritten = true;
@@ -138,7 +159,7 @@ public class TextPatternAnd extends TextPattern {
 				rewrittenCl.addAll(((TextPatternAnd)rewritten).clausesNot);
 				rewrittenNotCl.addAll(((TextPatternAnd)rewritten).clauses);
 				anyRewritten = true;
-			} else if (rewritten instanceof TextPatternNot) {
+			} else if (rewritten.okayToInvertForOptimization()) {
 				// "Switch sides"
 				rewrittenCl.add(rewritten.inverted());
 				anyRewritten = true;
@@ -151,8 +172,8 @@ public class TextPatternAnd extends TextPattern {
 		}
 		
 		if (rewrittenCl.size() == 0) {
-			// Node should be rewritten to OR.
-			return new TextPatternNot(new TextPatternOr(rewrittenNotCl.toArray(new TextPattern[0])));
+			// All-negative; node should be rewritten to OR.
+			return (new TextPatternOr(rewrittenNotCl.toArray(new TextPattern[0]))).inverted();
 		}
 		
 		if (anyRewritten) {
