@@ -47,6 +47,15 @@ public class TextPatternAnd extends TextPattern {
 		}
 	}
 
+	public void replaceClauseNot(TextPattern oldClause, TextPattern... newClauses) {
+		int i = clausesNot.indexOf(oldClause);
+		clausesNot.remove(i);
+		for (TextPattern newChild: newClauses) {
+			clausesNot.add(i, newChild);
+			i++;
+		}
+	}
+
 	public TextPatternAnd(List<TextPattern> includeClauses, List<TextPattern> excludeClauses) {
 		clauses.addAll(includeClauses);
 		clausesNot.addAll(excludeClauses);
@@ -94,42 +103,61 @@ public class TextPatternAnd extends TextPattern {
 
 	@Override
 	public TextPattern rewrite() {
-		// Rewrites AND queries containing only NOT children into "NOR" queries.
-		// This helps us isolate problematic subclauses which we can then rewrite to
-		// more efficient NOTCONTAINING clauses.
+
+		// Flatten nested AND queries.
+		// This doesn't change the query because the sequence operator is associative.
 		boolean anyRewritten = false;
-		List<TextPattern> rewritten = new ArrayList<TextPattern>();
-		List<TextPattern> rewrittenNot = new ArrayList<TextPattern>();
-		for (int i = 0; i < clauses.size(); i++) {
-			TextPattern child = clauses.get(i);
-			TextPattern r = child.rewrite();
-			if (r != child)
+		List<TextPattern> rewrittenCl = new ArrayList<TextPattern>();
+		List<TextPattern> rewrittenNotCl = new ArrayList<TextPattern>();
+		for (TextPattern child: clauses) {
+			TextPattern rewritten = child.rewrite();
+			if (rewritten instanceof TextPatternAnd) {
+				// Flatten.
+				// Child sequence we want to flatten into this sequence.
+				// Replace the child, incorporating the child sequence into the rewritten sequence
+				rewrittenCl.addAll(((TextPatternAnd)rewritten).clauses);
+				rewrittenNotCl.addAll(((TextPatternAnd)rewritten).clausesNot);
 				anyRewritten = true;
-			if (r instanceof TextPatternNot ) {
-				rewrittenNot.add(r.inverted());
+			} else if (rewritten instanceof TextPatternNot) {
+				// "Switch sides"
+				rewrittenNotCl.add(rewritten.inverted());
+				anyRewritten = true;
 			} else {
-				rewritten.add(r);
+				// Just add it.
+				rewrittenCl.add(rewritten);
+				if (rewritten != child)
+					anyRewritten = true;
 			}
 		}
-		for (int i = 0; i < clausesNot.size(); i++) {
-			TextPattern child = clauses.get(i);
-			TextPattern r = child.rewrite();
-			if (r != child)
+		for (TextPattern child: clausesNot) {
+			TextPattern rewritten = child.rewrite();
+			if (rewritten instanceof TextPatternAnd) {
+				// Flatten.
+				// Child sequence we want to flatten into this sequence.
+				// Replace the child, incorporating the child sequence into the rewritten sequence
+				rewrittenCl.addAll(((TextPatternAnd)rewritten).clausesNot);
+				rewrittenNotCl.addAll(((TextPatternAnd)rewritten).clauses);
 				anyRewritten = true;
-			if (r instanceof TextPatternNot ) {
-				rewritten.add(r.inverted());
+			} else if (rewritten instanceof TextPatternNot) {
+				// "Switch sides"
+				rewrittenCl.add(rewritten.inverted());
+				anyRewritten = true;
 			} else {
-				rewrittenNot.add(r);
+				// Just add it.
+				rewrittenNotCl.add(rewritten);
+				if (rewritten != child)
+					anyRewritten = true;
 			}
 		}
-		if (rewritten.size() == 0) {
+		
+		if (rewrittenCl.size() == 0) {
 			// Node should be rewritten to OR.
-			return new TextPatternNot(new TextPatternOr(rewrittenNot.toArray(new TextPattern[0])));
+			return new TextPatternNot(new TextPatternOr(rewrittenNotCl.toArray(new TextPattern[0])));
 		}
 		
 		if (anyRewritten) {
 			// Some clauses were rewritten.
-			return new TextPatternAnd(rewritten, rewrittenNot);
+			return new TextPatternAnd(rewrittenCl, rewrittenNotCl);
 		}
 		
 		// Node need not be rewritten; return as-is

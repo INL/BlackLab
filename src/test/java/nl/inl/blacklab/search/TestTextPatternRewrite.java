@@ -99,6 +99,22 @@ public class TestTextPatternRewrite {
 	}
 
 	@Test
+	public void testRewriteNestedAnd() {
+		TextPattern original = getPatternFromCql("[word = 'a' & lemma = 'b' & pos != 'c']");
+		Assert.assertEquals("AND(REGEX(contents%word@i, ^a$), AND(REGEX(contents%lemma@i, ^b$), NOT(REGEX(contents%pos@i, ^c$))))", original.translate(stringifier));
+		TextPattern rewritten = original.rewrite();
+		Assert.assertEquals("ANDNOT(AND(TERM(contents%word@i, a), TERM(contents%lemma@i, b)), TERM(contents%pos@i, c))", rewritten.translate(stringifier));
+	}
+
+	@Test
+	public void testRewriteNestedOr() {
+		TextPattern original = getPatternFromCql("[word = 'a' | word = 'b' | word = 'c']");
+		Assert.assertEquals("OR(REGEX(contents%word@i, ^a$), OR(REGEX(contents%word@i, ^b$), REGEX(contents%word@i, ^c$)))", original.translate(stringifier));
+		TextPattern rewritten = original.rewrite();
+		Assert.assertEquals("OR(TERM(contents%word@i, a), TERM(contents%word@i, b), TERM(contents%word@i, c))", rewritten.translate(stringifier));
+	}
+
+	@Test
 	public void testRewriteNegativeAnd() {
 		TextPattern original = getPatternFromCql("[word != 'a' & word != 'b']");
 		Assert.assertEquals("AND(NOT(REGEX(contents%word@i, ^a$)), NOT(REGEX(contents%word@i, ^b$)))", original.translate(stringifier));

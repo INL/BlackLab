@@ -49,33 +49,45 @@ public class TextPatternOr extends TextPatternCombiner {
 
 	@Override
 	public TextPattern rewrite() {
+		
+		// Flatten nested OR queries.
+		// This doesn't change the query because the sequence operator is associative.
+		boolean anyRewritten = false;
+		boolean hasNotChild = false;
+		List<TextPattern> rewrittenCl = new ArrayList<TextPattern>();
+		for (TextPattern child: clauses) {
+			TextPattern rewritten = child.rewrite();
+			if (rewritten instanceof TextPatternOr) {
+				// Flatten.
+				// Child sequence we want to flatten into this sequence.
+				// Replace the child, incorporating the child sequence into the rewritten sequence
+				rewrittenCl.addAll(((TextPatternOr)rewritten).clauses);
+				anyRewritten = true;
+			} else {
+				if (rewritten instanceof TextPatternNot)
+					hasNotChild = true;
+				// Just add it.
+				rewrittenCl.add(rewritten);
+				if (rewritten != child)
+					anyRewritten = true;
+			}
+		}
+		
 		// Rewrites OR queries containing some NOT children into "NAND" queries.
 		// This helps us isolate problematic subclauses which we can then rewrite to
 		// more efficient NOTCONTAINING clauses.
-		boolean hasNotChild = false;
-		boolean anyRewritten = false;
-		TextPattern[] rewritten = new TextPattern[clauses.size()];
-		for (int i = 0; i < clauses.size(); i++) {
-			TextPattern child = clauses.get(i);
-			rewritten[i] = child.rewrite();
-			if (rewritten[i] != child)
-				anyRewritten = true;
-			if (rewritten[i] instanceof TextPatternNot) {
-				hasNotChild = true;
-			}
-		}
 		if (hasNotChild) {
 			// At least one clause starts with NOT.
 			// Node should be rewritten to AND. Invert all clauses.
-			for (int i = 0; i < rewritten.length; i++) {
-				rewritten[i] = rewritten[i].inverted();
+			for (int i = 0; i < rewrittenCl.size(); i++) {
+				rewrittenCl.set(i, rewrittenCl.get(i).inverted());
 			}
-			return new TextPatternNot(new TextPatternAnd(rewritten));
+			return new TextPatternNot(new TextPatternAnd(rewrittenCl.toArray(new TextPattern[0])));
 		}
 		
 		if (anyRewritten) {
 			// Some clauses were rewritten.
-			return new TextPatternOr(rewritten);
+			return new TextPatternOr(rewrittenCl.toArray(new TextPattern[0]));
 		}
 		
 		// Node need not be rewritten; return as-is
