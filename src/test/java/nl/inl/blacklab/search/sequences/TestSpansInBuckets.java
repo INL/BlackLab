@@ -17,14 +17,15 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.MockSpansInBuckets;
+import nl.inl.blacklab.TestUtil;
+
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import nl.inl.blacklab.MockSpans;
-import nl.inl.blacklab.MockSpansInBuckets;
-import nl.inl.blacklab.TestUtil;
 
 public class TestSpansInBuckets {
 	private SpansInBuckets hpd;
@@ -42,8 +43,8 @@ public class TestSpansInBuckets {
 	public void testNextNormal() throws IOException {
 		SpansInBuckets exp = MockSpansInBuckets.fromLists(
 			new int[] { 1, 4, 5 },
-			new int[] { 0, 1, 3 }, 
-			new int[] { 1, 2, 3, 4 }, 
+			new int[] { 0, 1, 3 },
+			new int[] { 1, 2, 3, 4 },
 			new int[] { 5, 6, 7, 8 }
 		);
 		TestUtil.assertEquals(exp, hpd);
@@ -77,6 +78,6 @@ public class TestSpansInBuckets {
 
 	@Test
 	public void testSkipToPastEnd() throws IOException {
-		Assert.assertEquals(Spans.NO_MORE_DOCS, hpd.advance(6));
+		Assert.assertEquals(DocIdSetIterator.NO_MORE_DOCS, hpd.advance(6));
 	}
 }

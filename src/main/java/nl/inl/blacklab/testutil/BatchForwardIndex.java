@@ -2,11 +2,11 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 
-import org.apache.log4j.BasicConfigurator;
-
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
+
+import org.apache.log4j.BasicConfigurator;
 
 /**
  * Executes a batch of fetch operations on a forward index.
@@ -15,7 +15,6 @@ public class BatchForwardIndex {
 
 	private static final int SNIPPET_LENGTH_WORDS = 11;
 
-	@SuppressWarnings("deprecation")
 	public static void main(String[] args) throws Exception {
 
 		BasicConfigurator.configure(); // suppress log4j warning

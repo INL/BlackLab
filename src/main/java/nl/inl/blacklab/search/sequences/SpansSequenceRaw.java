@@ -17,12 +17,12 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+
+import org.apache.lucene.search.spans.Spans;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -98,7 +98,7 @@ class SpansSequenceRaw extends BLSpans {
 	}
 
 	@Override
-	public int docID() {		
+	public int docID() {
 		return currentDoc;
 	}
 
@@ -108,7 +108,7 @@ class SpansSequenceRaw extends BLSpans {
 			return -1; // .nextStartPosition() not called yet
 		return rightEnd;
 	}
-	
+
 	@Override
 	public int nextDoc() throws IOException {
 		alreadyAtFirstMatch = false;
@@ -130,7 +130,7 @@ class SpansSequenceRaw extends BLSpans {
 			alreadyAtFirstMatch = false;
 			return leftStart;
 		}
-		
+
 		/*
 		 * Go to the next match.
 		 *
@@ -148,7 +148,7 @@ class SpansSequenceRaw extends BLSpans {
 		 * collected matches from the right may be used for multiple matches from the left (if there are
 		 * multiple matches from the left with the same end point).
 		 */
-		
+
 		if (currentDoc == NO_MORE_DOCS || leftStart == NO_MORE_POSITIONS) {
 			leftStart = rightEnd = NO_MORE_POSITIONS;
 			return NO_MORE_POSITIONS;
@@ -179,8 +179,8 @@ class SpansSequenceRaw extends BLSpans {
 
 	/**
 	 * Puts both spans in the next doc (possibly the current one)
-	 * that has a match in it. 
-	 * 
+	 * that has a match in it.
+	 *
 	 * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
 	 * @throws IOException
 	 */
@@ -223,7 +223,7 @@ class SpansSequenceRaw extends BLSpans {
 				alreadyAtFirstMatch = true;
 				return currentDoc;
 			}
-			
+
 			// No matches in this doc; on to the next
 			currentDoc = left.nextDoc();
 			if (currentDoc == NO_MORE_DOCS) {
@@ -244,7 +244,6 @@ class SpansSequenceRaw extends BLSpans {
 	 *
 	 * After this function, we're on the first valid match found, or we're out of matches for this document.
 	 *
-	 * @return startPosition if we're on a valid match, NO_MORE_POSITIONS if we're done with this doc.
 	 * @throws IOException
 	 */
 	private void realignPos() throws IOException {

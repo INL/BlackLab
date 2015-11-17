@@ -17,12 +17,12 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.search.Span;
+
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
-
-import nl.inl.blacklab.search.Span;
 
 /**
  * Returns all tokens that do not occur in the matches
@@ -72,7 +72,8 @@ class SpansNot extends BLSpans {
 	 *
 	 *  The test values are: there are 3 documents (0, 1 and 2) and each is 5 tokens long.
 	 *
-	 *  @param test whether or not we want to use test values
+	 * @param test whether or not we want to use test values
+	 * @param maxDoc number of docs in the (mock) test set
 	 */
 	void setTest(boolean test, int maxDoc) {
 		useTestValues = test;
@@ -142,7 +143,7 @@ class SpansNot extends BLSpans {
 			currentStart = currentEnd = -1;
 		} while (nextStartPosition() == NO_MORE_POSITIONS);
 		alreadyAtFirstMatch = true;
-		
+
 		return currentDoc;
 	}
 
@@ -158,7 +159,7 @@ class SpansNot extends BLSpans {
 			alreadyAtFirstMatch = false;
 			return currentStart;
 		}
-		
+
 		if (currentDoc == NO_MORE_DOCS || currentStart == NO_MORE_POSITIONS) {
 			return NO_MORE_POSITIONS;
 		}
@@ -172,10 +173,10 @@ class SpansNot extends BLSpans {
 
 			// Which of 3 situations are we in?
 			if (currentDoc < 0) {
-				
+
 				// A - We haven't started yet.
 				return -1;
-				
+
 			} else if (clauseDoc == currentDoc && clauseStart != NO_MORE_POSITIONS)  {
 
 				// B - Spans is at currentDoc.
@@ -238,7 +239,7 @@ class SpansNot extends BLSpans {
 			currentStart = currentEnd = clauseStart = NO_MORE_POSITIONS;
 			return NO_MORE_DOCS;
 		}
-		
+
 		if (currentDoc >= doc) {
 			// We can't skip to it because we're already there or beyond.
 			// But, as per spec, skipTo always at least advances to the next document.

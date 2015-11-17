@@ -118,7 +118,7 @@ public class SpanQueryDocLevelAndNot extends SpanQuery {
 	 * @param terms
 	 *            the set the terms should be added to
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "rawtypes" })
 	@Override
 	public void extractTerms(Set terms) {
 		try {
@@ -126,7 +126,7 @@ public class SpanQueryDocLevelAndNot extends SpanQuery {
 			Method methodExtractTerms = SpanQuery.class.
 			        getDeclaredMethod("extractTerms", Set.class);
 			methodExtractTerms.setAccessible(true);
-			
+
 			for (final SpanQuery clause : getClauses()) {
 			    methodExtractTerms.invoke(clause, terms);
 				//clause.extractTerms(terms);

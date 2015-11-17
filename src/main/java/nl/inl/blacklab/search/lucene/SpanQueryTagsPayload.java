@@ -20,6 +20,9 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.QueryExecutionContext;
+
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -27,9 +30,6 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
-
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.QueryExecutionContext;
 
 /**
  *
@@ -42,7 +42,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
  *
  */
 public class SpanQueryTagsPayload extends SpanQuery {
-	
+
 	SpanTermQuery clause;
 
 	private String tagName;
@@ -102,7 +102,7 @@ public class SpanQueryTagsPayload extends SpanQuery {
 	 * @param terms
 	 *            the set the terms should be added to
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "rawtypes" })
 	@Override
 	public void extractTerms(Set terms) {
 		try {
