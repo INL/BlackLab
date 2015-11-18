@@ -23,21 +23,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.SimpleCollector;
-import org.apache.lucene.search.spans.SpanQuery;
-
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 import nl.inl.util.ReverseComparator;
 import nl.inl.util.ThreadPriority.Level;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * A list of DocResult objects (document-level query results). The list may be sorted by calling
@@ -204,12 +203,10 @@ public class DocResults implements Iterable<DocResult> {
 //		}
 
 		searcher.collectDocuments(query, new SimpleCollector() {
-			LeafReaderContext reader = null;
-
 			@Override
 			public void collect(int docId) throws IOException {
-				int globalDocId = docId + reader.docBase;
-				results.add(new DocResult(DocResults.this.searcher, null, globalDocId, reader.reader().document(docId)));
+				int globalDocId = docId;
+				results.add(new DocResult(DocResults.this.searcher, null, globalDocId, DocResults.this.searcher.document(docId)));
 			}
 
 			@Override

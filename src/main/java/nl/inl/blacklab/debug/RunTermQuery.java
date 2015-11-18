@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
+
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -27,9 +30,6 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
-
-import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 
 public class RunTermQuery {
 
@@ -173,7 +173,7 @@ public class RunTermQuery {
 		final BitSet bits = new BitSet(reader.maxDoc());
 		docsFound = false;
 		searcher.search(query, new SimpleCollector() {
-			private int docBase;
+//			private int docBase;
 
 			@Override
 			public void setScorer(Scorer scorer) {
@@ -182,9 +182,9 @@ public class RunTermQuery {
 
 			@Override
 			public void collect(int doc) {
-				bits.set(doc + docBase);
-				System.out.println(String.format("  doc %7d", doc + docBase));
-				matchingDoc = doc + docBase;
+				bits.set(doc/* + docBase*/);
+				System.out.println(String.format("  doc %7d", doc/* + docBase*/));
+				matchingDoc = doc /*+ docBase*/;
 				docsFound = true;
 			}
 
@@ -253,7 +253,7 @@ public class RunTermQuery {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
+
 	}
 
 	private static void usage() {
