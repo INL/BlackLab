@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,35 +34,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-
-import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.LockObtainFailedException;
-import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
@@ -90,6 +63,35 @@ import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
+
+import org.apache.log4j.Logger;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.LockObtainFailedException;
+import org.apache.lucene.util.Bits;
 
 /**
  * The main interface into the BlackLab library. The Searcher object is instantiated with an open
@@ -416,7 +418,12 @@ public class Searcher {
 			reader = DirectoryReader.open(indexWriter, false);
 		} else {
 			// Open Lucene index
-			reader = DirectoryReader.open(FSDirectory.open(indexDir.toPath()));
+			Path indexPath = indexDir.toPath();
+			while (Files.isSymbolicLink(indexPath)) {
+				// Resolve symlinks, as FSDirectory.open() can't handle them
+				indexPath = Files.readSymbolicLink(indexPath);
+			}
+			reader = DirectoryReader.open(FSDirectory.open(indexPath));
 		}
 		this.indexLocation = indexDir;
 
@@ -424,12 +431,12 @@ public class Searcher {
 		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
 		isEmptyIndex = indexStructure.isNewIndex();
 
-		// TODO: we need to create the analyzer before opening the index, because 
+		// TODO: we need to create the analyzer before opening the index, because
 		//   we can't change the analyzer attached to the IndexWriter (and passing a different
 		//   analyzer in addDocument() is going away in Lucene 5.x).
 		//   For now, if we're in index mode, we re-open the index with the analyzer we determined.
 		createAnalyzers();
-		
+
 		if (indexMode) {
 			// Re-open the IndexWriter with the analyzer we've created above (see comment above)
 			reader.close();
@@ -1431,7 +1438,7 @@ public class Searcher {
 	 * by HitPropValue.deserialize(), so if you're not sure if you need to call this
 	 * method in your application, you probably don't.
 	 *
-	 * This used to be public, but it's called automatically now in search mode, so 
+	 * This used to be public, but it's called automatically now in search mode, so
 	 * there's no need to call it manually anymore.
 	 */
 	void buildAllTermIndices() {
@@ -1749,7 +1756,12 @@ public class Searcher {
 		if (!indexDir.exists() && create) {
 			indexDir.mkdir();
 		}
-		Directory indexLuceneDir = FSDirectory.open(indexDir.toPath());
+		Path indexPath = indexDir.toPath();
+		while (Files.isSymbolicLink(indexPath)) {
+			// Resolve symlinks, as FSDirectory.open() can't handle them
+			indexPath = Files.readSymbolicLink(indexPath);
+		}
+		Directory indexLuceneDir = FSDirectory.open(indexPath);
 		@SuppressWarnings("resource")
 		Analyzer defaultAnalyzer = analyzer == null ? new BLDutchAnalyzer() : analyzer;
 		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
