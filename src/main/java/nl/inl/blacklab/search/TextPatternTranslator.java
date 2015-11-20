@@ -73,7 +73,7 @@ public abstract class TextPatternTranslator<T> {
 	 * @return result of the query execution
 	 */
 	public abstract T andNot(QueryExecutionContext context, T include, T exclude);
-	
+
 	/**
 	 * Token-level OR.
 	 *

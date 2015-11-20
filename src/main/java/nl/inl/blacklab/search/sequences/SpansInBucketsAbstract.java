@@ -109,7 +109,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	public Hit getHit(int indexInBucket) {
 		return bucket.get(indexInBucket);
 	}
-	
+
 	@Override
 	public Collection<byte[]> getPayload(int indexInBucket) {
 		return bucket.get(indexInBucket).getPayload();
@@ -149,8 +149,8 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 	/**
 	 * Subclasses should override this to gather the hits they wish to put in the next bucket.
-	 * 
-	 * Upon entering this method, the source spans is at the last unused hit (or the first hit in a 
+	 *
+	 * Upon entering this method, the source spans is at the last unused hit (or the first hit in a
 	 * new document). At the end, it should be at the first hit that doesn't fit in the bucket (or
 	 * beyond the last hit, i.e. Spans.NO_MORE_POSITIONS).
 	 *

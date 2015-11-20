@@ -39,7 +39,7 @@ public class TestSpansTagsPayload {
 		Spans exp = new MockSpans(expDoc, expStart, expEnd);
 		TestUtil.assertEquals(exp, spans);
 	}
-	
+
 	@Test
 	public void testNested() throws IOException {
 		int[] aDoc   = { 1, 1 };
@@ -88,7 +88,7 @@ public class TestSpansTagsPayload {
 
 		Spans spans = new SpansTagsPayload(a);
 		spans.advance(2);
-		
+
 		int[] expDoc   = { 2,  2};
 		int[] expStart = {12, 14};
 		int[] expEnd   = {17, 15};

@@ -82,7 +82,7 @@ public class DocFieldLengthGetter implements Closeable {
 			}
 		}
 	}
-	
+
 	@Override
 	public void close() {
 		if (uninv != null) {

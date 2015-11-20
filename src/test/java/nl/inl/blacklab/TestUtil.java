@@ -28,7 +28,7 @@ public class TestUtil {
 	public static void assertEquals(Spans expected, Spans actual) throws IOException {
 		assertEquals(expected, actual, false);
 	}
-	
+
 	public static void assertEquals(Spans expected, Spans actual, boolean skipFirstNextDoc) throws IOException {
 		int docNumber = 0, hitNumber;
 		boolean firstDoc = true;
@@ -77,7 +77,7 @@ public class TestUtil {
 	private static String hitDesc(int docNumber, int hitNumber) {
 		return StringUtil.ordinal(hitNumber) + " hit in " + StringUtil.ordinal(docNumber) + " doc";
 	}
-	
+
 	public static void assertEquals(SpansInBuckets expected, SpansInBuckets actual) throws IOException {
 		while (true) {
 			int actualDocId = actual.nextDoc();

@@ -137,7 +137,7 @@ public class TestTextPatternRewrite {
 		TextPattern rewritten = original.rewrite();
 		Assert.assertEquals("ANDNOT(TERM(contents%word@i, a), TERM(contents%lemma@i, b))", rewritten.translate(stringifier));
 	}
-	
+
 	@Test
 	public void testRewriteNotAndNot() {
 		TextPattern original = getPatternFromCql("[ !(word = 'a' & lemma != 'b') ]");

@@ -74,7 +74,7 @@ public class ComplexFieldProperty {
 	/** Token position increments. This allows us to index multiple terms at a single token position (just
 	 *  set the token increments of the additional tokens to 0). */
 	protected List<Integer> increments = new ArrayList<Integer>();
-	
+
 	/**
 	 * Payloads for this property, if any.
 	 */
@@ -294,11 +294,11 @@ public class ComplexFieldProperty {
 
 		return lastValuePosition;
 	}
-	
+
 	public void addPayload(BytesRef payload) {
 		payloads.add(payload);
 	}
-	
+
 	public int getLastValueIndex() {
 		return values.size() - 1;
 	}

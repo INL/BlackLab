@@ -55,13 +55,13 @@ class SpansPositionFilter extends BLSpans {
 	private Filter op;
 
 	/** Are we already at the first match in a new document, before nextStartPosition() has been called?
-	 * Necessary because we have to make sure nextDoc()/advance() actually puts us in a document with at 
-	 * least one match.  
+	 * Necessary because we have to make sure nextDoc()/advance() actually puts us in a document with at
+	 * least one match.
 	 */
 	private boolean alreadyAtFirstMatch = false;
 
 	/**
-	 * If true, produce hits that DON'T match the filter instead.		
+	 * If true, produce hits that DON'T match the filter instead.
 	 */
 	private boolean invert;
 
@@ -115,7 +115,7 @@ class SpansPositionFilter extends BLSpans {
 	@Override
 	public int nextDoc() throws IOException {
 		alreadyAtFirstMatch = false;
-		
+
 		// Are we done yet?
 		if (producerDoc == NO_MORE_DOCS || filterDoc == NO_MORE_DOCS)
 			return NO_MORE_DOCS;
@@ -134,13 +134,13 @@ class SpansPositionFilter extends BLSpans {
 	public int nextStartPosition() throws IOException {
 		if (producerDoc == NO_MORE_DOCS)
 			return NO_MORE_POSITIONS;
-		
+
 		if (alreadyAtFirstMatch) {
 			// We're already at the first match in the doc. Return it.
 			alreadyAtFirstMatch = false;
 			return producerStart;
 		}
-		
+
 		// Are we done yet?
 		if (producerStart == NO_MORE_POSITIONS)
 			return NO_MORE_POSITIONS;
@@ -150,7 +150,7 @@ class SpansPositionFilter extends BLSpans {
 	}
 
 	/**
-	 * Find a producer span (not necessarily in this document) matching with filter, 
+	 * Find a producer span (not necessarily in this document) matching with filter,
 	 * starting from the current producer span.
 	 *
 	 * @return docID if found, NO_MORE_DOCS if no such producer span exists (i.e. we're done)
@@ -159,7 +159,7 @@ class SpansPositionFilter extends BLSpans {
 	private int findDocWithMatch() throws IOException {
 		// Find the next "valid" container, if there is one.
 		while (producerDoc != NO_MORE_DOCS) {
-			
+
 			// Are filter and producer in the same document?
 			if (filterDoc < producerDoc) {
 				// No, advance filter to be in the same document as the producer
@@ -194,7 +194,7 @@ class SpansPositionFilter extends BLSpans {
 		// Find the next "valid" producer spans, if there is one.
 		while (producerStart != NO_MORE_POSITIONS) {
 			producerStart = producer.nextStartPosition();
-			
+
 			// We're at the first unchecked producer spans. Does it match our filter?
 			boolean invertedMatch = invert; // if looking for non-matches, keep track if there have been any matches.
 			switch(op) {
@@ -288,7 +288,7 @@ class SpansPositionFilter extends BLSpans {
 	@Override
 	public int advance(int doc) throws IOException {
 		alreadyAtFirstMatch = false;
-		
+
 		// Skip both to doc
 		producerDoc = producer.advance(doc);
 		producerStart = -1;
@@ -305,7 +305,7 @@ class SpansPositionFilter extends BLSpans {
 			return -1; // nextStartPosition() hasn't been called yet
 		return producerStart;
 	}
-	
+
 	@Override
 	public Collection<byte[]> getPayload() throws IOException {
 		return producer.getPayload();

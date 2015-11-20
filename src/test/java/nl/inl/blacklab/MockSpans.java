@@ -37,7 +37,7 @@ public class MockSpans extends BLSpans {
 	private int[] start;
 
 	private int[] end;
-	
+
 	private int currentDoc = -1;
 
 	private int currentHit = -1;
@@ -56,7 +56,7 @@ public class MockSpans extends BLSpans {
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
-		
+
 		sortedSpans = singleTokenSpans = uniqueSpans = true;
 		int prevDoc = -1, prevStart = -1, prevEnd = -1;
 		for (int i = 0; i < doc.length; i++) {
@@ -85,7 +85,7 @@ public class MockSpans extends BLSpans {
 	public int docID() {
 		return currentDoc;
 	}
-	
+
 	@Override
 	public int endPosition() {
 		if (currentHit < 0 || alreadyAtFirstMatch)
@@ -117,7 +117,7 @@ public class MockSpans extends BLSpans {
 	public boolean isPayloadAvailable() {
 		return payloads != null;
 	}
-	
+
 	@Override
 	public int nextDoc() {
 		if (currentDoc != NO_MORE_DOCS) {

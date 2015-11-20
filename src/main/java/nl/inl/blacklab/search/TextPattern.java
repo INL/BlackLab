@@ -145,10 +145,10 @@ public abstract class TextPattern implements Cloneable {
 
 	/**
 	 * Is it okay to invert this TextPattern for optimization?
-	 * 
+	 *
 	 * Heuristic used to determine when to optimize
-	 * a query by inverting one or more of its subqueries. 
-	 * 
+	 * a query by inverting one or more of its subqueries.
+	 *
 	 * @return true if it is, false if not
 	 */
 	boolean okayToInvertForOptimization() {
@@ -157,9 +157,9 @@ public abstract class TextPattern implements Cloneable {
 
 	/**
 	 * Is this (sub)pattern only a negative clause, excluding things?
-	 * 
+	 *
 	 * Used for optimization decisions, i.e. in TextPatternOr.rewrite().
-	 * 
+	 *
 	 * @return true if it's negative-only, false if not
 	 */
 	boolean isNegativeOnly() {

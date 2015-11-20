@@ -65,7 +65,7 @@ public class ComplexField {
 	 * @param mainPropertyName main property name
 	 * @param sensitivity ways to index main property, with respect to case- and
 	 *   diacritics-sensitivity.
-	 * @param mainPropHasPayloads does the main property have payloads? 
+	 * @param mainPropHasPayloads does the main property have payloads?
 	 */
 	public ComplexField(String name, String mainPropertyName, SensitivitySetting sensitivity, boolean mainPropHasPayloads) {
 		boolean includeOffsets = true;
@@ -239,7 +239,7 @@ public class ComplexField {
 	 * @param name property name
 	 * @param value the value to add
 	 * @param posIncr position increment
-	 * @deprecated keep a reference to the property object and add values to that. 
+	 * @deprecated keep a reference to the property object and add values to that.
 	 */
 	@Deprecated
 	public void addPropertyValue(String name, String value, int posIncr) {
@@ -253,7 +253,7 @@ public class ComplexField {
 	 * Add a value to a property
 	 * @param name property name
 	 * @param value the value to add
-	 * @deprecated keep a reference to the property object and add values to that. 
+	 * @deprecated keep a reference to the property object and add values to that.
 	 */
 	@Deprecated
 	public void addPropertyValue(String name, String value) {

@@ -69,7 +69,7 @@ class SpansAnd extends BLSpans {
 			return NO_MORE_POSITIONS;
 		return spans[0].endPosition();
 	}
-	
+
 	@Override
 	public int nextDoc() throws IOException {
 		alreadyAtFirstMatch = false;
@@ -79,7 +79,7 @@ class SpansAnd extends BLSpans {
 		catchUpDoc(laggingSpans);
 		return synchronizeDoc();
 	}
-	
+
 	@Override
 	public int nextStartPosition() throws IOException {
 		if (alreadyAtFirstMatch) {
@@ -98,14 +98,14 @@ class SpansAnd extends BLSpans {
 
 		return synchronizePosition();
 	}
-	
+
 	private int synchronizePosition() throws IOException {
 		// Synchronise spans
 		while (true) {
-			
+
 			if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS)
 				return NO_MORE_POSITIONS;
-			
+
 			// Synch at match start level
 			if (currentStart[0] == -1 && currentStart[1] == -1 || currentStart[0] != currentStart[1]) {
 				int laggingSpans = currentStart[0] < currentStart[1] ? 0 : 1;
@@ -139,20 +139,20 @@ class SpansAnd extends BLSpans {
 	 */
 	private int synchronizeDoc() throws IOException {
 		while (true) {
-			
+
 			// Are we done?
 			if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS) {
 				// Yes, one of the Spans was exhausted
 				return NO_MORE_DOCS;
 			}
-			
+
 			// Synch at document level
 			if (currentDoc[0] != currentDoc[1]) {
 				int laggingSpans = currentDoc[0] < currentDoc[1] ? 0 : 1;
 				catchUpDoc(laggingSpans);
 				continue;
 			}
-			
+
 			if (synchronizePosition() == NO_MORE_POSITIONS) {
 				// This doc doesn't match; try next doc.
 				currentDoc[0] = spans[0].nextDoc();
@@ -257,7 +257,7 @@ class SpansAnd extends BLSpans {
 	public boolean isPayloadAvailable() throws IOException {
 		return spans[0].isPayloadAvailable() || spans[1].isPayloadAvailable();
 	}
-	
-	
+
+
 
 }

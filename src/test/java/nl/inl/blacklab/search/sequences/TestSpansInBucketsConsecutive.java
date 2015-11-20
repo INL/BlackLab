@@ -39,10 +39,10 @@ public class TestSpansInBucketsConsecutive {
 
 	@Test
 	public void testListInterface() throws IOException {
-		
+
 		int[] bDoc   = {1, 2, 2};
 		int[] bStart = {0, 2, 4};
-		
+
 		int[] hStart = {1, 2, 3, 4, 6, 7};
 		int[] hEnd   = {2, 3, 4, 5, 7, 8};
 		SpansInBuckets exp = new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);

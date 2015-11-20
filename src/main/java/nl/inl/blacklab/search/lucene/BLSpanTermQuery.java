@@ -43,7 +43,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  * (i.e. for token tagging).
  */
 public class BLSpanTermQuery extends SpanQuery {
-	
+
 	SpanTermQuery q;
 
 	public BLSpanTermQuery(Term term) {
@@ -89,7 +89,7 @@ public class BLSpanTermQuery extends SpanQuery {
 	public String toString(String arg0) {
 		return "BL" + q.toString();
 	}
-	
+
 	@Override
 	public void extractTerms(Set<Term> terms) {
 		q.extractTerms(terms);

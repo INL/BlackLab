@@ -25,7 +25,7 @@ import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.search.lucene.BLSpans;
 
 public class TestSpansSequence {
-	
+
 	@Test
 	public void testSequenceSpansBasic() throws IOException {
 		int[] aDoc   = { 1, 1, 1 };

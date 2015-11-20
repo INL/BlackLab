@@ -27,9 +27,9 @@ import java.util.List;
  * (sub)fields that should apply to the same word).
  */
 public class TextPatternAnd extends TextPattern {
-	
+
 	protected List<TextPattern> clauses = new ArrayList<TextPattern>();
-	
+
 	protected List<TextPattern> clausesNot = new ArrayList<TextPattern>();
 
 	public TextPatternAnd(TextPattern... clauses) {
@@ -76,7 +76,7 @@ public class TextPatternAnd extends TextPattern {
 			return chResults.get(0);
 		} else if (chResults.size() == 0) {
 			// All negative clauses, so it's really just a NOT query. Should've been rewritten, but ok.
-			return translator.not(context, translator.and(context, chResultsNot)); 
+			return translator.not(context, translator.and(context, chResultsNot));
 		}
 		// Combination of positive and possibly negative clauses
 		T include = chResults.size() == 1 ? chResults.get(0) : translator.and(context, chResults);
@@ -85,7 +85,7 @@ public class TextPatternAnd extends TextPattern {
 		T exclude = chResultsNot.size() == 1 ? chResultsNot.get(0) : translator.and(context, chResultsNot);
 		return translator.andNot(context, include, exclude);
 	}
-	
+
 	@Override
 	public Object clone() {
 		try {
@@ -100,7 +100,7 @@ public class TextPatternAnd extends TextPattern {
 			throw new RuntimeException("Clone not supported: " + e.getMessage());
 		}
 	}
-	
+
 	@Override
 	public TextPattern inverted() {
 		if (clausesNot.size() == 0) {
@@ -110,13 +110,13 @@ public class TextPatternAnd extends TextPattern {
 		}
 		return new TextPatternAnd(clausesNot, clauses);
 	}
-	
+
 	@Override
 	boolean okayToInvertForOptimization() {
 		// Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
 		return clausesNot.size() > 0;
 	}
-	
+
 	@Override
 	boolean isNegativeOnly() {
 		return clauses.size() == 0;
@@ -170,17 +170,17 @@ public class TextPatternAnd extends TextPattern {
 					anyRewritten = true;
 			}
 		}
-		
+
 		if (rewrittenCl.size() == 0) {
 			// All-negative; node should be rewritten to OR.
 			return (new TextPatternOr(rewrittenNotCl.toArray(new TextPattern[0]))).inverted();
 		}
-		
+
 		if (anyRewritten) {
 			// Some clauses were rewritten.
 			return new TextPatternAnd(rewrittenCl, rewrittenNotCl);
 		}
-		
+
 		// Node need not be rewritten; return as-is
 		return this;
 	}

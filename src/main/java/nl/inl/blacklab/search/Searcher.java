@@ -35,35 +35,6 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import nl.inl.blacklab.analysis.BLDutchAnalyzer;
-import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
-import nl.inl.blacklab.analysis.BLStandardAnalyzer;
-import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
-import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
-import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.externalstorage.ContentStoreDir;
-import nl.inl.blacklab.externalstorage.ContentStoreDirAbstract;
-import nl.inl.blacklab.externalstorage.ContentStoreDirUtf8;
-import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.highlight.XmlHighlighter;
-import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
-import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
-import nl.inl.blacklab.search.indexstructure.PropertyDesc;
-import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
-import nl.inl.util.ExUtil;
-import nl.inl.util.LogUtil;
-import nl.inl.util.LuceneUtil;
-import nl.inl.util.Utilities;
-import nl.inl.util.VersionFile;
-
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
@@ -92,6 +63,35 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.analysis.BLDutchAnalyzer;
+import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
+import nl.inl.blacklab.analysis.BLStandardAnalyzer;
+import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
+import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
+import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.externalstorage.ContentStoreDir;
+import nl.inl.blacklab.externalstorage.ContentStoreDirAbstract;
+import nl.inl.blacklab.externalstorage.ContentStoreDirUtf8;
+import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.highlight.XmlHighlighter;
+import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
+import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexstructure.PropertyDesc;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
+import nl.inl.util.ExUtil;
+import nl.inl.util.LogUtil;
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.Utilities;
+import nl.inl.util.VersionFile;
 
 /**
  * The main interface into the BlackLab library. The Searcher object is instantiated with an open
@@ -1762,7 +1762,6 @@ public class Searcher {
 			indexPath = Files.readSymbolicLink(indexPath);
 		}
 		Directory indexLuceneDir = FSDirectory.open(indexPath);
-		@SuppressWarnings("resource")
 		Analyzer defaultAnalyzer = analyzer == null ? new BLDutchAnalyzer() : analyzer;
 		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);

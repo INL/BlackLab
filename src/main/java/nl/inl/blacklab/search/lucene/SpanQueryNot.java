@@ -58,13 +58,13 @@ public class SpanQueryNot extends SpanQueryBase {
 		clauses[0] = null;
 		baseFieldName = matchAllTokensFieldName;
 	}
-	
-	/** 
+
+	/**
 	 * Return a query that matches all tokens in a field.
-	 * 
-	 * @param ignoreLastToken if true, we assume the last token is always a special closing 
-	 *     token and ignore it (special closing token is required for punctuation after the last word) 
-	 * @param fieldName the field from which to match 
+	 *
+	 * @param ignoreLastToken if true, we assume the last token is always a special closing
+	 *     token and ignore it (special closing token is required for punctuation after the last word)
+	 * @param fieldName the field from which to match
 	 * @return the resulting query
 	 */
 	public static SpanQuery matchAllTokens(boolean ignoreLastToken, String fieldName) {

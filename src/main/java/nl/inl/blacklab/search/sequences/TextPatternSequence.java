@@ -37,7 +37,7 @@ public class TextPatternSequence extends TextPatternAnd {
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		if (clausesNot.size() > 0)
 			throw new RuntimeException("clausesNot not empty!");
-		
+
 		List<T> chResults = new ArrayList<T>();
 
 		// Keep track of which clauses can match the empty sequence. Use this to build alternatives

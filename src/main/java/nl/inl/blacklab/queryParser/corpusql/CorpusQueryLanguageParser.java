@@ -102,7 +102,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         return new TextPatternProperty(prop, value);
     }
 
-// --- Grammar rules start here --- 
+// --- Grammar rules start here ---
 
 /* a query */
   final public TextPattern query() throws ParseException {
@@ -485,7 +485,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     throw new Error("Missing return statement in function");
   }
 
-/* expression inside square brackets: an attribute clause, or multiple 
+/* expression inside square brackets: an attribute clause, or multiple
    attribute clauses combined with boolean operators */
   final public TextPattern positionLong() throws ParseException {
         TextPattern a = null, c = null;

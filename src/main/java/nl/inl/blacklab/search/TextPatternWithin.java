@@ -51,5 +51,5 @@ public class TextPatternWithin extends TextPatternCombiner {
 		// Inverting is "free"
 		return true;
 	}
-	
+
 }

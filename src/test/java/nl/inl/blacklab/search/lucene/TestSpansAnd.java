@@ -39,7 +39,7 @@ public class TestSpansAnd {
 		);
 		return new SpansAnd(a, b);
 	}
-	
+
 	@Test
 	public void testAndSpans() throws IOException {
 		Spans exp = MockSpans.fromLists(
@@ -49,7 +49,7 @@ public class TestSpansAnd {
 		);
 		TestUtil.assertEquals(exp, getSpans());
 	}
-	
+
 	@Test
 	public void testAndSpansAdvance() throws IOException {
 		Spans exp = MockSpans.single(2, 10, 20);
@@ -57,7 +57,7 @@ public class TestSpansAnd {
 		Assert.assertEquals(2, spans.advance(2));
 		TestUtil.assertEquals(exp, spans, true);
 	}
-	
+
 	@Test
 	public void testAndSpansAdvanceToCurrent() throws IOException {
 		Spans exp = MockSpans.single(2, 10, 20);
@@ -66,7 +66,7 @@ public class TestSpansAnd {
 		Assert.assertEquals(2, spans.advance(1));
 		TestUtil.assertEquals(exp, spans, true);
 	}
-	
+
 	@Test
 	public void testAndSpansAdvanceNoResults() throws IOException {
 		MockSpans exp = MockSpans.emptySpans();
@@ -74,7 +74,7 @@ public class TestSpansAnd {
 		Assert.assertEquals(DocIdSetIterator.NO_MORE_DOCS, spans.advance(3));
 		TestUtil.assertEquals(exp, spans, true);
 	}
-	
+
 	@Test
 	public void testAndSpansAdvanceBeyond() throws IOException {
 		MockSpans exp = MockSpans.emptySpans();

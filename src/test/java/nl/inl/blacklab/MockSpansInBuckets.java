@@ -34,15 +34,15 @@ import nl.inl.blacklab.search.sequences.SpansInBuckets;
  * from these arrays.
  */
 public class MockSpansInBuckets implements SpansInBuckets {
-	
+
 	private int[] start;
 
 	private int[] end;
-	
+
 	private int[] bucketStart;
-	
+
 	private int[] bucketDoc;
-	
+
 	private int currentBucket = -1;
 
 	private boolean alreadyAtFirstBucket = false;

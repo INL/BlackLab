@@ -33,7 +33,7 @@ public class TestSpansExpansion {
 
 		SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, false, 1, 2);
 		spans.setTest(true); // for test, all documents are 5 long
-		
+
 		int[] expDoc   = { 1, 1, 2, 2 };
 		int[] expStart = { 1, 1, 2, 2 };
 		int[] expEnd   = { 3, 4, 4, 5 };

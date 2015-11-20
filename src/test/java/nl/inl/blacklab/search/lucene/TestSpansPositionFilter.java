@@ -25,7 +25,7 @@ import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Filter;
 
 public class TestSpansPositionFilter {
-	
+
 	private SpansPositionFilter getSpans(boolean swap, Filter type, boolean invert) {
 		Spans a = MockSpans.fromLists(
 			new int[] {  1,  1,  2,  2,  2,  3 },
@@ -33,8 +33,8 @@ public class TestSpansPositionFilter {
 			new int[] { 15, 25, 15, 20, 35, 25 }
 		);
 		Spans b = MockSpans.fromLists(
-			new int[] {  1,  2,  3 }, 
-			new int[] { 11, 22, 20 }, 
+			new int[] {  1,  2,  3 },
+			new int[] { 11, 22, 20 },
 			new int[] { 12, 23, 25 }
 		);
 		return new SpansPositionFilter(swap ? b : a, swap ? a : b, type, invert);
@@ -45,7 +45,7 @@ public class TestSpansPositionFilter {
 		SpansPositionFilter spans = getSpans(false, Filter.CONTAINING, false);
 		Spans exp = MockSpans.fromLists(
 			new int[] { 1,  3},
-			new int[] {10, 20}, 
+			new int[] {10, 20},
 			new int[] {15, 25}
 		);
 		TestUtil.assertEquals(exp, spans);
@@ -77,8 +77,8 @@ public class TestSpansPositionFilter {
 	public void testNotWithin() throws IOException {
 		SpansPositionFilter spans = getSpans(true, Filter.WITHIN, true);
 		Spans exp = MockSpans.fromLists(
-			new int[] {  2 }, 
-			new int[] { 22 }, 
+			new int[] {  2 },
+			new int[] { 22 },
 			new int[] { 23 }
 		);
 		TestUtil.assertEquals(exp, spans);
@@ -88,8 +88,8 @@ public class TestSpansPositionFilter {
 	public void testStartsAt() throws IOException {
 		SpansPositionFilter spans = getSpans(false, Filter.STARTS_AT, false);
 		Spans exp = MockSpans.fromLists(
-			new int[] {  3 }, 
-			new int[] { 20 }, 
+			new int[] {  3 },
+			new int[] { 20 },
 			new int[] { 25 }
 		);
 		TestUtil.assertEquals(exp, spans);
@@ -99,8 +99,8 @@ public class TestSpansPositionFilter {
 	public void testEndsAt() throws IOException {
 		SpansPositionFilter spans = getSpans(false, Filter.ENDS_AT, false);
 		Spans exp = MockSpans.fromLists(
-			new int[] {  3 }, 
-			new int[] { 20 }, 
+			new int[] {  3 },
+			new int[] { 20 },
 			new int[] { 25 }
 		);
 		TestUtil.assertEquals(exp, spans);
@@ -110,8 +110,8 @@ public class TestSpansPositionFilter {
 	public void testMatches() throws IOException {
 		SpansPositionFilter spans = getSpans(false, Filter.MATCHES, false);
 		Spans exp = MockSpans.fromLists(
-			new int[] {  3 }, 
-			new int[] { 20 }, 
+			new int[] {  3 },
+			new int[] { 20 },
 			new int[] { 25 }
 		);
 		TestUtil.assertEquals(exp, spans);
@@ -121,8 +121,8 @@ public class TestSpansPositionFilter {
 	public void testNotMatches() throws IOException {
 		SpansPositionFilter spans = getSpans(true, Filter.MATCHES, true);
 		Spans exp = MockSpans.fromLists(
-			new int[] {  1,  2 }, 
-			new int[] { 11, 22 }, 
+			new int[] {  1,  2 },
+			new int[] { 11, 22 },
 			new int[] { 12, 23 }
 		);
 		TestUtil.assertEquals(exp, spans);

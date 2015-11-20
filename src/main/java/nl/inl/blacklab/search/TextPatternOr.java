@@ -49,7 +49,7 @@ public class TextPatternOr extends TextPatternCombiner {
 
 	@Override
 	public TextPattern rewrite() {
-		
+
 		// Flatten nested OR queries.
 		// This doesn't change the query because the sequence operator is associative.
 		boolean anyRewritten = false;
@@ -72,7 +72,7 @@ public class TextPatternOr extends TextPatternCombiner {
 					anyRewritten = true;
 			}
 		}
-		
+
 		// Rewrites OR queries containing some NOT children into "NAND" queries.
 		// This helps us isolate problematic subclauses which we can then rewrite to
 		// more efficient NOTCONTAINING clauses.
@@ -85,12 +85,12 @@ public class TextPatternOr extends TextPatternCombiner {
 			// Note extra rewrite at the end to make sure AND NOT structure is correctly built.
 			return ((new TextPatternAnd(rewrittenCl.toArray(new TextPattern[0]))).inverted()).rewrite();
 		}
-		
+
 		if (anyRewritten) {
 			// Some clauses were rewritten.
 			return new TextPatternOr(rewrittenCl.toArray(new TextPattern[0]));
 		}
-		
+
 		// Node need not be rewritten; return as-is
 		return this;
 	}

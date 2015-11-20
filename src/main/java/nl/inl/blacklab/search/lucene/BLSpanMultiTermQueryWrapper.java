@@ -41,7 +41,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	 * A rewrite method that first translates each term into a SpanTermQuery in a
 	 * {@link Occur#SHOULD} clause in a BooleanQuery, and keeps the
 	 * scores as computed by the query.
-	 * 
+	 *
 	 * @see #setRewriteMethod
 	 */
 	public final static SpanRewriteMethod BL_SCORING_SPAN_QUERY_REWRITE = new SpanRewriteMethod() {
@@ -82,22 +82,22 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	 * A rewrite method that first translates each term into a SpanTermQuery in a
 	 * {@link Occur#SHOULD} clause in a BooleanQuery, and keeps the
 	 * scores as computed by the query.
-	 * 
+	 *
 	 * <p>
 	 * This rewrite method only uses the top scoring terms so it will not overflow
 	 * the boolean max clause count.
-	 * 
+	 *
 	 * @see #setRewriteMethod
 	 */
 	public static final class BLTopTermsSpanBooleanQueryRewrite
 			extends SpanRewriteMethod {
-		
+
 		private final TopTermsRewrite<BLSpanOrQuery> delegate;
 
-		/** 
-		 * Create a TopTermsSpanBooleanQueryRewrite for 
+		/**
+		 * Create a TopTermsSpanBooleanQueryRewrite for
 		 * at most <code>size</code> terms.
-		 * @param size the maximum priority queue size 
+		 * @param size the maximum priority queue size
 		 */
 		public BLTopTermsSpanBooleanQueryRewrite(int size) {
 			delegate = new TopTermsRewrite<BLSpanOrQuery>(size) {
@@ -121,7 +121,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 			};
 		}
 
-		/** return the maximum priority queue size 
+		/** return the maximum priority queue size
 		 * @return the size */
 		public int getSize() {
 			return delegate.getSize();

@@ -20,7 +20,7 @@ package nl.inl.blacklab.search;
  * used to search for sentences containing a certain word, etc.
  */
 public class TextPatternContaining extends TextPatternCombiner {
-	
+
 	boolean invert;
 
 	public TextPatternContaining(TextPattern containers, TextPattern search) {
@@ -51,5 +51,5 @@ public class TextPatternContaining extends TextPatternCombiner {
 		// Inverting is "free"
 		return true;
 	}
-	
+
 }

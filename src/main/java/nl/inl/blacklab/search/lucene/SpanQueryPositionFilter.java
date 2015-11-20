@@ -49,23 +49,23 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 
 		/** Producer hit ends at filter hit */
 		ENDS_AT,
-		
+
 		/** Producer hit exactly matches filter hit */
 		MATCHES
 	}
 
 	/** Filter operation to apply */
 	private Filter op;
-	
+
 	/** Return producer spans that DON'T match the filter instead? */
 	private boolean invert;
 
 	/**
 	 * Produce hits that match filter hits.
-	 * 
+	 *
 	 * @param producer hits we may be interested in
 	 * @param filter how we determine what producer hits we're interested in
-	 * @param op operation used to determine what producer hits we're interested in (containing, within, startsat, endsat) 
+	 * @param op operation used to determine what producer hits we're interested in (containing, within, startsat, endsat)
 	 * @param invert produce hits that don't match filter instead?
 	 */
 	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, Filter op, boolean invert) {
@@ -76,7 +76,7 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 
 	/**
 	 * Produce hits containing filter hits.
-	 * 
+	 *
 	 * @param producer hits we may be interested in
 	 * @param filter how we determine what producer hits we're interested in
 	 * @param invert produce hits that don't match filter instead?

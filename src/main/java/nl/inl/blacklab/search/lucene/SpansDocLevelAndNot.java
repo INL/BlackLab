@@ -38,7 +38,7 @@ public class SpansDocLevelAndNot extends BLSpans {
 	private boolean excludeSpansNexted;
 
 	private boolean moreIncludeSpansDocs;
-	
+
 	private boolean moreIncludeSpansPos;
 
 	private boolean moreExcludeSpansDocs;

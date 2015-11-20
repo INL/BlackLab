@@ -61,7 +61,7 @@ public class SpanQueryUnique extends SpanQuery {
 			Method methodExtractTerms = SpanQuery.class.
 			        getDeclaredMethod("extractTerms", Set.class);
 			methodExtractTerms.setAccessible(true);
-			
+
 		    methodExtractTerms.invoke(src, terms);
 			//src.extractTerms(terms);
 		} catch (Exception e) {

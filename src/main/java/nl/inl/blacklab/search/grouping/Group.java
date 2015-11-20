@@ -27,6 +27,6 @@ abstract class Group {
 
 	public HitPropValue getIdentity() {
 		return groupIdentity;
-	}	
+	}
 
 }

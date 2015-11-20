@@ -17,7 +17,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
 
     /**
      * Parse a Contextual Query Language query.
-     
+
      * @param searcher our index
      * @param query our query
      * @return the parsed query
@@ -68,7 +68,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
         return defaultProperty;
     }
 
-// --- Grammar rules start here --- 
+// --- Grammar rules start here ---
 
 /* a query */
   final public CompleteQuery query() throws ParseException {

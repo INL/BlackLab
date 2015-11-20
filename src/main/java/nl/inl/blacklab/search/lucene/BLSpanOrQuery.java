@@ -73,7 +73,7 @@ public class BLSpanOrQuery extends SpanOrQuery {
 			Method methodExtractTerms = SpanQuery.class.
 			        getDeclaredMethod("extractTerms", Set.class);
 			methodExtractTerms.setAccessible(true);
-			
+
 			for (final SpanQuery clause : getClauses()) {
 			    methodExtractTerms.invoke(clause, terms);
 				//clause.extractTerms(terms);
@@ -458,7 +458,7 @@ public class BLSpanOrQuery extends SpanOrQuery {
 
 	/**
 	 * Convert a SpanOrQuery to a BLSpanOrQuery
-	 * 
+	 *
 	 * @param soq
 	 * @return
 	 */

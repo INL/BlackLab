@@ -109,7 +109,7 @@ public class TestSpansTags {
 
 		SpansTags spans = new SpansTags(a, b);
 		spans.advance(2);
-		
+
 		int[] expDoc   = { 2,  2};
 		int[] expStart = {12, 14};
 		int[] expEnd   = {17, 15};

@@ -300,7 +300,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				addMetadataField(name, value);
 		}
 	}
-	
+
 	/* Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
 	class OpenTagInfo {
 		public int position;
@@ -311,7 +311,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		}
 	}
 	List<OpenTagInfo> openTags = new ArrayList<OpenTagInfo>();
-	
+
 	/** Handle tags. */
 	public class InlineTagHandler extends ElementHandler {
 
@@ -343,7 +343,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			int currentPos = propMain.lastValuePosition() + 1;
 			int posIncrement = currentPos - lastEndTagPos;
 			propEndTag.addValue(localName, posIncrement);
-			
+
 			// Add payload to start tag property indicating end position
 			OpenTagInfo openTag = openTags.remove(openTags.size() - 1);
 			byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();

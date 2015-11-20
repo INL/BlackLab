@@ -112,7 +112,7 @@ public class PerDocumentSortedSpans extends BLSpans {
 			return null;
 		return bucketedSpans.getHit(indexInBucket);
 	}
-	
+
 	@Override
 	public int nextDoc() throws IOException {
 		curDoc = bucketedSpans.nextDoc();

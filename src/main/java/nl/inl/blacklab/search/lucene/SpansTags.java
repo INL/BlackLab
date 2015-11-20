@@ -103,7 +103,7 @@ class SpansTags extends BLSpans {
 		gatherHits();
 		return currentDoc[0];
 	}
-	
+
 	@Override
 	public int nextStartPosition() throws IOException {
 		// Do we have more hits in the list?

@@ -68,17 +68,17 @@ public interface SpansInBuckets {
 	Collection<byte[]> getPayload(int indexInBucket);
 
 	boolean isPayloadAvailable(int indexInBucket);
-	
+
 	/**
 	 * Go to the next document.
-	 * 
+	 *
 	 * You still have to call nextBucket() to get to the first valid bucket.
 	 *
 	 * @return docID if we're at the next valid doc, NO_MORE_DOCS if we're done
 	 * @throws IOException
 	 */
 	int nextDoc() throws IOException;
-	
+
 	/**
 	 * Go to the next bucket in this doc.
 	 *
@@ -91,7 +91,7 @@ public interface SpansInBuckets {
 	 * Skip to specified document id.
 	 *
 	 * If we're already at the target id, go to the next document (just like Spans).
-	 * 
+	 *
 	 * @param target
 	 *            document id to skip to
 	 * @return docID if we're at a valid document, NO_MORE_DOCS if we're done

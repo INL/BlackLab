@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.Span;
 class SpansTagsPayload extends BLSpans {
 
 	private Spans tags;
-	
+
 	private int end = -1; // -1: not nexted yet. -2: payload not read yet.
 
 	public SpansTagsPayload(Spans startTags) {
@@ -50,7 +50,7 @@ class SpansTagsPayload extends BLSpans {
 		end = -1; // not nexted yet
 		return tags.nextDoc();
 	}
-	
+
 	@Override
 	public int advance(int target) throws IOException {
 		end = -1; // not nexted yet
@@ -87,9 +87,9 @@ class SpansTagsPayload extends BLSpans {
 		} catch (IOException e) {
 			throw new RuntimeException("Error getting payload");
 		}
-		
+
 	}
 
-	
-	
+
+
 }

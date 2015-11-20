@@ -38,13 +38,13 @@ public class TextPatternNot extends TextPatternCombiner {
 	public TextPattern inverted() {
 		return clauses.get(0); // Just return our clause, dropping the NOT operation
 	}
-	
+
 	@Override
 	boolean okayToInvertForOptimization() {
 		// Yes, inverting is actually an improvement
 		return true;
 	}
-	
+
 	@Override
 	public boolean isNegativeOnly() {
 		return true;

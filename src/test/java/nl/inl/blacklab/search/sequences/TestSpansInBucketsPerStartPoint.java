@@ -39,13 +39,13 @@ public class TestSpansInBucketsPerStartPoint {
 
 	@Test
 	public void testListInterface() throws IOException {
-		
+
 		int[] bDoc   = {1, 1, 2, 2};
 		int[] bStart = {0, 2, 3, 4};
-		
+
 		int[] hStart = {1, 1, 3, 3, 5, 5};
 		int[] hEnd   = {2, 3, 4, 5, 6, 7};
-		
+
 		SpansInBuckets exp = new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);
 		TestUtil.assertEquals(exp, hpd);
 	}

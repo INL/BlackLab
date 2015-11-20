@@ -739,9 +739,9 @@ public class StringUtil {
 
 	/**
 	 * For a number n, return a string like "nth".
-	 * 
-	 * So 1 returns "1st", 2 returns "2nd", and so on. 
-	 * 
+	 *
+	 * So 1 returns "1st", 2 returns "2nd", and so on.
+	 *
 	 * @param docNumber number
 	 * @return ordinal for that number
 	 */

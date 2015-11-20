@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits. Allow us to retrieve
  * all hits that start at a certain point.
- * 
+ *
  * The reason we don't use SpansInBucketsAbstract here is that it's more efficient to just save the
  * endpoints for the current start point (the source spans is normally startpoint-sorted already).
  */
@@ -116,7 +116,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 		if (currentDoc >= target) {
 			return nextDoc();
 		}
-		
+
 		if (currentDoc == NO_MORE_DOCS)
 			return DocIdSetIterator.NO_MORE_DOCS;
 
@@ -124,7 +124,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 			currentDoc = source.advance(target);
 			currentSpansStart = source.nextStartPosition();
 		}
-		
+
 		return currentDoc;
 	}
 

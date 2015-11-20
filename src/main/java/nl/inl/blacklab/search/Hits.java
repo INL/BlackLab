@@ -670,7 +670,7 @@ public class Hits extends AbstractList<Hit> {
 							if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
 								capturedGroups = new HashMap<Hit, Span[]>();
 							}
-							
+
 							int doc = currentSourceSpans.nextDoc();
 							if (doc == DocIdSetIterator.NO_MORE_DOCS)
 								currentSourceSpans = null; // no matching docs in this segment, try next

@@ -55,7 +55,7 @@ public class ArrayUtil {
 			n = b.length;
 		for (int i = 0; i < n; i++) {
 			int cmp;
-	
+
 			// Figure out how to compare these two elements
 			if (a[i] instanceof int[]) {
 				// Use int array compare
@@ -69,7 +69,7 @@ public class ArrayUtil {
 			} else {
 				throw new RuntimeException("Cannot compare objects of type " + a[i].getClass());
 			}
-	
+
 			// Did that decide the comparison?
 			if (cmp != 0) {
 				return cmp; // yep, done

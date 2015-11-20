@@ -62,7 +62,7 @@ class TokenStreamFromList extends TokenStream {
 	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments) {
 		this(tokens, increments, null);
 	}
-	
+
 	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments, Iterable<BytesRef> payload) {
 		clearAttributes();
 		termAttr = addAttribute(CharTermAttribute.class);

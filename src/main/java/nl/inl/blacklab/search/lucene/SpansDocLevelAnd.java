@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.Span;
  *
  * Behave as a boolean AND at the document level and as a boolean
  * OR within each document.
- * 
+ *
  * (NOTE: we don't use SpanNearQuery with "infinite" slop because
  *  we need access to the sub-spans for capture group functionality)
  */
@@ -77,7 +77,7 @@ public class SpansDocLevelAnd extends BLSpans {
 	public int nextStartPosition() throws IOException {
 		if (currentDoc[currentSpansIndex] == NO_MORE_DOCS)
 			return NO_MORE_POSITIONS;
-		
+
 		// Advance the spans from which the last hit was produced,
 		// so that both spans[0] and spans[1] point to a 'fresh' hit.
 		// (Of course one or both might become depleted at some point;

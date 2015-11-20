@@ -35,7 +35,7 @@ public class MockSpanQuery extends SpanQuery {
 	private int[] start;
 
 	private int[] end;
-	
+
 	boolean isSimple;
 
 	public MockSpanQuery(int[] doc, int[] start, int[] end, boolean isSimple) {
@@ -53,7 +53,7 @@ public class MockSpanQuery extends SpanQuery {
 	public Spans getSpans(LeafReaderContext arg0, Bits arg1, Map<Term, TermContext> arg2) {
 		return new MockSpans(doc, start, end);
 	}
-	
+
 	@Override
 	public String toString(String field) {
 		return "SpanQueryStub()";

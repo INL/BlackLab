@@ -52,5 +52,5 @@ public final class BLDutchAnalyzer extends Analyzer {
 		}
 		return new TokenStreamComponents(source, filter);
 	}
-	
+
 }

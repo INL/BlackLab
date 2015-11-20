@@ -42,7 +42,7 @@ class SpansRepetition extends BLSpans {
 	private int currentDoc = -1;
 
 	boolean moreBuckets = false;
-	
+
 	private int min;
 
 	private int max;
@@ -66,7 +66,7 @@ class SpansRepetition extends BLSpans {
 		if (min < 1)
 			throw new RuntimeException("min < 1");
 	}
-	
+
 	@Override
 	public int docID() {
 		return currentDoc;
@@ -84,7 +84,7 @@ class SpansRepetition extends BLSpans {
 	@Override
 	public int nextDoc() throws IOException {
 		alreadyAtFirstMatch = false;
-		
+
 		if (currentDoc == NO_MORE_DOCS)
 			return NO_MORE_DOCS;
 
@@ -107,7 +107,7 @@ class SpansRepetition extends BLSpans {
 	 */
 	private int findDocWithMatchingBucket() throws IOException {
 		while (currentDoc != NO_MORE_DOCS) {
-			
+
 			// Another bucket in this doc?
 			int startPos = nextBucket();
 			moreBuckets = startPos != SpansInBuckets.NO_MORE_BUCKETS;
@@ -115,8 +115,8 @@ class SpansRepetition extends BLSpans {
 				// Yes, found one.
 				break;
 			}
-			
-			// No more matching buckets; try next doc 
+
+			// No more matching buckets; try next doc
 			currentDoc = source.nextDoc();
 		}
 		return currentDoc;
@@ -124,7 +124,7 @@ class SpansRepetition extends BLSpans {
 
 	/**
 	 * Go to the next matching bucket in the current doc, if it has any.
-	 * 
+	 *
 	 * @return the start position of the bucket, or NO_MORE_BUCKETS if there's no more matching buckets
 	 * @throws IOException
 	 */
@@ -155,7 +155,7 @@ class SpansRepetition extends BLSpans {
 	public int nextStartPosition() throws IOException {
 		if (currentDoc == NO_MORE_DOCS || !moreBuckets)
 			return NO_MORE_POSITIONS;
-		
+
 		if (alreadyAtFirstMatch) {
 			// We're already at the first match in the document, because
 			// we needed to check if there were matches at all. Return it now.
@@ -184,7 +184,7 @@ class SpansRepetition extends BLSpans {
 		if (moreBuckets) {
 			return startPos;
 		}
-		
+
 		// No more matching buckets.
 		return NO_MORE_POSITIONS;
 	}
@@ -201,7 +201,7 @@ class SpansRepetition extends BLSpans {
 	@Override
 	public int advance(int doc) throws IOException {
 		alreadyAtFirstMatch = false;
-		
+
 		if (currentDoc != NO_MORE_DOCS) {
 			// Go to first doc at or after target that has a match.
 			currentDoc = source.advance(doc);

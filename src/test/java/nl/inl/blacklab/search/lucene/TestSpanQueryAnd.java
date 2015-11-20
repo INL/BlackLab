@@ -22,7 +22,7 @@ import org.junit.Test;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 public class TestSpanQueryAnd {
-	
+
 	@Test(expected = RuntimeException.class)
 	public void testFieldMismatch() {
 		BLSpanTermQuery first = new BLSpanTermQuery(new Term("author", "bla"));

@@ -55,7 +55,7 @@ class SpansSequenceSimple extends BLSpans {
 		if (!left.hitsHaveUniqueEnd())
 			throw new RuntimeException("Left hits don't have unique end points!");
 	}
-	
+
 	@Override
 	public int docID() {
 		return currentDoc;
@@ -69,7 +69,7 @@ class SpansSequenceSimple extends BLSpans {
 			return NO_MORE_POSITIONS;
 		return right.endPosition();
 	}
-	
+
 	@Override
 	public int nextDoc() throws IOException {
 		alreadyAtFirstMatch = false;
@@ -88,7 +88,7 @@ class SpansSequenceSimple extends BLSpans {
 			alreadyAtFirstMatch = false;
 			return leftStart;
 		}
-		
+
 		/*
 		 * Go to the next match.
 		 *
@@ -106,7 +106,7 @@ class SpansSequenceSimple extends BLSpans {
 		 * collected matches from the right may be used for multiple matches from the left (if there are
 		 * multiple matches from the left with the same end point).
 		 */
-		
+
 		if (currentDoc == NO_MORE_DOCS || leftStart == NO_MORE_POSITIONS)
 			return NO_MORE_POSITIONS;
 
@@ -118,8 +118,8 @@ class SpansSequenceSimple extends BLSpans {
 
 	/**
 	 * Puts both spans in the next doc (possibly the current one)
-	 * that has a match in it. 
-	 * 
+	 * that has a match in it.
+	 *
 	 * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
 	 * @throws IOException
 	 */
@@ -151,7 +151,7 @@ class SpansSequenceSimple extends BLSpans {
 				alreadyAtFirstMatch = true;
 				return leftStart;
 			}
-			
+
 			// No matches in this doc; on to the next
 			currentDoc = left.nextDoc();
 			if (currentDoc == NO_MORE_DOCS)
@@ -206,7 +206,7 @@ class SpansSequenceSimple extends BLSpans {
 	@Override
 	public int startPosition() {
 		if (alreadyAtFirstMatch)
-			return -1; // .nextStartPosition() not called yet 
+			return -1; // .nextStartPosition() not called yet
 		return leftStart;
 	}
 
