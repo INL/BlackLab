@@ -55,7 +55,7 @@ public class CompleteQuery {
 		a = contentsQuery;
 		b = other.contentsQuery;
 		if (a != null && b != null)
-			c = new TextPatternAnd(a, b); // NOTE: token-level and!
+			c = new TextPatternAndNot(a, b); // NOTE: token-level and!
 		else
 			c = a == null ? b : a;
 
@@ -132,7 +132,7 @@ public class CompleteQuery {
 		a = contentsQuery;
 		b = other.contentsQuery;
 		if (a != null && b != null)
-			c = new TextPatternAnd(a, new TextPatternNot(b));
+			c = new TextPatternAndNot(a, new TextPatternNot(b));
 		else
 			c = a == null ? new TextPatternNot(b) : a;
 

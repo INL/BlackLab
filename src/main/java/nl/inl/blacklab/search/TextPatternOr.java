@@ -51,7 +51,7 @@ public class TextPatternOr extends TextPatternCombiner {
 	public TextPattern rewrite() {
 
 		// Flatten nested OR queries.
-		// This doesn't change the query because the sequence operator is associative.
+		// This doesn't change the query because the OR operator is associative.
 		boolean anyRewritten = false;
 		boolean hasNotChild = false;
 		List<TextPattern> rewrittenCl = new ArrayList<TextPattern>();
@@ -59,8 +59,8 @@ public class TextPatternOr extends TextPatternCombiner {
 			TextPattern rewritten = child.rewrite();
 			if (rewritten instanceof TextPatternOr) {
 				// Flatten.
-				// Child sequence we want to flatten into this sequence.
-				// Replace the child, incorporating the child sequence into the rewritten sequence
+				// Child OR operation we want to flatten into this OR operation.
+				// Replace the child, incorporating its children into this OR operation.
 				rewrittenCl.addAll(((TextPatternOr)rewritten).clauses);
 				anyRewritten = true;
 			} else {
@@ -83,7 +83,7 @@ public class TextPatternOr extends TextPatternCombiner {
 				rewrittenCl.set(i, rewrittenCl.get(i).inverted());
 			}
 			// Note extra rewrite at the end to make sure AND NOT structure is correctly built.
-			return ((new TextPatternAnd(rewrittenCl.toArray(new TextPattern[0]))).inverted()).rewrite();
+			return ((new TextPatternAndNot(rewrittenCl.toArray(new TextPattern[0]))).inverted()).rewrite();
 		}
 
 		if (anyRewritten) {

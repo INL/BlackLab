@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternAnd;
+import nl.inl.blacklab.search.TextPatternAndNot;
 import nl.inl.blacklab.search.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.TextPatternContaining;
 import nl.inl.blacklab.search.TextPatternEdge;
@@ -178,7 +178,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         if (b.toString().equals("->"))
             {if (true) throw new UnsupportedOperationException("Implication operator not yet supported");}
                 if (b.toString().equals("&"))
-                        {if (true) return new TextPatternAnd(query, rest);}
+                        {if (true) return new TextPatternAndNot(query, rest);}
                 {if (true) return new TextPatternOr(query, rest);}
     throw new Error("Missing return statement in function");
   }
@@ -507,7 +507,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         if (b.toString().equals("->"))
             {if (true) throw new UnsupportedOperationException("Implication operator not yet supported");}
                 if (b.toString().equals("&"))
-                        {if (true) return new TextPatternAnd(a, c);}
+                        {if (true) return new TextPatternAndNot(a, c);}
                 {if (true) return new TextPatternOr(a, c);}
     throw new Error("Missing return statement in function");
   }
@@ -583,7 +583,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         if (b.toString().equals("->"))
             {if (true) throw new UnsupportedOperationException("Implication operator not yet supported");}
                 if (b.toString().equals("&"))
-                        {if (true) return new TextPatternAnd(a, c);}
+                        {if (true) return new TextPatternAndNot(a, c);}
                 {if (true) return new TextPatternOr(a, c);}
     } else {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {

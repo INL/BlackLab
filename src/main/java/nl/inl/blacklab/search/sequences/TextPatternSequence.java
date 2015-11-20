@@ -21,14 +21,14 @@ import java.util.List;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternAnd;
+import nl.inl.blacklab.search.TextPatternAndNot;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
 /**
  * A sequence of patterns. The patterns specified may be any pattern, and may themselves be
  * sequences if desired.
  */
-public class TextPatternSequence extends TextPatternAnd {
+public class TextPatternSequence extends TextPatternAndNot {
 	public TextPatternSequence(TextPattern... clauses) {
 		super(clauses);
 	}
