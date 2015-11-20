@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -125,50 +126,41 @@ public class TextPatternAndNot extends TextPattern {
 	@Override
 	public TextPattern rewrite() {
 
-		// Flatten nested AND queries.
+		// Flatten nested AND queries, and invert negative-only clauses.
 		// This doesn't change the query because the AND operator is associative.
 		boolean anyRewritten = false;
 		List<TextPattern> rewrittenCl = new ArrayList<TextPattern>();
 		List<TextPattern> rewrittenNotCl = new ArrayList<TextPattern>();
-		for (TextPattern child: clauses) {
-			TextPattern rewritten = child.rewrite();
-			if (rewritten instanceof TextPatternAndNot) {
-				// Flatten.
-				// Child AND operation we want to flatten into this AND operation.
-				// Replace the child, incorporating its children into this AND operation.
-				rewrittenCl.addAll(((TextPatternAndNot)rewritten).clauses);
-				rewrittenNotCl.addAll(((TextPatternAndNot)rewritten).clausesNot);
-				anyRewritten = true;
-			} else if (rewritten.okayToInvertForOptimization()) {
-				// "Switch sides"
-				rewrittenNotCl.add(rewritten.inverted());
-				anyRewritten = true;
-			} else {
-				// Just add it.
-				rewrittenCl.add(rewritten);
-				if (rewritten != child)
+		boolean isNot = false;
+		for (List<TextPattern> cl: Arrays.asList(clauses, clausesNot)) {
+			for (TextPattern child: cl) {
+				List<TextPattern> clPos = isNot ? rewrittenNotCl : rewrittenCl;
+				List<TextPattern> clNeg = isNot ? rewrittenCl : rewrittenNotCl;
+				TextPattern rewritten = child.rewrite();
+				if (!(rewritten instanceof TextPatternAndNot) && rewritten.isNegativeOnly()) {
+					// "Switch sides": invert the clause, and
+					// swap the lists we add clauses to.
+					rewritten = rewritten.inverted();
+					List<TextPattern> temp = clPos;
+					clPos = clNeg;
+					clNeg = temp;
 					anyRewritten = true;
-			}
-		}
-		for (TextPattern child: clausesNot) {
-			TextPattern rewritten = child.rewrite();
-			if (rewritten instanceof TextPatternAndNot) {
-				// Flatten.
-				// Child AND operation we want to flatten into this AND operation.
-				// Replace the child, incorporating its children into this AND operation.
-				rewrittenCl.addAll(((TextPatternAndNot)rewritten).clausesNot);
-				rewrittenNotCl.addAll(((TextPatternAndNot)rewritten).clauses);
-				anyRewritten = true;
-			} else if (rewritten.okayToInvertForOptimization()) {
-				// "Switch sides"
-				rewrittenCl.add(rewritten.inverted());
-				anyRewritten = true;
-			} else {
-				// Just add it.
-				rewrittenNotCl.add(rewritten);
-				if (rewritten != child)
+				}
+				if (rewritten instanceof TextPatternAndNot) {
+					// Flatten.
+					// Child AND operation we want to flatten into this AND operation.
+					// Replace the child, incorporating its children into this AND operation.
+					clPos.addAll(((TextPatternAndNot)rewritten).clauses);
+					clNeg.addAll(((TextPatternAndNot)rewritten).clausesNot);
 					anyRewritten = true;
+				} else {
+					// Just add it.
+					clPos.add(rewritten);
+					if (rewritten != child)
+						anyRewritten = true;
+				}
 			}
+			isNot = true;
 		}
 
 		if (rewrittenCl.size() == 0) {
