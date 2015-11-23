@@ -76,6 +76,11 @@ public class TextPatternExpansion extends TextPattern {
 
 	@Override
 	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
+		if (expandToLeft && previousPart instanceof TextPatternAnyToken) {
+			// Expand to left following any token clause. Combine.
+			TextPatternAnyToken tp = (TextPatternAnyToken)previousPart;
+			return new TextPatternExpansion(clause, expandToLeft, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
+		}
 		if (!expandToLeft && max != min) {
 			// Expand to right with range of tokens. Combine with previous part to likely
 			// reduce the number of hits we'll have to expand.

@@ -90,7 +90,13 @@ public class TextPatternAnyToken extends TextPattern {
 	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
 		if (previousPart instanceof TextPatternAnyToken) {
 			TextPatternAnyToken tp = (TextPatternAnyToken)previousPart;
-			return new TextPatternAnyToken(min + tp.min, max + tp.max);
+			return new TextPatternAnyToken(min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
+		} else if (previousPart instanceof TextPatternExpansion) {
+			TextPatternExpansion tp = (TextPatternExpansion) previousPart;
+			if (!tp.expandToLeft) {
+				// Any token clause after expand to right; combine.
+				return new TextPatternExpansion(tp.clause, tp.expandToLeft, tp.min + min, (max == -1 || tp.max == -1) ? -1 : tp.max + max);
+			}
 		}
 		TextPattern combo = super.combineWithPrecedingPart(previousPart);
 		if (combo == null) {
