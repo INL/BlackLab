@@ -71,6 +71,8 @@ class SpansPositionFilter extends BLSpans {
 	 */
 	private boolean invert;
 
+	private boolean filterFixedLength;
+
 	/**
 	 * Find hits from producer, filtered by the filter according to the specified op
 	 *
@@ -85,6 +87,7 @@ class SpansPositionFilter extends BLSpans {
 		this.producer = BLSpansWrapper.optWrapSort(producer);
 		this.op = op;
 		this.invert = invert;
+		filterFixedLength = filter instanceof BLSpans && ((BLSpans)filter).hitsAllSameLength();
 		if (!(filter instanceof BLSpans) || (filter instanceof BLSpans && ((BLSpans)filter).hitsStartPointSorted())) {
 			// Already start point sorted; no need to sort buckets again
 			this.filter = new SpansInBucketsPerDocument(filter);
@@ -207,10 +210,24 @@ class SpansPositionFilter extends BLSpans {
 
 			// We're at the first unchecked producer spans. Does it match our filter?
 			boolean invertedMatch = invert; // if looking for non-matches, keep track if there have been any matches.
+			int min = 0, max = filter.bucketSize() - 1;
 			switch(op) {
 			case CONTAINING:
 				// Looking for producer hits with a filter hit inside
-				for (int i = 0; i < filter.bucketSize(); i++) {
+				while (min <= max) {
+					int i = (min + max) / 2;
+					if (filterFixedLength && filter.endPosition(i) > producer.endPosition() + rightAdjust) {
+						// Filter end position to the right of producer hit end position.
+						max = i - 1;
+					} else if (filter.startPosition(i) < producerStart + leftAdjust) {
+						// Filter start position to the left of producer hit start position.
+						min = i + 1;
+					} else {
+						// Can't narrow down the edges any further; do linear search from here.
+						break;
+					}
+				}
+				for (int i = min; i <= max; i++) {
 					if (filter.startPosition(i) >= producerStart + leftAdjust && filter.endPosition(i) <= producer.endPosition() + rightAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
@@ -225,7 +242,20 @@ class SpansPositionFilter extends BLSpans {
 				break;
 			case WITHIN:
 				// Looking for producer hits contained by a filter hit
-				for (int i = 0; i < filter.bucketSize(); i++) {
+				while (min <= max) {
+					int i = (min + max) / 2;
+					if (filter.startPosition(i) > producerStart + leftAdjust) {
+						// Filter start position to the right of producer hit start position.
+						max = i - 1;
+					} else if (filterFixedLength && filter.endPosition(i) < producer.endPosition() + rightAdjust) {
+						// Filter end position to the left of producer hit end position.
+						min = i + 1;
+					} else {
+						// Can't narrow down the edges any further; do linear search from here.
+						break;
+					}
+				}
+				for (int i = min; i <= max; i++) {
 					if (filter.startPosition(i) <= producerStart + leftAdjust && filter.endPosition(i) >= producer.endPosition() + rightAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
@@ -240,8 +270,16 @@ class SpansPositionFilter extends BLSpans {
 				break;
 			case STARTS_AT:
 				// Looking for producer hits starting at a filter hit
-				for (int i = 0; i < filter.bucketSize(); i++) {
-					if (filter.startPosition(i) == producerStart + leftAdjust) {
+				while (min <= max) {
+					int i = (min + max) / 2;
+					if (filter.startPosition(i) > producerStart + leftAdjust) {
+						// Filter start position to the right of producer hit start position.
+						max = i - 1;
+					} else if (filter.startPosition(i) < producerStart + leftAdjust) {
+						// Filter start position to the left of producer hit start position.
+						min = i + 1;
+					} else {
+						// Found filter hit at the start of current producer hit.
 						if (invert) {
 							// This producer hit is no good; on to the next.
 							invertedMatch = false;
@@ -255,7 +293,22 @@ class SpansPositionFilter extends BLSpans {
 				break;
 			case ENDS_AT:
 				// Looking for producer hits ending at a filter hit
-				for (int i = 0; i < filter.bucketSize(); i++) {
+				if (filterFixedLength) {
+					while (min <= max) {
+						int i = (min + max) / 2;
+						if (filter.endPosition(i) > producer.endPosition() + rightAdjust) {
+							// Filter end position to the right of producer hit end position.
+							max = i - 1;
+						} else if (filter.endPosition(i) < producer.endPosition() + rightAdjust) {
+							// Filter end position to the left of producer hit end position.
+							min = i + 1;
+						} else {
+							// Can't narrow down the edges any further; do linear search from here.
+							break;
+						}
+					}
+				}
+				for (int i = min; i <= max; i++) {
 					if (filter.endPosition(i) == producer.endPosition() + rightAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
@@ -270,7 +323,18 @@ class SpansPositionFilter extends BLSpans {
 				break;
 			case MATCHES:
 				// Looking for producer hits exactly matching a filter hit
-				for (int i = 0; i < filter.bucketSize(); i++) {
+				while (min <= max) {
+					int i = (min + max) / 2;
+					if (filter.startPosition(i) < producerStart + leftAdjust || filterFixedLength && filter.endPosition(i) < producer.endPosition() + rightAdjust) {
+						min = i + 1;
+					} else if (filter.startPosition(i) > producerStart + leftAdjust || filterFixedLength && filter.endPosition(i) > producer.endPosition() + rightAdjust) {
+						max = i - 1;
+					} else {
+						// Can't narrow down the edges any further; do linear search from here.
+						break;
+					}
+				}
+				for (int i = min; i <= max; i++) {
 					if (filter.startPosition(i) == producerStart + leftAdjust && filter.endPosition(i) == producer.endPosition() + rightAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
