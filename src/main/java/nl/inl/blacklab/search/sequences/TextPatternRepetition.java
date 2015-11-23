@@ -81,6 +81,8 @@ public class TextPatternRepetition extends TextPattern {
 	@Override
 	public TextPattern rewrite() {
 		TextPattern baseRewritten = base.rewrite();
+		if (min == 1 && max == 1)
+			return baseRewritten;
 		if (baseRewritten instanceof TextPatternAnyToken) {
 			// Repeating anytoken clause can sometimes be expressed as simple anytoken clause
 			TextPatternAnyToken tp = (TextPatternAnyToken)baseRewritten;
@@ -98,6 +100,24 @@ public class TextPatternRepetition extends TextPattern {
 			TextPattern container = new TextPatternRepetition(new TextPatternAnyToken(l, l), min, max);
 			container = container.rewrite();
 			return new TextPatternPositionFilter(container, baseRewritten.inverted(), Operation.CONTAINING, true);
+		} else if (baseRewritten instanceof TextPatternRepetition) {
+			TextPatternRepetition tp = (TextPatternRepetition)baseRewritten;
+			if (max == -1 && tp.max == -1) {
+				if (min >= 0 && min <= 1 && tp.min >= 0 && tp.min <= 1) {
+					// A++, A+*, A*+, A**. Rewrite to single repetition.
+					return new TextPatternRepetition(tp.base, min * tp.min, max);
+				}
+			} else {
+				if (min == 0 && max == 1 && tp.min == 0 && tp.max == 1) {
+					// A?? == A?
+					return tp;
+				}
+				if (min == 1 && max == 1) {
+					// A{x,y}{1,1} == A{x,y}
+					return new TextPatternRepetition(tp.base, tp.min, tp.max);
+				}
+				// (other cases like A{1,1}{x,y} should have been rewritten already)
+			}
 		}
 		if (baseRewritten == base)
 			return this;

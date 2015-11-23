@@ -222,6 +222,19 @@ public class TestTextPatternRewrite {
 		assertRewriteResult("'b' [word != 'a']{2}", "POSFILTER(EXPAND(TERM(contents%word@i, b), false, 2, 2), TERM(contents%word@i, a), NOTCONTAINING, 1, 0)");
 		assertRewriteResult("'b' 'c' [word != 'a']{2}", "POSFILTER(SEQ(TERM(contents%word@i, b), EXPAND(TERM(contents%word@i, c), false, 2, 2)), TERM(contents%word@i, a), NOTCONTAINING, 2, 0)");
 		assertRewriteResult("[word != 'a']{2} 'b' 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i, b), true, 2, 2), TERM(contents%word@i, c)), TERM(contents%word@i, a), NOTCONTAINING, 0, -2)");
+		assertRewriteResult("'a' [word != 'b']{1,20} 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i, a), false, 1, 20), TERM(contents%word@i, c)), TERM(contents%word@i, b), NOTCONTAINING, 1, -1)");
+	}
+
+	@Test
+	public void testRewriteRepetition() {
+		assertRewriteResult("('a'*)* 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), SEQ(TERM(contents%word@i, b)))");
+		assertRewriteResult("('a'+)* 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), SEQ(TERM(contents%word@i, b)))");
+		assertRewriteResult("('a'*)+ 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), SEQ(TERM(contents%word@i, b)))");
+		assertRewriteResult("('a'+)+", "REP(TERM(contents%word@i, a), 1, -1)");
+		assertRewriteResult("('a'?)? 'b'", "OR(SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), SEQ(TERM(contents%word@i, b)))");
+		assertRewriteResult("('a'{2,3}){1,1}", "REP(TERM(contents%word@i, a), 2, 3)");
+		assertRewriteResult("('a'{1,1}){2,3}", "REP(TERM(contents%word@i, a), 2, 3)");
+		assertRewriteResult("'a'{1,1}", "TERM(contents%word@i, a)");
 	}
 
 }
