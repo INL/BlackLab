@@ -70,4 +70,8 @@ public class TextPatternTags extends TextPattern {
 		return -1;
 	}
 
+	public String getElementName() {
+		return elementName;
+	}
+
 }

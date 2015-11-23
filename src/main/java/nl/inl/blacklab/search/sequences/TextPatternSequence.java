@@ -22,6 +22,9 @@ import java.util.List;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAndNot;
+import nl.inl.blacklab.search.TextPatternEdge;
+import nl.inl.blacklab.search.TextPatternPositionFilter;
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
 /**
@@ -225,21 +228,98 @@ public class TextPatternSequence extends TextPatternAndNot {
 		// This doesn't change the query because the sequence operator is associative.
 		List<TextPattern> flat = new ArrayList<TextPattern>();
 		for (TextPattern child: include) {
+			boolean nestedSequence = child instanceof TextPatternSequence;
+			if (nestedSequence) {
+				// Child sequence we want to flatten into this sequence.
+				// Replace the child, incorporating the child sequence into the rewritten sequence
+				((TextPatternSequence)child).getFlatSequence(flat);
+				anyRewritten = true;
+			} else {
+				// Not nested
+				flat.add(child);
+			}
+		}
+
+		// Try to match separate start and end tags in this sequence, and convert into a
+		// containing query. (<s> []* 'bla' []* </s> ==> <s/> containing 'bla')
+		for (int i = 0; i < flat.size(); i++) {
+			TextPattern clause = flat.get(i);
+			if (clause instanceof TextPatternEdge) {
+				TextPatternEdge start = (TextPatternEdge)clause;
+				if (!start.isRightEdge()) {
+					String tagName = start.getElementName();
+					if (tagName != null) {
+						// Start tag found. Is there a matching end tag?
+						for (int j = i + 1; j < flat.size(); j++) {
+							TextPattern clause2 = flat.get(j);
+							if (clause2 instanceof TextPatternEdge) {
+								TextPatternEdge end = (TextPatternEdge)clause2;
+								if (end.isRightEdge() && end.getElementName().equals(tagName)) {
+									// Found start and end tags in sequence. Convert to containing query.
+									List<TextPattern> search = new ArrayList<TextPattern>();
+									flat.remove(i); // start tag
+									for (int k = 0; k < j - i - 1; k++) {
+										search.add(flat.remove(i));
+									}
+									flat.remove(i); // end tag
+									boolean startAny = false;
+									if (search.get(0) instanceof TextPatternAnyToken) {
+										TextPatternAnyToken any1 = (TextPatternAnyToken)search.get(0);
+										if (any1.getMinLength() == 0 && any1.getMaxLength() == -1) {
+											startAny = true;
+											search.remove(0);
+										}
+									}
+									boolean endAny = false;
+									int last = search.size() - 1;
+									if (search.get(last) instanceof TextPatternAnyToken) {
+										TextPatternAnyToken any2 = (TextPatternAnyToken)search.get(last);
+										if (any2.getMinLength() == 0 && any2.getMaxLength() == -1) {
+											endAny = true;
+											search.remove(last);
+										}
+									}
+									TextPattern producer = start.getClause();
+									TextPattern filter = new TextPatternSequence(search.toArray(new TextPattern[0]));
+									Operation op;
+									if (startAny) {
+										if (endAny) {
+											op = Operation.CONTAINING;
+										} else {
+											op = Operation.ENDS_AT;
+										}
+									} else {
+										if (endAny) {
+											op = Operation.STARTS_AT;
+										} else {
+											op = Operation.MATCHES;
+										}
+									}
+									flat.add(i, new TextPatternPositionFilter(producer, filter, op));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Rewrite all clauses and flatten again if necessary.
+		for (int i = 0; i < flat.size(); i++) {
+			TextPattern child = flat.get(i);
 			TextPattern rewritten = child.rewrite();
 			boolean nestedSequence = rewritten instanceof TextPatternSequence;
 			if (child != rewritten || nestedSequence) {
+				anyRewritten = true;
 				if (nestedSequence) {
 					// Child sequence we want to flatten into this sequence.
 					// Replace the child, incorporating the child sequence into the rewritten sequence
-					flat.addAll(((TextPatternSequence)rewritten).include);
+					flat.remove(i);
+					flat.addAll(i, ((TextPatternSequence)child).include);
 				} else {
 					// Replace the child with the rewritten version
-					flat.add(rewritten);
+					flat.set(i, rewritten);
 				}
-				anyRewritten = true;
-			} else {
-				// Not rewritten
-				flat.add(child);
 			}
 		}
 
@@ -336,6 +416,21 @@ public class TextPatternSequence extends TextPatternAndNot {
 		if (withRep.size() == 1)
 			return withRep.get(0);
 		return new TextPatternSequence(withRep.toArray(new TextPattern[0]));
+	}
+
+	private List<TextPattern> getFlatSequence(List<TextPattern> flat) {
+		for (TextPattern child: include) {
+			boolean nestedSequence = child instanceof TextPatternSequence;
+			if (nestedSequence) {
+				// Child sequence we want to flatten into this sequence.
+				// Replace the child, incorporating the child sequence into the rewritten sequence
+				((TextPatternSequence)child).getFlatSequence(flat);
+			} else {
+				// Not nested
+				flat.add(child);
+			}
+		}
+		return flat;
 	}
 
 	@Override

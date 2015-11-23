@@ -171,11 +171,11 @@ public class TestTextPatternRewrite {
 	@Test
 	public void testRewriteRepetitionTags() {
 		assertRewrite("<s test='1' /> <s test='1' />",
-				"SEQ(TAGS(s, 1), TAGS(s, 1))",
-				"REP(TAGS(s, 1), 2, 2)");
+				"SEQ(TAGS(s, test=1), TAGS(s, test=1))",
+				"REP(TAGS(s, test=1), 2, 2)");
 
-		assertNoRewrite("<s test='1' /> <t test='1' />", "SEQ(TAGS(s, 1), TAGS(t, 1))");
-		assertNoRewrite("<s test='1' /> <s test='2' />", "SEQ(TAGS(s, 1), TAGS(s, 2))");
+		assertNoRewrite("<s test='1' /> <t test='1' />", "SEQ(TAGS(s, test=1), TAGS(t, test=1))");
+		assertNoRewrite("<s test='1' /> <s test='2' />", "SEQ(TAGS(s, test=1), TAGS(s, test=2))");
 	}
 
 	@Test
@@ -235,6 +235,17 @@ public class TestTextPatternRewrite {
 		assertRewriteResult("('a'{2,3}){1,1}", "REP(TERM(contents%word@i, a), 2, 3)");
 		assertRewriteResult("('a'{1,1}){2,3}", "REP(TERM(contents%word@i, a), 2, 3)");
 		assertRewriteResult("'a'{1,1}", "TERM(contents%word@i, a)");
+	}
+
+	@Test
+	public void testRewriteTags() {
+		assertRewriteResult("<s/> containing 'a' 'b'", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), CONTAINING)");
+		assertRewriteResult("<s> []* 'a' 'b' []* </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), CONTAINING)");
+		assertRewriteResult("<s> 'a' 'b' []* </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), STARTS_AT)");
+		assertRewriteResult("<s> []* 'a' 'b' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), ENDS_AT)");
+		assertRewriteResult("<s> 'a' 'b' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), MATCHES)");
+		assertRewriteResult("<s> ('a' 'b') 'c' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), SEQ(TERM(contents%word@i, b), TERM(contents%word@i, c))), MATCHES)");
+		assertRewriteResult("<s test='1'> 'a' </s>", "POSFILTER(TAGS(s, test=1), TERM(contents%word@i, a), MATCHES)");
 	}
 
 }
