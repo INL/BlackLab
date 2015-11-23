@@ -86,4 +86,11 @@ public abstract class TextPatternCombiner extends TextPattern {
 		return this;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternCombiner) {
+			return clauses.equals(((TextPatternCombiner) obj).clauses);
+		}
+		return false;
+	}
 }

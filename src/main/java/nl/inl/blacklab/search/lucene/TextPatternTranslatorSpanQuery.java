@@ -27,8 +27,9 @@ import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternPositionFilter;
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternTranslator;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Filter;
 import nl.inl.blacklab.search.sequences.SpanQueryExpansion;
 import nl.inl.blacklab.search.sequences.SpanQueryRepetition;
 import nl.inl.blacklab.search.sequences.SpanQuerySequence;
@@ -47,7 +48,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery andNot(QueryExecutionContext context, SpanQuery include, SpanQuery exclude) {
-		return new SpanQueryPositionFilter(include, exclude, SpanQueryPositionFilter.Filter.MATCHES, true);
+		return new SpanQueryPositionFilter(include, exclude, TextPatternPositionFilter.Operation.MATCHES, true);
 	}
 
 	@Override
@@ -99,27 +100,34 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		// (NOTE: only works for start tags and full elements because attribute values
 		//  are indexed at the start tag!)
 		SpanQuery filter = new SpanQueryAnd(attrFilters);
-		return new SpanQueryPositionFilter(allTags, filter, Filter.STARTS_AT, false);
+		return new SpanQueryPositionFilter(allTags, filter, TextPatternPositionFilter.Operation.STARTS_AT, false);
 	}
 
-	@Override
-	public SpanQuery containing(QueryExecutionContext context, SpanQuery containers, SpanQuery search, boolean invert) {
-		return new SpanQueryPositionFilter(containers, search, SpanQueryPositionFilter.Filter.CONTAINING, invert);
-	}
+//	@Override
+//	public SpanQuery containing(QueryExecutionContext context, SpanQuery containers, SpanQuery search, boolean invert) {
+//		return new SpanQueryPositionFilter(containers, search, SpanQueryPositionFilter.Filter.CONTAINING, invert);
+//	}
+//
+//	@Override
+//	public SpanQuery within(QueryExecutionContext context, SpanQuery search, SpanQuery containers, boolean invert) {
+//		return new SpanQueryPositionFilter(search, containers, SpanQueryPositionFilter.Filter.WITHIN, invert);
+//	}
 
 	@Override
-	public SpanQuery within(QueryExecutionContext context, SpanQuery search, SpanQuery containers, boolean invert) {
-		return new SpanQueryPositionFilter(search, containers, SpanQueryPositionFilter.Filter.WITHIN, invert);
+	public SpanQuery positionFilter(QueryExecutionContext context,
+			SpanQuery producer, SpanQuery filter, Operation op, boolean invert,
+			int leftAdjust, int rightAdjust) {
+		return new SpanQueryPositionFilter(producer, filter, op, invert, leftAdjust, rightAdjust);
 	}
 
 	@Override
 	public SpanQuery startsAt(QueryExecutionContext context, SpanQuery producer, SpanQuery filter) {
-		return new SpanQueryPositionFilter(producer, filter, SpanQueryPositionFilter.Filter.STARTS_AT, false);
+		return new SpanQueryPositionFilter(producer, filter, TextPatternPositionFilter.Operation.STARTS_AT, false);
 	}
 
 	@Override
 	public SpanQuery endsAt(QueryExecutionContext context, SpanQuery producer, SpanQuery filter) {
-		return new SpanQueryPositionFilter(producer, filter, SpanQueryPositionFilter.Filter.ENDS_AT, false);
+		return new SpanQueryPositionFilter(producer, filter, TextPatternPositionFilter.Operation.ENDS_AT, false);
 	}
 
 	@Override

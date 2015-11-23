@@ -90,9 +90,15 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 	}
 
 	protected int gatherEndPointsAtStartPoint() throws IOException {
-		// NOTE: we don't call clear() to avoid holding on to a lot of memory indefinitely
-		endPoints = new ArrayList<Integer>();
-		capturedGroupsPerEndpoint = new ArrayList<Span[]>();
+		if (endPoints.size() < ARRAYLIST_REALLOC_THRESHOLD) {
+			// Not a huge amount of memory, so don't reallocate
+			endPoints.clear();
+			capturedGroupsPerEndpoint.clear();
+		} else {
+			// Reallocate in this case to avoid holding on to a lot of memory
+			endPoints = new ArrayList<Integer>();
+			capturedGroupsPerEndpoint = new ArrayList<Span[]>();
+		}
 
 		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
 

@@ -46,4 +46,28 @@ public class TextPatternTags extends TextPattern {
 		return translator.tags(context, translator.optInsensitive(context, elementName), attr);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternTags) {
+			TextPatternTags tp = ((TextPatternTags) obj);
+			return elementName.equals(tp.elementName) && attr.equals(tp.attr);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return false;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 0;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return -1;
+	}
+
 }

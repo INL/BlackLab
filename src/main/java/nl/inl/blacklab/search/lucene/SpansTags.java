@@ -31,6 +31,8 @@ import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
  * Gets spans for a certain XML element.
  */
 class SpansTags extends BLSpans {
+	private static final int ARRAYLIST_REALLOC_THRESHOLD = 1000;
+
 	static SpanComparatorStartPoint cmpStartPoint = new SpanComparatorStartPoint();
 
 	/** The two sets of hits to combine */
@@ -162,11 +164,18 @@ class SpansTags extends BLSpans {
 		List<Integer> unmatchedOpenTagIndices = new ArrayList<Integer>();
 		List<Integer> emptyElementIndices = new ArrayList<Integer>(); // empty elements between tokens need special attention (see below)
 
-		// NOTE: for starts and ends, we don't just call .clear() because the
-		// application could keep holding on to too much memory after encountering
-		// one really large document!
-		starts = new ArrayList<Integer>();
-		ends = new ArrayList<Integer>();
+		// Don't always just call .clear() because the application could
+		// keep holding on to too much memory after encountering one really
+		// large document!
+		if (starts.size() < ARRAYLIST_REALLOC_THRESHOLD) {
+			// Not a huge amount of memory, so don't reallocate
+			starts.clear();
+			ends.clear();
+		} else {
+			// Reallocate in this case to avoid holding on to a lot of memory
+			starts = new ArrayList<Integer>();
+			ends = new ArrayList<Integer>();
+		}
 
 		currentHit = -1; // before first hit
 		for (Integer tag: startsAndEnds) {

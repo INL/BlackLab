@@ -15,6 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
+import nl.inl.blacklab.search.sequences.TextPatternExpansion;
+import nl.inl.blacklab.search.sequences.TextPatternRepetition;
+import nl.inl.blacklab.search.sequences.TextPatternSequence;
+
 /**
  * Describes some pattern of words in a content field. The point of this interface is to provide an
  * abstract layer to describe the pattern we're interested in, which can then be translated into,
@@ -151,7 +156,7 @@ public abstract class TextPattern implements Cloneable {
 	 *
 	 * @return true if it is, false if not
 	 */
-	boolean okayToInvertForOptimization() {
+	protected boolean okayToInvertForOptimization() {
 		return false;
 	}
 
@@ -162,8 +167,76 @@ public abstract class TextPattern implements Cloneable {
 	 *
 	 * @return true if it's negative-only, false if not
 	 */
-	boolean isNegativeOnly() {
+	public boolean isNegativeOnly() {
 		return false;
 	}
+
+	/**
+	 * Try to combine with the previous part into a repetition pattern.
+	 *
+	 * This optimized queries like "blah" "blah" into "blah"{2}, which
+	 * executes more efficiently.
+	 *
+	 * @param previousPart the part occurring before this one in a sequence
+	 * @return a combined repetition text pattern, or null if it can't be combined
+	 */
+	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
+		if (previousPart instanceof TextPatternRepetition) {
+			// Repetition clause.
+			TextPatternRepetition rep = (TextPatternRepetition) previousPart;
+			TextPattern prevCl = rep.getClause();
+			if (equals(prevCl)) {
+				// Same clause; add one to rep's min and max
+				return new TextPatternRepetition(this, 1 + rep.getMin(), 1 + rep.getMax());
+			}
+		} else if (equals(previousPart)) {
+			// Same clause; create repetition with min and max equals 2.
+			return new TextPatternRepetition(this, 2, 2);
+		} else if (previousPart instanceof TextPatternExpansion) {
+			TextPatternExpansion tp = (TextPatternExpansion)previousPart;
+			if (tp.isExpandToLeft() && tp.getMinExpand() != tp.getMaxExpand()) {
+				// Expand to left with a range of tokens. Combine with this part to likely
+				// reduce the number of hits we'll have to expand.
+				TextPattern seq = new TextPatternSequence(tp.getClause(), this);
+				seq = seq.rewrite();
+				return new TextPatternExpansion(seq, true, tp.getMinExpand(), tp.getMaxExpand());
+			}
+		} else if (hasConstantLength()) {
+			if (previousPart instanceof TextPatternPositionFilter) {
+				// We are "gobbled up" by the previous part and adjust its right matching edge inward.
+				// This should make filtering more efficient, since we will likely have fewer hits to filter.
+				try {
+					TextPatternPositionFilter result = (TextPatternPositionFilter)previousPart.clone();
+					result.clauses.set(0, new TextPatternSequence(result.clauses.get(0), this));
+					result.adjustRight(-getMinLength());
+					return result;
+				} catch (CloneNotSupportedException e) {
+					throw new RuntimeException(e);
+				}
+			} else if (isNegativeOnly() && previousPart.hasConstantLength()) {
+				// Negative, constant-length child after constant-length part.
+				// Rewrite to NOTCONTAINING clause, incorporating previous part.
+				int prevLen = previousPart.getMinLength();
+				int myLen = getMinLength();
+				TextPattern container = new TextPatternExpansion(previousPart, false, myLen, myLen);
+				TextPatternPositionFilter result = new TextPatternPositionFilter(container, inverted(), Operation.CONTAINING, true);
+				result.adjustLeft(prevLen);
+				return result;
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public abstract boolean equals(Object obj);
+
+	public abstract boolean hasConstantLength();
+
+	public abstract int getMinLength();
+
+	public abstract int getMaxLength();
+
+
 
 }

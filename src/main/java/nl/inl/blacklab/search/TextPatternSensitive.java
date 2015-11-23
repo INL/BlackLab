@@ -54,4 +54,29 @@ public class TextPatternSensitive extends TextPattern {
 			return this; // Nothing to rewrite
 		return new TextPatternSensitive(caseSensitive, diacriticsSensitive, rewritten);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternSensitive) {
+			TextPatternSensitive tp = ((TextPatternSensitive) obj);
+			return caseSensitive == tp.caseSensitive && diacriticsSensitive == tp.diacriticsSensitive &&
+					input.equals(tp.input);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return input.hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		return input.getMinLength();
+	}
+
+	@Override
+	public int getMaxLength() {
+		return input.getMaxLength();
+	}
 }

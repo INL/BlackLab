@@ -17,6 +17,8 @@ package nl.inl.blacklab.search.sequences;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.TextPatternPositionFilter;
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternTranslator;
 
 /**
@@ -79,9 +81,82 @@ public class TextPatternRepetition extends TextPattern {
 	@Override
 	public TextPattern rewrite() {
 		TextPattern baseRewritten = base.rewrite();
+		if (baseRewritten instanceof TextPatternAnyToken) {
+			// Repeating anytoken clause can sometimes be expressed as simple anytoken clause
+			TextPatternAnyToken tp = (TextPatternAnyToken)baseRewritten;
+			if (tp.min == 1 && tp.max == 1) {
+				// Repeat of a single any token
+				return new TextPatternAnyToken(min, max);
+			} else if (min == max && tp.min == tp.max) {
+				// Exact number of any tokens
+				int n = min * tp.min;
+				return new TextPatternAnyToken(n, n);
+			}
+		} else if (baseRewritten.isNegativeOnly() && baseRewritten.hasConstantLength()) {
+			// Rewrite to anytokens-not-containing form so we can optimize it
+			int l = baseRewritten.getMinLength();
+			TextPattern container = new TextPatternRepetition(new TextPatternAnyToken(l, l), min, max);
+			container = container.rewrite();
+			return new TextPatternPositionFilter(container, baseRewritten.inverted(), Operation.CONTAINING, true);
+		}
 		if (baseRewritten == base)
 			return this;
 		return new TextPatternRepetition(baseRewritten, min, max);
+	}
+
+	public TextPattern getClause() {
+		return base;
+	}
+
+	public int getMin() {
+		return min;
+	}
+
+	public int getMax() {
+		return max;
+	}
+
+	@Override
+	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
+		if (previousPart instanceof TextPatternRepetition) {
+			// Repetition clause.
+			TextPatternRepetition rep = (TextPatternRepetition) previousPart;
+			TextPattern prevCl = rep.getClause();
+			if (prevCl.equals(base)) {
+				// Same clause; combine repetitions
+				return new TextPatternRepetition(base, min + rep.getMin(), max + rep.getMax());
+			}
+		} else {
+			if (previousPart.equals(base)) {
+				// Same clause; add one to min and max
+				return new TextPatternRepetition(base, 1 + min, 1 + max);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternRepetition) {
+			TextPatternRepetition tp = ((TextPatternRepetition) obj);
+			return base.equals(tp.base) && min == tp.min && max == tp.max;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return base.hasConstantLength() && min == max;
+	}
+
+	@Override
+	public int getMinLength() {
+		return base.getMinLength() * min;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return max < 0 ? -1 : base.getMaxLength() * max;
 	}
 
 }

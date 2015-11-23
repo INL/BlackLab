@@ -28,4 +28,12 @@ public class TextPatternPrefix extends TextPatternTerm {
 		return translator.prefix(context, translator.optInsensitive(context, value));
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternPrefix) {
+			return super.equals(obj);
+		}
+		return false;
+	}
+
 }

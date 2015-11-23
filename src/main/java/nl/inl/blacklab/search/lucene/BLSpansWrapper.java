@@ -142,4 +142,9 @@ public class BLSpansWrapper extends BLSpans {
 		return source.endPosition();
 	}
 
+	@Override
+	public int advance(int target) throws IOException {
+		return source.advance(target);
+	}
+
 }

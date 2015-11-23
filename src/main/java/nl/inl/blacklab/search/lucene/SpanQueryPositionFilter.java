@@ -25,6 +25,8 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
+import nl.inl.blacklab.search.TextPatternPositionFilter;
+
 /**
  * Filters hits from a producer query based on the hit positions of a filter query.
  * This allows us to do several things, such as:
@@ -35,30 +37,17 @@ import org.apache.lucene.util.Bits;
  */
 public class SpanQueryPositionFilter extends SpanQueryBase {
 
-	/** The different positional operations */
-	public static enum Filter {
-
-		/** Producer hit contains filter hit */
-		CONTAINING,
-
-		/** Producer hit contained in filter hit */
-		WITHIN,
-
-		/** Producer hit starts at filter hit */
-		STARTS_AT,
-
-		/** Producer hit ends at filter hit */
-		ENDS_AT,
-
-		/** Producer hit exactly matches filter hit */
-		MATCHES
-	}
-
 	/** Filter operation to apply */
-	private Filter op;
+	private TextPatternPositionFilter.Operation op;
 
 	/** Return producer spans that DON'T match the filter instead? */
 	private boolean invert;
+
+	/** How to adjust the left edge of the producer hits while matching */
+	private int leftAdjust;
+
+	/** How to adjust the right edge of the producer hits while matching */
+	private int rightAdjust;
 
 	/**
 	 * Produce hits that match filter hits.
@@ -68,10 +57,26 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	 * @param op operation used to determine what producer hits we're interested in (containing, within, startsat, endsat)
 	 * @param invert produce hits that don't match filter instead?
 	 */
-	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, Filter op, boolean invert) {
+	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, TextPatternPositionFilter.Operation op, boolean invert) {
+		this(producer, filter, op, invert, 0, 0);
+	}
+
+	/**
+	 * Produce hits that match filter hits.
+	 *
+	 * @param producer hits we may be interested in
+	 * @param filter how we determine what producer hits we're interested in
+	 * @param op operation used to determine what producer hits we're interested in (containing, within, startsat, endsat)
+	 * @param invert produce hits that don't match filter instead?
+	 * @param leftAdjust how to adjust the left edge of the producer hits while matching
+	 * @param rightAdjust how to adjust the right edge of the producer hits while matching
+	 */
+	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, TextPatternPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
 		super(producer, filter);
 		this.op = op;
 		this.invert = invert;
+		this.leftAdjust = leftAdjust;
+		this.rightAdjust = rightAdjust;
 	}
 
 	/**
@@ -84,12 +89,14 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	 */
 	@Deprecated
 	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, boolean invert) {
-		this(producer, filter, Filter.CONTAINING, invert);
+		this(producer, filter, TextPatternPositionFilter.Operation.CONTAINING, invert, 0, 0);
 	}
 
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans result = new SpansPositionFilter(clauses[0].getSpans(context, acceptDocs, termContexts), clauses[1].getSpans(context, acceptDocs, termContexts), op, invert);
+		Spans spansProd = clauses[0].getSpans(context, acceptDocs, termContexts);
+		Spans spansFilter = clauses[1].getSpans(context, acceptDocs, termContexts);
+		Spans result = new SpansPositionFilter(spansProd, spansFilter, op, invert, leftAdjust, rightAdjust);
 		return result;
 	}
 

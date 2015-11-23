@@ -52,4 +52,25 @@ public class TextPatternCaptureGroup extends TextPattern {
 	public boolean matchesEmptySequence() {
 		return input.matchesEmptySequence();
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// Capture group clauses are unique.
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return input.hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		return input.getMinLength();
+	}
+
+	@Override
+	public int getMaxLength() {
+		return input.getMaxLength();
+	}
 }

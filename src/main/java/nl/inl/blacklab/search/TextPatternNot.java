@@ -40,7 +40,7 @@ public class TextPatternNot extends TextPatternCombiner {
 	}
 
 	@Override
-	boolean okayToInvertForOptimization() {
+	protected boolean okayToInvertForOptimization() {
 		// Yes, inverting is actually an improvement
 		return true;
 	}
@@ -62,5 +62,28 @@ public class TextPatternNot extends TextPatternCombiner {
 		if (rewritten == clauses.get(0) && !rewritten.okayToInvertForOptimization())
 			return this; // Nothing to rewrite
 		return rewritten.inverted();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternNot) {
+			return super.equals(obj);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 1;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return 1;
 	}
 }

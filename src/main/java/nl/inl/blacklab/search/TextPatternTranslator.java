@@ -18,6 +18,7 @@ package nl.inl.blacklab.search;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.util.StringUtil;
 
 /**
@@ -115,9 +116,13 @@ public abstract class TextPatternTranslator<T> {
 
 	public abstract T edge(T clause, boolean rightEdge);
 
-	public abstract T containing(QueryExecutionContext context, T containers, T search, boolean invert);
+//	public abstract T containing(QueryExecutionContext context, T containers, T search, boolean invert);
+//
+//	public abstract T within(QueryExecutionContext context, T search, T containers, boolean invert);
 
-	public abstract T within(QueryExecutionContext context, T search, T containers, boolean invert);
+	public abstract T positionFilter(QueryExecutionContext context, T producer,
+			T filter, Operation op, boolean invert, int leftAdjust,
+			int rightAdjust);
 
 	public abstract T startsAt(QueryExecutionContext context, T producer, T filter);
 

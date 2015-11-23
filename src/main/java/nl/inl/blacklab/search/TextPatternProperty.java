@@ -50,5 +50,29 @@ public class TextPatternProperty extends TextPattern {
 		return input.matchesEmptySequence();
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternProperty) {
+			TextPatternProperty tp = ((TextPatternProperty) obj);
+			return input.equals(tp.input) && propertyName.equals(tp.propertyName);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return input.hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		return input.getMinLength();
+	}
+
+	@Override
+	public int getMaxLength() {
+		return input.getMaxLength();
+	}
+
 
 }

@@ -44,4 +44,29 @@ public class TextPatternDocLevelAndNot extends TextPattern {
 			return this; // Nothing to rewrite
 		return new TextPatternDocLevelAndNot(inclRewr, exclRewr);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternDocLevelAndNot) {
+			return include.equals(((TextPatternDocLevelAndNot) obj).include) &&
+					exclude.equals(((TextPatternDocLevelAndNot) obj).exclude);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return include.hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		return include.getMinLength();
+	}
+
+	@Override
+	public int getMaxLength() {
+		return include.getMaxLength();
+	}
+
 }

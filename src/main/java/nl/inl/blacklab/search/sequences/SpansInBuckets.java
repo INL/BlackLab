@@ -43,6 +43,8 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
  * Note that SpansInBuckets assumes all hits in a bucket are from a single document.
  */
 public interface SpansInBuckets {
+	/** When to reallocate arraylists to avoid holding on to too much memory */
+	static final int ARRAYLIST_REALLOC_THRESHOLD = 1000;
 
 	final static int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 

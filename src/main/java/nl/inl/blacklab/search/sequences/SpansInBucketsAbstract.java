@@ -177,8 +177,15 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	private int gatherHitsInternal() throws IOException {
 		// NOTE: we could call .clear() here, but we don't want to hold on to
 		// a lot of memory indefinitely after encountering one huge bucket.
-		bucket = new ArrayList<Hit>();
-		capturedGroupsPerHit = new HashMap<Hit, Span[]>();
+		if (bucket.size() < ARRAYLIST_REALLOC_THRESHOLD) {
+			// Not a huge amount of memory, so don't reallocate
+			bucket.clear();
+			capturedGroupsPerHit.clear();
+		} else {
+			// Reallocate in this case to avoid holding on to a lot of memory
+			bucket = new ArrayList<Hit>();
+			capturedGroupsPerHit = new HashMap<Hit, Span[]>();
+		}
 
 		bucketSize = 0;
 		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;

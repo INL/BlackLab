@@ -18,7 +18,10 @@ package nl.inl.blacklab.search;
 /**
  * A TextPattern searching for TextPatterns that contain a hit from another TextPattern. This may be
  * used to search for sentences containing a certain word, etc.
+ *
+ * @deprecated use TextPatternPositionFilter
  */
+@Deprecated
 public class TextPatternContaining extends TextPatternCombiner {
 
 	boolean invert;
@@ -36,7 +39,7 @@ public class TextPatternContaining extends TextPatternCombiner {
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		T trContainers = clauses.get(0).translate(translator, context);
 		T trSearch = clauses.get(1).translate(translator, context);
-		return translator.containing(context, trContainers, trSearch, invert);
+		return translator.positionFilter(context, trContainers, trSearch, TextPatternPositionFilter.Operation.CONTAINING, invert, 0, 0);
 	}
 
 	@Override
@@ -47,9 +50,32 @@ public class TextPatternContaining extends TextPatternCombiner {
 	}
 
 	@Override
-	boolean okayToInvertForOptimization() {
+	protected boolean okayToInvertForOptimization() {
 		// Inverting is "free"
 		return true;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternContaining) {
+			return super.equals((TextPattern)obj) && ((TextPatternContaining)obj).invert == invert;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return clauses.get(0).hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		return clauses.get(0).getMinLength();
+	}
+
+	@Override
+	public int getMaxLength() {
+		return clauses.get(0).getMaxLength();
 	}
 
 }

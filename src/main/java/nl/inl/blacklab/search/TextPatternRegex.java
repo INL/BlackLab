@@ -133,4 +133,12 @@ public class TextPatternRegex extends TextPatternTerm {
 		return result;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternRegex) {
+			return super.equals(obj);
+		}
+		return false;
+	}
+
 }

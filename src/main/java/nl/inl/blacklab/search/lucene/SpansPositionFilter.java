@@ -21,7 +21,7 @@ import java.util.Collection;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Filter;
+import nl.inl.blacklab.search.TextPatternPositionFilter;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
@@ -52,7 +52,13 @@ class SpansPositionFilter extends BLSpans {
 	private int filterIndex = -1;
 
 	/** What filter operation to use */
-	private Filter op;
+	private TextPatternPositionFilter.Operation op;
+
+	/** How to adjust the left edge of the producer hits while matching */
+	private int leftAdjust;
+
+	/** How to adjust the right edge of the producer hits while matching */
+	private int rightAdjust;
 
 	/** Are we already at the first match in a new document, before nextStartPosition() has been called?
 	 * Necessary because we have to make sure nextDoc()/advance() actually puts us in a document with at
@@ -72,8 +78,10 @@ class SpansPositionFilter extends BLSpans {
 	 * @param filter the hits used to filter the producer hits
 	 * @param op filter operation to use
 	 * @param invert if true, produce hits that DON'T match the filter instead
+	 * @param leftAdjust how to adjust the left edge of the producer hits while matching
+	 * @param rightAdjust how to adjust the right edge of the producer hits while matching
 	 */
-	public SpansPositionFilter(Spans producer, Spans filter, SpanQueryPositionFilter.Filter op, boolean invert) {
+	public SpansPositionFilter(Spans producer, Spans filter, TextPatternPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
 		this.producer = BLSpansWrapper.optWrapSort(producer);
 		this.op = op;
 		this.invert = invert;
@@ -85,6 +93,8 @@ class SpansPositionFilter extends BLSpans {
 			// Not sorted yet; sort buckets
 			this.filter = new SpansInBucketsPerDocumentSorted(filter, cmpStartPoint);
 		}
+		this.leftAdjust = leftAdjust;
+		this.rightAdjust = rightAdjust;
 	}
 
 	/**
@@ -97,7 +107,7 @@ class SpansPositionFilter extends BLSpans {
 	 */
 	@Deprecated
 	public SpansPositionFilter(Spans containers, Spans filter, boolean invert) {
-		this(containers, filter, Filter.CONTAINING, invert);
+		this(containers, filter, TextPatternPositionFilter.Operation.CONTAINING, invert, 0, 0);
 	}
 
 	@Override
@@ -201,7 +211,7 @@ class SpansPositionFilter extends BLSpans {
 			case CONTAINING:
 				// Looking for producer hits with a filter hit inside
 				for (int i = 0; i < filter.bucketSize(); i++) {
-					if (filter.startPosition(i) >= producerStart && filter.endPosition(i) <= producer.endPosition()) {
+					if (filter.startPosition(i) >= producerStart + leftAdjust && filter.endPosition(i) <= producer.endPosition() + rightAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
 							invertedMatch = false;
@@ -216,7 +226,7 @@ class SpansPositionFilter extends BLSpans {
 			case WITHIN:
 				// Looking for producer hits contained by a filter hit
 				for (int i = 0; i < filter.bucketSize(); i++) {
-					if (filter.startPosition(i) <= producerStart && filter.endPosition(i) >= producer.endPosition()) {
+					if (filter.startPosition(i) <= producerStart + leftAdjust && filter.endPosition(i) >= producer.endPosition() + rightAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
 							invertedMatch = false;
@@ -231,7 +241,7 @@ class SpansPositionFilter extends BLSpans {
 			case STARTS_AT:
 				// Looking for producer hits starting at a filter hit
 				for (int i = 0; i < filter.bucketSize(); i++) {
-					if (filter.startPosition(i) == producerStart) {
+					if (filter.startPosition(i) == producerStart + leftAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
 							invertedMatch = false;
@@ -246,7 +256,7 @@ class SpansPositionFilter extends BLSpans {
 			case ENDS_AT:
 				// Looking for producer hits ending at a filter hit
 				for (int i = 0; i < filter.bucketSize(); i++) {
-					if (filter.endPosition(i) == producer.endPosition()) {
+					if (filter.endPosition(i) == producer.endPosition() + rightAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
 							invertedMatch = false;
@@ -261,7 +271,7 @@ class SpansPositionFilter extends BLSpans {
 			case MATCHES:
 				// Looking for producer hits exactly matching a filter hit
 				for (int i = 0; i < filter.bucketSize(); i++) {
-					if (filter.startPosition(i) == producerStart && filter.endPosition(i) == producer.endPosition()) {
+					if (filter.startPosition(i) == producerStart + leftAdjust && filter.endPosition(i) == producer.endPosition() + rightAdjust) {
 						if (invert) {
 							// This producer hit is no good; on to the next.
 							invertedMatch = false;
@@ -319,17 +329,18 @@ class SpansPositionFilter extends BLSpans {
 	@Override
 	public String toString() {
 		String not = invert ? "not " : "";
+		String ign = (leftAdjust != 0 || rightAdjust != 0) ? ", " + leftAdjust + ", " + rightAdjust : "";
 		switch (op) {
 		case CONTAINING:
-			return "SpansContaining(" + producer + " " + not + "containing " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "containing " + filter + ign + ")";
 		case WITHIN:
-			return "SpansContaining(" + producer + " " + not + "within " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "within " + filter + ign + ")";
 		case STARTS_AT:
-			return "SpansContaining(" + producer + " " + not + "starts at " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "starts at " + filter + ign + ")";
 		case ENDS_AT:
-			return "SpansContaining(" + producer + " " + not + "ends at " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "ends at " + filter + ign + ")";
 		case MATCHES:
-			return "SpansContaining(" + producer + " " + not + "matches " + filter + ")";
+			return "SpansContaining(" + producer + " " + not + "matches " + filter + ign + ")";
 		default:
 			throw new RuntimeException("Unknown filter operation " + op);
 		}

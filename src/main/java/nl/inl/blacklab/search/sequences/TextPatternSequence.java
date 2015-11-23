@@ -35,7 +35,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		if (clausesNot.size() > 0)
+		if (exclude.size() > 0)
 			throw new RuntimeException("clausesNot not empty!");
 
 		List<T> chResults = new ArrayList<T>();
@@ -49,8 +49,8 @@ public class TextPatternSequence extends TextPatternAndNot {
 
 		// Translate the clauses from back to front, because this makes it easier to
 		// deal with TextPatternAnyToken (see below).
-		for (int i = clauses.size() - 1; i >= 0; i--) {
-			TextPattern cl = clauses.get(i);
+		for (int i = include.size() - 1; i >= 0; i--) {
+			TextPattern cl = include.get(i);
 
 			if (cl instanceof TextPatternAnyToken) {
 				// These are a special case, because we shouldn't translate these into a
@@ -197,7 +197,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder();
-		for (TextPattern cl : clauses) {
+		for (TextPattern cl : include) {
 			if (b.length() > 0)
 				b.append(" ");
 			b.append(cl.toString());
@@ -207,7 +207,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 
 	@Override
 	public boolean matchesEmptySequence() {
-		for (TextPattern cl : clauses) {
+		for (TextPattern cl : include) {
 			if (!cl.matchesEmptySequence())
 				return false;
 		}
@@ -216,34 +216,64 @@ public class TextPatternSequence extends TextPatternAndNot {
 
 	@Override
 	public TextPattern rewrite() {
-		if (clausesNot.size() > 0)
+		if (exclude.size() > 0)
 			throw new RuntimeException("clausesNot not empty!");
+
+		boolean anyRewritten = false;
 
 		// Flatten nested sequences.
 		// This doesn't change the query because the sequence operator is associative.
-		TextPatternSequence result = null;
-		for (TextPattern child: clauses) {
+		List<TextPattern> flat = new ArrayList<TextPattern>();
+		for (TextPattern child: include) {
 			TextPattern rewritten = child.rewrite();
-			boolean flattenSequence = rewritten instanceof TextPatternSequence;
-			if (child != rewritten || flattenSequence) {
-				if (result == null) {
-					// This is the first rewrite we're doing. Clone this query now.
-					result = (TextPatternSequence) clone();
-				}
-				if (flattenSequence) {
+			boolean nestedSequence = rewritten instanceof TextPatternSequence;
+			if (child != rewritten || nestedSequence) {
+				if (nestedSequence) {
 					// Child sequence we want to flatten into this sequence.
 					// Replace the child, incorporating the child sequence into the rewritten sequence
-					result.replaceClause(child, ((TextPatternSequence)rewritten).clauses.toArray(new TextPattern[0]));
+					flat.addAll(((TextPatternSequence)rewritten).include);
 				} else {
 					// Replace the child with the rewritten version
-					result.replaceClause(child, rewritten);
+					flat.add(rewritten);
 				}
+				anyRewritten = true;
+			} else {
+				// Not rewritten
+				flat.add(child);
 			}
 		}
 
-		if (result == null) {
-			// No child clause rewritten: return ourselves.
-			return this;
+		// Now, see what parts of the sequence can be combined into more efficient queries:
+		// - repeating clauses can be turned into a single repetition clause.
+		// - anytoken clauses can be combined into expansion clauses, which can be
+		//   combined again into distance queries
+		// - negative clauses can be rewritten to NOTCONTAINING clauses and combined with
+		//   adjacent constant-length query parts.
+		TextPattern previousPart = null;
+		List<TextPattern> withRep = new ArrayList<TextPattern>();
+		for (TextPattern child: flat) {
+			TextPattern rep = child;
+			while (true) {
+				// Do we have a previous part?
+				previousPart = withRep.size() == 0 ? null : withRep.get(withRep.size() - 1);
+				if (previousPart == null)
+					break;
+				// Yes, try to combine with it.
+				TextPattern comb = rep.combineWithPrecedingPart(previousPart);
+				if (comb == null)
+					break;
+				// Success! Remove previous part and keep trying with the part before that.
+				withRep.remove(withRep.size() - 1);
+				rep = comb;
+			}
+			if (rep == child) {
+				// Could not be combined.
+				withRep.add(child);
+			} else {
+				// Combined with previous clause(s).
+				withRep.add(rep.rewrite());
+				anyRewritten = true;
+			}
 		}
 
 		/*
@@ -299,7 +329,51 @@ public class TextPatternSequence extends TextPatternAndNot {
 //			throw new RuntimeException("Cannot process sequence consisting of all NOT queries");
 //		}
 
-		return result;
+		if (!anyRewritten) {
+			// No child clause rewritten: return ourselves.
+			return this;
+		}
+		if (withRep.size() == 1)
+			return withRep.get(0);
+		return new TextPatternSequence(withRep.toArray(new TextPattern[0]));
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternSequence) {
+			return super.equals(obj);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		for (TextPattern clause: include) {
+			if (!clause.hasConstantLength())
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		int n = 0;
+		for (TextPattern clause: include) {
+			n += clause.getMinLength();
+		}
+		return n;
+	}
+
+	@Override
+	public int getMaxLength() {
+		int n = 0;
+		for (TextPattern clause: include) {
+			int max = clause.getMaxLength();
+			if (max < 0)
+				return -1; // infinite
+			n += max;
+		}
+		return n;
 	}
 
 }

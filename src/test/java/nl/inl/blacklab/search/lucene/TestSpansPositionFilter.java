@@ -22,11 +22,11 @@ import org.junit.Test;
 
 import nl.inl.blacklab.MockSpans;
 import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Filter;
+import nl.inl.blacklab.search.TextPatternPositionFilter;
 
 public class TestSpansPositionFilter {
 
-	private SpansPositionFilter getSpans(boolean swap, Filter type, boolean invert) {
+	private SpansPositionFilter getSpans(boolean swap, TextPatternPositionFilter.Operation type, boolean invert) {
 		Spans a = MockSpans.fromLists(
 			new int[] {  1,  1,  2,  2,  2,  3 },
 			new int[] { 10, 20, 10, 10, 30, 20 },
@@ -37,12 +37,12 @@ public class TestSpansPositionFilter {
 			new int[] { 11, 22, 20 },
 			new int[] { 12, 23, 25 }
 		);
-		return new SpansPositionFilter(swap ? b : a, swap ? a : b, type, invert);
+		return new SpansPositionFilter(swap ? b : a, swap ? a : b, type, invert, 0, 0);
 	}
 
 	@Test
 	public void testContaining() throws IOException {
-		SpansPositionFilter spans = getSpans(false, Filter.CONTAINING, false);
+		SpansPositionFilter spans = getSpans(false, TextPatternPositionFilter.Operation.CONTAINING, false);
 		Spans exp = MockSpans.fromLists(
 			new int[] { 1,  3},
 			new int[] {10, 20},
@@ -53,7 +53,7 @@ public class TestSpansPositionFilter {
 
 	@Test
 	public void testNotContaining() throws IOException {
-		SpansPositionFilter spans = getSpans(false, Filter.CONTAINING, true);
+		SpansPositionFilter spans = getSpans(false, TextPatternPositionFilter.Operation.CONTAINING, true);
 		Spans exp = MockSpans.fromLists(
 			new int[] {  1,  2,  2,  2 },
 			new int[] { 20, 10, 10, 30 },
@@ -64,7 +64,7 @@ public class TestSpansPositionFilter {
 
 	@Test
 	public void testWithin() throws IOException {
-		SpansPositionFilter spans = getSpans(true, Filter.WITHIN, false);
+		SpansPositionFilter spans = getSpans(true, TextPatternPositionFilter.Operation.WITHIN, false);
 		Spans exp = MockSpans.fromLists(
 			new int[] {  1,  3 },
 			new int[] { 11, 20 },
@@ -75,7 +75,7 @@ public class TestSpansPositionFilter {
 
 	@Test
 	public void testNotWithin() throws IOException {
-		SpansPositionFilter spans = getSpans(true, Filter.WITHIN, true);
+		SpansPositionFilter spans = getSpans(true, TextPatternPositionFilter.Operation.WITHIN, true);
 		Spans exp = MockSpans.fromLists(
 			new int[] {  2 },
 			new int[] { 22 },
@@ -86,7 +86,7 @@ public class TestSpansPositionFilter {
 
 	@Test
 	public void testStartsAt() throws IOException {
-		SpansPositionFilter spans = getSpans(false, Filter.STARTS_AT, false);
+		SpansPositionFilter spans = getSpans(false, TextPatternPositionFilter.Operation.STARTS_AT, false);
 		Spans exp = MockSpans.fromLists(
 			new int[] {  3 },
 			new int[] { 20 },
@@ -97,7 +97,7 @@ public class TestSpansPositionFilter {
 
 	@Test
 	public void testEndsAt() throws IOException {
-		SpansPositionFilter spans = getSpans(false, Filter.ENDS_AT, false);
+		SpansPositionFilter spans = getSpans(false, TextPatternPositionFilter.Operation.ENDS_AT, false);
 		Spans exp = MockSpans.fromLists(
 			new int[] {  3 },
 			new int[] { 20 },
@@ -108,7 +108,7 @@ public class TestSpansPositionFilter {
 
 	@Test
 	public void testMatches() throws IOException {
-		SpansPositionFilter spans = getSpans(false, Filter.MATCHES, false);
+		SpansPositionFilter spans = getSpans(false, TextPatternPositionFilter.Operation.MATCHES, false);
 		Spans exp = MockSpans.fromLists(
 			new int[] {  3 },
 			new int[] { 20 },
@@ -119,7 +119,7 @@ public class TestSpansPositionFilter {
 
 	@Test
 	public void testNotMatches() throws IOException {
-		SpansPositionFilter spans = getSpans(true, Filter.MATCHES, true);
+		SpansPositionFilter spans = getSpans(true, TextPatternPositionFilter.Operation.MATCHES, true);
 		Spans exp = MockSpans.fromLists(
 			new int[] {  1,  2 },
 			new int[] { 11, 22 },

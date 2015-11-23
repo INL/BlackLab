@@ -37,4 +37,28 @@ public class TextPatternEdge extends TextPatternCombiner {
 		//throw new RuntimeException("Cannot search for isolated NOT query (must always be AND NOT)");
 		return translator.edge(clauses.get(0).translate(translator, context), rightEdge);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternEdge) {
+			return super.equals(obj) && ((TextPatternEdge)obj).rightEdge == rightEdge;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 0;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return 0;
+	}
+
 }

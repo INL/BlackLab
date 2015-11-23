@@ -18,6 +18,7 @@ package nl.inl.blacklab.search;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.util.StringUtil;
 
 /**
@@ -62,17 +63,27 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 
 	@Override
 	public String tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
-		return "TAGS(" + elementName + (attr == null ? "-" : ", " + StringUtil.join(attr.values(), ";")) + ")";
+		if (attr != null && attr.size() > 0)
+			return "TAGS(" + elementName + (attr == null ? "-" : ", " + StringUtil.join(attr.values(), ";")) + ")";
+		return "TAGS(" + elementName + ")";
 	}
 
-	@Override
-	public String containing(QueryExecutionContext context, String containers, String search, boolean invert) {
-		return (invert ? "NOT" : "") + "CONTAINING(" + containers + ", " + search + ")";
-	}
+//	@Override
+//	public String containing(QueryExecutionContext context, String containers, String search, boolean invert) {
+//		return (invert ? "NOT" : "") + "CONTAINING(" + containers + ", " + search + ")";
+//	}
+//
+//	@Override
+//	public String within(QueryExecutionContext context, String search, String containers, boolean invert) {
+//		return (invert ? "NOT" : "") + "WITHIN(" + search + ", " + containers + ")";
+//	}
 
 	@Override
-	public String within(QueryExecutionContext context, String search, String containers, boolean invert) {
-		return (invert ? "NOT" : "") + "WITHIN(" + search + ", " + containers + ")";
+	public String positionFilter(QueryExecutionContext context,
+			String producer, String filter, Operation op, boolean invert,
+			int leftAdjust, int rightAdjust) {
+		String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
+		return "POSFILTER(" + producer + ", " + filter + ", " + (invert ? "NOT" : "") + op + adj + ")";
 	}
 
 	@Override

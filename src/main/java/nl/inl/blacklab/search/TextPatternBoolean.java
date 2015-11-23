@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -28,7 +29,9 @@ import org.apache.lucene.search.BooleanClause.Occur;
  * document. None of the MUST NOT clauses must occur in the document.
  *
  * For documents that satisfy these criteria, all the MUST and SHOULD hits are reported.
+ * @deprecated not used
  */
+@Deprecated
 public class TextPatternBoolean extends TextPattern {
 
 	private List<TextPattern> must = new ArrayList<TextPattern>();
@@ -51,11 +54,18 @@ public class TextPatternBoolean extends TextPattern {
 		TextPattern tpMust = null, tpShould = null;
 		if (must.size() > 0) {
 			// Build a TextPattern that combines all MUST queries with AND
-			tpMust = new TextPatternDocLevelAnd(must.toArray(new TextPattern[0]));
+			if (must.size() == 1)
+				tpMust = must.get(0);
+			else
+				tpMust = new TextPatternDocLevelAnd(must.toArray(new TextPattern[0]));
 		}
 		if (should.size() > 0) {
-			// Build a TextPattern that combines all SHOULD queries with OR
-			tpShould = new TextPatternOr(should.toArray(new TextPattern[0]));
+			if (should.size() == 1)
+				tpShould = should.get(0);
+			else {
+				// Build a TextPattern that combines all SHOULD queries with OR
+				tpShould = new TextPatternOr(should.toArray(new TextPattern[0]));
+			}
 		}
 		if (tpMust == null && tpShould == null)
 			throw new RuntimeException("Query must contain included terms (cannot just exclude)");
@@ -111,5 +121,59 @@ public class TextPatternBoolean extends TextPattern {
 		}
 	}
 
-	// TODO: implement rewrite!
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternBoolean) {
+			TextPatternBoolean tp = ((TextPatternBoolean) obj);
+			return must.equals(tp.must) && should.equals(tp.should) && mustNot.equals(tp.mustNot);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		int l = must.get(0).getMinLength();
+		for (List<TextPattern> coll: Arrays.asList(must, should)) {
+			for (TextPattern clause: coll) {
+				if (!clause.hasConstantLength() || clause.getMinLength() != l)
+					return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		int n = Integer.MAX_VALUE;
+		for (List<TextPattern> coll: Arrays.asList(must, should)) {
+			for (TextPattern clause: coll) {
+				n = Math.min(n, clause.getMinLength());
+			}
+		}
+		return n;
+	}
+
+	@Override
+	public int getMaxLength() {
+		int n = 0;
+		for (List<TextPattern> coll: Arrays.asList(must, should)) {
+			for (TextPattern clause: coll) {
+				int l = clause.getMaxLength();
+				if (l < 0)
+					return -1; // infinite
+				n = Math.max(n, l);
+			}
+		}
+		return n;
+	}
+
+
+
+	@Override
+	public TextPattern rewrite() {
+
+		// FIXME: rewrite clauses!
+
+		return this;
+	}
 }

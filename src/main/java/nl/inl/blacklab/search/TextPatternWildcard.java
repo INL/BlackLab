@@ -58,4 +58,12 @@ public class TextPatternWildcard extends TextPatternTerm {
 		// Can't simplify, just return ourselves
 		return this;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternWildcard) {
+			return super.equals(obj);
+		}
+		return false;
+	}
 }

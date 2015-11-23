@@ -29,47 +29,47 @@ import java.util.List;
  */
 public class TextPatternAndNot extends TextPattern {
 
-	protected List<TextPattern> clauses = new ArrayList<TextPattern>();
+	protected List<TextPattern> include = new ArrayList<TextPattern>();
 
-	protected List<TextPattern> clausesNot = new ArrayList<TextPattern>();
+	protected List<TextPattern> exclude = new ArrayList<TextPattern>();
 
 	public TextPatternAndNot(TextPattern... clauses) {
 		for (TextPattern clause : clauses) {
-			this.clauses.add(clause);
+			this.include.add(clause);
 		}
 	}
 
 	public TextPatternAndNot(List<TextPattern> includeClauses, List<TextPattern> excludeClauses) {
-		clauses.addAll(includeClauses);
-		clausesNot.addAll(excludeClauses);
+		include.addAll(includeClauses);
+		exclude.addAll(excludeClauses);
 	}
 
 	public void replaceClause(TextPattern oldClause, TextPattern... newClauses) {
-		int i = clauses.indexOf(oldClause);
-		clauses.remove(i);
+		int i = include.indexOf(oldClause);
+		include.remove(i);
 		for (TextPattern newChild: newClauses) {
-			clauses.add(i, newChild);
+			include.add(i, newChild);
 			i++;
 		}
 	}
 
 	public void replaceClauseNot(TextPattern oldClause, TextPattern... newClauses) {
-		int i = clausesNot.indexOf(oldClause);
-		clausesNot.remove(i);
+		int i = exclude.indexOf(oldClause);
+		exclude.remove(i);
 		for (TextPattern newChild: newClauses) {
-			clausesNot.add(i, newChild);
+			exclude.add(i, newChild);
 			i++;
 		}
 	}
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		List<T> chResults = new ArrayList<T>(clauses.size());
-		for (TextPattern cl : clauses) {
+		List<T> chResults = new ArrayList<T>(include.size());
+		for (TextPattern cl : include) {
 			chResults.add(cl.translate(translator, context));
 		}
-		List<T> chResultsNot = new ArrayList<T>(clausesNot.size());
-		for (TextPattern cl : clausesNot) {
+		List<T> chResultsNot = new ArrayList<T>(exclude.size());
+		for (TextPattern cl : exclude) {
 			chResultsNot.add(cl.translate(translator, context));
 		}
 		if (chResults.size() == 1 && chResultsNot.size() == 0) {
@@ -93,8 +93,8 @@ public class TextPatternAndNot extends TextPattern {
 			TextPatternAndNot clone = (TextPatternAndNot) super.clone();
 
 			// copy list of children so we can modify it independently
-			clone.clauses = new ArrayList<TextPattern>(clauses);
-			clone.clausesNot = new ArrayList<TextPattern>(clausesNot);
+			clone.include = new ArrayList<TextPattern>(include);
+			clone.exclude = new ArrayList<TextPattern>(exclude);
 
 			return clone;
 		} catch (CloneNotSupportedException e) {
@@ -104,23 +104,23 @@ public class TextPatternAndNot extends TextPattern {
 
 	@Override
 	public TextPattern inverted() {
-		if (clausesNot.size() == 0) {
+		if (exclude.size() == 0) {
 			// In this case, it's better to just wrap this in TextPatternNot,
 			// so it will be recognized by other rewrite()s.
 			return super.inverted();
 		}
-		return new TextPatternAndNot(clausesNot, clauses);
+		return new TextPatternAndNot(exclude, include);
 	}
 
 	@Override
-	boolean okayToInvertForOptimization() {
+	protected boolean okayToInvertForOptimization() {
 		// Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
-		return clausesNot.size() > 0;
+		return exclude.size() > 0;
 	}
 
 	@Override
-	boolean isNegativeOnly() {
-		return clauses.size() == 0;
+	public boolean isNegativeOnly() {
+		return include.size() == 0;
 	}
 
 	@Override
@@ -132,7 +132,7 @@ public class TextPatternAndNot extends TextPattern {
 		List<TextPattern> rewrittenCl = new ArrayList<TextPattern>();
 		List<TextPattern> rewrittenNotCl = new ArrayList<TextPattern>();
 		boolean isNot = false;
-		for (List<TextPattern> cl: Arrays.asList(clauses, clausesNot)) {
+		for (List<TextPattern> cl: Arrays.asList(include, exclude)) {
 			for (TextPattern child: cl) {
 				List<TextPattern> clPos = isNot ? rewrittenNotCl : rewrittenCl;
 				List<TextPattern> clNeg = isNot ? rewrittenCl : rewrittenNotCl;
@@ -150,8 +150,8 @@ public class TextPatternAndNot extends TextPattern {
 					// Flatten.
 					// Child AND operation we want to flatten into this AND operation.
 					// Replace the child, incorporating its children into this AND operation.
-					clPos.addAll(((TextPatternAndNot)rewritten).clauses);
-					clNeg.addAll(((TextPatternAndNot)rewritten).clausesNot);
+					clPos.addAll(((TextPatternAndNot)rewritten).include);
+					clNeg.addAll(((TextPatternAndNot)rewritten).exclude);
 					anyRewritten = true;
 				} else {
 					// Just add it.
@@ -165,6 +165,8 @@ public class TextPatternAndNot extends TextPattern {
 
 		if (rewrittenCl.size() == 0) {
 			// All-negative; node should be rewritten to OR.
+			if (rewrittenNotCl.size() == 1)
+				return rewrittenCl.get(0).inverted();
 			return (new TextPatternOr(rewrittenNotCl.toArray(new TextPattern[0]))).inverted();
 		}
 
@@ -177,4 +179,33 @@ public class TextPatternAndNot extends TextPattern {
 		return this;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternAndNot) {
+			return include.equals(((TextPatternAndNot) obj).include) &&
+					exclude.equals(((TextPatternAndNot) obj).exclude);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		if (include.size() == 0)
+			return true;
+		return include.get(0).hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		if (include.size() == 0)
+			return 1;
+		return include.get(0).getMinLength();
+	}
+
+	@Override
+	public int getMaxLength() {
+		if (include.size() == 0)
+			return 1;
+		return include.get(0).getMaxLength();
+	}
 }

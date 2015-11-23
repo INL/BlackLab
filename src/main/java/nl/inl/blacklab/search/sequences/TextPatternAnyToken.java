@@ -77,4 +77,40 @@ public class TextPatternAnyToken extends TextPattern {
 		return min == 0;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternAnyToken) {
+			TextPatternAnyToken tp = ((TextPatternAnyToken) obj);
+			return min == tp.min && max == tp.max;
+		}
+		return false;
+	}
+
+	@Override
+	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
+		if (previousPart instanceof TextPatternAnyToken) {
+			TextPatternAnyToken tp = (TextPatternAnyToken)previousPart;
+			return new TextPatternAnyToken(min + tp.min, max + tp.max);
+		}
+		TextPattern combo = super.combineWithPrecedingPart(previousPart);
+		if (combo == null) {
+			combo = new TextPatternExpansion(previousPart, false, min, max);
+		}
+		return combo;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return min == max;
+	}
+
+	@Override
+	public int getMinLength() {
+		return min;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return max;
+	}
 }

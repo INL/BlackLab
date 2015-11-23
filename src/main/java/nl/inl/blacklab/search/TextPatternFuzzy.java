@@ -46,4 +46,28 @@ public class TextPatternFuzzy extends TextPattern {
 		return translator.fuzzy(context, value, maxEdits, prefixLength);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternFuzzy) {
+			TextPatternFuzzy tp = ((TextPatternFuzzy) obj);
+			return value.equals(tp.value) && maxEdits == tp.maxEdits && prefixLength == tp.prefixLength;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 1;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return 1;
+	}
+
 }

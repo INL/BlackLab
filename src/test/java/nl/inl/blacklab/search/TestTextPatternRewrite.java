@@ -38,111 +38,190 @@ public class TestTextPatternRewrite {
 		}
 	}
 
-	@Test
-	public void testRewrite() {
-		TextPattern original = getPatternFromCql("[!(word != 'Water')]");
-		Assert.assertEquals("NOT(NOT(REGEX(contents%word@i, ^water$)))", original.translate(stringifier));
+	static void assertNoRewrite(String cql, String result) {
+		assertRewrite(cql, result, result);
+	}
+
+	static void assertRewrite(String cql, String before, String after) {
+		TextPattern original = getPatternFromCql(cql);
+		Assert.assertEquals(before, original.translate(stringifier));
 		TextPattern rewritten = original.rewrite();
 		String rewrittenStr = rewritten.translate(stringifier);
-		Assert.assertEquals("TERM(contents%word@i, water)", rewrittenStr);
+		Assert.assertEquals(after, rewrittenStr);
+	}
+
+	static void assertRewriteResult(String cql, String after) {
+		TextPattern original = getPatternFromCql(cql);
+		TextPattern rewritten = original.rewrite();
+		String rewrittenStr = rewritten.translate(stringifier);
+		Assert.assertEquals(after, rewrittenStr);
+	}
+
+	@Test
+	public void testRewrite() {
+		assertRewrite("[!(word != 'Water')]",
+			"NOT(NOT(REGEX(contents%word@i, ^water$)))",
+			"TERM(contents%word@i, water)");
 	}
 
 	@Test
 	public void testRewriteInsensitive() {
-		TextPattern original = getPatternFromCql("[word = '(?i)Appel']");
-		Assert.assertEquals("REGEX(contents%word@i, ^(?i)appel$)", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		String rewrittenStr = rewritten.translate(stringifier);
-		Assert.assertEquals("TERM(contents%word@i, appel)", rewrittenStr);
+		assertRewrite("[word = '(?i)Appel']",
+			"REGEX(contents%word@i, ^(?i)appel$)",
+			"TERM(contents%word@i, appel)");
 	}
 
 	@Test
 	public void testRewriteInsensitive2() {
-		TextPattern original = getPatternFromCql("[word = '(?i)Appel.*']");
-		Assert.assertEquals("REGEX(contents%word@i, ^(?i)appel.*$)", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		String rewrittenStr = rewritten.translate(stringifier);
-		Assert.assertEquals("PREFIX(contents%word@i, appel)", rewrittenStr);
+		assertRewrite("[word = '(?i)Appel.*']",
+				"REGEX(contents%word@i, ^(?i)appel.*$)",
+				"PREFIX(contents%word@i, appel)");
 	}
 
 	@Test
 	public void testRewriteInsensitive3() {
-		TextPattern original = getPatternFromCql("[word = '(?i).*Appel']");
-		Assert.assertEquals("REGEX(contents%word@i, ^(?i).*appel$)", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		String rewrittenStr = rewritten.translate(stringifier);
-		Assert.assertEquals("WILDCARD(contents%word@i, *appel)", rewrittenStr);
+		assertRewrite("[word = '(?i).*Appel']",
+				"REGEX(contents%word@i, ^(?i).*appel$)",
+				"WILDCARD(contents%word@i, *appel)");
 	}
 
 	@Test
 	public void testRewriteInsensitive4() {
-		TextPattern original = getPatternFromCql("[word = '(?i)[ao]ppel']");
-		Assert.assertEquals("REGEX(contents%word@i, ^(?i)[ao]ppel$)", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		String rewrittenStr = rewritten.translate(stringifier);
-		Assert.assertEquals("REGEX(contents%word@i, ^[ao]ppel$)", rewrittenStr);
+		assertRewrite("[word = '(?i)[ao]ppel']",
+				"REGEX(contents%word@i, ^(?i)[ao]ppel$)",
+				"REGEX(contents%word@i, ^[ao]ppel$)");
 	}
 
 	@Test
 	public void testRewriteSensitive() {
-		TextPattern original = getPatternFromCql("[word = '(?-i)Bla']");
-		Assert.assertEquals("REGEX(contents%word@i, ^(?-i)bla$)", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		String rewrittenStr = rewritten.translate(stringifier);
-		Assert.assertEquals("TERM(contents%word@s, Bla)", rewrittenStr);
+		assertRewrite("[word = '(?-i)Bla']",
+				"REGEX(contents%word@i, ^(?-i)bla$)",
+				"TERM(contents%word@s, Bla)");
 
-		original = getPatternFromCql("[word = '(?c)Bla']");
-		Assert.assertEquals("REGEX(contents%word@i, ^(?c)bla$)", original.translate(stringifier));
-		rewritten = original.rewrite();
-		rewrittenStr = rewritten.translate(stringifier);
-		Assert.assertEquals("TERM(contents%word@s, Bla)", rewrittenStr);
+		assertRewrite("[word = '(?c)Bla']",
+				"REGEX(contents%word@i, ^(?c)bla$)",
+				"TERM(contents%word@s, Bla)");
 	}
 
 	@Test
 	public void testRewriteNestedAnd() {
-		TextPattern original = getPatternFromCql("[word = 'a' & lemma = 'b' & pos != 'c']");
-		Assert.assertEquals("AND(REGEX(contents%word@i, ^a$), AND(REGEX(contents%lemma@i, ^b$), NOT(REGEX(contents%pos@i, ^c$))))", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		Assert.assertEquals("ANDNOT(AND(TERM(contents%word@i, a), TERM(contents%lemma@i, b)), TERM(contents%pos@i, c))", rewritten.translate(stringifier));
+		assertRewrite("[word = 'a' & lemma = 'b' & pos != 'c']",
+				"AND(REGEX(contents%word@i, ^a$), AND(REGEX(contents%lemma@i, ^b$), NOT(REGEX(contents%pos@i, ^c$))))",
+				"ANDNOT(AND(TERM(contents%word@i, a), TERM(contents%lemma@i, b)), TERM(contents%pos@i, c))");
 	}
 
 	@Test
 	public void testRewriteNestedOr() {
-		TextPattern original = getPatternFromCql("[word = 'a' | word = 'b' | word = 'c']");
-		Assert.assertEquals("OR(REGEX(contents%word@i, ^a$), OR(REGEX(contents%word@i, ^b$), REGEX(contents%word@i, ^c$)))", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		Assert.assertEquals("OR(TERM(contents%word@i, a), TERM(contents%word@i, b), TERM(contents%word@i, c))", rewritten.translate(stringifier));
+		assertRewrite("[word = 'a' | word = 'b' | word = 'c']",
+				"OR(REGEX(contents%word@i, ^a$), OR(REGEX(contents%word@i, ^b$), REGEX(contents%word@i, ^c$)))",
+				"OR(TERM(contents%word@i, a), TERM(contents%word@i, b), TERM(contents%word@i, c))");
 	}
 
 	@Test
 	public void testRewriteNegativeAnd() {
-		TextPattern original = getPatternFromCql("[word != 'a' & word != 'b']");
-		Assert.assertEquals("AND(NOT(REGEX(contents%word@i, ^a$)), NOT(REGEX(contents%word@i, ^b$)))", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		Assert.assertEquals("NOT(OR(TERM(contents%word@i, a), TERM(contents%word@i, b)))", rewritten.translate(stringifier));
+		assertRewrite("[word != 'a' & word != 'b']",
+				"AND(NOT(REGEX(contents%word@i, ^a$)), NOT(REGEX(contents%word@i, ^b$)))",
+				"NOT(OR(TERM(contents%word@i, a), TERM(contents%word@i, b)))");
 	}
 
 	@Test
 	public void testRewriteNegativeOr() {
-		TextPattern original = getPatternFromCql("[word != 'a' | lemma != 'b']");
-		Assert.assertEquals("OR(NOT(REGEX(contents%word@i, ^a$)), NOT(REGEX(contents%lemma@i, ^b$)))", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		Assert.assertEquals("NOT(AND(TERM(contents%word@i, a), TERM(contents%lemma@i, b)))", rewritten.translate(stringifier));
+		assertRewrite("[word != 'a' | lemma != 'b']",
+				"OR(NOT(REGEX(contents%word@i, ^a$)), NOT(REGEX(contents%lemma@i, ^b$)))",
+				"NOT(AND(TERM(contents%word@i, a), TERM(contents%lemma@i, b)))");
 	}
 
 	@Test
 	public void testRewriteAndNot() {
-		TextPattern original = getPatternFromCql("[word = 'a' & lemma != 'b']");
-		Assert.assertEquals("AND(REGEX(contents%word@i, ^a$), NOT(REGEX(contents%lemma@i, ^b$)))", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		Assert.assertEquals("ANDNOT(TERM(contents%word@i, a), TERM(contents%lemma@i, b))", rewritten.translate(stringifier));
+		assertRewrite("[word = 'a' & lemma != 'b']",
+				"AND(REGEX(contents%word@i, ^a$), NOT(REGEX(contents%lemma@i, ^b$)))",
+				"ANDNOT(TERM(contents%word@i, a), TERM(contents%lemma@i, b))");
 	}
 
 	@Test
 	public void testRewriteNotAndNot() {
-		TextPattern original = getPatternFromCql("[ !(word = 'a' & lemma != 'b') ]");
-		Assert.assertEquals("NOT(AND(REGEX(contents%word@i, ^a$), NOT(REGEX(contents%lemma@i, ^b$))))", original.translate(stringifier));
-		TextPattern rewritten = original.rewrite();
-		Assert.assertEquals("ANDNOT(TERM(contents%lemma@i, b), TERM(contents%word@i, a))", rewritten.translate(stringifier));
+		assertRewrite("[ !(word = 'a' & lemma != 'b') ]",
+				"NOT(AND(REGEX(contents%word@i, ^a$), NOT(REGEX(contents%lemma@i, ^b$))))",
+				"ANDNOT(TERM(contents%lemma@i, b), TERM(contents%word@i, a))");
 	}
+
+	@Test
+	public void testRewriteRepetitionWord() {
+		assertRewrite("'a' 'a'",
+				"SEQ(REGEX(contents%word@i, ^a$), REGEX(contents%word@i, ^a$))",
+				"REP(TERM(contents%word@i, a), 2, 2)");
+		assertRewrite("'a.*' 'a.*'",
+				"SEQ(REGEX(contents%word@i, ^a.*$), REGEX(contents%word@i, ^a.*$))",
+				"REP(PREFIX(contents%word@i, a), 2, 2)");
+	}
+
+	@Test
+	public void testRewriteRepetitionLemma() {
+		assertRewrite("[lemma='a'] [lemma='a']",
+				"SEQ(REGEX(contents%lemma@i, ^a$), REGEX(contents%lemma@i, ^a$))",
+				"REP(TERM(contents%lemma@i, a), 2, 2)");
+		assertRewrite("[lemma='a'] [lemma='b']",
+				"SEQ(REGEX(contents%lemma@i, ^a$), REGEX(contents%lemma@i, ^b$))",
+				"SEQ(TERM(contents%lemma@i, a), TERM(contents%lemma@i, b))");
+		assertRewrite("[lemma='a'] [word='a']",
+				"SEQ(REGEX(contents%lemma@i, ^a$), REGEX(contents%word@i, ^a$))",
+				"SEQ(TERM(contents%lemma@i, a), TERM(contents%word@i, a))");
+	}
+
+	@Test
+	public void testRewriteRepetitionTags() {
+		assertRewrite("<s test='1' /> <s test='1' />",
+				"SEQ(TAGS(s, 1), TAGS(s, 1))",
+				"REP(TAGS(s, 1), 2, 2)");
+
+		assertNoRewrite("<s test='1' /> <t test='1' />", "SEQ(TAGS(s, 1), TAGS(t, 1))");
+		assertNoRewrite("<s test='1' /> <s test='2' />", "SEQ(TAGS(s, 1), TAGS(s, 2))");
+	}
+
+	@Test
+	public void testRewriteRepetitionAndOr() {
+		assertRewriteResult("('a'|'b') ('a'|'b')",
+				"REP(OR(TERM(contents%word@i, a), TERM(contents%word@i, b)), 2, 2)");
+		assertRewriteResult("('a'|'b') ('a'|'c')",
+				"SEQ(OR(TERM(contents%word@i, a), TERM(contents%word@i, b)), OR(TERM(contents%word@i, a), TERM(contents%word@i, c)))");
+
+		assertRewriteResult("('a'&'b') ('a'&'b')",
+				"REP(AND(TERM(contents%word@i, a), TERM(contents%word@i, b)), 2, 2)");
+		assertRewriteResult("('a'&'b') ('a'&'c')",
+				"SEQ(AND(TERM(contents%word@i, a), TERM(contents%word@i, b)), AND(TERM(contents%word@i, a), TERM(contents%word@i, c)))");
+
+		assertRewriteResult("('a'& [word != 'b']) ('a'& [word != 'b'])",
+				"REP(ANDNOT(TERM(contents%word@i, a), TERM(contents%word@i, b)), 2, 2)");
+		assertRewriteResult("('a'& [word != 'b']) ('a'& [word != 'c'])",
+				"SEQ(ANDNOT(TERM(contents%word@i, a), TERM(contents%word@i, b)), ANDNOT(TERM(contents%word@i, a), TERM(contents%word@i, c)))");
+	}
+
+	@Test
+	public void testRewriteRepetitionAny() {
+		assertRewriteResult("'a' []{2,3}", "EXPAND(TERM(contents%word@i, a), false, 2, 3)");
+		assertRewriteResult("'a' ([]){2,3}", "EXPAND(TERM(contents%word@i, a), false, 2, 3)");
+		assertRewriteResult("'a' ([]{2}){3}", "EXPAND(TERM(contents%word@i, a), false, 6, 6)");
+		assertRewriteResult("'a' []{1,2} []{3,4}", "EXPAND(TERM(contents%word@i, a), false, 4, 6)");
+	}
+
+	@Test
+	public void testRewriteSequenceExpand() {
+		assertRewrite("'a' 'b' 'c' []{1,2}",
+			"SEQ(REGEX(contents%word@i, ^a$), SEQ(REGEX(contents%word@i, ^b$), EXPAND(REGEX(contents%word@i, ^c$), false, 1, 2)))",
+			"EXPAND(SEQ(TERM(contents%word@i, a), SEQ(TERM(contents%word@i, b), TERM(contents%word@i, c))), false, 1, 2)");
+	}
+
+	@Test
+	public void testRewriteContaining() {
+		assertRewriteResult("(<s/> containing 'a') (<s/> containing 'a')", "REP(POSFILTER(TAGS(s), TERM(contents%word@i, a), CONTAINING), 2, 2)");
+	}
+
+	@Test
+	public void testRewriteProblematicNegativeClauses() {
+		assertRewriteResult("'b' [word != 'a']", "POSFILTER(EXPAND(TERM(contents%word@i, b), false, 1, 1), TERM(contents%word@i, a), NOTCONTAINING, 1, 0)");
+		assertRewriteResult("'b' [word != 'a']{2}", "POSFILTER(EXPAND(TERM(contents%word@i, b), false, 2, 2), TERM(contents%word@i, a), NOTCONTAINING, 1, 0)");
+		assertRewriteResult("'b' 'c' [word != 'a']{2}", "POSFILTER(SEQ(TERM(contents%word@i, b), EXPAND(TERM(contents%word@i, c), false, 2, 2)), TERM(contents%word@i, a), NOTCONTAINING, 2, 0)");
+		assertRewriteResult("[word != 'a']{2} 'b' 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i, b), true, 2, 2), TERM(contents%word@i, c)), TERM(contents%word@i, a), NOTCONTAINING, 0, -2)");
+	}
+
 }

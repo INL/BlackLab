@@ -40,4 +40,26 @@ public class TextPatternTerm extends TextPattern {
 		return translator.term(context, translator.optInsensitive(context, value));
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternTerm) {
+			return value.equals(((TextPatternTerm) obj).value);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 1;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return 1;
+	}
 }

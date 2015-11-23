@@ -36,4 +36,44 @@ public class TextPatternDocLevelAnd extends TextPatternCombiner {
 			return chResults.get(0);
 		return translator.docLevelAnd(context, chResults);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TextPatternDocLevelAnd) {
+			return super.equals(obj);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		int l = clauses.get(0).getMinLength();
+		for (TextPattern clause: clauses) {
+			if (!clause.hasConstantLength() || clause.getMinLength() != l)
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		int n = Integer.MAX_VALUE;
+		for (TextPattern clause: clauses) {
+			n = Math.min(n, clause.getMinLength());
+		}
+		return n;
+	}
+
+	@Override
+	public int getMaxLength() {
+		int n = 0;
+		for (TextPattern clause: clauses) {
+			int l = clause.getMaxLength();
+			if (l < 0)
+				return -1; // infinite
+			n = Math.max(n, l);
+		}
+		return n;
+	}
+
 }
