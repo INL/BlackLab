@@ -240,6 +240,62 @@ class SpansPositionFilter extends BLSpans {
 					}
 				}
 				break;
+			case CONTAINING_AT_START:
+				// Looking for producer hits with a filter hit inside, at the start
+				while (min <= max) {
+					int i = (min + max) / 2;
+					if (filterFixedLength && filter.endPosition(i) > producer.endPosition() + rightAdjust) {
+						// Filter end position to the right of producer hit end position.
+						max = i - 1;
+					} else if (filter.startPosition(i) < producerStart + leftAdjust) {
+						// Filter start position to the left of producer hit start position.
+						min = i + 1;
+					} else {
+						// Can't narrow down the edges any further; do linear search from here.
+						break;
+					}
+				}
+				for (int i = min; i <= max; i++) {
+					if (filter.startPosition(i) == producerStart + leftAdjust && filter.endPosition(i) <= producer.endPosition() + rightAdjust) {
+						if (invert) {
+							// This producer hit is no good; on to the next.
+							invertedMatch = false;
+							break;
+						}
+						// Yes, this producer hit contains this filter hit
+						filterIndex = i; // remember for captured groups
+						return producerStart;
+					}
+				}
+				break;
+			case CONTAINING_AT_END:
+				// Looking for producer hits with a filter hit inside, at the end
+				while (min <= max) {
+					int i = (min + max) / 2;
+					if (filterFixedLength && filter.endPosition(i) > producer.endPosition() + rightAdjust) {
+						// Filter end position to the right of producer hit end position.
+						max = i - 1;
+					} else if (filter.startPosition(i) < producerStart + leftAdjust) {
+						// Filter start position to the left of producer hit start position.
+						min = i + 1;
+					} else {
+						// Can't narrow down the edges any further; do linear search from here.
+						break;
+					}
+				}
+				for (int i = min; i <= max; i++) {
+					if (filter.startPosition(i) >= producerStart + leftAdjust && filter.endPosition(i) == producer.endPosition() + rightAdjust) {
+						if (invert) {
+							// This producer hit is no good; on to the next.
+							invertedMatch = false;
+							break;
+						}
+						// Yes, this producer hit contains this filter hit
+						filterIndex = i; // remember for captured groups
+						return producerStart;
+					}
+				}
+				break;
 			case WITHIN:
 				// Looking for producer hits contained by a filter hit
 				while (min <= max) {

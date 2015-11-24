@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
+import nl.inl.blacklab.search.sequences.TextPatternFilterNGrams;
 import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 /**
@@ -39,7 +41,14 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 		ENDS_AT,
 
 		/** Producer hit exactly matches filter hit */
-		MATCHES
+		MATCHES,
+
+		/** Producer hit contains filter hit, at its end */
+		CONTAINING_AT_START,
+
+		/** Producer hit contains filter hit, at its start*/
+		CONTAINING_AT_END
+
 	}
 
 	/** The hits we're (possibly) looking for */
@@ -109,7 +118,7 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternPositionFilter) {
-			return super.equals((TextPattern)obj) && ((TextPatternPositionFilter)obj).invert == invert;
+			return super.equals(obj) && ((TextPatternPositionFilter)obj).invert == invert;
 		}
 		return false;
 	}
@@ -139,13 +148,21 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 			result.adjustLeft(previousPart.getMinLength());
 			return result;
 		}
-		return null; // not constant length, cannot combine
+		return super.combineWithPrecedingPart(previousPart);
 	}
 
 	@Override
 	public TextPattern rewrite() {
 		TextPattern producer = clauses.get(0).rewrite();
 		TextPattern filter = clauses.get(1).rewrite();
+
+		if (!invert && op != Operation.STARTS_AT && op != Operation.ENDS_AT && producer instanceof TextPatternAnyToken) {
+			// We're filtering "all n-grams of length min-max".
+			// Use the special optimized TextPatternFilterNGrams.
+			TextPatternAnyToken tp = (TextPatternAnyToken)producer;
+			return new TextPatternFilterNGrams(filter, op, tp.getMinLength(), tp.getMaxLength());
+		}
+
 		if (producer != clauses.get(0) || filter != clauses.get(1)) {
 			TextPatternPositionFilter result = new TextPatternPositionFilter(producer, filter, op, invert);
 			result.leftAdjust = leftAdjust;
@@ -153,6 +170,11 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 			return result;
 		}
 		return this;
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + op.hashCode() + (invert ? 13 : 0) + leftAdjust * 31 + rightAdjust * 37;
 	}
 
 }

@@ -30,6 +30,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternTranslator;
+import nl.inl.blacklab.search.sequences.SpanQueryFilterNGrams;
 import nl.inl.blacklab.search.sequences.SpanQueryExpansion;
 import nl.inl.blacklab.search.sequences.SpanQueryRepetition;
 import nl.inl.blacklab.search.sequences.SpanQuerySequence;
@@ -143,6 +144,11 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		SpanQueryExpansion spanQueryExpansion = new SpanQueryExpansion(clause, expandToLeft, min, max);
 		spanQueryExpansion.setIgnoreLastToken(context.alwaysHasClosingToken());
 		return spanQueryExpansion;
+	}
+
+	@Override
+	public SpanQuery filterNGrams(QueryExecutionContext context, SpanQuery clause, Operation op, int min, int max) {
+		return new SpanQueryFilterNGrams(clause, op, min, max);
 	}
 
 	@Override

@@ -198,4 +198,6 @@ public abstract class TextPatternTranslator<T> {
 	 */
 	public abstract T captureGroup(T clause, String name);
 
+	public abstract T filterNGrams(QueryExecutionContext context, T translate, Operation op, int min, int max);
+
 }

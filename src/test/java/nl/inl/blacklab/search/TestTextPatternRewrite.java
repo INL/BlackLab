@@ -17,11 +17,11 @@ package nl.inl.blacklab.search;
 
 import java.io.StringReader;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TestTextPatternRewrite {
 
@@ -241,11 +241,17 @@ public class TestTextPatternRewrite {
 	public void testRewriteTags() {
 		assertRewriteResult("<s/> containing 'a' 'b'", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), CONTAINING)");
 		assertRewriteResult("<s> []* 'a' 'b' []* </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), CONTAINING)");
-		assertRewriteResult("<s> 'a' 'b' []* </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), STARTS_AT)");
-		assertRewriteResult("<s> []* 'a' 'b' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), ENDS_AT)");
+		assertRewriteResult("<s> 'a' 'b' []* </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), CONTAINING_AT_START)");
+		assertRewriteResult("<s> []* 'a' 'b' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), CONTAINING_AT_END)");
 		assertRewriteResult("<s> 'a' 'b' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), MATCHES)");
 		assertRewriteResult("<s> ('a' 'b') 'c' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i, a), SEQ(TERM(contents%word@i, b), TERM(contents%word@i, c))), MATCHES)");
 		assertRewriteResult("<s test='1'> 'a' </s>", "POSFILTER(TAGS(s, test=1), TERM(contents%word@i, a), MATCHES)");
+	}
+
+	@Test
+	public void testRewriteNGramFilter() {
+		assertRewriteResult("[]{2,4} containing 'a' 'b'", "FILTERNGRAMS(SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), CONTAINING, 2, 4)");
+		assertRewriteResult("[]{1,2} within 'a' 'b' 'c'", "FILTERNGRAMS(SEQ(TERM(contents%word@i, a), SEQ(TERM(contents%word@i, b), TERM(contents%word@i, c))), WITHIN, 1, 2)");
 	}
 
 }

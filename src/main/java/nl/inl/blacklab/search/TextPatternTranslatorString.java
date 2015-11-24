@@ -64,7 +64,7 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	@Override
 	public String tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
 		if (attr != null && attr.size() > 0)
-			return "TAGS(" + elementName + (attr == null ? "-" : ", " + StringUtil.join(attr)) + ")";
+			return "TAGS(" + elementName + ", " + StringUtil.join(attr) + ")";
 		return "TAGS(" + elementName + ")";
 	}
 
@@ -104,6 +104,11 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	@Override
 	public String expand(QueryExecutionContext context, String clause, boolean expandToLeft, int min, int max) {
 		return "EXPAND(" + clause + ", " + expandToLeft + ", " + min + ", " + max + ")";
+	}
+
+	@Override
+	public String filterNGrams(QueryExecutionContext context, String clause, Operation op, int min, int max) {
+		return "FILTERNGRAMS(" + clause + ", " + op + ", " + min + ", " + max + ")";
 	}
 
 	@Override

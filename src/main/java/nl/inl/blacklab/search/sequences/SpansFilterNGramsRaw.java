@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
@@ -27,15 +28,13 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Expands the source spans to the left and right by the given ranges.
+ * Expands the source spans to the left and right to form N-grams.
  *
- * This is used to support sequences including subsequences of completely unknown tokens (like
- * <code>"apple" []{2,4} "pear"</code> to find apple and pear with 2 to 4 tokens in between).
+ * This is used to speed up queries of the form
+ * <code>[]{2,4} containing "a" "b"</code>: N-grams of certain lengths containing some construct.
  *
- * Note that this class will generate all possible expansions, so if you call it with left-expansion
- * of between 2 to 4 tokens, it will generate 3 new hits for every hit from the source spans: one
- * hit with 2 more tokens to the left, one hit with 3 more tokens to the left, and one hit with 4
- * more tokens to the left.
+ * Note that this class will generate all possible N-grams, so it will likely produce multiple
+ * N-gram hits per source hit.
  *
  * Note that the hits coming out of this class may contain duplicates and will not always be
  * properly sorted. Both are undesirable; the user doesn't want to see duplicates, and Lucene
@@ -45,7 +44,7 @@ import org.apache.lucene.search.spans.Spans;
  * Therefore, objects of this class should be wrapped in a class that sort the matches per document
  * and eliminates duplicates (hence the 'raw' in the name - not suitable for consumption yet).
  */
-class SpansExpansionRaw extends BLSpans {
+class SpansFilterNGramsRaw extends BLSpans {
 
 	/** The clause to expand */
 	private BLSpans clause;
@@ -54,10 +53,10 @@ class SpansExpansionRaw extends BLSpans {
 	private int currentDoc = -1;
 
 	/** Current startPosition() in the clause */
-	private int clauseStart = -1;
+	private int srcStart = -1;
 
-	/** Whether to expand to left (true) or right (false) */
-	private boolean expandToLeft;
+	/** How to expand the hits */
+	private Operation op;
 
 	/** Minimum number of tokens to expand */
 	private int min;
@@ -65,14 +64,14 @@ class SpansExpansionRaw extends BLSpans {
 	/** Maximum number of tokens to expand (-1 = infinite) */
 	private int max;
 
+	/** End of the current source hit */
+	private int srcEnd = -1;
+
 	/** Start of the current expanded hit */
 	private int start = -1;
 
-	/** End of the current expanded hit */
+	/** Start of the current expanded hit */
 	private int end = -1;
-
-	/** Number of expansion steps left to do for current clause hit */
-	private int expandStepsLeft = 0;
 
 	/** For which document do we have the token length? */
 	private int tokenLengthDocId = -1;
@@ -88,15 +87,15 @@ class SpansExpansionRaw extends BLSpans {
 
 	private boolean alreadyAtFirstHit;
 
-	public SpansExpansionRaw(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
+	public SpansFilterNGramsRaw(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause, Operation op, int min, int max) {
 		subtractFromLength = ignoreLastToken ? 1 : 0;
-		if (!expandToLeft) {
+		if (op != Operation.CONTAINING_AT_END && op != Operation.ENDS_AT && op != Operation.MATCHES) {
 			// We need to know document length to properly do expansion to the right
 			// TODO: cache this in Searcher..?
 			lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		}
 		this.clause = BLSpansWrapper.optWrap(clause);
-		this.expandToLeft = expandToLeft;
+		this.op = op;
 		this.min = min;
 		this.max = max;
 		if (max != -1 && min > max)
@@ -132,9 +131,9 @@ class SpansExpansionRaw extends BLSpans {
 				currentDoc = clause.nextDoc();
 				if (currentDoc == NO_MORE_DOCS)
 					return NO_MORE_DOCS;
-				clauseStart = start = end = -1;
-				clauseStart = goToNextClauseSpan();
-			} while (clauseStart == NO_MORE_POSITIONS);
+				srcStart = srcEnd = start = end = -1;
+				goToNextClauseSpan();
+			} while (start == NO_MORE_POSITIONS);
 			alreadyAtFirstHit = true;
 		}
 		return currentDoc;
@@ -146,30 +145,77 @@ class SpansExpansionRaw extends BLSpans {
 			alreadyAtFirstHit = false;
 			return start;
 		}
-		if (currentDoc == NO_MORE_DOCS)
-			return NO_MORE_POSITIONS;
-		if (clauseStart == NO_MORE_POSITIONS)
+		if (currentDoc == NO_MORE_DOCS || srcStart == NO_MORE_POSITIONS)
 			return NO_MORE_POSITIONS;
 
-		if (expandStepsLeft > 0) {
-			expandStepsLeft--;
-			if (expandToLeft) {
-				start--;
-
-				// Valid expansion?
-				if (start >= 0)
-					return start;
-
-				// Can't finish the expansion because we're at the start
-				// of the document; go to next hit.
-			} else {
-				end++;
-				return start;
+		// Is there another n-gram for this source hit?
+		boolean atValidNGram = false;
+		switch (op) {
+		case CONTAINING:
+			end++;
+			if (end - start > max || end > tokenLength) {
+				// N-gram became too long, or we went past end of document.
+				// On to next start position.
+				start++;
+				if (start > srcStart) {
+					// No more start positions for N-gram; done with this source hit.
+					break;
+				}
+				end = Math.max(srcEnd, start + min); // minimum length still containing source hit
+				if (end > tokenLength) {
+					// Smallest n-gram at start position went past the end of the document.
+					// Done with this source hit.
+					break;
+				}
 			}
-		}
+			atValidNGram = true;
+			break;
+		case CONTAINING_AT_START:
+			end++;
+			if (end - start > max || end > tokenLength) {
+				// N-gram became too long, or we went past end of document.
+				// We're done with this source hit.
+				break;
+			}
+			atValidNGram = true;
+			break;
+		case CONTAINING_AT_END:
+			// On to next start position.
+			start++;
+			if (end - start < min || start > srcStart) {
+				// No more start positions for N-gram; done with this source hit.
+				break;
+			}
+			atValidNGram = true;
+			break;
+		case WITHIN:
+			end++;
+			if (end - start > max || end > srcEnd) {
+				// N-gram became too long, or we went past end of source hit.
+				// On to next start position.
+				start++;
+				if (start > srcEnd - min) {
+					// No more start positions for N-gram; done with this source hit.
+					break;
+				}
+				end = start + min;
+			}
+			atValidNGram = true;
+			break;
 
-		clauseStart = goToNextClauseSpan();
-		return clauseStart;
+		case MATCHES:
+			// Matches only produces one hit per source hit,
+			// so we're always done with the source hit here.
+			break;
+
+		case STARTS_AT:
+		case ENDS_AT:
+			throw new UnsupportedOperationException("STARTS_AT and ENDS_AT not implemented for SpansExpandToNGram");
+		}
+		if (atValidNGram)
+			return start;
+
+		return goToNextClauseSpan();
 	}
 
 	@Override
@@ -180,9 +226,9 @@ class SpansExpansionRaw extends BLSpans {
 				currentDoc = clause.advance(doc);
 				if (currentDoc != NO_MORE_DOCS) {
 					while (true) {
-						clauseStart = start = end = -1;
-						clauseStart = goToNextClauseSpan();
-						if (clauseStart != NO_MORE_POSITIONS) {
+						srcStart = srcEnd = start = end = -1;
+						goToNextClauseSpan();
+						if (start != NO_MORE_POSITIONS) {
 							alreadyAtFirstHit = true;
 							return currentDoc;
 						}
@@ -209,52 +255,93 @@ class SpansExpansionRaw extends BLSpans {
 	 * @throws IOException
 	 */
 	private int goToNextClauseSpan() throws IOException {
-		clauseStart = clause.nextStartPosition();
-		if (clauseStart == NO_MORE_POSITIONS) {
-			start = end = NO_MORE_POSITIONS;
+		srcStart = clause.nextStartPosition();
+		if (srcStart == NO_MORE_POSITIONS) {
+			start = end = srcEnd = NO_MORE_POSITIONS;
 			return NO_MORE_POSITIONS;
 		}
 		while (true) {
-			// Attempt to do the initial expansion and reset the counter
-			start = clauseStart;
-			end = clause.endPosition();
-			if (expandToLeft)
-				start -= min;
-			else
-				end += min;
-
-			// What's the maximum we could still expand from here?
-			int maxExpandSteps;
-			if (expandToLeft) {
-				// Can only expand to the left until token 0.
-				maxExpandSteps = start;
-			} else {
-				// Can only expand to the right until last token in document.
-
+			// Determine limits and set to initial n-gram
+			srcEnd = clause.endPosition();
+			switch (op) {
+			case MATCHES:
+				int len = srcEnd - srcStart;
+				if (len >= min && (max == -1 || len <= max)) {
+					// Only one n-gram
+					start = srcStart;
+					end = srcEnd;
+					return start;
+				}
+				// Hit length doesn't match, so no n-grams.
+				break;
+			case CONTAINING:
 				// Do we know this document's length already?
 				if (currentDoc != tokenLengthDocId) {
 					// No, determine length now
 					tokenLengthDocId = currentDoc;
 					tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - subtractFromLength;
 				}
-				maxExpandSteps = tokenLength - end;
-			}
-			if (max == -1) {
-				// Infinite expansion; just use max
-				expandStepsLeft = maxExpandSteps;
-			}
-			else {
-				// Limited expansion; clamp by maximum
-				expandStepsLeft = Math.min(max - min, maxExpandSteps);
-			}
 
-			// Valid expansion?   [shouldn't be necessary anymore because we calculated max]
-			if (expandStepsLeft >= 0)
-				return start; // Yes, return
+				// First n-gram containing source hit: minimum start position,
+				// smallest possible length
+				start = srcEnd - max;
+				if (start < 0)
+					start = 0;
+				end = Math.max(srcEnd, start + min); // minimum length still containing source hit
+				if (end <= start + max && end <= tokenLength) {
+					// Valid n-gram containing hit.
+					return start;
+				}
+				// First n-gram would go past end of document, so no n-grams.
+				break;
+			case CONTAINING_AT_START:
+				// Do we know this document's length already?
+				if (currentDoc != tokenLengthDocId) {
+					// No, determine length now
+					tokenLengthDocId = currentDoc;
+					tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - subtractFromLength;
+				}
+
+				// First n-gram containing source hit: minimum start position,
+				// smallest possible length
+				start = srcStart;
+				end = Math.max(srcEnd, start + min); // minimum length still containing source hit
+				if (end <= start + max && end <= tokenLength) {
+					// Valid n-gram containing hit.
+					return start;
+				}
+				// First n-gram would go past end of document, so no n-grams.
+				break;
+			case CONTAINING_AT_END:
+				// First n-gram containing source hit: minimum start position, maximum length.
+				start = srcEnd - max;
+				if (start < 0)
+					start = 0;
+				end = srcEnd;
+				if (start <= srcStart) {
+					// Valid n-gram containing hit.
+					return start;
+				}
+				// Hit too large to be contained by specified n-grams.
+				break;
+			case WITHIN:
+				// First n-gram within source hit: starts at source start, minimum length
+				start = srcStart;
+				end = start + min;
+				if (end <= srcEnd) {
+					// n-gram is contained within hit, so valid.
+					return start;
+				}
+				// Minimum length n-gram doesn't fit in hit, so no n-grams.
+				break;
+			case STARTS_AT:
+			case ENDS_AT:
+				throw new UnsupportedOperationException("STARTS_AT and ENDS_AT not implemented for SpansExpandToNGram");
+			}
 
 			// No, try the next hit, if there is one
 			if (nextStartPosition() == NO_MORE_POSITIONS) {
-				start = end = NO_MORE_POSITIONS;
+				start = end = srcStart = srcEnd = NO_MORE_POSITIONS;
 				return NO_MORE_POSITIONS; // No hits left, we're done
 			}
 		}
@@ -272,42 +359,44 @@ class SpansExpansionRaw extends BLSpans {
 
 	@Override
 	public String toString() {
-		return "SpansExpansion(" + clause + ", " + expandToLeft + ", " + min + ", " + max + ")";
+		return "SpansExpansion(" + clause + ", " + op + ", " + min + ", " + max + ")";
 	}
 
 	@Override
 	public boolean hitsEndPointSorted() {
-		return clause.hitsEndPointSorted() && (expandToLeft || !expandToLeft && min == max);
+		return clause.hitsEndPointSorted() &&
+			(op == Operation.CONTAINING_AT_END || op == Operation.ENDS_AT || op == Operation.MATCHES || min == max);
 	}
 
 	@Override
 	public boolean hitsStartPointSorted() {
-		return clause.hitsStartPointSorted() && (!expandToLeft || expandToLeft && min == max);
+		return clause.hitsStartPointSorted() &&
+			(op == Operation.CONTAINING_AT_START || op == Operation.STARTS_AT || op == Operation.MATCHES || min == max);
 	}
 
 	@Override
 	public boolean hitsAllSameLength() {
-		return clause.hitsAllSameLength() && min == max;
+		return min == max;
 	}
 
 	@Override
 	public int hitsLength() {
-		return hitsAllSameLength() ? clause.hitsLength() + min : -1;
+		return min == max ? min : -1;
 	}
 
 	@Override
 	public boolean hitsHaveUniqueStart() {
-		return clause.hitsHaveUniqueStart() && min == max;
+		return false;
 	}
 
 	@Override
 	public boolean hitsHaveUniqueEnd() {
-		return clause.hitsHaveUniqueEnd() && min == max;
+		return false;
 	}
 
 	@Override
 	public boolean hitsAreUnique() {
-		return clause.hitsAreUnique() && min == max;
+		return false;
 	}
 
 	@Override

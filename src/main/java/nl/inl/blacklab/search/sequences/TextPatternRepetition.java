@@ -152,7 +152,7 @@ public class TextPatternRepetition extends TextPattern {
 				return new TextPatternRepetition(base, 1 + min, 1 + max);
 			}
 		}
-		return null;
+		return super.combineWithPrecedingPart(previousPart);
 	}
 
 	@Override

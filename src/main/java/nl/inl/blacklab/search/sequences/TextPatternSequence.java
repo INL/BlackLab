@@ -286,11 +286,11 @@ public class TextPatternSequence extends TextPatternAndNot {
 										if (endAny) {
 											op = Operation.CONTAINING;
 										} else {
-											op = Operation.ENDS_AT;
+											op = Operation.CONTAINING_AT_END;
 										}
 									} else {
 										if (endAny) {
-											op = Operation.STARTS_AT;
+											op = Operation.CONTAINING_AT_START;
 										} else {
 											op = Operation.MATCHES;
 										}
