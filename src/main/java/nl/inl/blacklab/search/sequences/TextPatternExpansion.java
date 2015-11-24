@@ -108,4 +108,9 @@ public class TextPatternExpansion extends TextPattern {
 		return this;
 	}
 
+	@Override
+	public int hashCode() {
+		return clause.hashCode() + 1023 * (expandToLeft ? 1 : 0) + 13 * min + 31 * max;
+	}
+
 }

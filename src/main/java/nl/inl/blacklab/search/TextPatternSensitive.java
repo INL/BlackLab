@@ -79,4 +79,9 @@ public class TextPatternSensitive extends TextPattern {
 	public int getMaxLength() {
 		return input.getMaxLength();
 	}
+
+	@Override
+	public int hashCode() {
+		return (caseSensitive ? 13 : 0) + (diacriticsSensitive ? 31 : 0) + input.hashCode();
+	}
 }

@@ -58,7 +58,7 @@ public class TextPatternContaining extends TextPatternCombiner {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternContaining) {
-			return super.equals((TextPattern)obj) && ((TextPatternContaining)obj).invert == invert;
+			return super.equals(obj) && ((TextPatternContaining)obj).invert == invert;
 		}
 		return false;
 	}
@@ -76,6 +76,11 @@ public class TextPatternContaining extends TextPatternCombiner {
 	@Override
 	public int getMaxLength() {
 		return clauses.get(0).getMaxLength();
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + (invert ? 13 : 0);
 	}
 
 }

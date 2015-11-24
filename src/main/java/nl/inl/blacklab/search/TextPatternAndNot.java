@@ -208,4 +208,9 @@ public class TextPatternAndNot extends TextPattern {
 			return 1;
 		return include.get(0).getMaxLength();
 	}
+
+	@Override
+	public int hashCode() {
+		return include.hashCode() + exclude.hashCode();
+	}
 }

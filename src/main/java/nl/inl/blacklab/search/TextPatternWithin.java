@@ -77,4 +77,8 @@ public class TextPatternWithin extends TextPatternCombiner {
 		return clauses.get(0).getMaxLength();
 	}
 
+	@Override
+	public int hashCode() {
+		return super.hashCode() + (invert ? 13 : 0);
+	}
 }

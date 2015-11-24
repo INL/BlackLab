@@ -77,4 +77,9 @@ public class TextPatternEdge extends TextPatternCombiner {
 		return clauses.get(0);
 	}
 
+	@Override
+	public int hashCode() {
+		return super.hashCode() + (rightEdge ? 13 : 0);
+	}
+
 }

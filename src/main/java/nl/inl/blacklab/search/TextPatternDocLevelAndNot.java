@@ -69,4 +69,9 @@ public class TextPatternDocLevelAndNot extends TextPattern {
 		return include.getMaxLength();
 	}
 
+	@Override
+	public int hashCode() {
+		return include.hashCode() + exclude.hashCode();
+	}
+
 }

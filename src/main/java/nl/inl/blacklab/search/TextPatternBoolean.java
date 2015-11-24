@@ -167,8 +167,6 @@ public class TextPatternBoolean extends TextPattern {
 		return n;
 	}
 
-
-
 	@Override
 	public TextPattern rewrite() {
 
@@ -176,4 +174,11 @@ public class TextPatternBoolean extends TextPattern {
 
 		return this;
 	}
+
+	@Override
+	public int hashCode() {
+		return must.hashCode() + should.hashCode() + mustNot.hashCode();
+	}
+
+
 }

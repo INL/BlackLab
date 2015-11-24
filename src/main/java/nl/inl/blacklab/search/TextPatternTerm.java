@@ -62,4 +62,9 @@ public class TextPatternTerm extends TextPattern {
 	public int getMaxLength() {
 		return 1;
 	}
+
+	@Override
+	public int hashCode() {
+		return value.hashCode();
+	}
 }

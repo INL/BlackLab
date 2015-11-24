@@ -74,4 +74,9 @@ public class TextPatternTags extends TextPattern {
 		return elementName;
 	}
 
+	@Override
+	public int hashCode() {
+		return elementName.hashCode() + attr.hashCode();
+	}
+
 }

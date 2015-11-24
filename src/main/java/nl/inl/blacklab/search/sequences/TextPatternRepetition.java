@@ -179,4 +179,9 @@ public class TextPatternRepetition extends TextPattern {
 		return max < 0 ? -1 : base.getMaxLength() * max;
 	}
 
+	@Override
+	public int hashCode() {
+		return base.hashCode() + 13 * min + 31 * max;
+	}
+
 }

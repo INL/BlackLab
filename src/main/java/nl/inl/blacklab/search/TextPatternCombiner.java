@@ -93,4 +93,9 @@ public abstract class TextPatternCombiner extends TextPattern {
 		}
 		return false;
 	}
+
+	@Override
+	public int hashCode() {
+		return clauses.hashCode();
+	}
 }

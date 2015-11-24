@@ -73,4 +73,9 @@ public class TextPatternCaptureGroup extends TextPattern {
 	public int getMaxLength() {
 		return input.getMaxLength();
 	}
+
+	@Override
+	public int hashCode() {
+		return input.hashCode() + groupName.hashCode();
+	}
 }

@@ -74,5 +74,10 @@ public class TextPatternProperty extends TextPattern {
 		return input.getMaxLength();
 	}
 
+	@Override
+	public int hashCode() {
+		return input.hashCode() + propertyName.hashCode();
+	}
+
 
 }

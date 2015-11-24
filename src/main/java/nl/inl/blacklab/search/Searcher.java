@@ -35,35 +35,6 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.LockObtainFailedException;
-import org.apache.lucene.util.Bits;
-
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
@@ -92,6 +63,35 @@ import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
+
+import org.apache.log4j.Logger;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.LockObtainFailedException;
+import org.apache.lucene.util.Bits;
 
 /**
  * The main interface into the BlackLab library. The Searcher object is instantiated with an open
@@ -1762,6 +1762,7 @@ public class Searcher {
 			indexPath = Files.readSymbolicLink(indexPath);
 		}
 		Directory indexLuceneDir = FSDirectory.open(indexPath);
+		@SuppressWarnings("resource")
 		Analyzer defaultAnalyzer = analyzer == null ? new BLDutchAnalyzer() : analyzer;
 		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);

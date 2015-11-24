@@ -237,6 +237,7 @@ public abstract class TextPattern implements Cloneable {
 
 	public abstract int getMaxLength();
 
-
+	@Override
+	public abstract int hashCode();
 
 }

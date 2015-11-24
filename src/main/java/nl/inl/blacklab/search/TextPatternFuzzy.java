@@ -70,4 +70,9 @@ public class TextPatternFuzzy extends TextPattern {
 		return 1;
 	}
 
+	@Override
+	public int hashCode() {
+		return value.hashCode() + 13 * maxEdits + 31 * prefixLength;
+	}
+
 }

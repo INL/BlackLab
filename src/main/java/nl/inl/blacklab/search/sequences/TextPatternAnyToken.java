@@ -119,4 +119,9 @@ public class TextPatternAnyToken extends TextPattern {
 	public int getMaxLength() {
 		return max;
 	}
+
+	@Override
+	public int hashCode() {
+		return min + 31 * max;
+	}
 }
