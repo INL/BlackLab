@@ -37,14 +37,14 @@ import java.util.HashMap;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
-import nl.inl.blacklab.search.TextPatternContaining;
 import nl.inl.blacklab.search.TextPatternEdge;
 import nl.inl.blacklab.search.TextPatternNot;
 import nl.inl.blacklab.search.TextPatternOr;
+import nl.inl.blacklab.search.TextPatternPositionFilter;
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternTags;
-import nl.inl.blacklab.search.TextPatternWithin;
 import nl.inl.blacklab.search.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
@@ -183,6 +183,7 @@ TextPattern complexQuery():
 {
     TextPattern a = null, b = null;
     Token op = null;
+    Operation oper = Operation.CONTAINING;
 } 
 {
     a=simpleQuery() [ op=queryOperator() b=complexQuery() ]
@@ -191,11 +192,10 @@ TextPattern complexQuery():
             return a;
         if (op.toString().equals("within")) {
             // a within b
-            return new TextPatternWithin(a, b);
+            oper = Operation.WITHIN;
         }
         
-        // a containing b
-        return new TextPatternContaining(a, b);
+        return new TextPatternPositionFilter(a, b, oper);
     }
 }
 

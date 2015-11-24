@@ -218,8 +218,20 @@
 						<goals>
 							<goal>javacc</goal>
 						</goals>
+						<configuration>
+        					<sourceDirectory>src/main/javacc</sourceDirectory>
+        					<outputDirectory>src/main/java</outputDirectory>
+        					<timestampDirectory>target/generated-sources/javacc-timestamp</timestampDirectory>
+        				</configuration>
 					</execution>
 				</executions>
+				<dependencies>
+			        <dependency>
+				        <groupId>net.java.dev.javacc</groupId>
+				        <artifactId>javacc</artifactId>
+				        <version>4.0</version>
+				    </dependency>
+			    </dependencies>
 			</plugin>
 
 			<plugin>
