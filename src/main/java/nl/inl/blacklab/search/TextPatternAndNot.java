@@ -137,7 +137,9 @@ public class TextPatternAndNot extends TextPattern {
 				List<TextPattern> clPos = isNot ? rewrittenNotCl : rewrittenCl;
 				List<TextPattern> clNeg = isNot ? rewrittenCl : rewrittenNotCl;
 				TextPattern rewritten = child.rewrite();
-				if (!(rewritten instanceof TextPatternAndNot) && rewritten.isNegativeOnly()) {
+				String className = rewritten.getClass().getSimpleName();
+				boolean isTPAndNot = className.equals("TextPatternAndNot") || className.equals("TextPatternAnd"); // TODO: Ugly, but TPSeq derives from TPAndNot...
+				if (!isTPAndNot && rewritten.isNegativeOnly()) {
 					// "Switch sides": invert the clause, and
 					// swap the lists we add clauses to.
 					rewritten = rewritten.inverted();
@@ -146,7 +148,7 @@ public class TextPatternAndNot extends TextPattern {
 					clNeg = temp;
 					anyRewritten = true;
 				}
-				if (rewritten instanceof TextPatternAndNot) {
+				if (isTPAndNot) {
 					// Flatten.
 					// Child AND operation we want to flatten into this AND operation.
 					// Replace the child, incorporating its children into this AND operation.
