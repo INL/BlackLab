@@ -333,6 +333,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				propStartTag.addValue(
 						"@" + name.toLowerCase() + "__" + value.toLowerCase(),
 						0);
+				propStartTag.addPayload(null);
 			}
 		}
 
