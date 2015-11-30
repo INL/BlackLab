@@ -55,7 +55,8 @@ public class BLSpanOrQuery extends SpanOrQuery {
 	/** Construct a BLSpanOrQuery merging the provided clauses. */
 	public BLSpanOrQuery(SpanQuery... clauses) {
 		super(clauses);
-		field = getField();
+		if (clauses.length > 0)
+			field = clauses[0].getField();
 	}
 
 	@Override
