@@ -44,7 +44,10 @@ public class SpanQueryCaptureGroup extends SpanQueryBase {
 
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		return new SpansCaptureGroup(clauses[0].getSpans(context, acceptDocs, termContexts), name);
+		Spans spans = clauses[0].getSpans(context, acceptDocs, termContexts);
+		if (spans == null)
+			return null;
+		return new SpansCaptureGroup(spans, name);
 	}
 
 	@Override

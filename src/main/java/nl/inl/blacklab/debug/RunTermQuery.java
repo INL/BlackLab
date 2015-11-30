@@ -9,9 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
-
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -30,6 +27,9 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
+
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 
 public class RunTermQuery {
 
@@ -215,7 +215,7 @@ public class RunTermQuery {
 		boolean hitsFound = false;
 		for (LeafReaderContext arc: reader.leaves()) {
 			Spans spans = spanQuery.getSpans(arc, arc.reader().getLiveDocs(), termContexts);
-			while(spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+			while(spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 				while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
 					int doc = arc.docBase + spans.docID();
 					System.out.println(String.format("  doc %7d, pos %4d-%4d", doc, spans.startPosition(), spans.endPosition()));
@@ -231,7 +231,7 @@ public class RunTermQuery {
 		LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
 		Spans spans = spanQuery.getSpans(scrw.getContext(), scrw.getLiveDocs(), termContexts);
 		hitsFound = false;
-		while(spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+		while(spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 			while(spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
 				System.out.println(String.format("  doc %7d, pos %4d-%4d", spans.docID(), spans.startPosition(), spans.endPosition()));
 				hitsFound = true;

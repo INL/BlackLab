@@ -107,7 +107,11 @@ public class SpanQueryDocLevelAndNot extends SpanQuery {
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term, TermContext> termContexts)  throws IOException {
 		Spans includespans = clauses[0].getSpans(context, acceptDocs, termContexts);
+		if (includespans == null)
+			return null;
 		Spans excludespans = clauses[1].getSpans(context, acceptDocs, termContexts);
+		if (excludespans == null)
+			return includespans;
 		Spans combi = new SpansDocLevelAndNot(includespans, excludespans);
 		return combi;
 	}

@@ -63,9 +63,9 @@ public class SpanQueryTags extends SpanQueryBase {
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		Spans startTags = clauses[0].getSpans(context, acceptDocs, termContexts);
 		Spans endTags = clauses[1].getSpans(context, acceptDocs, termContexts);
-		Spans result = new SpansTags(startTags, endTags);
-
-		return result;
+		if (startTags == null || endTags == null)
+			return null;
+		return new SpansTags(startTags, endTags);
 	}
 
 	@Override

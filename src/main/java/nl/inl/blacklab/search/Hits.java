@@ -658,22 +658,24 @@ public class Hits extends AbstractList<Hit> {
 								currentSourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(null, null, termContexts));
 							}
 
-							// Update the hit query context with our new spans,
-							// and notify the spans of the hit query context
-							// (TODO: figure out if we need to call setHitQueryContext()
-							//    for each segment or not; if it's just about capture groups
-							//    registering themselves, we only need that for the first Spans.
-							//    But it's probably required for backreferences, etc. anyway,
-							//    and there won't be that many segments, so it's probably ok)
-							hitQueryContext.setSpans(currentSourceSpans);
-							currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
-							if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-								capturedGroups = new HashMap<Hit, Span[]>();
-							}
+							if (currentSourceSpans != null) {
+								// Update the hit query context with our new spans,
+								// and notify the spans of the hit query context
+								// (TODO: figure out if we need to call setHitQueryContext()
+								//    for each segment or not; if it's just about capture groups
+								//    registering themselves, we only need that for the first Spans.
+								//    But it's probably required for backreferences, etc. anyway,
+								//    and there won't be that many segments, so it's probably ok)
+								hitQueryContext.setSpans(currentSourceSpans);
+								currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
+								if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
+									capturedGroups = new HashMap<Hit, Span[]>();
+								}
 
-							int doc = currentSourceSpans.nextDoc();
-							if (doc == DocIdSetIterator.NO_MORE_DOCS)
-								currentSourceSpans = null; // no matching docs in this segment, try next
+								int doc = currentSourceSpans.nextDoc();
+								if (doc == DocIdSetIterator.NO_MORE_DOCS)
+									currentSourceSpans = null; // no matching docs in this segment, try next
+							}
 						}
 
 						// Advance to next hit

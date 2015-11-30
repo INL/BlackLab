@@ -63,7 +63,10 @@ public class SpanQueryRepetition extends SpanQueryBase {
 
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
-		return new SpansRepetition(clauses[0].getSpans(context, acceptDocs, termContexts), min, max);
+		Spans spans = clauses[0].getSpans(context, acceptDocs, termContexts);
+		if (spans == null)
+			return null;
+		return new SpansRepetition(spans, min, max);
 	}
 
 	@Override

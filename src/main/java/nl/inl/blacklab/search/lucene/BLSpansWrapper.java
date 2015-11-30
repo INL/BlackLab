@@ -76,6 +76,8 @@ public class BLSpansWrapper extends BLSpans {
 	}
 
 	public static BLSpans optWrap(Spans spans) {
+		if (spans == null)
+			return null;
 		if (spans instanceof BLSpans)
 			return (BLSpans)spans;
 		return new BLSpansWrapper(spans);

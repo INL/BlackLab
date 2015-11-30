@@ -82,6 +82,8 @@ public class BLSpanTermQuery extends SpanQuery {
 	public Spans getSpans(final LeafReaderContext context, Bits acceptDocs,
 			Map<Term, TermContext> termContexts) throws IOException {
 		Spans spans = q.getSpans(context, acceptDocs, termContexts);
+		if (spans == null)
+			return null;
 		return new BLSpansWrapper(spans);
 	}
 

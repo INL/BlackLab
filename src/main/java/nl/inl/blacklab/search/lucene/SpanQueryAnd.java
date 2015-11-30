@@ -49,7 +49,10 @@ public class SpanQueryAnd extends SpanQueryBase {
 		Spans combi = clauses[0].getSpans(context, acceptDocs, termContexts);
 		for (int i = 1; i < clauses.length; i++) {
 			Spans si = clauses[i].getSpans(context, acceptDocs, termContexts);
-			combi = new SpansAnd(combi, si);
+			if (combi == null)
+				combi = si;
+			else
+				combi = new SpansAnd(combi, si);
 		}
 
 		return combi;

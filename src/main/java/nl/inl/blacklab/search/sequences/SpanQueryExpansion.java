@@ -79,7 +79,10 @@ public class SpanQueryExpansion extends SpanQueryBase {
 
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
-		BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses[0].getField(), clauses[0].getSpans(context, acceptDocs, termContexts), expandToLeft, min, max);
+		Spans spansSource = clauses[0].getSpans(context, acceptDocs, termContexts);
+		if (spansSource == null)
+			return null;
+		BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses[0].getField(), spansSource, expandToLeft, min, max);
 
 		// Note: the spans coming from SpansExpansion are not sorted properly.
 		// Before returning the final spans, we wrap it in a per-document (start-point) sorter.

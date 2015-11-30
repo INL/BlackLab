@@ -47,9 +47,10 @@ public class SpanQueryEdge extends SpanQueryBase {
 
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans result = new SpansEdge(clauses[0].getSpans(context, acceptDocs, termContexts), rightEdge);
-
-		return result;
+		Spans spans = clauses[0].getSpans(context, acceptDocs, termContexts);
+		if (spans == null)
+			return null;
+		return new SpansEdge(spans, rightEdge);
 	}
 
 	@Override

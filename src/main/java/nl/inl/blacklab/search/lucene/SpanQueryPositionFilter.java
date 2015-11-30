@@ -95,9 +95,12 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		Spans spansProd = clauses[0].getSpans(context, acceptDocs, termContexts);
+		if (spansProd == null)
+			return null;
 		Spans spansFilter = clauses[1].getSpans(context, acceptDocs, termContexts);
-		Spans result = new SpansPositionFilter(spansProd, spansFilter, op, invert, leftAdjust, rightAdjust);
-		return result;
+		if (spansFilter == null)
+			return spansProd;
+		return new SpansPositionFilter(spansProd, spansFilter, op, invert, leftAdjust, rightAdjust);
 	}
 
 	@Override

@@ -41,6 +41,8 @@ public class SpanQueryUnique extends SpanQuery {
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		Spans srcSpans = src.getSpans(context, acceptDocs, termContexts);
+		if (srcSpans == null)
+			return null;
 		return new SpansUnique(srcSpans);
 	}
 

@@ -60,8 +60,12 @@ public class SpanQuerySequence extends SpanQueryBase {
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
 		BLSpans combi = BLSpansWrapper.optWrap(clauses[0].getSpans(context, acceptDocs, termContexts));
+		if (combi == null)
+			return null;
 		for (int i = 1; i < clauses.length; i++) {
 			BLSpans si = BLSpansWrapper.optWrap(clauses[i].getSpans(context, acceptDocs, termContexts));
+			if (si == null)
+				return null;
 
 			// Note: the spans coming from SequenceSpansRaw are not sorted by end point.
 			// This is okay in this loop because combi is used as the left part of the next

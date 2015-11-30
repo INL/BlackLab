@@ -20,9 +20,6 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.QueryExecutionContext;
-
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -30,6 +27,9 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.QueryExecutionContext;
 
 /**
  *
@@ -60,8 +60,9 @@ public class SpanQueryTagsPayload extends SpanQuery {
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		Spans startTags = clause.getSpans(context, acceptDocs, termContexts);
-		Spans result = new SpansTagsPayload(startTags);
-		return result;
+		if (startTags == null)
+			return null;
+		return new SpansTagsPayload(startTags);
 	}
 
 	@Override

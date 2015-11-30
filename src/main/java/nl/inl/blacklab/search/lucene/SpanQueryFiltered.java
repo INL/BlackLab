@@ -41,6 +41,8 @@ public class SpanQueryFiltered extends SpanQueryBase {
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		Spans result = clauses[0].getSpans(context, acceptDocs, termContexts);
+		if (result == null)
+			return null;
 		return new SpansFiltered(result, filter.getDocIdSet(context, acceptDocs));
 	}
 

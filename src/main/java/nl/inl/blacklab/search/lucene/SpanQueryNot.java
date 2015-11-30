@@ -76,9 +76,8 @@ public class SpanQueryNot extends SpanQueryBase {
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
 		SpanQuery query = clauses[0];
-		Spans result = new SpansNot(ignoreLastToken, context.reader(), baseFieldName, query == null ? null : query.getSpans(context, acceptDocs, termContexts));
-
-		return result;
+		Spans spans = query == null ? null : query.getSpans(context, acceptDocs, termContexts);
+		return new SpansNot(ignoreLastToken, context.reader(), baseFieldName, spans);
 	}
 
 	@Override

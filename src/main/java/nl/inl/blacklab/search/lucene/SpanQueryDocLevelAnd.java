@@ -67,7 +67,10 @@ public class SpanQueryDocLevelAnd extends SpanQueryBase {
 		Spans combi = s0;
 		for (int i = 1; i < clauses.length; i++) {
 			Spans si = clauses[i].getSpans(context, acceptDocs, termContexts);
-			combi = new SpansDocLevelAnd(combi, si);
+			if (combi == null)
+				combi = si;
+			else
+				combi = new SpansDocLevelAnd(combi, si);
 		}
 
 		return combi;
