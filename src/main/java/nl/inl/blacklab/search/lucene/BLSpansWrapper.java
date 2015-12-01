@@ -18,11 +18,11 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
-
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
+
+import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 
 
 /**
@@ -100,9 +100,13 @@ public class BLSpansWrapper extends BLSpans {
 			result = (BLSpans)spans;
 		else
 			result = new BLSpansWrapper(spans);
-		if (!result.hitsStartPointSorted() || !result.hitsAreUnique())
-			result = new PerDocumentSortedSpans(result, false, !result.hitsAreUnique());
-		return result;
+		if (result.hitsStartPointSorted()) {
+			if (result.hitsAreUnique()) {
+				return result;
+			}
+			return new SpansUnique(result);
+		}
+		return new PerDocumentSortedSpans(result, false, !result.hitsAreUnique());
 	}
 
 	@Override

@@ -31,17 +31,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.BooleanQuery.TooManyClauses;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
-
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
@@ -56,6 +45,17 @@ import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
+
+import org.apache.log4j.Logger;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.BooleanQuery.TooManyClauses;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 /**
  * Represents a list of Hit objects. Also maintains information about the context (concordance)
@@ -441,7 +441,7 @@ public class Hits extends AbstractList<Hit> {
 	public Hits(Searcher searcher, String concordanceFieldPropName, Spans source) {
 		this(searcher, concordanceFieldPropName);
 
-		currentSourceSpans = BLSpansWrapper.optWrap(source);
+		currentSourceSpans = BLSpansWrapper.optWrapSortUniq(source);
 		try {
 			sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
 		} catch (IOException e) {
@@ -647,7 +647,7 @@ public class Hits extends AbstractList<Hit> {
 								LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
 								currentDocBase = context.docBase;
 								Bits liveDocs = context.reader().getLiveDocs();
-								currentSourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(context, liveDocs, termContexts));
+								currentSourceSpans = BLSpansWrapper.optWrapSortUniq(spanQuery.getSpans(context, liveDocs, termContexts));
 							} else {
 								// TESTING
 								currentDocBase = 0;
@@ -655,7 +655,7 @@ public class Hits extends AbstractList<Hit> {
 									sourceSpansFullyRead = true;
 									return;
 								}
-								currentSourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(null, null, termContexts));
+								currentSourceSpans = BLSpansWrapper.optWrapSortUniq(spanQuery.getSpans(null, null, termContexts));
 							}
 
 							if (currentSourceSpans != null) {
