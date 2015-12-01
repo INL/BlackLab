@@ -84,6 +84,8 @@ public class BLSpansWrapper extends BLSpans {
 	}
 
 	public static BLSpans optWrapSort(Spans spans) {
+		if (spans == null)
+			return null;
 		BLSpans result;
 		if (spans instanceof BLSpans)
 			result = (BLSpans)spans;
@@ -95,6 +97,8 @@ public class BLSpansWrapper extends BLSpans {
 	}
 
 	public static BLSpans optWrapSortUniq(Spans spans) {
+		if (spans == null)
+			return null;
 		BLSpans result;
 		if (spans instanceof BLSpans)
 			result = (BLSpans)spans;
