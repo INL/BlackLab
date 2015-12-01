@@ -223,6 +223,7 @@ public class TestTextPatternRewrite {
 		assertRewriteResult("'b' 'c' [word != 'a']{2}", "POSFILTER(SEQ(TERM(contents%word@i, b), EXPAND(TERM(contents%word@i, c), false, 2, 2)), TERM(contents%word@i, a), NOTCONTAINING, 2, 0)");
 		assertRewriteResult("[word != 'a']{2} 'b' 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i, b), true, 2, 2), TERM(contents%word@i, c)), TERM(contents%word@i, a), NOTCONTAINING, 0, -2)");
 		assertRewriteResult("'a' [word != 'b']{1,20} 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i, a), false, 1, 20), TERM(contents%word@i, c)), TERM(contents%word@i, b), NOTCONTAINING, 1, -1)");
+		assertRewriteResult("[word != 'a']? 'b' [word != 'c']?", "OR(SEQ(NOT(TERM(contents%word@i, a)), OR(SEQ(TERM(contents%word@i, b), NOT(TERM(contents%word@i, c))), SEQ(TERM(contents%word@i, b)))), SEQ(OR(SEQ(TERM(contents%word@i, b), NOT(TERM(contents%word@i, c))), SEQ(TERM(contents%word@i, b)))))");
 	}
 
 	@Test

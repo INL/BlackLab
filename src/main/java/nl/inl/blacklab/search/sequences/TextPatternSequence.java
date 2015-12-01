@@ -147,12 +147,6 @@ public class TextPatternSequence extends TextPatternAndNot {
 			List<T> chResults, List<Boolean> matchesEmptySeq) {
 		if (chResults.size() == 1) {
 			// Last clause in the sequence; just return it
-			// FIXME: what if this matches the empty sequence?
-			//        e.g. "the" "quick"?
-			//        should match both "the quick" and "the",
-			//        but right now, just matches "the quick".
-			//        To fix this, we should check that if the "tail" end can
-			//        match the empty sequence, not just the "head".
 			return chResults.get(0);
 		}
 

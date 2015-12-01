@@ -94,7 +94,7 @@ public class TextPatternRepetition extends TextPattern {
 				int n = min * tp.min;
 				return new TextPatternAnyToken(n, n);
 			}
-		} else if (baseRewritten.isNegativeOnly() && baseRewritten.hasConstantLength()) {
+		} else if (baseRewritten.isNegativeOnly() && baseRewritten.hasConstantLength() && min > 0) {
 			// Rewrite to anytokens-not-containing form so we can optimize it
 			int l = baseRewritten.getMinLength();
 			TextPattern container = new TextPatternRepetition(new TextPatternAnyToken(l, l), min, max);
