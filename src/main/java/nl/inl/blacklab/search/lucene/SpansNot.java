@@ -136,8 +136,10 @@ class SpansNot extends BLSpans {
 				currentStart = currentEnd = clauseStart = NO_MORE_POSITIONS;
 				return NO_MORE_DOCS; // no more docs; we're done
 			}
-			// FIXME: we should check that this doc actually has matches, i.e. that clause doesn't match all tokens in doc
-			clauseDoc = clause == null ? NO_MORE_DOCS : clause.advance(currentDoc);
+			if (clause == null)
+				clauseDoc = NO_MORE_DOCS;
+			else if (clauseDoc < currentDoc)
+				clauseDoc = clause.advance(currentDoc);
 			clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
 			currentDocLength = lengthGetter.getFieldLength(currentDoc) - subtractFromLength;
 			currentStart = currentEnd = -1;
@@ -242,7 +244,7 @@ class SpansNot extends BLSpans {
 
 		if (currentDoc >= doc) {
 			// We can't skip to it because we're already there or beyond.
-			// But, as per spec, skipTo always at least advances to the next document.
+			// But, as per spec, advance always at least advances to the next document.
 			return nextDoc();
 		}
 
