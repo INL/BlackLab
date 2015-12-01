@@ -161,9 +161,16 @@ class SpansSequenceRaw extends BLSpans {
 			if (leftStart == NO_MORE_POSITIONS) {
 				rightEnd = NO_MORE_POSITIONS;
 			} else {
-				if (right.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS)
-					leftStart = rightEnd = NO_MORE_POSITIONS;
-				else {
+				if (right.bucketSize() > 0 && left.endPosition() > right.startPosition(0)) {
+					// We have a new left end position, so need a new bucket
+					if (right.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS)
+						leftStart = rightEnd = NO_MORE_POSITIONS;
+				} else {
+					// Same left end position, so reuse this bucket
+					// (nothing to do)
+				}
+				if (leftStart != NO_MORE_POSITIONS){
+					// Reset the bucket and realign.
 					rightEnd = -1;
 					indexInBucket = -1;
 					realignPos();
