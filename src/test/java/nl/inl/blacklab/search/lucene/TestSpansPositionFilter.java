@@ -17,20 +17,20 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.Spans;
-import org.junit.Test;
-
 import nl.inl.blacklab.MockSpans;
 import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
+
+import org.apache.lucene.search.spans.Spans;
+import org.junit.Test;
 
 public class TestSpansPositionFilter {
 
 	private SpansPositionFilter getSpans(boolean swap, TextPatternPositionFilter.Operation type, boolean invert) {
 		Spans a = MockSpans.fromLists(
-			new int[] {  1,  1,  2,  2,  2,  3 },
-			new int[] { 10, 20, 10, 10, 30, 20 },
-			new int[] { 15, 25, 15, 20, 35, 25 }
+			new int[] {  0,  1,  1,  2,  2,  2,  3 },
+			new int[] { 10, 10, 20, 10, 10, 30, 20 },
+			new int[] { 20, 15, 25, 15, 20, 35, 25 }
 		);
 		Spans b = MockSpans.fromLists(
 			new int[] {  1,  2,  3 },
@@ -55,9 +55,9 @@ public class TestSpansPositionFilter {
 	public void testNotContaining() throws IOException {
 		SpansPositionFilter spans = getSpans(false, TextPatternPositionFilter.Operation.CONTAINING, true);
 		Spans exp = MockSpans.fromLists(
-			new int[] {  1,  2,  2,  2 },
-			new int[] { 20, 10, 10, 30 },
-			new int[] { 25, 15, 20, 35 }
+			new int[] {  0,  1,  2,  2,  2 },
+			new int[] { 10, 20, 10, 10, 30 },
+			new int[] { 20, 25, 15, 20, 35 }
 		);
 		TestUtil.assertEquals(exp, spans);
 	}

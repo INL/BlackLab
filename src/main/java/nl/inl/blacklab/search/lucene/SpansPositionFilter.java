@@ -18,13 +18,13 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
+
+import org.apache.lucene.search.spans.Spans;
 
 /**
  * Finds hits from a set that contain one or more hits from the second set,
@@ -71,6 +71,7 @@ class SpansPositionFilter extends BLSpans {
 	 */
 	private boolean invert;
 
+	/** Are the filter hits guaranteed to have the same length? */
 	private boolean filterFixedLength;
 
 	/**
@@ -174,12 +175,28 @@ class SpansPositionFilter extends BLSpans {
 		while (producerDoc != NO_MORE_DOCS) {
 
 			// Are filter and producer in the same document?
-			if (filterDoc < producerDoc) {
-				// No, advance filter to be in the same document as the producer
-				filterDoc = filter.advance(producerDoc);
-				if (filterDoc == NO_MORE_DOCS)
-					return NO_MORE_DOCS; // No more filter results, we're done.
-				filter.nextBucket();
+			while (filterDoc != producerDoc) {
+				if (filterDoc < producerDoc) {
+					// No, advance filter to be in the same document as the producer
+					filterDoc = filter.advance(producerDoc);
+					if (filterDoc == NO_MORE_DOCS) {
+						if (!invert) {
+							// Positive filter, but no more filter hits. We're done.
+							return NO_MORE_DOCS;
+						}
+					} else
+						filter.nextBucket();
+				} else if (producerDoc < filterDoc) {
+					if (invert) {
+						// For negative filters, lagging producer spans is ok. This just means
+						// all hits in the current producer doc are matches.
+						break;
+					}
+					// No, advance producer to be in the same document as the producer
+					producerDoc = producer.advance(filterDoc);
+					if (producerDoc == NO_MORE_DOCS)
+						return NO_MORE_DOCS; // No more producer results, we're done.
+				}
 			}
 
 			// Are there search results in this document?
@@ -207,6 +224,10 @@ class SpansPositionFilter extends BLSpans {
 		// Find the next "valid" producer spans, if there is one.
 		while (producerStart != NO_MORE_POSITIONS) {
 			producerStart = producer.nextStartPosition();
+			if (invert && filterDoc != producerDoc) {
+				// No filter hits in this doc, so this is definitely a hit.
+				return producerStart;
+			}
 
 			// We're at the first unchecked producer spans. Does it match our filter?
 			boolean invertedMatch = invert; // if looking for non-matches, keep track if there have been any matches.

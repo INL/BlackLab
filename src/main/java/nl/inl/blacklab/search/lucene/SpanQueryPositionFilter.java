@@ -18,14 +18,14 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Map;
 
+import nl.inl.blacklab.search.TextPatternPositionFilter;
+
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
-
-import nl.inl.blacklab.search.TextPatternPositionFilter;
 
 /**
  * Filters hits from a producer query based on the hit positions of a filter query.
@@ -98,8 +98,11 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 		if (spansProd == null)
 			return null;
 		Spans spansFilter = clauses[1].getSpans(context, acceptDocs, termContexts);
-		if (spansFilter == null)
-			return spansProd;
+		if (spansFilter == null) {
+			// No filter hits. If it's a positive filter, that means no producer hits can match.
+			// If it's a negative filter, all producer hits match.
+			return invert ? spansProd : null;
+		}
 		return new SpansPositionFilter(spansProd, spansFilter, op, invert, leftAdjust, rightAdjust);
 	}
 
