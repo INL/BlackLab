@@ -6,17 +6,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import nl.inl.blacklab.example.DocIndexerExample;
 import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.util.StringUtil;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class TestSearches {
 
@@ -163,6 +163,7 @@ public class TestSearches {
 		testTags();
 	}
 
+	@Test
 	public void testSimple() throws ParseException {
 		expected = Arrays.asList(
 				"[The] quick",
@@ -185,6 +186,7 @@ public class TestSearches {
 		Assert.assertEquals(expected, find(" [pos='nou'] "));
 	}
 
+	@Test
 	public void testSequences() throws ParseException {
 		expected = Arrays.asList(
 				"quick [brown fox] jumps",
@@ -192,6 +194,7 @@ public class TestSearches {
 		Assert.assertEquals(expected, find(" [pos='adj'] [pos='nou'] "));
 	}
 
+	@Test
 	public void testMatchAll() throws ParseException {
 		expected = Arrays.asList(
 				"brown [fox jumps] over",
@@ -206,6 +209,7 @@ public class TestSearches {
 		Assert.assertEquals(expected, find(" [] [pos='nou'] "));
 	}
 
+	@Test
 	public void testOptional() throws ParseException {
 		expected = Arrays.asList(
 				"be [with you]",
@@ -234,6 +238,7 @@ public class TestSearches {
 		Assert.assertEquals(expected, find(" 'with|find'? [pos='pro']? "));
 	}
 
+	@Test
 	public void testRepetition() throws ParseException {
 		expected = Arrays.asList(
 				"The [quick brown] fox");
@@ -247,6 +252,7 @@ public class TestSearches {
 		Assert.assertEquals(expected, find(" [pos='adj']{1,} "));
 	}
 
+	@Test
 	public void testStringRegexes() throws ParseException {
 		expected = Arrays.asList(
 				"quick [brown] fox",
@@ -259,6 +265,14 @@ public class TestSearches {
 		Assert.assertEquals(expected, find(" 'fo[xr].*' "));
 	}
 
+	@Test
+	public void testUniq() throws ParseException {
+		expected = Arrays.asList(
+				"fox [jumps] over");
+		Assert.assertEquals(expected, find("[word = 'jumps' | lemma = 'jump']"));
+	}
+
+	@Test
 	public void testTags() throws ParseException {
 		expected = Arrays.asList(
 				"quick [brown] fox");
