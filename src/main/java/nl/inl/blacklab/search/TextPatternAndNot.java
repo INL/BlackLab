@@ -109,7 +109,14 @@ public class TextPatternAndNot extends TextPattern {
 			// so it will be recognized by other rewrite()s.
 			return super.inverted();
 		}
-		return new TextPatternAndNot(exclude, include);
+
+		// ! ( (a & b) & !(c & d) ) --> !a | !b | (c & d)
+		List<TextPattern> inclNeg = new ArrayList<TextPattern>();
+		for (TextPattern tp: include) {
+			inclNeg.add(tp.inverted());
+		}
+		inclNeg.add(new TextPatternAndNot(exclude.toArray(new TextPattern[0])));
+		return new TextPatternOr(inclNeg.toArray(new TextPattern[0]));
 	}
 
 	@Override

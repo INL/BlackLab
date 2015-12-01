@@ -142,7 +142,7 @@ public class TestTextPatternRewrite {
 	public void testRewriteNotAndNot() {
 		assertRewrite("[ !(word = 'a' & lemma != 'b') ]",
 				"NOT(AND(REGEX(contents%word@i, ^a$), NOT(REGEX(contents%lemma@i, ^b$))))",
-				"ANDNOT(TERM(contents%lemma@i, b), TERM(contents%word@i, a))");
+				"OR(NOT(TERM(contents%word@i, a)), TERM(contents%lemma@i, b))");
 	}
 
 	@Test
