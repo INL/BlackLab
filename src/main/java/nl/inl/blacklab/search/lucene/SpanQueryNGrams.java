@@ -17,10 +17,14 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
@@ -48,6 +52,7 @@ public class SpanQueryNGrams extends SpanQueryBase {
 		baseFieldName = fieldName;
 		this.min = min;
 		this.max = max;
+		clauses = new SpanQuery[0];
 	}
 
 	@Override
@@ -57,7 +62,7 @@ public class SpanQueryNGrams extends SpanQueryBase {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryNGrams(" + (clauses[0] == null ? "" : clausesToString(field, " & ")) + ")";
+		return "SpanQueryNGrams(" + min + ", " + max + ")";
 	}
 
 	/** Set whether to ignore the last token.
@@ -66,6 +71,16 @@ public class SpanQueryNGrams extends SpanQueryBase {
 	 */
 	public void setIgnoreLastToken(boolean ignoreLastToken) {
 		this.ignoreLastToken = ignoreLastToken;
+	}
+
+	@Override
+	public Query rewrite(IndexReader reader) throws IOException {
+		return this; // cannot rewrite
+	}
+
+	@Override
+	public void extractTerms(@SuppressWarnings("rawtypes") Set terms) {
+		// no terms here
 	}
 
 }
