@@ -177,4 +177,11 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 		return super.hashCode() + op.hashCode() + (invert ? 13 : 0) + leftAdjust * 31 + rightAdjust * 37;
 	}
 
+	@Override
+	public String toString(QueryExecutionContext context) {
+		String producer = clauses.get(0).toString(context);
+		String filter = clauses.get(1).toString(context);
+		String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
+		return "POSFILTER(" + producer + ", " + filter + ", " + (invert ? "NOT" : "") + op + adj + ")";
+	}
 }

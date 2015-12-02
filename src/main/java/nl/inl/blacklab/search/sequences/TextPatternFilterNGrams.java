@@ -106,4 +106,9 @@ public class TextPatternFilterNGrams extends TextPattern {
 		return clause.hashCode() + op.hashCode() + 13 * min + 31 * max;
 	}
 
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "FILTERNGRAMS(" + clause.toString(context) + ", " + op + ", " + min + ", " + max + ")";
+	}
+
 }

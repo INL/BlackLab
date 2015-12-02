@@ -83,4 +83,9 @@ public class TextPatternContaining extends TextPatternCombiner {
 		return super.hashCode() + (invert ? 13 : 0);
 	}
 
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "CONTAINING(" + clauses.get(0).toString(context) + ", " + clauses.get(1).toString(context) + ")";
+	}
+
 }

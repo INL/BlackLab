@@ -176,12 +176,14 @@ public abstract class TextPatternTranslator<T> {
 	public abstract T prefix(QueryExecutionContext context, String value);
 
 	/**
-	 * Any token in field.
+	 * All N-grams.
 	 * @param context
 	 *            the current query translation context
+	 * @param min minimum length
+	 * @param max maximum length
 	 * @return the resulting any-token clause
 	 */
-	public abstract T any(QueryExecutionContext context);
+	public abstract T any(QueryExecutionContext context, int min, int max);
 
 	public String optInsensitive(QueryExecutionContext context, String value) {
 		if (!context.diacriticsSensitive)

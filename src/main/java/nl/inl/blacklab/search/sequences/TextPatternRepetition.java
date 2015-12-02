@@ -96,6 +96,7 @@ public class TextPatternRepetition extends TextPattern {
 			}
 		} else if (baseRewritten.isNegativeOnly() && baseRewritten.hasConstantLength() && min > 0) {
 			// Rewrite to anytokens-not-containing form so we can optimize it
+			// (note the check for min > 0 above, because position filter cannot match the empty sequence)
 			int l = baseRewritten.getMinLength();
 			TextPattern container = new TextPatternRepetition(new TextPatternAnyToken(l, l), min, max);
 			container = container.rewrite();
@@ -182,6 +183,11 @@ public class TextPatternRepetition extends TextPattern {
 	@Override
 	public int hashCode() {
 		return base.hashCode() + 13 * min + 31 * max;
+	}
+
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "REP(" + base.toString(context) + ", " + min + ", " + max + ")";
 	}
 
 }

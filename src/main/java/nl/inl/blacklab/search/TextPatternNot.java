@@ -86,4 +86,9 @@ public class TextPatternNot extends TextPatternCombiner {
 	public int getMaxLength() {
 		return 1;
 	}
+
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "NOT(" + clauses.get(0).toString(context) + ")";
+	}
 }

@@ -17,6 +17,8 @@ package nl.inl.blacklab.search;
 
 import java.util.Map;
 
+import nl.inl.util.StringUtil;
+
 import org.apache.lucene.index.Term;
 
 /**
@@ -77,6 +79,13 @@ public class TextPatternTags extends TextPattern {
 	@Override
 	public int hashCode() {
 		return elementName.hashCode() + attr.hashCode();
+	}
+
+	@Override
+	public String toString(QueryExecutionContext context) {
+		if (attr != null && attr.size() > 0)
+			return "TAGS(" + elementName + ", " + StringUtil.join(attr) + ")";
+		return "TAGS(" + elementName + ")";
 	}
 
 }

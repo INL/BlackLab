@@ -66,4 +66,9 @@ public class TextPatternWildcard extends TextPatternTerm {
 		}
 		return false;
 	}
+
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "WILDCARD(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
+	}
 }

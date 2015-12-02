@@ -13,9 +13,9 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.util.StringUtil;
 
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class TestSearches {
@@ -64,10 +64,10 @@ public class TestSearches {
 		+ "</s></doc>",
 	};
 
-	private File indexDir;
+	private static File indexDir;
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeClass
+	public static void setUp() throws Exception {
 		// Get a temporary directory for our test index
 		indexDir = new File(System.getProperty("java.io.tmpdir"),
 				"BlackLabExample");
@@ -96,14 +96,14 @@ public class TestSearches {
 		searcher.setDefaultContextSize(1);
 	}
 
-	@After
-	public void tearDown() {
+	@AfterClass
+	public static void tearDown() {
 		if (searcher != null)
 			searcher.close();
 		deleteTree(indexDir);
 	}
 
-	private void deleteTree(File dir) {
+	private static void deleteTree(File dir) {
 		for (File f: dir.listFiles()) {
 			if (f.isFile())
 				f.delete();

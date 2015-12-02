@@ -137,4 +137,9 @@ public class TextPatternOr extends TextPatternCombiner {
 		}
 		return n;
 	}
+
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "OR(" + clausesToString(clauses, context) + ")";
+	}
 }

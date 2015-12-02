@@ -141,4 +141,9 @@ public class TextPatternRegex extends TextPatternTerm {
 		return false;
 	}
 
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "REGEX(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
+	}
+
 }

@@ -15,7 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.util.List;
+
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
+import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
 import nl.inl.blacklab.search.sequences.TextPatternExpansion;
 import nl.inl.blacklab.search.sequences.TextPatternRepetition;
 import nl.inl.blacklab.search.sequences.TextPatternSequence;
@@ -111,19 +114,32 @@ public abstract class TextPattern implements Cloneable {
 
 	@Override
 	public String toString() {
-		return toString("fieldName");
+		return toString(Searcher.DEFAULT_CONTENTS_FIELD_NAME);
 	}
 
 	public String toString(Searcher searcher) {
-		return toString(searcher, "fieldName");
+		return toString(searcher, Searcher.DEFAULT_CONTENTS_FIELD_NAME);
 	}
 
 	public String toString(String fieldName) {
-		return translate(new TextPatternTranslatorString(), QueryExecutionContext.getSimple(fieldName));
+		return toString(QueryExecutionContext.getSimple(fieldName));
 	}
 
 	public String toString(Searcher searcher, String fieldName) {
-		return translate(new TextPatternTranslatorString(), searcher.getDefaultExecutionContext());
+		return toString(searcher.getDefaultExecutionContext());
+	}
+
+	abstract public String toString(QueryExecutionContext context);
+
+	protected String clausesToString(List<TextPattern> clauses,
+			QueryExecutionContext context) {
+		StringBuilder b = new StringBuilder();
+		for (TextPattern clause: clauses) {
+			if (b.length() > 0)
+				b.append(", ");
+			b.append(clause.toString(context));
+		}
+		return b.toString();
 	}
 
 	/**
@@ -192,6 +208,9 @@ public abstract class TextPattern implements Cloneable {
 		} else if (equals(previousPart)) {
 			// Same clause; create repetition with min and max equals 2.
 			return new TextPatternRepetition(this, 2, 2);
+		} else if (previousPart instanceof TextPatternAnyToken) {
+			TextPatternAnyToken tp = (TextPatternAnyToken)previousPart;
+			return new TextPatternExpansion(this, true, tp.getMinLength(), tp.getMaxLength());
 		} else if (previousPart instanceof TextPatternExpansion) {
 			TextPatternExpansion tp = (TextPatternExpansion)previousPart;
 			if (tp.isExpandToLeft() && tp.getMinExpand() != tp.getMaxExpand()) {

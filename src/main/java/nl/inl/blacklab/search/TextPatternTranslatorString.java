@@ -23,7 +23,9 @@ import nl.inl.util.StringUtil;
 
 /**
  * Translates a TextPattern to a String, for debugging and testing purposes.
+ * @deprecated use TextPattern.toString()
  */
+@Deprecated
 public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 
 	@Override
@@ -137,8 +139,8 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 	}
 
 	@Override
-	public String any(QueryExecutionContext context) {
-		return "ANYTOKEN";
+	public String any(QueryExecutionContext context, int min, int max) {
+		return "ANYTOKEN(" + min + ", " + max + ")";
 	}
 
 	@Override

@@ -74,4 +74,9 @@ public class TextPatternDocLevelAndNot extends TextPattern {
 		return include.hashCode() + exclude.hashCode();
 	}
 
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "DOC-ANDNOT(" + include.toString(context) + ", " + exclude.toString(context) + ")";
+	}
+
 }

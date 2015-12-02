@@ -113,4 +113,10 @@ public class TextPatternExpansion extends TextPattern {
 		return clause.hashCode() + 1023 * (expandToLeft ? 1 : 0) + 13 * min + 31 * max;
 	}
 
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "EXPAND(" + clause.toString(context) + ", " + expandToLeft + ", " + min + ", " + max + ")";
+	}
+
+
 }

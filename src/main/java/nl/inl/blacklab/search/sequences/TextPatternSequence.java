@@ -192,17 +192,6 @@ public class TextPatternSequence extends TextPatternAndNot {
 	}
 
 	@Override
-	public String toString() {
-		StringBuilder b = new StringBuilder();
-		for (TextPattern cl : include) {
-			if (b.length() > 0)
-				b.append(" ");
-			b.append(cl.toString());
-		}
-		return b.toString();
-	}
-
-	@Override
 	public boolean matchesEmptySequence() {
 		for (TextPattern cl : include) {
 			if (!cl.matchesEmptySequence())
@@ -465,4 +454,8 @@ public class TextPatternSequence extends TextPatternAndNot {
 		return n;
 	}
 
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "SEQ(" + clausesToString(include, context) + ")";
+	}
 }

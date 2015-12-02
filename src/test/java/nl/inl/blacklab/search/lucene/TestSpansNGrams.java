@@ -13,31 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.lucene;
 
-/**
- * A TextPattern matching words that start with the specified prefix.
- */
-public class TextPatternPrefix extends TextPatternTerm {
-	public TextPatternPrefix(String value) {
-		super(value);
+import java.io.IOException;
+
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.TestUtil;
+
+import org.apache.lucene.search.spans.Spans;
+import org.junit.Test;
+
+public class TestSpansNGrams {
+
+	private SpansNGrams getSpans() {
+		// NOTE: in doc 1, all tokens except 0-1 match; in doc 3, all tokens match
+		SpansNGrams spans = new SpansNGrams(false, null, "test", 2, 3);
+		spans.setTest(true, 1); // no IndexReader available
+		return spans;
 	}
 
-	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.prefix(context, translator.optInsensitive(context, value));
+	@Test
+	public void testSpansNGrams() throws IOException {
+		Spans exp = MockSpans.fromLists(
+			new int[] {0, 0, 0, 0, 0, 0, 0},
+			new int[] {0, 0, 1, 1, 2, 2, 3},
+			new int[] {2, 3, 3, 4, 4, 5, 5}
+		);
+		TestUtil.assertEquals(exp, getSpans());
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternPrefix) {
-			return super.equals(obj);
-		}
-		return false;
-	}
 
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return "PREFIX(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
-	}
 }

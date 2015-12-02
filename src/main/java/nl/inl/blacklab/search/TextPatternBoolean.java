@@ -180,5 +180,10 @@ public class TextPatternBoolean extends TextPattern {
 		return must.hashCode() + should.hashCode() + mustNot.hashCode();
 	}
 
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "BOOLEAN(" + clausesToString(must, context) + ", " + clausesToString(should, context) + ", " + clausesToString(mustNot, context) + ")";
+	}
+
 
 }

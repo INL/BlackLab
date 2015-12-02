@@ -115,7 +115,10 @@ public class TextPatternAndNot extends TextPattern {
 		for (TextPattern tp: include) {
 			inclNeg.add(tp.inverted());
 		}
-		inclNeg.add(new TextPatternAndNot(exclude.toArray(new TextPattern[0])));
+		if (exclude.size() == 1)
+			inclNeg.add(exclude.get(0));
+		else
+			inclNeg.add(new TextPatternAndNot(exclude.toArray(new TextPattern[0])));
 		return new TextPatternOr(inclNeg.toArray(new TextPattern[0]));
 	}
 
@@ -222,4 +225,12 @@ public class TextPatternAndNot extends TextPattern {
 	public int hashCode() {
 		return include.hashCode() + exclude.hashCode();
 	}
+
+	@Override
+	public String toString(QueryExecutionContext context) {
+		if (exclude.size() == 0)
+			return "AND(" + clausesToString(include, context) + ")";
+		return "ANDNOT([" + clausesToString(include, context) + "], [" + clausesToString(exclude, context) + "])";
+	}
+
 }

@@ -15,17 +15,16 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.sequences;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTerm;
-import nl.inl.blacklab.search.TextPatternTranslatorString;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TestTextPatternSequence {
 
-	TextPatternTranslatorString stringifier = new TextPatternTranslatorString();
+//	TextPatternTranslatorString stringifier = new TextPatternTranslatorString();
 
 	QueryExecutionContext ctx = QueryExecutionContext.getSimple("contents");
 
@@ -35,7 +34,7 @@ public class TestTextPatternSequence {
 		TextPattern seq = new TextPatternSequence(new TextPatternTerm("the"), new TextPatternTerm(
 				"fox"));
 
-		String str = seq.translate(stringifier, ctx);
+		String str = seq.toString(ctx); //seq.translate(stringifier, ctx);
 		Assert.assertEquals("SEQ(TERM(contents%word@i, the), TERM(contents%word@i, fox))", str);
 	}
 
@@ -45,8 +44,9 @@ public class TestTextPatternSequence {
 		TextPattern seq = new TextPatternSequence(new TextPatternTerm("the"),
 				new TextPatternAnyToken(1, 3), new TextPatternTerm("fox"));
 
-		String str = seq.translate(stringifier);
-		Assert.assertEquals("SEQ(TERM(contents%word@i, the), EXPAND(TERM(contents%word@i, fox), true, 1, 3))", str);
+		String str = seq.toString(ctx); //seq.translate(stringifier);
+		Assert.assertEquals("SEQ(TERM(contents%word@i, the), ANYTOKEN(1, 3), TERM(contents%word@i, fox))", str);
+		//Assert.assertEquals("SEQ(TERM(contents%word@i, the), EXPAND(TERM(contents%word@i, fox), true, 1, 3))", str);
 	}
 
 	@Test
@@ -55,8 +55,9 @@ public class TestTextPatternSequence {
 		TextPattern seq = new TextPatternSequence(new TextPatternTerm("the"),
 				new TextPatternAnyToken(1, 3));
 
-		String str = seq.translate(stringifier);
-		Assert.assertEquals("EXPAND(TERM(contents%word@i, the), false, 1, 3)", str);
+		String str = seq.toString(ctx); //seq.translate(stringifier);
+		Assert.assertEquals("SEQ(TERM(contents%word@i, the), ANYTOKEN(1, 3))", str);
+		//Assert.assertEquals("EXPAND(TERM(contents%word@i, the), false, 1, 3)", str);
 	}
 
 	@Test
@@ -65,8 +66,9 @@ public class TestTextPatternSequence {
 		TextPattern seq = new TextPatternSequence(new TextPatternAnyToken(1, 3),
 				new TextPatternTerm("fox"));
 
-		String str = seq.translate(stringifier);
-		Assert.assertEquals("EXPAND(TERM(contents%word@i, fox), true, 1, 3)", str);
+		String str = seq.toString(ctx); //seq.translate(stringifier);
+		Assert.assertEquals("SEQ(ANYTOKEN(1, 3), TERM(contents%word@i, fox))", str);
+		//Assert.assertEquals("EXPAND(TERM(contents%word@i, fox), true, 1, 3)", str);
 	}
 
 }

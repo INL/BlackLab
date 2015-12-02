@@ -67,4 +67,9 @@ public class TextPatternTerm extends TextPattern {
 	public int hashCode() {
 		return value.hashCode();
 	}
+
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "TERM(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
+	}
 }

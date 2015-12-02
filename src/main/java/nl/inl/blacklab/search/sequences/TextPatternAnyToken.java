@@ -51,8 +51,6 @@ public class TextPatternAnyToken extends TextPattern {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		T any = translator.any(context);
-
 		int realMin = min;
 		if (realMin == 0) {
 			// This can happen if the whole query is optional, so
@@ -61,15 +59,12 @@ public class TextPatternAnyToken extends TextPattern {
 			// behave the same as if min == 1.
 			realMin = 1;
 		}
-		if (realMin == 1 && max == 1)
-			return any;
+		return translator.any(context, realMin, max);
 
-		return translator.repetition(any, realMin, max);
-	}
-
-	@Override
-	public String toString() {
-		return "*[" + min + "," + max + "]";
+//		if (realMin == 1 && max == 1)
+//			return any;
+//
+//		return translator.repetition(any, realMin, max);
 	}
 
 	@Override
@@ -123,5 +118,10 @@ public class TextPatternAnyToken extends TextPattern {
 	@Override
 	public int hashCode() {
 		return min + 31 * max;
+	}
+
+	@Override
+	public String toString(QueryExecutionContext context) {
+		return "ANYTOKEN(" + min + ", " + max + ")";
 	}
 }
