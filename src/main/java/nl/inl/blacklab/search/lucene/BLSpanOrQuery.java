@@ -24,6 +24,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import nl.inl.blacklab.search.Span;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -38,8 +40,6 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.PriorityQueue;
-
-import nl.inl.blacklab.search.Span;
 
 /**
  * Matches the union of its clauses.
@@ -129,7 +129,7 @@ public class BLSpanOrQuery extends SpanOrQuery {
 
 	@Override
 	public String toString(String field) {
-		return "BL" + super.toString(field);
+		return super.toString(field);
 	}
 
 	@Override

@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -29,8 +31,6 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
-
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -89,7 +89,7 @@ public class BLSpanTermQuery extends SpanQuery {
 
 	@Override
 	public String toString(String arg0) {
-		return "BL" + q.toString();
+		return q.toString();
 	}
 
 	@Override
