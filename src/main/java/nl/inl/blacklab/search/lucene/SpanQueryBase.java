@@ -164,7 +164,7 @@ public abstract class SpanQueryBase extends SpanQuery {
 		return this; // no clauses rewritten
 	}
 
-	public String clausesToString(String field, String separator) {
+	public String clausesToString(String field) {
 		StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < clauses.length; i++) {
 			SpanQuery clause = clauses[i];

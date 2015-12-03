@@ -48,12 +48,24 @@ public class TextPatternOr extends TextPatternCombiner {
 	}
 
 	@Override
+	public TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		List<TextPattern> newCl = new ArrayList<TextPattern>();
+		for (TextPattern cl: clauses) {
+			newCl.add(cl.noEmpty());
+		}
+		return new TextPatternOr(newCl.toArray(new TextPattern[0]));
+	}
+
+	@Override
 	public TextPattern rewrite() {
 
 		// Flatten nested OR queries.
 		// This doesn't change the query because the OR operator is associative.
 		boolean anyRewritten = false;
 		boolean hasNotChild = false;
+		boolean allClausesSingleToken = true;
 		List<TextPattern> rewrittenCl = new ArrayList<TextPattern>();
 		for (TextPattern child: clauses) {
 			TextPattern rewritten = child.rewrite();
@@ -61,22 +73,29 @@ public class TextPatternOr extends TextPatternCombiner {
 				// Flatten.
 				// Child OR operation we want to flatten into this OR operation.
 				// Replace the child, incorporating its children into this OR operation.
+				for (TextPattern cl: ((TextPatternOr)rewritten).clauses) {
+					if (!cl.hasConstantLength() || cl.getMaxLength() != 1)
+						allClausesSingleToken = false;
+				}
 				rewrittenCl.addAll(((TextPatternOr)rewritten).clauses);
 				anyRewritten = true;
 			} else {
-				if (rewritten.isNegativeOnly())
+				if (rewritten.isSingleTokenNot())
 					hasNotChild = true;
 				// Just add it.
 				rewrittenCl.add(rewritten);
 				if (rewritten != child)
 					anyRewritten = true;
+				if (!rewritten.hasConstantLength() || rewritten.getMaxLength() != 1)
+					allClausesSingleToken = false;
 			}
 		}
 
 		// Rewrites OR queries containing some NOT children into "NAND" queries.
+		// (only possible if all OR queries have token length 1!)
 		// This helps us isolate problematic subclauses which we can then rewrite to
 		// more efficient NOTCONTAINING clauses.
-		if (hasNotChild) {
+		if (hasNotChild && allClausesSingleToken) {
 			// At least one clause starts with NOT.
 			// Node should be rewritten to AND. Invert all clauses.
 			for (int i = 0; i < rewrittenCl.size(); i++) {

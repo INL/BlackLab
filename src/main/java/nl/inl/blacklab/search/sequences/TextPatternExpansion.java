@@ -43,6 +43,14 @@ public class TextPatternExpansion extends TextPattern {
 	}
 
 	@Override
+	public TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		int newMin = min == 0 ? 1 : min;
+		return new TextPatternExpansion(clause.noEmpty(), expandToLeft, newMin, max);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternExpansion) {
 			TextPatternExpansion tp = ((TextPatternExpansion) obj);

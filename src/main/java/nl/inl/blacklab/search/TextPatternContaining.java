@@ -43,19 +43,6 @@ public class TextPatternContaining extends TextPatternCombiner {
 	}
 
 	@Override
-	public TextPattern inverted() {
-		TextPatternWithin cl = (TextPatternWithin)clone();
-		cl.invert = !cl.invert;
-		return cl;
-	}
-
-	@Override
-	protected boolean okayToInvertForOptimization() {
-		// Inverting is "free"
-		return true;
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternContaining) {
 			return super.equals(obj) && ((TextPatternContaining)obj).invert == invert;

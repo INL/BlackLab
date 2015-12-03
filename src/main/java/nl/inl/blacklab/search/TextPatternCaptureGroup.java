@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+
 /**
  * TextPattern for capturing a subclause as a named "group".
  */
@@ -51,6 +52,13 @@ public class TextPatternCaptureGroup extends TextPattern {
 	@Override
 	public boolean matchesEmptySequence() {
 		return input.matchesEmptySequence();
+	}
+
+	@Override
+	public TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		return new TextPatternCaptureGroup(input.noEmpty(), groupName);
 	}
 
 	@Override

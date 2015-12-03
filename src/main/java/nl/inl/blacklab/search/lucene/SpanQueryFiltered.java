@@ -48,6 +48,6 @@ public class SpanQueryFiltered extends SpanQueryBase {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryFiltered(" + clausesToString(field, " & ") + ", " + filter + ")";
+		return "SpanQueryFiltered(" + clausesToString(field) + ", " + filter + ")";
 	}
 }

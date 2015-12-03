@@ -44,6 +44,14 @@ public class TextPatternFilterNGrams extends TextPattern {
 	}
 
 	@Override
+	public TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		int newMin = min == 0 ? 1 : min;
+		return new TextPatternFilterNGrams(clause.noEmpty(), op, newMin, max);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternFilterNGrams) {
 			TextPatternFilterNGrams tp = ((TextPatternFilterNGrams) obj);

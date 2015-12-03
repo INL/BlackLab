@@ -125,12 +125,12 @@ public class TextPatternAndNot extends TextPattern {
 	@Override
 	protected boolean okayToInvertForOptimization() {
 		// Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
-		return exclude.size() > 0;
+		return producesSingleTokens() && exclude.size() > 0;
 	}
 
 	@Override
-	public boolean isNegativeOnly() {
-		return include.size() == 0;
+	public boolean isSingleTokenNot() {
+		return producesSingleTokens() && include.size() == 0;
 	}
 
 	@Override
@@ -149,7 +149,7 @@ public class TextPatternAndNot extends TextPattern {
 				TextPattern rewritten = child.rewrite();
 				String className = rewritten.getClass().getSimpleName();
 				boolean isTPAndNot = className.equals("TextPatternAndNot") || className.equals("TextPatternAnd"); // TODO: Ugly, but TPSeq derives from TPAndNot...
-				if (!isTPAndNot && rewritten.isNegativeOnly()) {
+				if (!isTPAndNot && rewritten.isSingleTokenNot()) {
 					// "Switch sides": invert the clause, and
 					// swap the lists we add clauses to.
 					rewritten = rewritten.inverted();

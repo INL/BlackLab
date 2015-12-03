@@ -103,19 +103,6 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 	}
 
 	@Override
-	public TextPattern inverted() {
-		TextPatternPositionFilter cl = (TextPatternPositionFilter)clone();
-		cl.invert = !cl.invert;
-		return cl;
-	}
-
-	@Override
-	protected boolean okayToInvertForOptimization() {
-		// Inverting is "free"
-		return true;
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternPositionFilter) {
 			return super.equals(obj) && ((TextPatternPositionFilter)obj).invert == invert;

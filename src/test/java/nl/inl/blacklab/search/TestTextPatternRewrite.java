@@ -227,30 +227,22 @@ public class TestTextPatternRewrite {
 		assertRewriteResult("'b' 'c' [word != 'a']{2}", "POSFILTER(SEQ(TERM(contents%word@i, b), EXPAND(TERM(contents%word@i, c), false, 2, 2)), TERM(contents%word@i, a), NOTCONTAINING, 2, 0)");
 		assertRewriteResult("[word != 'a']{2} 'b' 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i, b), true, 2, 2), TERM(contents%word@i, c)), TERM(contents%word@i, a), NOTCONTAINING, 0, -2)");
 		assertRewriteResult("'a' [word != 'b']{1,20} 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i, a), false, 1, 20), TERM(contents%word@i, c)), TERM(contents%word@i, b), NOTCONTAINING, 1, -1)");
-		assertRewriteResult("[word != 'a']? 'b' [word != 'c']?", "SEQ(REP(NOT(TERM(contents%word@i, a)), 0, 1), TERM(contents%word@i, b), REP(NOT(TERM(contents%word@i, c)), 0, 1))");
-//		assertRewriteResult("[word != 'a']? 'b' [word != 'c']?", "OR(SEQ(NOT(TERM(contents%word@i, a)), OR(SEQ(TERM(contents%word@i, b), NOT(TERM(contents%word@i, c))), SEQ(TERM(contents%word@i, b)))), SEQ(OR(SEQ(TERM(contents%word@i, b), NOT(TERM(contents%word@i, c))), SEQ(TERM(contents%word@i, b)))))");
+		assertRewriteResult("[word != 'a']? 'b' [word != 'c']?", "OR(POSFILTER(POSFILTER(EXPAND(EXPAND(TERM(contents%word@i, b), true, 1, 1), false, 1, 1), TERM(contents%word@i, c), NOTCONTAINING, 2, 0), TERM(contents%word@i, a), NOTCONTAINING, 0, -2), POSFILTER(EXPAND(TERM(contents%word@i, b), false, 1, 1), TERM(contents%word@i, c), NOTCONTAINING, 1, 0), POSFILTER(EXPAND(TERM(contents%word@i, b), true, 1, 1), TERM(contents%word@i, a), NOTCONTAINING, 0, -1), TERM(contents%word@i, b))");
+		assertRewriteResult("[word != 'a'] [pos='V.*']?", "OR(POSFILTER(EXPAND(PREFIX(contents%pos@i, v), true, 1, 1), TERM(contents%word@i, a), NOTCONTAINING, 0, -1), NOT(TERM(contents%word@i, a)))");
+		assertRewriteResult("[pos='V.*']? [word != 'a']", "OR(POSFILTER(EXPAND(PREFIX(contents%pos@i, v), false, 1, 1), TERM(contents%word@i, a), NOTCONTAINING, 1, 0), NOT(TERM(contents%word@i, a)))");
 	}
 
 	@Test
 	public void testRewriteRepetition() {
-		assertRewriteResult("('a'*)* 'b'", "SEQ(REP(TERM(contents%word@i, a), 0, -1), TERM(contents%word@i, b))");
-		assertRewriteResult("('a'+)* 'b'", "SEQ(REP(TERM(contents%word@i, a), 0, -1), TERM(contents%word@i, b))");
-		assertRewriteResult("('a'*)+ 'b'", "SEQ(REP(TERM(contents%word@i, a), 0, -1), TERM(contents%word@i, b))");
+		assertRewriteResult("('a'*)* 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), TERM(contents%word@i, b))");
+		assertRewriteResult("('a'+)* 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), TERM(contents%word@i, b))");
+		assertRewriteResult("('a'*)+ 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), TERM(contents%word@i, b))");
 		assertRewriteResult("('a'+)+", "REP(TERM(contents%word@i, a), 1, -1)");
-		assertRewriteResult("('a'?)? 'b'", "SEQ(REP(TERM(contents%word@i, a), 0, 1), TERM(contents%word@i, b))");
+		assertRewriteResult("('a'?)? 'b'", "OR(SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), TERM(contents%word@i, b))");
 		assertRewriteResult("('a'{2,3}){1,1}", "REP(TERM(contents%word@i, a), 2, 3)");
 		assertRewriteResult("('a'{1,1}){2,3}", "REP(TERM(contents%word@i, a), 2, 3)");
 		assertRewriteResult("'a'{1,1}", "TERM(contents%word@i, a)");
-
-//		assertRewriteResult("('a'*)* 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), SEQ(TERM(contents%word@i, b)))");
-//		assertRewriteResult("('a'+)* 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), SEQ(TERM(contents%word@i, b)))");
-//		assertRewriteResult("('a'*)+ 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), SEQ(TERM(contents%word@i, b)))");
-//		assertRewriteResult("('a'+)+", "REP(TERM(contents%word@i, a), 1, -1)");
-//		assertRewriteResult("('a'?)? 'b'", "OR(SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), SEQ(TERM(contents%word@i, b)))");
-//		assertRewriteResult("('a'{2,3}){1,1}", "REP(TERM(contents%word@i, a), 2, 3)");
-//		assertRewriteResult("('a'{1,1}){2,3}", "REP(TERM(contents%word@i, a), 2, 3)");
-//		assertRewriteResult("'a'{1,1}", "TERM(contents%word@i, a)");
-
+		assertRewriteResult("'a'? 'b'?", "OR(SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), TERM(contents%word@i, b), TERM(contents%word@i, a))");
 	}
 
 	@Test

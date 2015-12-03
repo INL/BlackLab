@@ -51,6 +51,14 @@ public class TextPatternRepetition extends TextPattern {
 	}
 
 	@Override
+	public TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		int newMin = min == 0 ? 1 : min;
+		return new TextPatternRepetition(base.noEmpty(), newMin, max);
+	}
+
+	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 		T baseTranslated = base.translate(translator, context);
 
@@ -94,7 +102,7 @@ public class TextPatternRepetition extends TextPattern {
 				int n = min * tp.min;
 				return new TextPatternAnyToken(n, n);
 			}
-		} else if (baseRewritten.isNegativeOnly() && baseRewritten.hasConstantLength() && min > 0) {
+		} else if (baseRewritten.isSingleTokenNot() && min > 0) {
 			// Rewrite to anytokens-not-containing form so we can optimize it
 			// (note the check for min > 0 above, because position filter cannot match the empty sequence)
 			int l = baseRewritten.getMinLength();

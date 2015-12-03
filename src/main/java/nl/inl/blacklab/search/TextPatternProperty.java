@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+
 /**
  * TextPattern for wrapping another TextPattern so that it applies to a certain word property.
  *
@@ -48,6 +49,13 @@ public class TextPatternProperty extends TextPattern {
 	@Override
 	public boolean matchesEmptySequence() {
 		return input.matchesEmptySequence();
+	}
+
+	@Override
+	public TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		return new TextPatternProperty(propertyName, input.noEmpty());
 	}
 
 	@Override

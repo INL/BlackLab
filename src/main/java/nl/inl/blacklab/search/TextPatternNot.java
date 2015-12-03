@@ -46,7 +46,7 @@ public class TextPatternNot extends TextPatternCombiner {
 	}
 
 	@Override
-	public boolean isNegativeOnly() {
+	public boolean isSingleTokenNot() {
 		return true;
 	}
 

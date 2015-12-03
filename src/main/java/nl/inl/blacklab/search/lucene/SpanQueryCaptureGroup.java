@@ -52,6 +52,6 @@ public class SpanQueryCaptureGroup extends SpanQueryBase {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryCaptureGroup(" + clausesToString(field, " & ") + ", " + name + ")";
+		return "SpanQueryCaptureGroup(" + clausesToString(field) + ", " + name + ")";
 	}
 }

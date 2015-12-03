@@ -78,6 +78,6 @@ public class SpanQueryDocLevelAnd extends SpanQueryBase {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryDocLevelAnd(" + clausesToString(field, " & ") + ")";
+		return "SpanQueryDocLevelAnd(" + clausesToString(field) + ")";
 	}
 }

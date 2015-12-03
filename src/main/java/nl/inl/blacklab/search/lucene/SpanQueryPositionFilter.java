@@ -108,18 +108,19 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 
 	@Override
 	public String toString(String field) {
-		String not = invert ? "not " : "";
+		String not = invert ? "NOT" : "";
+		String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
 		switch(op) {
 		case WITHIN:
-			return "SpanQueryContaining(" + clausesToString(field, " " + not + "within ") + ")";
+			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "WITHIN" + adj + ")";
 		case CONTAINING:
-			return "SpanQueryContaining(" + clausesToString(field, " " + not + "contains ") + ")";
+			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "CONTAINING" + adj + ")";
 		case ENDS_AT:
-			return "SpanQueryContaining(" + clausesToString(field, " " + not + "ends at ") + ")";
+			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "ENDS_AT" + adj + ")";
 		case STARTS_AT:
-			return "SpanQueryContaining(" + clausesToString(field, " " + not + "start at ") + ")";
+			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "STARTS_AT" + adj + ")";
 		case MATCHES:
-			return "SpanQueryContaining(" + clausesToString(field, " " + not + "matches ") + ")";
+			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "MATCHES" + adj + ")";
 		default:
 			throw new RuntimeException("Unknown filter operation " + op);
 		}

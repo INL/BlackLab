@@ -60,6 +60,6 @@ public class SpanQueryAnd extends SpanQueryBase {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryAnd(" + clausesToString(field, " & ") + ")";
+		return "SpanQueryAnd(" + clausesToString(field) + ")";
 	}
 }

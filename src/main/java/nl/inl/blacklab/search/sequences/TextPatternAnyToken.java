@@ -73,6 +73,13 @@ public class TextPatternAnyToken extends TextPattern {
 	}
 
 	@Override
+	public TextPattern noEmpty() {
+		if (min > 0)
+			return this;
+		return new TextPatternAnyToken(1, max);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternAnyToken) {
 			TextPatternAnyToken tp = ((TextPatternAnyToken) obj);

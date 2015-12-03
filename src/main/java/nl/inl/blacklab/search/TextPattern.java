@@ -177,13 +177,14 @@ public abstract class TextPattern implements Cloneable {
 	}
 
 	/**
-	 * Is this (sub)pattern only a negative clause, excluding things?
+	 * Is this (sub)pattern only a negative clause, producing all tokens that
+	 * don't satisfy certain conditions?
 	 *
 	 * Used for optimization decisions, i.e. in TextPatternOr.rewrite().
 	 *
 	 * @return true if it's negative-only, false if not
 	 */
-	public boolean isNegativeOnly() {
+	public boolean isSingleTokenNot() {
 		return false;
 	}
 
@@ -205,13 +206,16 @@ public abstract class TextPattern implements Cloneable {
 				// Same clause; add one to rep's min and max
 				return new TextPatternRepetition(this, 1 + rep.getMin(), 1 + rep.getMax());
 			}
-		} else if (equals(previousPart)) {
+		}
+		if (equals(previousPart)) {
 			// Same clause; create repetition with min and max equals 2.
 			return new TextPatternRepetition(this, 2, 2);
-		} else if (previousPart instanceof TextPatternAnyToken) {
+		}
+		if (previousPart instanceof TextPatternAnyToken) {
 			TextPatternAnyToken tp = (TextPatternAnyToken)previousPart;
 			return new TextPatternExpansion(this, true, tp.getMinLength(), tp.getMaxLength());
-		} else if (previousPart instanceof TextPatternExpansion) {
+		}
+		if (previousPart instanceof TextPatternExpansion) {
 			TextPatternExpansion tp = (TextPatternExpansion)previousPart;
 			if (tp.isExpandToLeft() && tp.getMinExpand() != tp.getMaxExpand()) {
 				// Expand to left with a range of tokens. Combine with this part to likely
@@ -220,7 +224,8 @@ public abstract class TextPattern implements Cloneable {
 				seq = seq.rewrite();
 				return new TextPatternExpansion(seq, true, tp.getMinExpand(), tp.getMaxExpand());
 			}
-		} else if (hasConstantLength()) {
+		}
+		if (hasConstantLength()) {
 			if (previousPart instanceof TextPatternPositionFilter) {
 				// We are "gobbled up" by the previous part and adjust its right matching edge inward.
 				// This should make filtering more efficient, since we will likely have fewer hits to filter.
@@ -232,14 +237,23 @@ public abstract class TextPattern implements Cloneable {
 				} catch (CloneNotSupportedException e) {
 					throw new RuntimeException(e);
 				}
-			} else if (isNegativeOnly() && previousPart.hasConstantLength()) {
-				// Negative, constant-length child after constant-length part.
+			}
+			if (isSingleTokenNot() && previousPart.hasConstantLength()) {
+				// Negative, single-token child after constant-length part.
 				// Rewrite to NOTCONTAINING clause, incorporating previous part.
 				int prevLen = previousPart.getMinLength();
-				int myLen = getMinLength();
-				TextPattern container = new TextPatternExpansion(previousPart, false, myLen, myLen);
+				TextPattern container = new TextPatternExpansion(previousPart, false, 1, 1);
 				TextPatternPositionFilter result = new TextPatternPositionFilter(container, inverted(), Operation.CONTAINING, true);
 				result.adjustLeft(prevLen);
+				return result;
+			}
+			if (previousPart.isSingleTokenNot()) {
+				// Constant-length child after negative, single-token part.
+				// Rewrite to NOTCONTAINING clause, incorporating previous part.
+				int myLen = getMinLength();
+				TextPattern container = new TextPatternExpansion(this, true, 1, 1);
+				TextPatternPositionFilter result = new TextPatternPositionFilter(container, previousPart.inverted(), Operation.CONTAINING, true);
+				result.adjustRight(-myLen);
 				return result;
 			}
 		}
@@ -250,6 +264,10 @@ public abstract class TextPattern implements Cloneable {
 	@Override
 	public abstract boolean equals(Object obj);
 
+	public boolean producesSingleTokens() {
+		return hasConstantLength() && getMinLength() == 1;
+	}
+
 	public abstract boolean hasConstantLength();
 
 	public abstract int getMinLength();
@@ -258,5 +276,15 @@ public abstract class TextPattern implements Cloneable {
 
 	@Override
 	public abstract int hashCode();
+
+	/**
+	 * Return a version of this clause that cannot match the empty sequence.
+	 * @return a version that doesn't match the empty sequence
+	 */
+	public TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		throw new RuntimeException("noEmpty() must be implemented!");
+	}
 
 }

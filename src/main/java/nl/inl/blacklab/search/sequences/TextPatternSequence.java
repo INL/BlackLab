@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAndNot;
 import nl.inl.blacklab.search.TextPatternEdge;
+import nl.inl.blacklab.search.TextPatternOr;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternTranslator;
@@ -45,87 +46,28 @@ public class TextPatternSequence extends TextPatternAndNot {
 
 		// Keep track of which clauses can match the empty sequence. Use this to build alternatives
 		// at the end. (see makeAlternatives)
-		List<Boolean> matchesEmptySeq = new ArrayList<Boolean>();
+//		List<Boolean> matchesEmptySeq = new ArrayList<Boolean>();
 
-		// To deal with wildcard tokens at the end of a sequence. See below.
-		TextPatternAnyToken previousAnyTokensPart = null;
-
-		// Translate the clauses from back to front, because this makes it easier to
-		// deal with TextPatternAnyToken (see below).
-		for (int i = include.size() - 1; i >= 0; i--) {
-			TextPattern cl = include.get(i);
-
-			if (cl instanceof TextPatternAnyToken) {
-				// These are a special case, because we shouldn't translate these into a
-				// query by themselves. We need to combine them with a query to the left
-				// or to the right.
-				// (We used to prefer the query to the right, as this prevented us from
-				// accidentally going past the end of the document (old version of
-				// SpansExpansionRaw), but this issue has since been fixed. We still
-				// go through the sequence from right to left for this reason, however)
-				TextPatternAnyToken any = (TextPatternAnyToken) cl;
-				if (chResults.size() > 0) {
-					// Yes, we have a query to the right. Use that.
-					T rightNeighbour = chResults.remove(0);
-					boolean rightNeighbourMatchesEmpty = matchesEmptySeq.remove(0);
-					T result = translator.expand(context, rightNeighbour, true, any.min, any.max);
-					chResults.add(0, result);
-					matchesEmptySeq
-							.add(0, rightNeighbourMatchesEmpty && any.matchesEmptySequence());
-				} else {
-					// No, we don't have a query to the right, use the one to the left.
-					// Of course, we haven't seen that one yet, so save the pattern and
-					// handle it in the next loop iteration
-
-					if (previousAnyTokensPart != null) {
-						// We already encountered a matchall which we haven't
-						// yet processed. Simply add the two together.
-						int min = previousAnyTokensPart.min + any.min;
-						int max = previousAnyTokensPart.max + any.max;
-						if (previousAnyTokensPart.max == -1 || any.max == -1)
-							max = -1; // infinite expansion
-						previousAnyTokensPart = new TextPatternAnyToken(min, max);
-					}
-					else
-						previousAnyTokensPart = any;
-				}
-				continue; // done with the AnyToken pattern, on to the next
-			}
-
+		// Translate the clauses
+		for (TextPattern cl: include) {
 			// Translate this part of the sequence
 			T translated = cl.translate(translator, context);
 			boolean translatedMatchesEmpty = cl.matchesEmptySequence();
+			if (translatedMatchesEmpty)
+				throw new RuntimeException("Sequence part matches empty sequence. TextPattern should have been rewritten!");
 
-			// If a wildcard part (TextPatternAnyToken) was found to the right of this,
-			// expand this part to the right. This only happens if the AnyToken part is
-			// at the end of the sequence.
-			if (previousAnyTokensPart != null) {
-				translated = translator.expand(context, translated, false, previousAnyTokensPart.min,
-						previousAnyTokensPart.max);
-				if (translatedMatchesEmpty)
-					translatedMatchesEmpty = previousAnyTokensPart.matchesEmptySequence();
-				previousAnyTokensPart = null;
-			}
-
-			// Insert at start of list, to preserve query order
-			chResults.add(0, translated);
-			matchesEmptySeq.add(0, translatedMatchesEmpty);
-		}
-
-		// Did the whole sequence consist of any-token parts?
-		if (chResults.size() == 0 && previousAnyTokensPart != null) {
-			// Yes.
-			// Translate as-is (don't use expansion). Probably less efficient,
-			// but it's the only way to resolve this type of query.
-			chResults.add(previousAnyTokensPart.translate(translator, context));
+			chResults.add(translated);
+//			matchesEmptySeq.add(translatedMatchesEmpty);
 		}
 
 		// Is it still a sequence, or just one part?
 		if (chResults.size() == 1)
 			return chResults.get(0); // just one part, return that
 
+		return translator.sequence(context, chResults);
+
 		// Multiple parts; create sequence object
-		return makeAlternatives(translator, context, chResults, matchesEmptySeq);
+		//return makeAlternatives(translator, context, chResults, matchesEmptySeq);
 	}
 
 	/**
@@ -143,6 +85,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 	 * @param matchesEmptySeq whether each of the clauses matches the empty sequence
 	 * @return several alternatives combined with or
 	 */
+	@Deprecated
 	public <T> T makeAlternatives(TextPatternTranslator<T> translator, QueryExecutionContext context,
 			List<T> chResults, List<Boolean> matchesEmptySeq) {
 		if (chResults.size() == 1) {
@@ -198,6 +141,13 @@ public class TextPatternSequence extends TextPatternAndNot {
 				return false;
 		}
 		return true;
+	}
+
+	@Override
+	public TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		throw new RuntimeException("Sequence should have been rewritten!");
 	}
 
 	@Override
@@ -279,6 +229,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 										}
 									}
 									flat.add(i, new TextPatternPositionFilter(producer, filter, op));
+									anyRewritten = true;
 								}
 							}
 						}
@@ -313,92 +264,104 @@ public class TextPatternSequence extends TextPatternAndNot {
 		// - negative clauses can be rewritten to NOTCONTAINING clauses and combined with
 		//   adjacent constant-length query parts.
 		TextPattern previousPart = null;
-		List<TextPattern> withRep = new ArrayList<TextPattern>();
+		List<TextPattern> seqCombined = new ArrayList<TextPattern>();
 		for (TextPattern child: flat) {
-			TextPattern rep = child;
+			TextPattern combined = child;
 			while (true) {
 				// Do we have a previous part?
-				previousPart = withRep.size() == 0 ? null : withRep.get(withRep.size() - 1);
+				previousPart = seqCombined.size() == 0 ? null : seqCombined.get(seqCombined.size() - 1);
 				if (previousPart == null)
 					break;
 				// Yes, try to combine with it.
-				TextPattern comb = rep.combineWithPrecedingPart(previousPart);
-				if (comb == null)
+				TextPattern tryComb = combined.combineWithPrecedingPart(previousPart);
+				if (tryComb == null)
 					break;
 				// Success! Remove previous part and keep trying with the part before that.
-				withRep.remove(withRep.size() - 1);
-				rep = comb;
+				anyRewritten = true;
+				seqCombined.remove(seqCombined.size() - 1);
+				combined = tryComb;
 			}
-			if (rep == child) {
+			if (combined == child) {
 				// Could not be combined.
-				withRep.add(child);
+				seqCombined.add(child);
 			} else {
 				// Combined with previous clause(s).
-				withRep.add(rep.rewrite());
-				anyRewritten = true;
+				seqCombined.add(combined.rewrite());
 			}
 		}
 
-		/*
-		if (result == null) {
-			// No rewrites or subsequence-incorporations done yet,
-			// but sequence should be unflattened, so clone it now.
-			result = (TextPatternSequence) clone();
-		}
-
-		// Now, "unflatten" the sequence into a binary tree, taking care to combine NOT-queries
-		// with an adjacent positive query.
-		boolean changesMade = true;
-		while (result.clauses.size() > 2 && changesMade) {
-			changesMade = false;
-			for (int i = 0; i < result.clauses.size() - 1; i++) {
-				TextPattern child = result.clauses.get(i);
-
-				// NOT-query with adjacent positive query?
-				if (child.isNegativeOnly()) {
-					TextPattern leftNeighbour = i > 0 ? result.clauses.get(i - 1) : null;
-					if (leftNeighbour != null && !leftNeighbour.isNegativeOnly()) {
-						// Combine with left query
-						TextPattern combined = new TextPatternSequence(leftNeighbour, child);
-						result.clauses.remove(i - 1);
-						result.replaceClause(child, combined);
-						changesMade = true;
-					} else if (!result.clauses.get(i + 1).isNegativeOnly()){
-						// Combine with right query
-						TextPattern combined = new TextPatternSequence(child, result.clauses.get(i + 1));
-						result.clauses.remove(i + 1);
-						result.replaceClause(child, combined);
-						changesMade = true;
-					} else {
-						// Can't combine with left or right neighbour; maybe next pass.
-					}
-				} else {
-					// Positive query; can and should always be combined with right neighbour
-					TextPattern combined = new TextPatternSequence(child, result.clauses.get(i + 1));
-					result.clauses.remove(i + 1);
-					result.replaceClause(child, combined);
-					changesMade = true;
-				}
-			}
-		}
-		*/
-
-//		if (result.clauses.size() > 2) {
-//			// This can only happen if the sequence consists of all NOT queries, because
-//			// that's the only situation in which we can't combine any of them.
-//			throw new RuntimeException("Cannot process sequence consisting of all NOT queries");
-//		} else if (result.clauses.size() == 2 && result.clauses.get(0).isNegativeOnly() && result.clauses.get(1).isNegativeOnly()) {
-//			// TextPatternSequence of 2 (correct) which consists of two NOT queries (incorrect, we can't execute this)
-//			throw new RuntimeException("Cannot process sequence consisting of all NOT queries");
-//		}
-
-		if (!anyRewritten) {
-			// No child clause rewritten: return ourselves.
+		// If any part of the sequence matches the empty sequence, we must
+		// rewrite it to several alternatives combined with OR. Do so now.
+		List<List<TextPattern>> results = makeAlternatives(seqCombined);
+		if (results.size() == 1 && !anyRewritten)
 			return this;
+		List<TextPattern> orCl = new ArrayList<TextPattern>();
+		for (List<TextPattern> seq: results) {
+			if (seq.size() == 1)
+				orCl.add(seq.get(0));
+			else
+				orCl.add(new TextPatternSequence(seq.toArray(new TextPattern[0])));
 		}
-		if (withRep.size() == 1)
-			return withRep.get(0);
-		return new TextPatternSequence(withRep.toArray(new TextPattern[0]));
+		if (orCl.size() == 1)
+			return orCl.get(0);
+		return new TextPatternOr(orCl.toArray(new TextPattern[0])).rewrite();
+	}
+
+	/**
+	 * Given translated clauses, builds several alternatives and combines them with OR.
+	 *
+	 * This is necessary because of how sequence matching works: first the hits in each
+	 * of the clauses are located, then we try to detect valid sequences by looking at these
+	 * hits. But when a clause also matches the empty sequence, you may miss valid sequence
+	 * matches because there's no hit in the clause to combine with the hits from other clauses.
+	 *
+	 * @param alternatives the alternative sequences we have built so far
+	 * @param parts translation results for each of the clauses so far
+	 * @return several alternatives combined with or
+	 */
+	List<List<TextPattern>> makeAlternatives(List<TextPattern> parts) {
+		if (parts.size() == 1) {
+			// Last clause in the sequence; just return it
+			// (noEmpty() version because we will build alternatives
+			//  in the caller if the input matched the empty sequence)
+			return Arrays.asList(Arrays.asList(parts.get(0).noEmpty().rewrite()));
+		}
+
+		// Recursively determine the query for the "tail" of the list,
+		// and whether it matches the empty sequence or not.
+		List<TextPattern> partsTail = parts.subList(1, parts.size());
+		boolean restMatchesEmpty = true;
+		for (TextPattern part: partsTail) {
+			if (!part.matchesEmptySequence()) {
+				restMatchesEmpty = false;
+				break;
+			}
+		}
+		List<List<TextPattern>> altTail = makeAlternatives(partsTail);
+
+		// Now, add the head part and check if that matches the empty sequence.
+		return combine(parts.get(0), altTail, restMatchesEmpty);
+	}
+
+	private List<List<TextPattern>> combine(TextPattern head,
+			List<List<TextPattern>> tailAlts, boolean tailMatchesEmpty) {
+		List<List<TextPattern>> results = new ArrayList<List<TextPattern>>();
+		TextPattern headNoEmpty = head.noEmpty().rewrite();
+		boolean headMatchesEmpty = head.matchesEmptySequence();
+		for (List<TextPattern> tailAlt: tailAlts) {
+			// Add head in front of each tail alternative
+			List<TextPattern> n = new ArrayList<TextPattern>(tailAlt);
+			n.add(0, headNoEmpty);
+			results.add(n);
+
+			// If head can be empty, also add original tail alternative
+			if (headMatchesEmpty)
+				results.add(tailAlt);
+		}
+		// If tail can be empty, also add the head separately
+		if (tailMatchesEmpty)
+			results.add(Arrays.asList(headNoEmpty));
+		return results;
 	}
 
 	private List<TextPattern> getFlatSequence(List<TextPattern> flat) {
