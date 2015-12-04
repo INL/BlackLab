@@ -18,13 +18,13 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
 import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
-
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Finds hits from a set that contain one or more hits from the second set,
@@ -160,6 +160,28 @@ class SpansPositionFilter extends BLSpans {
 			return NO_MORE_POSITIONS;
 
 		// Find first matching producer span from here
+		producerStart = producer.nextStartPosition();
+		return synchronizePos();
+	}
+
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		if (producerDoc == NO_MORE_DOCS)
+			return NO_MORE_POSITIONS;
+
+		if (alreadyAtFirstMatch) {
+			alreadyAtFirstMatch = false;
+			if (producerStart >= target)
+				return producerStart;
+		}
+
+		// Are we done yet?
+		if (producerStart == NO_MORE_POSITIONS)
+			return NO_MORE_POSITIONS;
+
+		producerStart = producer.advanceStartPosition(target);
+
+		// Find first matching producer span from here
 		return synchronizePos();
 	}
 
@@ -200,6 +222,9 @@ class SpansPositionFilter extends BLSpans {
 			}
 
 			// Are there search results in this document?
+			if (producerStart != NO_MORE_POSITIONS) {
+				producerStart = producer.nextStartPosition();
+			}
 			producerStart = synchronizePos();
 			if (producerStart != NO_MORE_POSITIONS) {
 				alreadyAtFirstMatch = true;
@@ -223,7 +248,6 @@ class SpansPositionFilter extends BLSpans {
 	private int synchronizePos() throws IOException {
 		// Find the next "valid" producer spans, if there is one.
 		while (producerStart != NO_MORE_POSITIONS) {
-			producerStart = producer.nextStartPosition();
 			if (invert && filterDoc != producerDoc) {
 				// No filter hits in this doc, so this is definitely a hit.
 				return producerStart;
@@ -432,6 +456,10 @@ class SpansPositionFilter extends BLSpans {
 				return producerStart;
 			}
 			// Didn't match filter; go to the next position.
+			producerStart = producer.nextStartPosition();
+			if (producerStart == NO_MORE_POSITIONS)
+				return NO_MORE_POSITIONS;
+
 		}
 		return producerStart;
 	}

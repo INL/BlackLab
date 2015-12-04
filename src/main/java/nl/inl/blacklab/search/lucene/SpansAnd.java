@@ -99,6 +99,19 @@ class SpansAnd extends BLSpans {
 		return synchronizePosition();
 	}
 
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		if (alreadyAtFirstMatch) {
+			alreadyAtFirstMatch = false;
+			if (currentStart[0] >= target)
+				return currentStart[0];
+		}
+		for (int i = 0; i < 2; i++) {
+			currentStart[i] = spans[i].advanceStartPosition(target);
+		}
+		return synchronizePosition();
+	}
+
 	private int synchronizePosition() throws IOException {
 		// Synchronise spans
 		while (true) {
@@ -176,9 +189,12 @@ class SpansAnd extends BLSpans {
 
 	private void catchUpMatchStart(int laggingSpans) throws IOException {
 		int catchUpTo = currentStart[1 - laggingSpans];
-		while (currentStart[laggingSpans] != NO_MORE_POSITIONS && currentStart[laggingSpans] < catchUpTo || currentStart[laggingSpans] == -1) {
-			currentStart[laggingSpans] = spans[laggingSpans].nextStartPosition();
+		if (currentStart[laggingSpans] != NO_MORE_POSITIONS && currentStart[laggingSpans] < catchUpTo || currentStart[laggingSpans] == -1) {
+			currentStart[laggingSpans] = spans[laggingSpans].advanceStartPosition(catchUpTo);
 		}
+//		while (currentStart[laggingSpans] != NO_MORE_POSITIONS && currentStart[laggingSpans] < catchUpTo || currentStart[laggingSpans] == -1) {
+//			currentStart[laggingSpans] = spans[laggingSpans].nextStartPosition();
+//		}
 	}
 
 	private void catchUpMatchEnd(int laggingSpans) throws IOException {

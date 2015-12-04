@@ -82,6 +82,11 @@ class SpansCaptureGroup extends BLSpans {
 		return clause.nextStartPosition();
 	}
 
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		return clause.advanceStartPosition(target);
+	}
+
 	/**
 	 * Skip to the specified document (or the first document after it containing hits).
 	 *

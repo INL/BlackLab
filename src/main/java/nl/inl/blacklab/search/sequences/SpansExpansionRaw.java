@@ -17,14 +17,14 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -132,8 +132,9 @@ class SpansExpansionRaw extends BLSpans {
 				currentDoc = clause.nextDoc();
 				if (currentDoc == NO_MORE_DOCS)
 					return NO_MORE_DOCS;
-				clauseStart = start = end = -1;
-				clauseStart = goToNextClauseSpan();
+				start = end = -1;
+				clauseStart = clause.nextStartPosition();
+				clauseStart = resetExpand();
 			} while (clauseStart == NO_MORE_POSITIONS);
 			alreadyAtFirstHit = true;
 		}
@@ -168,7 +169,28 @@ class SpansExpansionRaw extends BLSpans {
 			}
 		}
 
-		clauseStart = goToNextClauseSpan();
+		clauseStart = clause.nextStartPosition();
+		clauseStart = resetExpand();
+		return clauseStart;
+	}
+
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		if (alreadyAtFirstHit) {
+			alreadyAtFirstHit = false;
+			if (start >= target)
+				return start;
+		}
+		if (currentDoc == NO_MORE_DOCS)
+			return NO_MORE_POSITIONS;
+		if (clauseStart == NO_MORE_POSITIONS)
+			return NO_MORE_POSITIONS;
+
+		if (expandStepsLeft > 0 && start >= target)
+			return nextStartPosition(); // we're already there
+
+		clauseStart = clause.advanceStartPosition(target);
+		clauseStart = resetExpand();
 		return clauseStart;
 	}
 
@@ -181,7 +203,8 @@ class SpansExpansionRaw extends BLSpans {
 				if (currentDoc != NO_MORE_DOCS) {
 					while (true) {
 						clauseStart = start = end = -1;
-						clauseStart = goToNextClauseSpan();
+						clauseStart = clause.nextStartPosition();
+						clauseStart = resetExpand();
 						if (clauseStart != NO_MORE_POSITIONS) {
 							alreadyAtFirstHit = true;
 							return currentDoc;
@@ -199,7 +222,7 @@ class SpansExpansionRaw extends BLSpans {
 	}
 
 	/**
-	 * Go to the next position in the source clause and reset the expansion process.
+	 * We're at a new position in the source span. Reset the expansion process.
 	 *
 	 * Note that we may discover we can't do the minimum expansion (because the hit is at the start
 	 * of the document, for example), so we may have to advance the clause again, and may actually
@@ -208,8 +231,7 @@ class SpansExpansionRaw extends BLSpans {
 	 * @return the start position if we're at a valid hit and have reset the expansion, NO_MORE_POSITIONS if we're done
 	 * @throws IOException
 	 */
-	private int goToNextClauseSpan() throws IOException {
-		clauseStart = clause.nextStartPosition();
+	private int resetExpand() throws IOException {
 		if (clauseStart == NO_MORE_POSITIONS) {
 			start = end = NO_MORE_POSITIONS;
 			return NO_MORE_POSITIONS;

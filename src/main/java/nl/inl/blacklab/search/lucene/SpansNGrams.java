@@ -17,11 +17,11 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Return all n-grams of certain lengths.
@@ -170,6 +170,23 @@ class SpansNGrams extends BLSpans {
 			currentEnd++;
 		}
 		return currentStart;
+	}
+
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		if (alreadyAtFirstMatch) {
+			alreadyAtFirstMatch = false;
+			if (currentStart >= target)
+				return currentStart;
+		}
+		if (target >= currentDocLength) {
+			currentStart = currentEnd = NO_MORE_POSITIONS;
+			return NO_MORE_POSITIONS;
+		}
+		// Advance us to just before the requested start point, then call nextStartPosition().
+		currentStart = target - 1;
+		currentEnd = currentStart + max;
+		return nextStartPosition();
 	}
 
 	/**

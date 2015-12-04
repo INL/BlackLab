@@ -17,12 +17,12 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -71,7 +71,7 @@ class SpansSequenceRaw extends BLSpans {
 
 	private BLSpans origRight;
 
-	private SpansInBuckets right;
+	private SpansInBucketsPerStartPoint right;
 
 	int indexInBucket = -2; // -2 == not started yet; -1 == just started a bucket
 
@@ -163,7 +163,7 @@ class SpansSequenceRaw extends BLSpans {
 			} else {
 				if (right.bucketSize() > 0 && left.endPosition() > right.startPosition(0)) {
 					// We have a new left end position, so need a new bucket
-					if (right.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS)
+					if (right.advanceBucket(left.endPosition()) == SpansInBuckets.NO_MORE_BUCKETS)
 						leftStart = rightEnd = NO_MORE_POSITIONS;
 				} else {
 					// Same left end position, so reuse this bucket
@@ -263,7 +263,7 @@ class SpansSequenceRaw extends BLSpans {
 			if (rightStart < leftEnd) {
 				// Advance right if necessary
 				while (rightStart < leftEnd) {
-					int rightDoc = right.nextBucket();
+					int rightDoc = right.advanceBucket(leftEnd);
 					if (rightDoc == SpansInBuckets.NO_MORE_BUCKETS) {
 						leftStart = rightEnd = NO_MORE_POSITIONS;
 						return;

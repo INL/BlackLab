@@ -85,6 +85,18 @@ public class SpansDocLevelAnd extends BLSpans {
 
 		currentStart[currentSpansIndex] = spans[currentSpansIndex].nextStartPosition();
 
+		return determineCurrentHit();
+	}
+
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		for (int i = 0; i < 2; i++) {
+			currentStart[i] = spans[i].advanceStartPosition(target);
+		}
+		return determineCurrentHit();
+	}
+
+	private int determineCurrentHit() {
 		// Are we done with the current doc?
 		if (currentStart[0] == NO_MORE_POSITIONS && currentStart[1] == NO_MORE_POSITIONS) {
 			return NO_MORE_POSITIONS;

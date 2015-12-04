@@ -167,7 +167,7 @@ class SpansSequenceSimple extends BLSpans {
 			if (rightStart < leftEnd) {
 				// Advance right if necessary
 				while (rightStart < leftEnd) {
-					rightStart = right.nextStartPosition();
+					rightStart = right.advanceStartPosition(leftEnd);
 					if (rightStart == NO_MORE_POSITIONS) {
 						leftStart = NO_MORE_POSITIONS;
 						break;

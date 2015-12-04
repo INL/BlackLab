@@ -15,6 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
+import java.io.IOException;
+
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 
@@ -157,4 +161,45 @@ public abstract class BLSpans extends SpansAbstract {
 	 */
 	abstract public void getCapturedGroups(Span[] capturedGroups);
 
+	/**
+	 * Advance the start position in the current doc to target or beyond.
+	 *
+	 * Always at least advances to the next hit, even if the current start
+	 * position is already at or beyond the target.
+	 *
+	 * @param target target start position to advance to
+	 * @return new start position, or Spans.NO_MORE_POSITIONS if we're done with this document
+	 * @throws IOException
+	 */
+	public int advanceStartPosition(int target) throws IOException {
+		// Naive implementations; subclasses may provide a faster version.
+		int pos;
+		do {
+			pos = nextStartPosition();
+		} while(pos < target && pos != NO_MORE_POSITIONS);
+		return pos;
+	}
+
+	/**
+	 * Advance the start position in the current doc to target or beyond.
+	 *
+	 * Always at least advances to the next hit, even if the current start
+	 * position is already at or beyond the target.
+	 *
+	 * @param spans the spans to operate on
+	 * @param target target start position to advance to
+	 * @return new start position, or Spans.NO_MORE_POSITIONS if we're done with this document
+	 * @throws IOException
+	 */
+	public static int advanceStartPosition(Spans spans, int target) throws IOException {
+		if (spans instanceof BLSpans) {
+			return ((BLSpans) spans).advanceStartPosition(target);
+		}
+		// Naive implementations; subclasses may provide a faster version.
+		int pos;
+		do {
+			pos = spans.nextStartPosition();
+		} while(pos < target && pos != NO_MORE_POSITIONS);
+		return pos;
+	}
 }

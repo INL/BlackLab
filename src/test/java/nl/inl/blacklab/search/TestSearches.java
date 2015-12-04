@@ -6,17 +6,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import nl.inl.blacklab.example.DocIndexerExample;
 import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.util.StringUtil;
-
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 public class TestSearches {
 
@@ -270,6 +271,22 @@ public class TestSearches {
 		expected = Arrays.asList(
 				"fox [jumps] over");
 		Assert.assertEquals(expected, find("[word = 'jumps' | lemma = 'jump']"));
+	}
+
+	@Test
+	public void testOr() throws ParseException {
+		expected = Arrays.asList(
+				"fox [jumps] over",
+				"jumps [over] the");
+		Assert.assertEquals(expected, find("[word = 'jumps' | lemma = 'over']"));
+	}
+
+	@Test
+	@Ignore
+	public void testAnd() throws ParseException {
+		expected = Arrays.asList(
+				"The [quick] brown");
+		Assert.assertEquals(expected, find("[pos = 'adj' & lemma = '.*u.*']"));
 	}
 
 	@Test

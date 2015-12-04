@@ -17,12 +17,12 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Returns all tokens that do not occur in the matches
@@ -221,6 +221,24 @@ class SpansNot extends BLSpans {
 			}
 		}
 		return currentStart;
+	}
+
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		if (alreadyAtFirstMatch) {
+			alreadyAtFirstMatch = false;
+			if (currentStart >= target)
+				return currentStart;
+		}
+		if (target >= currentDocLength) {
+			currentStart = currentEnd = NO_MORE_POSITIONS;
+			return NO_MORE_POSITIONS;
+		}
+		// Advance us to just before the requested start point, then call nextStartPosition().
+		clauseStart = clause.advanceStartPosition(target);
+		currentStart = target - 1;
+		currentEnd = target;
+		return nextStartPosition();
 	}
 
 	/**

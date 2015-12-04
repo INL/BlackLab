@@ -74,6 +74,22 @@ public class SpansUnique extends BLSpans {
 	}
 
 	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		int prevStart, prevEnd;
+		if (currentStart != NO_MORE_POSITIONS) {
+			prevStart = currentStart;
+			prevEnd = src.endPosition();
+			currentStart = src.advanceStartPosition(target);
+			while (prevStart == currentStart && prevEnd == src.endPosition()) {
+				prevStart = currentStart;
+				prevEnd = src.endPosition();
+				currentStart = src.nextStartPosition();
+			}
+		}
+		return currentStart;
+	}
+
+	@Override
 	public int advance(int target) throws IOException {
 		if (currentDoc != NO_MORE_DOCS) {
 			if (target > currentDoc) {

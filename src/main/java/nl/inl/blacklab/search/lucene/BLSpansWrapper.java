@@ -18,11 +18,11 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
-import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
-
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.TermSpans;
+
+import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
 
 
 /**
@@ -140,6 +140,11 @@ public class BLSpansWrapper extends BLSpans {
 	@Override
 	public int nextStartPosition() throws IOException {
 		return source.nextStartPosition();
+	}
+
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		return BLSpans.advanceStartPosition(source, target);
 	}
 
 	@Override

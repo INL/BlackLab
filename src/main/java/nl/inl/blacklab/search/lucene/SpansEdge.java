@@ -75,6 +75,15 @@ class SpansEdge extends BLSpans {
 	}
 
 	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		if (rightEdge) {
+			// We can't skip because we're looking at end positions
+			return super.advanceStartPosition(target);
+		}
+		return clause.advanceStartPosition(target);
+	}
+
+	@Override
 	public int advance(int doc) throws IOException {
 		return clause.advance(doc);
 	}

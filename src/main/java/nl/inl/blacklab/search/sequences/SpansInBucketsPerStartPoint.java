@@ -22,11 +22,11 @@ import java.util.List;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 /**
@@ -37,7 +37,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
  * endpoints for the current start point (the source spans is normally startpoint-sorted already).
  */
 class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuckets {
-	protected Spans source;
+	protected BLSpans source;
 
 	protected int currentDoc = -1;
 
@@ -60,7 +60,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 	protected boolean clauseCapturesGroups = true;
 
 	public SpansInBucketsPerStartPoint(Spans source) {
-		this.source = source;
+		this.source = BLSpansWrapper.optWrapSort(source);
 	}
 
 	@Override
@@ -87,6 +87,23 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 			return NO_MORE_BUCKETS;
 
 		return gatherEndPointsAtStartPoint();
+	}
+
+	/**
+	 * Go to the next bucket at or beyond the specified start point.
+	 *
+	 * Always at least advances to the next bucket, even if we were
+	 * already at or beyond the specified target.
+	 *
+	 * @param targetPos the target start point
+	 * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
+	 * @throws IOException
+	 */
+	public int advanceBucket(int targetPos) throws IOException {
+		if (currentSpansStart >= targetPos)
+			return nextBucket();
+		currentSpansStart = source.advanceStartPosition(targetPos);
+		return currentDoc;
 	}
 
 	protected int gatherEndPointsAtStartPoint() throws IOException {
@@ -163,10 +180,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 	public void setHitQueryContext(HitQueryContext context) {
 		this.hitQueryContext = context;
 		int before = context.getCaptureRegisterNumber();
-		if (source instanceof BLSpans)
-			((BLSpans) source).setHitQueryContext(context);
-		else if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
-			System.err.println("### SpansInBucketsAbstract: " + source + ", not a BLSpans ###");
+		source.setHitQueryContext(context);
 		if (context.getCaptureRegisterNumber() == before) {
 			// Our clause doesn't capture any groups; optimize
 			clauseCapturesGroups = false;
@@ -202,4 +216,5 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 		// FIXME implement (optional) isPayloadAvailable() here
 		return false;
 	}
+
 }

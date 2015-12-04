@@ -24,8 +24,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.search.Span;
-
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -40,6 +38,8 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.PriorityQueue;
+
+import nl.inl.blacklab.search.Span;
 
 /**
  * Matches the union of its clauses.
@@ -440,6 +440,53 @@ public class BLSpanOrQuery extends SpanOrQuery {
 				if (!childClausesCaptureGroups)
 					return;
 				((BLSpans) topPositionSpans).getCapturedGroups(capturedGroups);
+			}
+
+			@Override
+			public int advanceStartPosition(int target) throws IOException {
+				// (JN: adapted from fillPositionQueue())
+
+				byPositionQueue.clear(); // start with empty position queue and re-add spans
+
+				// add all matching Spans at current doc to byPositionQueue
+				DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
+				while (listAtCurrentDoc != null) {
+					Spans spansAtDoc = listAtCurrentDoc.iterator;
+					if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc) { // matched
+																			// by
+																			// DisjunctionDisiApproximation
+						if (listAtCurrentDoc.twoPhaseView != null) { // matched
+																		// by
+																		// approximation
+							if (listAtCurrentDoc.lastApproxNonMatchDoc == listAtCurrentDoc.doc) { // matches()
+																									// returned
+																									// false
+								spansAtDoc = null;
+							} else {
+								if (listAtCurrentDoc.lastApproxMatchDoc != listAtCurrentDoc.doc) {
+									if (!listAtCurrentDoc.twoPhaseView
+											.matches()) {
+										spansAtDoc = null;
+									}
+								}
+							}
+						}
+					}
+
+					if (spansAtDoc != null) {
+						assert spansAtDoc.docID() == listAtCurrentDoc.doc;
+						//JN assert spansAtDoc.startPosition() == -1;
+						BLSpans.advanceStartPosition(spansAtDoc, target);
+						if (spansAtDoc.startPosition() != NO_MORE_POSITIONS) // JN WAS: assert spansAtDoc.startPosition() != NO_MORE_POSITIONS
+							byPositionQueue.add(spansAtDoc);
+					}
+					listAtCurrentDoc = listAtCurrentDoc.next;
+				}
+				if (byPositionQueue.size() == 0)
+					return NO_MORE_POSITIONS;
+
+				topPositionSpans = byPositionQueue.top();
+				return topPositionSpans.startPosition();
 			}
 
 		};

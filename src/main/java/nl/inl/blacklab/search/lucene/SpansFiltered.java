@@ -73,6 +73,13 @@ public class SpansFiltered extends BLSpans {
 	}
 
 	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		if (!more)
+			return NO_MORE_POSITIONS;
+		return spans.advanceStartPosition(target);
+	}
+
+	@Override
 	public int advance(int target) throws IOException {
 		if (!more)
 			return NO_MORE_DOCS;

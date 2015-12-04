@@ -17,15 +17,15 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Expands the source spans to the left and right to form N-grams.

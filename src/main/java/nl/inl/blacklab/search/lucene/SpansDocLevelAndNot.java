@@ -109,6 +109,11 @@ public class SpansDocLevelAndNot extends BLSpans {
 		return includeSpans.startPosition();
 	}
 
+	@Override
+	public int advanceStartPosition(int target) throws IOException {
+		return includeSpans.advanceStartPosition(target);
+	}
+
 	/**
 	 * Go to the specified document, if it has any hits. If not, go to the first document after
 	 * that with hits.
