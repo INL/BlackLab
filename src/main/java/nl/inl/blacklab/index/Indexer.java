@@ -34,14 +34,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-import org.apache.log4j.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.Term;
-
 import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -51,6 +43,14 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.TarGzipReader;
 import nl.inl.util.TarGzipReader.FileHandler;
 import nl.inl.util.UnicodeReader;
+
+import org.apache.log4j.Logger;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -769,12 +769,12 @@ public class Indexer {
 	}
 
 	public void indexGzip(final String gzFileName, InputStream gzipStream) {
-		if (!TarGzipReader.canProcessTarGzip()) {
-			// Apache commons-compress not found, skip file
-			terminateIndexing = !getListener().errorOccurred("Cannot index .gz, Apache common-compress not on classpath", "tgz", new File(gzFileName), null);
-			//logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
-			return;
-		}
+//		if (!TarGzipReader.canProcessTarGzip()) {
+//			// Apache commons-compress not found, skip file
+//			terminateIndexing = !getListener().errorOccurred("Cannot index .gz, Apache common-compress not on classpath", "tgz", new File(gzFileName), null);
+//			//logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
+//			return;
+//		}
 		TarGzipReader.processGzip(gzFileName, gzipStream, new FileHandler() {
 			@Override
 			public boolean handle(String filePath, InputStream contents) {
@@ -790,12 +790,12 @@ public class Indexer {
 	}
 
 	public void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
-		if (!TarGzipReader.canProcessTarGzip()) {
-			// Apache commons-compress not found, skip file
-			terminateIndexing = !getListener().errorOccurred("Cannot index .tar.gz, Apache common-compress not on classpath", "tgz", new File(tgzFileName), null);
-			//logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
-			return;
-		}
+//		if (!TarGzipReader.canProcessTarGzip()) {
+//			// Apache commons-compress not found, skip file
+//			terminateIndexing = !getListener().errorOccurred("Cannot index .tar.gz, Apache common-compress not on classpath", "tgz", new File(tgzFileName), null);
+//			//logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
+//			return;
+//		}
 		final Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
 		TarGzipReader.processTarGzip(tarGzipStream, new FileHandler() {
 			@Override
