@@ -11,6 +11,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.Searcher;
+import nl.inl.util.DateUtil;
+import nl.inl.util.FileUtil;
+import nl.inl.util.Json;
+import nl.inl.util.StringUtil;
+import nl.inl.util.json.JSONObject;
+
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.FieldInfo;
@@ -20,14 +28,6 @@ import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.DateUtil;
-import nl.inl.util.FileUtil;
-import nl.inl.util.Json;
-import nl.inl.util.StringUtil;
-import nl.inl.util.json.JSONObject;
-
 /**
  * Determines the structure of a BlackLab index.
  */
@@ -35,6 +35,14 @@ public class IndexStructure {
 	protected static final Logger logger = Logger.getLogger(IndexStructure.class);
 
 	private static final String METADATA_FILE_NAME = "indexmetadata.json";
+
+	/**
+	 * The latest index format. Written to the index metadata file.
+	 *
+	 * 3:   first version to include index metadata file
+	 * 3.1: tag length in payload
+	 */
+	static final String LATEST_INDEX_FORMAT = "3.1";
 
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, MetadataFieldDesc> metadataFieldInfos;
@@ -86,6 +94,10 @@ public class IndexStructure {
 	 *  occurred after the last word; now we always make sure we have it, so we
 	 *  can always skip the last token when matching) */
 	private boolean alwaysHasClosingToken = false;
+
+	/** Do we store tag length in the payload (v3.1) or do we store tag ends
+	 *  in a separate property (v3)? */
+	private boolean tagLengthInPayload = true;
 
 	/** May all users freely retrieve the full content of documents, or is that restricted? */
 	private boolean contentViewable = false;
@@ -195,6 +207,7 @@ public class IndexStructure {
 			timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
 		}
 		alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
+		tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
 		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
 		setNamingScheme(indexMetadata, fis);
 		if (indexMetadata.hasFieldInfo()) {
@@ -210,7 +223,7 @@ public class IndexStructure {
 
 			// Reset version info
 			blackLabBuildTime = Searcher.getBlackLabBuildTime();
-			indexFormat = "3";
+			indexFormat = LATEST_INDEX_FORMAT;
 			timeModified = timeCreated = DateUtil.getSqlDateTimeString();
 
 			// Clear any recorded values in metadata fields
@@ -242,7 +255,8 @@ public class IndexStructure {
 			"indexFormat", indexFormat,
 			"timeCreated", timeCreated,
 			"timeModified", timeModified,
-			"alwaysAddClosingToken", true // Indicates that we always index words+1 tokens (last token is for XML tags after the last word)
+			"alwaysAddClosingToken", true, // Indicates that we always index words+1 tokens (last token is for XML tags after the last word)
+			"tagLengthInPayload", true // Indicates that start tag property payload contains tag lengths, and there is no end tag property
 		));
 		JSONObject metadataFields = new JSONObject();
 		JSONObject jsonComplexFields = new JSONObject();
@@ -829,37 +843,6 @@ public class IndexStructure {
 		return blackLabBuildTime;
 	}
 
-//	/**
-//	 * Set the template for the indexmetadata.json file for a new index.
-//	 *
-//	 * The template determines whether and how fields are tokenized/analyzed,
-//	 * indicates which fields are title/author/date/pid fields, and provides
-//	 * extra (optional) information like display names and descriptions.
-//	 *
-//	 * This method should be called just after creating the new index. It cannot
-//	 * be used on existing indices; if you need to change something about your
-//	 * index metadata, edit the file directly (but be careful, as it of course
-//	 * will not affect already-indexed data).
-//	 *
-//	 * @param indexTemplateFile the JSON file to use as a template.
-//	 */
-//	public void setNewIndexMetadataTemplate(File indexTemplateFile) {
-//		// Copy the template file to the index dir and read the metadata again.
-//		File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME);
-//		FileUtil.writeFile(indexMetadataFile, FileUtil.readFile(indexTemplateFile));
-//		readMetadata(reader, false);
-//
-//		// Reset version info
-//		blackLabBuildTime = Searcher.getBlackLabBuildTime();
-//		indexFormat = "3";
-//		timeModified = timeCreated = DateUtil.getSqlDateTimeString();
-//
-//		// Clear any recorded values in metadata fields
-//		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
-//			f.resetForIndexing();
-//		}
-//	}
-
 	/**
 	 * While indexing, check if a complex field is already registered in the
 	 * metadata, and if not, add it now.
@@ -897,6 +880,16 @@ public class IndexStructure {
 	 */
 	public boolean alwaysHasClosingToken() {
 		return alwaysHasClosingToken;
+	}
+
+	/**
+	 * Are tag lengths stored in the start tag payload (index v3.1 and higher)
+	 * or are tag ends stored in a separate property (up until index v3)?
+	 *
+	 * @return true if tag lengths are stored in the start tag payload
+	 */
+	public boolean tagLengthInPayload() {
+		return tagLengthInPayload;
 	}
 
 	/**

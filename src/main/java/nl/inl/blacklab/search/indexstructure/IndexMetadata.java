@@ -38,8 +38,11 @@ public class IndexMetadata {
 			"description", "",
 			"versionInfo", Json.object(
 				"blackLabBuildTime", Searcher.getBlackLabBuildTime(),
-				"indexFormat", "3",
-				"indexTime", DateUtil.getSqlDateTimeString()),
+				"timeCreated", DateUtil.getSqlDateTimeString(),
+				"timeModified", DateUtil.getSqlDateTimeString(),
+				"indexFormat", IndexStructure.LATEST_INDEX_FORMAT,
+				"alwaysAddClosingToken", true,
+				"tagLengthInPayload", true),
 			"fieldInfo", Json.object(
 				"metadataFields", new JSONObject(),
 				"complexFields", new JSONObject())

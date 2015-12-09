@@ -40,8 +40,6 @@ import org.apache.lucene.search.spans.SpanQuery;
  */
 public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQuery> {
 
-	final static boolean USE_TAGS_WITH_PAYLOAD = true;
-
 	@Override
 	public SpanQuery and(QueryExecutionContext context, List<SpanQuery> clauses) {
 		return new SpanQueryAnd(clauses);
@@ -82,10 +80,13 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	@Override
 	public SpanQuery tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
 		SpanQuery allTags;
-		if (USE_TAGS_WITH_PAYLOAD)
-			allTags = new SpanQueryTagsPayload(context, elementName);
-		else
+		if (context.tagLengthInPayload()) {
+			// Modern index, with tag length in payload
 			allTags = new SpanQueryTags(context, elementName);
+		} else {
+			// Older index, with end tags stored in separate property
+			allTags = new SpanQueryTagsOld(context, elementName);
+		}
 		if (attr == null || attr.size() == 0)
 			return allTags;
 
@@ -103,16 +104,6 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		SpanQuery filter = new SpanQueryAnd(attrFilters);
 		return new SpanQueryPositionFilter(allTags, filter, TextPatternPositionFilter.Operation.STARTS_AT, false);
 	}
-
-//	@Override
-//	public SpanQuery containing(QueryExecutionContext context, SpanQuery containers, SpanQuery search, boolean invert) {
-//		return new SpanQueryPositionFilter(containers, search, SpanQueryPositionFilter.Filter.CONTAINING, invert);
-//	}
-//
-//	@Override
-//	public SpanQuery within(QueryExecutionContext context, SpanQuery search, SpanQuery containers, boolean invert) {
-//		return new SpanQueryPositionFilter(search, containers, SpanQueryPositionFilter.Filter.WITHIN, invert);
-//	}
 
 	@Override
 	public SpanQuery positionFilter(QueryExecutionContext context,

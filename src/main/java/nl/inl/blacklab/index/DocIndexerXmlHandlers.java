@@ -31,18 +31,6 @@ import java.util.Set;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
-import org.apache.lucene.util.BytesRef;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.DefaultHandler;
-
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.complex.ComplexField;
@@ -56,6 +44,18 @@ import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.util.BytesRef;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Abstract base class for a DocIndexer processing XML files using the hookable
@@ -340,10 +340,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 		/** Close tag: store the end tag location */
 		@Override
 		public void endElement(String uri, String localName, String qName) {
-			int lastEndTagPos = propEndTag.lastValuePosition();
 			int currentPos = propMain.lastValuePosition() + 1;
-			int posIncrement = currentPos - lastEndTagPos;
-			propEndTag.addValue(localName, posIncrement);
 
 			// Add payload to start tag property indicating end position
 			OpenTagInfo openTag = openTags.remove(openTags.size() - 1);
@@ -521,9 +518,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 																			// tag
 																			// positions
 		propStartTag.setForwardIndex(false);
-		propEndTag = addProperty(ComplexFieldUtil.END_TAG_PROP_NAME); // end tag
-																		// positions
-		propEndTag.setForwardIndex(false);
 		indexer.getSearcher()
 				.getIndexStructure()
 				.registerComplexField(contentsField.getName(),
@@ -720,11 +714,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	/** The punctuation property */
 	ComplexFieldProperty propPunct;
 
-	/** The start tag property */
+	/** The start tag property. Also contains tag length in payload. */
 	ComplexFieldProperty propStartTag;
-
-	/** The end tag property */
-	ComplexFieldProperty propEndTag;
 
 	/**
 	 * A metadata fetcher can fetch the metadata for a document from some
@@ -794,10 +785,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
 	public ComplexFieldProperty getPropStartTag() {
 		return propStartTag;
-	}
-
-	public ComplexFieldProperty getPropEndTag() {
-		return propEndTag;
 	}
 
 	public ComplexFieldProperty getMainProperty() {

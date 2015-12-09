@@ -16,12 +16,15 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
@@ -38,38 +41,86 @@ import nl.inl.blacklab.search.QueryExecutionContext;
  * and matches the first open tag with the first close tag, etc.
  *
  */
-public class SpanQueryTags extends SpanQueryBase {
+public class SpanQueryTags extends SpanQuery {
+
+	SpanTermQuery clause;
 
 	private String tagName;
 
+	private String baseFieldName;
+
 	public SpanQueryTags(QueryExecutionContext context, String tagName) {
-		super();
 		this.tagName = tagName;
-		clauses = new SpanQuery[2];
 		baseFieldName = context.fieldName;
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		String startTagFieldName = startTagContext.luceneField();
-		QueryExecutionContext endTagContext = context.withProperty(ComplexFieldUtil.END_TAG_PROP_NAME);
-		String endTagFieldName = endTagContext.luceneField();
-
-		// Use a BlackLabSpanTermQuery instead of default Lucene one
-		// because we need to override getField() to only return the base field name,
-		// not the complete field name with the property.
-		clauses[0] = new BLSpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));
-		clauses[1] = new BLSpanTermQuery(new Term(endTagFieldName, endTagContext.optDesensitize(tagName)));
+		this.clause = new SpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));
 	}
 
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans startTags = clauses[0].getSpans(context, acceptDocs, termContexts);
-		Spans endTags = clauses[1].getSpans(context, acceptDocs, termContexts);
-		if (startTags == null || endTags == null)
+		Spans startTags = clause.getSpans(context, acceptDocs, termContexts);
+		if (startTags == null)
 			return null;
-		return new SpansTags(startTags, endTags);
+		return new SpansTagsPayload(startTags);
 	}
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryTags(" + tagName + ")";
+		return "SpanQueryTagsPayload(" + tagName + ")";
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || this.getClass() != o.getClass())
+			return false;
+
+		final SpanQueryTags that = (SpanQueryTags) o;
+
+		if (!clause.equals(that.clause))
+			return false;
+
+		return (getBoost() == that.getBoost());
+	}
+
+	/**
+	 * Returns the name of the search field. In the case of a complex field, the clauses may
+	 * actually query different properties of the same complex field (e.g. "description" and
+	 * "description__pos"). That's why only the prefix is returned.
+	 *
+	 * @return name of the search field. In the case of a complex
+	 */
+	@Override
+	public String getField() {
+		return baseFieldName;
+	}
+
+	/**
+	 * Add all terms to the supplied set
+	 *
+	 * @param terms
+	 *            the set the terms should be added to
+	 */
+	@SuppressWarnings({ "rawtypes" })
+	@Override
+	public void extractTerms(Set terms) {
+		try {
+			// FIXME: temporary extractTerms hack
+			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
+			methodExtractTerms.setAccessible(true);
+			methodExtractTerms.invoke(clause, terms);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		int h = clause.hashCode();
+		h ^= (h << 10) | (h >>> 23);
+		h ^= Float.floatToRawIntBits(getBoost());
+		return h;
 	}
 }

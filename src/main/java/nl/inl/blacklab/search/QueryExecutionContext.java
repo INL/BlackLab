@@ -246,5 +246,9 @@ public class QueryExecutionContext {
 		return searcher.getIndexStructure().alwaysHasClosingToken();
 	}
 
+	public boolean tagLengthInPayload() {
+		return searcher.getIndexStructure().tagLengthInPayload();
+	}
+
 
 }
