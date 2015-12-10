@@ -33,6 +33,9 @@ import org.apache.lucene.util.BytesRef;
  */
 public class ComplexFieldProperty {
 
+	/** Maximum length a value is allowed to be. */
+	private static final int MAXIMUM_VALUE_LENGTH = 1000;
+
 	/** The field type for properties without character offsets */
 	private static FieldType tokenStreamFieldNoOffsets;
 
@@ -221,6 +224,12 @@ public class ComplexFieldProperty {
 	 * @param increment number of tokens distance from the last token added
 	 */
 	public void addValue(String value, int increment) {
+		if (value.length() > MAXIMUM_VALUE_LENGTH) {
+			// Let's keep a sane maximum value length.
+			// (Lucene's is 32766, but we don't want to go that far)
+			value = value.substring(0, MAXIMUM_VALUE_LENGTH);
+		}
+
 		// Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
 		String storedValue = storedValues.get(value);
 		if (storedValue == null) {
@@ -260,6 +269,12 @@ public class ComplexFieldProperty {
 	 * @return new position of the last token, in case it changed.
 	 */
 	public int addValueAtPosition(String value, int position) {
+		if (value.length() > MAXIMUM_VALUE_LENGTH) {
+			// Let's keep a sane maximum value length.
+			// (Lucene's is 32766, but we don't want to go that far)
+			value = value.substring(0, MAXIMUM_VALUE_LENGTH);
+		}
+
 		if (position >= lastValuePosition) {
 			// Beyond the last position; regular addValue()
 			addValue(value, position - lastValuePosition);
