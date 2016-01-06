@@ -32,6 +32,13 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
 		<tr>
+			<td>v1.2.0</td>
+			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.2.0/blacklab-1.2.0.jar'>Binary (jar)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.2.0.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.2.0.zip'>Source (zip)</a></td>
+			<td>Lucene 5, many optimizations, using Maven</td>
+		</tr>
+		<tr>
 			<td>v1.1.0</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.1.0/BlackLab.jar'>Binary (jar)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.1.0.tar.gz'>Source (tgz)</a></td>

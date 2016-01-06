@@ -2,13 +2,30 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.2.0
+
 ### Changed
 * Switched build from Ant to Maven, and added generating a project site with javadocs, reports, etc.
 * Using less memory by switching some Maps in the forward index to the gs-collections one.
+* Updated to Lucene 5.2.1.
+* Added Maven project site, available at http://inl.github.io/BlackLab/
+* Removed Lucene query parser for corpus queries.
+* Keep tag end position in payload of start tag, which results in much faster tag searches.
+* Rewrote many slower queries to make them (much) faster. Particularly searches with "not" parts and "containing"/"within" should be faster.
+* Sped up "containing", "within", and other such filter queries.
+* TextPatternAnd was renamed and expanded to TextPatternAndNot. TextPatternAnd is still available as a synonym, but has been deprecated.
+* Added TextPatternFilterNGrams to speed up queries of the form: []{2,3} containing "water" (or the "within" equivalent).
+* Added BLSpans.advanceStartPosition(target) to "skip" within a document.
+* Commons-compress (used for reading .gz files) is statically linked now.
+* Limited token length to 1000 (really long tokens would cause problems otherwise).
 
 ### Fixed
-* When an empty version file is read, don't crash on a NullPointerException.
-* Made ContentStoreDir independent of default encoding.
+* Empty version file causes NullPointerException.
+* Missing manifest file causes NullPointerException.
+* ContentStoreDir contained dependencies on the default encoding.
+* A number of subtle search bugs.
+* Opening an index by passing a symbolic link throws an exception.
+* Miscellaneous small fixes.
 
 ## Improvements up to v1.1.0
 * Upgraded from Lucene 3.6 to Lucene 4.2. This should speed up regular expression searching, among other things. The required Lucene 4 modules are: core, highlighter, queries, queryparser, analyzers-common. Thanks to Marc Kemps-Sneijders from the Meertens Institute for the code submission!
