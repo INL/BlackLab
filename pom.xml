@@ -6,7 +6,7 @@
 
 	<groupId>nl.inl.blacklab</groupId>
 	<artifactId>blacklab</artifactId>
-	<version>1.2-SNAPSHOT</version>
+	<version>1.2.0</version>
 	<packaging>jar</packaging>
 	
 	<name>BlackLab</name>
