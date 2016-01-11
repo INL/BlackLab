@@ -2,6 +2,11 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.2.1
+
+### Fixed
+* Queries containing only a document filter (metadata filter) would return incorrect results.
+
 ## Improvements up to v1.2.0
 
 ### Changed

@@ -32,6 +32,13 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
 		<tr>
+			<td>v1.2.1</td>
+			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.2.1/blacklab-1.2.1.jar'>Binary (jar)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.2.1.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.2.1.zip'>Source (zip)</a></td>
+			<td>Fixed document-only queries returning incorrect results.</td>
+		</tr>
+		<tr>
 			<td>v1.2.0</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.2.0/blacklab-1.2.0.jar'>Binary (jar)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.2.0.tar.gz'>Source (tgz)</a></td>
