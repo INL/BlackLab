@@ -25,7 +25,7 @@ import org.junit.Test;
 
 public class TestSpansNGrams {
 
-	private SpansNGrams getSpans() {
+	private static SpansNGrams getSpans() {
 		// NOTE: in doc 1, all tokens except 0-1 match; in doc 3, all tokens match
 		SpansNGrams spans = new SpansNGrams(false, null, "test", 2, 3);
 		spans.setTest(true, 1); // no IndexReader available

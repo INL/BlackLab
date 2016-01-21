@@ -48,7 +48,7 @@ public class SketchToXmlConverter {
 
 		File outDir = PropertiesUtil.getFileProp(properties, "inputDir", "input", null);
 
-		new SketchToXmlConverter().convertList(listFile, inDir, outDir);
+		SketchToXmlConverter.convertList(listFile, inDir, outDir);
 	}
 
 	private static final int LINES_PER_CHUNK_FILE = 30000;
@@ -235,7 +235,7 @@ public class SketchToXmlConverter {
 	 * @param outDir where to write output files
 	 * @throws Exception
 	 */
-	private void convertList(File listFile, File inDir, File outDir) throws Exception {
+	private static void convertList(File listFile, File inDir, File outDir) throws Exception {
 		SketchToXmlConverter converter = new SketchToXmlConverter();
 		List<String> filesToRead = FileUtil.readLines(listFile);
 		// Contains a list of files to index

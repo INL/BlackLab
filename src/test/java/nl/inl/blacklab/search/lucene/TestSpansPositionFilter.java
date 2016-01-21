@@ -26,7 +26,7 @@ import org.junit.Test;
 
 public class TestSpansPositionFilter {
 
-	private SpansPositionFilter getSpans(boolean swap, TextPatternPositionFilter.Operation type, boolean invert) {
+	private static SpansPositionFilter getSpans(boolean swap, TextPatternPositionFilter.Operation type, boolean invert) {
 		Spans a = MockSpans.fromLists(
 			new int[] {  0,  1,  1,  2,  2,  2,  3 },
 			new int[] { 10, 10, 20, 10, 10, 30, 20 },

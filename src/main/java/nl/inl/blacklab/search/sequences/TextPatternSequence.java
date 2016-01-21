@@ -343,7 +343,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 		return combine(parts.get(0), altTail, restMatchesEmpty);
 	}
 
-	private List<List<TextPattern>> combine(TextPattern head,
+	private static List<List<TextPattern>> combine(TextPattern head,
 			List<List<TextPattern>> tailAlts, boolean tailMatchesEmpty) {
 		List<List<TextPattern>> results = new ArrayList<>();
 		TextPattern headNoEmpty = head.noEmpty().rewrite();

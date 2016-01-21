@@ -114,12 +114,12 @@ public class TestChunkedList {
 		Assert.assertEquals(6, l.size());
 	}
 
-	private List<String> getFibList(int chunkSize) {
+	private static List<String> getFibList(int chunkSize) {
 		List<String> l = new ChunkedList<>(Arrays.asList("The", "quick", "brown", "fox", "jumps"), chunkSize);
 		return l;
 	}
 
-	private List<String> getFibList() {
+	private static List<String> getFibList() {
 		List<String> l = new ChunkedList<>(Arrays.asList("The", "quick", "brown", "fox", "jumps"));
 		return l;
 	}

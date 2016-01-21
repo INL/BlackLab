@@ -1121,7 +1121,7 @@ public class Searcher {
 	 * @param endAtWord first word not to include
 	 * @return the cut string
 	 */
-	private String getWordsFromString(String content, int startAtWord,
+	private static String getWordsFromString(String content, int startAtWord,
 			int endAtWord) {
 		if (startAtWord == -1 && endAtWord == -1)
 			return content;

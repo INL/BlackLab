@@ -20,14 +20,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.Spans;
 
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits. Allow us to retrieve
@@ -117,7 +117,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 			capturedGroupsPerEndpoint = new ArrayList<>();
 		}
 
-		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
+		doCapturedGroups = clauseCapturesGroups && source != null && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
 
 		bucketSize = 0;
 		currentBucketStart = currentSpansStart;
@@ -125,7 +125,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 			endPoints.add(source.endPosition());
 			if (doCapturedGroups) {
 				Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
-				((BLSpans)source).getCapturedGroups(capturedGroups);
+				source.getCapturedGroups(capturedGroups);
 				capturedGroupsPerEndpoint.add(capturedGroups);
 			}
 			bucketSize++;

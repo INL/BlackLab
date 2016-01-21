@@ -15,14 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+
 import org.apache.lucene.index.Term;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-
 public class TestSpanQueryAnd {
 
+	@SuppressWarnings("unused")
 	@Test(expected = RuntimeException.class)
 	public void testFieldMismatch() {
 		BLSpanTermQuery first = new BLSpanTermQuery(new Term("author", "bla"));

@@ -434,7 +434,7 @@ public class IndexStructure {
 	 * @param indexMetadata the metadata
 	 * @param fis field infos
 	 */
-	private void setNamingScheme(IndexMetadata indexMetadata, FieldInfos fis) {
+	private static void setNamingScheme(IndexMetadata indexMetadata, FieldInfos fis) {
 		// Specified in index metadata file?
 		String namingScheme = indexMetadata.getFieldNamingScheme();
 		if (namingScheme != null) {
