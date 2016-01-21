@@ -39,7 +39,7 @@ public abstract class SimpleResourcePool<T> {
 	 */
 	public SimpleResourcePool(int maxFreePoolSize) {
 		this.maxFreePoolSize = maxFreePoolSize;
-		freePool = new ArrayList<T>();
+		freePool = new ArrayList<>();
 		neverPool = (maxFreePoolSize == 0);
 	}
 

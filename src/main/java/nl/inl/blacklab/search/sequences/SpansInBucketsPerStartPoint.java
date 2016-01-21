@@ -45,9 +45,9 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
 	protected int currentSpansStart = -1;
 
-	private List<Integer> endPoints = new ArrayList<Integer>();
+	private List<Integer> endPoints = new ArrayList<>();
 
-	private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<Span[]>();
+	private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<>();
 
 	private int bucketSize = 0;
 
@@ -113,8 +113,8 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 			capturedGroupsPerEndpoint.clear();
 		} else {
 			// Reallocate in this case to avoid holding on to a lot of memory
-			endPoints = new ArrayList<Integer>();
-			capturedGroupsPerEndpoint = new ArrayList<Span[]>();
+			endPoints = new ArrayList<>();
+			capturedGroupsPerEndpoint = new ArrayList<>();
 		}
 
 		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;

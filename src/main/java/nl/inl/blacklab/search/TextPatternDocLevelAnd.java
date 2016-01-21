@@ -28,7 +28,7 @@ public class TextPatternDocLevelAnd extends TextPatternCombiner {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		List<T> chResults = new ArrayList<T>(clauses.size());
+		List<T> chResults = new ArrayList<>(clauses.size());
 		for (TextPattern cl : clauses) {
 			chResults.add(cl.translate(translator, context));
 		}

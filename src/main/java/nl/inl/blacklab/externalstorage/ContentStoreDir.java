@@ -150,7 +150,7 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 		if (!dir.exists())
 			dir.mkdir();
 		tocFile = new File(dir, "toc.dat");
-		toc = new HashMap<Integer, TocEntry>();
+		toc = new HashMap<>();
 		if (tocFile.exists())
 			readToc();
 		if (create) {

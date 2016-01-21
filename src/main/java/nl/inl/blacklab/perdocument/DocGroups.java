@@ -31,9 +31,9 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
  * Applies grouping to the results in a DocResults object.
  */
 public class DocGroups implements Iterable<DocGroup> {
-	Map<HitPropValue, DocGroup> groups = new HashMap<HitPropValue, DocGroup>();
+	Map<HitPropValue, DocGroup> groups = new HashMap<>();
 
-	List<DocGroup> orderedGroups = new ArrayList<DocGroup>();
+	List<DocGroup> orderedGroups = new ArrayList<>();
 
 	private Searcher searcher;
 
@@ -64,12 +64,12 @@ public class DocGroups implements Iterable<DocGroup> {
 		searcher = docResults.getSearcher();
 		this.groupBy = groupBy;
 		//Thread currentThread = Thread.currentThread();
-		Map<HitPropValue, List<DocResult>> groupLists = new HashMap<HitPropValue, List<DocResult>>();
+		Map<HitPropValue, List<DocResult>> groupLists = new HashMap<>();
 		for (DocResult r : docResults) {
 			HitPropValue groupId = groupBy.get(r);
 			List<DocResult> group = groupLists.get(groupId);
 			if (group == null) {
-				group = new ArrayList<DocResult>();
+				group = new ArrayList<>();
 				groupLists.put(groupId, group);
 			}
 			group.add(r);

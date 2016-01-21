@@ -141,7 +141,7 @@ public class TestSearches {
 	 * @return
 	 */
 	static List<String> getConcordances(Hits hits) {
-		List<String> results = new ArrayList<String>();
+		List<String> results = new ArrayList<>();
 		for (Hit hit : hits) {
 			Kwic kwic = hits.getKwic(hit);
 			String left = StringUtil.join(kwic.getLeft("word"), " ");

@@ -342,7 +342,7 @@ public class XmlHighlighter {
 	 * @return the list of tag locations, each with type EXISTING_TAG.
 	 */
 	private List<TagLocation> makeTagList(String elementContent) {
-		List<TagLocation> tags = new ArrayList<TagLocation>();
+		List<TagLocation> tags = new ArrayList<>();
 
 		// Regex for finding all XML tags.
 		// Group 1 indicates if this is an open or close tag
@@ -350,7 +350,7 @@ public class XmlHighlighter {
 		Pattern xmlTags = Pattern.compile("<\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>");
 
 		Matcher m = xmlTags.matcher(elementContent);
-		List<TagLocation> openTagStack = new ArrayList<TagLocation>(); // keep track of open tags
+		List<TagLocation> openTagStack = new ArrayList<>(); // keep track of open tags
 		int fixStartTagObjectNum = -1; // when adding start tags to fix well-formedness, number backwards (for correct sorting)
 		while (m.find()) {
 			TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, m.start(), m.end());
@@ -516,7 +516,7 @@ public class XmlHighlighter {
 	public static void main(String[] args) {
 		XmlHighlighter h = new XmlHighlighter();
 		String xml = "<zin><lidwoord>The</lidwoord> <adjectief>quick</adjectief> <adjectief>brown</adjectief> <substantief>fox</substantief></zin>";
-		List<HitCharSpan> hitSpans = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hitSpans = new ArrayList<>();
 		hitSpans.add(new HitCharSpan(41, 46));
 		hitSpans.add(new HitCharSpan(101, 124));
 		String result = h.highlight(xml, hitSpans, 0);

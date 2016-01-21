@@ -38,7 +38,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 	 *            the desired criteria
 	 */
 	public DocPropertyMultiple(DocProperty... criteria) {
-		this.criteria = new ArrayList<DocProperty>(Arrays.asList(criteria));
+		this.criteria = new ArrayList<>(Arrays.asList(criteria));
 	}
 
 	@Override

@@ -156,7 +156,7 @@ public class QueryTool {
 	private int showWhichGroup = -1;
 
 	/** Lists of words read from file to choose random word from (for batch mode) */
-	private Map<String, List<String>> wordLists = new HashMap<String, List<String>>();
+	private Map<String, List<String>> wordLists = new HashMap<>();
 
 	/** Thrown when an error occurs during parsing */
 	class ParseException extends Exception {
@@ -912,7 +912,7 @@ public class QueryTool {
 			return;
 		}
 		Document doc = searcher.document(docId);
-		Map<String, String> metadata = new TreeMap<String, String>(); // sort by key
+		Map<String, String> metadata = new TreeMap<>(); // sort by key
 		for (IndexableField f: doc.getFields()) {
 			metadata.put(f.name(), f.stringValue());
 		}
@@ -1522,7 +1522,7 @@ public class QueryTool {
 		HitsWindow window = hitsToShow.window(firstResult, resultsPerPage);
 
 		// Compile hits display info and calculate necessary width of left context column
-		List<HitToShow> toShow = new ArrayList<HitToShow>();
+		List<HitToShow> toShow = new ArrayList<>();
 		window.setContextSize(contextSize); // number of words around hit
 		int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
 		for (Hit hit : window) {

@@ -29,9 +29,9 @@ import java.util.List;
  */
 public class TextPatternAndNot extends TextPattern {
 
-	protected List<TextPattern> include = new ArrayList<TextPattern>();
+	protected List<TextPattern> include = new ArrayList<>();
 
-	protected List<TextPattern> exclude = new ArrayList<TextPattern>();
+	protected List<TextPattern> exclude = new ArrayList<>();
 
 	public TextPatternAndNot(TextPattern... clauses) {
 		for (TextPattern clause : clauses) {
@@ -64,11 +64,11 @@ public class TextPatternAndNot extends TextPattern {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		List<T> chResults = new ArrayList<T>(include.size());
+		List<T> chResults = new ArrayList<>(include.size());
 		for (TextPattern cl : include) {
 			chResults.add(cl.translate(translator, context));
 		}
-		List<T> chResultsNot = new ArrayList<T>(exclude.size());
+		List<T> chResultsNot = new ArrayList<>(exclude.size());
 		for (TextPattern cl : exclude) {
 			chResultsNot.add(cl.translate(translator, context));
 		}
@@ -93,8 +93,8 @@ public class TextPatternAndNot extends TextPattern {
 			TextPatternAndNot clone = (TextPatternAndNot) super.clone();
 
 			// copy list of children so we can modify it independently
-			clone.include = new ArrayList<TextPattern>(include);
-			clone.exclude = new ArrayList<TextPattern>(exclude);
+			clone.include = new ArrayList<>(include);
+			clone.exclude = new ArrayList<>(exclude);
 
 			return clone;
 		} catch (CloneNotSupportedException e) {
@@ -111,7 +111,7 @@ public class TextPatternAndNot extends TextPattern {
 		}
 
 		// ! ( (a & b) & !(c & d) ) --> !a | !b | (c & d)
-		List<TextPattern> inclNeg = new ArrayList<TextPattern>();
+		List<TextPattern> inclNeg = new ArrayList<>();
 		for (TextPattern tp: include) {
 			inclNeg.add(tp.inverted());
 		}
@@ -139,8 +139,8 @@ public class TextPatternAndNot extends TextPattern {
 		// Flatten nested AND queries, and invert negative-only clauses.
 		// This doesn't change the query because the AND operator is associative.
 		boolean anyRewritten = false;
-		List<TextPattern> rewrittenCl = new ArrayList<TextPattern>();
-		List<TextPattern> rewrittenNotCl = new ArrayList<TextPattern>();
+		List<TextPattern> rewrittenCl = new ArrayList<>();
+		List<TextPattern> rewrittenNotCl = new ArrayList<>();
 		boolean isNot = false;
 		for (List<TextPattern> cl: Arrays.asList(include, exclude)) {
 			for (TextPattern child: cl) {

@@ -94,7 +94,7 @@ class TermsImplV3 extends Terms {
 		if (indexMode) {
 			// Index mode: create a SortedMap based on the specified Collator.
 			// (used later to get the terms in sort order)
-			this.termIndex = new TreeMap<String, Integer>(this.collator);
+			this.termIndex = new TreeMap<>(this.collator);
 		} else {
 			// We already have the sort order, so TreeMap is not necessary here.
 			this.termIndex = Maps.mutable.empty();

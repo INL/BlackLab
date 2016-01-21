@@ -72,9 +72,9 @@ public class HitsWindow extends Hits {
 			number = source.size() - first;
 
 		// Copy the hits we're interested in.
-		hits = new ArrayList<Hit>();
+		hits = new ArrayList<>();
 		if (source.hasCapturedGroups())
-			capturedGroups = new HashMap<Hit, Span[]>();
+			capturedGroups = new HashMap<>();
 		for (int i = first; i < first + number; i++) {
 			Hit hit = source.get(i);
 			hits.add(hit);

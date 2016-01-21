@@ -56,13 +56,13 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 	protected int currentDoc = -1;
 
-	private List<Hit> bucket = new ArrayList<Hit>();
+	private List<Hit> bucket = new ArrayList<>();
 
 	/**
 	 * For each hit we fetched, store the captured groups, so we don't
 	 * lose this information.
 	 */
-	private Map<Hit, Span[]> capturedGroupsPerHit = new HashMap<Hit, Span[]>();
+	private Map<Hit, Span[]> capturedGroupsPerHit = new HashMap<>();
 
 	private int bucketSize = 0;
 
@@ -183,8 +183,8 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 			capturedGroupsPerHit.clear();
 		} else {
 			// Reallocate in this case to avoid holding on to a lot of memory
-			bucket = new ArrayList<Hit>();
-			capturedGroupsPerHit = new HashMap<Hit, Span[]>();
+			bucket = new ArrayList<>();
+			capturedGroupsPerHit = new HashMap<>();
 		}
 
 		bucketSize = 0;

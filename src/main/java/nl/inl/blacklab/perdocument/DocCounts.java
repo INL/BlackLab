@@ -35,9 +35,9 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
  * Useful for faceted search.
  */
 public class DocCounts implements Iterable<DocCount> {
-	Map<HitPropValue, DocCount> counts = new HashMap<HitPropValue, DocCount>();
+	Map<HitPropValue, DocCount> counts = new HashMap<>();
 
-	List<DocCount> orderedGroups = new ArrayList<DocCount>();
+	List<DocCount> orderedGroups = new ArrayList<>();
 
 	private Searcher searcher;
 

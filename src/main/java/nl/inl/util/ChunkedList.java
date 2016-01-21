@@ -40,7 +40,7 @@ import java.util.NoSuchElementException;
 public class ChunkedList<T> extends AbstractList<T> {
 	final static int DEFAULT_CHUNK_SIZE = 250000; // 1M per array
 
-	List<T[]> chunks = new ArrayList<T[]>();
+	List<T[]> chunks = new ArrayList<>();
 
 	/**
 	 * How many int elements are in each chunk

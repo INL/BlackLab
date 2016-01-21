@@ -99,7 +99,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 		static Object defaultHttpClient;
 
 		/** Cached metadata (saves URL requests) */
-		static Map<String, Metadata> cached = new HashMap<String, Metadata>();
+		static Map<String, Metadata> cached = new HashMap<>();
 
 		private static void init() {
 

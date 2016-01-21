@@ -158,7 +158,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
 		try {
 			LeafReader srw = SlowCompositeReaderWrapper.wrap(reader);
-			Map<String, UninvertingReader.Type> fields = new HashMap<String, UninvertingReader.Type>();
+			Map<String, UninvertingReader.Type> fields = new HashMap<>();
 			fields.put(fiidFieldName, UninvertingReader.Type.INTEGER);
 			uninv = new UninvertingReader(srw, fields);
 			cachedFiids = uninv.getNumericDocValues(fiidFieldName);
@@ -227,8 +227,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			if (termsFile.exists())
 				termsFile.delete();
 		}
-		toc = new ArrayList<TocEntry>();
-		deletedTocEntries = new ArrayList<TocEntry>();
+		toc = new ArrayList<>();
+		deletedTocEntries = new ArrayList<>();
 		try {
 			boolean existing = false;
 			if (tocFile.exists()) {
@@ -279,8 +279,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		// document start, documents of up to 2G tokens can be processed. We could get around
 		// this limitation by reading from multiple chunks, but this would make the code
 		// more complex.
-		tokensFileChunks = new ArrayList<ByteBuffer>();
-		tokensFileChunkOffsetBytes = new ArrayList<Long>();
+		tokensFileChunks = new ArrayList<>();
+		tokensFileChunkOffsetBytes = new ArrayList<>();
 		long mappedBytes = 0;
 		long tokenFileEndBytes = tokenFileEndPosition * SIZEOF_INT;
 		while (mappedBytes < tokenFileEndBytes) {
@@ -643,7 +643,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
 
 		// Translate them to strings using the terms index
-		List<String[]> result = new ArrayList<String[]>(resultInt.size());
+		List<String[]> result = new ArrayList<>(resultInt.size());
 		for (int[] snippetInt: resultInt) {
 			String[] snippet = new String[snippetInt.length];
 			for (int j = 0; j < snippetInt.length; j++) {
@@ -679,7 +679,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			int n = start.length;
 			if (n != end.length)
 				throw new RuntimeException("start and end must be of equal length");
-			List<int[]> result = new ArrayList<int[]>(n);
+			List<int[]> result = new ArrayList<>(n);
 
 			for (int i = 0; i < n; i++) {
 				if (start[i] == -1)

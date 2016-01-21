@@ -34,11 +34,11 @@ import org.apache.lucene.search.BooleanClause.Occur;
 @Deprecated
 public class TextPatternBoolean extends TextPattern {
 
-	private List<TextPattern> must = new ArrayList<TextPattern>();
+	private List<TextPattern> must = new ArrayList<>();
 
-	private List<TextPattern> should = new ArrayList<TextPattern>();
+	private List<TextPattern> should = new ArrayList<>();
 
-	private List<TextPattern> mustNot = new ArrayList<TextPattern>();
+	private List<TextPattern> mustNot = new ArrayList<>();
 
 	public TextPatternBoolean(boolean disableCoord) {
 		// do nothing (disableCoord is ignored as we don't use scoring)
@@ -111,9 +111,9 @@ public class TextPatternBoolean extends TextPattern {
 			TextPatternBoolean clone = (TextPatternBoolean) super.clone();
 
 			// copy list of children so we can modify it independently
-			clone.must = new ArrayList<TextPattern>(must);
-			clone.should = new ArrayList<TextPattern>(should);
-			clone.mustNot = new ArrayList<TextPattern>(mustNot);
+			clone.must = new ArrayList<>(must);
+			clone.should = new ArrayList<>(should);
+			clone.mustNot = new ArrayList<>(mustNot);
 
 			return clone;
 		} catch (CloneNotSupportedException e) {

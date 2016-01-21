@@ -91,7 +91,7 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 	 * What namespace prefix mappings have we encountered but not output in a start tag
 	 * yet? (used to make sure the stored XML contains all the required mappings)
 	 */
-	protected static Map<String,String> outputPrefixMapping = new HashMap<String, String>();
+	protected static Map<String,String> outputPrefixMapping = new HashMap<>();
 
 	/**
 	 * Encountered a prefix to namespace mapping; now in effect.

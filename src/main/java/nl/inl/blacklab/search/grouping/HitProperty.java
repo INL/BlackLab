@@ -38,7 +38,7 @@ public abstract class HitProperty implements Comparator<Object> {
 
 	public HitProperty(Hits hits) {
 		this.hits = hits;
-		contextIndices = new ArrayList<Integer>();
+		contextIndices = new ArrayList<>();
 		contextIndices.add(0); // in case it's accidentally not set, set a default value
 	}
 

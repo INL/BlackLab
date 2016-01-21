@@ -116,7 +116,7 @@ public class BatchContentStore {
 		int[] end = new int[snippets];
 
 		// Build sorted list of non-deleted ids.
-		List<Integer> docIds = new ArrayList<Integer>();
+		List<Integer> docIds = new ArrayList<>();
 		for (Integer i : cs.getDocIds()) {
 			if (!cs.isDeleted(i))
 				docIds.add(i);

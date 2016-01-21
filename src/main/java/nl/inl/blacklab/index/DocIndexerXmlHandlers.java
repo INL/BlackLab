@@ -78,7 +78,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	 * start tag yet? (used to make sure the stored XML contains all the
 	 * required mappings)
 	 */
-	protected static Map<String, String> outputPrefixMapping = new HashMap<String, String>();
+	protected static Map<String, String> outputPrefixMapping = new HashMap<>();
 
 	/**
 	 * Handle Document element. Starts a new Lucene document and adds the
@@ -310,7 +310,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			this.index = index;
 		}
 	}
-	List<OpenTagInfo> openTags = new ArrayList<OpenTagInfo>();
+	List<OpenTagInfo> openTags = new ArrayList<>();
 
 	/** Handle tags. */
 	public class InlineTagHandler extends ElementHandler {
@@ -697,7 +697,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	/** Name of the document currently being indexed */
 	String currentDocumentName;
 
-	Set<String> numericFields = new HashSet<String>();
+	Set<String> numericFields = new HashSet<>();
 
 	/**
 	 * Complex field where different aspects (word form, named entity status,

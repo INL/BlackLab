@@ -22,7 +22,7 @@ import java.util.List;
  * Abstract base class for combining several text patterns into a single new compound TextPattern
  */
 public abstract class TextPatternCombiner extends TextPattern {
-	protected List<TextPattern> clauses = new ArrayList<TextPattern>();
+	protected List<TextPattern> clauses = new ArrayList<>();
 
 	public TextPatternCombiner(TextPattern... clauses) {
 		for (TextPattern clause : clauses) {
@@ -47,7 +47,7 @@ public abstract class TextPatternCombiner extends TextPattern {
 			TextPatternCombiner clone = (TextPatternCombiner) super.clone();
 
 			// copy list of children so we can modify it independently
-			clone.clauses = new ArrayList<TextPattern>(clauses);
+			clone.clauses = new ArrayList<>(clauses);
 
 			return clone;
 		} catch (CloneNotSupportedException e) {

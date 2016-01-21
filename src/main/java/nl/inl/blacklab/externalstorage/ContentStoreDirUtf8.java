@@ -322,7 +322,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 				tocFile.delete();
 			setStoreType();
 		}
-		blockOffsetWhileStoring = new ArrayList<Integer>();
+		blockOffsetWhileStoring = new ArrayList<>();
 	}
 
 	/**
@@ -627,7 +627,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		tocModified = true;
 		charsFromEntryWritten = 0;
 		bytesWritten = 0;
-		blockOffsetWhileStoring = new ArrayList<Integer>();
+		blockOffsetWhileStoring = new ArrayList<>();
 		return e.id;
 	}
 

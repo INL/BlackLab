@@ -56,7 +56,7 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 	public AbstractSynonymFilter(TokenStream input, boolean includeOriginalTokens) {
 		super(input);
 		this.includeOriginalTokens = includeOriginalTokens;
-		synonymStack = new Stack<State>();
+		synonymStack = new Stack<>();
 		termAttr = addAttribute(CharTermAttribute.class);
 		addAttribute(PositionIncrementAttribute.class);
 		addAttribute(TypeAttribute.class);

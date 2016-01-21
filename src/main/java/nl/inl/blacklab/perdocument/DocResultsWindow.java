@@ -55,7 +55,7 @@ public class DocResultsWindow extends DocResults {
 
 		// Make sublist (don't use sublist because the backing list may change if not
 		// all hits have been read yet)
-		results = new ArrayList<DocResult>();
+		results = new ArrayList<>();
 		for (int i = first; i < first + number; i++) {
 			results.add(source.get(i));
 		}

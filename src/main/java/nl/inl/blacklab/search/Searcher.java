@@ -147,7 +147,7 @@ public class Searcher {
 	 *
 	 * Indexed by complex field name.
 	 */
-	private Map<String, ContentAccessor> contentAccessors = new HashMap<String, ContentAccessor>();
+	private Map<String, ContentAccessor> contentAccessors = new HashMap<>();
 
 	/**
 	 * ForwardIndices allow us to quickly find what token occurs at a specific position. This speeds
@@ -156,7 +156,7 @@ public class Searcher {
 	 *
 	 * Indexed by property name.
 	 */
-	private Map<String, ForwardIndex> forwardIndices = new HashMap<String, ForwardIndex>();
+	private Map<String, ForwardIndex> forwardIndices = new HashMap<>();
 
 	/**
 	 * The Lucene index reader
@@ -536,7 +536,7 @@ public class Searcher {
 	}
 
 	private void createAnalyzers() {
-		Map<String, Analyzer> fieldAnalyzers = new HashMap<String, Analyzer>();
+		Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
 		fieldAnalyzers.put("fromInputFile", getAnalyzerInstance("nontokenizing"));
 		Analyzer baseAnalyzer = getAnalyzerInstance(indexStructure.getDefaultAnalyzerName());
 		for (String fieldName: indexStructure.getMetadataFields()) {
@@ -1004,7 +1004,7 @@ public class Searcher {
 
 		getCharacterOffsets(doc, fieldName, starts, ends, true);
 
-		List<HitCharSpan> hitspans = new ArrayList<HitCharSpan>(starts.length);
+		List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
 		for (int i = 0; i < starts.length; i++) {
 			hitspans.add(new HitCharSpan(starts[i], ends[i]));
 		}
@@ -1525,7 +1525,7 @@ public class Searcher {
 		String[] content = getSubstringsFromDocument(d, fieldName, starts, ends);
 
 		// Cut 'em up
-		List<Concordance> rv = new ArrayList<Concordance>();
+		List<Concordance> rv = new ArrayList<>();
 		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
 			// Put the concordance in the Hit object
 			int absLeft = startsOfWords[i];
@@ -1917,7 +1917,7 @@ public class Searcher {
 		try {
 			String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, altName);
 			Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
-			Map<String, Integer> freq = new HashMap<String, Integer>();
+			Map<String, Integer> freq = new HashMap<>();
 			for (LeafReaderContext arc: reader.leaves()) {
 				if (weight == null)
 					throw new RuntimeException("weight == null");

@@ -194,7 +194,7 @@ public class FileUtil {
 	 */
 	public static List<String> readLines(File inputFile, String encoding) {
 		try {
-			List<String> result = new ArrayList<String>();
+			List<String> result = new ArrayList<>();
 			BufferedReader in = openForReading(inputFile, encoding);
 			try {
 				String line;

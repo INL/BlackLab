@@ -34,7 +34,7 @@ public class ContentStoreMemory extends ContentStore {
 	 * Create a new in-memory content store.
 	 */
 	public ContentStoreMemory() {
-		toc = new HashMap<Integer, String>();
+		toc = new HashMap<>();
 	}
 
 	/**

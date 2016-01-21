@@ -61,7 +61,7 @@ public class LuceneUtil {
 		boolean doFuzzy = true;
 		if (maxEdits == 0) {
 			// Exact match; don't use fuzzy query (slow)
-			Set<String> result = new HashSet<String>();
+			Set<String> result = new HashSet<>();
 			try {
 				for (String term: searchTerms) {
 					if (reader.docFreq(new Term(luceneName, term)) > 0)
@@ -82,7 +82,7 @@ public class LuceneUtil {
 		try {
 			Query rewritten = q.rewrite(reader);
 			WeightedTerm[] wts = QueryTermExtractor.getTerms(rewritten);
-			Set<String> terms = new HashSet<String>();
+			Set<String> terms = new HashSet<>();
 			for (WeightedTerm wt: wts) {
 				if (doFuzzy || searchTerms.contains(wt.getTerm())) {
 					terms.add(wt.getTerm());
@@ -304,7 +304,7 @@ public class LuceneUtil {
 			if (!sensitive)
 				prefix = StringUtil.removeAccents(prefix).toLowerCase();
 			org.apache.lucene.index.Terms terms = index.terms(fieldName);
-			List<String> results = new ArrayList<String>();
+			List<String> results = new ArrayList<>();
 			TermsEnum termsEnum = terms.iterator();
 			BytesRef brPrefix = new BytesRef(prefix.getBytes("utf-8"));
 			termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
