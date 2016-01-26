@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -104,7 +105,7 @@ import org.apache.lucene.util.Bits;
  * Searcher is thread-safe: a single instance may be shared to perform a number of simultaneous
  * searches.
  */
-public class Searcher {
+public class Searcher implements Closeable {
 
 	protected static final Logger logger = Logger.getLogger(Searcher.class);
 
@@ -588,6 +589,7 @@ public class Searcher {
 	 * Finalize the Searcher object. This closes the IndexSearcher and (depending on the constructor
 	 * used) may also close the index reader.
 	 */
+	@Override
 	public void close() {
 		try {
 			reader.close();
