@@ -425,13 +425,29 @@ public class Indexer {
 	 * @param fieldName what forward index to add this to
 	 * @param tokens the tokens to add
 	 * @return the id assigned to the content
+	 * @deprecated use the version that takes a ComplexFieldProperty insteads
 	 */
+	@Deprecated
 	public int addToForwardIndex(String fieldName, List<String> tokens) {
+		return addToForwardIndex(fieldName, tokens, null);
+	}
+
+	/**
+	 * Add a list of tokens to a forward index
+	 *
+	 * @param fieldName what forward index to add this to
+	 * @param tokens the tokens to add
+	 * @param posIncr position increment associated with each token, or null if always 1
+	 * @return the id assigned to the content
+	 * @deprecated use the version that takes a ComplexFieldProperty instead
+	 */
+	@Deprecated
+	public int addToForwardIndex(String fieldName, List<String> tokens, List<Integer> posIncr) {
 		ForwardIndex forwardIndex = searcher.getForwardIndex(fieldName);
 		if (forwardIndex == null)
 			throw new RuntimeException("No forward index for field " + fieldName);
 
-		return forwardIndex.addDocument(tokens);
+		return forwardIndex.addDocument(tokens, posIncr);
 	}
 
 	/**
@@ -443,22 +459,6 @@ public class Indexer {
 	 */
 	public int addToForwardIndex(String fieldName, ComplexFieldProperty prop) {
 		return addToForwardIndex(fieldName, prop.getValues(), prop.getPositionIncrements());
-	}
-
-	/**
-	 * Add a list of tokens to a forward index
-	 *
-	 * @param fieldName what forward index to add this to
-	 * @param tokens the tokens to add
-	 * @param posIncr position increment associated with each token
-	 * @return the id assigned to the content
-	 */
-	public int addToForwardIndex(String fieldName, List<String> tokens, List<Integer> posIncr) {
-		ForwardIndex forwardIndex = searcher.getForwardIndex(fieldName);
-		if (forwardIndex == null)
-			throw new RuntimeException("No forward index for field " + fieldName);
-
-		return forwardIndex.addDocument(tokens, posIncr);
 	}
 
 	/**

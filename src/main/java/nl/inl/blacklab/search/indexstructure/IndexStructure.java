@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -373,6 +375,11 @@ public class IndexStructure {
 			fieldDesc.setDescription(description);
 			if (mainProperty.length() > 0)
 				fieldDesc.setMainPropertyName(mainProperty);
+			String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
+			if (noForwardIndex.length() > 0) {
+				String[] noForwardIndexProps = noForwardIndex.split("\\s+");
+				fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
+			}
 			complexFields.put(fieldName, fieldDesc);
 		}
 	}

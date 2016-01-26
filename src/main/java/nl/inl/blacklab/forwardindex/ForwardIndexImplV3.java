@@ -620,11 +620,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
-	@Override
-	public synchronized int addDocument(List<String> content) {
-		return addDocument(content, null);
-	}
-
 	@Deprecated
 	@Override
 	public synchronized List<String[]> retrieveParts(int fiid, int[] start, int[] end) {

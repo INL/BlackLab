@@ -64,7 +64,9 @@ public abstract class ForwardIndex {
 	 *            the content to store
 	 * @return the id assigned to the content
 	 */
-	public abstract int addDocument(List<String> content);
+	public int addDocument(List<String> content) {
+		return addDocument(content, null);
+	}
 
 	/**
 	 * Delete a document from the forward index

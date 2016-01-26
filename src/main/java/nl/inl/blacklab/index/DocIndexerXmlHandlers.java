@@ -164,7 +164,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				String propName = prop.getName();
 				String fieldName = ComplexFieldUtil.propertyField(
 						contentsField.getName(), propName);
-				int fiid = indexer.addToForwardIndex(fieldName, prop.getValues(), prop.getPositionIncrements());
+				int fiid = indexer.addToForwardIndex(fieldName, prop);
 				currentLuceneDoc.add(new IntField(ComplexFieldUtil
 						.forwardIndexIdField(fieldName), fiid, Store.YES));
 			}
@@ -514,14 +514,15 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				mainPropName, getSensitivitySetting(mainPropName), false);
 		propMain = contentsField.getMainProperty();
 		propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
-		propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, true); // start
-																			// tag
-																			// positions
+		propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, true); // start tag positions
 		propStartTag.setForwardIndex(false);
-		indexer.getSearcher()
-				.getIndexStructure()
-				.registerComplexField(contentsField.getName(),
-						propMain.getName());
+		IndexStructure indexStructure = indexer.getSearcher().getIndexStructure();
+		indexStructure.registerComplexField(contentsField.getName(), propMain.getName());
+
+		// If the indexmetadata file specified a list of properties that shouldn't get a forward index,
+		// make the new complex field aware of this.
+		Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME).getNoForwardIndexProps();
+		contentsField.setNoForwardIndexProps(noForwardIndexProps);
 	}
 
 	public void addNumericFields(Collection<String> fields) {
