@@ -151,7 +151,7 @@ public class BLSpanOrQuery extends SpanOrQuery {
 		// for the anonymous BLSpan class
 		boolean clausesAllSameLengthSetter = true;
 		int clauseLengthSetter = -1;
-		final ArrayList<BLSpans> subSpans = new ArrayList<BLSpans>(
+		final ArrayList<BLSpans> subSpans = new ArrayList<>(
 				clauses.length);
 		for (SpanQuery sq : clauses) {
 			BLSpans spans = BLSpansWrapper.optWrap(sq.getSpans(context,
@@ -256,7 +256,7 @@ public class BLSpanOrQuery extends SpanOrQuery {
 				}
 
 				return new TwoPhaseIterator(
-						new DisjunctionDISIApproximation<Spans>(byDocQueue)) {
+						new DisjunctionDISIApproximation<>(byDocQueue)) {
 					@Override
 					public boolean matches() throws IOException {
 						return twoPhaseCurrentDocMatches();

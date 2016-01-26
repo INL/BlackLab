@@ -6,18 +6,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import nl.inl.blacklab.example.DocIndexerExample;
 import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.util.StringUtil;
+
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class TestSearches {
 
@@ -122,7 +122,7 @@ public class TestSearches {
 	 * @return the resulting BlackLab text pattern
 	 * @throws ParseException
 	 */
-	private List<String> find(String query) throws ParseException {
+	private static List<String> find(String query) throws ParseException {
 		// Parse query using the CorpusQL parser
 		TextPattern tp = CorpusQueryLanguageParser.parse(query);
 
@@ -141,7 +141,7 @@ public class TestSearches {
 	 * @return
 	 */
 	static List<String> getConcordances(Hits hits) {
-		List<String> results = new ArrayList<String>();
+		List<String> results = new ArrayList<>();
 		for (Hit hit : hits) {
 			Kwic kwic = hits.getKwic(hit);
 			String left = StringUtil.join(kwic.getLeft("word"), " ");

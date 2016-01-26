@@ -21,7 +21,7 @@ import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 public class DocumentFormats {
 
 	/** Document formats */
-	static Map<String, Class<? extends DocIndexer>> formats = new TreeMap<String, Class<? extends DocIndexer>>();
+	static Map<String, Class<? extends DocIndexer>> formats = new TreeMap<>();
 
 	static {
 		// Some abbreviations for commonly used builtin DocIndexers.
@@ -98,7 +98,7 @@ public class DocumentFormats {
 	 * @return the list of registered abbreviations
 	 */
 	public static List<String> list() {
-		List<String> l = new ArrayList<String>(formats.keySet());
+		List<String> l = new ArrayList<>(formats.keySet());
 		Collections.sort(l);
 		return Collections.unmodifiableList(l);
 	}

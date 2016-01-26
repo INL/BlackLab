@@ -403,7 +403,7 @@ public class Hits extends AbstractList<Hit> {
 	 */
 	public Hits(Searcher searcher, String concordanceFieldPropName) {
 		this.searcher = searcher;
-		hits = new ArrayList<Hit>();
+		hits = new ArrayList<>();
 		hitsCounted = 0;
 		setConcordanceField(concordanceFieldPropName);
 		currentContextSize = -1;
@@ -467,8 +467,8 @@ public class Hits extends AbstractList<Hit> {
 		try {
 			DirectoryReader reader = searcher == null ? null : searcher.getIndexReader();
 			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
-			termContexts = new HashMap<Term, TermContext>();
-			Set<Term> terms = new HashSet<Term>();
+			termContexts = new HashMap<>();
+			Set<Term> terms = new HashSet<>();
 			extractTermsFromSpanQuery(terms);
 			etiquette = new ThreadPriority();
 			for (Term term: terms) {
@@ -584,7 +584,7 @@ public class Hits extends AbstractList<Hit> {
 		}
 		// We do it this way because if we return (a copy of) the hits list,
 		// you get it unsorted.
-		List<Hit> list = new ArrayList<Hit>();
+		List<Hit> list = new ArrayList<>();
 		for (Hit h: this) {
 			list.add(h);
 		}
@@ -669,7 +669,7 @@ public class Hits extends AbstractList<Hit> {
 								hitQueryContext.setSpans(currentSourceSpans);
 								currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
 								if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-									capturedGroups = new HashMap<Hit, Span[]>();
+									capturedGroups = new HashMap<>();
 								}
 
 								int doc = currentSourceSpans.nextDoc();
@@ -1458,11 +1458,11 @@ public class Hits extends AbstractList<Hit> {
 	private Map<Hit, Kwic> retrieveKwics(int contextSize, String fieldName) {
 
 		// Group hits per document
-		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
+		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<>();
 		for (Hit key: this) {
 			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
 			if (hitsInDoc == null) {
-				hitsInDoc = new ArrayList<Hit>();
+				hitsInDoc = new ArrayList<>();
 				hitsPerDocument.put(key.doc, hitsInDoc);
 			}
 			hitsInDoc.add(key);
@@ -1480,7 +1480,7 @@ public class Hits extends AbstractList<Hit> {
 				punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(
 						fieldName, concPunctFI));
 
-			Map<String, ForwardIndex> attrForwardIndices = new HashMap<String, ForwardIndex>();
+			Map<String, ForwardIndex> attrForwardIndices = new HashMap<>();
 			if (concAttrFI == null) {
 				// All other FIs are attributes
 				for (String p: searcher.getForwardIndices().keySet()) {
@@ -1499,7 +1499,7 @@ public class Hits extends AbstractList<Hit> {
 				}
 			}
 
-			Map<Hit, Kwic> conc1 = new HashMap<Hit, Kwic>();
+			Map<Hit, Kwic> conc1 = new HashMap<>();
 			for (List<Hit> l: hitsPerDocument.values()) {
 				Hits hitsInThisDoc = new Hits(searcher, l);
 				hitsInThisDoc.copySettingsFrom(this);
@@ -1532,14 +1532,14 @@ public class Hits extends AbstractList<Hit> {
 			return;
 		}
 
-		List<ForwardIndex> fis = new ArrayList<ForwardIndex>();
+		List<ForwardIndex> fis = new ArrayList<>();
 		for (String fieldPropName: fieldProps) {
 			fis.add(searcher.getForwardIndex(fieldPropName));
 		}
 
 		// Get the context
 		// Group hits per document
-		List<Hit> hitsInSameDoc = new ArrayList<Hit>();
+		List<Hit> hitsInSameDoc = new ArrayList<>();
 		int currentDoc = -1;
 		int index = 0;
 		if (contexts == null || contexts.length < hits.size()) {
@@ -1570,7 +1570,7 @@ public class Hits extends AbstractList<Hit> {
 			findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
 
 		currentContextSize = desiredContextSize;
-		contextFieldsPropName = new ArrayList<String>(fieldProps);
+		contextFieldsPropName = new ArrayList<>(fieldProps);
 	}
 
 	/**
@@ -1629,7 +1629,7 @@ public class Hits extends AbstractList<Hit> {
 			ctx = searcher.getDefaultExecutionContext(concordanceFieldName);
 		ctx = ctx.withProperty(propName);
 		findContext(Arrays.asList(ctx.luceneField(false)));
-		Map<Integer, Integer> coll = new HashMap<Integer, Integer>();
+		Map<Integer, Integer> coll = new HashMap<>();
 		for (int j = 0; j < hits.size(); j++) {
 			int[] context = contexts[j];
 
@@ -1657,7 +1657,7 @@ public class Hits extends AbstractList<Hit> {
 		TermFrequencyList collocations = new TermFrequencyList(coll.size());
 		// TODO: get collocations for multiple contexts?
 		Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
-		Map<String, Integer> wordFreq = new HashMap<String, Integer>();
+		Map<String, Integer> wordFreq = new HashMap<>();
 		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
 			String word = terms.get(e.getKey());
 			if (!diacSensitive) {
@@ -1725,7 +1725,7 @@ public class Hits extends AbstractList<Hit> {
 	public Map<String, Span> getCapturedGroupMap(Hit hit) {
 		if (capturedGroups == null)
 			return null;
-		Map<String, Span> result = new TreeMap<String, Span>(); // TreeMap to maintain group ordering
+		Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
 		List<String> names = getCapturedGroupNames();
 		Span[] groups = capturedGroups.get(hit);
 		for (int i = 0; i < names.size(); i++) {
@@ -1797,7 +1797,7 @@ public class Hits extends AbstractList<Hit> {
 			toIndex = hits.size();
 
 		// Make sure we get sublist in sort order
-		List<Hit> result = new ArrayList<Hit>();
+		List<Hit> result = new ArrayList<>();
 		for (int i = fromIndex; i < toIndex; i++) {
 			result.add(get(i));
 		}
@@ -1829,7 +1829,7 @@ public class Hits extends AbstractList<Hit> {
 	 * @param contextField the field properties
 	 */
 	public void setContextField(List<String> contextField) {
-		this.contextFieldsPropName = contextField == null ? null : new ArrayList<String>(
+		this.contextFieldsPropName = contextField == null ? null : new ArrayList<>(
 				contextField);
 	}
 
@@ -1947,7 +1947,7 @@ public class Hits extends AbstractList<Hit> {
 		// Make the concordances from the context
 		for (int i = 0; i < hits.size(); i++) {
 			Hit h = hits.get(i);
-			List<String> tokens = new ArrayList<String>();
+			List<String> tokens = new ArrayList<>();
 			int[] context = contexts[i];
 			int contextLength = context[CONTEXTS_LENGTH_INDEX];
 			int contextRightStart = context[CONTEXTS_RIGHT_START_INDEX];
@@ -1978,7 +1978,7 @@ public class Hits extends AbstractList<Hit> {
 					tokens.add(""); // weird, but make sure the numbers add up at the end
 
 			}
-			List<String> properties = new ArrayList<String>();
+			List<String> properties = new ArrayList<>();
 			properties.add(concPunctFI);
 			for (int k = 0; k < attrContext.length; k++) {
 				properties.add(attrName[k]);
@@ -2165,7 +2165,7 @@ public class Hits extends AbstractList<Hit> {
 			Thread.currentThread().interrupt();
 			return new Hits(searcher);
 		}
-		List<Hit> hitsInDoc = new ArrayList<Hit>();
+		List<Hit> hitsInDoc = new ArrayList<>();
 		for (Hit hit: hits) {
 			if (hit.doc == docid)
 				hitsInDoc.add(hit);
@@ -2210,7 +2210,7 @@ public class Hits extends AbstractList<Hit> {
 		XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
 		hl.setUnbalancedTagsStrategy(searcher.getDefaultUnbalancedTagsStrategy());
 		Map<Integer, List<Hit>> hitsPerDocument = perDocumentGroupedHits();
-		Map<Hit, Concordance> conc = new HashMap<Hit, Concordance>();
+		Map<Hit, Concordance> conc = new HashMap<>();
 		for (List<Hit> l: hitsPerDocument.values()) {
 			Hits hitsInThisDoc = new Hits(searcher, l);
 			hitsInThisDoc.copySettingsFrom(this);
@@ -2227,11 +2227,11 @@ public class Hits extends AbstractList<Hit> {
 	 */
 	private Map<Integer, List<Hit>> perDocumentGroupedHits() {
 		// Group hits per document
-		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<Integer, List<Hit>>();
+		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<>();
 		for (Hit key: hits) {
 			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
 			if (hitsInDoc == null) {
-				hitsInDoc = new ArrayList<Hit>();
+				hitsInDoc = new ArrayList<>();
 				hitsPerDocument.put(key.doc, hitsInDoc);
 			}
 			hitsInDoc.add(key);

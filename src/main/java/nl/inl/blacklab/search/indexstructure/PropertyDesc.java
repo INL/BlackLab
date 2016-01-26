@@ -27,7 +27,7 @@ public class PropertyDesc {
 
 	public PropertyDesc(String name) {
 		propName = name;
-		alternatives = new TreeMap<String, AltDesc>();
+		alternatives = new TreeMap<>();
 		forwardIndex = false;
 	}
 

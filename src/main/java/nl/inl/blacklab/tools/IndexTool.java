@@ -40,7 +40,7 @@ import nl.inl.util.PropertiesUtil;
  */
 public class IndexTool {
 
-	static Map<String, String> indexerParam = new TreeMap<String, String>();
+	static Map<String, String> indexerParam = new TreeMap<>();
 
 	public static void main(String[] args) throws Exception {
 
@@ -56,7 +56,7 @@ public class IndexTool {
 		String docFormat = null;
 		boolean createNewIndex = false;
 		String command = "";
-		Set<String> commands = new HashSet<String>(Arrays.asList("add", "create", "delete"));
+		Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete"));
 		boolean addingFiles = true;
 		String deleteQuery = null;
 		for (int i = 0; i < args.length; i++) {

@@ -137,9 +137,9 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
 	/** Read external metadatafile (OLD; replaced by MetadataFetcher system. This will be removed soon)
 	 * @param metadataFile the file */
 	private static void readMetadata(File metadataFile) {
-		titles = new HashMap<String, String>();
-		dates = new HashMap<String, String>();
-		authors = new HashMap<String, String>();
+		titles = new HashMap<>();
+		dates = new HashMap<>();
+		authors = new HashMap<>();
 		// File metadataFile = new File("c:\\temp\\dpo_metadata.txt");
 		BufferedReader r = FileUtil.openForReading(metadataFile);
 		String l;

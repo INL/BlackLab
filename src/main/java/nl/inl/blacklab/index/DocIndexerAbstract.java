@@ -241,7 +241,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	/**
 	 * Parameters passed to this indexer
 	 */
-	private Map<String, String> parameters = new HashMap<String, String>();
+	private Map<String, String> parameters = new HashMap<>();
 
 	@Override
 	public boolean hasParameter(String name) {

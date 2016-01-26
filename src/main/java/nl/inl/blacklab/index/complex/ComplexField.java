@@ -49,11 +49,11 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
  */
 public class ComplexField {
 
-	private Map<String, ComplexFieldProperty> properties = new HashMap<String, ComplexFieldProperty>();
+	private Map<String, ComplexFieldProperty> properties = new HashMap<>();
 
-	private List<Integer> start = new ArrayList<Integer>();
+	private List<Integer> start = new ArrayList<>();
 
-	private List<Integer> end = new ArrayList<Integer>();
+	private List<Integer> end = new ArrayList<>();
 
 	private String fieldName;
 

@@ -209,8 +209,8 @@ public class RunTermQuery {
 		SpanQuery spanQuery = new SpanTermQuery(term);
 		spanQuery = (SpanQuery) spanQuery.rewrite(reader);
 
-		Map<Term, TermContext> termContexts = new HashMap<Term, TermContext>();
-		TreeSet<Term> terms = new TreeSet<Term>();
+		Map<Term, TermContext> termContexts = new HashMap<>();
+		TreeSet<Term> terms = new TreeSet<>();
 		extractTermsFromSpanQuery(spanQuery, terms);
 		for (Term termForContext: terms) {
 			termContexts.put(termForContext, TermContext.build(reader.getContext(), termForContext));

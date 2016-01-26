@@ -58,7 +58,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	@Override
 	public SpanQuery regex(QueryExecutionContext context, String value) {
 		String valueNoStartEndMatch = value.replaceAll("\\^|\\$", "");
-		return new BLSpanMultiTermQueryWrapper<RegexpQuery>(new RegexpQuery(
+		return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
 				new Term(context.luceneField(), context.optDesensitize(valueNoStartEndMatch))));
 	}
 
@@ -91,7 +91,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 			return allTags;
 
 		// Construct attribute filters
-		List<SpanQuery> attrFilters = new ArrayList<SpanQuery>();
+		List<SpanQuery> attrFilters = new ArrayList<>();
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		for (Map.Entry<String,String> e: attr.entrySet()) {
 			String value = optInsensitive(context, "@" + e.getKey() + "__" + e.getValue());
@@ -154,13 +154,13 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery wildcard(QueryExecutionContext context, String value) {
-		return new BLSpanMultiTermQueryWrapper<WildcardQuery>(new WildcardQuery(new Term(context.luceneField(),
+		return new BLSpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(context.luceneField(),
 				context.optDesensitize(value))));
 	}
 
 	@Override
 	public SpanQuery prefix(QueryExecutionContext context, String value) {
-		return new BLSpanMultiTermQueryWrapper<PrefixQuery>(new PrefixQuery(new Term(context.luceneField(),
+		return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
 				context.optDesensitize(value))));
 	}
 

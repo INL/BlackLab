@@ -29,7 +29,7 @@ public class TextPatternOr extends TextPatternCombiner {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		List<T> chResults = new ArrayList<T>(clauses.size());
+		List<T> chResults = new ArrayList<>(clauses.size());
 		for (TextPattern cl : clauses) {
 			chResults.add(cl.translate(translator, context));
 		}
@@ -51,7 +51,7 @@ public class TextPatternOr extends TextPatternCombiner {
 	public TextPattern noEmpty() {
 		if (!matchesEmptySequence())
 			return this;
-		List<TextPattern> newCl = new ArrayList<TextPattern>();
+		List<TextPattern> newCl = new ArrayList<>();
 		for (TextPattern cl: clauses) {
 			newCl.add(cl.noEmpty());
 		}
@@ -66,7 +66,7 @@ public class TextPatternOr extends TextPatternCombiner {
 		boolean anyRewritten = false;
 		boolean hasNotChild = false;
 		boolean allClausesSingleToken = true;
-		List<TextPattern> rewrittenCl = new ArrayList<TextPattern>();
+		List<TextPattern> rewrittenCl = new ArrayList<>();
 		for (TextPattern child: clauses) {
 			TextPattern rewritten = child.rewrite();
 			if (rewritten instanceof TextPatternOr) {

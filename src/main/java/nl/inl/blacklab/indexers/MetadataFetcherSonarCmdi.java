@@ -189,9 +189,9 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 		private boolean hasChild = false;
 
-		Map<String, String> indexFieldAs = new HashMap<String, String>();
+		Map<String, String> indexFieldAs = new HashMap<>();
 
-		List<String> elementStack = new ArrayList<String>();
+		List<String> elementStack = new ArrayList<>();
 
 		/**
 		 * Push the current element name onto the element stack

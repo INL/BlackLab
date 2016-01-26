@@ -49,7 +49,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	 * The values this field can have. Note that this may not be the complete list;
 	 * check valueListComplete.
 	 */
-	private Map<String, Integer> values = new HashMap<String, Integer>();
+	private Map<String, Integer> values = new HashMap<>();
 
 	/**
 	 * Whether or not all values are stored here.

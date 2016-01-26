@@ -36,7 +36,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 
 	public ComplexFieldDesc(String name) {
 		super(name);
-		props = new TreeMap<String, PropertyDesc>();
+		props = new TreeMap<>();
 		contentStore = false;
 		lengthInTokens = false;
 		xmlTags = false;

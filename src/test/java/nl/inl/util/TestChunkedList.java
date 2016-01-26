@@ -25,25 +25,25 @@ import org.junit.Test;
 public class TestChunkedList {
 	@Test
 	public void testEmpty() {
-		List<String> l = new ChunkedList<String>();
+		List<String> l = new ChunkedList<>();
 		Assert.assertEquals(0, l.size());
 	}
 
 	@Test(expected = IndexOutOfBoundsException.class)
 	public void testGetNegative() {
-		List<String> l = new ChunkedList<String>();
+		List<String> l = new ChunkedList<>();
 		l.get(-1);
 	}
 
 	@Test(expected = IndexOutOfBoundsException.class)
 	public void testGetOutOfBounds() {
-		List<String> l = new ChunkedList<String>();
+		List<String> l = new ChunkedList<>();
 		l.get(0);
 	}
 
 	@Test
 	public void testAdd() {
-		List<String> l = new ChunkedList<String>();
+		List<String> l = new ChunkedList<>();
 		l.add("42");
 		Assert.assertEquals("42", l.get(0));
 		Assert.assertEquals(1, l.size());
@@ -114,13 +114,13 @@ public class TestChunkedList {
 		Assert.assertEquals(6, l.size());
 	}
 
-	private List<String> getFibList(int chunkSize) {
-		List<String> l = new ChunkedList<String>(Arrays.asList("The", "quick", "brown", "fox", "jumps"), chunkSize);
+	private static List<String> getFibList(int chunkSize) {
+		List<String> l = new ChunkedList<>(Arrays.asList("The", "quick", "brown", "fox", "jumps"), chunkSize);
 		return l;
 	}
 
-	private List<String> getFibList() {
-		List<String> l = new ChunkedList<String>(Arrays.asList("The", "quick", "brown", "fox", "jumps"));
+	private static List<String> getFibList() {
+		List<String> l = new ChunkedList<>(Arrays.asList("The", "quick", "brown", "fox", "jumps"));
 		return l;
 	}
 

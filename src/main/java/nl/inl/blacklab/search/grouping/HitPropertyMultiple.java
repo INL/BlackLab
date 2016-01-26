@@ -39,7 +39,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	 */
 	public HitPropertyMultiple(HitProperty... criteria) {
 		super(criteria[0].hits);
-		this.criteria = new ArrayList<HitProperty>(Arrays.asList(criteria));
+		this.criteria = new ArrayList<>(Arrays.asList(criteria));
 
 		determineContextNeeded();
 	}
@@ -53,7 +53,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	 */
 	private void determineContextNeeded() {
 		// Figure out what context(s) we need
-		List<String> result = new ArrayList<String>();
+		List<String> result = new ArrayList<>();
 		for (HitProperty prop : criteria) {
 			List<String> requiredContext = prop.needsContext();
 			if (requiredContext != null) {
@@ -69,7 +69,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 		for (HitProperty prop : criteria) {
 			List<String> requiredContext = prop.needsContext();
 			if (requiredContext != null) {
-				List<Integer> contextNumbers = new ArrayList<Integer>();
+				List<Integer> contextNumbers = new ArrayList<>();
 				for (String c: requiredContext) {
 					contextNumbers.add(contextNeeded.indexOf(c));
 				}

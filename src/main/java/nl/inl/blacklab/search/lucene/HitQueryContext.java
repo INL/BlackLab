@@ -20,7 +20,7 @@ public class HitQueryContext {
 	private BLSpans rootSpans;
 
 	/** Captured group names for our query, in index order */
-	List<String> groupNames = new ArrayList<String>();
+	List<String> groupNames = new ArrayList<>();
 
 	/** We use this to check if subclauses capture groups or not */
 	private int numberOfTimesGroupRegistered = 0;

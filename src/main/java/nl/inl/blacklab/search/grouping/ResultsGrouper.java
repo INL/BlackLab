@@ -40,12 +40,12 @@ public class ResultsGrouper extends HitGroups {
 	/**
 	 * The groups.
 	 */
-	Map<HitPropValue, HitGroup> groups = new HashMap<HitPropValue, HitGroup>();
+	Map<HitPropValue, HitGroup> groups = new HashMap<>();
 
 	/**
 	 * The groups, in sorted order.
 	 */
-	List<HitGroup> groupsOrdered = new ArrayList<HitGroup>();
+	List<HitGroup> groupsOrdered = new ArrayList<>();
 
 	/**
 	 * Default field to make concordances from.
@@ -108,13 +108,13 @@ public class ResultsGrouper extends HitGroups {
 		}
 		contextField = hits.getContextFieldPropName();
 		//Thread currentThread = Thread.currentThread();
-		Map<HitPropValue, List<Hit>> groupLists = new HashMap<HitPropValue, List<Hit>>();
+		Map<HitPropValue, List<Hit>> groupLists = new HashMap<>();
 		for (int i = 0; i < hits.size(); i++) {
 
 			HitPropValue identity = getGroupIdentity(i);
 			List<Hit> group = groupLists.get(identity);
 			if (group == null) {
-				group = new ArrayList<Hit>();
+				group = new ArrayList<>();
 				groupLists.put(identity, group);
 			}
 			group.add(hits.getByOriginalOrder(i));

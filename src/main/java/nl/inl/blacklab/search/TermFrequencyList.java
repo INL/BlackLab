@@ -61,12 +61,12 @@ public class TermFrequencyList extends AbstractList<TermFrequency> {
 
 	public TermFrequencyList() {
 		super();
-		list = new ArrayList<TermFrequency>();
+		list = new ArrayList<>();
 	}
 
 	public TermFrequencyList(int capacity) {
 		super();
-		list = new ArrayList<TermFrequency>(capacity);
+		list = new ArrayList<>(capacity);
 	}
 
 	public long getTotalFrequency() {

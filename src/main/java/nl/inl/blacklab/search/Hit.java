@@ -63,7 +63,7 @@ public class Hit implements Comparable<Hit>, Cloneable {
 	 */
 	@Deprecated
 	public static List<Hit> hitList(BLSpans spans) {
-		List<Hit> result = new ArrayList<Hit>();
+		List<Hit> result = new ArrayList<>();
 		try {
 			while (spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 				while(spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {

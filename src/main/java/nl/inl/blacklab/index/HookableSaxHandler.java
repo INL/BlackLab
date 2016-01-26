@@ -127,7 +127,7 @@ public class HookableSaxHandler extends DefaultHandler {
 		List<String> elementNames;
 
 		/** Current matching status */
-		private List<ExprMatcher> matchers = new ArrayList<ExprMatcher>();
+		private List<ExprMatcher> matchers = new ArrayList<>();
 
 		/** Current parsing depth */
 		private int depth = 0;
@@ -165,7 +165,7 @@ public class HookableSaxHandler extends DefaultHandler {
 			if (parts[numberOfElementParts - 1].charAt(0) == '@') {
 				throw new RuntimeException("Cannot match on attribute");
 			}
-			elementNames = new ArrayList<String>();
+			elementNames = new ArrayList<>();
 			for (int i = 0; i < numberOfElementParts; i++) {
 				if (parts[i].length() == 0) {
 					throw new RuntimeException("Double slash in simple-xpath expression");
@@ -203,7 +203,7 @@ public class HookableSaxHandler extends DefaultHandler {
 			depth--;
 
 			// Call each of the matchers to signal the end of this element
-			Set<ExprMatcher> toRemove = new HashSet<ExprMatcher>();
+			Set<ExprMatcher> toRemove = new HashSet<>();
 			for (ExprMatcher m: matchers) {
 				if (!m.endElement())
 					toRemove.add(m); // This matcher is done
@@ -368,7 +368,7 @@ public class HookableSaxHandler extends DefaultHandler {
 	}
 
 	/** The list of hooks into our parser */
-	private List<SaxParserHook> hooks = new ArrayList<SaxParserHook>();
+	private List<SaxParserHook> hooks = new ArrayList<>();
 
 	/** To keep track of the position within the document */
 	protected Locator locator;

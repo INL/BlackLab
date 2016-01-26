@@ -58,7 +58,7 @@ public class DocFieldLengthGetter implements Closeable {
 		if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME)) {
 			// Cache the lengths for this field to speed things up
 			try {
-				Map<String, UninvertingReader.Type> fields = new HashMap<String, UninvertingReader.Type>();
+				Map<String, UninvertingReader.Type> fields = new HashMap<>();
 				fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER);
 				uninv = new UninvertingReader(reader, fields);
 				cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName); //FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName, true);

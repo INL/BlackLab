@@ -48,7 +48,7 @@ public class TestForwardIndexDelete {
 
 		fi = new ForwardIndexImplV3(dir, true, null, true);
 		// Store strings
-		List<Integer> toDelete = new ArrayList<Integer>();
+		List<Integer> toDelete = new ArrayList<>();
 		for (int j = 0; j < docLengths.length; j++) {
 			int length = docLengths[j];
 			int fiid = addDocumentOfLength(length);
@@ -64,7 +64,7 @@ public class TestForwardIndexDelete {
 	}
 
 	private int addDocumentOfLength(int length) {
-		List<String> content = new ArrayList<String>();
+		List<String> content = new ArrayList<>();
 		// Make test doc: first token is 0, each subsequent
 		// token is one more. Corresponds to term ids.
 		for (int i = 0; i < length; i++) {

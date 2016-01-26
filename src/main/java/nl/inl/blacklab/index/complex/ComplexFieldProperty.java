@@ -72,11 +72,11 @@ public class ComplexFieldProperty {
 	/**
 	 *  Term values for this property.
 	 */
-	protected List<String> values = new ArrayList<String>();
+	protected List<String> values = new ArrayList<>();
 
 	/** Token position increments. This allows us to index multiple terms at a single token position (just
 	 *  set the token increments of the additional tokens to 0). */
-	protected List<Integer> increments = new ArrayList<Integer>();
+	protected List<Integer> increments = new ArrayList<>();
 
 	/**
 	 * Payloads for this property, if any.
@@ -91,7 +91,7 @@ public class ComplexFieldProperty {
 	 * A property may be indexed in different ways (alternatives). This specifies names and filters
 	 * for each way.
 	 */
-	private Map<String, TokenFilterAdder> alternatives = new HashMap<String, TokenFilterAdder>();
+	private Map<String, TokenFilterAdder> alternatives = new HashMap<>();
 
 	/** The main alternative (the one that gets character offsets if desired) */
 	private String mainAlternative;
@@ -103,7 +103,7 @@ public class ComplexFieldProperty {
 	private boolean hasForwardIndex = true;
 
 	/** To keep memory usage down, we make sure we only store 1 copy of each string value */
-	private Map<String, String> storedValues = new HashMap<String, String>();
+	private Map<String, String> storedValues = new HashMap<>();
 
 	/**
 	 * Construct a ComplexFieldProperty object with the default alternative
@@ -138,7 +138,7 @@ public class ComplexFieldProperty {
 
 		this.includeOffsets = includeOffsets;
 		if (includePayloads)
-			payloads = new ArrayList<BytesRef>();
+			payloads = new ArrayList<>();
 	}
 
 	TokenStream getTokenStream(String altName, List<Integer> startChars, List<Integer> endChars) {

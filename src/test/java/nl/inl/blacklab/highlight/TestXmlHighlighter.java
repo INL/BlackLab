@@ -39,7 +39,7 @@ public class TestXmlHighlighter {
 	public void testHighlightNoTags() {
 		String xmlContent = "The quick brown fox jumps over the lazy dog.";
 
-		List<HitCharSpan> hits = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hits = new ArrayList<>();
 		hits.add(new HitCharSpan(10, 25));
 		Assert.assertEquals("The quick <hl>brown fox jumps</hl> over the lazy dog.", hl.highlight(xmlContent, hits));
 	}
@@ -48,7 +48,7 @@ public class TestXmlHighlighter {
 	public void testHighlightEndsUnmatched() {
 		String xmlContent = "The quick</i> brown <b>fox</b> jumps over <em>the lazy dog.";
 
-		List<HitCharSpan> hits = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hits = new ArrayList<>();
 		hits.add(new HitCharSpan(4, 49));
 		Assert.assertEquals("<i>The <hl>quick</hl></i><hl> brown <b>fox</b> jumps over </hl><em><hl>the</hl> lazy dog.</em>", hl.highlight(xmlContent, hits));
 	}
@@ -57,7 +57,7 @@ public class TestXmlHighlighter {
 	public void testHighlightMatchedInsideHit() {
 		String xmlContent = "The quick <em>brown fox</em> jumps over the lazy dog.";
 
-		List<HitCharSpan> hits = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hits = new ArrayList<>();
 		hits.add(new HitCharSpan(4, 34));
 		Assert.assertEquals("The <hl>quick <em>brown fox</em> jumps</hl> over the lazy dog.", hl.highlight(xmlContent, hits));
 	}
@@ -66,7 +66,7 @@ public class TestXmlHighlighter {
 	public void testHighlightMatchedInsideHitEdges() {
 		String xmlContent = "The quick <em>brown fox</em> jumps over the lazy dog.";
 
-		List<HitCharSpan> hits = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hits = new ArrayList<>();
 		hits.add(new HitCharSpan(10, 28));
 		Assert.assertEquals("The quick <hl><em>brown fox</em></hl> jumps over the lazy dog.", hl.highlight(xmlContent, hits));
 	}
@@ -75,7 +75,7 @@ public class TestXmlHighlighter {
 	public void testHighlightNotMatchedInsideHitEdge1() {
 		String xmlContent = "The quick <em>brown fox</em> jumps over the lazy dog.";
 
-		List<HitCharSpan> hits = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hits = new ArrayList<>();
 		hits.add(new HitCharSpan(10, 23));
 		Assert.assertEquals("The quick <hl></hl><em><hl>brown fox</hl></em> jumps over the lazy dog.", hl.highlight(xmlContent, hits));
 	}
@@ -84,7 +84,7 @@ public class TestXmlHighlighter {
 	public void testHighlightNotMatchedInsideHitEdge2() {
 		String xmlContent = "The quick <em>brown fox</em> jumps over the lazy dog.";
 
-		List<HitCharSpan> hits = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hits = new ArrayList<>();
 		hits.add(new HitCharSpan(14, 28));
 		Assert.assertEquals("The quick <em><hl>brown fox</hl></em><hl></hl> jumps over the lazy dog.", hl.highlight(xmlContent, hits));
 	}
@@ -93,7 +93,7 @@ public class TestXmlHighlighter {
 	public void testHighlightUnmatchedInsideHit() {
 		String xmlContent = "The quick <em>brown fox</em> jumps over the lazy dog.";
 
-		List<HitCharSpan> hits = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hits = new ArrayList<>();
 		hits.add(new HitCharSpan(20, 34));
 		Assert.assertEquals("The quick <em>brown <hl>fox</hl></em><hl> jumps</hl> over the lazy dog.", hl.highlight(xmlContent, hits));
 	}
@@ -102,7 +102,7 @@ public class TestXmlHighlighter {
 	public void testHighlightSelfClosingTag() {
 		String xmlContent = "The quick brown <word content='fox' / > jumps over the lazy dog.";
 
-		List<HitCharSpan> hits = new ArrayList<HitCharSpan>();
+		List<HitCharSpan> hits = new ArrayList<>();
 		hits.add(new HitCharSpan(10, 45));
 		Assert.assertEquals("The quick <hl>brown <word content='fox' / > jumps</hl> over the lazy dog.", hl.highlight(xmlContent, hits));
 	}

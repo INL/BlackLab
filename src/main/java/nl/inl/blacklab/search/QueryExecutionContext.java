@@ -132,7 +132,7 @@ public class QueryExecutionContext {
 //		}
 
 		// New alternative naming scheme (every alternative has a name)
-		List<String> validAlternatives = new ArrayList<String>();
+		List<String> validAlternatives = new ArrayList<>();
 		if (!caseSensitive && !diacriticsSensitive) {
 			// search insensitive if available
 			if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)

@@ -137,8 +137,8 @@ public class IndexStructure {
 		//this.reader = reader;
 		this.indexDir = indexDir;
 
-		metadataFieldInfos = new TreeMap<String, MetadataFieldDesc>();
-		complexFields = new TreeMap<String, ComplexFieldDesc>();
+		metadataFieldInfos = new TreeMap<>();
+		complexFields = new TreeMap<>();
 
 		readMetadata(reader, createNewIndex, indexTemplateFile);
 
@@ -434,7 +434,7 @@ public class IndexStructure {
 	 * @param indexMetadata the metadata
 	 * @param fis field infos
 	 */
-	private void setNamingScheme(IndexMetadata indexMetadata, FieldInfos fis) {
+	private static void setNamingScheme(IndexMetadata indexMetadata, FieldInfos fis) {
 		// Specified in index metadata file?
 		String namingScheme = indexMetadata.getFieldNamingScheme();
 		if (namingScheme != null) {
@@ -716,7 +716,7 @@ public class IndexStructure {
 	 */
 	public String findTextField(String search, boolean partialMatchOkay) {
 		// Find documents with title in the name
-		List<String> fieldsFound = new ArrayList<String>();
+		List<String> fieldsFound = new ArrayList<>();
 		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
 			if (e.getValue().getType() == FieldType.TEXT && e.getKey().toLowerCase().contains(search)) {
 				if (partialMatchOkay || e.getKey().toLowerCase().equals(search))

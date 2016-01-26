@@ -42,7 +42,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 		if (exclude.size() > 0)
 			throw new RuntimeException("clausesNot not empty!");
 
-		List<T> chResults = new ArrayList<T>();
+		List<T> chResults = new ArrayList<>();
 
 		// Keep track of which clauses can match the empty sequence. Use this to build alternatives
 		// at the end. (see makeAlternatives)
@@ -159,7 +159,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 
 		// Flatten nested sequences.
 		// This doesn't change the query because the sequence operator is associative.
-		List<TextPattern> flat = new ArrayList<TextPattern>();
+		List<TextPattern> flat = new ArrayList<>();
 		for (TextPattern child: include) {
 			boolean nestedSequence = child instanceof TextPatternSequence;
 			if (nestedSequence) {
@@ -189,7 +189,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 								TextPatternEdge end = (TextPatternEdge)clause2;
 								if (end.isRightEdge() && end.getElementName().equals(tagName)) {
 									// Found start and end tags in sequence. Convert to containing query.
-									List<TextPattern> search = new ArrayList<TextPattern>();
+									List<TextPattern> search = new ArrayList<>();
 									flat.remove(i); // start tag
 									for (int k = 0; k < j - i - 1; k++) {
 										search.add(flat.remove(i));
@@ -264,7 +264,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 		// - negative clauses can be rewritten to NOTCONTAINING clauses and combined with
 		//   adjacent constant-length query parts.
 		TextPattern previousPart = null;
-		List<TextPattern> seqCombined = new ArrayList<TextPattern>();
+		List<TextPattern> seqCombined = new ArrayList<>();
 		for (TextPattern child: flat) {
 			TextPattern combined = child;
 			while (true) {
@@ -295,7 +295,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 		List<List<TextPattern>> results = makeAlternatives(seqCombined);
 		if (results.size() == 1 && !anyRewritten)
 			return this;
-		List<TextPattern> orCl = new ArrayList<TextPattern>();
+		List<TextPattern> orCl = new ArrayList<>();
 		for (List<TextPattern> seq: results) {
 			if (seq.size() == 1)
 				orCl.add(seq.get(0));
@@ -343,14 +343,14 @@ public class TextPatternSequence extends TextPatternAndNot {
 		return combine(parts.get(0), altTail, restMatchesEmpty);
 	}
 
-	private List<List<TextPattern>> combine(TextPattern head,
+	private static List<List<TextPattern>> combine(TextPattern head,
 			List<List<TextPattern>> tailAlts, boolean tailMatchesEmpty) {
-		List<List<TextPattern>> results = new ArrayList<List<TextPattern>>();
+		List<List<TextPattern>> results = new ArrayList<>();
 		TextPattern headNoEmpty = head.noEmpty().rewrite();
 		boolean headMatchesEmpty = head.matchesEmptySequence();
 		for (List<TextPattern> tailAlt: tailAlts) {
 			// Add head in front of each tail alternative
-			List<TextPattern> n = new ArrayList<TextPattern>(tailAlt);
+			List<TextPattern> n = new ArrayList<>(tailAlt);
 			n.add(0, headNoEmpty);
 			results.add(n);
 

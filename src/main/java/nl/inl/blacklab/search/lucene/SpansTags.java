@@ -45,10 +45,10 @@ class SpansTags extends BLSpans {
 	private int currentHit = -1;
 
 	/** Starts of hits in current document */
-	private List<Integer> starts = new ArrayList<Integer>();
+	private List<Integer> starts = new ArrayList<>();
 
 	/** Ends of hits in current document */
-	private List<Integer> ends = new ArrayList<Integer>();
+	private List<Integer> ends = new ArrayList<>();
 
 	public SpansTags(Spans startTags, Spans endTags) {
 		Spans[] origSpans = { startTags, endTags };
@@ -122,7 +122,7 @@ class SpansTags extends BLSpans {
 		// (Note that we add 2 to the tag position to avoid the problem of x == -x for x == 0;
 		//  below we subtract it again)
 		// The list will be sorted by tag position.
-		List<Integer> startsAndEnds = new ArrayList<Integer>();
+		List<Integer> startsAndEnds = new ArrayList<>();
 		if (spans[0].nextBucket() == SpansInBuckets.NO_MORE_BUCKETS ||
 			spans[1].nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
 			throw new RuntimeException("Both spans must have exactly one bucket per document");
@@ -161,8 +161,8 @@ class SpansTags extends BLSpans {
 		}
 
 		// Go through the list of all tags, keep track of unmatched open tags and finding matches
-		List<Integer> unmatchedOpenTagIndices = new ArrayList<Integer>();
-		List<Integer> emptyElementIndices = new ArrayList<Integer>(); // empty elements between tokens need special attention (see below)
+		List<Integer> unmatchedOpenTagIndices = new ArrayList<>();
+		List<Integer> emptyElementIndices = new ArrayList<>(); // empty elements between tokens need special attention (see below)
 
 		// Don't always just call .clear() because the application could
 		// keep holding on to too much memory after encountering one really
@@ -173,8 +173,8 @@ class SpansTags extends BLSpans {
 			ends.clear();
 		} else {
 			// Reallocate in this case to avoid holding on to a lot of memory
-			starts = new ArrayList<Integer>();
-			ends = new ArrayList<Integer>();
+			starts = new ArrayList<>();
+			ends = new ArrayList<>();
 		}
 
 		currentHit = -1; // before first hit

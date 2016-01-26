@@ -47,7 +47,7 @@ public class DocResults implements Iterable<DocResult> {
 	/**
 	 * (Part of) our document results
 	 */
-	protected List<DocResult> results = new ArrayList<DocResult>();
+	protected List<DocResult> results = new ArrayList<>();
 
 	/**
 	 * Our searcher object
@@ -336,7 +336,7 @@ public class DocResults implements Iterable<DocResult> {
 	public void sort(DocProperty prop, boolean sortReverse) {
 		Comparator<DocResult> comparator = new ComparatorDocProperty(prop);
 		if (sortReverse) {
-			comparator = new ReverseComparator<DocResult>(comparator);
+			comparator = new ReverseComparator<>(comparator);
 		}
 		sort(comparator);
 	}
@@ -398,7 +398,7 @@ public class DocResults implements Iterable<DocResult> {
 							addDocResultToList(doc, hits, indexReader);
 						}
 						doc = hit.doc;
-						docHits = new ArrayList<Hit>();
+						docHits = new ArrayList<>();
 					}
 					docHits.add(hit);
 				}

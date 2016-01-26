@@ -81,7 +81,7 @@ class TermsImplV2 extends Terms {
 
 		// Create a SortedMap based on the specified Collator.
 
-		this.termIndex = new TreeMap<String, Integer>(this.collator);
+		this.termIndex = new TreeMap<>(this.collator);
 	}
 
 	public TermsImplV2(boolean indexMode, Collator coll, File termsFile) {

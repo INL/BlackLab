@@ -95,7 +95,7 @@ public class ContextQlParseUtils {
 		} else {
 			// Phrase query
 			if (isContentsSearch) {
-				List<TextPattern> clauses = new ArrayList<TextPattern>();
+				List<TextPattern> clauses = new ArrayList<>();
 				for (int i = 0; i < parts.length; i++) {
 					clauses.add(new TextPatternWildcard(parts[i]));
 				}

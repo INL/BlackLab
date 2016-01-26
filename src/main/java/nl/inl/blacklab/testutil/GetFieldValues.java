@@ -24,17 +24,17 @@ public class GetFieldValues {
 		}
 
 		File indexDir = new File(args[0]);
-		List<String> fieldNames = new ArrayList<String>();
+		List<String> fieldNames = new ArrayList<>();
 		for (int i = 1; i < args.length; i++) {
 			fieldNames.add(args[i]);
 		}
 
-		Map<String, Set<String>> fieldValues = new HashMap<String, Set<String>>();
+		Map<String, Set<String>> fieldValues = new HashMap<>();
 		Searcher searcher = Searcher.open(indexDir);
 		try {
 			IndexReader r = searcher.getIndexReader();
 
-			Set<String> fieldsToLoad = new HashSet<String>();
+			Set<String> fieldsToLoad = new HashSet<>();
 			for (String fieldToLoad: fieldNames) {
 				fieldsToLoad.add(fieldToLoad);
 			}
@@ -55,7 +55,7 @@ public class GetFieldValues {
 						Set<String> uniq;
 						uniq = fieldValues.get(fieldName);
 						if (uniq == null) {
-							uniq = new TreeSet<String>(); // TreeSet auto-sorts
+							uniq = new TreeSet<>(); // TreeSet auto-sorts
 							fieldValues.put(fieldName, uniq);
 						}
 						uniq.add(value);

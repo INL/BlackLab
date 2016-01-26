@@ -52,7 +52,7 @@ public class Kwic {
 	 */
 	@Deprecated
 	public Kwic(List<String> properties, List<String> left, List<String> match, List<String> right) {
-		List<String> tokens = new ArrayList<String>();
+		List<String> tokens = new ArrayList<>();
 		tokens.addAll(left);
 		tokens.addAll(match);
 		tokens.addAll(right);
