@@ -85,4 +85,6 @@ public abstract class Terms {
 		return idToSortPosition(termId1, sensitive) - idToSortPosition(termId2, sensitive);
 	}
 
+	protected abstract void setBlockBasedFile(boolean useBlockBasedTermsFile);
+
 }

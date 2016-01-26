@@ -4,9 +4,9 @@ import java.io.File;
 import java.text.Collator;
 import java.util.List;
 
-import org.apache.lucene.index.DirectoryReader;
-
 import nl.inl.util.VersionFile;
+
+import org.apache.lucene.index.DirectoryReader;
 
 /**
  * A component that can quickly tell you what word occurs at a specific position of a specific document.
@@ -184,7 +184,7 @@ public abstract class ForwardIndex {
 	/**
 	 * Current forward index format version
 	 */
-	private static final String CURRENT_VERSION = "3";
+	private static final String CURRENT_VERSION = "4";
 
 	/**
 	 * Open a forward index.
@@ -237,12 +237,14 @@ public abstract class ForwardIndex {
 		}
 
 		// Version check
-		boolean isVersion2 = false;
+		String version = CURRENT_VERSION;
 		if (!indexMode || !create) {
 			// We're opening an existing forward index. Check version.
 			if (!VersionFile.isTypeVersion(dir, "fi", CURRENT_VERSION)) {
-				if (VersionFile.isTypeVersion(dir, "fi", "2")) {
-					isVersion2 = true;
+				if (VersionFile.isTypeVersion(dir, "fi", "3")) {
+					version = "3";
+				} else if (VersionFile.isTypeVersion(dir, "fi", "2")) {
+					version = "2";
 				} else {
 					throw new RuntimeException("Not a forward index or wrong version: "
 							+ VersionFile.report(dir) + " (fi " + CURRENT_VERSION + " expected)");
@@ -253,10 +255,20 @@ public abstract class ForwardIndex {
 			VersionFile.write(dir, "fi", CURRENT_VERSION);
 		}
 
-		if (isVersion2)
+		ForwardIndex fi;
+		fi = new ForwardIndexImplV3(dir, indexMode, collator, create);
+		switch(version) {
+		case "2":
 			throw new RuntimeException("Forward index version (2) too old for this BlackLab version. Please re-index.");
-			//return new ForwardIndexImplV2(dir, indexMode, collator, create);
-		return new ForwardIndexImplV3(dir, indexMode, collator, create);
+		case "3":
+			fi.setLargeTermsFileSupport(false);
+			break;
+		case "4":
+			break;
+		}
+		return fi;
 	}
+
+	protected abstract void setLargeTermsFileSupport(boolean b);
 
 }

@@ -35,16 +35,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.util.ExUtil;
+
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.uninverting.UninvertingReader;
-
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.util.ExUtil;
-import nl.inl.util.VersionFile;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question
@@ -91,8 +90,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 	/** The number of integer positions to reserve when mapping the file for writing. */
 	final static int WRITE_MAP_RESERVE = 250000; // 250K integers = 1M bytes
-
-	private static final String THIS_VERSION = "3";
 
 	/** The memory mapped write buffer */
 	private IntBuffer writeBuffer;
@@ -152,6 +149,9 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 	private UninvertingReader uninv;
 
+	/** If true, we use the new, block-based terms file, that can grow larger than 2 GB. */
+	private boolean useBlockBasedTermsFile = true;
+
 	@Override
 	public void setIdTranslateInfo(DirectoryReader reader, String lucenePropFieldName) {
 		this.reader = reader;
@@ -196,25 +196,14 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
-	public ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create) {
+	protected ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create) {
 		if (!dir.exists()) {
 			if (!create)
 				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
 			dir.mkdir();
 		}
 
-		// Version check
 		this.indexMode = indexMode;
-		if (!indexMode || !create) {
-			// We're opening an existing forward index. Check version.
-			if (!VersionFile.isTypeVersion(dir, "fi", THIS_VERSION)) {
-				throw new RuntimeException("Not a forward index or wrong version: "
-						+ VersionFile.report(dir) + " (fi " + THIS_VERSION + " expected)");
-			}
-		} else {
-			// We're creating a forward index. Write version.
-			VersionFile.write(dir, "fi", THIS_VERSION);
-		}
 
 		termsFile = new File(dir, "terms.dat");
 		tocFile = new File(dir, "docs.dat");
@@ -242,6 +231,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				tokensFileChunks = null;
 				tocModified = true;
 			}
+			terms.setBlockBasedFile(useBlockBasedTermsFile);
 			openTokensFile();
 
 			// Tricks to speed up reading
@@ -872,6 +862,11 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	@Override
 	public long getTotalSize() {
 		return tokenFileEndPosition;
+	}
+
+	@Override
+	protected void setLargeTermsFileSupport(boolean b) {
+		this.useBlockBasedTermsFile = b;
 	}
 
 }

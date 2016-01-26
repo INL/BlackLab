@@ -41,6 +41,8 @@ import com.gs.collections.impl.factory.Maps;
  * saves and loads faster, and includes the case-insensitive sorting order.
  */
 class TermsImplV3 extends Terms {
+	private static final int APPROX_MAX_ARRAY_SIZE = Integer.MAX_VALUE - 100;
+
 	/** Number of sort buffers we store in the terms file (case-sensitive/insensitive and inverted buffers for both as well) */
 	private static final int NUM_SORT_BUFFERS = 4;
 
@@ -81,6 +83,9 @@ class TermsImplV3 extends Terms {
 	 * Collator to use for insensitive string comparisons
 	 */
 	Collator collatorInsensitive;
+
+	/** Use new blocks-based terms file, that can grow larger than 2 GB? */
+	private boolean useBlockBasedTermsFile = true;
 
 	public TermsImplV3(boolean indexMode, Collator collator) {
 		this.indexMode = indexMode;
@@ -155,27 +160,65 @@ class TermsImplV3 extends Terms {
 			MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, termsFile.length());
 			try {
 				int n = buf.getInt();
-
-				// Read the term string offsets and string data block
-				int[] termStringOffsets = new int[n + 1];
 				IntBuffer ib = buf.asIntBuffer();
-				ib.get(termStringOffsets);
-				int termStringsByteSize = ib.get();
-				buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
-				byte[] termStrings = new byte[termStringsByteSize];
-				buf.get(termStrings);
-				ib = buf.asIntBuffer();
-
-				// Now instantiate String objects from the offsets and byte data
+				int[] termStringOffsets = new int[n + 1];
 				terms = new String[n];
-				for (int id = 0; id < n; id++) {
-					int offset = termStringOffsets[id];
-					int length = termStringOffsets[id + 1] - offset;
-					String str = new String(termStrings, offset, length, "utf-8");
 
-					// We need to find term for id while searching
-					terms[id] = str;
+				if (useBlockBasedTermsFile) {
+					// New format, multiple blocks of term strings if necessary,
+					// so term strings may total over 2 GB.
+
+					// Read the term string offsets and string data block
+					int currentTerm = 0;
+					while (currentTerm < n) {
+						int numTermsThisBlock = ib.get();
+						ib.get(termStringOffsets, currentTerm, numTermsThisBlock); // term string offsets
+
+						// Read term strings data
+						int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
+						buf.position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
+						byte[] termStringsThisBlock = new byte[dataBlockSize];
+						buf.get(termStringsThisBlock);
+
+						// Now instantiate String objects from the offsets and byte data
+						for ( ; currentTerm < n; currentTerm++) {
+							int offset = termStringOffsets[currentTerm];
+							int length = termStringOffsets[currentTerm + 1] - offset;
+							String str = new String(termStringsThisBlock, offset, length, "utf-8");
+
+							// We need to find term for id while searching
+							terms[currentTerm] = str;
+						}
+
+						ib = buf.asIntBuffer();
+					}
+
+				} else {
+					// Old format, single term strings block.
+					// Causes problems when term strings total over 2 GB.
+
+					ib.get(termStringOffsets); // term string offsets
+					int termStringsByteSize = ib.get(); // data block size
+
+					// termStringByteSize fits in an int, and terms
+					// fits in a single byte array. Use the old code.
+					buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
+					byte[] termStrings = new byte[termStringsByteSize];
+					buf.get(termStrings);
+					ib = buf.asIntBuffer();
+
+					// Now instantiate String objects from the offsets and byte data
+					terms = new String[n];
+					for (int id = 0; id < n; id++) {
+						int offset = termStringOffsets[id];
+						int length = termStringOffsets[id + 1] - offset;
+						String str = new String(termStrings, offset, length, "utf-8");
+
+						// We need to find term for id while searching
+						terms[id] = str;
+					}
 				}
+
 				if (indexMode) {
 					termIndexBuilt = false;
 					buildTermIndex(); // We need to find id for term while indexing
@@ -214,7 +257,7 @@ class TermsImplV3 extends Terms {
 
 			// Fill the terms[] array
 			terms = new String[n];
-			int termStringsByteSize = 0;
+			long termStringsByteSize = 0;
 			for (Map.Entry<String, Integer> entry: termIndex.entrySet()) {
 				terms[entry.getValue()] = entry.getKey();
 				termStringsByteSize += entry.getKey().getBytes("utf-8").length;
@@ -226,25 +269,66 @@ class TermsImplV3 extends Terms {
 			MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileLength);
 			buf.putInt(n); // Start with the number of terms
 			try {
-				// Calculate byte offsets for all the terms and fill data array
-				int currentOffset = 0;
-				int[] termStringOffsets = new int[n + 1];
-				byte[] termStrings = new byte[termStringsByteSize];
-				for (int i = 0; i < n; i++) {
-					termStringOffsets[i] = currentOffset;
-					byte[] termBytes = terms[i].getBytes("utf-8");
-					System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
-					currentOffset += termBytes.length;
-				}
-				termStringOffsets[n] = currentOffset;
-
-				// Write offset and data arrays to file
 				IntBuffer ib = buf.asIntBuffer();
-				ib.put(termStringOffsets);
-				ib.put(termStringsByteSize); // size of the data block to follow
-				buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
-				buf.put(termStrings);
-				ib = buf.asIntBuffer();
+				if (!useBlockBasedTermsFile) {
+					// Terms file is small enough to fit in a single byte array.
+					// Use the old code.
+
+					// Calculate byte offsets for all the terms and fill data array
+					int currentOffset = 0;
+					int[] termStringOffsets = new int[n + 1];
+					byte[] termStrings = new byte[(int)termStringsByteSize];
+					for (int i = 0; i < n; i++) {
+						termStringOffsets[i] = currentOffset;
+						byte[] termBytes = terms[i].getBytes("utf-8");
+						System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
+						currentOffset += termBytes.length;
+					}
+					termStringOffsets[n] = currentOffset;
+
+					// Write offset and data arrays to file
+					ib.put(termStringOffsets);
+					ib.put((int)termStringsByteSize); // size of the data block to follow
+					buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
+					buf.put(termStrings);
+					ib = buf.asIntBuffer();
+				} else {
+					// Terms file is too large to fit in a single byte array.
+					// Use the new code.
+					int currentTerm = 0;
+					long bytesLeftToWrite = termStringsByteSize;
+					int[] termStringOffsets = new int[n];
+					while (currentTerm < n) {
+						int firstTermInBlock = currentTerm;
+						int blockSize = (int)Math.min(bytesLeftToWrite, APPROX_MAX_ARRAY_SIZE);
+
+						// Calculate byte offsets for all the terms and fill data array
+						int currentOffset = 0;
+						byte[] termStrings = new byte[blockSize];
+						while (currentTerm < n) {
+							termStringOffsets[currentTerm] = currentOffset;
+							byte[] termBytes = terms[currentTerm].getBytes("utf-8");
+							if (currentOffset + termBytes.length > blockSize) {
+								// Block is full. Write it and continue with next block.
+								break;
+							}
+							System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
+							currentOffset += termBytes.length;
+							currentTerm++;
+							bytesLeftToWrite -= termBytes.length;
+						}
+						// Write offset and data arrays to file
+						int numTermsThisBlock = currentTerm - firstTermInBlock;
+						ib.put(numTermsThisBlock);
+						ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock);
+						ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
+						                       // (doubles as the size of the data block to follow)
+						buf.position(buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock)); // advance past offsets array
+						buf.put(termStrings, 0, currentOffset);
+						ib = buf.asIntBuffer();
+					}
+
+				}
 
 				// Write the case-sensitive sort order
 				// Because termIndex is a SortedMap, values are returned in key-sorted order.
@@ -333,6 +417,11 @@ class TermsImplV3 extends Terms {
 	@Override
 	public int idToSortPosition(int id, boolean sensitive) {
 		return sensitive ? sortPositionPerId[id] : sortPositionPerIdInsensitive[id];
+	}
+
+	@Override
+	protected void setBlockBasedFile(boolean useBlockBasedTermsFile) {
+		this.useBlockBasedTermsFile = useBlockBasedTermsFile;
 	}
 
 }
