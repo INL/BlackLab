@@ -628,7 +628,7 @@ public class Indexer {
 			if (fn.endsWith(".zip")) {
 				indexZip(fileToIndex, glob, recurseSubdirs);
 			} else {
-				if (!isSpecialOperatingSystemFile(fileToIndex)) { // skip special OS files
+				if (!isSpecialOperatingSystemFile(fileToIndex.getName())) { // skip special OS files
 					try {
 						FileInputStream is = new FileInputStream(fileToIndex);
 						try {
@@ -738,7 +738,8 @@ public class Indexer {
 					String fileName = e.getName();
 					Matcher m = pattGlob.matcher(fileName);
 					boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".gz") || fileName.endsWith(".tgz");
-					if (m.matches() || isArchive) {
+					boolean skipFile = isSpecialOperatingSystemFile(fileName);
+					if (!skipFile && (m.matches() || isArchive)) {
 						try {
 							InputStream is = z.getInputStream(e);
 							try {
@@ -772,11 +773,15 @@ public class Indexer {
 		TarGzipReader.processGzip(gzFileName, gzipStream, new FileHandler() {
 			@Override
 			public boolean handle(String filePath, InputStream contents) {
-				try {
-					indexInputStream(filePath, contents, "*", false);
-				} catch (Exception e) {
-					log("*** Error indexing .gz file: " + filePath, e);
-					terminateIndexing = !getListener().errorOccurred(e.getMessage(), "gz", new File(filePath), new File(filePath));
+				int i = filePath.lastIndexOf("/");
+				String fileName = i < 0 ? filePath : filePath.substring(i + 1);
+				if (!isSpecialOperatingSystemFile(fileName)) {
+					try {
+						indexInputStream(filePath, contents, "*", false);
+					} catch (Exception e) {
+						log("*** Error indexing .gz file: " + filePath, e);
+						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "gz", new File(filePath), new File(filePath));
+					}
 				}
 				return continueIndexing();
 			}
@@ -788,24 +793,28 @@ public class Indexer {
 		TarGzipReader.processTarGzip(tarGzipStream, new FileHandler() {
 			@Override
 			public boolean handle(String filePath, InputStream contents) {
-				try {
-					File f = new File(filePath);
-					String fn = f.getName();
-					Matcher m = pattGlob.matcher(fn);
-					if (m.matches()) {
-						String entryName = tgzFileName + File.separator + filePath;
-						indexInputStream(entryName, contents, glob, recurseArchives);
-					} else {
-						boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".gz") || fn.endsWith(".tgz");
-						if (isArchive) {
-							if (recurseArchives && processArchivesAsDirectories) {
-								indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
+				int i = filePath.lastIndexOf("/");
+				String fileName = i < 0 ? filePath : filePath.substring(i + 1);
+				if (!isSpecialOperatingSystemFile(fileName)) {
+					try {
+						File f = new File(filePath);
+						String fn = f.getName();
+						Matcher m = pattGlob.matcher(fn);
+						if (m.matches()) {
+							String entryName = tgzFileName + File.separator + filePath;
+							indexInputStream(entryName, contents, glob, recurseArchives);
+						} else {
+							boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".gz") || fn.endsWith(".tgz");
+							if (isArchive) {
+								if (recurseArchives && processArchivesAsDirectories) {
+									indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
+								}
 							}
 						}
+					} catch (Exception e) {
+						log("*** Error indexing tgz file: " + tgzFileName, e);
+						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "tgz", new File(tgzFileName), new File(filePath));
 					}
-				} catch (Exception e) {
-					log("*** Error indexing tgz file: " + tgzFileName, e);
-					terminateIndexing = !getListener().errorOccurred(e.getMessage(), "tgz", new File(tgzFileName), new File(filePath));
 				}
 				return continueIndexing();
 			}
@@ -817,12 +826,11 @@ public class Indexer {
 	 *
 	 * Skips Windows Thumbs.db file and Mac OSX .DS_Store file.
 	 *
-	 * @param file
-	 *            the file
+	 * @param fileName name of the file
 	 * @return true if we should skip it, false otherwise
 	 */
-	protected boolean isSpecialOperatingSystemFile(File file) {
-		return file.getName().equals("Thumbs.db") || file.getName().equals(".DS_Store");
+	protected boolean isSpecialOperatingSystemFile(String fileName) {
+		return fileName.equals("Thumbs.db") || fileName.equals(".DS_Store");
 	}
 
 	/**
