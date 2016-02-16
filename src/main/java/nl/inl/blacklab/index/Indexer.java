@@ -636,7 +636,7 @@ public class Indexer {
 						} finally {
 							is.close();
 						}
-					} catch (IOException e) {
+					} catch (RuntimeException | IOException e) {
 						log("*** Error indexing " + fileToIndex, e);
 						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "file", fileToIndex, null);
 					}
@@ -769,12 +769,6 @@ public class Indexer {
 	}
 
 	public void indexGzip(final String gzFileName, InputStream gzipStream) {
-//		if (!TarGzipReader.canProcessTarGzip()) {
-//			// Apache commons-compress not found, skip file
-//			terminateIndexing = !getListener().errorOccurred("Cannot index .gz, Apache common-compress not on classpath", "tgz", new File(gzFileName), null);
-//			//logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
-//			return;
-//		}
 		TarGzipReader.processGzip(gzFileName, gzipStream, new FileHandler() {
 			@Override
 			public boolean handle(String filePath, InputStream contents) {
@@ -790,12 +784,6 @@ public class Indexer {
 	}
 
 	public void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
-//		if (!TarGzipReader.canProcessTarGzip()) {
-//			// Apache commons-compress not found, skip file
-//			terminateIndexing = !getListener().errorOccurred("Cannot index .tar.gz, Apache common-compress not on classpath", "tgz", new File(tgzFileName), null);
-//			//logger.warn("Skipping " + tgzFileName + ", Apache common-compress not found on classpath!");
-//			return;
-//		}
 		final Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
 		TarGzipReader.processTarGzip(tarGzipStream, new FileHandler() {
 			@Override
@@ -827,12 +815,14 @@ public class Indexer {
 	/**
 	 * Should we skip the specified file because it is a special OS file?
 	 *
+	 * Skips Windows Thumbs.db file and Mac OSX .DS_Store file.
+	 *
 	 * @param file
 	 *            the file
 	 * @return true if we should skip it, false otherwise
 	 */
 	protected boolean isSpecialOperatingSystemFile(File file) {
-		return file.getName().equals("Thumbs.db");
+		return file.getName().equals("Thumbs.db") || file.getName().equals(".DS_Store");
 	}
 
 	/**
