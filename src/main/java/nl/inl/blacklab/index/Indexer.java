@@ -751,7 +751,7 @@ public class Indexer {
 							} finally {
 								is.close();
 							}
-						} catch (ZipException ex) {
+						} catch (RuntimeException | ZipException ex) {
 							log("*** Error indexing " + fileName + " from " + zipFile, ex);
 							terminateIndexing = !getListener().errorOccurred(ex.getMessage(), "zip", zipFile, new File(fileName));
 						}
