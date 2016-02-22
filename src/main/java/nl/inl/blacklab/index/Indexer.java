@@ -491,7 +491,7 @@ public class Indexer {
 	}
 
 	/**
-	 * Index a document from a Reader, using the specified type of DocIndexer
+	 * Index a document from a Reader.
 	 *
 	 * Catches and reports any errors that occur.
 	 *
@@ -646,7 +646,20 @@ public class Indexer {
 	}
 
 	/**
-	 * Index from an InputStream
+	 * Index a document from an InputStream.
+	 *
+	 * @param documentName
+	 *            name for the InputStream (e.g. name of the file)
+	 * @param input
+	 *            the stream
+	 * @throws Exception
+	 */
+	public void index(String documentName, InputStream input) throws Exception {
+		indexReader(documentName, new BufferedReader(new UnicodeReader(input, "utf-8")));
+	}
+
+	/**
+	 * Index from an InputStream, which may be an archive.
 	 *
 	 * @param name
 	 *            name for the InputStream (e.g. name of the file)

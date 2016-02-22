@@ -735,11 +735,6 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 					int a = start[i];
 					int b = end[i];
 
-//					if (a == -1 && b == -1) {
-//						// This means "retrieve whole content"
-//						a = 0;
-//						b = e.entryLengthCharacters;
-//					}
 					if (a == -1)
 						a = 0;
 					if (b == -1)

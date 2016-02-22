@@ -36,7 +36,9 @@ import nl.inl.util.ExUtil;
 /**
  * Store string content by id in a directory of compound files with a TOC file. Quickly retrieve
  * (parts of) the string content.
+ * @deprecated use ContentStoreDirZip
  */
+@Deprecated
 public class ContentStoreDir extends ContentStoreDirAbstract {
 	private static final String CHAR_ENCODING = "UTF-16LE";
 
@@ -136,7 +138,9 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 
 	/**
 	 * @param dir directory to use for the content store
+	 * @deprecated use ContentStoreDirZip
 	 */
+	@Deprecated
 	public ContentStoreDir(File dir) {
 		this(dir, false);
 	}
@@ -144,7 +148,9 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 	/**
 	 * @param dir directory to use for the content store
 	 * @param create if true, create a new content store. Otherwise append to the existing one
+	 * @deprecated use ContentStoreDirZip
 	 */
+	@Deprecated
 	public ContentStoreDir(File dir, boolean create) {
 		this.dir = dir;
 		if (!dir.exists())

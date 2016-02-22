@@ -42,8 +42,8 @@ import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
 import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.externalstorage.ContentStoreDir;
 import nl.inl.blacklab.externalstorage.ContentStoreDirAbstract;
+import nl.inl.blacklab.externalstorage.ContentStoreDirFixedBlock;
 import nl.inl.blacklab.externalstorage.ContentStoreDirUtf8;
 import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -1351,7 +1351,7 @@ public class Searcher implements Closeable {
 		ContentAccessor ca = contentAccessors.get(fieldName);
 		if (indexMode && ca == null) {
 			// Index mode. Create new content store.
-			ContentStore contentStore = new ContentStoreDirZip(new File(indexLocation, "cs_"
+			ContentStore contentStore = new ContentStoreDirFixedBlock(new File(indexLocation, "cs_"
 					+ fieldName), isEmptyIndex);
 			registerContentStore(fieldName, contentStore);
 			return contentStore;
@@ -1635,17 +1635,20 @@ public class Searcher implements Closeable {
 	public ContentStore openContentStore(File indexXmlDir, boolean create) {
 		String type;
 		if (create)
-			type = "utf8zip";
+			type = "fixedblock";
 		else {
 			VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
 			type = vf.getType();
 		}
+		if (type.equals("fixedblock"))
+			return new ContentStoreDirFixedBlock(indexXmlDir, create);
 		if (type.equals("utf8zip"))
 			return new ContentStoreDirZip(indexXmlDir, create);
 		if (type.equals("utf8"))
 			return new ContentStoreDirUtf8(indexXmlDir, create);
-		if (type.equals("utf16"))
-			return new ContentStoreDir(indexXmlDir, create);
+		if (type.equals("utf16")) {
+			throw new RuntimeException("UTF-16 content store is deprecated. Please re-index your data.");
+		}
 		throw new RuntimeException("Unknown content store type " + type);
 	}
 
