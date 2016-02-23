@@ -37,12 +37,12 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-import nl.inl.util.ExUtil;
-import nl.inl.util.SimpleResourcePool;
-
 import org.apache.log4j.Logger;
 
 import com.gs.collections.impl.factory.Maps;
+
+import nl.inl.util.ExUtil;
+import nl.inl.util.SimpleResourcePool;
 
 /**
  * Store string content by id in a compound file and a TOC file. Quickly retrieve
@@ -672,68 +672,71 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			FileInputStream fileInputStream = new FileInputStream(contentsFile);
 			try {
 				FileChannel fileChannel = fileInputStream.getChannel();
+				try {
+					// Retrieve the strings requested
+					for (int i = 0; i < n; i++) {
+						int a = start[i];
+						int b = end[i];
 
-				// Retrieve the strings requested
-				for (int i = 0; i < n; i++) {
-					int a = start[i];
-					int b = end[i];
+						if (a == -1)
+							a = 0;
+						if (b == -1)
+							b = e.entryLengthCharacters;
 
-					if (a == -1)
-						a = 0;
-					if (b == -1)
-						b = e.entryLengthCharacters;
-
-					// Check values
-					if (a < 0 || b < 0) {
-						throw new RuntimeException("Illegal values, start = " + a + ", end = " + b);
-					}
-					if (a > e.entryLengthCharacters || b > e.entryLengthCharacters) {
-						throw new RuntimeException("Value(s) out of range, start = " + a
-								+ ", end = " + b + ", content length = " + e.entryLengthCharacters);
-					}
-					if (b <= a) {
-						throw new RuntimeException(
-								"Tried to read empty or negative length snippet (from " + a
-										+ " to " + b + ")");
-					}
-
-					// 1 - determine what blocks to read
-					int firstBlock = -1, lastBlock = -1;
-					int bl = 0;
-					int charOffset = -1;
-					for (int offs: e.blockCharOffsets) {
-						if (offs <= a) {
-							firstBlock = bl; // last block that starts before a
-							charOffset = offs;
+						// Check values
+						if (a < 0 || b < 0) {
+							throw new RuntimeException("Illegal values, start = " + a + ", end = " + b);
 						}
-						if (offs > b && lastBlock == -1) {
-							lastBlock = bl - 1;  // first block that ends after b
-							break;
+						if (a > e.entryLengthCharacters || b > e.entryLengthCharacters) {
+							throw new RuntimeException("Value(s) out of range, start = " + a
+									+ ", end = " + b + ", content length = " + e.entryLengthCharacters);
 						}
-						bl++;
-					}
-					if (lastBlock == -1)
-						lastBlock = bl - 1; // last available block
-
-					// 2 - read and decode blocks
-					StringBuilder decoded = new StringBuilder();
-					for (int j = firstBlock; j <= lastBlock; j++) {
-						int blockNum = e.getBlockNumber(j);
-						long readStartOffset = blockNum * BLOCK_SIZE_BYTES;
-						int bytesToRead = BLOCK_SIZE_BYTES;
-						ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
-						int bytesRead = fileChannel.read(buffer, readStartOffset);
-						if (bytesRead < bytesToRead) {
-							// Apparently, something went wrong.
-							throw new RuntimeException("Not enough bytes read, " + bytesRead
-									+ " < " + bytesToRead);
+						if (b <= a) {
+							throw new RuntimeException(
+									"Tried to read empty or negative length snippet (from " + a
+											+ " to " + b + ")");
 						}
-						decoded.append(decodeBlock(buffer.array(), 0, bytesRead));
-					}
 
-					// 3 - take just what we need
-					int firstChar = a - charOffset;
-					result[i] = decoded.toString().substring(firstChar, firstChar + b - a);
+						// 1 - determine what blocks to read
+						int firstBlock = -1, lastBlock = -1;
+						int bl = 0;
+						int charOffset = -1;
+						for (int offs: e.blockCharOffsets) {
+							if (offs <= a) {
+								firstBlock = bl; // last block that starts before a
+								charOffset = offs;
+							}
+							if (offs > b && lastBlock == -1) {
+								lastBlock = bl - 1;  // first block that ends after b
+								break;
+							}
+							bl++;
+						}
+						if (lastBlock == -1)
+							lastBlock = bl - 1; // last available block
+
+						// 2 - read and decode blocks
+						StringBuilder decoded = new StringBuilder();
+						for (int j = firstBlock; j <= lastBlock; j++) {
+							int blockNum = e.getBlockNumber(j);
+							long readStartOffset = blockNum * BLOCK_SIZE_BYTES;
+							int bytesToRead = BLOCK_SIZE_BYTES;
+							ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
+							int bytesRead = fileChannel.read(buffer, readStartOffset);
+							if (bytesRead < bytesToRead) {
+								// Apparently, something went wrong.
+								throw new RuntimeException("Not enough bytes read, " + bytesRead
+										+ " < " + bytesToRead);
+							}
+							decoded.append(decodeBlock(buffer.array(), 0, bytesRead));
+						}
+
+						// 3 - take just what we need
+						int firstChar = a - charOffset;
+						result[i] = decoded.toString().substring(firstChar, firstChar + b - a);
+					}
+				} finally {
+					fileChannel.close();
 				}
 			} finally {
 				fileInputStream.close();
