@@ -18,6 +18,7 @@ package nl.inl.blacklab.externalstorage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
@@ -55,9 +56,11 @@ import com.gs.collections.impl.factory.Maps;
 public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private static final Logger logger = Logger.getLogger(ContentStoreDirFixedBlock.class);
 
-	private static final String VERSION_FILE_NAME = "version.dat";
+	private static final String TOC_FILE_NAME = "toc.dat";
 
-	private static final String CONTENT_FILE_NAME = "file-contents.dat";
+	private static final String CONTENTS_FILE_NAME = "file-contents.dat";
+
+	private static final String VERSION_FILE_NAME = "version.dat";
 
 	private static final String CHAR_ENCODING = "UTF-8";
 
@@ -239,6 +242,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	 */
 	private int nextId = 1;
 
+	File contentsFile;
+
 	RandomAccessFile rafContentsFile;
 
 	FileChannel fchContentsFile;
@@ -288,12 +293,24 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		this.dir = dir;
 		if (!dir.exists())
 			dir.mkdir();
-		tocFile = new File(dir, "toc.dat");
+		tocFile = new File(dir, TOC_FILE_NAME);
+		contentsFile = new File(dir, CONTENTS_FILE_NAME);
 		if (create && tocFile.exists()) {
 			// Delete the ContentStore files
 			tocFile.delete();
 			new File(dir, VERSION_FILE_NAME).delete();
-			new File(dir, CONTENT_FILE_NAME).delete();
+			new File(dir, CONTENTS_FILE_NAME).delete();
+
+			// Also delete old content store format files if present
+			File[] dataFiles = dir.listFiles(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir_, String name) {
+					return name.matches("data\\d+.dat");
+				}
+			});
+			for (File f : dataFiles) {
+				f.delete();
+			}
 		}
 		toc = Maps.mutable.empty();
 		if (tocFile.exists())
@@ -347,9 +364,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		closeContentsFile();
 
 		// delete contents file and empty TOC
-		File f = getContentFile();
-		if (f.exists())
-			f.delete();
+		if (contentsFile.exists())
+			contentsFile.delete();
 		toc.clear();
 		freeBlocks.clear();
 		tocModified = true;
@@ -534,57 +550,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		if (content.length() == 0)
 			return;
 
-//		// Calculate what charsFromEntryWritten will be after storing this part
-//		// (used to determine if we will cross a block boundary)
-//		int offsetAfterThisPart = charsFromEntryWritten + content.length();
-//
-//		// See if we're about to cross any block boundaries; if so, write the content up to the
-//		// first block boundary, save the new block offset, and repeat.
-//		int thisPartCharsWritten = 0, thisPartCharsLeftToWrite = content.length();
-
 		unwrittenContents.append(content);
 		writeBlocks(false);
-
-//		OutputStream os = openContentsFile();
-//		while (true) {
-//			// Will we cross a(nother) block boundary writing this part of the content?
-//			int nextBlockBoundary = blockOffsetWhileStoring.size() * newEntryBlockSizeCharacters;
-//			boolean willWeCrossBlockBoundary = (offsetAfterThisPart > nextBlockBoundary);
-//			if (!willWeCrossBlockBoundary) {
-//				// No; break out of this loop and write the last bit of content.
-//				break;
-//			}
-//
-//			// How many characters till the block boundary?
-//			int charsRemainingInBlock = nextBlockBoundary - charsFromEntryWritten;
-//
-//			// Are we at the block boundary already?
-//			if (charsRemainingInBlock > 0) {
-//				// No, not at the boundary yet; add last piece to block
-//				// and update bookkeeping variables
-//				unwrittenContents.append(content.substring(thisPartCharsWritten, thisPartCharsWritten
-//				+ charsRemainingInBlock));
-//				charsFromEntryWritten += charsRemainingInBlock;
-//
-//				thisPartCharsWritten += charsRemainingInBlock;
-//				thisPartCharsLeftToWrite -= charsRemainingInBlock;
-//			}
-//
-//			// We are now at a block boundary. Write the block and
-//			// store next block offset.
-//			if (unwrittenContents.length() > 0) {
-//				writeCurrentBlock(os);
-//				blockOffsetWhileStoring.add(bytesWritten);
-//			}
-//		}
-//		// No more block boundaries to cross. If there's any content left to write in the
-//		// current block,
-//		// do so now.
-//		if (thisPartCharsLeftToWrite > 0) {
-//			unwrittenContents.append(content.substring(thisPartCharsWritten, thisPartCharsWritten
-//			+ thisPartCharsLeftToWrite));
-//			charsFromEntryWritten += thisPartCharsLeftToWrite;
-//		}
 	}
 
 	/**
@@ -602,13 +569,13 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			writeBlocks(true);
 		}
 
+		// Convert lists to arrays of primitives for storing
 		int[] blockIndices = new int[blockIndicesWhileStoring.size()];
 		int i = 0;
 		for (Integer bo : blockIndicesWhileStoring) {
 			blockIndices[i] = bo;
 			i++;
 		}
-
 		int[] blockCharOffsets = new int[blockCharOffsetsWhileStoring.size()];
 		i = 0;
 		for (Integer bo : blockCharOffsetsWhileStoring) {
@@ -630,12 +597,12 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private void ensureContentsFileOpen() {
 		try {
 			if (rafContentsFile == null) {
-				File contentsFile = new File(dir, CONTENT_FILE_NAME);
+				File contentsFile = new File(dir, CONTENTS_FILE_NAME);
 				rafContentsFile = new RandomAccessFile(contentsFile, "rw");
 				fchContentsFile = rafContentsFile.getChannel();
 			}
 		} catch (FileNotFoundException e) {
-			throw new RuntimeException("Contents file not found" + CONTENT_FILE_NAME, e);
+			throw new RuntimeException("Contents file not found" + CONTENTS_FILE_NAME, e);
 		}
 	}
 
@@ -643,23 +610,13 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		try {
 			if (rafContentsFile != null) {
 				fchContentsFile.close();
+				fchContentsFile = null;
 				rafContentsFile.close();
+				rafContentsFile = null;
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	/**
-	 * Get a data File object, given the data file id.
-	 *
-	 * @param fileId
-	 *            the data file id
-	 * @return the File object
-	 */
-	private File getContentFile() {
-		File f = new File(dir, CONTENT_FILE_NAME);
-		return f;
 	}
 
 	/**
@@ -712,7 +669,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			String[] result = new String[n];
 
 			// Open the file
-			FileInputStream fileInputStream = new FileInputStream(getContentFile());
+			FileInputStream fileInputStream = new FileInputStream(contentsFile);
 			try {
 				FileChannel fileChannel = fileInputStream.getChannel();
 
@@ -743,9 +700,12 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 					// 1 - determine what blocks to read
 					int firstBlock = -1, lastBlock = -1;
 					int bl = 0;
+					int charOffset = -1;
 					for (int offs: e.blockCharOffsets) {
-						if (offs <= a)
+						if (offs <= a) {
 							firstBlock = bl; // last block that starts before a
+							charOffset = offs;
+						}
 						if (offs > b && lastBlock == -1) {
 							lastBlock = bl - 1;  // first block that ends after b
 							break;
@@ -754,7 +714,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 					}
 					if (lastBlock == -1)
 						lastBlock = bl - 1; // last available block
-					int charOffset = firstBlock * BLOCK_SIZE_BYTES;
 
 					// 2 - read and decode blocks
 					StringBuilder decoded = new StringBuilder();
