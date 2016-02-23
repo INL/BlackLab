@@ -50,9 +50,8 @@ public class SpanQueryAnd extends SpanQueryBase {
 		for (int i = 1; i < clauses.length; i++) {
 			Spans si = clauses[i].getSpans(context, acceptDocs, termContexts);
 			if (combi == null)
-				combi = si;
-			else
-				combi = new SpansAnd(combi, si);
+				return null; // if no hits in one of the clauses, no hits in and query
+			combi = new SpansAnd(combi, si);
 		}
 
 		return combi;
