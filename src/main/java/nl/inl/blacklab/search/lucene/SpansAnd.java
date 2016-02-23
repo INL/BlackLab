@@ -18,9 +18,9 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
+
+import org.apache.lucene.search.spans.Spans;
 
 /**
  * Combines two Spans using AND. Note that this means that only matches with the same document id,
@@ -65,7 +65,7 @@ class SpansAnd extends BLSpans {
 	public int endPosition() {
 		if (alreadyAtFirstMatch)
 			return -1; // .nextStartPosition() not called yet
-		if (currentStart[1] == NO_MORE_POSITIONS)
+		if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS)
 			return NO_MORE_POSITIONS;
 		return spans[0].endPosition();
 	}
