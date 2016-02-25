@@ -56,14 +56,25 @@ import nl.inl.util.SimpleResourcePool;
 public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private static final Logger logger = Logger.getLogger(ContentStoreDirFixedBlock.class);
 
-	private static final String TOC_FILE_NAME = "toc.dat";
+	/** The type of content store. Written to version file and detected when opening. */
+	private static final String CONTENT_STORE_TYPE_NAME = "fixedblock";
 
-	private static final String CONTENTS_FILE_NAME = "file-contents.dat";
+	/** Version of this type of content store. Written to version file and detected when opening. */
+	private static final String CURRENT_VERSION = "1";
 
+	/** Name of the version file */
 	private static final String VERSION_FILE_NAME = "version.dat";
 
+	/** Name of the table of contents file */
+	private static final String TOC_FILE_NAME = "toc.dat";
+
+	/** Name of the file containing all the original file contents (zipped) */
+	private static final String CONTENTS_FILE_NAME = "file-contents.dat";
+
+	/** Character encoding used for storing contents */
 	private static final String CHAR_ENCODING = "UTF-8";
 
+	/** How many bytes an int consists of (used when repositioning file pointers) */
 	private static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
 
 	/**
@@ -237,20 +248,20 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		this.writeMapReserve = writeMapReserve;
 	}
 
-	/**
-	 * Next content ID.
-	 */
+	/** Next content ID */
 	private int nextId = 1;
 
+	/** The file containing all the original file contents */
 	File contentsFile;
 
+	/** Handle into the contents file */
 	RandomAccessFile rafContentsFile;
 
+	/** Channel into the contents file */
 	FileChannel fchContentsFile;
 
-	/**
-	 * If we're writing content in chunks, this keeps track of how many chars were already written.
-	 * Used by store() to calculate the total content length in chars.
+	/** Keeps track of how many chars were in the blocks we've already written.
+	 *  Used by store() to calculate the total content length in chars.
 	 */
 	private int charsFromEntryWritten = 0;
 
@@ -260,10 +271,13 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	 */
 	private int bytesWritten = 0;
 
+	/** Keeps track of the block ids we've stored parts the current file in so far */
 	private List<Integer> blockIndicesWhileStoring;
 
+	/** Keeps track of the char offsets of the blocks of the current file so far */
 	private List<Integer> blockCharOffsetsWhileStoring;
 
+	/** If true, the toc file should be updated dat the end */
 	private boolean tocModified = false;
 
 	/** Contents still waiting to be written to the contents file in blocks */
@@ -780,7 +794,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	SimpleResourcePool<byte[]> zipbufPool;
 
 	protected void setStoreType() {
-		setStoreType("fixedblock", "1");
+		setStoreType(CONTENT_STORE_TYPE_NAME, CURRENT_VERSION);
 	}
 
 	protected byte[] encodeBlock() {
