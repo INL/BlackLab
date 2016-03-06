@@ -274,13 +274,12 @@ public class XmlHighlighter {
 	private void existingTag(TagLocation tag, String str) {
 		boolean suspendHighlighting = false;
 
-		if (inHighlightTag > 0) {
+		if (inHighlightTag > 0 &&
+				(outerHighlightTag.start > tag.matchingTagStart || outerHighlightTag.matchingTagStart <= tag.matchingTagStart)) {
 			// We should possibly suspend highlighting for this tag to maintain well-formedness.
 			// Check the current (outer) highlighting span and see if our matching tag is inside or outside this highlighting span.
-			if (outerHighlightTag.start > tag.matchingTagStart || outerHighlightTag.matchingTagStart <= tag.matchingTagStart) {
-				// Matching tag is outside the highlighting span; highlighting must be suspended to maintain well-formedness.
-				suspendHighlighting = true;
-			}
+			// Matching tag is outside the highlighting span; highlighting must be suspended to maintain well-formedness.
+			suspendHighlighting = true;
 		}
 
 		if (suspendHighlighting)
