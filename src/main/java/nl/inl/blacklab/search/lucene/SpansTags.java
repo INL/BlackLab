@@ -181,7 +181,7 @@ class SpansTags extends BLSpans {
 		for (Integer tag: startsAndEnds) {
 			if (tag > 0) {
 				int startPositionToStore = tag - 2;  // subtract 2 again to get original position (see above)
-				if (emptyElementIndices.size() > 0) {
+				if (!emptyElementIndices.isEmpty()) {
 					// We have an unmatched close tag, probably an empty element between tokens (see below).
 					// Is this the corresponding start tag?
 					int index = emptyElementIndices.remove(emptyElementIndices.size() - 1);
@@ -200,7 +200,7 @@ class SpansTags extends BLSpans {
 			} else {
 				// Close tag. Are there unmatched open tags?
 				int endPositionToStore = -tag - 2 + 1; // subtract 2 and add 1 to let it point to the next token again (see above)
-				if (unmatchedOpenTagIndices.size() == 0) {
+				if (unmatchedOpenTagIndices.isEmpty()) {
 					// No. This must be an empty element between two tokens. Because we don't know the
 					// relative order of tags between tokens (this information is not in the index),
 					// our sort messes this up.
@@ -215,10 +215,10 @@ class SpansTags extends BLSpans {
 				}
 			}
 		}
-		if (unmatchedOpenTagIndices.size() > 0) {
+		if (!unmatchedOpenTagIndices.isEmpty()) {
 			throw new RuntimeException("Unmatched open tags left for document");
 		}
-		if (emptyElementIndices.size() > 0) {
+		if (!emptyElementIndices.isEmpty()) {
 			throw new RuntimeException("Unmatched close tag left for document");
 		}
 	}

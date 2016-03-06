@@ -39,7 +39,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 
 	@Override
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		if (exclude.size() > 0)
+		if (!exclude.isEmpty())
 			throw new RuntimeException("clausesNot not empty!");
 
 		List<T> chResults = new ArrayList<>();
@@ -152,7 +152,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 
 	@Override
 	public TextPattern rewrite() {
-		if (exclude.size() > 0)
+		if (!exclude.isEmpty())
 			throw new RuntimeException("clausesNot not empty!");
 
 		boolean anyRewritten = false;
@@ -269,7 +269,7 @@ public class TextPatternSequence extends TextPatternAndNot {
 			TextPattern combined = child;
 			while (true) {
 				// Do we have a previous part?
-				previousPart = seqCombined.size() == 0 ? null : seqCombined.get(seqCombined.size() - 1);
+				previousPart = seqCombined.isEmpty() ? null : seqCombined.get(seqCombined.size() - 1);
 				if (previousPart == null)
 					break;
 				// Yes, try to combine with it.

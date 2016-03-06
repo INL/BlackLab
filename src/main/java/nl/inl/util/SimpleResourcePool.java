@@ -91,7 +91,7 @@ public abstract class SimpleResourcePool<T> {
 	 */
 	public synchronized T acquire() {
 		try {
-			if (neverPool || freePool.size() == 0) {
+			if (neverPool || freePool.isEmpty()) {
 				return createResource();
 			}
 			return freePool.remove(0);

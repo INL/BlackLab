@@ -548,7 +548,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 					.append("=\"").append(value).append("\"");
 		}
 		// Append any namespace mapping not yet outputted
-		if (outputPrefixMapping.size() > 0) {
+		if (!outputPrefixMapping.isEmpty()) {
 			for (Map.Entry<String, String> e : outputPrefixMapping.entrySet()) {
 				if (e.getKey().length() == 0)
 					elementBuilder.append(" xmlns=\"").append(e.getValue())

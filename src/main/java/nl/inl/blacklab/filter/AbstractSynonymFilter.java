@@ -127,7 +127,7 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 		// we may have to loop to the first synonym. See end of loop.
 		do {
 			// Do we have any synonyms left?
-			if (synonymStack.size() > 0) {
+			if (!synonymStack.isEmpty()) {
 				// Yes, shift one in.
 				State syn = synonymStack.pop();
 				restoreState(syn);
