@@ -34,6 +34,9 @@ import nl.inl.util.FileUtil.FileTask;
  */
 public class Utilities {
 
+	private Utilities() {
+	}
+
 	/**
 	 * Removes temporary test directories that may be left over from previous test
 	 * runs because of memory mapping file locking on Windows.

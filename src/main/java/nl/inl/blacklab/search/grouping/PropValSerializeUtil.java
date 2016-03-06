@@ -16,6 +16,9 @@ public class PropValSerializeUtil {
 
 	private final static String MULTIPLE_SEPARATOR_ESC_REGEX = StringUtil.escapeRegexCharacters(MULTIPLE_SEPARATOR);
 
+	private PropValSerializeUtil() {
+	}
+
 	public static String escapePart(String part) {
 		return part.replace("$", "$DL").replace(",", "$CM").replace(":", "$CL");
 	}

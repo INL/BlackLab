@@ -2,6 +2,9 @@ package nl.inl.util;
 
 public class ArrayUtil {
 
+	private ArrayUtil() {
+	}
+
 	/**
 	 * Compare two arrays of ints by comparing each element in succession.
 	 *

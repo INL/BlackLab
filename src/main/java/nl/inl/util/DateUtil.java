@@ -26,6 +26,9 @@ import java.util.Locale;
  */
 public class DateUtil {
 
+	private DateUtil() {
+	}
+
 	/**
 	 * Parse a date.
 	 *

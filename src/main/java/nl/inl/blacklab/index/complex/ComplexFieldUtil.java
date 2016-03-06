@@ -98,6 +98,9 @@ public class ComplexFieldUtil {
 		LENGTH_TOKENS_BOOKKEEP_NAME
 	);
 
+	private ComplexFieldUtil() {
+	}
+
 	public enum BookkeepFieldType {
 		CONTENT_ID,
 		FORWARD_INDEX_ID,

@@ -34,6 +34,9 @@ public class LocaleUtil {
 	 */
 	private static Locale englishLocale = new Locale("en", "GB");
 
+	private LocaleUtil() {
+	}
+
 	/**
 	 * Get the dutch locale
 	 *

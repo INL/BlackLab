@@ -28,6 +28,9 @@ public class ConsoleUtil {
 	private static BufferedReader stdinReader = IoUtil
 			.makeBuffered(new InputStreamReader(System.in));
 
+	private ConsoleUtil() {
+	}
+
 	/**
 	 * Prompt the user for a string
 	 *

@@ -17,7 +17,10 @@ import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 public class ContextQlParseUtils {
 
-    public static CompleteQuery clause(Searcher searcher, String index, String relation, String term, String defaultProperty) {
+	private ContextQlParseUtils() {
+	}
+
+	public static CompleteQuery clause(Searcher searcher, String index, String relation, String term, String defaultProperty) {
         if (relation == null)
             relation = "=";
         if (index == null)
