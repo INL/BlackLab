@@ -231,7 +231,7 @@ public class IndexTool {
 		if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
 			indexTemplateFile = null;
 		}
-		Indexer indexer = null;
+		Indexer indexer;
 		try {
 			indexer = new Indexer(indexDir, createNewIndex, docIndexerClass, indexTemplateFile);
 		} catch (DocumentFormatException e1) {

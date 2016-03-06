@@ -149,7 +149,7 @@ public class DocFieldLengthGetter implements Closeable {
 		// (much slower)
 		try {
 			Terms vector = reader.getTermVector(doc, fieldName);
-			TermsEnum termsEnum = null;
+			TermsEnum termsEnum;
 			termsEnum = vector.iterator();
 			int termFreq = 0;
 			while (termsEnum.next() != null) {
