@@ -60,7 +60,7 @@ public class ComplexFieldProperty {
 	}
 
 	/** How a property is to be indexed with respect to case and diacritics sensitivity. */
-	public static enum SensitivitySetting {
+	public enum SensitivitySetting {
 		ONLY_SENSITIVE,                 // only index case- and diacritics-sensitively
 		ONLY_INSENSITIVE,               // only index case- and diacritics-insensitively
 		SENSITIVE_AND_INSENSITIVE,      // case+diac sensitive as well as case+diac insensitive
