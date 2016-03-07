@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
+
 /**
  * A textpattern matching a simple wildcard expression.
  *
@@ -47,6 +49,10 @@ public class TextPatternWildcard extends TextPatternTerm {
 
 		// Replace multiple consecutive asterisks with a single one
 		value = value.replaceAll("\\*+", "*");
+
+		// Is is "any word"?
+		if (value.equals("*"))
+			return new TextPatternAnyToken(1, 1);
 
 		// Is it a prefix query? ("bla*")
 		if (value.indexOf('*') == value.length() - 1 && value.indexOf('?') < 0) {
