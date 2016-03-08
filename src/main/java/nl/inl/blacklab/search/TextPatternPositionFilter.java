@@ -26,7 +26,7 @@ import nl.inl.blacklab.search.sequences.TextPatternSequence;
 public class TextPatternPositionFilter extends TextPatternCombiner {
 
 	/** The different positional operations */
-	public static enum Operation {
+	public enum Operation {
 
 		/** Producer hit contains filter hit */
 		CONTAINING,

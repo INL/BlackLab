@@ -14,7 +14,7 @@ public class ThreadPriority {
 	/**
 	 * The different priorities a thread can have in our system.
 	 */
-	public static enum Level {
+	public enum Level {
 		PAUSED,
 		RUNNING_LOW_PRIO,
 		RUNNING

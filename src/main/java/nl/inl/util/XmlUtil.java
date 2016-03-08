@@ -298,7 +298,7 @@ public class XmlUtil {
 	/**
 	 * States of the xmlToPlainText() state machine
 	 */
-	private static enum XmlToPlainTextState {
+	private enum XmlToPlainTextState {
 
 		/** Copy these characters to the destination */
 		COPY,
