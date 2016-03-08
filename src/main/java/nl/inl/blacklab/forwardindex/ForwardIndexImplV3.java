@@ -276,7 +276,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		while (mappedBytes < tokenFileEndBytes) {
 			// Find the last TOC entry start point that's also in the previous mapping
 			// (or right the first byte after the previous mapping).
-			long startOfNextMappingBytes = 0;
+			long startOfNextMappingBytes;
 
 			// Look for the largest entryOffset that's no larger than mappedBytes.
 			TocEntry mapNextChunkFrom = null;

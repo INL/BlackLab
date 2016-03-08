@@ -698,7 +698,7 @@ public class QueryTool {
 		// In batch mode, we can use the chain operator (&&) to
 		// time several commands together. See if we're chaining
 		// commands here.
-		String cmd = null, restCommand = null;
+		String cmd, restCommand = null;
 		int commandSeparatorIndex = fullCmd.indexOf("&&");
 		if (commandSeparatorIndex >= 0) {
 			cmd = fullCmd.substring(0, commandSeparatorIndex).trim();

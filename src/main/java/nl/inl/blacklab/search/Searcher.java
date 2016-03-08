@@ -909,7 +909,7 @@ public class Searcher implements Closeable {
 
 				// Iterate over docs containing this term (NOTE: should be only one doc!)
 				while (dpe.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-					int position = -1;
+					int position;
 
 					// Iterate over positions of this term in this doc
 					int positionsRead = 0;

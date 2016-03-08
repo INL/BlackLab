@@ -117,7 +117,7 @@ public class BLSpanOrQuery extends SpanOrQuery {
 			}
 		}
 		if (cloneClauses != null) {
-			BLSpanOrQuery clone = null;
+			BLSpanOrQuery clone;
 			clone = new BLSpanOrQuery(cloneClauses);
 			clone.setBoost(getBoost());
 			if (clone.getField() == null)

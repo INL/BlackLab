@@ -176,7 +176,7 @@ public class LuceneUtil {
 					// NOTE: .docId() will always return 0 in this case
 					//if (docPosEnum.docID() != doc)
 					//	throw new RuntimeException("Wrong doc id: " + docPosEnum.docID() + " (expected " + doc + ")");
-					int position = -1;
+					int position;
 					for (int i = 0; i < docPosEnum.freq(); i++)  {
 						position = docPosEnum.nextPosition();
 						if (position == -1)
