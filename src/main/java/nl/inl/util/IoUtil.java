@@ -26,6 +26,9 @@ import java.io.Reader;
  */
 public class IoUtil {
 
+	private IoUtil() {
+	}
+
 	/**
 	 * Wraps the specified reader in a BufferedReader for efficient and convenient access.
 	 *

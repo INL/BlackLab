@@ -23,6 +23,9 @@ import java.io.StringWriter;
  */
 public class ExUtil {
 
+	private ExUtil() {
+	}
+
 	/**
 	 * If the supplied exception is not already an instance of RuntimeException, wrap it in a
 	 * RuntimeException object.

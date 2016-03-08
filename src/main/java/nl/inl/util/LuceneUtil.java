@@ -28,6 +28,9 @@ import org.apache.lucene.util.BytesRef;
 
 public class LuceneUtil {
 
+	private LuceneUtil() {
+	}
+
 	/**
 	 * Test if a term occurs in the index
 	 * @param reader the index

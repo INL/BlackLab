@@ -73,6 +73,9 @@ public class StringUtil {
 
 	private static Collator englishInsensitiveCollator;
 
+	private StringUtil() {
+	}
+
 	/**
 	 * Replaces space with non-breaking space so the browser doesn't word-wrap
 	 *

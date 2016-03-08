@@ -17,6 +17,9 @@ package nl.inl.util;
 
 public class TimeUtil {
 
+	private TimeUtil() {
+	}
+
 	public static double secondsSince(long startTime) {
 		return (System.currentTimeMillis() - startTime) / 1000.0;
 	}
