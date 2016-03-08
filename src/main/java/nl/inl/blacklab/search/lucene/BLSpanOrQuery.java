@@ -295,25 +295,23 @@ public class BLSpanOrQuery extends SpanOrQuery {
 				DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
 				while (listAtCurrentDoc != null) {
 					Spans spansAtDoc = listAtCurrentDoc.iterator;
-					if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc) { // matched
-																			// by
-																			// DisjunctionDisiApproximation
-						if (listAtCurrentDoc.twoPhaseView != null) { // matched
+					if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc && listAtCurrentDoc.twoPhaseView != null) { // matched
+																		// by
+																		// DisjunctionDisiApproximation
+																		// matched
 																		// by
 																		// approximation
-							if (listAtCurrentDoc.lastApproxNonMatchDoc == listAtCurrentDoc.doc) { // matches()
-																									// returned
-																									// false
+						if (listAtCurrentDoc.lastApproxNonMatchDoc == listAtCurrentDoc.doc) { // matches()
+																								// returned
+																								// false
+							spansAtDoc = null;
+						} else {
+							if (listAtCurrentDoc.lastApproxMatchDoc != listAtCurrentDoc.doc && !listAtCurrentDoc.twoPhaseView
+									.matches()) {
 								spansAtDoc = null;
-							} else {
-								if (listAtCurrentDoc.lastApproxMatchDoc != listAtCurrentDoc.doc) {
-									if (!listAtCurrentDoc.twoPhaseView
-											.matches()) {
-										spansAtDoc = null;
-									}
-								}
 							}
 						}
+					
 					}
 
 					if (spansAtDoc != null) {
