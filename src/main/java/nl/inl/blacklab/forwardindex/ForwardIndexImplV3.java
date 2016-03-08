@@ -552,7 +552,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		// (always, unless we found an exact-fitting gap)
 		if (addNewEntry) {
 			// See if there's an unused entry
-			TocEntry smallestFreeEntry = deletedTocEntries.size() == 0 ? null : deletedTocEntries.get(0);
+			TocEntry smallestFreeEntry = deletedTocEntries.isEmpty() ? null : deletedTocEntries.get(0);
 			if (smallestFreeEntry != null && smallestFreeEntry.length == 0) {
 				// Yes; re-use
 				deletedTocEntries.remove(0);

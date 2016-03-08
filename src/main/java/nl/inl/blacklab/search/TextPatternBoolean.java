@@ -52,14 +52,14 @@ public class TextPatternBoolean extends TextPattern {
 
 		// MUST and SHOULD
 		TextPattern tpMust = null, tpShould = null;
-		if (must.size() > 0) {
+		if (!must.isEmpty()) {
 			// Build a TextPattern that combines all MUST queries with AND
 			if (must.size() == 1)
 				tpMust = must.get(0);
 			else
 				tpMust = new TextPatternDocLevelAnd(must.toArray(new TextPattern[0]));
 		}
-		if (should.size() > 0) {
+		if (!should.isEmpty()) {
 			if (should.size() == 1)
 				tpShould = should.get(0);
 			else {
@@ -77,7 +77,7 @@ public class TextPatternBoolean extends TextPattern {
 		}
 
 		// MUST NOT
-		if (mustNot.size() > 0) {
+		if (!mustNot.isEmpty()) {
 			// Build a TextPattern that combines all MUST NOT queries with AND
 			translated = new TextPatternDocLevelAndNot(translated, new TextPatternDocLevelAnd(
 					mustNot.toArray(new TextPattern[0])));

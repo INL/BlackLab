@@ -187,7 +187,7 @@ public class Kwic {
 	public Concordance toConcordance() {
 		String[] conc = new String[3];
 		List<String> match = getMatch();
-		String addPunctAfter = match.size() > 0 ? match.get(0) : "";
+		String addPunctAfter = !match.isEmpty() ? match.get(0) : "";
 		conc[0] = xmlString(getLeft(), addPunctAfter, true);
 		conc[1] = xmlString(match, null, true);
 		conc[2] = xmlString(getRight(), null, false);

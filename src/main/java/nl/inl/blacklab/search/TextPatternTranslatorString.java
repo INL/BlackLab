@@ -65,7 +65,7 @@ public class TextPatternTranslatorString extends TextPatternTranslator<String> {
 
 	@Override
 	public String tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
-		if (attr != null && attr.size() > 0)
+		if (attr != null && !attr.isEmpty())
 			return "TAGS(" + elementName + ", " + StringUtil.join(attr) + ")";
 		return "TAGS(" + elementName + ")";
 	}

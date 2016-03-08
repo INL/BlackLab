@@ -72,16 +72,16 @@ public class TextPatternAndNot extends TextPattern {
 		for (TextPattern cl : exclude) {
 			chResultsNot.add(cl.translate(translator, context));
 		}
-		if (chResults.size() == 1 && chResultsNot.size() == 0) {
+		if (chResults.size() == 1 && chResultsNot.isEmpty()) {
 			// Single positive clause
 			return chResults.get(0);
-		} else if (chResults.size() == 0) {
+		} else if (chResults.isEmpty()) {
 			// All negative clauses, so it's really just a NOT query. Should've been rewritten, but ok.
 			return translator.not(context, translator.and(context, chResultsNot));
 		}
 		// Combination of positive and possibly negative clauses
 		T include = chResults.size() == 1 ? chResults.get(0) : translator.and(context, chResults);
-		if (chResultsNot.size() == 0)
+		if (chResultsNot.isEmpty())
 			return include;
 		T exclude = chResultsNot.size() == 1 ? chResultsNot.get(0) : translator.and(context, chResultsNot);
 		return translator.andNot(context, include, exclude);
@@ -104,7 +104,7 @@ public class TextPatternAndNot extends TextPattern {
 
 	@Override
 	public TextPattern inverted() {
-		if (exclude.size() == 0) {
+		if (exclude.isEmpty()) {
 			// In this case, it's better to just wrap this in TextPatternNot,
 			// so it will be recognized by other rewrite()s.
 			return super.inverted();
@@ -125,12 +125,12 @@ public class TextPatternAndNot extends TextPattern {
 	@Override
 	protected boolean okayToInvertForOptimization() {
 		// Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
-		return producesSingleTokens() && exclude.size() > 0;
+		return producesSingleTokens() && !exclude.isEmpty();
 	}
 
 	@Override
 	public boolean isSingleTokenNot() {
-		return producesSingleTokens() && include.size() == 0;
+		return producesSingleTokens() && include.isEmpty();
 	}
 
 	@Override
@@ -175,7 +175,7 @@ public class TextPatternAndNot extends TextPattern {
 			isNot = true;
 		}
 
-		if (rewrittenCl.size() == 0) {
+		if (rewrittenCl.isEmpty()) {
 			// All-negative; node should be rewritten to OR.
 			if (rewrittenNotCl.size() == 1)
 				return rewrittenCl.get(0).inverted();
@@ -202,21 +202,21 @@ public class TextPatternAndNot extends TextPattern {
 
 	@Override
 	public boolean hasConstantLength() {
-		if (include.size() == 0)
+		if (include.isEmpty())
 			return true;
 		return include.get(0).hasConstantLength();
 	}
 
 	@Override
 	public int getMinLength() {
-		if (include.size() == 0)
+		if (include.isEmpty())
 			return 1;
 		return include.get(0).getMinLength();
 	}
 
 	@Override
 	public int getMaxLength() {
-		if (include.size() == 0)
+		if (include.isEmpty())
 			return 1;
 		return include.get(0).getMaxLength();
 	}
@@ -228,7 +228,7 @@ public class TextPatternAndNot extends TextPattern {
 
 	@Override
 	public String toString(QueryExecutionContext context) {
-		if (exclude.size() == 0)
+		if (exclude.isEmpty())
 			return "AND(" + clausesToString(include, context) + ")";
 		return "ANDNOT([" + clausesToString(include, context) + "], [" + clausesToString(exclude, context) + "])";
 	}

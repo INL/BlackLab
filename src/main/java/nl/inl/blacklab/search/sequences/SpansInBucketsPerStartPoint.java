@@ -189,7 +189,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
 	@Override
 	public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
-		if (!doCapturedGroups || capturedGroupsPerEndpoint.size() == 0)
+		if (!doCapturedGroups || capturedGroupsPerEndpoint.isEmpty())
 			return;
 		Span[] previouslyCapturedGroups = capturedGroupsPerEndpoint.get(indexInBucket);
 		if (previouslyCapturedGroups != null) {

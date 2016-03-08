@@ -170,7 +170,7 @@ public class BLSpanOrQuery extends SpanOrQuery {
 				}
 			}
 		}
-		if (subSpans.size() == 0)
+		if (subSpans.isEmpty())
 			return null;
 		else if (subSpans.size() == 1)
 			return BLSpansWrapper.optWrap(subSpans.get(0));

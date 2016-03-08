@@ -87,7 +87,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 			// Older index, with end tags stored in separate property
 			allTags = new SpanQueryTagsOld(context, elementName);
 		}
-		if (attr == null || attr.size() == 0)
+		if (attr == null || attr.isEmpty())
 			return allTags;
 
 		// Construct attribute filters
