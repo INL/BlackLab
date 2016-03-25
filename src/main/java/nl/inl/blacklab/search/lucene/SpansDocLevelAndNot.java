@@ -78,11 +78,10 @@ public class SpansDocLevelAndNot extends BLSpans {
 		}
 
 		boolean done = false;
-		int newDocId = -1;
 		do {
 			if (moreIncludeSpansDocs && includeSpans.nextDoc() != NO_MORE_DOCS) {
 				// Voldoet deze?
-				newDocId = includeSpans.docID();
+				int newDocId = includeSpans.docID();
 				if (moreExcludeSpansDocs && excludeSpans.docID() < newDocId) {
 					moreExcludeSpansDocs = excludeSpans.advance(newDocId) != NO_MORE_DOCS;
 				}

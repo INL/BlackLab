@@ -184,7 +184,7 @@ public class ComplexFieldUtil {
 	 * @return the combined complex field name
 	 */
 	public static String bookkeepingField(String fieldName, String propName, String bookkeepName) {
-		String fieldPropName = "";
+		String fieldPropName;
 		boolean propGiven = propName != null && propName.length() > 0;
 		if (fieldName == null || fieldName.length() == 0) {
 			if (propGiven) {
@@ -225,7 +225,7 @@ public class ComplexFieldUtil {
 	 * @return the combined complex field name
 	 */
 	public static String propertyField(String fieldName, String propName, String altName) {
-		String fieldPropName = "";
+		String fieldPropName;
 		boolean propGiven = propName != null && propName.length() > 0;
 		if (!propGiven) {
 			throw new RuntimeException("Must specify a property name");

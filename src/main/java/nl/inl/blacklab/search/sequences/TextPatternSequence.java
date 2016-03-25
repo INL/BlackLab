@@ -263,13 +263,12 @@ public class TextPatternSequence extends TextPatternAndNot {
 		//   combined again into distance queries
 		// - negative clauses can be rewritten to NOTCONTAINING clauses and combined with
 		//   adjacent constant-length query parts.
-		TextPattern previousPart = null;
 		List<TextPattern> seqCombined = new ArrayList<>();
 		for (TextPattern child: flat) {
 			TextPattern combined = child;
 			while (true) {
 				// Do we have a previous part?
-				previousPart = seqCombined.isEmpty() ? null : seqCombined.get(seqCombined.size() - 1);
+				TextPattern previousPart = seqCombined.isEmpty() ? null : seqCombined.get(seqCombined.size() - 1);
 				if (previousPart == null)
 					break;
 				// Yes, try to combine with it.

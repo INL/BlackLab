@@ -39,7 +39,7 @@ public class PropertyDesc {
 //			altDesc = ", with alternatives \"" + altList + "\"";
 //		else if (alternatives.size() == 1)
 //			altDesc = ", with alternative \"" + altList + "\"";
-		String sensitivityDesc = "";
+		String sensitivityDesc;
 		switch (sensitivity) {
 		case ONLY_SENSITIVE:
 			sensitivityDesc = "sensitive only";

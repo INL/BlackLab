@@ -48,7 +48,7 @@ public class TextPatternBoolean extends TextPattern {
 	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
 
 		// First, translate clauses into complete TextPattern. Then translate that.
-		TextPattern translated = null;
+		TextPattern translated;
 
 		// MUST and SHOULD
 		TextPattern tpMust = null, tpShould = null;

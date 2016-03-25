@@ -1919,13 +1919,12 @@ public class Hits extends AbstractList<Hit> {
 
 		// Get attributes context
 		String[] attrName = null;
-		ForwardIndex[] attrFI = null;
 		Terms[] attrTerms = null;
 		int[][][] attrContext = null;
 		if (attrForwardIndices != null) {
 			int n = attrForwardIndices.size();
 			attrName = new String[n];
-			attrFI = new ForwardIndex[n];
+			ForwardIndex[] attrFI = new ForwardIndex[n];
 			attrTerms = new Terms[n];
 			attrContext = new int[n][][];
 			int i = 0;

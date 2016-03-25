@@ -276,7 +276,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		while (mappedBytes < tokenFileEndBytes) {
 			// Find the last TOC entry start point that's also in the previous mapping
 			// (or right the first byte after the previous mapping).
-			long startOfNextMappingBytes = 0;
 
 			// Look for the largest entryOffset that's no larger than mappedBytes.
 			TocEntry mapNextChunkFrom = null;
@@ -296,7 +295,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 					max = middle;
 				}
 			}
-			startOfNextMappingBytes = toc.get(min).offset * SIZEOF_INT;
+			long startOfNextMappingBytes = toc.get(min).offset * SIZEOF_INT;
 
 			// Map this chunk
 			long sizeBytes = tokenFileEndBytes - startOfNextMappingBytes;
@@ -350,7 +349,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private void readToc() {
 		toc.clear();
 		deletedTocEntries.clear();
-		try (RandomAccessFile raf = new RandomAccessFile(tocFile, "r"); 
+		try (RandomAccessFile raf = new RandomAccessFile(tocFile, "r");
 			FileChannel fc = raf.getChannel()) {
 			long fileSize = tocFile.length();
 			MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, fileSize);

@@ -191,7 +191,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 
 		private static String fetchDocument(String url) {
 			int code = -1;
-			String reason = "unknown";
+			String reason;
 
 			// HTTP
 			try {

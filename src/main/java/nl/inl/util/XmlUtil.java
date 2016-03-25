@@ -365,7 +365,7 @@ public class XmlUtil {
 			case ';':
 				if (state == XmlToPlainTextState.IN_ENTITY) {
 					// Leaving entity
-					char whichEntity = '!';
+					char whichEntity;
 					String entityName = conc.substring(entityStart, srcIndex);
 					if (entityName.equals("lt"))
 						whichEntity = '<';
