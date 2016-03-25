@@ -106,13 +106,11 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 					propMain.addValue(wordform);
 					propPartOfSpeech.addValue(pos);
 					propLemma.addValue(lemma);
-					if (pos.length() == 0 || lemma.length() == 0) {
-						if (!lemPosProblemReported) {
-							lemPosProblemReported = true;
-							System.err.println(
-								"Word without Pos (set=http://ilk.uvt.nl/folia/sets/frog-mbpos-cgn) and/or lemma (set=http://ilk.uvt.nl/folia/sets/frog-mblem-nl "
-								+ "at " + describePosition());
-						}
+					if ((pos.length() == 0 || lemma.length() == 0) && !lemPosProblemReported) {
+						lemPosProblemReported = true;
+						System.err.println(
+							"Word without Pos (set=http://ilk.uvt.nl/folia/sets/frog-mbpos-cgn) and/or lemma (set=http://ilk.uvt.nl/folia/sets/frog-mblem-nl "
+							+ "at " + describePosition());
 					}
 					propPunct.addValue(" ");
 				}

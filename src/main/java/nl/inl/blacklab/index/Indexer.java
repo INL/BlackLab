@@ -818,10 +818,8 @@ public class Indexer {
 							indexInputStream(entryName, contents, glob, recurseArchives);
 						} else {
 							boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".gz") || fn.endsWith(".tgz");
-							if (isArchive) {
-								if (recurseArchives && processArchivesAsDirectories) {
-									indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
-								}
+							if (isArchive && recurseArchives && processArchivesAsDirectories) {
+								indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
 							}
 						}
 					} catch (Exception e) {
