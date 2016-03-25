@@ -350,41 +350,32 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private void readToc() {
 		toc.clear();
 		deletedTocEntries.clear();
-		try {
-			RandomAccessFile raf = new RandomAccessFile(tocFile, "r");
+		try (RandomAccessFile raf = new RandomAccessFile(tocFile, "r"); 
+			FileChannel fc = raf.getChannel()) {
 			long fileSize = tocFile.length();
-			try {
-				FileChannel fc = raf.getChannel();
-				try {
-					MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, fileSize);
-					int n = buf.getInt();
-					long[] offset = new long[n];
-					int[] length = new int[n];
-					byte[] deleted = new byte[n];
-					LongBuffer lb = buf.asLongBuffer();
-					lb.get(offset);
-					buf.position(buf.position() + SIZEOF_LONG * n);
-					IntBuffer ib = buf.asIntBuffer();
-					ib.get(length);
-					buf.position(buf.position() + SIZEOF_INT * n);
-					buf.get(deleted);
-					for (int i = 0; i < n; i++) {
-						TocEntry e = new TocEntry(offset[i], length[i], deleted[i] != 0);
-						toc.add(e);
-						if (e.deleted) {
-							deletedTocEntries.add(e);
-						}
-						long end = e.offset + e.length;
-						if (end > tokenFileEndPosition)
-							tokenFileEndPosition = end;
-					}
-					sortDeletedTocEntries();
-				} finally {
-					fc.close();
+			MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, fileSize);
+			int n = buf.getInt();
+			long[] offset = new long[n];
+			int[] length = new int[n];
+			byte[] deleted = new byte[n];
+			LongBuffer lb = buf.asLongBuffer();
+			lb.get(offset);
+			buf.position(buf.position() + SIZEOF_LONG * n);
+			IntBuffer ib = buf.asIntBuffer();
+			ib.get(length);
+			buf.position(buf.position() + SIZEOF_INT * n);
+			buf.get(deleted);
+			for (int i = 0; i < n; i++) {
+				TocEntry e = new TocEntry(offset[i], length[i], deleted[i] != 0);
+				toc.add(e);
+				if (e.deleted) {
+					deletedTocEntries.add(e);
 				}
-			} finally {
-				raf.close();
+				long end = e.offset + e.length;
+				if (end > tokenFileEndPosition)
+					tokenFileEndPosition = end;
 			}
+			sortDeletedTocEntries();
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
