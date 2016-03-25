@@ -26,6 +26,9 @@ public class NetUtil {
 	/** The default encoding to use in networking (as recommended by W3C) */
 	private static String defaultEncoding = "utf-8";
 
+	private NetUtil() {
+	}
+
 	/**
 	 * Get the default encoding to use in networking
 	 *

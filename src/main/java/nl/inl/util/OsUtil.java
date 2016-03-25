@@ -22,6 +22,9 @@ import java.lang.management.RuntimeMXBean;
  * OS-specific utilities
  */
 public class OsUtil {
+	private OsUtil() {
+	}
+
 	/**
 	 * Are we running on windows?
 	 *

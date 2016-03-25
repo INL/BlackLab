@@ -33,6 +33,9 @@ public class LogUtil {
 	/** Has log4j been initialised? */
 	private static boolean log4jInitialized = false;
 
+	private LogUtil() {
+	}
+
 	/**
 	 * Initialize the log4j library, according to the specified properties file found somewhere on
 	 * the classpath.

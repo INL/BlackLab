@@ -22,6 +22,9 @@ public class MemoryUtil {
 	/** Handle to interface with the Java VM environment */
 	private static Runtime runtime = Runtime.getRuntime();
 
+	private MemoryUtil() {
+	}
+
 	/**
 	 * Returns the amount of memory that can still be allocated before we get the OutOfMemory
 	 * exception.

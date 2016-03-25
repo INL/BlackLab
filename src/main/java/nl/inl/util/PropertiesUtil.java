@@ -28,6 +28,9 @@ import java.util.Properties;
  */
 public class PropertiesUtil {
 
+	private PropertiesUtil() {
+	}
+
 	/**
 	 * Read Properties from the specified file
 	 *
