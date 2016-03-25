@@ -2,6 +2,14 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.3.1
+
+### Fixed
+* Bug in SpanQueryAnd which causes incorrect hits to be reported.
+
+## Changed
+* Special OSX and Windows files are skipped, even if they occur inside archives. 
+
 ## Improvements up to v1.3
 
 ### Added

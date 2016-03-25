@@ -730,7 +730,7 @@ public class IndexStructure {
 					fieldsFound.add(e.getKey());
 			}
 		}
-		if (fieldsFound.size() == 0)
+		if (fieldsFound.isEmpty())
 			return null;
 
 		// Sort (so we get titleLevel1 not titleLevel2 for example)

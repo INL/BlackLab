@@ -370,7 +370,7 @@ public class XmlHighlighter {
 			} else {
 				// Close tag. Did we encounter a matching open tag?
 				TagLocation openTag = null;
-				if (openTagStack.size() > 0) {
+				if (!openTagStack.isEmpty()) {
 					// Yes, this tag is matched. Find matching tag and link them.
 					openTag = openTagStack.remove(openTagStack.size() - 1);
 					openTag.name = null; // no longer necessary to remember tag name

@@ -83,7 +83,7 @@ public class TextPatternTags extends TextPattern {
 
 	@Override
 	public String toString(QueryExecutionContext context) {
-		if (attr != null && attr.size() > 0)
+		if (attr != null && !attr.isEmpty())
 			return "TAGS(" + elementName + ", " + StringUtil.join(attr) + ")";
 		return "TAGS(" + elementName + ")";
 	}
