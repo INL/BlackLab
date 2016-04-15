@@ -46,8 +46,6 @@ import nl.inl.blacklab.search.Span;
  *
  * BL-specific version (search for "// BL") that produces a BLSpans.
  */
-@SuppressWarnings({ "javadoc" })
-// BL: suppress some innocent warnings
 public class BLSpanOrQuery extends SpanOrQuery {
 
 	private String field;

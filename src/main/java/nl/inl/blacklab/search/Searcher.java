@@ -1765,7 +1765,6 @@ public class Searcher implements Closeable {
 			indexPath = Files.readSymbolicLink(indexPath);
 		}
 		Directory indexLuceneDir = FSDirectory.open(indexPath);
-		@SuppressWarnings("resource")
 		Analyzer defaultAnalyzer = analyzer == null ? new BLDutchAnalyzer() : analyzer;
 		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
