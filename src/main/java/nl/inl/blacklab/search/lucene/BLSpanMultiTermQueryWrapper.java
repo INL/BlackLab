@@ -38,7 +38,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
 	/**
 	 * A rewrite method that first translates each term into a SpanTermQuery in a
-	 * {@link Occur#SHOULD} clause in a BooleanQuery, and keeps the
+	 * Occur#SHOULD clause in a BooleanQuery, and keeps the
 	 * scores as computed by the query.
 	 *
 	 * @see #setRewriteMethod
@@ -79,7 +79,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
 	/**
 	 * A rewrite method that first translates each term into a SpanTermQuery in a
-	 * {@link Occur#SHOULD} clause in a BooleanQuery, and keeps the
+	 * Occur#SHOULD clause in a BooleanQuery, and keeps the
 	 * scores as computed by the query.
 	 *
 	 * <p>

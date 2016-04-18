@@ -50,7 +50,9 @@ public class BLSpanOrQuery extends SpanOrQuery {
 
 	private String field;
 
-	/** Construct a BLSpanOrQuery merging the provided clauses. */
+	/** Construct a BLSpanOrQuery merging the provided clauses.
+	 * @param clauses clauses to combine using OR
+	 */
 	public BLSpanOrQuery(SpanQuery... clauses) {
 		super(clauses);
 		if (clauses.length > 0)
@@ -505,8 +507,8 @@ public class BLSpanOrQuery extends SpanOrQuery {
 	/**
 	 * Convert a SpanOrQuery to a BLSpanOrQuery
 	 *
-	 * @param soq
-	 * @return
+	 * @param soq query to convert
+	 * @return the result
 	 */
 	public static BLSpanOrQuery from(SpanOrQuery soq) {
 		BLSpanOrQuery blsoq = new BLSpanOrQuery(soq.getClauses());
