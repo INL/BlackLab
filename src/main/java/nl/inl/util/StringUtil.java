@@ -19,7 +19,9 @@ import java.text.Collator;
 import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +37,16 @@ public class StringUtil {
 	public static final char CHAR_NON_BREAKING_SPACE = '\u00A0';
 
 	/** Matches whitespace. */
-	private static final Pattern PATT_WHITESPACE = Pattern.compile("\\s+");
+	public static final Pattern PATT_WHITESPACE = Pattern.compile("\\s+");
+
+	/** Matches trailing whitespace. */
+	public final static Pattern PATT_LEADING_WHITESPACE = Pattern.compile("^\\s+");
+
+	/** Matches trailing whitespace. */
+	public final static Pattern PATT_TRAILING_WHITESPACE = Pattern.compile("\\s+$");
+
+	/** Matcht een niet-lege string die alleen whitespace bevat */
+	public final static Pattern PATT_ONLY_WHITESPACE = Pattern.compile("^\\s+$");
 
 	/** Match een XML tag */
 	private final static Pattern PATT_XML_TAG = Pattern.compile("<[^>]+>");
@@ -46,9 +57,6 @@ public class StringUtil {
 	/** Match een enkele quote */
 	private final static Pattern PATT_SINGLE_QUOTE = Pattern.compile("'");
 
-	/** Matcht een niet-lege string die alleen whitespace bevat */
-	private final static Pattern PATT_ONLY_WHITESPACE = Pattern.compile("^\\s+$");
-
 	/** Pattern matching nbsp character (decimal 160 = hex A0) */
 	private static final Pattern PATT_NON_BREAKING_SPACE = Pattern.compile(STR_NON_BREAKING_SPACE);
 
@@ -56,17 +64,16 @@ public class StringUtil {
 	 * Matches Unicode diacritics composition characters, which are separated out by the Normalizer
 	 * and then discarded using this regex.
 	 */
-	private static final Pattern PATT_DIACRITICS = Pattern
-			.compile("\\p{InCombiningDiacriticalMarks}+");
-
-	/** Whitespace and/or punctuation at start */
-	final static Pattern PATT_WS_PUNCT_AT_END = Pattern.compile("[\\p{P}\\s]+$");
+	private static final Pattern PATT_DIACRITICS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
 	/** Whitespace and/or punctuation at end */
+	final static Pattern PATT_WS_PUNCT_AT_END = Pattern.compile("[\\p{P}\\s]+$");
+
+	/** Whitespace and/or punctuation at start */
 	final static Pattern PATT_WS_PUNCT_AT_START = Pattern.compile("^[\\p{P}\\s]+");
 
 	/** Punctuation. */
-	private static final Pattern PATT_PUNCTUATION = Pattern.compile("\\p{P}");
+	public static final Pattern PATT_PUNCTUATION = Pattern.compile("\\p{P}");
 
 	/** The default collator: Dutch, case-insensitive */
 	protected static Collator dutchInsensitiveCollator = null;
@@ -129,8 +136,7 @@ public class StringUtil {
 	 *            whether or not we should add "..." at the end if we abbreviated
 	 * @return the (possibly) abbreviated string
 	 */
-	public static String abbreviate(String str, int preferredLength, int overshootAllowed,
-			boolean addEllipsis) {
+	public static String abbreviate(String str, int preferredLength, int overshootAllowed, boolean addEllipsis) {
 		String result = str.replaceAll("\\s+", " "); // normalize whitespace
 		if (result.length() > preferredLength + overshootAllowed) {
 			int i = result.substring(0, preferredLength + 1).lastIndexOf(" ");
@@ -173,8 +179,7 @@ public class StringUtil {
 		return PATT_DOUBLE_QUOTE.matcher(termStr).replaceAll("\"\"");
 	}
 
-	static final Pattern regexCharacters = Pattern
-			.compile("([\\|\\\\\\?\\*\\+\\(\\)\\[\\]\\-\\^\\$\\{\\}\\.])");
+	static final Pattern regexCharacters = Pattern.compile("([\\|\\\\\\?\\*\\+\\(\\)\\[\\]\\-\\^\\$\\{\\}\\.])");
 
 	/**
 	 * Escape regex special characters
@@ -354,7 +359,8 @@ public class StringUtil {
 		StringBuilder builder = new StringBuilder();
 		Iterator<T> iter = parts.iterator();
 		while (iter.hasNext()) {
-			builder.append(iter.next().toString());
+			T value = iter.next();
+			builder.append(value == null ? "(null)" : value.toString());
 			if (!iter.hasNext()) {
 				break;
 			}
@@ -376,10 +382,10 @@ public class StringUtil {
 	 */
 	public static <T> String join(T[] parts, String delimiter) {
 		StringBuilder builder = new StringBuilder();
-		for (T t: parts) {
+		for (T value: parts) {
 			if (builder.length() > 0)
 				builder.append(delimiter);
-			builder.append(t.toString());
+			builder.append(value == null ? "(null)" : value.toString());
 		}
 		return builder.toString();
 	}
@@ -397,7 +403,8 @@ public class StringUtil {
 		for (Map.Entry<T, U> e: map.entrySet()) {
 			if (builder.length() > 0)
 				builder.append(delimiter);
-			builder.append(e.getKey().toString()).append(keyValueDelimiter).append(e.getValue().toString());
+			U value = e.getValue();
+			builder.append(e.getKey().toString()).append(keyValueDelimiter).append(value == null ? "(null)" : value.toString());
 		}
 		return builder.toString();
 	}
@@ -429,6 +436,36 @@ public class StringUtil {
 	}
 
 	/**
+	 * Custom stringifier for a type
+	 * @param <T> the type we can stringify
+	 */
+	public interface Stringifier<T> {
+		String toString(T o);
+	}
+
+	/**
+	 * Join a number of (string representations of) items to a single string using a delimiter
+	 *
+	 * @param <T> the type of items to join
+	 * @param parts the parts to join
+	 * @param j how to convert objects to string
+	 * @param delimiter the delimiter to use
+	 * @return the joined string
+	 */
+	public static <T> String join(Iterable<T> parts, Stringifier<T> j, String delimiter) {
+		StringBuilder builder = new StringBuilder();
+		Iterator<T> iter = parts.iterator();
+		while (iter.hasNext()) {
+			builder.append(j.toString(iter.next()));
+			if (!iter.hasNext()) {
+				break;
+			}
+			builder.append(delimiter);
+		}
+		return builder.toString();
+	}
+
+	/**
 	 * Limit a string to a certain length, adding an ellipsis if desired.
 	 *
 	 * Tries to cut the string at a word boundary, but will cut through words if necessary.
@@ -446,8 +483,7 @@ public class StringUtil {
 	 *         <code>preferredLength + max(overshootAllowed, 3)</code> long (if addEllipsis is
 	 *         true).
 	 */
-	public static String limitStringToLength(String str, int preferredLength, int overshootAllowed,
-			boolean addEllipsis) {
+	public static String limitStringToLength(String str, int preferredLength, int overshootAllowed, boolean addEllipsis) {
 		String result = str;
 		if (result.length() > preferredLength + overshootAllowed) {
 			int i = result.substring(0, preferredLength + 1).lastIndexOf(" ");
@@ -493,8 +529,7 @@ public class StringUtil {
 	 */
 	public static String unescapeXmlChars(String source) {
 		// TODO: define static Patterns for these
-		return source.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&")
-				.replaceAll("&quot;", "\"");
+		return source.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&").replaceAll("&quot;", "\"");
 	}
 
 	/**
@@ -505,33 +540,85 @@ public class StringUtil {
 	 * @param wrapAt
 	 *            the maximum number of characters per line
 	 * @return the wrapped text
+	 * @deprecated use wrap()
 	 */
+	@Deprecated
 	public static String wrapText(String message, int wrapAt) {
-		StringBuilder wrapped = new StringBuilder();
+		return join(wrap(message, wrapAt), "\n");
+	}
+
+	/**
+	 * Wrap text at the specified number of characters,
+	 * adding newlines at the right places.
+	 *
+	 * @param message
+	 *            the text to wrap
+	 * @param wrapAt
+	 *            the maximum number of characters per line
+	 * @return the wrapped text as a newline-joined string
+	 */
+	public static String wrapToString(String message, int wrapAt) {
+		return join(wrap(message, wrapAt), "\n");
+	}
+
+	/**
+	 * Wrap text at the specified number of characters,
+	 * returning a list of lines.
+	 *
+	 * @param message
+	 *            the text to wrap
+	 * @param wrapAt
+	 *            the maximum number of characters per line
+	 * @return the wrapped text as a newline-joined string
+	 */
+	public static List<String> wrap(String message, int wrapAt) {
+		List<String> wrapped = new ArrayList<>();
 		String lines[] = message.split("\n");
-		for (String line : lines) {
+		for (String line: lines) {
 			if (line.length() > 0) {
 				while (line.length() > 0) {
 					int i = wrapAt + 1;
 					if (i < line.length()) {
 						while (i > 0) {
 							char c = line.charAt(i);
-							if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+							if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+								i++;
 								break;
+							}
 							i--;
 						}
 						if (i == 0)
 							i = wrapAt + 1;
 					} else
 						i = line.length();
-					wrapped.append(line.substring(0, i).trim()).append("\n");
-					line = line.substring(i).trim();
+					wrapped.add(rtrim(line.substring(0, i)));
+					line = rtrim(line.substring(i));
 				}
 			} else {
-				wrapped.append("\n");
+				wrapped.add("");
 			}
 		}
-		return wrapped.toString().trim();
+		return wrapped;
+	}
+
+	/**
+	 * Remove leading whitespace from a string.
+	 *
+	 * @param input a string
+	 * @return the string without leading whitespace
+	 */
+	public static String ltrim(String input) {
+		return PATT_LEADING_WHITESPACE.matcher(input).replaceAll("");
+	}
+
+	/**
+	 * Remove trailing whitespace from a string.
+	 *
+	 * @param input a string
+	 * @return the string without trailing whitespace
+	 */
+	public static String rtrim(String input) {
+		return PATT_TRAILING_WHITESPACE.matcher(input).replaceAll("");
 	}
 
 	/**

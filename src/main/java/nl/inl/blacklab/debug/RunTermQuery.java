@@ -9,9 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
-
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -30,6 +27,9 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
+
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 
 public class RunTermQuery {
 
@@ -91,7 +91,7 @@ public class RunTermQuery {
 			b.append(i + first).append(":").append(word).append(" ");
 			i++;
 		}
-		System.out.println(StringUtil.wrapText(b.toString(), 80));
+		System.out.println(StringUtil.wrap(b.toString(), 80));
 	}
 
 	private static void doTermVector(int doc, Term term, DirectoryReader reader) {

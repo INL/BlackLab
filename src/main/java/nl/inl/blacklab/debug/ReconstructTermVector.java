@@ -52,7 +52,7 @@ public class ReconstructTermVector {
 			b.append(i).append(":").append(word).append(" ");
 			i++;
 		}
-		System.out.println(StringUtil.wrapText(b.toString(), 80));
+		System.out.println(StringUtil.wrap(b.toString(), 80));
 	}
 
 	private static void usage() {

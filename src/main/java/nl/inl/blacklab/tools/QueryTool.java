@@ -35,6 +35,14 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
+import org.apache.lucene.search.spans.SpanQuery;
+
 import nl.inl.blacklab.perdocument.DocResult;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.perdocument.DocResultsWindow;
@@ -75,14 +83,6 @@ import nl.inl.util.StringUtil;
 import nl.inl.util.TimeUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryWrapperFilter;
-import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * Simple command-line querying tool for BlackLab indices.
@@ -745,7 +745,7 @@ public class QueryTool {
 					String left = stripXML ? XmlUtil.xmlToPlainText(conc.left()) : conc.left();
 					String middle = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
 					String right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
-					outprintln("\n" + StringUtil.wrapText(left + "[" + middle + "]" + right, 80));
+					outprintln("\n" + StringUtil.wrapToString(left + "[" + middle + "]" + right, 80));
 				}
 			} else if (lcased.startsWith("highlight ")) {
 				int hitId = parseInt(lcased.substring(8), 1) - 1;
@@ -755,7 +755,7 @@ public class QueryTool {
 				} else {
 					int docid = currentHitSet.get(hitId).doc;
 					Hits hitsInDoc = hits.getHitsInDoc(docid);
-					outprintln(StringUtil.wrapText(searcher.highlightContent(docid, hitsInDoc), 80));
+					outprintln(StringUtil.wrapToString(searcher.highlightContent(docid, hitsInDoc), 80));
 				}
 			} else if (lcased.startsWith("snippetsize ")) {
 				snippetSize = parseInt(lcased.substring(12), 0);
