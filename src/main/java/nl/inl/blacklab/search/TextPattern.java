@@ -189,6 +189,24 @@ public abstract class TextPattern implements Cloneable {
 	}
 
 	/**
+	 * Add two values for maximum number of repetitions, taking "infinite" into account.
+	 *
+	 * -1 repetitions means infinite. Adding infinite to any other value
+	 * produces infinite again.
+	 *
+	 * @param a first max. repetitions value
+	 * @param b first max. repetitions value
+	 * @return sum of the max. repetitions values
+	 */
+	protected int addRepetitionMaxValues(int a, int b) {
+		// Is either value infinite?
+		if (a == -1 || b == -1)
+			return -1; // Yes, result is infinite
+		// Add regular values
+		return a + b;
+	}
+
+	/**
 	 * Try to combine with the previous part into a repetition pattern.
 	 *
 	 * This optimized queries like "blah" "blah" into "blah"{2}, which
@@ -204,7 +222,7 @@ public abstract class TextPattern implements Cloneable {
 			TextPattern prevCl = rep.getClause();
 			if (equals(prevCl)) {
 				// Same clause; add one to rep's min and max
-				return new TextPatternRepetition(this, 1 + rep.getMin(), 1 + rep.getMax());
+				return new TextPatternRepetition(this, 1 + rep.getMin(), addRepetitionMaxValues(rep.getMax(), 1));
 			}
 		}
 		if (equals(previousPart)) {

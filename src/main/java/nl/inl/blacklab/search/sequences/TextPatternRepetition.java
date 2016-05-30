@@ -153,12 +153,12 @@ public class TextPatternRepetition extends TextPattern {
 			TextPattern prevCl = rep.getClause();
 			if (prevCl.equals(base)) {
 				// Same clause; combine repetitions
-				return new TextPatternRepetition(base, min + rep.getMin(), max + rep.getMax());
+				return new TextPatternRepetition(base, min + rep.getMin(), addRepetitionMaxValues(rep.getMax(), max));
 			}
 		} else {
 			if (previousPart.equals(base)) {
 				// Same clause; add one to min and max
-				return new TextPatternRepetition(base, 1 + min, 1 + max);
+				return new TextPatternRepetition(base, min + 1, addRepetitionMaxValues(max, 1));
 			}
 		}
 		return super.combineWithPrecedingPart(previousPart);

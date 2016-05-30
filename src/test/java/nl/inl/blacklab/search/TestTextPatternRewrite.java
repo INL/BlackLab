@@ -243,6 +243,13 @@ public class TestTextPatternRewrite {
 		assertRewriteResult("('a'{1,1}){2,3}", "REP(TERM(contents%word@i, a), 2, 3)");
 		assertRewriteResult("'a'{1,1}", "TERM(contents%word@i, a)");
 		assertRewriteResult("'a'? 'b'?", "OR(SEQ(TERM(contents%word@i, a), TERM(contents%word@i, b)), TERM(contents%word@i, b), TERM(contents%word@i, a))");
+		assertRewriteResult("'a' 'a'*", "REP(TERM(contents%word@i, a), 1, -1)");
+		assertRewriteResult("'a'? 'a'? 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, 2), TERM(contents%word@i, b)), TERM(contents%word@i, b))");
+		assertRewriteResult("'a'* 'a'", "REP(TERM(contents%word@i, a), 1, -1)");
+		assertRewriteResult("'a'* 'a'* 'b'", "OR(SEQ(REP(TERM(contents%word@i, a), 1, -1), TERM(contents%word@i, b)), TERM(contents%word@i, b))");
+		assertRewriteResult("'a' 'a'+", "REP(TERM(contents%word@i, a), 2, -1)");
+		assertRewriteResult("'a'+ 'a'", "REP(TERM(contents%word@i, a), 2, -1)");
+		assertRewriteResult("'a'+ 'a'+", "REP(TERM(contents%word@i, a), 2, -1)");
 	}
 
 	@Test

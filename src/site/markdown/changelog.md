@@ -2,10 +2,18 @@
 
 ## Improvements in HEAD
 
+### Fixed
+* Query rewrite bug when combining identical clauses with different repetitions,
+  i.e. \[pos="AA.*"\]\[pos="AA.*"\]* --> \[pos="AA.*"\]+
+* Throw a descriptive error if an index contains no fields.
+
+### Changed
+* Some small code quality improvements, like using .isEmpty() instead of .size() == 0
+
 ## Improvements up to v1.3.1
 
 ### Fixed
-* Bug in SpanQueryAnd which causes incorrect hits to be reported.
+* Bug in SpanQueryAnd which caused incorrect hits to be reported.
 
 ## Changed
 * Special OSX and Windows files are skipped, even if they occur inside archives. 
