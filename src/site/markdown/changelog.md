@@ -8,7 +8,8 @@
 * Throw a descriptive error if an index contains no fields.
 
 ### Changed
-* Some small code quality improvements, like using .isEmpty() instead of .size() == 0
+* Some small code quality improvements, like using .isEmpty() instead of .size() == 0.
+* Added -javadoc and -sources JARs to Maven build, in preparation for publishing to Maven Central. 
 
 ## Improvements up to v1.3.1
 
