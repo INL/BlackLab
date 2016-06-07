@@ -25,15 +25,17 @@ First you need to get the BlackLab library JAR, either by downloading a prebuilt
 
 ## Getting BlackLab
 
+### Maven Central
+
+Starting with version 1.3.2, BlackLab is in Maven Central, so you should be able to simply [add it to your build tool](dependency-info.html).
+
 ### Downloading a prebuilt binary
 
-A prebuilt binary JAR for BlackLab is available from the [Downloads](downloads.html) page. Note that this may not include the most recent improvements.
-
-**NOTE**: we are working towards releasing BlackLab to Maven Central, so you can simply add it to your project configuration file and have it be automatically downloaded when you build your project.
+Prebuilt binary JARs for BlackLab are available from the [Downloads](downloads.html) page.
 
 ### Building from source
 
-If you want the very latest version of BlackLab, you should build it from source code.
+If you want the very latest version of BlackLab, you can easily build it from source code.
 
 First, you need to download the source code from GitHub. You can download it from there in a .zip file, but a better way to get it is by cloning it using Git. [Install a Git client](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) (we'll give command line examples here, but it should translate easily to GUI clients like TortoiseGit), change to a directory where you keep your projects, and clone BlackLab:
 
@@ -47,7 +49,7 @@ BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build 
 
 ("install" refers to the fact that the library is "installed" to your private Maven repository after it is built)
 
-After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab library should be under target/BlackLab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.2-SNAPSHOT")
+After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab library should be under target/BlackLab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.4-SNAPSHOT")
 
 <a id="preparing-your-data"></a>
 

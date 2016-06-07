@@ -2,6 +2,8 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.3.2
+
 ### Fixed
 * Query rewrite bug when combining identical clauses with different repetitions,
   i.e. \[pos="AA.*"\]\[pos="AA.*"\]* --> \[pos="AA.*"\]+
@@ -9,7 +11,8 @@
 
 ### Changed
 * Some small code quality improvements, like using .isEmpty() instead of .size() == 0.
-* Added -javadoc and -sources JARs to Maven build, in preparation for publishing to Maven Central. 
+* Added -javadoc and -sources JARs to Maven build, in preparation for publishing to Maven Central.
+* Added distributionManagement section for deploying to OSSRH staging area. 
 
 ## Improvements up to v1.3.1
 
