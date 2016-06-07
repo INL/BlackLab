@@ -32,6 +32,13 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
 		<tr>
+			<td>v1.3.2</td>
+			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.2/blacklab-1.3.2.jar'>Binary (jar)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.2.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.2.zip'>Source (zip)</a></td>
+			<td>Fixed query rewrite bug; prepared for release to Maven Central.</td>
+		</tr>
+		<tr>
 			<td>v1.3.1</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.1/blacklab-1.3.1.jar'>Binary (jar)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.1.tar.gz'>Source (tgz)</a></td>
