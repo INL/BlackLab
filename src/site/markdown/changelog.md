@@ -2,6 +2,11 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.3.3
+
+### Fixed
+* Indices with old terms file format (pre-1.3) produced empty concordances.
+
 ## Improvements up to v1.3.2
 
 ### Fixed
@@ -20,7 +25,8 @@
 * Bug in SpanQueryAnd which caused incorrect hits to be reported.
 
 ## Changed
-* Special OSX and Windows files are skipped, even if they occur inside archives. 
+* Special OSX and Windows files are skipped, even if they occur inside archives.
+* Added new default content store format "fixedblock", that improves space re-use when updating documents. 
 
 ## Improvements up to v1.3
 

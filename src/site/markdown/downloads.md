@@ -32,6 +32,13 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
 		<tr>
+			<td>v1.3.3</td>
+			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.3/blacklab-1.3.3.jar'>Binary (jar)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.3.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.3.zip'>Source (zip)</a></td>
+			<td>Fixed empty concordances bug for pre-1.3 indices.</td>
+		</tr>
+		<tr>
 			<td>v1.3.2</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.2/blacklab-1.3.2.jar'>Binary (jar)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.2.tar.gz'>Source (tgz)</a></td>

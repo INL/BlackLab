@@ -258,16 +258,17 @@ public abstract class ForwardIndex {
 		}
 
 		ForwardIndex fi;
-		fi = new ForwardIndexImplV3(dir, indexMode, collator, create);
+		boolean largeTermsFileSupport = true;
 		switch(version) {
 		case "2":
 			throw new RuntimeException("Forward index version (2) too old for this BlackLab version. Please re-index.");
 		case "3":
-			fi.setLargeTermsFileSupport(false);
+			largeTermsFileSupport = false;
 			break;
 		case "4":
 			break;
 		}
+		fi = new ForwardIndexImplV3(dir, indexMode, collator, create, largeTermsFileSupport);
 		return fi;
 	}
 

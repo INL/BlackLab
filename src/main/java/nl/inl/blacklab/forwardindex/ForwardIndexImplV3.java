@@ -196,7 +196,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
-	protected ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create) {
+	protected ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create, boolean largeTermsFileSupport) {
 		if (!dir.exists()) {
 			if (!create)
 				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
@@ -219,10 +219,11 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		toc = new ArrayList<>();
 		deletedTocEntries = new ArrayList<>();
 		try {
+			setLargeTermsFileSupport(largeTermsFileSupport);
 			boolean existing = false;
 			if (tocFile.exists()) {
 				readToc();
-				terms = new TermsImplV3(indexMode, collator, termsFile);
+				terms = new TermsImplV3(indexMode, collator, termsFile, useBlockBasedTermsFile);
 				existing = true;
 				tocModified = false;
 			} else {
@@ -230,8 +231,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				tokensFile.createNewFile();
 				tokensFileChunks = null;
 				tocModified = true;
+				terms.setBlockBasedFile(useBlockBasedTermsFile);
 			}
-			terms.setBlockBasedFile(useBlockBasedTermsFile);
 			openTokensFile();
 
 			// Tricks to speed up reading
@@ -255,6 +256,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		if (create) {
 			clear();
 		}
+	}
+
+	public ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create) {
+		this(dir, indexMode, collator, create, true);
 	}
 
 	private void openTokensFile() throws FileNotFoundException {

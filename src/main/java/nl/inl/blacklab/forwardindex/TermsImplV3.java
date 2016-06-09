@@ -108,7 +108,12 @@ class TermsImplV3 extends Terms {
 	}
 
 	public TermsImplV3(boolean indexMode, Collator coll, File termsFile) {
+		this(indexMode, coll, termsFile, true);
+	}
+
+	public TermsImplV3(boolean indexMode, Collator coll, File termsFile, boolean useBlockBasedTermsFile) {
 		this(indexMode, coll);
+		setBlockBasedFile(useBlockBasedTermsFile);
 		if (termsFile.exists())
 			read(termsFile);
 	}
