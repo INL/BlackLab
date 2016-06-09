@@ -4,6 +4,7 @@ import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 
+@SuppressWarnings("all")
 public class ContextualQueryLanguageParserTokenManager implements ContextualQueryLanguageParserConstants
 {
   public  java.io.PrintStream debugStream = System.out;
@@ -455,7 +456,7 @@ private final int jjMoveNfa_0(int startState, int curPos)
    return toRet;
 }
 static final int[] jjnextStates = {
-   14, 15, 17, 1, 2, 4, 6, 7, 10, 
+   14, 15, 17, 1, 2, 4, 6, 7, 10,
 };
 private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, long l2)
 {
@@ -463,26 +464,26 @@ private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, lo
    {
       case 0:
          return ((jjbitVec2[i2] & l2) != 0L);
-      default : 
+      default :
          if ((jjbitVec0[i1] & l1) != 0L)
             return true;
          return false;
    }
 }
 public static final String[] jjstrLiteralImages = {
-"", null, null, null, null, null, null, null, null, null, null, null, null, 
+"", null, null, null, null, null, null, null, null, null, null, null, null,
 "\76", "\75", "\50", "\51", "\74", "\76\75", "\74\75", "\74\76", "\57", };
 public static final String[] lexStateNames = {
-   "DEFAULT", 
+   "DEFAULT",
 };
 static final long[] jjtoToken = {
-   0x3fff81L, 
+   0x3fff81L,
 };
 static final long[] jjtoSkip = {
-   0x7eL, 
+   0x7eL,
 };
 static final long[] jjtoSpecial = {
-   0x60L, 
+   0x60L,
 };
 protected JavaCharStream input_stream;
 private final int[] jjrounds = new int[18];
@@ -544,7 +545,7 @@ int jjround;
 int jjmatchedPos;
 int jjmatchedKind;
 
-public Token getNextToken() 
+public Token getNextToken()
 {
   int kind;
   Token specialToken = null;
@@ -553,13 +554,13 @@ public Token getNextToken()
 
   EOFLoop :
   for (;;)
-  {   
-   try   
-   {     
+  {
+   try
+   {
       curChar = input_stream.BeginToken();
-   }     
+   }
    catch(java.io.IOException e)
-   {        
+   {
       jjmatchedKind = 0;
       matchedToken = jjFillToken();
       matchedToken.specialToken = specialToken;
