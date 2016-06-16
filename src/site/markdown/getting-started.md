@@ -94,6 +94,7 @@ Your data is indexed and placed in a new BlackLab index in the "test-index" dire
 See also:
 
 - [Adding a new input format](add-input-format.html) (if your format isn't supported yet and you don't want to convert)
+- [Indexing in detail](indexing-with-blacklab.html)
 
 ### Testing your index
 

@@ -1,5 +1,7 @@
 # Adding a new input format
 
+This page provides a simple tutorial. For more in-depth information, see [Indexing with BlackLab](indexing-with-blacklab.html).
+
 If you have text in a format that isn't supported by BlackLab yet, you will have to create a DocIndexer class to support the format. You can have a look at the DocIndexer classes supplied with BlackLab (see the nl.inl.blacklab.indexers package), but here we'll build one from the ground up, step by step.
 
 It's important to note that we assume you have an XML format that is tagged per word. That is, in the main content of your documents, every word should have its own XML tag. If your format is not like that, it's still possible to index it using BlackLab, but the process will be a little bit different. Please [contact us](mailto:jan.niestadt@inl.nl) and we'd be happy to help.
