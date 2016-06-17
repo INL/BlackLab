@@ -3,6 +3,8 @@
 This page goes into detail about indexing documents with BlackLab.
 For a simple tutorial, see [Adding a new input format](add-input-format.html).
 
+[TOC]
+
 ## Indexing documents in a supported format
 
 Start the IndexTool without parameters for help information:
@@ -34,13 +36,14 @@ Here, FILTER_QUERY is a metadata filter query in Lucene query language that matc
 ## Supported formats
 
 Here's a list of supported input formats:
+
 * folia (a corpus XML format popular in the Netherlands; see https://proycon.github.io/folia/)
 * tei (a popular XML format for linguistic resources, including corpora. indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type'; see http://www.tei-c.org/)
 * tei-element-text (a variant of TEI where content inside the 'text' element is indexed)
 * tei-pos-function (a variant of TEI where part of speech is in an attribute called 'function')
 * sketchxml (a simple XML format based on the word-per-line files that the Sketch Engine and CWB use)
 * pagexml (OCR XML format)
-* alto (OCR XML format)
+* alto (OCR XML format; see http://www.loc.gov/standards/alto/)
 
 Adding support for your own format is not hard. See below, or have a look at [Adding an input format](add-input-format.html). To use your own DocIndexer class with IndexTool, specify the fully-qualified class name as the FORMAT parameters.
 
@@ -63,6 +66,8 @@ Configuring an external metadata fetcher (see "Metadata from an external source"
 ## Configuring case- and diacritics sensitivity per property
 
 You can also configure what "sensitivity alternatives" (case/diacritics sensitivity) to index for each property, using the "PROPNAME_sensitivity" parameter. Accepted values are "i" (both only insensitive), "s" (both only sensitive), "si" (sensitive and insensitive) and "all" (case/diacritics sensitive and insensitive, so 4 alternatives). What alternatives are indexed determines how specifically you can specify the desired sensitivity when searching.
+
+If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e. word/lemma get "si", punct gets "i", starttag gets "s", others get "i").
 
 ## Configuring the index structure
 
@@ -91,9 +96,9 @@ Here's a commented example of indexstructure.json (double-slash comments in JSON
 	    	"authorField": "author", // (may be used by application to display document author)
 	    	"dateField":   "date",   // (may be used by application to display document date)
 	    	"pidField":    "id",     // (may be used by application to uniquely refer to documents;
-	    	                             may be used by (future versions of) BlackLab to directly 
-	    	                             update documents without the client having to manually delete
-	    	                             the previous version)
+	    	                         //  may be used by (future versions of) BlackLab to directly 
+	    	                         //  update documents without the client having to manually delete
+	    	                         //  the previous version)
 	    	"defaultAnalyzerName": "DEFAULT",   // The type of analyzer to use for metadata fields
 	    	                                    // by default (DEFAULT|whitespace|standard|nontokenizing)
 	    	"contentViewable": false, // is the user allowed to retrieve whole documents? 
@@ -177,7 +182,7 @@ Finally, you may sometimes wish to add values to an earlier corpus position. Say
 
 It is possible to add payloads to property values. When calling addProperty() at the start of the constructor, make sure to use the version that takes a boolean called 'includePayloads', and set it to true. Then use ComplexFieldProperty.addPayload(). You can use null if a particular value has no payload. There's also a addPayloadAtIndex() method to add payloads some time after adding the value itself, but that requires knowing the index in the value list of the value you want to add a payload for, so you should store this index when you add the value.
 
-One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHandler. When you use InlineTagHandler to index an inline lement, say a sentence tag, BlackLab will add a value (or several values, if the element has attributes) to the built-in 'starttag' property. When it encounters the end tag, it wil update the start tag value with a payload indication the element length. This is used when searching to determine what matches occur inside certain XML tags.
+One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHandler. When you use InlineTagHandler to index an inline element, say a sentence tag, BlackLab will add a value (or several values, if the element has attributes) to the built-in 'starttag' property. When it encounters the end tag, it wil update the start tag value with a payload indication the element length. This is used when searching to determine what matches occur inside certain XML tags.
 
 ### Indexing non-XML file types
 
