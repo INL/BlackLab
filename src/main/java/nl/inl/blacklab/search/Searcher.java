@@ -2004,7 +2004,7 @@ public class Searcher implements Closeable {
 	/**
 	 * Instantiate analyzer based on an analyzer alias.
 	 *
-	 * @param analyzerName the classname, optionally preceded by the package name
+	 * @param analyzerName type of analyzer (default|whitespace|standard|nontokenizing)
 	 * @return the analyzer, or null if the name wasn't recognized
 	 */
 	static Analyzer getAnalyzerInstance(String analyzerName) {

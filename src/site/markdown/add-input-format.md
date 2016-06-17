@@ -21,7 +21,7 @@ Here's the first version of our TEI indexer:
 		}
 	}
 
-We create a DocumentElementHandler (an inner class defined in DocIndexerXmlHandlers) and add it as a handler for the <TEI\> and <TEI.2\> elements. Why two different elements? Because we want to support both TEI P4 (which uses <TEI.2\>) and P5 (which uses <TEI\>). The handler will get triggered every time one of these elements is found.
+We create a DocumentElementHandler (an inner class defined in DocIndexerXmlHandlers) and add it as a handler for the &lt;TEI\&gt; and &lt;TEI.2\&gt; elements. Why two different elements? Because we want to support both TEI P4 (which uses &lt;TEI.2\&gt;) and P5 (which uses &lt;TEI\&gt;). The handler will get triggered every time one of these elements is found.
 
 Note that, if we want, we can customize the handler. We'll see an example of this later. But for this document element handler, we don't need any customization. The default DocumentElementHandler will make sure BlackLab knows where our documents start and end and get added to the index in the correct way. It will also automatically add any attributes of the element as metadata fields, but the TEI document elements don't have attributes, so that doesn't apply here.
 
@@ -79,7 +79,7 @@ Now it's time to add a handler for word tags:
 
 Here we see an example of customizing a default handler. The default handler is called WordHandlerBase, and it takes care of storing character positions (needed if we want to highlight hits in the original XML) and reporting progress, but nothing else. You are responsible for indexing the different properties (the defaults word and punct, plus the we you added ourselves, lemma and pos). We use an anonymous inner class and override the startElement() and endElement() methods.
 
-At the top of those methods, notice how we use the body handler we added earlier: we check if we're inside a body element, and return if not, even before calling the superclass method. This makes sure any <w/> tags outside <body/> tags are skipped.
+At the top of those methods, notice how we use the body handler we added earlier: we check if we're inside a body element, and return if not, even before calling the superclass method. This makes sure any &lt;w/&gt; tags outside &lt;body/&gt; tags are skipped.
 
 The values for lemma and part of speech are taken from the element attributes and added to the properties we created earlier; simple enough. For the main property ("word", the actual word forms) and the "punct" property (punctuation and whitespace between words), we use the consumeCharacterContent() method. All character content in the XML is collected, and calling consumeCharacterContent() returns the context collected since the last call, and clears the buffer again. At the start of each word, we consume the character content and add it to the punct property; at the end of each word, we do the same again and add it to the main property ("word").
 
