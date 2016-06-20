@@ -2,6 +2,12 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.3.4
+
+### Fixed
+* Lone carriage return characters in JSON output were not escaped;
+  Windows line endings were escaped as a single \\n.
+
 ## Improvements up to v1.3.3
 
 ### Fixed
