@@ -38,7 +38,7 @@
 
 ### Added
 * Searcher now implements Closeable, so it can be used with the try-with-resources statement.
-* You can specify that properties should not get a forward index using the complexField property "noForwardIndexProps" (space-separated list of property names) in indexstructure.json.
+* You can specify that properties should not get a forward index using the complexField property "noForwardIndexProps" (space-separated list of property names) in indextemplate.json.
 
 ### Fixed
 * Forward index terms is no longer limited to around 2 GB.

@@ -75,59 +75,63 @@ What we call the "index structure" consists of some top-level index information 
 
 By default, a default index structure is determined by BlackLab and the DocIndexer you're using. However, you can influence exactly how your index is created using a customized index structure file. If you specify such an index structure file when creating the index, it will be used as a template for the index metadata file, and so you won't have to specify the index structure file again when updating your index later; all the information is now in the index metadata file. It is possible to edit the index metadata file manually as well, but use caution, because it might break something.
 
-Here's a commented example of indexstructure.json (double-slash comments in JSON files are allowed by BlackLab):
+Here's a commented example of indextemplate.json (double-slash comments in JSON files are allowed by BlackLab):
 
-	// indexstructure.json - indexer options (template for the index's indexmetadata.json)
-	{
-	    // Display name for the index and short description
-	    // (not used by BlackLab. None of the display name or description values
-	    //  are used by BlackLab directly, but applications can retrieve them if they want)
-	    "displayName": "OpenSonar",
-	    "description": "The OpenSonar corpus.",
-	 
-	    // About the fields in this index
-	    // (defaults are set by indexer if not specified)
-	    "fieldInfo": {
-	    	"namingScheme": "DEFAULT",   // ..or "NO_SPECIAL_CHARS" (the alternate naming scheme,
-	    	                             //  which can be used to avoid problems with e.g. Solr)
-	    	                             // (if omitted, DEFAULT is used)
-	    	"titleField":  "title",  // (detected if omitted; may be used by application to display
-	    	                         //  document titles)
-	    	"authorField": "author", // (may be used by application to display document author)
-	    	"dateField":   "date",   // (may be used by application to display document date)
-	    	"pidField":    "id",     // (may be used by application to uniquely refer to documents;
-	    	                         //  may be used by (future versions of) BlackLab to directly 
-	    	                         //  update documents without the client having to manually delete
-	    	                         //  the previous version)
-	    	"defaultAnalyzerName": "DEFAULT",   // The type of analyzer to use for metadata fields
-	    	                                    // by default (DEFAULT|whitespace|standard|nontokenizing)
-	    	"contentViewable": false, // is the user allowed to retrieve whole documents? 
-	    	"documentFormat": "",     // (not used by BlackLab. may be used by application to 
-	    	                          //  e.g. select which XSLT to use)
-	    	
-	        "metadataFields": {
-	            "author": {
-	                "displayName": "author",
-	                "description": "The author of the document.",
-	                "group": "authorRelated",     // can be used to group fields in interface
-	                "type": "tokenized",          // ..or text, numeric, untokenized [tokenized]
-	                "analyzer": "default",        // ..(or whitespace|standard|nontokenizing) [default]
-	                "unknownValue": "unknown",    // what value to index if the value is unknown [unknown]
-	                "unknownCondition": "MISSING_OR_EMPTY" // When is the value considered unknown?
-	                                                       // (other options: MISSING, EMPTY, NEVER) [NEVER]
-	            }
-	        },
-	        "complexFields": {
-	            "contents": {
-	                "mainProperty": "word",       // used for concordances; contains char. offsets
-	                "displayName": "contents",  // may be used by application
-	                "description": "The text contents of the document.",  // may be used by application
-	                "noForwardIndexProps": ""   // space-separated list of property names that shouldn't
-	                                            // get a forward index [""]
-	            }
-	        }
-	    }
-	}
+    // indextemplate.json - indexer options (template for the index's indexmetadata.json)
+    {
+      // Display name for the index and short description
+      // (not used by BlackLab. None of the display name or description values
+      //  are used by BlackLab directly, but applications can retrieve them if they want)
+      "displayName": "OpenSonar",
+      "description": "The OpenSonar corpus.",
+     
+      // About the fields in this index
+      // (defaults are set by indexer if not specified)
+      "fieldInfo": {
+        "namingScheme": "DEFAULT",   // ..or "NO_SPECIAL_CHARS" (the alternate naming scheme,
+                                     //  which can be used to avoid problems with e.g. Solr)
+                                     // (if omitted, DEFAULT is used)
+        "titleField":  "title",  // (detected if omitted; may be used by application to display
+                                 //  document titles)
+        "authorField": "author", // (may be used by application to display document author)
+        "dateField":   "date",   // (may be used by application to display document date)
+        "pidField":    "id",     // (may be used by application to uniquely refer to documents;
+                                 //  may be used by (future versions of) BlackLab to directly 
+                                 //  update documents without the client having to manually delete
+                                 //  the previous version)
+        "defaultAnalyzerName": "DEFAULT",   // The type of analyzer to use for metadata fields
+                                            // by default (DEFAULT|whitespace|standard|nontokenizing)
+        "contentViewable": false, // is the user allowed to retrieve whole documents? 
+        "documentFormat": "",     // (not used by BlackLab. may be used by application to 
+                                  //  e.g. select which XSLT to use)
+        
+        "unknownValue": "unknown",   // what value to index if field value is unknown [unknown]
+        "unknownCondition": "NEVER", // When is a field value considered unknown?
+                                     // (other options: MISSING, EMPTY, MISSING_OR_EMPTY) [NEVER]
+
+        "metadataFields": {
+            
+          "author": {
+            "displayName": "author",
+            "description": "The author of the document.",
+            "group": "authorRelated",     // can be used to group fields in interface
+            "type": "tokenized",          // ..or text, numeric, untokenized [tokenized]
+            "analyzer": "default",        // ..(or whitespace|standard|nontokenizing) [default]
+            "unknownValue": "unknown",    // overrides default unknownValue for this field
+            "unknownCondition": "MISSING_OR_EMPTY" // overrides default unknownCondition for this field
+          }
+        },
+        "complexFields": {
+          "contents": {
+            "mainProperty": "word",     // used for concordances; contains char. offsets
+            "displayName": "contents",  // may be used by application
+            "description": "The text contents of the document.",  // may be used by application
+            "noForwardIndexProps": ""   // space-separated list of property names that shouldn't
+                                        // get a forward index [""]
+          }
+        }
+      }
+    }
 
 ### When and how to disable the forward index for a property
 
@@ -136,7 +140,7 @@ quickly answer the question "what value appears in position X of document Y?". T
 snippets (such as for keyword-in-context (KWIC) views), to sort and group based on context words (such as sorting on the word left of the hit) and will in the future be used to speed up certain query types.
 
 However, forward indices take up a lot of disk space and can take up a lot of memory, and they are not always needed for every 
-property. You should probably have a forward index for at least the word and punct properties, and for any property you'd like to sort/group on or that you use heavily in searching. But if you add a property that is only used in certain special cases, you can decide to disable the forward index for that property. You can do this by adding the property name to the "noForwardIndexProps" space-separated list in the indexstructure.json file shown above.
+property. You should probably have a forward index for at least the word and punct properties, and for any property you'd like to sort/group on or that you use heavily in searching. But if you add a property that is only used in certain special cases, you can decide to disable the forward index for that property. You can do this by adding the property name to the "noForwardIndexProps" space-separated list in the indextemplate.json file shown above.
 
 A note about forward indices and indexing multiple values at a single corpus position: as of right now, the forward index will only store the first value indexed at any position. We would like to expand this so that it is possible to quickly retrieve all values indexed at a corpus position, but that is not the case now.
 

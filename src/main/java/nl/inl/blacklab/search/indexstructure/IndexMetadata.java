@@ -192,5 +192,18 @@ public class IndexMetadata {
 		return jsonRoot;
 	}
 
+	public String getDefaultUnknownCondition() {
+		JSONObject fieldInfo = getFieldInfo();
+		if (!fieldInfo.has("unknownCondition"))
+			return "NEVER";
+		return fieldInfo.getString("unknownCondition");
+	}
+
+	public String getDefaultUnknownValue() {
+		JSONObject fieldInfo = getFieldInfo();
+		if (!fieldInfo.has("unknownValue"))
+			return "unknown";
+		return fieldInfo.getString("unknownValue");
+	}
 
 }

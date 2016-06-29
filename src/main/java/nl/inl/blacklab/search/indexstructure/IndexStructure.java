@@ -49,6 +49,12 @@ public class IndexStructure {
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, MetadataFieldDesc> metadataFieldInfos;
 
+	/** When a metadata field value is considered "unknown" (NEVER, MISSING, EMPTY, MISSING_OR_EMPTY) [NEVER] */
+	private String defaultUnknownCondition;
+
+	/** What value to index when a metadata field value is unknown [unknown] */
+	private String defaultUnknownValue;
+
 	/** The complex fields in our index */
 	private Map<String, ComplexFieldDesc> complexFields;
 
@@ -215,6 +221,8 @@ public class IndexStructure {
 			throw new RuntimeException("Lucene index contains no fields!");
 		}
 		setNamingScheme(indexMetadata, fis);
+		defaultUnknownCondition = indexMetadata.getDefaultUnknownCondition();
+		defaultUnknownValue = indexMetadata.getDefaultUnknownValue();
 		if (indexMetadata.hasFieldInfo()) {
 			getFieldInfoFromMetadata(indexMetadata, fis);
 		}
@@ -285,7 +293,7 @@ public class IndexStructure {
 				"type", f.getType().toString().toLowerCase(),
 				"analyzer", f.getAnalyzerName(),
 				"unknownValue", f.getUnknownValue(),
-				"unknownCondition", unknownCondition == null ? "NEVER" : unknownCondition.toString(),
+				"unknownCondition", unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString(),
 				"valueListComplete", f.isValueListComplete()
 			);
 			JSONObject jsonValues = new JSONObject();
@@ -343,8 +351,8 @@ public class IndexStructure {
 			String group = Json.getString(fieldConfig, "group", "");
 			String type = Json.getString(fieldConfig, "type", "tokenized");
 			String analyzer = Json.getString(fieldConfig, "analyzer", "DEFAULT");
-			String unknownValue = Json.getString(fieldConfig, "unknownValue", "unknown");
-			String unknownCondition = Json.getString(fieldConfig, "unknownCondition", "NEVER");
+			String unknownValue = Json.getString(fieldConfig, "unknownValue", defaultUnknownValue);
+			String unknownCondition = Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition);
 			JSONObject values = null;
 			if (fieldConfig.has("values")) {
 				values = fieldConfig.getJSONObject("values");
@@ -412,7 +420,10 @@ public class IndexStructure {
 				if (!metadataFieldInfos.containsKey(name)) {
 					// Metadata field, not found in metadata JSON file
 					FieldType type = getFieldType(name);
-					metadataFieldInfos.put(name, new MetadataFieldDesc(name, type));
+					MetadataFieldDesc metadataFieldDesc = new MetadataFieldDesc(name, type);
+					metadataFieldDesc.setUnknownCondition(defaultUnknownCondition);
+					metadataFieldDesc.setUnknownValue(defaultUnknownValue);
+					metadataFieldInfos.put(name, metadataFieldDesc);
 				}
 			} else {
 				// Part of complex field.
@@ -878,6 +889,8 @@ public class IndexStructure {
 			return;
 		// Not registered yet; do so now.
 		MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TEXT);
+		mf.setUnknownCondition(defaultUnknownCondition);
+		mf.setUnknownValue(defaultUnknownValue);
 		metadataFieldInfos.put(fieldName, mf);
 	}
 
