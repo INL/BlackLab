@@ -783,7 +783,8 @@ public class StringUtil {
 	 */
 	public static String escapeDoubleQuotedString(String str) {
 		str = str.replaceAll("[\"\\\\]", "\\\\$0");
-		str = str.replaceAll("\r?\n", "\\\\n");
+		str = str.replaceAll("\r", "\\\\r");
+		str = str.replaceAll("\n", "\\\\n");
 		return str;
 	}
 

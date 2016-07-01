@@ -50,6 +50,8 @@ public class TestStringUtil {
 	public void testEscapeDoubleQuotedString() {
 		Assert.assertEquals("Test \\\" test \\\\ test",
 				StringUtil.escapeDoubleQuotedString("Test \" test \\ test"));
+		Assert.assertEquals("Newline \\n Return \\r Windows line end \\r\\n",
+				StringUtil.escapeDoubleQuotedString("Newline \n Return \r Windows line end \r\n"));
 	}
 
 }
