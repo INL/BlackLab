@@ -73,6 +73,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 		if (currentDoc != NO_MORE_DOCS) {
 			currentDoc = source.nextDoc();
 			currentSpansStart = source.nextStartPosition();
+			currentBucketStart = -1; // no bucket yet
 		}
 		return currentDoc;
 	}
@@ -103,7 +104,9 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 		if (currentSpansStart >= targetPos)
 			return nextBucket();
 		currentSpansStart = source.advanceStartPosition(targetPos);
-		return currentDoc;
+		if (currentSpansStart == Spans.NO_MORE_POSITIONS)
+			return NO_MORE_BUCKETS;
+		return gatherEndPointsAtStartPoint();
 	}
 
 	protected int gatherEndPointsAtStartPoint() throws IOException {
@@ -146,6 +149,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 		if (currentDoc < target) {
 			currentDoc = source.advance(target);
 			currentSpansStart = source.nextStartPosition();
+			currentBucketStart = -1; // no bucket yet
 		}
 
 		return currentDoc;

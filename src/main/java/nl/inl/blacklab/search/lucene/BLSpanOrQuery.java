@@ -442,52 +442,56 @@ public class BLSpanOrQuery extends SpanOrQuery {
 				((BLSpans) topPositionSpans).getCapturedGroups(capturedGroups);
 			}
 
-			@Override
-			public int advanceStartPosition(int target) throws IOException {
-				// (JN: adapted from fillPositionQueue())
-
-				byPositionQueue.clear(); // start with empty position queue and re-add spans
-
-				// add all matching Spans at current doc to byPositionQueue
-				DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
-				while (listAtCurrentDoc != null) {
-					Spans spansAtDoc = listAtCurrentDoc.iterator;
-					if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc) { // matched
-																			// by
-																			// DisjunctionDisiApproximation
-						if (listAtCurrentDoc.twoPhaseView != null) { // matched
-																		// by
-																		// approximation
-							if (listAtCurrentDoc.lastApproxNonMatchDoc == listAtCurrentDoc.doc) { // matches()
-																									// returned
-																									// false
-								spansAtDoc = null;
-							} else {
-								if (listAtCurrentDoc.lastApproxMatchDoc != listAtCurrentDoc.doc) {
-									if (!listAtCurrentDoc.twoPhaseView
-											.matches()) {
-										spansAtDoc = null;
-									}
-								}
-							}
-						}
-					}
-
-					if (spansAtDoc != null) {
-						assert spansAtDoc.docID() == listAtCurrentDoc.doc;
-						//JN assert spansAtDoc.startPosition() == -1;
-						BLSpans.advanceStartPosition(spansAtDoc, target);
-						if (spansAtDoc.startPosition() != NO_MORE_POSITIONS) // JN WAS: assert spansAtDoc.startPosition() != NO_MORE_POSITIONS
-							byPositionQueue.add(spansAtDoc);
-					}
-					listAtCurrentDoc = listAtCurrentDoc.next;
-				}
-				if (byPositionQueue.size() == 0)
-					return NO_MORE_POSITIONS;
-
-				topPositionSpans = byPositionQueue.top();
-				return topPositionSpans.startPosition();
-			}
+			// NOTE 2016-07-01: the version below has a bug. Try searching for "marines" "had" "l.*" in the Brown corpus;
+			//  you won't find anything, but searching for "marines" "had" "la.*" will. The version below will skip over
+			//  some hits some of the time to cause this bug. For now, we're using the naive (slower) default implementation
+			//  in BLSpans.
+//			@Override
+//			public int advanceStartPosition(int target) throws IOException {
+//				// (JN: adapted from fillPositionQueue())
+//
+//				byPositionQueue.clear(); // start with empty position queue and re-add spans
+//
+//				// add all matching Spans at current doc to byPositionQueue
+//				DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
+//				while (listAtCurrentDoc != null) {
+//					Spans spansAtDoc = listAtCurrentDoc.iterator;
+//					if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc) { // matched
+//																			// by
+//																			// DisjunctionDisiApproximation
+//						if (listAtCurrentDoc.twoPhaseView != null) { // matched
+//																		// by
+//																		// approximation
+//							if (listAtCurrentDoc.lastApproxNonMatchDoc == listAtCurrentDoc.doc) { // matches()
+//																									// returned
+//																									// false
+//								spansAtDoc = null;
+//							} else {
+//								if (listAtCurrentDoc.lastApproxMatchDoc != listAtCurrentDoc.doc) {
+//									if (!listAtCurrentDoc.twoPhaseView
+//											.matches()) {
+//										spansAtDoc = null;
+//									}
+//								}
+//							}
+//						}
+//					}
+//
+//					if (spansAtDoc != null) {
+//						assert spansAtDoc.docID() == listAtCurrentDoc.doc;
+//						//JN assert spansAtDoc.startPosition() == -1;
+//						BLSpans.advanceStartPosition(spansAtDoc, target);
+//						if (spansAtDoc.startPosition() != NO_MORE_POSITIONS) // JN WAS: assert spansAtDoc.startPosition() != NO_MORE_POSITIONS
+//							byPositionQueue.add(spansAtDoc);
+//					}
+//					listAtCurrentDoc = listAtCurrentDoc.next;
+//				}
+//				if (byPositionQueue.size() == 0)
+//					return NO_MORE_POSITIONS;
+//
+//				topPositionSpans = byPositionQueue.top();
+//				return topPositionSpans.startPosition();
+//			}
 
 		};
 	}

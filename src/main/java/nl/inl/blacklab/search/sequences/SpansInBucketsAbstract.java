@@ -64,7 +64,10 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	 */
 	private Map<Hit, Span[]> capturedGroupsPerHit = new HashMap<>();
 
-	private int bucketSize = 0;
+	/**
+	 * Size of the current bucket, or -1 if we're not at a valid bucket.
+	 */
+	private int bucketSize = -1;
 
 	private HitQueryContext hitQueryContext;
 
@@ -126,6 +129,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 	@Override
 	public int nextDoc() throws IOException {
+		bucketSize = -1; // not at a valid bucket anymore
 		if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
 			currentDoc = source.nextDoc();
 			if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
@@ -160,6 +164,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
 	@Override
 	public int advance(int target) throws IOException {
+		bucketSize = -1; // not at a valid bucket anymore
 		if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
 			if (currentDoc >= target)
 				nextDoc();
