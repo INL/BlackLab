@@ -2,6 +2,12 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.3.5
+
+### Fixed
+* BLSpanOrQuery would occasionally miss valid hits due to a
+  bug in the advanceStartPoint() method.
+
 ## Improvements up to v1.3.4
 
 ### Fixed

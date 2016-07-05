@@ -32,32 +32,11 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
 		<tr>
-			<td>v1.3.4</td>
-			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.3/blacklab-1.3.4.jar'>Binary (jar)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.4.tar.gz'>Source (tgz)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.4.zip'>Source (zip)</a></td>
-			<td>Fixed incorrect string escaping.</td>
-		</tr>
-		<tr>
-			<td>v1.3.3</td>
-			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.3/blacklab-1.3.3.jar'>Binary (jar)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.3.tar.gz'>Source (tgz)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.3.zip'>Source (zip)</a></td>
-			<td>Fixed empty concordances bug for pre-1.3 indices.</td>
-		</tr>
-		<tr>
-			<td>v1.3.2</td>
-			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.2/blacklab-1.3.2.jar'>Binary (jar)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.2.tar.gz'>Source (tgz)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.2.zip'>Source (zip)</a></td>
-			<td>Fixed query rewrite bug; prepared for release to Maven Central.</td>
-		</tr>
-		<tr>
-			<td>v1.3.1</td>
-			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.1/blacklab-1.3.1.jar'>Binary (jar)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.1.tar.gz'>Source (tgz)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.1.zip'>Source (zip)</a></td>
-			<td>Fixed bug with AND queries sometimes reporting incorrect hits; skipped special OS files inside archives.</td>
+			<td>v1.3.5</td>
+			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.5/blacklab-1.3.5.jar'>Binary (jar)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.5.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.5.zip'>Source (zip)</a></td>
+			<td>Fixed occasionally missing certain valid hits.</td>
 		</tr>
 		<tr>
 			<td>v1.3</td>

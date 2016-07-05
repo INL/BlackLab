@@ -3,7 +3,7 @@
 
 	<groupId>nl.inl.blacklab</groupId>
 	<artifactId>blacklab</artifactId>
-	<version>1.4-SNAPSHOT</version>
+	<version>1.3.5</version>
 	<packaging>jar</packaging>
 	
 	<name>BlackLab</name>
