@@ -1,4 +1,4 @@
-package nl.inl.blacklab.debug;
+package nl.inl.blacklab.tools.debug;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
