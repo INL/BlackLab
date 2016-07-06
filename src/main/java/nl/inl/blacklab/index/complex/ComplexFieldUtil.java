@@ -59,6 +59,10 @@ public class ComplexFieldUtil {
 	/** Property name for part of speech (optional, not every input format will have this) */
 	public static final String PART_OF_SPEECH_PROP_NAME = "pos";
 
+	/** For properties combined in a single Lucene field, this is the separator between the
+	 *  name prefix of an indexed value and the actual value of the property */
+	public static final String ASCII_UNIT_SEPARATOR = "\u001F";
+
 	/**
 	 * String used to separate the base field name (say, contents) and the field property (pos,
 	 * lemma, etc.)
@@ -231,12 +235,9 @@ public class ComplexFieldUtil {
 			throw new RuntimeException("Must specify a property name");
 		}
 		if (fieldName == null || fieldName.length() == 0) {
-			if (propGiven) {
-				fieldPropName = propName;
-			} else
-				throw new RuntimeException("Must specify a base name, a property name or both");
+			fieldPropName = propName;
 		} else {
-			fieldPropName = fieldName + (propGiven ? PROP_SEP + propName : "");
+			fieldPropName = fieldName + PROP_SEP + propName;
 		}
 
 		if (altName == null || altName.length() == 0) {
