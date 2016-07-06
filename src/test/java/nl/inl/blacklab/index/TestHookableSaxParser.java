@@ -89,6 +89,13 @@ public class TestHookableSaxParser {
 	}
 
 	@Test
+	public void testRootChildRelative() throws SAXException, IOException {
+		hookableSaxHandler.addHook("root/child", hookHandler, false);
+		parser.parse(inputSource, hookableSaxHandler);
+		Assert.assertEquals("<><>", hookHandler.toString());
+	}
+
+	@Test
 	public void testAnyChildName() throws SAXException, IOException {
 		hookableSaxHandler.addHook("//child/name", hookHandler, false);
 		parser.parse(inputSource, hookableSaxHandler);
