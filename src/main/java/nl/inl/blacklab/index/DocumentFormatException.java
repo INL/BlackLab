@@ -1,4 +1,4 @@
-package nl.inl.blacklab.exceptions;
+package nl.inl.blacklab.index;
 
 /**
  * An unknown document format was specified, or there

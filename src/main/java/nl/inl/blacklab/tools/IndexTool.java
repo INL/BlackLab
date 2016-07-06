@@ -26,8 +26,8 @@ import java.util.TreeMap;
 
 import org.apache.lucene.index.CorruptIndexException;
 
-import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.Searcher;
