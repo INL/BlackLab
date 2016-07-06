@@ -96,12 +96,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 		String fromInputFile;
 		Document luceneDoc = ourDocIndexer.getCurrentLuceneDoc();
-		if (ourDocIndexer != null) {
-			fromInputFile = luceneDoc.get("fromInputFile");
-		} else {
-			// TEST
-			fromInputFile = TEST_FROM_INPUT_FILE;
-		}
+		fromInputFile = luceneDoc.get("fromInputFile");
 
 		fromInputFile = fromInputFile.replaceAll("\\\\", "/");
 		int lastSlash = fromInputFile.lastIndexOf("/");

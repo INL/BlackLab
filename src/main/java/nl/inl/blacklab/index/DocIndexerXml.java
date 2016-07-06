@@ -31,7 +31,9 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Abstract base class for a DocIndexer processing XML files.
+ * @deprecated use DocIndexerXmlHandlers instead; see project site for a guide
  */
+@Deprecated
 public abstract class DocIndexerXml extends DocIndexerAbstract {
 	class SaxParseHandler extends DefaultHandler {
 		/** to keep track of the position within the document */
@@ -91,7 +93,7 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 	 * What namespace prefix mappings have we encountered but not output in a start tag
 	 * yet? (used to make sure the stored XML contains all the required mappings)
 	 */
-	protected static Map<String,String> outputPrefixMapping = new HashMap<>();
+	final protected static Map<String,String> outputPrefixMapping = new HashMap<>();
 
 	/**
 	 * Encountered a prefix to namespace mapping; now in effect.

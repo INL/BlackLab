@@ -76,8 +76,6 @@ class TokenStreamWithOffsets extends TokenStream {
 		// Capture token contents
 		if (iterator.hasNext()) {
 			String term = iterator.next();
-			if (term == null)
-				System.err.println("TERM==NULL");
 			termAttr.copyBuffer(term.toCharArray(), 0, term.length());
 			positionIncrementAttr.setPositionIncrement(incrementIt.next());
 			offsetAttr.setOffset(startCharIt.next(), endCharIt.next());
