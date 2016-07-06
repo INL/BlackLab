@@ -33,11 +33,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	 */
 	private static final long WRITE_CONTENT_CHUNK_SIZE = 10000000;
 
-	/**
-	 * [DEBUG] Skip documents that are WRITE_CONTENT_CHUNK_SIZE chars or longer?
-	 */
-	protected static boolean SKIP_LARGE_DOCUMENTS = false;
-
 	protected boolean skippingCurrentDocument = false;
 
 	public Indexer indexer;
@@ -150,12 +145,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	public void appendContent(String str) {
 		appendContentInternal(str);
 		if (content.length() >= WRITE_CONTENT_CHUNK_SIZE) {
-			if (SKIP_LARGE_DOCUMENTS && !skippingCurrentDocument) {
-				nDocumentsSkipped++;
-				System.err.println("Skipping large document!");
-				skippingCurrentDocument = true; // too large
-			}
-
 			storePartCapturedContent();
 		}
 	}
@@ -163,12 +152,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	public void appendContent(char[] buffer, int start, int length) {
 		appendContentInternal(new String(buffer, start, length));
 		if (content.length() >= WRITE_CONTENT_CHUNK_SIZE) {
-			if (SKIP_LARGE_DOCUMENTS && !skippingCurrentDocument) {
-				nDocumentsSkipped++;
-				System.err.println("Skipping large document!");
-				skippingCurrentDocument = true; // too large
-			}
-
 			storePartCapturedContent();
 		}
 	}
