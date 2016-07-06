@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.example;
+package nl.inl.blacklab.tools.indexexample;
 
 import java.io.Reader;
 
