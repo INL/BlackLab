@@ -535,7 +535,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			// Take the first from the list
 			freeBlock = freeBlocks.remove(0);
 		}
-		int offset = freeBlock * BLOCK_SIZE_BYTES;
+		long offset = freeBlock * BLOCK_SIZE_BYTES;
 
 		// Write data to the block
 		try {

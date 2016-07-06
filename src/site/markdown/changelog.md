@@ -2,11 +2,19 @@
 
 ## Improvements in HEAD
 
+### Fixed
+* Content store growing larger than 2 GB caused an
+  integer overflow.
+
 ## Improvements up to v1.3.5
 
 ### Fixed
 * BLSpanOrQuery would occasionally miss valid hits due to a
   bug in the advanceStartPoint() method.
+
+### Changed
+* Switched to JavaCC 6.x.
+* Added default unknown condition and value to indextemplate.json, so you can specify what to do if a metadata field value is missing without specifying it for each field separately.
 
 ## Improvements up to v1.3.4
 
