@@ -34,6 +34,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import org.apache.log4j.Logger;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
+
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
@@ -43,20 +51,12 @@ import nl.inl.util.TarGzipReader;
 import nl.inl.util.TarGzipReader.FileHandler;
 import nl.inl.util.UnicodeReader;
 
-import org.apache.log4j.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.Term;
-
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
  */
 public class Indexer {
 
-	static final Logger logger = Logger.getLogger(Searcher.class);
+	static final Logger logger = Logger.getLogger(Indexer.class);
 
 	/** Our index */
 	Searcher searcher;

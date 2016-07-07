@@ -286,6 +286,20 @@ public class Hits extends AbstractList<Hit> {
 		return etiquette.getPriorityLevel();
 	}
 
+	public void copySettingsFrom(Hits copyFrom) {
+		concordanceFieldName = copyFrom.concordanceFieldName;
+		maxHitsToRetrieve = copyFrom.maxHitsToRetrieve;
+		maxHitsToCount = copyFrom.maxHitsToCount;
+		maxHitsRetrieved = copyFrom.maxHitsRetrieved;
+		maxHitsCounted = copyFrom.maxHitsCounted;
+		desiredContextSize = copyFrom.desiredContextSize;
+		concWordFI = copyFrom.concWordFI;
+		concPunctFI = copyFrom.concPunctFI;
+		concAttrFI = copyFrom.concAttrFI;
+		concsType = copyFrom.concsType;
+		hitQueryContext = copyFrom.hitQueryContext;
+	}
+
 	/**
 	 * Construct a Hits object from an existing Hits object.
 	 *
@@ -308,26 +322,12 @@ public class Hits extends AbstractList<Hit> {
 		docsRetrieved = copyFrom.docsRetrieved;
 		docsCounted = copyFrom.docsCounted;
 		previousHitDoc = copyFrom.previousHitDoc;
-
+	
 		searcher = copyFrom.searcher;
 		copySettingsFrom(copyFrom);
-
+	
 		currentContextSize = -1; // context is not copied
 		etiquette = new ThreadPriority();
-	}
-
-	public void copySettingsFrom(Hits copyFrom) {
-		concordanceFieldName = copyFrom.concordanceFieldName;
-		maxHitsToRetrieve = copyFrom.maxHitsToRetrieve;
-		maxHitsToCount = copyFrom.maxHitsToCount;
-		maxHitsRetrieved = copyFrom.maxHitsRetrieved;
-		maxHitsCounted = copyFrom.maxHitsCounted;
-		desiredContextSize = copyFrom.desiredContextSize;
-		concWordFI = copyFrom.concWordFI;
-		concPunctFI = copyFrom.concPunctFI;
-		concAttrFI = copyFrom.concAttrFI;
-		concsType = copyFrom.concsType;
-		hitQueryContext = copyFrom.hitQueryContext;
 	}
 
 	/**
@@ -496,18 +496,6 @@ public class Hits extends AbstractList<Hit> {
 		sourceSpansFullyRead = false;
 	}
 
-	private void extractTermsFromSpanQuery(Set<Term> terms) {
-		try {
-			// FIXME: temporary extractTerms hack
-			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
-			methodExtractTerms.setAccessible(true);
-		    methodExtractTerms.invoke(spanQuery, terms);
-			//spanQuery.extractTerms(terms);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	/**
 	 * Construct an empty Hits object
 	 *
@@ -519,6 +507,18 @@ public class Hits extends AbstractList<Hit> {
 	 */
 	public Hits(Searcher searcher, SpanQuery sourceQuery) throws TooManyClauses {
 		this(searcher, searcher.getContentsFieldMainPropName(), sourceQuery);
+	}
+
+	private void extractTermsFromSpanQuery(Set<Term> terms) {
+		try {
+			// FIXME: temporary extractTerms hack
+			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
+			methodExtractTerms.setAccessible(true);
+		    methodExtractTerms.invoke(spanQuery, terms);
+			//spanQuery.extractTerms(terms);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/** Returns the context size.

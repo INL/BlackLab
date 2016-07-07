@@ -13,14 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.DateUtil;
-import nl.inl.util.FileUtil;
-import nl.inl.util.Json;
-import nl.inl.util.StringUtil;
-import nl.inl.util.json.JSONObject;
-
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.FieldInfo;
@@ -29,6 +21,14 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.Searcher;
+import nl.inl.util.DateUtil;
+import nl.inl.util.FileUtil;
+import nl.inl.util.Json;
+import nl.inl.util.StringUtil;
+import nl.inl.util.json.JSONObject;
 
 /**
  * Determines the structure of a BlackLab index.

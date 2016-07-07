@@ -11,6 +11,7 @@
 
 ### Changed
 * Performed some code cleanups, moved some internal classes to different packages.
+* Made Searcher an abstract base class to SearcherImpl.
 
 ## Improvements up to v1.3.5
 
