@@ -16,6 +16,9 @@
 package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.xml.sax.Attributes;
 
@@ -24,6 +27,7 @@ import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * Index a FoLiA file.
@@ -52,6 +56,10 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 	 * set="http://ilk.uvt.nl/folia/sets/frog-mblem-nl"
 	 */
 	int numLemmaAnnotations = 0;
+
+	boolean capturePosFeatures = false;
+
+	Map<String, String> posFeatures = new HashMap<>();
 
 	public DocIndexerOpenSonar(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
@@ -105,6 +113,9 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 				if (wordform.length() > 0) {
 					propMain.addValue(wordform);
 					propPartOfSpeech.addValue(pos);
+					for (Entry<String, String> e: posFeatures.entrySet()) {
+						propPartOfSpeech.addValue(e.getKey() + ComplexFieldUtil.ASCII_UNIT_SEPARATOR + e.getValue());
+					}
 					propLemma.addValue(lemma);
 					if ((pos.length() == 0 || lemma.length() == 0) && !lemPosProblemReported) {
 						lemPosProblemReported = true;
@@ -155,6 +166,29 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 					pos = attributes.getValue("class");
 					if (pos == null)
 						pos = "";
+					capturePosFeatures = true;
+					posFeatures.clear();
+				}
+			}
+
+			@Override
+			public void endElement(String uri, String localName, String qName) {
+				capturePosFeatures = false;
+				super.endElement(uri, localName, qName);
+			}
+
+		});
+
+		// pos element: contains part of speech
+		addHandler("pos/feat", new ElementHandler() {
+			@Override
+			public void startElement(String uri, String localName, String qName,
+					Attributes attributes) {
+				super.startElement(uri, localName, qName, attributes);
+				if (capturePosFeatures) {
+					String featSubset = attributes.getValue("subset");
+					String featClass = attributes.getValue("class");
+					posFeatures.put(featSubset, featClass);
 				}
 			}
 		});
