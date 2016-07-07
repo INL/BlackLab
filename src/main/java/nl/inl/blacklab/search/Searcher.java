@@ -48,24 +48,16 @@ public abstract class Searcher {
 	protected static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
 
 	/** Analyzer based on WhitespaceTokenizer */
-	protected static Analyzer whitespaceAnalyzer;
+	final protected static Analyzer whitespaceAnalyzer = new BLWhitespaceAnalyzer();
 
 	/** Analyzer for Dutch and other Latin script languages */
-	protected static Analyzer defaultAnalyzer;
+	final protected static Analyzer defaultAnalyzer = new BLDutchAnalyzer();
 
 	/** Analyzer based on StandardTokenizer */
-	protected static Analyzer standardAnalyzer;
+	final protected static Analyzer standardAnalyzer = new BLStandardAnalyzer();
 
 	/** Analyzer that doesn't tokenize */
-	protected static Analyzer nonTokenizingAnalyzer;
-
-	static {
-		// Create the various analyzer objects we'll be using for metadata fields.
-		whitespaceAnalyzer = new BLWhitespaceAnalyzer();
-		defaultAnalyzer = new BLDutchAnalyzer();
-		standardAnalyzer = new BLStandardAnalyzer();
-		nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
-	}
+	final protected static Analyzer nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
 
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).

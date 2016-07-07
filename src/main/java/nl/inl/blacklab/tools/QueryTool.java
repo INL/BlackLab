@@ -527,7 +527,7 @@ public class QueryTool {
 
 		if (in == null) {
 			webSafeOperationOnly = true; // don't allow file operations in web mode
-			err = out; // send errors to the same output writer in web mode
+			this.err = out; // send errors to the same output writer in web mode
 		} else {
 			printProgramHead();
 		}
@@ -549,6 +549,7 @@ public class QueryTool {
 	public QueryTool(File indexDir, BufferedReader in, PrintWriter out, PrintWriter err) throws CorruptIndexException {
 		this.in = in;
 		this.out = out;
+		this.err = err;
 
 		if (in != null) {
 			printProgramHead();
@@ -568,7 +569,7 @@ public class QueryTool {
 
 		if (in == null) {
 			webSafeOperationOnly = true; // don't allow file operations in web mode
-			err = out; // send errors to the same output writer in web mode
+			this.err = out; // send errors to the same output writer in web mode
 		}
 
 		contextSize = searcher.getDefaultContextSize();
