@@ -134,7 +134,7 @@ class SpansExpansionRaw extends BLSpans {
 					return NO_MORE_DOCS;
 				start = end = -1;
 				clauseStart = clause.nextStartPosition();
-				clauseStart = resetExpand();
+				resetExpand();
 			} while (clauseStart == NO_MORE_POSITIONS);
 			alreadyAtFirstHit = true;
 		}
@@ -170,7 +170,7 @@ class SpansExpansionRaw extends BLSpans {
 		}
 
 		clauseStart = clause.nextStartPosition();
-		clauseStart = resetExpand();
+		resetExpand();
 		return clauseStart;
 	}
 
@@ -190,7 +190,7 @@ class SpansExpansionRaw extends BLSpans {
 			return nextStartPosition(); // we're already there
 
 		clauseStart = clause.advanceStartPosition(target);
-		clauseStart = resetExpand();
+		resetExpand();
 		return clauseStart;
 	}
 
@@ -202,9 +202,9 @@ class SpansExpansionRaw extends BLSpans {
 				currentDoc = clause.advance(doc);
 				if (currentDoc != NO_MORE_DOCS) {
 					while (true) {
-						clauseStart = start = end = -1;
+						start = end = -1;
 						clauseStart = clause.nextStartPosition();
-						clauseStart = resetExpand();
+						resetExpand();
 						if (clauseStart != NO_MORE_POSITIONS) {
 							alreadyAtFirstHit = true;
 							return currentDoc;
@@ -228,13 +228,15 @@ class SpansExpansionRaw extends BLSpans {
 	 * of the document, for example), so we may have to advance the clause again, and may actually
 	 * run out of hits while doing so.
 	 *
-	 * @return the start position if we're at a valid hit and have reset the expansion, NO_MORE_POSITIONS if we're done
+	 * Updates clauseStart to the start position if we're at a valid hit and have reset the expansion,
+	 * or to NO_MORE_POSITIONS if we're done.
+	 *
 	 * @throws IOException
 	 */
-	private int resetExpand() throws IOException {
+	private void resetExpand() throws IOException {
 		if (clauseStart == NO_MORE_POSITIONS) {
-			start = end = NO_MORE_POSITIONS;
-			return NO_MORE_POSITIONS;
+			clauseStart = start = end = NO_MORE_POSITIONS;
+			return;
 		}
 		while (true) {
 			// Attempt to do the initial expansion and reset the counter
@@ -271,13 +273,15 @@ class SpansExpansionRaw extends BLSpans {
 			}
 
 			// Valid expansion?   [shouldn't be necessary anymore because we calculated max]
-			if (expandStepsLeft >= 0)
-				return start; // Yes, return
+			if (expandStepsLeft >= 0) {
+				clauseStart = start; // Yes, return
+				return;
+			}
 
 			// No, try the next hit, if there is one
 			if (nextStartPosition() == NO_MORE_POSITIONS) {
-				start = end = NO_MORE_POSITIONS;
-				return NO_MORE_POSITIONS; // No hits left, we're done
+				clauseStart = start = end = NO_MORE_POSITIONS;
+				return; // No hits left, we're done
 			}
 		}
 	}
