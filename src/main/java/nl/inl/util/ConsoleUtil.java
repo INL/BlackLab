@@ -17,6 +17,7 @@ package nl.inl.util;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 
 /**
  * Utilities for simple user input from stdin.
@@ -25,8 +26,7 @@ public class ConsoleUtil {
 	/**
 	 * Easily read from standard input
 	 */
-	private static BufferedReader stdinReader = IoUtil
-			.makeBuffered(new InputStreamReader(System.in));
+	private static BufferedReader stdinReader = IoUtil.makeBuffered(new InputStreamReader(System.in, Charset.defaultCharset()));
 
 	private ConsoleUtil() {
 	}

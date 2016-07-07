@@ -6,8 +6,11 @@
 
 ### Fixed
 * Content store growing larger than 2 GB caused an integer overflow.
-* Fixed bug with element matching in DocIndexers.
 * Fixed rare bug while storing document in ContentStoreDirFixedBlock.
+* DocIndexersXmlHandlers element matching didn't work correctly for some XML structures.
+
+### Changed
+* Performed some code cleanups, moved some internal classes to different packages.
 
 ## Improvements up to v1.3.5
 

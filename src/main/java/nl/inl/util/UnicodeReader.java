@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackInputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 
 /**
  * Reader that skips BOM in UTF-8 (and other Unicode encodings) files.
@@ -85,7 +86,7 @@ public class UnicodeReader extends Reader {
 
 		// Use given encoding.
 		if (encoding == null) {
-			reader = new InputStreamReader(pushbackStream);
+			reader = new InputStreamReader(pushbackStream, Charset.defaultCharset());
 		} else {
 			reader = new InputStreamReader(pushbackStream, encoding);
 		}

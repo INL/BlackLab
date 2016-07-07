@@ -116,7 +116,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 		if (parts.length == 1)
 			throw new RuntimeException("Complex field with just basename given, error!");
 
-		String propPart = parts.length == 1 ? "" : parts[1];
+		String propPart = parts[1];
 
 		if (propPart == null && parts.length >= 3) {
 			// Bookkeeping field
@@ -147,15 +147,12 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 			if (parts[2] != null) {
 				// Alternative
 				pd.addAlternative(parts[2]);
-			} else if (parts.length >= 3) {
+			} else {
 				// Property bookkeeping field
 				if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
 					pd.setForwardIndex(true);
 				} else
 					throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
-			} else {
-				// No alternative specified; this is an error.
-				throw new RuntimeException("No alternative given!");
 			}
 		}
 	}

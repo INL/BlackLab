@@ -89,10 +89,10 @@ import nl.inl.util.XmlUtil;
  */
 public class QueryTool {
 	/** Our output writer. */
-	public PrintWriter out = new PrintWriter(System.out, true);
+	public PrintWriter out;
 
 	/** Our error writer (if null, output errors to out as well) */
-	public PrintWriter err = new PrintWriter(System.err, true);
+	public PrintWriter err;
 
 	static boolean batchMode = false;
 
@@ -453,15 +453,17 @@ public class QueryTool {
 		}
 
 		// Use correct output encoding
-		PrintWriter out;
+		PrintWriter out, err;
 		try {
 			// Yes
 			out = new PrintWriter(new OutputStreamWriter(System.out, encoding), true);
+			err = new PrintWriter(new OutputStreamWriter(System.err, encoding), true);
 			out.println("Using output encoding " + encoding + "\n");
 		} catch (UnsupportedEncodingException e) {
 			// Nope; fall back to default
 			System.err.println("Unknown encoding " + encoding + "; using default");
-			out = new PrintWriter(System.out, true);
+			out = new PrintWriter(new OutputStreamWriter(System.out, Charset.defaultCharset()), true);
+			err = new PrintWriter(new OutputStreamWriter(System.err, Charset.defaultCharset()), true);
 		}
 
 		BufferedReader in;
@@ -476,7 +478,7 @@ public class QueryTool {
 		}
 
 		try {
-			QueryTool c = new QueryTool(indexDir, in, out);
+			QueryTool c = new QueryTool(indexDir, in, out, err);
 			c.commandProcessor();
 		} finally {
 			try {
@@ -510,18 +512,18 @@ public class QueryTool {
 	/**
 	 * Construct the query tool object.
 	 * @param searcher the searcher object (our index)
-	 * @param in
-	 *      where to read commands from
-	 * @param out
-	 * 		where to write output to
+	 * @param in where to read commands from
+	 * @param out where to write output to
+	 * @param err where to write errors to
 	 * @throws CorruptIndexException
 	 */
-	public QueryTool(Searcher searcher, BufferedReader in, PrintWriter out) throws CorruptIndexException {
+	public QueryTool(Searcher searcher, BufferedReader in, PrintWriter out, PrintWriter err) throws CorruptIndexException {
 		this.searcher = searcher;
 		shouldCloseSearcher = false; // caller is responsible
 
 		this.in = in;
 		this.out = out;
+		this.err = err;
 
 		if (in == null) {
 			webSafeOperationOnly = true; // don't allow file operations in web mode
@@ -536,33 +538,15 @@ public class QueryTool {
 	}
 
 	/**
-	 * Switch to a different Searcher.
-	 * @param searcher the new Searcher to use
-	 */
-	public void setSearcher(Searcher searcher) {
-		if (shouldCloseSearcher)
-			searcher.close();
-		this.searcher = searcher;
-		shouldCloseSearcher = false; // caller is responsible
-
-		// Reset results
-		hits = null;
-		groups = null;
-		collocations = null;
-	}
-
-	/**
 	 * Construct the query tool object.
 	 *
-	 * @param indexDir
-	 *            directory our index is in
-	 * @param in
-	 *      where to read commands from
-	 * @param out
-	 * 		where to write output to
+	 * @param indexDir directory our index is in
+	 * @param in where to read commands from
+	 * @param out where to write output to
+	 * @param err where to write errors to
 	 * @throws CorruptIndexException
 	 */
-	public QueryTool(File indexDir, BufferedReader in, PrintWriter out) throws CorruptIndexException {
+	public QueryTool(File indexDir, BufferedReader in, PrintWriter out, PrintWriter err) throws CorruptIndexException {
 		this.in = in;
 		this.out = out;
 
@@ -595,13 +579,29 @@ public class QueryTool {
 	/**
 	 * Construct the query tool object.
 	 *
-	 * @param indexDir
-	 *            directory our index is in
+	 * @param indexDir directory our index is in
 	 * @param out the output writer to use
+	 * @param err where to write errors to
 	 * @throws CorruptIndexException
 	 */
-	public QueryTool(File indexDir, PrintWriter out) throws CorruptIndexException {
-		this(indexDir, null, out);
+	public QueryTool(File indexDir, PrintWriter out, PrintWriter err) throws CorruptIndexException {
+		this(indexDir, null, out, err);
+	}
+
+	/**
+	 * Switch to a different Searcher.
+	 * @param searcher the new Searcher to use
+	 */
+	public void setSearcher(Searcher searcher) {
+		if (shouldCloseSearcher)
+			searcher.close();
+		this.searcher = searcher;
+		shouldCloseSearcher = false; // caller is responsible
+
+		// Reset results
+		hits = null;
+		groups = null;
+		collocations = null;
 	}
 
 	/**

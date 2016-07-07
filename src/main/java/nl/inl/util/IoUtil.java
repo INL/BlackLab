@@ -47,11 +47,12 @@ public class IoUtil {
 	/**
 	 * Read text from an input stream.
 	 * @param is the input stream
+	 * @param encoding the character encoding to use
 	 * @return the text read
 	 * @throws IOException
 	 */
-	public static String readStream(InputStream is) throws IOException {
-		BufferedReader reader = makeBuffered(new InputStreamReader(is));
+	public static String readStream(InputStream is, String encoding) throws IOException {
+		BufferedReader reader = makeBuffered(new InputStreamReader(is, encoding));
 		StringBuilder b = new StringBuilder();
 		while (true) {
 			String line = reader.readLine();

@@ -55,12 +55,13 @@ public class Json {
 	 * The data may be commented using Java-style end-of-line comments (//).
 	 *
 	 * @param is the stream to read from
+	 * @param encoding character encoding to use
 	 * @return the JSON object read
 	 * @throws JSONException if the data read was not valid commented-JSON
 	 * @throws IOException on I/O error
 	 */
-	public static JSONObject read(InputStream is) throws JSONException, IOException {
-		BufferedReader reader = IoUtil.makeBuffered(new InputStreamReader(is));
+	public static JSONObject read(InputStream is, String encoding) throws JSONException, IOException {
+		BufferedReader reader = IoUtil.makeBuffered(new InputStreamReader(is, encoding));
 		return new JSONObject(readFileStripLineComments(reader));
 	}
 

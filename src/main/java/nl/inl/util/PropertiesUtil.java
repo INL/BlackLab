@@ -17,9 +17,10 @@ package nl.inl.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
 
@@ -45,7 +46,7 @@ public class PropertiesUtil {
 						+ " does not exist or is not a regular file!");
 			}
 
-			Reader in = new BufferedReader(new FileReader(file));
+			Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "iso-8859-1"));
 			try {
 				Properties properties = new Properties();
 				properties.load(in);

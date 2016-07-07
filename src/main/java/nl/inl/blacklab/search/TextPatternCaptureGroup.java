@@ -64,7 +64,7 @@ public class TextPatternCaptureGroup extends TextPattern {
 	@Override
 	public boolean equals(Object obj) {
 		// Capture group clauses are unique.
-		return false;
+		return obj == this;
 	}
 
 	@Override

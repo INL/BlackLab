@@ -54,7 +54,7 @@ public class OsUtil {
 		// Extract the process ID by splitting the string returned by the
 		// bean.getName() method.
 		//
-		long processId = Long.valueOf(jvmName.split("@")[0]);
+		long processId = Long.parseLong(jvmName.split("@")[0]);
 		return processId;
 	}
 
