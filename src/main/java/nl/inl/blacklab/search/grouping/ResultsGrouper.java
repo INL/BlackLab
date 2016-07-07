@@ -26,6 +26,7 @@ import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.HitsImpl;
 import nl.inl.blacklab.search.Searcher;
 
 /**
@@ -83,7 +84,7 @@ public class ResultsGrouper extends HitGroups {
 	@Deprecated
 	public ResultsGrouper(Searcher searcher, SpanQuery source, HitProperty criteria,
 			String defaultConcField) {
-		this(new Hits(searcher, defaultConcField, source), criteria);
+		this(new HitsImpl(searcher, defaultConcField, source), criteria);
 	}
 
 	/**

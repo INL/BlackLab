@@ -13,6 +13,7 @@ import nl.inl.blacklab.MockTerms;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyDecade;
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.HitsImpl;
 import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextPart;
 import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextStart;
 
@@ -20,7 +21,7 @@ public class TestHitProperties {
 
 	MockSearcher mockSearcher = new MockSearcher();
 
-	Hits hits = new Hits(mockSearcher);
+	Hits hits = new HitsImpl(mockSearcher);
 
 	@Before
 	public void setUp() {

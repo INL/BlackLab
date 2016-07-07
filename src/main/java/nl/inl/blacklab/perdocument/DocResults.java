@@ -34,6 +34,7 @@ import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.HitsImpl;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 import nl.inl.util.ReverseComparator;
@@ -130,7 +131,7 @@ public class DocResults implements Iterable<DocResult> {
 	 */
 	@Deprecated
 	public DocResults(Searcher searcher, String field, SpanQuery query) {
-		this(searcher, new Hits(searcher, field, query));
+		this(searcher, new HitsImpl(searcher, field, query));
 	}
 
 	/**
@@ -393,7 +394,7 @@ public class DocResults implements Iterable<DocResult> {
 					Hit hit = sourceHitsIterator.next();
 					if (hit.doc != doc) {
 						if (docHits != null) {
-							Hits hits = new Hits(searcher, docHits);
+							Hits hits = new HitsImpl(searcher, docHits);
 							hits.copySettingsFrom(sourceHits); // concordance type, etc.
 							addDocResultToList(doc, hits, indexReader);
 						}
@@ -408,7 +409,7 @@ public class DocResults implements Iterable<DocResult> {
 						partialDocId = doc;
 						partialDocHits = docHits; // not done, continue from here later
 					} else {
-						Hits hits = new Hits(searcher, docHits);
+						Hits hits = new HitsImpl(searcher, docHits);
 						hits.copySettingsFrom(sourceHits); // concordance type, etc.
 						addDocResultToList(doc, hits, indexReader);
 					}

@@ -30,8 +30,7 @@ public class TestHits {
 		int[] aEnd = new int[] { 2, 3 };
 		Spans a = new MockSpans(aDoc, aStart, aEnd);
 
-		@SuppressWarnings("deprecation")
-		Hits hits = new Hits(null, null, a);
+		Hits hits = new HitsImpl(null, null, a);
 
 		int i = 0;
 		for (Hit hit: hits) {

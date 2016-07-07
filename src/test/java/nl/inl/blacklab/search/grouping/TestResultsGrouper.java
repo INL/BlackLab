@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.MockSpanQuery;
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.HitsImpl;
 import nl.inl.blacklab.search.Searcher;
 
 public class TestResultsGrouper {
@@ -33,7 +34,7 @@ public class TestResultsGrouper {
 	@Test
 	public void testGrouper() {
 		SpanQuery query = new MockSpanQuery(doc, start, end);
-		Hits hits = new Hits((Searcher)null, "contents%word", query);
+		Hits hits = new HitsImpl((Searcher)null, "contents%word", query);
 		HitProperty crit = new HitPropertyDocumentId(hits);
 		HitGroups grouper = hits.groupedBy(crit);
 		Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();

@@ -15,11 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
-import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.MockHits;
 import nl.inl.blacklab.search.Hits;
 
 public class TestDocResults {
@@ -29,10 +28,8 @@ public class TestDocResults {
 		int[] aDoc = new int[] { 1, 1, 2, 3, 3 };
 		int[] aStart = new int[] { 1, 2, 3, 4, 5 };
 		int[] aEnd = new int[] { 2, 3, 4, 5, 6 };
-		Spans a = new MockSpans(aDoc, aStart, aEnd);
 
-		@SuppressWarnings("deprecation") // it's ok, we're professionals (don't try this at home though)
-		Hits hits = new Hits(null, null, a);
+		Hits hits = new MockHits(aDoc, aStart, aEnd);
 		DocResults drs = hits.perDocResults();
 
 		int[] expDoc = new int[] {1, 2, 3};

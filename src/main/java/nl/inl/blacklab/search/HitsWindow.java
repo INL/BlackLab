@@ -21,7 +21,7 @@ import java.util.HashMap;
 /**
  * Represents a subset of a Hits object, for example a page of hits.
  */
-public class HitsWindow extends Hits {
+public class HitsWindow extends HitsImpl {
 	/**
 	 * Number of hits in the window
 	 */
@@ -53,11 +53,11 @@ public class HitsWindow extends Hits {
 	 */
 	@Deprecated
 	public HitsWindow(Hits source, int first, int windowSize) {
-		super(source.searcher, source.concordanceFieldName);
+		super(source.getSearcher(), source.getConcordanceFieldName());
 		this.source = source;
 		this.first = first;
 		this.windowSize = windowSize;
-		this.contextFieldsPropName = source.contextFieldsPropName;
+		this.contextFieldsPropName = source.getContextFieldPropName();
 
 		// Error if first out of range
 		boolean emptyResultSet = !source.sizeAtLeast(1);
