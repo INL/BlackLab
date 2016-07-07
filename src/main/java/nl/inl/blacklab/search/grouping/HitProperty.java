@@ -47,6 +47,10 @@ public abstract class HitProperty implements Comparator<Object> {
 	/**
 	 * Compares two hits on this property.
 	 *
+	 * The default implementation uses get() to compare
+	 * the two hits. Subclasses may override this method to
+	 * provide a more efficient implementation.
+	 *
 	 * Note that we use Object as the type instead of Hit to save
 	 * on run-time type checking. We know (slash hope :-) that this
 	 * method is only ever called to compare Hits.
@@ -56,7 +60,11 @@ public abstract class HitProperty implements Comparator<Object> {
 	 * @return 0 if equal, negative if a < b, positive if a > b.
 	 */
 	@Override
-	public abstract int compare(Object a, Object b);
+	public int compare(Object a, Object b) {
+		HitPropValue hitPropValueA = get((Integer)a);
+		HitPropValue hitPropValueB = get((Integer)b);
+		return hitPropValueA.compareTo(hitPropValueB);
+	}
 
 	/**
 	 * Retrieve context from which field(s) prior to sorting/grouping on this
@@ -110,7 +118,7 @@ public abstract class HitProperty implements Comparator<Object> {
 			type = type.substring(1);
 		}
 		String info = parts.length > 1 ? parts[1] : "";
-		List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright");
+		List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright", "context");
 		int typeNum = types.indexOf(type);
 		HitProperty result;
 		switch (typeNum) {
@@ -137,6 +145,9 @@ public abstract class HitProperty implements Comparator<Object> {
 			break;
 		case 7:
 			result = HitPropertyWordRight.deserialize(hits, info);
+			break;
+		case 8:
+			result = HitPropertyContextWords.deserialize(hits, info);
 			break;
 		default:
 			logger.debug("Unknown HitProperty '" + type + "'");
