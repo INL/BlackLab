@@ -192,12 +192,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
-	@Deprecated
-	public boolean getMakeConcordancesFromForwardIndex() {
-		return getDefaultConcordanceType() == ConcordanceType.FORWARD_INDEX;
-	}
-
-	@Override
 	public ConcordanceType getDefaultConcordanceType() {
 		return defaultConcsType;
 	}
@@ -205,12 +199,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	@Override
 	public void setDefaultConcordanceType(ConcordanceType type) {
 		defaultConcsType = type;
-	}
-
-	@Override
-	@Deprecated
-	public void setMakeConcordancesFromForwardIndex(boolean concordancesFromForwardIndex) {
-		setDefaultConcordanceType(concordancesFromForwardIndex ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE);
 	}
 
 	/** If true, we want to add/delete documents. If false, we're just searching. */
@@ -345,20 +333,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 		return isEmptyIndex;
 	}
 
-	/**
-	 * Open an index.
-	 *
-	 * @param indexDir the index directory
-	 * @param indexMode if true, open in index mode; if false, open in search mode.
-	 * @param createNewIndex if true, delete existing index in this location if it exists.
-	 * @throws CorruptIndexException
-	 * @throws IOException
-	 */
-	private SearcherImpl(File indexDir, boolean indexMode, boolean createNewIndex)
-			throws CorruptIndexException, IOException {
-		this(indexDir, indexMode, createNewIndex, (File)null);
-	}
-
 	private void createAnalyzers() {
 		Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
 		fieldAnalyzers.put("fromInputFile", getAnalyzerInstance("nontokenizing"));
@@ -378,20 +352,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 		}
 
 		analyzer = new PerFieldAnalyzerWrapper(baseAnalyzer, fieldAnalyzers);
-	}
-
-	/**
-	 * Construct a Searcher object, the main search interface on a BlackLab index.
-	 *
-	 * @param indexDir
-	 *            the index directory
-	 * @throws CorruptIndexException
-	 * @throws IOException
-	 * @deprecated use Searcher.open(File)
-	 */
-	@Deprecated
-	public SearcherImpl(File indexDir) throws CorruptIndexException, IOException {
-		this(indexDir, false, false);
 	}
 
 	@Override
@@ -797,12 +757,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
-	@Deprecated
-	public String getContent(Document d) {
-		return getContent(d, mainContentsFieldName);
-	}
-
-	@Override
 	public String getContent(int docId, String fieldName) {
 		return getContent(docId, fieldName, -1, -1);
 	}
@@ -1069,13 +1023,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
-	@Deprecated
-	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI,
-			Collection<String> attrFI) {
-		setConcordanceXmlProperties(wordFI, punctFI, attrFI);
-	}
-
-	@Override
 	public void setConcordanceXmlProperties(String wordFI, String punctFI,
 			Collection<String> attrFI) {
 		concWordFI = wordFI;
@@ -1091,12 +1038,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	@Override
 	public void setDefaultContextSize(int defaultContextSize) {
 		this.defaultContextSize = defaultContextSize;
-	}
-
-	@Override
-	@Deprecated
-	public ContentStore getContentStoreDir(File indexXmlDir, boolean create) {
-		return openContentStore(indexXmlDir, create);
 	}
 
 	@Override
@@ -1294,18 +1235,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	@Override
 	public Analyzer getAnalyzer() {
 		return analyzer;
-	}
-
-	@Override
-	@Deprecated
-	public Analyzer getIndexAnalyzer() {
-		return getAnalyzer();
-	}
-
-	@Override
-	@Deprecated
-	public Analyzer getSearchAnalyzer() {
-		return getAnalyzer();
 	}
 
 	@Override

@@ -1,24 +1,38 @@
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
+import nl.inl.blacklab.MockForwardIndex;
+import nl.inl.blacklab.MockSearcher;
+import nl.inl.blacklab.MockTerms;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyDecade;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextPart;
+import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextStart;
 
 public class TestHitProperties {
 
-	Hits hits = new Hits((Searcher)null);
+	MockSearcher mockSearcher = new MockSearcher();
+
+	Hits hits = new Hits(mockSearcher);
+
+	@Before
+	public void setUp() {
+		mockSearcher.setForwardIndex(new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
+	}
 
 	@Test
 	public void testHitPropertySerialize() {
 		HitProperty prop;
 
-		// Need stub Searcher object for testing!
-//		prop = new HitPropertyDocumentDecade(hits, "decade");
-//		Assert.assertEquals("decade:decade", prop.serialize());
+		prop = new HitPropertyDocumentDecade(hits, "decade");
+		Assert.assertEquals("decade:decade", prop.serialize());
 
 		prop = new HitPropertyDocumentId(hits);
 		prop.setReverse(true);
@@ -26,8 +40,16 @@ public class TestHitProperties {
 		Assert.assertEquals(exp, prop.serialize());
 		Assert.assertEquals(exp, HitProperty.deserialize(hits, exp).serialize());
 
-//		prop = new HitPropertyHitText(hits, "lemma", "s");
-//		Assert.assertEquals("hit:lemma:s", prop.serialize());
+		prop = new HitPropertyHitText(hits, "contents", "lemma", true);
+		Assert.assertEquals("hit:lemma:s", prop.serialize());
+
+		List<ContextPart> contextParts = Arrays.asList(
+			new ContextPart(ContextStart.LEFT_OF_HIT, 1, 1),         // second word to left of hit
+			new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1), // first two hit words
+			new ContextPart(ContextStart.HIT_TEXT_FROM_END, 0, 0)    // last hit word
+		);
+		prop = new HitPropertyContextWords(hits, "contents", "lemma", true, contextParts);
+		Assert.assertEquals("context:lemma:s:L2-2$CMH1-2$CME1-1", prop.serialize());
 	}
 
 	@Test
@@ -45,10 +67,15 @@ public class TestHitProperties {
 	public void testHitPropValueSerialize() {
 		HitPropValue val, val1;
 
-		val1 = new HitPropValueDecade(1980);
-		String exp = "dec:1980";
+		val1 = new HitPropValueContextWord(hits, "lemma", 2, true);
+		String exp = "cwo:lemma:s:mies";
 		Assert.assertEquals(exp, val1.serialize());
-		Assert.assertEquals(exp, HitPropValue.deserialize(hits, "dec:1980").serialize());
+		Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
+
+		val1 = new HitPropValueDecade(1980);
+		exp = "dec:1980";
+		Assert.assertEquals(exp, val1.serialize());
+		Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
 
 		val = new HitPropValueMultiple(new HitPropValue[] {val1, new HitPropValueString("blabla")});
 		exp = "dec:1980,str:blabla";

@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.Searcher;
 public class HitPropertyContextWords extends HitProperty {
 
 	/** A location in the hit context to start a stretch of words from. */
-	private enum ContextPart {
+	public enum ContextStart {
 		LEFT_OF_HIT("L"),          // left context of the hit
 		HIT_TEXT_FROM_START("H"),  // hit text
 		HIT_TEXT_FROM_END("E"),    // hit text, backwards from last matched word
@@ -38,7 +38,7 @@ public class HitPropertyContextWords extends HitProperty {
 
 		private String code;
 
-		ContextPart(String code) {
+		ContextStart(String code) {
 			this.code = code;
 		}
 
@@ -49,12 +49,12 @@ public class HitPropertyContextWords extends HitProperty {
 	}
 
 	/** A stretch of words from the (surroundings of) the matched text. */
-	private static class ContextWordDef {
-		public ContextPart startFrom;
+	public static class ContextPart {
+		public ContextStart startFrom;
 		public int firstWord;
 		public int lastWord;
 
-		public ContextWordDef(ContextPart startFrom, int firstWord, int lastWord) {
+		public ContextPart(ContextStart startFrom, int firstWord, int lastWord) {
 			this.startFrom = startFrom;
 			this.firstWord = firstWord;
 			this.lastWord = lastWord;
@@ -62,7 +62,7 @@ public class HitPropertyContextWords extends HitProperty {
 
 		@Override
 		public String toString() {
-			return startFrom.toString() + firstWord + (lastWord >= 0 ? "," + lastWord : "");
+			return startFrom.toString() + (firstWord + 1) + (lastWord >= 0 ? "-" + (lastWord + 1) : "");
 		}
 
 		public int getNumberOfWords() {
@@ -80,11 +80,11 @@ public class HitPropertyContextWords extends HitProperty {
 
 	private Searcher searcher;
 
-	private List<ContextWordDef> words;
+	private List<ContextPart> words;
 
 	int totalWords;
 
-	public HitPropertyContextWords(Hits hits, String field, String property, boolean sensitive, List<ContextWordDef> words) {
+	public HitPropertyContextWords(Hits hits, String field, String property, boolean sensitive, List<ContextPart> words) {
 		super(hits);
 		this.searcher = hits.getSearcher();
 		if (property == null || property.length() == 0) {
@@ -99,9 +99,9 @@ public class HitPropertyContextWords extends HitProperty {
 		this.words = words;
 		if (words == null) {
 			this.words = new ArrayList<>();
-			this.words.add(new ContextWordDef(ContextPart.HIT_TEXT_FROM_START, 0, hits.getContextSize())); // "entire hit text"
+			this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, hits.getContextSize())); // "entire hit text"
 		} else {
-			for (ContextWordDef part: words) {
+			for (ContextPart part: words) {
 				if (part.lastWord == -1) {
 					// "as much as possible"
 					switch(part.startFrom) {
@@ -122,7 +122,7 @@ public class HitPropertyContextWords extends HitProperty {
 			}
 		}
 		totalWords = 0;
-		for (ContextWordDef contextWordDef: this.words) {
+		for (ContextPart contextWordDef: this.words) {
 			totalWords += contextWordDef.getNumberOfWords();
 		}
 	}
@@ -136,7 +136,7 @@ public class HitPropertyContextWords extends HitProperty {
 
 		int[] dest = new int[totalWords];
 		int destIndex = 0;
-		for (ContextWordDef contextWordDef: words) {
+		for (ContextPart contextWordDef: words) {
 			//
 			int srcStartIndex, srcDirection, finalValidSrcIndex;
 			switch(contextWordDef.startFrom) {
@@ -248,7 +248,7 @@ public class HitPropertyContextWords extends HitProperty {
 	 */
 	private String serializeContextWordSpec() {
 		StringBuilder result = new StringBuilder();
-		for (ContextWordDef contextWordPart: words) {
+		for (ContextPart contextWordPart: words) {
 			if (result.length() > 0)
 				result.append(",");
 			result.append(contextWordPart.toString());
@@ -263,7 +263,7 @@ public class HitPropertyContextWords extends HitProperty {
 		if (propName.length() == 0)
 			propName = ComplexFieldUtil.getDefaultMainPropName();
 		boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
-		List<ContextWordDef> whichWords = null;
+		List<ContextPart> whichWords = null;
 		if (parts.length > 2)
 			whichWords = parseContextWordSpec(parts[2]);
 		if (fieldName == null || fieldName.length() == 0)
@@ -275,25 +275,25 @@ public class HitPropertyContextWords extends HitProperty {
 	 * @param contextWordSpec specification string
 	 * @return stretches of context words indicated in the string
 	 */
-	private static List<ContextWordDef> parseContextWordSpec(String contextWordSpec) {
-		List<ContextWordDef> result = new ArrayList<>();
+	private static List<ContextPart> parseContextWordSpec(String contextWordSpec) {
+		List<ContextPart> result = new ArrayList<>();
 		for (String part: contextWordSpec.split("\\s*,\\s*")) {
 			if (part.length() == 0)
 				continue;
-			ContextPart startFrom;
+			ContextStart startFrom;
 			switch(part.charAt(0)) {
 			case 'L':
-				startFrom = ContextPart.LEFT_OF_HIT;
+				startFrom = ContextStart.LEFT_OF_HIT;
 				break;
 			case 'E':
-				startFrom = ContextPart.HIT_TEXT_FROM_END;
+				startFrom = ContextStart.HIT_TEXT_FROM_END;
 				break;
 			case 'R':
-				startFrom = ContextPart.RIGHT_OF_HIT;
+				startFrom = ContextStart.RIGHT_OF_HIT;
 				break;
 			default:
 			case 'H':
-				startFrom = ContextPart.HIT_TEXT_FROM_START;
+				startFrom = ContextStart.HIT_TEXT_FROM_START;
 				break;
 			}
 			int firstWord = 0;
@@ -308,7 +308,7 @@ public class HitPropertyContextWords extends HitProperty {
 					// ignore and accept the defaults
 				}
 			}
-			result.add(new ContextWordDef(startFrom, firstWord, lastWord));
+			result.add(new ContextPart(startFrom, firstWord, lastWord));
 		}
 		return result;
 	}

@@ -615,40 +615,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
-	@Deprecated
-	@Override
-	public synchronized List<String[]> retrieveParts(int fiid, int[] start, int[] end) {
-
-		// First, retrieve the token ids
-		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
-
-		// Translate them to strings using the terms index
-		List<String[]> result = new ArrayList<>(resultInt.size());
-		for (int[] snippetInt: resultInt) {
-			String[] snippet = new String[snippetInt.length];
-			for (int j = 0; j < snippetInt.length; j++) {
-				snippet[j] = terms.get(snippetInt[j]);
-			}
-			result.add(snippet);
-		}
-		return result;
-	}
-
-	@Deprecated
-	@Override
-	public synchronized List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end,
-			boolean sensitive) {
-
-		// First, retrieve the token ids
-		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
-
-		// Translate them to sort orders
-		for (int[] snippetInt: resultInt) {
-			terms.toSortOrder(snippetInt, snippetInt, sensitive);
-		}
-		return resultInt;
-	}
-
 	@Override
 	public synchronized List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
 		try {

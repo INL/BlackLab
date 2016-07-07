@@ -299,7 +299,9 @@ public abstract class Searcher {
 	 * @deprecated use getDefaultConcordanceType
 	 */
 	@Deprecated
-	public abstract boolean getMakeConcordancesFromForwardIndex();
+	public boolean getMakeConcordancesFromForwardIndex() {
+		return getDefaultConcordanceType() == ConcordanceType.FORWARD_INDEX;
+	}
 
 	public abstract ConcordanceType getDefaultConcordanceType();
 
@@ -319,7 +321,9 @@ public abstract class Searcher {
 	 * @deprecated use setDefaultConcordanceType()
 	 */
 	@Deprecated
-	public abstract void setMakeConcordancesFromForwardIndex(boolean concordancesFromForwardIndex);
+	public void setMakeConcordancesFromForwardIndex(boolean concordancesFromForwardIndex) {
+		setDefaultConcordanceType(concordancesFromForwardIndex ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE);
+	}
 
 	/**
 	 * Is this a newly created, empty index?
@@ -560,7 +564,9 @@ public abstract class Searcher {
 	 * @deprecated use version that takes a docId
 	 */
 	@Deprecated
-	public abstract String getContent(Document d, String fieldName);
+	public String getContent(Document d, String fieldName) {
+		throw new UnsupportedOperationException("Deprecated");
+	}
 
 	/**
 	 * Get the document contents (original XML).
@@ -571,7 +577,9 @@ public abstract class Searcher {
 	 * @deprecated use version that takes a docId
 	 */
 	@Deprecated
-	public abstract String getContent(Document d);
+	public String getContent(Document d) {
+		return getContent(d, getMainContentsFieldName());
+	}
 
 	/**
 	 * Get the contents of a field from a Lucene Document.
@@ -725,7 +733,9 @@ public abstract class Searcher {
 	 * @deprecated renamed to setConcordanceXmlProperties
 	 */
 	@Deprecated
-	public abstract void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI);
+	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
+		setConcordanceXmlProperties(wordFI, punctFI, attrFI);
+	}
 
 	/**
 	 * Indicate how to use the forward indices to build concordances.
@@ -766,7 +776,9 @@ public abstract class Searcher {
 	 * @deprecated renamed to openContentStore()
 	 */
 	@Deprecated
-	public abstract ContentStore getContentStoreDir(File indexXmlDir, boolean create);
+	public ContentStore getContentStoreDir(File indexXmlDir, boolean create) {
+		return openContentStore(indexXmlDir, create);
+	}
 
 	/**
 	 * Factory method to create a directory content store.
@@ -874,7 +886,9 @@ public abstract class Searcher {
 	 * @deprecated use getAnalyzer() (we can use the same analyzer for indexing and searching after all because wildcard queries are never analyzed)
 	 */
 	@Deprecated
-	public abstract Analyzer getIndexAnalyzer();
+	public Analyzer getIndexAnalyzer() {
+		return getAnalyzer();
+	}
 
 	/**
 	 * Get the analyzer to use for parsing document filters while searching.
@@ -883,7 +897,9 @@ public abstract class Searcher {
 	 * @deprecated use getAnalyzer() (we can use the same analyzer for indexing and searching after all because wildcard queries are never analyzed)
 	 */
 	@Deprecated
-	public abstract Analyzer getSearchAnalyzer();
+	public Analyzer getSearchAnalyzer() {
+		return getAnalyzer();
+	}
 
 	/**
 	 * Perform a document query only (no hits)

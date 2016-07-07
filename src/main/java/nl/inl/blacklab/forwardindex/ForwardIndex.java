@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.util.VersionFile;
@@ -100,7 +101,22 @@ public abstract class ForwardIndex {
 	 * @deprecated use retrievePartsInt and getTerms().get(id)
 	 */
 	@Deprecated
-	public abstract List<String[]> retrieveParts(int fiid, int[] start, int[] end);
+	public synchronized List<String[]> retrieveParts(int fiid, int[] start, int[] end) {
+
+		// First, retrieve the token ids
+		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
+
+		// Translate them to strings using the terms index
+		List<String[]> result = new ArrayList<>(resultInt.size());
+		for (int[] snippetInt: resultInt) {
+			String[] snippet = new String[snippetInt.length];
+			for (int j = 0; j < snippetInt.length; j++) {
+				snippet[j] = getTerms().get(snippetInt[j]);
+			}
+			result.add(snippet);
+		}
+		return result;
+	}
 
 	/**
 	 * Retrieve one or more parts from the specified content, in the form of token sort order ids.
@@ -121,7 +137,16 @@ public abstract class ForwardIndex {
 	 * @deprecated
 	 */
 	@Deprecated
-	public abstract List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end, boolean sensitive);
+	public synchronized List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end, boolean sensitive) {
+		// First, retrieve the token ids
+		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
+
+		// Translate them to sort orders
+		for (int[] snippetInt: resultInt) {
+			getTerms().toSortOrder(snippetInt, snippetInt, sensitive);
+		}
+		return resultInt;
+	}
 
 	/**
 	 * Retrieve one or more parts from the specified content, in the form of token ids.
