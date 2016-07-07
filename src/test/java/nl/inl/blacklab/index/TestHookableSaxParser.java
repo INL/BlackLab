@@ -28,6 +28,7 @@ public class TestHookableSaxParser {
 	@Before
 	public void setUp() {
 		String testXml = "<root>"
+				+ "<nochild>blabla</nochild>"
 				+ "<child><name>A</name><child att='123'><name>C</name></child></child>"
 				+ "<child><name>B</name><child att='456'><name>D</name></child></child>"
 				+ "</root>";
@@ -98,7 +99,7 @@ public class TestHookableSaxParser {
 	public void testAllDescendants() throws SAXException, IOException {
 		hookableSaxHandler.addHook("/root", hookHandler, true);
 		parser.parse(inputSource, hookableSaxHandler);
-		Assert.assertEquals("<<<$><<$>>><<$><<$>>>>", hookHandler.toString());
+		Assert.assertEquals("<<$><<$><<$>>><<$><<$>>>>", hookHandler.toString());
 	}
 
 //	@Test

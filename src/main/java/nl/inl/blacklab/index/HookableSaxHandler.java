@@ -67,6 +67,9 @@ public class HookableSaxHandler extends DefaultHandler {
 						if (elementToMatch.equals(elementName) || elementToMatch.equals("*")) {
 							// We have a match! Record it.
 							succesfulMatches++;
+						} else {
+							// Mismatch.
+							failedMatches++;
 						}
 						return;
 					}
