@@ -116,16 +116,16 @@ public class Searcher implements Closeable {
 	private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
 
 	/** Analyzer based on WhitespaceTokenizer */
-	private static BLWhitespaceAnalyzer whitespaceAnalyzer;
+	private static Analyzer whitespaceAnalyzer;
 
 	/** Analyzer for Dutch and other Latin script languages */
-	private static BLDutchAnalyzer defaultAnalyzer;
+	private static Analyzer defaultAnalyzer;
 
 	/** Analyzer based on StandardTokenizer */
-	private static BLStandardAnalyzer standardAnalyzer;
+	private static Analyzer standardAnalyzer;
 
 	/** Analyzer that doesn't tokenize */
-	private static BLNonTokenizingAnalyzer nonTokenizingAnalyzer;
+	private static Analyzer nonTokenizingAnalyzer;
 
 	static {
 		// Create the various analyzer objects we'll be using for metadata fields.
@@ -172,7 +172,7 @@ public class Searcher implements Closeable {
 	/**
 	 * Name of the main contents field (used as default parameter value for many methods)
 	 */
-	public String mainContentsFieldName;
+	private String mainContentsFieldName;
 
 	/** Default number of words around a hit */
 	private int defaultContextSize = 5;
