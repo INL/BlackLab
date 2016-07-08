@@ -46,7 +46,7 @@ public class TestForwardIndexDelete {
 		// Create new test dir
 		dir = Utilities.createBlackLabTestDir("ForwardIndexDelete");
 
-		fi = new ForwardIndexImplV3(dir, true, null, true);
+		fi = new ForwardIndexImplV3(dir, true, null, true, true);
 		// Store strings
 		List<Integer> toDelete = new ArrayList<>();
 		for (int j = 0; j < docLengths.length; j++) {

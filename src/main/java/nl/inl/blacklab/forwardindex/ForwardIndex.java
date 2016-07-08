@@ -220,42 +220,13 @@ public abstract class ForwardIndex {
 	 * instantiates the right class.
 	 *
 	 * @param dir forward index directory
-	 * @return the forward index object
-	 */
-	public static ForwardIndex open(File dir) {
-		return open(dir, false, null, false);
-	}
-
-	/**
-	 * Open a forward index.
-	 *
-	 * Automatically figures out the forward index version and
-	 * instantiates the right class.
-	 *
-	 * @param dir forward index directory
-	 * @param indexMode true iff we're in index mode (writing to
-	 *   the forward index); otherwise it will be read-only.
-	 * @return the forward index object
-	 */
-	public static ForwardIndex open(File dir, boolean indexMode) {
-		return open(dir, indexMode, null, false);
-	}
-
-	/**
-	 * Open a forward index.
-	 *
-	 * Automatically figures out the forward index version and
-	 * instantiates the right class.
-	 *
-	 * @param dir forward index directory
 	 * @param indexMode true iff we're in index mode (writing to
 	 *   the forward index); otherwise it will be read-only.
 	 * @param collator collator to use for sorting
 	 * @param create if true, create a new forward index
 	 * @return the forward index object
 	 */
-	public static ForwardIndex open(File dir, boolean indexMode, Collator collator,
-			boolean create) {
+	public static ForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create) {
 
 		if (!dir.exists()) {
 			if (!create)

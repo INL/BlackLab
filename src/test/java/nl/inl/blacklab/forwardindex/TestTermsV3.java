@@ -43,7 +43,7 @@ public class TestTermsV3 {
 		dir = Utilities.createBlackLabTestDir("Terms");
 
 		// Store some terms
-		t = new TermsImplV3(true, Collator.getInstance(new Locale("en", "GB")));
+		t = new TermsImplV3(true, Collator.getInstance(new Locale("en", "GB")), null, true);
 		for (int i = 0; i < str.length; i++) {
 			t.indexOf(str[i]);
 		}
@@ -51,7 +51,7 @@ public class TestTermsV3 {
 		t.write(f); // close so everything is guaranteed to be written
 
 		// Open for reading
-		t = new TermsImplV3(false, Collator.getInstance(new Locale("en", "GB")), f);
+		t = new TermsImplV3(false, Collator.getInstance(new Locale("en", "GB")), f, true);
 	}
 
 	@After

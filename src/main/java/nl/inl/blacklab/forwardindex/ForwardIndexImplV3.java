@@ -27,7 +27,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,15 +34,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.util.ExUtil;
-
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.uninverting.UninvertingReader;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.util.ExUtil;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question
@@ -196,7 +195,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
-	protected ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create, boolean largeTermsFileSupport) {
+	ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create, boolean largeTermsFileSupport) {
 		if (!dir.exists()) {
 			if (!create)
 				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
@@ -227,7 +226,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				existing = true;
 				tocModified = false;
 			} else {
-				terms = new TermsImplV3(indexMode, collator);
+				terms = new TermsImplV3(indexMode, collator, null, true);
 				tokensFile.createNewFile();
 				tokensFileChunks = null;
 				tocModified = true;
@@ -256,10 +255,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		if (create) {
 			clear();
 		}
-	}
-
-	public ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create) {
-		this(dir, indexMode, collator, create, true);
 	}
 
 	private void openTokensFile() throws FileNotFoundException {
@@ -717,21 +712,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			return result;
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
-		}
-	}
-
-	public static void main(String[] args) {
-		ForwardIndex fi = new ForwardIndexImplV3(new File("E:\\temp"), true, null, false);
-		try {
-			String test = "the quick brown fox jumps over the lazy dog . the brown quick dog jumps beside the lazy fox";
-			int doc = fi.addDocument(Arrays.asList(test.split("\\s+")));
-			System.out.println("Stored " + doc);
-
-			test = "fox jumps over dog";
-			doc = fi.addDocument(Arrays.asList(test.split("\\s+")));
-			System.out.println("Stored " + doc);
-		} finally {
-			fi.close();
 		}
 	}
 

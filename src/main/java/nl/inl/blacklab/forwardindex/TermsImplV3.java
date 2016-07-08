@@ -86,7 +86,7 @@ class TermsImplV3 extends Terms {
 	/** Use new blocks-based terms file, that can grow larger than 2 GB? */
 	private boolean useBlockBasedTermsFile = true;
 
-	public TermsImplV3(boolean indexMode, Collator collator) {
+	TermsImplV3(boolean indexMode, Collator collator, File termsFile, boolean useBlockBasedTermsFile) {
 		this.indexMode = indexMode;
 		if (collator == null)
 			collator = Collator.getInstance();
@@ -104,16 +104,8 @@ class TermsImplV3 extends Terms {
 			this.termIndex = Maps.mutable.empty();
 		}
 		termIndexBuilt = true;
-	}
-
-	public TermsImplV3(boolean indexMode, Collator coll, File termsFile) {
-		this(indexMode, coll, termsFile, true);
-	}
-
-	public TermsImplV3(boolean indexMode, Collator coll, File termsFile, boolean useBlockBasedTermsFile) {
-		this(indexMode, coll);
 		setBlockBasedFile(useBlockBasedTermsFile);
-		if (termsFile.exists())
+		if (termsFile != null && termsFile.exists())
 			read(termsFile);
 	}
 
