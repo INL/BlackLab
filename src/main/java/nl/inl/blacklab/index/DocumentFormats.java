@@ -12,6 +12,7 @@ import nl.inl.blacklab.indexers.DocIndexerPageXml;
 import nl.inl.blacklab.indexers.DocIndexerTei;
 import nl.inl.blacklab.indexers.DocIndexerTeiPosInFunctionAttr;
 import nl.inl.blacklab.indexers.DocIndexerTeiText;
+import nl.inl.blacklab.indexers.DocIndexerWhiteLab2;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 
 /**
@@ -30,6 +31,7 @@ public class DocumentFormats {
 		// be on the classpath)
 		register("alto", DocIndexerAlto.class);
 		register("folia", DocIndexerFolia.class);
+		register("whitelab2", DocIndexerWhiteLab2.class);
 		register("pagexml", DocIndexerPageXml.class);
 		register("sketchxml", DocIndexerXmlSketch.class);
 
