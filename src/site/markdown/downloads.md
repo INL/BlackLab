@@ -32,11 +32,11 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
 		<tr>
-			<td>v1.3.5</td>
-			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.5/blacklab-1.3.5.jar'>Binary (jar)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.5.tar.gz'>Source (tgz)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.5.zip'>Source (zip)</a></td>
-			<td>Fixed occasionally missing certain valid hits.</td>
+			<td>v1.3.6/td>
+			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.6/blacklab-1.3.6.jar'>Binary (jar)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.6.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.6.zip'>Source (zip)</a></td>
+			<td>Fixed a few semi-rare indexing bugs.</td>
 		</tr>
 		<tr>
 			<td>v1.3</td>

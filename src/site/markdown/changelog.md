@@ -2,9 +2,12 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.3.6
+
 ### Fixed
-* Content store growing larger than 2 GB caused an
-  integer overflow.
+* Content store growing larger than 2 GB caused an integer overflow.
+* Fixed bug with element matching in DocIndexers.
+* Fixed rare bug while storing document in ContentStoreDirFixedBlock.
 
 ## Improvements up to v1.3.5
 
