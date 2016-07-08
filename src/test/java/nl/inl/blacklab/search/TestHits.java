@@ -19,6 +19,7 @@ import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.MockSearcher;
 import nl.inl.blacklab.MockSpans;
 
 public class TestHits {
@@ -30,7 +31,7 @@ public class TestHits {
 		int[] aEnd = new int[] { 2, 3 };
 		Spans a = new MockSpans(aDoc, aStart, aEnd);
 
-		Hits hits = new HitsImpl(null, null, a);
+		Hits hits = HitsImpl.fromSpans(new MockSearcher(), "word", a);
 
 		int i = 0;
 		for (Hit hit: hits) {

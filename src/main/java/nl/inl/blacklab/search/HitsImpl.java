@@ -487,6 +487,23 @@ public class HitsImpl extends Hits {
 		}
 	}
 
+	/**
+	 * Construct an empty Hits object.
+	 *
+	 * Used for testing. If possible, don't use this, but construct a Hits object from a
+	 * SpanQuery, as it's more efficient.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param concordanceFieldPropName
+	 *            field to use by default when finding concordances
+	 * @param source
+	 *            where to retrieve the Hit objects from
+	 */
+	public static Hits fromSpans(Searcher searcher, String concordanceFieldPropName, Spans source) {
+		return new HitsImpl(searcher, concordanceFieldPropName, source);
+	}
+
 	private void extractTermsFromSpanQuery(Set<Term> terms) {
 		try {
 			// FIXME: temporary extractTerms hack
