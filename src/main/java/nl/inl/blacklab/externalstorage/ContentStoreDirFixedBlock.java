@@ -293,13 +293,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
 	/**
 	 * @param dir content store dir
-	 */
-	public ContentStoreDirFixedBlock(File dir) {
-		this(dir, false);
-	}
-
-	/**
-	 * @param dir content store dir
 	 * @param create if true, create a new content store
 	 */
 	public ContentStoreDirFixedBlock(File dir, boolean create) {

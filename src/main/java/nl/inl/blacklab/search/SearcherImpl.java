@@ -61,10 +61,6 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
 import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.externalstorage.ContentStoreDirAbstract;
-import nl.inl.blacklab.externalstorage.ContentStoreDirFixedBlock;
-import nl.inl.blacklab.externalstorage.ContentStoreDirUtf8;
-import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
@@ -311,7 +307,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 						dir = new File(indexDir, "xml"); // OLD, should eventually be removed
 					}
 					if (dir.exists()) {
-						registerContentStore(cfn, openContentStore(dir));
+						registerContentStore(cfn, openContentStore(dir, false));
 					}
 				}
 			}
@@ -860,9 +856,9 @@ public class SearcherImpl extends Searcher implements Closeable {
 	public ContentStore getContentStore(String fieldName) {
 		ContentAccessor ca = contentAccessors.get(fieldName);
 		if (indexMode && ca == null) {
-			// Index mode. Create new content store.
-			ContentStore contentStore = new ContentStoreDirFixedBlock(new File(indexLocation, "cs_"
-					+ fieldName), isEmptyIndex);
+			// Index mode. Create new content store or open existing one.
+			File contentStoreDir = new File(indexLocation, "cs_" + fieldName);
+			ContentStore contentStore = ContentStore.open(contentStoreDir, isEmptyIndex);
 			registerContentStore(fieldName, contentStore);
 			return contentStore;
 		}
@@ -1038,32 +1034,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	@Override
 	public void setDefaultContextSize(int defaultContextSize) {
 		this.defaultContextSize = defaultContextSize;
-	}
-
-	@Override
-	public ContentStore openContentStore(File indexXmlDir, boolean create) {
-		String type;
-		if (create)
-			type = "fixedblock";
-		else {
-			VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
-			type = vf.getType();
-		}
-		if (type.equals("fixedblock"))
-			return new ContentStoreDirFixedBlock(indexXmlDir, create);
-		if (type.equals("utf8zip"))
-			return new ContentStoreDirZip(indexXmlDir, create);
-		if (type.equals("utf8"))
-			return new ContentStoreDirUtf8(indexXmlDir, create);
-		if (type.equals("utf16")) {
-			throw new RuntimeException("UTF-16 content store is deprecated. Please re-index your data.");
-		}
-		throw new RuntimeException("Unknown content store type " + type);
-	}
-
-	@Override
-	public ContentStore openContentStore(File indexXmlDir) {
-		return openContentStore(indexXmlDir, false);
 	}
 
 	@Override

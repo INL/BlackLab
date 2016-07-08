@@ -288,11 +288,6 @@ public class MockSearcher extends Searcher {
 	}
 
 	@Override
-	public ContentStore openContentStore(File indexXmlDir) {
-		return null;
-	}
-
-	@Override
 	public Terms getTerms(String fieldPropName) {
 		return null;
 	}

@@ -49,7 +49,7 @@ public class TestContentStoreDirFixedBlock {
 		// Create new test dir
 		dir = Utilities.createBlackLabTestDir("ContentStoreDirNew");
 
-		store = new ContentStoreDirFixedBlock(dir);
+		store = new ContentStoreDirFixedBlock(dir, false);
 		try {
 
 			// Create four different documents that span different numbers of 4K blocks.
@@ -70,7 +70,7 @@ public class TestContentStoreDirFixedBlock {
 		} finally {
 			store.close(); // close so everything is guaranteed to be written
 		}
-		store = new ContentStoreDirFixedBlock(dir);
+		store = new ContentStoreDirFixedBlock(dir, false);
 	}
 
 	@After
@@ -189,14 +189,14 @@ public class TestContentStoreDirFixedBlock {
 	@Test
 	public void testCloseReopen() {
 		store.close();
-		store = new ContentStoreDirFixedBlock(dir);
+		store = new ContentStoreDirFixedBlock(dir, false);
 		Assert.assertEquals(doc[0], store.retrieve(1));
 	}
 
 	@Test
 	public void testCloseReopenAppend() {
 		store.close();
-		store = new ContentStoreDirFixedBlock(dir);
+		store = new ContentStoreDirFixedBlock(dir, false);
 		Assert.assertEquals(5, store.store("test"));
 	}
 }

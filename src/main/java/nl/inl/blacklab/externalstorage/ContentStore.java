@@ -15,7 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.externalstorage;
 
+import java.io.File;
 import java.util.Set;
+
+import nl.inl.util.VersionFile;
 
 
 /**
@@ -116,5 +119,25 @@ public abstract class ContentStore {
 	 * @return the length in characters
 	 */
 	public abstract int getDocLength(int id);
+
+	public static ContentStore open(File indexXmlDir, boolean create) {
+		String type;
+		if (create)
+			type = "fixedblock";
+		else {
+			VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
+			type = vf.getType();
+		}
+		if (type.equals("fixedblock"))
+			return new ContentStoreDirFixedBlock(indexXmlDir, create);
+		if (type.equals("utf8zip"))
+			return new ContentStoreDirZip(indexXmlDir, create);
+		if (type.equals("utf8"))
+			return new ContentStoreDirUtf8(indexXmlDir, create);
+		if (type.equals("utf16")) {
+			throw new RuntimeException("UTF-16 content store is deprecated. Please re-index your data.");
+		}
+		throw new RuntimeException("Unknown content store type " + type);
+	}
 
 }

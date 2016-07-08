@@ -780,16 +780,9 @@ public abstract class Searcher {
 	 * @param create if true, create a new content store even if one exists
 	 * @return the content store
 	 */
-	public abstract ContentStore openContentStore(File indexXmlDir, boolean create);
-
-	/**
-	 * Factory method to create a directory content store.
-	 *
-	 * @param indexXmlDir
-	 *            the content store directory
-	 * @return the content store
-	 */
-	public abstract ContentStore openContentStore(File indexXmlDir);
+	public ContentStore openContentStore(File indexXmlDir, boolean create) {
+		return ContentStore.open(indexXmlDir, create);
+	}
 
 	/**
 	 * Get the Terms object for the specified field.
