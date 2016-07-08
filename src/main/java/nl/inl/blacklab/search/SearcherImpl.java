@@ -59,7 +59,6 @@ import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
-import nl.inl.blacklab.externalstorage.ContentAccessorContentStore;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -688,7 +687,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 		int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord,
 				endAtWord);
-		return ca.getSubstringFromDocument(d, startEnd[0], startEnd[1]);
+		return ca.getSubstringsFromDocument(d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
 	}
 
 	/**
@@ -734,7 +733,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 			return d.get(fieldName).substring(startAtChar, endAtChar);
 		}
 
-		return ca.getSubstringFromDocument(d, startAtChar, endAtChar);
+		return ca.getSubstringsFromDocument(d, new int[] { startAtChar }, new int[] { endAtChar })[0];
 	}
 
 	@Override
@@ -747,7 +746,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 			content = d.get(fieldName);
 		} else {
 			// Content accessor set. Use it to retrieve the content.
-			content = ca.getSubstringFromDocument(d, -1, -1);
+			content = ca.getSubstringsFromDocument(d, new int[] { -1 }, new int[] { -1 })[0];
 		}
 		return content;
 	}
@@ -862,10 +861,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 			registerContentStore(fieldName, contentStore);
 			return contentStore;
 		}
-		if (ca instanceof ContentAccessorContentStore) {
-			return ((ContentAccessorContentStore) ca).getContentStore();
-		}
-		return null;
+		return ca.getContentStore();
 	}
 
 	/**
@@ -884,7 +880,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	 *
 	 */
 	private void registerContentStore(String fieldName, ContentStore contentStore) {
-		registerContentAccessor(new ContentAccessorContentStore(fieldName, contentStore));
+		registerContentAccessor(new ContentAccessor(fieldName, contentStore));
 	}
 
 	@Override
@@ -1176,15 +1172,8 @@ public class SearcherImpl extends Searcher implements Closeable {
 						}
 
 						// Delete this document in all content stores
-						for (Map.Entry<String, ContentAccessor> e: contentAccessors.entrySet()) {
-							String fieldName = e.getKey();
-							ContentAccessor ca = e.getValue();
-							if (!(ca instanceof ContentAccessorContentStore))
-								continue; // can only delete from content store
-							ContentStore cs = ((ContentAccessorContentStore) ca).getContentStore();
-							int cid = Integer.parseInt(d.get(ComplexFieldUtil
-									.contentIdField((fieldName))));
-							cs.delete(cid);
+						for (ContentAccessor ca: contentAccessors.values()) {
+							ca.delete(d);
 						}
 					}
 				} finally {
