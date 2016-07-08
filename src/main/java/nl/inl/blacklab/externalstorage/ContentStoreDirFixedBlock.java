@@ -830,13 +830,22 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				// Check the size
 				float waste = (float)(BLOCK_SIZE_BYTES - compressedDataLength) / BLOCK_SIZE_BYTES;
 				float ratio = (float)length / compressedDataLength;
+
 				if (compressedDataLength > BLOCK_SIZE_BYTES) {
-					logger.debug("Block size too large, retrying. Char length: " + length + ", encoded length: " + compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", ratio: " + ratio);
-					length -= (compressedDataLength - BLOCK_SIZE_BYTES) * MAX_COMPRESSION_FACTOR;
+					// Compressed block too large.
+					// Shrink the uncompressed data length by 5% more than what we expect to be required.
+					float shrinkFactor = 1.0f + (1.05f * (compressedDataLength - BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
+					logger.debug("Block size too large, retrying. Char length: " + length + ", encoded length: " + compressedDataLength + " > " + BLOCK_SIZE_BYTES + ", shrinkFactor: " + shrinkFactor);
+					length = (int)(length / shrinkFactor);
+					if (length <= 0)
+						length = 1;
 					doMinCheck = false; // prevent oscillation between enlarging and shrinking
 				} else if (doMinCheck && length < available && compressedDataLength < MINIMUM_ACCEPTABLE_BLOCK_SIZE) {
-					logger.debug("Block size too small, retrying. Char length: " + length + ", encoded length: " + compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", waste%: " + waste + ", ratio: " + ratio);
-					length += (MINIMUM_ACCEPTABLE_BLOCK_SIZE - compressedDataLength) * AVERAGE_COMPRESSION_FACTOR;
+					// Compressed block too small.
+					// Grow the uncompressed data length by 5% less than what we expect is possible.
+					float growFactor = 1.0f + (0.95f * (BLOCK_SIZE_BYTES - compressedDataLength)) / compressedDataLength;
+					logger.debug("Block size too small, retrying. Char length: " + length + ", encoded length: " + compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", growFactor: " + growFactor);
+					length = (int)(length * growFactor);
 					if (length > available)
 						length = available;
 				} else {
