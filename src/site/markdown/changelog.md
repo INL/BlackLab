@@ -2,18 +2,20 @@
 
 ## Improvements in HEAD
 
-## Improvements up to v1.3.6
-
-### Fixed
-* Content store growing larger than 2 GB caused an integer overflow.
-* Fixed rare bug while storing document in ContentStoreDirFixedBlock.
-* DocIndexersXmlHandlers element matching didn't work correctly for some XML structures.
-
 ### Changed
 * Performed some code cleanups, moved some internal classes to different packages.
 * Made Searcher an abstract base class to SearcherImpl.
 * Made Hits an abstract base class to HitsImpl.
 * Added mock classes for Searcher, Hits, ForwardIndex, Terms; used them to add tests.
+* Updated gs-collections 6.1 to eclipse-collections 7.1 .
+
+## Improvements up to v1.3.6
+
+### Fixed
+* Content store growing larger than 2 GB caused an integer overflow.
+* DocIndexersXmlHandlers element matching didn't work correctly for some XML structures.
+* Storing document in ContentStoreDirFixedBlock would very rarely crash due to a
+  block resizing bug.
 
 ## Improvements up to v1.3.5
 

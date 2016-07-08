@@ -38,8 +38,7 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import org.apache.log4j.Logger;
-
-import com.gs.collections.impl.factory.Maps;
+import org.eclipse.collections.impl.factory.Maps;
 
 import nl.inl.util.ExUtil;
 import nl.inl.util.SimpleResourcePool;

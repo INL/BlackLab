@@ -435,11 +435,11 @@
 			<version>4.8</version>
 			<scope>test</scope>
 		</dependency>
-
+		
 		<dependency>
-			<groupId>com.goldmansachs</groupId>
-			<artifactId>gs-collections</artifactId>
-			<version>6.1.0</version>
+			<groupId>org.eclipse.collections</groupId>
+			<artifactId>eclipse-collections</artifactId>
+			<version>7.1.0</version>
 		</dependency>
 		
 		<dependency>
