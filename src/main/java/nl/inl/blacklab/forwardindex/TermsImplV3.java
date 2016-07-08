@@ -28,8 +28,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
-
-import com.gs.collections.impl.factory.Maps;
+import org.eclipse.collections.impl.factory.Maps;
 
 /**
  * Keeps a first-come-first-serve list of unique terms.

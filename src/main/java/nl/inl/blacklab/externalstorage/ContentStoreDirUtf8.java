@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.gs.collections.impl.factory.Maps;
+import org.eclipse.collections.impl.factory.Maps;
 
 import nl.inl.util.ExUtil;
 

@@ -2,12 +2,19 @@
 
 ## Improvements in HEAD
 
+### Changed
+* Updated gs-collections 6.1 to eclipse-collections 7.1 .
+* Fixed large content store opening really slowly.
+
 ## Improvements up to v1.3.6
 
 ### Fixed
 * Content store growing larger than 2 GB caused an integer overflow.
 * Fixed bug with element matching in DocIndexers.
 * Fixed rare bug while storing document in ContentStoreDirFixedBlock.
+* DocIndexersXmlHandlers element matching didn't work correctly for some XML structures.
+* Storing document in ContentStoreDirFixedBlock would very rarely crash due to a
+  block resizing bug.
 
 ## Improvements up to v1.3.5
 
