@@ -7,6 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitProperty;
@@ -60,6 +63,66 @@ public abstract class Hits extends AbstractList<Hit> {
 	 */
 	public static void setDefaultMaxHitsToCount(int n) {
 		Hits.defaultMaxHitsToCount = n;
+	}
+
+	/**
+	 * Construct an empty Hits object.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param concordanceFieldName
+	 *            field to use by default when finding concordances
+	 */
+	public static Hits emptyList(Searcher searcher, String concordanceFieldPropName) {
+		return fromList(searcher, concordanceFieldPropName, (List<Hit>)null);
+	}
+
+	/**
+	 * Make a wrapper Hits object for a list of Hit objects.
+	 *
+	 * Does not copy the list, but reuses it.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param concordanceFieldName
+	 *            field to use by default when finding concordances
+	 * @param hits the list of hits to wrap
+	 */
+	public static Hits fromList(Searcher searcher, String concField, List<Hit> docHits) {
+		return new HitsImpl(searcher, concField, docHits);
+	}
+
+	/**
+	 * Construct a Hits object from a SpanQuery.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param concordanceFieldPropName
+	 *            field to use by default when finding concordances
+	 * @param sourceQuery
+	 *            the query to execute to get the hits
+	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
+	 */
+	public static Hits fromSpanQuery(Searcher searcher, String field, SpanQuery query) {
+		return new HitsImpl(searcher, field, query);
+	}
+
+
+	/**
+	 * Construct a Hits object from a Spans.
+	 *
+	 * Used for testing. Don't use this in applications, but construct a Hits object from a
+	 * SpanQuery, as it's more efficient.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param concordanceFieldPropName
+	 *            field to use by default when finding concordances
+	 * @param source
+	 *            where to retrieve the Hit objects from
+	 */
+	public static Hits fromSpans(Searcher searcher, String concordanceFieldPropName, Spans source) {
+		return new HitsImpl(searcher, concordanceFieldPropName, source);
 	}
 
 	/**

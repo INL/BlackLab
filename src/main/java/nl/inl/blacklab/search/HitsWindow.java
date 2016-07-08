@@ -17,6 +17,7 @@ package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Represents a subset of a Hits object, for example a page of hits.
@@ -53,7 +54,7 @@ public class HitsWindow extends HitsImpl {
 	 */
 	@Deprecated
 	public HitsWindow(Hits source, int first, int windowSize) {
-		super(source.getSearcher(), source.getConcordanceFieldName());
+		super(source.getSearcher(), source.getConcordanceFieldName(), (List<Hit>)null);
 		this.source = source;
 		this.first = first;
 		this.windowSize = windowSize;

@@ -469,18 +469,18 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 	@Override
 	public Hits find(SpanQuery query, String fieldNameConc) throws BooleanQuery.TooManyClauses {
-		return new HitsImpl(this, fieldNameConc, query);
+		return Hits.fromSpanQuery(this, fieldNameConc, query);
 	}
 
 	@Override
 	public Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses {
-		return new HitsImpl(this, mainContentsFieldName, query);
+		return Hits.fromSpanQuery(this, mainContentsFieldName, query);
 	}
 
 	@Override
 	public Hits find(TextPattern pattern, String fieldName, Filter filter)
 			throws BooleanQuery.TooManyClauses {
-		return new HitsImpl(this, fieldName, createSpanQuery(pattern, fieldName, filter));
+		return Hits.fromSpanQuery(this, fieldName, createSpanQuery(pattern, fieldName, filter));
 	}
 
 	@Override
@@ -673,7 +673,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord, int endAtWord) {
 		// FIXME: use fieldName
 		Hit hit = new Hit(docId, startAtWord, endAtWord);
-		Hits hits = new HitsImpl(this, Arrays.asList(hit));
+		Hits hits = Hits.fromList(this, getContentsFieldMainPropName(), Arrays.asList(hit));
 		Kwic kwic = hits.getKwic(hit, 0);
 		return kwic.getDocContents();
 	}

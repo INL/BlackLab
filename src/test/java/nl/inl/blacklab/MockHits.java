@@ -1,5 +1,6 @@
 package nl.inl.blacklab;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -20,18 +21,30 @@ import nl.inl.util.ThreadPriority.Level;
 
 public class MockHits extends Hits {
 
+	private Searcher searcher;
 	private int[] doc;
 	private int[] start;
 	private int[] end;
 
-	public MockHits(int[] doc, int[] start, int[] end) {
+	public MockHits(Searcher searcher, int[] doc, int[] start, int[] end) {
+		this(searcher);
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
 	}
 
-	public MockHits(MockHits mockHits) {
-		// TODO Auto-generated constructor stub
+	public MockHits(Searcher searcher) {
+		this.searcher = searcher;
+		this.doc = new int[0];
+		this.start = new int[0];
+		this.end = new int[0];
+	}
+
+	public MockHits(MockHits o) {
+		this.searcher = o.getSearcher();
+		this.doc = Arrays.copyOf(o.doc, o.doc.length);
+		this.start = Arrays.copyOf(o.start, o.start.length);
+		this.end = Arrays.copyOf(o.end, o.end.length);
 	}
 
 	@Override
@@ -296,8 +309,7 @@ public class MockHits extends Hits {
 
 	@Override
 	public Searcher getSearcher() {
-		//
-		return null;
+		return searcher;
 	}
 
 	@Override

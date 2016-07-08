@@ -53,7 +53,7 @@ public class MockSearcher extends Searcher {
 
 	@Override
 	public ConcordanceType getDefaultConcordanceType() {
-		return null;
+		return ConcordanceType.FORWARD_INDEX;
 	}
 
 	@Override
@@ -274,7 +274,7 @@ public class MockSearcher extends Searcher {
 
 	@Override
 	public int getDefaultContextSize() {
-		return 0;
+		return 5;
 	}
 
 	@Override

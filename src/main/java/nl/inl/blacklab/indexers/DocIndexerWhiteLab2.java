@@ -286,7 +286,7 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 			public void startElement(String uri, String localName, String qName,
 					Attributes attributes) {
 				speaker = attributes.getValue("speaker");
-				ids = new ArrayList<String>();
+				ids = new ArrayList<>();
 				if (insideElement())
 			        super.startElement(uri, localName, qName, attributes);
 			}

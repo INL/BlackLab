@@ -19,6 +19,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.MockHits;
+import nl.inl.blacklab.MockSearcher;
 import nl.inl.blacklab.search.Hits;
 
 public class TestDocResults {
@@ -29,7 +30,7 @@ public class TestDocResults {
 		int[] aStart = new int[] { 1, 2, 3, 4, 5 };
 		int[] aEnd = new int[] { 2, 3, 4, 5, 6 };
 
-		Hits hits = new MockHits(aDoc, aStart, aEnd);
+		Hits hits = new MockHits(new MockSearcher(), aDoc, aStart, aEnd);
 		DocResults drs = hits.perDocResults();
 
 		int[] expDoc = new int[] {1, 2, 3};

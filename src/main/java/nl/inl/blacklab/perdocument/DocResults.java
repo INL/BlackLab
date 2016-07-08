@@ -34,7 +34,6 @@ import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.HitsImpl;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 import nl.inl.util.ReverseComparator;
@@ -131,7 +130,7 @@ public class DocResults implements Iterable<DocResult> {
 	 */
 	@Deprecated
 	public DocResults(Searcher searcher, String field, SpanQuery query) {
-		this(searcher, new HitsImpl(searcher, field, query));
+		this(searcher, Hits.fromSpanQuery(searcher, field, query));
 	}
 
 	/**
@@ -388,13 +387,13 @@ public class DocResults implements Iterable<DocResult> {
 				partialDocHits = null;
 
 				IndexReader indexReader = searcher == null ? null : searcher.getIndexReader();
-				//Thread currentThread = Thread.currentThread();
+				String concordanceFieldName = searcher == null ? "contents" : searcher.getContentsFieldMainPropName();
 				while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
 					Hit hit = sourceHitsIterator.next();
 					if (hit.doc != doc) {
 						if (docHits != null) {
-							Hits hits = new HitsImpl(searcher, docHits);
+							Hits hits = Hits.fromList(searcher, concordanceFieldName, docHits);
 							hits.copySettingsFrom(sourceHits); // concordance type, etc.
 							addDocResultToList(doc, hits, indexReader);
 						}
@@ -409,7 +408,7 @@ public class DocResults implements Iterable<DocResult> {
 						partialDocId = doc;
 						partialDocHits = docHits; // not done, continue from here later
 					} else {
-						Hits hits = new HitsImpl(searcher, docHits);
+						Hits hits = Hits.fromList(searcher, concordanceFieldName, docHits);
 						hits.copySettingsFrom(sourceHits); // concordance type, etc.
 						addDocResultToList(doc, hits, indexReader);
 					}

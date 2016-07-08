@@ -19,7 +19,6 @@ import java.util.List;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.HitsImpl;
 import nl.inl.blacklab.search.Searcher;
 
 /**
@@ -31,7 +30,7 @@ public class HitGroup extends Group {
 
 	HitGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField) {
 		super(groupIdentity);
-		results = new HitsImpl(searcher, defaultConcField);
+		results = Hits.emptyList(searcher, defaultConcField);
 	}
 
 	/**
@@ -46,7 +45,7 @@ public class HitGroup extends Group {
 	 */
 	HitGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField, List<Hit> hits) {
 		super(groupIdentity);
-		results = new HitsImpl(searcher, defaultConcField, hits);
+		results = Hits.fromList(searcher, defaultConcField, hits);
 	}
 
 	public Hits getHits() {

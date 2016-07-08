@@ -21,7 +21,6 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.HitsImpl;
 import nl.inl.blacklab.search.Searcher;
 
 /**
@@ -44,7 +43,7 @@ public class DocResult {
 		this.docId = docId;
 		this.document = document;
 		this.score = score;
-		hits = new HitsImpl(searcher, concField);
+		hits = Hits.emptyList(searcher, concField);
 	}
 
 	/**
@@ -63,7 +62,7 @@ public class DocResult {
 		this.docId = doc;
 		this.document = document;
 		this.score = 0.0f;
-		hits = new HitsImpl(searcher, concField, docHits);
+		hits = Hits.fromList(searcher, concField, docHits);
 	}
 
 	/**
