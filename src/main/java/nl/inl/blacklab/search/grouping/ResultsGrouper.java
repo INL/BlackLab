@@ -78,7 +78,7 @@ public class ResultsGrouper extends HitGroups {
 	 *            the criteria to group on
 	 * @param defaultConcField
 	 *            the default concordance field
-	 * @deprecated pass a Hits object to ResultsGrouper
+	 * @deprecated use Hits.groupedBy(criteria).
 	 */
 	@Deprecated
 	public ResultsGrouper(Searcher searcher, SpanQuery source, HitProperty criteria,

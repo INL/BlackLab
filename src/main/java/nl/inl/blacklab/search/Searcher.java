@@ -347,6 +347,42 @@ public abstract class Searcher {
 	protected boolean indexMode = false;
 
 	/**
+	 * Stop retrieving hits after this number.
+	 * (-1 = don't stop retrieving)
+	 */
+	protected int defaultMaxHitsToRetrieve = 1000000;
+
+	/**
+	 * Stop counting hits after this number.
+	 * (-1 = don't stop counting)
+	 */
+	protected int defaultMaxHitsToCount = -1;
+
+	/** @return the default maximum number of hits to retrieve. */
+	public int getDefaultMaxHitsToRetrieve() {
+		return defaultMaxHitsToRetrieve;
+	}
+
+	/** Set the default maximum number of hits to retrieve
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public void setDefaultMaxHitsToRetrieve(int n) {
+		defaultMaxHitsToRetrieve = n;
+	}
+
+	/** @return the default maximum number of hits to count. */
+	public int getDefaultMaxHitsToCount() {
+		return defaultMaxHitsToCount;
+	}
+
+	/** Set the default maximum number of hits to count
+	 * @param n the number of hits, or -1 for no limit
+	 */
+	public void setDefaultMaxHitsToCount(int n) {
+		defaultMaxHitsToCount = n;
+	}
+
+	/**
 	 * How do we fix well-formedness for snippets of XML?
 	 * @return the setting: either adding or removing unbalanced tags
 	 */

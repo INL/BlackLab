@@ -33,36 +33,56 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * Stop retrieving hits after this number.
 	 * (-1 = don't stop retrieving)
 	 */
+	@Deprecated
 	protected static int defaultMaxHitsToRetrieve = 1000000;
+
+	@Deprecated
+	protected static boolean defaultMaxHitsToRetrieveChanged = false;
 
 	/**
 	 * Stop counting hits after this number.
 	 * (-1 = don't stop counting)
 	 */
+	@Deprecated
 	protected static int defaultMaxHitsToCount = -1;
 
-	/** @return the default maximum number of hits to retrieve. */
+	@Deprecated
+	protected static boolean defaultMaxHitsToCountChanged = false;
+
+	/** @return the default maximum number of hits to retrieve.
+	 * @deprecated use Searcher.getDefaultMaxHitsToRetrieve()
+	 */
+	@Deprecated
 	public static int getDefaultMaxHitsToRetrieve() {
 		return defaultMaxHitsToRetrieve;
 	}
 
 	/** Set the default maximum number of hits to retrieve
 	 * @param n the number of hits, or -1 for no limit
+	 * @deprecated use Searcher.setDefaultMaxHitsToRetrieve()
 	 */
+	@Deprecated
 	public static void setDefaultMaxHitsToRetrieve(int n) {
-		Hits.defaultMaxHitsToRetrieve = n;
+		defaultMaxHitsToRetrieve = n;
+		defaultMaxHitsToRetrieveChanged = true;
 	}
 
-	/** @return the default maximum number of hits to count. */
+	/** @return the default maximum number of hits to count.
+	 * @deprecated use Searcher.getDefaultMaxHitsToCount()
+	 */
+	@Deprecated
 	public static int getDefaultMaxHitsToCount() {
 		return defaultMaxHitsToCount;
 	}
 
 	/** Set the default maximum number of hits to count
 	 * @param n the number of hits, or -1 for no limit
+	 * @deprecated use Searcher.setDefaultMaxHitsToCount()
 	 */
+	@Deprecated
 	public static void setDefaultMaxHitsToCount(int n) {
-		Hits.defaultMaxHitsToCount = n;
+		defaultMaxHitsToCount = n;
+		defaultMaxHitsToCountChanged = true;
 	}
 
 	/**
@@ -133,13 +153,13 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * Stop retrieving hits after this number.
 	 * (-1 = don't stop retrieving)
 	 */
-	protected int maxHitsToRetrieve = defaultMaxHitsToRetrieve;
+	protected int maxHitsToRetrieve;
 
 	/**
 	 * Stop counting hits after this number.
 	 * (-1 = don't stop counting)
 	 */
-	protected int maxHitsToCount = defaultMaxHitsToCount;
+	protected int maxHitsToCount;
 
 	/**
 	 * The default field to use for retrieving concordance information.
@@ -169,6 +189,8 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	protected ThreadPriority etiquette;
 
 	public Hits(Searcher searcher, String concordanceFieldName) {
+		maxHitsToRetrieve = defaultMaxHitsToRetrieveChanged ? defaultMaxHitsToRetrieve : searcher.getDefaultMaxHitsToRetrieve();
+		maxHitsToCount = defaultMaxHitsToCountChanged ? defaultMaxHitsToCount : searcher.getDefaultMaxHitsToCount();
 		this.searcher = searcher;
 		setConcordanceField(concordanceFieldName);
 		concWordFI = searcher.getConcWordFI();
