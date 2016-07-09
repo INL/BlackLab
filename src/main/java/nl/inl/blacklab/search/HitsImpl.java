@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,7 +46,6 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
 
@@ -85,6 +83,11 @@ public class HitsImpl extends Hits {
 	private int[][] contexts;
 
 	/**
+	 * The current context size (number of words around hits we now have).
+	 */
+	private int currentContextSize;
+
+	/**
 	 * The sort order, if we've sorted, or null if not
 	 */
 	Integer[] sortOrder;
@@ -111,13 +114,6 @@ public class HitsImpl extends Hits {
 	 * Otherwise, it is null.
 	 */
 	protected List<String> contextFieldsPropName;
-
-	/**
-	 * The default field to use for retrieving concordance information.
-	 */
-	protected String concordanceFieldName;
-
-	/////////////////////////////////////////////
 
 	/**
 	 * Our SpanQuery, for getting the next Spans when the current one's done.
@@ -154,20 +150,6 @@ public class HitsImpl extends Hits {
 	 */
 	protected boolean sourceSpansFullyRead = true;
 
-	/////////////////////////////////////////////
-
-	/**
-	 * Stop retrieving hits after this number.
-	 * (-1 = don't stop retrieving)
-	 */
-	private int maxHitsToRetrieve = defaultMaxHitsToRetrieve;
-
-	/**
-	 * Stop counting hits after this number.
-	 * (-1 = don't stop counting)
-	 */
-	private int maxHitsToCount = defaultMaxHitsToCount;
-
 	/**
 	 * If true, we've stopped retrieving hits because there are more than
 	 * the maximum we've set.
@@ -201,78 +183,6 @@ public class HitsImpl extends Hits {
 	 */
 	private int previousHitDoc = -1;
 
-	/**
-	 * The desired context size (number of words to fetch around hits).
-	 * Defaults to Searcher.getDefaultContextSize().
-	 */
-	private int desiredContextSize;
-
-	/**
-	 * The current context size (number of words around hits we now have).
-	 */
-	private int currentContextSize;
-
-	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
-	String concWordFI;
-
-	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
-	String concPunctFI;
-
-	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
-	Collection<String> concAttrFI; // all other FIs are attributes
-
-	/** What to use to make concordances: forward index or content store */
-	ConcordanceType concsType;
-
-	/** To keep track of captured groups, etc. */
-	private HitQueryContext hitQueryContext;
-
-	private ThreadPriority etiquette;
-
-	/**
-	 * Set the thread priority level for this Hits object.
-	 *
-	 * Allows us to set a query to low-priority, or to (almost) pause it.
-	 *
-	 * @param level the desired priority level
-	 */
-	@Override
-	public void setPriorityLevel(ThreadPriority.Level level) {
-		etiquette.setPriorityLevel(level);
-	}
-
-	/**
-	 * Get the thread priority level for this Hits object.
-	 *
-	 * Can be normal, low-priority, or (almost) paused.
-	 *
-	 * @return the current priority level
-	 */
-	@Override
-	public ThreadPriority.Level getPriorityLevel() {
-		return etiquette.getPriorityLevel();
-	}
-
-	@Override
-	public String getConcWordFI() {
-		return concWordFI;
-	}
-
-	@Override
-	public String getConcPunctFI() {
-		return concPunctFI;
-	}
-
-	@Override
-	public Collection<String> getConcAttrFI() {
-		return concAttrFI;
-	}
-
-	@Override
-	public HitQueryContext getHitQueryContext() {
-		return hitQueryContext;
-	}
-
 	@Override
 	public Hits copy() {
 		return new HitsImpl(this);
@@ -287,7 +197,7 @@ public class HitsImpl extends Hits {
 	 * @param copyFrom the Hits object to copy
 	 */
 	private HitsImpl(HitsImpl copyFrom) {
-		super(copyFrom.searcher);
+		super(copyFrom.searcher, copyFrom.getConcordanceFieldName());
 		try {
 			copyFrom.ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -295,8 +205,7 @@ public class HitsImpl extends Hits {
 		}
 		hits = copyFrom.hits;
 		kwics = copyFrom.kwics;
-		sourceSpansFullyRead = true; //copyFrom.sourceSpansFullyRead;
-		//sourceSpans = copyFrom.sourceSpans;
+		sourceSpansFullyRead = true;
 		hitsCounted = copyFrom.countSoFarHitsCounted();
 		docsRetrieved = copyFrom.countSoFarDocsRetrieved();
 		docsCounted = copyFrom.countSoFarDocsCounted();
@@ -320,11 +229,9 @@ public class HitsImpl extends Hits {
 	 * @param hits the list of hits to wrap
 	 */
 	HitsImpl(Searcher searcher, String concordanceFieldName, List<Hit> hits) {
-		super(searcher);
+		super(searcher, concordanceFieldName);
 		this.hits = hits == null ? new ArrayList<Hit>() : hits;
 		hitsCounted = this.hits.size();
-		setConcordanceField(concordanceFieldName);
-		desiredContextSize = searcher.getDefaultContextSize();
 		currentContextSize = -1;
 		int prevDoc = -1;
 		docsRetrieved = docsCounted = 0;
@@ -335,10 +242,6 @@ public class HitsImpl extends Hits {
 				prevDoc = h.doc;
 			}
 		}
-		concWordFI = searcher.getConcWordFI();
-		concPunctFI = searcher.getConcPunctFI();
-		concAttrFI = searcher.getConcAttrFI();
-		concsType = searcher.getDefaultConcordanceType();
 		etiquette = new ThreadPriority();
 	}
 
@@ -380,7 +283,6 @@ public class HitsImpl extends Hits {
 			currentSourceSpans = null;
 			atomicReaderContexts = reader == null ? null : reader.leaves();
 			atomicReaderContextIndex = -1;
-			hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
 			//sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw != null ? srw.getContext() : null, srw != null ? srw.getLiveDocs() : null, termContexts));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -425,14 +327,6 @@ public class HitsImpl extends Hits {
 		}
 	}
 
-	/** Returns the context size.
-	 * @return context size (number of words to fetch around hits)
-	 */
-	@Override
-	public int getContextSize() {
-		return desiredContextSize;
-	}
-
 	/** Sets the desired context size.
 	 * @param contextSize the context size (number of words to fetch around hits)
 	 */
@@ -440,7 +334,7 @@ public class HitsImpl extends Hits {
 	public synchronized void setContextSize(int contextSize) {
 		if (this.desiredContextSize == contextSize)
 			return; // no need to reset anything
-		this.desiredContextSize = contextSize;
+		super.setContextSize(contextSize);
 
 		// Reset context and concordances so we get the correct context size next time
 		currentContextSize = -1;
@@ -608,8 +502,10 @@ public class HitsImpl extends Hits {
 	 * @param reverseSort
 	 *            if true, sort in descending order
 	 * @param sensitive whether to sort case-sensitively or not
+	 * @deprecated use sortedBy()
 	 */
 	@Override
+	@Deprecated
 	public synchronized void sort(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
 		try {
 			ensureAllHitsRead();
@@ -930,35 +826,71 @@ public class HitsImpl extends Hits {
 	}
 
 	/**
-	 * Return the concordance for the specified hit.
+	 * Retrieve a single KWIC (KeyWord In Context). Only use if you need a larger
+	 * snippet around a single
+	 * hit. If you need KWICs for a set of hits, just instantiate a HitsWindow and call
+	 * getKwic() on that; it will fetch all KWICs in the window in a batch, which
+	 * is more efficient.
 	 *
-	 * The first call to this method will fetch the concordances for all the hits in this
-	 * Hits object. So make sure to select an appropriate HitsWindow first: don't call this
-	 * method on a Hits set with >1M hits unless you really want to display all of them in one
-	 * go.
-	 *
-	 * @param h the hit
-	 * @return concordance for this hit
+	 * @param fieldName field to use for building the KWIC
+	 * @param hit the hit for which we want a KWIC
+	 * @param contextSize the desired number of words around the hit
+	 * @return the KWIC
 	 */
 	@Override
-	public Concordance getConcordance(Hit h) {
-		return getConcordance(h, desiredContextSize);
+	public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
+		List<Hit> oneHit = Arrays.asList(hit);
+		HitsImpl h = new HitsImpl(searcher, searcher.getMainContentsFieldName(), oneHit);
+		h.copySettingsFrom(this); // concordance type, etc.
+		Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, fieldName);
+		return oneConc.get(hit);
 	}
 
 	/**
-	 * Return the KWIC for the specified hit.
+	 * Get a KWIC with a custom context size.
 	 *
-	 * The first call to this method will fetch the KWICs for all the hits in this
-	 * Hits object. So make sure to select an appropriate HitsWindow first: don't call this
-	 * method on a Hits set with >1M hits unless you really want to display all of them in one
-	 * go.
+	 * Don't call this directly for displaying a list of results. In that case,
+	 * just instantiate a HitsWindow, call setContextSize() on it to set a
+	 * default context size and call getKwic(Hit) for each hit. That's
+	 * more efficient if you're dealing with many hits.
+	 *
+	 * This method is mostly just for getting a larger snippet around
+	 * a single hit.
 	 *
 	 * @param h the hit
+	 * @param contextSize the context size for this KWIC
+	 *   (only use if you want a different one than the preset preference)
 	 * @return KWIC for this hit
 	 */
 	@Override
-	public Kwic getKwic(Hit h) {
-		return getKwic(h, desiredContextSize);
+	public Kwic getKwic(Hit h, int contextSize) {
+		if (contextSize != desiredContextSize) {
+			// Different context size than the default for the whole set;
+			// We probably want to show a hit with a larger snippet around it
+			// (say, 50 words or so). Don't clobber the context of the other
+			// hits, just fetch this snippet separately.
+			return getKwic(concordanceFieldName, h, contextSize);
+		}
+
+		// Default context size. Read all hits and find concordances for all of them
+		// in batch.
+		try {
+			ensureAllHitsRead();
+		} catch (InterruptedException e) {
+			// Thread was interrupted. Just go ahead with the hits we did
+			// get, so at least we can return a valid concordance object and
+			// not break the calling method. It is responsible for checking
+			// for thread interruption (only some applications use this at all,
+			// so throwing exceptions from all methods is too inconvenient)
+			Thread.currentThread().interrupt();
+		}
+		if (kwics == null) {
+			findKwics(); // just try to find the default concordances
+		}
+		Kwic kwic = kwics.get(h);
+		if (kwic == null)
+			throw new RuntimeException("KWIC for hit not found: " + h);
+		return kwic;
 	}
 
 	/**
@@ -982,27 +914,6 @@ public class HitsImpl extends Hits {
 			return oneKwic.get(hit).toConcordance();
 		}
 		Map<Hit, Concordance> oneConc = h.retrieveConcordancesFromContentStore(contextSize, fieldName);
-		return oneConc.get(hit);
-	}
-
-	/**
-	 * Retrieve a single KWIC (KeyWord In Context). Only use if you need a larger
-	 * snippet around a single
-	 * hit. If you need KWICs for a set of hits, just instantiate a HitsWindow and call
-	 * getKwic() on that; it will fetch all KWICs in the window in a batch, which
-	 * is more efficient.
-	 *
-	 * @param fieldName field to use for building the KWIC
-	 * @param hit the hit for which we want a KWIC
-	 * @param contextSize the desired number of words around the hit
-	 * @return the KWIC
-	 */
-	@Override
-	public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
-		List<Hit> oneHit = Arrays.asList(hit);
-		HitsImpl h = new HitsImpl(searcher, searcher.getMainContentsFieldName(), oneHit);
-		h.copySettingsFrom(this); // concordance type, etc.
-		Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, fieldName);
 		return oneConc.get(hit);
 	}
 
@@ -1054,53 +965,6 @@ public class HitsImpl extends Hits {
 		if (conc == null)
 			throw new RuntimeException("Concordance for hit not found: " + h);
 		return conc;
-	}
-
-	/**
-	 * Get a KWIC with a custom context size.
-	 *
-	 * Don't call this directly for displaying a list of results. In that case,
-	 * just instantiate a HitsWindow, call setContextSize() on it to set a
-	 * default context size and call getKwic(Hit) for each hit. That's
-	 * more efficient if you're dealing with many hits.
-	 *
-	 * This method is mostly just for getting a larger snippet around
-	 * a single hit.
-	 *
-	 * @param h the hit
-	 * @param contextSize the context size for this KWIC
-	 *   (only use if you want a different one than the preset preference)
-	 * @return KWIC for this hit
-	 */
-	@Override
-	public Kwic getKwic(Hit h, int contextSize) {
-		if (contextSize != desiredContextSize) {
-			// Different context size than the default for the whole set;
-			// We probably want to show a hit with a larger snippet around it
-			// (say, 50 words or so). Don't clobber the context of the other
-			// hits, just fetch this snippet separately.
-			return getKwic(concordanceFieldName, h, contextSize);
-		}
-
-		// Default context size. Read all hits and find concordances for all of them
-		// in batch.
-		try {
-			ensureAllHitsRead();
-		} catch (InterruptedException e) {
-			// Thread was interrupted. Just go ahead with the hits we did
-			// get, so at least we can return a valid concordance object and
-			// not break the calling method. It is responsible for checking
-			// for thread interruption (only some applications use this at all,
-			// so throwing exceptions from all methods is too inconvenient)
-			Thread.currentThread().interrupt();
-		}
-		if (kwics == null) {
-			findKwics(); // just try to find the default concordances
-		}
-		Kwic kwic = kwics.get(h);
-		if (kwic == null)
-			throw new RuntimeException("KWIC for hit not found: " + h);
-		return kwic;
 	}
 
 	/**
@@ -1410,18 +1274,6 @@ public class HitsImpl extends Hits {
 	}
 
 	/**
-	 * Get the captured group name information.
-	 *
-	 * @return the captured group names, in index order
-	 */
-	@Override
-	public List<String> getCapturedGroupNames() {
-		if (hitQueryContext == null)
-			return null;
-		return hitQueryContext.getCapturedGroupNames();
-	}
-
-	/**
 	 * Get the captured group information in map form.
 	 *
 	 * Relatively slow; use getCapturedGroups() and getCapturedGroupNames()
@@ -1444,27 +1296,6 @@ public class HitsImpl extends Hits {
 	}
 
 	/**
-	 * Returns the field to use for retrieving concordances.
-	 *
-	 * @return the field name
-	 */
-	@Override
-	public String getConcordanceFieldName() {
-		return concordanceFieldName;
-	}
-
-	/**
-	 * Sets the field to use for retrieving concordances.
-	 *
-	 * @param concordanceFieldName
-	 *            the field name
-	 */
-	@Override
-	public void setConcordanceField(String concordanceFieldName) {
-		this.concordanceFieldName = concordanceFieldName;
-	}
-
-	/**
 	 * Get the field our current concordances were retrieved from
 	 *
 	 * @return the field name
@@ -1482,34 +1313,6 @@ public class HitsImpl extends Hits {
 	public void setContextField(List<String> contextField) {
 		this.contextFieldsPropName = contextField == null ? null : new ArrayList<>(
 				contextField);
-	}
-
-	/** @return the maximum number of hits to retrieve. */
-	@Override
-	public int getMaxHitsToRetrieve() {
-		return maxHitsToRetrieve;
-	}
-
-	/** Set the maximum number of hits to retrieve
-	 * @param n the number of hits, or -1 for no limit
-	 */
-	@Override
-	public void setMaxHitsToRetrieve(int n) {
-		this.maxHitsToRetrieve = n;
-	}
-
-	/** @return the maximum number of hits to count. */
-	@Override
-	public int getMaxHitsToCount() {
-		return maxHitsToCount;
-	}
-
-	/** Set the maximum number of hits to count
-	 * @param n the number of hits, or -1 for no limit
-	 */
-	@Override
-	public void setMaxHitsToCount(int n) {
-		this.maxHitsToCount = n;
 	}
 
 	/**
@@ -1817,21 +1620,6 @@ public class HitsImpl extends Hits {
 	}
 
 	/**
-	 * Indicate how to use the forward indices to build concordances.
-	 *
-	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
-	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
-	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
-	 */
-	@Override
-	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI,
-			Collection<String> attrFI) {
-		concWordFI = wordFI;
-		concPunctFI = punctFI;
-		concAttrFI = attrFI;
-	}
-
-	/**
 	 * Generate concordances from content store (slower).
 	 *
 	 * @param hits the hits for which to retrieve concordances
@@ -1872,32 +1660,6 @@ public class HitsImpl extends Hits {
 		return hitsPerDocument;
 	}
 
-	/**
-	 * Are we making concordances using the forward index (true) or using
-	 * the content store (false)? Forward index is more efficient but returns
-	 * concordances that don't include XML tags.
-	 *
-	 * @return true iff we use the forward index for making concordances.
-	 */
-	@Override
-	public ConcordanceType getConcordanceType() {
-		return concsType;
-	}
-
-	/**
-	 * Do we want to retrieve concordances from the forward index or from the
-	 * content store? Forward index is more efficient but doesn't exactly reproduces the
-	 * original XML.
-	 *
-	 * The default type can be set by calling Searcher.setDefaultConcordanceType().
-	 *
-	 * @param type the type of concordances to make
-	 */
-	@Override
-	public void setConcordanceType(ConcordanceType type) {
-		this.concsType = type;
-	}
-
 	@Override
 	protected void setMaxHitsCounted(boolean maxHitsCounted) {
 		this.maxHitsCounted = maxHitsCounted;
@@ -1906,11 +1668,6 @@ public class HitsImpl extends Hits {
 	@Override
 	protected void setMaxHitsRetrieved(boolean maxHitsRetrieved) {
 		this.maxHitsRetrieved = maxHitsRetrieved;
-	}
-
-	@Override
-	protected void setHitQueryContext(HitQueryContext hitQueryContext) {
-		this.hitQueryContext = hitQueryContext;
 	}
 
 }

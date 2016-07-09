@@ -157,10 +157,10 @@ public class Example {
 		// Execute the search
 		Hits hits = searcher.find(tp);
 
-		hits.sort(new HitPropertyHitText(hits, "contents"));
+		Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, "contents"));
 
 		// Display the concordances
-		displayConcordances(hits);
+		displayConcordances(sortedHits);
 	}
 
 	/**

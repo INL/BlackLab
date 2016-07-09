@@ -41,8 +41,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 */
 	protected static int defaultMaxHitsToCount = -1;
 
-	protected Searcher searcher;
-
 	/** @return the default maximum number of hits to retrieve. */
 	public static int getDefaultMaxHitsToRetrieve() {
 		return defaultMaxHitsToRetrieve;
@@ -127,9 +125,61 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 		return new HitsImpl(searcher, concordanceFieldPropName, source);
 	}
 
-	public Hits(Searcher searcher) {
+	//----------------------------------------------------------
+
+	protected Searcher searcher;
+
+	/**
+	 * Stop retrieving hits after this number.
+	 * (-1 = don't stop retrieving)
+	 */
+	protected int maxHitsToRetrieve = defaultMaxHitsToRetrieve;
+
+	/**
+	 * Stop counting hits after this number.
+	 * (-1 = don't stop counting)
+	 */
+	protected int maxHitsToCount = defaultMaxHitsToCount;
+
+	/**
+	 * The default field to use for retrieving concordance information.
+	 */
+	protected String concordanceFieldName;
+
+	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
+	protected String concWordFI;
+
+	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
+	protected String concPunctFI;
+
+	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
+	protected Collection<String> concAttrFI; // all other FIs are attributes
+
+	/** What to use to make concordances: forward index or content store */
+	protected ConcordanceType concsType;
+
+	/**
+	 * The desired context size (number of words to fetch around hits).
+	 * Defaults to Searcher.getDefaultContextSize().
+	 */
+	protected int desiredContextSize;
+
+	protected HitQueryContext hitQueryContext;
+
+	protected ThreadPriority etiquette;
+
+	public Hits(Searcher searcher, String concordanceFieldName) {
 		this.searcher = searcher;
+		setConcordanceField(concordanceFieldName);
+		concWordFI = searcher.getConcWordFI();
+		concPunctFI = searcher.getConcPunctFI();
+		concAttrFI = searcher.getConcAttrFI();
+		concsType = searcher.getDefaultConcordanceType();
+		desiredContextSize = searcher.getDefaultContextSize();
+		hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
 	}
+
+
 
 	/**
 	 * Set the thread priority level for this Hits object.
@@ -138,7 +188,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param level the desired priority level
 	 */
-	public abstract void setPriorityLevel(ThreadPriority.Level level);
+	public void setPriorityLevel(ThreadPriority.Level level) {
+		etiquette.setPriorityLevel(level);
+	}
 
 	/**
 	 * Get the thread priority level for this Hits object.
@@ -147,7 +199,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @return the current priority level
 	 */
-	public abstract ThreadPriority.Level getPriorityLevel();
+	public ThreadPriority.Level getPriorityLevel() {
+		return etiquette.getPriorityLevel();
+	}
 
 	/**
 	 * Return a copy of this Hits object.
@@ -166,14 +220,11 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param copyFrom where to copy settings from
 	 */
 	public void copySettingsFrom(Hits copyFrom) {
-		setConcordanceField(copyFrom.getConcordanceFieldName());
 		setMaxHitsToRetrieve(copyFrom.getMaxHitsToRetrieve());
 		setMaxHitsToCount(copyFrom.getMaxHitsToCount());
 		setMaxHitsRetrieved(copyFrom.maxHitsRetrieved());
 		setMaxHitsCounted(copyFrom.maxHitsCounted());
 		setContextSize(copyFrom.getContextSize());
-		setForwardIndexConcordanceParameters(copyFrom.getConcWordFI(), copyFrom.getConcPunctFI(), copyFrom.getConcAttrFI());
-		setConcordanceType(copyFrom.getConcordanceType());
 		setHitQueryContext(copyFrom.getHitQueryContext());
 	}
 
@@ -184,12 +235,16 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	/** Returns the context size.
 	 * @return context size (number of words to fetch around hits)
 	 */
-	public abstract int getContextSize();
+	public int getContextSize() {
+		return desiredContextSize;
+	}
 
 	/** Sets the desired context size.
 	 * @param contextSize the context size (number of words to fetch around hits)
 	 */
-	public abstract void setContextSize(int contextSize);
+	public synchronized void setContextSize(int contextSize) {
+		this.desiredContextSize = contextSize;
+	}
 
 	/**
 	 * Were all hits retrieved, or did we stop because there were too many?
@@ -243,7 +298,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *            the hit property/properties to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
-	 * @deprecated use single HitProperty version, possibly with HitPropertyMultiple
+	 * @deprecated use sortedBy()
 	 */
 	@Deprecated
 	public void sort(HitProperty[] sortProp, boolean reverseSort) {
@@ -263,7 +318,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param sortProp
 	 *            the hit property/properties to sort on
-	 * @deprecated use single HitProperty version, possibly with HitPropertyMultiple
+	 * @deprecated use sortedBy()
 	 */
 	@Deprecated
 	public void sort(HitProperty... sortProp) {
@@ -280,7 +335,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param sortProp
 	 *            the hit property to sort on
+	 * @deprecated use sortedBy()
 	 */
+	@Deprecated
 	public void sort(final HitProperty sortProp) {
 		sort(sortProp, false, searcher.isDefaultSearchCaseSensitive());
 	}
@@ -300,7 +357,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *            the hit property to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
+	 * @deprecated use sortedBy()
 	 */
+	@Deprecated
 	public void sort(final HitProperty sortProp, boolean reverseSort) {
 		sort(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
 	}
@@ -318,7 +377,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param reverseSort
 	 *            if true, sort in descending order
 	 * @param sensitive whether to sort case-sensitively or not
+	 * @deprecated use sortedBy()
 	 */
+	@Deprecated
 	public abstract void sort(HitProperty sortProp, boolean reverseSort, boolean sensitive);
 
 	/**
@@ -341,7 +402,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 		hits.sort(sortProp, reverseSort, sensitive);
 		return hits;
 	}
-
 
 	/**
 	 * Return a new Hits object with these hits sorted by the given property.
@@ -525,7 +585,28 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *   returns them in sorted order (if any)
 	 * @return the iterator
 	 */
-	public abstract Iterator<Hit> getIterator(boolean originalOrder);
+	public Iterator<Hit> getIterator(boolean originalOrder) {
+		return new Iterator<Hit>() {
+			int i = -1;
+
+			@Override
+			public boolean hasNext() {
+				return i + 1 < size();
+			}
+
+			@Override
+			public Hit next() {
+				i++;
+				return get(i);
+			}
+
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+
+		};
+	}
 
 	/**
 	 * Return an iterator over these hits.
@@ -571,7 +652,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param h the hit
 	 * @return concordance for this hit
 	 */
-	public abstract Concordance getConcordance(Hit h);
+	public Concordance getConcordance(Hit h) {
+		return getConcordance(h, desiredContextSize);
+	}
 
 	/**
 	 * Return the KWIC for the specified hit.
@@ -584,7 +667,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param h the hit
 	 * @return KWIC for this hit
 	 */
-	public abstract Kwic getKwic(Hit h);
+	public Kwic getKwic(Hit h) {
+		return getKwic(h, desiredContextSize);
+	}
 
 	/**
 	 * Retrieve a single concordance. Only use if you need a larger snippet around a single
@@ -703,7 +788,12 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @return the captured group names, in index order
 	 */
-	public abstract List<String> getCapturedGroupNames();
+	public List<String> getCapturedGroupNames() {
+		if (hitQueryContext == null)
+			return null;
+		return hitQueryContext.getCapturedGroupNames();
+	}
+
 
 	/**
 	 * Get the captured group information in map form.
@@ -730,7 +820,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @return the field name
 	 */
-	public abstract String getConcordanceFieldName();
+	public String getConcordanceFieldName() {
+		return concordanceFieldName;
+	}
 
 	/**
 	 * Sets the field to use for retrieving concordances.
@@ -738,7 +830,10 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param concordanceFieldName
 	 *            the field name
 	 */
-	public abstract void setConcordanceField(String concordanceFieldName);
+	public void setConcordanceField(String concordanceFieldName) {
+		this.concordanceFieldName = concordanceFieldName;
+	}
+
 
 	/**
 	 * Get the field our current concordances were retrieved from
@@ -792,20 +887,28 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	public abstract void setContextField(List<String> contextField);
 
 	/** @return the maximum number of hits to retrieve. */
-	public abstract int getMaxHitsToRetrieve();
+	public int getMaxHitsToRetrieve() {
+		return maxHitsToRetrieve;
+	}
 
 	/** Set the maximum number of hits to retrieve
 	 * @param n the number of hits, or -1 for no limit
 	 */
-	public abstract void setMaxHitsToRetrieve(int n);
+	public void setMaxHitsToRetrieve(int n) {
+		this.maxHitsToRetrieve = n;
+	}
 
 	/** @return the maximum number of hits to count. */
-	public abstract int getMaxHitsToCount();
+	public int getMaxHitsToCount() {
+		return maxHitsToCount;
+	}
 
 	/** Set the maximum number of hits to count
 	 * @param n the number of hits, or -1 for no limit
 	 */
-	public abstract void setMaxHitsToCount(int n);
+	public void setMaxHitsToCount(int n) {
+		this.maxHitsToCount = n;
+	}
 
 	/**
 	 * Convenience method to get all hits in a single doc from a larger hitset.
@@ -831,7 +934,11 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
 	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
 	 */
-	public abstract void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI);
+	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
+		concWordFI = wordFI;
+		concPunctFI = punctFI;
+		concAttrFI = attrFI;
+	}
 
 	/**
 	 * Are we making concordances using the forward index (true) or using
@@ -840,7 +947,18 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @return true iff we use the forward index for making concordances.
 	 */
-	public abstract ConcordanceType getConcordanceType();
+
+
+	/**
+	 * Are we making concordances using the forward index (true) or using
+	 * the content store (false)? Forward index is more efficient but returns
+	 * concordances that don't include XML tags.
+	 *
+	 * @return true iff we use the forward index for making concordances.
+	 */
+	public ConcordanceType getConcordanceType() {
+		return concsType;
+	}
 
 	/**
 	 * Do we want to retrieve concordances from the forward index or from the
@@ -851,17 +969,28 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param type the type of concordances to make
 	 */
-	public abstract void setConcordanceType(ConcordanceType type);
+	public void setConcordanceType(ConcordanceType type) {
+		this.concsType = type;
+	}
 
-	public abstract String getConcWordFI();
+	public String getConcWordFI() {
+		return concWordFI;
+	}
 
-	public abstract String getConcPunctFI();
+	public String getConcPunctFI() {
+		return concPunctFI;
+	}
 
-	public abstract Collection<String> getConcAttrFI();
+	public Collection<String> getConcAttrFI() {
+		return concAttrFI;
+	}
 
-	public abstract HitQueryContext getHitQueryContext();
+	public HitQueryContext getHitQueryContext() {
+		return hitQueryContext;
+	}
 
-	protected abstract void setHitQueryContext(HitQueryContext hitQueryContext);
-
+	protected void setHitQueryContext(HitQueryContext hitQueryContext) {
+		this.hitQueryContext = hitQueryContext;
+	}
 
 }

@@ -1223,7 +1223,7 @@ public class QueryTool {
 			errprintln("Invalid hit sort criterium: " + sortBy
 					+ " (valid are: match, left, right, doc, <metadatafield>)");
 		} else {
-			hitsToSort.sort(crit);
+			hitsToSort = hitsToSort.sortedBy(crit);
 			firstResult = 0;
 			showResultsPage();
 			if (property == null)

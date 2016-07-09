@@ -1,12 +1,9 @@
 package nl.inl.blacklab;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
@@ -15,8 +12,6 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.grouping.HitProperty;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.util.ThreadPriority.Level;
 
 public class MockHits extends Hits {
 
@@ -27,7 +22,7 @@ public class MockHits extends Hits {
 	private int numberOfDocs;
 
 	public MockHits(Searcher searcher, int[] doc, int[] start, int[] end) {
-		super(searcher);
+		super(searcher, searcher.getMainContentsFieldName());
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
@@ -54,32 +49,12 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public void setPriorityLevel(Level level) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Level getPriorityLevel() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Hits copy() {
 		return new MockHits(searcher, doc, start, end);
 	}
 
 	@Override
 	public void copySettingsFrom(Hits copyFrom) {
-		// NOP
-	}
-
-	@Override
-	public int getContextSize() {
-		return 0;
-	}
-
-	@Override
-	public void setContextSize(int contextSize) {
 		// NOP
 	}
 
@@ -94,16 +69,7 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public void sort(HitProperty sortProp) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void sort(HitProperty sortProp, boolean reverseSort) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
+	@Deprecated
 	public void sort(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
 		throw new UnsupportedOperationException();
 	}
@@ -165,30 +131,6 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public Iterator<Hit> getIterator(boolean originalOrder) {
-		return new Iterator<Hit>() {
-			int i = -1;
-
-			@Override
-			public boolean hasNext() {
-				return i + 1 < size();
-			}
-
-			@Override
-			public Hit next() {
-				i++;
-				return get(i);
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
-	}
-
-	@Override
 	public Hit getByOriginalOrder(int i) {
 		return get(i);
 	}
@@ -199,22 +141,12 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public Kwic getKwic(Hit h) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Kwic getKwic(Hit h, int contextSize) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Concordance getConcordance(Hit h) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -254,11 +186,6 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public List<String> getCapturedGroupNames() {
-		return null;
-	}
-
-	@Override
 	public Map<String, Span> getCapturedGroupMap(Hit hit) {
 		return null;
 	}
@@ -284,26 +211,6 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public int getMaxHitsToRetrieve() {
-		return -1;
-	}
-
-	@Override
-	public void setMaxHitsToRetrieve(int n) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public int getMaxHitsToCount() {
-		return -1;
-	}
-
-	@Override
-	public void setMaxHitsToCount(int n) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Hits getHitsInDoc(int docid) {
 		throw new UnsupportedOperationException();
 	}
@@ -314,52 +221,12 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
-		// NOP
-	}
-
-	@Override
-	public ConcordanceType getConcordanceType() {
-		return null;
-	}
-
-	@Override
-	public void setConcordanceType(ConcordanceType type) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	protected void setMaxHitsCounted(boolean maxHitsCounted) {
 		// NOP
 	}
 
 	@Override
 	protected void setMaxHitsRetrieved(boolean maxHitsRetrieved) {
-		// NOP
-	}
-
-	@Override
-	public String getConcWordFI() {
-		return null;
-	}
-
-	@Override
-	public String getConcPunctFI() {
-		return null;
-	}
-
-	@Override
-	public Collection<String> getConcAttrFI() {
-		return null;
-	}
-
-	@Override
-	public HitQueryContext getHitQueryContext() {
-		return null;
-	}
-
-	@Override
-	protected void setHitQueryContext(HitQueryContext hitQueryContext) {
 		// NOP
 	}
 
