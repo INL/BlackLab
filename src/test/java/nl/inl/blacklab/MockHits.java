@@ -21,7 +21,6 @@ import nl.inl.util.ThreadPriority.Level;
 
 public class MockHits extends Hits {
 
-	private Searcher searcher;
 	private int[] doc;
 	private int[] start;
 	private int[] end;
@@ -183,12 +182,6 @@ public class MockHits extends Hits {
 
 	@Override
 	public Iterator<Hit> getIterator(boolean originalOrder) {
-		return iterator();
-	}
-
-	@Override
-	public Iterator<Hit> iterator() {
-		//
 		return new Iterator<Hit>() {
 			int i = -1;
 
@@ -272,12 +265,6 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public TermFrequencyList getCollocations() {
-		//
-		return null;
-	}
-
-	@Override
 	public TermFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
 		//
 		return null;
@@ -305,11 +292,6 @@ public class MockHits extends Hits {
 	public Map<String, Span> getCapturedGroupMap(Hit hit) {
 		//
 		return null;
-	}
-
-	@Override
-	public Searcher getSearcher() {
-		return searcher;
 	}
 
 	@Override
@@ -386,12 +368,6 @@ public class MockHits extends Hits {
 
 	@Override
 	public void setConcordanceType(ConcordanceType type) {
-		//
-
-	}
-
-	@Override
-	protected void setConcFIs(String concWordFI, String concPunctFI, Collection<String> concAttrFI) {
 		//
 
 	}

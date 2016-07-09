@@ -107,11 +107,6 @@ public class HitsImpl extends Hits {
 	Map<Hit, Concordance> concordances;
 
 	/**
-	 * The searcher object.
-	 */
-	protected Searcher searcher;
-
-	/**
 	 * If we have context information, this specifies the property (i.e. word, lemma, pos) the context came from.
 	 * Otherwise, it is null.
 	 */
@@ -473,11 +468,6 @@ public class HitsImpl extends Hits {
 		return maxHitsCounted;
 	}
 
-	/**
-	 * If we still have only partially read our Spans object,
-	 * read the rest of it and add all the hits.
-	 * @throws InterruptedException if the thread was interrupted during this operation
-	 */
 	private void ensureAllHitsRead() throws InterruptedException {
 		ensureHitsRead(-1);
 	}
@@ -604,43 +594,6 @@ public class HitsImpl extends Hits {
 				throw new RuntimeException(e);
 			}
 		}
-	}
-
-	/**
-	 * Sort the list of hits.
-	 *
-	 * Note that if the thread is interrupted during this, sort may return
-	 * without the hits actually being fully read and sorted. We don't want
-	 * to add throws declarations to our whole API, so we assume the calling
-	 * method will check for thread interruption if the application uses it.
-	 *
-	 * @param sortProp
-	 *            the hit property to sort on
-	 */
-	@Override
-	public void sort(final HitProperty sortProp) {
-		sort(sortProp, false, searcher.isDefaultSearchCaseSensitive());
-	}
-
-	/**
-	 * Sort the list of hits.
-	 *
-	 * Note that if the thread is interrupted during this, sort may return
-	 * without the hits actually being fully read and sorted. We don't want
-	 * to add throws declarations to our whole API, so we assume the calling
-	 * method will check for thread interruption if the application uses it.
-	 *
-	 * Case-sensitivity depends on the default case-sensitivity set on the Searcher
-	 * object.
-	 *
-	 * @param sortProp
-	 *            the hit property to sort on
-	 * @param reverseSort
-	 *            if true, sort in descending order
-	 */
-	@Override
-	public void sort(final HitProperty sortProp, boolean reverseSort) {
-		sort(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
 	}
 
 	/**
@@ -907,20 +860,6 @@ public class HitsImpl extends Hits {
 	}
 
 	/**
-	 * Iterate over the hits in the original (pre-sort) order.
-	 * @return an iterable object that will produce hits in the original order.
-	 */
-	@Override
-	public Iterable<Hit> hitsInOriginalOrder() {
-		return new Iterable<Hit>() {
-			@Override
-			public Iterator<Hit> iterator() {
-				return HitsImpl.this.getIterator(true);
-			}
-		};
-	}
-
-	/**
 	 * Return an iterator over these hits that produces the
 	 * hits in their original order.
 	 *
@@ -968,19 +907,6 @@ public class HitsImpl extends Hits {
 			}
 
 		};
-	}
-
-	/**
-	 * Return an iterator over these hits.
-	 *
-	 * The order is the sorted order, not the original order. Use
-	 * hitsInOriginalOrder() to iterate in the original order.
-	 *
-	 * @return the iterator
-	 */
-	@Override
-	public Iterator<Hit> iterator() {
-		return getIterator(false);
 	}
 
 	/**
@@ -1417,19 +1343,6 @@ public class HitsImpl extends Hits {
 	/**
 	 * Count occurrences of context words around hit.
 	 *
-	 * Uses the default contents field for collocations, and the default
-	 * sensitivity settings.
-	 *
-	 * @return the frequency of each occurring token
-	 */
-	@Override
-	public TermFrequencyList getCollocations() {
-		return getCollocations(null, null);
-	}
-
-	/**
-	 * Count occurrences of context words around hit.
-	 *
 	 * @param propName the property to use for the collocations, or null if default
 	 * @param ctx query execution context, containing the sensitivity settings
 	 *
@@ -1551,16 +1464,6 @@ public class HitsImpl extends Hits {
 			result.put(names.get(i), groups[i]);
 		}
 		return result;
-	}
-
-	/**
-	 * Returns the searcher object.
-	 *
-	 * @return the searcher object.
-	 */
-	@Override
-	public Searcher getSearcher() {
-		return searcher;
 	}
 
 	/**
@@ -2016,13 +1919,6 @@ public class HitsImpl extends Hits {
 	@Override
 	public void setConcordanceType(ConcordanceType type) {
 		this.concsType = type;
-	}
-
-	@Override
-	protected void setConcFIs(String concWordFI, String concPunctFI, Collection<String> concAttrFI) {
-		this.concWordFI = concWordFI;
-		this.concPunctFI = concPunctFI;
-		this.concAttrFI = concAttrFI;
 	}
 
 	@Override

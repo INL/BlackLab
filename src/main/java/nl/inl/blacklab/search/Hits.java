@@ -41,6 +41,8 @@ public abstract class Hits extends AbstractList<Hit> {
 	 */
 	protected static int defaultMaxHitsToCount = -1;
 
+	protected Searcher searcher;
+
 	/** @return the default maximum number of hits to retrieve. */
 	public static int getDefaultMaxHitsToRetrieve() {
 		return defaultMaxHitsToRetrieve;
@@ -150,12 +152,10 @@ public abstract class Hits extends AbstractList<Hit> {
 		setMaxHitsRetrieved(copyFrom.maxHitsRetrieved());
 		setMaxHitsCounted(copyFrom.maxHitsCounted());
 		setContextSize(copyFrom.getContextSize());
-		setConcFIs(copyFrom.getConcWordFI(), copyFrom.getConcPunctFI(), copyFrom.getConcAttrFI());
+		setForwardIndexConcordanceParameters(copyFrom.getConcWordFI(), copyFrom.getConcPunctFI(), copyFrom.getConcAttrFI());
 		setConcordanceType(copyFrom.getConcordanceType());
 		setHitQueryContext(copyFrom.getHitQueryContext());
 	}
-
-	protected abstract void setConcFIs(String concWordFI, String concPunctFI, Collection<String> concAttrFI);
 
 	protected abstract void setMaxHitsCounted(boolean maxHitsCounted);
 
@@ -261,7 +261,9 @@ public abstract class Hits extends AbstractList<Hit> {
 	 * @param sortProp
 	 *            the hit property to sort on
 	 */
-	public abstract void sort(HitProperty sortProp);
+	public void sort(final HitProperty sortProp) {
+		sort(sortProp, false, searcher.isDefaultSearchCaseSensitive());
+	}
 
 	/**
 	 * Sort the list of hits.
@@ -279,7 +281,9 @@ public abstract class Hits extends AbstractList<Hit> {
 	 * @param reverseSort
 	 *            if true, sort in descending order
 	 */
-	public abstract void sort(HitProperty sortProp, boolean reverseSort);
+	public void sort(final HitProperty sortProp, boolean reverseSort) {
+		sort(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
+	}
 
 	/**
 	 * Sort the list of hits.
@@ -327,7 +331,7 @@ public abstract class Hits extends AbstractList<Hit> {
 	 * @return a new Hits object with the same hits, sorted in the specified way
 	 */
 	public Hits sortedBy(final HitProperty sortProp, boolean reverseSort) {
-		return sortedBy(sortProp, reverseSort, getSearcher().isDefaultSearchCaseSensitive());
+		return sortedBy(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
 	}
 
 	/**
@@ -342,7 +346,7 @@ public abstract class Hits extends AbstractList<Hit> {
 	 * @return a new Hits object with the same hits, sorted in the specified way
 	 */
 	public Hits sortedBy(final HitProperty sortProp) {
-		return sortedBy(sortProp, false, getSearcher().isDefaultSearchCaseSensitive());
+		return sortedBy(sortProp, false, searcher.isDefaultSearchCaseSensitive());
 	}
 
 	/**
@@ -478,7 +482,14 @@ public abstract class Hits extends AbstractList<Hit> {
 	 * Iterate over the hits in the original (pre-sort) order.
 	 * @return an iterable object that will produce hits in the original order.
 	 */
-	public abstract Iterable<Hit> hitsInOriginalOrder();
+	public Iterable<Hit> hitsInOriginalOrder() {
+		return new Iterable<Hit>() {
+			@Override
+			public Iterator<Hit> iterator() {
+				return Hits.this.getIterator(true);
+			}
+		};
+	}
 
 	/**
 	 * Return an iterator over these hits that produces the
@@ -499,7 +510,9 @@ public abstract class Hits extends AbstractList<Hit> {
 	 * @return the iterator
 	 */
 	@Override
-	public abstract Iterator<Hit> iterator();
+	public Iterator<Hit> iterator() {
+		return getIterator(false);
+	}
 
 	/**
 	 * Return the specified hit number, based on the order they
@@ -631,7 +644,10 @@ public abstract class Hits extends AbstractList<Hit> {
 	 *
 	 * @return the frequency of each occurring token
 	 */
-	public abstract TermFrequencyList getCollocations();
+	public TermFrequencyList getCollocations() {
+		return getCollocations(null, null);
+	}
+
 
 	/**
 	 * Count occurrences of context words around hit.
@@ -679,7 +695,9 @@ public abstract class Hits extends AbstractList<Hit> {
 	 *
 	 * @return the searcher object.
 	 */
-	public abstract Searcher getSearcher();
+	public Searcher getSearcher() {
+		return searcher;
+	}
 
 	/**
 	 * Returns the field to use for retrieving concordances.
