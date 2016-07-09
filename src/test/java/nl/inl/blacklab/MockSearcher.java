@@ -2,7 +2,6 @@ package nl.inl.blacklab;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.Collator;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +23,6 @@ import org.apache.lucene.store.LockObtainFailedException;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.perdocument.DocResults;
@@ -76,7 +74,7 @@ public class MockSearcher extends Searcher {
 	@Override
 	public void close() {
 		//
-
+		super.close();
 	}
 
 	@Override
@@ -247,16 +245,6 @@ public class MockSearcher extends Searcher {
 	}
 
 	@Override
-	public void setCollator(Collator collator) {
-		//
-	}
-
-	@Override
-	public Collator getCollator() {
-		return null;
-	}
-
-	@Override
 	public ForwardIndex getForwardIndex(String fieldPropName) {
 		return forwardIndex;
 	}
@@ -284,16 +272,6 @@ public class MockSearcher extends Searcher {
 
 	@Override
 	public ContentStore openContentStore(File indexXmlDir, boolean create) {
-		return null;
-	}
-
-	@Override
-	public Terms getTerms(String fieldPropName) {
-		return null;
-	}
-
-	@Override
-	public Terms getTerms() {
 		return null;
 	}
 

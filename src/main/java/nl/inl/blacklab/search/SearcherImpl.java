@@ -20,9 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -61,12 +59,10 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
 import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
@@ -93,21 +89,6 @@ import nl.inl.util.VersionFile;
 public class SearcherImpl extends Searcher implements Closeable {
 
 	protected static final Logger logger = Logger.getLogger(SearcherImpl.class);
-
-	/** The collator to use for sorting. Defaults to English collator. */
-	private Collator collator = Searcher.defaultCollator;
-
-	/**
-	 * ContentAccessors tell us how to get a field's content:
-	 * <ol>
-	 * <li>if there is no contentaccessor: get it from the Lucene index (stored field)</li>
-	 * <li>from an external source (file, database) if it's not (because the content is very large
-	 * and/or we want faster random access to the content than a stored field can provide)</li>
-	 * </ol>
-	 *
-	 * Indexed by complex field name.
-	 */
-	private Map<String, ContentAccessor> contentAccessors = new HashMap<>();
 
 	/**
 	 * ForwardIndices allow us to quickly find what token occurs at a specific position. This speeds
@@ -389,12 +370,8 @@ public class SearcherImpl extends Searcher implements Closeable {
 				fi.close();
 			}
 
-			// Close the content accessor(s)
-			// (the ContentStore, and possibly other content accessors
-			// (although that feature is not used right now))
-			for (ContentAccessor ca: contentAccessors.values()) {
-				ca.close();
-			}
+			super.close();
+
 
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -665,29 +642,18 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
-	public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord, int endAtWord) {
-		// FIXME: use fieldName
-		Hit hit = new Hit(docId, startAtWord, endAtWord);
-		Hits hits = Hits.fromList(this, getContentsFieldMainPropName(), Arrays.asList(hit));
-		Kwic kwic = hits.getKwic(hit, 0);
-		return kwic.getDocContents();
-	}
-
-	@Override
 	public String getContent(int docId, String fieldName, int startAtWord, int endAtWord) {
-		Document d = document(docId);
-		ContentAccessor ca = contentAccessors.get(fieldName);
-		if (ca == null) {
+		if (!contentStores.exists(fieldName)) {
 			// No special content accessor set; assume a stored field
+			Document d = document(docId);
 			String content = d.get(fieldName);
 			if (content == null)
 				throw new RuntimeException("Field not found: " + fieldName);
 			return getWordsFromString(content, startAtWord, endAtWord);
 		}
 
-		int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord,
-				endAtWord);
-		return ca.getSubstringsFromDocument(d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
+		int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord);
+		return contentStores.getSubstrings(fieldName, docId, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
 	}
 
 	/**
@@ -726,29 +692,23 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 	@Override
 	public String getContentByCharPos(int docId, String fieldName, int startAtChar, int endAtChar) {
-		Document d = document(docId);
-		ContentAccessor ca = contentAccessors.get(fieldName);
-		if (ca == null) {
+		if (!contentStores.exists(fieldName)) {
 			// No special content accessor set; assume a stored field
+			Document d = document(docId);
 			return d.get(fieldName).substring(startAtChar, endAtChar);
 		}
-
-		return ca.getSubstringsFromDocument(d, new int[] { startAtChar }, new int[] { endAtChar })[0];
+		return contentStores.getSubstrings(fieldName, docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
 	}
 
 	@Override
 	@Deprecated
 	public String getContent(Document d, String fieldName) {
-		ContentAccessor ca = contentAccessors.get(fieldName);
-		String content;
-		if (ca == null) {
+		if (!contentStores.exists(fieldName)) {
 			// No special content accessor set; assume a stored field
-			content = d.get(fieldName);
-		} else {
-			// Content accessor set. Use it to retrieve the content.
-			content = ca.getSubstringsFromDocument(d, new int[] { -1 }, new int[] { -1 })[0];
+			return d.get(fieldName);
 		}
-		return content;
+		// Content accessor set. Use it to retrieve the content.
+		return contentStores.getSubstrings(fieldName, d, new int[] { -1 }, new int[] { -1 })[0];
 	}
 
 	@Override
@@ -784,9 +744,8 @@ public class SearcherImpl extends Searcher implements Closeable {
 	 */
 	private String[] getSubstringsFromDocument(Document d, String fieldName, int[] starts,
 			int[] ends) {
-		ContentAccessor ca = contentAccessors.get(fieldName);
-		String[] content;
-		if (ca == null) {
+		if (!contentStores.exists(fieldName)) {
+			String[] content;
 			// No special content accessor set; assume a non-complex stored field
 			// TODO: check with index structure?
 			String luceneName = fieldName; // <- non-complex, so this works
@@ -795,11 +754,10 @@ public class SearcherImpl extends Searcher implements Closeable {
 			for (int i = 0; i < starts.length; i++) {
 				content[i] = fieldContent.substring(starts[i], ends[i]);
 			}
-		} else {
-			// Content accessor set. Use it to retrieve the content.
-			content = ca.getSubstringsFromDocument(d, starts, ends);
+			return content;
 		}
-		return content;
+		// Content accessor set. Use it to retrieve the content.
+		return contentStores.getSubstrings(fieldName, d, starts, ends);
 	}
 
 	@Override
@@ -838,30 +796,17 @@ public class SearcherImpl extends Searcher implements Closeable {
 		return highlightContent(docId, mainContentsFieldName, hits, -1, -1);
 	}
 
-	/**
-	 * Register a content accessor.
-	 *
-	 * This tells the Searcher how the content of different fields may be accessed. This is used for
-	 * making concordances, for example. Some fields are stored in the Lucene index, while others
-	 * may be stored on the file system, a database, etc.
-	 *
-	 * @param contentAccessor
-	 */
-	private void registerContentAccessor(ContentAccessor contentAccessor) {
-		contentAccessors.put(contentAccessor.getFieldName(), contentAccessor);
-	}
-
 	@Override
 	public ContentStore getContentStore(String fieldName) {
-		ContentAccessor ca = contentAccessors.get(fieldName);
-		if (indexMode && ca == null) {
+		ContentStore cs = contentStores.get(fieldName);
+		if (indexMode && cs == null) {
 			// Index mode. Create new content store or open existing one.
 			File contentStoreDir = new File(indexLocation, "cs_" + fieldName);
 			ContentStore contentStore = ContentStore.open(contentStoreDir, isEmptyIndex);
 			registerContentStore(fieldName, contentStore);
 			return contentStore;
 		}
-		return ca.getContentStore();
+		return cs;
 	}
 
 	/**
@@ -880,17 +825,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	 *
 	 */
 	private void registerContentStore(String fieldName, ContentStore contentStore) {
-		registerContentAccessor(new ContentAccessor(fieldName, contentStore));
-	}
-
-	@Override
-	public void setCollator(Collator collator) {
-		this.collator = collator;
-	}
-
-	@Override
-	public Collator getCollator() {
-		return collator;
+		contentStores.put(fieldName, contentStore);
 	}
 
 	/**
@@ -960,7 +895,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 				return null;
 			}
 			// Open forward index
-			forwardIndex = ForwardIndex.open(dir, indexMode, collator, isEmptyIndex);
+			forwardIndex = ForwardIndex.open(dir, indexMode, getCollator(), isEmptyIndex);
 			forwardIndex.setIdTranslateInfo(reader, fieldPropName); // how to translate from
 																			// Lucene
 																			// doc to fiid
@@ -1030,20 +965,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	@Override
 	public void setDefaultContextSize(int defaultContextSize) {
 		this.defaultContextSize = defaultContextSize;
-	}
-
-	@Override
-	public Terms getTerms(String fieldPropName) {
-		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
-		if (forwardIndex == null) {
-			throw new RuntimeException("Field " + fieldPropName + " has no forward index!");
-		}
-		return forwardIndex.getTerms();
-	}
-
-	@Override
-	public Terms getTerms() {
-		return getTerms(ComplexFieldUtil.mainPropertyField(indexStructure, mainContentsFieldName));
 	}
 
 	@Override
@@ -1172,9 +1093,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 						}
 
 						// Delete this document in all content stores
-						for (ContentAccessor ca: contentAccessors.values()) {
-							ca.delete(d);
-						}
+						contentStores.deleteDocument(d);
 					}
 				} finally {
 					scrw.close();
@@ -1194,12 +1113,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	@Override
 	public Analyzer getAnalyzer() {
 		return analyzer;
-	}
-
-	@Override
-	@SuppressWarnings("deprecation") // DocResults constructor will be made package-private eventually
-	public DocResults queryDocuments(Query documentFilterQuery) {
-		return new DocResults(this, documentFilterQuery);
 	}
 
 	@Override

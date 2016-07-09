@@ -7,6 +7,7 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.Collator;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -34,15 +36,19 @@ import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.externalstorage.ContentStoresManager;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.util.VersionFile;
 
 public abstract class Searcher {
+
+	protected static final Logger logger = Logger.getLogger(Searcher.class);
 
 	/** The collator to use for sorting. Defaults to English collator. */
 	protected static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
@@ -58,6 +64,9 @@ public abstract class Searcher {
 
 	/** Analyzer that doesn't tokenize */
 	final protected static Analyzer nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
+
+	/** Complex field name for default contents field */
+	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
 
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).
@@ -267,8 +276,33 @@ public abstract class Searcher {
 		return null;
 	}
 
-	/** Complex field name for default contents field */
-	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
+	//-------------------------------------------------------------------------
+
+	/** The collator to use for sorting. Defaults to English collator. */
+	private Collator collator = Searcher.defaultCollator;
+
+	protected ContentStoresManager contentStores = new ContentStoresManager();
+
+	/**
+	 * Set the collator used for sorting.
+	 *
+	 * The default collator is for English.
+	 *
+	 * @param collator
+	 *            the collator
+	 */
+	public void setCollator(Collator collator) {
+		this.collator = collator;
+	}
+
+	/**
+	 * Get the collator being used for sorting.
+	 *
+	 * @return the collator
+	 */
+	public Collator getCollator() {
+		return collator;
+	}
 
 	/**
 	 * How do we fix well-formedness for snippets of XML?
@@ -334,7 +368,9 @@ public abstract class Searcher {
 	 * Finalize the Searcher object. This closes the IndexSearcher and (depending on the constructor
 	 * used) may also close the index reader.
 	 */
-	public abstract void close();
+	public void close() {
+		contentStores.close();
+	}
 
 	/**
 	 * Get information about the structure of the BlackLab index.
@@ -508,7 +544,12 @@ public abstract class Searcher {
 	public abstract void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
 			boolean fillInDefaultsIfNotFound);
 
-	public abstract DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord, int endAtWord);
+	public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord, int endAtWord) {
+		Hit hit = new Hit(docId, startAtWord, endAtWord);
+		Hits hits = Hits.fromList(this, fieldName, Arrays.asList(hit));
+		Kwic kwic = hits.getKwic(hit, 0);
+		return kwic.getDocContents();
+	}
 
 	/**
 	 * Get part of the contents of a field from a Lucene Document.
@@ -657,22 +698,6 @@ public abstract class Searcher {
 	 */
 	public abstract ContentStore getContentStore(String fieldName);
 
-	/**
-	 * Set the collator used for sorting.
-	 *
-	 * The default collator is for English.
-	 *
-	 * @param collator
-	 *            the collator
-	 */
-	public abstract void setCollator(Collator collator);
-
-	/**
-	 * Get the collator being used for sorting.
-	 *
-	 * @return the collator
-	 */
-	public abstract Collator getCollator();
 
 	/**
 	 * Tries to get the ForwardIndex object for the specified fieldname.
@@ -798,7 +823,13 @@ public abstract class Searcher {
 	 * @throws RuntimeException
 	 *             if this field does not have a forward index, and hence no Terms object.
 	 */
-	public abstract Terms getTerms(String fieldPropName);
+	public Terms getTerms(String fieldPropName) {
+		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
+		if (forwardIndex == null) {
+			throw new RuntimeException("Field " + fieldPropName + " has no forward index!");
+		}
+		return forwardIndex.getTerms();
+	}
 
 	/**
 	 * Get the Terms object for the main contents field.
@@ -812,7 +843,9 @@ public abstract class Searcher {
 	 * @throws RuntimeException
 	 *             if this field does not have a forward index, and hence no Terms object.
 	 */
-	public abstract Terms getTerms();
+	public Terms getTerms() {
+		return getTerms(ComplexFieldUtil.mainPropertyField(getIndexStructure(), getMainContentsFieldName()));
+	}
 
 	public abstract String getContentsFieldMainPropName();
 
@@ -891,7 +924,10 @@ public abstract class Searcher {
 	 * @param documentFilterQuery the document-level query
 	 * @return the matching documents
 	 */
-	public abstract DocResults queryDocuments(Query documentFilterQuery);
+	@SuppressWarnings("deprecation") // DocResults constructor will be made package-private eventually
+	public DocResults queryDocuments(Query documentFilterQuery) {
+		return new DocResults(this, documentFilterQuery);
+	}
 
 	/**
 	 * Determine the term frequencies in a set of documents (defined by the filter query)
