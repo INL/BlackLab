@@ -48,7 +48,7 @@ public class HitPropertyWordLeft extends HitProperty {
 	}
 
 	public HitPropertyWordLeft(Hits hits) {
-		this(hits, hits.getSearcher().getContentsFieldMainPropName(), hits.getSearcher()
+		this(hits, hits.getSearcher().getMainContentsFieldName(), hits.getSearcher()
 				.isDefaultSearchCaseSensitive());
 	}
 
@@ -71,7 +71,7 @@ public class HitPropertyWordLeft extends HitProperty {
 	}
 
 	public HitPropertyWordLeft(Hits hits, boolean sensitive) {
-		this(hits, hits.getSearcher().getContentsFieldMainPropName(), sensitive);
+		this(hits, hits.getSearcher().getMainContentsFieldName(), sensitive);
 	}
 
 	@Override

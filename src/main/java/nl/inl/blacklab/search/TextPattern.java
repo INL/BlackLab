@@ -74,24 +74,6 @@ public abstract class TextPattern implements Cloneable {
 	}
 
 	/**
-	 * Translate this TextPattern into some other representation.
-	 *
-	 * For example, TextPatternTranslatorSpanQuery translates it into Lucene SpanQuerys.
-	 *
-	 * Used a simple default query execution context not tied to a Searcher. Useful for testing.
-	 *
-	 * @param translator
-	 *            the translator to use
-	 *
-	 * @param <T>
-	 *            type of object to translate to
-	 * @return result of the translation
-	 */
-	public <T> T translate(TextPatternTranslator<T> translator) {
-		return translate(translator, QueryExecutionContext.getSimple("contents"));
-	}
-
-	/**
 	 * Does this TextPattern match the empty sequence?
 	 *
 	 * For example, the query [word="cow"]* matches the empty sequence. We need to know this so we
@@ -114,16 +96,16 @@ public abstract class TextPattern implements Cloneable {
 
 	@Override
 	public String toString() {
-		return toString(Searcher.DEFAULT_CONTENTS_FIELD_NAME);
+		return toString(null, Searcher.DEFAULT_CONTENTS_FIELD_NAME);
 	}
 
 	public String toString(Searcher searcher) {
 		return toString(searcher, Searcher.DEFAULT_CONTENTS_FIELD_NAME);
 	}
 
-	public String toString(String fieldName) {
-		return toString(QueryExecutionContext.getSimple(fieldName));
-	}
+//	public String toString(String fieldName) {
+//		return toString(QueryExecutionContext.getSimple(null, fieldName));
+//	}
 
 	public String toString(Searcher searcher, String fieldName) {
 		return toString(searcher.getDefaultExecutionContext());

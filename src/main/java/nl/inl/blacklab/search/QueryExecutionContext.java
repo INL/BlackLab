@@ -3,6 +3,7 @@ package nl.inl.blacklab.search;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.MockSearcher;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
@@ -107,8 +108,8 @@ public class QueryExecutionContext {
 	 */
 	private String[] getAlternatives() {
 
-		if (searcher == null) {
-			// Test
+		if (searcher instanceof MockSearcher) {
+			// TODO: give MockSearcher an index structure so we don't need this hack
 			if (caseSensitive)
 				return new String[] {"s", "i"};
 			return new String[] {"i", "s"};
@@ -186,8 +187,9 @@ public class QueryExecutionContext {
 		// Determine available alternatives based on sensitivity preferences.
 		String[] alternatives = includeAlternative ? getAlternatives() : null;
 
-		if (searcher == null) {
+		if (searcher instanceof MockSearcher) {
 			// Mostly for testing. Don't check, just combine field parts.
+			// TODO: give MockSearcher an index structure so we don't need this hack
 			if (alternatives == null || alternatives.length == 0)
 				return ComplexFieldUtil.propertyField(fieldName, propName);
 			return ComplexFieldUtil.propertyField(fieldName, propName, alternatives[0]);
@@ -237,9 +239,9 @@ public class QueryExecutionContext {
 	 * @param fieldName field to get an execution context for
 	 * @return the context
 	 */
-	public static QueryExecutionContext getSimple(String fieldName) {
+	public static QueryExecutionContext getSimple(Searcher searcher, String fieldName) {
 		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
-		return new QueryExecutionContext(null, fieldName, mainPropName, false, false);
+		return new QueryExecutionContext(searcher, fieldName, mainPropName, false, false);
 	}
 
 	public boolean alwaysHasClosingToken() {

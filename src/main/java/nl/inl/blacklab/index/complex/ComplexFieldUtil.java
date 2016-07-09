@@ -382,9 +382,6 @@ public class ComplexFieldUtil {
 		int propSepPos = luceneFieldName.indexOf(PROP_SEP);
 		int altSepPos = luceneFieldName.indexOf(ALT_SEP);
 		int bookkeepingSepPos;
-//		if (oldFieldNames && propSepPos >= 0)
-//			bookkeepingSepPos = luceneFieldName.indexOf(BOOKKEEPING_SEP, propSepPos + 1);
-//		else
 			bookkeepingSepPos = luceneFieldName.indexOf(BOOKKEEPING_SEP);
 
 		// Strip off property and possible alternative

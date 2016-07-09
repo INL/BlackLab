@@ -15,18 +15,19 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.sequences;
 
+import org.junit.Assert;
+import org.junit.Test;
+
+import nl.inl.blacklab.MockSearcher;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternTerm;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 public class TestTextPatternSequence {
 
 //	TextPatternTranslatorString stringifier = new TextPatternTranslatorString();
 
-	QueryExecutionContext ctx = QueryExecutionContext.getSimple("contents");
+	QueryExecutionContext ctx = QueryExecutionContext.getSimple(new MockSearcher(), "contents");
 
 	@Test
 	public void testSequence() {

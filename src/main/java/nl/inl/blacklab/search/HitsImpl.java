@@ -273,6 +273,11 @@ public class HitsImpl extends Hits {
 		return hitQueryContext;
 	}
 
+	@Override
+	public Hits copy() {
+		return new HitsImpl(this);
+	}
+
 	/**
 	 * Construct a Hits object from an existing Hits object.
 	 *
@@ -282,6 +287,7 @@ public class HitsImpl extends Hits {
 	 * @param copyFrom the Hits object to copy
 	 */
 	private HitsImpl(HitsImpl copyFrom) {
+		super(copyFrom.searcher);
 		try {
 			copyFrom.ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -296,7 +302,6 @@ public class HitsImpl extends Hits {
 		docsCounted = copyFrom.countSoFarDocsCounted();
 		previousHitDoc = copyFrom.previousHitDoc;
 
-		searcher = copyFrom.getSearcher();
 		copySettingsFrom(copyFrom);
 
 		currentContextSize = -1; // context is not copied
@@ -315,11 +320,11 @@ public class HitsImpl extends Hits {
 	 * @param hits the list of hits to wrap
 	 */
 	HitsImpl(Searcher searcher, String concordanceFieldName, List<Hit> hits) {
-		this.searcher = searcher;
+		super(searcher);
 		this.hits = hits == null ? new ArrayList<Hit>() : hits;
 		hitsCounted = this.hits.size();
 		setConcordanceField(concordanceFieldName);
-		desiredContextSize = searcher == null ? 5 : searcher.getDefaultContextSize();
+		desiredContextSize = searcher.getDefaultContextSize();
 		currentContextSize = -1;
 		int prevDoc = -1;
 		docsRetrieved = docsCounted = 0;
@@ -330,16 +335,10 @@ public class HitsImpl extends Hits {
 				prevDoc = h.doc;
 			}
 		}
-		if (searcher == null) { // (test)
-			concWordFI = concPunctFI = null;
-			concAttrFI = null;
-			concsType = ConcordanceType.FORWARD_INDEX;
-		} else {
-			concWordFI = searcher.getConcWordFI();
-			concPunctFI = searcher.getConcPunctFI();
-			concAttrFI = searcher.getConcAttrFI();
-			concsType = searcher.getDefaultConcordanceType();
-		}
+		concWordFI = searcher.getConcWordFI();
+		concPunctFI = searcher.getConcPunctFI();
+		concAttrFI = searcher.getConcAttrFI();
+		concsType = searcher.getDefaultConcordanceType();
 		etiquette = new ThreadPriority();
 	}
 
@@ -359,7 +358,7 @@ public class HitsImpl extends Hits {
 		this(searcher, concordanceFieldPropName, (List<Hit>)null);
 
 		try {
-			DirectoryReader reader = searcher == null ? null : searcher.getIndexReader();
+			DirectoryReader reader = searcher.getIndexReader();
 			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
 			termContexts = new HashMap<>();
 			Set<Term> terms = new HashSet<>();
@@ -649,28 +648,6 @@ public class HitsImpl extends Hits {
 				sortOrder[i] = sortOrder[n - i - 1];
 			}
 		}
-	}
-
-	/**
-	 * Return a new Hits object with these hits sorted by the given property.
-	 *
-	 * This keeps the existing sort (or lack of one) intact and allows you to cache
-	 * different sorts of the same resultset. The hits themselves are reused between
-	 * the two Hits instances, so not too much additional memory is used.
-	 *
-	 * @param sortProp
-	 *            the hit property to sort on
-	 * @param reverseSort
-	 *            if true, sort in descending order
-	 * @param sensitive whether to sort case-sensitively or not
-	 * @return a new Hits object with the same hits, sorted in the specified way
-	 */
-	@Override
-	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
-		Hits hits = new HitsImpl(this);
-		sortProp = sortProp.copyWithHits(hits);
-		hits.sort(sortProp, reverseSort, sensitive);
-		return hits;
 	}
 
 	/**
@@ -998,7 +975,7 @@ public class HitsImpl extends Hits {
 	@Override
 	public synchronized Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
-		HitsImpl h = new HitsImpl(searcher, searcher.getContentsFieldMainPropName(), oneHit);
+		HitsImpl h = new HitsImpl(searcher, searcher.getMainContentsFieldName(), oneHit);
 		h.copySettingsFrom(this); // concordance type, etc.
 		if (concsType == ConcordanceType.FORWARD_INDEX) {
 			Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, fieldName);
@@ -1023,7 +1000,7 @@ public class HitsImpl extends Hits {
 	@Override
 	public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
 		List<Hit> oneHit = Arrays.asList(hit);
-		HitsImpl h = new HitsImpl(searcher, searcher.getContentsFieldMainPropName(), oneHit);
+		HitsImpl h = new HitsImpl(searcher, searcher.getMainContentsFieldName(), oneHit);
 		h.copySettingsFrom(this); // concordance type, etc.
 		Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, fieldName);
 		return oneConc.get(hit);
@@ -1238,7 +1215,7 @@ public class HitsImpl extends Hits {
 
 			Map<Hit, Kwic> conc1 = new HashMap<>();
 			for (List<Hit> l: hitsPerDocument.values()) {
-				HitsImpl hitsInThisDoc = new HitsImpl(searcher, searcher.getContentsFieldMainPropName(), l);
+				HitsImpl hitsInThisDoc = new HitsImpl(searcher, searcher.getMainContentsFieldName(), l);
 				hitsInThisDoc.copySettingsFrom(this);
 				hitsInThisDoc.makeKwicsSingleDocForwardIndex(forwardIndex, punctForwardIndex,
 						attrForwardIndices, contextSize, conc1);
@@ -1321,7 +1298,7 @@ public class HitsImpl extends Hits {
 	 */
 	private void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
 		// Find context for the hits in the current document
-		HitsImpl hitsObj = new HitsImpl(searcher, searcher.getContentsFieldMainPropName(), hitsInSameDoc);
+		HitsImpl hitsObj = new HitsImpl(searcher, searcher.getMainContentsFieldName(), hitsInSameDoc);
 		hitsObj.copySettingsFrom(this);
 		hitsObj.getContextWords(desiredContextSize, fis);
 
@@ -1817,14 +1794,14 @@ public class HitsImpl extends Hits {
 			// client should detect thread was interrupted if it
 			// wants to use background threads.
 			Thread.currentThread().interrupt();
-			return Hits.emptyList(searcher, searcher == null ? "word" : searcher.getContentsFieldMainPropName());
+			return Hits.emptyList(searcher, searcher.getMainContentsFieldName());
 		}
 		List<Hit> hitsInDoc = new ArrayList<>();
 		for (Hit hit: hits) {
 			if (hit.doc == docid)
 				hitsInDoc.add(hit);
 		}
-		Hits result = Hits.fromList(searcher, searcher.getContentsFieldMainPropName(), hitsInDoc);
+		Hits result = Hits.fromList(searcher, searcher.getMainContentsFieldName(), hitsInDoc);
 		result.copySettingsFrom(this);
 		return result;
 	}
@@ -1868,7 +1845,7 @@ public class HitsImpl extends Hits {
 		Map<Integer, List<Hit>> hitsPerDocument = perDocumentGroupedHits();
 		Map<Hit, Concordance> conc = new HashMap<>();
 		for (List<Hit> l: hitsPerDocument.values()) {
-			HitsImpl hitsInThisDoc = new HitsImpl(searcher, searcher.getContentsFieldMainPropName(), l);
+			HitsImpl hitsInThisDoc = new HitsImpl(searcher, searcher.getMainContentsFieldName(), l);
 			hitsInThisDoc.copySettingsFrom(this);
 			hitsInThisDoc.makeConcordancesSingleDocContentStore(fieldName, contextSize, conc, hl);
 		}

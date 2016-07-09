@@ -20,10 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -44,13 +41,11 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
@@ -59,16 +54,11 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.highlight.XmlHighlighter;
-import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
-import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
-import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.ExUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
@@ -91,15 +81,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	protected static final Logger logger = Logger.getLogger(SearcherImpl.class);
 
 	/**
-	 * ForwardIndices allow us to quickly find what token occurs at a specific position. This speeds
-	 * up grouping and sorting. There may be several indices on a complex field, e.g.: word form,
-	 * lemma, part of speech.
-	 *
-	 * Indexed by property name.
-	 */
-	private Map<String, ForwardIndex> forwardIndices = new HashMap<>();
-
-	/**
 	 * The Lucene index reader
 	 */
 	private DirectoryReader reader;
@@ -110,75 +91,9 @@ public class SearcherImpl extends Searcher implements Closeable {
 	private IndexSearcher indexSearcher;
 
 	/**
-	 * Name of the main contents field (used as default parameter value for many methods)
-	 */
-	private String mainContentsFieldName;
-
-	/** Default number of words around a hit */
-	private int defaultContextSize = 5;
-
-	/** Should we default to case-sensitive searching? [false] */
-	private boolean defaultCaseSensitive = false;
-
-	/** Should we default to diacritics-sensitive searching? [false] */
-	private boolean defaultDiacriticsSensitive = false;
-
-	/**
 	 * Directory where our index resides
 	 */
 	private File indexLocation;
-
-	/** Structure of our index */
-	private IndexStructure indexStructure;
-
-	/** Do we want to retrieve concordances from the forward index instead of from the
-	 *  content store? Generating them from the forward index is more
-	 *  efficient.
-	 *
-	 *  This is set to true for all modern indices.
-	 *  (to be precise, it's set to true iff a punctuation forward index is present)
-	 *
-	 *  This setting controls the default. You don't have to set this to false if you
-	 *  sometimes want concordances from the content store; you can specifically request
-	 *  those when you need them.
-	 */
-	private ConcordanceType defaultConcsType = ConcordanceType.CONTENT_STORE;
-	//private boolean concordancesFromForwardIndex = false;
-
-	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
-	private String concWordFI = "word";
-
-	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
-	private String concPunctFI = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
-
-	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
-	private Collection<String> concAttrFI = null; // all other FIs are attributes
-
-	/** How we fix well-formedness for snippets of XML: by adding or removing unbalanced tags */
-	private UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
-
-	@Override
-	public UnbalancedTagsStrategy getDefaultUnbalancedTagsStrategy() {
-		return defaultUnbalancedTagsStrategy;
-	}
-
-	@Override
-	public void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy) {
-		this.defaultUnbalancedTagsStrategy = strategy;
-	}
-
-	@Override
-	public ConcordanceType getDefaultConcordanceType() {
-		return defaultConcsType;
-	}
-
-	@Override
-	public void setDefaultConcordanceType(ConcordanceType type) {
-		defaultConcsType = type;
-	}
-
-	/** If true, we want to add/delete documents. If false, we're just searching. */
-	private boolean indexMode = false;
 
 	/** If true, we've just created a new index. New indices cannot be searched, only added to. */
 	private boolean isEmptyIndex = false;
@@ -187,10 +102,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	private IndexWriter indexWriter = null;
 
 	/** Thread that automatically warms up the forward indices, if enabled. */
-	private Thread buildTermIndicesThread;
-
-	/** Analyzer used for indexing our metadata fields */
-	private Analyzer analyzer;
+	private Thread warmUpForwardIndicesThread;
 
 	/**
 	 * Open an index.
@@ -275,7 +187,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 				// See if we have a punctuation forward index. If we do,
 				// default to creating concordances using that.
 				if (mainContentsField.hasPunctuation()) {
-					defaultConcsType = ConcordanceType.FORWARD_INDEX;
+					setDefaultConcordanceType(ConcordanceType.FORWARD_INDEX);
 				}
 			}
 
@@ -350,12 +262,12 @@ public class SearcherImpl extends Searcher implements Closeable {
 			}
 
 			// See if the forward index warmup thread is running, and if so, stop it
-			if (buildTermIndicesThread != null && buildTermIndicesThread.isAlive()) {
-				buildTermIndicesThread.interrupt();
+			if (warmUpForwardIndicesThread != null && warmUpForwardIndicesThread.isAlive()) {
+				warmUpForwardIndicesThread.interrupt();
 
 				// Wait for a maximum of a second for the thread to close down gracefully
 				int i = 0;
-				while (buildTermIndicesThread.isAlive() && i < 10) {
+				while (warmUpForwardIndicesThread.isAlive() && i < 10) {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
@@ -365,22 +277,11 @@ public class SearcherImpl extends Searcher implements Closeable {
 				}
 			}
 
-			// Close the forward indices
-			for (ForwardIndex fi: forwardIndices.values()) {
-				fi.close();
-			}
-
 			super.close();
-
 
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
-	}
-
-	@Override
-	public IndexStructure getIndexStructure() {
-		return indexStructure;
 	}
 
 	@Override
@@ -405,69 +306,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	@Override
 	public int maxDoc() {
 		return reader.maxDoc();
-	}
-
-	@Override
-	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
-		return new SpanQueryFiltered(query, filter);
-	}
-
-	@Override
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
-		// Convert to SpanQuery
-		pattern = pattern.rewrite();
-		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
-		SpanQuery spanQuery = pattern.translate(spanQueryTranslator,
-				getDefaultExecutionContext(fieldName));
-		if (filter != null)
-			spanQuery = new SpanQueryFiltered(spanQuery, filter);
-		return spanQuery;
-	}
-
-	@Override
-	public SpanQuery createSpanQuery(TextPattern pattern, Filter filter) {
-		return createSpanQuery(pattern, mainContentsFieldName, filter);
-	}
-
-	@Override
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
-		return createSpanQuery(pattern, fieldName, (Filter)null);
-	}
-
-	@Override
-	public SpanQuery createSpanQuery(TextPattern pattern) {
-		return createSpanQuery(pattern, mainContentsFieldName, (Filter)null);
-	}
-
-	@Override
-	public Hits find(SpanQuery query, String fieldNameConc) throws BooleanQuery.TooManyClauses {
-		return Hits.fromSpanQuery(this, fieldNameConc, query);
-	}
-
-	@Override
-	public Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses {
-		return Hits.fromSpanQuery(this, mainContentsFieldName, query);
-	}
-
-	@Override
-	public Hits find(TextPattern pattern, String fieldName, Filter filter)
-			throws BooleanQuery.TooManyClauses {
-		return Hits.fromSpanQuery(this, fieldName, createSpanQuery(pattern, fieldName, filter));
-	}
-
-	@Override
-	public Hits find(TextPattern pattern, Filter filter) throws BooleanQuery.TooManyClauses {
-		return find(pattern, mainContentsFieldName, filter);
-	}
-
-	@Override
-	public Hits find(TextPattern pattern, String fieldName) throws BooleanQuery.TooManyClauses {
-		return find(pattern, fieldName, null);
-	}
-
-	@Override
-	public Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses {
-		return find(pattern, mainContentsFieldName, null);
 	}
 
 	@Override
@@ -610,222 +448,17 @@ public class SearcherImpl extends Searcher implements Closeable {
 		}
 	}
 
-	/**
-	 * Get character positions from a list of hits.
-	 *
-	 * @param doc
-	 *            the document from which to find character positions
-	 * @param fieldName
-	 *            the field from which to find character positions
-	 * @param hits
-	 *            the hits for which we wish to find character positions
-	 * @return a list of HitSpan objects containing the character positions for the hits.
-	 */
-	private List<HitCharSpan> getCharacterOffsets(int doc, String fieldName, Hits hits) {
-		int[] starts = new int[hits.size()];
-		int[] ends = new int[hits.size()];
-		Iterator<Hit> hitsIt = hits.iterator();
-		for (int i = 0; i < starts.length; i++) {
-			Hit hit = hitsIt.next(); // hits.get(i);
-			starts[i] = hit.start;
-			ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
-									// subtract one
-		}
-
-		getCharacterOffsets(doc, fieldName, starts, ends, true);
-
-		List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
-		for (int i = 0; i < starts.length; i++) {
-			hitspans.add(new HitCharSpan(starts[i], ends[i]));
-		}
-		return hitspans;
-	}
-
-	@Override
-	public String getContent(int docId, String fieldName, int startAtWord, int endAtWord) {
-		if (!contentStores.exists(fieldName)) {
-			// No special content accessor set; assume a stored field
-			Document d = document(docId);
-			String content = d.get(fieldName);
-			if (content == null)
-				throw new RuntimeException("Field not found: " + fieldName);
-			return getWordsFromString(content, startAtWord, endAtWord);
-		}
-
-		int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord);
-		return contentStores.getSubstrings(fieldName, docId, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
-	}
-
-	/**
-	 * Convert start/end word positions to char positions.
-	 *
-	 * @param docId     Lucene Document id
-	 * @param fieldName name of the field
-	 * @param startAtWord where to start getting the content (-1 for start of document, 0 for first word)
-	 * @param endAtWord where to end getting the content (-1 for end of document)
-	 * @return the start and end char position as a two element int array
-	 *   (with any -1's preserved)
-	 */
-	private int[] startEndWordToCharPos(int docId, String fieldName,
-			int startAtWord, int endAtWord) {
-		if (startAtWord == -1 && endAtWord == -1) {
-			// No need to translate anything
-			return new int[] {-1, -1};
-		}
-
-		// Translate word pos to char pos and retrieve content
-		// NOTE: this boolean stuff is a bit iffy, but is necessary because
-		// getCharacterOffsets doesn't handle -1 to mean start/end of doc.
-		// We should probably fix that some time.
-		boolean startAtStartOfDoc = startAtWord == -1;
-		boolean endAtEndOfDoc = endAtWord == -1;
-		int[] starts = new int[] {startAtStartOfDoc ? 0 : startAtWord};
-		int[] ends = new int[] {endAtEndOfDoc ? starts[0] : endAtWord};
-		getCharacterOffsets(docId, fieldName, starts, ends, true);
-		if (startAtStartOfDoc)
-			starts[0] = -1;
-		if (endAtEndOfDoc)
-			ends[0] = -1;
-		int[] startEnd = new int[] {starts[0], ends[0]};
-		return startEnd;
-	}
-
-	@Override
-	public String getContentByCharPos(int docId, String fieldName, int startAtChar, int endAtChar) {
-		if (!contentStores.exists(fieldName)) {
-			// No special content accessor set; assume a stored field
-			Document d = document(docId);
-			return d.get(fieldName).substring(startAtChar, endAtChar);
-		}
-		return contentStores.getSubstrings(fieldName, docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
-	}
-
-	@Override
-	@Deprecated
-	public String getContent(Document d, String fieldName) {
-		if (!contentStores.exists(fieldName)) {
-			// No special content accessor set; assume a stored field
-			return d.get(fieldName);
-		}
-		// Content accessor set. Use it to retrieve the content.
-		return contentStores.getSubstrings(fieldName, d, new int[] { -1 }, new int[] { -1 })[0];
-	}
-
-	@Override
-	public String getContent(int docId, String fieldName) {
-		return getContent(docId, fieldName, -1, -1);
-	}
-
-	@Override
-	public String getContent(int docId) {
-		return getContent(docId, mainContentsFieldName, -1, -1);
-	}
-
 	@Override
 	public DirectoryReader getIndexReader() {
 		return reader;
 	}
 
-	/**
-	 * Get a number of substrings from a certain field in a certain document.
-	 *
-	 * For larger documents, this is faster than retrieving the whole content first and then cutting
-	 * substrings from that.
-	 *
-	 * @param d
-	 *            the document
-	 * @param fieldName
-	 *            the field
-	 * @param starts
-	 *            start positions of the substring we want
-	 * @param ends
-	 *            end positions of the substring we want; correspond to the starts array.
-	 * @return the substrings
-	 */
-	private String[] getSubstringsFromDocument(Document d, String fieldName, int[] starts,
-			int[] ends) {
-		if (!contentStores.exists(fieldName)) {
-			String[] content;
-			// No special content accessor set; assume a non-complex stored field
-			// TODO: check with index structure?
-			String luceneName = fieldName; // <- non-complex, so this works
-			String fieldContent = d.get(luceneName);
-			content = new String[starts.length];
-			for (int i = 0; i < starts.length; i++) {
-				content[i] = fieldContent.substring(starts[i], ends[i]);
-			}
-			return content;
-		}
-		// Content accessor set. Use it to retrieve the content.
-		return contentStores.getSubstrings(fieldName, d, starts, ends);
-	}
-
 	@Override
-	public String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord) {
-		// Get the field content
-		int endAtWordForCharPos = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
-		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWordForCharPos);
-		int startAtChar = startEndCharPos[0];
-		int endAtChar = startEndCharPos[1];
-		String content = getContentByCharPos(docId, fieldName, startAtChar, endAtChar);
-
-		if (hits == null && startAtWord == -1 && endAtWord == -1) {
-			// No hits to highlight, and we've fetched the whole document, so it is
-			// well-formed already. Just return as-is.
-			return content;
-		}
-
-		// Find the character offsets for the hits and highlight
-		List<HitCharSpan> hitspans = null;
-		if (hits != null) // if hits == null, we still want the highlighter to make it well-formed
-			hitspans = getCharacterOffsets(docId, fieldName, hits);
-		XmlHighlighter hl = new XmlHighlighter();
-		hl.setUnbalancedTagsStrategy(defaultUnbalancedTagsStrategy);
-		if (startAtChar == -1)
-			startAtChar = 0;
-		return hl.highlight(content, hitspans, startAtChar);
-	}
-
-	@Override
-	public String highlightContent(int docId, String fieldName, Hits hits) {
-		return highlightContent(docId, fieldName, hits, -1, -1);
-	}
-
-	@Override
-	public String highlightContent(int docId, Hits hits) {
-		return highlightContent(docId, mainContentsFieldName, hits, -1, -1);
-	}
-
-	@Override
-	public ContentStore getContentStore(String fieldName) {
-		ContentStore cs = contentStores.get(fieldName);
-		if (indexMode && cs == null) {
-			// Index mode. Create new content store or open existing one.
-			File contentStoreDir = new File(indexLocation, "cs_" + fieldName);
-			ContentStore contentStore = ContentStore.open(contentStoreDir, isEmptyIndex);
-			registerContentStore(fieldName, contentStore);
-			return contentStore;
-		}
-		return cs;
-	}
-
-	/**
-	 * Register a ContentStore as a content accessor.
-	 *
-	 * This tells the Searcher how the content of different fields may be accessed. This is used for
-	 * making concordances, for example. Some fields are stored in the Lucene index, while others
-	 * may be stored on the file system, a database, etc.
-	 *
-	 * A ContentStore is a filesystem-based way to access the contents.
-	 *
-	 * @param fieldName
-	 *            the field for which this is the content accessor
-	 * @param contentStore
-	 *            the ContentStore object by which to access the content
-	 *
-	 */
-	private void registerContentStore(String fieldName, ContentStore contentStore) {
-		contentStores.put(fieldName, contentStore);
+	protected ContentStore openContentStore(String fieldName) {
+		File contentStoreDir = new File(indexLocation, "cs_" + fieldName);
+		ContentStore contentStore = ContentStore.open(contentStoreDir, isEmptyIndex);
+		registerContentStore(fieldName, contentStore);
+		return contentStore;
 	}
 
 	/**
@@ -848,149 +481,40 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 		if (!indexMode) {
 			// Start a background thread to build term indices
-			buildTermIndicesThread = new Thread(new Runnable() {
+			warmUpForwardIndicesThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
-					buildAllTermIndices(); // speed up first call to Terms.indexOf()
+					warmUpForwardIndices(); // speed up first call to Terms.indexOf()
 				}
 			});
-			buildTermIndicesThread.start();
-		}
-	}
-
-	/**
-	 * Builds index for Terms.indexOf() method.
-	 *
-	 * This makes sure the first call to Terms.indexOf() in search mode will be fast.
-	 * Subsequent calls are always fast. (Terms.indexOf() is only used in search mode
-	 * by HitPropValue.deserialize(), so if you're not sure if you need to call this
-	 * method in your application, you probably don't.
-	 *
-	 * This used to be public, but it's called automatically now in search mode, so
-	 * there's no need to call it manually anymore.
-	 */
-	void buildAllTermIndices() {
-		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
-			e.getValue().getTerms().buildTermIndex();
+			warmUpForwardIndicesThread.start();
 		}
 	}
 
 	@Override
-	public ForwardIndex getForwardIndex(String fieldPropName) {
-		ForwardIndex forwardIndex = forwardIndices.get(fieldPropName);
-		if (forwardIndex == null) {
-			File dir = new File(indexLocation, "fi_" + fieldPropName);
+	protected ForwardIndex openForwardIndex(String fieldPropName) {
+		ForwardIndex forwardIndex;
+		File dir = new File(indexLocation, "fi_" + fieldPropName);
 
-			// Special case for old BL index with "forward" as the name of the single forward index
-			// (this should be removed eventually)
-			if (!isEmptyIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
-				// Default forward index used to be called "forward". Look for that instead.
-				File alt = new File(indexLocation, "forward");
-				if (alt.exists())
-					dir = alt;
-			}
-
-			if (!isEmptyIndex && !dir.exists()) {
-				// Forward index doesn't exist
-				return null;
-			}
-			// Open forward index
-			forwardIndex = ForwardIndex.open(dir, indexMode, getCollator(), isEmptyIndex);
-			forwardIndex.setIdTranslateInfo(reader, fieldPropName); // how to translate from
-																			// Lucene
-																			// doc to fiid
-			forwardIndices.put(fieldPropName, forwardIndex);
+		// Special case for old BL index with "forward" as the name of the single forward index
+		// (this should be removed eventually)
+		if (!isEmptyIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
+			// Default forward index used to be called "forward". Look for that instead.
+			File alt = new File(indexLocation, "forward");
+			if (alt.exists())
+				dir = alt;
 		}
+
+		if (!isEmptyIndex && !dir.exists()) {
+			// Forward index doesn't exist
+			return null;
+		}
+		// Open forward index
+		forwardIndex = ForwardIndex.open(dir, indexMode, getCollator(), isEmptyIndex);
+		forwardIndex.setIdTranslateInfo(reader, fieldPropName); // how to translate from
+																		// Lucene
+																		// doc to fiid
 		return forwardIndex;
-	}
-
-	@Override
-	public List<Concordance> makeConcordancesFromContentStore(int doc, String fieldName, int[] startsOfWords,
-			int[] endsOfWords, XmlHighlighter hl) {
-		// Determine starts and ends
-		int n = startsOfWords.length / 2;
-		int[] starts = new int[n];
-		int[] ends = new int[n];
-		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
-			starts[j] = startsOfWords[i];
-			ends[j] = endsOfWords[i + 1];
-		}
-
-		// Retrieve 'em all
-		Document d = document(doc);
-		String[] content = getSubstringsFromDocument(d, fieldName, starts, ends);
-
-		// Cut 'em up
-		List<Concordance> rv = new ArrayList<>();
-		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
-			// Put the concordance in the Hit object
-			int absLeft = startsOfWords[i];
-			int absRight = endsOfWords[i + 1];
-			int relHitLeft = startsOfWords[i + 1] - absLeft;
-			int relHitRight = endsOfWords[i] - absLeft;
-			String currentContent = content[j];
-
-			// Determine context and build concordance.
-			// Note that hit text may be empty for hits of length zero,
-			// such as a search for open tags (which have a location but zero length,
-			// like a search for a word has a length 1)
-			String hitText = relHitRight < relHitLeft ? "" : currentContent.substring(relHitLeft,
-					relHitRight);
-			String leftContext = currentContent.substring(0, relHitLeft);
-			String rightContext = currentContent.substring(relHitRight, absRight - absLeft);
-
-			// Make each fragment well-formed
-			hitText = hl.makeWellFormed(hitText);
-			leftContext = hl.makeWellFormed(leftContext);
-			rightContext = hl.makeWellFormed(rightContext);
-
-			rv.add(new Concordance(new String[] { leftContext, hitText, rightContext }));
-		}
-		return rv;
-	}
-
-	@Override
-	public void setConcordanceXmlProperties(String wordFI, String punctFI,
-			Collection<String> attrFI) {
-		concWordFI = wordFI;
-		concPunctFI = punctFI;
-		concAttrFI = attrFI;
-	}
-
-	@Override
-	public int getDefaultContextSize() {
-		return defaultContextSize;
-	}
-
-	@Override
-	public void setDefaultContextSize(int defaultContextSize) {
-		this.defaultContextSize = defaultContextSize;
-	}
-
-	@Override
-	public String getContentsFieldMainPropName() {
-		return mainContentsFieldName;
-	}
-
-	@Override
-	public boolean isDefaultSearchCaseSensitive() {
-		return defaultCaseSensitive;
-	}
-
-	@Override
-	public boolean isDefaultSearchDiacriticsSensitive() {
-		return defaultDiacriticsSensitive;
-	}
-
-	@Override
-	public void setDefaultSearchSensitive(boolean b) {
-		defaultCaseSensitive = defaultDiacriticsSensitive = b;
-	}
-
-	@Override
-	public void setDefaultSearchSensitive(boolean caseSensitive, boolean diacriticsSensitive) {
-		defaultCaseSensitive = caseSensitive;
-		defaultDiacriticsSensitive = diacriticsSensitive;
 	}
 
 	@Override
@@ -1004,11 +528,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 		String mainPropName = mainProperty.getName();
 		return new QueryExecutionContext(this, fieldName, mainPropName, defaultCaseSensitive,
 				defaultDiacriticsSensitive);
-	}
-
-	@Override
-	public QueryExecutionContext getDefaultExecutionContext() {
-		return getDefaultExecutionContext(mainContentsFieldName);
 	}
 
 	@Override
@@ -1083,14 +602,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 							break;
 						Document d = reader.document(docId);
 
-						// Delete this document in all forward indices
-						for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
-							String fieldName = e.getKey();
-							ForwardIndex fi = e.getValue();
-							int fiid = Integer.parseInt(d.get(ComplexFieldUtil
-									.forwardIndexIdField(fieldName)));
-							fi.deleteDocument(fiid);
-						}
+						deleteFromForwardIndices(d);
 
 						// Delete this document in all content stores
 						contentStores.deleteDocument(d);
@@ -1108,11 +620,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public Analyzer getAnalyzer() {
-		return analyzer;
 	}
 
 	@Override
@@ -1158,31 +665,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public String getMainContentsFieldName() {
-		return mainContentsFieldName;
-	}
-
-	@Override
-	public String getConcWordFI() {
-		return concWordFI;
-	}
-
-	@Override
-	public String getConcPunctFI() {
-		return concPunctFI;
-	}
-
-	@Override
-	public Collection<String> getConcAttrFI() {
-		return concAttrFI;
-	}
-
-	@Override
-	public Map<String, ForwardIndex> getForwardIndices() {
-		return forwardIndices;
 	}
 
 	@Override

@@ -270,4 +270,8 @@ public abstract class ForwardIndex {
 
 	protected abstract void setLargeTermsFileSupport(boolean b);
 
+	public void warmUp() {
+		getTerms().buildTermIndex();
+	}
+
 }

@@ -386,8 +386,8 @@ public class DocResults implements Iterable<DocResult> {
 				partialDocId = -1;
 				partialDocHits = null;
 
-				IndexReader indexReader = searcher == null ? null : searcher.getIndexReader();
-				String concordanceFieldName = searcher == null ? "contents" : searcher.getContentsFieldMainPropName();
+				IndexReader indexReader = searcher.getIndexReader();
+				String concordanceFieldName = searcher.getMainContentsFieldName();
 				while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
 					Hit hit = sourceHitsIterator.next();

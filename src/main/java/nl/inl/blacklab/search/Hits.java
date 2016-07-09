@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.ThreadPriority;
 
-public abstract class Hits extends AbstractList<Hit> {
+public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 
 	/** In context arrays, how many bookkeeping ints are stored at the start? */
 	public final static int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;
@@ -127,6 +127,10 @@ public abstract class Hits extends AbstractList<Hit> {
 		return new HitsImpl(searcher, concordanceFieldPropName, source);
 	}
 
+	public Hits(Searcher searcher) {
+		this.searcher = searcher;
+	}
+
 	/**
 	 * Set the thread priority level for this Hits object.
 	 *
@@ -145,6 +149,22 @@ public abstract class Hits extends AbstractList<Hit> {
 	 */
 	public abstract ThreadPriority.Level getPriorityLevel();
 
+	/**
+	 * Return a copy of this Hits object.
+	 *
+	 * NOTE: Why not use clone()/Cloneable? See http://www.artima.com/intv/bloch13.html
+	 *
+	 * @return a copy of this Hits object
+	 */
+	public abstract Hits copy();
+
+	/**
+	 * Copy the settings from another Hits object.
+	 *
+	 * NOTE: this should be phased out, and copy() or adapters should be used.
+	 *
+	 * @param copyFrom where to copy settings from
+	 */
 	public void copySettingsFrom(Hits copyFrom) {
 		setConcordanceField(copyFrom.getConcordanceFieldName());
 		setMaxHitsToRetrieve(copyFrom.getMaxHitsToRetrieve());
@@ -315,7 +335,13 @@ public abstract class Hits extends AbstractList<Hit> {
 	 * @param sensitive whether to sort case-sensitively or not
 	 * @return a new Hits object with the same hits, sorted in the specified way
 	 */
-	public abstract Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive);
+	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+		Hits hits = copy();
+		sortProp = sortProp.copyWithHits(hits);
+		hits.sort(sortProp, reverseSort, sensitive);
+		return hits;
+	}
+
 
 	/**
 	 * Return a new Hits object with these hits sorted by the given property.

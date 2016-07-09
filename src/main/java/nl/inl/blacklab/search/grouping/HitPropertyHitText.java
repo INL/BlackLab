@@ -48,7 +48,7 @@ public class HitPropertyHitText extends HitProperty {
 	}
 
 	public HitPropertyHitText(Hits hits) {
-		this(hits, hits.getSearcher().getContentsFieldMainPropName(), hits.getSearcher().isDefaultSearchCaseSensitive());
+		this(hits, hits.getSearcher().getMainContentsFieldName(), hits.getSearcher().isDefaultSearchCaseSensitive());
 	}
 
 	public HitPropertyHitText(Hits hits, String field, String property, boolean sensitive) {
@@ -71,7 +71,7 @@ public class HitPropertyHitText extends HitProperty {
 	}
 
 	public HitPropertyHitText(Hits hits, boolean sensitive) {
-		this(hits, hits.getSearcher().getContentsFieldMainPropName(), sensitive);
+		this(hits, hits.getSearcher().getMainContentsFieldName(), sensitive);
 	}
 
 	@Override

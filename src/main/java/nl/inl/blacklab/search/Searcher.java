@@ -7,8 +7,11 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -40,10 +43,13 @@ import nl.inl.blacklab.externalstorage.ContentStoresManager;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
+import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
 import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.VersionFile;
 
 public abstract class Searcher {
@@ -281,7 +287,88 @@ public abstract class Searcher {
 	/** The collator to use for sorting. Defaults to English collator. */
 	private Collator collator = Searcher.defaultCollator;
 
+	/** Analyzer used for indexing our metadata fields */
+	protected Analyzer analyzer;
+
+	/** Structure of our index */
+	protected IndexStructure indexStructure;
+
 	protected ContentStoresManager contentStores = new ContentStoresManager();
+
+	/**
+	 * ForwardIndices allow us to quickly find what token occurs at a specific position. This speeds
+	 * up grouping and sorting. There may be several indices on a complex field, e.g.: word form,
+	 * lemma, part of speech.
+	 *
+	 * Indexed by property name.
+	 */
+	protected Map<String, ForwardIndex> forwardIndices = new HashMap<>();
+
+	/** Do we want to retrieve concordances from the forward index instead of from the
+	 *  content store? Generating them from the forward index is more
+	 *  efficient.
+	 *
+	 *  This is set to FORWARD_INDEX for all modern indices.
+	 *  (to be precise, it's set to true iff a punctuation forward index is present)
+	 *
+	 *  This setting controls the default. You don't have to set this to CONTENT_STORE if
+	 *  you *sometimes* want concordances from the content store; you can specifically
+	 *  request those when you need them.
+	 */
+	private ConcordanceType defaultConcsType = ConcordanceType.CONTENT_STORE;
+
+	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
+	private String concWordFI = "word";
+
+	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
+	private String concPunctFI = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
+
+	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
+	private Collection<String> concAttrFI = null; // all other FIs are attributes
+
+	/** How we fix well-formedness for snippets of XML: by adding or removing unbalanced tags */
+	private UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
+
+	/**
+	 * Name of the main contents field (used as default parameter value for many methods)
+	 */
+	protected String mainContentsFieldName;
+
+	/** Default number of words around a hit */
+	protected int defaultContextSize = 5;
+
+	/** Should we default to case-sensitive searching? [false] */
+	protected boolean defaultCaseSensitive = false;
+
+	/** Should we default to diacritics-sensitive searching? [false] */
+	protected boolean defaultDiacriticsSensitive = false;
+
+	/** If true, we want to add/delete documents. If false, we're just searching. */
+	protected boolean indexMode = false;
+
+	/**
+	 * How do we fix well-formedness for snippets of XML?
+	 * @return the setting: either adding or removing unbalanced tags
+	 */
+	public UnbalancedTagsStrategy getDefaultUnbalancedTagsStrategy() {
+		return defaultUnbalancedTagsStrategy;
+	}
+
+	/**
+	 * Set how to fix well-formedness for snippets of XML.
+	 * @param strategy the setting: either adding or removing unbalanced tags
+	 */
+	public void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy) {
+		this.defaultUnbalancedTagsStrategy = strategy;
+	}
+
+	public ConcordanceType getDefaultConcordanceType() {
+		return defaultConcsType;
+	}
+
+	public void setDefaultConcordanceType(ConcordanceType type) {
+		defaultConcsType = type;
+	}
 
 	/**
 	 * Set the collator used for sorting.
@@ -304,17 +391,6 @@ public abstract class Searcher {
 		return collator;
 	}
 
-	/**
-	 * How do we fix well-formedness for snippets of XML?
-	 * @return the setting: either adding or removing unbalanced tags
-	 */
-	public abstract UnbalancedTagsStrategy getDefaultUnbalancedTagsStrategy();
-
-	/**
-	 * Set how to fix well-formedness for snippets of XML.
-	 * @param strategy the setting: either adding or removing unbalanced tags
-	 */
-	public abstract void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy);
 
 	/**
 	 * Are we making concordances using the forward index (true) or using
@@ -328,10 +404,6 @@ public abstract class Searcher {
 	public boolean getMakeConcordancesFromForwardIndex() {
 		return getDefaultConcordanceType() == ConcordanceType.FORWARD_INDEX;
 	}
-
-	public abstract ConcordanceType getDefaultConcordanceType();
-
-	public abstract void setDefaultConcordanceType(ConcordanceType type);
 
 	/**
 	 * Do we want to retrieve concordances from the forward index instead of from the
@@ -370,6 +442,29 @@ public abstract class Searcher {
 	 */
 	public void close() {
 		contentStores.close();
+
+		// Close the forward indices
+		for (ForwardIndex fi: forwardIndices.values()) {
+			fi.close();
+		}
+
+	}
+
+	/**
+	 * Builds index for Terms.indexOf() method.
+	 *
+	 * This makes sure the first call to Terms.indexOf() in search mode will be fast.
+	 * Subsequent calls are always fast. (Terms.indexOf() is only used in search mode
+	 * by HitPropValue.deserialize(), so if you're not sure if you need to call this
+	 * method in your application, you probably don't.
+	 *
+	 * This used to be public, but it's called automatically now in search mode, so
+	 * there's no need to call it manually anymore.
+	 */
+	protected void warmUpForwardIndices() {
+		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
+			e.getValue().warmUp(); //getTerms().buildTermIndex();
+		}
 	}
 
 	/**
@@ -377,7 +472,9 @@ public abstract class Searcher {
 	 *
 	 * @return the structure object
 	 */
-	public abstract IndexStructure getIndexStructure();
+	public IndexStructure getIndexStructure() {
+		return indexStructure;
+	}
 
 	/**
 	 * Retrieve a Lucene Document object from the index.
@@ -406,15 +503,32 @@ public abstract class Searcher {
 	 */
 	public abstract int maxDoc();
 
-	public abstract SpanQuery filterDocuments(SpanQuery query, Filter filter);
+	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
+		return new SpanQueryFiltered(query, filter);
+	}
 
-	public abstract SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter);
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
+		// Convert to SpanQuery
+		pattern = pattern.rewrite();
+		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
+		SpanQuery spanQuery = pattern.translate(spanQueryTranslator,
+				getDefaultExecutionContext(fieldName));
+		if (filter != null)
+			spanQuery = new SpanQueryFiltered(spanQuery, filter);
+		return spanQuery;
+	}
 
-	public abstract SpanQuery createSpanQuery(TextPattern pattern, Filter filter);
+	public SpanQuery createSpanQuery(TextPattern pattern, Filter filter) {
+		return createSpanQuery(pattern, getMainContentsFieldName(), filter);
+	}
 
-	public abstract SpanQuery createSpanQuery(TextPattern pattern, String fieldName);
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
+		return createSpanQuery(pattern, fieldName, (Filter)null);
+	}
 
-	public abstract SpanQuery createSpanQuery(TextPattern pattern);
+	public SpanQuery createSpanQuery(TextPattern pattern) {
+		return createSpanQuery(pattern, getMainContentsFieldName(), (Filter)null);
+	}
 
 	/**
 	 * Find hits for a pattern in a field.
@@ -427,7 +541,9 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public abstract Hits find(SpanQuery query, String fieldNameConc) throws BooleanQuery.TooManyClauses;
+	public Hits find(SpanQuery query, String fieldNameConc) throws BooleanQuery.TooManyClauses {
+		return Hits.fromSpanQuery(this, fieldNameConc, query);
+	}
 
 	/**
 	 * Find hits for a pattern in a field.
@@ -438,7 +554,9 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public abstract Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses;
+	public Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses {
+		return Hits.fromSpanQuery(this, getMainContentsFieldName(), query);
+	}
 
 	/**
 	 * Find hits for a pattern in a field.
@@ -454,7 +572,10 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public abstract Hits find(TextPattern pattern, String fieldName, Filter filter) throws BooleanQuery.TooManyClauses;
+	public Hits find(TextPattern pattern, String fieldName, Filter filter)
+			throws BooleanQuery.TooManyClauses {
+		return Hits.fromSpanQuery(this, fieldName, createSpanQuery(pattern, fieldName, filter));
+	}
 
 	/**
 	 * Find hits for a pattern and filter them.
@@ -468,7 +589,9 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public abstract Hits find(TextPattern pattern, Filter filter) throws BooleanQuery.TooManyClauses;
+	public Hits find(TextPattern pattern, Filter filter) throws BooleanQuery.TooManyClauses {
+		return find(pattern, getMainContentsFieldName(), filter);
+	}
 
 	/**
 	 * Find hits for a pattern in a field.
@@ -482,7 +605,9 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public abstract Hits find(TextPattern pattern, String fieldName) throws BooleanQuery.TooManyClauses;
+	public Hits find(TextPattern pattern, String fieldName) throws BooleanQuery.TooManyClauses {
+		return find(pattern, fieldName, null);
+	}
 
 	/**
 	 * Find hits for a pattern.
@@ -494,7 +619,9 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public abstract Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses;
+	public Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses {
+		return find(pattern, getMainContentsFieldName(), null);
+	}
 
 	/**
 	 * Find matching documents and their scores for a pattern.
@@ -561,11 +688,18 @@ public abstract class Searcher {
 	 *            the Lucene Document id
 	 * @param fieldName
 	 *            the name of the field
-	 * @param startAtWord where to start getting the content (-1 for start of document, 0 for first word)
-	 * @param endAtWord where to end getting the content (-1 for end of document)
+	 * @param startAtChar where to start getting the content (-1 for start of document, 0 for first char)
+	 * @param endAtChar where to end getting the content (-1 for end of document)
 	 * @return the field content
 	 */
-	public abstract String getContent(int docId, String fieldName, int startAtWord, int endAtWord);
+	public String getContentByCharPos(int docId, String fieldName, int startAtChar, int endAtChar) {
+		if (!contentStores.exists(fieldName)) {
+			// No special content accessor set; assume a stored field
+			Document d = document(docId);
+			return d.get(fieldName).substring(startAtChar, endAtChar);
+		}
+		return contentStores.getSubstrings(fieldName, docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
+	}
 
 	/**
 	 * Get part of the contents of a field from a Lucene Document.
@@ -577,11 +711,88 @@ public abstract class Searcher {
 	 *            the Lucene Document id
 	 * @param fieldName
 	 *            the name of the field
-	 * @param startAtChar where to start getting the content (-1 for start of document, 0 for first char)
-	 * @param endAtChar where to end getting the content (-1 for end of document)
+	 * @param startAtWord where to start getting the content (-1 for start of document, 0 for first word)
+	 * @param endAtWord where to end getting the content (-1 for end of document)
 	 * @return the field content
 	 */
-	public abstract String getContentByCharPos(int docId, String fieldName, int startAtChar, int endAtChar);
+	public String getContent(int docId, String fieldName, int startAtWord, int endAtWord) {
+		if (!contentStores.exists(fieldName)) {
+			// No special content accessor set; assume a stored field
+			Document d = document(docId);
+			String content = d.get(fieldName);
+			if (content == null)
+				throw new RuntimeException("Field not found: " + fieldName);
+			return getWordsFromString(content, startAtWord, endAtWord);
+		}
+
+		int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord);
+		return contentStores.getSubstrings(fieldName, docId, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
+	}
+
+	/**
+	 * Get character positions from a list of hits.
+	 *
+	 * @param doc
+	 *            the document from which to find character positions
+	 * @param fieldName
+	 *            the field from which to find character positions
+	 * @param hits
+	 *            the hits for which we wish to find character positions
+	 * @return a list of HitSpan objects containing the character positions for the hits.
+	 */
+	private List<HitCharSpan> getCharacterOffsets(int doc, String fieldName, Hits hits) {
+		int[] starts = new int[hits.size()];
+		int[] ends = new int[hits.size()];
+		Iterator<Hit> hitsIt = hits.iterator();
+		for (int i = 0; i < starts.length; i++) {
+			Hit hit = hitsIt.next(); // hits.get(i);
+			starts[i] = hit.start;
+			ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
+									// subtract one
+		}
+
+		getCharacterOffsets(doc, fieldName, starts, ends, true);
+
+		List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
+		for (int i = 0; i < starts.length; i++) {
+			hitspans.add(new HitCharSpan(starts[i], ends[i]));
+		}
+		return hitspans;
+	}
+
+	/**
+	 * Convert start/end word positions to char positions.
+	 *
+	 * @param docId     Lucene Document id
+	 * @param fieldName name of the field
+	 * @param startAtWord where to start getting the content (-1 for start of document, 0 for first word)
+	 * @param endAtWord where to end getting the content (-1 for end of document)
+	 * @return the start and end char position as a two element int array
+	 *   (with any -1's preserved)
+	 */
+	private int[] startEndWordToCharPos(int docId, String fieldName,
+			int startAtWord, int endAtWord) {
+		if (startAtWord == -1 && endAtWord == -1) {
+			// No need to translate anything
+			return new int[] {-1, -1};
+		}
+
+		// Translate word pos to char pos and retrieve content
+		// NOTE: this boolean stuff is a bit iffy, but is necessary because
+		// getCharacterOffsets doesn't handle -1 to mean start/end of doc.
+		// We should probably fix that some time.
+		boolean startAtStartOfDoc = startAtWord == -1;
+		boolean endAtEndOfDoc = endAtWord == -1;
+		int[] starts = new int[] {startAtStartOfDoc ? 0 : startAtWord};
+		int[] ends = new int[] {endAtEndOfDoc ? starts[0] : endAtWord};
+		getCharacterOffsets(docId, fieldName, starts, ends, true);
+		if (startAtStartOfDoc)
+			starts[0] = -1;
+		if (endAtEndOfDoc)
+			ends[0] = -1;
+		int[] startEnd = new int[] {starts[0], ends[0]};
+		return startEnd;
+	}
 
 	/**
 	 * Get the contents of a field from a Lucene Document.
@@ -598,7 +809,12 @@ public abstract class Searcher {
 	 */
 	@Deprecated
 	public String getContent(Document d, String fieldName) {
-		throw new UnsupportedOperationException("Deprecated");
+		if (!contentStores.exists(fieldName)) {
+			// No special content accessor set; assume a stored field
+			return d.get(fieldName);
+		}
+		// Content accessor set. Use it to retrieve the content.
+		return contentStores.getSubstrings(fieldName, d, new int[] { -1 }, new int[] { -1 })[0];
 	}
 
 	/**
@@ -626,7 +842,9 @@ public abstract class Searcher {
 	 *            the name of the field
 	 * @return the field content
 	 */
-	public abstract String getContent(int docId, String fieldName);
+	public String getContent(int docId, String fieldName) {
+		return getContent(docId, fieldName, -1, -1);
+	}
 
 	/**
 	 * Get the document contents (original XML).
@@ -635,7 +853,9 @@ public abstract class Searcher {
 	 *            the Document id
 	 * @return the field content
 	 */
-	public abstract String getContent(int docId);
+	public String getContent(int docId) {
+		return getContent(docId, mainContentsFieldName, -1, -1);
+	}
 
 	/**
 	 * Get the Lucene index reader we're using.
@@ -660,7 +880,31 @@ public abstract class Searcher {
 	 * @param endAtWord where to end highlighting (first word not returned)
 	 * @return the highlighted content
 	 */
-	public abstract String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord);
+	public String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord) {
+		// Get the field content
+		int endAtWordForCharPos = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
+		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWordForCharPos);
+		int startAtChar = startEndCharPos[0];
+		int endAtChar = startEndCharPos[1];
+		String content = getContentByCharPos(docId, fieldName, startAtChar, endAtChar);
+
+		if (hits == null && startAtWord == -1 && endAtWord == -1) {
+			// No hits to highlight, and we've fetched the whole document, so it is
+			// well-formed already. Just return as-is.
+			return content;
+		}
+
+		// Find the character offsets for the hits and highlight
+		List<HitCharSpan> hitspans = null;
+		if (hits != null) // if hits == null, we still want the highlighter to make it well-formed
+			hitspans = getCharacterOffsets(docId, fieldName, hits);
+		XmlHighlighter hl = new XmlHighlighter();
+		hl.setUnbalancedTagsStrategy(getDefaultUnbalancedTagsStrategy());
+		if (startAtChar == -1)
+			startAtChar = 0;
+		return hl.highlight(content, hitspans, startAtChar);
+	}
+
 
 	/**
 	 * Highlight field content with the specified hits.
@@ -675,7 +919,9 @@ public abstract class Searcher {
 	 *            the hits
 	 * @return the highlighted content
 	 */
-	public abstract String highlightContent(int docId, String fieldName, Hits hits);
+	public String highlightContent(int docId, String fieldName, Hits hits) {
+		return highlightContent(docId, fieldName, hits, -1, -1);
+	}
 
 	/**
 	 * Highlight field content with the specified hits.
@@ -688,7 +934,9 @@ public abstract class Searcher {
 	 *            the hits
 	 * @return the highlighted content
 	 */
-	public abstract String highlightContent(int docId, Hits hits);
+	public String highlightContent(int docId, Hits hits) {
+		return highlightContent(docId, getMainContentsFieldName(), hits, -1, -1);
+	}
 
 	/**
 	 * Get the content store for a field name.
@@ -696,8 +944,35 @@ public abstract class Searcher {
 	 * @param fieldName the field name
 	 * @return the content store, or null if there is no content store for this field
 	 */
-	public abstract ContentStore getContentStore(String fieldName);
+	public ContentStore getContentStore(String fieldName) {
+		ContentStore cs = contentStores.get(fieldName);
+		if (indexMode && cs == null) {
+			// Index mode. Create new content store or open existing one.
+			return openContentStore(fieldName);
+		}
+		return cs;
+	}
 
+	/**
+	 * Register a ContentStore as a content accessor.
+	 *
+	 * This tells the Searcher how the content of different fields may be accessed. This is used for
+	 * making concordances, for example. Some fields are stored in the Lucene index, while others
+	 * may be stored on the file system, a database, etc.
+	 *
+	 * A ContentStore is a filesystem-based way to access the contents.
+	 *
+	 * @param fieldName
+	 *            the field for which this is the content accessor
+	 * @param contentStore
+	 *            the ContentStore object by which to access the content
+	 *
+	 */
+	protected void registerContentStore(String fieldName, ContentStore contentStore) {
+		contentStores.put(fieldName, contentStore);
+	}
+
+	protected abstract ContentStore openContentStore(String fieldName);
 
 	/**
 	 * Tries to get the ForwardIndex object for the specified fieldname.
@@ -710,7 +985,55 @@ public abstract class Searcher {
 	 *            the field for which we want the forward index
 	 * @return the ForwardIndex if found/created, or null otherwise
 	 */
-	public abstract ForwardIndex getForwardIndex(String fieldPropName);
+	public ForwardIndex getForwardIndex(String fieldPropName) {
+		ForwardIndex forwardIndex = forwardIndices.get(fieldPropName);
+		if (forwardIndex == null) {
+			forwardIndex = openForwardIndex(fieldPropName);
+			if (forwardIndex != null)
+				addForwardIndex(fieldPropName, forwardIndex);
+		}
+		return forwardIndex;
+	}
+
+	protected void addForwardIndex(String fieldPropName, ForwardIndex forwardIndex) {
+		forwardIndices.put(fieldPropName, forwardIndex);
+	}
+
+	protected abstract ForwardIndex openForwardIndex(String fieldPropName);
+
+	/**
+	 * Get a number of substrings from a certain field in a certain document.
+	 *
+	 * For larger documents, this is faster than retrieving the whole content first and then cutting
+	 * substrings from that.
+	 *
+	 * @param d
+	 *            the document
+	 * @param fieldName
+	 *            the field
+	 * @param starts
+	 *            start positions of the substring we want
+	 * @param ends
+	 *            end positions of the substring we want; correspond to the starts array.
+	 * @return the substrings
+	 */
+	private String[] getSubstringsFromDocument(Document d, String fieldName, int[] starts,
+			int[] ends) {
+		if (!contentStores.exists(fieldName)) {
+			String[] content;
+			// No special content accessor set; assume a non-complex stored field
+			// TODO: check with index structure?
+			String luceneName = fieldName; // <- non-complex, so this works
+			String fieldContent = d.get(luceneName);
+			content = new String[starts.length];
+			for (int i = 0; i < starts.length; i++) {
+				content[i] = fieldContent.substring(starts[i], ends[i]);
+			}
+			return content;
+		}
+		// Content accessor set. Use it to retrieve the content.
+		return contentStores.getSubstrings(fieldName, d, starts, ends);
+	}
 
 	/**
 	 * Determine the concordance strings for a number of concordances, given the relevant character
@@ -735,8 +1058,50 @@ public abstract class Searcher {
 	 * @param hl
 	 * @return the list of concordances
 	 */
-	public abstract List<Concordance> makeConcordancesFromContentStore(int doc, String fieldName, int[] startsOfWords,
-			int[] endsOfWords, XmlHighlighter hl);
+	public List<Concordance> makeConcordancesFromContentStore(int doc, String fieldName, int[] startsOfWords,
+			int[] endsOfWords, XmlHighlighter hl) {
+		// Determine starts and ends
+		int n = startsOfWords.length / 2;
+		int[] starts = new int[n];
+		int[] ends = new int[n];
+		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
+			starts[j] = startsOfWords[i];
+			ends[j] = endsOfWords[i + 1];
+		}
+
+		// Retrieve 'em all
+		Document d = document(doc);
+		String[] content = getSubstringsFromDocument(d, fieldName, starts, ends);
+
+		// Cut 'em up
+		List<Concordance> rv = new ArrayList<>();
+		for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
+			// Put the concordance in the Hit object
+			int absLeft = startsOfWords[i];
+			int absRight = endsOfWords[i + 1];
+			int relHitLeft = startsOfWords[i + 1] - absLeft;
+			int relHitRight = endsOfWords[i] - absLeft;
+			String currentContent = content[j];
+
+			// Determine context and build concordance.
+			// Note that hit text may be empty for hits of length zero,
+			// such as a search for open tags (which have a location but zero length,
+			// like a search for a word has a length 1)
+			String hitText = relHitRight < relHitLeft ? "" : currentContent.substring(relHitLeft,
+					relHitRight);
+			String leftContext = currentContent.substring(0, relHitLeft);
+			String rightContext = currentContent.substring(relHitRight, absRight - absLeft);
+
+			// Make each fragment well-formed
+			hitText = hl.makeWellFormed(hitText);
+			leftContext = hl.makeWellFormed(leftContext);
+			rightContext = hl.makeWellFormed(rightContext);
+
+			rv.add(new Concordance(new String[] { leftContext, hitText, rightContext }));
+		}
+		return rv;
+	}
+
 
 	/**
 	 * Indicate how to use the forward indices to build concordances.
@@ -766,14 +1131,22 @@ public abstract class Searcher {
 	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
 	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
 	 */
-	public abstract void setConcordanceXmlProperties(String wordFI, String punctFI, Collection<String> attrFI);
+	public void setConcordanceXmlProperties(String wordFI, String punctFI,
+			Collection<String> attrFI) {
+		concWordFI = wordFI;
+		concPunctFI = punctFI;
+		concAttrFI = attrFI;
+	}
+
 
 	/**
 	 * Get the default context size used for building concordances
 	 *
 	 * @return the context size
 	 */
-	public abstract int getDefaultContextSize();
+	public int getDefaultContextSize() {
+		return defaultContextSize;
+	}
 
 	/**
 	 * Set the default context size to use for building concordances
@@ -781,7 +1154,10 @@ public abstract class Searcher {
 	 * @param defaultContextSize
 	 *            the context size
 	 */
-	public abstract void setDefaultContextSize(int defaultContextSize);
+	public void setDefaultContextSize(int defaultContextSize) {
+		this.defaultContextSize = defaultContextSize;
+	}
+
 
 	/**
 	 * Factory method to create a directory content store.
@@ -847,15 +1223,22 @@ public abstract class Searcher {
 		return getTerms(ComplexFieldUtil.mainPropertyField(getIndexStructure(), getMainContentsFieldName()));
 	}
 
-	public abstract String getContentsFieldMainPropName();
+	public boolean isDefaultSearchCaseSensitive() {
+		return defaultCaseSensitive;
+	}
 
-	public abstract boolean isDefaultSearchCaseSensitive();
+	public boolean isDefaultSearchDiacriticsSensitive() {
+		return defaultDiacriticsSensitive;
+	}
 
-	public abstract boolean isDefaultSearchDiacriticsSensitive();
+	public void setDefaultSearchSensitive(boolean b) {
+		defaultCaseSensitive = defaultDiacriticsSensitive = b;
+	}
 
-	public abstract void setDefaultSearchSensitive(boolean b);
-
-	public abstract void setDefaultSearchSensitive(boolean caseSensitive, boolean diacriticsSensitive);
+	public void setDefaultSearchSensitive(boolean caseSensitive, boolean diacriticsSensitive) {
+		defaultCaseSensitive = caseSensitive;
+		defaultDiacriticsSensitive = diacriticsSensitive;
+	}
 
 	/**
 	 * Get the default initial query execution context.
@@ -873,7 +1256,9 @@ public abstract class Searcher {
 	 *
 	 * @return the query execution context
 	 */
-	public abstract QueryExecutionContext getDefaultExecutionContext();
+	public QueryExecutionContext getDefaultExecutionContext() {
+		return getDefaultExecutionContext(getMainContentsFieldName());
+	}
 
 	public abstract String getIndexName();
 
@@ -895,7 +1280,9 @@ public abstract class Searcher {
 	 * Get the analyzer for indexing and searching.
 	 * @return the analyzer
 	 */
-	public abstract Analyzer getAnalyzer();
+	public Analyzer getAnalyzer() {
+		return analyzer;
+	}
 
 	/**
 	 * Get the analyzer to use for indexing.
@@ -956,16 +1343,37 @@ public abstract class Searcher {
 	 */
 	public abstract List<String> getFieldTerms(String fieldName, int maxResults);
 
-	public abstract String getMainContentsFieldName();
+	public String getMainContentsFieldName() {
+		return mainContentsFieldName;
+	}
 
-	public abstract String getConcWordFI();
+	public String getConcWordFI() {
+		return concWordFI;
+	}
 
-	public abstract String getConcPunctFI();
+	public String getConcPunctFI() {
+		return concPunctFI;
+	}
 
-	public abstract Collection<String> getConcAttrFI();
-
-	public abstract Map<String, ForwardIndex> getForwardIndices();
+	public Collection<String> getConcAttrFI() {
+		return concAttrFI;
+	}
 
 	public abstract IndexSearcher getIndexSearcher();
+
+	protected void deleteFromForwardIndices(Document d) {
+		// Delete this document in all forward indices
+		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
+			String fieldName = e.getKey();
+			ForwardIndex fi = e.getValue();
+			int fiid = Integer.parseInt(d.get(ComplexFieldUtil
+					.forwardIndexIdField(fieldName)));
+			fi.deleteDocument(fiid);
+		}
+	}
+
+	public Map<String, ForwardIndex> getForwardIndices() {
+		return forwardIndices;
+	}
 
 }

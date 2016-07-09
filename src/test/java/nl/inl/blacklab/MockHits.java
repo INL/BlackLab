@@ -1,6 +1,5 @@
 package nl.inl.blacklab;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -25,152 +24,137 @@ public class MockHits extends Hits {
 	private int[] start;
 	private int[] end;
 
+	private int numberOfDocs;
+
 	public MockHits(Searcher searcher, int[] doc, int[] start, int[] end) {
-		this(searcher);
+		super(searcher);
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
+		countDocs();
+	}
+
+	private void countDocs() {
+		numberOfDocs = 0;
+		int prevDoc = -1;
+		for (int d: doc) {
+			if (d != prevDoc) {
+				numberOfDocs++;
+				prevDoc = d;
+			}
+		}
 	}
 
 	public MockHits(Searcher searcher) {
-		this.searcher = searcher;
-		this.doc = new int[0];
-		this.start = new int[0];
-		this.end = new int[0];
+		this(searcher, new int[0], new int[0], new int[0]);
 	}
 
 	public MockHits(MockHits o) {
-		this.searcher = o.getSearcher();
-		this.doc = Arrays.copyOf(o.doc, o.doc.length);
-		this.start = Arrays.copyOf(o.start, o.start.length);
-		this.end = Arrays.copyOf(o.end, o.end.length);
+		this(o.getSearcher(), o.doc.clone(), o.start.clone(), o.end.clone());
 	}
 
 	@Override
 	public void setPriorityLevel(Level level) {
-		//
-
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Level getPriorityLevel() {
-		//
-		return null;
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Hits copy() {
+		return new MockHits(searcher, doc, start, end);
 	}
 
 	@Override
 	public void copySettingsFrom(Hits copyFrom) {
-		//
-
+		// NOP
 	}
 
 	@Override
 	public int getContextSize() {
-		//
 		return 0;
 	}
 
 	@Override
 	public void setContextSize(int contextSize) {
-		//
-
+		// NOP
 	}
 
 	@Override
 	public boolean maxHitsRetrieved() {
-		//
 		return false;
 	}
 
 	@Override
 	public boolean maxHitsCounted() {
-		//
 		return false;
 	}
 
 	@Override
 	public void sort(HitProperty sortProp) {
-		//
-
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void sort(HitProperty sortProp, boolean reverseSort) {
-		//
-
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void sort(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
-		//
-
-	}
-
-	@Override
-	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
-		Hits hits = new MockHits(this);
-		sortProp = sortProp.copyWithHits(hits);
-		hits.sort(sortProp, reverseSort, sensitive);
-		return hits;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean sizeAtLeast(int lowerBound) {
-		//
-		return false;
+		return size() >= lowerBound;
 	}
 
 	@Override
 	public int size() {
-		//
 		return start.length;
 	}
 
 	@Override
 	public int totalSize() {
-		//
 		return size();
 	}
 
 	@Override
 	public int numberOfDocs() {
-		//
-		return 0;
+		return numberOfDocs;
 	}
 
 	@Override
 	public int totalNumberOfDocs() {
-		//
-		return 0;
+		return numberOfDocs();
 	}
 
 	@Override
 	public int countSoFarHitsCounted() {
-		//
 		return size();
 	}
 
 	@Override
 	public int countSoFarHitsRetrieved() {
-		//
 		return size();
 	}
 
 	@Override
 	public int countSoFarDocsCounted() {
-		//
-		return 0;
+		return numberOfDocs();
 	}
 
 	@Override
 	public int countSoFarDocsRetrieved() {
-		//
-		return 0;
+		return numberOfDocs();
 	}
 
 	@Override
 	public boolean doneFetchingHits() {
-		//
 		return true;
 	}
 
@@ -206,212 +190,177 @@ public class MockHits extends Hits {
 
 	@Override
 	public Hit getByOriginalOrder(int i) {
-		//
 		return get(i);
 	}
 
 	@Override
 	public Hit get(int i) {
-		//
 		return new Hit(doc[i], start[i], end[i]);
 	}
 
 	@Override
-	public Concordance getConcordance(Hit h) {
-		//
-		return null;
-	}
-
-	@Override
 	public Kwic getKwic(Hit h) {
-		//
-		return null;
-	}
-
-	@Override
-	public Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
-		//
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
-		//
-		return null;
-	}
-
-	@Override
-	public Concordance getConcordance(Hit h, int contextSize) {
-		//
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Kwic getKwic(Hit h, int contextSize) {
-		//
-		return null;
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Concordance getConcordance(Hit h) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Concordance getConcordance(Hit h, int contextSize) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void findContext(List<String> fieldProps) {
-		//
-
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void clearConcordances() {
-		//
-
+		// NOP
 	}
 
 	@Override
 	public TermFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
-		//
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean hasCapturedGroups() {
-		//
 		return false;
 	}
 
 	@Override
 	public Span[] getCapturedGroups(Hit hit) {
-		//
 		return null;
 	}
 
 	@Override
 	public List<String> getCapturedGroupNames() {
-		//
 		return null;
 	}
 
 	@Override
 	public Map<String, Span> getCapturedGroupMap(Hit hit) {
-		//
 		return null;
 	}
 
 	@Override
 	public String getConcordanceFieldName() {
-		//
 		return null;
 	}
 
 	@Override
 	public void setConcordanceField(String concordanceFieldName) {
-		//
-
+		// NOP
 	}
 
 	@Override
 	public List<String> getContextFieldPropName() {
-		//
 		return null;
 	}
 
 	@Override
 	public void setContextField(List<String> contextField) {
-		//
-
+		// NOP
 	}
 
 	@Override
 	public int getMaxHitsToRetrieve() {
-		//
-		return 0;
+		return -1;
 	}
 
 	@Override
 	public void setMaxHitsToRetrieve(int n) {
-		//
-
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int getMaxHitsToCount() {
-		//
-		return 0;
+		return -1;
 	}
 
 	@Override
 	public void setMaxHitsToCount(int n) {
-		//
-
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Hits getHitsInDoc(int docid) {
-		//
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int[] getHitContext(int hitNumber) {
-		//
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
-		//
-
+		// NOP
 	}
 
 	@Override
 	public ConcordanceType getConcordanceType() {
-		//
 		return null;
 	}
 
 	@Override
 	public void setConcordanceType(ConcordanceType type) {
-		//
-
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	protected void setMaxHitsCounted(boolean maxHitsCounted) {
-		//
-
+		// NOP
 	}
 
 	@Override
 	protected void setMaxHitsRetrieved(boolean maxHitsRetrieved) {
-		//
-
+		// NOP
 	}
 
 	@Override
 	public String getConcWordFI() {
-		//
 		return null;
 	}
 
 	@Override
 	public String getConcPunctFI() {
-		//
 		return null;
 	}
 
 	@Override
 	public Collection<String> getConcAttrFI() {
-		//
 		return null;
 	}
 
 	@Override
 	public HitQueryContext getHitQueryContext() {
-		//
 		return null;
 	}
 
 	@Override
 	protected void setHitQueryContext(HitQueryContext hitQueryContext) {
-		//
-
+		// NOP
 	}
 
 }

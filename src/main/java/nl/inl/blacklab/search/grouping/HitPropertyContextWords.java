@@ -267,7 +267,7 @@ public class HitPropertyContextWords extends HitProperty {
 		if (parts.length > 2)
 			whichWords = parseContextWordSpec(parts[2]);
 		if (fieldName == null || fieldName.length() == 0)
-			return new HitPropertyContextWords(hits, hits.getSearcher().getContentsFieldMainPropName(), null, sensitive, whichWords);
+			return new HitPropertyContextWords(hits, hits.getSearcher().getMainContentsFieldName(), null, sensitive, whichWords);
 		return new HitPropertyContextWords(hits, fieldName, propName, sensitive, whichWords);
 	}
 
