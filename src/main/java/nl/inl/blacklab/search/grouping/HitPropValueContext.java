@@ -13,7 +13,7 @@ public abstract class HitPropValueContext extends HitPropValue {
 	protected String propName;
 
 	public HitPropValueContext(Hits hits, String propName) {
-		this.fieldName = hits.getConcordanceFieldName();
+		this.fieldName = hits.settings().concordanceField();
 		this.propName = propName;
 		this.terms = hits.getSearcher().getForwardIndex(ComplexFieldUtil.propertyField(fieldName, propName)).getTerms();
 	}

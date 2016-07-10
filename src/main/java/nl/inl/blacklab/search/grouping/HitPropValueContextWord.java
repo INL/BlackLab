@@ -36,7 +36,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 
 	public static HitPropValue deserialize(Hits hits, String info) {
 		String[] parts = PropValSerializeUtil.splitParts(info);
-		String fieldName = hits.getConcordanceFieldName();
+		String fieldName = hits.settings().concordanceField();
 		String propName = parts[0];
 		boolean sensitive = parts[1].equalsIgnoreCase("s");
 		Terms termsObj = hits.getSearcher().getForwardIndex(ComplexFieldUtil.propertyField(fieldName, propName)).getTerms();

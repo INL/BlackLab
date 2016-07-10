@@ -50,7 +50,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
 	public static HitPropValue deserialize(Hits hits, String info) {
 		String[] parts = PropValSerializeUtil.splitParts(info);
-		String fieldName = hits.getConcordanceFieldName();
+		String fieldName = hits.settings().concordanceField();
 		String propName = parts[0];
 		boolean sensitive = parts[1].equalsIgnoreCase("s");
 		int[] ids = new int[parts.length - 2];

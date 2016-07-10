@@ -68,8 +68,8 @@ public class TestHitProperties {
 	public void testHitPropValueSerialize() {
 		HitPropValue val, val1;
 
-		val1 = new HitPropValueContextWord(hits, "contents%lemma", 2, true);
-		String exp = "cwo:contents%lemma:s:mies";
+		val1 = new HitPropValueContextWord(hits, "lemma", 2, true);
+		String exp = "cwo:lemma:s:mies";
 		Assert.assertEquals(exp, val1.serialize());
 		Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
 

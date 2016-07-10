@@ -130,7 +130,7 @@ public class HitPropertyWordLeft extends HitProperty {
 
 	public static HitPropertyWordLeft deserialize(Hits hits, String info) {
 		String[] parts = PropValSerializeUtil.splitParts(info);
-		String fieldName = hits.getConcordanceFieldName();
+		String fieldName = hits.settings().concordanceField();
 		String propName = parts[0];
 		if (propName.length() == 0)
 			propName = ComplexFieldUtil.getDefaultMainPropName();

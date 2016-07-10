@@ -1388,7 +1388,7 @@ public class QueryTool {
 	private void showCollocations() {
 		if (collocations == null) {
 			// Case-sensitive collocations..?
-			String fieldName = hits.getConcordanceFieldName();
+			String fieldName = hits.settings().concordanceField();
 			if (collocProperty == null) {
 				ComplexFieldDesc cf = searcher.getIndexStructure().getComplexFieldDesc(fieldName);
 				collocProperty = cf.getMainProperty().getName();

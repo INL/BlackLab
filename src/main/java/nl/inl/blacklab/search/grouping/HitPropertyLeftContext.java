@@ -152,7 +152,7 @@ public class HitPropertyLeftContext extends HitProperty {
 
 	public static HitPropertyLeftContext deserialize(Hits hits, String info) {
 		String[] parts = PropValSerializeUtil.splitParts(info);
-		String fieldName = hits.getConcordanceFieldName();
+		String fieldName = hits.settings().concordanceField();
 		String propName = parts[0];
 		if (propName.length() == 0)
 			propName = ComplexFieldUtil.getDefaultMainPropName();

@@ -149,39 +149,8 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 
 	protected Searcher searcher;
 
-	/**
-	 * Stop retrieving hits after this number.
-	 * (-1 = don't stop retrieving)
-	 */
-	protected int maxHitsToRetrieve;
+	protected HitsSettings settings;
 
-	/**
-	 * Stop counting hits after this number.
-	 * (-1 = don't stop counting)
-	 */
-	protected int maxHitsToCount;
-
-	/**
-	 * The default field to use for retrieving concordance information.
-	 */
-	protected String concordanceFieldName;
-
-	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
-	protected String concWordFI;
-
-	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
-	protected String concPunctFI;
-
-	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
-	protected Collection<String> concAttrFI; // all other FIs are attributes
-
-	/** What to use to make concordances: forward index or content store */
-	protected ConcordanceType concsType;
-
-	/**
-	 * The desired context size (number of words to fetch around hits).
-	 * Defaults to Searcher.getDefaultContextSize().
-	 */
 	protected int desiredContextSize;
 
 	protected HitQueryContext hitQueryContext;
@@ -189,14 +158,8 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	protected ThreadPriority etiquette;
 
 	public Hits(Searcher searcher, String concordanceFieldName) {
-		maxHitsToRetrieve = defaultMaxHitsToRetrieveChanged ? defaultMaxHitsToRetrieve : searcher.getDefaultMaxHitsToRetrieve();
-		maxHitsToCount = defaultMaxHitsToCountChanged ? defaultMaxHitsToCount : searcher.getDefaultMaxHitsToCount();
 		this.searcher = searcher;
-		setConcordanceField(concordanceFieldName);
-		concWordFI = searcher.getConcWordFI();
-		concPunctFI = searcher.getConcPunctFI();
-		concAttrFI = searcher.getConcAttrFI();
-		concsType = searcher.getDefaultConcordanceType();
+		settings = new HitsSettings(searcher, concordanceFieldName);
 		desiredContextSize = searcher.getDefaultContextSize();
 		hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
 	}
@@ -254,6 +217,28 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 
 	protected abstract void setMaxHitsRetrieved(boolean maxHitsRetrieved);
 
+	/**
+	 * Returns the field to use for retrieving concordances.
+	 *
+	 * @return the field name
+	 * @deprecated use settings().concordanceField()
+	 */
+	@Deprecated
+	public String getConcordanceFieldName() {
+		return settings().concordanceField();
+	}
+
+	/**
+	 * Sets the field to use for retrieving concordances.
+	 *
+	 * @param concordanceFieldName the field name
+	 * @deprecated use settings().setConcordanceField()
+	 */
+	@Deprecated
+	public void setConcordanceField(String concordanceFieldName) {
+		settings().setConcordanceField(concordanceFieldName);
+	}
+
 	/** Returns the context size.
 	 * @return context size (number of words to fetch around hits)
 	 */
@@ -265,7 +250,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param contextSize the context size (number of words to fetch around hits)
 	 */
 	public synchronized void setContextSize(int contextSize) {
-		this.desiredContextSize = contextSize;
+		desiredContextSize = contextSize;
 	}
 
 	/**
@@ -838,26 +823,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	}
 
 	/**
-	 * Returns the field to use for retrieving concordances.
-	 *
-	 * @return the field name
-	 */
-	public String getConcordanceFieldName() {
-		return concordanceFieldName;
-	}
-
-	/**
-	 * Sets the field to use for retrieving concordances.
-	 *
-	 * @param concordanceFieldName
-	 *            the field name
-	 */
-	public void setConcordanceField(String concordanceFieldName) {
-		this.concordanceFieldName = concordanceFieldName;
-	}
-
-
-	/**
 	 * Get the field our current concordances were retrieved from
 	 *
 	 * @return the field name
@@ -908,28 +873,42 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 */
 	public abstract void setContextField(List<String> contextField);
 
-	/** @return the maximum number of hits to retrieve. */
+	/** @return the maximum number of hits to retrieve.
+	 * @deprecated use settings().maxHitsToRetrieve()
+	 */
+	@Deprecated
 	public int getMaxHitsToRetrieve() {
-		return maxHitsToRetrieve;
+		return settings.maxHitsToRetrieve();
 	}
 
 	/** Set the maximum number of hits to retrieve
 	 * @param n the number of hits, or -1 for no limit
+	 * @deprecated use settings().maxHitsToRetrieve()
 	 */
+	@Deprecated
 	public void setMaxHitsToRetrieve(int n) {
-		this.maxHitsToRetrieve = n;
+		settings.setMaxHitsToRetrieve(n);
 	}
 
-	/** @return the maximum number of hits to count. */
+	/** @return the maximum number of hits to count.
+	 * @deprecated use settings().maxHitsToCount()
+	 */
+	@Deprecated
 	public int getMaxHitsToCount() {
-		return maxHitsToCount;
+		return settings.maxHitsToCount();
 	}
 
 	/** Set the maximum number of hits to count
 	 * @param n the number of hits, or -1 for no limit
+	 * @deprecated use settings().maxHitsToCount()
 	 */
+	@Deprecated
 	public void setMaxHitsToCount(int n) {
-		this.maxHitsToCount = n;
+		settings.setMaxHitsToCount(n);
+	}
+
+	public HitsSettings settings() {
+		return settings;
 	}
 
 	/**
@@ -955,11 +934,11 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
 	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
 	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
+	 * @deprecated use settings().setConcordanceProperties()
 	 */
+	@Deprecated
 	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
-		concWordFI = wordFI;
-		concPunctFI = punctFI;
-		concAttrFI = attrFI;
+		settings().setConcordanceProperties(wordFI, punctFI, attrFI);
 	}
 
 	/**
@@ -977,9 +956,11 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * concordances that don't include XML tags.
 	 *
 	 * @return true iff we use the forward index for making concordances.
+	 * @deprecated use settings().concordanceType()
 	 */
+	@Deprecated
 	public ConcordanceType getConcordanceType() {
-		return concsType;
+		return settings.concordanceType();
 	}
 
 	/**
@@ -990,21 +971,38 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * The default type can be set by calling Searcher.setDefaultConcordanceType().
 	 *
 	 * @param type the type of concordances to make
+	 * @deprecated use settings().setConcordanceType()
 	 */
+	@Deprecated
 	public void setConcordanceType(ConcordanceType type) {
-		this.concsType = type;
+		settings().setConcordanceType(type);
 	}
 
+	/**
+	 * @return the property to use as words in concordances
+	 * @deprecated use settings().concWordProp()
+	 */
+	@Deprecated
 	public String getConcWordFI() {
-		return concWordFI;
+		return settings().concWordProp();
 	}
 
+	/**
+	 * @return the property to use as punctuation in concordances
+	 * @deprecated use settings().concPunctProp()
+	 */
+	@Deprecated
 	public String getConcPunctFI() {
-		return concPunctFI;
+		return settings().concPunctProp();
 	}
 
+	/**
+	 * @return the property to use as extra attributes in concordances
+	 * @deprecated use settings().concAttrProps()
+	 */
+	@Deprecated
 	public Collection<String> getConcAttrFI() {
-		return concAttrFI;
+		return settings().concAttrProps();
 	}
 
 	public HitQueryContext getHitQueryContext() {

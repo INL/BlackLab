@@ -54,7 +54,7 @@ public class HitsWindow extends HitsImpl {
 	 */
 	@Deprecated
 	public HitsWindow(Hits source, int first, int windowSize) {
-		super(source.getSearcher(), source.getConcordanceFieldName(), (List<Hit>)null);
+		super(source.getSearcher(), source.settings().concordanceField(), (List<Hit>)null);
 		this.source = source;
 		this.first = first;
 		this.windowSize = windowSize;

@@ -420,7 +420,7 @@ public class DocResults implements Iterable<DocResult> {
 	}
 
 	private void addDocResultToList(int doc, Hits docHits, IndexReader indexReader) throws IOException {
-		DocResult docResult = new DocResult(searcher, sourceHits.getConcordanceFieldName(), doc, indexReader == null ? null : indexReader.document(doc), docHits);
+		DocResult docResult = new DocResult(searcher, sourceHits.settings().concordanceField(), doc, indexReader == null ? null : indexReader.document(doc), docHits);
 		// Make sure we remember what kind of context we have, if any
 		docResult.setContextField(sourceHits.getContextFieldPropName());
 		results.add(docResult);

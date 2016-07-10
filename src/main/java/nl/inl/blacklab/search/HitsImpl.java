@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -197,7 +198,7 @@ public class HitsImpl extends Hits {
 	 * @param copyFrom the Hits object to copy
 	 */
 	private HitsImpl(HitsImpl copyFrom) {
-		super(copyFrom.searcher, copyFrom.getConcordanceFieldName());
+		super(copyFrom.searcher, copyFrom.settings().concordanceField());
 		try {
 			copyFrom.ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -379,6 +380,8 @@ public class HitsImpl extends Hits {
 		synchronized (this) {
 			boolean readAllHits = number < 0;
 			try {
+				int maxHitsToCount = settings.maxHitsToCount();
+				int maxHitsToRetrieve = settings.maxHitsToRetrieve();
 				while (readAllHits || hits.size() < number) {
 
 					// Don't hog the CPU, don't take too long
@@ -869,7 +872,7 @@ public class HitsImpl extends Hits {
 			// We probably want to show a hit with a larger snippet around it
 			// (say, 50 words or so). Don't clobber the context of the other
 			// hits, just fetch this snippet separately.
-			return getKwic(concordanceFieldName, h, contextSize);
+			return getKwic(settings().concordanceField(), h, contextSize);
 		}
 
 		// Default context size. Read all hits and find concordances for all of them
@@ -909,7 +912,7 @@ public class HitsImpl extends Hits {
 		List<Hit> oneHit = Arrays.asList(hit);
 		HitsImpl h = new HitsImpl(searcher, searcher.getMainContentsFieldName(), oneHit);
 		h.copySettingsFrom(this); // concordance type, etc.
-		if (concsType == ConcordanceType.FORWARD_INDEX) {
+		if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX) {
 			Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, fieldName);
 			return oneKwic.get(hit).toConcordance();
 		}
@@ -935,7 +938,7 @@ public class HitsImpl extends Hits {
 	 */
 	@Override
 	public synchronized Concordance getConcordance(Hit h, int contextSize) {
-		if (concsType == ConcordanceType.FORWARD_INDEX)
+		if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX)
 			return getKwic(h, contextSize).toConcordance();
 
 		if (contextSize != desiredContextSize) {
@@ -943,7 +946,7 @@ public class HitsImpl extends Hits {
 			// We probably want to show a hit with a larger snippet around it
 			// (say, 50 words or so). Don't clobber the context of the other
 			// hits, just fetch this snippet separately.
-			return getConcordance(concordanceFieldName, h, contextSize);
+			return getConcordance(settings().concordanceField(), h, contextSize);
 		}
 
 		// Default context size. Read all hits and find concordances for all of them
@@ -974,7 +977,7 @@ public class HitsImpl extends Hits {
 	 * you call getConcordance() for the first time.
 	 */
 	synchronized void findConcordances() {
-		if (concsType == ConcordanceType.FORWARD_INDEX) {
+		if (settings.concordanceType() == ConcordanceType.FORWARD_INDEX) {
 			findKwics();
 			return;
 		}
@@ -992,7 +995,7 @@ public class HitsImpl extends Hits {
 		}
 
 		// Get the concordances
-		concordances = retrieveConcordancesFromContentStore(desiredContextSize, concordanceFieldName);
+		concordances = retrieveConcordancesFromContentStore(desiredContextSize, settings().concordanceField());
 	}
 
 	/**
@@ -1015,7 +1018,7 @@ public class HitsImpl extends Hits {
 		}
 
 		// Get the concordances
-		kwics = retrieveKwics(desiredContextSize, concordanceFieldName);
+		kwics = retrieveKwics(desiredContextSize, settings().concordanceField());
 	}
 
 	/**
@@ -1046,19 +1049,22 @@ public class HitsImpl extends Hits {
 			hitsInDoc.add(key);
 		}
 
-		if (concsType == ConcordanceType.FORWARD_INDEX) {
+		if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX) {
 			// Yes, make 'em from the forward index (faster)
 			ForwardIndex forwardIndex = null;
+			String concWordFI = settings().concWordProp();
 			if (concWordFI != null)
 				forwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
 						concWordFI));
 
 			ForwardIndex punctForwardIndex = null;
+			String concPunctFI = settings().concPunctProp();
 			if (concPunctFI != null)
 				punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(
 						fieldName, concPunctFI));
 
 			Map<String, ForwardIndex> attrForwardIndices = new HashMap<>();
+			Collection<String> concAttrFI = settings().concAttrProps();
 			if (concAttrFI == null) {
 				// All other FIs are attributes
 				for (String p: searcher.getForwardIndices().keySet()) {
@@ -1195,7 +1201,7 @@ public class HitsImpl extends Hits {
 		if (propName == null)
 			propName = searcher.getIndexStructure().getMainContentsField().getMainProperty().getName();
 		if (ctx == null)
-			ctx = searcher.getDefaultExecutionContext(concordanceFieldName);
+			ctx = searcher.getDefaultExecutionContext(settings().concordanceField());
 		ctx = ctx.withProperty(propName);
 		findContext(Arrays.asList(ctx.luceneField(false)));
 		Map<Integer, Integer> coll = new HashMap<>();
@@ -1378,6 +1384,8 @@ public class HitsImpl extends Hits {
 		Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
 
 		// Make the concordances from the context
+		String concPunctFI = settings().concPunctProp();
+		String concWordFI = settings().concWordProp();
 		for (int i = 0; i < hits.size(); i++) {
 			Hit h = hits.get(i);
 			List<String> tokens = new ArrayList<>();
