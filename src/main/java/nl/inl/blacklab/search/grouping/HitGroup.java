@@ -30,7 +30,8 @@ public class HitGroup extends Group {
 
 	HitGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField) {
 		super(groupIdentity);
-		results = Hits.emptyList(searcher, defaultConcField);
+		results = Hits.emptyList(searcher);
+		results.settings().setConcordanceField(defaultConcField);
 	}
 
 	/**
@@ -45,7 +46,8 @@ public class HitGroup extends Group {
 	 */
 	HitGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField, List<Hit> hits) {
 		super(groupIdentity);
-		results = Hits.fromList(searcher, defaultConcField, hits);
+		results = Hits.fromList(searcher, hits);
+		results.settings().setConcordanceField(defaultConcField);
 	}
 
 	public Hits getHits() {

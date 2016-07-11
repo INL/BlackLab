@@ -85,7 +85,7 @@ public class TestIndex {
 
 		// Create the BlackLab searcher object
 		searcher = Searcher.open(indexDir);
-		searcher.setDefaultContextSize(1);
+		searcher.hitsSettings().setContextSize(1);
 	}
 
 	public Searcher getSearcher() {

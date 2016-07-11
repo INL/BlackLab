@@ -83,7 +83,10 @@ public class ResultsGrouper extends HitGroups {
 	@Deprecated
 	public ResultsGrouper(Searcher searcher, SpanQuery source, HitProperty criteria,
 			String defaultConcField) {
-		this(Hits.fromSpanQuery(searcher, defaultConcField, source), criteria);
+		super(searcher, criteria);
+		Hits hits = Hits.fromSpanQuery(searcher, source);
+		hits.settings().setConcordanceField(defaultConcField);
+		init(hits, criteria);
 	}
 
 	/**
@@ -101,7 +104,11 @@ public class ResultsGrouper extends HitGroups {
 	@Deprecated
 	public ResultsGrouper(Hits hits, HitProperty criteria) {
 		super(hits.getSearcher(), criteria);
-		defaultConcField = hits.getConcordanceFieldName();
+		init(hits, criteria);
+	}
+
+	private void init(Hits hits, HitProperty criteria) {
+		defaultConcField = hits.settings().concordanceField();
 		List<String> requiredContext = criteria.needsContext();
 		if (requiredContext != null) {
 			hits.findContext(requiredContext);
@@ -134,7 +141,6 @@ public class ResultsGrouper extends HitGroups {
 		// If the group identities are context words, we should possibly merge
 		// some groups if they have identical sort orders (up to now, we've grouped on
 		// token id, not sort order).
-
 	}
 
 	/**

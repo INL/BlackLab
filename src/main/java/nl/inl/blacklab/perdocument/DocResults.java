@@ -130,7 +130,8 @@ public class DocResults implements Iterable<DocResult> {
 	 */
 	@Deprecated
 	public DocResults(Searcher searcher, String field, SpanQuery query) {
-		this(searcher, Hits.fromSpanQuery(searcher, field, query));
+		this(searcher, Hits.fromSpanQuery(searcher, query));
+		sourceHits.settings().setConcordanceField(field);
 	}
 
 	/**
@@ -387,13 +388,12 @@ public class DocResults implements Iterable<DocResult> {
 				partialDocHits = null;
 
 				IndexReader indexReader = searcher.getIndexReader();
-				String concordanceFieldName = searcher.getMainContentsFieldName();
 				while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
 					Hit hit = sourceHitsIterator.next();
 					if (hit.doc != doc) {
 						if (docHits != null) {
-							Hits hits = Hits.fromList(searcher, concordanceFieldName, docHits);
+							Hits hits = Hits.fromList(searcher, docHits);
 							hits.copySettingsFrom(sourceHits); // concordance type, etc.
 							addDocResultToList(doc, hits, indexReader);
 						}
@@ -408,7 +408,7 @@ public class DocResults implements Iterable<DocResult> {
 						partialDocId = doc;
 						partialDocHits = docHits; // not done, continue from here later
 					} else {
-						Hits hits = Hits.fromList(searcher, concordanceFieldName, docHits);
+						Hits hits = Hits.fromList(searcher, docHits);
 						hits.copySettingsFrom(sourceHits); // concordance type, etc.
 						addDocResultToList(doc, hits, indexReader);
 					}

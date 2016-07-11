@@ -43,7 +43,8 @@ public class DocResult {
 		this.docId = docId;
 		this.document = document;
 		this.score = score;
-		hits = Hits.emptyList(searcher, concField);
+		hits = Hits.emptyList(searcher);
+		hits.settings().setConcordanceField(concField);
 	}
 
 	/**
@@ -62,7 +63,8 @@ public class DocResult {
 		this.docId = doc;
 		this.document = document;
 		this.score = 0.0f;
-		hits = Hits.fromList(searcher, concField, docHits);
+		hits = Hits.fromList(searcher, docHits);
+		hits.settings().setConcordanceField(concField);
 	}
 
 	/**

@@ -187,7 +187,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 				// See if we have a punctuation forward index. If we do,
 				// default to creating concordances using that.
 				if (mainContentsField.hasPunctuation()) {
-					setDefaultConcordanceType(ConcordanceType.FORWARD_INDEX);
+					hitsSettings.setConcordanceType(ConcordanceType.FORWARD_INDEX);
 				}
 			}
 

@@ -33,7 +33,7 @@ public class TestResultsGrouper {
 	@Test
 	public void testGrouper() {
 		SpanQuery query = new MockSpanQuery(doc, start, end);
-		Hits hits = Hits.fromSpanQuery(new MockSearcher(), "contents%word", query);
+		Hits hits = Hits.fromSpanQuery(new MockSearcher(), query);
 		HitProperty crit = new HitPropertyDocumentId(hits);
 		HitGroups grouper = hits.groupedBy(crit);
 		Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();

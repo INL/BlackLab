@@ -27,7 +27,7 @@ public class MockSearcher extends Searcher {
 
 	public MockSearcher() {
 		mainContentsFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
-		setDefaultContextSize(5);
+		hitsSettings().setContextSize(5);
 	}
 
 	@Override

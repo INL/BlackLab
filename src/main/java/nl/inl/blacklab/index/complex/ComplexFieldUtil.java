@@ -50,6 +50,8 @@ public class ComplexFieldUtil {
 
 	public static final String END_TAG_PROP_NAME = "endtag";
 
+	public static String WORD_PROP_NAME = "word";
+
 	/** Property name for the spaces and punctuation between words */
 	public static final String PUNCTUATION_PROP_NAME = "punct";
 

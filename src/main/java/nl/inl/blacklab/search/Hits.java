@@ -44,7 +44,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @deprecated moved to HitsSettings
 	 */
 	@Deprecated
-	protected static int defaultMaxHitsToCount = HitsSettings.UNLIMITED;
+	protected static int defaultMaxHitsToCount = Searcher.UNLIMITED_HITS;
 
 	@Deprecated
 	protected static boolean defaultMaxHitsToCountChanged = false;
@@ -90,12 +90,10 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param concordanceFieldPropName
-	 *            field to use by default when finding concordances
 	 * @return hits found
 	 */
-	public static Hits emptyList(Searcher searcher, String concordanceFieldPropName) {
-		return fromList(searcher, concordanceFieldPropName, (List<Hit>)null);
+	public static Hits emptyList(Searcher searcher) {
+		return fromList(searcher, (List<Hit>)null);
 	}
 
 	/**
@@ -105,13 +103,11 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param concField
-	 *            field to use by default when finding concordances
 	 * @param docHits the list of hits to wrap
 	 * @return hits found
 	 */
-	public static Hits fromList(Searcher searcher, String concField, List<Hit> docHits) {
-		return new HitsImpl(searcher, concField, docHits);
+	public static Hits fromList(Searcher searcher, List<Hit> docHits) {
+		return new HitsImpl(searcher, docHits);
 	}
 
 	/**
@@ -119,14 +115,12 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param field
-	 *            field to use by default when finding concordances
 	 * @param query
 	 *            the query to execute to get the hits
 	 * @return hits found
 	 */
-	public static Hits fromSpanQuery(Searcher searcher, String field, SpanQuery query) {
-		return new HitsImpl(searcher, field, query);
+	public static Hits fromSpanQuery(Searcher searcher, SpanQuery query) {
+		return new HitsImpl(searcher, query);
 	}
 
 
@@ -145,7 +139,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @return hits found
 	 */
 	public static Hits fromSpans(Searcher searcher, String concordanceFieldPropName, Spans source) {
-		return new HitsImpl(searcher, concordanceFieldPropName, source);
+		Hits hits = new HitsImpl(searcher, source);
+		hits.settings.setConcordanceField(concordanceFieldPropName);
+		return hits;
 	}
 
 	//----------------------------------------------------------
@@ -162,10 +158,21 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *  for way too long). */
 	protected ThreadPriority etiquette;
 
-	public Hits(Searcher searcher, String concordanceFieldName) {
+	public Hits(Searcher searcher) {
 		this.searcher = searcher;
-		settings = new HitsSettings(searcher, concordanceFieldName);
+		settings = new HitsSettings(searcher.hitsSettings(), true); // , concordanceFieldName);
 		hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
+	}
+
+	/**
+	 * @param searcher searcher object
+	 * @param concordanceFieldName concordance field to use
+	 * @deprecated if you need a different concordance field, change it using settings().setConcordanceField().
+	 */
+	@Deprecated
+	public Hits(Searcher searcher, String concordanceFieldName) {
+		this(searcher);
+		settings.setConcordanceField(concordanceFieldName);
 	}
 
 	/**
@@ -207,11 +214,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @param copyFrom where to copy settings from
 	 */
 	public void copySettingsFrom(Hits copyFrom) {
-		setMaxHitsToRetrieve(copyFrom.getMaxHitsToRetrieve());
-		setMaxHitsToCount(copyFrom.getMaxHitsToCount());
+		settings = new HitsSettings(copyFrom.settings, false);
 		setMaxHitsRetrieved(copyFrom.maxHitsRetrieved());
 		setMaxHitsCounted(copyFrom.maxHitsCounted());
-		setContextSize(copyFrom.getContextSize());
 		setHitQueryContext(copyFrom.getHitQueryContext());
 	}
 

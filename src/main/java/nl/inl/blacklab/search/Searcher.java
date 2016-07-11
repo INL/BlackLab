@@ -56,6 +56,26 @@ public abstract class Searcher {
 
 	protected static final Logger logger = Logger.getLogger(Searcher.class);
 
+	/** When setting how many hits to retrieve/count, this means "no limit". */
+	public final static int UNLIMITED_HITS = -1;
+
+	static final int DEFAULT_MAX_RETRIEVE = 1000000;
+
+	static final int DEFAULT_MAX_COUNT = Searcher.UNLIMITED_HITS;
+
+	/** Complex field name for default contents field */
+	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
+
+	public static final ConcordanceType DEFAULT_CONC_TYPE = ConcordanceType.CONTENT_STORE;
+
+	public static final String DEFAULT_CONC_WORD_PROP = ComplexFieldUtil.WORD_PROP_NAME;
+
+	public static final String DEFAULT_CONC_PUNCT_PROP = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
+
+	public static final Collection<String> DEFAULT_CONC_ATTR_PROP = null;
+
+	public static final int DEFAULT_CONTEXT_SIZE = 5;
+
 	/** The collator to use for sorting. Defaults to English collator. */
 	protected static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
 
@@ -70,9 +90,6 @@ public abstract class Searcher {
 
 	/** Analyzer that doesn't tokenize */
 	final protected static Analyzer nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
-
-	/** Complex field name for default contents field */
-	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
 
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).
@@ -304,38 +321,64 @@ public abstract class Searcher {
 	 */
 	protected Map<String, ForwardIndex> forwardIndices = new HashMap<>();
 
-	/** Do we want to retrieve concordances from the forward index instead of from the
-	 *  content store? Generating them from the forward index is more
-	 *  efficient.
+	protected HitsSettings hitsSettings;
+
+	/**
+	 * The default settings for all new Hits objects.
 	 *
-	 *  This is set to FORWARD_INDEX for all modern indices.
-	 *  (to be precise, it's set to true iff a punctuation forward index is present)
+	 * You may change these settings; this will affect all new Hits objects.
 	 *
-	 *  This setting controls the default. You don't have to set this to CONTENT_STORE if
-	 *  you *sometimes* want concordances from the content store; you can specifically
-	 *  request those when you need them.
+	 * @return settings object
 	 */
-	private ConcordanceType defaultConcsType = ConcordanceType.CONTENT_STORE;
+	public HitsSettings hitsSettings() {
+		return hitsSettings;
+	}
 
-	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
-	private String concWordFI = "word";
+	public Searcher() {
+		hitsSettings = new HitsSettings();
+	}
 
-	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
-	private String concPunctFI = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
-
-	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
-	private Collection<String> concAttrFI = null; // all other FIs are attributes
-
-	/** How we fix well-formedness for snippets of XML: by adding or removing unbalanced tags */
-	private UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
-
+//	/**
+//	 * Stop retrieving hits after this number.
+//	 * (HitsSettings.UNLIMITED = don't stop retrieving)
+//	 */
+//	protected int defaultMaxHitsToRetrieve = DEFAULT_MAX_RETRIEVE;
+//
+//	/**
+//	 * Stop counting hits after this number.
+//	 * (HitsSettings.UNLIMITED = don't stop counting)
+//	 */
+//	protected int defaultMaxHitsToCount = DEFAULT_MAX_COUNT;
+//
+//	/** Do we want to retrieve concordances from the forward index instead of from the
+//	 *  content store? Generating them from the forward index is more
+//	 *  efficient.
+//	 *
+//	 *  This is set to FORWARD_INDEX for all modern indices.
+//	 *  (to be precise, it's set to true iff a punctuation forward index is present)
+//	 *
+//	 *  This setting controls the default. You don't have to set this to CONTENT_STORE if
+//	 *  you *sometimes* want concordances from the content store; you can specifically
+//	 *  request those when you need them.
+//	 */
+//	private ConcordanceType defaultConcsType = DEFAULT_CONC_TYPE;
+//
 	/**
 	 * Name of the main contents field (used as default parameter value for many methods)
 	 */
-	protected String mainContentsFieldName;
-
-	/** Default number of words around a hit */
-	protected int defaultContextSize = 5;
+	protected String mainContentsFieldName = DEFAULT_CONTENTS_FIELD_NAME;
+//
+//	/** Forward index to use as text context of &lt;w/&gt; tags in concordances (words; null = no text content) */
+//	private String concWordFI = DEFAULT_CONC_WORD_PROP;
+//
+//	/** Forward index to use as text context between &lt;w/&gt; tags in concordances (punctuation+whitespace; null = just a space) */
+//	private String concPunctFI = DEFAULT_CONC_PUNCT_PROP;
+//
+//	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
+//	private Collection<String> concAttrFI = DEFAULT_CONC_ATTR_PROP; // all other FIs are attributes
+//
+//	/** Default number of words around a hit */
+//	protected int defaultContextSize = DEFAULT_CONTEXT_SIZE;
 
 	/** Should we default to case-sensitive searching? [false] */
 	protected boolean defaultCaseSensitive = false;
@@ -343,43 +386,44 @@ public abstract class Searcher {
 	/** Should we default to diacritics-sensitive searching? [false] */
 	protected boolean defaultDiacriticsSensitive = false;
 
+	/** How we fix well-formedness for snippets of XML: by adding or removing unbalanced tags */
+	private UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
+
 	/** If true, we want to add/delete documents. If false, we're just searching. */
 	protected boolean indexMode = false;
 
-	/**
-	 * Stop retrieving hits after this number.
-	 * (-1 = don't stop retrieving)
+	/** @return the default maximum number of hits to retrieve.
+	 * @deprecated use hitsSettings().maxHitsToRetrieve()
 	 */
-	protected int defaultMaxHitsToRetrieve = 1000000;
-
-	/**
-	 * Stop counting hits after this number.
-	 * (-1 = don't stop counting)
-	 */
-	protected int defaultMaxHitsToCount = -1;
-
-	/** @return the default maximum number of hits to retrieve. */
+	@Deprecated
 	public int getDefaultMaxHitsToRetrieve() {
-		return defaultMaxHitsToRetrieve;
+		return hitsSettings().maxHitsToRetrieve();
 	}
 
 	/** Set the default maximum number of hits to retrieve
-	 * @param n the number of hits, or -1 for no limit
+	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
+	 * @deprecated use hitsSettings().setMaxHitsToRetrieve()
 	 */
+	@Deprecated
 	public void setDefaultMaxHitsToRetrieve(int n) {
-		defaultMaxHitsToRetrieve = n;
+		hitsSettings().setMaxHitsToRetrieve(n);
 	}
 
-	/** @return the default maximum number of hits to count. */
+	/** @return the default maximum number of hits to count.
+	 * @deprecated use hitsSettings().maxHitsToCount()
+	 */
+	@Deprecated
 	public int getDefaultMaxHitsToCount() {
-		return defaultMaxHitsToCount;
+		return hitsSettings().maxHitsToCount();
 	}
 
 	/** Set the default maximum number of hits to count
-	 * @param n the number of hits, or -1 for no limit
+	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
+	 * @deprecated use hitsSettings().setMaxHitsToCount()
 	 */
+	@Deprecated
 	public void setDefaultMaxHitsToCount(int n) {
-		defaultMaxHitsToCount = n;
+		hitsSettings().setMaxHitsToCount(n);
 	}
 
 	/**
@@ -398,12 +442,22 @@ public abstract class Searcher {
 		this.defaultUnbalancedTagsStrategy = strategy;
 	}
 
+	/**
+	 * @return the default concordance type
+	 * @deprecated use hitsSettings().concordanceType()
+	 */
+	@Deprecated
 	public ConcordanceType getDefaultConcordanceType() {
-		return defaultConcsType;
+		return hitsSettings().concordanceType();
 	}
 
+	/**
+	 * @param type the default concordance type
+	 * @deprecated use hitsSettings().setConcordanceType()
+	 */
+	@Deprecated
 	public void setDefaultConcordanceType(ConcordanceType type) {
-		defaultConcsType = type;
+		hitsSettings().setConcordanceType(type);
 	}
 
 	/**
@@ -434,7 +488,7 @@ public abstract class Searcher {
 	 * concordances that don't include XML tags.
 	 *
 	 * @return true iff we use the forward index for making concordances.
-	 * @deprecated use getDefaultConcordanceType
+	 * @deprecated use hitsSettings().concordanceType()
 	 */
 	@Deprecated
 	public boolean getMakeConcordancesFromForwardIndex() {
@@ -452,7 +506,7 @@ public abstract class Searcher {
 	 *
 	 * @param concordancesFromForwardIndex true if we want to use the forward index to make
 	 * concordances.
-	 * @deprecated use setDefaultConcordanceType()
+	 * @deprecated use hitsSettings().setConcordanceType()
 	 */
 	@Deprecated
 	public void setMakeConcordancesFromForwardIndex(boolean concordancesFromForwardIndex) {
@@ -578,7 +632,9 @@ public abstract class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(SpanQuery query, String fieldNameConc) throws BooleanQuery.TooManyClauses {
-		return Hits.fromSpanQuery(this, fieldNameConc, query);
+		Hits hits = Hits.fromSpanQuery(this, query);
+		hits.settings.setConcordanceField(fieldNameConc);
+		return hits;
 	}
 
 	/**
@@ -591,7 +647,7 @@ public abstract class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses {
-		return Hits.fromSpanQuery(this, getMainContentsFieldName(), query);
+		return Hits.fromSpanQuery(this, query);
 	}
 
 	/**
@@ -610,7 +666,9 @@ public abstract class Searcher {
 	 */
 	public Hits find(TextPattern pattern, String fieldName, Filter filter)
 			throws BooleanQuery.TooManyClauses {
-		return Hits.fromSpanQuery(this, fieldName, createSpanQuery(pattern, fieldName, filter));
+		Hits hits = Hits.fromSpanQuery(this, createSpanQuery(pattern, fieldName, filter));
+		hits.settings.setConcordanceField(fieldName);
+		return hits;
 	}
 
 	/**
@@ -709,7 +767,8 @@ public abstract class Searcher {
 
 	public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord, int endAtWord) {
 		Hit hit = new Hit(docId, startAtWord, endAtWord);
-		Hits hits = Hits.fromList(this, fieldName, Arrays.asList(hit));
+		Hits hits = Hits.fromList(this, Arrays.asList(hit));
+		hits.settings.setConcordanceField(fieldName);
 		Kwic kwic = hits.getKwic(hit, 0);
 		return kwic.getDocContents();
 	}
@@ -1148,7 +1207,7 @@ public abstract class Searcher {
 	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
 	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
 	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
-	 * @deprecated renamed to setConcordanceXmlProperties
+	 * @deprecated use hitsSettings().setConcordanceProperties()
 	 */
 	@Deprecated
 	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
@@ -1166,12 +1225,12 @@ public abstract class Searcher {
 	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
 	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
 	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
+	 * @deprecated use hitsSettings().setConcordanceProperties()
 	 */
+	@Deprecated
 	public void setConcordanceXmlProperties(String wordFI, String punctFI,
 			Collection<String> attrFI) {
-		concWordFI = wordFI;
-		concPunctFI = punctFI;
-		concAttrFI = attrFI;
+		hitsSettings().setConcordanceProperties(wordFI, punctFI, attrFI);
 	}
 
 
@@ -1179,9 +1238,11 @@ public abstract class Searcher {
 	 * Get the default context size used for building concordances
 	 *
 	 * @return the context size
+	 * @deprecated use hitsSettings().contextSize()
 	 */
+	@Deprecated
 	public int getDefaultContextSize() {
-		return defaultContextSize;
+		return hitsSettings().contextSize();
 	}
 
 	/**
@@ -1189,9 +1250,11 @@ public abstract class Searcher {
 	 *
 	 * @param defaultContextSize
 	 *            the context size
+	 * @deprecated use hitsSettings().setContextSize()
 	 */
+	@Deprecated
 	public void setDefaultContextSize(int defaultContextSize) {
-		this.defaultContextSize = defaultContextSize;
+		hitsSettings().setContextSize(defaultContextSize);
 	}
 
 
@@ -1374,7 +1437,7 @@ public abstract class Searcher {
 	 * Return the list of terms that occur in a field.
 	 *
 	 * @param fieldName the field
-	 * @param maxResults maximum number to return (or -1 for no limit)
+	 * @param maxResults maximum number to return (or HitsSettings.UNLIMITED (== -1) for no limit)
 	 * @return the matching terms
 	 */
 	public abstract List<String> getFieldTerms(String fieldName, int maxResults);
@@ -1383,16 +1446,31 @@ public abstract class Searcher {
 		return mainContentsFieldName;
 	}
 
+	/**
+	 * @return the word property used for concordances
+	 * @deprecated use hitsSettings().concWordProp()
+	 */
+	@Deprecated
 	public String getConcWordFI() {
-		return concWordFI;
+		return hitsSettings().concWordProp();
 	}
 
+	/**
+	 * @return the punctuation property used for concordances
+	 * @deprecated use hitsSettings().concPunctProp()
+	 */
+	@Deprecated
 	public String getConcPunctFI() {
-		return concPunctFI;
+		return hitsSettings().concPunctProp();
 	}
 
+	/**
+	 * @return the extra attribute properties used for concordances
+	 * @deprecated use hitsSettings().concAttrProps()
+	 */
+	@Deprecated
 	public Collection<String> getConcAttrFI() {
-		return concAttrFI;
+		return hitsSettings().concAttrProps();
 	}
 
 	public abstract IndexSearcher getIndexSearcher();

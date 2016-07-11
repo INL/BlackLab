@@ -4,9 +4,6 @@ import java.util.Collection;
 
 public class HitsSettings {
 
-	/** When setting how many hits to retrieve/count, this means "no limit". */
-	public final static int UNLIMITED = -1;
-
 	/**
 	 * Stop retrieving hits after this number.
 	 * (NO_LIMIT = -1 = don't stop retrieving)
@@ -40,15 +37,26 @@ public class HitsSettings {
 	private int desiredContextSize;
 
 	@SuppressWarnings("deprecation")
-	public HitsSettings(Searcher searcher, String concordanceFieldName) {
-		this.concordanceFieldName = concordanceFieldName;
-		maxHitsToRetrieve = Hits.defaultMaxHitsToRetrieveChanged ? Hits.defaultMaxHitsToRetrieve : searcher.getDefaultMaxHitsToRetrieve();
-		maxHitsToCount = Hits.defaultMaxHitsToCountChanged ? Hits.defaultMaxHitsToCount : searcher.getDefaultMaxHitsToCount();
-		concsType = searcher.getDefaultConcordanceType();
-		concWordProps = searcher.getConcWordFI();
-		concPunctProps = searcher.getConcPunctFI();
-		concAttrProps = searcher.getConcAttrFI();
-		desiredContextSize = searcher.getDefaultContextSize();
+	public HitsSettings(HitsSettings defaults, boolean staticHitsFieldsOverrideDefaults) {
+		concordanceFieldName = defaults.concordanceFieldName;
+		maxHitsToRetrieve = (staticHitsFieldsOverrideDefaults && Hits.defaultMaxHitsToRetrieveChanged) ? Hits.defaultMaxHitsToRetrieve : defaults.maxHitsToRetrieve;
+		maxHitsToCount = (staticHitsFieldsOverrideDefaults && Hits.defaultMaxHitsToCountChanged) ? Hits.defaultMaxHitsToCount : defaults.maxHitsToCount;
+		concsType = defaults.concsType;
+		concWordProps = defaults.concWordProps;
+		concPunctProps = defaults.concPunctProps;
+		concAttrProps = defaults.concAttrProps;
+		desiredContextSize = defaults.desiredContextSize;
+	}
+
+	public HitsSettings() {
+		this.concordanceFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
+		maxHitsToRetrieve = Searcher.DEFAULT_MAX_RETRIEVE;
+		maxHitsToCount = Searcher.DEFAULT_MAX_COUNT;
+		concsType = Searcher.DEFAULT_CONC_TYPE;
+		concWordProps = Searcher.DEFAULT_CONC_WORD_PROP;
+		concPunctProps = Searcher.DEFAULT_CONC_PUNCT_PROP;
+		concAttrProps = Searcher.DEFAULT_CONC_ATTR_PROP;
+		desiredContextSize = Searcher.DEFAULT_CONTEXT_SIZE;
 	}
 
 	/** @return the maximum number of hits to retrieve. */

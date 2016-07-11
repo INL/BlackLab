@@ -198,7 +198,7 @@ public class HitsImpl extends Hits {
 	 * @param copyFrom the Hits object to copy
 	 */
 	private HitsImpl(HitsImpl copyFrom) {
-		super(copyFrom.searcher, copyFrom.settings().concordanceField());
+		super(copyFrom.searcher);
 		try {
 			copyFrom.ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -229,8 +229,8 @@ public class HitsImpl extends Hits {
 	 *            field to use by default when finding concordances
 	 * @param hits the list of hits to wrap
 	 */
-	HitsImpl(Searcher searcher, String concordanceFieldName, List<Hit> hits) {
-		super(searcher, concordanceFieldName);
+	HitsImpl(Searcher searcher, List<Hit> hits) {
+		super(searcher);
 		this.hits = hits == null ? new ArrayList<Hit>() : hits;
 		hitsCounted = this.hits.size();
 		currentContextSize = -1;
@@ -247,6 +247,24 @@ public class HitsImpl extends Hits {
 	}
 
 	/**
+	 * Make a wrapper Hits object for a list of Hit objects.
+	 *
+	 * Does not copy the list, but reuses it.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param concordanceFieldName
+	 *            field to use by default when finding concordances
+	 * @param hits the list of hits to wrap
+	 * @deprecated if you need a different concordance field, set it manually
+	 */
+	@Deprecated
+	HitsImpl(Searcher searcher, String concordanceFieldName, List<Hit> hits) {
+		this(searcher, hits);
+		settings.setConcordanceField(concordanceFieldName);
+	}
+
+	/**
 	 * Construct a Hits object from a SpanQuery.
 	 *
 	 * @param searcher
@@ -257,9 +275,8 @@ public class HitsImpl extends Hits {
 	 *            the query to execute to get the hits
 	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
 	 */
-	HitsImpl(Searcher searcher, String concordanceFieldPropName, SpanQuery sourceQuery)
-			throws TooManyClauses {
-		this(searcher, concordanceFieldPropName, (List<Hit>)null);
+	HitsImpl(Searcher searcher, SpanQuery sourceQuery) throws TooManyClauses {
+		this(searcher, (List<Hit>)null);
 		try {
 			DirectoryReader reader = searcher.getIndexReader();
 			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
@@ -292,6 +309,47 @@ public class HitsImpl extends Hits {
 	}
 
 	/**
+	 * Construct a Hits object from a SpanQuery.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param concordanceFieldPropName
+	 *            field to use by default when finding concordances
+	 * @param sourceQuery
+	 *            the query to execute to get the hits
+	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
+	 * @deprecated if you need a different concordance field, set it manually
+	 */
+	@Deprecated
+	HitsImpl(Searcher searcher, String concordanceFieldPropName, SpanQuery sourceQuery)
+			throws TooManyClauses {
+		this(searcher, sourceQuery);
+		settings.setConcordanceField(concordanceFieldPropName);
+	}
+
+	/**
+	 * Construct a Hits object from a Spans.
+	 *
+	 * If possible, don't use this constructor, use the one that takes
+	 * a SpanQuery, as it's more efficient.
+	 *
+	 * @param searcher
+	 *            the searcher object
+	 * @param source
+	 *            where to retrieve the Hit objects from
+	 */
+	HitsImpl(Searcher searcher, Spans source) {
+		this(searcher, (List<Hit>)null);
+
+		currentSourceSpans = BLSpansWrapper.optWrapSortUniq(source);
+		try {
+			sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
 	 * Construct a Hits object from a Spans.
 	 *
 	 * If possible, don't use this constructor, use the one that takes
@@ -303,16 +361,12 @@ public class HitsImpl extends Hits {
 	 *            field to use by default when finding concordances
 	 * @param source
 	 *            where to retrieve the Hit objects from
+	 * @deprecated if you need a different concordance field, set it manually
 	 */
+	@Deprecated
 	HitsImpl(Searcher searcher, String concordanceFieldPropName, Spans source) {
-		this(searcher, concordanceFieldPropName, (List<Hit>)null);
-
-		currentSourceSpans = BLSpansWrapper.optWrapSortUniq(source);
-		try {
-			sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		this(searcher, source);
+		settings.setConcordanceField(concordanceFieldPropName);
 	}
 
 	private void extractTermsFromSpanQuery(Set<Term> terms) {
@@ -1600,14 +1654,14 @@ public class HitsImpl extends Hits {
 			// client should detect thread was interrupted if it
 			// wants to use background threads.
 			Thread.currentThread().interrupt();
-			return Hits.emptyList(searcher, searcher.getMainContentsFieldName());
+			return Hits.emptyList(searcher);
 		}
 		List<Hit> hitsInDoc = new ArrayList<>();
 		for (Hit hit: hits) {
 			if (hit.doc == docid)
 				hitsInDoc.add(hit);
 		}
-		Hits result = Hits.fromList(searcher, searcher.getMainContentsFieldName(), hitsInDoc);
+		Hits result = Hits.fromList(searcher, hitsInDoc);
 		result.copySettingsFrom(this);
 		return result;
 	}

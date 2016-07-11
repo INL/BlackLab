@@ -22,7 +22,7 @@ public class MockHits extends Hits {
 	private int numberOfDocs;
 
 	public MockHits(Searcher searcher, int[] doc, int[] start, int[] end) {
-		super(searcher, searcher.getMainContentsFieldName());
+		super(searcher);
 		this.doc = doc;
 		this.start = start;
 		this.end = end;

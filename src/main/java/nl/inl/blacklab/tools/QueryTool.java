@@ -532,7 +532,7 @@ public class QueryTool {
 			printProgramHead();
 		}
 
-		contextSize = searcher.getDefaultContextSize();
+		contextSize = searcher.hitsSettings().contextSize();
 
 		wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
 	}
@@ -572,7 +572,7 @@ public class QueryTool {
 			this.err = out; // send errors to the same output writer in web mode
 		}
 
-		contextSize = searcher.getDefaultContextSize();
+		contextSize = searcher.hitsSettings().contextSize();
 
 		wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
 	}
@@ -785,7 +785,7 @@ public class QueryTool {
 				boolean b = false;
 				if (v.equals("on") || v.equals("yes") || v.equals("true"))
 					b = true;
-				searcher.setDefaultConcordanceType(b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE);
+				searcher.hitsSettings().setConcordanceType(b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE);
 			} else if (lcased.startsWith("stripxml ")) {
 				String v = lcased.substring(9);
 				boolean b = false;
