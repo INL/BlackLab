@@ -260,7 +260,6 @@ public class HitsImpl extends Hits {
 	HitsImpl(Searcher searcher, String concordanceFieldPropName, SpanQuery sourceQuery)
 			throws TooManyClauses {
 		this(searcher, concordanceFieldPropName, (List<Hit>)null);
-
 		try {
 			DirectoryReader reader = searcher.getIndexReader();
 			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
@@ -330,18 +329,12 @@ public class HitsImpl extends Hits {
 
 	/** Sets the desired context size.
 	 * @param contextSize the context size (number of words to fetch around hits)
+	 * @deprecated use settings().setContextSize()
 	 */
 	@Override
+	@Deprecated
 	public synchronized void setContextSize(int contextSize) {
-		if (this.desiredContextSize == contextSize)
-			return; // no need to reset anything
-		super.setContextSize(contextSize);
-
-		// Reset context and concordances so we get the correct context size next time
-		currentContextSize = -1;
-		contextFieldsPropName = null;
-		concordances = null;
-		kwics = null;
+		settings().setContextSize(contextSize);
 	}
 
 	/**
@@ -528,14 +521,11 @@ public class HitsImpl extends Hits {
 		for (int i = 0; i < n; i++)
 			sortOrder[i] = i;
 
-		// Do we need context and don't we have it yet?
+		// If we need context, make sure we have it.
 		List<String> requiredContext = sortProp.needsContext();
-		if (requiredContext != null
-				&& (!requiredContext.equals(contextFieldsPropName) || currentContextSize != desiredContextSize)) {
-			// Get 'em
-			findContext(requiredContext);
-		}
+		findContext(requiredContext);
 
+		// Perform the actual sort.
 		Arrays.sort(sortOrder, sortProp);
 
 		if (reverseSort) {
@@ -867,7 +857,7 @@ public class HitsImpl extends Hits {
 	 */
 	@Override
 	public Kwic getKwic(Hit h, int contextSize) {
-		if (contextSize != desiredContextSize) {
+		if (contextSize != settings().contextSize()) {
 			// Different context size than the default for the whole set;
 			// We probably want to show a hit with a larger snippet around it
 			// (say, 50 words or so). Don't clobber the context of the other
@@ -941,7 +931,7 @@ public class HitsImpl extends Hits {
 		if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX)
 			return getKwic(h, contextSize).toConcordance();
 
-		if (contextSize != desiredContextSize) {
+		if (contextSize != settings().contextSize()) {
 			// Different context size than the default for the whole set;
 			// We probably want to show a hit with a larger snippet around it
 			// (say, 50 words or so). Don't clobber the context of the other
@@ -995,7 +985,7 @@ public class HitsImpl extends Hits {
 		}
 
 		// Get the concordances
-		concordances = retrieveConcordancesFromContentStore(desiredContextSize, settings().concordanceField());
+		concordances = retrieveConcordancesFromContentStore(settings().contextSize(), settings().concordanceField());
 	}
 
 	/**
@@ -1003,7 +993,10 @@ public class HitsImpl extends Hits {
 	 *
 	 * You shouldn't have to call this manually, as it's automatically called when
 	 * you call getKwic() for the first time.
+	 *
+	 * @deprecated define an appropriate HitsWindow and call getKwic(); findKwics() will be called automatically.
 	 */
+	@Deprecated
 	synchronized void findKwics() {
 		try {
 			ensureAllHitsRead();
@@ -1018,7 +1011,7 @@ public class HitsImpl extends Hits {
 		}
 
 		// Get the concordances
-		kwics = retrieveKwics(desiredContextSize, settings().concordanceField());
+		kwics = retrieveKwics(settings().contextSize(), settings().concordanceField());
 	}
 
 	/**
@@ -1113,7 +1106,7 @@ public class HitsImpl extends Hits {
 		}
 		// Make sure we don't have the desired context already
 		if (contextFieldsPropName != null && fieldProps.equals(contextFieldsPropName)
-				&& desiredContextSize == currentContextSize) {
+				&& settings().contextSize() == currentContextSize) {
 			return;
 		}
 
@@ -1154,7 +1147,7 @@ public class HitsImpl extends Hits {
 		if (!hitsInSameDoc.isEmpty())
 			findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
 
-		currentContextSize = desiredContextSize;
+		currentContextSize = settings().contextSize();
 		contextFieldsPropName = new ArrayList<>(fieldProps);
 	}
 
@@ -1170,7 +1163,7 @@ public class HitsImpl extends Hits {
 		// Find context for the hits in the current document
 		HitsImpl hitsObj = new HitsImpl(searcher, searcher.getMainContentsFieldName(), hitsInSameDoc);
 		hitsObj.copySettingsFrom(this);
-		hitsObj.getContextWords(desiredContextSize, fis);
+		hitsObj.getContextWords(settings().contextSize(), fis);
 
 		// Copy the contexts from the temporary Hits object to this one
 		for (int i = 0; i < hitsInSameDoc.size(); i++) {
@@ -1180,8 +1173,10 @@ public class HitsImpl extends Hits {
 
 	/**
 	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
+	 * @deprecated client should not need this, should only be used internally
 	 */
 	@Override
+	@Deprecated
 	public synchronized void clearConcordances() {
 		concordances = null;
 		kwics = null;

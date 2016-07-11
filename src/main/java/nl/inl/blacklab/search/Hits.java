@@ -31,7 +31,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 
 	/**
 	 * Stop retrieving hits after this number.
-	 * (-1 = don't stop retrieving)
+	 * @deprecated moved to HitsSettings
 	 */
 	@Deprecated
 	protected static int defaultMaxHitsToRetrieve = 1000000;
@@ -41,10 +41,10 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 
 	/**
 	 * Stop counting hits after this number.
-	 * (-1 = don't stop counting)
+	 * @deprecated moved to HitsSettings
 	 */
 	@Deprecated
-	protected static int defaultMaxHitsToCount = -1;
+	protected static int defaultMaxHitsToCount = HitsSettings.UNLIMITED;
 
 	@Deprecated
 	protected static boolean defaultMaxHitsToCountChanged = false;
@@ -58,7 +58,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	}
 
 	/** Set the default maximum number of hits to retrieve
-	 * @param n the number of hits, or -1 for no limit
+	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
 	 * @deprecated use Searcher.setDefaultMaxHitsToRetrieve()
 	 */
 	@Deprecated
@@ -76,7 +76,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	}
 
 	/** Set the default maximum number of hits to count
-	 * @param n the number of hits, or -1 for no limit
+	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
 	 * @deprecated use Searcher.setDefaultMaxHitsToCount()
 	 */
 	@Deprecated
@@ -152,22 +152,21 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 
 	protected Searcher searcher;
 
+	/** Settings for retrieving hits, sorting/grouping on context and making concordances. */
 	protected HitsSettings settings;
 
-	protected int desiredContextSize;
-
+	/** Context of our query; mostly used to keep track of captured groups. */
 	protected HitQueryContext hitQueryContext;
 
+	/** Helper object for implementing query thread priority (making sure queries don't hog the CPU
+	 *  for way too long). */
 	protected ThreadPriority etiquette;
 
 	public Hits(Searcher searcher, String concordanceFieldName) {
 		this.searcher = searcher;
 		settings = new HitsSettings(searcher, concordanceFieldName);
-		desiredContextSize = searcher.getDefaultContextSize();
 		hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
 	}
-
-
 
 	/**
 	 * Set the thread priority level for this Hits object.
@@ -244,16 +243,20 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 
 	/** Returns the context size.
 	 * @return context size (number of words to fetch around hits)
+	 * @deprecated use settings().contextSize()
 	 */
+	@Deprecated
 	public int getContextSize() {
-		return desiredContextSize;
+		return settings().contextSize();
 	}
 
 	/** Sets the desired context size.
 	 * @param contextSize the context size (number of words to fetch around hits)
+	 * @deprecated use settings().setContextSize()
 	 */
+	@Deprecated
 	public synchronized void setContextSize(int contextSize) {
-		desiredContextSize = contextSize;
+		settings().setContextSize(contextSize);
 	}
 
 	/**
@@ -663,7 +666,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @return concordance for this hit
 	 */
 	public Concordance getConcordance(Hit h) {
-		return getConcordance(h, desiredContextSize);
+		return getConcordance(h, settings().contextSize());
 	}
 
 	/**
@@ -678,7 +681,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 * @return KWIC for this hit
 	 */
 	public Kwic getKwic(Hit h) {
-		return getKwic(h, desiredContextSize);
+		return getKwic(h, settings().contextSize());
 	}
 
 	/**
@@ -754,7 +757,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 
 	/**
 	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
+	 * @deprecated client should not need this, should be triggered by settings changes
 	 */
+	@Deprecated
 	public abstract void clearConcordances();
 
 	/**

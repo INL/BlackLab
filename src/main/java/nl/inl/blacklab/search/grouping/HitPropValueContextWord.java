@@ -42,7 +42,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 		Terms termsObj = hits.getSearcher().getForwardIndex(ComplexFieldUtil.propertyField(fieldName, propName)).getTerms();
 		int id;
 		if (parts[2].length() == 0)
-			id = -1; // no token
+			id = Terms.NO_TERM; // no token
 		else
 			id = termsObj.indexOf(parts[2]);
 		return new HitPropValueContextWord(hits, propName, id, sensitive);

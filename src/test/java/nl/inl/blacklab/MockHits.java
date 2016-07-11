@@ -166,6 +166,7 @@ public class MockHits extends Hits {
 	}
 
 	@Override
+	@Deprecated
 	public void clearConcordances() {
 		// NOP
 	}

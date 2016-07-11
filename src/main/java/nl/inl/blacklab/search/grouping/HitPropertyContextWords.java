@@ -102,7 +102,7 @@ public class HitPropertyContextWords extends HitProperty {
 		this.words = words;
 		if (words == null) {
 			this.words = new ArrayList<>();
-			this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, hits.getContextSize())); // "entire hit text"
+			this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, hits.settings().contextSize())); // "entire hit text"
 		} else {
 			for (ContextPart part: words) {
 				if (part.lastWord == -1) {
@@ -111,7 +111,7 @@ public class HitPropertyContextWords extends HitProperty {
 					case HIT_TEXT_FROM_END:
 					case HIT_TEXT_FROM_START:
 						// Entire left or right context
-						part.lastWord = hits.getContextSize() - 1;
+						part.lastWord = hits.settings().contextSize() - 1;
 						break;
 					default:
 					case LEFT_OF_HIT:

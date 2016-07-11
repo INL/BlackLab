@@ -124,7 +124,7 @@ class TermsImplV3 extends Terms {
 		if (index != null)
 			return index;
 		if (!indexMode)
-			return -1; // term not found
+			return NO_TERM; // term not found
 		index = termIndex.size();
 		termIndex.put(term, index);
 		return index;
@@ -387,15 +387,15 @@ class TermsImplV3 extends Terms {
 	public void toSortOrder(int[] tokenId, int[] sortOrder, boolean sensitive) {
 		if (sensitive) {
 			for (int i = 0; i < tokenId.length; i++) {
-				if (tokenId[i] == -1)
-					sortOrder[i] = -1;
+				if (tokenId[i] == NO_TERM)
+					sortOrder[i] = NO_TERM;
 				else
 					sortOrder[i] = sortPositionPerId[tokenId[i]];
 			}
 		} else {
 			for (int i = 0; i < tokenId.length; i++) {
-				if (tokenId[i] == -1)
-					sortOrder[i] = -1;
+				if (tokenId[i] == NO_TERM)
+					sortOrder[i] = NO_TERM;
 				else
 					sortOrder[i] = sortPositionPerIdInsensitive[tokenId[i]];
 			}

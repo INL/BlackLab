@@ -730,8 +730,8 @@ public class QueryTool {
 				showResultsPage();
 			} else if (lcased.startsWith("context ")) {
 				contextSize = parseInt(lcased.substring(8), 0);
-				if (hits != null && hits.getContextSize() != contextSize) {
-					hits.setContextSize(contextSize);
+				if (hits != null && hits.settings().contextSize() != contextSize) {
+					hits.settings().setContextSize(contextSize);
 					collocations = null;
 				}
 				showResultsPage();
@@ -1524,7 +1524,7 @@ public class QueryTool {
 
 		// Compile hits display info and calculate necessary width of left context column
 		List<HitToShow> toShow = new ArrayList<>();
-		window.setContextSize(contextSize); // number of words around hit
+		window.settings().setContextSize(contextSize); // number of words around hit
 		int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
 		for (Hit hit : window) {
 			Concordance conc = window.getConcordance(hit);

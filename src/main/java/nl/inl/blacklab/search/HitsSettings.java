@@ -4,15 +4,18 @@ import java.util.Collection;
 
 public class HitsSettings {
 
+	/** When setting how many hits to retrieve/count, this means "no limit". */
+	public final static int UNLIMITED = -1;
+
 	/**
 	 * Stop retrieving hits after this number.
-	 * (-1 = don't stop retrieving)
+	 * (NO_LIMIT = -1 = don't stop retrieving)
 	 */
 	private int maxHitsToRetrieve;
 
 	/**
 	 * Stop counting hits after this number.
-	 * (-1 = don't stop counting)
+	 * (NO_LIMIT = -1 = don't stop counting)
 	 */
 	private int maxHitsToCount;
 
@@ -33,6 +36,9 @@ public class HitsSettings {
 	/** Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null = the rest) */
 	private Collection<String> concAttrProps; // all other FIs are attributes
 
+	/** Our desired context size */
+	private int desiredContextSize;
+
 	@SuppressWarnings("deprecation")
 	public HitsSettings(Searcher searcher, String concordanceFieldName) {
 		this.concordanceFieldName = concordanceFieldName;
@@ -42,6 +48,7 @@ public class HitsSettings {
 		concWordProps = searcher.getConcWordFI();
 		concPunctProps = searcher.getConcPunctFI();
 		concAttrProps = searcher.getConcAttrFI();
+		desiredContextSize = searcher.getDefaultContextSize();
 	}
 
 	/** @return the maximum number of hits to retrieve. */
@@ -50,7 +57,7 @@ public class HitsSettings {
 	}
 
 	/** Set the maximum number of hits to retrieve
-	 * @param n the number of hits, or -1 for no limit
+	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
 	 */
 	public void setMaxHitsToRetrieve(int n) {
 		this.maxHitsToRetrieve = n;
@@ -62,7 +69,7 @@ public class HitsSettings {
 	}
 
 	/** Set the maximum number of hits to count
-	 * @param n the number of hits, or -1 for no limit
+	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
 	 */
 	public void setMaxHitsToCount(int n) {
 		this.maxHitsToCount = n;
@@ -136,6 +143,14 @@ public class HitsSettings {
 
 	public Collection<String> concAttrProps() {
 		return concAttrProps;
+	}
+
+	public int contextSize() {
+		return desiredContextSize;
+	}
+
+	public void setContextSize(int n) {
+		desiredContextSize = n;
 	}
 
 }
