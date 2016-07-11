@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
@@ -74,8 +75,6 @@ public class HitPropertyContextWords extends HitProperty {
 
 	private String propName;
 
-	//private Terms terms;
-
 	private boolean sensitive;
 
 	private Searcher searcher;
@@ -83,6 +82,10 @@ public class HitPropertyContextWords extends HitProperty {
 	private List<ContextPart> words;
 
 	int totalWords;
+
+	public HitPropertyContextWords(Hits hits, String field, String property, boolean sensitive, String wordSpec) {
+		this(hits, field, property, sensitive, parseContextWordSpec(wordSpec));
+	}
 
 	public HitPropertyContextWords(Hits hits, String field, String property, boolean sensitive, List<ContextPart> words) {
 		super(hits);
@@ -165,11 +168,17 @@ public class HitPropertyContextWords extends HitProperty {
 			int firstWordSrcIndex, stopAtSrcIndex;
 			if (srcDirection > 0) {
 				firstWordSrcIndex = srcStartIndex + contextWordDef.firstWord;
+				if (firstWordSrcIndex > finalValidSrcIndex) {
+					firstWordSrcIndex = -1; // no values
+				}
 				stopAtSrcIndex = srcStartIndex + contextWordDef.lastWord + 1;
 				if (stopAtSrcIndex > finalValidSrcIndex + 1)
 					stopAtSrcIndex = finalValidSrcIndex + 1;
 			} else {
 				firstWordSrcIndex = srcStartIndex - contextWordDef.firstWord;
+				if (firstWordSrcIndex < finalValidSrcIndex) {
+					firstWordSrcIndex = -1; // no values
+				}
 				stopAtSrcIndex = srcStartIndex - contextWordDef.lastWord - 1;
 				if (stopAtSrcIndex < finalValidSrcIndex - 1)
 					stopAtSrcIndex = finalValidSrcIndex - 1;
@@ -177,52 +186,23 @@ public class HitPropertyContextWords extends HitProperty {
 			// Copy the words we want to our dest array
 			int valuesCopied = 0;
 			int contextStartIndex = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-			for (int srcIndex = firstWordSrcIndex; srcIndex != finalValidSrcIndex && srcIndex != stopAtSrcIndex; srcIndex++) {
-				dest[destIndex] = context[contextStartIndex + srcIndex];
-				destIndex++;
-				valuesCopied++;
+			if (firstWordSrcIndex >= 0) {
+				for (int srcIndex = firstWordSrcIndex; srcIndex != finalValidSrcIndex + 1 && srcIndex != stopAtSrcIndex; srcIndex++) {
+					dest[destIndex] = context[contextStartIndex + srcIndex];
+					destIndex++;
+					valuesCopied++;
+				}
 			}
 			// If we don't have enough (e.g. because the hit is shorter), add dummy values
 			for ( ; valuesCopied < contextWordDef.lastWord - contextWordDef.firstWord + 1; valuesCopied++) {
-				dest[destIndex] = 0;
+				dest[destIndex] = Terms.NO_TERM;
+				destIndex++;
 			}
 		}
 		return new HitPropValueContextWords(hits, propName, dest, sensitive);
 	}
 
-	/*
-	@Override
-	public int compare(Object i, Object j) {
-		int[] ca = hits.getHitContext((Integer)i);
-		int caHitStart = ca[Hits.CONTEXTS_HIT_START_INDEX];
-		int caLength = ca[Hits.CONTEXTS_LENGTH_INDEX];
-		int[] cb = hits.getHitContext((Integer)j);
-		int cbHitStart = cb[Hits.CONTEXTS_HIT_START_INDEX];
-		int cbLength = cb[Hits.CONTEXTS_LENGTH_INDEX];
-
-		// Compare the left context for these two hits, starting at the end
-		int contextIndex = contextIndices.get(0);
-		int ai = caHitStart - 1;
-		int bi = cbHitStart - 1;
-		while (ai >= 0 && bi >= 0) {
-			int cmp = terms.compareSortPosition(ca[contextIndex * caLength + ai + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
-					cb[contextIndex * cbLength + bi + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS], sensitive);
-			if (cmp != 0)
-				return reverse ? -cmp : cmp;
-			ai--;
-			bi--;
-		}
-		// One or both ran out, and so far, they're equal.
-		if (ai < 0) {
-			if (bi >= 0) {
-				// b longer than a => a < b
-				return reverse ? 1 : -1;
-			}
-			return 0; // same length; a == b
-		}
-		return reverse ? -1 : 1; // a longer than b => a > b
-	}
-	*/
+	// OPT: provide specific compare() method that compares contexts in-place
 
 	@Override
 	public List<String> needsContext() {

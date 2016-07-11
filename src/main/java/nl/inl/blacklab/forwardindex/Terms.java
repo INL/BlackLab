@@ -7,6 +7,8 @@ import java.io.File;
  */
 public abstract class Terms {
 
+	public static final int NO_TERM = -1;
+
 	/**
 	 * Get the existing index number of a term, or add it to the term list
 	 * and assign it a new index number.

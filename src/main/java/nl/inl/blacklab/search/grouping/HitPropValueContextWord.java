@@ -31,7 +31,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 
 	@Override
 	public String toString() {
-		return valueTokenId < 0 ? "" : terms.get(valueTokenId);
+		return valueTokenId < 0 ? "-" : terms.get(valueTokenId);
 	}
 
 	public static HitPropValue deserialize(Hits hits, String info) {

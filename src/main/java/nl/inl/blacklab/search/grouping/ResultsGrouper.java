@@ -216,4 +216,10 @@ public class ResultsGrouper extends HitGroups {
 	public int numberOfGroups() {
 		return groups.size();
 	}
+
+	@Override
+	public String toString() {
+		return "ResultsGrouper with " + numberOfGroups() + " groups";
+	}
+
 }

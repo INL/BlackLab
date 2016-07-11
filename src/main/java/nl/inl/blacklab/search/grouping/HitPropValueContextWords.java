@@ -38,7 +38,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 	public String toString() {
 		StringBuilder b = new StringBuilder();
 		for (int v: valueTokenId) {
-			String word = v < 0 ? "" : terms.get(v);
+			String word = v < 0 ? "-" : terms.get(v);
 			if (word.length() > 0) {
 				if (b.length() > 0)
 					b.append(" ");
@@ -58,7 +58,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		for (int i = 2; i < parts.length; i++) {
 			int tokenId;
 			if (parts[i].length() == 0)
-				tokenId = -1; // no token
+				tokenId = Terms.NO_TERM; // no token
 			else
 				tokenId = termsObj.indexOf(parts[i]);
 			ids[i - 2] = tokenId;
