@@ -191,11 +191,6 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public String getConcordanceFieldName() {
-		return null;
-	}
-
-	@Override
 	public List<String> getContextFieldPropName() {
 		return null;
 	}

@@ -31,7 +31,7 @@ public class TestHits {
 		int[] aEnd = new int[] { 2, 3 };
 		Spans a = new MockSpans(aDoc, aStart, aEnd);
 
-		Hits hits = HitsImpl.fromSpans(new MockSearcher(), "word", a);
+		Hits hits = Hits.fromSpans(new MockSearcher(), "word", a);
 
 		int i = 0;
 		for (Hit hit: hits) {

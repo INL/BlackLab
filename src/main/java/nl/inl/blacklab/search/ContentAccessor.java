@@ -80,8 +80,8 @@ public class ContentAccessor {
 	 *
 	 * Note: if start and end are both -1 for a certain substring, the whole document is returned.
 	 *
-	 * @param docId
-	 *            the Lucene document id
+	 * @param contentId
+	 *            the content id
 	 * @param start
 	 *            start positions of the substrings.
 	 *            -1 means start of document.

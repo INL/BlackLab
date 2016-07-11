@@ -90,8 +90,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param concordanceFieldName
+	 * @param concordanceFieldPropName
 	 *            field to use by default when finding concordances
+	 * @return hits found
 	 */
 	public static Hits emptyList(Searcher searcher, String concordanceFieldPropName) {
 		return fromList(searcher, concordanceFieldPropName, (List<Hit>)null);
@@ -104,9 +105,10 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param concordanceFieldName
+	 * @param concField
 	 *            field to use by default when finding concordances
-	 * @param hits the list of hits to wrap
+	 * @param docHits the list of hits to wrap
+	 * @return hits found
 	 */
 	public static Hits fromList(Searcher searcher, String concField, List<Hit> docHits) {
 		return new HitsImpl(searcher, concField, docHits);
@@ -117,11 +119,11 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param concordanceFieldPropName
+	 * @param field
 	 *            field to use by default when finding concordances
-	 * @param sourceQuery
+	 * @param query
 	 *            the query to execute to get the hits
-	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
+	 * @return hits found
 	 */
 	public static Hits fromSpanQuery(Searcher searcher, String field, SpanQuery query) {
 		return new HitsImpl(searcher, field, query);
@@ -140,6 +142,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *            field to use by default when finding concordances
 	 * @param source
 	 *            where to retrieve the Hit objects from
+	 * @return hits found
 	 */
 	public static Hits fromSpans(Searcher searcher, String concordanceFieldPropName, Spans source) {
 		return new HitsImpl(searcher, concordanceFieldPropName, source);
