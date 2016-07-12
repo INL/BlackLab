@@ -27,8 +27,6 @@ import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
@@ -36,9 +34,11 @@ import java.util.zip.Inflater;
 
 import org.apache.log4j.Logger;
 import org.eclipse.collections.api.iterator.IntIterator;
-import org.eclipse.collections.impl.factory.Maps;
+import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import nl.inl.util.CollUtil;
 import nl.inl.util.ExUtil;
 import nl.inl.util.SimpleResourcePool;
 
@@ -206,7 +206,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	/**
 	 * The TOC entries
 	 */
-	private Map<Integer, TocEntry> toc;
+	private MutableIntObjectMap<TocEntry> toc;
 
 	/**
 	 * The table of contents (TOC) file
@@ -317,7 +317,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				f.delete();
 			}
 		}
-		toc = Maps.mutable.empty();
+		toc = IntObjectMaps.mutable.empty();  //Maps.mutable.empty();
 		if (tocFile.exists())
 			readToc();
 		tocModified = false;
@@ -435,8 +435,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			// Determine occupied blocks
 			boolean[] blockOccupied = new boolean[totalBlocks]; // automatically initialized to false
 			int numOccupied = 0;
-			for (Entry<Integer, TocEntry> mapEntry: toc.entrySet()) {
-				TocEntry e = mapEntry.getValue();
+			for (TocEntry e: toc) {
 				for (int bl: e.blockIndices) {
 					blockOccupied[bl] = true;
 					numOccupied++;
@@ -773,7 +772,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
 	@Override
 	public Set<Integer> getDocIds() {
-		return toc.keySet();
+		return CollUtil.toJavaSet(toc.keySet());
 	}
 
 	@Override

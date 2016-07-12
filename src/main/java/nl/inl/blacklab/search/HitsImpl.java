@@ -39,6 +39,12 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
+import org.eclipse.collections.api.map.primitive.IntObjectMap;
+import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
+import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.tuple.primitive.IntIntPair;
+import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
+import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -1086,7 +1092,7 @@ public class HitsImpl extends Hits {
 	private Map<Hit, Kwic> retrieveKwics(int contextSize, String fieldName) {
 
 		// Group hits per document
-		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<>();
+		MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
 		for (Hit key: this) {
 			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
 			if (hitsInDoc == null) {
@@ -1253,7 +1259,7 @@ public class HitsImpl extends Hits {
 			ctx = searcher.getDefaultExecutionContext(settings().concordanceField());
 		ctx = ctx.withProperty(propName);
 		findContext(Arrays.asList(ctx.luceneField(false)));
-		Map<Integer, Integer> coll = new HashMap<>();
+		MutableIntIntMap coll = IntIntMaps.mutable.empty();
 		for (int j = 0; j < hits.size(); j++) {
 			int[] context = contexts[j];
 
@@ -1266,11 +1272,11 @@ public class HitsImpl extends Hits {
 				if (i >= contextHitStart && i < contextRightStart)
 					continue; // don't count words in hit itself, just around [option..?]
 				int w = context[indexInContent];
-				Integer n = coll.get(w);
-				if (n == null)
+				int n;
+				if (!coll.contains(w))
 					n = 1;
 				else
-					n++;
+					n = coll.get(w) + 1;
 				coll.put(w, n);
 			}
 		}
@@ -1282,8 +1288,10 @@ public class HitsImpl extends Hits {
 		// TODO: get collocations for multiple contexts?
 		Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
 		Map<String, Integer> wordFreq = new HashMap<>();
-		for (Map.Entry<Integer, Integer> e: coll.entrySet()) {
-			String word = terms.get(e.getKey());
+		for (IntIntPair e: coll.keyValuesView()) {
+			int key = e.getOne();
+			int value = e.getTwo();
+			String word = terms.get(key);
 			if (!diacSensitive) {
 				word = StringUtil.removeAccents(word);
 			}
@@ -1296,7 +1304,7 @@ public class HitsImpl extends Hits {
 			if (n == null) {
 				n = 0;
 			}
-			n += e.getValue();
+			n += value;
 			wordFreq.put(word, n);
 		}
 
@@ -1687,25 +1695,8 @@ public class HitsImpl extends Hits {
 	private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, String fieldName) {
 		XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
 		hl.setUnbalancedTagsStrategy(searcher.getDefaultUnbalancedTagsStrategy());
-		Map<Integer, List<Hit>> hitsPerDocument = perDocumentGroupedHits();
-		Map<Hit, Concordance> conc = new HashMap<>();
-		for (List<Hit> l: hitsPerDocument.values()) {
-			HitsImpl hitsInThisDoc = new HitsImpl(searcher, searcher.getMainContentsFieldName(), l);
-			hitsInThisDoc.copySettingsFrom(this);
-			hitsInThisDoc.makeConcordancesSingleDocContentStore(fieldName, contextSize, conc, hl);
-		}
-		return conc;
-	}
-
-	/**
-	 * Group hits in a map per document. Used by the retrieveConcordances methods.
-	 *
-	 * @param hits the hits to group.
-	 * @return the grouped hits
-	 */
-	private Map<Integer, List<Hit>> perDocumentGroupedHits() {
 		// Group hits per document
-		Map<Integer, List<Hit>> hitsPerDocument = new HashMap<>();
+		MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
 		for (Hit key: hits) {
 			List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
 			if (hitsInDoc == null) {
@@ -1714,7 +1705,13 @@ public class HitsImpl extends Hits {
 			}
 			hitsInDoc.add(key);
 		}
-		return hitsPerDocument;
+		Map<Hit, Concordance> conc = new HashMap<>();
+		for (List<Hit> l: hitsPerDocument.values()) {
+			HitsImpl hitsInThisDoc = new HitsImpl(searcher, l);
+			hitsInThisDoc.copySettingsFrom(this);
+			hitsInThisDoc.makeConcordancesSingleDocContentStore(fieldName, contextSize, conc, hl);
+		}
+		return conc;
 	}
 
 	@Override
