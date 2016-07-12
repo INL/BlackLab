@@ -51,7 +51,7 @@ public class SpanQueryTags extends SpanQuery {
 
 	public SpanQueryTags(QueryExecutionContext context, String tagName) {
 		this.tagName = tagName;
-		baseFieldName = context.fieldName;
+		baseFieldName = context.fieldName();
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		String startTagFieldName = startTagContext.luceneField();
 		this.clause = new SpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));

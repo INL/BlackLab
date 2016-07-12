@@ -59,7 +59,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	public SpanQuery regex(QueryExecutionContext context, String value) {
 		String valueNoStartEndMatch = value.replaceAll("\\^|\\$", "");
 		return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
-				new Term(context.luceneField(), context.optDesensitize(valueNoStartEndMatch))));
+				new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(valueNoStartEndMatch))));
 	}
 
 	@Override
@@ -74,7 +74,9 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery fuzzy(QueryExecutionContext context, String value, int maxEdits, int prefixLength) {
-		return new SpanFuzzyQuery(new Term(context.luceneField(), context.optDesensitize(value)), maxEdits, prefixLength);
+		String valuePrefix = context.subpropPrefix(); // for searching in "subproperties" (e.g. PoS features)
+		prefixLength += valuePrefix.length();
+		return new SpanFuzzyQuery(new Term(context.luceneField(), valuePrefix + context.optDesensitize(value)), maxEdits, prefixLength);
 	}
 
 	@Override
@@ -127,7 +129,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,
 		// not the complete field name with the property.
-		return new BLSpanTermQuery(new Term(context.luceneField(), context.optDesensitize(value)));
+		return new BLSpanTermQuery(new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(value)));
 	}
 
 	@Override
@@ -155,13 +157,13 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	@Override
 	public SpanQuery wildcard(QueryExecutionContext context, String value) {
 		return new BLSpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(context.luceneField(),
-				context.optDesensitize(value))));
+				context.subpropPrefix() + context.optDesensitize(value))));
 	}
 
 	@Override
 	public SpanQuery prefix(QueryExecutionContext context, String value) {
 		return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
-				context.optDesensitize(value))));
+				context.subpropPrefix() + context.optDesensitize(value))));
 	}
 
 	@Override

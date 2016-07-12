@@ -429,13 +429,27 @@ TextPattern positionLongPart():
 TextPattern attValuePair():
 {
 	TextPattern v = null;
-	Token t = null;
+	String prop;
 }
 {
 	LOOKAHEAD(2)
-	t=<NAME> "=" v=valuePart()      { return propertyClause(t.toString(), v); }
-|	t=<NAME> "!=" v=valuePart()      { return new TextPatternNot(propertyClause(t.toString(), v)); }
-|	v=valuePart()                   { return v; }
+	prop=propName() "=" v=valuePart()   { return propertyClause(prop, v); }
+|	prop=propName() "!=" v=valuePart()  { return new TextPatternNot(propertyClause(prop, v)); }
+|	v=valuePart()                       { return v; }
+}
+
+String propName():
+{
+	Token t = null, subProp = null;
+}
+{
+	t=<NAME> [ ":" subProp=<NAME> ]
+	{
+		String propName = t.toString(); 
+		if (subProp == null)
+			return propName;
+		return propName + ":" + subProp.toString();
+	}
 }
 
 /* value expression: a value or multiple values combined with boolean operators */

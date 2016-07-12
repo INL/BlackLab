@@ -52,7 +52,7 @@ public class SpanQueryTagsOld extends SpanQueryBase {
 		super();
 		this.tagName = tagName;
 		clauses = new SpanQuery[2];
-		baseFieldName = context.fieldName;
+		baseFieldName = context.fieldName();
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		String startTagFieldName = startTagContext.luceneField();
 		QueryExecutionContext endTagContext = context.withProperty(ComplexFieldUtil.END_TAG_PROP_NAME);

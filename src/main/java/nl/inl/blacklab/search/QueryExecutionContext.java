@@ -17,27 +17,30 @@ import nl.inl.util.StringUtil;
  */
 public class QueryExecutionContext {
 	/** The searcher object, representing the BlackLab index */
-	public Searcher searcher;
+	private Searcher searcher;
 
 	/** The (complex) field to search */
-	public String fieldName;
+	private String fieldName;
 
 	/** The property to search */
-	public String propName;
+	private String propName;
+
+	/** What to prefix values with (for "subproperties", like PoS features, etc.) */
+	private String subpropPrefix;
 
 	/** Search case-sensitive?
 	 *
 	 * NOTE: depending on available alternatives in the index, this will choose
 	 * the most appropriate one.
 	 */
-	public boolean caseSensitive;
+	private boolean caseSensitive;
 
 	/** Search diacritics-sensitive?
 	 *
 	 * NOTE: depending on available alternatives in the index, this will choose
 	 * the most appropriate one.
 	 */
-	public boolean diacriticsSensitive;
+	private boolean diacriticsSensitive;
 
 	/**
 	 * Construct a query execution context object.
@@ -50,7 +53,11 @@ public class QueryExecutionContext {
 	public QueryExecutionContext(Searcher searcher, String fieldName, String propName, boolean caseSensitive, boolean diacriticsSensitive) {
 		this.searcher = searcher;
 		this.fieldName = fieldName;
-		this.propName = propName;
+		String[] parts = propName.split(":", -1);
+		if (parts.length > 2)
+			throw new RuntimeException("propName contains more than one colon!");
+		this.propName = parts[0];
+		this.subpropPrefix = parts.length == 2 ? parts[1] + ComplexFieldUtil.ASCII_UNIT_SEPARATOR : "";
 		this.caseSensitive = caseSensitive;
 		this.diacriticsSensitive = diacriticsSensitive;
 	}
@@ -244,13 +251,76 @@ public class QueryExecutionContext {
 		return new QueryExecutionContext(searcher, fieldName, mainPropName, false, false);
 	}
 
+	/**
+	 * Do property fields in the index always have an extra "closing token" at the end,
+	 * to account for punctuation after the last word.
+	 *
+	 * The closing token is ignored while searching.
+	 *
+	 * @return true if there are closing tokens
+	 */
 	public boolean alwaysHasClosingToken() {
 		return searcher.getIndexStructure().alwaysHasClosingToken();
 	}
 
+	/**
+	 * Does the index store the length of XML tags in the payload?
+	 *
+	 * Older indices instead store a tag end token separately.
+	 *
+	 * @return true if tag lengths are in payload
+	 */
 	public boolean tagLengthInPayload() {
 		return searcher.getIndexStructure().tagLengthInPayload();
 	}
 
+	/**
+	 * The (complex) field to search
+	 * @return field name
+	 */
+	public String fieldName() {
+		return fieldName;
+	}
+
+	/**
+	 * The property to search
+	 * @return property name
+	 */
+	public String propName() {
+		return propName;
+	}
+
+	/** What to prefix values with (for "subproperties", like PoS features, etc.)
+	 *
+	 * Subproperties are indexed with this prefix before every value. When searching,
+	 * we also prefix our search string with this value.
+	 *
+	 * @return prefix what to prefix search strings with to find the right subproperty value
+	 */
+	public String subpropPrefix() {
+		return subpropPrefix;
+	}
+
+	/** Search diacritics-sensitive?
+	 *
+	 * NOTE: depending on available alternatives in the index, this will choose
+	 * the most appropriate one.
+	 *
+	 * @return true iff we want to pay attention to diacritics
+	 */
+	public boolean diacriticsSensitive() {
+		return diacriticsSensitive;
+	}
+
+	/** Search case-sensitive?
+	 *
+	 * NOTE: depending on available alternatives in the index, this will choose
+	 * the most appropriate one.
+	 *
+	 * @return true iff we want to pay attention to case
+	 */
+	public boolean caseSensitive() {
+		return caseSensitive;
+	}
 
 }

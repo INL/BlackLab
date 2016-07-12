@@ -114,7 +114,8 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 					propMain.addValue(wordform);
 					propPartOfSpeech.addValue(pos);
 					for (Entry<String, String> e: posFeatures.entrySet()) {
-						propPartOfSpeech.addValue(e.getKey() + ComplexFieldUtil.ASCII_UNIT_SEPARATOR + e.getValue());
+						// Add the separate PoS features as extra values at this position.
+						propPartOfSpeech.addValue(e.getKey() + ComplexFieldUtil.ASCII_UNIT_SEPARATOR + e.getValue(), 0);
 					}
 					propLemma.addValue(lemma);
 					if ((pos.length() == 0 || lemma.length() == 0) && !lemPosProblemReported) {
@@ -168,6 +169,8 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 						pos = "";
 					capturePosFeatures = true;
 					posFeatures.clear();
+					String posHead = pos.contains("(") ? pos.substring(0, pos.indexOf("(")).trim() : pos;
+					posFeatures.put("head", posHead);
 				}
 			}
 

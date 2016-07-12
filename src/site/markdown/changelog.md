@@ -4,10 +4,18 @@
 
 ### Changed
 * Performed some code cleanups, moved some internal classes to different packages.
-* Made Searcher an abstract base class to SearcherImpl.
-* Made Hits an abstract base class to HitsImpl.
-* Added mock classes for Searcher, Hits, ForwardIndex, Terms; used them to add tests.
-* Updated gs-collections 6.1 to eclipse-collections 7.1 .
+* Made Searcher an abstract base class to SearcherImpl; Hits an abstract base class to HitsImpl.
+  Added mock classes for Searcher, Hits, ForwardIndex, Terms; used them to add tests.
+* Updated gs-collections 6.1 to eclipse-collections 7.1. Replaced Map<Integer, T> with
+  IntObjectMap, Map<Integer, Integer> with IntIntMap, ArrayList<Integer> with IntArrayList
+  a number of times (mainly) for more memory-efficiency.
+* Moved hits-related settings from Searcher and Hits into a shared HitsSetting class;
+  Searcher has a default set of HitsSettings that Hits objects "inherit".
+* Added experimental support for "subproperties": properties that are indexed in the same Lucene 
+  field, using prefixes, but don't each have a forward index. For now, mainly useful for
+  indexing each part of speech feature separately, but in the future, BlackLab could possibly move 
+  to indexing all properties in a single Lucene field. See DocIndexerOpenSonar,
+  QueryExecutionContext.subpropPrefix(). 
 
 ## Improvements up to v1.3.6
 
