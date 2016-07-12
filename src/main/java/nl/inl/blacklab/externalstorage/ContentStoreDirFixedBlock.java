@@ -26,19 +26,15 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import org.apache.log4j.Logger;
-import org.eclipse.collections.api.IntIterable;
 import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.impl.factory.Maps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
@@ -438,14 +434,17 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
 			// Determine occupied blocks
 			boolean[] blockOccupied = new boolean[totalBlocks]; // automatically initialized to false
+			int numOccupied = 0;
 			for (Entry<Integer, TocEntry> mapEntry: toc.entrySet()) {
 				TocEntry e = mapEntry.getValue();
 				for (int bl: e.blockIndices) {
 					blockOccupied[bl] = true;
+					numOccupied++;
 				}
 			}
 			// Build the list of free blocks
 			freeBlocks.clear();
+			freeBlocks.ensureCapacity(totalBlocks - numOccupied);
 			for (int i = 0; i < totalBlocks; i++) {
 				if (!blockOccupied[i])
 					freeBlocks.add(i);

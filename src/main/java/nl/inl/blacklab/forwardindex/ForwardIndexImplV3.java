@@ -364,6 +364,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			ib.get(length);
 			buf.position(buf.position() + SIZEOF_INT * n);
 			buf.get(deleted);
+			toc.ensureCapacity(n);
 			for (int i = 0; i < n; i++) {
 				TocEntry e = new TocEntry(offset[i], length[i], deleted[i] != 0);
 				toc.add(e);
