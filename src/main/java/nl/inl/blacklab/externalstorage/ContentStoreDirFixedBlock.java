@@ -38,6 +38,8 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import org.apache.log4j.Logger;
+import org.eclipse.collections.api.IntIterable;
+import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.impl.factory.Maps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
@@ -272,10 +274,10 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private int bytesWritten = 0;
 
 	/** Keeps track of the block ids we've stored parts the current file in so far */
-	private List<Integer> blockIndicesWhileStoring;
+	private IntArrayList blockIndicesWhileStoring;
 
 	/** Keeps track of the char offsets of the blocks of the current file so far */
-	private List<Integer> blockCharOffsetsWhileStoring;
+	private IntArrayList blockCharOffsetsWhileStoring;
 
 	/** If true, the toc file should be updated dat the end */
 	private boolean tocModified = false;
@@ -329,8 +331,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				tocFile.delete();
 			setStoreType();
 		}
-		blockIndicesWhileStoring = new ArrayList<>();
-		blockCharOffsetsWhileStoring = new ArrayList<>();
+		blockIndicesWhileStoring = new IntArrayList();
+		blockCharOffsetsWhileStoring = new IntArrayList();
 
 		final int POOL_SIZE = 10;
 		compresserPool = new SimpleResourcePool<Deflater>(POOL_SIZE){
@@ -582,14 +584,16 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		// Convert lists to arrays of primitives for storing
 		int[] blockIndices = new int[blockIndicesWhileStoring.size()];
 		int i = 0;
-		for (Integer bo : blockIndicesWhileStoring) {
-			blockIndices[i] = bo;
+		IntIterator it = blockIndicesWhileStoring.intIterator();
+		while (it.hasNext()) {
+			blockIndices[i] = it.next();
 			i++;
 		}
 		int[] blockCharOffsets = new int[blockCharOffsetsWhileStoring.size()];
 		i = 0;
-		for (Integer bo : blockCharOffsetsWhileStoring) {
-			blockCharOffsets[i] = bo;
+		it = blockCharOffsetsWhileStoring.intIterator();
+		while (it.hasNext()) {
+			blockCharOffsets[i] = it.next();
 			i++;
 		}
 
