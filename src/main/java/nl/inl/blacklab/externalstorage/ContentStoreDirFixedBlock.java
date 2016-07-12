@@ -28,17 +28,18 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import org.apache.log4j.Logger;
 import org.eclipse.collections.impl.factory.Maps;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.util.ExUtil;
 import nl.inl.util.SimpleResourcePool;
@@ -289,7 +290,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private int totalBlocks;
 
 	/** The sorted list of free blocks in the contents file */
-	private List<Integer> freeBlocks = new ArrayList<>();
+	private IntArrayList freeBlocks = new IntArrayList();
 
 	/**
 	 * @param dir content store dir
@@ -440,16 +441,19 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				closeMappedToc();
 			}
 
-			// Determine free blocks
-			freeBlocks.clear();
-			for (int i = 0; i < totalBlocks; i++) {
-				freeBlocks.add(i);
-			}
+			// Determine occupied blocks
+			boolean[] blockOccupied = new boolean[totalBlocks]; // automatically initialized to false
 			for (Entry<Integer, TocEntry> mapEntry: toc.entrySet()) {
 				TocEntry e = mapEntry.getValue();
 				for (int bl: e.blockIndices) {
-					freeBlocks.remove((Integer)bl);
+					blockOccupied[bl] = true;
 				}
+			}
+			// Build the list of free blocks
+			freeBlocks.clear();
+			for (int i = 0; i < totalBlocks; i++) {
+				if (!blockOccupied[i])
+					freeBlocks.add(i);
 			}
 
 		} catch (Exception e) {
@@ -532,7 +536,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			freeBlock = totalBlocks - 1;
 		} else {
 			// Take the first from the list
-			freeBlock = freeBlocks.remove(0);
+			freeBlock = freeBlocks.removeAtIndex(0);
 		}
 		long offset = (long)freeBlock * BLOCK_SIZE_BYTES;
 
@@ -767,7 +771,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		for (int bl: e.blockIndices) {
 			freeBlocks.add(bl);
 		}
-		Collections.sort(freeBlocks);
+		freeBlocks.sortThis();
 		tocModified = true;
 	}
 
