@@ -20,14 +20,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.Spans;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits. Allow us to retrieve
@@ -45,7 +46,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
 	protected int currentSpansStart = -1;
 
-	private List<Integer> endPoints = new ArrayList<>();
+	private IntArrayList endPoints = new IntArrayList();
 
 	private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<>();
 
@@ -116,7 +117,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 			capturedGroupsPerEndpoint.clear();
 		} else {
 			// Reallocate in this case to avoid holding on to a lot of memory
-			endPoints = new ArrayList<>();
+			endPoints = new IntArrayList();
 			capturedGroupsPerEndpoint = new ArrayList<>();
 		}
 

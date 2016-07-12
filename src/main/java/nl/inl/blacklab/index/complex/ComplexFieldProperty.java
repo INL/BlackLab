@@ -27,6 +27,9 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.util.BytesRef;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
+
+import nl.inl.util.CollUtil;
 
 /**
  * A property in a complex field. See ComplexField for details.
@@ -76,7 +79,7 @@ public class ComplexFieldProperty {
 
 	/** Token position increments. This allows us to index multiple terms at a single token position (just
 	 *  set the token increments of the additional tokens to 0). */
-	protected List<Integer> increments = new ArrayList<>();
+	protected IntArrayList increments = new IntArrayList();
 
 	/**
 	 * Payloads for this property, if any.
@@ -141,7 +144,7 @@ public class ComplexFieldProperty {
 			payloads = new ArrayList<>();
 	}
 
-	TokenStream getTokenStream(String altName, List<Integer> startChars, List<Integer> endChars) {
+	TokenStream getTokenStream(String altName, IntArrayList startChars, IntArrayList endChars) {
 		TokenStream ts;
 		if (includeOffsets) {
 			// FIXME: make TokenStreamWithOffsets work with payloads as well
@@ -165,8 +168,8 @@ public class ComplexFieldProperty {
 		return tokenStreamFieldNoOffsets;
 	}
 
-	public void addToLuceneDoc(Document doc, String fieldName, List<Integer> startChars,
-			List<Integer> endChars) {
+	public void addToLuceneDoc(Document doc, String fieldName, IntArrayList startChars,
+			IntArrayList endChars) {
 		for (String altName : alternatives.keySet()) {
 			//doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
 			//		getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
@@ -174,6 +177,17 @@ public class ComplexFieldProperty {
 					getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
 		}
 	}
+
+//	@Deprecated
+//	public void addToLuceneDoc(Document doc, String fieldName, List<Integer> startChars,
+//			List<Integer> endChars) {
+//		for (String altName : alternatives.keySet()) {
+//			//doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
+//			//		getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
+//			doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
+//					getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
+//		}
+//	}
 
 	/**
 	 * @param altName
@@ -190,7 +204,7 @@ public class ComplexFieldProperty {
 	}
 
 	public List<Integer> getPositionIncrements() {
-		return Collections.unmodifiableList(increments);
+		return CollUtil.toList(increments);
 	}
 
 	public int lastValuePosition() {
@@ -295,7 +309,7 @@ public class ComplexFieldProperty {
 					int n = i + 1;
 					values.add(n, storedValue);
 					int incr = position - curPos;
-					increments.add(n, incr);
+					increments.addAtIndex(n, incr);
 					if (increments.size() > n + 1 && incr > 0) {
 						// Inserted value wasn't the last value, so the
 						// increment for the value after this is now wrong;

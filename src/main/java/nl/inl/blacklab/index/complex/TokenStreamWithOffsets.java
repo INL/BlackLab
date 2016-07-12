@@ -25,6 +25,8 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /**
  * Takes a List&lt;String&gt; plus two List&lt;Integer&gt;'s and iterates through them as a
@@ -51,14 +53,14 @@ class TokenStreamWithOffsets extends TokenStream {
 
 	protected Iterator<String> iterator;
 
-	protected Iterator<Integer> incrementIt;
+	protected IntIterator incrementIt;
 
-	private Iterator<Integer> startCharIt;
+	private IntIterator startCharIt;
 
-	private Iterator<Integer> endCharIt;
+	private IntIterator endCharIt;
 
-	public TokenStreamWithOffsets(List<String> tokens, List<Integer> increments, List<Integer> startChar,
-			List<Integer> endChar) {
+	public TokenStreamWithOffsets(List<String> tokens, IntArrayList increments, IntArrayList startChar,
+			IntArrayList endChar) {
 		clearAttributes();
 		termAttr = addAttribute(CharTermAttribute.class);
 		offsetAttr = addAttribute(OffsetAttribute.class);
@@ -66,10 +68,24 @@ class TokenStreamWithOffsets extends TokenStream {
 		positionIncrementAttr.setPositionIncrement(1);
 
 		iterator = tokens.iterator();
-		incrementIt = increments.iterator();
-		startCharIt = startChar.iterator();
-		endCharIt = endChar.iterator();
+		incrementIt = increments.intIterator();
+		startCharIt = startChar.intIterator();
+		endCharIt = endChar.intIterator();
 	}
+
+//	public TokenStreamWithOffsets(List<String> tokens, List<Integer> increments, List<Integer> startChar,
+//			List<Integer> endChar) {
+//		clearAttributes();
+//		termAttr = addAttribute(CharTermAttribute.class);
+//		offsetAttr = addAttribute(OffsetAttribute.class);
+//		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
+//		positionIncrementAttr.setPositionIncrement(1);
+//
+//		iterator = tokens.iterator();
+//		incrementIt = increments.iterator();
+//		startCharIt = startChar.iterator();
+//		endCharIt = endChar.iterator();
+//	}
 
 	@Override
 	final public boolean incrementToken() {

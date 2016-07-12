@@ -18,8 +18,6 @@
  */
 package nl.inl.blacklab.index.complex;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Iterator;
 
 import org.apache.lucene.analysis.TokenStream;
@@ -27,6 +25,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PayloadAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.util.BytesRef;
+import org.eclipse.collections.api.IntIterable;
+import org.eclipse.collections.api.iterator.IntIterator;
 
 /**
  * Takes an Iterable<String> and iterates through it as a TokenStream.
@@ -39,7 +39,7 @@ class TokenStreamFromList extends TokenStream {
 	protected Iterator<String> iterator;
 
 	/** Iterator over the position increments */
-	private Iterator<Integer> incrementIt;
+	private IntIterator incrementIt;
 
 	/** Iterator over the payloads, if any */
 	private Iterator<BytesRef> payloadIt = null;
@@ -59,18 +59,34 @@ class TokenStreamFromList extends TokenStream {
 	 */
 	protected PayloadAttribute payloadAttr = null;
 
-	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments) {
-		this(tokens, increments, null);
-	}
+//	@Deprecated
+//	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments) {
+//		this(tokens, increments, null);
+//	}
+//
+//	@Deprecated
+//	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments, Iterable<BytesRef> payload) {
+//		clearAttributes();
+//		termAttr = addAttribute(CharTermAttribute.class);
+//		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
+//		positionIncrementAttr.setPositionIncrement(1);
+//
+//		iterator = tokens.iterator();
+//		incrementIt = increments.iterator();
+//		if (payload != null) {
+//			payloadAttr = addAttribute(PayloadAttribute.class);
+//			payloadIt = payload.iterator();
+//		}
+//	}
 
-	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments, Iterable<BytesRef> payload) {
+	public TokenStreamFromList(Iterable<String> tokens, IntIterable increments, Iterable<BytesRef> payload) {
 		clearAttributes();
 		termAttr = addAttribute(CharTermAttribute.class);
 		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
 		positionIncrementAttr.setPositionIncrement(1);
 
 		iterator = tokens.iterator();
-		incrementIt = increments.iterator();
+		incrementIt = increments.intIterator();
 		if (payload != null) {
 			payloadAttr = addAttribute(PayloadAttribute.class);
 			payloadIt = payload.iterator();
@@ -92,20 +108,20 @@ class TokenStreamFromList extends TokenStream {
 		return false;
 	}
 
-	public static void main(String[] args) throws IOException {
-		TokenStream s = new TokenStreamFromList(Arrays.asList("a", "b", "c"), Arrays.asList(1, 1, 1));
-		try {
-			CharTermAttribute term = s.addAttribute(CharTermAttribute.class);
-			s.incrementToken();
-			System.out.println(new String(term.buffer(), 0, term.length()));
-			s.incrementToken();
-			System.out.println(new String(term.buffer(), 0, term.length()));
-			s.incrementToken();
-			System.out.println(new String(term.buffer(), 0, term.length()));
-			System.out.println(s.incrementToken());
-		} finally {
-			s.close();
-		}
-	}
+//	public static void main(String[] args) throws IOException {
+//		TokenStream s = new TokenStreamFromList(Arrays.asList("a", "b", "c"), Arrays.asList(1, 1, 1));
+//		try {
+//			CharTermAttribute term = s.addAttribute(CharTermAttribute.class);
+//			s.incrementToken();
+//			System.out.println(new String(term.buffer(), 0, term.length()));
+//			s.incrementToken();
+//			System.out.println(new String(term.buffer(), 0, term.length()));
+//			s.incrementToken();
+//			System.out.println(new String(term.buffer(), 0, term.length()));
+//			System.out.println(s.incrementToken());
+//		} finally {
+//			s.close();
+//		}
+//	}
 
 }

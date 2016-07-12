@@ -16,10 +16,10 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.lucene.search.spans.Spans;
+import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
@@ -45,10 +45,10 @@ class SpansTags extends BLSpans {
 	private int currentHit = -1;
 
 	/** Starts of hits in current document */
-	private List<Integer> starts = new ArrayList<>();
+	private IntArrayList starts = new IntArrayList();
 
 	/** Ends of hits in current document */
-	private List<Integer> ends = new ArrayList<>();
+	private IntArrayList ends = new IntArrayList();
 
 	public SpansTags(Spans startTags, Spans endTags) {
 		Spans[] origSpans = { startTags, endTags };
@@ -122,7 +122,7 @@ class SpansTags extends BLSpans {
 		// (Note that we add 2 to the tag position to avoid the problem of x == -x for x == 0;
 		//  below we subtract it again)
 		// The list will be sorted by tag position.
-		List<Integer> startsAndEnds = new ArrayList<>();
+		IntArrayList startsAndEnds = new IntArrayList();
 		if (spans[0].nextBucket() == SpansInBuckets.NO_MORE_BUCKETS ||
 			spans[1].nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
 			throw new RuntimeException("Both spans must have exactly one bucket per document");
@@ -161,8 +161,8 @@ class SpansTags extends BLSpans {
 		}
 
 		// Go through the list of all tags, keep track of unmatched open tags and finding matches
-		List<Integer> unmatchedOpenTagIndices = new ArrayList<>();
-		List<Integer> emptyElementIndices = new ArrayList<>(); // empty elements between tokens need special attention (see below)
+		IntArrayList unmatchedOpenTagIndices = new IntArrayList();
+		IntArrayList emptyElementIndices = new IntArrayList(); // empty elements between tokens need special attention (see below)
 
 		// Don't always just call .clear() because the application could
 		// keep holding on to too much memory after encountering one really
@@ -173,18 +173,20 @@ class SpansTags extends BLSpans {
 			ends.clear();
 		} else {
 			// Reallocate in this case to avoid holding on to a lot of memory
-			starts = new ArrayList<>();
-			ends = new ArrayList<>();
+			starts = new IntArrayList();
+			ends = new IntArrayList();
 		}
 
 		currentHit = -1; // before first hit
-		for (Integer tag: startsAndEnds) {
+		IntIterator it = startsAndEnds.intIterator();
+		while (it.hasNext()) {
+			int tag = it.next();
 			if (tag > 0) {
 				int startPositionToStore = tag - 2;  // subtract 2 again to get original position (see above)
 				if (!emptyElementIndices.isEmpty()) {
 					// We have an unmatched close tag, probably an empty element between tokens (see below).
 					// Is this the corresponding start tag?
-					int index = emptyElementIndices.remove(emptyElementIndices.size() - 1);
+					int index = emptyElementIndices.removeAtIndex(emptyElementIndices.size() - 1);
 					if (startPositionToStore == ends.get(index)) {
 						// Yes. Fill in start position.
 						starts.set(index, startPositionToStore);
@@ -210,7 +212,7 @@ class SpansTags extends BLSpans {
 					emptyElementIndices.add(ends.size() - 1); // index to fill in when end tag found
 				} else {
 					// Yes. Match it to the most recently added unmatched open tag.
-					int index = unmatchedOpenTagIndices.remove(unmatchedOpenTagIndices.size() - 1);
+					int index = unmatchedOpenTagIndices.removeAtIndex(unmatchedOpenTagIndices.size() - 1);
 					ends.set(index, endPositionToStore);
 				}
 			}

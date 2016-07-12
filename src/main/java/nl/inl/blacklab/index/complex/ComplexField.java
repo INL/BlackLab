@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.index.complex;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,11 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
+
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 
 
 /**
@@ -53,9 +53,9 @@ public class ComplexField {
 
 	private Map<String, ComplexFieldProperty> properties = new HashMap<>();
 
-	private List<Integer> start = new ArrayList<>();
+	private IntArrayList start = new IntArrayList();
 
-	private List<Integer> end = new ArrayList<>();
+	private IntArrayList end = new IntArrayList();
 
 	private String fieldName;
 
