@@ -63,6 +63,10 @@ It's definitely possible, but we haven't done so at INL (we use Lucene directly 
 
 If you’re using Solr and are interested in taking advantage of the features that BlackLab provides, drop us a line (see below)!
 
+BlackLab (Server) is slow and uses 100% CPU
+-------------------------------------------
+Make sure the JVM has enough heap space. If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl. See [http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/ here].
+
 Future plans
 ------------
 
