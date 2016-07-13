@@ -3,6 +3,7 @@ package nl.inl.util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
@@ -20,10 +22,15 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.highlight.QueryTermExtractor;
 import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.BytesRef;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 public class LuceneUtil {
 
@@ -327,6 +334,32 @@ public class LuceneUtil {
 			return results;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery, String fieldName, String propName, String altName) {
+		try {
+			String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, altName);
+			Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
+			Map<String, Integer> freq = new HashMap<>();
+			IndexReader indexReader = indexSearcher.getIndexReader();
+			for (LeafReaderContext arc: indexReader.leaves()) {
+				if (weight == null)
+					throw new RuntimeException("weight == null");
+				if (arc == null)
+					throw new RuntimeException("arc == null");
+				if (arc.reader() == null)
+					throw new RuntimeException("arc.reader() == null");
+				Scorer scorer = weight.scorer(arc, arc.reader().getLiveDocs());
+				if (scorer != null) {
+					while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+						getFrequenciesFromTermVector(indexReader, scorer.docID() + arc.docBase, luceneField, freq);
+					}
+				}
+			}
+			return freq;
+		} catch (IOException e) {
+			throw ExUtil.wrapRuntimeException(e);
 		}
 	}
 

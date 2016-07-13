@@ -34,7 +34,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
@@ -646,28 +645,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	@Override
 	@Deprecated
 	public Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName) {
-		try {
-			String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, altName);
-			Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
-			Map<String, Integer> freq = new HashMap<>();
-			for (LeafReaderContext arc: reader.leaves()) {
-				if (weight == null)
-					throw new RuntimeException("weight == null");
-				if (arc == null)
-					throw new RuntimeException("arc == null");
-				if (arc.reader() == null)
-					throw new RuntimeException("arc.reader() == null");
-				Scorer scorer = weight.scorer(arc, arc.reader().getLiveDocs());
-				if (scorer != null) {
-					while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-						LuceneUtil.getFrequenciesFromTermVector(reader, scorer.docID() + arc.docBase, luceneField, freq);
-					}
-				}
-			}
-			return freq;
-		} catch (IOException e) {
-			throw ExUtil.wrapRuntimeException(e);
-		}
+		return LuceneUtil.termFrequencies(getIndexSearcher(), documentFilterQuery, fieldName, propName, altName);
 	}
 
 	@Override

@@ -1433,8 +1433,7 @@ public abstract class Searcher {
 	 * @param propName property name, i.e. word, lemma, pos, etc.
 	 * @param altName alternative name, i.e. s, i (case-sensitivity)
 	 * @return the term frequency map
-	 * @deprecated use getIndexSearcher() and find them yourself.
-	 *    Use ComplexFieldUtil.propertyField(fieldName, propName, altName) to find Lucene field name.
+	 * @deprecated Use Searcher.getIndexSearcher() and LuceneUtil.termFrequencies instead
 	 */
 	@Deprecated
 	public abstract Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName);
