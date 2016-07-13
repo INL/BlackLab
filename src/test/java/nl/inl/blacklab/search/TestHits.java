@@ -15,12 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.MockHits;
 import nl.inl.blacklab.MockSearcher;
-import nl.inl.blacklab.MockSpans;
 
 public class TestHits {
 
@@ -29,9 +28,7 @@ public class TestHits {
 		int[] aDoc = new int[] { 1, 2 };
 		int[] aStart = new int[] { 1, 2 };
 		int[] aEnd = new int[] { 2, 3 };
-		Spans a = new MockSpans(aDoc, aStart, aEnd);
-
-		Hits hits = Hits.fromSpans(new MockSearcher(), "word", a);
+		Hits hits = new MockHits(new MockSearcher(), aDoc, aStart, aEnd);
 
 		int i = 0;
 		for (Hit hit: hits) {
