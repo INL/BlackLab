@@ -553,8 +553,10 @@ public abstract class Searcher {
 	 */
 	protected void warmUpForwardIndices() {
 		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
+			logger.debug("    (warmup-thread) Building term indices for forward index " + e.getKey() + "...");
 			e.getValue().warmUp(); //getTerms().buildTermIndex();
 		}
+		logger.debug("    (warmup-thread) Done.");
 	}
 
 	/**
