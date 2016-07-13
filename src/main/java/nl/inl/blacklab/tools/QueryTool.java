@@ -1073,7 +1073,7 @@ public class QueryTool {
 			Filter filter = filterForThisQuery == null ? null : new QueryWrapperFilter(filterForThisQuery);
 
 			// Execute search
-			SpanQuery spanQuery = searcher.createSpanQuery(pattern, filter);
+			SpanQuery spanQuery = searcher.createSpanQuery(pattern, searcher.getMainContentsFieldName(), filter);
 			if (verbose)
 				outprintln("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
 			hits = searcher.find(spanQuery);

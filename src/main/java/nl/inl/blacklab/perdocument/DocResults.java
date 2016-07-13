@@ -204,33 +204,37 @@ public class DocResults implements Iterable<DocResult> {
 //			}
 //		}
 
-		searcher.collectDocuments(query, new SimpleCollector() {
+		try {
+			searcher.getIndexSearcher().search(query, new SimpleCollector() {
 
-			private int docBase;
+				private int docBase;
 
-			@Override
-			protected void doSetNextReader(LeafReaderContext context)
-					throws IOException {
-				docBase = context.docBase;
-				super.doSetNextReader(context);
-			}
+				@Override
+				protected void doSetNextReader(LeafReaderContext context)
+						throws IOException {
+					docBase = context.docBase;
+					super.doSetNextReader(context);
+				}
 
-			@Override
-			public void collect(int docId) throws IOException {
-				int globalDocId = docId + docBase;
-				results.add(new DocResult(DocResults.this.searcher, null, globalDocId, DocResults.this.searcher.document(globalDocId)));
-			}
+				@Override
+				public void collect(int docId) throws IOException {
+					int globalDocId = docId + docBase;
+					results.add(new DocResult(DocResults.this.searcher, null, globalDocId, DocResults.this.searcher.document(globalDocId)));
+				}
 
-			@Override
-			public void setScorer(Scorer scorer) {
-				// (ignore)
-			}
+				@Override
+				public void setScorer(Scorer scorer) {
+					// (ignore)
+				}
 
-			@Override
-			public boolean needsScores() {
-				return false;
-			}
-		});
+				@Override
+				public boolean needsScores() {
+					return false;
+				}
+			});
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		//this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));
 	}

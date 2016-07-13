@@ -593,6 +593,7 @@ public abstract class Searcher {
 	 */
 	public abstract int maxDoc();
 
+	@Deprecated
 	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
 		return new SpanQueryFiltered(query, filter);
 	}
@@ -608,14 +609,17 @@ public abstract class Searcher {
 		return spanQuery;
 	}
 
+	@Deprecated
 	public SpanQuery createSpanQuery(TextPattern pattern, Filter filter) {
 		return createSpanQuery(pattern, getMainContentsFieldName(), filter);
 	}
 
+	@Deprecated
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
 		return createSpanQuery(pattern, fieldName, (Filter)null);
 	}
 
+	@Deprecated
 	public SpanQuery createSpanQuery(TextPattern pattern) {
 		return createSpanQuery(pattern, getMainContentsFieldName(), (Filter)null);
 	}
@@ -727,7 +731,9 @@ public abstract class Searcher {
 	 *         be returned if there were no matches!
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
+	 * @deprecated use getIndexSearcher() and find them yourself
 	 */
+	@Deprecated
 	public abstract Scorer findDocScores(Query q);
 
 	/**
@@ -739,7 +745,9 @@ public abstract class Searcher {
 	 * @param n
 	 *            number of top documents to return
 	 * @return the documents
+	 * @deprecated use getIndexSearcher() and find them yourself
 	 */
+	@Deprecated
 	public abstract TopDocs findTopDocs(Query q, int n);
 
 	/**
@@ -1423,14 +1431,19 @@ public abstract class Searcher {
 	 * @param propName property name, i.e. word, lemma, pos, etc.
 	 * @param altName alternative name, i.e. s, i (case-sensitivity)
 	 * @return the term frequency map
+	 * @deprecated use getIndexSearcher() and find them yourself.
+	 *    Use ComplexFieldUtil.propertyField(fieldName, propName, altName) to find Lucene field name.
 	 */
+	@Deprecated
 	public abstract Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName);
 
 	/**
 	 * Perform a document query and collect the results through a Collector.
 	 * @param query query to execute
 	 * @param collector object that receives each document hit
+	 * @deprecated use getIndexSearcher() and find them yourself.
 	 */
+	@Deprecated
 	public abstract void collectDocuments(Query query, Collector collector);
 
 	/**

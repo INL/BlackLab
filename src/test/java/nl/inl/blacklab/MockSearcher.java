@@ -61,12 +61,14 @@ public class MockSearcher extends Searcher {
 	}
 
 	@Override
+	@Deprecated
 	public Scorer findDocScores(Query q) {
 		//
 		return null;
 	}
 
 	@Override
+	@Deprecated
 	public TopDocs findTopDocs(Query q, int n) {
 		//
 		return null;
@@ -129,11 +131,13 @@ public class MockSearcher extends Searcher {
 	}
 
 	@Override
+	@Deprecated
 	public Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName) {
 		return null;
 	}
 
 	@Override
+	@Deprecated
 	public void collectDocuments(Query query, Collector collector) {
 		//
 	}

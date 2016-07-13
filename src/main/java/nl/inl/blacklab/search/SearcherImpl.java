@@ -309,6 +309,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
+	@Deprecated
 	public Scorer findDocScores(Query q) {
 		try {
 			Weight w = indexSearcher.createNormalizedWeight(q, true);
@@ -321,6 +322,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
+	@Deprecated
 	public TopDocs findTopDocs(Query q, int n) {
 		try {
 			return indexSearcher.search(q, n);
@@ -623,6 +625,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
+	@Deprecated
 	public Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName) {
 		try {
 			String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, altName);
@@ -649,6 +652,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
+	@Deprecated
 	public void collectDocuments(Query query, Collector collector) {
 		try {
 			indexSearcher.search(query, collector);
