@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
@@ -135,7 +135,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private long tokenFileEndPosition = 0;
 
 	/** Index reader, for getting documents (for translating from Lucene doc id to fiid) */
-	private DirectoryReader reader;
+	private IndexReader reader;
 
 	/** fiid field name in the Lucene index (for translating from Lucene doc id to fiid) */
 	private String fiidFieldName;
@@ -152,7 +152,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private boolean useBlockBasedTermsFile = true;
 
 	@Override
-	public void setIdTranslateInfo(DirectoryReader reader, String lucenePropFieldName) {
+	public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
 		this.reader = reader;
 		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
 		try {

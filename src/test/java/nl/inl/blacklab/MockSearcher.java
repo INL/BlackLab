@@ -8,7 +8,7 @@ import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
@@ -80,7 +80,7 @@ public class MockSearcher extends Searcher {
 	}
 
 	@Override
-	public DirectoryReader getIndexReader() {
+	public IndexReader getIndexReader() {
 		return null;
 	}
 

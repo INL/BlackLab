@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.PostingsEnum;
@@ -128,7 +127,7 @@ public class LuceneUtil {
 	 *            end position (last word we want to request)
 	 * @return the words found, in order
 	 */
-	public static String[] getWordsFromTermVector(DirectoryReader reader, int doc,
+	public static String[] getWordsFromTermVector(IndexReader reader, int doc,
 			String luceneName, int start, int end) {
 		return getWordsFromTermVector(reader, doc, luceneName, start, end, false);
 	}
@@ -152,7 +151,7 @@ public class LuceneUtil {
 	 *   (debug)
 	 * @return the words found, in order
 	 */
-	public static String[] getWordsFromTermVector(DirectoryReader reader, int doc,
+	public static String[] getWordsFromTermVector(IndexReader reader, int doc,
 			String luceneName, int start, int end, boolean partialOk) {
 
 		// Retrieve the term position vector of the contents of this document.
@@ -224,7 +223,7 @@ public class LuceneUtil {
 	 * @param luceneName the index field from which to use the term vector
 	 * @param freq where to add to the token frequencies
 	 */
-	public static void getFrequenciesFromTermVector(DirectoryReader reader, int doc,
+	public static void getFrequenciesFromTermVector(IndexReader reader, int doc,
 			String luceneName, Map<String, Integer> freq) {
 		try {
 			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);

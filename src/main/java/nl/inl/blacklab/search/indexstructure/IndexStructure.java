@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
@@ -127,7 +126,7 @@ public class IndexStructure {
 	 * @param indexDir where the index (and the metadata file) is stored
 	 * @param createNewIndex whether we're creating a new index
 	 */
-	public IndexStructure(DirectoryReader reader, File indexDir, boolean createNewIndex) {
+	public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex) {
 		this(reader, indexDir, createNewIndex, (File)null);
 	}
 
@@ -140,7 +139,7 @@ public class IndexStructure {
 	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
 	 *   (if creating new index)
 	 */
-	public IndexStructure(DirectoryReader reader, File indexDir,
+	public IndexStructure(IndexReader reader, File indexDir,
 			boolean createNewIndex, File indexTemplateFile) {
 		//this.reader = reader;
 		this.indexDir = indexDir;
@@ -171,7 +170,7 @@ public class IndexStructure {
 	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
 	 *   (only if creating a new index)
 	 */
-	private void readMetadata(DirectoryReader reader, boolean createNewIndex, File indexTemplateFile) {
+	private void readMetadata(IndexReader reader, boolean createNewIndex, File indexTemplateFile) {
 
 		File metadataFile = new File(indexDir, METADATA_FILE_NAME);
 		boolean usedTemplate = false;

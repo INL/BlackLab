@@ -30,6 +30,7 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReader;
@@ -83,7 +84,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	/**
 	 * The Lucene index reader
 	 */
-	private DirectoryReader reader;
+	private IndexReader reader;
 
 	/**
 	 * The Lucene IndexSearcher, for dealing with non-Span queries (for per-document scoring)
@@ -466,7 +467,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
-	public DirectoryReader getIndexReader() {
+	public IndexReader getIndexReader() {
 		return reader;
 	}
 
@@ -599,7 +600,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 			throw new RuntimeException("Cannot delete documents, not in index mode");
 		try {
 			// Open a fresh reader to execute the query
-			DirectoryReader reader = DirectoryReader.open(indexWriter, false);
+			IndexReader reader = DirectoryReader.open(indexWriter, false);
 			try {
 				// Execute the query, iterate over the docs and delete from FI and CS.
 				IndexSearcher s = new IndexSearcher(reader);

@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
@@ -48,7 +49,7 @@ public class RunTermQuery {
 			fieldName = args[1];
 
 		// Open the index
-		DirectoryReader reader = null;
+		IndexReader reader = null;
 		try {
 			reader = DirectoryReader.open(FSDirectory.open(Paths.get(".")));
 		} catch (Exception e) {
@@ -72,7 +73,7 @@ public class RunTermQuery {
 	}
 
 	private static void doSnippet(int docId, int position, Term term,
-			DirectoryReader reader) {
+			IndexReader reader) {
 
 		System.out.println("\nSNIPPET");
 
@@ -94,7 +95,7 @@ public class RunTermQuery {
 		System.out.println(StringUtil.wrap(b.toString(), 80));
 	}
 
-	private static void doTermVector(int doc, Term term, DirectoryReader reader) {
+	private static void doTermVector(int doc, Term term, IndexReader reader) {
 		System.out.println("\nTERM VECTOR FOR DOC " + doc);
 		String luceneName = term.field();
 		String word = term.text();
@@ -164,7 +165,7 @@ public class RunTermQuery {
 		}
 	}
 
-	private static void doQuery(Term term, DirectoryReader reader) throws IOException {
+	private static void doQuery(Term term, IndexReader reader) throws IOException {
 		Query query = new TermQuery(term);
 		query = query.rewrite(reader);
 		System.out.println("REGULAR QUERY");
@@ -205,7 +206,7 @@ public class RunTermQuery {
 		System.out.println("");
 	}
 
-	private static void doSpanQuery(Term term, DirectoryReader reader) throws IOException {
+	private static void doSpanQuery(Term term, IndexReader reader) throws IOException {
 		SpanQuery spanQuery = new SpanTermQuery(term);
 		spanQuery = (SpanQuery) spanQuery.rewrite(reader);
 

@@ -22,7 +22,7 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
@@ -967,7 +967,7 @@ public abstract class Searcher {
 	 *
 	 * @return the Lucene index reader
 	 */
-	public abstract DirectoryReader getIndexReader();
+	public abstract IndexReader getIndexReader();
 
 	/**
 	 * Highlight part of field content with the specified hits,

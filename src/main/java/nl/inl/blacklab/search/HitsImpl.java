@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -283,7 +283,7 @@ public class HitsImpl extends Hits {
 	HitsImpl(Searcher searcher, SpanQuery sourceQuery) throws TooManyClauses {
 		this(searcher, (List<Hit>)null);
 		try {
-			DirectoryReader reader = searcher.getIndexReader();
+			IndexReader reader = searcher.getIndexReader();
 			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
 			termContexts = new HashMap<>();
 			Set<Term> terms = new HashSet<>();

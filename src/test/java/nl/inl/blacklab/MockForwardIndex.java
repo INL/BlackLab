@@ -2,7 +2,7 @@ package nl.inl.blacklab;
 
 import java.util.List;
 
-import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -16,7 +16,7 @@ public class MockForwardIndex extends ForwardIndex {
 	}
 
 	@Override
-	public void setIdTranslateInfo(DirectoryReader reader, String lucenePropFieldName) {
+	public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
 		//
 
 	}

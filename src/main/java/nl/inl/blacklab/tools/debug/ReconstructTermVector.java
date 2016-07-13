@@ -3,6 +3,7 @@ package nl.inl.blacklab.tools.debug;
 import java.nio.file.Paths;
 
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.util.LuceneUtil;
@@ -31,7 +32,7 @@ public class ReconstructTermVector {
 		}
 
 		// Open the index
-		DirectoryReader reader = null;
+		IndexReader reader = null;
 		try {
 			reader = DirectoryReader.open(FSDirectory.open(Paths.get(".")));
 		} catch (Exception e) {
