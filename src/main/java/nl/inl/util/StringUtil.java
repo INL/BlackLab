@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * Een collectie reguliere expressies om verschillende patronen uit Strings te filteren.
  */
@@ -702,11 +704,14 @@ public class StringUtil {
 	 * Convert the first character in a string to uppercase.
 	 * @param str the string to be capitalized
 	 * @return the capitalized string
+	 * @deprecated use StringUtils.capitalize() from commons-lang
 	 */
+	@Deprecated
 	public static String capitalizeFirst(String str) {
-		if (str.length() == 0)
-			return str;
-		return str.substring(0, 1).toUpperCase() + str.substring(1);
+		return StringUtils.capitalize(str);
+//		if (str.length() == 0)
+//			return str;
+//		return str.substring(0, 1).toUpperCase() + str.substring(1);
 	}
 
 	/**

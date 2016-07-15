@@ -54,4 +54,12 @@ public class TestStringUtil {
 				StringUtil.escapeDoubleQuotedString("Newline \n Return \r Windows line end \r\n"));
 	}
 
+	@SuppressWarnings("deprecation")
+	@Test
+	public void testCapitalize() {
+		Assert.assertEquals("Aap", StringUtil.capitalizeFirst("aap"));
+		Assert.assertEquals("AAP", StringUtil.capitalizeFirst("AAP"));
+		Assert.assertEquals("'aap'", StringUtil.capitalizeFirst("'aap'"));
+	}
+
 }

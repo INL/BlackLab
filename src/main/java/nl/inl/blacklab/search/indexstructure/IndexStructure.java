@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
@@ -796,9 +797,9 @@ public class IndexStructure {
 		if (displayName != null && displayName.length() != 0)
 			dispName = displayName;
 		if (dispName.equalsIgnoreCase("index"))
-			dispName = StringUtil.capitalizeFirst(indexDir.getName());
+			dispName = StringUtils.capitalize(indexDir.getName());
 		if (dispName.equalsIgnoreCase("index"))
-			dispName = StringUtil.capitalizeFirst(indexDir.getParentFile().getName());
+			dispName = StringUtils.capitalize(indexDir.getParentFile().getName());
 		return dispName;
 	}
 
