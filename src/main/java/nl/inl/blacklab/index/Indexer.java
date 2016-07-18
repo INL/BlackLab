@@ -765,7 +765,7 @@ public class Indexer {
 								is.close();
 							}
 						} catch (RuntimeException | ZipException ex) {
-							log("*** Error indexing " + fileName + " from " + zipFile, ex);
+							log("*** Error indexing file " + fileName + " inside zip archive " + zipFile, ex);
 							terminateIndexing = !getListener().errorOccurred(ex.getMessage(), "zip", zipFile, new File(fileName));
 						}
 					}
@@ -822,7 +822,7 @@ public class Indexer {
 							}
 						}
 					} catch (Exception e) {
-						log("*** Error indexing tgz file: " + tgzFileName, e);
+						log("*** Error indexing file " + filePath + " inside tarred/gzipped archive: " + tgzFileName, e);
 						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "tgz", new File(tgzFileName), new File(filePath));
 					}
 				}
