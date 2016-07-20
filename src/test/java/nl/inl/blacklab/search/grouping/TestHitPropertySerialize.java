@@ -50,7 +50,7 @@ public class TestHitPropertySerialize {
 			new ContextPart(ContextStart.HIT_TEXT_FROM_END, 0, 0)    // last hit word
 		);
 		prop = new HitPropertyContextWords(hits, "contents", "lemma", true, contextParts);
-		Assert.assertEquals("context:lemma:s:L2-2$CMH1-2$CME1-1", prop.serialize());
+		Assert.assertEquals("context:lemma:s:L2-2;H1-2;E1-1", prop.serialize());
 	}
 
 	@Test

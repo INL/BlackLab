@@ -17,7 +17,7 @@ public abstract class HitsSample extends HitsImpl {
 
 	protected float ratioOfHitsToSelect;
 
-	protected float numberOfHitsToSelect;
+	protected int numberOfHitsToSelect;
 
 	protected boolean exactNumberGiven = false;
 
@@ -114,7 +114,7 @@ public abstract class HitsSample extends HitsImpl {
 		return seed;
 	}
 
-	public float numberOfHitsToSelect() {
+	public int numberOfHitsToSelect() {
 		return numberOfHitsToSelect;
 	}
 

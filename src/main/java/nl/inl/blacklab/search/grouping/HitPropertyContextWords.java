@@ -187,7 +187,7 @@ public class HitPropertyContextWords extends HitProperty {
 			int valuesCopied = 0;
 			int contextStartIndex = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
 			if (firstWordSrcIndex >= 0) {
-				for (int srcIndex = firstWordSrcIndex; srcIndex != finalValidSrcIndex + 1 && srcIndex != stopAtSrcIndex; srcIndex++) {
+				for (int srcIndex = firstWordSrcIndex; srcIndex != finalValidSrcIndex + 1 && srcIndex != stopAtSrcIndex; srcIndex += srcDirection) {
 					dest[destIndex] = context[contextStartIndex + srcIndex];
 					destIndex++;
 					valuesCopied++;
@@ -230,7 +230,7 @@ public class HitPropertyContextWords extends HitProperty {
 		StringBuilder result = new StringBuilder();
 		for (ContextPart contextWordPart: words) {
 			if (result.length() > 0)
-				result.append(",");
+				result.append(";");
 			result.append(contextWordPart.toString());
 		}
 		return result.toString();
@@ -257,7 +257,7 @@ public class HitPropertyContextWords extends HitProperty {
 	 */
 	private static List<ContextPart> parseContextWordSpec(String contextWordSpec) {
 		List<ContextPart> result = new ArrayList<>();
-		for (String part: contextWordSpec.split("\\s*,\\s*")) {
+		for (String part: contextWordSpec.split("\\s*;\\s*")) {
 			if (part.length() == 0)
 				continue;
 			ContextStart startFrom;

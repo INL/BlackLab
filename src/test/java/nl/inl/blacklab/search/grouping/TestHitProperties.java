@@ -47,7 +47,7 @@ public class TestHitProperties {
 	@Test
 	public void testHitPropContextWords() throws ParseException {
 		Hits hits = testIndex.find(" 'the' ");
-		HitProperty p = new HitPropertyContextWords(hits, "contents", "word", true, "L1-1,H1-2");
+		HitProperty p = new HitPropertyContextWords(hits, "contents", "word", true, "L1-1;H1-2");
 		HitGroups g = hits.groupedBy(p);
 		HitGroup group;
 		group = g.getGroup(new HitPropValueContextWords(hits, "word", new int[] {NO_TERM, term("The"), NO_TERM}, true));

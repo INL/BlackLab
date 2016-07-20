@@ -19,6 +19,10 @@ public class HitsSampleImpl extends HitsSample {
 		if (numberOfHitsToSelect == 0 && totalNumberOfHits > 0 && ratio > 0)
 			numberOfHitsToSelect = 1; // always choose at least one hit, unless we specify ratio 0 (why..??)
 
+		// Copy relevant information from Hits object
+		setMaxHitsCounted(hits.maxHitsCounted());
+		setMaxHitsRetrieved(hits.maxHitsRetrieved());
+
 		selectHits(hits);
 	}
 
@@ -36,20 +40,25 @@ public class HitsSampleImpl extends HitsSample {
 	private void selectHits(Hits hits) {
 		// Choose the hits
 		Set<Integer> chosenHitIndices = new TreeSet<>();
-		System.out.println("---");
 		for (int i = 0; i < numberOfHitsToSelect; i++) {
 			// Choose a hit we haven't chosen yet
 			int hitIndex;
 			do {
 				hitIndex = random.nextInt(hits.size());
 			} while (chosenHitIndices.contains(hitIndex));
-			System.out.println(hitIndex);
 			chosenHitIndices.add(hitIndex);
 		}
 
 		// Add the hits in order of their index
 		for (Integer hitIndex: chosenHitIndices) {
-			this.hits.add(hits.get(hitIndex));
+			Hit hit = hits.get(hitIndex);
+			if (hit.doc != previousHitDoc) {
+				docsRetrieved++;
+				docsCounted++;
+				previousHitDoc = hit.doc;
+			}
+			this.hits.add(hit);
+			hitsCounted++;
 		}
 	}
 

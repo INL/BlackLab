@@ -172,22 +172,22 @@ public class HitsImpl extends Hits {
 	 * The number of hits we've seen and counted so far. May be more than
 	 * the number of hits we've retrieved if that exceeds maxHitsToRetrieve.
 	 */
-	private int hitsCounted = 0;
+	protected int hitsCounted = 0;
 
 	/**
 	 * The number of separate documents we've seen in the hits retrieved.
 	 */
-	private int docsRetrieved = 0;
+	protected int docsRetrieved = 0;
 
 	/**
 	 * The number of separate documents we've counted so far (includes non-retrieved hits).
 	 */
-	private int docsCounted = 0;
+	protected int docsCounted = 0;
 
 	/**
 	 * Document the previous hit was in, so we can count separate documents.
 	 */
-	private int previousHitDoc = -1;
+	protected int previousHitDoc = -1;
 
 	@Override
 	public Hits copy() {
