@@ -57,8 +57,10 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 	 */
 	int numLemmaAnnotations = 0;
 
+	/** Are we capturing the features inside a pos element? */
 	boolean capturePosFeatures = false;
 
+	/** The features inside the current pos element, to be indexed as subproperties */
 	Map<String, String> posFeatures = new HashMap<>();
 
 	public DocIndexerOpenSonar(Indexer indexer, String fileName, Reader reader) {
@@ -167,6 +169,7 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 					pos = attributes.getValue("class");
 					if (pos == null)
 						pos = "";
+					// Capture the features inside this pos element (and add the head PoS now)
 					capturePosFeatures = true;
 					posFeatures.clear();
 					String posHead = pos.contains("(") ? pos.substring(0, pos.indexOf("(")).trim() : pos;
@@ -176,13 +179,13 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 
 			@Override
 			public void endElement(String uri, String localName, String qName) {
-				capturePosFeatures = false;
+				capturePosFeatures = false; // we have all the features
 				super.endElement(uri, localName, qName);
 			}
 
 		});
 
-		// pos element: contains part of speech
+		// pos/feat element: contains a part of speech feature
 		addHandler("pos/feat", new ElementHandler() {
 			@Override
 			public void startElement(String uri, String localName, String qName,

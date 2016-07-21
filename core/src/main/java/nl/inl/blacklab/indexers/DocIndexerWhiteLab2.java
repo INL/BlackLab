@@ -17,7 +17,10 @@ package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.xml.sax.Attributes;
 
@@ -26,6 +29,7 @@ import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * Index a FoLiA file for WhiteLab 2.0.
@@ -69,6 +73,12 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 	 * set="http://ilk.uvt.nl/folia/sets/frog-mblem-nl"
 	 */
 	int numLemmaAnnotations = 0;
+
+	/** Are we capturing the features inside a pos element? */
+	boolean capturePosFeatures = false;
+
+	/** The features inside the current pos element, to be indexed as subproperties */
+	Map<String, String> posFeatures = new HashMap<>();
 
 	public DocIndexerWhiteLab2(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
@@ -141,6 +151,10 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 					propXmlid.addValue(xmlid.split("\\.", 2)[1]);
 					ids.add(xmlid);
 					propPartOfSpeech.addValue(pos);
+					for (Entry<String, String> e: posFeatures.entrySet()) {
+						// Add the separate PoS features as extra values at this position.
+						propPartOfSpeech.addValue(e.getKey() + ComplexFieldUtil.ASCII_UNIT_SEPARATOR + e.getValue(), 0);
+					}
 					propLemma.addValue(lemma);
 
 					if (pos.length() == 0 || lemma.length() == 0) {
@@ -207,9 +221,37 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 					pos = attributes.getValue("class");
 					if (pos == null)
 						pos = "";
+					// Capture the features inside this pos element (and add the head PoS now)
+					capturePosFeatures = true;
+					posFeatures.clear();
+					String posHead = pos.contains("(") ? pos.substring(0, pos.indexOf("(")).trim() : pos;
+					posFeatures.put("head", posHead);
+				}
+			}
+
+			@Override
+			public void endElement(String uri, String localName, String qName) {
+				capturePosFeatures = false; // we have all the features
+				super.endElement(uri, localName, qName);
+			}
+
+		});
+
+		// pos/feat element: contains a part of speech feature
+		addHandler("pos/feat", new ElementHandler() {
+			@Override
+			public void startElement(String uri, String localName, String qName,
+					Attributes attributes) {
+				super.startElement(uri, localName, qName, attributes);
+				if (capturePosFeatures) {
+					String featSubset = attributes.getValue("subset");
+					String featClass = attributes.getValue("class");
+					posFeatures.put(featSubset, featClass);
 				}
 			}
 		});
+
+		// ph = phonetic
 		addHandler("ph", new ContentCapturingHandler() {
 			@Override
 			public void startElement(String uri, String localName, String qName,
