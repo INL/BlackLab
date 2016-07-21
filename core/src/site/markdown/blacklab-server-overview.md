@@ -111,6 +111,8 @@ Explanation of the various resources:
 
 Below is an overview of parameters that can be passed to the various resources. Default values for most parameters can be configured on the server; below are a few suggestions for defaults.
 
+(NOTE: parameters in italics haven't been implemented yet)
+
 <table>
 	<tr>
 		<th style="text-align:left;">Parameter        </th>
@@ -157,7 +159,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>Document faceting criteria, comma-separated. See below.  (default: don’t do any faceting)</td>
 	</tr>
 	<tr>
-		<td>collator </td>
+		<td><i>collator</i></td>
 		<td>What collator to use for sorting and grouping (default: nl)</td>
 	</tr>
 	<tr>
