@@ -1,0 +1,304 @@
+{
+    // BlackLab Server config file
+    // ===============================================================
+    // NOTE: this file is in JSON format, with end-of-line comments (//) allowed.
+
+
+    // How to do user authentication
+    // The indicated class is dynamically loaded, and passed any parameters
+    // given.
+    "authSystem": {
+        "class": "AuthDebugFixed",
+        "userId": "jan"
+    },
+    
+    // The location and parameters for each index
+    // ---------------------------------------------------------------
+    // (missing indices will be skipped)
+    
+    // Index collections are multiple indices under a single directory.
+    // BLS will detect when an index is added and make it available to
+    // query. It will also detect if it is removed.
+    // NOTE: if multiple accessible collections contain indices with the 
+    // same name, one of them is picked at random (i.e. don't do this).  
+    "indexCollections": [
+    
+//      e.g.:
+//      "/data1/blacklab/public-indices/",
+//      "/data2/blacklab/public-indices/"
+
+    ],
+
+    // Subdirectories of this directory will be used as user's personal
+    // index collections. So a subdirectory "jan" will contain indices 
+    // that belong to user jan. Indices in these collections are only
+    // available when that user is logged in.
+    "userCollectionsDir": "/data/blacklab/user-indices/",
+
+    // A list of single indices, where they can be found,
+    // and whether or not full document content may be retrieved
+    // by users. 
+    "indices": {
+//      e.g.:
+//      "brown": {
+//          "dir": "/data/blacklab/brown/index"
+//      },
+    },
+    
+    // A list of IPs that will run in debug mode.
+    // In debug mode, ...
+    // - the /cache-info resource show the contents of the job cache
+    //   (other debug information resources may be added in the future)
+    // - output is prettyprinted by default (can be overriden with the "prettyprint"
+    //   GET parameter)
+    "debugModeIps": [
+        //"127.0.0.1",      // IPv4 localhost
+        //"0:0:0:0:0:0:0:1" // IPv6 localhost
+    ],
+
+    // Configuration that affects how requests are handled
+    // ---------------------------------------------------------------
+    "requests": {
+        // Default number of hits/results per page.
+        // The "number" GET parameter overrides this value.
+        "defaultPageSize": 20,
+
+        // Default pattern language to use.
+        // The "pattlang" GET parameter overrides this value.
+        "defaultPatternLanguage": "corpusql",
+
+        // Default sensitivity of searches:
+        // - sensitive (case- and diacritics-sensitive)
+        // - insensitive (case- and diacritics-insensitive)
+        // - case (case-sensitive, diacritics-insensitive)
+        // - diacritics (case-insensitive, diacritics-sensitive)
+        // The "sensitive" GET parameter overrides this value (yes or no only).
+        // You can also override this setting by specifying the desired sensitivity in the pattern:
+        // Insensitive search: [lemma="(?i)test"] Sensitive search: [word="(?-i)Test"]
+        "defaultSearchSensitivity": "insensitive",
+
+        // Default filter language to use.
+        // The "filterlang" GET parameter override this value.
+        "defaultFilterLanguage": "luceneql",
+
+        // Should requests be blocking by default?
+        // The "block" GET parameter overrides this value.
+        "defaultBlockingMode": true,
+
+        // Default number of words around hit.
+        // The "wordsaroundhit" GET parameter overrides this value.
+        "defaultContextSize": 5,
+
+        // Maximum context size allowed. Only applies to sets of hits, not to individual snippets.
+        "maxContextSize": 20,
+
+        // Maximum snippet size allowed. If this is too big, users can view the whole document even
+        // if they may not be allowed to.
+        // (this applies to the "wordsaroundhit" GET parameter of the /docs/ID/snippet resource)
+        "maxSnippetSize": 100,
+        
+        // The default maximum number of hits to retrieve
+        // (retrieved hits are used for sorting, grouping, etc.)
+        // -1 means no limit, but be careful, this may overload your server.
+        "defaultMaxHitsToRetrieve": 1000000,
+        
+        // The default maximum number of hits to count.
+        // (counted hits are only counted, not retrieved, and are therefore not used
+        //  for sorting, grouping, etc.)
+        // -1 means no limit, but be careful, this may overload your server.
+        "defaultMaxHitsToCount": 5000000,
+        
+        // The maximum allowed number of hits to retrieve.
+        // (users may override the default - this is the maximum number they may specify)
+        // -1 means no limit, but be careful, this may overload your server.
+        "maxHitsToRetrieveAllowed": 2000000,
+        
+        // The maximum allowed number of hits to count.
+        // (users may override the default - this is the maximum number they may specify)
+        // -1 means no limit, but be careful, this may overload your server.
+        "maxHitsToCountAllowed": 10000000,
+
+        // Clients from these IPs may choose their own user id and send it along in a GET parameter "userid".
+        // This setting exists for web applications that contact the webservice (partly) through the
+        // server component. They would get the same session id for each user, making them likely 
+        // to hit the maxRunningJobsPerUser setting. Instead, they should assign session IDs for each of
+        // their clients and send them along with any request to the webservice.
+        "overrideUserIdIps": [
+            "127.0.0.1",      // IPv4 localhost
+            "0:0:0:0:0:0:0:1" // IPv6 localhost
+        ]
+    },
+
+
+    // Settings related to tuning server load and client responsiveness
+    // ---------------------------------------------------------------
+    "performance": {
+    
+        // Specifies how the server will behave under different loads.
+        //
+        // Specify the different server loads and their behaviours from 
+        // heaviest to lightest load (because load states are checked in order,
+        // so the first matching state is the one we choose).
+        //
+        // The values for the options are made up of simple clauses, shown below.
+        // Clauses may be combined using "or".
+        // 
+        // always:      matches all searches
+        // never:       matches no searches
+        // age <n>:     matches searches that were started at least n seconds ago
+        // ignored <n>: matches searches that have not been referenced (except by the
+        //              cache) for at least n seconds.
+        // paused <n>:  matches searches that have been paused for at least n seconds
+        // cached <n>:  matches finished searches for which the results have been cached 
+        //              for at least n seconds.
+        //
+        // (the default of 7 == HEAVY seems to be a good setup for an 8-core machine)
+        //
+        // If you change these rules, be careful not to create situations that 
+        // are irreversible (like searches getting paused but never resumed), or 
+        // 'oscillating' situations (searches getting paused, resumed, paused, resumed, 
+        // etc.)!
+        "serverLoadStates": [
+            
+            {
+                "name": "HEAVY",
+                "minSearches": 7, // at least 7 concurrent queries
+                
+                // How should we behave in this state?
+                "discardResults":   "cached 450",  // When to remove search results from the cache
+                "lowerPriority":    "always",      // When to lower priority of a query
+                "raisePriority":    "never",       // When to raise priority of a query
+                "pauseCount":       "always",      // When to pause a count
+                "pauseSearch":      "age 60",      // When to pause a search
+                "resumeSearch":     "never",       // Resume searches or not?
+                "abortCount":       "ignored 60 or age 300",  // When to abort a count
+                "abortSearch":      "ignored 300 or age 900", // When to abort a search
+                "queueNewSearches": "always",      // Queue new searches?
+                "refuseSearch":     "always"       // If we cannot lower the load, refuse new searches
+            },
+            
+            {
+                "name": "MEDIUM",
+                "minSearches": 5, // at least 5 concurrent queries
+                
+                // How should we behave in this state?
+                "discardResults":   "cached 900",  // When to remove search results from the cache
+                "lowerPriority":    "age 60",      // When to lower priority of a query
+                "raisePriority":    "never",       // When to raise priority of a query
+                "pauseCount":       "age 60",      // When to pause a count
+                "pauseSearch":      "age 300",     // When to pause a search
+                "resumeSearch":     "never",       // Resume searches or not?
+                "abortCount":       "ignored 300", // When to abort a count
+                "abortSearch":      "ignored 900", // When to abort a search
+                "queueNewSearches": "never",       // Queue new searches?
+                "refuseSearch":     "never"        // Refuse new searches if we cannot lower the load?
+            },
+            
+            // 0+ concurrent searches: light load
+            {
+                "name": "LIGHT",
+            	// (no minSearches setting here because it's the last state,
+            	//  so we're in this state whenever we're not in the other states)
+                
+                // How should we behave in this state? (NOTE: these are the default values for these options)
+                "discardResults":   "cached 1800", // When to remove search results from the cache
+                "lowerPriority":    "never",       // When to lower priority of a query
+                "raisePriority":    "always",      // When to raise priority of a query
+                "pauseCount":       "never",       // When to pause a count
+                "pauseSearch":      "never",       // When to pause a search
+                "resumeSearch":     "paused 30",   // Resume searches or not?
+                                                   // NOTE: we check that it's been paused for a while to
+                                                   // avoid 'oscillation'
+                "abortCount":       "never",       // When to abort a count
+                "abortSearch":      "never",       // When to abort a search
+                "queueNewSearches": "never",       // Queue new searches?
+                "refuseSearch":     "never"        // Refuse new searches if we cannot lower the load?
+            }
+            
+        ],
+
+        // Settings for job caching.
+        "cache": {
+            // How many search jobs will we cache at most? (or -1 for no limit)
+            // A note about jobs: a request to BlackLab Server routinely results in 3+ simultaneous search jobs
+            // being launched: a job to get a window into the sorted hits, which launches a job to get sorted hits,
+            // which launches a job to get the unsorted hits. There's also usually a separate job for keeping track
+            // of the running total number of hits found (which re-uses the unsorted hits job). The reason for this
+            // architecture is that jobs can be more easily re-used in subsequent searches that way: if the sort changes,
+            // we can still use the unsorted hits job, etc. Practical upshot of this: number of jobs does not
+            // equal number of searches.
+            
+        	//@@@ change to searches instead of jobs?
+        
+            "maxNumberOfJobs": 20,
+
+            // After how much time will a search job be removed from the cache? (in seconds)
+            //"maxJobAgeSec": 3600,
+
+            // Maximum size the cache may grow to (in megabytes), or -1 for no limit.
+            // [NOT PROPERLY IMPLEMENTED YET! LEAVE AT -1 FOR NOW]
+            "maxSizeMegs": -1,
+
+            // How much free memory the cache should shoot for (in megabytes) while cleaning up.
+            // Because we don't have direct control over the garbage collector, we can't reliably clean up until
+            // this exact number is available. Instead we just get rid of a few cached jobs whenever a
+            // new job is added and we're under this target number. See numberOfJobsToPurgeWhenBelowTargetMem.
+            
+            // @@@ change this to % (of initial free memory) ?
+            
+            "targetFreeMemMegs": 100
+
+            // When there's less free memory available than targetFreeMemMegs, each time a job
+            // is created and added to the cache, we will get rid of this number of older jobs in order
+            // to (hopefully) free up memory (if the Java GC agrees with us).
+            // 2 seems like an okay value, but you can change it if you want to experiment.
+            //"numberOfJobsToPurgeWhenBelowTargetMem": 2
+        },
+
+        // The minimum amount of free memory required to start a new search job. If this memory is not available,
+        // an error message is returned.
+        
+        // @@@ change this to % (of initial free memory) ?
+            
+        "minFreeMemForSearchMegs": 50,
+
+        // The maximum number of jobs a user is allowed to have running at the same time. This does not
+        // include finished jobs in the cache, only jobs that have not finished yet.
+        // The above remark about jobs applies here too: one search request will start multiple jobs.
+        // Therefore, this value shouldn't be set too low. This setting is meant to prevent over-eager scripts 
+        // and other abuse from bringing down the server. Regular users should never hit this limit.
+        
+        //@@@ change to searches instead of jobs?
+        
+        "maxRunningJobsPerUser": 20,
+
+        // How long the client may keep results we give them in their local (browser) cache.
+        // This is used to write HTTP cache headers. Low values mean clients might re-request
+        // the same information, making clients less responsive and consuming more network resources.
+        // Higher values make clients more responsive but could cause problems if the data (or worse,
+        // the protocol) changes after an update. A value of an hour or so seems reasonable.
+        "clientCacheTimeSec": 3600
+
+        // The minimum time to advise a client to wait before checking the status of a search again.
+        // The lower this is set, the more responsive client applications should become, but
+        // the server will have to serve more polling requests. This shouldn't affect server load
+        // too much however, as these are simple, easily-handled requests.
+        //"checkAgainAdviceMinimumMs": 200,
+
+        // How to determine the "check again advice time" to give to clients.
+        // We divide the search time so far by this number to get the advice.
+        // E.g. if this is set to 5 (the default), if a search has been running for 10
+        // seconds, clients are advised to wait 2 seconds before checking the status again.
+        // Higher numbers mean a (slightly) more responsive application at the cost of
+        // (slightly) increased server load.
+        //"checkAgainAdviceDivider": 5,
+
+        // Even if the client specifies nonblocking mode, the server will always wait a short while
+        // for the search to complete, so it can answer short requests immediately without the client
+        // having to start polling.
+        // This should be set to a fairly low value so the client remains responsive, but high enough
+        // that simple searches will complete within this time.
+        //"waitTimeInNonblockingModeMs": 100
+
+    }
+}

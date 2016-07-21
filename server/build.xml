@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE project>
+<project name="blacklab-server" default="dist" basedir=".">
+	
+    <fail>
+        This project has switched over to Maven builds.
+        Please install Maven and type "mvn package".
+    </fail>
+    
+    <target name="dist">
+    </target>
+
+</project>
