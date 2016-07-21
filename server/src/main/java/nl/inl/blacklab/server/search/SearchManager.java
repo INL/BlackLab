@@ -122,8 +122,9 @@ public class SearchManager {
 	/** Maximum snippet size allowed */
 	private int maxSnippetSize;
 
+	// TODO: move to SearchParamaters?
 	/** Default values for request parameters */
-	private Map<String, String> defaultParameterValues;
+	final static private Map<String, String> defaultParameterValues = new HashMap<>();;
 
 	/** Default number of hits/results per page [20] */
 	private int defaultPageSize;
@@ -465,7 +466,7 @@ public class SearchManager {
 		}
 
 		// Set up the parameter default values
-		defaultParameterValues = new HashMap<>();
+		//defaultParameterValues = new HashMap<>();
 		defaultParameterValues.put("filterlang", defaultFilterLanguage);
 		defaultParameterValues.put("pattlang", defaultPatternLanguage);
 		defaultParameterValues.put("sort", "");

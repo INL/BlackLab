@@ -25,13 +25,30 @@ public class SearchParameters extends TreeMap<String, String> {
 
 	/** Parameters involved in search */
 	final static public List<String> NAMES = Arrays.asList(
-		"resultsType", "patt", "pattlang", "pattfield",
-		"filter", "filterlang", "sort", "group", "viewgroup",
-		"collator", "first", "number", "wordsaroundhit",
-		"hitstart", "hitend", "facets", "waitfortotal",
-		"includetokencount", "usecontent", "wordstart", "wordend",
-		"calc", "maxretrieve", "maxcount", "property", "sensitive",
-		"sample", "samplenum", "sampleseed"
+		// What to search for
+		"patt", "pattlang",                  // pattern to search for
+		"filter", "filterlang",              // docs to search
+		"sample", "samplenum", "sampleseed", // what hits to select
+
+		// How to present results
+		"sort",                         // sorting (grouped) hits/docs
+		"first", "number",              // results window
+		"wordsaroundhit", "usecontent", // concordances
+		"hitstart", "hitend",           // doc snippets
+		  "wordstart", "wordend",
+
+		// How to process results
+		"facets",                       // include facet information?
+		"includetokencount",            // count tokens in all matched documents?
+		"maxretrieve", "maxcount",      // limits to numbers of hits to process
+
+		// Alternative views
+		"calc",                         // collocations, or other context-based calculations
+		"group", "viewgroup",           // grouping hits/docs
+		"property", "sensitive",        // for term frequency
+
+		// How to execute request
+		"waitfortotal"                  // wait until total number of results known?
 	);
 
 	public SearchParameters(SearchManager searchManager) {
