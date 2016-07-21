@@ -243,15 +243,15 @@ The sort, group and facets parameters receive one or more criteria (comma-separa
 	</tr>
 	<tr>
 		<td>hit[:prop[:c]] </td>
-		<td>Sort/group/facet on matched text. If prop is omitted, the default property (usually word) is used. c can specify case-sensitivity: either s (sensitive) or i (insensitive). prop and c can also be added to left, right, leftword and rightword. Examples: hit, hit:lemma, hit:lemma:s.</td>
+		<td>Sort/group/facet on matched text. If prop is omitted, the default property (usually word) is used. c can specify case-sensitivity: either s (sensitive) or i (insensitive). prop and c can also be added to left, right, wordleft and wordright. Examples: hit, hit:lemma, hit:lemma:s.</td>
 	</tr>
 	<tr>
 		<td>left / right </td>
-		<td>Left/right context words. Used for sorting, not for grouping/faceting (use leftword/rightword instead). Examples: left, left:pos, left:pos:s.</td>
+		<td>Left/right context words. Used for sorting, not for grouping/faceting (use wordleft/wordright instead). Examples: left, left:pos, left:pos:s.</td>
 	</tr>
 	<tr>
-		<td>leftword / rightword </td>
-		<td>Single word to the left or right of the matched text. Used for grouping/faceting. Examples: leftword, leftword:pos</td>
+		<td>wordleft / wordright </td>
+		<td>Single word to the left or right of the matched text. Used for grouping/faceting. Examples: wordleft, wordleft:pos</td>
 	</tr>
 	<tr>
 		<td>field:name </td>
@@ -335,7 +335,11 @@ The entire document, with occurrences of “test” highlighted (with <hl/\> tag
 
 ## Installation
 
+First, you need the BlackLab Server WAR file. You can either download the latest release [https://github.com/INL/BlackLab/releases here], or you can build it by cloning the [https://github.com/INL/BlackLab GitHub repository] and building it using Maven.
+
 BlackLab Server needs to run in a Java application server that support servlets. We’ll assume Apache Tomcat here, but others should work almost the same.
+
+For larger indices, it is important to give Tomcat's JVM enough heap memory. See [http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/ here]. (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.)
 
 Place the configuration file blacklab-server.json (see Appendix A) in /etc/blacklab/ or, if you prefer, on the application server’s classpath. Make sure at least the “indexCollections” setting is correctly specified (should point to a directory containing one or more BlackLab indices as subdirectories). Apart from that, the file could actually be empty: default values are used for missing settings. So if you have an index in directory /home/jan/blacklab/test, the minimal blacklab-server.json looks like this:
 
@@ -430,24 +434,24 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	        // limit was reached or not. -1 means "no limit". For large 
 	        // corpora, this can crash the server if uses perform big 
 	        // searches.
-	        "defaultMaxHitsToRetrieve": 20,
+	        "defaultMaxHitsToRetrieve": 1000000,
 	
 	        // Default maximum number of hits to count.
 	        // BlackLab will keep counting hits even if it hits the 
 	        // retrieval maximum. The default value for this is -1,
 	        // meaning "no limit". Counts for large hit sets will take a 
 	        // long time but will generally not crash the server.
-	        "defaultMaxHitsToCount": 30,
+	        "defaultMaxHitsToCount": 10000000,
 	
 	        // Users can change the above retrieval maximum with the
 	        // "maxretrieve" URL parameter. This specifies the maximum 
 	        // allowed value for that parameter. -1 means "no limit".
-	        "maxHitsToRetrieveAllowed": 40,
+	        "maxHitsToRetrieveAllowed": 1000000,
 	
 	        // Users can change the above count maximum with the 
 	        // "maxcount" URL parameter. This specifies the maximum 
 	        // allowed value for that parameter. -1 means "no limit".
-	        "maxHitsToCountAllowed": 60,
+	        "maxHitsToCountAllowed": 10000000,
 	
 	        // Clients from these IPs may choose their own user id and 
 	        // send  it along in a GET parameter "userid". This setting 
