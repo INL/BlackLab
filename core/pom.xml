@@ -2,10 +2,10 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-                <groupId>nl.inl.blacklab</groupId>
-                <artifactId>blacklab-all</artifactId>
-                <version>1.4-SNAPSHOT</version>
-        </parent>
+        <groupId>nl.inl.blacklab</groupId>
+        <artifactId>blacklab-all</artifactId>
+        <version>1.4.0</version>
+    </parent>
 	<artifactId>blacklab</artifactId>
 	<packaging>jar</packaging>
 	

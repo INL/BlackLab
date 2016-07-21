@@ -2,20 +2,37 @@
 
 ## Improvements in HEAD
 
-### Changed
-* Performed some code cleanups, moved some internal classes to different packages.
-* Made Searcher an abstract base class to SearcherImpl; Hits an abstract base class to HitsImpl.
-  Added mock classes for Searcher, Hits, ForwardIndex, Terms; used them to add tests.
-* Updated gs-collections 6.1 to eclipse-collections 7.1. Replaced Map<Integer, T> with
-  IntObjectMap, Map<Integer, Integer> with IntIntMap, ArrayList<Integer> with IntArrayList
-  a number of times (mainly) for more memory-efficiency.
-* Moved hits-related settings from Searcher and Hits into a shared HitsSetting class;
-  Searcher has a default set of HitsSettings that Hits objects "inherit".
+## Improvements up to v1.4.0
+
+### New
 * Added experimental support for "subproperties": properties that are indexed in the same Lucene 
   field, using prefixes, but don't each have a forward index. For now, mainly useful for
   indexing each part of speech feature separately, but in the future, BlackLab could possibly move 
   to indexing all properties in a single Lucene field. See DocIndexerOpenSonar,
   QueryExecutionContext.subpropPrefix(). 
+* Added HitsSample and its implementation class, which can take a random sample of a larger
+  set of hits.
+* Added HitPropertyContextWords, which gives the user more options for sorting/grouping on
+  context words, such as "group on the first and last words of the matched text" or "group on the
+  second and third words to the left of the matched text".
+
+### Changed
+* Performed some code cleanups, moved some internal classes to different packages.
+* Made Searcher an abstract base class to SearcherImpl; Hits an abstract base class to HitsImpl.
+  Added mock classes for Searcher, Hits, ForwardIndex, Terms; used them to add tests.
+* Moved hits-related settings from Searcher and Hits into a shared HitsSetting class;
+  Searcher has a default set of HitsSettings that Hits objects "inherit".
+* Updated gs-collections 6.1 to eclipse-collections 7.1. Replaced Map<Integer, T> with
+  IntObjectMap, Map<Integer, Integer> with IntIntMap, ArrayList<Integer> with IntArrayList
+  a number of times (mainly) for more memory-efficiency.
+* Started using commons-lang to replace certain utility functions.
+* Moved some basic Lucene functionality unrelated to the rest of BlackLab from Searcher to 
+  LuceneUtil.
+
+## Improvements up to v1.3.7
+
+### Fixed
+* Opening a large "fixed-block" content store took a really long time. 
 
 ## Improvements up to v1.3.6
 
@@ -31,9 +48,11 @@
 * BLSpanOrQuery would occasionally miss valid hits due to a
   bug in the advanceStartPoint() method.
 
+### New
+* Added default unknown condition and value to indextemplate.json, so you can specify what to do if a metadata field value is missing without specifying it for each field separately.
+
 ### Changed
 * Switched to JavaCC 6.x.
-* Added default unknown condition and value to indextemplate.json, so you can specify what to do if a metadata field value is missing without specifying it for each field separately.
 
 ## Improvements up to v1.3.4
 
@@ -63,9 +82,11 @@
 ### Fixed
 * Bug in SpanQueryAnd which caused incorrect hits to be reported.
 
+### New
+* Added new default content store format "fixedblock", that improves space re-use when updating documents. 
+
 ## Changed
 * Special OSX and Windows files are skipped, even if they occur inside archives.
-* Added new default content store format "fixedblock", that improves space re-use when updating documents. 
 
 ## Improvements up to v1.3
 
