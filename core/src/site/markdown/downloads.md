@@ -32,14 +32,14 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
 		<tr>
-			<td>v1.4.0/td>
+			<td>v1.4.0</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.4.0/blacklab-1.4.0.jar'>Binary (jar)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.4.0.tar.gz'>Source (tgz)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.4.0.zip'>Source (zip)</a></td>
 			<td>Added HitsSample, HitPropertyContextWords and subproperties (experimental).</td>
 		</tr>
 		<tr>
-			<td>v1.3.7/td>
+			<td>v1.3.7</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.3.7/blacklab-1.3.7.jar'>Binary (jar)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.7.tar.gz'>Source (tgz)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.3.7.zip'>Source (zip)</a></td>

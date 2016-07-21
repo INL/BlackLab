@@ -22,8 +22,8 @@
   Added mock classes for Searcher, Hits, ForwardIndex, Terms; used them to add tests.
 * Moved hits-related settings from Searcher and Hits into a shared HitsSetting class;
   Searcher has a default set of HitsSettings that Hits objects "inherit".
-* Updated gs-collections 6.1 to eclipse-collections 7.1. Replaced Map<Integer, T> with
-  IntObjectMap, Map<Integer, Integer> with IntIntMap, ArrayList<Integer> with IntArrayList
+* Updated gs-collections 6.1 to eclipse-collections 7.1. Replaced Map&lt;Integer, T&gt; with
+  IntObjectMap, Map&lt;Integer, Integer&gt; with IntIntMap, ArrayList&lt;Integer&gt; with IntArrayList
   a number of times (mainly) for more memory-efficiency.
 * Started using commons-lang to replace certain utility functions.
 * Moved some basic Lucene functionality unrelated to the rest of BlackLab from Searcher to 
