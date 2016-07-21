@@ -182,6 +182,32 @@ To skip a number of corpus positions when adding a value, use an increment that 
 
 Finally, you may sometimes wish to add values to an earlier corpus position. Say you're at position 100, and you want to add a value to position 50. You can do so using the ComplexFieldProperty.addValueAtPosition(String, Integer) method. The first token has position 0.
 
+### Subproperties, for e.g. making part of speech features separately searchable (EXPERIMENTAL)
+
+Note that this feature is experimental and details may change in future versions.
+
+Part of speech sometimes consists of several features in addition to the main PoS, e.g. "NOU-C(gender=n,number=sg)". It would be nice to be able to search each of these features separately without resorting to complex regular expressions. You can use the feature described above (multiple values at one position) to achieve this. We call this approach "subproperties", because you index the values of several "subproperties" in a single Lucene field.
+
+To add subproperties to a property, first add the main property value (in this case, the whole PoS expression "NOU-C(gender=n,number=sg)"), followed by several other tokens at the same position (position increments of zero):
+
+  propPartOfSpeech.addValue(subPropertyName + ComplexFieldUtil.ASCII_UNIT_SEPARATOR + subPropertyValue, 0);
+
+In our example, you might add three subproperty values: main=NOU-C (the "main" part of speech), gender=n and number=sg.
+
+Then, to query these subproperties, use the following CQL extension syntax:
+
+  [pos:main="NOU-C" & pos:gender="n" & pos:number="sg"]
+  
+These will effectively be translated into this:
+
+  [pos="main#NOU-C" & pos="gender#n" & pos="number#sg"]
+  
+Except we don't use the hash sign as a separator, and we do some internal tricks to ensure wildcard and regex queries work properly.
+
+Note that these subproperties will not have their own forward index; only the main property has one, and it includes only the first value indexed at any location, so the subproperty values aren't stored there either.
+
+Adding a few subproperties per token position like this will make the index slightly larger, but it shouldn't affect performance or index size too much.
+
 ### Storing extra information with property values, using payloads
 
 It is possible to add payloads to property values. When calling addProperty() at the start of the constructor, make sure to use the version that takes a boolean called 'includePayloads', and set it to true. Then use ComplexFieldProperty.addPayload(). You can use null if a particular value has no payload. There's also a addPayloadAtIndex() method to add payloads some time after adding the value itself, but that requires knowing the index in the value list of the value you want to add a payload for, so you should store this index when you add the value.

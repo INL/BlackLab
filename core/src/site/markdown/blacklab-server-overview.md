@@ -111,8 +111,6 @@ Explanation of the various resources:
 
 Below is an overview of parameters that can be passed to the various resources. Default values for most parameters can be configured on the server; below are a few suggestions for defaults.
 
-(parameters in italics have not been implemented yet)
-
 <table>
 	<tr>
 		<th style="text-align:left;">Parameter        </th>
@@ -226,6 +224,21 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>calc </td>
 		<td>(empty) or colloc. Calculate some information from the result set. Currently only supports calculating collocations (frequency lists of words near hits).</td>
 	</tr>
+	<tr>
+		<td>sample</td>
+		<td>Percentage of hits to select. Chooses a random sample of all the hits found.</td>
+	</tr>
+	<tr>
+		<td>samplenum</td>
+		<td>Exact number of hits to select. Chooses a random sample of all the hits found.</td>
+	</tr>
+	<tr>
+		<td>sampleseed</td>
+		<td>Signed long random seed for sampling. Optional. When given, uses this value to seed the random number
+		    generator, ensuring identical sampling results next time. Please note that, without sorting, hit order
+		    is undefined (if the same data is re-indexed, hits may be produced in a different order). So if you 
+		    want true reproducability, you should always sort hits that you want to sample.</td>
+	</tr>
 </table>
 
 NOTE: using the original content may cause problems with well-formedness; these are fixed automatically, but the fix may result in inline tags in strange places (e.g. a start-sentence tag that is not at the start of the sentence anymore)
@@ -248,6 +261,12 @@ The sort, group and facets parameters receive one or more criteria (comma-separa
 	<tr>
 		<td>left / right </td>
 		<td>Left/right context words. Used for sorting, not for grouping/faceting (use wordleft/wordright instead). Examples: left, left:pos, left:pos:s.</td>
+	</tr>
+	<tr>
+		<td>context</td>
+		<td>More generic context words expression, giving the user more control at the cost of a bit of speed. Examples:
+		    context:word:s:H1-1;E1-1 (first (H1-1) and last (E1-1) matched word), context:word:s:H2 (all but the first matched word), context:word:s:R2-3 (second and third 
+		    word to the right of the match), context:word:s:L1 (left context, starting from first word to the left of the hit, i.e. the same as left:word:s)</td>
 	</tr>
 	<tr>
 		<td>wordleft / wordright </td>
