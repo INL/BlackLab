@@ -570,11 +570,13 @@ public abstract class Job implements Comparable<Job> {
 
 	public synchronized void incrRef() {
 		if (refsToJob == REFS_INVALID)
-			throw new RuntimeException("Cannot add ref, job was already cleaned up!");
+			throw new RuntimeException("Cannot increment refs, job was already cleaned up!");
 		refsToJob++;
 	}
 
 	public synchronized void decrRef() {
+		if (refsToJob == REFS_INVALID)
+			throw new RuntimeException("Cannot decrement refs, job was already cleaned up!");
 		refsToJob--;
 		if (refsToJob == 1) {
 			// Only in cache; set the last accessed time so we
