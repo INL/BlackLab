@@ -52,11 +52,11 @@ public class SearchCache {
 	/** If we're below target mem, how many jobs should we get rid of each time we add something to the cache? */
 	private int numberOfJobsToPurgeWhenBelowTargetMem;
 
-	private int maxConcurrentSearches;
+	private int maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
 
-	private boolean autoDetectMaxConcurrent;
+	private boolean autoDetectMaxConcurrent = true;
 
-	private int maxPausedSearches;
+	private int maxPausedSearches = 10;
 
 	/**
 	 * Initialize the cache.

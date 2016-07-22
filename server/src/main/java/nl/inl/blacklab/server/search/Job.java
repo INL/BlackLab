@@ -2,8 +2,12 @@ package nl.inl.blacklab.server.search;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.apache.log4j.Logger;
 
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Hits;
@@ -16,8 +20,6 @@ import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.util.ExUtil;
 import nl.inl.util.ThreadPriority;
 import nl.inl.util.ThreadPriority.Level;
-
-import org.apache.log4j.Logger;
 
 public abstract class Job implements Comparable<Job> {
 
@@ -56,31 +58,17 @@ public abstract class Job implements Comparable<Job> {
 	 */
 	public static Job create(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
 		Job search = null;
-		String jobClass = par.getString("jobclass");
-		// TODO: use a map of String -> Class<? extends Job>
-		if (jobClass.equals("JobHits")) {
-			search = new JobHits(searchMan, user, par);
-		} else if (jobClass.equals("JobDocs")) {
-			search = new JobDocs(searchMan, user, par);
-		} else if (jobClass.equals("JobHitsSorted")) {
-			search = new JobHitsSorted(searchMan, user, par);
-		} else if (jobClass.equals("JobDocsSorted")) {
-			search = new JobDocsSorted(searchMan, user, par);
-		} else if (jobClass.equals("JobHitsWindow")) {
-			search = new JobHitsWindow(searchMan, user, par);
-		} else if (jobClass.equals("JobDocsWindow")) {
-			search = new JobDocsWindow(searchMan, user, par);
-		} else if (jobClass.equals("JobHitsTotal")) {
-			search = new JobHitsTotal(searchMan, user, par);
-		} else if (jobClass.equals("JobDocsTotal")) {
-			search = new JobDocsTotal(searchMan, user, par);
-		} else if (jobClass.equals("JobHitsGrouped")) {
-			search = new JobHitsGrouped(searchMan, user, par);
-		} else if (jobClass.equals("JobDocsGrouped")) {
-			search = new JobDocsGrouped(searchMan, user, par);
-		} else
-			throw new InternalServerError(1);
-
+		String strJobClass = par.getString("jobclass");
+		if (!strJobClass.startsWith("Job"))
+			throw new InternalServerError("Illegal Job class name", 1);
+		Class<?> jobClass;
+		try {
+			jobClass = Class.forName("nl.inl.blacklab.server.search." + strJobClass);
+			Constructor<?> cons = jobClass.getConstructor(SearchManager.class, User.class, SearchParameters.class);
+			search = (Job)cons.newInstance(searchMan, user, par);
+		} catch (ClassNotFoundException|NoSuchMethodException|InstantiationException|IllegalAccessException|IllegalArgumentException|InvocationTargetException e) {
+			throw new InternalServerError("Error instantiating Job class", 1, e);
+		}
 		return search;
 	}
 

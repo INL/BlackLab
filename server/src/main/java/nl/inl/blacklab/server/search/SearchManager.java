@@ -124,7 +124,7 @@ public class SearchManager {
 
 	// TODO: move to SearchParamaters?
 	/** Default values for request parameters */
-	final static private Map<String, String> defaultParameterValues = new HashMap<>();;
+	final static private Map<String, String> defaultParameterValues = new HashMap<>();
 
 	/** Default number of hits/results per page [20] */
 	private int defaultPageSize;
@@ -299,23 +299,31 @@ public class SearchManager {
 				for (int i = 0; i < jsonOverrideUserIdIps.length(); i++) {
 					overrideUserIdIps.add(jsonOverrideUserIdIps.getString(i));
 				}
+			} else {
+				defaultOutputType = DataFormat.XML;
+				defaultPageSize = 20;
+				maxPageSize = 1000;
+				defaultPatternLanguage = "corpusql";
+				defaultCaseSensitive = defaultDiacriticsSensitive = false;
+				defaultFilterLanguage = "luceneql";
+				defaultBlockingMode = true;
+				defaultContextSize = 5;
+				maxContextSize = 20;
+				maxSnippetSize = 100;
+				maxHitsToRetrieveAllowed = 10000000;
+				maxHitsToCountAllowed = -1;
+				overrideUserIdIps = new HashSet<>();
 			}
 
 			// Performance properties
 			if (properties.has("performance")) {
 				JSONObject perfProp = properties.getJSONObject("performance");
-				minFreeMemForSearchMegs = JsonUtil.getIntProp(perfProp,
-						"minFreeMemForSearchMegs", 50);
-				maxRunningJobsPerUser = JsonUtil.getIntProp(perfProp,
-						"maxRunningJobsPerUser", 20);
-				checkAgainAdviceMinimumMs = JsonUtil.getIntProp(perfProp,
-						"checkAgainAdviceMinimumMs", 200);
-				checkAgainAdviceDivider = JsonUtil.getIntProp(perfProp,
-						"checkAgainAdviceDivider", 5);
-				waitTimeInNonblockingModeMs = JsonUtil.getIntProp(perfProp,
-						"waitTimeInNonblockingModeMs", 100);
-				clientCacheTimeSec = JsonUtil.getIntProp(perfProp,
-						"clientCacheTimeSec", 3600);
+				minFreeMemForSearchMegs = JsonUtil.getIntProp(perfProp, "minFreeMemForSearchMegs", 50);
+				maxRunningJobsPerUser = JsonUtil.getIntProp(perfProp, "maxRunningJobsPerUser", 20);
+				checkAgainAdviceMinimumMs = JsonUtil.getIntProp(perfProp, "checkAgainAdviceMinimumMs", 200);
+				checkAgainAdviceDivider = JsonUtil.getIntProp(perfProp, "checkAgainAdviceDivider", 5);
+				waitTimeInNonblockingModeMs = JsonUtil.getIntProp(perfProp, "waitTimeInNonblockingModeMs", 100);
+				clientCacheTimeSec = JsonUtil.getIntProp(perfProp, "clientCacheTimeSec", 3600);
 
 				// Cache properties
 				JSONObject cacheProp = perfProp.getJSONObject("cache");
@@ -335,7 +343,14 @@ public class SearchManager {
 				}
 				cache.setServerLoadOptions(jsonServerLoad);
 			} else {
-				cache = new SearchCache(); // default settings
+				// Set default values
+				minFreeMemForSearchMegs = 50;
+				maxRunningJobsPerUser = 20;
+				checkAgainAdviceMinimumMs = 200;
+				checkAgainAdviceDivider = 5;
+				waitTimeInNonblockingModeMs = 100;
+				clientCacheTimeSec = 3600;
+				cache = new SearchCache();
 			}
 
 			// Find the indices
