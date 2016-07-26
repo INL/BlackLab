@@ -730,7 +730,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 						// 2 - read and decode blocks
 						StringBuilder decoded = new StringBuilder();
 						for (int j = firstBlock; j <= lastBlock; j++) {
-							int blockNum = e.getBlockNumber(j);
+							long blockNum = e.getBlockNumber(j);
 							long readStartOffset = blockNum * BLOCK_SIZE_BYTES;
 							int bytesToRead = BLOCK_SIZE_BYTES;
 							ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
