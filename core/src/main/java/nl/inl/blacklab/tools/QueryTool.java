@@ -330,6 +330,8 @@ public class QueryTool {
 	/** Strip XML tags when displaying concordances? */
 	private boolean stripXML = true;
 
+	private String contentsField;
+
 	/**
 	 * The main program.
 	 *
@@ -519,6 +521,7 @@ public class QueryTool {
 	 */
 	public QueryTool(Searcher searcher, BufferedReader in, PrintWriter out, PrintWriter err) throws CorruptIndexException {
 		this.searcher = searcher;
+		this.contentsField = searcher.getMainContentsFieldName();
 		shouldCloseSearcher = false; // caller is responsible
 
 		this.in = in;
@@ -563,6 +566,7 @@ public class QueryTool {
 		// Create the BlackLab searcher object
 		try {
 			searcher = Searcher.open(indexDir);
+			contentsField = searcher.getMainContentsFieldName();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -597,6 +601,7 @@ public class QueryTool {
 		if (shouldCloseSearcher)
 			searcher.close();
 		this.searcher = searcher;
+		contentsField = searcher.getMainContentsFieldName();
 		shouldCloseSearcher = false; // caller is responsible
 
 		// Reset results
@@ -1064,7 +1069,7 @@ public class QueryTool {
 			}
 			pattern = pattern.rewrite();
 			if (verbose)
-				outprintln("TextPattern: " + pattern.toString(searcher, CONTENTS_FIELD));
+				outprintln("TextPattern: " + pattern.toString(searcher, contentsField));
 
 			// If the query included filter clauses, use those. Otherwise use the global filter, if any.
 			Query filterForThisQuery = parser.getIncludedFilterQuery();
@@ -1073,9 +1078,9 @@ public class QueryTool {
 			Filter filter = filterForThisQuery == null ? null : new QueryWrapperFilter(filterForThisQuery);
 
 			// Execute search
-			SpanQuery spanQuery = searcher.createSpanQuery(pattern, searcher.getMainContentsFieldName(), filter);
+			SpanQuery spanQuery = searcher.createSpanQuery(pattern, contentsField, filter);
 			if (verbose)
-				outprintln("SpanQuery: " + spanQuery.toString(CONTENTS_FIELD));
+				outprintln("SpanQuery: " + spanQuery.toString(contentsField));
 			hits = searcher.find(spanQuery);
 			docs = null;
 			groups = null;
@@ -1176,8 +1181,6 @@ public class QueryTool {
 		}
 	}
 
-	final String CONTENTS_FIELD = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
-
 	/** Desired context size */
 	private int contextSize;
 
@@ -1205,14 +1208,14 @@ public class QueryTool {
 			crit = new HitPropertyDocumentId(hitsToSort);
 		else {
 			if (sortBy.equalsIgnoreCase("match") || sortBy.equalsIgnoreCase("word"))
-				crit = new HitPropertyHitText(hitsToSort, CONTENTS_FIELD, property);
+				crit = new HitPropertyHitText(hitsToSort, contentsField, property);
 			else if (sortBy.equalsIgnoreCase("left"))
-				crit = new HitPropertyLeftContext(hitsToSort, CONTENTS_FIELD, property);
+				crit = new HitPropertyLeftContext(hitsToSort, contentsField, property);
 			else if (sortBy.equalsIgnoreCase("right"))
-				crit = new HitPropertyRightContext(hitsToSort, CONTENTS_FIELD, property);
+				crit = new HitPropertyRightContext(hitsToSort, contentsField, property);
 			else if (sortBy.equalsIgnoreCase("lempos")) {
-				HitProperty p1 = new HitPropertyHitText(hitsToSort, CONTENTS_FIELD, "lemma");
-				HitProperty p2 = new HitPropertyHitText(hitsToSort, CONTENTS_FIELD, "pos");
+				HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField, "lemma");
+				HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField, "pos");
 				crit = new HitPropertyMultiple(p1, p2);
 			} else if (searcher.getIndexStructure().getMetadataFields().contains(sortBy)) {
 				crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
@@ -1281,14 +1284,14 @@ public class QueryTool {
 		HitProperty crit = null;
 		try {
 			if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
-				crit = new HitPropertyHitText(hits, CONTENTS_FIELD, property);
+				crit = new HitPropertyHitText(hits, contentsField, property);
 			else if (groupBy.startsWith("left"))
-				crit = new HitPropertyWordLeft(hits, CONTENTS_FIELD, property);
+				crit = new HitPropertyWordLeft(hits, contentsField, property);
 			else if (groupBy.startsWith("right"))
-				crit = new HitPropertyWordRight(hits, CONTENTS_FIELD, property);
+				crit = new HitPropertyWordRight(hits, contentsField, property);
 			else if (groupBy.equals("test")) {
-				HitProperty p1 = new HitPropertyHitText(hits, CONTENTS_FIELD, "lemma");
-				HitProperty p2 = new HitPropertyHitText(hits, CONTENTS_FIELD, "type");
+				HitProperty p1 = new HitPropertyHitText(hits, contentsField, "lemma");
+				HitProperty p2 = new HitPropertyHitText(hits, contentsField, "type");
 				crit = new HitPropertyMultiple(p1, p2);
 			}
 		} catch (Exception e) {
