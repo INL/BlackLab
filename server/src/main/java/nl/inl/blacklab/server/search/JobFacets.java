@@ -1,14 +1,15 @@
 package nl.inl.blacklab.server.search;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocProperty;
-import nl.inl.blacklab.perdocument.DocPropertyMultiple;
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -22,14 +23,15 @@ public class JobFacets extends Job {
 
 	private DocResults docResults;
 
-	public JobFacets(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobFacets(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking docs search.
-		SearchParameters parNoGroup = par.copyWithout("group", "sort");
+		Description parNoGroup = DescriptionImpl.jobDocs(JobDocs.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(),
+				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
 		JobWithDocs docsSearch = searchMan.searchDocs(user, parNoGroup);
 		try {
 			waitForJobToFinish(docsSearch);
@@ -40,22 +42,7 @@ public class JobFacets extends Job {
 			docsSearch.decrRef();
 			docsSearch = null;
 		}
-		String facets = par.getString("facets");
-		if (facets == null) {
-			// If no facets were specified, we shouldn't even be here.
-			throw new RuntimeException("facets == null");
-		}
-		DocProperty propMultipleFacets = DocProperty.deserialize(facets);
-		List<DocProperty> props = new ArrayList<>();
-		if (propMultipleFacets instanceof DocPropertyMultiple) {
-			// Multiple facets requested
-			for (DocProperty prop: (DocPropertyMultiple)propMultipleFacets) {
-				props.add(prop);
-			}
-		} else {
-			// Just a single facet requested
-			props.add(propMultipleFacets);
-		}
+		List<DocProperty> props = jobDesc.getFacets();
 
 		Map<String, DocCounts> theCounts = new HashMap<>();
 		for (DocProperty facetBy: props) {
@@ -85,7 +72,7 @@ public class JobFacets extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("numberOfDocResults", docResults == null ? -1 : docResults.size());
 		d.put("numberOfFacets", counts == null ? -1 : counts.size());
@@ -97,6 +84,10 @@ public class JobFacets extends Job {
 		counts = null;
 		docResults = null;
 		super.cleanup();
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, List<DocProperty> facets, MaxSettings maxSettings) {
+		return DescriptionImpl.facets(JobFacets.class, searchMan, indexName, pattern, filterQuery, facets, maxSettings);
 	}
 
 }

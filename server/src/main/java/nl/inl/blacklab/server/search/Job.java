@@ -5,13 +5,18 @@ import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectList;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -43,34 +48,362 @@ public abstract class Job implements Comparable<Job> {
 	 */
 	final static boolean ENABLE_JOB_CLEANUP = false;
 
+	/** Description of a job */
+	public static interface Description {
+		/**
+		 * Generate a unique identifier string for this job, for caching, etc.
+		 * @return the unique identifier string
+		 */
+		String uniqueIdentifier();
+
+		/**
+		 * Create the job corresponding to this description.
+		 * @param searchMan searchmanager to use
+		 * @param user user that created the job
+		 * @return newly created job
+		 * @throws BlsException on error
+		 */
+		Job createJob(SearchManager searchMan, User user) throws BlsException;
+
+		/**
+		 * Get the index name
+		 * @return name of the index this job if for
+		 */
+		String getIndexName();
+
+		/**
+		 * Get the pattern to search for (if any)
+		 * @return pattern, or null if none given
+		 * @throws BlsException on error
+		 */
+		TextPattern getPattern() throws BlsException;
+
+		String getDocPid();
+
+		Query getFilterQuery() throws BlsException;
+
+		SampleSettings getSampleSettings();
+
+		MaxSettings getMaxSettings();
+
+		WindowSettings getWindowSettings();
+
+		ContextSettings getContextSettings();
+
+		DocGroupSettings docGroupSettings() throws BlsException;
+
+		DocGroupSortSettings docGroupSortSettings() throws BlsException;
+
+		DocSortSettings docSortSettings();
+
+		List<DocProperty> getFacets();
+
+		HitGroupSettings hitGroupSettings();
+
+		HitGroupSortSettings hitGroupSortSettings();
+
+		HitsSortSettings hitsSortSettings();
+
+		boolean hasSort();
+
+		DataObject toDataObject();
+
+	}
+
+	/** Description of a job */
+	public static class DescriptionImpl implements Description {
+
+		private Class<? extends Job> jobClass;
+
+		private SearchManager searchMan;
+
+		private String indexName;
+
+		private TextPattern pattern;
+
+		private Query filterQuery;
+
+		private HitsSortSettings hitsSortSett;
+
+		private HitGroupSettings hitsGroupSett;
+
+		private HitGroupSortSettings hitsGroupSortSett;
+
+		private DocSortSettings docSortSett;
+
+		private DocGroupSettings docGroupSett;
+
+		private DocGroupSortSettings docGroupSortSett;
+
+		private String docPid;
+
+		private MaxSettings maxSettings;
+
+		private SampleSettings sampleSettings;
+
+		private WindowSettings windowSettings;
+
+		private ContextSettings contextSettings;
+
+		private List<DocProperty> facets;
+
+		public DescriptionImpl(SearchManager searchMan) {
+			this.searchMan = searchMan;
+		}
+
+		@Override
+		public String toString() {
+			try {
+				return "DescriptionImpl [jobClass=" + jobClass + ", indexName=" + indexName + ", pattern=" + pattern.toString(getSearcher()) + ", filterQuery="
+						+ filterQuery + ", hitsSortSett=" + hitsSortSett + ", hitsGroupSett=" + hitsGroupSett + ", hitsGroupSortSett="
+						+ hitsGroupSortSett + ", docSortSett=" + docSortSett + ", docGroupSett=" + docGroupSett + ", docGroupSortSortSett="
+						+ docGroupSortSett + ", docPid=" + docPid + ", maxSettings=" + maxSettings + ", sampleSettings=" +
+						sampleSettings + ", windowSettings=" + windowSettings + ", contextSettings=" + contextSettings
+						+ ", facets=" + facets
+						+ "]";
+			} catch (BlsException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		Searcher getSearcher() throws BlsException {
+			return searchMan.getSearcher(indexName);
+		}
+
+		/**
+		 * Generate a unique identifier string for this job, for caching, etc.
+		 * @return the unique identifier string
+		 */
+		@Override
+		public String uniqueIdentifier() {
+			return toString();
+		}
+
+		/**
+		 * Create the job corresponding to this description.
+		 * @param searchMan searchmanager to use
+		 * @param user user that created the job
+		 * @return newly created job
+		 * @throws BlsException on error
+		 */
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			try {
+				Constructor<?> cons = jobClass.getConstructor(SearchManager.class, User.class, Description.class);
+				return (Job)cons.newInstance(searchMan, user, this);
+			} catch (NoSuchMethodException|InstantiationException|IllegalAccessException|IllegalArgumentException|InvocationTargetException e) {
+				throw new InternalServerError("Error instantiating Job class", 1, e);
+			}
+		}
+
+		/**
+		 * Get the index name
+		 * @return name of the index this job if for
+		 */
+		@Override
+		public String getIndexName() {
+			return indexName;
+		}
+
+		/**
+		 * Get the pattern to search for (if any)
+		 * @return pattern, or null if none given
+		 */
+		@Override
+		public TextPattern getPattern() {
+			return pattern;
+		}
+
+		@Override
+		public String getDocPid() {
+			return docPid;
+		}
+
+		@Override
+		public Query getFilterQuery() {
+			return filterQuery;
+		}
+
+		@Override
+		public SampleSettings getSampleSettings() {
+			return sampleSettings;
+		}
+
+		@Override
+		public MaxSettings getMaxSettings() {
+			return maxSettings;
+		}
+
+		@Override
+		public WindowSettings getWindowSettings() {
+			return windowSettings;
+		}
+
+		@Override
+		public ContextSettings getContextSettings() {
+			return contextSettings;
+		}
+
+		@Override
+		public DocGroupSettings docGroupSettings() {
+			return docGroupSett;
+		}
+
+		@Override
+		public DocGroupSortSettings docGroupSortSettings() {
+			return docGroupSortSett;
+		}
+
+		@Override
+		public DocSortSettings docSortSettings() {
+			return docSortSett;
+		}
+
+		@Override
+		public List<DocProperty> getFacets() {
+			return facets;
+		}
+
+		@Override
+		public HitGroupSettings hitGroupSettings() {
+			return hitsGroupSett;
+		}
+
+		@Override
+		public HitGroupSortSettings hitGroupSortSettings() {
+			return hitsGroupSortSett;
+		}
+
+		@Override
+		public HitsSortSettings hitsSortSettings() {
+			return hitsSortSett;
+		}
+
+		@Override
+		public boolean hasSort() {
+			return hitsSortSett != null || hitsGroupSortSett != null || docSortSett != null || docGroupSortSett != null;
+		}
+
+		public static Description jobHits(Class<? extends Job> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, HitsSortSettings hitsSortSettings,
+				String docPid, MaxSettings maxSettings, SampleSettings sampleSettings, WindowSettings windowSettings,
+				ContextSettings contextSettings) {
+			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			desc.jobClass = jobClass;
+			desc.indexName = indexName;
+			desc.pattern = pattern;
+			desc.filterQuery = filterQuery;
+			desc.hitsSortSett = hitsSortSettings;
+			desc.docPid = docPid;
+			desc.maxSettings = maxSettings;
+			desc.sampleSettings = sampleSettings;
+			desc.windowSettings = windowSettings;
+			desc.contextSettings = contextSettings;
+			return desc;
+		}
+
+		public static Description jobDocs(Class<? extends Job> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+				DocSortSettings sortSettings, MaxSettings maxSettings, WindowSettings windowSettings, ContextSettings contextSettings) {
+			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			desc.jobClass = jobClass;
+			desc.indexName = indexName;
+			desc.pattern = pattern;
+			desc.filterQuery = filterQuery;
+			desc.docSortSett = sortSettings;
+			desc.maxSettings = maxSettings;
+			desc.windowSettings = windowSettings;
+			desc.contextSettings = contextSettings;
+			return desc;
+		}
+
+		public static Description hitsGrouped(Class<? extends Job> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+				HitGroupSettings hitGroupSettings, HitGroupSortSettings hitGroupSortSettings, MaxSettings maxSettings,
+				SampleSettings sampleSettings) {
+			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			desc.jobClass = jobClass;
+			desc.indexName = indexName;
+			desc.pattern = pattern;
+			desc.filterQuery = filterQuery;
+			desc.hitsGroupSett = hitGroupSettings;
+			desc.hitsGroupSortSett = hitGroupSortSettings;
+			desc.maxSettings = maxSettings;
+			desc.sampleSettings = sampleSettings;
+			return desc;
+		}
+
+		public static Description docsGrouped(Class<JobDocsGrouped> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+				DocGroupSettings docGroupSettings, DocGroupSortSettings docGroupSortSettings, MaxSettings maxSettings) {
+			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			desc.jobClass = jobClass;
+			desc.indexName = indexName;
+			desc.pattern = pattern;
+			desc.filterQuery = filterQuery;
+			desc.docGroupSett = docGroupSettings;
+			desc.docGroupSortSett = docGroupSortSettings;
+			desc.maxSettings = maxSettings;
+			return desc;
+		}
+
+		public static Description facets(Class<JobFacets> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+				List<DocProperty> facets, MaxSettings maxSettings) {
+			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			desc.jobClass = jobClass;
+			desc.indexName = indexName;
+			desc.pattern = pattern;
+			desc.filterQuery = filterQuery;
+			desc.maxSettings = maxSettings;
+			return desc;
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement d = new DataObjectMapElement();
+			d.put("jobClass", jobClass.getSimpleName());
+			d.put("indexName", indexName);
+			if (pattern != null) {
+				try {
+					d.put("pattern", pattern.toString(getSearcher()));
+				} catch (BlsException e) {
+					throw new RuntimeException(e);
+				}
+			}
+			if (filterQuery != null)
+				d.put("filterQuery", filterQuery.toString());
+			if (hitsSortSett != null)
+				d.put("hitsSortSett", hitsSortSett.toString());
+			if (hitsGroupSett != null)
+				d.put("hitsGroupSett", hitsGroupSett.toString());
+			if (hitsGroupSortSett != null)
+				d.put("hitsGroupSortSett", hitsGroupSortSett.toString());
+			if (docSortSett != null)
+				d.put("docSortSett", docSortSett.toString());
+			if (docGroupSett != null)
+				d.put("docGroupSett", docGroupSett.toString());
+			if (docGroupSortSett != null)
+				d.put("docGroupSortSett", docGroupSortSett.toString());
+			if (docPid != null)
+				d.put("docPid", docPid);
+			if (maxSettings != null)
+				d.put("maxSettings", maxSettings.toString());
+			if (sampleSettings != null)
+				d.put("sampleSettings", sampleSettings.toString());
+			if (windowSettings != null)
+				d.put("windowSettings", windowSettings.toString());
+			if (contextSettings != null)
+				d.put("contextSettings", contextSettings.toString());
+			if (facets != null) {
+				DataObjectList l = new DataObjectList("facet");
+				for (DocProperty facet: facets) {
+					l.add(facet.toString());
+				}
+				d.put("facets", l);
+			}
+			return d;
+		}
+
+	}
+
 	/** id for the next job started */
 	static long nextJobId = 0;
-
-	/**
-	 * Create a new Search (subclass) object to carry out the specified search,
-	 * and call the perform() method to start the search.
-	 *
-	 * @param searchMan the servlet
-	 * @param user user creating the job
-	 * @param par search parameters
-	 * @return the new Search object
-	 * @throws BlsException
-	 */
-	public static Job create(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
-		Job search = null;
-		String strJobClass = par.getString("jobclass");
-		if (!strJobClass.startsWith("Job"))
-			throw new InternalServerError("Illegal Job class name", 1);
-		Class<?> jobClass;
-		try {
-			jobClass = Class.forName("nl.inl.blacklab.server.search." + strJobClass);
-			Constructor<?> cons = jobClass.getConstructor(SearchManager.class, User.class, SearchParameters.class);
-			search = (Job)cons.newInstance(searchMan, user, par);
-		} catch (ClassNotFoundException|NoSuchMethodException|InstantiationException|IllegalAccessException|IllegalArgumentException|InvocationTargetException e) {
-			throw new InternalServerError("Error instantiating Job class", 1, e);
-		}
-		return search;
-	}
 
 	/** Unique job id */
 	long id = nextJobId++;
@@ -151,8 +484,21 @@ public abstract class Job implements Comparable<Job> {
 	/** Thread object carrying out the search, if performing the search. */
 	private SearchThread searchThread = null;
 
-	/** Parameters uniquely identifying this search */
-	protected SearchParameters par;
+	/** Description of this job */
+	protected Description jobDesc;
+
+	/** If this job was initiated directly by user interaction, this contains
+	 *  the original servlet parameters. Otherwise, it is null.
+	 */
+	protected SearchParameters searchParam;
+
+	public SearchParameters getSearchParam() {
+		return searchParam;
+	}
+
+	public void setSearchParam(SearchParameters searchParam) {
+		this.searchParam = searchParam;
+	}
 
 	/** The servlet */
 	protected SearchManager searchMan;
@@ -163,12 +509,12 @@ public abstract class Job implements Comparable<Job> {
 	/** Is this job running in low priority? */
 	protected ThreadPriority.Level level = ThreadPriority.Level.RUNNING;
 
-	public Job(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public Job(SearchManager searchMan, User user, Description par) throws BlsException {
 		super();
 		this.searchMan = searchMan;
 		this.user = user;
-		this.par = par;
-		searcher = searchMan.getSearcher(par.getString("indexname"));
+		this.jobDesc = par;
+		searcher = searchMan.getSearcher(par.getIndexName());
 		resetLastAccessed();
 		startedAt = -1;
 		finishedAt = -1;
@@ -284,8 +630,8 @@ public abstract class Job implements Comparable<Job> {
 		lastAccessed = System.currentTimeMillis();
 	}
 
-	public SearchParameters getParameters() {
-		return par;
+	public Job.Description getParameters() {
+		return jobDesc;
 	}
 
 	/** Perform the search.
@@ -439,7 +785,7 @@ public abstract class Job implements Comparable<Job> {
 
 	@Override
 	public String toString() {
-		return id + ": " + par.toString();
+		return id + ": " + jobDesc.toString();
 	}
 
 	private String shortUserId() {
@@ -462,7 +808,14 @@ public abstract class Job implements Comparable<Job> {
 		logger.error(shortUserId() + " " + msg);
 	}
 
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	/**
+	 * Convert the job to a data object for displaying in cache info.
+	 *
+	 * @param debugInfo include debug info?
+	 * @return the data object
+	 * @throws BlsException on error
+	 */
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement stats = new DataObjectMapElement();
 		boolean isCount = (this instanceof JobHitsTotal) || (this instanceof JobDocsTotal);
 		stats.put("type", isCount ? "count" : "search");
@@ -478,7 +831,9 @@ public abstract class Job implements Comparable<Job> {
 		DataObjectMapElement d = new DataObjectMapElement();
 		d.put("id", id);
 		d.put("class", getClass().getSimpleName());
-		d.put("searchParam", par.toDataObject());
+		if (searchParam != null)
+			d.put("searchParam", searchParam.toDataObject());
+		d.put("jobDesc", jobDesc.toDataObject());
 		d.put("stats", stats);
 
 		if (debugInfo) {

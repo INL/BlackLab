@@ -1,6 +1,9 @@
 package nl.inl.blacklab.server.search;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -13,14 +16,14 @@ public class JobHitsTotal extends Job {
 
 	private Hits hits = null;
 
-	public JobHitsTotal(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobHitsTotal(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		JobWithHits hitsSearch = searchMan.searchHits(user, par);
+		JobWithHits hitsSearch = searchMan.searchHits(user, jobDesc);
 		try {
 			waitForJobToFinish(hitsSearch);
 
@@ -58,7 +61,7 @@ public class JobHitsTotal extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("hitsCounted", hits != null ? hits.countSoFarHitsCounted() : -1);
 		return d;
@@ -68,6 +71,11 @@ public class JobHitsTotal extends Job {
 	protected void cleanup() {
 		hits = null;
 		super.cleanup();
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+			MaxSettings maxSettings, SampleSettings sampleSettings) {
+		return DescriptionImpl.jobHits(JobHitsTotal.class, searchMan, indexName, pattern, filterQuery, null, null, maxSettings, sampleSettings, null, null);
 	}
 
 }

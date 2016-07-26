@@ -1,8 +1,10 @@
 package nl.inl.blacklab.server.search;
 
-import nl.inl.blacklab.search.ConcordanceType;
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -16,36 +18,32 @@ public class JobHitsWindow extends Job {
 
 	private int requestedWindowSize;
 
-	public JobHitsWindow(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobHitsWindow(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		JobWithHits hitsSearch = searchMan.searchHits(user, par);
+		JobWithHits hitsSearch = searchMan.searchHits(user, jobDesc);
 		try {
 			waitForJobToFinish(hitsSearch);
 
 			// Now, create a HitsWindow on these hits.
 			Hits hits = hitsSearch.getHits();
 			setPriorityInternal(); // make sure hits has the right priority
-			int first = par.getInteger("first");
-			requestedWindowSize = par.getInteger("number");
+			WindowSettings windowSett = jobDesc.getWindowSettings();
+			int first = windowSett.first();
+			requestedWindowSize = windowSett.size();
 			if (!hits.sizeAtLeast(first + 1)) {
 				debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
 				first = 0;
 			}
 			hitsWindow = hits.window(first, requestedWindowSize);
 			setPriorityInternal(); // make sure hits has the right priority
-			int contextSize = par.getInteger("wordsaroundhit");
-			int maxContextSize = searchMan.getMaxContextSize();
-			if (contextSize > maxContextSize) {
-				debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
-				contextSize = maxContextSize;
-			}
-			hitsWindow.settings().setContextSize(contextSize);
-			hitsWindow.settings().setConcordanceType(par.getString("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX);
+			ContextSettings contextSett = jobDesc.getContextSettings();
+			hitsWindow.settings().setContextSize(contextSett.size());
+			hitsWindow.settings().setConcordanceType(contextSett.concType());
 		} finally {
 			hitsSearch.decrRef();
 		}
@@ -66,7 +64,7 @@ public class JobHitsWindow extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("requestedWindowSize", requestedWindowSize);
 		d.put("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.size());
@@ -77,6 +75,11 @@ public class JobHitsWindow extends Job {
 	protected void cleanup() {
 		hitsWindow = null;
 		super.cleanup();
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, HitsSortSettings hitsSortSettings,
+			WindowSettings windowSettings, ContextSettings contextSettings, MaxSettings maxSettings, SampleSettings sampleSettings) {
+		return DescriptionImpl.jobHits(JobHitsWindow.class, searchMan, indexName, pattern, filterQuery, hitsSortSettings, null, maxSettings, sampleSettings, windowSettings, contextSettings);
 	}
 
 }

@@ -1059,103 +1059,73 @@ public class SearchManager {
 		return indices;
 	}
 
-	public JobWithHits searchHits(User user, SearchParameters par)
+	public JobWithHits searchHits(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("indexname", "patt",
-				"pattlang", "filter", "filterlang", "sort", "docpid",
-				"maxretrieve", "maxcount", "sample", "samplenum", "sampleseed");
-		String sort = parBasic.get("sort");
-		if (sort != null && sort.length() > 0) {
-			// Sorted hits
-			parBasic.put("jobclass", "JobHitsSorted");
-			return (JobHitsSorted) search(user, parBasic);
+		Job.Description parBasic;
+		if (par.hasSort()) {
+			parBasic = JobHitsSorted.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+					par.hitsSortSettings(), par.getDocPid(), par.getMaxSettings(), par.getSampleSettings());
+		} else {
+			parBasic = JobHits.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+					par.getDocPid(), par.getMaxSettings(), par.getSampleSettings());
 		}
-
-		// No sort
-		parBasic.remove("sort"); // unsorted must not include sort parameter, or
-									// it's cached wrong
-		parBasic.put("jobclass", "JobHits");
-		return (JobHits) search(user, parBasic);
+		return (JobWithHits) search(user, parBasic);
 	}
 
-	public JobWithDocs searchDocs(User user, SearchParameters par)
+	public JobWithDocs searchDocs(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("indexname", "patt",
-				"pattlang", "filter", "filterlang", "sort", "usecontent",
-				"maxretrieve", "maxcount");
-		String sort = parBasic.get("sort");
-		if (sort != null && sort.length() > 0) {
-			// Sorted hits
-			parBasic.put("jobclass", "JobDocsSorted");
-			return (JobDocsSorted) search(user, parBasic);
-		}
-
-		// No sort
-		parBasic.remove("sort"); // unsorted must not include sort parameter, or
-									// it's cached wrong
-		parBasic.put("jobclass", "JobDocs");
-		return (JobDocs) search(user, parBasic);
+		Job.Description parBasic = JobDocs.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.docSortSettings(), par.getContextSettings(), par.getMaxSettings());
+		return (JobWithDocs) search(user, parBasic);
 	}
 
-	public JobHitsWindow searchHitsWindow(User user, SearchParameters par)
+	public JobHitsWindow searchHitsWindow(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("indexname", "patt",
-				"pattlang", "filter", "filterlang", "sort", "first", "number",
-				"wordsaroundhit", "usecontent", "maxretrieve", "maxcount",
-				"sample", "samplenum", "sampleseed");
-		parBasic.put("jobclass", "JobHitsWindow");
+		Job.Description parBasic = JobHitsWindow.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.hitsSortSettings(), par.getWindowSettings(), par.getContextSettings(), par.getMaxSettings(),
+				par.getSampleSettings());
 		return (JobHitsWindow) search(user, parBasic);
 	}
 
-	public JobDocsWindow searchDocsWindow(User user, SearchParameters par)
+	public JobDocsWindow searchDocsWindow(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("indexname", "patt",
-				"pattlang", "filter", "filterlang", "sort", "first", "number",
-				"wordsaroundhit", "usecontent", "maxretrieve", "maxcount");
-		parBasic.put("jobclass", "JobDocsWindow");
+		Job.Description parBasic = JobDocsWindow.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.docSortSettings(), par.getWindowSettings(), par.getContextSettings(), par.getMaxSettings());
 		return (JobDocsWindow) search(user, parBasic);
 	}
 
-	public JobHitsTotal searchHitsTotal(User user, SearchParameters par)
+	public JobHitsTotal searchHitsTotal(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("indexname", "patt",
-				"pattlang", "filter", "filterlang", "maxretrieve", "maxcount",
-				"sample", "samplenum", "sampleseed");
-		parBasic.put("jobclass", "JobHitsTotal");
+		Job.Description parBasic = JobHitsTotal.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.getMaxSettings(), par.getSampleSettings());
 		return (JobHitsTotal) search(user, parBasic);
 	}
 
-	public JobDocsTotal searchDocsTotal(User user, SearchParameters par)
+	public JobDocsTotal searchDocsTotal(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("indexname", "patt",
-				"pattlang", "filter", "filterlang", "maxretrieve", "maxcount");
-		parBasic.put("jobclass", "JobDocsTotal");
+		Job.Description parBasic = JobDocsTotal.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.getMaxSettings());
 		return (JobDocsTotal) search(user, parBasic);
 	}
 
-	public JobHitsGrouped searchHitsGrouped(User user, SearchParameters par)
+	public JobHitsGrouped searchHitsGrouped(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("indexname", "patt",
-				"pattlang", "filter", "filterlang", "group", "sort",
-				"maxretrieve", "maxcount", "sample", "samplenum", "sampleseed");
-		parBasic.put("jobclass", "JobHitsGrouped");
+		Job.Description parBasic = JobHitsGrouped.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.hitGroupSettings(), par.hitGroupSortSettings(), par.getMaxSettings(), par.getSampleSettings());
 		return (JobHitsGrouped) search(user, parBasic);
 	}
 
-	public JobDocsGrouped searchDocsGrouped(User user, SearchParameters par)
+	public JobDocsGrouped searchDocsGrouped(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("indexname", "patt",
-				"pattlang", "filter", "filterlang", "group", "sort",
-				"maxretrieve", "maxcount");
-		parBasic.put("jobclass", "JobDocsGrouped");
+		Job.Description parBasic = JobDocsGrouped.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.docGroupSettings(), par.docGroupSortSettings(), par.getMaxSettings());
 		return (JobDocsGrouped) search(user, parBasic);
 	}
 
-	public JobFacets searchFacets(User user, SearchParameters par)
+	public JobFacets searchFacets(User user, Job.Description par)
 			throws BlsException {
-		SearchParameters parBasic = par.copyWithOnly("facets", "indexname",
-				"patt", "pattlang", "filter", "filterlang");
-		parBasic.put("jobclass", "JobFacets");
+		Job.Description parBasic = JobFacets.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.getFacets(), par.getMaxSettings());
 		return (JobFacets) search(user, parBasic);
 	}
 
@@ -1174,7 +1144,7 @@ public class SearchManager {
 	 * @throws BlsException
 	 *             if the query couldn't be executed
 	 */
-	private Job search(User user, SearchParameters searchParameters)
+	private Job search(User user, Job.Description searchParameters)
 			throws BlsException {
 		//logger.debug("@PERF search");
 		try {
@@ -1225,7 +1195,7 @@ public class SearchManager {
 
 					// Create a new search object with these parameters and place it
 					// in the cache
-					job = Job.create(this, user, searchParameters);
+					job = searchParameters.createJob(this, user);
 					if (job == null) {
 						logger.error("search == null, unpossiblez!!!");
 					}
@@ -1449,7 +1419,7 @@ public class SearchManager {
 		return cache.getCacheStatusDataObject();
 	}
 
-	public synchronized DataObject getCacheContentsDataObject(boolean debugInfo) {
+	public synchronized DataObject getCacheContentsDataObject(boolean debugInfo) throws BlsException {
 		return cache.getContentsDataObject(debugInfo);
 	}
 

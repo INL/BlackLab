@@ -1,6 +1,9 @@
 package nl.inl.blacklab.server.search;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -11,14 +14,16 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobHitsSorted extends JobWithHits {
 
-	public JobHitsSorted(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobHitsSorted(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		SearchParameters parNoSort = par.copyWithout("sort");
+		Description parNoSort = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(), jobDesc.getFilterQuery(),
+				null, jobDesc.getDocPid(), jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
+				jobDesc.getContextSettings());
 		JobWithHits hitsSearch = searchMan.searchHits(user, parNoSort);
 		Hits hitsUnsorted;
 		try {
@@ -30,15 +35,8 @@ public class JobHitsSorted extends JobWithHits {
 			hitsSearch.decrRef();
 			hitsSearch = null;
 		}
-		String sortBy = par.getString("sort");
-		if (sortBy == null)
-			sortBy = "";
-		boolean reverse = false;
-		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-			reverse = true;
-			sortBy = sortBy.substring(1);
-		}
-		HitProperty sortProp = HitProperty.deserialize(hitsUnsorted, sortBy);
+		HitsSortSettings sortSett = jobDesc.hitsSortSettings();
+		HitProperty sortProp = HitProperty.deserialize(hits, sortSett.sortBy());
 		/*if (sortProp == null)
 			throw new QueryException("UNKNOWN_SORT_PROPERTY", "Unknown sort property '" + sortBy + "'.");
 		*/
@@ -50,7 +48,7 @@ public class JobHitsSorted extends JobWithHits {
 			// if that particular sort cannot be performed on that type of search.
 			// We don't want the client to have to validate this, so we simply
 			// ignore sort requests we can't carry out.
-			hits = hitsUnsorted.sortedBy(sortProp, reverse);
+			hits = hitsUnsorted.sortedBy(sortProp, sortSett.reverse());
 		} else
 			hits = hitsUnsorted;
 		setPriorityInternal();
@@ -68,10 +66,15 @@ public class JobHitsSorted extends JobWithHits {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("numberOfHits", hits == null ? -1 : hits.size());
 		return d;
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+			HitsSortSettings hitsSortSett, String docPid, MaxSettings maxSettings, SampleSettings sampleSettings) {
+		return DescriptionImpl.jobHits(JobHitsSorted.class, searchMan, indexName, pattern, filterQuery, hitsSortSett, docPid, maxSettings, sampleSettings, null, null);
 	}
 
 }

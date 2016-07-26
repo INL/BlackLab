@@ -1,14 +1,29 @@
 package nl.inl.blacklab.server.search;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
+import org.apache.lucene.search.Query;
+
+import nl.inl.blacklab.perdocument.DocGroupProperty;
+import nl.inl.blacklab.perdocument.DocProperty;
+import nl.inl.blacklab.perdocument.DocPropertyMultiple;
+import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.HitsSample;
+import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.grouping.GroupProperty;
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
-
-import org.apache.log4j.Logger;
+import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 
 /**
  * Uniquely describes a search operation.
@@ -17,7 +32,7 @@ import org.apache.log4j.Logger;
  *
  * Derives from TreeMap because it keeps entries in sorted order, which can  be convenient.
  */
-public class SearchParameters extends TreeMap<String, String> {
+public class SearchParameters extends TreeMap<String, String> implements Job.Description {
 	private static final Logger logger = Logger.getLogger(SearchParameters.class);
 
 	/** The search manager, for querying default value for missing parameters */
@@ -57,13 +72,7 @@ public class SearchParameters extends TreeMap<String, String> {
 
 	@Override
 	public String toString() {
-		StringBuilder b = new StringBuilder();
-		for (Map.Entry<String, String> e: entrySet()) {
-			if (b.length() > 0)
-				b.append(", ");
-			b.append(e.getKey() + "=" + e.getValue());
-		}
-		return "{ " + b.toString() + " }";
+		return "{ " + uniqueIdentifier() + " }";
 	}
 
 	public String getString(Object key) {
@@ -114,37 +123,208 @@ public class SearchParameters extends TreeMap<String, String> {
 		}
 	}
 
-	public SearchParameters copyWithJobClass(String newJobClass) {
-		SearchParameters par = new SearchParameters(searchManager);
-		par.putAll(this);
-		par.put("jobclass", newJobClass);
-		return par;
-	}
-
-	public SearchParameters copyWithOnly(String... keys) {
-		SearchParameters copy = new SearchParameters(searchManager);
-		for (String key: keys) {
-			if (containsKey(key))
-				copy.put(key, get(key));
-		}
-		return copy;
-	}
-
-	public SearchParameters copyWithout(String... remove) {
-		SearchParameters copy = new SearchParameters(searchManager);
-		copy.putAll(this);
-		for (String key: remove) {
-			copy.remove(key);
-		}
-		return copy;
-	}
-
+	@Override
 	public DataObject toDataObject() {
 		DataObjectMapElement d = new DataObjectMapElement();
 		for (Map.Entry<String, String> e: entrySet()) {
 			d.put(e.getKey(), e.getValue());
 		}
 		return d;
+	}
+
+	@Override
+	public String uniqueIdentifier() {
+		StringBuilder b = new StringBuilder();
+		for (Map.Entry<String, String> e: entrySet()) {
+			if (b.length() > 0)
+				b.append(", ");
+			b.append(e.getKey() + "=" + e.getValue());
+		}
+		return b.toString();
+	}
+
+	@Override
+	public Job createJob(SearchManager searchMan, User user) throws BlsException {
+		String strJobClass = getString("jobclass");
+		if (!strJobClass.startsWith("Job"))
+			throw new InternalServerError("Illegal Job class name", 1);
+		Class<?> jobClass;
+		try {
+			jobClass = Class.forName("nl.inl.blacklab.server.search." + strJobClass);
+			Constructor<?> cons = jobClass.getConstructor(SearchManager.class, User.class, Job.Description.class);
+			return (Job)cons.newInstance(searchMan, user, this);
+		} catch (ClassNotFoundException|NoSuchMethodException|InstantiationException|IllegalAccessException|IllegalArgumentException|InvocationTargetException e) {
+			throw new InternalServerError("Error instantiating Job class", 1, e);
+		}
+	}
+
+	@Override
+	public String getIndexName() {
+		return getString("indexname");
+	}
+
+	Searcher getSearcher() throws BlsException {
+		return searchManager.getSearcher(getIndexName());
+	}
+
+	@Override
+	public TextPattern getPattern() throws BlsException {
+		if (containsKey("patt"))
+			return searchManager.parsePatt(getSearcher(), getString("patt"), getString("pattlang"));
+		return null;
+	}
+
+	@Override
+	public String getDocPid() {
+		return getString("docpid");
+	}
+
+	@Override
+	public Query getFilterQuery() throws BlsException {
+		if (containsKey("filter"))
+			return SearchManager.parseFilter(getSearcher(), getString("filter"), getString("filterlang"));
+		return null;
+	}
+
+	@Override
+	public SampleSettings getSampleSettings() {
+		float samplePercentage = containsKey("sample") ? getFloat("sample") : -1f;
+		int sampleNum = containsKey("samplenum") ? getInteger("samplenum") : -1;
+		long sampleSeed = containsKey("sampleseed") ? getLong("sampleseed") : HitsSample.RANDOM_SEED;
+		return new SampleSettings(samplePercentage, sampleNum, sampleSeed);
+	}
+
+	@Override
+	public MaxSettings getMaxSettings() {
+		int maxRetrieve = getInteger("maxretrieve");
+		if (searchManager.getMaxHitsToRetrieveAllowed() >= 0 && maxRetrieve > searchManager.getMaxHitsToRetrieveAllowed()) {
+			maxRetrieve = searchManager.getMaxHitsToRetrieveAllowed();
+		}
+		int maxCount = getInteger("maxcount");
+		if (searchManager.getMaxHitsToCountAllowed() >= 0 && maxCount > searchManager.getMaxHitsToCountAllowed()) {
+			maxCount = searchManager.getMaxHitsToCountAllowed();
+		}
+		return new MaxSettings(maxRetrieve, maxCount);
+	}
+
+	@Override
+	public WindowSettings getWindowSettings() {
+		int first = getInteger("first");
+		int size = getInteger("number");
+		return new WindowSettings(first, size);
+	}
+
+	@Override
+	public ContextSettings getContextSettings() {
+		int contextSize = getInteger("wordsaroundhit");
+		int maxContextSize = searchManager.getMaxContextSize();
+		if (contextSize > maxContextSize) {
+			//debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
+			contextSize = maxContextSize;
+		}
+		ConcordanceType concType = getString("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
+		return new ContextSettings(contextSize, concType);
+	}
+
+	@Override
+	public List<DocProperty> getFacets() {
+		String facets = getString("facets");
+		if (facets == null) {
+			// If no facets were specified, we shouldn't even be here.
+			throw new RuntimeException("facets == null");
+		}
+		DocProperty propMultipleFacets = DocProperty.deserialize(facets);
+		List<DocProperty> props = new ArrayList<>();
+		if (propMultipleFacets instanceof DocPropertyMultiple) {
+			// Multiple facets requested
+			for (DocProperty prop: (DocPropertyMultiple)propMultipleFacets) {
+				props.add(prop);
+			}
+		} else {
+			// Just a single facet requested
+			props.add(propMultipleFacets);
+		}
+		return props;
+	}
+
+	@Override
+	public DocGroupSettings docGroupSettings() throws BlsException {
+		String groupBy = getString("group");
+		DocProperty groupProp = null;
+		if (groupBy == null)
+			groupBy = "";
+		groupProp = DocProperty.deserialize(groupBy);
+		if (groupProp == null)
+			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
+		return new DocGroupSettings(groupProp);
+	}
+
+	@Override
+	public DocGroupSortSettings docGroupSortSettings() throws BlsException {
+		String sortBy = getString("sort");
+		if (sortBy == null)
+			sortBy = "";
+		boolean reverse = false;
+		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
+			reverse = true;
+			sortBy = sortBy.substring(1);
+		}
+		DocGroupProperty sortProp = DocGroupProperty.deserialize(sortBy);
+		return new DocGroupSortSettings(sortProp, reverse);
+	}
+
+	@Override
+	public DocSortSettings docSortSettings() {
+		String sortBy = getString("sort");
+		if (sortBy == null)
+			sortBy = "";
+		boolean reverse = false;
+		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
+			reverse = true;
+			sortBy = sortBy.substring(1);
+		}
+		DocProperty sortProp = DocProperty.deserialize(sortBy);
+		return new DocSortSettings(sortProp, reverse);
+	}
+
+	@Override
+	public HitGroupSortSettings hitGroupSortSettings()  {
+		String sortBy = getString("sort");
+		if (sortBy == null)
+			sortBy = "";
+		boolean reverse = false;
+		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
+			reverse = true;
+			sortBy = sortBy.substring(1);
+		}
+		GroupProperty sortProp = GroupProperty.deserialize(sortBy);
+		return new HitGroupSortSettings(sortProp, reverse);
+	}
+
+	@Override
+	public HitGroupSettings hitGroupSettings() {
+		String groupBy = getString("group");
+		if (groupBy == null)
+			groupBy = "";
+		return new HitGroupSettings(groupBy);
+	}
+
+	@Override
+	public HitsSortSettings hitsSortSettings() {
+		String sortBy = getString("sort");
+		if (sortBy == null)
+			sortBy = "";
+		boolean reverse = false;
+		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
+			reverse = true;
+			sortBy = sortBy.substring(1);
+		}
+		return new HitsSortSettings(sortBy, reverse);
+	}
+
+	@Override
+	public boolean hasSort() {
+		return containsKey("sort") && getString("sort").length() > 0;
 	}
 
 }

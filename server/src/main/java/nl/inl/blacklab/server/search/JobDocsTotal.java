@@ -1,6 +1,9 @@
 package nl.inl.blacklab.server.search;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -15,14 +18,14 @@ public class JobDocsTotal extends Job {
 
 	private DocResults docResults = null;
 
-	public JobDocsTotal(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobDocsTotal(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking docs search.
-		JobWithDocs docsSearch = searchMan.searchDocs(user, par);
+		JobWithDocs docsSearch = searchMan.searchDocs(user, jobDesc);
 		try {
 			waitForJobToFinish(docsSearch);
 
@@ -61,7 +64,7 @@ public class JobDocsTotal extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("docsCounted", docResults.getOriginalHits() != null ? docResults.getOriginalHits().countSoFarDocsCounted() : -1);
 		return d;
@@ -71,6 +74,10 @@ public class JobDocsTotal extends Job {
 	protected void cleanup() {
 		docResults = null;
 		super.cleanup();
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings) {
+		return DescriptionImpl.jobDocs(JobDocsTotal.class, searchMan, indexName, pattern, filterQuery, null, maxSettings, null, null);
 	}
 
 }

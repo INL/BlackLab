@@ -1,7 +1,9 @@
 package nl.inl.blacklab.server.search;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.grouping.GroupProperty;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
@@ -18,14 +20,15 @@ public class JobHitsGrouped extends Job {
 
 	private Hits hits;
 
-	public JobHitsGrouped(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobHitsGrouped(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		SearchParameters parNoGroup = par.copyWithout("group", "sort");
+		Description parNoGroup = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(), jobDesc.getFilterQuery(),
+				null, jobDesc.getDocPid(), jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
 		JobWithHits hitsSearch = searchMan.searchHits(user, parNoGroup);
 		try {
 			waitForJobToFinish(hitsSearch);
@@ -37,25 +40,15 @@ public class JobHitsGrouped extends Job {
 			hitsSearch.decrRef();
 			hitsSearch = null;
 		}
-		String groupBy = par.getString("group");
+		HitGroupSettings groupSett = jobDesc.hitGroupSettings();
 		HitProperty groupProp = null;
-		if (groupBy == null)
-			groupBy = "";
-		groupProp = HitProperty.deserialize(hits, groupBy);
+		groupProp = HitProperty.deserialize(hits, groupSett.groupBy());
 		if (groupProp == null)
-			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
+			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupSett.groupBy() + "'.");
 		HitGroups theGroups = hits.groupedBy(groupProp);
 
-		String sortBy = par.getString("sort");
-		if (sortBy == null)
-			sortBy = "";
-		boolean reverse = false;
-		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-			reverse = true;
-			sortBy = sortBy.substring(1);
-		}
-		GroupProperty sortProp = GroupProperty.deserialize(sortBy);
-		theGroups.sortGroups(sortProp, reverse);
+		HitGroupSortSettings sortSett = jobDesc.hitGroupSortSettings();
+		theGroups.sortGroups(sortSett.sortBy(), sortSett.reverse());
 
 		groups = theGroups; // we're done, caller can use the groups now
 	}
@@ -79,7 +72,7 @@ public class JobHitsGrouped extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("hitsRetrieved", hits == null ? -1 : hits.countSoFarHitsRetrieved());
 		d.put("numberOfGroups", groups == null ? -1 : groups.numberOfGroups());
@@ -91,6 +84,11 @@ public class JobHitsGrouped extends Job {
 		groups = null;
 		hits = null;
 		super.cleanup();
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, HitGroupSettings hitGroupSettings,
+			HitGroupSortSettings hitGroupSortSettings, MaxSettings maxSettings, SampleSettings sampleSettings) {
+		return DescriptionImpl.hitsGrouped(JobHitsGrouped.class, searchMan, indexName, pattern, filterQuery, hitGroupSettings, hitGroupSortSettings, maxSettings, sampleSettings);
 	}
 
 }

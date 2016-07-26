@@ -14,6 +14,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import nl.inl.blacklab.server.dataobject.DataFormat;
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectPlain;
@@ -24,9 +27,6 @@ import nl.inl.blacklab.server.search.SearchParameters;
 import nl.inl.util.Json;
 import nl.inl.util.LogUtil;
 import nl.inl.util.json.JSONObject;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 public class BlackLabServer extends HttpServlet {
 	private static final Logger logger = Logger.getLogger(BlackLabServer.class);

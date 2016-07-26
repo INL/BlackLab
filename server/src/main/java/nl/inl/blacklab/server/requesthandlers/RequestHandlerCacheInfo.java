@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
+import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.User;
 
 /**
@@ -15,7 +16,7 @@ public class RequestHandlerCacheInfo extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() {
+	public Response handle() throws BlsException {
 
 		String strDebugInfo = request.getParameter("debug");
 		boolean debugInfo = strDebugInfo == null ? false : strDebugInfo.matches("true|yes|1");

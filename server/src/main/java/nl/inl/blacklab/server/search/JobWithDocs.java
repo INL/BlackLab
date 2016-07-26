@@ -12,7 +12,7 @@ public class JobWithDocs extends Job {
 
 	DocResults docResults;
 
-	public JobWithDocs(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobWithDocs(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
@@ -21,7 +21,7 @@ public class JobWithDocs extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("countDocsRetrieved", docResults == null || docResults.getOriginalHits() == null ? -1 : docResults.getOriginalHits().countSoFarDocsRetrieved());
 		return d;

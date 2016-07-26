@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.search;
 
-import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -13,14 +12,15 @@ public class JobDocsSorted extends JobWithDocs {
 
 	private DocResults sourceResults;
 
-	public JobDocsSorted(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobDocsSorted(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking docs search.
-		SearchParameters parNoSort = par.copyWithout("sort");
+		Description parNoSort = DescriptionImpl.jobDocs(JobDocs.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(), jobDesc.getFilterQuery(),
+				null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
 		JobWithDocs search = searchMan.searchDocs(user, parNoSort);
 		try {
 			waitForJobToFinish(search);
@@ -32,19 +32,8 @@ public class JobDocsSorted extends JobWithDocs {
 			search.decrRef();
 			search = null;
 		}
-		String sortBy = par.getString("sort");
-		if (sortBy == null)
-			sortBy = "";
-		boolean reverse = false;
-		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-			reverse = true;
-			sortBy = sortBy.substring(1);
-		}
-		DocProperty sortProp = DocProperty.deserialize(sortBy);
-		/*if (sortProp == null)
-			throw new QueryException("UNKNOWN_SORT_PROPERTY", "Unknown sort property '" + sortBy + "'.");
-		*/
-		if (sortProp != null) {
+		DocSortSettings docSortSett = jobDesc.docSortSettings();
+		if (docSortSett.sortBy() != null) {
 			// Be lenient of clients passing wrong sortBy values,
 			// e.g. trying to sort a per-document search by hit context.
 			// The problem is that applications might remember your
@@ -52,7 +41,7 @@ public class JobDocsSorted extends JobWithDocs {
 			// if that particular sort cannot be performed on that type of search.
 			// We don't want the client to have to validate this, so we simply
 			// ignore sort requests we can't carry out.
-			sourceResults.sort(sortProp, reverse); // TODO: add .sortedBy() same as in Hits
+			sourceResults.sort(docSortSett.sortBy(), docSortSett.reverse()); // TODO: add .sortedBy() same as in Hits
 		}
 		docResults = sourceResults; // client can use results
 	}
@@ -69,7 +58,7 @@ public class JobDocsSorted extends JobWithDocs {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("numberOfDocResults", docResults == null ? -1 : docResults.size());
 		return d;

@@ -1,7 +1,10 @@
 package nl.inl.blacklab.server.search;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.perdocument.DocResultsWindow;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -17,14 +20,14 @@ public class JobDocsWindow extends Job {
 
 	private int requestedWindowSize;
 
-	public JobDocsWindow(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobDocsWindow(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking docs search.
-		JobWithDocs docsSearch = searchMan.searchDocs(user, par);
+		JobWithDocs docsSearch = searchMan.searchDocs(user, jobDesc);
 		try {
 			waitForJobToFinish(docsSearch);
 
@@ -35,8 +38,9 @@ public class JobDocsWindow extends Job {
 			docsSearch.decrRef();
 			docsSearch = null;
 		}
-		int first = par.getInteger("first");
-		requestedWindowSize = par.getInteger("number");
+		WindowSettings windowSett = jobDesc.getWindowSettings();
+		int first = windowSett.first();
+		requestedWindowSize = windowSett.size();
 		if (!sourceResults.sizeAtLeast(first + 1)) {
 			debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
 			first = 0;
@@ -60,7 +64,7 @@ public class JobDocsWindow extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("requestedWindowSize", requestedWindowSize);
 		d.put("actualWindowSize", window == null ? -1 : window.size());
@@ -71,6 +75,11 @@ public class JobDocsWindow extends Job {
 	protected void cleanup() {
 		window = null;
 		super.cleanup();
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, DocSortSettings sortSettings,
+			WindowSettings windowSettings, ContextSettings contextSettings, MaxSettings maxSettings) {
+		return DescriptionImpl.jobDocs(JobDocsWindow.class, searchMan, indexName, pattern, filterQuery, sortSettings, maxSettings, windowSettings, contextSettings);
 	}
 
 }

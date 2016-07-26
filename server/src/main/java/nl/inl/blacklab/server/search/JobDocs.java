@@ -1,28 +1,29 @@
 package nl.inl.blacklab.server.search;
 
-import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.Forbidden;
-
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+
+import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.Forbidden;
 
 /**
  * Represents a doc search operation.
  */
 public class JobDocs extends JobWithDocs {
 
-	public JobDocs(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobDocs(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		String patt = par.getString("patt");
-		if (patt != null && patt.length() > 0) {
-			SearchParameters parNoSort = par.copyWithout("sort");
+		if (jobDesc.getPattern() != null) {
+			Description parNoSort = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(), jobDesc.getFilterQuery(),
+					null, jobDesc.getDocPid(), jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
+					jobDesc.getContextSettings());
 			JobWithHits hitsSearch = searchMan.searchHits(user, parNoSort);
 			Hits hits;
 			try {
@@ -33,11 +34,12 @@ public class JobDocs extends JobWithDocs {
 				hitsSearch.decrRef();
 				hitsSearch = null;
 			}
-			hits.settings().setConcordanceType(par.getString("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX);
+			ContextSettings contextSett = jobDesc.getContextSettings();
+			hits.settings().setConcordanceType(contextSett.concType());
 			docResults = hits.perDocResults();
 		} else {
 			// Documents only
-			Query filterQuery = SearchManager.parseFilter(searcher, par.getString("filter"), par.getString("filterlang"));
+			Query filterQuery = jobDesc.getFilterQuery();
 			if (filterQuery == null) {
 				if (SearchManager.isAllDocsQueryAllowed())
 					filterQuery = new MatchAllDocsQuery();
@@ -46,6 +48,11 @@ public class JobDocs extends JobWithDocs {
 			}
 			docResults = searcher.queryDocuments(filterQuery);
 		}
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, DocSortSettings docSortSettings,
+			ContextSettings contextSettings, MaxSettings maxSettings) {
+		return DescriptionImpl.jobDocs(JobDocs.class, searchMan, indexName, pattern, filterQuery, docSortSettings, maxSettings, null, contextSettings);
 	}
 
 }

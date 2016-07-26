@@ -13,7 +13,7 @@ public class JobWithHits extends Job {
 	/** The hits found */
 	protected Hits hits;
 
-	public JobWithHits(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobWithHits(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
@@ -22,7 +22,7 @@ public class JobWithHits extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("countHitsRetrieved", hits == null ? -1 : hits.countSoFarDocsRetrieved());
 		return d;

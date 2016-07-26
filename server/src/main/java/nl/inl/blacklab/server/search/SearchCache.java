@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectList;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
+import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.MemoryUtil;
 import nl.inl.util.ThreadPriority.Level;
 import nl.inl.util.json.JSONObject;
@@ -30,7 +31,7 @@ public class SearchCache {
 	}
 
 	/** The cached search objects. */
-	private Map<SearchParameters, Job> cachedSearches;
+	private Map<Job.Description, Job> cachedSearches;
 
 	/** Maximum size in MB to target, or -1 for no limit. NOT IMPLEMENTED YET. */
 	private long maxSizeMegs = -1;
@@ -87,7 +88,7 @@ public class SearchCache {
 	 * @param searchParameters the search parameters
 	 * @return the Search if found, or null if not
 	 */
-	public Job get(SearchParameters searchParameters) {
+	public Job get(Job.Description searchParameters) {
 		Job search = cachedSearches.get(searchParameters);
 		if (search == null) {
 			//logger.debug("Cache miss: " + searchParameters);
@@ -113,7 +114,7 @@ public class SearchCache {
 		performLoadManagement(search);
 
 		// Search already in cache?
-		SearchParameters searchParameters = search.getParameters();
+		Job.Description searchParameters = search.getParameters();
 		if (cachedSearches.containsKey(searchParameters)) {
 			if (cachedSearches.get(searchParameters) != search) {
 				throw new RuntimeException("Cache already contains different search object!");
@@ -136,10 +137,10 @@ public class SearchCache {
 	 */
 	public void clearCacheForIndex(String indexName) {
 		// Iterate over the entries and remove the ones in the specified index
-		Iterator<Map.Entry<SearchParameters, Job>> it = cachedSearches.entrySet().iterator();
+		Iterator<Map.Entry<Job.Description, Job>> it = cachedSearches.entrySet().iterator();
 		while (it.hasNext()) {
-			Entry<SearchParameters, Job> entry = it.next();
-			if (entry.getKey().getString("indexname").equals(indexName)) {
+			Entry<Job.Description, Job> entry = it.next();
+			if (entry.getKey().getIndexName().equals(indexName)) {
 				entry.getValue().decrRef();
 				it.remove();
 			}
@@ -368,7 +369,7 @@ public class SearchCache {
 		return doCache;
 	}
 
-	public DataObject getContentsDataObject(boolean debugInfo) {
+	public DataObject getContentsDataObject(boolean debugInfo) throws BlsException {
 		DataObjectList doCacheContents = new DataObjectList("job");
 		for (Job job: cachedSearches.values()) {
 			doCacheContents.add(job.toDataObject(debugInfo));

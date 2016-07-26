@@ -1,11 +1,11 @@
 package nl.inl.blacklab.server.search;
 
-import nl.inl.blacklab.perdocument.DocGroupProperty;
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.perdocument.DocGroups;
-import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
 
@@ -18,14 +18,15 @@ public class JobDocsGrouped extends Job {
 
 	private DocResults docResults;
 
-	public JobDocsGrouped(SearchManager searchMan, User user, SearchParameters par) throws BlsException {
+	public JobDocsGrouped(SearchManager searchMan, User user, Description par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking docs search.
-		SearchParameters parNoGroup = par.copyWithout("group", "sort");
+		Description parNoGroup = DescriptionImpl.jobDocs(JobDocs.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(),
+				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
 		JobWithDocs docsSearch = searchMan.searchDocs(user, parNoGroup);
 		try {
 			waitForJobToFinish(docsSearch);
@@ -37,25 +38,11 @@ public class JobDocsGrouped extends Job {
 			docsSearch.decrRef();
 			docsSearch = null;
 		}
-		String groupBy = par.getString("group");
-		DocProperty groupProp = null;
-		if (groupBy == null)
-			groupBy = "";
-		groupProp = DocProperty.deserialize(groupBy);
-		if (groupProp == null)
-			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
-		DocGroups theGroups = docResults.groupedBy(groupProp);
+		DocGroupSettings groupSett = jobDesc.docGroupSettings();
+		DocGroups theGroups = docResults.groupedBy(groupSett.groupBy());
 
-		String sortBy = par.getString("sort");
-		if (sortBy == null)
-			sortBy = "";
-		boolean reverse = false;
-		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-			reverse = true;
-			sortBy = sortBy.substring(1);
-		}
-		DocGroupProperty sortProp = DocGroupProperty.deserialize(sortBy);
-		theGroups.sort(sortProp, reverse);
+		DocGroupSortSettings sortSett = jobDesc.docGroupSortSettings();
+		theGroups.sort(sortSett.sortBy(), sortSett.reverse());
 
 		groups = theGroups; // we're done, caller can use the groups now
 	}
@@ -80,7 +67,7 @@ public class JobDocsGrouped extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) {
+	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("numberOfDocResults", docResults == null ? -1 : docResults.size());
 		d.put("numberOfGroups", groups == null ? -1 : groups.numberOfGroups());
@@ -92,6 +79,12 @@ public class JobDocsGrouped extends Job {
 		groups = null;
 		docResults = null;
 		super.cleanup();
+	}
+
+	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, DocGroupSettings docGroupSettings,
+			DocGroupSortSettings docGroupSortSettings, MaxSettings maxSettings) {
+		return DescriptionImpl.docsGrouped(JobDocsGrouped.class, searchMan, indexName, pattern, filterQuery, docGroupSettings,
+				docGroupSortSettings, maxSettings);
 	}
 
 
