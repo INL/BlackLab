@@ -2,6 +2,11 @@
 
 ## Improvements in HEAD
 
+### Fixed
+* Potential overflow bug in ContentStoreFixedBlock when retrieving content.
+* ContentStoreFixedBlock decompression bug that occurred with highly compressable content.
+  (N.B. there is no need to re-index if you experienced either of the above bugs)
+
 ## Improvements up to v1.4.0
 
 ### New

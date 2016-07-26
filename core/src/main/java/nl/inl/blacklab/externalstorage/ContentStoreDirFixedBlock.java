@@ -103,7 +103,10 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private static final int TYPICAL_BLOCK_SIZE_CHARACTERS = (int)(BLOCK_SIZE_BYTES * CONSERVATIVE_COMPRESSION_FACTOR);
 
 	/** The expected maximum compression factor */
-	private static final float MAX_COMPRESSION_FACTOR = AVERAGE_COMPRESSION_FACTOR * 3 / 2;
+	private static final float MAX_COMPRESSION_FACTOR = 15;
+
+	/** Maximum byte size of unencoded block (we make the zip buffer one larger to detect when buffer space was insufficient) */
+	private static final int MAX_BLOCK_SIZE_BYTES = (int)(BLOCK_SIZE_BYTES * MAX_COMPRESSION_FACTOR);
 
 	/** How many available characters will trigger a block write. */
 	private static final int WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE = (int)(BLOCK_SIZE_BYTES * MAX_COMPRESSION_FACTOR);
@@ -114,10 +117,10 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		/** content store id for this document */
 		public int id;
 
-		/** length of the string in bytes */
+		/** length of the encoded string in bytes */
 		public int entryLengthBytes;
 
-		/** length of the string in characters */
+		/** length of the decoded string in characters */
 		public int entryLengthCharacters;
 
 		/** blocks this document is stored in */
@@ -356,7 +359,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		zipbufPool = new SimpleResourcePool<byte[]>(POOL_SIZE){
 			@Override
 			public byte[] createResource() {
-				return new byte[BLOCK_SIZE_BYTES * 10];
+				return new byte[MAX_BLOCK_SIZE_BYTES+1]; // one larger to detect when buffer space was insufficient
 			}
 		};
 	}
@@ -740,12 +743,13 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 								throw new RuntimeException("Not enough bytes read, " + bytesRead
 										+ " < " + bytesToRead);
 							}
-							decoded.append(decodeBlock(buffer.array(), 0, bytesRead));
+							String decodedBlock = decodeBlock(buffer.array(), 0, bytesRead);
+							decoded.append(decodedBlock);
 						}
 
 						// 3 - take just what we need
 						int firstChar = a - charOffset;
-						result[i] = decoded.toString().substring(firstChar, firstChar + b - a);
+						result[i] = decoded.substring(firstChar, firstChar + b - a);
 					}
 				} finally {
 					fileChannel.close();
@@ -811,7 +815,14 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				// Serialize to bytes
 				byte[] encoded;
 				try {
-					encoded = unwrittenContents.substring(0, length).getBytes(CHAR_ENCODING);
+					while (true) {
+						encoded = unwrittenContents.substring(0, length).getBytes(CHAR_ENCODING);
+
+						// Make sure the block fits in our zip buffer
+						if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
+							break;
+						length -= (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
+					}
 				} catch (UnsupportedEncodingException e) {
 					throw new RuntimeException(e);
 				}
@@ -820,9 +831,12 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				compresser.reset();
 				compresser.setInput(encoded);
 				compresser.finish();
-				int compressedDataLength = compresser.deflate(zipbuf);
+				int compressedDataLength = compresser.deflate(zipbuf, 0, zipbuf.length, Deflater.FULL_FLUSH);
 				if (compressedDataLength <= 0) {
 					throw new RuntimeException("Error, deflate returned " + compressedDataLength);
+				}
+				if (compressedDataLength == zipbuf.length) {
+					throw new RuntimeException("Error, deflate returned size of zipbuf, this indicates insufficient space");
 				}
 
 				// Check the size
@@ -869,6 +883,10 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				int resultLength = decompresser.inflate(zipbuf);
 				if (resultLength <= 0) {
 					throw new RuntimeException("Error, inflate returned " + resultLength);
+				}
+				if (!decompresser.finished()) {
+					// This shouldn't happen because our max block size prevents it
+					throw new RuntimeException("Unzip buffer size insufficient");
 				}
 				try {
 					return new String(zipbuf, 0, resultLength, CHAR_ENCODING);
