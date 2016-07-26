@@ -590,8 +590,8 @@ if (b == null)
   final public String propName() throws ParseException {Token t = null, subProp = null;
     t = jj_consume_token(NAME);
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-    case 26:{
-      jj_consume_token(26);
+    case 14:{
+      jj_consume_token(14);
       subProp = jj_consume_token(NAME);
       break;
       }
@@ -748,7 +748,7 @@ if (b.toString().equals("->"))
 
   private boolean jj_3R_16()
  {
-    if (jj_scan_token(26)) return true;
+    if (jj_scan_token(14)) return true;
     if (jj_scan_token(NAME)) return true;
     return false;
   }
@@ -1100,7 +1100,7 @@ if (b.toString().equals("->"))
       jj_la1_init_1();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x180,0x180,0x3800000,0x4000,0x200,0x4000,0x1800,0x400,0xe0000,0x100000,0x3800000,0x600,0x600,0x28003800,0x88001a00,0x20001800,0x3800000,0x88000000,0x8001a00,0x4000000,0x8001800,0x8001800,};
+      jj_la1_0 = new int[] {0x180,0x180,0x3800000,0x4000,0x200,0x4000,0x1800,0x400,0xe0000,0x100000,0x3800000,0x600,0x600,0x28003800,0x88001a00,0x20001800,0x3800000,0x88000000,0x8001a00,0x4000,0x8001800,0x8001800,};
    }
    private static void jj_la1_init_1() {
       jj_la1_1 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,};

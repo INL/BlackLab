@@ -443,7 +443,7 @@ String propName():
 	Token t = null, subProp = null;
 }
 {
-	t=<NAME> [ ":" subProp=<NAME> ]
+	t=<NAME> [ "/" subProp=<NAME> ]
 	{
 		String propName = t.toString(); 
 		if (subProp == null)

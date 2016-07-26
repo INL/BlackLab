@@ -21,8 +21,7 @@ import nl.inl.blacklab.search.sequences.TextPatternRepetition;
 import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 /** Token Manager. */
-@SuppressWarnings("all")
-public class CorpusQueryLanguageParserTokenManager implements CorpusQueryLanguageParserConstants {
+@SuppressWarnings("all")public class CorpusQueryLanguageParserTokenManager implements CorpusQueryLanguageParserConstants {
 
   /** Debug output. */
   public  java.io.PrintStream debugStream = System.out;
