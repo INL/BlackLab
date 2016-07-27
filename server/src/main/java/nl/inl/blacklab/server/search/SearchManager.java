@@ -1059,15 +1059,6 @@ public class SearchManager {
 		return indices;
 	}
 
-//	public JobWithHits searchSampleHits(User user, Job.Description par)
-//			throws BlsException {
-//		hitsToSample = DescriptionImpl.jobHits(jobClass, indexName, pattern, filterQuery, hitsSortSettings, maxSettings, sampleSettings, windowSettings, contextSettings);
-//		Job.Description parBasic = new JobSampleHits.Description(par.getIndexName(), hitsToSample, par.getSampleSettings());
-//				.jobHits(JobSampleHits.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), par.hitsSortSettings(), par.getMaxSettings(), par.getSampleSettings(), null, null);
-//		return (JobWithHits) search(user, parBasic);
-//	}
-
-
 	/**
 	 * Start a new search or return an existing Search object corresponding to
 	 * these search parameters.

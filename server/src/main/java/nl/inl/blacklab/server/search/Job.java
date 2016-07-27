@@ -107,6 +107,8 @@ public abstract class Job implements Comparable<Job> {
 		public abstract DataObject toDataObject();
 
 		public Description hitsSorted() throws BlsException {
+			if (!hasSort())
+				return hits();
 			return DescriptionImpl.jobHits(JobHitsSorted.class, getIndexName(), getPattern(), getFilterQuery(), hitsSortSettings(), getMaxSettings(), null, null, null);
 		}
 
@@ -120,8 +122,10 @@ public abstract class Job implements Comparable<Job> {
 		}
 
 		public Description hitsWindow() throws BlsException {
+			if (getWindowSettings() == null)
+				return hitsSample();
 			return DescriptionImpl.jobHits(JobHitsWindow.class, getIndexName(), getPattern(), getFilterQuery(), hitsSortSettings(),
-			getMaxSettings(), getSampleSettings(), getWindowSettings(), getContextSettings());
+					getMaxSettings(), getSampleSettings(), getWindowSettings(), getContextSettings());
 		}
 
 		public Description hitsTotal() throws BlsException {
@@ -133,7 +137,15 @@ public abstract class Job implements Comparable<Job> {
 		}
 
 		public Description docsWindow() throws BlsException {
+			if (getWindowSettings() == null)
+				return docsSample();
 			return DescriptionImpl.jobDocs(JobDocsWindow.class, getIndexName(), getPattern(), getFilterQuery(), docSortSettings(), getMaxSettings(), getWindowSettings(), getContextSettings());
+		}
+
+		public Description docsSample() throws BlsException {
+			if (getSampleSettings() == null)
+				return docs();  // TODO SHOULD BE: docsSorted()
+			return docs(); // TODO implement doc sampling
 		}
 
 		public Description docsTotal() throws BlsException {
@@ -147,6 +159,12 @@ public abstract class Job implements Comparable<Job> {
 
 		public Description facets() throws BlsException {
 			return DescriptionImpl.facets(JobFacets.class, getIndexName(), getPattern(), getFilterQuery(), getFacets(), getMaxSettings());
+		}
+
+		public Description hitsSample() throws BlsException {
+			if (getSampleSettings() == null)
+				return hitsSorted();
+			return new JobSampleHits.DescSampleHits(getIndexName(), hitsSorted(), getSampleSettings());
 		}
 	}
 

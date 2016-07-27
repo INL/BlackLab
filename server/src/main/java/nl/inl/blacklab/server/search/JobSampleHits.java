@@ -12,13 +12,13 @@ import nl.inl.blacklab.server.exceptions.BlsException;
  */
 public class JobSampleHits extends JobWithHits {
 
-	public static class Description extends Job.BasicDescription {
+	public static class DescSampleHits extends BasicDescription {
 
 		Description inputJob;
 
 		SampleSettings sampleSettings;
 
-		public Description(String indexName, Description hitsToSample, SampleSettings settings) {
+		public DescSampleHits(String indexName, Description hitsToSample, SampleSettings settings) {
 			super(indexName);
 			this.inputJob = hitsToSample;
 			this.sampleSettings = settings;
@@ -54,13 +54,13 @@ public class JobSampleHits extends JobWithHits {
 
 	}
 
-	public JobSampleHits(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobSampleHits(SearchManager searchMan, User user, DescSampleHits par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		Description sampleDesc = (JobSampleHits.Description)jobDesc;
+		DescSampleHits sampleDesc = (JobSampleHits.DescSampleHits)jobDesc;
 		Description inputDesc = sampleDesc.getInputDesc();
 		JobWithHits inputJob;
 		if (inputDesc.hasSort())

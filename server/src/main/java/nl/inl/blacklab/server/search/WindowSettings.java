@@ -20,4 +20,9 @@ public class WindowSettings {
 		return size;
 	}
 
+	@Override
+	public String toString() {
+		return "WindowSettings [first=" + first + ", size=" + size + "]";
+	}
+
 }

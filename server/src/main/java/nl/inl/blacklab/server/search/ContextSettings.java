@@ -22,4 +22,9 @@ public class ContextSettings {
 		return concType;
 	}
 
+	@Override
+	public String toString() {
+		return "ContextSettings [size=" + size + ", concType=" + concType + "]";
+	}
+
 }

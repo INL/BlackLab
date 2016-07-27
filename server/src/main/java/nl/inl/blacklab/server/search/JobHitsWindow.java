@@ -22,11 +22,8 @@ public class JobHitsWindow extends Job {
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		JobWithHits hitsSearch;
-		if (jobDesc.hasSort())
-			hitsSearch = (JobWithHits) searchMan.search(user, jobDesc.hitsSorted());
-		else
-			hitsSearch = (JobWithHits) searchMan.search(user, jobDesc.hits());
+		Description hitsSearchDesc = jobDesc.hitsSample(); // chooses between sample, sorted or unsorted based on parameters
+		JobWithHits hitsSearch = (JobWithHits)searchMan.search(user, hitsSearchDesc);
 		try {
 			waitForJobToFinish(hitsSearch);
 

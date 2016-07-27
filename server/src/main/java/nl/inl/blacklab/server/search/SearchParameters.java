@@ -192,6 +192,8 @@ public class SearchParameters extends Job.AbstractDescription implements Map<Str
 
 	@Override
 	public SampleSettings getSampleSettings() {
+		if (! (containsKey("sample") || containsKey("samplenum")) )
+			return null;
 		float samplePercentage = containsKey("sample") ? getFloat("sample") : -1f;
 		int sampleNum = containsKey("samplenum") ? getInteger("samplenum") : -1;
 		long sampleSeed = containsKey("sampleseed") ? getLong("sampleseed") : HitsSample.RANDOM_SEED;
@@ -255,8 +257,8 @@ public class SearchParameters extends Job.AbstractDescription implements Map<Str
 	public DocGroupSettings docGroupSettings() throws BlsException {
 		String groupBy = getString("group");
 		DocProperty groupProp = null;
-		if (groupBy == null)
-			groupBy = "";
+		if (groupBy == null || groupBy.length() == 0)
+			return null;
 		groupProp = DocProperty.deserialize(groupBy);
 		if (groupProp == null)
 			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
@@ -266,8 +268,8 @@ public class SearchParameters extends Job.AbstractDescription implements Map<Str
 	@Override
 	public DocGroupSortSettings docGroupSortSettings() throws BlsException {
 		String sortBy = getString("sort");
-		if (sortBy == null)
-			sortBy = "";
+		if (sortBy == null || sortBy.length() == 0)
+			return null;
 		boolean reverse = false;
 		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
 			reverse = true;
@@ -280,8 +282,8 @@ public class SearchParameters extends Job.AbstractDescription implements Map<Str
 	@Override
 	public DocSortSettings docSortSettings() {
 		String sortBy = getString("sort");
-		if (sortBy == null)
-			sortBy = "";
+		if (sortBy == null || sortBy.length() == 0)
+			return null;
 		boolean reverse = false;
 		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
 			reverse = true;
@@ -294,8 +296,8 @@ public class SearchParameters extends Job.AbstractDescription implements Map<Str
 	@Override
 	public HitGroupSortSettings hitGroupSortSettings()  {
 		String sortBy = getString("sort");
-		if (sortBy == null)
-			sortBy = "";
+		if (sortBy == null || sortBy.length() == 0)
+			return null;
 		boolean reverse = false;
 		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
 			reverse = true;
@@ -308,16 +310,16 @@ public class SearchParameters extends Job.AbstractDescription implements Map<Str
 	@Override
 	public HitGroupSettings hitGroupSettings() {
 		String groupBy = getString("group");
-		if (groupBy == null)
-			groupBy = "";
+		if (groupBy == null || groupBy.length() == 0)
+			return null;
 		return new HitGroupSettings(groupBy);
 	}
 
 	@Override
 	public HitsSortSettings hitsSortSettings() {
 		String sortBy = getString("sort");
-		if (sortBy == null)
-			sortBy = "";
+		if (sortBy == null || sortBy.length() == 0)
+			return null;
 		boolean reverse = false;
 		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
 			reverse = true;

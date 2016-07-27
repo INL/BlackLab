@@ -31,13 +31,13 @@ public class SearchCache {
 	}
 
 	/** The cached search objects. */
-	private Map<Job.Description, Job> cachedSearches;
+	private Map<String, Job> cachedSearches;
 
 	/** Maximum size in MB to target, or -1 for no limit. NOT IMPLEMENTED YET. */
 	private long maxSizeMegs = -1;
 
-	/** Maximum number of searches to cache, or -1 for no limit. Defaults to (a fairly low) 20.*/
-	private int maxNumberOfJobs = 20;
+	/** Maximum number of searches to cache, or -1 for no limit. Defaults to 100.*/
+	private int maxNumberOfJobs = 100;
 
 	/** Maximum age of a cached search in seconds. May be exceeded because it is only cleaned up when
 	 *  adding new searches. Defaults to one hour. */
@@ -85,15 +85,15 @@ public class SearchCache {
 	/**
 	 * Get a search from the cache if present.
 	 *
-	 * @param searchParameters the search parameters
+	 * @param jobDesc the search parameters
 	 * @return the Search if found, or null if not
 	 */
-	public Job get(Job.Description searchParameters) {
-		Job search = cachedSearches.get(searchParameters);
+	public Job get(Job.Description jobDesc) {
+		Job search = cachedSearches.get(jobDesc.uniqueIdentifier());
 		if (search == null) {
-			//logger.debug("Cache miss: " + searchParameters);
+			//logger.debug("Cache miss: " + jobDesc);
 		} else {
-			//logger.debug("Cache hit: " + searchParameters);
+			//logger.debug("Cache hit: " + jobDesc);
 			search.resetLastAccessed();
 		}
 		return search;
@@ -114,19 +114,19 @@ public class SearchCache {
 		performLoadManagement(search);
 
 		// Search already in cache?
-		Job.Description searchParameters = search.getParameters();
-		if (cachedSearches.containsKey(searchParameters)) {
-			if (cachedSearches.get(searchParameters) != search) {
+		String uniqueIdentifier = search.getDescription().uniqueIdentifier();
+		if (cachedSearches.containsKey(uniqueIdentifier)) {
+			if (cachedSearches.get(uniqueIdentifier) != search) {
 				throw new RuntimeException("Cache already contains different search object!");
 			}
 			// Same object already in cache, do nothing
-			logger.debug("Same object put in cache twice: " + searchParameters);
+			logger.debug("Same object put in cache twice: " + uniqueIdentifier);
 			return;
 		}
 
 		// Put search in cache
-		//logger.debug("Put in cache: " + searchParameters);
-		cachedSearches.put(searchParameters, search);
+		//logger.debug("Put in cache: " + uniqueIdentifier);
+		cachedSearches.put(uniqueIdentifier, search);
 		search.incrRef();
 	}
 
@@ -137,10 +137,10 @@ public class SearchCache {
 	 */
 	public void clearCacheForIndex(String indexName) {
 		// Iterate over the entries and remove the ones in the specified index
-		Iterator<Map.Entry<Job.Description, Job>> it = cachedSearches.entrySet().iterator();
+		Iterator<Map.Entry<String, Job>> it = cachedSearches.entrySet().iterator();
 		while (it.hasNext()) {
-			Entry<Job.Description, Job> entry = it.next();
-			if (entry.getKey().getIndexName().equals(indexName)) {
+			Entry<String, Job> entry = it.next();
+			if (entry.getValue().getDescription().getIndexName().equals(indexName)) {
 				entry.getValue().decrRef();
 				it.remove();
 			}
@@ -345,16 +345,6 @@ public class SearchCache {
 		return n;
 	}
 
-//	private int numberOfPausedSearches() {
-//		int n = 0;
-//		for (Job job: cachedSearches.values()) {
-//			if (job.getPriorityLevel() == Level.PAUSED) {
-//				n++;
-//			}
-//		}
-//		return n;
-//	}
-
 	public void setMinFreeMemTargetBytes(long minFreeMemTargetBytes) {
 		this.minFreeMemTargetMegs = minFreeMemTargetBytes;
 	}
@@ -419,9 +409,11 @@ public class SearchCache {
 
 				// NOTE: we'll leave this to removeOldSearches() for now.
 				// Later we'll integrate the two.
+				//logger.debug("LOADMGR: search is finished, no problem: " + search);
 
 			} else if (search.isWaitingForOtherJob()) {
 				// Waiting, not taking up any CPU. Can run normally, but doesn't take a core.
+				//logger.debug("LOADMGR: search is waiting for other job: " + search);
 				applyAction(search, ServerLoadQueryAction.RUN_NORMALLY);
 			} else {
 				// Running search. Run, pause or abort?
@@ -429,14 +421,15 @@ public class SearchCache {
 					// A core is available. Run the search.
 					coresLeft--;
 					applyAction(search, ServerLoadQueryAction.RUN_NORMALLY);
-					//logger.debug("LOADMGR: cores=" + coresLeft);
+					//logger.debug("LOADMGR: search is running, ok: " + search);
 				} else if (pauseSlotsLeft > 0) {
 					// No cores, but a pause slot is left. Pause it.
+					logger.debug("LOADMGR: no cores left for search: " + search);
 					pauseSlotsLeft--;
 					applyAction(search, ServerLoadQueryAction.PAUSE);
-					//logger.debug("LOADMGR: pauseSlots=" + pauseSlotsLeft);
 				} else {
 					// No cores or pause slots. Abort the search.
+					logger.debug("LOADMGR: no pause slots left, aborting: " + search);
 					applyAction(search, ServerLoadQueryAction.ABORT);
 				}
 			}
@@ -482,7 +475,7 @@ public class SearchCache {
 	}
 
 	private void removeFromCache(Job search) {
-		cachedSearches.remove(search.getParameters());
+		cachedSearches.remove(search.getDescription().uniqueIdentifier());
 		search.decrRef();
 		cacheSizeBytes -= search.estimateSizeBytes();
 	}
