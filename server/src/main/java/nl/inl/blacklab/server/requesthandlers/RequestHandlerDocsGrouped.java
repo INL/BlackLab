@@ -25,7 +25,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 	@Override
 	public Response handle() throws BlsException {
 		// Get the window we're interested in
-		JobDocsGrouped search = searchMan.searchDocsGrouped(user, searchParam);
+		JobDocsGrouped search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
 		try {
 			if (getBoolParameter("block")) {
 				search.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);

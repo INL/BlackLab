@@ -21,7 +21,7 @@ public class JobHitsSorted extends JobWithHits {
 		Description parNoSort = DescriptionImpl.jobHits(JobHits.class, jobDesc.getIndexName(), jobDesc.getPattern(),
 				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
 				jobDesc.getContextSettings());
-		JobWithHits hitsSearch = searchMan.searchHits(user, parNoSort);
+		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, parNoSort.hits());
 		Hits hitsUnsorted;
 		try {
 			waitForJobToFinish(hitsSearch);

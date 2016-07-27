@@ -24,9 +24,9 @@ public class JobHitsWindow extends Job {
 		// First, execute blocking hits search.
 		JobWithHits hitsSearch;
 		if (jobDesc.hasSort())
-			hitsSearch = searchMan.searchHitsSorted(user, jobDesc);
+			hitsSearch = (JobWithHits) searchMan.search(user, jobDesc.hitsSorted());
 		else
-			hitsSearch = searchMan.searchHits(user, jobDesc);
+			hitsSearch = (JobWithHits) searchMan.search(user, jobDesc.hits());
 		try {
 			waitForJobToFinish(hitsSearch);
 

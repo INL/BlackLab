@@ -49,12 +49,12 @@ public abstract class Job implements Comparable<Job> {
 	final static boolean ENABLE_JOB_CLEANUP = false;
 
 	/** Description of a job */
-	public static interface Description {
+	public static abstract class Description {
 		/**
 		 * Generate a unique identifier string for this job, for caching, etc.
 		 * @return the unique identifier string
 		 */
-		String uniqueIdentifier();
+		public abstract String uniqueIdentifier();
 
 		/**
 		 * Create the job corresponding to this description.
@@ -63,52 +63,94 @@ public abstract class Job implements Comparable<Job> {
 		 * @return newly created job
 		 * @throws BlsException on error
 		 */
-		Job createJob(SearchManager searchMan, User user) throws BlsException;
+		public abstract Job createJob(SearchManager searchMan, User user) throws BlsException;
 
 		/**
 		 * Get the index name
 		 * @return name of the index this job if for
 		 */
-		String getIndexName();
+		public abstract String getIndexName();
 
 		/**
 		 * Get the pattern to search for (if any)
 		 * @return pattern, or null if none given
 		 * @throws BlsException on error
 		 */
-		TextPattern getPattern() throws BlsException;
+		public abstract TextPattern getPattern() throws BlsException;
 
-		Query getFilterQuery() throws BlsException;
+		public abstract Query getFilterQuery() throws BlsException;
 
-		SampleSettings getSampleSettings();
+		public abstract SampleSettings getSampleSettings();
 
-		MaxSettings getMaxSettings();
+		public abstract MaxSettings getMaxSettings();
 
-		WindowSettings getWindowSettings();
+		public abstract WindowSettings getWindowSettings();
 
-		ContextSettings getContextSettings();
+		public abstract ContextSettings getContextSettings();
 
-		DocGroupSettings docGroupSettings() throws BlsException;
+		public abstract DocGroupSettings docGroupSettings() throws BlsException;
 
-		DocGroupSortSettings docGroupSortSettings() throws BlsException;
+		public abstract DocGroupSortSettings docGroupSortSettings() throws BlsException;
 
-		DocSortSettings docSortSettings();
+		public abstract DocSortSettings docSortSettings();
 
-		List<DocProperty> getFacets();
+		public abstract List<DocProperty> getFacets();
 
-		HitGroupSettings hitGroupSettings();
+		public abstract HitGroupSettings hitGroupSettings();
 
-		HitGroupSortSettings hitGroupSortSettings();
+		public abstract HitGroupSortSettings hitGroupSortSettings();
 
-		HitsSortSettings hitsSortSettings();
+		public abstract HitsSortSettings hitsSortSettings();
 
-		boolean hasSort();
+		public abstract boolean hasSort();
 
-		DataObject toDataObject();
+		public abstract DataObject toDataObject();
 
+		public Description hitsSorted() throws BlsException {
+			return DescriptionImpl.jobHits(JobHitsSorted.class, getIndexName(), getPattern(), getFilterQuery(), hitsSortSettings(), getMaxSettings(), null, null, null);
+		}
+
+		public Description hits() throws BlsException {
+			return DescriptionImpl.jobHits(JobHits.class, getIndexName(), getPattern(), getFilterQuery(), null, getMaxSettings(),
+			null, null, null);
+		}
+
+		public Description docs() throws BlsException {
+			return DescriptionImpl.jobDocs(JobDocs.class, getIndexName(), getPattern(), getFilterQuery(), docSortSettings(), getMaxSettings(), null, getContextSettings());
+		}
+
+		public Description hitsWindow() throws BlsException {
+			return DescriptionImpl.jobHits(JobHitsWindow.class, getIndexName(), getPattern(), getFilterQuery(), hitsSortSettings(),
+			getMaxSettings(), getSampleSettings(), getWindowSettings(), getContextSettings());
+		}
+
+		public Description hitsTotal() throws BlsException {
+			return DescriptionImpl.jobHits(JobHitsTotal.class, getIndexName(), getPattern(), getFilterQuery(), null, getMaxSettings(), getSampleSettings(), null, null);
+		}
+
+		public Description hitsGrouped() throws BlsException {
+			return DescriptionImpl.hitsGrouped(JobHitsGrouped.class, getIndexName(), getPattern(), getFilterQuery(), hitGroupSettings(), hitGroupSortSettings(), getMaxSettings(), getSampleSettings());
+		}
+
+		public Description docsWindow() throws BlsException {
+			return DescriptionImpl.jobDocs(JobDocsWindow.class, getIndexName(), getPattern(), getFilterQuery(), docSortSettings(), getMaxSettings(), getWindowSettings(), getContextSettings());
+		}
+
+		public Description docsTotal() throws BlsException {
+			return DescriptionImpl.jobDocs(JobDocsTotal.class, getIndexName(), getPattern(), getFilterQuery(), null, getMaxSettings(), null, null);
+		}
+
+		public Description docsGrouped() throws BlsException {
+			return DescriptionImpl.docsGrouped(JobDocsGrouped.class, getIndexName(), getPattern(), getFilterQuery(), docGroupSettings(),
+			docGroupSortSettings(), getMaxSettings());
+		}
+
+		public Description facets() throws BlsException {
+			return DescriptionImpl.facets(JobFacets.class, getIndexName(), getPattern(), getFilterQuery(), getFacets(), getMaxSettings());
+		}
 	}
 
-	public static abstract class AbstractDescription implements Description {
+	public static abstract class AbstractDescription extends Description {
 
 		@Override
 		public String uniqueIdentifier() {

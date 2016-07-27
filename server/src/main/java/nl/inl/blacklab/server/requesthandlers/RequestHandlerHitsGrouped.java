@@ -26,7 +26,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 		//logger.debug("@PERF RHHitsGrouped: START");
 
 		// Get the window we're interested in
-		JobHitsGrouped search = searchMan.searchHitsGrouped(user, searchParam);
+		JobHitsGrouped search = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped());
 		try {
 			if (getBoolParameter("block")) {
 				//logger.debug("@PERF RHHitsGrouped: block");

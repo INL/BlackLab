@@ -24,7 +24,7 @@ public class JobDocsWindow extends Job {
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking docs search.
-		JobWithDocs docsSearch = searchMan.searchDocs(user, jobDesc);
+		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, jobDesc.docs());
 		try {
 			waitForJobToFinish(docsSearch);
 

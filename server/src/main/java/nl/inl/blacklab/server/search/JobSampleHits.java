@@ -64,9 +64,9 @@ public class JobSampleHits extends JobWithHits {
 		Description inputDesc = sampleDesc.getInputDesc();
 		JobWithHits inputJob;
 		if (inputDesc.hasSort())
-			inputJob = searchMan.searchHitsSorted(user, inputDesc);
+			inputJob = (JobWithHits) searchMan.search(user, inputDesc.hitsSorted());
 		else
-			inputJob = searchMan.searchHits(user, inputDesc);
+			inputJob = (JobWithHits) searchMan.search(user, inputDesc.hits());
 		waitForJobToFinish(inputJob);
 		Hits inputHits = inputJob.getHits();
 		SampleSettings sample = sampleDesc.getSampleSettings();

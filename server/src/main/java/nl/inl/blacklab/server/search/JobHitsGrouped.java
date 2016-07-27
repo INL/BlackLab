@@ -27,7 +27,7 @@ public class JobHitsGrouped extends Job {
 		Description parNoGroup = DescriptionImpl.jobHits(JobHits.class, jobDesc.getIndexName(), jobDesc.getPattern(),
 				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
 				jobDesc.getContextSettings());
-		JobWithHits hitsSearch = searchMan.searchHits(user, parNoGroup);
+		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, parNoGroup.hits());
 		try {
 			waitForJobToFinish(hitsSearch);
 

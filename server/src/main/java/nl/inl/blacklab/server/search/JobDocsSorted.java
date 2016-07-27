@@ -21,7 +21,7 @@ public class JobDocsSorted extends JobWithDocs {
 		// First, execute blocking docs search.
 		Description parNoSort = DescriptionImpl.jobDocs(JobDocs.class, jobDesc.getIndexName(), jobDesc.getPattern(), jobDesc.getFilterQuery(),
 				null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
-		JobWithDocs search = searchMan.searchDocs(user, parNoSort);
+		JobWithDocs search = (JobWithDocs) searchMan.search(user, parNoSort.docs());
 		try {
 			waitForJobToFinish(search);
 

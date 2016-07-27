@@ -20,7 +20,7 @@ public class JobHitsTotal extends Job {
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		JobWithHits hitsSearch = searchMan.searchHits(user, jobDesc);
+		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, jobDesc.hits());
 		try {
 			waitForJobToFinish(hitsSearch);
 

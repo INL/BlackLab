@@ -29,7 +29,7 @@ public class JobFacets extends Job {
 		// First, execute blocking docs search.
 		Description parNoGroup = DescriptionImpl.jobDocs(JobDocs.class, jobDesc.getIndexName(), jobDesc.getPattern(),
 				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
-		JobWithDocs docsSearch = searchMan.searchDocs(user, parNoGroup);
+		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, parNoGroup.docs());
 		try {
 			waitForJobToFinish(docsSearch);
 

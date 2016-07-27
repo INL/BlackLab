@@ -61,7 +61,7 @@ public class RequestHandlerDocs extends RequestHandler {
 				// TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
 
 				// Yes. Group, then show hits from the specified group
-				searchGrouped = searchMan.searchDocsGrouped(user, searchParam);
+				searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
 				search = searchGrouped;
 				search.incrRef();
 				if (block) {
@@ -107,7 +107,7 @@ public class RequestHandlerDocs extends RequestHandler {
 			} else {
 				// Regular set of docs (no grouping first)
 
-				searchWindow = searchMan.searchDocsWindow(user, searchParam);
+				searchWindow = (JobDocsWindow) searchMan.search(user, searchParam.docsWindow());
 				search = searchWindow;
 				search.incrRef();
 				if (block) {
@@ -118,7 +118,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
 				// Also determine the total number of hits
 				// (usually nonblocking, unless "waitfortotal=yes" was passed)
-				total = searchMan.searchDocsTotal(user, searchParam);
+				total = (JobDocsTotal) searchMan.search(user, searchParam.docsTotal());
 				if (searchParam.getBoolean("waitfortotal")) {
 					total.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
 					if (!total.finished())
