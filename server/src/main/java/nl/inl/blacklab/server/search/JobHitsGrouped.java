@@ -27,8 +27,9 @@ public class JobHitsGrouped extends Job {
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		Description parNoGroup = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(), jobDesc.getFilterQuery(),
-				null, jobDesc.getDocPid(), jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
+		Description parNoGroup = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(),
+				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
+				jobDesc.getContextSettings());
 		JobWithHits hitsSearch = searchMan.searchHits(user, parNoGroup);
 		try {
 			waitForJobToFinish(hitsSearch);

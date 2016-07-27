@@ -21,8 +21,8 @@ public class JobDocs extends JobWithDocs {
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
 		if (jobDesc.getPattern() != null) {
-			Description parNoSort = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(), jobDesc.getFilterQuery(),
-					null, jobDesc.getDocPid(), jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
+			Description parNoSort = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(),
+					jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
 					jobDesc.getContextSettings());
 			JobWithHits hitsSearch = searchMan.searchHits(user, parNoSort);
 			Hits hits;

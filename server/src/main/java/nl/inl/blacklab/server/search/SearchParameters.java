@@ -17,6 +17,7 @@ import nl.inl.blacklab.perdocument.DocPropertyMultiple;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.GroupProperty;
 import nl.inl.blacklab.server.dataobject.DataObject;
@@ -24,6 +25,7 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.exceptions.NotFound;
 
 /**
  * Uniquely describes a search operation.
@@ -175,12 +177,17 @@ public class SearchParameters extends TreeMap<String, String> implements Job.Des
 	}
 
 	@Override
-	public String getDocPid() {
-		return getString("docpid");
-	}
-
-	@Override
 	public Query getFilterQuery() throws BlsException {
+		String docId = getString("docpid");
+		if (docId != null) {
+			// Only hits in 1 doc (for highlighting)
+			int luceneDocId = SearchManager.getLuceneDocIdFromPid(getSearcher(), docId);
+			if (luceneDocId < 0)
+				throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
+			logger.debug("Filtering on single doc-id");
+			return new SingleDocIdFilter(luceneDocId);
+		}
+
 		if (containsKey("filter"))
 			return SearchManager.parseFilter(getSearcher(), getString("filter"), getString("filterlang"));
 		return null;

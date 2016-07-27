@@ -78,8 +78,6 @@ public abstract class Job implements Comparable<Job> {
 		 */
 		TextPattern getPattern() throws BlsException;
 
-		String getDocPid();
-
 		Query getFilterQuery() throws BlsException;
 
 		SampleSettings getSampleSettings();
@@ -135,8 +133,6 @@ public abstract class Job implements Comparable<Job> {
 
 		private DocGroupSortSettings docGroupSortSett;
 
-		private String docPid;
-
 		private MaxSettings maxSettings;
 
 		private SampleSettings sampleSettings;
@@ -156,7 +152,7 @@ public abstract class Job implements Comparable<Job> {
 			return "DescriptionImpl [jobClass=" + jobClass + ", indexName=" + indexName + ", pattern=" + pattern.toString() + ", filterQuery="
 					+ filterQuery + ", hitsSortSett=" + hitsSortSett + ", hitsGroupSett=" + hitsGroupSett + ", hitsGroupSortSett="
 					+ hitsGroupSortSett + ", docSortSett=" + docSortSett + ", docGroupSett=" + docGroupSett + ", docGroupSortSortSett="
-					+ docGroupSortSett + ", docPid=" + docPid + ", maxSettings=" + maxSettings + ", sampleSettings=" +
+					+ docGroupSortSett + ", maxSettings=" + maxSettings + ", sampleSettings=" +
 					sampleSettings + ", windowSettings=" + windowSettings + ", contextSettings=" + contextSettings
 					+ ", facets=" + facets
 					+ "]";
@@ -208,11 +204,6 @@ public abstract class Job implements Comparable<Job> {
 		@Override
 		public TextPattern getPattern() {
 			return pattern;
-		}
-
-		@Override
-		public String getDocPid() {
-			return docPid;
 		}
 
 		@Override
@@ -280,16 +271,15 @@ public abstract class Job implements Comparable<Job> {
 			return hitsSortSett != null || hitsGroupSortSett != null || docSortSett != null || docGroupSortSett != null;
 		}
 
-		public static Description jobHits(Class<? extends Job> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, HitsSortSettings hitsSortSettings,
-				String docPid, MaxSettings maxSettings, SampleSettings sampleSettings, WindowSettings windowSettings,
-				ContextSettings contextSettings) {
+		public static Description jobHits(Class<? extends Job> jobClass, SearchManager searchMan, String indexName,
+				TextPattern pattern, Query filterQuery, HitsSortSettings hitsSortSettings, MaxSettings maxSettings,
+				SampleSettings sampleSettings, WindowSettings windowSettings, ContextSettings contextSettings) {
 			DescriptionImpl desc = new DescriptionImpl(searchMan);
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;
 			desc.filterQuery = filterQuery;
 			desc.hitsSortSett = hitsSortSettings;
-			desc.docPid = docPid;
 			desc.maxSettings = maxSettings;
 			desc.sampleSettings = sampleSettings;
 			desc.windowSettings = windowSettings;
@@ -297,8 +287,9 @@ public abstract class Job implements Comparable<Job> {
 			return desc;
 		}
 
-		public static Description jobDocs(Class<? extends Job> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
-				DocSortSettings sortSettings, MaxSettings maxSettings, WindowSettings windowSettings, ContextSettings contextSettings) {
+		public static Description jobDocs(Class<? extends Job> jobClass, SearchManager searchMan, String indexName,
+				TextPattern pattern, Query filterQuery, DocSortSettings sortSettings, MaxSettings maxSettings,
+				WindowSettings windowSettings, ContextSettings contextSettings) {
 			DescriptionImpl desc = new DescriptionImpl(searchMan);
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
@@ -371,8 +362,6 @@ public abstract class Job implements Comparable<Job> {
 				d.put("docGroupSett", docGroupSett.toString());
 			if (docGroupSortSett != null)
 				d.put("docGroupSortSett", docGroupSortSett.toString());
-			if (docPid != null)
-				d.put("docPid", docPid);
 			if (maxSettings != null)
 				d.put("maxSettings", maxSettings.toString());
 			if (sampleSettings != null)

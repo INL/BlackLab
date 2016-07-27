@@ -1064,10 +1064,10 @@ public class SearchManager {
 		Job.Description parBasic;
 		if (par.hasSort()) {
 			parBasic = JobHitsSorted.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-					par.hitsSortSettings(), par.getDocPid(), par.getMaxSettings(), par.getSampleSettings());
+					par.hitsSortSettings(), par.getMaxSettings(), par.getSampleSettings());
 		} else {
 			parBasic = JobHits.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-					par.getDocPid(), par.getMaxSettings(), par.getSampleSettings());
+					par.getMaxSettings(), par.getSampleSettings());
 		}
 		return (JobWithHits) search(user, parBasic);
 	}
