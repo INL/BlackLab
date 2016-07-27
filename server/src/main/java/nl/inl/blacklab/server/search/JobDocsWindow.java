@@ -77,9 +77,9 @@ public class JobDocsWindow extends Job {
 		super.cleanup();
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, DocSortSettings sortSettings,
+	public static Description description(String indexName, TextPattern pattern, Query filterQuery, DocSortSettings sortSettings,
 			WindowSettings windowSettings, ContextSettings contextSettings, MaxSettings maxSettings) {
-		return DescriptionImpl.jobDocs(JobDocsWindow.class, searchMan, indexName, pattern, filterQuery, sortSettings, maxSettings, windowSettings, contextSettings);
+		return DescriptionImpl.jobDocs(JobDocsWindow.class, indexName, pattern, filterQuery, sortSettings, maxSettings, windowSettings, contextSettings);
 	}
 
 }

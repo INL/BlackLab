@@ -27,7 +27,7 @@ public class JobHitsGrouped extends Job {
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		Description parNoGroup = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(),
+		Description parNoGroup = DescriptionImpl.jobHits(JobHits.class, jobDesc.getIndexName(), jobDesc.getPattern(),
 				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
 				jobDesc.getContextSettings());
 		JobWithHits hitsSearch = searchMan.searchHits(user, parNoGroup);
@@ -87,9 +87,9 @@ public class JobHitsGrouped extends Job {
 		super.cleanup();
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, HitGroupSettings hitGroupSettings,
+	public static Description description(String indexName, TextPattern pattern, Query filterQuery, HitGroupSettings hitGroupSettings,
 			HitGroupSortSettings hitGroupSortSettings, MaxSettings maxSettings, SampleSettings sampleSettings) {
-		return DescriptionImpl.hitsGrouped(JobHitsGrouped.class, searchMan, indexName, pattern, filterQuery, hitGroupSettings, hitGroupSortSettings, maxSettings, sampleSettings);
+		return DescriptionImpl.hitsGrouped(JobHitsGrouped.class, indexName, pattern, filterQuery, hitGroupSettings, hitGroupSortSettings, maxSettings, sampleSettings);
 	}
 
 }

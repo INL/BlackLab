@@ -1063,7 +1063,7 @@ public class SearchManager {
 			throws BlsException {
 		Job.Description parBasic;
 		if (par.hasSort()) {
-			parBasic = JobHitsSorted.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+			parBasic = JobHitsSorted.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 					par.hitsSortSettings(), par.getMaxSettings(), par.getSampleSettings());
 		} else {
 			parBasic = JobHits.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
@@ -1074,14 +1074,14 @@ public class SearchManager {
 
 	public JobWithDocs searchDocs(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobDocs.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+		Job.Description parBasic = JobDocs.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.docSortSettings(), par.getContextSettings(), par.getMaxSettings());
 		return (JobWithDocs) search(user, parBasic);
 	}
 
 	public JobHitsWindow searchHitsWindow(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobHitsWindow.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+		Job.Description parBasic = JobHitsWindow.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.hitsSortSettings(), par.getWindowSettings(), par.getContextSettings(), par.getMaxSettings(),
 				par.getSampleSettings());
 		return (JobHitsWindow) search(user, parBasic);
@@ -1089,42 +1089,42 @@ public class SearchManager {
 
 	public JobDocsWindow searchDocsWindow(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobDocsWindow.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+		Job.Description parBasic = JobDocsWindow.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.docSortSettings(), par.getWindowSettings(), par.getContextSettings(), par.getMaxSettings());
 		return (JobDocsWindow) search(user, parBasic);
 	}
 
 	public JobHitsTotal searchHitsTotal(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobHitsTotal.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+		Job.Description parBasic = JobHitsTotal.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.getMaxSettings(), par.getSampleSettings());
 		return (JobHitsTotal) search(user, parBasic);
 	}
 
 	public JobDocsTotal searchDocsTotal(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobDocsTotal.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+		Job.Description parBasic = JobDocsTotal.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.getMaxSettings());
 		return (JobDocsTotal) search(user, parBasic);
 	}
 
 	public JobHitsGrouped searchHitsGrouped(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobHitsGrouped.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+		Job.Description parBasic = JobHitsGrouped.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.hitGroupSettings(), par.hitGroupSortSettings(), par.getMaxSettings(), par.getSampleSettings());
 		return (JobHitsGrouped) search(user, parBasic);
 	}
 
 	public JobDocsGrouped searchDocsGrouped(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobDocsGrouped.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+		Job.Description parBasic = JobDocsGrouped.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.docGroupSettings(), par.docGroupSortSettings(), par.getMaxSettings());
 		return (JobDocsGrouped) search(user, parBasic);
 	}
 
 	public JobFacets searchFacets(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobFacets.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+		Job.Description parBasic = JobFacets.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.getFacets(), par.getMaxSettings());
 		return (JobFacets) search(user, parBasic);
 	}

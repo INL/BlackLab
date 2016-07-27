@@ -76,8 +76,8 @@ public class JobDocsTotal extends Job {
 		super.cleanup();
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings) {
-		return DescriptionImpl.jobDocs(JobDocsTotal.class, searchMan, indexName, pattern, filterQuery, null, maxSettings, null, null);
+	public static Description description(String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings) {
+		return DescriptionImpl.jobDocs(JobDocsTotal.class, indexName, pattern, filterQuery, null, maxSettings, null, null);
 	}
 
 }

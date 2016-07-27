@@ -113,8 +113,6 @@ public abstract class Job implements Comparable<Job> {
 
 		private Class<? extends Job> jobClass;
 
-		private SearchManager searchMan;
-
 		private String indexName;
 
 		private TextPattern pattern;
@@ -143,8 +141,7 @@ public abstract class Job implements Comparable<Job> {
 
 		private List<DocProperty> facets;
 
-		public DescriptionImpl(SearchManager searchMan) {
-			this.searchMan = searchMan;
+		public DescriptionImpl() {
 		}
 
 		@Override
@@ -156,10 +153,6 @@ public abstract class Job implements Comparable<Job> {
 					sampleSettings + ", windowSettings=" + windowSettings + ", contextSettings=" + contextSettings
 					+ ", facets=" + facets
 					+ "]";
-		}
-
-		Searcher getSearcher() throws BlsException {
-			return searchMan.getSearcher(indexName);
 		}
 
 		/**
@@ -271,12 +264,11 @@ public abstract class Job implements Comparable<Job> {
 			return hitsSortSett != null || hitsGroupSortSett != null || docSortSett != null || docGroupSortSett != null;
 		}
 
-		public static Description jobHits(Class<? extends Job> jobClass, SearchManager searchMan, String indexName,
+		public static Description jobHits(Class<? extends Job> jobClass, String indexName,
 				TextPattern pattern, Query filterQuery, HitsSortSettings hitsSortSettings, MaxSettings maxSettings,
 				SampleSettings sampleSettings, WindowSettings windowSettings, ContextSettings contextSettings) {
-			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			DescriptionImpl desc = new DescriptionImpl();
 			desc.jobClass = jobClass;
-			desc.indexName = indexName;
 			desc.pattern = pattern;
 			desc.filterQuery = filterQuery;
 			desc.hitsSortSett = hitsSortSettings;
@@ -287,10 +279,10 @@ public abstract class Job implements Comparable<Job> {
 			return desc;
 		}
 
-		public static Description jobDocs(Class<? extends Job> jobClass, SearchManager searchMan, String indexName,
+		public static Description jobDocs(Class<? extends Job> jobClass, String indexName,
 				TextPattern pattern, Query filterQuery, DocSortSettings sortSettings, MaxSettings maxSettings,
 				WindowSettings windowSettings, ContextSettings contextSettings) {
-			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			DescriptionImpl desc = new DescriptionImpl();
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;
@@ -302,10 +294,10 @@ public abstract class Job implements Comparable<Job> {
 			return desc;
 		}
 
-		public static Description hitsGrouped(Class<? extends Job> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+		public static Description hitsGrouped(Class<? extends Job> jobClass, String indexName, TextPattern pattern, Query filterQuery,
 				HitGroupSettings hitGroupSettings, HitGroupSortSettings hitGroupSortSettings, MaxSettings maxSettings,
 				SampleSettings sampleSettings) {
-			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			DescriptionImpl desc = new DescriptionImpl();
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;
@@ -317,9 +309,9 @@ public abstract class Job implements Comparable<Job> {
 			return desc;
 		}
 
-		public static Description docsGrouped(Class<JobDocsGrouped> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+		public static Description docsGrouped(Class<JobDocsGrouped> jobClass, String indexName, TextPattern pattern, Query filterQuery,
 				DocGroupSettings docGroupSettings, DocGroupSortSettings docGroupSortSettings, MaxSettings maxSettings) {
-			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			DescriptionImpl desc = new DescriptionImpl();
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;
@@ -330,9 +322,9 @@ public abstract class Job implements Comparable<Job> {
 			return desc;
 		}
 
-		public static Description facets(Class<JobFacets> jobClass, SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+		public static Description facets(Class<JobFacets> jobClass, String indexName, TextPattern pattern, Query filterQuery,
 				List<DocProperty> facets, MaxSettings maxSettings) {
-			DescriptionImpl desc = new DescriptionImpl(searchMan);
+			DescriptionImpl desc = new DescriptionImpl();
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;

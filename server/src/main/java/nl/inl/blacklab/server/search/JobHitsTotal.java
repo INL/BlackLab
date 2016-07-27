@@ -73,9 +73,9 @@ public class JobHitsTotal extends Job {
 		super.cleanup();
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+	public static Description description(String indexName, TextPattern pattern, Query filterQuery,
 			MaxSettings maxSettings, SampleSettings sampleSettings) {
-		return DescriptionImpl.jobHits(JobHitsTotal.class, searchMan, indexName, pattern, filterQuery, null, maxSettings, sampleSettings, null, null);
+		return DescriptionImpl.jobHits(JobHitsTotal.class, indexName, pattern, filterQuery, null, maxSettings, sampleSettings, null, null);
 	}
 
 }

@@ -165,8 +165,12 @@ public class SearchParameters extends TreeMap<String, String> implements Job.Des
 		return getString("indexname");
 	}
 
-	Searcher getSearcher() throws BlsException {
-		return searchManager.getSearcher(getIndexName());
+	protected Searcher getSearcher() {
+		try {
+			return searchManager.getSearcher(getIndexName());
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override

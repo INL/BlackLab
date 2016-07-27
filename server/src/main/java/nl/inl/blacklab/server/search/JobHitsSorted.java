@@ -21,7 +21,7 @@ public class JobHitsSorted extends JobWithHits {
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
-		Description parNoSort = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(),
+		Description parNoSort = DescriptionImpl.jobHits(JobHits.class, jobDesc.getIndexName(), jobDesc.getPattern(),
 				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
 				jobDesc.getContextSettings());
 		JobWithHits hitsSearch = searchMan.searchHits(user, parNoSort);
@@ -72,9 +72,9 @@ public class JobHitsSorted extends JobWithHits {
 		return d;
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+	public static Description description(String indexName, TextPattern pattern, Query filterQuery,
 			HitsSortSettings hitsSortSett, MaxSettings maxSettings, SampleSettings sampleSettings) {
-		return DescriptionImpl.jobHits(JobHitsSorted.class, searchMan, indexName, pattern, filterQuery, hitsSortSett, maxSettings, sampleSettings, null, null);
+		return DescriptionImpl.jobHits(JobHitsSorted.class, indexName, pattern, filterQuery, hitsSortSett, maxSettings, sampleSettings, null, null);
 	}
 
 }

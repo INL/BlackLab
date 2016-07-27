@@ -30,7 +30,7 @@ public class JobFacets extends Job {
 	@Override
 	public void performSearch() throws BlsException {
 		// First, execute blocking docs search.
-		Description parNoGroup = DescriptionImpl.jobDocs(JobDocs.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(),
+		Description parNoGroup = DescriptionImpl.jobDocs(JobDocs.class, jobDesc.getIndexName(), jobDesc.getPattern(),
 				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
 		JobWithDocs docsSearch = searchMan.searchDocs(user, parNoGroup);
 		try {
@@ -86,8 +86,8 @@ public class JobFacets extends Job {
 		super.cleanup();
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, List<DocProperty> facets, MaxSettings maxSettings) {
-		return DescriptionImpl.facets(JobFacets.class, searchMan, indexName, pattern, filterQuery, facets, maxSettings);
+	public static Description description(String indexName, TextPattern pattern, Query filterQuery, List<DocProperty> facets, MaxSettings maxSettings) {
+		return DescriptionImpl.facets(JobFacets.class, indexName, pattern, filterQuery, facets, maxSettings);
 	}
 
 }

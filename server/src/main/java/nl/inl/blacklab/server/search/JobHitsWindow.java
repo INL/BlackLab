@@ -77,10 +77,10 @@ public class JobHitsWindow extends Job {
 		super.cleanup();
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
+	public static Description description(String indexName, TextPattern pattern, Query filterQuery,
 			HitsSortSettings hitsSortSettings, WindowSettings windowSettings, ContextSettings contextSettings,
 			MaxSettings maxSettings, SampleSettings sampleSettings) {
-		return DescriptionImpl.jobHits(JobHitsWindow.class, searchMan, indexName, pattern, filterQuery, hitsSortSettings,
+		return DescriptionImpl.jobHits(JobHitsWindow.class, indexName, pattern, filterQuery, hitsSortSettings,
 				maxSettings, sampleSettings, windowSettings, contextSettings);
 	}
 

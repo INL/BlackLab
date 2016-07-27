@@ -21,7 +21,7 @@ public class JobDocs extends JobWithDocs {
 	public void performSearch() throws BlsException {
 		// First, execute blocking hits search.
 		if (jobDesc.getPattern() != null) {
-			Description parNoSort = DescriptionImpl.jobHits(JobHits.class, searchMan, jobDesc.getIndexName(), jobDesc.getPattern(),
+			Description parNoSort = DescriptionImpl.jobHits(JobHits.class, jobDesc.getIndexName(), jobDesc.getPattern(),
 					jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
 					jobDesc.getContextSettings());
 			JobWithHits hitsSearch = searchMan.searchHits(user, parNoSort);
@@ -50,9 +50,9 @@ public class JobDocs extends JobWithDocs {
 		}
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery, DocSortSettings docSortSettings,
+	public static Description description(String indexName, TextPattern pattern, Query filterQuery, DocSortSettings docSortSettings,
 			ContextSettings contextSettings, MaxSettings maxSettings) {
-		return DescriptionImpl.jobDocs(JobDocs.class, searchMan, indexName, pattern, filterQuery, docSortSettings, maxSettings, null, contextSettings);
+		return DescriptionImpl.jobDocs(JobDocs.class, indexName, pattern, filterQuery, docSortSettings, maxSettings, null, contextSettings);
 	}
 
 }
