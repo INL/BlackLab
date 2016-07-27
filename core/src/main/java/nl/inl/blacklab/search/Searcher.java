@@ -798,12 +798,12 @@ public abstract class Searcher {
 	 * @return the field content
 	 */
 	public String getContentByCharPos(int docId, String fieldName, int startAtChar, int endAtChar) {
+		Document d = document(docId);
 		if (!contentStores.exists(fieldName)) {
 			// No special content accessor set; assume a stored field
-			Document d = document(docId);
 			return d.get(fieldName).substring(startAtChar, endAtChar);
 		}
-		return contentStores.getSubstrings(fieldName, docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
+		return contentStores.getSubstrings(fieldName, d, new int[] { startAtChar }, new int[] { endAtChar })[0];
 	}
 
 	/**
@@ -821,9 +821,9 @@ public abstract class Searcher {
 	 * @return the field content
 	 */
 	public String getContent(int docId, String fieldName, int startAtWord, int endAtWord) {
+		Document d = document(docId);
 		if (!contentStores.exists(fieldName)) {
 			// No special content accessor set; assume a stored field
-			Document d = document(docId);
 			String content = d.get(fieldName);
 			if (content == null)
 				throw new RuntimeException("Field not found: " + fieldName);
@@ -831,7 +831,7 @@ public abstract class Searcher {
 		}
 
 		int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord);
-		return contentStores.getSubstrings(fieldName, docId, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
+		return contentStores.getSubstrings(fieldName, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
 	}
 
 	/**

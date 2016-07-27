@@ -58,11 +58,11 @@ public class ContentStoresManager {
 		return contentAccessor.getSubstringsFromDocument(d, start, end);
 	}
 
-	public String[] getSubstrings(String fieldName, int docId, int[] start, int[] end) {
+	public String[] getSubstrings(String fieldName, int contentId, int[] start, int[] end) {
 		ContentAccessor contentAccessor = contentAccessors.get(fieldName);
 		if (contentAccessor == null)
 			return null;
-		return contentAccessor.getSubstringsFromDocument(docId, start, end);
+		return contentAccessor.getSubstringsFromDocument(contentId, start, end);
 	}
 
 
