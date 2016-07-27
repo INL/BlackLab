@@ -29,11 +29,6 @@ public class HitPropValueContextWord extends HitPropValueContext {
 		return ((Integer)valueSortOrder).hashCode();
 	}
 
-	@Override
-	public String toString() {
-		return valueTokenId < 0 ? "-" : terms.get(valueTokenId);
-	}
-
 	public static HitPropValue deserialize(Hits hits, String info) {
 		String[] parts = PropValSerializeUtil.splitParts(info);
 		String fieldName = hits.settings().concordanceField();

@@ -24,17 +24,6 @@ public class HitPropValueMultiple extends HitPropValue {
 		return result;
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder b = new StringBuilder();
-		for (HitPropValue v: value) {
-			if (b.length() > 0)
-				b.append(" / ");
-			b.append(v.toString());
-		}
-		return b.toString();
-	}
-
 	public static HitPropValueMultiple deserialize(Hits hits, String info) {
 		String[] strValues = PropValSerializeUtil.splitMultiple(info);
 		HitPropValue[] values = new HitPropValue[strValues.length];

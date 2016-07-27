@@ -208,4 +208,8 @@ public abstract class HitProperty implements Comparator<Object> {
 		this.reverse = reverse;
 	}
 
+	@Override
+	public String toString() {
+		return serialize();
+	}
 }

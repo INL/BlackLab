@@ -22,11 +22,6 @@ public class HitPropValueString extends HitPropValue {
 		return value.equals(((HitPropValueString)obj).value);
 	}
 
-	@Override
-	public String toString() {
-		return value;
-	}
-
 	public static HitPropValue deserialize(String info) {
 		return new HitPropValueString(info);
 	}

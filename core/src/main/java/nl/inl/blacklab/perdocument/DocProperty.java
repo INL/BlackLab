@@ -130,4 +130,10 @@ public abstract class DocProperty {
 		this.reverse = reverse;
 	}
 
+	@Override
+	public String toString() {
+		return serialize();
+	}
+
+
 }
