@@ -6,7 +6,6 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 
-import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -42,17 +41,7 @@ public class JobHits extends JobWithHits {
 				hits.settings().setMaxHitsToRetrieve(maxSettings.maxRetrieve());
 				hits.settings().setMaxHitsToCount(maxSettings.maxCount());
 
-				// Do we want to take a smaller sample of all the hits?
-				SampleSettings sample = jobDesc.getSampleSettings();
-				if (sample.percentage() >= 0) {
-					hits = HitsSample.fromHits(hits, sample.percentage() / 100f, sample.seed());
-				} else if (sample.number() >= 0) {
-					hits = HitsSample.fromHits(hits, sample.number(), sample.seed());
-				}
-
 			} catch (RuntimeException e) {
-				// TODO: catch a more specific exception!
-				e.printStackTrace();
 				throw new InternalServerError("Internal error", 15, e);
 			}
 		} catch (TooManyClauses e) {

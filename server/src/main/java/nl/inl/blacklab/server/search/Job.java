@@ -108,12 +108,124 @@ public abstract class Job implements Comparable<Job> {
 
 	}
 
+	public static abstract class AbstractDescription implements Description {
+
+		@Override
+		public String uniqueIdentifier() {
+			try {
+				return this.getClass().getSimpleName() + " [indexName=" + getIndexName() + ", pattern=" + getPattern() + ", filterQuery="
+						+ getFilterQuery() + ", hitsSortSett=" + hitsSortSettings() + ", hitsGroupSett=" + hitGroupSettings() + ", hitsGroupSortSett="
+						+ hitGroupSortSettings() + ", docSortSett=" + docSortSettings() + ", docGroupSett=" + docGroupSettings() + ", docGroupSortSortSett="
+						+ docGroupSortSettings() + ", maxSettings=" + getMaxSettings() + ", sampleSettings=" +
+						getSampleSettings() + ", windowSettings=" + getWindowSettings() + ", contextSettings=" + getContextSettings()
+						+ ", facets=" + getFacets()
+						+ "]";
+			} catch (BlsException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return uniqueIdentifier();
+		}
+
+		@Override
+		public TextPattern getPattern() throws BlsException {
+			return null;
+		}
+
+		@Override
+		public Query getFilterQuery() throws BlsException {
+			return null;
+		}
+
+		@Override
+		public SampleSettings getSampleSettings() {
+			return null;
+		}
+
+		@Override
+		public MaxSettings getMaxSettings() {
+			return null;
+		}
+
+		@Override
+		public WindowSettings getWindowSettings() {
+			return null;
+		}
+
+		@Override
+		public ContextSettings getContextSettings() {
+			return null;
+		}
+
+		@Override
+		public DocGroupSettings docGroupSettings() throws BlsException {
+			return null;
+		}
+
+		@Override
+		public DocGroupSortSettings docGroupSortSettings() throws BlsException {
+			return null;
+		}
+
+		@Override
+		public DocSortSettings docSortSettings() {
+			return null;
+		}
+
+		@Override
+		public List<DocProperty> getFacets() {
+			return null;
+		}
+
+		@Override
+		public HitGroupSettings hitGroupSettings() {
+			return null;
+		}
+
+		@Override
+		public HitGroupSortSettings hitGroupSortSettings() {
+			return null;
+		}
+
+		@Override
+		public HitsSortSettings hitsSortSettings() {
+			return null;
+		}
+
+		@Override
+		public boolean hasSort() {
+			return false;
+		}
+
+	}
+
+	public abstract static class BasicDescription extends AbstractDescription {
+
+		String indexName;
+
+		public BasicDescription(String indexName) {
+			this.indexName = indexName;
+		}
+
+		/**
+		 * Get the index name
+		 * @return name of the index this job if for
+		 */
+		@Override
+		public String getIndexName() {
+			return indexName;
+		}
+
+
+	}
+
 	/** Description of a job */
-	public static class DescriptionImpl implements Description {
+	public static class DescriptionImpl extends BasicDescription {
 
 		private Class<? extends Job> jobClass;
-
-		private String indexName;
 
 		private TextPattern pattern;
 
@@ -141,27 +253,26 @@ public abstract class Job implements Comparable<Job> {
 
 		private List<DocProperty> facets;
 
-		public DescriptionImpl() {
+		public DescriptionImpl(String indexName) {
+			super(indexName);
 		}
 
+		/**
+		 * Generate a unique identifier string for this job, for caching, etc.
+		 *
+		 * NOTE: this is not guaranteed to stay the same between BlackLab versions.
+		 *
+		 * @return the unique identifier string
+		 */
 		@Override
-		public String toString() {
-			return "DescriptionImpl [jobClass=" + jobClass + ", indexName=" + indexName + ", pattern=" + pattern.toString() + ", filterQuery="
+		public String uniqueIdentifier() {
+			return "DescriptionImpl [jobClass=" + jobClass + ", indexName=" + getIndexName() + ", pattern=" + pattern.toString() + ", filterQuery="
 					+ filterQuery + ", hitsSortSett=" + hitsSortSett + ", hitsGroupSett=" + hitsGroupSett + ", hitsGroupSortSett="
 					+ hitsGroupSortSett + ", docSortSett=" + docSortSett + ", docGroupSett=" + docGroupSett + ", docGroupSortSortSett="
 					+ docGroupSortSett + ", maxSettings=" + maxSettings + ", sampleSettings=" +
 					sampleSettings + ", windowSettings=" + windowSettings + ", contextSettings=" + contextSettings
 					+ ", facets=" + facets
 					+ "]";
-		}
-
-		/**
-		 * Generate a unique identifier string for this job, for caching, etc.
-		 * @return the unique identifier string
-		 */
-		@Override
-		public String uniqueIdentifier() {
-			return toString();
 		}
 
 		/**
@@ -179,15 +290,6 @@ public abstract class Job implements Comparable<Job> {
 			} catch (NoSuchMethodException|InstantiationException|IllegalAccessException|IllegalArgumentException|InvocationTargetException e) {
 				throw new InternalServerError("Error instantiating Job class", 1, e);
 			}
-		}
-
-		/**
-		 * Get the index name
-		 * @return name of the index this job if for
-		 */
-		@Override
-		public String getIndexName() {
-			return indexName;
 		}
 
 		/**
@@ -267,7 +369,7 @@ public abstract class Job implements Comparable<Job> {
 		public static Description jobHits(Class<? extends Job> jobClass, String indexName,
 				TextPattern pattern, Query filterQuery, HitsSortSettings hitsSortSettings, MaxSettings maxSettings,
 				SampleSettings sampleSettings, WindowSettings windowSettings, ContextSettings contextSettings) {
-			DescriptionImpl desc = new DescriptionImpl();
+			DescriptionImpl desc = new DescriptionImpl(indexName);
 			desc.jobClass = jobClass;
 			desc.pattern = pattern;
 			desc.filterQuery = filterQuery;
@@ -282,7 +384,7 @@ public abstract class Job implements Comparable<Job> {
 		public static Description jobDocs(Class<? extends Job> jobClass, String indexName,
 				TextPattern pattern, Query filterQuery, DocSortSettings sortSettings, MaxSettings maxSettings,
 				WindowSettings windowSettings, ContextSettings contextSettings) {
-			DescriptionImpl desc = new DescriptionImpl();
+			DescriptionImpl desc = new DescriptionImpl(indexName);
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;
@@ -297,7 +399,7 @@ public abstract class Job implements Comparable<Job> {
 		public static Description hitsGrouped(Class<? extends Job> jobClass, String indexName, TextPattern pattern, Query filterQuery,
 				HitGroupSettings hitGroupSettings, HitGroupSortSettings hitGroupSortSettings, MaxSettings maxSettings,
 				SampleSettings sampleSettings) {
-			DescriptionImpl desc = new DescriptionImpl();
+			DescriptionImpl desc = new DescriptionImpl(indexName);
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;
@@ -311,7 +413,7 @@ public abstract class Job implements Comparable<Job> {
 
 		public static Description docsGrouped(Class<JobDocsGrouped> jobClass, String indexName, TextPattern pattern, Query filterQuery,
 				DocGroupSettings docGroupSettings, DocGroupSortSettings docGroupSortSettings, MaxSettings maxSettings) {
-			DescriptionImpl desc = new DescriptionImpl();
+			DescriptionImpl desc = new DescriptionImpl(indexName);
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;
@@ -324,7 +426,7 @@ public abstract class Job implements Comparable<Job> {
 
 		public static Description facets(Class<JobFacets> jobClass, String indexName, TextPattern pattern, Query filterQuery,
 				List<DocProperty> facets, MaxSettings maxSettings) {
-			DescriptionImpl desc = new DescriptionImpl();
+			DescriptionImpl desc = new DescriptionImpl(indexName);
 			desc.jobClass = jobClass;
 			desc.indexName = indexName;
 			desc.pattern = pattern;
@@ -464,14 +566,6 @@ public abstract class Job implements Comparable<Job> {
 	 */
 	protected SearchParameters searchParam;
 
-	public SearchParameters getSearchParam() {
-		return searchParam;
-	}
-
-	public void setSearchParam(SearchParameters searchParam) {
-		this.searchParam = searchParam;
-	}
-
 	/** The servlet */
 	protected SearchManager searchMan;
 
@@ -491,6 +585,18 @@ public abstract class Job implements Comparable<Job> {
 		startedAt = -1;
 		finishedAt = -1;
 		thrownException = null;
+	}
+
+	public SearchParameters getSearchParam() {
+		return searchParam;
+	}
+
+	public void setSearchParam(SearchParameters searchParam) {
+		this.searchParam = searchParam;
+	}
+
+	public Description getDescription() {
+		return jobDesc;
 	}
 
 	public Searcher getSearcher() {
@@ -892,6 +998,7 @@ public abstract class Job implements Comparable<Job> {
 		}
 		thrownException = null;
 		searchThread = null;
+		jobDesc = null;
 		refsToJob = REFS_INVALID;
 	}
 

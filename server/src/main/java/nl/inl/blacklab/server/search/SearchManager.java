@@ -1059,16 +1059,17 @@ public class SearchManager {
 		return indices;
 	}
 
+	public JobWithHits searchHitsSorted(User user, Job.Description par)
+			throws BlsException {
+		Job.Description parBasic = JobHitsSorted.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.hitsSortSettings(), par.getMaxSettings(), null);
+		return (JobWithHits) search(user, parBasic);
+	}
+
 	public JobWithHits searchHits(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic;
-		if (par.hasSort()) {
-			parBasic = JobHitsSorted.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-					par.hitsSortSettings(), par.getMaxSettings(), par.getSampleSettings());
-		} else {
-			parBasic = JobHits.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-					par.getMaxSettings(), par.getSampleSettings());
-		}
+		Job.Description parBasic = JobHits.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.getMaxSettings(), null);
 		return (JobWithHits) search(user, parBasic);
 	}
 
@@ -1087,13 +1088,6 @@ public class SearchManager {
 		return (JobHitsWindow) search(user, parBasic);
 	}
 
-	public JobDocsWindow searchDocsWindow(User user, Job.Description par)
-			throws BlsException {
-		Job.Description parBasic = JobDocsWindow.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.docSortSettings(), par.getWindowSettings(), par.getContextSettings(), par.getMaxSettings());
-		return (JobDocsWindow) search(user, parBasic);
-	}
-
 	public JobHitsTotal searchHitsTotal(User user, Job.Description par)
 			throws BlsException {
 		Job.Description parBasic = JobHitsTotal.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
@@ -1101,18 +1095,25 @@ public class SearchManager {
 		return (JobHitsTotal) search(user, parBasic);
 	}
 
-	public JobDocsTotal searchDocsTotal(User user, Job.Description par)
-			throws BlsException {
-		Job.Description parBasic = JobDocsTotal.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.getMaxSettings());
-		return (JobDocsTotal) search(user, parBasic);
-	}
-
 	public JobHitsGrouped searchHitsGrouped(User user, Job.Description par)
 			throws BlsException {
 		Job.Description parBasic = JobHitsGrouped.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
 				par.hitGroupSettings(), par.hitGroupSortSettings(), par.getMaxSettings(), par.getSampleSettings());
 		return (JobHitsGrouped) search(user, parBasic);
+	}
+
+	public JobDocsWindow searchDocsWindow(User user, Job.Description par)
+			throws BlsException {
+		Job.Description parBasic = JobDocsWindow.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.docSortSettings(), par.getWindowSettings(), par.getContextSettings(), par.getMaxSettings());
+		return (JobDocsWindow) search(user, parBasic);
+	}
+
+	public JobDocsTotal searchDocsTotal(User user, Job.Description par)
+			throws BlsException {
+		Job.Description parBasic = JobDocsTotal.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
+				par.getMaxSettings());
+		return (JobDocsTotal) search(user, parBasic);
 	}
 
 	public JobDocsGrouped searchDocsGrouped(User user, Job.Description par)
