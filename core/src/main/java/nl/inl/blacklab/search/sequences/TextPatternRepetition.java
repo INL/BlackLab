@@ -82,11 +82,6 @@ public class TextPatternRepetition extends TextPattern {
 	}
 
 	@Override
-	public String toString() {
-		return "TextPatternRepetition(" + base + ", " + min + ", " + max + ")";
-	}
-
-	@Override
 	public TextPattern rewrite() {
 		TextPattern baseRewritten = base.rewrite();
 		if (min == 1 && max == 1)
@@ -193,9 +188,15 @@ public class TextPatternRepetition extends TextPattern {
 		return base.hashCode() + 13 * min + 31 * max;
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "REP(" + base.toString(context) + ", " + min + ", " + max + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "REP(" + base.toString() + ", " + min + ", " + max + ")";
 	}
 
 }

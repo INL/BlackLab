@@ -185,5 +185,9 @@ public class TextPatternBoolean extends TextPattern {
 		return "BOOLEAN(" + clausesToString(must, context) + ", " + clausesToString(should, context) + ", " + clausesToString(mustNot, context) + ")";
 	}
 
+	@Override
+	public String toString() {
+		return "BOOLEAN(" + clausesToString(must) + ", " + clausesToString(should) + ", " + clausesToString(mustNot) + ")";
+	}
 
 }

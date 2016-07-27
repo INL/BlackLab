@@ -153,17 +153,13 @@ public abstract class Job implements Comparable<Job> {
 
 		@Override
 		public String toString() {
-			try {
-				return "DescriptionImpl [jobClass=" + jobClass + ", indexName=" + indexName + ", pattern=" + pattern.toString(getSearcher()) + ", filterQuery="
-						+ filterQuery + ", hitsSortSett=" + hitsSortSett + ", hitsGroupSett=" + hitsGroupSett + ", hitsGroupSortSett="
-						+ hitsGroupSortSett + ", docSortSett=" + docSortSett + ", docGroupSett=" + docGroupSett + ", docGroupSortSortSett="
-						+ docGroupSortSett + ", docPid=" + docPid + ", maxSettings=" + maxSettings + ", sampleSettings=" +
-						sampleSettings + ", windowSettings=" + windowSettings + ", contextSettings=" + contextSettings
-						+ ", facets=" + facets
-						+ "]";
-			} catch (BlsException e) {
-				throw new RuntimeException(e);
-			}
+			return "DescriptionImpl [jobClass=" + jobClass + ", indexName=" + indexName + ", pattern=" + pattern.toString() + ", filterQuery="
+					+ filterQuery + ", hitsSortSett=" + hitsSortSett + ", hitsGroupSett=" + hitsGroupSett + ", hitsGroupSortSett="
+					+ hitsGroupSortSett + ", docSortSett=" + docSortSett + ", docGroupSett=" + docGroupSett + ", docGroupSortSortSett="
+					+ docGroupSortSett + ", docPid=" + docPid + ", maxSettings=" + maxSettings + ", sampleSettings=" +
+					sampleSettings + ", windowSettings=" + windowSettings + ", contextSettings=" + contextSettings
+					+ ", facets=" + facets
+					+ "]";
 		}
 
 		Searcher getSearcher() throws BlsException {
@@ -359,13 +355,8 @@ public abstract class Job implements Comparable<Job> {
 			DataObjectMapElement d = new DataObjectMapElement();
 			d.put("jobClass", jobClass.getSimpleName());
 			d.put("indexName", indexName);
-			if (pattern != null) {
-				try {
-					d.put("pattern", pattern.toString(getSearcher()));
-				} catch (BlsException e) {
-					throw new RuntimeException(e);
-				}
-			}
+			if (pattern != null)
+				d.put("pattern", pattern.toString());
 			if (filterQuery != null)
 				d.put("filterQuery", filterQuery.toString());
 			if (hitsSortSett != null)

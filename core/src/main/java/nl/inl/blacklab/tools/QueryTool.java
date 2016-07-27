@@ -1069,7 +1069,7 @@ public class QueryTool {
 			}
 			pattern = pattern.rewrite();
 			if (verbose)
-				outprintln("TextPattern: " + pattern.toString(searcher, contentsField));
+				outprintln("TextPattern: " + pattern.toString());
 
 			// If the query included filter clauses, use those. Otherwise use the global filter, if any.
 			Query filterForThisQuery = parser.getIncludedFilterQuery();

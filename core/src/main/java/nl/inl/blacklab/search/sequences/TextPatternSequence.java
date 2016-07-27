@@ -416,8 +416,14 @@ public class TextPatternSequence extends TextPatternAndNot {
 		return n;
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "SEQ(" + clausesToString(include, context) + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "SEQ(" + clausesToString(include) + ")";
 	}
 }

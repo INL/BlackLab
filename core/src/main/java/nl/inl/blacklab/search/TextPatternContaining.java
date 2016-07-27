@@ -75,4 +75,9 @@ public class TextPatternContaining extends TextPatternCombiner {
 		return "CONTAINING(" + clauses.get(0).toString(context) + ", " + clauses.get(1).toString(context) + ")";
 	}
 
+	@Override
+	public String toString() {
+		return "CONTAINING(" + clauses.get(0).toString() + ", " + clauses.get(1).toString() + ")";
+	}
+
 }
