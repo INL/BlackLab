@@ -1,10 +1,7 @@
 package nl.inl.blacklab.server.search;
 
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.perdocument.DocGroups;
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -79,12 +76,6 @@ public class JobDocsGrouped extends Job {
 		groups = null;
 		docResults = null;
 		super.cleanup();
-	}
-
-	public static Description description(String indexName, TextPattern pattern, Query filterQuery, DocGroupSettings docGroupSettings,
-			DocGroupSortSettings docGroupSortSettings, MaxSettings maxSettings) {
-		return DescriptionImpl.docsGrouped(JobDocsGrouped.class, indexName, pattern, filterQuery, docGroupSettings,
-				docGroupSortSettings, maxSettings);
 	}
 
 

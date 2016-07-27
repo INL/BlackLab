@@ -1,9 +1,6 @@
 package nl.inl.blacklab.server.search;
 
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -71,11 +68,6 @@ public class JobHitsTotal extends Job {
 	protected void cleanup() {
 		hits = null;
 		super.cleanup();
-	}
-
-	public static Description description(String indexName, TextPattern pattern, Query filterQuery,
-			MaxSettings maxSettings, SampleSettings sampleSettings) {
-		return DescriptionImpl.jobHits(JobHitsTotal.class, indexName, pattern, filterQuery, null, maxSettings, sampleSettings, null, null);
 	}
 
 }

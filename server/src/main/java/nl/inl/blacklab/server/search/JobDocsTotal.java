@@ -1,9 +1,6 @@
 package nl.inl.blacklab.server.search;
 
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -74,10 +71,6 @@ public class JobDocsTotal extends Job {
 	protected void cleanup() {
 		docResults = null;
 		super.cleanup();
-	}
-
-	public static Description description(String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings) {
-		return DescriptionImpl.jobDocs(JobDocsTotal.class, indexName, pattern, filterQuery, null, maxSettings, null, null);
 	}
 
 }

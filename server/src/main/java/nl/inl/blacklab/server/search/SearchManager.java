@@ -48,6 +48,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.exceptions.TooManyRequests;
+import nl.inl.blacklab.server.search.Job.DescriptionImpl;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 import nl.inl.util.MemoryUtil;
@@ -1061,72 +1062,64 @@ public class SearchManager {
 
 	public JobWithHits searchHitsSorted(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobHitsSorted.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.hitsSortSettings(), par.getMaxSettings(), null);
+		Job.Description parBasic = DescriptionImpl.jobHits(JobHitsSorted.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), par.hitsSortSettings(), par.getMaxSettings(), null, null, null);
 		return (JobWithHits) search(user, parBasic);
 	}
 
 	public JobWithHits searchHits(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobHits.description(this, par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.getMaxSettings(), null);
+		Job.Description parBasic = DescriptionImpl.jobHits(JobHits.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), null, par.getMaxSettings(),
+		null, null, null);
 		return (JobWithHits) search(user, parBasic);
 	}
 
 	public JobWithDocs searchDocs(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobDocs.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.docSortSettings(), par.getContextSettings(), par.getMaxSettings());
+		Job.Description parBasic = DescriptionImpl.jobDocs(JobDocs.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), par.docSortSettings(), par.getMaxSettings(), null, par.getContextSettings());
 		return (JobWithDocs) search(user, parBasic);
 	}
 
 	public JobHitsWindow searchHitsWindow(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobHitsWindow.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.hitsSortSettings(), par.getWindowSettings(), par.getContextSettings(), par.getMaxSettings(),
-				par.getSampleSettings());
+		Job.Description parBasic = DescriptionImpl.jobHits(JobHitsWindow.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), par.hitsSortSettings(),
+		par.getMaxSettings(), par.getSampleSettings(), par.getWindowSettings(), par.getContextSettings());
 		return (JobHitsWindow) search(user, parBasic);
 	}
 
 	public JobHitsTotal searchHitsTotal(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobHitsTotal.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.getMaxSettings(), par.getSampleSettings());
+		Job.Description parBasic = DescriptionImpl.jobHits(JobHitsTotal.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), null, par.getMaxSettings(), par.getSampleSettings(), null, null);
 		return (JobHitsTotal) search(user, parBasic);
 	}
 
 	public JobHitsGrouped searchHitsGrouped(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobHitsGrouped.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.hitGroupSettings(), par.hitGroupSortSettings(), par.getMaxSettings(), par.getSampleSettings());
+		Job.Description parBasic = DescriptionImpl.hitsGrouped(JobHitsGrouped.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), par.hitGroupSettings(), par.hitGroupSortSettings(), par.getMaxSettings(), par.getSampleSettings());
 		return (JobHitsGrouped) search(user, parBasic);
 	}
 
 	public JobDocsWindow searchDocsWindow(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobDocsWindow.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.docSortSettings(), par.getWindowSettings(), par.getContextSettings(), par.getMaxSettings());
+		Job.Description parBasic = DescriptionImpl.jobDocs(JobDocsWindow.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), par.docSortSettings(), par.getMaxSettings(), par.getWindowSettings(), par.getContextSettings());
 		return (JobDocsWindow) search(user, parBasic);
 	}
 
 	public JobDocsTotal searchDocsTotal(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobDocsTotal.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.getMaxSettings());
+		Job.Description parBasic = DescriptionImpl.jobDocs(JobDocsTotal.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), null, par.getMaxSettings(), null, null);
 		return (JobDocsTotal) search(user, parBasic);
 	}
 
 	public JobDocsGrouped searchDocsGrouped(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobDocsGrouped.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.docGroupSettings(), par.docGroupSortSettings(), par.getMaxSettings());
+		Job.Description parBasic = DescriptionImpl.docsGrouped(JobDocsGrouped.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), par.docGroupSettings(),
+		par.docGroupSortSettings(), par.getMaxSettings());
 		return (JobDocsGrouped) search(user, parBasic);
 	}
 
 	public JobFacets searchFacets(User user, Job.Description par)
 			throws BlsException {
-		Job.Description parBasic = JobFacets.description(par.getIndexName(), par.getPattern(), par.getFilterQuery(),
-				par.getFacets(), par.getMaxSettings());
+		Job.Description parBasic = DescriptionImpl.facets(JobFacets.class, par.getIndexName(), par.getPattern(), par.getFilterQuery(), par.getFacets(), par.getMaxSettings());
 		return (JobFacets) search(user, parBasic);
 	}
 

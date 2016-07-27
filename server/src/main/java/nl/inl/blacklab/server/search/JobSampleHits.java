@@ -12,7 +12,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
  */
 public class JobSampleHits extends JobWithHits {
 
-	private static class Description extends Job.BasicDescription {
+	public static class Description extends Job.BasicDescription {
 
 		Description inputJob;
 
@@ -75,10 +75,6 @@ public class JobSampleHits extends JobWithHits {
 		} else if (sample.number() >= 0) {
 			hits = HitsSample.fromHits(inputHits, sample.number(), sample.seed());
 		}
-	}
-
-	public static Description description(SearchManager searchMan, String indexName, Description hitsToSample, SampleSettings sampleSettings) {
-		return new JobSampleHits.Description(indexName, hitsToSample, sampleSettings);
 	}
 
 }

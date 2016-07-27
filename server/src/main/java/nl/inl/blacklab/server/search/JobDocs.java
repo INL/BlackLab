@@ -4,7 +4,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.Forbidden;
 
@@ -48,11 +47,6 @@ public class JobDocs extends JobWithDocs {
 			}
 			docResults = searcher.queryDocuments(filterQuery);
 		}
-	}
-
-	public static Description description(String indexName, TextPattern pattern, Query filterQuery, DocSortSettings docSortSettings,
-			ContextSettings contextSettings, MaxSettings maxSettings) {
-		return DescriptionImpl.jobDocs(JobDocs.class, indexName, pattern, filterQuery, docSortSettings, maxSettings, null, contextSettings);
 	}
 
 }

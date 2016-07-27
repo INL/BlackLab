@@ -4,12 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -84,10 +81,6 @@ public class JobFacets extends Job {
 		counts = null;
 		docResults = null;
 		super.cleanup();
-	}
-
-	public static Description description(String indexName, TextPattern pattern, Query filterQuery, List<DocProperty> facets, MaxSettings maxSettings) {
-		return DescriptionImpl.facets(JobFacets.class, indexName, pattern, filterQuery, facets, maxSettings);
 	}
 
 }

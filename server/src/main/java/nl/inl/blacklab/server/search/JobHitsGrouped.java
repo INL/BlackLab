@@ -1,9 +1,6 @@
 package nl.inl.blacklab.server.search;
 
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
@@ -85,11 +82,6 @@ public class JobHitsGrouped extends Job {
 		groups = null;
 		hits = null;
 		super.cleanup();
-	}
-
-	public static Description description(String indexName, TextPattern pattern, Query filterQuery, HitGroupSettings hitGroupSettings,
-			HitGroupSortSettings hitGroupSortSettings, MaxSettings maxSettings, SampleSettings sampleSettings) {
-		return DescriptionImpl.hitsGrouped(JobHitsGrouped.class, indexName, pattern, filterQuery, hitGroupSettings, hitGroupSortSettings, maxSettings, sampleSettings);
 	}
 
 }

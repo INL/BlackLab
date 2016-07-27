@@ -64,10 +64,4 @@ public class JobHits extends JobWithHits {
 		super.cleanup();
 	}
 
-	public static Description description(SearchManager searchMan, String indexName, TextPattern pattern, Query filterQuery,
-			MaxSettings maxSettings, SampleSettings sampleSettings) {
-		return DescriptionImpl.jobHits(JobHits.class, indexName, pattern, filterQuery, null, maxSettings,
-				sampleSettings, null, null);
-	}
-
 }

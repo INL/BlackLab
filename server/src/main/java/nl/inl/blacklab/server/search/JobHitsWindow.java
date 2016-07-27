@@ -1,10 +1,7 @@
 package nl.inl.blacklab.server.search;
 
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -79,13 +76,6 @@ public class JobHitsWindow extends Job {
 	protected void cleanup() {
 		hitsWindow = null;
 		super.cleanup();
-	}
-
-	public static Description description(String indexName, TextPattern pattern, Query filterQuery,
-			HitsSortSettings hitsSortSettings, WindowSettings windowSettings, ContextSettings contextSettings,
-			MaxSettings maxSettings, SampleSettings sampleSettings) {
-		return DescriptionImpl.jobHits(JobHitsWindow.class, indexName, pattern, filterQuery, hitsSortSettings,
-				maxSettings, sampleSettings, windowSettings, contextSettings);
 	}
 
 }
