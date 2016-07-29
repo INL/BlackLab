@@ -25,7 +25,6 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.SearchParameters;
 import nl.inl.blacklab.server.search.ParseUtil;
 import nl.inl.blacklab.server.search.User;
 

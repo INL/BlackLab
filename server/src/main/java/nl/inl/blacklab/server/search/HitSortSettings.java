@@ -1,12 +1,12 @@
 package nl.inl.blacklab.server.search;
 
-public class HitsSortSettings {
+public class HitSortSettings {
 
 	private String sortBy;
 
 	private boolean reverse;
 
-	public HitsSortSettings(String sortBy, boolean reverse) {
+	public HitSortSettings(String sortBy, boolean reverse) {
 		super();
 		this.sortBy = sortBy;
 		this.reverse = reverse;

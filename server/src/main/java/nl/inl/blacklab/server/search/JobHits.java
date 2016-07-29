@@ -18,19 +18,27 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
  */
 public class JobHits extends JobWithHits {
 
-	public static class JobDescHits extends JobDescriptionBasic {
+	public static class JobDescHits extends JobDescription {
 
-		TextPattern pattern;
+		private String indexName;
 
-		Query filterQuery;
+		private TextPattern pattern;
 
-		MaxSettings maxSettings;
+		private Query filterQuery;
+
+		private MaxSettings maxSettings;
 
 		public JobDescHits(String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings) {
-			super(indexName);
+			super(null);
+			this.indexName = indexName;
 			this.pattern = pattern;
 			this.filterQuery = filterQuery;
 			this.maxSettings = maxSettings;
+		}
+
+		@Override
+		public String getIndexName() {
+			return indexName;
 		}
 
 		@Override
@@ -50,7 +58,7 @@ public class JobHits extends JobWithHits {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHits [" + indexName + ", " + pattern + ", " + filterQuery + ", " + maxSettings + "]";
+			return "JDHits [" + getIndexName() + ", " + pattern + ", " + filterQuery + ", " + maxSettings + "]";
 		}
 
 		@Override
@@ -62,7 +70,6 @@ public class JobHits extends JobWithHits {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobHits");
-			o.put("indexName", indexName);
 			o.put("pattern", pattern.toString());
 			o.put("filterQuery", filterQuery.toString());
 			o.put("maxSettings", maxSettings.toString());
@@ -77,7 +84,7 @@ public class JobHits extends JobWithHits {
 	/** The parsed filter */
 	protected Filter filter;
 
-	public JobHits(SearchManager searchMan, User user, JobDescHits par) throws BlsException {
+	public JobHits(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 

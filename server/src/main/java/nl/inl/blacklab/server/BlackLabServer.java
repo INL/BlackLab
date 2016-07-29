@@ -22,8 +22,8 @@ import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectPlain;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.SearchParameters;
 import nl.inl.util.Json;
 import nl.inl.util.LogUtil;
 import nl.inl.util.json.JSONObject;
@@ -222,15 +222,7 @@ public class BlackLabServer extends HttpServlet {
 	 * @return the unique key
 	 */
 	public SearchParameters getSearchParameters(HttpServletRequest request, String indexName) {
-		SearchParameters param = new SearchParameters(searchManager);
-		param.put("indexname", indexName);
-		for (String name: SearchManager.getSearchParameterNames()) {
-			String value = ServletUtil.getParameter(request, name, "").trim();
-			if (value.length() == 0)
-				continue;
-			param.put(name, value);
-		}
-		return param;
+		return SearchParameters.get(searchManager, indexName, request);
 	}
 
 	public SearchManager getSearchManager() {

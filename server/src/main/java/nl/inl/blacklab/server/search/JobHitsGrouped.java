@@ -14,30 +14,23 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobHitsGrouped extends Job {
 
-	public static class JobDescHitsGrouped extends JobDescriptionBasic {
-
-		JobDescription inputDesc;
+	public static class JobDescHitsGrouped extends JobDescription {
 
 		HitGroupSettings groupSettings;
 
-		public JobDescHitsGrouped(String indexName, JobDescription hitsToGroup, HitGroupSettings groupSettings) {
-			super(indexName);
-			this.inputDesc = hitsToGroup;
+		public JobDescHitsGrouped(JobDescription hitsToGroup, HitGroupSettings groupSettings) {
+			super(hitsToGroup);
 			this.groupSettings = groupSettings;
 		}
 
-		public JobDescription getInputDesc() {
-			return inputDesc;
-		}
-
 		@Override
-		public HitGroupSettings hitGroupSettings() {
+		public HitGroupSettings getHitGroupSettings() {
 			return groupSettings;
 		}
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHitsGrouped [" + indexName + ", " + inputDesc + ", " + groupSettings + "]";
+			return "JDHitsGrouped [" + inputDesc + ", " + groupSettings + "]";
 		}
 
 		@Override
@@ -49,7 +42,6 @@ public class JobHitsGrouped extends Job {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobHitsGrouped");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			o.put("groupSettings", groupSettings.toString());
 			return o;
@@ -61,34 +53,23 @@ public class JobHitsGrouped extends Job {
 
 	private Hits hits;
 
-	public JobHitsGrouped(SearchManager searchMan, User user, JobDescHitsGrouped par) throws BlsException {
+	public JobHitsGrouped(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescHitsGrouped groupDesc = (JobDescHitsGrouped)jobDesc;
-
-		// First, execute blocking hits search.
-		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, groupDesc.getInputDesc());
-		try {
-			waitForJobToFinish(hitsSearch);
-
-			// Now, group the hits.
-			hits = hitsSearch.getHits();
-			setPriorityInternal();
-		} finally {
-			hitsSearch.decrRef();
-			hitsSearch = null;
-		}
-		HitGroupSettings groupSett = jobDesc.hitGroupSettings();
+		// Now, group the hits.
+		hits = ((JobWithHits)inputJob).getHits();
+		setPriorityInternal();
+		HitGroupSettings groupSett = jobDesc.getHitGroupSettings();
 		HitProperty groupProp = null;
 		groupProp = HitProperty.deserialize(hits, groupSett.groupBy());
 		if (groupProp == null)
 			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupSett.groupBy() + "'.");
 		HitGroups theGroups = hits.groupedBy(groupProp);
 
-		HitGroupSortSettings sortSett = jobDesc.hitGroupSortSettings();
+		HitGroupSortSettings sortSett = jobDesc.getHitGroupSortSettings();
 		if (sortSett != null)
 			theGroups.sortGroups(sortSett.sortBy(), sortSett.reverse());
 

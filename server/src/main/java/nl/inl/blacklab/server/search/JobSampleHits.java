@@ -12,20 +12,13 @@ import nl.inl.blacklab.server.exceptions.BlsException;
  */
 public class JobSampleHits extends JobWithHits {
 
-	public static class JobDescSampleHits extends JobDescriptionBasic {
-
-		JobDescription inputDesc;
+	public static class JobDescSampleHits extends JobDescription {
 
 		SampleSettings sampleSettings;
 
-		public JobDescSampleHits(String indexName, JobDescription hitsToSample, SampleSettings settings) {
-			super(indexName);
-			this.inputDesc = hitsToSample;
+		public JobDescSampleHits(JobDescription hitsToSample, SampleSettings settings) {
+			super(hitsToSample);
 			this.sampleSettings = settings;
-		}
-
-		public JobDescription getInputDesc() {
-			return inputDesc;
 		}
 
 		@Override
@@ -35,7 +28,7 @@ public class JobSampleHits extends JobWithHits {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDSampleHits [" + indexName + ", " + inputDesc + ", " + sampleSettings + "]";
+			return "JDSampleHits [" + inputDesc + ", " + sampleSettings + "]";
 		}
 
 		@Override
@@ -47,7 +40,6 @@ public class JobSampleHits extends JobWithHits {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobSampleHits");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			o.put("sampleSettings", sampleSettings.toString());
 			return o;
@@ -55,19 +47,14 @@ public class JobSampleHits extends JobWithHits {
 
 	}
 
-	public JobSampleHits(SearchManager searchMan, User user, JobDescSampleHits par) throws BlsException {
+	public JobSampleHits(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescSampleHits sampleDesc = (JobDescSampleHits)jobDesc;
-		JobDescription inputDesc = sampleDesc.getInputDesc();
-		JobWithHits inputJob;
-		inputJob = (JobWithHits) searchMan.search(user, inputDesc);
-		waitForJobToFinish(inputJob);
-		Hits inputHits = inputJob.getHits();
-		SampleSettings sample = sampleDesc.getSampleSettings();
+		Hits inputHits = ((JobWithHits)inputJob).getHits();
+		SampleSettings sample = jobDesc.getSampleSettings();
 		if (sample.percentage() >= 0) {
 			hits = HitsSample.fromHits(inputHits, sample.percentage() / 100f, sample.seed());
 		} else if (sample.number() >= 0) {

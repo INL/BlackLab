@@ -12,30 +12,23 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobDocsGrouped extends Job {
 
-	public static class JobDescDocsGrouped extends JobDescriptionBasic {
-
-		JobDescription inputDesc;
+	public static class JobDescDocsGrouped extends JobDescription {
 
 		DocGroupSettings groupSettings;
 
-		public JobDescDocsGrouped(String indexName, JobDescription docsToGroup, DocGroupSettings groupSettings) {
-			super(indexName);
-			this.inputDesc = docsToGroup;
+		public JobDescDocsGrouped(JobDescription docsToGroup, DocGroupSettings groupSettings) {
+			super(docsToGroup);
 			this.groupSettings = groupSettings;
 		}
 
-		public JobDescription getInputDesc() {
-			return inputDesc;
-		}
-
 		@Override
-		public DocGroupSettings docGroupSettings() {
+		public DocGroupSettings getDocGroupSettings() {
 			return groupSettings;
 		}
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDDocsGrouped [" + indexName + ", " + inputDesc + ", " + groupSettings + "]";
+			return "JDDocsGrouped [" + inputDesc + ", " + groupSettings + "]";
 		}
 
 		@Override
@@ -47,7 +40,6 @@ public class JobDocsGrouped extends Job {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobDocsGrouped");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			o.put("groupSettings", groupSettings.toString());
 			return o;
@@ -59,30 +51,18 @@ public class JobDocsGrouped extends Job {
 
 	private DocResults docResults;
 
-	public JobDocsGrouped(SearchManager searchMan, User user, JobDescDocsGrouped par) throws BlsException {
+	public JobDocsGrouped(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescDocsGrouped docGroupDesc = (JobDescDocsGrouped)jobDesc;
-
-		// First, execute blocking docs search.
-		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, docGroupDesc.getInputDesc());
-		try {
-			waitForJobToFinish(docsSearch);
-
-			// Now, group the docs.
-			docResults = docsSearch.getDocResults();
-			setPriorityInternal();
-		} finally {
-			docsSearch.decrRef();
-			docsSearch = null;
-		}
-		DocGroupSettings groupSett = jobDesc.docGroupSettings();
+		docResults = ((JobWithDocs)inputJob).getDocResults();
+		setPriorityInternal();
+		DocGroupSettings groupSett = jobDesc.getDocGroupSettings();
 		DocGroups theGroups = docResults.groupedBy(groupSett.groupBy());
 
-		DocGroupSortSettings sortSett = jobDesc.docGroupSortSettings();
+		DocGroupSortSettings sortSett = jobDesc.getDocGroupSortSettings();
 		if (sortSett != null)
 			theGroups.sort(sortSett.sortBy(), sortSett.reverse());
 

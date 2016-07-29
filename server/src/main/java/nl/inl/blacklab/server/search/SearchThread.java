@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 final class SearchThread extends Thread implements UncaughtExceptionHandler {
 	protected static final Logger logger = Logger.getLogger(SearchThread.class);
 
-	/** The search to execute */
+	/** The job to execute */
 	private Job search;
 
 	/**
@@ -28,7 +28,7 @@ final class SearchThread extends Thread implements UncaughtExceptionHandler {
 	@Override
 	public void run() {
 		try {
-			search.performSearch();
+			search.performSearchInternal();
 			search.setFinished();
 		} catch (Throwable e) {
 			// NOTE: we catch Throwable here (while it's normally good practice to

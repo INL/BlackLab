@@ -12,23 +12,16 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobDocsWindow extends Job {
 
-	public static class JobDescDocsWindow extends JobDescriptionBasic {
-
-		JobDescription inputDesc;
+	public static class JobDescDocsWindow extends JobDescription {
 
 		WindowSettings windowSettings;
 
 		ContextSettings contextSettings;
 
-		public JobDescDocsWindow(String indexName, JobDescription inputDesc, WindowSettings windowSettings, ContextSettings contextSettings) {
-			super(indexName);
-			this.inputDesc = inputDesc;
+		public JobDescDocsWindow(JobDescription inputDesc, WindowSettings windowSettings, ContextSettings contextSettings) {
+			super(inputDesc);
 			this.windowSettings = windowSettings;
 			this.contextSettings = contextSettings;
-		}
-
-		public JobDescription getInputDesc() {
-			return inputDesc;
 		}
 
 		@Override
@@ -43,7 +36,7 @@ public class JobDocsWindow extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDDocsWindow [" + indexName + ", " + inputDesc + ", " + windowSettings + ", " + contextSettings + "]";
+			return "JDDocsWindow [" + inputDesc + ", " + windowSettings + ", " + contextSettings + "]";
 		}
 
 		@Override
@@ -55,7 +48,6 @@ public class JobDocsWindow extends Job {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobHitsWindow");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			o.put("windowSettings", windowSettings.toString());
 			o.put("contextSettings", contextSettings.toString());
@@ -70,26 +62,15 @@ public class JobDocsWindow extends Job {
 
 	private int requestedWindowSize;
 
-	public JobDocsWindow(SearchManager searchMan, User user, JobDescDocsWindow par) throws BlsException {
+	public JobDocsWindow(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescDocsWindow docsWindowDesc = (JobDescDocsWindow)jobDesc;
-
-		// First, execute blocking docs search.
-		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, docsWindowDesc.getInputDesc());
-		try {
-			waitForJobToFinish(docsSearch);
-
-			// Now, create a HitsWindow on these hits.
-			sourceResults = docsSearch.getDocResults();
-			setPriorityInternal(); // make sure sourceResults has the right priority
-		} finally {
-			docsSearch.decrRef();
-			docsSearch = null;
-		}
+		// Now, create a HitsWindow on these hits.
+		sourceResults = ((JobWithDocs)inputJob).getDocResults();
+		setPriorityInternal(); // make sure sourceResults has the right priority
 		WindowSettings windowSett = jobDesc.getWindowSettings();
 		int first = windowSett.first();
 		requestedWindowSize = windowSett.size();

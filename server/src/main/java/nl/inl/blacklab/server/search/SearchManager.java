@@ -569,10 +569,6 @@ public class SearchManager {
 		return dir;
 	}
 
-	final static public List<String> getSearchParameterNames() {
-		return SearchParameters.NAMES;
-	}
-
 	/**
 	 * Find an index given its name.
 	 *

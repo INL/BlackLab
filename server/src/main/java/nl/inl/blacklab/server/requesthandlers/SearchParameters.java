@@ -1,14 +1,12 @@
-package nl.inl.blacklab.server.search;
+package nl.inl.blacklab.server.requesthandlers;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.search.Query;
@@ -22,12 +20,37 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.GroupProperty;
+import nl.inl.blacklab.server.ServletUtil;
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
+import nl.inl.blacklab.server.search.ContextSettings;
+import nl.inl.blacklab.server.search.DocGroupSettings;
+import nl.inl.blacklab.server.search.DocGroupSortSettings;
+import nl.inl.blacklab.server.search.DocSortSettings;
+import nl.inl.blacklab.server.search.HitGroupSettings;
+import nl.inl.blacklab.server.search.HitGroupSortSettings;
+import nl.inl.blacklab.server.search.HitSortSettings;
+import nl.inl.blacklab.server.search.JobDescription;
+import nl.inl.blacklab.server.search.JobDocs.JobDescDocs;
+import nl.inl.blacklab.server.search.JobDocsGrouped.JobDescDocsGrouped;
+import nl.inl.blacklab.server.search.JobDocsSorted.JobDescDocsSorted;
+import nl.inl.blacklab.server.search.JobDocsTotal.JobDescDocsTotal;
+import nl.inl.blacklab.server.search.JobDocsWindow.JobDescDocsWindow;
+import nl.inl.blacklab.server.search.JobFacets.JobDescFacets;
+import nl.inl.blacklab.server.search.JobHits.JobDescHits;
+import nl.inl.blacklab.server.search.JobHitsGrouped.JobDescHitsGrouped;
+import nl.inl.blacklab.server.search.JobHitsSorted.JobDescHitsSorted;
+import nl.inl.blacklab.server.search.JobHitsTotal.JobDescHitsTotal;
+import nl.inl.blacklab.server.search.JobHitsWindow.JobDescHitsWindow;
+import nl.inl.blacklab.server.search.JobSampleHits.JobDescSampleHits;
+import nl.inl.blacklab.server.search.MaxSettings;
+import nl.inl.blacklab.server.search.ParseUtil;
+import nl.inl.blacklab.server.search.SampleSettings;
+import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.search.WindowSettings;
 
 /**
  * Uniquely describes a search operation.
@@ -36,7 +59,7 @@ import nl.inl.blacklab.server.exceptions.NotFound;
  *
  * Derives from TreeMap because it keeps entries in sorted order, which can  be convenient.
  */
-public class SearchParameters extends JobDescriptionAbstract implements Map<String, String> {
+public class SearchParameters {
 	private static final Logger logger = Logger.getLogger(SearchParameters.class);
 
 	/** The search manager, for querying default value for missing parameters */
@@ -44,8 +67,14 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 
 	private Map<String, String> map = new TreeMap<>();
 
+	/** The pattern, if parsed already */
+	private TextPattern pattern;
+
+	/** The filter query, if parsed already */
+	private Query filterQuery;
+
 	/** Parameters involved in search */
-	final static public List<String> NAMES = Arrays.asList(
+	private static final List<String> NAMES = Arrays.asList(
 		// What to search for
 		"patt", "pattlang",                  // pattern to search for
 		"filter", "filterlang",              // docs to search
@@ -72,11 +101,10 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		"waitfortotal"                  // wait until total number of results known?
 	);
 
-	public SearchParameters(SearchManager searchManager) {
+	private SearchParameters(SearchManager searchManager) {
 		this.searchManager = searchManager;
 	}
 
-	@Override
 	public String put(String key, String value) {
 		return map.put(key, value);
 	}
@@ -129,36 +157,19 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		}
 	}
 
-	@Override
 	public DataObject toDataObject() {
 		DataObjectMapElement d = new DataObjectMapElement();
-		for (Map.Entry<String, String> e: entrySet()) {
+		for (Map.Entry<String, String> e: map.entrySet()) {
 			d.put(e.getKey(), e.getValue());
 		}
 		return d;
 	}
 
-	@Override
-	public Job createJob(SearchManager searchMan, User user) throws BlsException {
-		String strJobClass = getString("jobclass");
-		if (!strJobClass.startsWith("Job"))
-			throw new InternalServerError("Illegal Job class name", 1);
-		Class<?> jobClass;
-		try {
-			jobClass = Class.forName("nl.inl.blacklab.server.search." + strJobClass);
-			Constructor<?> cons = jobClass.getConstructor(SearchManager.class, User.class, JobDescription.class);
-			return (Job)cons.newInstance(searchMan, user, this);
-		} catch (ClassNotFoundException|NoSuchMethodException|InstantiationException|IllegalAccessException|IllegalArgumentException|InvocationTargetException e) {
-			throw new InternalServerError("Error instantiating Job class", 1, e);
-		}
-	}
-
-	@Override
-	public String getIndexName() {
+	private String getIndexName() {
 		return getString("indexname");
 	}
 
-	protected Searcher getSearcher() {
+	private Searcher getSearcher() {
 		try {
 			return searchManager.getSearcher(getIndexName());
 		} catch (Exception e) {
@@ -166,32 +177,32 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		}
 	}
 
-	@Override
-	public TextPattern getPattern() throws BlsException {
-		if (containsKey("patt"))
-			return searchManager.parsePatt(getSearcher(), getString("patt"), getString("pattlang"));
-		return null;
-	}
-
-	@Override
-	public Query getFilterQuery() throws BlsException {
-		String docId = getString("docpid");
-		if (docId != null) {
-			// Only hits in 1 doc (for highlighting)
-			int luceneDocId = SearchManager.getLuceneDocIdFromPid(getSearcher(), docId);
-			if (luceneDocId < 0)
-				throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-			logger.debug("Filtering on single doc-id");
-			return new SingleDocIdFilter(luceneDocId);
+	private TextPattern getPattern() throws BlsException {
+		if (pattern == null) {
+			if (containsKey("patt"))
+				pattern = searchManager.parsePatt(getSearcher(), getString("patt"), getString("pattlang"));
 		}
-
-		if (containsKey("filter"))
-			return SearchManager.parseFilter(getSearcher(), getString("filter"), getString("filterlang"));
-		return null;
+		return pattern;
 	}
 
-	@Override
-	public SampleSettings getSampleSettings() {
+	private Query getFilterQuery() throws BlsException {
+		if (filterQuery == null) {
+			String docId = getString("docpid");
+			if (docId != null) {
+				// Only hits in 1 doc (for highlighting)
+				int luceneDocId = SearchManager.getLuceneDocIdFromPid(getSearcher(), docId);
+				if (luceneDocId < 0)
+					throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
+				logger.debug("Filtering on single doc-id");
+				filterQuery = new SingleDocIdFilter(luceneDocId);
+			} else if (containsKey("filter")) {
+				filterQuery = SearchManager.parseFilter(getSearcher(), getString("filter"), getString("filterlang"));
+			}
+		}
+		return filterQuery;
+	}
+
+	private SampleSettings getSampleSettings() {
 		if (! (containsKey("sample") || containsKey("samplenum")) )
 			return null;
 		float samplePercentage = containsKey("sample") ? getFloat("sample") : -1f;
@@ -200,8 +211,7 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		return new SampleSettings(samplePercentage, sampleNum, sampleSeed);
 	}
 
-	@Override
-	public MaxSettings getMaxSettings() {
+	private MaxSettings getMaxSettings() {
 		int maxRetrieve = getInteger("maxretrieve");
 		if (searchManager.getMaxHitsToRetrieveAllowed() >= 0 && maxRetrieve > searchManager.getMaxHitsToRetrieveAllowed()) {
 			maxRetrieve = searchManager.getMaxHitsToRetrieveAllowed();
@@ -213,14 +223,12 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		return new MaxSettings(maxRetrieve, maxCount);
 	}
 
-	@Override
-	public WindowSettings getWindowSettings() {
+	private WindowSettings getWindowSettings() {
 		int first = getInteger("first");
 		int size = getInteger("number");
 		return new WindowSettings(first, size);
 	}
 
-	@Override
 	public ContextSettings getContextSettings() {
 		int contextSize = getInteger("wordsaroundhit");
 		int maxContextSize = searchManager.getMaxContextSize();
@@ -232,8 +240,7 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		return new ContextSettings(contextSize, concType);
 	}
 
-	@Override
-	public List<DocProperty> getFacets() {
+	private List<DocProperty> getFacets() {
 		String facets = getString("facets");
 		if (facets == null) {
 			// If no facets were specified, we shouldn't even be here.
@@ -253,8 +260,7 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		return props;
 	}
 
-	@Override
-	public DocGroupSettings docGroupSettings() throws BlsException {
+	private DocGroupSettings docGroupSettings() throws BlsException {
 		String groupBy = getString("group");
 		DocProperty groupProp = null;
 		if (groupBy == null || groupBy.length() == 0)
@@ -265,8 +271,7 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		return new DocGroupSettings(groupProp);
 	}
 
-	@Override
-	public DocGroupSortSettings docGroupSortSettings() throws BlsException {
+	private DocGroupSortSettings docGroupSortSettings() throws BlsException {
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -279,8 +284,7 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		return new DocGroupSortSettings(sortProp, reverse);
 	}
 
-	@Override
-	public DocSortSettings docSortSettings() {
+	private DocSortSettings docSortSettings() {
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -293,8 +297,7 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		return new DocSortSettings(sortProp, reverse);
 	}
 
-	@Override
-	public HitGroupSortSettings hitGroupSortSettings()  {
+	private HitGroupSortSettings hitGroupSortSettings()  {
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -307,16 +310,14 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 		return new HitGroupSortSettings(sortProp, reverse);
 	}
 
-	@Override
-	public HitGroupSettings hitGroupSettings() {
+	private HitGroupSettings hitGroupSettings() {
 		String groupBy = getString("group");
 		if (groupBy == null || groupBy.length() == 0)
 			return null;
 		return new HitGroupSettings(groupBy);
 	}
 
-	@Override
-	public HitsSortSettings hitsSortSettings() {
+	private HitSortSettings hitsSortSettings() {
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -325,68 +326,87 @@ public class SearchParameters extends JobDescriptionAbstract implements Map<Stri
 			reverse = true;
 			sortBy = sortBy.substring(1);
 		}
-		return new HitsSortSettings(sortBy, reverse);
+		return new HitSortSettings(sortBy, reverse);
 	}
 
-	@Override
-	public boolean hasSort() {
+	private boolean hasSort() {
 		return containsKey("sort") && getString("sort").length() > 0;
 	}
 
-	@Override
-	public void clear() {
-		map.clear();
-	}
-
-	@Override
-	public boolean containsKey(Object key) {
+	public boolean containsKey(String key) {
 		return map.containsKey(key);
 	}
 
-	@Override
-	public boolean containsValue(Object value) {
-		return map.containsValue(value);
+	public JobDescription hitsWindow() throws BlsException {
+		if (getWindowSettings() == null)
+			return hitsSample();
+		return new JobDescHitsWindow(hitsSample(), getWindowSettings(), getContextSettings());
 	}
 
-	@Override
-	public Set<java.util.Map.Entry<String, String>> entrySet() {
-		return map.entrySet();
+	public JobDescription hitsSample() throws BlsException {
+		if (getSampleSettings() == null)
+			return hitsSorted();
+		return new JobDescSampleHits(hitsSorted(), getSampleSettings());
 	}
 
-	@Override
-	public String get(Object key) {
-		return map.get(key);
+	public JobDescription hitsSorted() throws BlsException {
+		if (!hasSort())
+			return hits();
+		return new JobDescHitsSorted(hits(), hitsSortSettings());
 	}
 
-	@Override
-	public boolean isEmpty() {
-		return map.isEmpty();
+	public JobDescription hitsTotal() throws BlsException {
+		return new JobDescHitsTotal(hits());
 	}
 
-	@Override
-	public Set<String> keySet() {
-		return map.keySet();
+	public JobDescription hits() throws BlsException {
+		return new JobDescHits(getIndexName(), getPattern(), getFilterQuery(), getMaxSettings());
 	}
 
-	@Override
-	public void putAll(Map<? extends String, ? extends String> m) {
-		map.putAll(m);
+	public JobDescription docsWindow() throws BlsException {
+		if (getWindowSettings() == null)
+			return docsSorted();
+		return new JobDescDocsWindow(docsSorted(), getWindowSettings(), getContextSettings());
 	}
 
-	@Override
-	public String remove(Object key) {
-		return map.remove(key);
+	public JobDescription docsSorted() throws BlsException {
+		if (!hasSort())
+			return docs();
+		return new JobDescDocsSorted(docs(), docSortSettings());
 	}
 
-	@Override
-	public int size() {
-		return map.size();
+	public JobDescription docsTotal() throws BlsException {
+		return new JobDescDocsTotal(docs());
 	}
 
-	@Override
-	public Collection<String> values() {
-		return map.values();
+	public JobDescription docs() throws BlsException {
+		if (getPattern() != null)
+			return new JobDescDocs(hitsSample(), getFilterQuery());
+		return new JobDescDocs(null, getFilterQuery());
 	}
 
+	public JobDescription hitsGrouped() throws BlsException {
+		return new JobDescHitsGrouped(hitsSample(), hitGroupSettings());
+	}
+
+	public JobDescription docsGrouped() throws BlsException {
+		return new JobDescDocsGrouped(docs(), docGroupSettings());
+	}
+
+	public JobDescription facets() throws BlsException {
+		return new JobDescFacets(docs(), getFacets());
+	}
+
+	public static SearchParameters get(SearchManager searchMan, String indexName, HttpServletRequest request) {
+		SearchParameters param = new SearchParameters(searchMan);
+		param.put("indexname", indexName);
+		for (String name: SearchParameters.NAMES) {
+			String value = ServletUtil.getParameter(request, name, "").trim();
+			if (value.length() == 0)
+				continue;
+			param.put(name, value);
+		}
+		return param;
+	}
 
 }

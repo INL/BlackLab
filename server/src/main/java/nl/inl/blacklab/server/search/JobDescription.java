@@ -8,21 +8,28 @@ import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.JobDocs.JobDescDocs;
-import nl.inl.blacklab.server.search.JobDocsGrouped.JobDescDocsGrouped;
-import nl.inl.blacklab.server.search.JobDocsSorted.JobDescDocsSorted;
-import nl.inl.blacklab.server.search.JobDocsTotal.JobDescDocsTotal;
-import nl.inl.blacklab.server.search.JobDocsWindow.JobDescDocsWindow;
-import nl.inl.blacklab.server.search.JobFacets.JobDescFacets;
-import nl.inl.blacklab.server.search.JobHits.JobDescHits;
-import nl.inl.blacklab.server.search.JobHitsGrouped.JobDescHitsGrouped;
-import nl.inl.blacklab.server.search.JobHitsSorted.JobDescHitsSorted;
-import nl.inl.blacklab.server.search.JobHitsTotal.JobDescHitsTotal;
-import nl.inl.blacklab.server.search.JobHitsWindow.JobDescHitsWindow;
-import nl.inl.blacklab.server.search.JobSampleHits.JobDescSampleHits;
 
 /** Description of a job */
 public abstract class JobDescription {
+
+	JobDescription inputDesc;
+
+	public JobDescription(JobDescription inputDesc) {
+		this.inputDesc = inputDesc;
+	}
+
+	public JobDescription getInputDesc() {
+		return inputDesc;
+	}
+
+	/**
+	 * Get the index name
+	 * @return name of the index this job if for
+	 */
+	public String getIndexName() {
+		return inputDesc.getIndexName();
+	}
+
 	/**
 	 * Generate a unique identifier string for this job, for caching, etc.
 	 * @return the unique identifier string
@@ -38,108 +45,72 @@ public abstract class JobDescription {
 	 */
 	public abstract Job createJob(SearchManager searchMan, User user) throws BlsException;
 
-	/**
-	 * Get the index name
-	 * @return name of the index this job if for
-	 */
-	public abstract String getIndexName();
+	@Override
+	public String toString() {
+		return uniqueIdentifier();
+	}
 
 	/**
 	 * Get the pattern to search for (if any)
 	 * @return pattern, or null if none given
 	 * @throws BlsException on error
 	 */
-	public abstract TextPattern getPattern() throws BlsException;
+	public TextPattern getPattern() throws BlsException {
+		return null;
+	}
 
-	public abstract Query getFilterQuery() throws BlsException;
+	public Query getFilterQuery() throws BlsException {
+		return null;
+	}
 
-	public abstract SampleSettings getSampleSettings();
+	public SampleSettings getSampleSettings() {
+		return null;
+	}
 
-	public abstract MaxSettings getMaxSettings();
+	public MaxSettings getMaxSettings() {
+		return null;
+	}
 
-	public abstract WindowSettings getWindowSettings();
+	public WindowSettings getWindowSettings() {
+		return null;
+	}
 
-	public abstract ContextSettings getContextSettings();
+	public ContextSettings getContextSettings() {
+		return null;
+	}
 
-	public abstract DocGroupSettings docGroupSettings() throws BlsException;
+	public List<DocProperty> getFacets() {
+		return null;
+	}
 
-	public abstract DocGroupSortSettings docGroupSortSettings() throws BlsException;
+	public DocGroupSettings getDocGroupSettings() throws BlsException {
+		return null;
+	}
 
-	public abstract DocSortSettings docSortSettings();
+	public DocGroupSortSettings getDocGroupSortSettings() throws BlsException {
+		return null;
+	}
 
-	public abstract List<DocProperty> getFacets();
+	public DocSortSettings getDocSortSettings() {
+		return null;
+	}
 
-	public abstract HitGroupSettings hitGroupSettings();
+	public HitGroupSettings getHitGroupSettings() {
+		return null;
+	}
 
-	public abstract HitGroupSortSettings hitGroupSortSettings();
+	public HitGroupSortSettings getHitGroupSortSettings() {
+		return null;
+	}
 
-	public abstract HitsSortSettings hitsSortSettings();
+	public HitSortSettings getHitSortSettings() {
+		return null;
+	}
 
-	public abstract boolean hasSort();
+	public boolean hasSort() {
+		return false;
+	}
 
 	public abstract DataObject toDataObject();
 
-	public JobDescription hitsWindow() throws BlsException {
-		if (getWindowSettings() == null)
-			return hitsSample();
-		return new JobDescHitsWindow(getIndexName(), hitsSample(), getWindowSettings(), getContextSettings());
-	}
-
-	public JobDescription hitsSample() throws BlsException {
-		if (getSampleSettings() == null)
-			return hitsSorted();
-		return new JobDescSampleHits(getIndexName(), hitsSorted(), getSampleSettings());
-	}
-
-	public JobDescription hitsSorted() throws BlsException {
-		if (!hasSort())
-			return hits();
-		return new JobDescHitsSorted(getIndexName(), hits(), hitsSortSettings());
-	}
-
-	public JobDescription hitsTotal() throws BlsException {
-		return new JobDescHitsTotal(getIndexName(), hits());
-	}
-
-	public JobDescription hits() throws BlsException {
-		return new JobDescHits(getIndexName(), getPattern(), getFilterQuery(), getMaxSettings());
-	}
-
-	public JobDescription docsWindow() throws BlsException {
-		if (getWindowSettings() == null)
-			return docsSorted();
-		return new JobDescDocsWindow(getIndexName(), docsSorted(), getWindowSettings(), getContextSettings());
-	}
-
-	public JobDescription docsSorted() throws BlsException {
-		if (!hasSort())
-			return docs();
-		return new JobDescDocsSorted(getIndexName(), docs(), docSortSettings());
-	}
-
-	public JobDescription docsTotal() throws BlsException {
-		return new JobDescDocsTotal(getIndexName(), docs());
-	}
-
-	public JobDescription docs() throws BlsException {
-		if (getPattern() != null)
-			return new JobDescDocs(getIndexName(), hitsSample(), getFilterQuery());
-		return new JobDescDocs(getIndexName(), null, getFilterQuery());
-	}
-
-	public JobDescription hitsGrouped() throws BlsException {
-		return new JobDescHitsGrouped(getIndexName(), hitsSample(), hitGroupSettings());
-		//return JobDescriptionImpl.hitsGrouped(JobHitsGrouped.class, getIndexName(), getPattern(), getFilterQuery(), hitGroupSettings(), hitGroupSortSettings(), getMaxSettings(), getSampleSettings());
-	}
-
-	public JobDescription docsGrouped() throws BlsException {
-		return new JobDescDocsGrouped(getIndexName(), docs(), docGroupSettings());
-//		return JobDescriptionImpl.docsGrouped(JobDocsGrouped.class, getIndexName(), getPattern(), getFilterQuery(), docGroupSettings(),
-//		docGroupSortSettings(), getMaxSettings());
-	}
-
-	public JobDescription facets() throws BlsException {
-		return new JobDescFacets(getIndexName(), docs(), getFacets());
-		//return JobDescriptionImpl.facets(JobFacets.class, getIndexName(), getPattern(), getFilterQuery(), getFacets(), getMaxSettings());
-	}
 }

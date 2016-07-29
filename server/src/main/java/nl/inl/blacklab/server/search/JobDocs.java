@@ -14,20 +14,13 @@ import nl.inl.blacklab.server.exceptions.Forbidden;
  */
 public class JobDocs extends JobWithDocs {
 
-	public static class JobDescDocs extends JobDescriptionBasic {
-
-		JobDescription inputDesc;
+	public static class JobDescDocs extends JobDescription {
 
 		Query filterQuery;
 
-		public JobDescDocs(String indexName, JobDescription hitsToGroup, Query filterQuery) {
-			super(indexName);
-			this.inputDesc = hitsToGroup;
+		public JobDescDocs(JobDescription hitsToGroup, Query filterQuery) {
+			super(hitsToGroup);
 			this.filterQuery = filterQuery;
-		}
-
-		public JobDescription getInputDesc() {
-			return inputDesc;
 		}
 
 		@Override
@@ -37,7 +30,7 @@ public class JobDocs extends JobWithDocs {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDDescDocs [" + indexName + ", " + inputDesc + ", " + filterQuery + "]";
+			return "JDDescDocs [" + inputDesc + ", " + filterQuery + "]";
 		}
 
 		@Override
@@ -49,7 +42,6 @@ public class JobDocs extends JobWithDocs {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobHits");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toString());
 			o.put("filterQuery", filterQuery.toString());
 			return o;
@@ -57,26 +49,15 @@ public class JobDocs extends JobWithDocs {
 
 	}
 
-	public JobDocs(SearchManager searchMan, User user, JobDescDocs par) throws BlsException {
+	public JobDocs(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescDocs docsDesc = (JobDescDocs)jobDesc;
-
-		// First, execute blocking hits search.
-		JobDescription inputDesc = docsDesc.getInputDesc();
-		if (inputDesc != null) {
-			JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, inputDesc);
-			Hits hits;
-			try {
-				waitForJobToFinish(hitsSearch);
-				hits = hitsSearch.getHits();
-			} finally {
-				hitsSearch.decrRef();
-				hitsSearch = null;
-			}
+		if (inputJob != null) {
+			JobWithHits hitsSearch = (JobWithHits)inputJob;
+			Hits hits = hitsSearch.getHits();
 			// Now, get per document results
 			//ContextSettings contextSett = jobDesc.getContextSettings();
 			//hits.settings().setConcordanceType(contextSett.concType());

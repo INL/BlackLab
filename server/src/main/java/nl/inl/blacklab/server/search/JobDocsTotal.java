@@ -12,22 +12,17 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobDocsTotal extends Job {
 
-	public static class JobDescDocsTotal extends JobDescriptionBasic {
+	public static class JobDescDocsTotal extends JobDescription {
 
 		JobDescription inputDesc;
 
-		public JobDescDocsTotal(String indexName, JobDescription inputDesc) {
-			super(indexName);
-			this.inputDesc = inputDesc;
-		}
-
-		public JobDescription getInputDesc() {
-			return inputDesc;
+		public JobDescDocsTotal(JobDescription inputDesc) {
+			super(inputDesc);
 		}
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDDocsTotal [" + indexName + ", " + inputDesc + "]";
+			return "JDDocsTotal [" + inputDesc + "]";
 		}
 
 		@Override
@@ -39,7 +34,6 @@ public class JobDocsTotal extends Job {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobDocsTotal");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			return o;
 		}
@@ -48,27 +42,16 @@ public class JobDocsTotal extends Job {
 
 	private DocResults docResults = null;
 
-	public JobDocsTotal(SearchManager searchMan, User user, JobDescDocsTotal par) throws BlsException {
+	public JobDocsTotal(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescDocsTotal docsTotalDesc = (JobDescDocsTotal)jobDesc;
-
-		// First, execute blocking docs search.
-		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, docsTotalDesc.getInputDesc());
-		try {
-			waitForJobToFinish(docsSearch);
-
-			// Get the total number of docs (we ignore the return value because you can monitor progress
-			// and get the final total through the getDocResults() method yourself.
-			docResults = docsSearch.getDocResults();
-			setPriorityInternal(); // make sure docResults has the right priority
-		} finally {
-			docsSearch.decrRef();
-			docsSearch = null;
-		}
+		// Get the total number of docs (we ignore the return value because you can monitor progress
+		// and get the final total through the getDocResults() method yourself.
+		docResults = ((JobWithDocs)inputJob).getDocResults();
+		setPriorityInternal(); // make sure docResults has the right priority
 		docResults.size();
 		if (Thread.interrupted()) {
 			throw new ServiceUnavailable("Determining total number of docs took too long, cancelled");

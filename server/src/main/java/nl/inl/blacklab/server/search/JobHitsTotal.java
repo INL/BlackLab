@@ -12,22 +12,15 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobHitsTotal extends Job {
 
-	public static class JobDescHitsTotal extends JobDescriptionBasic {
+	public static class JobDescHitsTotal extends JobDescription {
 
-		JobDescription inputDesc;
-
-		public JobDescHitsTotal(String indexName, JobDescription inputDesc) {
-			super(indexName);
-			this.inputDesc = inputDesc;
-		}
-
-		public JobDescription getInputDesc() {
-			return inputDesc;
+		public JobDescHitsTotal(JobDescription inputDesc) {
+			super(inputDesc);
 		}
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHitsTotal [" + indexName + ", " + inputDesc + "]";
+			return "JDHitsTotal [" + inputDesc + "]";
 		}
 
 		@Override
@@ -39,7 +32,6 @@ public class JobHitsTotal extends Job {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobHitsTotal");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			return o;
 		}
@@ -48,27 +40,16 @@ public class JobHitsTotal extends Job {
 
 	private Hits hits = null;
 
-	public JobHitsTotal(SearchManager searchMan, User user, JobDescHitsTotal par) throws BlsException {
+	public JobHitsTotal(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescHitsTotal hitsTotalDesc = (JobDescHitsTotal)jobDesc;
-
-		// First, execute blocking hits search.
-		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, hitsTotalDesc.getInputDesc());
-		try {
-			waitForJobToFinish(hitsSearch);
-
-			// Get the total number of hits (we ignore the value because you can monitor progress
-			// and get the final total through the getHits() method yourself.
-			hits = hitsSearch.getHits();
-			setPriorityInternal(); // make sure hits has the right priority
-		} finally {
-			hitsSearch.decrRef();
-			hitsSearch = null;
-		}
+		// Get the total number of hits (we ignore the value because you can monitor progress
+		// and get the final total through the getHits() method yourself.
+		hits = ((JobWithHits)inputJob).getHits();
+		setPriorityInternal(); // make sure hits has the right priority
 		hits.size();
 		if (Thread.interrupted()) {
 			throw new ServiceUnavailable("Determining total number of hits took too long, cancelled");

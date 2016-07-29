@@ -11,30 +11,23 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobDocsSorted extends JobWithDocs {
 
-	public static class JobDescDocsSorted extends JobDescriptionBasic {
-
-		JobDescription inputDesc;
+	public static class JobDescDocsSorted extends JobDescription {
 
 		DocSortSettings sortSettings;
 
-		public JobDescDocsSorted(String indexName, JobDescription hitsToSort, DocSortSettings sortSettings) {
-			super(indexName);
-			this.inputDesc = hitsToSort;
+		public JobDescDocsSorted(JobDescription hitsToSort, DocSortSettings sortSettings) {
+			super(hitsToSort);
 			this.sortSettings = sortSettings;
 		}
 
-		public JobDescription getInputDesc() {
-			return inputDesc;
-		}
-
 		@Override
-		public DocSortSettings docSortSettings() {
+		public DocSortSettings getDocSortSettings() {
 			return sortSettings;
 		}
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDDocsSorted [" + indexName + ", " + inputDesc + ", " + sortSettings + "]";
+			return "JDDocsSorted [" + inputDesc + ", " + sortSettings + "]";
 		}
 
 		@Override
@@ -46,7 +39,6 @@ public class JobDocsSorted extends JobWithDocs {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobDocsSorted");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			o.put("sortSettings", sortSettings.toString());
 			return o;
@@ -56,27 +48,16 @@ public class JobDocsSorted extends JobWithDocs {
 
 	private DocResults sourceResults;
 
-	public JobDocsSorted(SearchManager searchMan, User user, JobDescDocsSorted par) throws BlsException {
+	public JobDocsSorted(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescDocsSorted docsSortedDesc = (JobDescDocsSorted)jobDesc;
-
-		// First, execute blocking docs search.
-		JobWithDocs search = (JobWithDocs) searchMan.search(user, docsSortedDesc.getInputDesc());
-		try {
-			waitForJobToFinish(search);
-
-			sourceResults = search.getDocResults();
-			setPriorityInternal();
-		} finally {
-			search.decrRef();
-			search = null;
-		}
+		sourceResults = ((JobWithDocs)inputJob).getDocResults();
+		setPriorityInternal();
 		// Now, sort the docs.
-		DocSortSettings docSortSett = jobDesc.docSortSettings();
+		DocSortSettings docSortSett = jobDesc.getDocSortSettings();
 		if (docSortSett.sortBy() != null) {
 			// Be lenient of clients passing wrong sortBy values,
 			// e.g. trying to sort a per-document search by hit context.

@@ -17,20 +17,13 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobFacets extends Job {
 
-	public static class JobDescFacets extends JobDescriptionBasic {
-
-		JobDescription inputDesc;
+	public static class JobDescFacets extends JobDescription {
 
 		private List<DocProperty> facets;
 
-		public JobDescFacets(String indexName, JobDescription docsToFacet, List<DocProperty> facets) {
-			super(indexName);
-			this.inputDesc = docsToFacet;
+		public JobDescFacets(JobDescription docsToFacet, List<DocProperty> facets) {
+			super(docsToFacet);
 			this.facets = facets;
-		}
-
-		public JobDescription getInputDesc() {
-			return inputDesc;
 		}
 
 		@Override
@@ -40,7 +33,7 @@ public class JobFacets extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDFacets[" + indexName + ", " + inputDesc + ", " + facets + "]";
+			return "JDFacets[" + inputDesc + ", " + facets + "]";
 		}
 
 		@Override
@@ -52,7 +45,6 @@ public class JobFacets extends Job {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobDocsFacets");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			o.put("facets", facets.toString());
 			return o;
@@ -64,25 +56,14 @@ public class JobFacets extends Job {
 
 	private DocResults docResults;
 
-	public JobFacets(SearchManager searchMan, User user, JobDescFacets par) throws BlsException {
+	public JobFacets(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescFacets facetDesc = (JobDescFacets)jobDesc;
-
-		// First, execute blocking docs search.
-		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, facetDesc.getInputDesc());
-		try {
-			waitForJobToFinish(docsSearch);
-
-			// Now, group the docs according to the requested facets.
-			docResults = docsSearch.getDocResults();
-		} finally {
-			docsSearch.decrRef();
-			docsSearch = null;
-		}
+		// Now, group the docs according to the requested facets.
+		docResults = ((JobWithDocs)inputJob).getDocResults();
 		List<DocProperty> props = jobDesc.getFacets();
 
 		Map<String, DocCounts> theCounts = new HashMap<>();

@@ -12,30 +12,23 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobHitsSorted extends JobWithHits {
 
-	public static class JobDescHitsSorted extends JobDescriptionBasic {
+	public static class JobDescHitsSorted extends JobDescription {
 
-		JobDescription inputDesc;
+		HitSortSettings sortSettings;
 
-		HitsSortSettings sortSettings;
-
-		public JobDescHitsSorted(String indexName, JobDescription hitsToSort, HitsSortSettings sortSettings) {
-			super(indexName);
-			this.inputDesc = hitsToSort;
+		public JobDescHitsSorted(JobDescription hitsToSort, HitSortSettings sortSettings) {
+			super(hitsToSort);
 			this.sortSettings = sortSettings;
 		}
 
-		public JobDescription getInputDesc() {
-			return inputDesc;
-		}
-
 		@Override
-		public HitsSortSettings hitsSortSettings() {
+		public HitSortSettings getHitSortSettings() {
 			return sortSettings;
 		}
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHitsSorted [" + indexName + ", " + inputDesc + ", " + sortSettings + "]";
+			return "JDHitsSorted [" + inputDesc + ", " + sortSettings + "]";
 		}
 
 		@Override
@@ -47,7 +40,6 @@ public class JobHitsSorted extends JobWithHits {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobHitsSorted");
-			o.put("indexName", indexName);
 			o.put("inputDesc", inputDesc.toDataObject());
 			o.put("sortSettings", sortSettings.toString());
 			return o;
@@ -61,21 +53,9 @@ public class JobHitsSorted extends JobWithHits {
 
 	@Override
 	public void performSearch() throws BlsException {
-		JobDescHitsSorted sortDesc = (JobDescHitsSorted)jobDesc;
-
-		// First, execute blocking hits search.
-		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, sortDesc.getInputDesc());
-		Hits hitsUnsorted;
-		try {
-			waitForJobToFinish(hitsSearch);
-
-			// Now, sort the hits.
-			hitsUnsorted = hitsSearch.getHits();
-		} finally {
-			hitsSearch.decrRef();
-			hitsSearch = null;
-		}
-		HitsSortSettings sortSett = jobDesc.hitsSortSettings();
+		// Now, sort the hits.
+		Hits hitsUnsorted = ((JobWithHits)inputJob).getHits();
+		HitSortSettings sortSett = jobDesc.getHitSortSettings();
 		HitProperty sortProp = HitProperty.deserialize(hitsUnsorted, sortSett.sortBy());
 		/*if (sortProp == null)
 			throw new QueryException("UNKNOWN_SORT_PROPERTY", "Unknown sort property '" + sortBy + "'.");

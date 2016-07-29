@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
@@ -125,10 +124,8 @@ public abstract class Job implements Comparable<Job> {
 	/** Description of this job */
 	protected JobDescription jobDesc;
 
-	/** If this job was initiated directly by user interaction, this contains
-	 *  the original servlet parameters. Otherwise, it is null.
-	 */
-	protected SearchParameters searchParam;
+	/** The job we're operating on (i.e. the hits to sort, or the docs to group) */
+	Job inputJob = null;
 
 	/** The servlet */
 	protected SearchManager searchMan;
@@ -149,14 +146,6 @@ public abstract class Job implements Comparable<Job> {
 		startedAt = -1;
 		finishedAt = -1;
 		thrownException = null;
-	}
-
-	public SearchParameters getSearchParam() {
-		return searchParam;
-	}
-
-	public void setSearchParam(SearchParameters searchParam) {
-		this.searchParam = searchParam;
 	}
 
 	public JobDescription getDescription() {
@@ -297,6 +286,28 @@ public abstract class Job implements Comparable<Job> {
 		performCalled = true;
 
 		waitUntilFinished(waitTimeMs);
+	}
+
+	/**
+	 * @throws BlsException on error
+	 */
+	protected void performSearchInternal() throws BlsException {
+		JobDescription inputDesc = jobDesc.getInputDesc();
+		if (inputDesc != null) {
+			// Perform the input job and then call this job's performSearch method
+			inputJob = searchMan.search(user, inputDesc);
+			try {
+				waitForJobToFinish(inputJob);
+				performSearch();
+			} finally {
+				inputJob.decrRef();
+				inputJob = null;
+			}
+		} else {
+			// No input job.
+			performSearch();
+		}
+
 	}
 
 	/**
@@ -473,8 +484,6 @@ public abstract class Job implements Comparable<Job> {
 		DataObjectMapElement d = new DataObjectMapElement();
 		d.put("id", id);
 		d.put("class", getClass().getSimpleName());
-		if (searchParam != null)
-			d.put("searchParam", searchParam.toDataObject());
 		d.put("jobDesc", jobDesc.toDataObject());
 		d.put("stats", stats);
 
