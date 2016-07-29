@@ -22,7 +22,7 @@ import nl.inl.util.json.JSONObject;
 
 import org.apache.log4j.Logger;
 
-public class SearchCache {
+class SearchCache {
 	private static final Logger logger = Logger.getLogger(SearchCache.class);
 
 	/** Max time searches are allowed to run (5 minutes) */

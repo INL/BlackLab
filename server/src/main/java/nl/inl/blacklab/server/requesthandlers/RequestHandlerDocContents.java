@@ -33,7 +33,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 			throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
 		Searcher searcher = getSearcher();
-		DataFormat type = searchMan.getContentsFormat(indexName);
+		DataFormat type = DataFormat.XML;
 		int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
 		if (luceneDocId < 0)
 			throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");

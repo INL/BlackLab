@@ -19,7 +19,7 @@ public class Response {
 	 * @return the data object representing the error message
 	 */
 	public static Response busy(BlackLabServer servlet) {
-		int when = servlet.getSearchManager().getCheckAgainAdviceMinimumMs();
+		int when = 1000; //servlet.getSearchManager().getCheckAgainAdviceMinimumMs();
 		Response r = new Response(DataObject.statusObjectWithCheckAgain("WORKING", "Searching, please wait...", when));
 		r.setCacheAllowed(false); // status should never be cached
 		return r;

@@ -24,6 +24,7 @@ import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.util.Json;
 import nl.inl.util.LogUtil;
 import nl.inl.util.json.JSONObject;

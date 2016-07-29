@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.search;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -21,7 +20,6 @@ import org.apache.log4j.Logger;
 
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.server.ServletUtil;
 import nl.inl.blacklab.server.dataobject.DataFormat;
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -38,6 +36,7 @@ import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.JsonUtil;
+import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 import nl.inl.util.MemoryUtil;
@@ -62,17 +61,6 @@ public class SearchManager {
 	static final boolean ENABLE_THREAD_PRIORITY = true;
 
 	/**
-	 * A file filter that returns readable directories only; used for scanning
-	 * collections dirs
-	 */
-	private static FileFilter readableDirFilter = new FileFilter() {
-		@Override
-		public boolean accept(File f) {
-			return f.isDirectory() && f.canRead();
-		}
-	};
-
-	/**
 	 * Are we allowed to query the list of all document?
 	 * (slow for large corpora)
 	 * TODO: make configurable
@@ -84,27 +72,6 @@ public class SearchManager {
 	 * server start instead of all-time.
 	 */
 	long createdAt = System.currentTimeMillis();
-
-	/**
-	 * How long the server should wait for a quick answer when starting a
-	 * nonblocking request. If the answer is found within this time, the client
-	 * needs only one request even in nonblocking mode.
-	 */
-	private int waitTimeInNonblockingModeMs;
-
-	/**
-	 * The minimum time to advise a client to wait before checking the status of
-	 * a search again.
-	 */
-	private int checkAgainAdviceMinimumMs;
-
-	/**
-	 * What number to divide the search time so far by to get the check again
-	 * advice. E.g. if this is set to 5 (the default), if a search has been
-	 * running for 10 seconds, clients are advised to wait 2 seconds before
-	 * checking the status again.
-	 */
-	private int checkAgainAdviceDivider;
 
 	/** Maximum context size allowed */
 	private int maxContextSize;
@@ -310,9 +277,6 @@ public class SearchManager {
 				JSONObject perfProp = properties.getJSONObject("performance");
 				minFreeMemForSearchMegs = JsonUtil.getIntProp(perfProp, "minFreeMemForSearchMegs", 50);
 				maxRunningJobsPerUser = JsonUtil.getIntProp(perfProp, "maxRunningJobsPerUser", 20);
-				checkAgainAdviceMinimumMs = JsonUtil.getIntProp(perfProp, "checkAgainAdviceMinimumMs", 200);
-				checkAgainAdviceDivider = JsonUtil.getIntProp(perfProp, "checkAgainAdviceDivider", 5);
-				waitTimeInNonblockingModeMs = JsonUtil.getIntProp(perfProp, "waitTimeInNonblockingModeMs", 100);
 				clientCacheTimeSec = JsonUtil.getIntProp(perfProp, "clientCacheTimeSec", 3600);
 
 				// Cache properties
@@ -336,9 +300,6 @@ public class SearchManager {
 				// Set default values
 				minFreeMemForSearchMegs = 50;
 				maxRunningJobsPerUser = 20;
-				checkAgainAdviceMinimumMs = 200;
-				checkAgainAdviceDivider = 5;
-				waitTimeInNonblockingModeMs = 100;
 				clientCacheTimeSec = 3600;
 				cache = new SearchCache();
 			}
@@ -889,7 +850,7 @@ public class SearchManager {
 		File userDir = getUserCollectionDir(userId);
 		Set<String> indices = new HashSet<>();
 		if (userDir != null) {
-			for (File f : userDir.listFiles(readableDirFilter)) {
+			for (File f : userDir.listFiles(BlsUtils.readableDirFilter)) {
 				indices.add(userId + ":" + f.getName());
 			}
 		}
@@ -906,7 +867,7 @@ public class SearchManager {
 
 		// Scan collections for any new indices
 		for (File dir : collectionsDirs) {
-			for (File f : dir.listFiles(readableDirFilter)) {
+			for (File f : dir.listFiles(BlsUtils.readableDirFilter)) {
 				if (!indexParam.containsKey(f.getName()) && Searcher.isIndex(f)) {
 					// New one; add it
 					indexParam.put(f.getName(), new IndexParam(f));
@@ -1008,7 +969,7 @@ public class SearchManager {
 
 		if (performSearch) {
 			// Start the search, waiting a short time in case it's a fast search
-			job.perform(waitTimeInNonblockingModeMs);
+			job.perform(500); // hardcoded because we are going to remove nonblocking mode soon
 		}
 
 		// If the search thread threw an exception, rethrow it now.
@@ -1018,7 +979,7 @@ public class SearchManager {
 
 		job.incrRef();
 		if (block) {
-			job.waitUntilFinished(getMaxSearchTimeSec() * 1000);
+			job.waitUntilFinished(SearchCache.getMaxSearchTimeSec() * 1000);
 			if (!job.finished()) {
 				throw new ServiceUnavailable("Search took too long, cancelled.");
 			}
@@ -1026,24 +987,12 @@ public class SearchManager {
 		return job;
 	}
 
-	public long getMinFreeMemForSearchMegs() {
-		return minFreeMemForSearchMegs;
-	}
-
 	public static String getParameterDefaultValue(String paramName) {
 		return defaultParameterValues.get(paramName);
 	}
 
-	public int getCheckAgainAdviceMinimumMs() {
-		return checkAgainAdviceMinimumMs;
-	}
-
 	public boolean isDebugMode(String ip) {
 		return debugModeIps.contains(ip);
-	}
-
-	public DataFormat getContentsFormat(String indexName) {
-		return DataFormat.XML; // could be made configurable
 	}
 
 	public int getMaxContextSize() {
@@ -1070,27 +1019,8 @@ public class SearchManager {
 		return defaultOutputType;
 	}
 
-	public int getMaxSearchTimeSec() {
-		return SearchCache.getMaxSearchTimeSec();
-	}
-
 	public int getClientCacheTimeSec() {
 		return clientCacheTimeSec;
-	}
-
-	/**
-	 * Give advice for how long to wait to check the status of a search.
-	 *
-	 * @param search
-	 *            the search you want to check the status of
-	 * @return how long you should wait before asking again
-	 */
-	public int getCheckAgainAdviceMs(Job search) {
-		// Simple advice algorithm: the longer the search
-		// has been running, the less frequently the client
-		// should check its progress. Just divide the search time by
-		// 5 with a configured minimum.
-		return Math.min(checkAgainAdviceMinimumMs, (int)(search.userWaitTime() * 1000 / checkAgainAdviceDivider));
 	}
 
 	/**

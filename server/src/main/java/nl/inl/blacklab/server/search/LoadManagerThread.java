@@ -8,7 +8,7 @@ import org.apache.log4j.Logger;
  * A thread that regularly calls SearchCache.performLoadManagement(null)
  * to ensure that load management continues even if no new requests are coming in.
  */
-public class LoadManagerThread extends Thread implements UncaughtExceptionHandler {
+class LoadManagerThread extends Thread implements UncaughtExceptionHandler {
 	private static final Logger logger = Logger.getLogger(LoadManagerThread.class);
 
 	private SearchManager searchMan;

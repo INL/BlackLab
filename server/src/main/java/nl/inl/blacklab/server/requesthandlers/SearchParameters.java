@@ -20,7 +20,6 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.GroupProperty;
-import nl.inl.blacklab.server.ServletUtil;
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -52,13 +51,12 @@ import nl.inl.blacklab.server.jobs.JobSampleHits.JobDescSampleHits;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.ParseUtil;
+import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
- * Uniquely describes a search operation.
+ * The parameters passed in the request.
  *
- * Used for caching and nonblocking operation.
- *
- * Derives from TreeMap because it keeps entries in sorted order, which can  be convenient.
+ * We create the necessary JobDescriptions from this.
  */
 public class SearchParameters {
 	private static final Logger logger = Logger.getLogger(SearchParameters.class);

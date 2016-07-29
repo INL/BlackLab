@@ -18,7 +18,6 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.ServletUtil;
 import nl.inl.blacklab.server.dataobject.DataObjectList;
 import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
@@ -27,6 +26,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ParseUtil;
+import nl.inl.blacklab.server.util.ServletUtil;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;

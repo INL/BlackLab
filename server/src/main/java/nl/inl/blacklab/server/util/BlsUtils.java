@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.util;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 
 import org.apache.log4j.Logger;
@@ -24,27 +25,6 @@ import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 
 public class BlsUtils {
 	private static final Logger logger = Logger.getLogger(BlsUtils.class);
-
-	public static boolean strToBool(String value)
-			throws IllegalArgumentException {
-		if (value.equals("true") || value.equals("1") || value.equals("yes")
-				|| value.equals("on"))
-			return true;
-		if (value.equals("false") || value.equals("0") || value.equals("no")
-				|| value.equals("off"))
-			return false;
-		throw new IllegalArgumentException("Cannot convert to boolean: "
-				+ value);
-	}
-
-	public static int strToInt(String value) throws IllegalArgumentException {
-		try {
-			return Integer.parseInt(value);
-		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException("Cannot convert to int: "
-					+ value);
-		}
-	}
 
 	public static Query parseFilter(Searcher searcher, String filter,
 			String filterLang) throws BlsException {
@@ -97,39 +77,47 @@ public class BlsUtils {
 						+ "'. Supported: luceneql, contextql.");
 	}
 
-	// Copied from Apache Commons
-	// (as allowed under the Apache License 2.0)
-	public static boolean isSymlink(File file) throws IOException {
-		if (file == null)
-			throw new NullPointerException("File must not be null");
-		File canon;
-		if (file.getParent() == null) {
-			canon = file;
-		} else {
-			File canonDir = file.getParentFile().getCanonicalFile();
-			canon = new File(canonDir, file.getName());
+	public static TextPattern parsePatt(Searcher searcher, String pattern,
+			String language, boolean required) throws BlsException {
+		if (pattern == null || pattern.length() == 0) {
+			if (required)
+				throw new BadRequest("NO_PATTERN_GIVEN",
+						"Text search pattern required. Please specify 'patt' parameter.");
+			return null; // not required, ok
 		}
-		return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
+	
+		if (language.equals("corpusql")) {
+			try {
+				return CorpusQueryLanguageParser.parse(pattern);
+			} catch (ParseException e) {
+				throw new BadRequest("PATT_SYNTAX_ERROR",
+						"Syntax error in CorpusQL pattern: " + e.getMessage());
+			} catch (TokenMgrError e) {
+				throw new BadRequest("PATT_SYNTAX_ERROR",
+						"Syntax error in CorpusQL pattern: " + e.getMessage());
+			}
+		} else if (language.equals("contextql")) {
+			try {
+				CompleteQuery q = ContextualQueryLanguageParser.parse(searcher,
+						pattern);
+				return q.getContentsQuery();
+			} catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
+				throw new BadRequest("PATT_SYNTAX_ERROR",
+						"Syntax error in ContextQL pattern: " + e.getMessage());
+			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
+				throw new BadRequest("PATT_SYNTAX_ERROR",
+						"Syntax error in ContextQL pattern: " + e.getMessage());
+			}
+		}
+	
+		throw new BadRequest("UNKNOWN_PATT_LANG",
+				"Unknown pattern language '" + language
+						+ "'. Supported: corpusql, contextql, luceneql.");
 	}
 
-	/**
-	 * Delete an entire tree with files, subdirectories, etc.
-	 *
-	 * CAREFUL, DANGEROUS!
-	 *
-	 * @param root
-	 *            the directory tree to delete
-	 */
-	public static void delTree(File root) {
-		if (!root.isDirectory())
-			throw new RuntimeException("Not a directory: " + root);
-		for (File f : root.listFiles()) {
-			if (f.isDirectory())
-				delTree(f);
-			else
-				f.delete();
-		}
-		root.delete();
+	public static TextPattern parsePatt(Searcher searcher, String pattern,
+			String language) throws BlsException {
+		return parsePatt(searcher, pattern, language, true);
 	}
 
 	/**
@@ -180,6 +168,41 @@ public class BlsUtils {
 		return docResults.get(0).getDocId();
 	}
 
+	// Copied from Apache Commons
+	// (as allowed under the Apache License 2.0)
+	public static boolean isSymlink(File file) throws IOException {
+		if (file == null)
+			throw new NullPointerException("File must not be null");
+		File canon;
+		if (file.getParent() == null) {
+			canon = file;
+		} else {
+			File canonDir = file.getParentFile().getCanonicalFile();
+			canon = new File(canonDir, file.getName());
+		}
+		return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
+	}
+
+	/**
+	 * Delete an entire tree with files, subdirectories, etc.
+	 *
+	 * CAREFUL, DANGEROUS!
+	 *
+	 * @param root
+	 *            the directory tree to delete
+	 */
+	public static void delTree(File root) {
+		if (!root.isDirectory())
+			throw new RuntimeException("Not a directory: " + root);
+		for (File f : root.listFiles()) {
+			if (f.isDirectory())
+				delTree(f);
+			else
+				f.delete();
+		}
+		root.delete();
+	}
+
 	static void debugWait() throws BlsException {
 		// Fake extra search time
 		try {
@@ -189,47 +212,15 @@ public class BlsUtils {
 		}
 	}
 
-	public static TextPattern parsePatt(Searcher searcher, String pattern,
-			String language, boolean required) throws BlsException {
-		if (pattern == null || pattern.length() == 0) {
-			if (required)
-				throw new BadRequest("NO_PATTERN_GIVEN",
-						"Text search pattern required. Please specify 'patt' parameter.");
-			return null; // not required, ok
+	/**
+	 * A file filter that returns readable directories only; used for scanning
+	 * collections dirs
+	 */
+	public static FileFilter readableDirFilter = new FileFilter() {
+		@Override
+		public boolean accept(File f) {
+			return f.isDirectory() && f.canRead();
 		}
-
-		if (language.equals("corpusql")) {
-			try {
-				return CorpusQueryLanguageParser.parse(pattern);
-			} catch (ParseException e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in CorpusQL pattern: " + e.getMessage());
-			} catch (TokenMgrError e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in CorpusQL pattern: " + e.getMessage());
-			}
-		} else if (language.equals("contextql")) {
-			try {
-				CompleteQuery q = ContextualQueryLanguageParser.parse(searcher,
-						pattern);
-				return q.getContentsQuery();
-			} catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in ContextQL pattern: " + e.getMessage());
-			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in ContextQL pattern: " + e.getMessage());
-			}
-		}
-
-		throw new BadRequest("UNKNOWN_PATT_LANG",
-				"Unknown pattern language '" + language
-						+ "'. Supported: corpusql, contextql, luceneql.");
-	}
-
-	public static TextPattern parsePatt(Searcher searcher, String pattern,
-			String language) throws BlsException {
-		return parsePatt(searcher, pattern, language, true);
-	}
+	};
 
 }

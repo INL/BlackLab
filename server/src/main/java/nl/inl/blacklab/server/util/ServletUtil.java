@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server;
+package nl.inl.blacklab.server.util;
 
 import java.io.PrintStream;
 import java.text.DateFormat;

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 
-import nl.inl.blacklab.server.ServletUtil;
+import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
  * Represents hierarchical data that can be serialized to XML or JSON.
