@@ -13,7 +13,7 @@ public class JobWithHits extends Job {
 	/** The hits found */
 	protected Hits hits;
 
-	public JobWithHits(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobWithHits(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 

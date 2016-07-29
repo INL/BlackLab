@@ -1071,7 +1071,7 @@ public class SearchManager {
 	 * @throws BlsException
 	 *             if the query couldn't be executed
 	 */
-	public Job search(User user, Job.Description searchParameters) throws BlsException {
+	public Job search(User user, JobDescription searchParameters) throws BlsException {
 		//logger.debug("@PERF search");
 		try {
 			// Search the cache / running jobs for this search, create new if not
@@ -1244,21 +1244,7 @@ public class SearchManager {
 				throw new BadRequest("PATT_SYNTAX_ERROR",
 						"Syntax error in ContextQL pattern: " + e.getMessage());
 			}
-		} /*else if (language.equals("luceneql")) {
-			try {
-				String field = searcher.getIndexStructure()
-						.getMainContentsField().getName();
-				LuceneQueryParser parser = new LuceneQueryParser(
-						Version.LUCENE_42, field, searcher.getAnalyzer());
-				return parser.parse(pattern);
-			} catch (nl.inl.blacklab.queryParser.lucene.ParseException e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in LuceneQL pattern: " + e.getMessage());
-			} catch (nl.inl.blacklab.queryParser.lucene.TokenMgrError e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in LuceneQL pattern: " + e.getMessage());
-			}
-		}*/
+		}
 
 		throw new BadRequest("UNKNOWN_PATT_LANG",
 				"Unknown pattern language '" + language

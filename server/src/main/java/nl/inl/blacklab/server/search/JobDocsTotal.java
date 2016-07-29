@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -11,18 +12,52 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobDocsTotal extends Job {
 
-	//private JobWithDocs docsSearch;
+	public static class JobDescDocsTotal extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		public JobDescDocsTotal(String indexName, JobDescription inputDesc) {
+			super(indexName);
+			this.inputDesc = inputDesc;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDDocsTotal [" + indexName + ", " + inputDesc + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobDocsTotal(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobDocsTotal");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
+			return o;
+		}
+
+	}
 
 	private DocResults docResults = null;
 
-	public JobDocsTotal(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobDocsTotal(SearchManager searchMan, User user, JobDescDocsTotal par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescDocsTotal docsTotalDesc = (JobDescDocsTotal)jobDesc;
+
 		// First, execute blocking docs search.
-		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, jobDesc.docs());
+		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, docsTotalDesc.getInputDesc());
 		try {
 			waitForJobToFinish(docsSearch);
 

@@ -42,6 +42,7 @@ final class SearchThread extends Thread implements UncaughtExceptionHandler {
 			// outside the run() method or aren't caught here for some other reason).
 			// Even then, some low-level ones (like OutOfMemoryException) seem to slip by.
 			if (search != null) {
+				e.printStackTrace();
 				search.thrownException = e;
 				search.setFinished();
 			}

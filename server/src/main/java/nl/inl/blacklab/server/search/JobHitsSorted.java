@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.grouping.HitProperty;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -11,17 +12,59 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobHitsSorted extends JobWithHits {
 
-	public JobHitsSorted(SearchManager searchMan, User user, Description par) throws BlsException {
+	public static class JobDescHitsSorted extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		HitsSortSettings sortSettings;
+
+		public JobDescHitsSorted(String indexName, JobDescription hitsToSort, HitsSortSettings sortSettings) {
+			super(indexName);
+			this.inputDesc = hitsToSort;
+			this.sortSettings = sortSettings;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public HitsSortSettings hitsSortSettings() {
+			return sortSettings;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDHitsSorted [" + indexName + ", " + inputDesc + ", " + sortSettings + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobHitsSorted(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobHitsSorted");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
+			o.put("sortSettings", sortSettings.toString());
+			return o;
+		}
+
+	}
+
+	public JobHitsSorted(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescHitsSorted sortDesc = (JobDescHitsSorted)jobDesc;
+
 		// First, execute blocking hits search.
-		Description parNoSort = DescriptionImpl.jobHits(JobHits.class, jobDesc.getIndexName(), jobDesc.getPattern(),
-				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
-				jobDesc.getContextSettings());
-		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, parNoSort.hits());
+		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, sortDesc.getInputDesc());
 		Hits hitsUnsorted;
 		try {
 			waitForJobToFinish(hitsSearch);
@@ -33,7 +76,7 @@ public class JobHitsSorted extends JobWithHits {
 			hitsSearch = null;
 		}
 		HitsSortSettings sortSett = jobDesc.hitsSortSettings();
-		HitProperty sortProp = HitProperty.deserialize(hits, sortSett.sortBy());
+		HitProperty sortProp = HitProperty.deserialize(hitsUnsorted, sortSett.sortBy());
 		/*if (sortProp == null)
 			throw new QueryException("UNKNOWN_SORT_PROPERTY", "Unknown sort property '" + sortBy + "'.");
 		*/

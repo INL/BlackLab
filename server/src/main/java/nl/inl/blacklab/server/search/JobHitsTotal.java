@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -11,16 +12,52 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobHitsTotal extends Job {
 
+	public static class JobDescHitsTotal extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		public JobDescHitsTotal(String indexName, JobDescription inputDesc) {
+			super(indexName);
+			this.inputDesc = inputDesc;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDHitsTotal [" + indexName + ", " + inputDesc + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobHitsTotal(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobHitsTotal");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
+			return o;
+		}
+
+	}
+
 	private Hits hits = null;
 
-	public JobHitsTotal(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobHitsTotal(SearchManager searchMan, User user, JobDescHitsTotal par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescHitsTotal hitsTotalDesc = (JobDescHitsTotal)jobDesc;
+
 		// First, execute blocking hits search.
-		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, jobDesc.hits());
+		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, hitsTotalDesc.getInputDesc());
 		try {
 			waitForJobToFinish(hitsSearch);
 

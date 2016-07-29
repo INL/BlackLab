@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -10,28 +11,71 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobDocsSorted extends JobWithDocs {
 
+	public static class JobDescDocsSorted extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		DocSortSettings sortSettings;
+
+		public JobDescDocsSorted(String indexName, JobDescription hitsToSort, DocSortSettings sortSettings) {
+			super(indexName);
+			this.inputDesc = hitsToSort;
+			this.sortSettings = sortSettings;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public DocSortSettings docSortSettings() {
+			return sortSettings;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDDocsSorted [" + indexName + ", " + inputDesc + ", " + sortSettings + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobDocsSorted(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobDocsSorted");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
+			o.put("sortSettings", sortSettings.toString());
+			return o;
+		}
+
+	}
+
 	private DocResults sourceResults;
 
-	public JobDocsSorted(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobDocsSorted(SearchManager searchMan, User user, JobDescDocsSorted par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescDocsSorted docsSortedDesc = (JobDescDocsSorted)jobDesc;
+
 		// First, execute blocking docs search.
-		Description parNoSort = DescriptionImpl.jobDocs(JobDocs.class, jobDesc.getIndexName(), jobDesc.getPattern(), jobDesc.getFilterQuery(),
-				null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
-		JobWithDocs search = (JobWithDocs) searchMan.search(user, parNoSort.docs());
+		JobWithDocs search = (JobWithDocs) searchMan.search(user, docsSortedDesc.getInputDesc());
 		try {
 			waitForJobToFinish(search);
 
-			// Now, sort the docs.
 			sourceResults = search.getDocResults();
 			setPriorityInternal();
 		} finally {
 			search.decrRef();
 			search = null;
 		}
+		// Now, sort the docs.
 		DocSortSettings docSortSett = jobDesc.docSortSettings();
 		if (docSortSett.sortBy() != null) {
 			// Be lenient of clients passing wrong sortBy values,

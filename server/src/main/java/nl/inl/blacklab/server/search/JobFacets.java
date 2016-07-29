@@ -7,6 +7,7 @@ import java.util.Map;
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -16,20 +17,63 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobFacets extends Job {
 
+	public static class JobDescFacets extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		private List<DocProperty> facets;
+
+		public JobDescFacets(String indexName, JobDescription docsToFacet, List<DocProperty> facets) {
+			super(indexName);
+			this.inputDesc = docsToFacet;
+			this.facets = facets;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public List<DocProperty> getFacets() {
+			return facets;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDFacets[" + indexName + ", " + inputDesc + ", " + facets + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobFacets(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobDocsFacets");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
+			o.put("facets", facets.toString());
+			return o;
+		}
+
+	}
+
 	private Map<String, DocCounts> counts;
 
 	private DocResults docResults;
 
-	public JobFacets(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobFacets(SearchManager searchMan, User user, JobDescFacets par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescFacets facetDesc = (JobDescFacets)jobDesc;
+
 		// First, execute blocking docs search.
-		Description parNoGroup = DescriptionImpl.jobDocs(JobDocs.class, jobDesc.getIndexName(), jobDesc.getPattern(),
-				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
-		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, parNoGroup.docs());
+		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, facetDesc.getInputDesc());
 		try {
 			waitForJobToFinish(docsSearch);
 

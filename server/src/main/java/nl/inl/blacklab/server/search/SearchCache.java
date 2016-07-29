@@ -88,7 +88,7 @@ public class SearchCache {
 	 * @param jobDesc the search parameters
 	 * @return the Search if found, or null if not
 	 */
-	public Job get(Job.Description jobDesc) {
+	public Job get(JobDescription jobDesc) {
 		Job search = cachedSearches.get(jobDesc.uniqueIdentifier());
 		if (search == null) {
 			//logger.debug("Cache miss: " + jobDesc);

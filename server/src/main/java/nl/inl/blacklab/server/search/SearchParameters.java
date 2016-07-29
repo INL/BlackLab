@@ -36,7 +36,7 @@ import nl.inl.blacklab.server.exceptions.NotFound;
  *
  * Derives from TreeMap because it keeps entries in sorted order, which can  be convenient.
  */
-public class SearchParameters extends Job.AbstractDescription implements Map<String, String> {
+public class SearchParameters extends JobDescriptionAbstract implements Map<String, String> {
 	private static final Logger logger = Logger.getLogger(SearchParameters.class);
 
 	/** The search manager, for querying default value for missing parameters */
@@ -146,7 +146,7 @@ public class SearchParameters extends Job.AbstractDescription implements Map<Str
 		Class<?> jobClass;
 		try {
 			jobClass = Class.forName("nl.inl.blacklab.server.search." + strJobClass);
-			Constructor<?> cons = jobClass.getConstructor(SearchManager.class, User.class, Job.Description.class);
+			Constructor<?> cons = jobClass.getConstructor(SearchManager.class, User.class, JobDescription.class);
 			return (Job)cons.newInstance(searchMan, user, this);
 		} catch (ClassNotFoundException|NoSuchMethodException|InstantiationException|IllegalAccessException|IllegalArgumentException|InvocationTargetException e) {
 			throw new InternalServerError("Error instantiating Job class", 1, e);

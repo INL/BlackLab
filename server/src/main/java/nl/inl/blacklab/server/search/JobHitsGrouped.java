@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.search;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitProperty;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -13,21 +14,63 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobHitsGrouped extends Job {
 
+	public static class JobDescHitsGrouped extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		HitGroupSettings groupSettings;
+
+		public JobDescHitsGrouped(String indexName, JobDescription hitsToGroup, HitGroupSettings groupSettings) {
+			super(indexName);
+			this.inputDesc = hitsToGroup;
+			this.groupSettings = groupSettings;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public HitGroupSettings hitGroupSettings() {
+			return groupSettings;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDHitsGrouped [" + indexName + ", " + inputDesc + ", " + groupSettings + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobHitsGrouped(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobHitsGrouped");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
+			o.put("groupSettings", groupSettings.toString());
+			return o;
+		}
+
+	}
+
 	private HitGroups groups;
 
 	private Hits hits;
 
-	public JobHitsGrouped(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobHitsGrouped(SearchManager searchMan, User user, JobDescHitsGrouped par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescHitsGrouped groupDesc = (JobDescHitsGrouped)jobDesc;
+
 		// First, execute blocking hits search.
-		Description parNoGroup = DescriptionImpl.jobHits(JobHits.class, jobDesc.getIndexName(), jobDesc.getPattern(),
-				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
-				jobDesc.getContextSettings());
-		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, parNoGroup.hits());
+		JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, groupDesc.getInputDesc());
 		try {
 			waitForJobToFinish(hitsSearch);
 
@@ -46,7 +89,8 @@ public class JobHitsGrouped extends Job {
 		HitGroups theGroups = hits.groupedBy(groupProp);
 
 		HitGroupSortSettings sortSett = jobDesc.hitGroupSortSettings();
-		theGroups.sortGroups(sortSett.sortBy(), sortSett.reverse());
+		if (sortSett != null)
+			theGroups.sortGroups(sortSett.sortBy(), sortSett.reverse());
 
 		groups = theGroups; // we're done, caller can use the groups now
 	}

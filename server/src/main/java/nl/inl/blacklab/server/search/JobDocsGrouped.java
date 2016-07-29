@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.perdocument.DocGroups;
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -11,20 +12,63 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobDocsGrouped extends Job {
 
+	public static class JobDescDocsGrouped extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		DocGroupSettings groupSettings;
+
+		public JobDescDocsGrouped(String indexName, JobDescription docsToGroup, DocGroupSettings groupSettings) {
+			super(indexName);
+			this.inputDesc = docsToGroup;
+			this.groupSettings = groupSettings;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public DocGroupSettings docGroupSettings() {
+			return groupSettings;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDDocsGrouped [" + indexName + ", " + inputDesc + ", " + groupSettings + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobDocsGrouped(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobDocsGrouped");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
+			o.put("groupSettings", groupSettings.toString());
+			return o;
+		}
+
+	}
+
 	private DocGroups groups;
 
 	private DocResults docResults;
 
-	public JobDocsGrouped(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobDocsGrouped(SearchManager searchMan, User user, JobDescDocsGrouped par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescDocsGrouped docGroupDesc = (JobDescDocsGrouped)jobDesc;
+
 		// First, execute blocking docs search.
-		Description parNoGroup = DescriptionImpl.jobDocs(JobDocs.class, jobDesc.getIndexName(), jobDesc.getPattern(),
-				jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getWindowSettings(), jobDesc.getContextSettings());
-		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, parNoGroup.docs());
+		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, docGroupDesc.getInputDesc());
 		try {
 			waitForJobToFinish(docsSearch);
 
@@ -39,7 +83,8 @@ public class JobDocsGrouped extends Job {
 		DocGroups theGroups = docResults.groupedBy(groupSett.groupBy());
 
 		DocGroupSortSettings sortSett = jobDesc.docGroupSortSettings();
-		theGroups.sort(sortSett.sortBy(), sortSett.reverse());
+		if (sortSett != null)
+			theGroups.sort(sortSett.sortBy(), sortSett.reverse());
 
 		groups = theGroups; // we're done, caller can use the groups now
 	}

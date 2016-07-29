@@ -12,20 +12,20 @@ import nl.inl.blacklab.server.exceptions.BlsException;
  */
 public class JobSampleHits extends JobWithHits {
 
-	public static class DescSampleHits extends BasicDescription {
+	public static class JobDescSampleHits extends JobDescriptionBasic {
 
-		Description inputJob;
+		JobDescription inputDesc;
 
 		SampleSettings sampleSettings;
 
-		public DescSampleHits(String indexName, Description hitsToSample, SampleSettings settings) {
+		public JobDescSampleHits(String indexName, JobDescription hitsToSample, SampleSettings settings) {
 			super(indexName);
-			this.inputJob = hitsToSample;
+			this.inputDesc = hitsToSample;
 			this.sampleSettings = settings;
 		}
 
-		public Description getInputDesc() {
-			return inputJob;
+		public JobDescription getInputDesc() {
+			return inputDesc;
 		}
 
 		@Override
@@ -35,7 +35,7 @@ public class JobSampleHits extends JobWithHits {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "SampleHits [" + inputJob + ", " + sampleSettings + "]";
+			return "JDSampleHits [" + indexName + ", " + inputDesc + ", " + sampleSettings + "]";
 		}
 
 		@Override
@@ -47,26 +47,24 @@ public class JobSampleHits extends JobWithHits {
 		public DataObject toDataObject() {
 			DataObjectMapElement o = new DataObjectMapElement();
 			o.put("jobClass", "JobSampleHits");
-			o.put("inputJob", inputJob.uniqueIdentifier());
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
 			o.put("sampleSettings", sampleSettings.toString());
 			return o;
 		}
 
 	}
 
-	public JobSampleHits(SearchManager searchMan, User user, DescSampleHits par) throws BlsException {
+	public JobSampleHits(SearchManager searchMan, User user, JobDescSampleHits par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		DescSampleHits sampleDesc = (JobSampleHits.DescSampleHits)jobDesc;
-		Description inputDesc = sampleDesc.getInputDesc();
+		JobDescSampleHits sampleDesc = (JobDescSampleHits)jobDesc;
+		JobDescription inputDesc = sampleDesc.getInputDesc();
 		JobWithHits inputJob;
-		if (inputDesc.hasSort())
-			inputJob = (JobWithHits) searchMan.search(user, inputDesc.hitsSorted());
-		else
-			inputJob = (JobWithHits) searchMan.search(user, inputDesc.hits());
+		inputJob = (JobWithHits) searchMan.search(user, inputDesc);
 		waitForJobToFinish(inputJob);
 		Hits inputHits = inputJob.getHits();
 		SampleSettings sample = sampleDesc.getSampleSettings();

@@ -4,6 +4,8 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.server.dataobject.DataObject;
+import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.Forbidden;
 
@@ -12,29 +14,73 @@ import nl.inl.blacklab.server.exceptions.Forbidden;
  */
 public class JobDocs extends JobWithDocs {
 
-	public JobDocs(SearchManager searchMan, User user, Description par) throws BlsException {
+	public static class JobDescDocs extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		Query filterQuery;
+
+		public JobDescDocs(String indexName, JobDescription hitsToGroup, Query filterQuery) {
+			super(indexName);
+			this.inputDesc = hitsToGroup;
+			this.filterQuery = filterQuery;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public Query getFilterQuery() {
+			return filterQuery;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDDescDocs [" + indexName + ", " + inputDesc + ", " + filterQuery + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobDocs(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobHits");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toString());
+			o.put("filterQuery", filterQuery.toString());
+			return o;
+		}
+
+	}
+
+	public JobDocs(SearchManager searchMan, User user, JobDescDocs par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescDocs docsDesc = (JobDescDocs)jobDesc;
+
 		// First, execute blocking hits search.
-		if (jobDesc.getPattern() != null) {
-			Description parNoSort = DescriptionImpl.jobHits(JobHits.class, jobDesc.getIndexName(), jobDesc.getPattern(),
-					jobDesc.getFilterQuery(), null, jobDesc.getMaxSettings(), jobDesc.getSampleSettings(), jobDesc.getWindowSettings(),
-					jobDesc.getContextSettings());
-			JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, parNoSort.hits());
+		JobDescription inputDesc = docsDesc.getInputDesc();
+		if (inputDesc != null) {
+			JobWithHits hitsSearch = (JobWithHits) searchMan.search(user, inputDesc);
 			Hits hits;
 			try {
 				waitForJobToFinish(hitsSearch);
-				// Now, get per document results
 				hits = hitsSearch.getHits();
 			} finally {
 				hitsSearch.decrRef();
 				hitsSearch = null;
 			}
-			ContextSettings contextSett = jobDesc.getContextSettings();
-			hits.settings().setConcordanceType(contextSett.concType());
+			// Now, get per document results
+			//ContextSettings contextSett = jobDesc.getContextSettings();
+			//hits.settings().setConcordanceType(contextSett.concType());
+			//hits.settings().setContextSize(contextSett.size());
 			docResults = hits.perDocResults();
 		} else {
 			// Documents only

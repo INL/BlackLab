@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.perdocument.DocResultsWindow;
+import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -11,20 +12,74 @@ import nl.inl.util.ThreadPriority.Level;
  */
 public class JobDocsWindow extends Job {
 
+	public static class JobDescDocsWindow extends JobDescriptionBasic {
+
+		JobDescription inputDesc;
+
+		WindowSettings windowSettings;
+
+		ContextSettings contextSettings;
+
+		public JobDescDocsWindow(String indexName, JobDescription inputDesc, WindowSettings windowSettings, ContextSettings contextSettings) {
+			super(indexName);
+			this.inputDesc = inputDesc;
+			this.windowSettings = windowSettings;
+			this.contextSettings = contextSettings;
+		}
+
+		public JobDescription getInputDesc() {
+			return inputDesc;
+		}
+
+		@Override
+		public WindowSettings getWindowSettings() {
+			return windowSettings;
+		}
+
+		@Override
+		public ContextSettings getContextSettings() {
+			return contextSettings;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDDocsWindow [" + indexName + ", " + inputDesc + ", " + windowSettings + ", " + contextSettings + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobDocsWindow(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobHitsWindow");
+			o.put("indexName", indexName);
+			o.put("inputDesc", inputDesc.toDataObject());
+			o.put("windowSettings", windowSettings.toString());
+			o.put("contextSettings", contextSettings.toString());
+			return o;
+		}
+
+	}
+
 	private DocResults sourceResults;
 
 	private DocResultsWindow window;
 
 	private int requestedWindowSize;
 
-	public JobDocsWindow(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobDocsWindow(SearchManager searchMan, User user, JobDescDocsWindow par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
+		JobDescDocsWindow docsWindowDesc = (JobDescDocsWindow)jobDesc;
+
 		// First, execute blocking docs search.
-		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, jobDesc.docs());
+		JobWithDocs docsSearch = (JobWithDocs) searchMan.search(user, docsWindowDesc.getInputDesc());
 		try {
 			waitForJobToFinish(docsSearch);
 
@@ -42,6 +97,7 @@ public class JobDocsWindow extends Job {
 			debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
 			first = 0;
 		}
+		// TODO: context settings!
 		window = sourceResults.window(first, requestedWindowSize);
 	}
 

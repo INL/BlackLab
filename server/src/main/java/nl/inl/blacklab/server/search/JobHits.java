@@ -7,6 +7,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 
 import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.server.dataobject.DataObject;
+import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -16,13 +18,66 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
  */
 public class JobHits extends JobWithHits {
 
+	public static class JobDescHits extends JobDescriptionBasic {
+
+		TextPattern pattern;
+
+		Query filterQuery;
+
+		MaxSettings maxSettings;
+
+		public JobDescHits(String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings) {
+			super(indexName);
+			this.pattern = pattern;
+			this.filterQuery = filterQuery;
+			this.maxSettings = maxSettings;
+		}
+
+		@Override
+		public TextPattern getPattern() {
+			return pattern;
+		}
+
+		@Override
+		public Query getFilterQuery() {
+			return filterQuery;
+		}
+
+		@Override
+		public MaxSettings getMaxSettings() {
+			return maxSettings;
+		}
+
+		@Override
+		public String uniqueIdentifier() {
+			return "JDHits [" + indexName + ", " + pattern + ", " + filterQuery + ", " + maxSettings + "]";
+		}
+
+		@Override
+		public Job createJob(SearchManager searchMan, User user) throws BlsException {
+			return new JobHits(searchMan, user, this);
+		}
+
+		@Override
+		public DataObject toDataObject() {
+			DataObjectMapElement o = new DataObjectMapElement();
+			o.put("jobClass", "JobHits");
+			o.put("indexName", indexName);
+			o.put("pattern", pattern.toString());
+			o.put("filterQuery", filterQuery.toString());
+			o.put("maxSettings", maxSettings.toString());
+			return o;
+		}
+
+	}
+
 	/** The parsed pattern */
 	protected TextPattern textPattern;
 
 	/** The parsed filter */
 	protected Filter filter;
 
-	public JobHits(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobHits(SearchManager searchMan, User user, JobDescHits par) throws BlsException {
 		super(searchMan, user, par);
 	}
 

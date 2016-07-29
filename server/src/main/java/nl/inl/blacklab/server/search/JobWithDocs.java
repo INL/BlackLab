@@ -12,7 +12,7 @@ public class JobWithDocs extends Job {
 
 	DocResults docResults;
 
-	public JobWithDocs(SearchManager searchMan, User user, Description par) throws BlsException {
+	public JobWithDocs(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
