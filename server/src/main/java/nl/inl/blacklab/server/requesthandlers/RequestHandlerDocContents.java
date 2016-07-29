@@ -11,10 +11,9 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.search.JobWithHits;
-import nl.inl.blacklab.server.search.SearchCache;
-import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.JobWithHits;
+import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.util.BlsUtils;
 
 import org.apache.lucene.document.Document;
 
@@ -35,7 +34,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
 		Searcher searcher = getSearcher();
 		DataFormat type = searchMan.getContentsFormat(indexName);
-		int luceneDocId = SearchManager.getLuceneDocIdFromPid(searcher, docId);
+		int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
 		if (luceneDocId < 0)
 			throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
 		Document document = searcher.document(luceneDocId); //searchMan.getDocumentFromPid(indexName, docId);
@@ -53,14 +52,8 @@ public class RequestHandlerDocContents extends RequestHandler {
 			//@@@ TODO: filter on document!
 			searchParam.put("docpid", docId);
 			JobWithHits search;
-			search = (JobWithHits) searchMan.search(user, searchParam.hits());
+			search = (JobWithHits) searchMan.search(user, searchParam.hits(), true);
 			try {
-				search.waitUntilFinished(SearchCache.maxSearchTimeSec);
-				if (!search.finished()) {
-					Response errObj = Response.searchTimedOut();
-					errObj.setOverrideType(type); // Application expects this MIME type, don't disappoint
-					return errObj;
-				}
 				hits = search.getHits();
 			} finally {
 				search.decrRef();

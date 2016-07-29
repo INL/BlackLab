@@ -17,28 +17,13 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
-
 import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 
-import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
-import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
-import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.ServletUtil;
 import nl.inl.blacklab.server.dataobject.DataFormat;
 import nl.inl.blacklab.server.dataobject.DataObject;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
-import nl.inl.blacklab.server.dataobject.DataObjectString;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
@@ -48,6 +33,11 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.exceptions.TooManyRequests;
+import nl.inl.blacklab.server.jobs.Job;
+import nl.inl.blacklab.server.jobs.JobDescription;
+import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.util.BlsUtils;
+import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 import nl.inl.util.MemoryUtil;
@@ -534,14 +524,12 @@ public class SearchManager {
 		// If no auth system is configured, all users are anonymous
 		if (authSystem == null) {
 			User user = User.anonymous(request.getSession().getId());
-			//logger.debug("No auth system, user = " + user);
 			return user;
 		}
 
 		// Let auth system determine the current user.
 		try {
 			User user = (User)authMethodDetermineCurrentUser.invoke(authSystem, servlet, request);
-			//logger.debug("User = " + user);
 			return user;
 		} catch (Exception e) {
 			throw new RuntimeException("Error determining current user", e);
@@ -582,9 +570,6 @@ public class SearchManager {
 	 * @return the index dir and mayViewContents setting
 	 */
 	private synchronized IndexParam getIndexParam(String indexName) {
-		//logger.debug("@PERF getIndexParam");
-		try {
-
 		// Already in the cache?
 		if (indexParam.containsKey(indexName)) {
 			IndexParam p = indexParam.get(indexName);
@@ -614,10 +599,6 @@ public class SearchManager {
 		}
 
 		return null;
-
-		} finally {
-			//logger.debug("@PERF getIndexParam EXIT");
-		}
 	}
 
 	public File getIndexDir(String indexName) {
@@ -688,84 +669,76 @@ public class SearchManager {
 	 * @throws BlsException
 	 *             if not found or open error
 	 */
-	@SuppressWarnings("deprecation")
-	// for call to _setPidField() and _setContentViewable()
+	@SuppressWarnings("deprecation")  // for call to _setPidField() and _setContentViewable()
 	public synchronized Searcher getSearcher(String indexName)
 			throws BlsException {
-		//logger.debug("@PERF getSearcher");
-		try {
+		if (!isValidIndexName(indexName))
+			throw new IllegalIndexName(indexName);
 
-			if (!isValidIndexName(indexName))
-				throw new IllegalIndexName(indexName);
-
-			if (searchers.containsKey(indexName)) {
-				Searcher searcher = searchers.get(indexName);
-				if (searcher.getIndexDirectory().canRead())
-					return searcher;
-				// Index was (re)moved; remove Searcher from cache.
-				searchers.remove(indexName);
-				indexStatus.remove(indexName);
-				cache.clearCacheForIndex(indexName);
-				// Maybe we can find an index with this name elsewhere?
-			}
-			IndexParam par = getIndexParam(indexName);
-			if (par == null) {
-				throw new IndexNotFound(indexName);
-			}
-			File indexDir = par.getDir();
-			Searcher searcher;
-			try {
-				logger.debug("Opening index '" + indexName + "', dir = " + indexDir);
-				searcher = Searcher.open(indexDir);
-				searcher.setDefaultSearchSensitive(defaultCaseSensitive, defaultDiacriticsSensitive);
-			} catch (Exception e) {
-				throw new InternalServerError("Could not open index '" + indexName
-						+ "'", 27, e);
-			}
-			searchers.put(indexName, searcher);
-
-			// Figure out the pid from the index metadata and/or BLS config.
-			String indexPid = searcher.getIndexStructure().pidField();
-			if (indexPid == null)
-				indexPid = "";
-			String configPid = par.getPidField();
-			if (indexPid.length() > 0 && !configPid.equals(indexPid)) {
-				if (configPid.length() > 0) {
-					logger.error("Different pid field configured in blacklab-server.json than in index metadata! ("
-							+ configPid + "/" + indexPid + "); using the latter");
-				}
-				// Update index parameters with the pid field found in the metadata
-				par.setPidField(indexPid);
-			} else {
-				// No pid configured in index, only in blacklab-server.json. We want
-				// to get rid
-				// of this (prints an error on startup), but it should still work
-				// for now. Inject
-				// the setting into the searcher.
-				if (configPid.length() > 0)
-					searcher.getIndexStructure()._setPidField(configPid);
-			}
-			if (indexPid.length() == 0 && configPid.length() == 0) {
-				logger.warn("No pid given for index '" + indexName
-						+ "'; using Lucene doc ids.");
-			}
-
-			// Look for the contentViewable setting in the index metadata
-			boolean contentViewable = searcher.getIndexStructure()
-					.contentViewable();
-			boolean blsConfigContentViewable = par.mayViewContents();
-			if (par.mayViewContentsSpecified()
-					&& contentViewable != blsConfigContentViewable) {
-				logger.error("Index metadata and blacklab-server.json configuration disagree on content view settings! Disallowing free content viewing.");
-				par.setMayViewContent(false);
-				searcher.getIndexStructure()._setContentViewable(false);
-			}
-
-			return searcher;
-
-		} finally {
-			//logger.debug("@PERF getSearcher EXIT");
+		if (searchers.containsKey(indexName)) {
+			Searcher searcher = searchers.get(indexName);
+			if (searcher.getIndexDirectory().canRead())
+				return searcher;
+			// Index was (re)moved; remove Searcher from cache.
+			searchers.remove(indexName);
+			indexStatus.remove(indexName);
+			cache.clearCacheForIndex(indexName);
+			// Maybe we can find an index with this name elsewhere?
 		}
+		IndexParam par = getIndexParam(indexName);
+		if (par == null) {
+			throw new IndexNotFound(indexName);
+		}
+		File indexDir = par.getDir();
+		Searcher searcher;
+		try {
+			logger.debug("Opening index '" + indexName + "', dir = " + indexDir);
+			searcher = Searcher.open(indexDir);
+			searcher.setDefaultSearchSensitive(defaultCaseSensitive, defaultDiacriticsSensitive);
+		} catch (Exception e) {
+			throw new InternalServerError("Could not open index '" + indexName
+					+ "'", 27, e);
+		}
+		searchers.put(indexName, searcher);
+
+		// Figure out the pid from the index metadata and/or BLS config.
+		String indexPid = searcher.getIndexStructure().pidField();
+		if (indexPid == null)
+			indexPid = "";
+		String configPid = par.getPidField();
+		if (indexPid.length() > 0 && !configPid.equals(indexPid)) {
+			if (configPid.length() > 0) {
+				logger.error("Different pid field configured in blacklab-server.json than in index metadata! ("
+						+ configPid + "/" + indexPid + "); using the latter");
+			}
+			// Update index parameters with the pid field found in the metadata
+			par.setPidField(indexPid);
+		} else {
+			// No pid configured in index, only in blacklab-server.json. We want
+			// to get rid
+			// of this (prints an error on startup), but it should still work
+			// for now. Inject
+			// the setting into the searcher.
+			if (configPid.length() > 0)
+				searcher.getIndexStructure()._setPidField(configPid);
+		}
+		if (indexPid.length() == 0 && configPid.length() == 0) {
+			logger.warn("No pid given for index '" + indexName
+					+ "'; using Lucene doc ids.");
+		}
+
+		// Look for the contentViewable setting in the index metadata
+		boolean contentViewable = searcher.getIndexStructure()
+				.contentViewable();
+		boolean blsConfigContentViewable = par.mayViewContents();
+		if (par.mayViewContentsSpecified()
+				&& contentViewable != blsConfigContentViewable) {
+			logger.error("Index metadata and blacklab-server.json configuration disagree on content view settings! Disallowing free content viewing.");
+			par.setMayViewContent(false);
+			searcher.getIndexStructure()._setContentViewable(false);
+		}
+
+		return searcher;
 	}
 
 	/**
@@ -872,7 +845,7 @@ public class SearchManager {
 
 		// Don't follow symlinks
 		try {
-			if (isSymlink(indexDir)) {
+			if (BlsUtils.isSymlink(indexDir)) {
 				throw new InternalServerError("Could not delete index. Is a symlink.", 21);
 			}
 		} catch (IOException e1) {
@@ -902,103 +875,7 @@ public class SearchManager {
 		}
 
 		// Everything seems ok. Delete the index.
-		delTree(indexDir);
-	}
-
-	// Copied from Apache Commons
-	// (as allowed under the Apache License 2.0)
-	public static boolean isSymlink(File file) throws IOException {
-		if (file == null)
-			throw new NullPointerException("File must not be null");
-		File canon;
-		if (file.getParent() == null) {
-			canon = file;
-		} else {
-			File canonDir = file.getParentFile().getCanonicalFile();
-			canon = new File(canonDir, file.getName());
-		}
-		return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
-	}
-
-	/**
-	 * Delete an entire tree with files, subdirectories, etc.
-	 *
-	 * CAREFUL, DANGEROUS!
-	 *
-	 * @param root
-	 *            the directory tree to delete
-	 */
-	private static void delTree(File root) {
-		if (!root.isDirectory())
-			throw new RuntimeException("Not a directory: " + root);
-		for (File f : root.listFiles()) {
-			if (f.isDirectory())
-				delTree(f);
-			else
-				f.delete();
-		}
-		root.delete();
-	}
-
-	/**
-	 * Get the Lucene Document id given the pid
-	 *
-	 * @param searcher
-	 *            our index
-	 * @param pid
-	 *            the pid string (or Lucene doc id if we don't use a pid)
-	 * @return the document id, or -1 if it doesn't exist
-	 */
-	public static int getLuceneDocIdFromPid(Searcher searcher, String pid)
-			{
-		//logger.debug("@PERF getLuceneDocIdFromPid");
-		try {
-
-		String pidField = searcher.getIndexStructure().pidField(); // getIndexParam(indexName,
-																	// user).getPidField();
-		// Searcher searcher = getSearcher(indexName, user);
-		if (pidField == null || pidField.length() == 0) {
-			int luceneDocId;
-			try {
-				luceneDocId = Integer.parseInt(pid);
-			} catch (NumberFormatException e) {
-				throw new IllegalArgumentException(
-						"Pid must be a Lucene doc id, but it's not a number: "
-								+ pid);
-			}
-			return luceneDocId;
-		}
-		boolean lowerCase = false; // HACK in case pid field is incorrectly
-									// lowercased
-		DocResults docResults;
-		while (true) {
-			String p = lowerCase ? pid.toLowerCase() : pid;
-			TermQuery documentFilterQuery = new TermQuery(new Term(pidField, p));
-			docResults = searcher.queryDocuments(documentFilterQuery);
-			if (docResults.size() > 1) {
-				// Should probably throw a fatal exception, but sometimes
-				// documents
-				// accidentally occur twice in a dataset...
-				// TODO: make configurable whether or not a fatal exception is
-				// thrown
-				logger.error("Pid must uniquely identify a document, but it has "
-						+ docResults.size() + " hits: " + pid);
-			}
-			if (docResults.size() == 0) {
-				if (lowerCase)
-					return -1; // tried with and without lowercasing; doesn't
-								// exist
-				lowerCase = true; // try lowercase now
-			} else {
-				// size == 1, found!
-				break;
-			}
-		}
-		return docResults.get(0).getDocId();
-
-		} finally {
-			//logger.debug("@PERF getLuceneDocIdFromPid EXIT");
-		}
+		BlsUtils.delTree(indexDir);
 	}
 
 	/**
@@ -1063,239 +940,98 @@ public class SearchManager {
 	 *            user creating the job
 	 * @param searchParameters
 	 *            the search parameters
+	 * @param block if true, wait until job is done
 	 * @return a Search object corresponding to these parameters
 	 * @throws BlsException
 	 *             if the query couldn't be executed
 	 */
-	public Job search(User user, JobDescription searchParameters) throws BlsException {
-		//logger.debug("@PERF search");
-		try {
-			// Search the cache / running jobs for this search, create new if not
-			// found.
-			boolean performSearch = false;
-			Job job;
-			synchronized (this) {
-				job = cache.get(searchParameters);
-				if (job == null) {
-					// Not found in cache
+	public Job search(User user, JobDescription searchParameters, boolean block) throws BlsException {
+		// Search the cache / running jobs for this search, create new if not found.
+		boolean performSearch = false;
+		Job job;
+		synchronized (this) {
+			job = cache.get(searchParameters);
+			if (job == null) {
+				// Not found in cache
 
-					// Do we have enough memory to start a new search?
-					long freeMegs = MemoryUtil.getFree() / 1000000;
-					if (freeMegs < minFreeMemForSearchMegs) {
-						cache.removeOldSearches(); // try to free up space for next
-													// search
-						logger.warn("Can't start new search, not enough memory ("
-								+ freeMegs + "M < " + minFreeMemForSearchMegs
-								+ "M)");
-						logger.warn("(NOTE: make sure Tomcat's max heap mem is set to an appropriate value!)");
-						throw new ServiceUnavailable("The server seems to be under heavy load right now. Please try again later.");
-					}
-					// logger.debug("Enough free memory: " + freeMegs + "M");
+				// Do we have enough memory to start a new search?
+				long freeMegs = MemoryUtil.getFree() / 1000000;
+				if (freeMegs < minFreeMemForSearchMegs) {
+					cache.removeOldSearches(); // try to free up space for next
+												// search
+					logger.warn("Can't start new search, not enough memory ("
+							+ freeMegs + "M < " + minFreeMemForSearchMegs
+							+ "M)");
+					logger.warn("(NOTE: make sure Tomcat's max heap mem is set to an appropriate value!)");
+					throw new ServiceUnavailable("The server seems to be under heavy load right now. Please try again later.");
+				}
+				// logger.debug("Enough free memory: " + freeMegs + "M");
 
-					// Is this user allowed to start another search?
-					int numRunningJobs = 0;
-					String uniqueId = user.uniqueId();
-					Set<Job> runningJobs = runningJobsPerUser.get(uniqueId);
-					Set<Job> newRunningJobs = new HashSet<>();
-					if (runningJobs != null) {
-						for (Job runningJob : runningJobs) {
-							if (!runningJob.finished()) {
-								numRunningJobs++;
-								newRunningJobs.add(runningJob);
-							}
+				// Is this user allowed to start another search?
+				int numRunningJobs = 0;
+				String uniqueId = user.uniqueId();
+				Set<Job> runningJobs = runningJobsPerUser.get(uniqueId);
+				Set<Job> newRunningJobs = new HashSet<>();
+				if (runningJobs != null) {
+					for (Job runningJob : runningJobs) {
+						if (!runningJob.finished()) {
+							numRunningJobs++;
+							newRunningJobs.add(runningJob);
 						}
 					}
-					if (numRunningJobs >= maxRunningJobsPerUser) {
-						// User has too many running jobs. Can't start another one.
-						runningJobsPerUser.put(uniqueId, newRunningJobs); // refresh
-																			// the
-																			// list
-						logger.warn("Can't start new search, user already has "
-								+ numRunningJobs + " jobs running.");
-						throw new TooManyRequests("You already have too many running searches. Please wait for some previous searches to complete before starting new ones.");
-					}
-
-					// Create a new search object with these parameters and place it
-					// in the cache
-					job = searchParameters.createJob(this, user);
-					if (job == null) {
-						logger.error("search == null, unpossiblez!!!");
-					}
-					cache.put(job);
-
-					// Update running jobs
-					newRunningJobs.add(job);
-					runningJobsPerUser.put(uniqueId, newRunningJobs);
-
-					performSearch = true;
 				}
+				if (numRunningJobs >= maxRunningJobsPerUser) {
+					// User has too many running jobs. Can't start another one.
+					runningJobsPerUser.put(uniqueId, newRunningJobs); // refresh
+																		// the
+																		// list
+					logger.warn("Can't start new search, user already has "
+							+ numRunningJobs + " jobs running.");
+					throw new TooManyRequests("You already have too many running searches. Please wait for some previous searches to complete before starting new ones.");
+				}
+
+				// Create a new search object with these parameters and place it
+				// in the cache
+				job = searchParameters.createJob(this, user);
+				if (job == null) {
+					logger.error("search == null, unpossiblez!!!");
+				}
+				cache.put(job);
+
+				// Update running jobs
+				newRunningJobs.add(job);
+				runningJobsPerUser.put(uniqueId, newRunningJobs);
+
+				performSearch = true;
 			}
-
-			if (performSearch) {
-				// Start the search, waiting a short time in case it's a fast search
-				job.perform(waitTimeInNonblockingModeMs);
-			}
-//			else {
-//				search.incrementClientsWaiting();
-//			}
-
-			// If the search thread threw an exception, rethrow it now.
-			if (job.threwException()) {
-				job.rethrowException();
-			}
-
-			job.incrRef();
-			return job;
-
-		} finally {
-			//logger.debug("@PERF search EXIT");
 		}
+
+		if (performSearch) {
+			// Start the search, waiting a short time in case it's a fast search
+			job.perform(waitTimeInNonblockingModeMs);
+		}
+
+		// If the search thread threw an exception, rethrow it now.
+		if (job.threwException()) {
+			job.rethrowException();
+		}
+
+		job.incrRef();
+		if (block) {
+			job.waitUntilFinished(getMaxSearchTimeSec() * 1000);
+			if (!job.finished()) {
+				throw new ServiceUnavailable("Search took too long, cancelled.");
+			}
+		}
+		return job;
 	}
 
 	public long getMinFreeMemForSearchMegs() {
 		return minFreeMemForSearchMegs;
 	}
 
-	public String getParameterDefaultValue(String paramName) {
-		String defVal = defaultParameterValues.get(paramName);
-		/*
-		 * if (defVal == null) { defVal = "";
-		 * defaultParameterValues.put(paramName, defVal); }
-		 */
-		return defVal;
-	}
-
-	public static boolean strToBool(String value)
-			throws IllegalArgumentException {
-		if (value.equals("true") || value.equals("1") || value.equals("yes")
-				|| value.equals("on"))
-			return true;
-		if (value.equals("false") || value.equals("0") || value.equals("no")
-				|| value.equals("off"))
-			return false;
-		throw new IllegalArgumentException("Cannot convert to boolean: "
-				+ value);
-	}
-
-	public static int strToInt(String value) throws IllegalArgumentException {
-		try {
-			return Integer.parseInt(value);
-		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException("Cannot convert to int: "
-					+ value);
-		}
-	}
-
-	/**
-	 * Construct a simple error response object.
-	 *
-	 * @param code
-	 *            (string) error code
-	 * @param msg
-	 *            the error message
-	 * @return the data object representing the error message
-	 */
-	public static DataObject errorObject(String code, String msg) {
-		DataObjectMapElement error = new DataObjectMapElement();
-		error.put("code", new DataObjectString(code));
-		error.put("message", new DataObjectString(msg));
-		DataObjectMapElement rv = new DataObjectMapElement();
-		rv.put("error", error);
-		return rv;
-	}
-
-	public TextPattern parsePatt(Searcher searcher, String pattern,
-			String language) throws BlsException {
-		return parsePatt(searcher, pattern, language, true);
-	}
-
-	public TextPattern parsePatt(Searcher searcher, String pattern,
-			String language, boolean required) throws BlsException {
-		if (pattern == null || pattern.length() == 0) {
-			if (required)
-				throw new BadRequest("NO_PATTERN_GIVEN",
-						"Text search pattern required. Please specify 'patt' parameter.");
-			return null; // not required, ok
-		}
-
-		if (language.equals("corpusql")) {
-			try {
-				return CorpusQueryLanguageParser.parse(pattern);
-			} catch (ParseException e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in CorpusQL pattern: " + e.getMessage());
-			} catch (TokenMgrError e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in CorpusQL pattern: " + e.getMessage());
-			}
-		} else if (language.equals("contextql")) {
-			try {
-				CompleteQuery q = ContextualQueryLanguageParser.parse(searcher,
-						pattern);
-				return q.getContentsQuery();
-			} catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in ContextQL pattern: " + e.getMessage());
-			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
-				throw new BadRequest("PATT_SYNTAX_ERROR",
-						"Syntax error in ContextQL pattern: " + e.getMessage());
-			}
-		}
-
-		throw new BadRequest("UNKNOWN_PATT_LANG",
-				"Unknown pattern language '" + language
-						+ "'. Supported: corpusql, contextql, luceneql.");
-	}
-
-	public static Query parseFilter(Searcher searcher, String filter,
-			String filterLang) throws BlsException {
-		return parseFilter(searcher, filter, filterLang, false);
-	}
-
-	public static Query parseFilter(Searcher searcher, String filter,
-			String filterLang, boolean required) throws BlsException {
-		if (filter == null || filter.length() == 0) {
-			if (required)
-				throw new BadRequest("NO_FILTER_GIVEN",
-						"Document filter required. Please specify 'filter' parameter.");
-			return null; // not required
-		}
-
-		Analyzer analyzer = searcher.getAnalyzer();
-		if (filterLang.equals("luceneql")) {
-			try {
-				QueryParser parser = new QueryParser("", analyzer);
-				parser.setAllowLeadingWildcard(true);
-				Query query = parser.parse(filter);
-				return query;
-			} catch (org.apache.lucene.queryparser.classic.ParseException e) {
-				throw new BadRequest("FILTER_SYNTAX_ERROR",
-						"Error parsing LuceneQL filter query: "
-								+ e.getMessage());
-			} catch (org.apache.lucene.queryparser.classic.TokenMgrError e) {
-				throw new BadRequest("FILTER_SYNTAX_ERROR",
-						"Error parsing LuceneQL filter query: "
-								+ e.getMessage());
-			}
-		} else if (filterLang.equals("contextql")) {
-			try {
-				CompleteQuery q = ContextualQueryLanguageParser.parse(searcher,
-						filter);
-				return q.getFilterQuery();
-			} catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
-				throw new BadRequest("FILTER_SYNTAX_ERROR",
-						"Error parsing ContextQL filter query: "
-								+ e.getMessage());
-			} catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
-				throw new BadRequest("FILTER_SYNTAX_ERROR",
-						"Error parsing ContextQL filter query: "
-								+ e.getMessage());
-			}
-		}
-
-		throw new BadRequest("UNKNOWN_FILTER_LANG",
-				"Unknown filter language '" + filterLang
-						+ "'. Supported: luceneql, contextql.");
+	public static String getParameterDefaultValue(String paramName) {
+		return defaultParameterValues.get(paramName);
 	}
 
 	public int getCheckAgainAdviceMinimumMs() {
@@ -1304,15 +1040,6 @@ public class SearchManager {
 
 	public boolean isDebugMode(String ip) {
 		return debugModeIps.contains(ip);
-	}
-
-	static void debugWait() throws BlsException {
-		// Fake extra search time
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			throw new ServiceUnavailable("Debug wait interrupted");
-		}
 	}
 
 	public DataFormat getContentsFormat(String indexName) {
@@ -1343,6 +1070,10 @@ public class SearchManager {
 		return defaultOutputType;
 	}
 
+	public int getMaxSearchTimeSec() {
+		return SearchCache.getMaxSearchTimeSec();
+	}
+
 	public int getClientCacheTimeSec() {
 		return clientCacheTimeSec;
 	}
@@ -1355,14 +1086,11 @@ public class SearchManager {
 	 * @return how long you should wait before asking again
 	 */
 	public int getCheckAgainAdviceMs(Job search) {
-
 		// Simple advice algorithm: the longer the search
 		// has been running, the less frequently the client
 		// should check its progress. Just divide the search time by
 		// 5 with a configured minimum.
-		int checkAgainAdvice = Math.min(checkAgainAdviceMinimumMs, (int)(search.userWaitTime() * 1000 / checkAgainAdviceDivider));
-
-		return checkAgainAdvice;
+		return Math.min(checkAgainAdviceMinimumMs, (int)(search.userWaitTime() * 1000 / checkAgainAdviceDivider));
 	}
 
 	/**
@@ -1473,15 +1201,6 @@ public class SearchManager {
 	 */
 	public static boolean isAllDocsQueryAllowed() {
 		return allDocsQueryAllowed;
-	}
-
-	/**
-	 * Remove a cancelled job from the cache.
-	 *
-	 * @param job the job to remove
-	 */
-	public void removeFromCache(Job job) {
-		removeFromCache(job);
 	}
 
 }

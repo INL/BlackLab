@@ -14,7 +14,7 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.StringUtil;
 
 /**

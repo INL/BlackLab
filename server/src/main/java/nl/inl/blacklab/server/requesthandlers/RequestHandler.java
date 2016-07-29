@@ -24,9 +24,9 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.ParseUtil;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.util.ParseUtil;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -332,7 +332,7 @@ public abstract class RequestHandler {
 	 * @return the integer value
 	 */
 	public String getStringParameter(String paramName) {
-		return ServletUtil.getParameter(request, paramName, servlet.getSearchManager().getParameterDefaultValue(paramName));
+		return ServletUtil.getParameter(request, paramName, SearchManager.getParameterDefaultValue(paramName));
 	}
 
 	/**

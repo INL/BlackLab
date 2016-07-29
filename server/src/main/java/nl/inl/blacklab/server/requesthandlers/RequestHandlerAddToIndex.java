@@ -14,7 +14,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.index.IndexTask;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.User;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadBase;

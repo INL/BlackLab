@@ -13,6 +13,9 @@ import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectList;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.jobs.Job;
+import nl.inl.blacklab.server.jobs.JobDescription;
+import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.util.MemoryUtil;
 import nl.inl.util.ThreadPriority.Level;
 import nl.inl.util.json.JSONObject;
@@ -23,11 +26,15 @@ public class SearchCache {
 	private static final Logger logger = Logger.getLogger(SearchCache.class);
 
 	/** Max time searches are allowed to run (5 minutes) */
-	public static int maxSearchTimeSec = 5 * 60;
+	private static int maxSearchTimeSec = 5 * 60;
 
 	/** @param maxSearchTimeSec Max time searches are allowed to run (default: 300s == 5 minutes) */
-	public static void setMaxSearchTimeSec(int maxSearchTimeSec) {
+	static void setMaxSearchTimeSec(int maxSearchTimeSec) {
 		SearchCache.maxSearchTimeSec = maxSearchTimeSec;
+	}
+
+	static int getMaxSearchTimeSec() {
+		return maxSearchTimeSec;
 	}
 
 	/** The cached search objects. */

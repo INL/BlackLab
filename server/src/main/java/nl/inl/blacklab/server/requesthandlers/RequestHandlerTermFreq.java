@@ -15,8 +15,8 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -37,7 +37,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
 		ComplexFieldDesc cfd = struct.getMainContentsField();
 		String propName = searchParam.getString("property");
 		boolean sensitive = searchParam.getBoolean("sensitive");
-		Query q = SearchManager.parseFilter(searcher, searchParam.getString("filter"), searchParam.getString("filterlang"));
+		Query q = BlsUtils.parseFilter(searcher, searchParam.getString("filter"), searchParam.getString("filterlang"));
 		Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher.getIndexSearcher(), q, cfd.getName(), propName, sensitive ? "s" : "i");
 
 		TermFrequencyList tfl = new TermFrequencyList(freq.size());

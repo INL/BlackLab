@@ -10,9 +10,8 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.dataobject.DataObjectList;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.JobDocsGrouped;
-import nl.inl.blacklab.server.search.SearchCache;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.JobDocsGrouped;
+import nl.inl.blacklab.server.jobs.User;
 
 /**
  * Request handler for grouped doc results.
@@ -25,14 +24,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 	@Override
 	public Response handle() throws BlsException {
 		// Get the window we're interested in
-		JobDocsGrouped search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
+		JobDocsGrouped search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), getBoolParameter("block"));
 		try {
-			if (getBoolParameter("block")) {
-				search.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
-				if (!search.finished())
-					return Response.searchTimedOut();
-			}
-
 			// If search is not done yet, indicate this to the user
 			if (!search.finished()) {
 				return Response.busy(servlet);

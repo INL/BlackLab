@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.User;
 
 /**
  * Get debug info about the servlet and index.

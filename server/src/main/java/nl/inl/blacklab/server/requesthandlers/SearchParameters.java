@@ -26,31 +26,32 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.search.ContextSettings;
-import nl.inl.blacklab.server.search.DocGroupSettings;
-import nl.inl.blacklab.server.search.DocGroupSortSettings;
-import nl.inl.blacklab.server.search.DocSortSettings;
-import nl.inl.blacklab.server.search.HitGroupSettings;
-import nl.inl.blacklab.server.search.HitGroupSortSettings;
-import nl.inl.blacklab.server.search.HitSortSettings;
-import nl.inl.blacklab.server.search.JobDescription;
-import nl.inl.blacklab.server.search.JobDocs.JobDescDocs;
-import nl.inl.blacklab.server.search.JobDocsGrouped.JobDescDocsGrouped;
-import nl.inl.blacklab.server.search.JobDocsSorted.JobDescDocsSorted;
-import nl.inl.blacklab.server.search.JobDocsTotal.JobDescDocsTotal;
-import nl.inl.blacklab.server.search.JobDocsWindow.JobDescDocsWindow;
-import nl.inl.blacklab.server.search.JobFacets.JobDescFacets;
-import nl.inl.blacklab.server.search.JobHits.JobDescHits;
-import nl.inl.blacklab.server.search.JobHitsGrouped.JobDescHitsGrouped;
-import nl.inl.blacklab.server.search.JobHitsSorted.JobDescHitsSorted;
-import nl.inl.blacklab.server.search.JobHitsTotal.JobDescHitsTotal;
-import nl.inl.blacklab.server.search.JobHitsWindow.JobDescHitsWindow;
-import nl.inl.blacklab.server.search.JobSampleHits.JobDescSampleHits;
-import nl.inl.blacklab.server.search.MaxSettings;
-import nl.inl.blacklab.server.search.ParseUtil;
-import nl.inl.blacklab.server.search.SampleSettings;
+import nl.inl.blacklab.server.jobs.ContextSettings;
+import nl.inl.blacklab.server.jobs.DocGroupSettings;
+import nl.inl.blacklab.server.jobs.DocGroupSortSettings;
+import nl.inl.blacklab.server.jobs.DocSortSettings;
+import nl.inl.blacklab.server.jobs.HitGroupSettings;
+import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
+import nl.inl.blacklab.server.jobs.HitSortSettings;
+import nl.inl.blacklab.server.jobs.JobDescription;
+import nl.inl.blacklab.server.jobs.MaxSettings;
+import nl.inl.blacklab.server.jobs.SampleSettings;
+import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.jobs.JobDocs.JobDescDocs;
+import nl.inl.blacklab.server.jobs.JobDocsGrouped.JobDescDocsGrouped;
+import nl.inl.blacklab.server.jobs.JobDocsSorted.JobDescDocsSorted;
+import nl.inl.blacklab.server.jobs.JobDocsTotal.JobDescDocsTotal;
+import nl.inl.blacklab.server.jobs.JobDocsWindow.JobDescDocsWindow;
+import nl.inl.blacklab.server.jobs.JobFacets.JobDescFacets;
+import nl.inl.blacklab.server.jobs.JobHits.JobDescHits;
+import nl.inl.blacklab.server.jobs.JobHitsGrouped.JobDescHitsGrouped;
+import nl.inl.blacklab.server.jobs.JobHitsSorted.JobDescHitsSorted;
+import nl.inl.blacklab.server.jobs.JobHitsTotal.JobDescHitsTotal;
+import nl.inl.blacklab.server.jobs.JobHitsWindow.JobDescHitsWindow;
+import nl.inl.blacklab.server.jobs.JobSampleHits.JobDescSampleHits;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.WindowSettings;
+import nl.inl.blacklab.server.util.BlsUtils;
+import nl.inl.blacklab.server.util.ParseUtil;
 
 /**
  * Uniquely describes a search operation.
@@ -115,7 +116,7 @@ public class SearchParameters {
 	public String getString(Object key) {
 		String value = map.get(key);
 		if (value == null || value.length() == 0) {
-			value = searchManager.getParameterDefaultValue(key.toString());
+			value = SearchManager.getParameterDefaultValue(key.toString());
 		}
 		return value;
 	}
@@ -183,7 +184,7 @@ public class SearchParameters {
 	private TextPattern getPattern() throws BlsException {
 		if (pattern == null) {
 			if (containsKey("patt"))
-				pattern = searchManager.parsePatt(getSearcher(), getString("patt"), getString("pattlang"));
+				pattern = BlsUtils.parsePatt(getSearcher(), getString("patt"), getString("pattlang"));
 		}
 		return pattern;
 	}
@@ -193,13 +194,13 @@ public class SearchParameters {
 			String docId = getString("docpid");
 			if (docId != null) {
 				// Only hits in 1 doc (for highlighting)
-				int luceneDocId = SearchManager.getLuceneDocIdFromPid(getSearcher(), docId);
+				int luceneDocId = BlsUtils.getLuceneDocIdFromPid(getSearcher(), docId);
 				if (luceneDocId < 0)
 					throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
 				logger.debug("Filtering on single doc-id");
 				filterQuery = new SingleDocIdFilter(luceneDocId);
 			} else if (containsKey("filter")) {
-				filterQuery = SearchManager.parseFilter(getSearcher(), getString("filter"), getString("filterlang"));
+				filterQuery = BlsUtils.parseFilter(getSearcher(), getString("filter"), getString("filterlang"));
 			}
 		}
 		return filterQuery;

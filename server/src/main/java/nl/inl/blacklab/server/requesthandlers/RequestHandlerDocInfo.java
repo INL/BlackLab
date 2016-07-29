@@ -9,8 +9,8 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.util.BlsUtils;
 
 import org.apache.lucene.document.Document;
 
@@ -32,7 +32,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
 			throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
 		Searcher searcher = getSearcher();
-		int luceneDocId = SearchManager.getLuceneDocIdFromPid(searcher, docId);
+		int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
 		if (luceneDocId < 0)
 			throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
 		Document document = searcher.document(luceneDocId);

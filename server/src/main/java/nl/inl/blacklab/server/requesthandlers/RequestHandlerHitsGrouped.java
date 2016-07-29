@@ -9,9 +9,8 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.dataobject.DataObjectList;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.JobHitsGrouped;
-import nl.inl.blacklab.server.search.SearchCache;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.JobHitsGrouped;
+import nl.inl.blacklab.server.jobs.User;
 
 /**
  * Request handler for grouped hit results.
@@ -23,32 +22,17 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
 	@Override
 	public Response handle() throws BlsException {
-		//logger.debug("@PERF RHHitsGrouped: START");
-
 		// Get the window we're interested in
-		JobHitsGrouped search = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped());
+		JobHitsGrouped search = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), getBoolParameter("block"));
 		try {
-			if (getBoolParameter("block")) {
-				//logger.debug("@PERF RHHitsGrouped: block");
-				search.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
-				if (!search.finished()) {
-					//logger.debug("@PERF RHHitsGrouped: block, timed out");
-					return Response.searchTimedOut();
-				}
-				//logger.debug("@PERF RHHitsGrouped: block, finished");
-			}
-
 			// If search is not done yet, indicate this to the user
 			if (!search.finished()) {
-				//logger.debug("@PERF RHHitsGrouped: busy");
 				return Response.busy(servlet);
 			}
 
 			// Search is done; construct the results object
-			//logger.debug("@PERF RHHitsGrouped: get groups");
 			HitGroups groups = search.getGroups();
 
-			//logger.debug("@PERF RHHitsGrouped: construct results");
 			DataObjectList doGroups = null;
 			// The list of groups found
 			// TODO paging..?
@@ -95,8 +79,6 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 			DataObjectMapElement response = new DataObjectMapElement();
 			response.put("summary", summary);
 			response.put("hitGroups", doGroups);
-
-			//logger.debug("@PERF RHHitsGrouped: DONE");
 
 			return new Response(response);
 		} finally {

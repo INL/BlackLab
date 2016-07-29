@@ -29,12 +29,11 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.dataobject.DataObjectPlain;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.Job;
-import nl.inl.blacklab.server.search.JobHitsGrouped;
-import nl.inl.blacklab.server.search.JobHitsTotal;
-import nl.inl.blacklab.server.search.JobHitsWindow;
-import nl.inl.blacklab.server.search.SearchCache;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.Job;
+import nl.inl.blacklab.server.jobs.JobHitsGrouped;
+import nl.inl.blacklab.server.jobs.JobHitsTotal;
+import nl.inl.blacklab.server.jobs.JobHitsWindow;
+import nl.inl.blacklab.server.jobs.User;
 
 /**
  * Request handler for hit results.
@@ -46,8 +45,6 @@ public class RequestHandlerHits extends RequestHandler {
 
 	@Override
 	public Response handle() throws BlsException {
-		//logger.debug("@PERF RHHits: START");
-
 		Job search = null;
 		JobHitsGrouped searchGrouped = null;
 		JobHitsWindow searchWindow = null;
@@ -69,18 +66,9 @@ public class RequestHandlerHits extends RequestHandler {
 				// TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
 
 				// Yes. Group, then show hits from the specified group
-				searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped());
+				searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), block);
 				search = searchGrouped;
 				search.incrRef();
-				if (block) {
-					//logger.debug("@PERF RHHits: block");
-					search.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
-					if (!search.finished()) {
-						//logger.debug("@PERF RHHits: block, timed out");
-						return Response.searchTimedOut();
-					}
-					//logger.debug("@PERF RHHits: block, finished");
-				}
 
 				// If search is not done yet, indicate this to the user
 				if (!search.finished()) {
@@ -120,42 +108,23 @@ public class RequestHandlerHits extends RequestHandler {
 			} else {
 				// Regular set of hits (no grouping first)
 
-				searchWindow = (JobHitsWindow) searchMan.search(user, searchParam.hitsWindow());
+				searchWindow = (JobHitsWindow) searchMan.search(user, searchParam.hitsWindow(), block);
 				search = searchWindow;
 				search.incrRef();
-				if (block) {
-					search.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
-					if (!search.finished()) {
-						return Response.searchTimedOut();
-					}
-				}
 
 				// Also determine the total number of hits
 				// (usually nonblocking, unless "waitfortotal=yes" was passed)
-				total = (JobHitsTotal) searchMan.search(user, searchParam.hitsTotal());
-				if (searchParam.getBoolean("waitfortotal")) {
-					//logger.debug("@PERF RHHits: waitfortotal");
-					total.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
-					if (!total.finished()) {
-						//logger.debug("@PERF RHHits: waitfortotal timed out");
-						return Response.searchTimedOut();
-					}
-					//logger.debug("@PERF RHHits: waitfortotal finished");
-				}
+				total = (JobHitsTotal) searchMan.search(user, searchParam.hitsTotal(), searchParam.getBoolean("waitfortotal"));
 
 				// If search is not done yet, indicate this to the user
 				if (!search.finished()) {
-					//logger.debug("@PERF RHHits: busy");
 					return Response.busy(servlet);
 				}
 
-				//logger.debug("@PERF RHHits: get Window");
 				window = searchWindow.getWindow();
-				//logger.debug("@PERF RHHits: got Window");
 			}
 
 			if (searchParam.getString("calc").equals("colloc")) {
-				//logger.debug("@PERF RHHits: colloc");
 				return new Response(getCollocations(window.getOriginalHits()));
 			}
 
@@ -163,7 +132,6 @@ public class RequestHandlerHits extends RequestHandler {
 			DataObjectMapAttribute doFacets = null;
 			DocResults perDocResults = null;
 			if (parFacets != null && parFacets.length() > 0) {
-				//logger.debug("@PERF RHHits: facets");
 				// Now, group the docs according to the requested facets.
 				perDocResults = window.getOriginalHits().perDocResults();
 				doFacets = getFacets(perDocResults, parFacets);
@@ -175,7 +143,6 @@ public class RequestHandlerHits extends RequestHandler {
 			int totalTokens = -1;
 			IndexStructure struct = searcher.getIndexStructure();
 			if (includeTokenCount) {
-				//logger.debug("@PERF RHHits: token count");
 				if (perDocResults == null)
 					perDocResults = window.getOriginalHits().perDocResults();
 				// Determine total number of tokens in result set
@@ -189,7 +156,6 @@ public class RequestHandlerHits extends RequestHandler {
 			// The hits and document info
 			DataObjectList hitList = new DataObjectList("hit");
 			DataObjectMapAttribute docInfos = new DataObjectMapAttribute("docInfo", "pid");
-			//logger.debug("@PERF RHHits: construct results");
 			for (Hit hit: window) {
 				DataObjectMapElement hitMap = new DataObjectMapElement();
 
@@ -226,7 +192,6 @@ public class RequestHandlerHits extends RequestHandler {
 					docInfos.put(pid, getDocumentInfo(searcher, searcher.document(hit.doc)));
 				}
 			}
-			//logger.debug("@PERF RHHits: construct results DONE");
 
 			// The summary (done last because the count might be done by this time)
 			DataObjectMapElement summary = new DataObjectMapElement();

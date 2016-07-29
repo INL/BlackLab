@@ -22,13 +22,11 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.dataobject.DataObjectPlain;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.Job;
-import nl.inl.blacklab.server.search.JobDocsGrouped;
-import nl.inl.blacklab.server.search.JobDocsTotal;
-import nl.inl.blacklab.server.search.JobDocsWindow;
-import nl.inl.blacklab.server.search.SearchCache;
-import nl.inl.blacklab.server.search.User;
-
+import nl.inl.blacklab.server.jobs.Job;
+import nl.inl.blacklab.server.jobs.JobDocsGrouped;
+import nl.inl.blacklab.server.jobs.JobDocsTotal;
+import nl.inl.blacklab.server.jobs.JobDocsWindow;
+import nl.inl.blacklab.server.jobs.User;
 import org.apache.lucene.document.Document;
 
 /**
@@ -61,14 +59,9 @@ public class RequestHandlerDocs extends RequestHandler {
 				// TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
 
 				// Yes. Group, then show hits from the specified group
-				searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
+				searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), block);
 				search = searchGrouped;
 				search.incrRef();
-				if (block) {
-					search.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
-					if (!search.finished())
-						return Response.searchTimedOut();
-				}
 
 				// If search is not done yet, indicate this to the user
 				if (!search.finished()) {
@@ -107,23 +100,13 @@ public class RequestHandlerDocs extends RequestHandler {
 			} else {
 				// Regular set of docs (no grouping first)
 
-				searchWindow = (JobDocsWindow) searchMan.search(user, searchParam.docsWindow());
+				searchWindow = (JobDocsWindow) searchMan.search(user, searchParam.docsWindow(), block);
 				search = searchWindow;
 				search.incrRef();
-				if (block) {
-					search.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
-					if (!search.finished())
-						return Response.searchTimedOut();
-				}
 
 				// Also determine the total number of hits
 				// (usually nonblocking, unless "waitfortotal=yes" was passed)
-				total = (JobDocsTotal) searchMan.search(user, searchParam.docsTotal());
-				if (searchParam.getBoolean("waitfortotal")) {
-					total.waitUntilFinished(SearchCache.maxSearchTimeSec * 1000);
-					if (!total.finished())
-						return Response.searchTimedOut();
-				}
+				total = (JobDocsTotal) searchMan.search(user, searchParam.docsTotal(), searchParam.getBoolean("waitfortotal"));
 
 				// If search is not done yet, indicate this to the user
 				if (!search.finished()) {
