@@ -221,8 +221,8 @@ public class BlackLabServer extends HttpServlet {
 	 * @param indexName the index to search
 	 * @return the unique key
 	 */
-	public SearchParameters getSearchParameters(HttpServletRequest request, String indexName) {
-		return SearchParameters.get(searchManager, indexName, request);
+	public SearchParameters getSearchParameters(boolean isDocs, HttpServletRequest request, String indexName) {
+		return SearchParameters.get(searchManager, isDocs, indexName, request);
 	}
 
 	public SearchManager getSearchManager() {

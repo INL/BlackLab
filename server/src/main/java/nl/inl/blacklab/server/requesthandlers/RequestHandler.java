@@ -281,15 +281,16 @@ public abstract class RequestHandler {
 		this.servlet = servlet;
 		this.request = request;
 		searchMan = servlet.getSearchManager();
-		searchParam = servlet.getSearchParameters(request, indexName);
+		String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
+		if (!pathAndQueryString.startsWith("/cache-info")) // annoying when monitoring
+			logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " " + request.getMethod() + " " + pathAndQueryString);
+		boolean isDocs = !pathAndQueryString.startsWith("/hits");
+		searchParam = servlet.getSearchParameters(isDocs, request, indexName);
 		this.indexName = indexName;
 		this.urlResource = urlResource;
 		this.urlPathInfo = urlPathInfo;
 		this.user = user;
 
-		String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
-		if (!pathAndQueryString.startsWith("/cache-info")) // annoying when monitoring
-			logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " " + request.getMethod() + " " + pathAndQueryString);
 	}
 
 	private void setDebug(boolean debugMode) {

@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.perdocument.DocGroups;
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -17,7 +16,7 @@ public class JobDocsGrouped extends Job {
 		DocGroupSettings groupSettings;
 
 		public JobDescDocsGrouped(JobDescription docsToGroup, DocGroupSettings groupSettings) {
-			super(docsToGroup);
+			super(JobDocsGrouped.class, docsToGroup);
 			this.groupSettings = groupSettings;
 		}
 
@@ -28,19 +27,12 @@ public class JobDocsGrouped extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDDocsGrouped [" + inputDesc + ", " + groupSettings + "]";
+			return super.uniqueIdentifier() + "[" + groupSettings + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobDocsGrouped(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobDocsGrouped");
-			o.put("inputDesc", inputDesc.toDataObject());
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("groupSettings", groupSettings.toString());
 			return o;
 		}

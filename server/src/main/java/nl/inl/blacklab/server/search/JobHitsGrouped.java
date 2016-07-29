@@ -3,7 +3,6 @@ package nl.inl.blacklab.server.search;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitProperty;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -19,7 +18,7 @@ public class JobHitsGrouped extends Job {
 		HitGroupSettings groupSettings;
 
 		public JobDescHitsGrouped(JobDescription hitsToGroup, HitGroupSettings groupSettings) {
-			super(hitsToGroup);
+			super(JobHitsGrouped.class, hitsToGroup);
 			this.groupSettings = groupSettings;
 		}
 
@@ -30,19 +29,12 @@ public class JobHitsGrouped extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHitsGrouped [" + inputDesc + ", " + groupSettings + "]";
+			return super.uniqueIdentifier() + "[" + groupSettings + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobHitsGrouped(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobHitsGrouped");
-			o.put("inputDesc", inputDesc.toDataObject());
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("groupSettings", groupSettings.toString());
 			return o;
 		}

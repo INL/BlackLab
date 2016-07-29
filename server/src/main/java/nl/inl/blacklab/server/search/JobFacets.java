@@ -7,7 +7,6 @@ import java.util.Map;
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -22,7 +21,7 @@ public class JobFacets extends Job {
 		private List<DocProperty> facets;
 
 		public JobDescFacets(JobDescription docsToFacet, List<DocProperty> facets) {
-			super(docsToFacet);
+			super(JobFacets.class, docsToFacet);
 			this.facets = facets;
 		}
 
@@ -33,19 +32,12 @@ public class JobFacets extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDFacets[" + inputDesc + ", " + facets + "]";
+			return super.uniqueIdentifier() + "[" + facets + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobFacets(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobDocsFacets");
-			o.put("inputDesc", inputDesc.toDataObject());
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("facets", facets.toString());
 			return o;
 		}

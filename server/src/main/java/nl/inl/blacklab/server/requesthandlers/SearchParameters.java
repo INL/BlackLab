@@ -73,6 +73,8 @@ public class SearchParameters {
 	/** The filter query, if parsed already */
 	private Query filterQuery;
 
+	private boolean isDocsOperation;
+
 	/** Parameters involved in search */
 	private static final List<String> NAMES = Arrays.asList(
 		// What to search for
@@ -101,8 +103,9 @@ public class SearchParameters {
 		"waitfortotal"                  // wait until total number of results known?
 	);
 
-	private SearchParameters(SearchManager searchManager) {
+	private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
 		this.searchManager = searchManager;
+		this.isDocsOperation = isDocsOperation;
 	}
 
 	public String put(String key, String value) {
@@ -272,6 +275,8 @@ public class SearchParameters {
 	}
 
 	private DocGroupSortSettings docGroupSortSettings() throws BlsException {
+		if (!containsKey("group"))
+			return null; // not grouping, so no group sort
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -285,6 +290,8 @@ public class SearchParameters {
 	}
 
 	private DocSortSettings docSortSettings() {
+		if (!isDocsOperation)
+			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -298,6 +305,8 @@ public class SearchParameters {
 	}
 
 	private HitGroupSortSettings hitGroupSortSettings()  {
+		if (!containsKey("group"))
+			return null; // not grouping, so no group sort
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -318,6 +327,8 @@ public class SearchParameters {
 	}
 
 	private HitSortSettings hitsSortSettings() {
+		if (isDocsOperation)
+			return null; // we're doing per-docs stuff, so sort doesn't apply to hits
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -327,10 +338,6 @@ public class SearchParameters {
 			sortBy = sortBy.substring(1);
 		}
 		return new HitSortSettings(sortBy, reverse);
-	}
-
-	private boolean hasSort() {
-		return containsKey("sort") && getString("sort").length() > 0;
 	}
 
 	public boolean containsKey(String key) {
@@ -350,7 +357,7 @@ public class SearchParameters {
 	}
 
 	public JobDescription hitsSorted() throws BlsException {
-		if (!hasSort())
+		if (hitsSortSettings() == null)
 			return hits();
 		return new JobDescHitsSorted(hits(), hitsSortSettings());
 	}
@@ -370,7 +377,7 @@ public class SearchParameters {
 	}
 
 	public JobDescription docsSorted() throws BlsException {
-		if (!hasSort())
+		if (docSortSettings() == null)
 			return docs();
 		return new JobDescDocsSorted(docs(), docSortSettings());
 	}
@@ -397,8 +404,8 @@ public class SearchParameters {
 		return new JobDescFacets(docs(), getFacets());
 	}
 
-	public static SearchParameters get(SearchManager searchMan, String indexName, HttpServletRequest request) {
-		SearchParameters param = new SearchParameters(searchMan);
+	public static SearchParameters get(SearchManager searchMan, boolean isDocs, String indexName, HttpServletRequest request) {
+		SearchParameters param = new SearchParameters(searchMan, isDocs);
 		param.put("indexname", indexName);
 		for (String name: SearchParameters.NAMES) {
 			String value = ServletUtil.getParameter(request, name, "").trim();

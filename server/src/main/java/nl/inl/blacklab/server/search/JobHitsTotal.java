@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -15,25 +14,17 @@ public class JobHitsTotal extends Job {
 	public static class JobDescHitsTotal extends JobDescription {
 
 		public JobDescHitsTotal(JobDescription inputDesc) {
-			super(inputDesc);
+			super(JobHitsTotal.class, inputDesc);
 		}
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHitsTotal [" + inputDesc + "]";
+			return super.uniqueIdentifier() + "[]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobHitsTotal(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobHitsTotal");
-			o.put("inputDesc", inputDesc.toDataObject());
-			return o;
+		public DataObjectMapElement toDataObject() {
+			return super.toDataObject();
 		}
 
 	}

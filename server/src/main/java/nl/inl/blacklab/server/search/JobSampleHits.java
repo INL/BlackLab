@@ -3,7 +3,6 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsSample;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 
@@ -17,7 +16,7 @@ public class JobSampleHits extends JobWithHits {
 		SampleSettings sampleSettings;
 
 		public JobDescSampleHits(JobDescription hitsToSample, SampleSettings settings) {
-			super(hitsToSample);
+			super(JobSampleHits.class, hitsToSample);
 			this.sampleSettings = settings;
 		}
 
@@ -28,19 +27,12 @@ public class JobSampleHits extends JobWithHits {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDSampleHits [" + inputDesc + ", " + sampleSettings + "]";
+			return super.uniqueIdentifier() + "[" + sampleSettings + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobSampleHits(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobSampleHits");
-			o.put("inputDesc", inputDesc.toDataObject());
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("sampleSettings", sampleSettings.toString());
 			return o;
 		}

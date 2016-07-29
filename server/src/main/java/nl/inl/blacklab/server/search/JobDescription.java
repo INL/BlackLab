@@ -1,20 +1,33 @@
 package nl.inl.blacklab.server.search;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.server.dataobject.DataObject;
+import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 
 /** Description of a job */
 public abstract class JobDescription {
 
+	private Class<? extends Job> jobClass;
+
+	Constructor<? extends Job> jobClassCtor;
+
 	JobDescription inputDesc;
 
-	public JobDescription(JobDescription inputDesc) {
+	public JobDescription(Class<? extends Job> jobClass, JobDescription inputDesc) {
+		try {
+			this.jobClass = jobClass;
+			jobClassCtor = jobClass.getConstructor(SearchManager.class, User.class, JobDescription.class);
+		} catch (NoSuchMethodException|SecurityException e) {
+			throw new RuntimeException(e);
+		}
 		this.inputDesc = inputDesc;
 	}
 
@@ -34,7 +47,9 @@ public abstract class JobDescription {
 	 * Generate a unique identifier string for this job, for caching, etc.
 	 * @return the unique identifier string
 	 */
-	public abstract String uniqueIdentifier();
+	public String uniqueIdentifier() {
+		return jobClass.getSimpleName() + " [" + (inputDesc == null ? "no input job" : inputDesc.uniqueIdentifier()) + "]";
+	}
 
 	/**
 	 * Create the job corresponding to this description.
@@ -43,7 +58,13 @@ public abstract class JobDescription {
 	 * @return newly created job
 	 * @throws BlsException on error
 	 */
-	public abstract Job createJob(SearchManager searchMan, User user) throws BlsException;
+	public Job createJob(SearchManager searchMan, User user) throws BlsException {
+		try {
+			return jobClassCtor.newInstance(searchMan, user, this);
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new InternalServerError("Cannot instantiate job class for JobDesc: " + this, 31, e);
+		}
+	}
 
 	@Override
 	public String toString() {
@@ -107,10 +128,11 @@ public abstract class JobDescription {
 		return null;
 	}
 
-	public boolean hasSort() {
-		return false;
+	public DataObjectMapElement toDataObject() {
+		DataObjectMapElement o = new DataObjectMapElement();
+		o.put("jobClass", jobClass.getSimpleName());
+		o.put("inputDesc", inputDesc == null ? "(none)" : inputDesc.toString());
+		return o;
 	}
-
-	public abstract DataObject toDataObject();
 
 }

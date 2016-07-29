@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -19,7 +18,7 @@ public class JobHitsWindow extends Job {
 		ContextSettings contextSettings;
 
 		public JobDescHitsWindow(JobDescription inputDesc, WindowSettings windowSettings, ContextSettings contextSettings) {
-			super(inputDesc);
+			super(JobHitsWindow.class, inputDesc);
 			this.windowSettings = windowSettings;
 			this.contextSettings = contextSettings;
 		}
@@ -36,19 +35,12 @@ public class JobHitsWindow extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHitsWindow [" + inputDesc + ", " + windowSettings + ", " + contextSettings + "]";
+			return super.uniqueIdentifier() + "[" + windowSettings + ", " + contextSettings + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobHitsWindow(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobHitsWindow");
-			o.put("inputDesc", inputDesc.toDataObject());
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("windowSettings", windowSettings.toString());
 			o.put("contextSettings", contextSettings.toString());
 			return o;

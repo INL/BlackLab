@@ -4,7 +4,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.Forbidden;
@@ -19,7 +18,7 @@ public class JobDocs extends JobWithDocs {
 		Query filterQuery;
 
 		public JobDescDocs(JobDescription hitsToGroup, Query filterQuery) {
-			super(hitsToGroup);
+			super(JobDocs.class, hitsToGroup);
 			this.filterQuery = filterQuery;
 		}
 
@@ -30,19 +29,12 @@ public class JobDocs extends JobWithDocs {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDDescDocs [" + inputDesc + ", " + filterQuery + "]";
+			return super.uniqueIdentifier() + "[" + filterQuery + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobDocs(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobHits");
-			o.put("inputDesc", inputDesc.toString());
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("filterQuery", filterQuery.toString());
 			return o;
 		}

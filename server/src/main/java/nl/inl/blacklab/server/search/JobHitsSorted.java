@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.grouping.HitProperty;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -17,7 +16,7 @@ public class JobHitsSorted extends JobWithHits {
 		HitSortSettings sortSettings;
 
 		public JobDescHitsSorted(JobDescription hitsToSort, HitSortSettings sortSettings) {
-			super(hitsToSort);
+			super(JobHitsSorted.class, hitsToSort);
 			this.sortSettings = sortSettings;
 		}
 
@@ -28,19 +27,12 @@ public class JobHitsSorted extends JobWithHits {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHitsSorted [" + inputDesc + ", " + sortSettings + "]";
+			return super.uniqueIdentifier() + "[" + sortSettings + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobHitsSorted(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobHitsSorted");
-			o.put("inputDesc", inputDesc.toDataObject());
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("sortSettings", sortSettings.toString());
 			return o;
 		}

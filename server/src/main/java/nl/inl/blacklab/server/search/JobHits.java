@@ -7,7 +7,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -29,7 +28,7 @@ public class JobHits extends JobWithHits {
 		private MaxSettings maxSettings;
 
 		public JobDescHits(String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings) {
-			super(null);
+			super(JobHits.class, null);
 			this.indexName = indexName;
 			this.pattern = pattern;
 			this.filterQuery = filterQuery;
@@ -58,18 +57,12 @@ public class JobHits extends JobWithHits {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDHits [" + getIndexName() + ", " + pattern + ", " + filterQuery + ", " + maxSettings + "]";
+			return super.uniqueIdentifier() + "[" + getIndexName() + ", " + pattern + ", " + filterQuery + ", " + maxSettings + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobHits(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobHits");
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("pattern", pattern.toString());
 			o.put("filterQuery", filterQuery.toString());
 			o.put("maxSettings", maxSettings.toString());

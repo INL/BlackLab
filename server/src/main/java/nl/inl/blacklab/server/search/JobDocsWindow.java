@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.perdocument.DocResultsWindow;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.ThreadPriority.Level;
@@ -19,7 +18,7 @@ public class JobDocsWindow extends Job {
 		ContextSettings contextSettings;
 
 		public JobDescDocsWindow(JobDescription inputDesc, WindowSettings windowSettings, ContextSettings contextSettings) {
-			super(inputDesc);
+			super(JobDocsWindow.class, inputDesc);
 			this.windowSettings = windowSettings;
 			this.contextSettings = contextSettings;
 		}
@@ -36,19 +35,12 @@ public class JobDocsWindow extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return "JDDocsWindow [" + inputDesc + ", " + windowSettings + ", " + contextSettings + "]";
+			return super.uniqueIdentifier() + "[" + windowSettings + ", " + contextSettings + "]";
 		}
 
 		@Override
-		public Job createJob(SearchManager searchMan, User user) throws BlsException {
-			return new JobDocsWindow(searchMan, user, this);
-		}
-
-		@Override
-		public DataObject toDataObject() {
-			DataObjectMapElement o = new DataObjectMapElement();
-			o.put("jobClass", "JobHitsWindow");
-			o.put("inputDesc", inputDesc.toDataObject());
+		public DataObjectMapElement toDataObject() {
+			DataObjectMapElement o = super.toDataObject();
 			o.put("windowSettings", windowSettings.toString());
 			o.put("contextSettings", contextSettings.toString());
 			return o;

@@ -22,7 +22,7 @@ public class RequestHandlerDebug extends RequestHandler {
 		response.put("resource", urlResource);
 		response.put("rest", urlPathInfo);
 		response.put("queryString", request.getQueryString());
-		response.put("searchParam", servlet.getSearchParameters(request, indexName).toString());
+		response.put("searchParam", servlet.getSearchParameters(false, request, indexName).toString());
 		Response r = new Response(response);
 		r.setCacheAllowed(false);
 		return r;
