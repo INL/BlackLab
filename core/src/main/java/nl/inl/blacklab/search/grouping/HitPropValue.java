@@ -76,7 +76,5 @@ public abstract class HitPropValue implements Comparable<Object> {
 	public abstract String serialize();
 
 	@Override
-	final public String toString() {
-		return serialize();
-	}
+	public abstract String toString();
 }

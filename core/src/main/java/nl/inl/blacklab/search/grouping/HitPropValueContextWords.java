@@ -53,6 +53,20 @@ public class HitPropValueContextWords extends HitPropValueContext {
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		for (int v: valueTokenId) {
+			String word = v < 0 ? "-" : terms.get(v);
+			if (word.length() > 0) {
+				if (b.length() > 0)
+					b.append(" ");
+				b.append(word);
+			}
+		}
+		return b.toString();
+	}
+
+	@Override
 	public String serialize() {
 		String[] parts = new String[valueTokenId.length + 3];
 		parts[0] = "cws";

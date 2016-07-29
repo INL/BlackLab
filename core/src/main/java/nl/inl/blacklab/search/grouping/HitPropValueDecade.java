@@ -20,6 +20,14 @@ public class HitPropValueDecade extends HitPropValueInt {
 	}
 
 	@Override
+	public String toString() {
+		if (value == HitPropertyDocumentDecade.UNKNOWN_VALUE)
+			return "unknown";
+		int year = value - value % 10;
+		return year + "-" + (year + 9);
+	}
+
+	@Override
 	public String serialize() {
 		if (value == HitPropertyDocumentDecade.UNKNOWN_VALUE)
 			return "unknown";

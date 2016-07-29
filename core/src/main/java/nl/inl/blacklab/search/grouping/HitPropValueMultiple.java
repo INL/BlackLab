@@ -36,6 +36,17 @@ public class HitPropValueMultiple extends HitPropValue {
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		for (HitPropValue v: value) {
+			if (b.length() > 0)
+				b.append(" / ");
+			b.append(v.toString());
+		}
+		return b.toString();
+	}
+
+	@Override
 	public String serialize() {
 		String[] valuesSerialized = new String[value.length];
 		for (int i = 0; i < value.length; i++) {

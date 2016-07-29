@@ -44,6 +44,11 @@ public class HitPropValueContextWord extends HitPropValueContext {
 	}
 
 	@Override
+	public String toString() {
+		return valueTokenId < 0 ? "-" : terms.get(valueTokenId);
+	}
+
+	@Override
 	public String serialize() {
 		String token;
 		if (valueTokenId < 0)

@@ -27,6 +27,11 @@ public class HitPropValueString extends HitPropValue {
 	}
 
 	@Override
+	public String toString() {
+		return value;
+	}
+
+	@Override
 	public String serialize() {
 		return PropValSerializeUtil.combineParts("str", value);
 	}
