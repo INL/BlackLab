@@ -131,8 +131,8 @@ public class SearchManager {
 	/** Default filter language to use. [luceneql] */
 	private String defaultFilterLanguage;
 
-	/** Should requests be blocking by default? [yes] */
-	private boolean defaultBlockingMode;
+	/** Should requests be blocking by default? [yes] (NOTE: nonblocking mode will be removed in a future version) */
+	private boolean defaultBlockingMode = true;
 
 	/** Default number of words around hit. [5] */
 	private int defaultContextSize;
@@ -234,8 +234,7 @@ public class SearchManager {
 				}
 				defaultFilterLanguage = JsonUtil.getProperty(reqProp,
 						"defaultFilterLanguage", "luceneql");
-				defaultBlockingMode = JsonUtil.getBooleanProp(reqProp,
-						"defaultBlockingMode", true);
+				//defaultBlockingMode = JsonUtil.getBooleanProp(reqProp, "defaultBlockingMode", true);
 				defaultContextSize = JsonUtil.getIntProp(reqProp,
 						"defaultContextSize", 5);
 				maxContextSize = JsonUtil.getIntProp(reqProp, "maxContextSize", 20);
@@ -442,7 +441,7 @@ public class SearchManager {
 		defaultParameterValues.put("hitstart", "0");
 		defaultParameterValues.put("hitend", "1");
 		defaultParameterValues.put("number", "" + defaultPageSize);
-		defaultParameterValues.put("block", defaultBlockingMode ? "yes" : "no");
+		defaultParameterValues.put("block", "yes"); //defaultBlockingMode ? "yes" : "no");
 		defaultParameterValues.put("waitfortotal", "no");
 		defaultParameterValues.put("includetokencount", "no");
 		defaultParameterValues.put("wordsaroundhit", "" + defaultContextSize);
