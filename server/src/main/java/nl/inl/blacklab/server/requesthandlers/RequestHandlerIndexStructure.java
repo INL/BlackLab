@@ -82,7 +82,7 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 		response.put("indexName", indexName);
 		response.put("displayName", struct.getDisplayName());
 		response.put("description", struct.getDescription());
-		response.put("status", searchMan.getIndexStatus(indexName));
+		response.put("status", indexMan.getIndexStatus(indexName));
 		response.put("contentViewable", struct.contentViewable());
 		String documentFormat = struct.getDocumentFormat();
 		if (documentFormat != null && documentFormat.length() > 0)

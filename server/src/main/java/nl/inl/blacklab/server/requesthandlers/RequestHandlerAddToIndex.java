@@ -47,10 +47,10 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
 		if (!indexName.contains(":"))
 			throw new NotAuthorized("Can only add to private indices.");
-		if (!searchMan.indexExists(indexName))
+		if (!indexMan.indexExists(indexName))
 			throw new IndexNotFound(indexName);
 
-		String status = searchMan.getIndexStatus(indexName);
+		String status = indexMan.getIndexStatus(indexName);
 		if (!status.equals("available") && !status.equals("empty"))
 			return Response.unavailable(indexName, status);
 
@@ -85,12 +85,12 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 			// Process the uploaded file items
 			Iterator<FileItem> i = fileItems.iterator();
 
-			if (!searchMan.indexExists(indexName))
+			if (!indexMan.indexExists(indexName))
 				return Response.indexNotFound(indexName);
-			File indexDir = searchMan.getIndexDir(indexName);
+			File indexDir = indexMan.getIndexDir(indexName);
 			int filesDone = 0;
-			String newStatus = searchMan.setIndexStatus(indexName, "available|empty", "busy");
-			searchMan.closeSearcher(indexName);
+			String newStatus = indexMan.setIndexStatus(indexName, "available|empty", "busy");
+			indexMan.closeSearcher(indexName);
 			if (!newStatus.equals("busy")) {
 				return Response.internalError("Could not set index status to busy (status was " + newStatus + ")", debugMode, 28);
 			}
@@ -154,7 +154,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 					}
 				}
 			} finally {
-				searchMan.setIndexStatus(indexName, null, "available");
+				indexMan.setIndexStatus(indexName, null, "available");
 			}
 		} catch (BlsException ex) {
 			throw ex;

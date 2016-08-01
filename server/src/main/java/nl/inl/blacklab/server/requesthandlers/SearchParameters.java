@@ -222,7 +222,7 @@ public class SearchParameters {
 
 	private Searcher getSearcher() {
 		try {
-			return searchManager.getSearcher(getIndexName());
+			return searchManager.getIndexManager().getSearcher(getIndexName());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

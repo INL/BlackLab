@@ -4,17 +4,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectList;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
+import nl.inl.blacklab.server.exceptions.TooManyRequests;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDescription;
+import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.MemoryUtil;
 import nl.inl.util.ThreadPriority;
 import nl.inl.util.ThreadPriority.Level;
@@ -26,15 +31,17 @@ public class SearchCache {
 	private static final Logger logger = Logger.getLogger(SearchCache.class);
 
 	/**
-	 * If enabled, this makes sure the SearchCache will follow the behaviour
-	 * rules set in blacklab-server.json to lowprio/pause searches in certain
-	 * situations under certain loads.
-	 * (EXPERIMENTAL)
+	 * What we can do to a query in response to the server load.
 	 */
-	static final boolean ENABLE_THREAD_PRIORITY = true;
+	private static enum ServerLoadQueryAction {
+		RUN_NORMALLY, // no action
+		PAUSE, // pause search
+		ABORT, // abort search / refuse to start new search
+		REMOVE_FROM_CACHE, // discard results from cache
+	}
 
 	/** Our configuration */
-	private BlsConfigCacheAndPerformance config;
+	private BlsConfigCacheAndPerformance cacheConfig;
 
 	/** The cached search objects. */
 	private Map<String, Job> cachedSearches;
@@ -49,26 +56,33 @@ public class SearchCache {
 	 */
 	private Thread loadManagerThread;
 
+	/** Keeps track of running jobs per user, so we can limit this. */
+	private Map<String, Set<Job>> runningJobsPerUser = new HashMap<>();
+
+	private SearchManager searchMan;
+
 	/**
 	 * Initialize the cache.
 	 *
+	 * @param searchMan search manager object
 	 * @param settings cache settings
 	 */
-	public SearchCache(JSONObject settings) {
+	public SearchCache(SearchManager searchMan, JSONObject settings) {
+		this.searchMan = searchMan;
 
 		// Cache properties
 		JSONObject cacheProp = settings == null ? null : settings.getJSONObject("cache");
-		config = new BlsConfigCacheAndPerformance(cacheProp);
+		cacheConfig = new BlsConfigCacheAndPerformance(cacheProp);
 
 		JSONObject jsonServerLoad = null;
 		if (settings != null && settings.has("serverLoad")) {
 			// Load manager stuff (experimental)
 			jsonServerLoad = settings.getJSONObject("serverLoad");
-			config.setServerLoadOptions(jsonServerLoad);
+			cacheConfig.setServerLoadOptions(jsonServerLoad);
 
 			// Make sure long operations yield their thread occasionally,
 			// and automatically abort really long operations.
-			ThreadPriority.setEnabled(ENABLE_THREAD_PRIORITY);
+			ThreadPriority.setEnabled(cacheConfig.enableThreadPriority());
 		}
 
 		cachedSearches = new HashMap<>();
@@ -76,54 +90,6 @@ public class SearchCache {
 		loadManagerThread = new LoadManagerThread(this);
 		loadManagerThread.start();
 
-	}
-
-	/**
-	 * Get a search from the cache if present.
-	 *
-	 * @param jobDesc the search parameters
-	 * @return the Search if found, or null if not
-	 */
-	public Job get(JobDescription jobDesc) {
-		Job search = cachedSearches.get(jobDesc.uniqueIdentifier());
-		if (search == null) {
-			//logger.debug("Cache miss: " + jobDesc);
-		} else {
-			//logger.debug("Cache hit: " + jobDesc);
-			search.resetLastAccessed();
-		}
-		return search;
-	}
-
-	/** Put a search in the cache.
-	 *
-	 * Also cleans older searches from the cache if necessary.
-	 *
-	 * @param search the search object
-	 */
-	public void put(Job search) {
-		if (config.getMaxNumberOfJobs() <= 0)
-			return;
-
-		removeOldSearches();
-
-		performLoadManagement(search);
-
-		// Search already in cache?
-		String uniqueIdentifier = search.getDescription().uniqueIdentifier();
-		if (cachedSearches.containsKey(uniqueIdentifier)) {
-			if (cachedSearches.get(uniqueIdentifier) != search) {
-				throw new RuntimeException("Cache already contains different search object!");
-			}
-			// Same object already in cache, do nothing
-			logger.debug("Same object put in cache twice: " + uniqueIdentifier);
-			return;
-		}
-
-		// Put search in cache
-		//logger.debug("Put in cache: " + uniqueIdentifier);
-		cachedSearches.put(uniqueIdentifier, search);
-		search.incrRef();
 	}
 
 	/**
@@ -150,6 +116,145 @@ public class SearchCache {
 		clearCache(false);
 	}
 
+	public void cleanup() {
+		// Stop the load manager thread
+		loadManagerThread.interrupt();
+		loadManagerThread = null;
+
+		clearCache(true);
+
+		searchMan = null;
+	}
+
+	public DataObject getCacheStatusDataObject() {
+		DataObjectMapElement doCache = new DataObjectMapElement();
+		doCache.put("maxSizeBytes", cacheConfig.getMaxSizeMegs() * 1000 * 1000);
+		doCache.put("maxNumberOfSearches", cacheConfig.getMaxNumberOfJobs());
+		doCache.put("maxSearchAgeSec", cacheConfig.getMaxJobAgeSec());
+		doCache.put("sizeBytes", calculateSizeBytes(cachedSearches.values()));
+		doCache.put("numberOfSearches", cachedSearches.size());
+		return doCache;
+	}
+
+	public DataObject getContentsDataObject(boolean debugInfo) throws BlsException {
+		DataObjectList doCacheContents = new DataObjectList("job");
+		for (Job job: cachedSearches.values()) {
+			doCacheContents.add(job.toDataObject(debugInfo));
+		}
+		return doCacheContents;
+	}
+
+	/**
+	 * Start a new search or return an existing Search object corresponding to
+	 * these search parameters.
+	 *
+	 * @param user
+	 *            user creating the job
+	 * @param jobDesc
+	 *            the search parameters
+	 * @param block if true, wait until job is done
+	 * @return a Search object corresponding to these parameters
+	 * @throws BlsException
+	 *             if the query couldn't be executed
+	 */
+	public Job search(User user, JobDescription jobDesc, boolean block) throws BlsException {
+		// Search the cache / running jobs for this search, create new if not found.
+		boolean performSearch = false;
+		Job job;
+		synchronized (this) {
+			job = get(jobDesc);
+			if (job == null) {
+				// Not found in cache
+
+				// Do we have enough memory to start a new search?
+				checkFreeMemory();
+
+				// Check what jobs this user has running
+				// Check if search allowed, and update running jobs for user
+				Set<Job> runningJobs = updateRunningJobs(user.uniqueId());
+				if (runningJobs.size() >= searchMan.config().getMaxRunningJobsPerUser()) {
+					// User has too many running jobs. Can't start another one.
+					logger.warn("Can't start new search, user already has " + runningJobs.size() + " jobs running.");
+					throw new TooManyRequests(
+							"You already have too many running searches. Please wait for some previous searches to complete before starting new ones.");
+				}
+
+				// Create a new search object with these parameters and place it in the cache
+				job = jobDesc.createJob(searchMan, user);
+				job.incrRef();
+				put(job);
+				runningJobs.add(job);
+				performSearch = true;
+			}
+		}
+
+		if (performSearch) {
+			// Start the search, waiting a short time in case it's a fast search
+			job.perform(500); // hardcoded because we are going to remove nonblocking mode soon
+		}
+
+		// If the search thread threw an exception, rethrow it now.
+		if (job.threwException()) {
+			job.rethrowException();
+		}
+
+		if (block) {
+			job.waitUntilFinished(cacheConfig.getMaxSearchTimeSec() * 1000);
+			if (!job.finished()) {
+				throw new ServiceUnavailable("Search took too long, cancelled.");
+			}
+		}
+		return job;
+	}
+
+	/**
+	 * Get a search from the cache if present.
+	 *
+	 * @param jobDesc the search parameters
+	 * @return the Search if found, or null if not
+	 */
+	private Job get(JobDescription jobDesc) {
+		Job search = cachedSearches.get(jobDesc.uniqueIdentifier());
+		if (search == null) {
+			// logger.debug("Cache miss: " + jobDesc);
+		} else {
+			// logger.debug("Cache hit: " + jobDesc);
+			search.resetLastAccessed();
+		}
+		return search;
+	}
+
+	/** Put a search in the cache.
+	 *
+	 * Also cleans older searches from the cache if necessary.
+	 *
+	 * @param search the search object
+	 */
+	private void put(Job search) {
+		if (cacheConfig.getMaxNumberOfJobs() <= 0)
+			return;
+
+		removeOldSearches();
+
+		performLoadManagement(search);
+
+		// Search already in cache?
+		String uniqueIdentifier = search.getDescription().uniqueIdentifier();
+		if (cachedSearches.containsKey(uniqueIdentifier)) {
+			if (cachedSearches.get(uniqueIdentifier) != search) {
+				throw new RuntimeException("Cache already contains different search object!");
+			}
+			// Same object already in cache, do nothing
+			logger.debug("Same object put in cache twice: " + uniqueIdentifier);
+			return;
+		}
+
+		// Put search in cache
+		// logger.debug("Put in cache: " + uniqueIdentifier);
+		cachedSearches.put(uniqueIdentifier, search);
+		search.incrRef();
+	}
+
 	/**
 	 * Get rid of all the cached Searches.
 	 *
@@ -165,19 +270,11 @@ public class SearchCache {
 		logger.debug("Cache cleared.");
 	}
 
-	public void cleanup() {
-		// Stop the load manager thread
-		loadManagerThread.interrupt();
-		loadManagerThread = null;
-
-		clearCache(true);
-	}
-
 	/**
 	 * If the cache exceeds the given parameters, clean it up by
 	 * removing less recently used searches.
 	 */
-	void removeOldSearches() {
+	private void removeOldSearches() {
 
 		// Sort cache by last access time
 		List<Job> lastAccessOrder = new ArrayList<>(cachedSearches.values());
@@ -188,8 +285,10 @@ public class SearchCache {
 		// If we're low on memory, always remove a few searches from cache.
 		int minSearchesToRemove = 0;
 		long freeMegs = MemoryUtil.getFree() / 1000000;
-		if (freeMegs < config.getMinFreeMemTargetMegs()) {
-			minSearchesToRemove = config.getNumberOfJobsToPurgeWhenBelowTargetMem(); // arbitrary, number but will keep on being removed every call until enough free mem has been reclaimed
+		if (freeMegs < cacheConfig.getMinFreeMemTargetMegs()) {
+			// pretty arbitrary number, but will keep on being removed every
+			// call until enough free mem has been reclaimed
+			minSearchesToRemove = cacheConfig.getNumberOfJobsToPurgeWhenBelowTargetMem();
 			logger.debug("Not enough free mem, will remove some searches.");
 		}
 
@@ -199,7 +298,7 @@ public class SearchCache {
 		for (int i = lastAccessOrder.size() - 1; i >= 0; i--) {
 			Job search = lastAccessOrder.get(i);
 
-			if (!search.finished() && search.userWaitTime() > config.getMaxSearchTimeSec()) {
+			if (!search.finished() && search.userWaitTime() > cacheConfig.getMaxSearchTimeSec()) {
 				// Search is taking too long. Cancel it.
 				logger.debug("Search is taking too long, cancelling: " + search);
 				abortSearch(search);
@@ -214,13 +313,15 @@ public class SearchCache {
 					removeBecauseOfCacheSizeOrAge = isCacheTooBig || isSearchTooOld;
 				}
 				if (minSearchesToRemove > 0 || removeBecauseOfCacheSizeOrAge) {
-					// Search is too old or cache is too big. Keep removing searches until that's no longer the case
-					//logger.debug("Remove from cache: " + search);
+					// Search is too old or cache is too big. Keep removing searches until that's no
+					// longer the case
+					// logger.debug("Remove from cache: " + search);
 					removeFromCache(search);
 
 					minSearchesToRemove--;
 				} else {
-					// Cache is no longer too big and these searches are not too old. Stop checking that,
+					// Cache is no longer too big and these searches are not too old. Stop checking
+					// that,
 					// just check for long-running searches
 					lookAtCacheSizeAndSearchAccessTime = false;
 				}
@@ -247,10 +348,9 @@ public class SearchCache {
 	 * @return true iff the cache is too big.
 	 */
 	private boolean cacheTooBig() {
-		boolean tooManySearches = config.getMaxNumberOfJobs() >= 0
-				&& cachedSearches.size() > config.getMaxNumberOfJobs();
+		boolean tooManySearches = cacheConfig.getMaxNumberOfJobs() >= 0 && cachedSearches.size() > cacheConfig.getMaxNumberOfJobs();
 		long cacheSizeMegs = cacheSizeBytes / 1000000;
-		boolean tooMuchMemory = config.getMaxSizeMegs() >= 0 && cacheSizeMegs > config.getMaxSizeMegs();
+		boolean tooMuchMemory = cacheConfig.getMaxSizeMegs() >= 0 && cacheSizeMegs > cacheConfig.getMaxSizeMegs();
 		return tooManySearches || tooMuchMemory;
 	}
 
@@ -263,46 +363,8 @@ public class SearchCache {
 	 * @return true iff the search is too old
 	 */
 	private boolean searchTooOld(Job search) {
-		boolean tooOld = config.getMaxJobAgeSec() >= 0 && search.cacheAge() > config.getMaxJobAgeSec();
+		boolean tooOld = cacheConfig.getMaxJobAgeSec() >= 0 && search.cacheAge() > cacheConfig.getMaxJobAgeSec();
 		return tooOld;
-	}
-
-//	public int numberOfRunningSearches() {
-//		int n = 0;
-//		for (Job job: cachedSearches.values()) {
-//			if (!job.finished() && !job.isWaitingForOtherJob() && job.getPriorityLevel() != Level.PAUSED) {
-//				n++;
-//			}
-//		}
-//		return n;
-//	}
-
-	public DataObject getCacheStatusDataObject() {
-		DataObjectMapElement doCache = new DataObjectMapElement();
-		doCache.put("maxSizeBytes", config.getMaxSizeMegs() * 1000 * 1000);
-		doCache.put("maxNumberOfSearches", config.getMaxNumberOfJobs());
-		doCache.put("maxSearchAgeSec", config.getMaxJobAgeSec());
-		doCache.put("sizeBytes", calculateSizeBytes(cachedSearches.values()));
-		doCache.put("numberOfSearches", cachedSearches.size());
-		return doCache;
-	}
-
-	public DataObject getContentsDataObject(boolean debugInfo) throws BlsException {
-		DataObjectList doCacheContents = new DataObjectList("job");
-		for (Job job: cachedSearches.values()) {
-			doCacheContents.add(job.toDataObject(debugInfo));
-		}
-		return doCacheContents;
-	}
-
-	/**
-	 * What we can do to a query in response to the server load.
-	 */
-	enum ServerLoadQueryAction {
-		RUN_NORMALLY,      // no action
-		PAUSE,             // pause search
-		ABORT,             // abort search / refuse to start new search
-		REMOVE_FROM_CACHE, // discard results from cache
 	}
 
 	/**
@@ -313,9 +375,9 @@ public class SearchCache {
 	 */
 	void performLoadManagement(Job newSearch) {
 
-		if (config.shouldAutoDetectMaxConcurrent()) {
+		if (cacheConfig.shouldAutoDetectMaxConcurrent()) {
 			// Autodetect number of CPUs
-			config.autoAdjustMaxConcurrent();
+			cacheConfig.autoAdjustMaxConcurrent();
 		}
 
 		List<Job> searches = new ArrayList<>(cachedSearches.values());
@@ -323,21 +385,22 @@ public class SearchCache {
 		// Sort the searches based on descending "worthiness"
 		Collections.sort(searches);
 
-		int coresLeft = config.getMaxConcurrentSearches();
-		int pauseSlotsLeft = config.getMaxPausedSearches();
-		//logger.debug("=== LOADMGR: START. cores=" + coresLeft + ", pauseSlots=" + pauseSlotsLeft);
-		//int cacheSlotsLeft = maxNumberOfJobs;
+		int coresLeft = cacheConfig.getMaxConcurrentSearches();
+		int pauseSlotsLeft = cacheConfig.getMaxPausedSearches();
+		// logger.debug("=== LOADMGR: START. cores=" + coresLeft + ", pauseSlots=" +
+		// pauseSlotsLeft);
+		// int cacheSlotsLeft = maxNumberOfJobs;
 		for (Job search: searches) {
 			if (search.finished()) {
 				// Finished search. Keep in cache?
 
 				// NOTE: we'll leave this to removeOldSearches() for now.
 				// Later we'll integrate the two.
-				//logger.debug("LOADMGR: search is finished, no problem: " + search);
+				// logger.debug("LOADMGR: search is finished, no problem: " + search);
 
 			} else if (search.isWaitingForOtherJob()) {
 				// Waiting, not taking up any CPU. Can run normally, but doesn't take a core.
-				//logger.debug("LOADMGR: search is waiting for other job: " + search);
+				// logger.debug("LOADMGR: search is waiting for other job: " + search);
 				applyAction(search, ServerLoadQueryAction.RUN_NORMALLY);
 			} else {
 				// Running search. Run, pause or abort?
@@ -345,7 +408,7 @@ public class SearchCache {
 					// A core is available. Run the search.
 					coresLeft--;
 					applyAction(search, ServerLoadQueryAction.RUN_NORMALLY);
-					//logger.debug("LOADMGR: search is running, ok: " + search);
+					// logger.debug("LOADMGR: search is running, ok: " + search);
 				} else if (pauseSlotsLeft > 0) {
 					// No cores, but a pause slot is left. Pause it.
 					logger.debug("LOADMGR: no cores left for search: " + search);
@@ -358,7 +421,7 @@ public class SearchCache {
 				}
 			}
 		}
-		//logger.debug("=== LOADMGR: END.");
+		// logger.debug("=== LOADMGR: END.");
 	}
 
 	/**
@@ -370,7 +433,7 @@ public class SearchCache {
 	 */
 	private void applyAction(Job search, ServerLoadQueryAction action) {
 		// See what to do with the current search
-		switch(action) {
+		switch (action) {
 		case RUN_NORMALLY:
 			// "No action": if paused, keep paused; if running, run normally (not low prio)
 			if (search.getPriorityLevel() != Level.RUNNING) {
@@ -380,7 +443,7 @@ public class SearchCache {
 			break;
 		case PAUSE:
 			if (search.getPriorityLevel() != Level.PAUSED) {
-				logger.debug("LOADMGR: Pausing search: " + search + " (was: "+search.getPriorityLevel()+")");
+				logger.debug("LOADMGR: Pausing search: " + search + " (was: " + search.getPriorityLevel() + ")");
 				search.setPriorityLevel(Level.PAUSED);
 			}
 			break;
@@ -409,8 +472,30 @@ public class SearchCache {
 		removeFromCache(search);
 	}
 
-	int getMaxSearchTimeSec() {
-		return config.getMaxSearchTimeSec();
+	private Set<Job> updateRunningJobs(String uniqueId) {
+		Set<Job> runningJobs = runningJobsPerUser.get(uniqueId);
+		Set<Job> newRunningJobs = new HashSet<>();
+		if (runningJobs != null) {
+			for (Job runningJob: runningJobs) {
+				if (!runningJob.finished()) {
+					newRunningJobs.add(runningJob);
+				}
+			}
+		}
+		runningJobsPerUser.put(uniqueId, newRunningJobs);
+		return newRunningJobs;
+	}
+
+	private void checkFreeMemory() throws ServiceUnavailable {
+		long freeMegs = MemoryUtil.getFree() / 1000000;
+		if (freeMegs < searchMan.config().getMinFreeMemForSearchMegs()) {
+			removeOldSearches(); // try to free up space for next search
+			logger.warn(
+					"Can't start new search, not enough memory (" + freeMegs + "M < " + searchMan.config().getMinFreeMemForSearchMegs() + "M)");
+			logger.warn("(NOTE: make sure Tomcat's max heap mem is set to an appropriate value!)");
+			throw new ServiceUnavailable("The server seems to be under heavy load right now. Please try again later.");
+		}
+		// logger.debug("Enough free memory: " + freeMegs + "M");
 	}
 
 }

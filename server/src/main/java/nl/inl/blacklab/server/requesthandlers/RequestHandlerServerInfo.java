@@ -23,15 +23,15 @@ public class RequestHandlerServerInfo extends RequestHandler {
 
 	@Override
 	public Response handle() throws BlsException {
-		Collection<String> indices = searchMan.getAllAvailableIndices(user.getUserId());
+		Collection<String> indices = indexMan.getAllAvailableIndices(user.getUserId());
 		DataObjectMapAttribute doIndices = new DataObjectMapAttribute("index", "name");
 		//DataObjectList doIndices = new DataObjectList("index");
 		for (String indexName: indices) {
 			DataObjectMapElement doIndex = new DataObjectMapElement();
-			Searcher searcher = searchMan.getSearcher(indexName);
+			Searcher searcher = indexMan.getSearcher(indexName);
 			IndexStructure struct = searcher.getIndexStructure();
 			doIndex.put("displayName", struct.getDisplayName());
-			doIndex.put("status", searchMan.getIndexStatus(indexName));
+			doIndex.put("status", indexMan.getIndexStatus(indexName));
 			String documentFormat = struct.getDocumentFormat();
 			if (documentFormat != null && documentFormat.length() > 0)
 				doIndex.put("documentFormat", documentFormat);
@@ -45,7 +45,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
 		doUser.put("loggedIn", user.isLoggedIn());
 		if (user.isLoggedIn())
 			doUser.put("id", user.getUserId());
-		doUser.put("canCreateIndex", user.isLoggedIn() ? searchMan.canCreateIndex(user.getUserId()) : false);
+		doUser.put("canCreateIndex", user.isLoggedIn() ? indexMan.canCreateIndex(user.getUserId()) : false);
 
 		DataObjectMapElement response = new DataObjectMapElement();
 		response.put("blacklabBuildTime", Searcher.getBlackLabBuildTime());

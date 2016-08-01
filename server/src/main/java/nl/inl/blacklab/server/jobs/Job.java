@@ -142,7 +142,7 @@ public abstract class Job implements Comparable<Job> {
 		this.searchMan = searchMan;
 		this.user = user;
 		this.jobDesc = par;
-		searcher = searchMan.getSearcher(par.getIndexName());
+		searcher = searchMan.getIndexManager().getSearcher(par.getIndexName());
 		resetLastAccessed();
 		startedAt = -1;
 		finishedAt = -1;

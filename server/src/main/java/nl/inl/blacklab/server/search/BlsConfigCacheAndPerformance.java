@@ -34,6 +34,14 @@ public class BlsConfigCacheAndPerformance {
 	/** Max time searches are allowed to run (5 minutes) */
 	private int maxSearchTimeSec = 5 * 60;
 
+	/**
+	 * If enabled, this makes sure the SearchCache will follow the behaviour
+	 * rules set in blacklab-server.json to lowprio/pause searches in certain
+	 * situations under certain loads.
+	 * (EXPERIMENTAL)
+	 */
+	static final boolean ENABLE_THREAD_PRIORITY = true;
+
 	public BlsConfigCacheAndPerformance(JSONObject settings) {
 		this();
 		if (settings != null) {
@@ -110,6 +118,10 @@ public class BlsConfigCacheAndPerformance {
 		maxPausedSearches = 10;
 		if (jsonServerLoad != null)
 			maxPausedSearches = JsonUtil.getIntProp(jsonServerLoad, "maxPausedSearches", 10);
+	}
+
+	public boolean enableThreadPriority() {
+		return ENABLE_THREAD_PRIORITY;
 	}
 
 }

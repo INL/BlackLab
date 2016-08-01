@@ -24,7 +24,7 @@ public class RequestHandlerIndexStatus extends RequestHandler {
 		// Assemble response
 		DataObjectMapElement response = new DataObjectMapElement();
 		response.put("indexName", indexName);
-		response.put("status", searchMan.getIndexStatus(indexName));
+		response.put("status", indexMan.getIndexStatus(indexName));
 
 		// Remove any empty settings
 		response.removeEmptyMapValues();

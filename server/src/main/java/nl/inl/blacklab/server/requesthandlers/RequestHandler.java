@@ -24,6 +24,7 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.search.IndexManager;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.ParseUtil;
@@ -172,7 +173,7 @@ public abstract class RequestHandler {
 					try {
 						String handlerName = urlResource;
 
-						String status = searchManager.getIndexStatus(indexName);
+						String status = searchManager.getIndexManager().getIndexStatus(indexName);
 						if (!status.equals("available") && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status")) {
 							return Response.unavailable(indexName, status);
 						}
@@ -278,10 +279,13 @@ public abstract class RequestHandler {
 	/** User id (if logged in) and/or session id */
 	User user;
 
+	protected IndexManager indexMan;
+
 	RequestHandler(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathInfo) {
 		this.servlet = servlet;
 		this.request = request;
 		searchMan = servlet.getSearchManager();
+		indexMan = searchMan.getIndexManager();
 		String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 		if (!pathAndQueryString.startsWith("/cache-info")) // annoying when monitoring
 			logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " " + request.getMethod() + " " + pathAndQueryString);
@@ -392,7 +396,7 @@ public abstract class RequestHandler {
 	}
 
 	protected Searcher getSearcher() throws BlsException {
-		return searchMan.getSearcher(indexName);
+		return indexMan.getSearcher(indexName);
 	}
 
 	protected boolean isBlockingOperation() {
