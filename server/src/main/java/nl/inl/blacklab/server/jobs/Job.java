@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.search.Hits;
+
+import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.dataobject.DataObjectList;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
@@ -18,7 +18,7 @@ import nl.inl.util.ExUtil;
 import nl.inl.util.ThreadPriority;
 import nl.inl.util.ThreadPriority.Level;
 
-public abstract class Job implements Comparable<Job> {
+public abstract class Job implements Comparable<Job>, Prioritizable {
 
 	protected static final Logger logger = Logger.getLogger(Job.class);
 
@@ -712,10 +712,19 @@ public abstract class Job implements Comparable<Job> {
 	}
 
 	/**
+	 * Returns the Prioritizable object we need to set
+	 * the thread priority on.
+	 *
+	 * @return the object to prioritize
+	 */
+	protected abstract Prioritizable getObjectToPrioritize();
+
+	/**
 	 * Set the thread priority level.
 	 *
 	 * @param level the desired priority level.
 	 */
+	@Override
 	public void setPriorityLevel(ThreadPriority.Level level) {
 		if (this.level != level) {
 			if (this.level == Level.PAUSED) {
@@ -738,45 +747,37 @@ public abstract class Job implements Comparable<Job> {
 	 *
 	 * @return the current priority level.
 	 */
+	@Override
 	public ThreadPriority.Level getPriorityLevel() {
 		return level;
 	}
 
 	/**
-	 * Set the operation to be normal priority, low priority or paused.
+	 * Set the priority/paused status of a Prioritizable object.
 	 *
-	 * Depends on the lowPrio and paused variables.
+	 * @param p object to set the priority of
+	 */
+	protected void setPriority(Prioritizable p) {
+		if (p != null) {
+			p.setPriorityLevel(level);
+		}
+	}
+
+	/**
+	 * Set the operation to the current priority level
+	 * (normal, low or paused).
 	 */
 	protected void setPriorityInternal() {
-		// Subclasses can override this to set the priority of the operation
+		setPriority(getObjectToPrioritize());
 	}
 
 	/**
 	 * Get the actual priority of the Hits or DocResults object.
 	 * @return the priority level
 	 */
-	public abstract Level getPriorityOfResultsObject();
-
-	/**
-	 * Set the priority/paused status of a Hits object.
-	 *
-	 * @param h the Hits object
-	 */
-	protected void setHitsPriority(Hits h) {
-		if (h != null) {
-			h.setPriorityLevel(level);
-		}
-	}
-
-	/**
-	 * Set the priority/paused status of a DocResults object.
-	 *
-	 * @param docResults the DocResults object
-	 */
-	protected void setDocsPriority(DocResults docResults) {
-		if (docResults != null) {
-			docResults.setPriorityLevel(level);
-		}
+	protected Level getPriorityOfResultsObject() {
+		Prioritizable p = getObjectToPrioritize();
+		return p == null ? Level.RUNNING : p.getPriorityLevel();
 	}
 
 	public void setFinished() {

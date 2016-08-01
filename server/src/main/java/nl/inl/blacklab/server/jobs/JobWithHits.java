@@ -4,7 +4,6 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * A search job that produces a Hits object
@@ -30,19 +29,14 @@ public class JobWithHits extends Job {
 	}
 
 	@Override
-	protected void setPriorityInternal() {
-		setHitsPriority(hits);
-	}
-
-	@Override
-	public Level getPriorityOfResultsObject() {
-		return hits == null ? Level.RUNNING : hits.getPriorityLevel();
-	}
-
-	@Override
 	protected void cleanup() {
 		hits = null;
 		super.cleanup();
+	}
+
+	@Override
+	protected Hits getObjectToPrioritize() {
+		return hits;
 	}
 
 }

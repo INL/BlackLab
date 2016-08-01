@@ -7,7 +7,6 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * Represents a hits search and sort operation.
@@ -78,16 +77,6 @@ public class JobHitsGrouped extends Job {
 	}
 
 	@Override
-	protected void setPriorityInternal() {
-		setHitsPriority(hits);
-	}
-
-	@Override
-	public Level getPriorityOfResultsObject() {
-		return hits == null ? Level.RUNNING : hits.getPriorityLevel();
-	}
-
-	@Override
 	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("hitsRetrieved", hits == null ? -1 : hits.countSoFarHitsRetrieved());
@@ -100,6 +89,11 @@ public class JobHitsGrouped extends Job {
 		groups = null;
 		hits = null;
 		super.cleanup();
+	}
+
+	@Override
+	protected Hits getObjectToPrioritize() {
+		return hits;
 	}
 
 }

@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.ThreadPriority;
 
-public abstract class Hits extends AbstractList<Hit> implements Cloneable {
+public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prioritizable {
 
 	/** In context arrays, how many bookkeeping ints are stored at the start? */
 	public final static int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;
@@ -182,6 +182,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @param level the desired priority level
 	 */
+	@Override
 	public void setPriorityLevel(ThreadPriority.Level level) {
 		etiquette.setPriorityLevel(level);
 	}
@@ -193,6 +194,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable {
 	 *
 	 * @return the current priority level
 	 */
+	@Override
 	public ThreadPriority.Level getPriorityLevel() {
 		return etiquette.getPriorityLevel();
 	}

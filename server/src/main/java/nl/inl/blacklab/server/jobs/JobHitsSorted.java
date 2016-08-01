@@ -5,7 +5,6 @@ import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * Represents a hits search and sort operation.
@@ -50,32 +49,13 @@ public class JobHitsSorted extends JobWithHits {
 		Hits hitsUnsorted = ((JobWithHits)inputJob).getHits();
 		HitSortSettings sortSett = jobDesc.getHitSortSettings();
 		HitProperty sortProp = HitProperty.deserialize(hitsUnsorted, sortSett.sortBy());
-		/*if (sortProp == null)
-			throw new QueryException("UNKNOWN_SORT_PROPERTY", "Unknown sort property '" + sortBy + "'.");
-		*/
 		if (sortProp != null) {
-			// Be lenient of clients passing wrong sortBy values,
-			// e.g. trying to sort a per-document search by hit context.
-			// The problem is that applications might remember your
-			// preferred sort and pass it with subsequent searches, even
-			// if that particular sort cannot be performed on that type of search.
-			// We don't want the client to have to validate this, so we simply
-			// ignore sort requests we can't carry out.
 			hits = hitsUnsorted.sortedBy(sortProp, sortSett.reverse());
-		} else
+		} else {
+			// Be lenient of clients passing wrong sortBy values; simply ignore bad sort requests.
 			hits = hitsUnsorted;
+		}
 		setPriorityInternal();
-	}
-
-	@Override
-	protected void setPriorityInternal() {
-		if (hits != null)
-			setHitsPriority(hits);
-	}
-
-	@Override
-	public Level getPriorityOfResultsObject() {
-		return hits == null ? Level.RUNNING : hits.getPriorityLevel();
 	}
 
 	@Override

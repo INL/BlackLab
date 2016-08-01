@@ -34,6 +34,7 @@ import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 import nl.inl.util.ReverseComparator;
@@ -43,7 +44,7 @@ import nl.inl.util.ThreadPriority.Level;
  * A list of DocResult objects (document-level query results). The list may be sorted by calling
  * DocResults.sort().
  */
-public class DocResults implements Iterable<DocResult> {
+public class DocResults implements Iterable<DocResult>, Prioritizable {
 	/**
 	 * (Part of) our document results
 	 */
@@ -581,12 +582,14 @@ public class DocResults implements Iterable<DocResult> {
 		return sum;
 	}
 
+	@Override
 	public void setPriorityLevel(Level level) {
 		if (sourceHits != null) {
 			sourceHits.setPriorityLevel(level);
 		}
 	}
 
+	@Override
 	public Level getPriorityLevel() {
 		return sourceHits.getPriorityLevel();
 	}

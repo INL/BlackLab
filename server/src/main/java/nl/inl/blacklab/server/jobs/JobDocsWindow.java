@@ -2,10 +2,10 @@ package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.perdocument.DocResultsWindow;
+import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * Represents searching for a window in a larger set of hits.
@@ -75,17 +75,6 @@ public class JobDocsWindow extends Job {
 		window = sourceResults.window(first, requestedWindowSize);
 	}
 
-	@Override
-	protected void setPriorityInternal() {
-		if (sourceResults != null)
-			setDocsPriority(sourceResults);
-	}
-
-	@Override
-	public Level getPriorityOfResultsObject() {
-		return sourceResults == null ? Level.RUNNING : sourceResults.getPriorityLevel();
-	}
-
 	public DocResultsWindow getWindow() {
 		return window;
 	}
@@ -102,6 +91,11 @@ public class JobDocsWindow extends Job {
 	protected void cleanup() {
 		window = null;
 		super.cleanup();
+	}
+
+	@Override
+	protected Prioritizable getObjectToPrioritize() {
+		return sourceResults;
 	}
 
 }

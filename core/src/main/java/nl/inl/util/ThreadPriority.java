@@ -2,6 +2,8 @@ package nl.inl.util;
 
 import org.apache.log4j.Logger;
 
+import nl.inl.blacklab.search.Prioritizable;
+
 /** Allows us to lower thread priority and/or pause thread.
  *
  * The thread must cooperate by calling behave() regularly.
@@ -9,7 +11,7 @@ import org.apache.log4j.Logger;
  * it's not particularly portable / practical to use (differences
  * in priority between OS'es, needs root on Linux, etc.)
  */
-public class ThreadPriority {
+public class ThreadPriority implements Prioritizable {
 
 	/**
 	 * The different priorities a thread can have in our system.
@@ -43,10 +45,12 @@ public class ThreadPriority {
 		reset();
 	}
 
+	@Override
 	public void setPriorityLevel(Level level) {
 		this.level = level;
 	}
 
+	@Override
 	public Level getPriorityLevel() {
 		return level;
 	}

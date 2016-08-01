@@ -5,7 +5,6 @@ import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * Represents searching for a window in a larger set of hits.
@@ -81,16 +80,6 @@ public class JobHitsWindow extends Job {
 	}
 
 	@Override
-	protected void setPriorityInternal() {
-		setHitsPriority(hitsWindow);
-	}
-
-	@Override
-	public Level getPriorityOfResultsObject() {
-		return hitsWindow == null ? Level.RUNNING : hitsWindow.getPriorityLevel();
-	}
-
-	@Override
 	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
 		DataObjectMapElement d = super.toDataObject(debugInfo);
 		d.put("requestedWindowSize", requestedWindowSize);
@@ -102,6 +91,11 @@ public class JobHitsWindow extends Job {
 	protected void cleanup() {
 		hitsWindow = null;
 		super.cleanup();
+	}
+
+	@Override
+	protected HitsWindow getObjectToPrioritize() {
+		return hitsWindow;
 	}
 
 }

@@ -10,7 +10,6 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * Represents a hits search and sort operation.
@@ -73,17 +72,6 @@ public class JobFacets extends Job {
 		counts = theCounts; // we're done, caller can use the groups now
 	}
 
-	@Override
-	protected void setPriorityInternal() {
-		if (docResults != null)
-			setDocsPriority(docResults);
-	}
-
-	@Override
-	public Level getPriorityOfResultsObject() {
-		return docResults == null ? Level.RUNNING : docResults.getPriorityLevel();
-	}
-
 	public Map<String, DocCounts> getCounts() {
 		return counts;
 	}
@@ -105,6 +93,11 @@ public class JobFacets extends Job {
 		counts = null;
 		docResults = null;
 		super.cleanup();
+	}
+
+	@Override
+	protected DocResults getObjectToPrioritize() {
+		return docResults;
 	}
 
 }

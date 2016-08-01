@@ -5,7 +5,6 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * Represents finding the total number of hits.
@@ -48,16 +47,6 @@ public class JobHitsTotal extends Job {
 		}
 	}
 
-	@Override
-	protected void setPriorityInternal() {
-		setHitsPriority(hits);
-	}
-
-	@Override
-	public Level getPriorityOfResultsObject() {
-		return hits == null ? Level.RUNNING : hits.getPriorityLevel();
-	}
-
 	/**
 	 * Returns the Hits object when available.
 	 *
@@ -78,6 +67,11 @@ public class JobHitsTotal extends Job {
 	protected void cleanup() {
 		hits = null;
 		super.cleanup();
+	}
+
+	@Override
+	protected Hits getObjectToPrioritize() {
+		return hits;
 	}
 
 }

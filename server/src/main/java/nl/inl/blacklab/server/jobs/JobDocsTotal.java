@@ -5,7 +5,6 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * Represents finding the total number of docs.
@@ -50,17 +49,6 @@ public class JobDocsTotal extends Job {
 		}
 	}
 
-	@Override
-	protected void setPriorityInternal() {
-		if (docResults != null)
-			setDocsPriority(docResults);
-	}
-
-	@Override
-	public Level getPriorityOfResultsObject() {
-		return docResults == null ? Level.RUNNING : docResults.getPriorityLevel();
-	}
-
 	/**
 	 * Returns the DocResults object when available.
 	 *
@@ -81,6 +69,11 @@ public class JobDocsTotal extends Job {
 	protected void cleanup() {
 		docResults = null;
 		super.cleanup();
+	}
+
+	@Override
+	protected DocResults getObjectToPrioritize() {
+		return docResults;
 	}
 
 }
