@@ -27,7 +27,7 @@ public class AuthDebugUrl {
 		// Is client on debug IP and is there a userid parameter?
 		String userId = null;
 		SearchManager searchMan = ((BlackLabServer)servlet).getSearchManager();
-		if (searchMan.mayOverrideUserId(request.getRemoteAddr()) && request.getParameter("userid") != null) {
+		if (searchMan.config().overrideUserId(request.getRemoteAddr()) && request.getParameter("userid") != null) {
 			userId = request.getParameter("userid");
 		}
 

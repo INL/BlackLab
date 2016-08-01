@@ -5,7 +5,6 @@ import javax.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.dataobject.DataFormat;
 import nl.inl.blacklab.server.dataobject.DataObject;
-import nl.inl.blacklab.server.search.SearchManager;
 
 import org.apache.log4j.Logger;
 
@@ -125,7 +124,7 @@ public class Response {
 	}
 
 	public static Response illegalIndexName(String shortName) {
-		return badRequest("ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + SearchManager.ILLEGAL_NAME_ERROR);
+		return badRequest("ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + Response.ILLEGAL_NAME_ERROR);
 	}
 
 	/** HTTP response status code to use. */
@@ -139,6 +138,8 @@ public class Response {
 
 	/** If true, the client may cache this response. If false, it should never cache this. */
 	boolean cacheAllowed = true;
+
+	public static final String ILLEGAL_NAME_ERROR = "is not a valid index name (only letters, digits, underscores and dashes allowed, and must start with a letter)";
 
 	public Response(DataObject dataObject, int httpStatusCode) {
 		this.dataObject = dataObject;

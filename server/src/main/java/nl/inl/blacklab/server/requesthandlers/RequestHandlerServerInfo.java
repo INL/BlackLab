@@ -53,7 +53,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
 		response.put("user", doUser);
 		response.put("helpPageUrl", servlet.getServletContext().getContextPath() + "/help");
 		if (debugMode) {
-			response.put("cacheStatus", searchMan.getCacheStatusDataObject());
+			response.put("cacheStatus", searchMan.getCache().getCacheStatusDataObject());
 		}
 
 		Response responseObj = new Response(response);

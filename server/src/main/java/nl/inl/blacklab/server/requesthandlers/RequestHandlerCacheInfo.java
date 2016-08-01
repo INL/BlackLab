@@ -22,8 +22,8 @@ public class RequestHandlerCacheInfo extends RequestHandler {
 		boolean debugInfo = strDebugInfo == null ? false : strDebugInfo.matches("true|yes|1");
 
 		DataObjectMapElement response = new DataObjectMapElement();
-		response.put("cacheStatus", searchMan.getCacheStatusDataObject());
-		response.put("cacheContents", searchMan.getCacheContentsDataObject(debugInfo));
+		response.put("cacheStatus", searchMan.getCache().getCacheStatusDataObject());
+		response.put("cacheContents", searchMan.getCache().getContentsDataObject(debugInfo));
 
 		Response r = new Response(response);
 		r.setCacheAllowed(false);

@@ -1,12 +1,12 @@
 package nl.inl.blacklab.server.exceptions;
 
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.requesthandlers.Response;
 
 public class IllegalIndexName extends BadRequest {
 
 	public IllegalIndexName(String indexName) {
-		super("ILLEGAL_INDEX_NAME", "\"" + shortName(indexName) + "\" " + SearchManager.ILLEGAL_NAME_ERROR);
+		super("ILLEGAL_INDEX_NAME", "\"" + shortName(indexName) + "\" " + Response.ILLEGAL_NAME_ERROR);
 	}
 
 	private static String shortName(String indexName) {

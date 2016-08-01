@@ -223,4 +223,19 @@ public class BlsUtils {
 		}
 	};
 
+	/**
+	 * Check the index name part (not the user id part, if any)
+	 * of the specified index name.
+	 *
+	 * @param indexName the index name, possibly including user id prefix
+	 * @return whether or not the index name part is valid
+	 */
+	public static boolean isValidIndexName(String indexName) {
+		if (indexName.contains(":")) {
+			String[] parts = indexName.split(":");
+			indexName = parts[1];
+		}
+		return indexName.matches("[a-zA-Z][a-zA-Z0-9_\\-]*");
+	}
+
 }

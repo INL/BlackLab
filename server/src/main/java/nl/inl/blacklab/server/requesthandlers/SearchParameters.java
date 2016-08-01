@@ -273,12 +273,12 @@ public class SearchParameters {
 
 	private MaxSettings getMaxSettings() {
 		int maxRetrieve = getInteger("maxretrieve");
-		if (searchManager.getMaxHitsToRetrieveAllowed() >= 0 && maxRetrieve > searchManager.getMaxHitsToRetrieveAllowed()) {
-			maxRetrieve = searchManager.getMaxHitsToRetrieveAllowed();
+		if (searchManager.config().maxHitsToRetrieveAllowed() >= 0 && maxRetrieve > searchManager.config().maxHitsToRetrieveAllowed()) {
+			maxRetrieve = searchManager.config().maxHitsToRetrieveAllowed();
 		}
 		int maxCount = getInteger("maxcount");
-		if (searchManager.getMaxHitsToCountAllowed() >= 0 && maxCount > searchManager.getMaxHitsToCountAllowed()) {
-			maxCount = searchManager.getMaxHitsToCountAllowed();
+		if (searchManager.config().maxHitsToCountAllowed() >= 0 && maxCount > searchManager.config().maxHitsToCountAllowed()) {
+			maxCount = searchManager.config().maxHitsToCountAllowed();
 		}
 		return new MaxSettings(maxRetrieve, maxCount);
 	}
@@ -291,7 +291,7 @@ public class SearchParameters {
 
 	public ContextSettings getContextSettings() {
 		int contextSize = getInteger("wordsaroundhit");
-		int maxContextSize = searchManager.getMaxContextSize();
+		int maxContextSize = searchManager.config().maxContextSize();
 		if (contextSize > maxContextSize) {
 			//debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
 			contextSize = maxContextSize;

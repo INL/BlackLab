@@ -18,7 +18,7 @@ public class RequestHandlerClearCache extends RequestHandler {
 	public Response handle() {
 		if (!debugMode)
 			return Response.forbidden();
-		searchMan.clearCache();
+		searchMan.getCache().clearCache();
 		return Response.status("SUCCESS", "Cache cleared succesfully.", HttpServletResponse.SC_OK);
 	}
 

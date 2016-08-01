@@ -41,8 +41,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 			if (first < 0)
 				first = 0;
 			int number = searchParam.getInteger("number");
-			if (number < 0 || number > searchMan.getMaxPageSize())
-				number = searchMan.getDefaultPageSize();
+			if (number < 0 || number > searchMan.config().maxPageSize())
+				number = searchMan.config().defaultPageSize();
 			int i = 0;
 			for (HitGroup group: groups) {
 				if (i >= first && i < first + number) {

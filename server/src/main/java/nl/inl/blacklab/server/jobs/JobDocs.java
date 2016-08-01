@@ -60,7 +60,7 @@ public class JobDocs extends JobWithDocs {
 			// Documents only
 			Query filterQuery = jobDesc.getFilterQuery();
 			if (filterQuery == null) {
-				if (SearchManager.isAllDocsQueryAllowed())
+				if (searchMan.config().isAllDocsQueryAllowed())
 					filterQuery = new MatchAllDocsQuery();
 				else
 					throw new Forbidden("You must specify at least a filter query.");

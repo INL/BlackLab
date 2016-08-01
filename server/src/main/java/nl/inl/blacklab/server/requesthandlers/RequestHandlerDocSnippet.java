@@ -63,8 +63,8 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 		}
 		int snippetStart = Math.max(0, start - wordsAroundHit);
 		int snippetEnd = end + wordsAroundHit;
-		if (snippetEnd - snippetStart > searchMan.getMaxSnippetSize()) {
-			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.getMaxSnippetSize() + " words.");
+		if (snippetEnd - snippetStart > searchMan.config().maxSnippetSize()) {
+			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
 		}
 		if (start < 0 || end < 0 || wordsAroundHit * 2 + end - start <= 0 || end < start || wordsAroundHit < 0) {
 			throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");

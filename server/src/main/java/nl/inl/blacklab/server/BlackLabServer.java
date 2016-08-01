@@ -141,12 +141,12 @@ public class BlackLabServer extends HttpServlet {
 			HttpServletResponse responseObject,
 			Response response) {
 
-		boolean debugMode = searchManager.isDebugMode(request.getRemoteAddr());
+		boolean debugMode = searchManager.config().isDebugMode(request.getRemoteAddr());
 
 		// Determine response type
 		DataFormat outputType = response.getOverrideType(); // some responses override the user's request (i.e. article XML)
 		if (outputType == null) {
-			outputType = ServletUtil.getOutputType(request, searchManager.getDefaultOutputType());
+			outputType = ServletUtil.getOutputType(request, searchManager.config().defaultOutputType());
 		}
 
 		// Is this a JSONP request?
@@ -158,7 +158,7 @@ public class BlackLabServer extends HttpServlet {
 			responseObject.setStatus(response.getHttpStatusCode());
 		responseObject.setCharacterEncoding("utf-8");
 		responseObject.setContentType(ServletUtil.getContentType(outputType));
-		int cacheTime = response.isCacheAllowed() ? searchManager.getClientCacheTimeSec() : 0;
+		int cacheTime = response.isCacheAllowed() ? searchManager.config().clientCacheTimeSec() : 0;
 		ServletUtil.writeCacheHeaders(responseObject, cacheTime);
 
 		try {

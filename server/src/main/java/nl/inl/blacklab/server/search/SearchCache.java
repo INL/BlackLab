@@ -15,56 +15,39 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDescription;
-import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.util.MemoryUtil;
+import nl.inl.util.ThreadPriority;
 import nl.inl.util.ThreadPriority.Level;
 import nl.inl.util.json.JSONObject;
 
 import org.apache.log4j.Logger;
 
-class SearchCache {
+public class SearchCache {
 	private static final Logger logger = Logger.getLogger(SearchCache.class);
 
-	/** Max time searches are allowed to run (5 minutes) */
-	private static int maxSearchTimeSec = 5 * 60;
+	/**
+	 * If enabled, this makes sure the SearchCache will follow the behaviour
+	 * rules set in blacklab-server.json to lowprio/pause searches in certain
+	 * situations under certain loads.
+	 * (EXPERIMENTAL)
+	 */
+	static final boolean ENABLE_THREAD_PRIORITY = true;
 
-	/** @param maxSearchTimeSec Max time searches are allowed to run (default: 300s == 5 minutes) */
-	static void setMaxSearchTimeSec(int maxSearchTimeSec) {
-		SearchCache.maxSearchTimeSec = maxSearchTimeSec;
-	}
-
-	static int getMaxSearchTimeSec() {
-		return maxSearchTimeSec;
-	}
+	/** Our configuration */
+	private BlsConfigCacheAndPerformance config;
 
 	/** The cached search objects. */
 	private Map<String, Job> cachedSearches;
-
-	/** Maximum size in MB to target, or -1 for no limit. NOT IMPLEMENTED YET. */
-	private long maxSizeMegs = -1;
-
-	/** Maximum number of searches to cache, or -1 for no limit. Defaults to 100.*/
-	private int maxNumberOfJobs = 100;
-
-	/** Maximum age of a cached search in seconds. May be exceeded because it is only cleaned up when
-	 *  adding new searches. Defaults to one hour. */
-	private int maxJobAgeSec = 3600;
 
 	/** (Estimated) size of the cache. Only updated in removeOldSearches, so may not
 	 * always be accurate. */
 	private long cacheSizeBytes;
 
-	/** How much free memory we should try to target when cleaning the cache. */
-	private long minFreeMemTargetMegs;
-
-	/** If we're below target mem, how many jobs should we get rid of each time we add something to the cache? */
-	private int numberOfJobsToPurgeWhenBelowTargetMem;
-
-	private int maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
-
-	private boolean autoDetectMaxConcurrent = true;
-
-	private int maxPausedSearches = 10;
+	/**
+	 * A thread that ensures load management continues even if
+	 * no new requests are coming in.
+	 */
+	private Thread loadManagerThread;
 
 	/**
 	 * Initialize the cache.
@@ -72,21 +55,27 @@ class SearchCache {
 	 * @param settings cache settings
 	 */
 	public SearchCache(JSONObject settings) {
-		cachedSearches = new HashMap<>();
-		maxJobAgeSec = JsonUtil.getIntProp(settings, "maxJobAgeSec", 3600);
-		maxNumberOfJobs = JsonUtil.getIntProp(settings, "maxNumberOfJobs", 20);
-		maxSizeMegs = JsonUtil.getIntProp(settings, "maxSizeMegs", -1);
-		minFreeMemTargetMegs = JsonUtil.getIntProp(settings, "targetFreeMemMegs", 100);
-		numberOfJobsToPurgeWhenBelowTargetMem = JsonUtil.getIntProp(settings, "numberOfJobsToPurgeWhenBelowTargetMem", 100);
-	}
 
-	public SearchCache() {
+		// Cache properties
+		JSONObject cacheProp = settings == null ? null : settings.getJSONObject("cache");
+		config = new BlsConfigCacheAndPerformance(cacheProp);
+
+		JSONObject jsonServerLoad = null;
+		if (settings != null && settings.has("serverLoad")) {
+			// Load manager stuff (experimental)
+			jsonServerLoad = settings.getJSONObject("serverLoad");
+			config.setServerLoadOptions(jsonServerLoad);
+
+			// Make sure long operations yield their thread occasionally,
+			// and automatically abort really long operations.
+			ThreadPriority.setEnabled(ENABLE_THREAD_PRIORITY);
+		}
+
 		cachedSearches = new HashMap<>();
-		maxJobAgeSec = 3600;
-		maxNumberOfJobs = 20;
-		maxSizeMegs = -1;
-		minFreeMemTargetMegs = 100;
-		numberOfJobsToPurgeWhenBelowTargetMem = 100;
+
+		loadManagerThread = new LoadManagerThread(this);
+		loadManagerThread.start();
+
 	}
 
 	/**
@@ -113,7 +102,7 @@ class SearchCache {
 	 * @param search the search object
 	 */
 	public void put(Job search) {
-		if (maxNumberOfJobs <= 0)
+		if (config.getMaxNumberOfJobs() <= 0)
 			return;
 
 		removeOldSearches();
@@ -166,7 +155,7 @@ class SearchCache {
 	 *
 	 * @param cancelRunning if true, cancels all running searches as well.
 	 */
-	public void clearCache(boolean cancelRunning) {
+	private void clearCache(boolean cancelRunning) {
 		for (Job cachedSearch: cachedSearches.values()) {
 			if (!cachedSearch.finished())
 				cachedSearch.cancelJob();
@@ -174,6 +163,14 @@ class SearchCache {
 		}
 		cachedSearches.clear();
 		logger.debug("Cache cleared.");
+	}
+
+	public void cleanup() {
+		// Stop the load manager thread
+		loadManagerThread.interrupt();
+		loadManagerThread = null;
+
+		clearCache(true);
 	}
 
 	/**
@@ -191,8 +188,8 @@ class SearchCache {
 		// If we're low on memory, always remove a few searches from cache.
 		int minSearchesToRemove = 0;
 		long freeMegs = MemoryUtil.getFree() / 1000000;
-		if (freeMegs < minFreeMemTargetMegs) {
-			minSearchesToRemove = numberOfJobsToPurgeWhenBelowTargetMem; // arbitrary, number but will keep on being removed every call until enough free mem has been reclaimed
+		if (freeMegs < config.getMinFreeMemTargetMegs()) {
+			minSearchesToRemove = config.getNumberOfJobsToPurgeWhenBelowTargetMem(); // arbitrary, number but will keep on being removed every call until enough free mem has been reclaimed
 			logger.debug("Not enough free mem, will remove some searches.");
 		}
 
@@ -202,7 +199,7 @@ class SearchCache {
 		for (int i = lastAccessOrder.size() - 1; i >= 0; i--) {
 			Job search = lastAccessOrder.get(i);
 
-			if (!search.finished() && search.userWaitTime() > maxSearchTimeSec) {
+			if (!search.finished() && search.userWaitTime() > config.getMaxSearchTimeSec()) {
 				// Search is taking too long. Cancel it.
 				logger.debug("Search is taking too long, cancelling: " + search);
 				abortSearch(search);
@@ -250,10 +247,10 @@ class SearchCache {
 	 * @return true iff the cache is too big.
 	 */
 	private boolean cacheTooBig() {
-		boolean tooManySearches = maxNumberOfJobs >= 0
-				&& cachedSearches.size() > maxNumberOfJobs;
+		boolean tooManySearches = config.getMaxNumberOfJobs() >= 0
+				&& cachedSearches.size() > config.getMaxNumberOfJobs();
 		long cacheSizeMegs = cacheSizeBytes / 1000000;
-		boolean tooMuchMemory = maxSizeMegs >= 0 && cacheSizeMegs > maxSizeMegs;
+		boolean tooMuchMemory = config.getMaxSizeMegs() >= 0 && cacheSizeMegs > config.getMaxSizeMegs();
 		return tooManySearches || tooMuchMemory;
 	}
 
@@ -266,103 +263,27 @@ class SearchCache {
 	 * @return true iff the search is too old
 	 */
 	private boolean searchTooOld(Job search) {
-		boolean tooOld = maxJobAgeSec >= 0 && search.cacheAge() > maxJobAgeSec;
+		boolean tooOld = config.getMaxJobAgeSec() >= 0 && search.cacheAge() > config.getMaxJobAgeSec();
 		return tooOld;
 	}
 
-	/**
-	 * Return the maximum size of the cache to target, in bytes.
-	 *
-	 * @return targeted max. size of the cache in bytes, or -1 for no limit
-	 */
-	public long getMaxSizeBytes() {
-		return maxSizeMegs;
-	}
-
-	/**
-	 * Set the maximum size of the cache to target, in bytes.
-	 *
-	 * NOTE: the maximum size is checked based on a rough estimate of the
-	 * memory consumed by each search. Also, the specified value may be exceeded
-	 * because Search objects are added to the cache before the search is executed,
-	 * so they grow in size. Choose a conservative size and monitor memory usage in
-	 * practice.
-	 *
-	 * @param maxSizeBytes targeted max. size of the cache in bytes, or -1 for no limit
-	 */
-	public void setMaxSizeBytes(long maxSizeBytes) {
-		this.maxSizeMegs = maxSizeBytes;
-		removeOldSearches();
-	}
-
-	/**
-	 * Return the maximum size of the cache in number of searches.
-	 * @return the maximum size, or -1 for no limit
-	 */
-	public int getMaxJobsToCache() {
-		return maxNumberOfJobs;
-	}
-
-	/**
-	 * Set the maximum size of the cache in number of searches.
-	 * @param maxJobs the maximum size, or -1 for no limit
-	 */
-	public void setMaxJobsToCache(int maxJobs) {
-		this.maxNumberOfJobs = maxJobs;
-		removeOldSearches();
-	}
-
-	/**
-	 * Return the maximum age of a search in the cache.
-	 *
-	 * The age is defined as the period of time since the last access.
-	 *
-	 * @return the maximum age, or -1 for no limit
-	 */
-	public int getMaxJobAgeSec() {
-		return maxJobAgeSec;
-	}
-
-	/**
-	 * Set the maximum age of a search in the cache.
-	 *
-	 * The age is defined as the period of time since the last access.
-	 *
-	 * @param maxJobAgeSec the maximum age, or -1 for no limit
-	 */
-	public void setMaxJobAgeSec(int maxJobAgeSec) {
-		this.maxJobAgeSec = maxJobAgeSec;
-	}
-
-	public long getSizeBytes() {
-		return calculateSizeBytes(cachedSearches.values());
-	}
-
-	public int getNumberOfSearches() {
-		return cachedSearches.size();
-	}
-
-	public int numberOfRunningSearches() {
-		int n = 0;
-		for (Job job: cachedSearches.values()) {
-			if (!job.finished() && !job.isWaitingForOtherJob() && job.getPriorityLevel() != Level.PAUSED) {
-				n++;
-			}
-		}
-		return n;
-	}
-
-	public void setMinFreeMemTargetBytes(long minFreeMemTargetBytes) {
-		this.minFreeMemTargetMegs = minFreeMemTargetBytes;
-	}
+//	public int numberOfRunningSearches() {
+//		int n = 0;
+//		for (Job job: cachedSearches.values()) {
+//			if (!job.finished() && !job.isWaitingForOtherJob() && job.getPriorityLevel() != Level.PAUSED) {
+//				n++;
+//			}
+//		}
+//		return n;
+//	}
 
 	public DataObject getCacheStatusDataObject() {
 		DataObjectMapElement doCache = new DataObjectMapElement();
-		doCache.put("maxSizeBytes", getMaxSizeBytes());
-		doCache.put("maxNumberOfSearches", getMaxJobsToCache());
-		doCache.put("maxSearchAgeSec", getMaxJobAgeSec());
-		doCache.put("sizeBytes", getSizeBytes());
-		doCache.put("numberOfSearches", getNumberOfSearches());
+		doCache.put("maxSizeBytes", config.getMaxSizeMegs() * 1000 * 1000);
+		doCache.put("maxNumberOfSearches", config.getMaxNumberOfJobs());
+		doCache.put("maxSearchAgeSec", config.getMaxJobAgeSec());
+		doCache.put("sizeBytes", calculateSizeBytes(cachedSearches.values()));
+		doCache.put("numberOfSearches", cachedSearches.size());
 		return doCache;
 	}
 
@@ -392,13 +313,9 @@ class SearchCache {
 	 */
 	void performLoadManagement(Job newSearch) {
 
-		if (autoDetectMaxConcurrent) {
+		if (config.shouldAutoDetectMaxConcurrent()) {
 			// Autodetect number of CPUs
-			int n = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
-			if (n != maxConcurrentSearches) {
-				logger.debug("maxConcurrentSearches autodetect: changed from " + maxConcurrentSearches + " to " + n);
-				maxConcurrentSearches = n;
-			}
+			config.autoAdjustMaxConcurrent();
 		}
 
 		List<Job> searches = new ArrayList<>(cachedSearches.values());
@@ -406,8 +323,8 @@ class SearchCache {
 		// Sort the searches based on descending "worthiness"
 		Collections.sort(searches);
 
-		int coresLeft = maxConcurrentSearches;
-		int pauseSlotsLeft = maxPausedSearches;
+		int coresLeft = config.getMaxConcurrentSearches();
+		int pauseSlotsLeft = config.getMaxPausedSearches();
 		//logger.debug("=== LOADMGR: START. cores=" + coresLeft + ", pauseSlots=" + pauseSlotsLeft);
 		//int cacheSlotsLeft = maxNumberOfJobs;
 		for (Job search: searches) {
@@ -492,18 +409,8 @@ class SearchCache {
 		removeFromCache(search);
 	}
 
-	public void setServerLoadOptions(JSONObject jsonServerLoad) {
-		maxConcurrentSearches = 1;
-		if (jsonServerLoad != null)
-			maxConcurrentSearches = JsonUtil.getIntProp(jsonServerLoad, "maxConcurrentSearches", -1);
-		autoDetectMaxConcurrent = maxConcurrentSearches <= 0;
-		if (autoDetectMaxConcurrent) {
-			maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
-			logger.debug("Autodetect maxConcurrentSearches: " + maxConcurrentSearches);
-		}
-
-		maxPausedSearches = 10;
-		if (jsonServerLoad != null)
-			maxPausedSearches = JsonUtil.getIntProp(jsonServerLoad, "maxPausedSearches", 10);
+	int getMaxSearchTimeSec() {
+		return config.getMaxSearchTimeSec();
 	}
+
 }

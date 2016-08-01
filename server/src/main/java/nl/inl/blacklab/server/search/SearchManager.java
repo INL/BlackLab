@@ -20,8 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.server.dataobject.DataFormat;
-import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
@@ -37,11 +35,9 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.JsonUtil;
-import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 import nl.inl.util.MemoryUtil;
-import nl.inl.util.ThreadPriority;
 import nl.inl.util.json.JSONArray;
 import nl.inl.util.json.JSONException;
 import nl.inl.util.json.JSONObject;
@@ -51,68 +47,14 @@ public class SearchManager {
 
 	private static final int MAX_USER_INDICES = 10;
 
-	public static final String ILLEGAL_NAME_ERROR = "is not a valid index name (only letters, digits, underscores and dashes allowed, and must start with a letter)";
-
-	/**
-	 * If enabled, this makes sure the SearchCache will follow the behaviour
-	 * rules set in blacklab-server.json to lowprio/pause searches in certain
-	 * situations under certain loads.
-	 * (EXPERIMENTAL)
-	 */
-	static final boolean ENABLE_THREAD_PRIORITY = true;
-
-	/**
-	 * Are we allowed to query the list of all document?
-	 * (slow for large corpora)
-	 * TODO: make configurable
-	 */
-	private static boolean allDocsQueryAllowed = false;
-
-	/**
-	 * Check the index name part (not the user id part, if any)
-	 * of the specified index name.
-	 *
-	 * @param indexName the index name, possibly including user id prefix
-	 * @return whether or not the index name part is valid
-	 */
-	public static boolean isValidIndexName(String indexName) {
-		if (indexName.contains(":")) {
-			String[] parts = indexName.split(":");
-			indexName = parts[1];
-		}
-		return indexName.matches("[a-zA-Z][a-zA-Z0-9_\\-]*");
-	}
-
-	/**
-	 * Are we allowed to query the list of all document?
-	 * (slow for large corpora)
-	 * @return true if we are, false if not
-	 */
-	public static boolean isAllDocsQueryAllowed() {
-		return allDocsQueryAllowed;
-	}
-
 	/**
 	 * When the SearchManager was created. Used in logging to show ms since
 	 * server start instead of all-time.
 	 */
 	long createdAt = System.currentTimeMillis();
 
-	/** Maximum context size allowed */
-	private int maxContextSize;
-
-	/** Maximum snippet size allowed */
-	private int maxSnippetSize;
-
-	private int defaultMaxHitsToRetrieve;
-
-	private int defaultMaxHitsToCount;
-
-	/** Default number of hits/results per page [20] */
-	private int defaultPageSize;
-
-	/** Maximum value allowed for number parameter */
-	private int maxPageSize;
+	/** Our config */
+	private BlsConfig config;
 
 	/** Our current set of indices (with dir and mayViewContent setting) */
 	private Map<String, IndexParam> indexParam;
@@ -125,9 +67,6 @@ public class SearchManager {
 
 	/** The Searcher objects, one for each of the indices we can search. */
 	private Map<String, Searcher> searchers = new HashMap<>();
-
-//	/** The IndexJob objects, one for each of the indices we're adding to. */
-//	private Map<String, IndexJob> indexJobs = new HashMap<String, IndexJob>();
 
 	/** Configured index collections directories */
 	private List<File> collectionsDirs;
@@ -144,168 +83,22 @@ public class SearchManager {
 	/** Keeps track of running jobs per user, so we can limit this. */
 	private Map<String, Set<Job>> runningJobsPerUser = new HashMap<>();
 
-	/** Default case-sensitivity to use. [insensitive] */
-	private boolean defaultCaseSensitive;
-
-	/** Default diacritics-sensitivity to use. [insensitive] */
-	private boolean defaultDiacriticsSensitive;
-
-	/** Default number of words around hit. [5] */
-	private int defaultContextSize;
-
-	/** Minimum amount of free memory (MB) to start a new search. [50] */
-	private int minFreeMemForSearchMegs;
-
-	/**
-	 * Maximum number of simultaneously running jobs started by the same user.
-	 * [20] Please note that a search may start 2-4 jobs, so don't set this too
-	 * low. This is just meant to prevent over-eager scripts and other abuse.
-	 * Regular users should never hit this limit.
-	 */
-	private long maxRunningJobsPerUser;
-
-	/** IP addresses for which debug mode will be turned on. */
-	private Set<String> debugModeIps = new HashSet<>();
-
-	/** The default output type, JSON or XML. */
-	private DataFormat defaultOutputType;
-
-	/**
-	 * Which IPs are allowed to override the userId using a parameter.
-	 */
-	private Set<String> overrideUserIdIps;
-
-	/**
-	 * How long the client may used a cached version of the results we give
-	 * them. This is used to write HTTP cache headers. A value of an hour or so
-	 * seems reasonable.
-	 */
-	private int clientCacheTimeSec;
-
-	/** Maximum allowed value for maxretrieve parameter (-1 = no limit). */
-	private int maxHitsToRetrieveAllowed;
-
-	/** Maximum allowed value for maxcount parameter (-1 = no limit). */
-	private int maxHitsToCountAllowed;
-
-	/** The authentication system, giving information about the currently logged-in user
-        (or at least a session id) */
-	private Object authSystem;
-
-	/** The method to invoke for determining the current user. */
-	private Method authMethodDetermineCurrentUser;
-
-	/**
-	 * A thread that calls performLoadSpecificBehaviour(null) regularly,
-	 * to ensure load management continues even if no new requests are coming in.
-	 */
-	private Thread loadManagerThread;
+	/** System for determining the current user. */
+	private AuthSystem authSystem;
 
 	public SearchManager(JSONObject properties) throws ConfigurationException {
 		logger.debug("SearchManager created");
 
 		try {
-			// this.properties = properties;
-			if (properties.has("debugModeIps")) {
-				JSONArray jsonDebugModeIps = properties
-						.getJSONArray("debugModeIps");
-				for (int i = 0; i < jsonDebugModeIps.length(); i++) {
-					debugModeIps.add(jsonDebugModeIps.getString(i));
-				}
-			}
+			config = new BlsConfig(properties);
 
-			// Request properties
-			if (properties.has("requests")) {
-				JSONObject reqProp = properties.getJSONObject("requests");
-				defaultOutputType = DataFormat.XML; // XML if nothing specified
-													// (because
-													// of browser's default Accept
-													// header)
-				if (reqProp.has("defaultOutputType"))
-					defaultOutputType = ServletUtil.getOutputTypeFromString(
-							reqProp.getString("defaultOutputType"), DataFormat.XML);
-				defaultPageSize = JsonUtil.getIntProp(reqProp, "defaultPageSize",
-						20);
-				maxPageSize = JsonUtil.getIntProp(reqProp, "maxPageSize", 1000);
-				String defaultSearchSensitivity = JsonUtil.getProperty(reqProp,
-						"defaultSearchSensitivity", "insensitive");
-				switch(defaultSearchSensitivity) {
-				case "sensitive":
-					defaultCaseSensitive = defaultDiacriticsSensitive = true;
-					break;
-				case "case":
-					defaultCaseSensitive = true;
-					defaultDiacriticsSensitive = false;
-					break;
-				case "diacritics":
-					defaultDiacriticsSensitive = true;
-					defaultCaseSensitive = false;
-					break;
-				default:
-					defaultCaseSensitive = defaultDiacriticsSensitive = false;
-					break;
-				}
-				defaultContextSize = JsonUtil.getIntProp(reqProp,
-						"defaultContextSize", 5);
-				maxContextSize = JsonUtil.getIntProp(reqProp, "maxContextSize", 20);
-				maxSnippetSize = JsonUtil
-						.getIntProp(reqProp, "maxSnippetSize", 100);
-				defaultMaxHitsToRetrieve = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToRetrieve", Searcher.DEFAULT_MAX_RETRIEVE);
-				defaultMaxHitsToCount = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToCount", Searcher.DEFAULT_MAX_COUNT);
-				maxHitsToRetrieveAllowed = JsonUtil.getIntProp(reqProp,
-						"maxHitsToRetrieveAllowed", 10000000);
-				maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp,
-						"maxHitsToCountAllowed", -1);
-				JSONArray jsonOverrideUserIdIps = reqProp
-						.getJSONArray("overrideUserIdIps");
-				overrideUserIdIps = new HashSet<>();
-				for (int i = 0; i < jsonOverrideUserIdIps.length(); i++) {
-					overrideUserIdIps.add(jsonOverrideUserIdIps.getString(i));
-				}
-			} else {
-				defaultOutputType = DataFormat.XML;
-				defaultPageSize = 20;
-				maxPageSize = 1000;
-				defaultCaseSensitive = defaultDiacriticsSensitive = false;
-				defaultContextSize = 5;
-				maxContextSize = 20;
-				maxSnippetSize = 100;
-				maxHitsToRetrieveAllowed = 10000000;
-				maxHitsToCountAllowed = -1;
-				overrideUserIdIps = new HashSet<>();
-			}
+			// Performance properties [optional, defaults will be used if missing]
+			JSONObject perfProp = null;
+			if (properties.has("performance"))
+				perfProp = properties.getJSONObject("performance");
 
-			// Performance properties
-			if (properties.has("performance")) {
-				JSONObject perfProp = properties.getJSONObject("performance");
-				minFreeMemForSearchMegs = JsonUtil.getIntProp(perfProp, "minFreeMemForSearchMegs", 50);
-				maxRunningJobsPerUser = JsonUtil.getIntProp(perfProp, "maxRunningJobsPerUser", 20);
-				clientCacheTimeSec = JsonUtil.getIntProp(perfProp, "clientCacheTimeSec", 3600);
-
-				// Cache properties
-				JSONObject cacheProp = perfProp.getJSONObject("cache");
-
-				// Start with empty cache
-				cache = new SearchCache(cacheProp);
-
-				JSONObject jsonServerLoad = null;
-				if (perfProp.has("serverLoad")) {
-					// Load manager stuff (experimental)
-
-					// Make sure long operations yield their thread occasionally,
-					// and automatically abort really long operations.
-					ThreadPriority.setEnabled(ENABLE_THREAD_PRIORITY);
-
-					jsonServerLoad = perfProp.getJSONObject("serverLoad");
-				}
-				cache.setServerLoadOptions(jsonServerLoad);
-			} else {
-				// Set default values
-				minFreeMemForSearchMegs = 50;
-				maxRunningJobsPerUser = 20;
-				clientCacheTimeSec = 3600;
-				cache = new SearchCache();
-			}
+			// Create the cache
+			cache = new SearchCache(perfProp);
 
 			// Find the indices
 			indexParam = new HashMap<>();
@@ -420,8 +213,9 @@ public class SearchManager {
 						authClass = "nl.inl.blacklab.server.auth." + authClass;
 					}
 					Class<?> cl = Class.forName(authClass);
-					authSystem = cl.getConstructor(Map.class).newInstance(authParam);
-					authMethodDetermineCurrentUser = cl.getMethod("determineCurrentUser", HttpServlet.class, HttpServletRequest.class);
+					Object authSystemObj = cl.getConstructor(Map.class).newInstance(authParam);
+					Method authMethodDetermineCurrentUser = cl.getMethod("determineCurrentUser", HttpServlet.class, HttpServletRequest.class);
+					authSystem = new AuthSystem(authSystemObj, authMethodDetermineCurrentUser);
 				} catch (Exception e) {
 					throw new RuntimeException("Error instantiating auth system: " + authClass, e);
 				}
@@ -435,15 +229,11 @@ public class SearchManager {
 		}
 
 		// Set up the parameter default values
-		SearchParameters.setDefault("number", "" + defaultPageSize);
-		SearchParameters.setDefault("wordsaroundhit", "" + defaultContextSize);
-		SearchParameters.setDefault("maxretrieve", "" + defaultMaxHitsToRetrieve);
-		SearchParameters.setDefault("maxcount", "" + defaultMaxHitsToCount);
-		SearchParameters.setDefault("sensitive", defaultCaseSensitive && defaultDiacriticsSensitive ? "yes" : "no");
-
-		loadManagerThread = new LoadManagerThread(this);
-		loadManagerThread.start();
-
+		SearchParameters.setDefault("number", "" + config.defaultPageSize());
+		SearchParameters.setDefault("wordsaroundhit", "" + config.getDefaultContextSize());
+		SearchParameters.setDefault("maxretrieve", "" + config.getDefaultMaxHitsToRetrieve());
+		SearchParameters.setDefault("maxcount", "" + config.getDefaultMaxHitsToCount());
+		SearchParameters.setDefault("sensitive", config.isDefaultCaseSensitive() && config.isDefaultDiacriticsSensitive() ? "yes" : "no");
 	}
 
 	/**
@@ -453,32 +243,8 @@ public class SearchManager {
 	 * cancels any running searches.
 	 */
 	public synchronized void cleanup() {
-		// Stop the load manager thread
-		loadManagerThread.interrupt();
-		loadManagerThread = null;
-
 		// Stop any running searches
-		cache.clearCache(true);
-	}
-
-	public synchronized void performLoadManagement() {
-		cache.performLoadManagement(null);
-	}
-
-	public User determineCurrentUser(HttpServlet servlet, HttpServletRequest request) {
-		// If no auth system is configured, all users are anonymous
-		if (authSystem == null) {
-			User user = User.anonymous(request.getSession().getId());
-			return user;
-		}
-
-		// Let auth system determine the current user.
-		try {
-			User user = (User)authMethodDetermineCurrentUser.invoke(authSystem, servlet, request);
-			return user;
-		} catch (Exception e) {
-			throw new RuntimeException("Error determining current user", e);
-		}
+		cache.cleanup();
 	}
 
 	/**
@@ -580,7 +346,7 @@ public class SearchManager {
 	}
 
 	public synchronized void closeSearcher(String indexName) throws BlsException {
-		if (!isValidIndexName(indexName))
+		if (!BlsUtils.isValidIndexName(indexName))
 			throw new IllegalIndexName(indexName);
 		if (searchers.containsKey(indexName)) {
 			searchers.get(indexName).close();
@@ -602,7 +368,7 @@ public class SearchManager {
 	@SuppressWarnings("deprecation")  // for call to _setPidField() and _setContentViewable()
 	public synchronized Searcher getSearcher(String indexName)
 			throws BlsException {
-		if (!isValidIndexName(indexName))
+		if (!BlsUtils.isValidIndexName(indexName))
 			throw new IllegalIndexName(indexName);
 
 		if (searchers.containsKey(indexName)) {
@@ -624,7 +390,7 @@ public class SearchManager {
 		try {
 			logger.debug("Opening index '" + indexName + "', dir = " + indexDir);
 			searcher = Searcher.open(indexDir);
-			searcher.setDefaultSearchSensitive(defaultCaseSensitive, defaultDiacriticsSensitive);
+			searcher.setDefaultSearchSensitive(config.isDefaultCaseSensitive(), config.isDefaultDiacriticsSensitive());
 		} catch (Exception e) {
 			throw new InternalServerError("Could not open index '" + indexName
 					+ "'", 27, e);
@@ -681,7 +447,7 @@ public class SearchManager {
 	 */
 	public boolean indexExists(String indexName)
 			throws BlsException {
-		if (!isValidIndexName(indexName))
+		if (!BlsUtils.isValidIndexName(indexName))
 			throw new IllegalIndexName(indexName);
 		IndexParam par = getIndexParam(indexName);
 		if (par == null) {
@@ -709,7 +475,7 @@ public class SearchManager {
 			IOException {
 		if (!indexName.contains(":"))
 			throw new NotAuthorized("Can only create private indices.");
-		if (!isValidIndexName(indexName))
+		if (!BlsUtils.isValidIndexName(indexName))
 			throw new IllegalIndexName(indexName);
 		if (indexExists(indexName))
 			throw new BadRequest("INDEX_ALREADY_EXISTS",
@@ -753,7 +519,7 @@ public class SearchManager {
 			throws BlsException {
 		if (!indexName.contains(":"))
 			throw new NotAuthorized("Can only delete private indices.");
-		if (!isValidIndexName(indexName))
+		if (!BlsUtils.isValidIndexName(indexName))
 			throw new IllegalIndexName(indexName);
 		if (!indexExists(indexName))
 			throw new IndexNotFound(indexName);
@@ -886,11 +652,11 @@ public class SearchManager {
 
 				// Do we have enough memory to start a new search?
 				long freeMegs = MemoryUtil.getFree() / 1000000;
-				if (freeMegs < minFreeMemForSearchMegs) {
+				if (freeMegs < config.getMinFreeMemForSearchMegs()) {
 					cache.removeOldSearches(); // try to free up space for next
 												// search
 					logger.warn("Can't start new search, not enough memory ("
-							+ freeMegs + "M < " + minFreeMemForSearchMegs
+							+ freeMegs + "M < " + config.getMinFreeMemForSearchMegs()
 							+ "M)");
 					logger.warn("(NOTE: make sure Tomcat's max heap mem is set to an appropriate value!)");
 					throw new ServiceUnavailable("The server seems to be under heavy load right now. Please try again later.");
@@ -910,7 +676,7 @@ public class SearchManager {
 						}
 					}
 				}
-				if (numRunningJobs >= maxRunningJobsPerUser) {
+				if (numRunningJobs >= config.getMaxRunningJobsPerUser()) {
 					// User has too many running jobs. Can't start another one.
 					runningJobsPerUser.put(uniqueId, newRunningJobs); // refresh
 																		// the
@@ -948,7 +714,7 @@ public class SearchManager {
 
 		job.incrRef();
 		if (block) {
-			job.waitUntilFinished(SearchCache.getMaxSearchTimeSec() * 1000);
+			job.waitUntilFinished(cache.getMaxSearchTimeSec() * 1000);
 			if (!job.finished()) {
 				throw new ServiceUnavailable("Search took too long, cancelled.");
 			}
@@ -956,62 +722,12 @@ public class SearchManager {
 		return job;
 	}
 
-	public boolean isDebugMode(String ip) {
-		return debugModeIps.contains(ip);
+	public SearchCache getCache() {
+		return cache;
 	}
 
-	public int getMaxContextSize() {
-		return maxContextSize;
-	}
-
-	public synchronized DataObject getCacheStatusDataObject() {
-		return cache.getCacheStatusDataObject();
-	}
-
-	public synchronized DataObject getCacheContentsDataObject(boolean debugInfo) throws BlsException {
-		return cache.getContentsDataObject(debugInfo);
-	}
-
-	public int getMaxSnippetSize() {
-		return maxSnippetSize;
-	}
-
-	public boolean mayOverrideUserId(String ip) {
-		return overrideUserIdIps.contains(ip);
-	}
-
-	public DataFormat getDefaultOutputType() {
-		return defaultOutputType;
-	}
-
-	public int getClientCacheTimeSec() {
-		return clientCacheTimeSec;
-	}
-
-	/**
-	 * Get maximum allowed value for maxretrieve parameter.
-	 *
-	 * @return the maximum, or -1 if there's no limit
-	 */
-	public int getMaxHitsToRetrieveAllowed() {
-		return maxHitsToRetrieveAllowed;
-	}
-
-	/**
-	 * Get maximum allowed value for maxcount parameter.
-	 *
-	 * @return the maximum, or -1 if there's no limit
-	 */
-	public int getMaxHitsToCountAllowed() {
-		return maxHitsToCountAllowed;
-	}
-
-	public int getMaxPageSize() {
-		return maxPageSize;
-	}
-
-	public int getDefaultPageSize() {
-		return defaultPageSize;
+	public BlsConfig config() {
+		return config;
 	}
 
 	/**
@@ -1085,8 +801,8 @@ public class SearchManager {
 		return indices;
 	}
 
-	public synchronized void clearCache() {
-		cache.clearCache();
+	public AuthSystem getAuthSystem() {
+		return authSystem;
 	}
 
 }

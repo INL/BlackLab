@@ -99,8 +99,8 @@ public class RequestHandlerHits extends RequestHandler {
 				if (first < 0)
 					first = 0;
 				int number = searchParam.getInteger("number");
-				if (number < 0 || number > searchMan.getMaxPageSize())
-					number = searchMan.getDefaultPageSize();
+				if (number < 0 || number > searchMan.config().maxPageSize())
+					number = searchMan.config().defaultPageSize();
 				if (!hitsSorted.sizeAtLeast(first))
 					return Response.badRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
 				window = hitsSorted.window(first, number);

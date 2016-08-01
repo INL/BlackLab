@@ -50,8 +50,8 @@ public class RequestHandlerTermFreq extends RequestHandler {
 		if (first < 0 || first >= tfl.size())
 			first = 0;
 		int number = searchParam.getInteger("number");
-		if (number < 0 || number > searchMan.getMaxPageSize())
-			number = searchMan.getDefaultPageSize();
+		if (number < 0 || number > searchMan.config().maxPageSize())
+			number = searchMan.config().defaultPageSize();
 		int last = first + number;
 		if (last > tfl.size())
 			last = tfl.size();

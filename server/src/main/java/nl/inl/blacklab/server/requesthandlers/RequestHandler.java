@@ -25,6 +25,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.ParseUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
@@ -69,11 +70,11 @@ public abstract class RequestHandler {
 	 * @return the response data
 	 */
 	public static Response handle(BlackLabServer servlet, HttpServletRequest request) {
-		boolean debugMode = servlet.getSearchManager().isDebugMode(request.getRemoteAddr());
+		boolean debugMode = servlet.getSearchManager().config().isDebugMode(request.getRemoteAddr());
 
 		// See if a user is logged in
 		SearchManager searchManager = servlet.getSearchManager();
-		User user = searchManager.determineCurrentUser(servlet, request);
+		User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
 
 		// Parse the URL
 		String servletPath = request.getServletPath();
@@ -143,7 +144,7 @@ public abstract class RequestHandler {
 					if (!isPrivateIndex)
 						return Response.forbidden("Can only POST to private indices.");
 					if (urlResource.equals("docs") && urlPathInfo.length() == 0) {
-						if (!SearchManager.isValidIndexName(indexName))
+						if (!BlsUtils.isValidIndexName(indexName))
 							return Response.illegalIndexName(shortName);
 
 						// POST to /blacklab-server/indexName/docs/ : add data to index
