@@ -284,13 +284,17 @@ public abstract class RequestHandler {
 		String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 		if (!pathAndQueryString.startsWith("/cache-info")) // annoying when monitoring
 			logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " " + request.getMethod() + " " + pathAndQueryString);
-		boolean isDocs = !pathAndQueryString.startsWith("/hits");
+		boolean isDocs = isDocsOperation();
 		searchParam = servlet.getSearchParameters(isDocs, request, indexName);
 		this.indexName = indexName;
 		this.urlResource = urlResource;
 		this.urlPathInfo = urlPathInfo;
 		this.user = user;
 
+	}
+
+	protected boolean isDocsOperation() {
+		return false;
 	}
 
 	private void setDebug(boolean debugMode) {

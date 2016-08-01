@@ -122,4 +122,9 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 		return fragInfo;
 	}
 
+	@Override
+	protected boolean isDocsOperation() {
+		return true;
+	}
+
 }

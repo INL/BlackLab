@@ -218,6 +218,7 @@ public class BlackLabServer extends HttpServlet {
 	 * parameters alone, you can't always tell what type of search we're doing. The RequestHandler subclass
 	 * will add a jobclass parameter when executing the actual search.
 	 *
+	 * @param isDocs is this a docs operation? influences how the "sort" parameter is interpreted
 	 * @param request the HTTP request
 	 * @param indexName the index to search
 	 * @return the unique key

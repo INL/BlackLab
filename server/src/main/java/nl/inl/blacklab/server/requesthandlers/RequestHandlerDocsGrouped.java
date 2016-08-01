@@ -90,4 +90,9 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 		}
 	}
 
+	@Override
+	protected boolean isDocsOperation() {
+		return true;
+	}
+
 }

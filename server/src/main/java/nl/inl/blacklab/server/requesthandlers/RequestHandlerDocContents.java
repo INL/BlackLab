@@ -80,4 +80,9 @@ public class RequestHandlerDocContents extends RequestHandler {
 		}
 		return new Response(docContents);
 	}
+
+	@Override
+	protected boolean isDocsOperation() {
+		return true;
+	}
 }

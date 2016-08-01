@@ -248,5 +248,10 @@ public class RequestHandlerDocs extends RequestHandler {
 		}
 	}
 
+	@Override
+	protected boolean isDocsOperation() {
+		return true;
+	}
+
 
 }

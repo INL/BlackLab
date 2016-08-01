@@ -75,7 +75,6 @@ public abstract class JobDescription {
 	/**
 	 * Get the pattern to search for (if any)
 	 * @return pattern, or null if none given
-	 * @throws BlsException on error
 	 */
 	public TextPattern getPattern() {
 		return null;

@@ -263,6 +263,8 @@ public class SearchParameters {
 	}
 
 	private DocGroupSettings docGroupSettings() throws BlsException {
+		if (!isDocsOperation)
+			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
 		String groupBy = getString("group");
 		DocProperty groupProp = null;
 		if (groupBy == null || groupBy.length() == 0)
@@ -273,7 +275,10 @@ public class SearchParameters {
 		return new DocGroupSettings(groupProp);
 	}
 
-	private DocGroupSortSettings docGroupSortSettings() throws BlsException {
+	// TODO: use this properly!
+	private DocGroupSortSettings docGroupSortSettings() {
+		if (!isDocsOperation)
+			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
 		if (!containsKey("group"))
 			return null; // not grouping, so no group sort
 		String sortBy = getString("sort");
@@ -303,7 +308,10 @@ public class SearchParameters {
 		return new DocSortSettings(sortProp, reverse);
 	}
 
+	// TODO: use this properly!
 	private HitGroupSortSettings hitGroupSortSettings()  {
+		if (isDocsOperation)
+			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
 		if (!containsKey("group"))
 			return null; // not grouping, so no group sort
 		String sortBy = getString("sort");
@@ -319,6 +327,8 @@ public class SearchParameters {
 	}
 
 	private HitGroupSettings hitGroupSettings() {
+		if (isDocsOperation)
+			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
 		String groupBy = getString("group");
 		if (groupBy == null || groupBy.length() == 0)
 			return null;

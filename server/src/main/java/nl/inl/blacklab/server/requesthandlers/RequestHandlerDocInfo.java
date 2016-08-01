@@ -49,4 +49,9 @@ public class RequestHandlerDocInfo extends RequestHandler {
 		return new Response(response);
 	}
 
+	@Override
+	protected boolean isDocsOperation() {
+		return true;
+	}
+
 }
