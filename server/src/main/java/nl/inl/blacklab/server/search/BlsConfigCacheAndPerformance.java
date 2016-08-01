@@ -40,17 +40,83 @@ public class BlsConfigCacheAndPerformance {
 	 * situations under certain loads.
 	 * (EXPERIMENTAL)
 	 */
-	static final boolean ENABLE_THREAD_PRIORITY = true;
+	private boolean enableThreadPriority = false;
+
+	/** Minimum amount of free memory (MB) to start a new search. [50] */
+	private int minFreeMemForSearchMegs;
+
+	public int getMinFreeMemForSearchMegs() {
+		return minFreeMemForSearchMegs;
+	}
+
+	public int getMaxRunningJobsPerUser() {
+		return maxRunningJobsPerUser;
+	}
+
+	public int getClientCacheTimeSec() {
+		return clientCacheTimeSec;
+	}
+
+	/**
+	 * Maximum number of simultaneously running jobs started by the same user.
+	 * [20] Please note that a search may start 2-4 jobs, so don't set this too
+	 * low. This is just meant to prevent over-eager scripts and other abuse.
+	 * Regular users should never hit this limit.
+	 */
+	private int maxRunningJobsPerUser;
+
+	/**
+	 * How long the client may used a cached version of the results we give
+	 * them. This is used to write HTTP cache headers. A value of an hour or so
+	 * seems reasonable.
+	 */
+	private int clientCacheTimeSec;
 
 	public BlsConfigCacheAndPerformance(JSONObject settings) {
 		this();
+
 		if (settings != null) {
+			minFreeMemForSearchMegs = JsonUtil.getIntProp(settings, "minFreeMemForSearchMegs", 50);
+			maxRunningJobsPerUser = JsonUtil.getIntProp(settings, "maxRunningJobsPerUser", 20);
+			clientCacheTimeSec = JsonUtil.getIntProp(settings, "clientCacheTimeSec", 3600);
+		} else {
+			// Set default values
+			minFreeMemForSearchMegs = 50;
+			maxRunningJobsPerUser = 20;
+			clientCacheTimeSec = 3600;
+		}
+
+		JSONObject cacheSettings = null;
+		if (settings != null && settings.has("cache"))
+			cacheSettings = settings.getJSONObject("cache");
+		if (cacheSettings != null) {
 			maxJobAgeSec = JsonUtil.getIntProp(settings, "maxJobAgeSec", 3600);
 			maxNumberOfJobs = JsonUtil.getIntProp(settings, "maxNumberOfJobs", 20);
 			maxSizeMegs = JsonUtil.getIntProp(settings, "maxSizeMegs", -1);
 			minFreeMemTargetMegs = JsonUtil.getIntProp(settings, "targetFreeMemMegs", 100);
 			numberOfJobsToPurgeWhenBelowTargetMem = JsonUtil.getIntProp(settings, "numberOfJobsToPurgeWhenBelowTargetMem", 100);
 		}
+
+		JSONObject serverLoadSettings = null;
+		if (settings != null && settings.has("serverLoad")) {
+			// Load manager stuff (experimental)
+			serverLoadSettings = settings.getJSONObject("serverLoad");
+
+			enableThreadPriority = true; // EXPERIMENTAL
+		}
+		if (serverLoadSettings != null) {
+			maxConcurrentSearches = 1;
+			maxConcurrentSearches = JsonUtil.getIntProp(serverLoadSettings, "maxConcurrentSearches", -1);
+			autoDetectMaxConcurrent = maxConcurrentSearches <= 0;
+			if (autoDetectMaxConcurrent) {
+				maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
+				logger.debug("Autodetect maxConcurrentSearches: " + maxConcurrentSearches);
+			}
+
+			maxPausedSearches = 10;
+			maxPausedSearches = JsonUtil.getIntProp(serverLoadSettings, "maxPausedSearches", 10);
+		}
+
 	}
 
 	public BlsConfigCacheAndPerformance() {
@@ -105,23 +171,8 @@ public class BlsConfigCacheAndPerformance {
 		}
 	}
 
-	public void setServerLoadOptions(JSONObject jsonServerLoad) {
-		maxConcurrentSearches = 1;
-		if (jsonServerLoad != null)
-			maxConcurrentSearches = JsonUtil.getIntProp(jsonServerLoad, "maxConcurrentSearches", -1);
-		autoDetectMaxConcurrent = maxConcurrentSearches <= 0;
-		if (autoDetectMaxConcurrent) {
-			maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
-			logger.debug("Autodetect maxConcurrentSearches: " + maxConcurrentSearches);
-		}
-
-		maxPausedSearches = 10;
-		if (jsonServerLoad != null)
-			maxPausedSearches = JsonUtil.getIntProp(jsonServerLoad, "maxPausedSearches", 10);
-	}
-
 	public boolean enableThreadPriority() {
-		return ENABLE_THREAD_PRIORITY;
+		return enableThreadPriority;
 	}
 
 }

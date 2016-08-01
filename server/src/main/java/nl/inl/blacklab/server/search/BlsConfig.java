@@ -1,7 +1,11 @@
 package nl.inl.blacklab.server.search;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import org.apache.log4j.Logger;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.dataobject.DataFormat;
@@ -11,6 +15,9 @@ import nl.inl.util.json.JSONArray;
 import nl.inl.util.json.JSONObject;
 
 public class BlsConfig {
+
+	@SuppressWarnings("unused")
+	private static final Logger logger = Logger.getLogger(BlsConfig.class);
 
 	/** Maximum context size allowed */
 	private int maxContextSize;
@@ -37,17 +44,6 @@ public class BlsConfig {
 	/** Default number of words around hit. [5] */
 	private int defaultContextSize;
 
-	/** Minimum amount of free memory (MB) to start a new search. [50] */
-	private int minFreeMemForSearchMegs;
-
-	/**
-	 * Maximum number of simultaneously running jobs started by the same user.
-	 * [20] Please note that a search may start 2-4 jobs, so don't set this too
-	 * low. This is just meant to prevent over-eager scripts and other abuse.
-	 * Regular users should never hit this limit.
-	 */
-	private long maxRunningJobsPerUser;
-
 	/** IP addresses for which debug mode will be turned on. */
 	private Set<String> debugModeIps = new HashSet<>();
 
@@ -58,13 +54,6 @@ public class BlsConfig {
 	 * Which IPs are allowed to override the userId using a parameter.
 	 */
 	private Set<String> overrideUserIdIps;
-
-	/**
-	 * How long the client may used a cached version of the results we give
-	 * them. This is used to write HTTP cache headers. A value of an hour or so
-	 * seems reasonable.
-	 */
-	private int clientCacheTimeSec;
 
 	/** Maximum allowed value for maxretrieve parameter (-1 = no limit). */
 	private int maxHitsToRetrieveAllowed;
@@ -79,7 +68,20 @@ public class BlsConfig {
 	 */
 	private boolean allDocsQueryAllowed = false;
 
+	private BlsConfigCacheAndPerformance cacheConfig;
+
+	private String authClass;
+
+	Map<String, Object> authParam;
+
 	public BlsConfig(JSONObject properties) {
+		getDebugProperties(properties);
+		getRequestsProperties(properties);
+		getPerformanceProperties(properties);
+		getAuthProperties(properties);
+	}
+
+	private void getDebugProperties(JSONObject properties) {
 		if (properties.has("debugModeIps")) {
 			JSONArray jsonDebugModeIps = properties
 					.getJSONArray("debugModeIps");
@@ -87,19 +89,24 @@ public class BlsConfig {
 				debugModeIps.add(jsonDebugModeIps.getString(i));
 			}
 		}
+	}
 
-		// Request properties
+	private void getPerformanceProperties(JSONObject properties) {
+		JSONObject perfProp = null;
+		if (properties.has("performance"))
+			perfProp = properties.getJSONObject("performance");
+		this.cacheConfig = new BlsConfigCacheAndPerformance(perfProp);
+	}
+
+	private void getRequestsProperties(JSONObject properties) {
 		if (properties.has("requests")) {
 			JSONObject reqProp = properties.getJSONObject("requests");
-			defaultOutputType = DataFormat.XML; // XML if nothing specified
-												// (because
-												// of browser's default Accept
-												// header)
+			 // XML if nothing specified (because of browser's default Accept header)
+			defaultOutputType = DataFormat.XML;
 			if (reqProp.has("defaultOutputType"))
 				defaultOutputType = ServletUtil.getOutputTypeFromString(
 						reqProp.getString("defaultOutputType"), DataFormat.XML);
-			defaultPageSize = JsonUtil.getIntProp(reqProp, "defaultPageSize",
-					20);
+			defaultPageSize = JsonUtil.getIntProp(reqProp, "defaultPageSize", 20);
 			maxPageSize = JsonUtil.getIntProp(reqProp, "maxPageSize", 1000);
 			String defaultSearchSensitivity = JsonUtil.getProperty(reqProp,
 					"defaultSearchSensitivity", "insensitive");
@@ -148,20 +155,25 @@ public class BlsConfig {
 			maxHitsToCountAllowed = -1;
 			overrideUserIdIps = new HashSet<>();
 		}
+	}
 
-		// Performance properties
-		if (properties.has("performance")) {
-			JSONObject perfProp = properties.getJSONObject("performance");
-			minFreeMemForSearchMegs = JsonUtil.getIntProp(perfProp, "minFreeMemForSearchMegs", 50);
-			maxRunningJobsPerUser = JsonUtil.getIntProp(perfProp, "maxRunningJobsPerUser", 20);
-			clientCacheTimeSec = JsonUtil.getIntProp(perfProp, "clientCacheTimeSec", 3600);
+	private void getAuthProperties(JSONObject properties) {
+		JSONObject authProp = null;
+		if (properties.has("authSystem"))
+			authProp = properties.getJSONObject("authSystem");
+		authClass = "";
+		if (authProp != null) {
+			authParam = JsonUtil.mapFromJsonObject(authProp);
+			if (authParam.containsKey("class")) {
+				authClass = authParam.get("class").toString();
+			}
 		} else {
-			// Set default values
-			minFreeMemForSearchMegs = 50;
-			maxRunningJobsPerUser = 20;
-			clientCacheTimeSec = 3600;
+			authParam = new HashMap<>();
 		}
+	}
 
+	public BlsConfigCacheAndPerformance getCacheConfig() {
+		return cacheConfig;
 	}
 
 	public int maxContextSize() {
@@ -200,14 +212,6 @@ public class BlsConfig {
 		return defaultContextSize;
 	}
 
-	public int getMinFreeMemForSearchMegs() {
-		return minFreeMemForSearchMegs;
-	}
-
-	public long getMaxRunningJobsPerUser() {
-		return maxRunningJobsPerUser;
-	}
-
 	public Set<String> getDebugModeIps() {
 		return debugModeIps;
 	}
@@ -221,7 +225,7 @@ public class BlsConfig {
 	}
 
 	public int clientCacheTimeSec() {
-		return clientCacheTimeSec;
+		return cacheConfig.getClientCacheTimeSec();
 	}
 
 	public int maxHitsToRetrieveAllowed() {
@@ -242,6 +246,14 @@ public class BlsConfig {
 
 	public boolean isAllDocsQueryAllowed() {
 		return allDocsQueryAllowed;
+	}
+
+	public String getAuthClass() {
+		return authClass;
+	}
+
+	public Map<String, Object> getAuthParam() {
+		return authParam;
 	}
 
 }

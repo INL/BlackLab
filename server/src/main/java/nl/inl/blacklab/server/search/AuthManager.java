@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.search;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServlet;
@@ -10,8 +9,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.util.JsonUtil;
-import nl.inl.util.json.JSONObject;
 
 public class AuthManager {
 
@@ -24,17 +21,7 @@ public class AuthManager {
 	/** The method to invoke for determining the current user. */
 	private Method authMethodDetermineCurrentUser = null;
 
-	public AuthManager(JSONObject properties) {
-		String authClass = "";
-		Map<String, Object> authParam;
-		if (properties != null) {
-			authParam = JsonUtil.mapFromJsonObject(properties);
-			if (authParam.containsKey("class")) {
-				authClass = authParam.get("class").toString();
-			}
-		} else {
-			authParam = new HashMap<>();
-		}
+	public AuthManager(String authClass, Map<String, Object> authParam) {
 		if (authClass.length() > 0) {
 			try {
 				if (!authClass.contains(".")) {

@@ -36,19 +36,13 @@ public class SearchManager {
 
 			// Create the cache
 			// Use the performance properties [optional, defaults will be used if missing]
-			JSONObject perfProp = null;
-			if (properties.has("performance"))
-				perfProp = properties.getJSONObject("performance");
-			cache = new SearchCache(this, perfProp);
+			cache = new SearchCache(this, config);
 
 			// Find the indices
 			indexMan = new IndexManager(this, properties);
 
 			// Init auth system
-			JSONObject authProp = null;
-			if (properties.has("authSystem"))
-				authProp = properties.getJSONObject("authSystem");
-			authSystem = new AuthManager(authProp);
+			authSystem = new AuthManager(config.getAuthClass(), config.getAuthParam());
 		} catch (JSONException e) {
 			e.printStackTrace();
 			throw new ConfigurationException("Invalid JSON in blacklab-server.json; please validate: " + e.getMessage());

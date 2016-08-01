@@ -27,7 +27,6 @@ import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.util.Json;
 import nl.inl.util.LogUtil;
-import nl.inl.util.json.JSONObject;
 
 public class BlackLabServer extends HttpServlet {
 	private static final Logger logger = Logger.getLogger(BlackLabServer.class);
@@ -82,12 +81,10 @@ public class BlackLabServer extends HttpServlet {
 				logger.debug("Reading configuration file from classpath: " + configFileName);
 			}
 		}
-		JSONObject config;
 
 		try {
 			try {
-				config = Json.read(is, "utf-8");
-				searchManager = new SearchManager(config);
+				searchManager = new SearchManager(Json.read(is, "utf-8"));
 			} finally {
 				is.close();
 			}
