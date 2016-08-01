@@ -23,7 +23,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 	@Override
 	public Response handle() throws BlsException {
 		// Get the window we're interested in
-		JobHitsGrouped search = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), getBoolParameter("block"));
+		JobHitsGrouped search = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), isBlockingOperation());
 		try {
 			// If search is not done yet, indicate this to the user
 			if (!search.finished()) {

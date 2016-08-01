@@ -326,62 +326,6 @@ public abstract class RequestHandler {
 	public abstract Response handle() throws BlsException, InterruptedException;
 
 	/**
-	 * Get a string parameter.
-	 *
-	 * Illegal values will return 0 and log a debug message.
-	 *
-	 * If the parameter was not specified, the default value will be used.
-	 *
-	 * @param paramName parameter name
-	 * @return the integer value
-	 */
-	public String getStringParameter(String paramName) {
-		return ServletUtil.getParameter(request, paramName, SearchManager.getParameterDefaultValue(paramName));
-	}
-
-	/**
-	 * Get an integer parameter.
-	 *
-	 * Illegal values will return 0 and log a debug message.
-	 *
-	 * If the parameter was not specified, the default value will be used.
-	 *
-	 * @param paramName parameter name
-	 * @return the integer value
-	 */
-	public int getIntParameter(String paramName) {
-		String str = getStringParameter(paramName);
-		try {
-			return ParseUtil.strToInt(str);
-		} catch (IllegalArgumentException e) {
-			debug(logger, "Illegal integer value for parameter '" + paramName + "': " + str);
-			return 0;
-		}
-	}
-
-	/**
-	 * Get a boolean parameter.
-	 *
-	 * Valid values are: true, false, 1, 0, yes, no, on, off.
-	 *
-	 * Other values will return false and log a debug message.
-	 *
-	 * If the parameter was not specified, the default value will be used.
-	 *
-	 * @param paramName parameter name
-	 * @return the boolean value
-	 */
-	protected boolean getBoolParameter(String paramName) {
-		String str = getStringParameter(paramName).toLowerCase();
-		try {
-			return ParseUtil.strToBool(str);
-		} catch (IllegalArgumentException e) {
-			debug(logger, "Illegal boolean value for parameter '" + paramName + "': " + str);
-			return false;
-		}
-	}
-
-	/**
 	 * Get document information (metadata, contents authorization)
 	 *
 	 * @param searcher our index
@@ -448,6 +392,16 @@ public abstract class RequestHandler {
 
 	protected Searcher getSearcher() throws BlsException {
 		return searchMan.getSearcher(indexName);
+	}
+
+	protected boolean isBlockingOperation() {
+		String str = ServletUtil.getParameter(request, "block", "yes").toLowerCase();
+		try {
+			return ParseUtil.strToBool(str);
+		} catch (IllegalArgumentException e) {
+			debug(logger, "Illegal boolean value for parameter '" + "block" + "': " + str);
+			return false;
+		}
 	}
 
 	public static DataObjectMapElement getDocFields(IndexStructure struct) {

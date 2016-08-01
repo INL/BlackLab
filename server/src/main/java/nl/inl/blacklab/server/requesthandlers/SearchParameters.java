@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -61,18 +62,53 @@ import nl.inl.blacklab.server.util.ServletUtil;
 public class SearchParameters {
 	private static final Logger logger = Logger.getLogger(SearchParameters.class);
 
-	/** The search manager, for querying default value for missing parameters */
-	private SearchManager searchManager;
+	// TODO: move to SearchParameters?
+	/** Default values for request parameters */
+	final static private Map<String, String> defaultParameterValues;
 
-	private Map<String, String> map = new TreeMap<>();
+	static {
+		defaultParameterValues = new HashMap<>();
+		defaultParameterValues.put("filterlang", "luceneql");
+		defaultParameterValues.put("pattlang", "corpusql");
+		defaultParameterValues.put("sort", "");
+		defaultParameterValues.put("group", "");
+		defaultParameterValues.put("viewgroup", "");
+		defaultParameterValues.put("first", "0");
+		defaultParameterValues.put("hitstart", "0");
+		defaultParameterValues.put("hitend", "1");
+		defaultParameterValues.put("includetokencount", "no");
+		defaultParameterValues.put("usecontent", "fi");
+		defaultParameterValues.put("wordstart", "-1");
+		defaultParameterValues.put("wordend", "-1");
+		defaultParameterValues.put("calc", "");
+		defaultParameterValues.put("property", "word");
+		defaultParameterValues.put("waitfortotal", "no");
+		defaultParameterValues.put("number", "20");
+		defaultParameterValues.put("wordsaroundhit", "5");
+		defaultParameterValues.put("maxretrieve", "1000000");
+		defaultParameterValues.put("maxcount", "10000000");
+		defaultParameterValues.put("sensitive", "no");
+	}
 
-	/** The pattern, if parsed already */
-	private TextPattern pattern;
+	private static String getParameterDefaultValue(String paramName) {
+		return defaultParameterValues.get(paramName);
+	}
 
-	/** The filter query, if parsed already */
-	private Query filterQuery;
+	public static void setDefault(String name, String value) {
+		defaultParameterValues.put(name, value);
+	}
 
-	private boolean isDocsOperation;
+	public static SearchParameters get(SearchManager searchMan, boolean isDocs, String indexName, HttpServletRequest request) {
+		SearchParameters param = new SearchParameters(searchMan, isDocs);
+		param.put("indexname", indexName);
+		for (String name: SearchParameters.NAMES) {
+			String value = ServletUtil.getParameter(request, name, "").trim();
+			if (value.length() == 0)
+				continue;
+			param.put(name, value);
+		}
+		return param;
+	}
 
 	/** Parameters involved in search */
 	private static final List<String> NAMES = Arrays.asList(
@@ -102,6 +138,19 @@ public class SearchParameters {
 		"waitfortotal"                  // wait until total number of results known?
 	);
 
+	/** The search manager, for querying default value for missing parameters */
+	private SearchManager searchManager;
+
+	private Map<String, String> map = new TreeMap<>();
+
+	/** The pattern, if parsed already */
+	private TextPattern pattern;
+
+	/** The filter query, if parsed already */
+	private Query filterQuery;
+
+	private boolean isDocsOperation;
+
 	private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
 		this.searchManager = searchManager;
 		this.isDocsOperation = isDocsOperation;
@@ -114,7 +163,7 @@ public class SearchParameters {
 	public String getString(Object key) {
 		String value = map.get(key);
 		if (value == null || value.length() == 0) {
-			value = SearchManager.getParameterDefaultValue(key.toString());
+			value = getParameterDefaultValue(key.toString());
 		}
 		return value;
 	}
@@ -179,15 +228,24 @@ public class SearchParameters {
 		}
 	}
 
+	public boolean hasPattern() throws BlsException {
+		return getPattern() != null;
+	}
+
 	private TextPattern getPattern() throws BlsException {
 		if (pattern == null) {
-			if (containsKey("patt"))
-				pattern = BlsUtils.parsePatt(getSearcher(), getString("patt"), getString("pattlang"));
+			String patt = getString("patt");
+			if (patt != null && patt.length() > 0)
+				pattern = BlsUtils.parsePatt(getSearcher(), patt, getString("pattlang"));
 		}
 		return pattern;
 	}
 
-	private Query getFilterQuery() throws BlsException {
+	public boolean hasFilter() throws BlsException {
+		return getFilterQuery() != null;
+	}
+
+	Query getFilterQuery() throws BlsException {
 		if (filterQuery == null) {
 			String docId = getString("docpid");
 			if (docId != null) {
@@ -411,18 +469,6 @@ public class SearchParameters {
 
 	public JobDescription facets() throws BlsException {
 		return new JobDescFacets(docs(), getFacets());
-	}
-
-	public static SearchParameters get(SearchManager searchMan, boolean isDocs, String indexName, HttpServletRequest request) {
-		SearchParameters param = new SearchParameters(searchMan, isDocs);
-		param.put("indexname", indexName);
-		for (String name: SearchParameters.NAMES) {
-			String value = ServletUtil.getParameter(request, name, "").trim();
-			if (value.length() == 0)
-				continue;
-			param.put(name, value);
-		}
-		return param;
 	}
 
 }

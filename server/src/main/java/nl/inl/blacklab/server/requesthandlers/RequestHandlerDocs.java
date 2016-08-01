@@ -53,7 +53,7 @@ public class RequestHandlerDocs extends RequestHandler {
 		try {
 			DocResultsWindow window;
 			DocGroup group = null;
-			boolean block = getBoolParameter("block");
+			boolean block = isBlockingOperation();
 			if (groupBy.length() > 0 && viewGroup.length() > 0) {
 
 				// TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)

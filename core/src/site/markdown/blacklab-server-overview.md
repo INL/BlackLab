@@ -414,14 +414,6 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	        //  the above default page size will be used instead)
 	        "maxPageSize": 3000,
 	
-	        // Default pattern language to use.
-	        // The "pattlang" GET parameter overrides this value.
-	        "defaultPatternLanguage": "corpusql",
-	
-	        // Default filter language to use.
-	        // The "filterlang" GET parameter overrides this value.
-	        "defaultFilterLanguage": "luceneql",
-	
 	        // Default number of words around hit.
 	        // The "wordsaroundhit" GET parameter overrides this value.
 	        "defaultContextSize": 5,

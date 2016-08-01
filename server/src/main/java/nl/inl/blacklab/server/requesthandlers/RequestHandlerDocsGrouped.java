@@ -24,7 +24,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 	@Override
 	public Response handle() throws BlsException {
 		// Get the window we're interested in
-		JobDocsGrouped search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), getBoolParameter("block"));
+		JobDocsGrouped search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), isBlockingOperation());
 		try {
 			// If search is not done yet, indicate this to the user
 			if (!search.finished()) {

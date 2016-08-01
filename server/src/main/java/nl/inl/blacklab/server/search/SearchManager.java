@@ -16,9 +16,9 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.log4j.Logger;
 
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.dataobject.DataFormat;
 import nl.inl.blacklab.server.dataobject.DataObject;
@@ -34,6 +34,7 @@ import nl.inl.blacklab.server.exceptions.TooManyRequests;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -68,6 +69,30 @@ public class SearchManager {
 	private static boolean allDocsQueryAllowed = false;
 
 	/**
+	 * Check the index name part (not the user id part, if any)
+	 * of the specified index name.
+	 *
+	 * @param indexName the index name, possibly including user id prefix
+	 * @return whether or not the index name part is valid
+	 */
+	public static boolean isValidIndexName(String indexName) {
+		if (indexName.contains(":")) {
+			String[] parts = indexName.split(":");
+			indexName = parts[1];
+		}
+		return indexName.matches("[a-zA-Z][a-zA-Z0-9_\\-]*");
+	}
+
+	/**
+	 * Are we allowed to query the list of all document?
+	 * (slow for large corpora)
+	 * @return true if we are, false if not
+	 */
+	public static boolean isAllDocsQueryAllowed() {
+		return allDocsQueryAllowed;
+	}
+
+	/**
 	 * When the SearchManager was created. Used in logging to show ms since
 	 * server start instead of all-time.
 	 */
@@ -79,9 +104,9 @@ public class SearchManager {
 	/** Maximum snippet size allowed */
 	private int maxSnippetSize;
 
-	// TODO: move to SearchParamaters?
-	/** Default values for request parameters */
-	final static private Map<String, String> defaultParameterValues = new HashMap<>();
+	private int defaultMaxHitsToRetrieve;
+
+	private int defaultMaxHitsToCount;
 
 	/** Default number of hits/results per page [20] */
 	private int defaultPageSize;
@@ -119,20 +144,11 @@ public class SearchManager {
 	/** Keeps track of running jobs per user, so we can limit this. */
 	private Map<String, Set<Job>> runningJobsPerUser = new HashMap<>();
 
-	/** Default pattern language to use. [corpusql] */
-	private String defaultPatternLanguage;
-
 	/** Default case-sensitivity to use. [insensitive] */
 	private boolean defaultCaseSensitive;
 
 	/** Default diacritics-sensitivity to use. [insensitive] */
 	private boolean defaultDiacriticsSensitive;
-
-	/** Default filter language to use. [luceneql] */
-	private String defaultFilterLanguage;
-
-	/** Should requests be blocking by default? [yes] (NOTE: nonblocking mode will be removed in a future version) */
-	private boolean defaultBlockingMode = true;
 
 	/** Default number of words around hit. [5] */
 	private int defaultContextSize;
@@ -185,7 +201,6 @@ public class SearchManager {
 	 */
 	private Thread loadManagerThread;
 
-	@SuppressWarnings("deprecation")
 	public SearchManager(JSONObject properties) throws ConfigurationException {
 		logger.debug("SearchManager created");
 
@@ -212,8 +227,6 @@ public class SearchManager {
 				defaultPageSize = JsonUtil.getIntProp(reqProp, "defaultPageSize",
 						20);
 				maxPageSize = JsonUtil.getIntProp(reqProp, "maxPageSize", 1000);
-				defaultPatternLanguage = JsonUtil.getProperty(reqProp,
-						"defaultPatternLanguage", "corpusql");
 				String defaultSearchSensitivity = JsonUtil.getProperty(reqProp,
 						"defaultSearchSensitivity", "insensitive");
 				switch(defaultSearchSensitivity) {
@@ -232,19 +245,13 @@ public class SearchManager {
 					defaultCaseSensitive = defaultDiacriticsSensitive = false;
 					break;
 				}
-				defaultFilterLanguage = JsonUtil.getProperty(reqProp,
-						"defaultFilterLanguage", "luceneql");
-				//defaultBlockingMode = JsonUtil.getBooleanProp(reqProp, "defaultBlockingMode", true);
 				defaultContextSize = JsonUtil.getIntProp(reqProp,
 						"defaultContextSize", 5);
 				maxContextSize = JsonUtil.getIntProp(reqProp, "maxContextSize", 20);
 				maxSnippetSize = JsonUtil
 						.getIntProp(reqProp, "maxSnippetSize", 100);
-				Hits.setDefaultMaxHitsToRetrieve(JsonUtil.getIntProp(reqProp,
-						"defaultMaxHitsToRetrieve",
-						Hits.getDefaultMaxHitsToRetrieve()));
-				Hits.setDefaultMaxHitsToCount(JsonUtil.getIntProp(reqProp,
-						"defaultMaxHitsToCount", Hits.getDefaultMaxHitsToCount()));
+				defaultMaxHitsToRetrieve = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToRetrieve", Searcher.DEFAULT_MAX_RETRIEVE);
+				defaultMaxHitsToCount = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToCount", Searcher.DEFAULT_MAX_COUNT);
 				maxHitsToRetrieveAllowed = JsonUtil.getIntProp(reqProp,
 						"maxHitsToRetrieveAllowed", 10000000);
 				maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp,
@@ -259,10 +266,7 @@ public class SearchManager {
 				defaultOutputType = DataFormat.XML;
 				defaultPageSize = 20;
 				maxPageSize = 1000;
-				defaultPatternLanguage = "corpusql";
 				defaultCaseSensitive = defaultDiacriticsSensitive = false;
-				defaultFilterLanguage = "luceneql";
-				defaultBlockingMode = true;
 				defaultContextSize = 5;
 				maxContextSize = 20;
 				maxSnippetSize = 100;
@@ -431,30 +435,11 @@ public class SearchManager {
 		}
 
 		// Set up the parameter default values
-		//defaultParameterValues = new HashMap<>();
-		defaultParameterValues.put("filterlang", defaultFilterLanguage);
-		defaultParameterValues.put("pattlang", defaultPatternLanguage);
-		defaultParameterValues.put("sort", "");
-		defaultParameterValues.put("group", "");
-		defaultParameterValues.put("viewgroup", "");
-		defaultParameterValues.put("first", "0");
-		defaultParameterValues.put("hitstart", "0");
-		defaultParameterValues.put("hitend", "1");
-		defaultParameterValues.put("number", "" + defaultPageSize);
-		defaultParameterValues.put("block", "yes"); //defaultBlockingMode ? "yes" : "no");
-		defaultParameterValues.put("waitfortotal", "no");
-		defaultParameterValues.put("includetokencount", "no");
-		defaultParameterValues.put("wordsaroundhit", "" + defaultContextSize);
-		defaultParameterValues.put("usecontent", "fi");
-		defaultParameterValues.put("wordstart", "-1");
-		defaultParameterValues.put("wordend", "-1");
-		defaultParameterValues.put("calc", "");
-		defaultParameterValues.put("maxretrieve",
-				"" + Hits.getDefaultMaxHitsToRetrieve());
-		defaultParameterValues.put("maxcount",
-				"" + Hits.getDefaultMaxHitsToCount());
-		defaultParameterValues.put("sensitive", defaultCaseSensitive && defaultDiacriticsSensitive ? "yes" : "no");
-		defaultParameterValues.put("property", "word");
+		SearchParameters.setDefault("number", "" + defaultPageSize);
+		SearchParameters.setDefault("wordsaroundhit", "" + defaultContextSize);
+		SearchParameters.setDefault("maxretrieve", "" + defaultMaxHitsToRetrieve);
+		SearchParameters.setDefault("maxcount", "" + defaultMaxHitsToCount);
+		SearchParameters.setDefault("sensitive", defaultCaseSensitive && defaultDiacriticsSensitive ? "yes" : "no");
 
 		loadManagerThread = new LoadManagerThread(this);
 		loadManagerThread.start();
@@ -592,21 +577,6 @@ public class SearchManager {
 			return p;
 		}
 		return null;
-	}
-
-	/**
-	 * Check the index name part (not the user id part, if any)
-	 * of the specified index name.
-	 *
-	 * @param indexName the index name, possibly including user id prefix
-	 * @return whether or not the index name part is valid
-	 */
-	public static boolean isValidIndexName(String indexName) {
-		if (indexName.contains(":")) {
-			String[] parts = indexName.split(":");
-			indexName = parts[1];
-		}
-		return indexName.matches("[a-zA-Z][a-zA-Z0-9_\\-]*");
 	}
 
 	public synchronized void closeSearcher(String indexName) throws BlsException {
@@ -986,10 +956,6 @@ public class SearchManager {
 		return job;
 	}
 
-	public static String getParameterDefaultValue(String paramName) {
-		return defaultParameterValues.get(paramName);
-	}
-
 	public boolean isDebugMode(String ip) {
 		return debugModeIps.contains(ip);
 	}
@@ -1121,15 +1087,6 @@ public class SearchManager {
 
 	public synchronized void clearCache() {
 		cache.clearCache();
-	}
-
-	/**
-	 * Are we allowed to query the list of all document?
-	 * (slow for large corpora)
-	 * @return true if we are, false if not
-	 */
-	public static boolean isAllDocsQueryAllowed() {
-		return allDocsQueryAllowed;
 	}
 
 }

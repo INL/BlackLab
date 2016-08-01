@@ -59,9 +59,9 @@ public abstract class Searcher {
 	/** When setting how many hits to retrieve/count, this means "no limit". */
 	public final static int UNLIMITED_HITS = -1;
 
-	static final int DEFAULT_MAX_RETRIEVE = 1000000;
+	public static final int DEFAULT_MAX_RETRIEVE = 1000000;
 
-	static final int DEFAULT_MAX_COUNT = Searcher.UNLIMITED_HITS;
+	public static final int DEFAULT_MAX_COUNT = Searcher.UNLIMITED_HITS;
 
 	/** Complex field name for default contents field */
 	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";

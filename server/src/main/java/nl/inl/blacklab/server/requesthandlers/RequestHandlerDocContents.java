@@ -46,9 +46,8 @@ public class RequestHandlerDocContents extends RequestHandler {
 			return errObj;
 		}
 
-		String patt = searchParam.getString("patt");
 		Hits hits = null;
-		if (patt != null && patt.length() > 0) {
+		if (searchParam.hasPattern()) {
 			//@@@ TODO: filter on document!
 			searchParam.put("docpid", docId);
 			JobWithHits search;
