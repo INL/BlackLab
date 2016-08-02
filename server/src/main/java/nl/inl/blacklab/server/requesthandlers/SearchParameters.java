@@ -116,7 +116,7 @@ public class SearchParameters {
 	private static final List<String> NAMES = Arrays.asList(
 		// What to search for
 		"patt", "pattlang",                  // pattern to search for
-		"filter", "filterlang",              // docs to search
+		"filter", "filterlang", "docpid",    // docs to search
 		"sample", "samplenum", "sampleseed", // what hits to select
 
 		// How to present results
