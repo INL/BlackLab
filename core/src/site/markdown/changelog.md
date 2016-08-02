@@ -2,10 +2,20 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.4.1
+
 ### Fixed
 * Potential overflow bug in ContentStoreFixedBlock when retrieving content.
 * ContentStoreFixedBlock decompression bug that occurred with highly compressable content.
   (N.B. there is no need to re-index if you experienced either of the above bugs)
+
+### Changed
+* Don't store Document objects in DocResults, saving memory and time.
+* Changed BL-CQL subproperty separator (e.g. for querying part of speech features separately)
+  from ':' to '/'.
+
+### BlackLab Server
+* Made sure missing options in blacklab-server.json don't cause problems.
 
 ## Improvements up to v1.4.0
 
