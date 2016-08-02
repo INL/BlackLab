@@ -104,7 +104,6 @@ public class ResultsGrouper extends HitGroups {
 	@Deprecated
 	public ResultsGrouper(Hits hits, HitProperty criteria) {
 		super(hits.getSearcher(), criteria);
-		criteria.setHits(hits); // make sure HitProperty has access to hits
 		init(hits, criteria);
 	}
 

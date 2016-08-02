@@ -174,10 +174,6 @@ public abstract class HitProperty implements Comparator<Object> {
 		this.contextIndices.addAll(contextIndices);
 	}
 
-	public void setHits(Hits hits) {
-		this.hits = hits;
-	}
-
 	/**
 	 * Produce a copy of this HitProperty object with a different Hits object.
 	 *
