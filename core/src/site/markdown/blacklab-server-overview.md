@@ -533,7 +533,7 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	            // unsorted hits job, etc. Practical upshot of this: 
 	            // number of jobs does not equal number of searches. Don’t
 	            // set this too low.
-	            "maxNumberOfJobs": 20,
+	            "maxNumberOfJobs": 100,
 	
 	            // After how much time will a search job be removed from 
 	            // the cache? (in seconds)

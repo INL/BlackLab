@@ -122,6 +122,11 @@
     // ---------------------------------------------------------------
     "performance": {
     
+    	// NOTE: the serverLoadStates part is a PROPOSAL, and is not currently
+    	//       read from the configuration file. Current load management is a
+    	//       simple scheme that orders searches by "worthiness", runs only
+    	//       the top X ones, pauses the Y next ones, and aborts the rest. 
+    	// 
         // Specifies how the server will behave under different loads.
         //
         // Specify the different server loads and their behaviours from 
@@ -216,9 +221,7 @@
             // we can still use the unsorted hits job, etc. Practical upshot of this: number of jobs does not
             // equal number of searches.
             
-        	//@@@ change to searches instead of jobs?
-        
-            "maxNumberOfJobs": 20,
+            "maxNumberOfJobs": 100,
 
             // After how much time will a search job be removed from the cache? (in seconds)
             //"maxJobAgeSec": 3600,
