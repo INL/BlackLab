@@ -18,9 +18,25 @@ public class JobDocs extends JobWithDocs {
 
 		Query filterQuery;
 
-		public JobDescDocs(JobDescription hitsToGroup, Query filterQuery) {
+		private String indexName;
+
+		public JobDescDocs(JobDescription hitsToGroup, Query filterQuery, String indexName) {
 			super(JobDocs.class, hitsToGroup);
 			this.filterQuery = filterQuery;
+			if (hitsToGroup == null) {
+				this.indexName = indexName;
+			} else {
+				this.indexName = null;
+				if (!indexName.equals(inputDesc.getIndexName()))
+					throw new RuntimeException("Mismatch between indexnames!");
+			}
+		}
+
+		@Override
+		public String getIndexName() {
+			if (indexName != null)
+				return indexName;
+			return super.getIndexName();
 		}
 
 		@Override
@@ -52,9 +68,6 @@ public class JobDocs extends JobWithDocs {
 			JobWithHits hitsSearch = (JobWithHits)inputJob;
 			Hits hits = hitsSearch.getHits();
 			// Now, get per document results
-			//ContextSettings contextSett = jobDesc.getContextSettings();
-			//hits.settings().setConcordanceType(contextSett.concType());
-			//hits.settings().setContextSize(contextSett.size());
 			docResults = hits.perDocResults();
 		} else {
 			// Documents only

@@ -470,8 +470,8 @@ public class SearchParameters {
 	public JobDescription docs() throws BlsException {
 		TextPattern pattern = getPattern();
 		if (pattern != null)
-			return new JobDescDocs(hitsSample(), getFilterQuery());
-		return new JobDescDocs(null, getFilterQuery());
+			return new JobDescDocs(hitsSample(), getFilterQuery(), getIndexName());
+		return new JobDescDocs(null, getFilterQuery(), getIndexName());
 	}
 
 	public JobDescription hitsGrouped() throws BlsException {

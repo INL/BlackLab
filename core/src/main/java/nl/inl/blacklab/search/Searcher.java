@@ -574,6 +574,8 @@ public abstract class Searcher {
 	 * NOTE: you must check if the document isn't deleted using Search.isDeleted()
 	 * first! Lucene 4.0+ allows you to retrieve deleted documents, making you
 	 * responsible for checking whether documents are deleted or not.
+	 * (This doesn't apply to search results; searches should never produce deleted
+	 *  documents. It does apply when you're e.g. iterating over all documents in the index)
 	 *
 	 * @param doc
 	 *            the document id
