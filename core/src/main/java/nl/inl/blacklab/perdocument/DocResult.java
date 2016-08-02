@@ -29,22 +29,42 @@ import nl.inl.blacklab.search.Searcher;
 public class DocResult {
 	private int docId;
 
-	private Document document;
-
 	private Hits hits;
 
 	private float score;
 
+	public DocResult(Searcher searcher, String concField, int docId, float score) {
+		this.docId = docId;
+		this.score = score;
+		hits = Hits.emptyList(searcher);
+		hits.settings().setConcordanceField(concField);
+	}
+
+	/**
+	 * Construct a DocResult
+	 * @param searcher searcher object
+	 * @param concField concordance field
+	 * @param docId Lucene document id
+	 * @param document Lucene document
+	 * @deprecated use version that doesn't take a Document (will be loaded lazily)
+	 */
+	@Deprecated
 	public DocResult(Searcher searcher, String concField, int docId, Document document) {
 		this(searcher, concField, docId, document, 0.0f);
 	}
 
+	/**
+	 * Construct a DocResult
+	 * @param searcher searcher object
+	 * @param concField concordance field
+	 * @param docId Lucene document id
+	 * @param document Lucene document
+	 * @param score document score
+	 * @deprecated use version that doesn't take a Document (will be loaded lazily)
+	 */
+	@Deprecated
 	public DocResult(Searcher searcher, String concField, int docId, Document document, float score) {
-		this.docId = docId;
-		this.document = document;
-		this.score = score;
-		hits = Hits.emptyList(searcher);
-		hits.settings().setConcordanceField(concField);
+		this(searcher, concField, docId, score);
 	}
 
 	/**
@@ -53,15 +73,13 @@ public class DocResult {
 	 * @param searcher the index we searched
 	 * @param concField concordance field (e.g. "contents")
 	 * @param doc the Lucene document id
-	 * @param document the Lucene document
+	 * @param document the Lucene document (NOTE: this is ignored, just pass null)
 	 * @param docHits hits in the document
 	 * @deprecated use the version that takes a Hits object
 	 */
 	@Deprecated
-	public DocResult(Searcher searcher, String concField, int doc, Document document,
-			List<Hit> docHits) {
+	public DocResult(Searcher searcher, String concField, int doc, Document document, List<Hit> docHits) {
 		this.docId = doc;
-		this.document = document;
 		this.score = 0.0f;
 		hits = Hits.fromList(searcher, docHits);
 		hits.settings().setConcordanceField(concField);
@@ -73,13 +91,25 @@ public class DocResult {
 	 * @param searcher the index we searched
 	 * @param concField concordance field (e.g. "contents")
 	 * @param doc the Lucene document id
-	 * @param document the Lucene document
+	 * @param document the Lucene document (NOTE: this is ignored, just pass null)
+	 * @param docHits hits in the document
+	 * @deprecated use version that doesn't take a Document (will be loaded lazily)
+	 */
+	@Deprecated
+	public DocResult(Searcher searcher, String concField, int doc, Document document, Hits docHits) {
+		this(searcher, concField, doc, docHits);
+	}
+
+	/**
+	 * Construct a DocResult.
+	 *
+	 * @param searcher the index we searched
+	 * @param concField concordance field (e.g. "contents")
+	 * @param doc the Lucene document id
 	 * @param docHits hits in the document
 	 */
-	public DocResult(Searcher searcher, String concField, int doc, Document document,
-			Hits docHits) {
+	public DocResult(Searcher searcher, String concField, int doc, Hits docHits) {
 		this.docId = doc;
-		this.document = document;
 		this.score = 0.0f;
 		hits = docHits;
 	}
@@ -96,7 +126,7 @@ public class DocResult {
 	}
 
 	public Document getDocument() {
-		return document;
+		return hits.getSearcher().document(docId);
 	}
 
 	/**

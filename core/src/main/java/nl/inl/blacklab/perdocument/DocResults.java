@@ -23,7 +23,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -41,8 +40,7 @@ import nl.inl.util.ReverseComparator;
 import nl.inl.util.ThreadPriority.Level;
 
 /**
- * A list of DocResult objects (document-level query results). The list may be sorted by calling
- * DocResults.sort().
+ * A list of DocResult objects (document-level query results).
  */
 public class DocResults implements Iterable<DocResult>, Prioritizable {
 	/**
@@ -161,7 +159,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		if (scorer == null)
 			return; // no matches, empty result set
 		try {
-			IndexReader indexReader = searcher.getIndexReader();
 			while (true) {
 				int docId;
 				try {
@@ -172,8 +169,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 				if (docId == DocIdSetIterator.NO_MORE_DOCS)
 					break;
 
-				Document d = indexReader.document(docId);
-				DocResult dr = new DocResult(searcher, null, docId, d, scorer.score());
+				DocResult dr = new DocResult(searcher, null, docId, scorer.score());
 				results.add(dr);
 			}
 		} catch (Exception e) {
@@ -220,7 +216,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 				@Override
 				public void collect(int docId) throws IOException {
 					int globalDocId = docId + docBase;
-					results.add(new DocResult(DocResults.this.searcher, null, globalDocId, DocResults.this.searcher.document(globalDocId)));
+					results.add(new DocResult(DocResults.this.searcher, null, globalDocId, 0.0f));
 				}
 
 				@Override
@@ -384,48 +380,44 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		if (sourceHitsFullyRead())
 			return;
 
-		try {
-			synchronized(sourceHitsIterator) {
-				// Fill list of document results
-				int doc = partialDocId;
-				List<Hit> docHits = partialDocHits;
-				partialDocId = -1;
-				partialDocHits = null;
+		synchronized(sourceHitsIterator) {
+			// Fill list of document results
+			int doc = partialDocId;
+			List<Hit> docHits = partialDocHits;
+			partialDocId = -1;
+			partialDocHits = null;
 
-				IndexReader indexReader = searcher.getIndexReader();
-				while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
+			IndexReader indexReader = searcher.getIndexReader();
+			while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
-					Hit hit = sourceHitsIterator.next();
-					if (hit.doc != doc) {
-						if (docHits != null) {
-							Hits hits = Hits.fromList(searcher, docHits);
-							hits.copySettingsFrom(sourceHits); // concordance type, etc.
-							addDocResultToList(doc, hits, indexReader);
-						}
-						doc = hit.doc;
-						docHits = new ArrayList<>();
-					}
-					docHits.add(hit);
-				}
-				// add the final dr instance to the results collection
-				if (docHits != null) {
-					if (sourceHitsIterator.hasNext()) {
-						partialDocId = doc;
-						partialDocHits = docHits; // not done, continue from here later
-					} else {
+				Hit hit = sourceHitsIterator.next();
+				if (hit.doc != doc) {
+					if (docHits != null) {
 						Hits hits = Hits.fromList(searcher, docHits);
 						hits.copySettingsFrom(sourceHits); // concordance type, etc.
 						addDocResultToList(doc, hits, indexReader);
 					}
+					doc = hit.doc;
+					docHits = new ArrayList<>();
+				}
+				docHits.add(hit);
+			}
+			// add the final dr instance to the results collection
+			if (docHits != null) {
+				if (sourceHitsIterator.hasNext()) {
+					partialDocId = doc;
+					partialDocHits = docHits; // not done, continue from here later
+				} else {
+					Hits hits = Hits.fromList(searcher, docHits);
+					hits.copySettingsFrom(sourceHits); // concordance type, etc.
+					addDocResultToList(doc, hits, indexReader);
 				}
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 
-	private void addDocResultToList(int doc, Hits docHits, IndexReader indexReader) throws IOException {
-		DocResult docResult = new DocResult(searcher, sourceHits.settings().concordanceField(), doc, indexReader == null ? null : indexReader.document(doc), docHits);
+	private void addDocResultToList(int doc, Hits docHits, IndexReader indexReader) {
+		DocResult docResult = new DocResult(searcher, sourceHits.settings().concordanceField(), doc, docHits);
 		// Make sure we remember what kind of context we have, if any
 		docResult.setContextField(sourceHits.getContextFieldPropName());
 		results.add(docResult);
