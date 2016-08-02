@@ -2,10 +2,31 @@
 
 ## Improvements in HEAD
 
+### Changed
+* Deprecated TextPattern.toString() methods that take arguments.
+* Gave HitProperty and DocProperty default toString() implementation.
+
+### BlackLab Server
+* Heavily refactored to be more modular.
+* Preparations to eventually remove nonblocking mode.
+* Allowed previously forbidden all-docs query (now that large document 
+  queries are faster and less memory hungry).
+* Made docpid a general way to easily filter on a single document PID.
+
+## Improvements up to v1.4.1
+
 ### Fixed
 * Potential overflow bug in ContentStoreFixedBlock when retrieving content.
 * ContentStoreFixedBlock decompression bug that occurred with highly compressable content.
   (N.B. there is no need to re-index if you experienced either of the above bugs)
+
+### Changed
+* Don't store Document objects in DocResults, saving memory and time.
+* Changed BL-CQL subproperty separator (e.g. for querying part of speech features separately)
+  from ':' to '/'.
+
+### BlackLab Server
+* Made sure missing options in blacklab-server.json don't cause problems.
 
 ## Improvements up to v1.4.0
 

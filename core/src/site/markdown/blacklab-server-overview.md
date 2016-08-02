@@ -137,6 +137,10 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>Query language for filter parameter. Supported are lucene (Lucene Query Language) and (limited) contextql (contextual query language).(default: lucene )</td>
 	</tr>
 	<tr>
+		<td>docpid </td>
+		<td>Filter on a single document pid, e.g. “DOC0001” (default: none)</td>
+	</tr>
+	<tr>
 		<td>wordsaroundhit </td>
 		<td>Number of words of context to retrieve for hits- and docs-results (default: 5)</td>
 	</tr>
