@@ -105,6 +105,16 @@ public class DataObjectMapElement extends DataObject {
 		return map.put(key, value);
 	}
 
+	public DataObject put(String key, Object value) {
+		return put(key, value == null ? "" : value.toString());
+	}
+
+	public DataObject putIfNotNull(String key, Object value) {
+		if (value == null)
+			return null;
+		return put(key, value.toString());
+	}
+
 	public DataObject put(String key, String value) {
 		return map.put(key, DataObject.from(value));
 	}

@@ -24,7 +24,7 @@ public class HitGroupSortSettings {
 
 	@Override
 	public String toString() {
-		return "HitGroupSortSettings [sortBy=" + sortBy + ", reverse=" + reverse + "]";
+		return "hitgroupsort=" + sortBy + ", sortreverse=" + reverse;
 	}
 
 }

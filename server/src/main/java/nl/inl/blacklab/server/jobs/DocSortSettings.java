@@ -23,7 +23,7 @@ public class DocSortSettings {
 
 	@Override
 	public String toString() {
-		return "DocSortSettings [sortBy=" + sortBy.serialize() + ", reverse=" + reverse + "]";
+		return "docsort=" + sortBy.serialize() + ", sortreverse=" + reverse;
 	}
 
 }

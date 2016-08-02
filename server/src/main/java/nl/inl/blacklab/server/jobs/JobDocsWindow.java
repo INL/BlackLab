@@ -16,12 +16,9 @@ public class JobDocsWindow extends Job {
 
 		WindowSettings windowSettings;
 
-		ContextSettings contextSettings;
-
-		public JobDescDocsWindow(JobDescription inputDesc, WindowSettings windowSettings, ContextSettings contextSettings) {
+		public JobDescDocsWindow(JobDescription inputDesc, WindowSettings windowSettings) {
 			super(JobDocsWindow.class, inputDesc);
 			this.windowSettings = windowSettings;
-			this.contextSettings = contextSettings;
 		}
 
 		@Override
@@ -30,20 +27,14 @@ public class JobDocsWindow extends Job {
 		}
 
 		@Override
-		public ContextSettings getContextSettings() {
-			return contextSettings;
-		}
-
-		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[" + windowSettings + ", " + contextSettings + "]";
+			return super.uniqueIdentifier() + windowSettings + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
-			o.put("windowSettings", windowSettings.toString());
-			o.put("contextSettings", contextSettings.toString());
+			o.put("windowSettings", windowSettings);
 			return o;
 		}
 
@@ -71,7 +62,6 @@ public class JobDocsWindow extends Job {
 			debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
 			first = 0;
 		}
-		// TODO: context settings!
 		window = sourceResults.window(first, requestedWindowSize);
 	}
 

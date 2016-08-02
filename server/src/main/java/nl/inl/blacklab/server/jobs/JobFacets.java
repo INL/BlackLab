@@ -38,13 +38,13 @@ public class JobFacets extends Job {
 					strFacets.append(", ");
 				strFacets.append(facet.serialize());
 			}
-			return super.uniqueIdentifier() + "[[" + facets + "]]";
+			return super.uniqueIdentifier() + "[" + facets + "])";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
-			o.put("facets", facets.toString());
+			o.put("facets", facets);
 			return o;
 		}
 
@@ -67,7 +67,7 @@ public class JobFacets extends Job {
 		Map<String, DocCounts> theCounts = new HashMap<>();
 		for (DocProperty facetBy: props) {
 			DocCounts facetCounts = docResults.countBy(facetBy);
-			counts.put(facetBy.serialize(), facetCounts);
+			theCounts.put(facetBy.getName(), facetCounts);
 		}
 		counts = theCounts; // we're done, caller can use the groups now
 	}

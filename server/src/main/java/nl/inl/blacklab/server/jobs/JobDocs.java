@@ -30,13 +30,13 @@ public class JobDocs extends JobWithDocs {
 
 		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[" + filterQuery + "]";
+			return super.uniqueIdentifier() + filterQuery + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
-			o.put("filterQuery", filterQuery.toString());
+			o.put("filterQuery", filterQuery);
 			return o;
 		}
 

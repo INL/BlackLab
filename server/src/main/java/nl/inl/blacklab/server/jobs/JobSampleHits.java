@@ -28,13 +28,13 @@ public class JobSampleHits extends JobWithHits {
 
 		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[" + sampleSettings + "]";
+			return super.uniqueIdentifier() + sampleSettings + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
-			o.put("sampleSettings", sampleSettings.toString());
+			o.put("sampleSettings", sampleSettings);
 			return o;
 		}
 

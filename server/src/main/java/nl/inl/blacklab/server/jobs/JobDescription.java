@@ -49,7 +49,7 @@ public abstract class JobDescription {
 	 * @return the unique identifier string
 	 */
 	public String uniqueIdentifier() {
-		return jobClass.getSimpleName() + " [" + (inputDesc == null ? "no input job" : inputDesc.uniqueIdentifier()) + "]";
+		return jobClass.getSimpleName() + "(" + (inputDesc == null ? "" : "input=" + inputDesc.uniqueIdentifier() + ", ");
 	}
 
 	/**

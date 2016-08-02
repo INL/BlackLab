@@ -24,7 +24,7 @@ public class DocGroupSortSettings {
 
 	@Override
 	public String toString() {
-		return "DocGroupSortSettings [sortBy=" + sortBy + ", reverse=" + reverse + "]";
+		return "docgroupsort=" + sortBy + ", sortreverse=" + reverse;
 	}
 
 }

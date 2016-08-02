@@ -96,6 +96,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
 	public void addCriterium(HitProperty crit) {
 		criteria.add(crit);
+		crit.setHits(hits); // make sure new criterium has access to hits
 		determineContextNeeded();
 	}
 

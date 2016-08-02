@@ -585,6 +585,7 @@ public class HitsImpl extends Hits {
 		findContext(requiredContext);
 
 		// Perform the actual sort.
+		sortProp.setHits(this); // make sure HitProperty has access to the hits
 		Arrays.sort(sortOrder, sortProp);
 
 		if (reverseSort) {

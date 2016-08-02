@@ -22,7 +22,7 @@ public class WindowSettings {
 
 	@Override
 	public String toString() {
-		return "WindowSettings [first=" + first + ", size=" + size + "]";
+		return "firstresult=" + first + ", numofresults=" + size;
 	}
 
 }

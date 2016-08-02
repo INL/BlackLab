@@ -6,6 +6,7 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 
+import nl.inl.blacklab.search.HitsSettings;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -28,12 +29,15 @@ public class JobHits extends JobWithHits {
 
 		private MaxSettings maxSettings;
 
-		public JobDescHits(String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings) {
+		private ContextSettings contextSettings;
+
+		public JobDescHits(String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings, ContextSettings contextSettings) {
 			super(JobHits.class, null);
 			this.indexName = indexName;
 			this.pattern = pattern;
 			this.filterQuery = filterQuery;
 			this.maxSettings = maxSettings;
+			this.contextSettings = contextSettings;
 		}
 
 		@Override
@@ -57,16 +61,23 @@ public class JobHits extends JobWithHits {
 		}
 
 		@Override
+		public ContextSettings getContextSettings() {
+			return contextSettings;
+		}
+
+		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[" + getIndexName() + ", " + pattern + ", " + filterQuery + ", " + maxSettings + "]";
+			return super.uniqueIdentifier() + "index=" + getIndexName() + ", patt=" + pattern + ", filter=" + filterQuery + ", " +
+					maxSettings + ", " + contextSettings + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
-			o.put("pattern", pattern.toString());
-			o.put("filterQuery", filterQuery.toString());
-			o.put("maxSettings", maxSettings.toString());
+			o.put("pattern", pattern);
+			o.put("filterQuery", filterQuery);
+			o.put("maxSettings", maxSettings);
+			o.put("contextSettings", contextSettings);
 			return o;
 		}
 
@@ -94,9 +105,12 @@ public class JobHits extends JobWithHits {
 
 				// Set the max retrieve/count value
 				MaxSettings maxSettings = jobDesc.getMaxSettings();
-				hits.settings().setMaxHitsToRetrieve(maxSettings.maxRetrieve());
-				hits.settings().setMaxHitsToCount(maxSettings.maxCount());
-
+				HitsSettings hitsSettings = hits.settings();
+				hitsSettings.setMaxHitsToRetrieve(maxSettings.maxRetrieve());
+				hitsSettings.setMaxHitsToCount(maxSettings.maxCount());
+				ContextSettings contextSettings = jobDesc.getContextSettings();
+				hitsSettings.setConcordanceType(contextSettings.concType());
+				hitsSettings.setContextSize(contextSettings.size());
 			} catch (RuntimeException e) {
 				throw new InternalServerError("Internal error", 15, e);
 			}

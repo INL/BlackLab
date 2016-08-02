@@ -21,7 +21,7 @@ public class JobDocsTotal extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[]";
+			return super.uniqueIdentifier() + ")";
 		}
 
 		@Override

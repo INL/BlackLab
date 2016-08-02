@@ -17,7 +17,7 @@ public class DocGroupSettings {
 
 	@Override
 	public String toString() {
-		return "DocGroupSettings [groupBy=" + groupBy.serialize() + "]";
+		return "docgroup=" + groupBy.serialize();
 	}
 
 }

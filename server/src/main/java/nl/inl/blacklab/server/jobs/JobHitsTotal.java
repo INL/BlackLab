@@ -19,7 +19,7 @@ public class JobHitsTotal extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[]";
+			return super.uniqueIdentifier() + ")";
 		}
 
 		@Override

@@ -151,6 +151,8 @@ public class SearchParameters {
 
 	private boolean isDocsOperation;
 
+	private List<DocProperty> facetProps;
+
 	private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
 		this.searchManager = searchManager;
 		this.isDocsOperation = isDocsOperation;
@@ -301,23 +303,26 @@ public class SearchParameters {
 	}
 
 	private List<DocProperty> getFacets() {
-		String facets = getString("facets");
-		if (facets == null) {
-			// If no facets were specified, we shouldn't even be here.
-			throw new RuntimeException("facets == null");
-		}
-		DocProperty propMultipleFacets = DocProperty.deserialize(facets);
-		List<DocProperty> props = new ArrayList<>();
-		if (propMultipleFacets instanceof DocPropertyMultiple) {
-			// Multiple facets requested
-			for (DocProperty prop: (DocPropertyMultiple)propMultipleFacets) {
-				props.add(prop);
+		if (facetProps == null) {
+			String facets = getString("facets");
+			if (facets == null) {
+				return null;
 			}
-		} else {
-			// Just a single facet requested
-			props.add(propMultipleFacets);
+			DocProperty propMultipleFacets = DocProperty.deserialize(facets);
+			if (propMultipleFacets == null)
+				return null;
+			facetProps = new ArrayList<>();
+			if (propMultipleFacets instanceof DocPropertyMultiple) {
+				// Multiple facets requested
+				for (DocProperty prop: (DocPropertyMultiple)propMultipleFacets) {
+					facetProps.add(prop);
+				}
+			} else {
+				// Just a single facet requested
+				facetProps.add(propMultipleFacets);
+			}
 		}
-		return props;
+		return facetProps;
 	}
 
 	private DocGroupSettings docGroupSettings() throws BlsException {
@@ -333,7 +338,6 @@ public class SearchParameters {
 		return new DocGroupSettings(groupProp);
 	}
 
-	// TODO: use this properly!
 	private DocGroupSortSettings docGroupSortSettings() {
 		if (!isDocsOperation)
 			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
@@ -348,6 +352,8 @@ public class SearchParameters {
 			sortBy = sortBy.substring(1);
 		}
 		DocGroupProperty sortProp = DocGroupProperty.deserialize(sortBy);
+		if (sortProp == null)
+			return null;
 		return new DocGroupSortSettings(sortProp, reverse);
 	}
 
@@ -363,10 +369,11 @@ public class SearchParameters {
 			sortBy = sortBy.substring(1);
 		}
 		DocProperty sortProp = DocProperty.deserialize(sortBy);
+		if (sortProp == null)
+			return null;
 		return new DocSortSettings(sortProp, reverse);
 	}
 
-	// TODO: use this properly!
 	private HitGroupSortSettings hitGroupSortSettings()  {
 		if (isDocsOperation)
 			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
@@ -381,6 +388,8 @@ public class SearchParameters {
 			sortBy = sortBy.substring(1);
 		}
 		GroupProperty sortProp = GroupProperty.deserialize(sortBy);
+		if (sortProp == null)
+			return null;
 		return new HitGroupSortSettings(sortProp, reverse);
 	}
 
@@ -412,21 +421,24 @@ public class SearchParameters {
 	}
 
 	public JobDescription hitsWindow() throws BlsException {
-		if (getWindowSettings() == null)
+		WindowSettings windowSettings = getWindowSettings();
+		if (windowSettings == null)
 			return hitsSample();
-		return new JobDescHitsWindow(hitsSample(), getWindowSettings(), getContextSettings());
+		return new JobDescHitsWindow(hitsSample(), windowSettings);
 	}
 
 	public JobDescription hitsSample() throws BlsException {
-		if (getSampleSettings() == null)
+		SampleSettings sampleSettings = getSampleSettings();
+		if (sampleSettings == null)
 			return hitsSorted();
-		return new JobDescSampleHits(hitsSorted(), getSampleSettings());
+		return new JobDescSampleHits(hitsSorted(), sampleSettings);
 	}
 
 	public JobDescription hitsSorted() throws BlsException {
-		if (hitsSortSettings() == null)
+		HitSortSettings hitsSortSettings = hitsSortSettings();
+		if (hitsSortSettings == null)
 			return hits();
-		return new JobDescHitsSorted(hits(), hitsSortSettings());
+		return new JobDescHitsSorted(hits(), hitsSortSettings);
 	}
 
 	public JobDescription hitsTotal() throws BlsException {
@@ -434,19 +446,21 @@ public class SearchParameters {
 	}
 
 	public JobDescription hits() throws BlsException {
-		return new JobDescHits(getIndexName(), getPattern(), getFilterQuery(), getMaxSettings());
+		return new JobDescHits(getIndexName(), getPattern(), getFilterQuery(), getMaxSettings(), getContextSettings());
 	}
 
 	public JobDescription docsWindow() throws BlsException {
-		if (getWindowSettings() == null)
+		WindowSettings windowSettings = getWindowSettings();
+		if (windowSettings == null)
 			return docsSorted();
-		return new JobDescDocsWindow(docsSorted(), getWindowSettings(), getContextSettings());
+		return new JobDescDocsWindow(docsSorted(), windowSettings);
 	}
 
 	public JobDescription docsSorted() throws BlsException {
-		if (docSortSettings() == null)
+		DocSortSettings docSortSettings = docSortSettings();
+		if (docSortSettings == null)
 			return docs();
-		return new JobDescDocsSorted(docs(), docSortSettings());
+		return new JobDescDocsSorted(docs(), docSortSettings);
 	}
 
 	public JobDescription docsTotal() throws BlsException {
@@ -454,7 +468,8 @@ public class SearchParameters {
 	}
 
 	public JobDescription docs() throws BlsException {
-		if (getPattern() != null)
+		TextPattern pattern = getPattern();
+		if (pattern != null)
 			return new JobDescDocs(hitsSample(), getFilterQuery());
 		return new JobDescDocs(null, getFilterQuery());
 	}
@@ -469,6 +484,10 @@ public class SearchParameters {
 
 	public JobDescription facets() throws BlsException {
 		return new JobDescFacets(docs(), getFacets());
+	}
+
+	public boolean hasFacets() {
+		return getFacets() != null;
 	}
 
 }

@@ -15,12 +15,9 @@ public class JobHitsWindow extends Job {
 
 		WindowSettings windowSettings;
 
-		ContextSettings contextSettings;
-
-		public JobDescHitsWindow(JobDescription inputDesc, WindowSettings windowSettings, ContextSettings contextSettings) {
+		public JobDescHitsWindow(JobDescription inputDesc, WindowSettings windowSettings) {
 			super(JobHitsWindow.class, inputDesc);
 			this.windowSettings = windowSettings;
-			this.contextSettings = contextSettings;
 		}
 
 		@Override
@@ -29,20 +26,14 @@ public class JobHitsWindow extends Job {
 		}
 
 		@Override
-		public ContextSettings getContextSettings() {
-			return contextSettings;
-		}
-
-		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[" + windowSettings + ", " + contextSettings + "]";
+			return super.uniqueIdentifier() + windowSettings + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
-			o.put("windowSettings", windowSettings.toString());
-			o.put("contextSettings", contextSettings.toString());
+			o.put("windowSettings", windowSettings);
 			return o;
 		}
 
@@ -70,9 +61,6 @@ public class JobHitsWindow extends Job {
 		}
 		hitsWindow = hits.window(first, requestedWindowSize);
 		setPriorityInternal(); // make sure hits has the right priority
-		ContextSettings contextSett = jobDesc.getContextSettings();
-		hitsWindow.settings().setContextSize(contextSett.size());
-		hitsWindow.settings().setConcordanceType(contextSett.concType());
 	}
 
 	public HitsWindow getWindow() {

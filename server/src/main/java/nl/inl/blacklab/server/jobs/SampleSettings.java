@@ -28,7 +28,7 @@ public class SampleSettings {
 
 	@Override
 	public String toString() {
-		return "SampleSettings [percentage=" + percentage + ", number=" + number + ", seed=" + seed + "]";
+		return "sampleperc=" + percentage + ", samplenum=" + number + ", sampleseed=" + seed;
 	}
 
 }

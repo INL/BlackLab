@@ -22,7 +22,7 @@ public class HitSortSettings {
 
 	@Override
 	public String toString() {
-		return "HitsSortSettings [sortBy=" + sortBy + ", reverse=" + reverse + "]";
+		return "hitsort=" + sortBy + ", sortreverse=" + reverse;
 	}
 
 }

@@ -116,13 +116,10 @@ public class RequestHandlerDocs extends RequestHandler {
 				window = searchWindow.getWindow();
 			}
 
-			String parFacets = searchParam.getString("facets");
 			DataObjectMapAttribute doFacets = null;
-			if (parFacets != null && parFacets.length() > 0) {
+			if (searchParam.hasFacets()) {
 				// Now, group the docs according to the requested facets.
-				//TODO: use background job?
-				DocResults docsToFacet = window.getOriginalDocs();
-				doFacets = getFacets(docsToFacet, parFacets);
+				doFacets = getFacets(window.getOriginalDocs(), searchParam.facets());
 			}
 
 			Searcher searcher = search.getSearcher();

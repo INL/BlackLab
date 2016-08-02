@@ -29,13 +29,13 @@ public class JobHitsGrouped extends Job {
 
 		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[" + groupSettings + "]";
+			return super.uniqueIdentifier() + groupSettings + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
-			o.put("groupSettings", groupSettings.toString());
+			o.put("groupSettings", groupSettings);
 			return o;
 		}
 

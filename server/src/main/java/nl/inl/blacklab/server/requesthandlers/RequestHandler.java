@@ -2,18 +2,18 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.perdocument.DocCount;
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocGroupProperty;
-import nl.inl.blacklab.perdocument.DocProperty;
-import nl.inl.blacklab.perdocument.DocPropertyMultiple;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
@@ -23,15 +23,14 @@ import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.jobs.JobDescription;
+import nl.inl.blacklab.server.jobs.JobFacets;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.IndexManager;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.ParseUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
-
-import org.apache.log4j.Logger;
-import org.apache.lucene.document.Document;
 
 /**
  * Base class for request handlers, to handle the different types of
@@ -353,23 +352,15 @@ public abstract class RequestHandler {
 		return docInfo;
 	}
 
-	protected DataObjectMapAttribute getFacets(DocResults docsToFacet, String facetSpec) {
-		DataObjectMapAttribute doFacets;
-		DocProperty propMultipleFacets = DocProperty.deserialize(facetSpec);
-		List<DocProperty> props = new ArrayList<>();
-		if (propMultipleFacets instanceof DocPropertyMultiple) {
-			// Multiple facets requested
-			for (DocProperty prop: (DocPropertyMultiple)propMultipleFacets) {
-				props.add(prop);
-			}
-		} else {
-			// Just a single facet requested
-			props.add(propMultipleFacets);
-		}
+	protected DataObjectMapAttribute getFacets(DocResults docsToFacet, JobDescription facetDesc) throws BlsException {
 
-		doFacets = new DataObjectMapAttribute("facet", "name");
-		for (DocProperty facetBy: props) {
-			DocCounts facetCounts = docsToFacet.countBy(facetBy);
+		JobFacets facets = (JobFacets)searchMan.search(user, facetDesc, true);
+		Map<String, DocCounts> counts = facets.getCounts();
+
+		DataObjectMapAttribute doFacets = new DataObjectMapAttribute("facet", "name");
+		for (Entry<String, DocCounts> e: counts.entrySet()) {
+			String facetBy = e.getKey();
+			DocCounts facetCounts = e.getValue();
 			facetCounts.sort(DocGroupProperty.size());
 			DataObjectList doFacet = new DataObjectList("item");
 			int n = 0, maxFacetValues = 10;
@@ -390,7 +381,7 @@ public abstract class RequestHandler {
 				doItem.put("size", facetCounts.getTotalResults() - totalSize);
 				doFacet.add(doItem);
 			}
-			doFacets.put(facetBy.getName(), doFacet);
+			doFacets.put(facetBy, doFacet);
 		}
 		return doFacets;
 	}

@@ -128,13 +128,14 @@ public class RequestHandlerHits extends RequestHandler {
 				return new Response(getCollocations(window.getOriginalHits()));
 			}
 
-			String parFacets = searchParam.getString("facets");
+			//String parFacets = searchParam.getString("facets");
 			DataObjectMapAttribute doFacets = null;
 			DocResults perDocResults = null;
-			if (parFacets != null && parFacets.length() > 0) {
+			//if (parFacets != null && parFacets.length() > 0) {
+			if (searchParam.hasFacets()) {
 				// Now, group the docs according to the requested facets.
 				perDocResults = window.getOriginalHits().perDocResults();
-				doFacets = getFacets(perDocResults, parFacets);
+				doFacets = getFacets(perDocResults, searchParam.facets());
 			}
 
 			Searcher searcher = search.getSearcher();

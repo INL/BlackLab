@@ -24,7 +24,7 @@ public class ContextSettings {
 
 	@Override
 	public String toString() {
-		return "ContextSettings [size=" + size + ", concType=" + concType + "]";
+		return "ctxsize=" + size + ", conctype=" + concType;
 	}
 
 }

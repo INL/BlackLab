@@ -27,13 +27,13 @@ public class JobHitsSorted extends JobWithHits {
 
 		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + "[" + sortSettings + "]";
+			return super.uniqueIdentifier() + sortSettings + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
-			o.put("sortSettings", sortSettings.toString());
+			o.put("sortSettings", sortSettings);
 			return o;
 		}
 

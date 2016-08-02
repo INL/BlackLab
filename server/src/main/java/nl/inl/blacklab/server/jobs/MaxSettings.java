@@ -21,7 +21,7 @@ public class MaxSettings {
 
 	@Override
 	public String toString() {
-		return "MaxSettings [maxRetrieve=" + maxRetrieve + ", maxCount=" + maxCount + "]";
+		return "maxRetrieve=" + maxRetrieve + ", maxCount=" + maxCount;
 	}
 
 }

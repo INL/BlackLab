@@ -14,7 +14,7 @@ public class HitGroupSettings {
 
 	@Override
 	public String toString() {
-		return "HitGroupSettings [groupBy=" + groupBy + "]";
+		return "hitgroup=" + groupBy;
 	}
 
 }
