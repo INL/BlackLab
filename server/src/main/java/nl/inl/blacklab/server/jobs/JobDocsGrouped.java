@@ -15,9 +15,12 @@ public class JobDocsGrouped extends Job {
 
 		DocGroupSettings groupSettings;
 
-		public JobDescDocsGrouped(JobDescription docsToGroup, DocGroupSettings groupSettings) {
+		private DocGroupSortSettings groupSortSettings;
+
+		public JobDescDocsGrouped(JobDescription docsToGroup, DocGroupSettings groupSettings, DocGroupSortSettings groupSortSettings) {
 			super(JobDocsGrouped.class, docsToGroup);
 			this.groupSettings = groupSettings;
+			this.groupSortSettings = groupSortSettings;
 		}
 
 		@Override
@@ -26,14 +29,20 @@ public class JobDocsGrouped extends Job {
 		}
 
 		@Override
+		public DocGroupSortSettings getDocGroupSortSettings() {
+			return groupSortSettings;
+		}
+
+		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + groupSettings + ")";
+			return super.uniqueIdentifier() + groupSettings + ", " + groupSortSettings + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
 			o.put("groupSettings", groupSettings);
+			o.put("groupSortSettings", groupSortSettings);
 			return o;
 		}
 

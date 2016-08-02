@@ -17,9 +17,12 @@ public class JobHitsGrouped extends Job {
 
 		HitGroupSettings groupSettings;
 
-		public JobDescHitsGrouped(JobDescription hitsToGroup, HitGroupSettings groupSettings) {
+		private HitGroupSortSettings groupSortSettings;
+
+		public JobDescHitsGrouped(JobDescription hitsToGroup, HitGroupSettings groupSettings, HitGroupSortSettings groupSortSettings) {
 			super(JobHitsGrouped.class, hitsToGroup);
 			this.groupSettings = groupSettings;
+			this.groupSortSettings = groupSortSettings;
 		}
 
 		@Override
@@ -28,14 +31,20 @@ public class JobHitsGrouped extends Job {
 		}
 
 		@Override
+		public HitGroupSortSettings getHitGroupSortSettings() {
+			return groupSortSettings;
+		}
+
+		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + groupSettings + ")";
+			return super.uniqueIdentifier() + groupSettings + ", " + groupSortSettings + ")";
 		}
 
 		@Override
 		public DataObjectMapElement toDataObject() {
 			DataObjectMapElement o = super.toDataObject();
 			o.put("groupSettings", groupSettings);
+			o.put("groupSortSettings", groupSortSettings);
 			return o;
 		}
 

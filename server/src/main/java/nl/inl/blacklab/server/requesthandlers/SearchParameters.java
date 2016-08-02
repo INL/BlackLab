@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.perdocument.DocGroupProperty;
+import nl.inl.blacklab.perdocument.DocGroupPropertyIdentity;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyMultiple;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -21,6 +22,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.GroupProperty;
+import nl.inl.blacklab.search.grouping.GroupPropertyIdentity;
 import nl.inl.blacklab.server.dataobject.DataObject;
 import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -339,21 +341,22 @@ public class SearchParameters {
 	}
 
 	private DocGroupSortSettings docGroupSortSettings() {
-		if (!isDocsOperation)
-			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
-		if (!containsKey("group"))
-			return null; // not grouping, so no group sort
-		String sortBy = getString("sort");
-		if (sortBy == null || sortBy.length() == 0)
-			return null;
+		DocGroupProperty sortProp = null;
 		boolean reverse = false;
-		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-			reverse = true;
-			sortBy = sortBy.substring(1);
+		if (isDocsOperation) {
+			if (containsKey("group")) {
+				String sortBy = getString("sort");
+				if (sortBy != null && sortBy.length() > 0) {
+					if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
+						reverse = true;
+						sortBy = sortBy.substring(1);
+					}
+					sortProp = DocGroupProperty.deserialize(sortBy);
+				}
+			}
 		}
-		DocGroupProperty sortProp = DocGroupProperty.deserialize(sortBy);
 		if (sortProp == null)
-			return null;
+			sortProp = new DocGroupPropertyIdentity();
 		return new DocGroupSortSettings(sortProp, reverse);
 	}
 
@@ -375,21 +378,23 @@ public class SearchParameters {
 	}
 
 	private HitGroupSortSettings hitGroupSortSettings()  {
-		if (isDocsOperation)
-			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
-		if (!containsKey("group"))
-			return null; // not grouping, so no group sort
-		String sortBy = getString("sort");
-		if (sortBy == null || sortBy.length() == 0)
-			return null;
+		GroupProperty sortProp = null;
 		boolean reverse = false;
-		if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-			reverse = true;
-			sortBy = sortBy.substring(1);
+		if (!isDocsOperation) {
+			// not grouping, so no group sort
+			if (containsKey("group")) {
+				String sortBy = getString("sort");
+				if (sortBy != null && sortBy.length() > 0) {
+					if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
+						reverse = true;
+						sortBy = sortBy.substring(1);
+					}
+					sortProp = GroupProperty.deserialize(sortBy);
+				}
+			}
 		}
-		GroupProperty sortProp = GroupProperty.deserialize(sortBy);
 		if (sortProp == null)
-			return null;
+			sortProp = new GroupPropertyIdentity();
 		return new HitGroupSortSettings(sortProp, reverse);
 	}
 
@@ -475,11 +480,11 @@ public class SearchParameters {
 	}
 
 	public JobDescription hitsGrouped() throws BlsException {
-		return new JobDescHitsGrouped(hitsSample(), hitGroupSettings());
+		return new JobDescHitsGrouped(hitsSample(), hitGroupSettings(), hitGroupSortSettings());
 	}
 
 	public JobDescription docsGrouped() throws BlsException {
-		return new JobDescDocsGrouped(docs(), docGroupSettings());
+		return new JobDescDocsGrouped(docs(), docGroupSettings(), docGroupSortSettings());
 	}
 
 	public JobDescription facets() throws BlsException {
