@@ -63,10 +63,10 @@ public class BlsConfig {
 
 	/**
 	 * Are we allowed to query the list of all document?
-	 * (slow for large corpora)
+	 * (might be slow for large corpora, seems ok though)
 	 * TODO: make configurable
 	 */
-	private boolean allDocsQueryAllowed = false;
+	private boolean allDocsQueryAllowed = true;
 
 	private BlsConfigCacheAndPerformance cacheConfig;
 
