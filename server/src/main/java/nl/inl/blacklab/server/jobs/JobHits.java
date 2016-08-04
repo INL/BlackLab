@@ -6,9 +6,9 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.HitsSettings;
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -72,13 +72,12 @@ public class JobHits extends JobWithHits {
 		}
 
 		@Override
-		public DataObjectMapElement toDataObject() {
-			DataObjectMapElement o = super.toDataObject();
-			o.put("pattern", pattern);
-			o.put("filterQuery", filterQuery);
-			o.put("maxSettings", maxSettings);
-			o.put("contextSettings", contextSettings);
-			return o;
+		public void dataStreamEntries(DataStream ds) {
+			super.dataStreamEntries(ds);
+			ds	.entry("pattern", pattern)
+				.entry("filterQuery", filterQuery)
+				.entry("maxSettings", maxSettings)
+				.entry("contextSettings", contextSettings);
 		}
 
 	}

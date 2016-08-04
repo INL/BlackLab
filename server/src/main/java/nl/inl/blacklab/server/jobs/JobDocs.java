@@ -3,8 +3,8 @@ package nl.inl.blacklab.server.jobs;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.Forbidden;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -50,10 +50,9 @@ public class JobDocs extends JobWithDocs {
 		}
 
 		@Override
-		public DataObjectMapElement toDataObject() {
-			DataObjectMapElement o = super.toDataObject();
-			o.put("filterQuery", filterQuery);
-			return o;
+		public void dataStreamEntries(DataStream ds) {
+			super.dataStreamEntries(ds);
+			ds	.entry("filterQuery", filterQuery);
 		}
 
 	}

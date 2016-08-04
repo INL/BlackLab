@@ -13,9 +13,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import nl.inl.blacklab.server.dataobject.DataObject;
-import nl.inl.blacklab.server.dataobject.DataObjectList;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.exceptions.TooManyRequests;
@@ -116,22 +114,26 @@ public class SearchCache {
 		searchMan = null;
 	}
 
-	public DataObject getCacheStatusDataObject() {
-		DataObjectMapElement doCache = new DataObjectMapElement();
-		doCache.put("maxSizeBytes", cacheConfig.getMaxSizeMegs() * 1000 * 1000);
-		doCache.put("maxNumberOfSearches", cacheConfig.getMaxNumberOfJobs());
-		doCache.put("maxSearchAgeSec", cacheConfig.getMaxJobAgeSec());
-		doCache.put("sizeBytes", calculateSizeBytes(cachedSearches.values()));
-		doCache.put("numberOfSearches", cachedSearches.size());
-		return doCache;
+	public void dataStreamCacheStatus(DataStream ds) {
+		long maxSizeMegs = cacheConfig.getMaxSizeMegs();
+		long maxSizeBytes = maxSizeMegs < 0 ? -1 : maxSizeMegs * 1000 * 1000;
+		ds.startMap()
+			.entry("maxSizeBytes", maxSizeBytes)
+			.entry("maxNumberOfSearches", cacheConfig.getMaxNumberOfJobs())
+			.entry("maxSearchAgeSec", cacheConfig.getMaxJobAgeSec())
+			.entry("sizeBytes", calculateSizeBytes(cachedSearches.values()))
+			.entry("numberOfSearches", cachedSearches.size())
+		.endMap();
 	}
 
-	public DataObject getContentsDataObject(boolean debugInfo) throws BlsException {
-		DataObjectList doCacheContents = new DataObjectList("job");
+	public void dataStreamContents(DataStream ds, boolean debugInfo) {
+		ds.startList();
 		for (Job job: cachedSearches.values()) {
-			doCacheContents.add(job.toDataObject(debugInfo));
+			ds.startItem("job");
+			job.dataStream(ds, debugInfo);
+			ds.endItem();
 		}
-		return doCacheContents;
+		ds.endList();
 	}
 
 	/**

@@ -45,13 +45,17 @@ public class DataStreamXml extends DataStream {
 
 	@Override
 	public DataStream startDocument(String rootEl) {
+		if (rootEl == null)
+			return this;
 		print("<?xml version=\"1.0\" encoding=\"utf-8\" ?>").newline();
 		startOpenEl(rootEl);
 		return endOpenEl();
 	}
 
 	@Override
-	public DataStream endDocument() {
+	public DataStream endDocument(String rootEl) {
+		if (rootEl == null)
+			return this;
 		startCompact();
 		return closeEl().endCompact();
 	}

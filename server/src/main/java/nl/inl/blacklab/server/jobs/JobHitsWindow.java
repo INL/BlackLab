@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.jobs;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -31,10 +31,9 @@ public class JobHitsWindow extends Job {
 		}
 
 		@Override
-		public DataObjectMapElement toDataObject() {
-			DataObjectMapElement o = super.toDataObject();
-			o.put("windowSettings", windowSettings);
-			return o;
+		public void dataStreamEntries(DataStream ds) {
+			super.dataStreamEntries(ds);
+			ds	.entry("windowSettings", windowSettings);
 		}
 
 	}
@@ -68,11 +67,9 @@ public class JobHitsWindow extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
-		DataObjectMapElement d = super.toDataObject(debugInfo);
-		d.put("requestedWindowSize", requestedWindowSize);
-		d.put("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.size());
-		return d;
+	protected void dataStreamSubclassEntries(DataStream ds) {
+		ds	.entry("requestedWindowSize", requestedWindowSize)
+			.entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.size());
 	}
 
 	@Override

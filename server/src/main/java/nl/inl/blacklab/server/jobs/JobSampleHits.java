@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.jobs;
 
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsSample;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -32,10 +32,9 @@ public class JobSampleHits extends JobWithHits {
 		}
 
 		@Override
-		public DataObjectMapElement toDataObject() {
-			DataObjectMapElement o = super.toDataObject();
-			o.put("sampleSettings", sampleSettings);
-			return o;
+		public void dataStreamEntries(DataStream ds) {
+			super.dataStreamEntries(ds);
+			ds	.entry("sampleSettings", sampleSettings);
 		}
 
 	}

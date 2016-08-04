@@ -3,7 +3,7 @@ package nl.inl.blacklab.datastream;
 import java.io.PrintWriter;
 import java.util.List;
 
-import nl.inl.blacklab.server.dataobject.DataFormat;
+import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
  * Class to stream out XML or JSON data.
@@ -17,6 +17,73 @@ public abstract class DataStream {
 		if (format == DataFormat.JSON)
 			return new DataStreamJson(out, prettyPrint, jsonpCallback);
 		return new DataStreamXml(out, prettyPrint);
+	}
+
+	/**
+	 * Stream a simple status response.
+	 *
+	 * Status response may indicate success, or e.g. that the
+	 * server is carrying out the request and will have results later.
+	 *
+	 * @param code (string) status code
+	 * @param msg the message
+	 * @param checkAgainMs advice for how long to wait before asking again (ms) (if 0, don't include this)
+	 * @deprecated checkAgainMs will be removed when nonblocking mode is removed
+	 */
+	@Deprecated
+	public void statusObject(String code, String msg, int checkAgainMs) {
+		startMap()
+			.startEntry("status")
+				.startMap()
+					.entry("code", code)
+					.entry("message", msg);
+		if (checkAgainMs != 0)
+			entry("checkAgainMs", checkAgainMs);
+				endMap()
+			.endEntry()
+		.endMap();
+	}
+
+	/**
+	 * Construct a simple status response object.
+	 *
+	 * Status response may indicate success, or e.g. that the
+	 * server is carrying out the request and will have results later.
+	 *
+	 * @param code (string) status code
+	 * @param msg the message
+	 */
+	public void statusObject(String code, String msg) {
+		statusObject(code, msg, 0);
+	}
+
+	/**
+	 * Construct a simple error response object.
+	 *
+	 * @param code (string) error code
+	 * @param msg the error message
+	 */
+	public void error(String code, String msg) {
+		startMap()
+		.startEntry("error")
+			.startMap()
+				.entry("code", code)
+				.entry("message", msg);
+				endMap()
+			.endEntry()
+		.endMap();
+	}
+
+	public void internalError(Exception e, boolean debugMode, int code) {
+		error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(e, debugMode, code));
+	}
+
+	public void internalError(String message, boolean debugMode, int code) {
+		error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(message, debugMode, code));
+	}
+
+	public void internalError(int code) {
+		error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(code));
 	}
 
 	PrintWriter out;
@@ -101,7 +168,7 @@ public abstract class DataStream {
 
 	public abstract DataStream startDocument(String rootEl);
 
-	public abstract DataStream endDocument();
+	public abstract DataStream endDocument(String rootEl);
 
 
 	public abstract DataStream startList();
@@ -116,7 +183,15 @@ public abstract class DataStream {
 		return startItem(name).value(value).endItem();
 	}
 
+	public DataStream item(String name, Object value) {
+		return startItem(name).value(value).endItem();
+	}
+
 	public DataStream item(String name, int value) {
+		return startItem(name).value(value).endItem();
+	}
+
+	public DataStream item(String name, long value) {
 		return startItem(name).value(value).endItem();
 	}
 
@@ -141,7 +216,15 @@ public abstract class DataStream {
 		return startEntry(key).value(value).endEntry();
 	}
 
+	public DataStream entry(String key, Object value) {
+		return startEntry(key).value(value).endEntry();
+	}
+
 	public DataStream entry(String key, int value) {
+		return startEntry(key).value(value).endEntry();
+	}
+
+	public DataStream entry(String key, long value) {
 		return startEntry(key).value(value).endEntry();
 	}
 
@@ -157,7 +240,15 @@ public abstract class DataStream {
 		return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
 	}
 
+	public DataStream attrEntry(String elementName, String attrName, String key, Object value) {
+		return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
+	}
+
 	public DataStream attrEntry(String elementName, String attrName, String key, int value) {
+		return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
+	}
+
+	public DataStream attrEntry(String elementName, String attrName, String key, long value) {
 		return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
 	}
 
@@ -180,6 +271,8 @@ public abstract class DataStream {
 
 	public abstract DataStream value(String value);
 
+	public          DataStream value(Object value) { return value(value == null ? "" : value.toString()); }
+
 	public abstract DataStream value(long value);
 
 	public abstract DataStream value(double value);
@@ -188,16 +281,6 @@ public abstract class DataStream {
 
 	public DataStream plain(String value) {
 		return print(value);
-	}
-
-	public DataStream errorResponse(String code, String message) {
-		return startMap()
-			.startEntry("error")
-				.startMap()
-					.entry("code", code)
-					.entry("message", message)
-				.endMap()
-			.endMap();
 	}
 
 	public static void main(String[] args) {
@@ -240,7 +323,7 @@ public abstract class DataStream {
 						.attrEntry("test", "attr", "key", "value")
 					.endMap()
 				.endEntry()
-			.endDocument();
+			.endDocument("test");
 		out.println("");
 	}
 

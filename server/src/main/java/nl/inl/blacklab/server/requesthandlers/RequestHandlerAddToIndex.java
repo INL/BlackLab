@@ -7,6 +7,13 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadBase;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -15,12 +22,6 @@ import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.index.IndexTask;
 import nl.inl.blacklab.server.jobs.User;
-
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadBase;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 /**
  * Display the contents of the cache.
@@ -42,7 +43,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public int handle(DataStream ds) throws BlsException {
 		debug(logger, "REQ add data: " + indexName);
 
 		if (!indexName.contains(":"))
@@ -52,12 +53,12 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
 		String status = indexMan.getIndexStatus(indexName);
 		if (!status.equals("available") && !status.equals("empty"))
-			return Response.unavailable(indexName, status);
+			return Response.unavailable(ds, indexName, status);
 
 		// Check that we have a file upload request
 		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 		if (!isMultipart) {
-			return Response.badRequest("NO_FILE", "Upload a file to add to the index.");
+			return Response.badRequest(ds, "NO_FILE", "Upload a file to add to the index.");
 		}
 		DiskFileItemFactory factory = new DiskFileItemFactory();
 
@@ -77,22 +78,22 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 			try {
 				fileItems = upload.parseRequest(request);
 			} catch (FileUploadBase.SizeLimitExceededException e) {
-				return Response.badRequest("ERROR_UPLOADING_FILE", "File too large (maximum " + MAX_UPLOAD_SIZE / 1024 / 1024 + " MB)");
+				return Response.badRequest(ds, "ERROR_UPLOADING_FILE", "File too large (maximum " + MAX_UPLOAD_SIZE / 1024 / 1024 + " MB)");
 			} catch (FileUploadException e) {
-				return Response.badRequest("ERROR_UPLOADING_FILE", e.getMessage());
+				return Response.badRequest(ds, "ERROR_UPLOADING_FILE", e.getMessage());
 			}
 
 			// Process the uploaded file items
 			Iterator<FileItem> i = fileItems.iterator();
 
 			if (!indexMan.indexExists(indexName))
-				return Response.indexNotFound(indexName);
+				return Response.indexNotFound(ds, indexName);
 			File indexDir = indexMan.getIndexDir(indexName);
 			int filesDone = 0;
 			String newStatus = indexMan.setIndexStatus(indexName, "available|empty", "busy");
 			indexMan.closeSearcher(indexName);
 			if (!newStatus.equals("busy")) {
-				return Response.internalError("Could not set index status to busy (status was " + newStatus + ")", debugMode, 28);
+				return Response.internalError(ds, "Could not set index status to busy (status was " + newStatus + ")", debugMode, 28);
 			}
 			try {
 				while (i.hasNext()) {
@@ -100,13 +101,13 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 					if (!fi.isFormField()) {
 
 						if (!fi.getFieldName().equals("data"))
-							return Response.badRequest("CANNOT_UPLOAD_FILE", "Cannot upload file. File should be uploaded using the 'data' field.");
+							return Response.badRequest(ds, "CANNOT_UPLOAD_FILE", "Cannot upload file. File should be uploaded using the 'data' field.");
 
 						if (fi.getSize() > MAX_UPLOAD_SIZE)
-							return Response.badRequest("CANNOT_UPLOAD_FILE", "Cannot upload file. It is larger than the maximum of " + (MAX_UPLOAD_SIZE / 1024 / 1024) + " MB.");
+							return Response.badRequest(ds, "CANNOT_UPLOAD_FILE", "Cannot upload file. It is larger than the maximum of " + (MAX_UPLOAD_SIZE / 1024 / 1024) + " MB.");
 
 						if (filesDone != 0)
-							return Response.internalError("Tried to upload more than one file.", debugMode, 14);
+							return Response.internalError(ds, "Tried to upload more than one file.", debugMode, 14);
 
 						// Get the uploaded file parameters
 						String fileName = fi.getName();
@@ -141,7 +142,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 							}
 							task.run();
 							if (task.getIndexError() != null) {
-								return Response.internalError(task.getIndexError(), true, 30);
+								return Response.internalError(ds, task.getIndexError(), true, 30);
 							}
 						} finally {
 							if (tmpFile != null)
@@ -159,11 +160,11 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		} catch (BlsException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			return Response.internalError(ex, debugMode, 26);
+			return Response.internalError(ds, ex, debugMode, 26);
 		}
 
 		if (indexError != null)
-			return Response.badRequest("INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");
-		return Response.success("Data added succesfully."); //Response.accepted();
+			return Response.badRequest(ds, "INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");
+		return Response.success(ds, "Data added succesfully."); //Response.accepted();
 	}
 }

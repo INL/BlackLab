@@ -1,9 +1,15 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.perdocument.DocResults;
@@ -22,12 +28,6 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObject;
-import nl.inl.blacklab.server.dataobject.DataObjectContextList;
-import nl.inl.blacklab.server.dataobject.DataObjectList;
-import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
-import nl.inl.blacklab.server.dataobject.DataObjectPlain;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped;
@@ -44,7 +44,7 @@ public class RequestHandlerHits extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public int handle(DataStream ds) throws BlsException {
 		Job search = null;
 		JobHitsGrouped searchGrouped = null;
 		JobHitsWindow searchWindow = null;
@@ -72,7 +72,7 @@ public class RequestHandlerHits extends RequestHandler {
 
 				// If search is not done yet, indicate this to the user
 				if (!search.finished()) {
-					return Response.busy(servlet);
+					return Response.busy(ds, servlet);
 				}
 
 				// Search is done; construct the results object
@@ -81,11 +81,11 @@ public class RequestHandlerHits extends RequestHandler {
 				HitPropValue viewGroupVal = null;
 				viewGroupVal = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
 				if (viewGroupVal == null)
-					return Response.badRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+					return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
 
 				group = groups.getGroup(viewGroupVal);
 				if (group == null)
-					return Response.badRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+					return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
 				String sortBy = searchParam.getString("sort");
 				HitProperty sortProp = sortBy != null && sortBy.length() > 0 ? HitProperty.deserialize(group.getHits(), sortBy) : null;
@@ -102,7 +102,7 @@ public class RequestHandlerHits extends RequestHandler {
 				if (number < 0 || number > searchMan.config().maxPageSize())
 					number = searchMan.config().defaultPageSize();
 				if (!hitsSorted.sizeAtLeast(first))
-					return Response.badRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
+					return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
 				window = hitsSorted.window(first, number);
 
 			} else {
@@ -118,25 +118,18 @@ public class RequestHandlerHits extends RequestHandler {
 
 				// If search is not done yet, indicate this to the user
 				if (!search.finished()) {
-					return Response.busy(servlet);
+					return Response.busy(ds, servlet);
 				}
 
 				window = searchWindow.getWindow();
 			}
 
 			if (searchParam.getString("calc").equals("colloc")) {
-				return new Response(getCollocations(window.getOriginalHits()));
+				dataStreamCollocations(ds, window.getOriginalHits());
+				return HTTP_OK;
 			}
 
-			//String parFacets = searchParam.getString("facets");
-			DataObjectMapAttribute doFacets = null;
 			DocResults perDocResults = null;
-			//if (parFacets != null && parFacets.length() > 0) {
-			if (searchParam.hasFacets()) {
-				// Now, group the docs according to the requested facets.
-				perDocResults = window.getOriginalHits().perDocResults();
-				doFacets = getFacets(perDocResults, searchParam.facets());
-			}
 
 			Searcher searcher = search.getSearcher();
 
@@ -144,8 +137,7 @@ public class RequestHandlerHits extends RequestHandler {
 			int totalTokens = -1;
 			IndexStructure struct = searcher.getIndexStructure();
 			if (includeTokenCount) {
-				if (perDocResults == null)
-					perDocResults = window.getOriginalHits().perDocResults();
+				perDocResults = window.getOriginalHits().perDocResults();
 				// Determine total number of tokens in result set
 				String fieldName = struct.getMainContentsField().getName();
 				DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
@@ -154,93 +146,124 @@ public class RequestHandlerHits extends RequestHandler {
 
 			// Search is done; construct the results object
 
-			// The hits and document info
-			DataObjectList hitList = new DataObjectList("hit");
-			DataObjectMapAttribute docInfos = new DataObjectMapAttribute("docInfo", "pid");
-			for (Hit hit: window) {
-				DataObjectMapElement hitMap = new DataObjectMapElement();
+			ds.startMap();
 
-				// Find pid
-				Document document = searcher.document(hit.doc);
-				String pid = getDocumentPid(searcher, hit.doc, document);
-
-				boolean useOrigContent = searchParam.getString("usecontent").equals("orig");
-
-				// TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
-
-				// Add basic hit info
-				hitMap.put("docPid", pid);
-				hitMap.put("start", hit.start);
-				hitMap.put("end", hit.end);
-
-				if (useOrigContent) {
-					// Add concordance from original XML
-					Concordance c = window.getConcordance(hit);
-					hitMap.put("left", new DataObjectPlain(c.left()));
-					hitMap.put("match", new DataObjectPlain(c.match()));
-					hitMap.put("right", new DataObjectPlain(c.right()));
-				} else {
-					// Add KWIC info
-					Kwic c = window.getKwic(hit);
-					hitMap.put("left", new DataObjectContextList(c.getProperties(), c.getLeft()));
-					hitMap.put("match", new DataObjectContextList(c.getProperties(), c.getMatch()));
-					hitMap.put("right", new DataObjectContextList(c.getProperties(), c.getRight()));
-				}
-				hitList.add(hitMap);
-
-				// Add document info if we didn't already
-				if (!docInfos.containsKey(hit.doc)) {
-					docInfos.put(pid, getDocumentInfo(searcher, searcher.document(hit.doc)));
-				}
-			}
-
-			// The summary (done last because the count might be done by this time)
-			DataObjectMapElement summary = new DataObjectMapElement();
+			// The summary
+			ds.startEntry("summary").startMap();
 			Hits hits = searchWindow != null ? hits = searchWindow.getWindow().getOriginalHits() : group.getHits();
 			boolean done = hits.doneFetchingHits();
-			summary.put("searchParam", searchParam.toDataObject());
-			summary.put("searchTime", (int)(search.userWaitTime() * 1000));
+			ds.startEntry("searchParam");
+			searchParam.dataStream(ds);
+			ds.endEntry();
+			ds.entry("searchTime", (int)(search.userWaitTime() * 1000));
 			if (total != null)
-				summary.put("countTime", (int)(total.userWaitTime() * 1000));
-			summary.put("stillCounting", !done);
+				ds.entry("countTime", (int)(total.userWaitTime() * 1000));
+			ds.entry("stillCounting", !done);
 			int totalHitsCounted = hits.countSoFarHitsCounted();
 			if (total != null && total.threwException()) {
 				// indicate that something went wrong while counting;
 				// i.e. timeout
 				totalHitsCounted = -1;
 			}
-			summary.put("numberOfHits", totalHitsCounted);
-			summary.put("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved());
-			summary.put("stoppedCountingHits", hits.maxHitsCounted());
-			summary.put("stoppedRetrievingHits", hits.maxHitsRetrieved());
-			summary.put("numberOfDocs", hits.countSoFarDocsCounted());
-			summary.put("numberOfDocsRetrieved", hits.countSoFarDocsRetrieved());
+			ds	.entry("numberOfHits", totalHitsCounted)
+				.entry("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved())
+				.entry("stoppedCountingHits", hits.maxHitsCounted())
+				.entry("stoppedRetrievingHits", hits.maxHitsRetrieved())
+				.entry("numberOfDocs", hits.countSoFarDocsCounted())
+				.entry("numberOfDocsRetrieved", hits.countSoFarDocsRetrieved());
 			if (hits instanceof HitsSample) {
 				HitsSample sample = ((HitsSample)hits);
-				summary.put("sampleSeed", sample.seed());
+				ds.entry("sampleSeed", sample.seed());
 				if (sample.exactNumberGiven())
-					summary.put("sampleSize", sample.numberOfHitsToSelect());
+					ds.entry("sampleSize", sample.numberOfHitsToSelect());
 				else
-					summary.put("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
+					ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
 			}
-			summary.put("windowFirstResult", window.first());
-			summary.put("requestedWindowSize", searchParam.getInteger("number"));
-			summary.put("actualWindowSize", window.size());
-			summary.put("windowHasPrevious", window.hasPrevious());
-			summary.put("windowHasNext", window.hasNext());
+			ds.entry("windowFirstResult", window.first())
+				.entry("requestedWindowSize", searchParam.getInteger("number"))
+				.entry("actualWindowSize", window.size())
+				.entry("windowHasPrevious", window.hasPrevious())
+				.entry("windowHasNext", window.hasNext());
 			if (includeTokenCount)
-				summary.put("tokensInMatchingDocuments", totalTokens);
-			summary.put("docFields", RequestHandler.getDocFields(struct));
+				ds.entry("tokensInMatchingDocuments", totalTokens);
+			ds.startEntry("docFields");
+			RequestHandler.dataStreamDocFields(ds, searcher.getIndexStructure());
+			ds.endEntry();
+			ds.endMap().endEntry();
 
-			// Assemble all the parts
-			DataObjectMapElement response = new DataObjectMapElement();
-			response.put("summary", summary);
-			response.put("hits", hitList);
-			response.put("docInfos", docInfos);
-			if (doFacets != null)
-				response.put("facets", doFacets);
+			ds.startEntry("hits").startList();
+			Map<Integer, String> pids = new HashMap<>();
+			for (Hit hit: window) {
+				ds.startItem("hit").startMap();
 
-			return new Response(response);
+				// Find pid
+				String pid = pids.get(hit.doc);
+				if (pid == null) {
+					Document document = searcher.document(hit.doc);
+					pid = getDocumentPid(searcher, hit.doc, document);
+					pids.put(hit.doc, pid);
+				}
+
+				boolean useOrigContent = searchParam.getString("usecontent").equals("orig");
+
+				// TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
+
+				// Add basic hit info
+				ds.entry("docPid", pid);
+				ds.entry("start", hit.start);
+				ds.entry("end", hit.end);
+
+				if (useOrigContent) {
+					// Add concordance from original XML
+					Concordance c = window.getConcordance(hit);
+					ds	.startEntry("left").plain(c.left()).endEntry()
+						.startEntry("match").plain(c.match()).endEntry()
+						.startEntry("right").plain(c.right()).endEntry();
+				} else {
+					// Add KWIC info
+					Kwic c = window.getKwic(hit);
+					ds	.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
+						.startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()
+						.startEntry("right").contextList(c.getProperties(), c.getRight()).endEntry();
+				}
+				ds.endMap().endItem();
+			}
+			ds.endList().endEntry();
+
+			ds.startEntry("docInfos").startMap();
+			//DataObjectMapAttribute docInfos = new DataObjectMapAttribute("docInfo", "pid");
+			MutableIntSet docsDone = new IntHashSet();
+			Document doc = null;
+			String lastPid = "";
+			for (Hit hit: window) {
+				String pid = pids.get(hit.doc);
+
+				// Add document info if we didn't already
+				if (!docsDone.contains(hit.doc)) {
+					docsDone.add(hit.doc);
+					ds.startAttrEntry("docInfo", "pid", pid);
+					if (!pid.equals(lastPid)) {
+						doc = searcher.document(hit.doc);
+						lastPid = pid;
+					}
+					dataStreamDocumentInfo(ds, searcher, doc);
+					ds.endAttrEntry();
+				}
+			}
+			ds.endMap().endEntry();
+
+			if (searchParam.hasFacets()) {
+				// Now, group the docs according to the requested facets.
+				if (perDocResults == null)
+					perDocResults = window.getOriginalHits().perDocResults();
+				ds.startEntry("facets");
+				dataStreamFacets(ds, perDocResults, searchParam.facets());
+				ds.endEntry();
+			}
+
+			ds.endMap();
+
+			return HTTP_OK;
 		} finally {
 			if (search != null)
 				search.decrRef();
@@ -253,18 +276,15 @@ public class RequestHandlerHits extends RequestHandler {
 		}
 	}
 
-	private DataObject getCollocations(Hits originalHits) {
+	private void dataStreamCollocations(DataStream ds, Hits originalHits) {
 		originalHits.settings().setContextSize(searchParam.getInteger("wordsaroundhit"));
-		DataObjectMapAttribute doTokenFreq = new DataObjectMapAttribute("token", "text");
+		ds.startMap().startEntry("tokenFrequencies").startMap();
 		TermFrequencyList tfl = originalHits.getCollocations();
 		tfl.sort();
 		for (TermFrequency tf: tfl) {
-			doTokenFreq.put(tf.term, tf.frequency);
+			ds.attrEntry("token", "text", tf.term, tf.frequency);
 		}
-
-		DataObjectMapElement response = new DataObjectMapElement();
-		response.put("tokenFrequencies", doTokenFreq);
-		return response;
+		ds.endMap().endEntry().endMap();
 	}
 
 }

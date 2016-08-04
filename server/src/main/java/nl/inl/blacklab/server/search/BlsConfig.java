@@ -7,8 +7,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import nl.inl.blacklab.datastream.DataFormat;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.server.dataobject.DataFormat;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.util.json.JSONArray;

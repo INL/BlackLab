@@ -6,9 +6,9 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -128,11 +128,9 @@ public abstract class JobDescription {
 		return null;
 	}
 
-	public DataObjectMapElement toDataObject() {
-		DataObjectMapElement o = new DataObjectMapElement();
-		o.put("jobClass", jobClass.getSimpleName());
-		o.put("inputDesc", inputDesc == null ? "(none)" : inputDesc.toString());
-		return o;
+	public void dataStreamEntries(DataStream ds) {
+		ds	.entry("jobClass", jobClass.getSimpleName())
+			.entry("inputDesc", inputDesc == null ? "(none)" : inputDesc.toString());
 	}
 
 }

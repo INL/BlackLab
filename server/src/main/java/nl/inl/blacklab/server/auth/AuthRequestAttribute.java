@@ -5,11 +5,11 @@ import java.util.Map;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.log4j.Logger;
+
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
-
-import org.apache.log4j.Logger;
 
 /**
  * Authentication system using servlet request attributes for logged-in user id.

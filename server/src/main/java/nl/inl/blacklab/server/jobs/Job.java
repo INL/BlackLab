@@ -7,10 +7,9 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.server.dataobject.DataObjectList;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -462,89 +461,97 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		logger.error(shortUserId() + " " + msg);
 	}
 
-	/**
-	 * Convert the job to a data object for displaying in cache info.
-	 *
-	 * @param debugInfo include debug info?
-	 * @return the data object
-	 * @throws BlsException on error
-	 */
-	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
-		DataObjectMapElement stats = new DataObjectMapElement();
+	public void dataStream(DataStream ds, boolean debugInfo) {
 		boolean isCount = (this instanceof JobHitsTotal) || (this instanceof JobDocsTotal);
-		stats.put("type", isCount ? "count" : "search");
-		stats.put("status", status());
-		stats.put("userWaitTime", userWaitTime());
-		stats.put("totalExecTime", totalExecTime());
-		stats.put("notAccessedFor", notAccessedFor());
-		stats.put("pausedFor", currentPauseLength());
-		stats.put("createdBy", shortUserId());
-		stats.put("refsToJob", refsToJob - 1); // (- 1 because the cache always references it)
-		stats.put("waitingForJobs", waitingFor.size());
-
-		DataObjectMapElement d = new DataObjectMapElement();
-		d.put("id", id);
-		d.put("class", getClass().getSimpleName());
-		d.put("jobDesc", jobDesc.toDataObject());
-		d.put("stats", stats);
-
+		ds.startMap()
+			.entry("id", id)
+			.entry("class", getClass().getSimpleName())
+			.startEntry("jobDesc");
+		jobDesc.dataStreamEntries(ds);
+		ds	.endEntry()
+			.startEntry("stats")
+				.startMap()
+					.entry("type", isCount ? "count" : "search")
+					.entry("status", status())
+					.entry("userWaitTime", userWaitTime())
+					.entry("totalExecTime", totalExecTime())
+					.entry("notAccessedFor", notAccessedFor())
+					.entry("pausedFor", currentPauseLength())
+					.entry("createdBy", shortUserId())
+					.entry("refsToJob", refsToJob - 1) // (- 1 because the cache always references it)
+					.entry("waitingForJobs", waitingFor.size())
+				.endMap()
+			.endEntry();
 		if (debugInfo) {
-			// Add extra debug info.
-			DataObjectMapElement dbg = new DataObjectMapElement();
-
-			// Ids of the jobs this thread is waiting for, if any
-			DataObjectList wfIds = new DataObjectList("jobId");
-			if (waitingFor.size() > 0) {
-				for (Job j: waitingFor) {
-					wfIds.add(j.id);
-				}
-			}
-			dbg.put("waitingForIds", wfIds);
-
-			// More information about job state
-			dbg.put("startedAt", startedAt);
-			dbg.put("finishedAt", finishedAt);
-			dbg.put("lastAccessed", lastAccessed);
-			dbg.put("pausedTime", pausedTime);
-			dbg.put("setLevelPausedAt", setLevelPausedAt);
-			dbg.put("setLevelRunningAt", setLevelRunningAt);
-			dbg.put("performCalled", performCalled);
-			dbg.put("cancelJobCalled", cancelJobCalled);
-			dbg.put("priorityLevel", level.toString());
-			dbg.put("resultsPriorityLevel", getPriorityOfResultsObject().toString());
-
-			// Information about thrown exception, if any
-			DataObjectMapElement ex = new DataObjectMapElement();
-			if (thrownException != null) {
-				PrintWriter st = new PrintWriter(new StringWriter());
-				thrownException.printStackTrace(st);
-				ex.put("class", thrownException.getClass().getName());
-				ex.put("message", thrownException.getMessage());
-				ex.put("stackTrace", st.toString());
-			}
-			dbg.put("thrownException", ex);
-
-			// Information about thread object, if any
-			DataObjectMapElement thr = new DataObjectMapElement();
-			if (searchThread != null) {
-				thr.put("name", searchThread.getName());
-				thr.put("osPriority", searchThread.getPriority());
-				thr.put("isAlive", searchThread.isAlive());
-				thr.put("isDaemon", searchThread.isDaemon());
-				thr.put("isInterrupted", searchThread.isInterrupted());
-				thr.put("state", searchThread.getState().toString());
-				StackTraceElement[] stackTrace = searchThread.getStackTrace();
-				StringBuilder stackTraceStr = new StringBuilder();
-				for (StackTraceElement element: stackTrace) {
-					stackTraceStr.append(element.toString()).append("\n");
-				}
-				thr.put("currentlyExecuting", stackTraceStr.toString());
-			}
-			dbg.put("searchThread", thr);
-			d.put("debugInfo", dbg);
+			ds.startEntry("debugInfo");
+			dataStreamDebugInfo(ds);
+			ds.endEntry();
 		}
+		dataStreamSubclassEntries(ds);
+		ds.endMap();
+	}
 
-		return d;
+	protected void dataStreamSubclassEntries(DataStream ds) {
+		// (subclasses can add extra entries here)
+	}
+
+	private void dataStreamDebugInfo(DataStream ds) {
+		ds.startMap()
+			.startEntry("waitingForIds")
+				.startList();
+		// Ids of the jobs this thread is waiting for, if any
+		if (waitingFor.size() > 0) {
+			for (Job j: waitingFor) {
+				ds	.item("jobId", j.id);
+			}
+		}
+		ds		.endList()
+			.endEntry()
+			// More information about job state
+			.entry("startedAt", startedAt)
+			.entry("finishedAt", finishedAt)
+			.entry("lastAccessed", lastAccessed)
+			.entry("pausedTime", pausedTime)
+			.entry("setLevelPausedAt", setLevelPausedAt)
+			.entry("setLevelRunningAt", setLevelRunningAt)
+			.entry("performCalled", performCalled)
+			.entry("cancelJobCalled", cancelJobCalled)
+			.entry("priorityLevel", level.toString())
+			.entry("resultsPriorityLevel", getPriorityOfResultsObject().toString())
+			.startEntry("thrownException")
+				.startMap();
+		// Information about thrown exception, if any
+		if (thrownException != null) {
+			PrintWriter st = new PrintWriter(new StringWriter());
+			thrownException.printStackTrace(st);
+			ds
+					.entry("class", thrownException.getClass().getName())
+					.entry("message", thrownException.getMessage())
+					.entry("stackTrace", st.toString());
+		}
+		ds		.endMap()
+			.endEntry()
+			.startEntry("searchThread")
+				.startMap();
+		// Information about thread object, if any
+		if (searchThread != null) {
+			StackTraceElement[] stackTrace = searchThread.getStackTrace();
+			StringBuilder stackTraceStr = new StringBuilder();
+			for (StackTraceElement element: stackTrace) {
+				stackTraceStr.append(element.toString()).append("\n");
+			}
+			ds
+					.entry("name", searchThread.getName())
+					.entry("osPriority", searchThread.getPriority())
+					.entry("isAlive", searchThread.isAlive())
+					.entry("isDaemon", searchThread.isDaemon())
+					.entry("isInterrupted", searchThread.isInterrupted())
+					.entry("state", searchThread.getState().toString())
+					.entry("currentlyExecuting", stackTraceStr.toString());
+		}
+		ds		.endMap()
+			.endEntry()
+		.endMap();
 	}
 
 	private String status() {

@@ -6,11 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.server.dataobject.DataObject;
-import nl.inl.blacklab.server.dataobject.DataObjectList;
-import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
-
 /**
  * Allows us to keep a log of what a thread has been up to.
  * Can store both a linear message log and keep a number of counters.
@@ -99,25 +94,25 @@ public class ThreadLog {
 		n += delta;
 		counters.put(name, n);
 	}
-
-	/**
-	 * Dump the ThreadLog in DataObject format, so we can return it as JSON or XML.
-	 * @return the DataObject representation
-	 */
-	public DataObject dump() {
-		DataObjectMapElement result = new DataObjectMapElement();
-
-		DataObjectList m = new DataObjectList("message");
-		for (String msg: messages) {
-			m.add(msg);
-		}
-		result.put("messages", m);
-
-		DataObjectMapAttribute c = new DataObjectMapAttribute("counter", "name");
-		for (Map.Entry<String, Integer> counter: counters.entrySet()) {
-			c.put(counter.getKey(), counter.getValue());
-		}
-
-		return result;
-	}
+//
+//	/**
+//	 * Dump the ThreadLog in DataObject format, so we can return it as JSON or XML.
+//	 * @return the DataObject representation
+//	 */
+//	public DataObject dump() {
+//		DataObjectMapElement result = new DataObjectMapElement();
+//
+//		DataObjectList m = new DataObjectList("message");
+//		for (String msg: messages) {
+//			m.add(msg);
+//		}
+//		result.put("messages", m);
+//
+//		DataObjectMapAttribute c = new DataObjectMapAttribute("counter", "name");
+//		for (Map.Entry<String, Integer> counter: counters.entrySet()) {
+//			c.put(counter.getKey(), counter.getValue());
+//		}
+//
+//		return result;
+//	}
 }

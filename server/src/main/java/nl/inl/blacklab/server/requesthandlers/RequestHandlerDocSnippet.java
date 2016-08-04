@@ -4,6 +4,9 @@ import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.lucene.document.Document;
+
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Hit;
@@ -11,18 +14,12 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObject;
-import nl.inl.blacklab.server.dataobject.DataObjectContextList;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
-import nl.inl.blacklab.server.dataobject.DataObjectPlain;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.BlsUtils;
-
-import org.apache.lucene.document.Document;
 
 /**
  * Get information about the structure of an index.
@@ -33,7 +30,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public int handle(DataStream ds) throws BlsException {
 		int i = urlPathInfo.indexOf('/');
 		String docId = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
 		if (docId.length() == 0)
@@ -73,53 +70,51 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 		Hits hits = Hits.fromList(searcher, Arrays.asList(hit));
 		boolean origContent = searchParam.getString("usecontent").equals("orig");
 		hits.settings().setConcordanceType(origContent ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX);
-		return new Response(getHitOrFragmentInfo(hits, hit, wordsAroundHit, origContent, !isHit, null));
+		getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);
+		return HTTP_OK;
 	}
 
 	/**
 	 * Get a DataObject representation of a hit
 	 * (or just a document fragment with no hit in it)
 	 *
+	 * @param ds output stream
 	 * @param hits the hits object the hit occurs in
 	 * @param hit the hit (or fragment)
 	 * @param wordsAroundHit number of words around the hit we want
 	 * @param useOrigContent if true, uses the content store; if false, the forward index
 	 * @param isFragment if false, separates hit into left/match/right; otherwise, just returns whole fragment
 	 * @param docPid if not null, include doc pid, hit start and end info
-	 * @return the DataObject representation of the hit or fragment
 	 */
-	public static DataObject getHitOrFragmentInfo(Hits hits, Hit hit, int wordsAroundHit,
+	public static void getHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, int wordsAroundHit,
 			boolean useOrigContent, boolean isFragment, String docPid) {
-		DataObjectMapElement fragInfo = new DataObjectMapElement();
-
+		ds.startMap();
 		if (docPid != null) {
 			// Add basic hit info
-			fragInfo.put("docPid", docPid);
-			fragInfo.put("start", hit.start);
-			fragInfo.put("end", hit.end);
+			ds	.entry("docPid", docPid)
+				.entry("start", hit.start)
+				.entry("end", hit.end);
 		}
 
 		if (useOrigContent) {
 			Concordance c = hits.getConcordance(hit, wordsAroundHit);
 			if (!isFragment) {
-				fragInfo.put("left", new DataObjectPlain(c.left()));
-				fragInfo.put("match", new DataObjectPlain(c.match()));
-				fragInfo.put("right", new DataObjectPlain(c.right()));
+				ds	.startEntry("left").plain(c.left()).endEntry()
+					.startEntry("match").plain(c.match()).endEntry()
+					.startEntry("right").plain(c.right()).endEntry();
 			} else {
-				return new DataObjectPlain(c.match());
+				ds.plain(c.match());
 			}
 		} else {
-			Kwic kwic = hits.getKwic(hit, wordsAroundHit);
+			Kwic c = hits.getKwic(hit, wordsAroundHit);
 			if (!isFragment) {
-				fragInfo.put("left", new DataObjectContextList(kwic.getProperties(), kwic.getLeft()));
-				fragInfo.put("match", new DataObjectContextList(kwic.getProperties(), kwic.getMatch()));
-				fragInfo.put("right", new DataObjectContextList(kwic.getProperties(), kwic.getRight()));
+				ds	.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
+					.startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()
+					.startEntry("right").contextList(c.getProperties(), c.getRight()).endEntry();
 			} else {
-				return new DataObjectContextList(kwic.getProperties(), kwic.getTokens());
+				ds.contextList(c.getProperties(), c.getTokens());
 			}
 		}
-
-		return fragInfo;
 	}
 
 	@Override

@@ -16,12 +16,15 @@ public class DataStreamJson extends DataStream {
 	/** JSONP callback function name, or null for none */
 	String jsonpCallback;
 
+	boolean isJsonp = false;
+
 	/** First entry in map/list: don't print separator */
 	boolean firstEntry = true;
 
 	public DataStreamJson(PrintWriter out, boolean prettyPrint, String jsonpCallback) {
 		super(out, prettyPrint);
 		this.jsonpCallback = jsonpCallback;
+		isJsonp = jsonpCallback != null && jsonpCallback.length() > 0;
 	}
 
 	DataStream openbl(String str) {
@@ -36,16 +39,15 @@ public class DataStreamJson extends DataStream {
 
 	@Override
 	public DataStream startDocument(String rootEl) {
-		if (jsonpCallback != null) {
+		if (isJsonp) {
 			print(jsonpCallback).print("(");
 		}
-		return openbl("{");
+		return this;
 	}
 
 	@Override
-	public DataStream endDocument() {
-		closebl("}");
-		if (jsonpCallback != null) {
+	public DataStream endDocument(String rootEl) {
+		if (isJsonp) {
 			print(");");
 		}
 		return this;
@@ -99,14 +101,12 @@ public class DataStreamJson extends DataStream {
 	}
 
 	@Override
-	public DataStream startAttrEntry(String elementName, String attrName,
-			String key) {
+	public DataStream startAttrEntry(String elementName, String attrName, String key) {
 		return startEntry(key);
 	}
 
 	@Override
-	public DataStream startAttrEntry(String elementName, String attrName,
-			int key) {
+	public DataStream startAttrEntry(String elementName, String attrName, int key) {
 		return startEntry(Integer.toString(key));
 	}
 

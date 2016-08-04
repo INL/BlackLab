@@ -2,8 +2,8 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 
@@ -16,18 +16,23 @@ public class RequestHandlerCacheInfo extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public boolean isCacheAllowed() {
+		return false;
+	}
 
+	@Override
+	public int handle(DataStream ds) throws BlsException {
 		String strDebugInfo = request.getParameter("debug");
 		boolean debugInfo = strDebugInfo == null ? false : strDebugInfo.matches("true|yes|1");
-
-		DataObjectMapElement response = new DataObjectMapElement();
-		response.put("cacheStatus", searchMan.getCache().getCacheStatusDataObject());
-		response.put("cacheContents", searchMan.getCache().getContentsDataObject(debugInfo));
-
-		Response r = new Response(response);
-		r.setCacheAllowed(false);
-		return r;
+		ds.startMap()
+			.startEntry("cacheStatus");
+		searchMan.getCache().dataStreamCacheStatus(ds);
+		ds	.endEntry()
+			.startEntry("cacheContents");
+		searchMan.getCache().dataStreamContents(ds, debugInfo);
+		ds	.endEntry()
+		.endMap();
+		return HTTP_OK;
 	}
 
 }

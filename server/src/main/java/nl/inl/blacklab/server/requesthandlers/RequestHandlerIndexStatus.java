@@ -2,8 +2,8 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 
@@ -17,21 +17,22 @@ public class RequestHandlerIndexStatus extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public boolean isCacheAllowed() {
+		return false; // because status might change
+	}
+
+	@Override
+	public int handle(DataStream ds) throws BlsException {
 		//Searcher searcher = getSearcher();
 		//IndexStructure struct = searcher.getIndexStructure();
 
 		// Assemble response
-		DataObjectMapElement response = new DataObjectMapElement();
-		response.put("indexName", indexName);
-		response.put("status", indexMan.getIndexStatus(indexName));
+		ds.startMap()
+			.entry("indexName", indexName)
+			.entry("status", indexMan.getIndexStatus(indexName))
+		.endMap();
 
-		// Remove any empty settings
-		response.removeEmptyMapValues();
-
-		Response r = new Response(response);
-		r.setCacheAllowed(false); // because status might change
-		return r;
+		return HTTP_OK;
 	}
 
 }

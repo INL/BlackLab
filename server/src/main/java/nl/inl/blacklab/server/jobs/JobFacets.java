@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -42,10 +42,9 @@ public class JobFacets extends Job {
 		}
 
 		@Override
-		public DataObjectMapElement toDataObject() {
-			DataObjectMapElement o = super.toDataObject();
-			o.put("facets", facets);
-			return o;
+		public void dataStreamEntries(DataStream ds) {
+			super.dataStreamEntries(ds);
+			ds	.entry("facets", facets);
 		}
 
 	}
@@ -81,11 +80,9 @@ public class JobFacets extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
-		DataObjectMapElement d = super.toDataObject(debugInfo);
-		d.put("numberOfDocResults", docResults == null ? -1 : docResults.size());
-		d.put("numberOfFacets", counts == null ? -1 : counts.size());
-		return d;
+	protected void dataStreamSubclassEntries(DataStream ds) {
+		ds	.entry("numberOfDocResults", docResults == null ? -1 : docResults.size())
+			.entry("numberOfFacets", counts == null ? -1 : counts.size());
 	}
 
 	@Override

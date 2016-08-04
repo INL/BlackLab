@@ -8,9 +8,11 @@
 
 ### BlackLab Server
 * Heavily refactored to be more modular.
-* Preparations to eventually remove nonblocking mode.
+* Replaced building a DataObject tree and serializing it with directly
+  streaming the response data using DataStream, saving memory.
 * Allowed previously forbidden all-docs query (now that large document 
   queries are faster and less memory hungry).
+* Preparations to eventually remove nonblocking mode.
 * Made docpid a general way to easily filter on a single document PID.
 
 ## Improvements up to v1.4.1

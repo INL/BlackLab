@@ -7,10 +7,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.datastream.DataFormat;
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocCount;
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocGroupProperty;
@@ -18,11 +21,7 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObjectList;
-import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.JobFacets;
 import nl.inl.blacklab.server.jobs.User;
@@ -37,8 +36,11 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * requests. The static handle() method will dispatch the request to the
  * appropriate subclass.
  */
+@SuppressWarnings("unused")
 public abstract class RequestHandler {
 	static final Logger logger = Logger.getLogger(RequestHandler.class);
+
+	public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
 	/** The available request handlers by name */
 	static Map<String, Class<? extends RequestHandler>> availableHandlers;
@@ -69,7 +71,7 @@ public abstract class RequestHandler {
 	 * @param request the request object
 	 * @return the response data
 	 */
-	public static Response handle(BlackLabServer servlet, HttpServletRequest request) {
+	public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request) {
 		boolean debugMode = servlet.getSearchManager().config().isDebugMode(request.getRemoteAddr());
 
 		// See if a user is logged in
@@ -86,9 +88,10 @@ public abstract class RequestHandler {
 			servletPath = servletPath.substring(0, servletPath.length() - 1);
 		String[] parts = servletPath.split("/", 3);
 		String indexName = parts.length >= 1 ? parts[0] : "";
+		RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName, null, null);
 		if (indexName.startsWith(":")) {
 			if (!user.isLoggedIn())
-				return Response.unauthorized("Log in to access your private indices.");
+				return errorObj.unauthorized("Log in to access your private indices.");
 			// Private index. Prefix with user id.
 			indexName = user.getUserId() + indexName;
 		}
@@ -106,11 +109,11 @@ public abstract class RequestHandler {
 			if (userAndIndexName.length > 1)
 				shortName = userAndIndexName[1];
 			else
-				return Response.illegalIndexName("");
+				return errorObj.illegalIndexName("");
 			if (!user.isLoggedIn())
-				return Response.unauthorized("Log in to access your private indices.");
+				return errorObj.unauthorized("Log in to access your private indices.");
 			if (!user.getUserId().equals(userAndIndexName[0]))
-				return Response.unauthorized("You cannot access another user's private indices.");
+				return errorObj.unauthorized("You cannot access another user's private indices.");
 		}
 
 		// Choose the RequestHandler subclass
@@ -120,13 +123,13 @@ public abstract class RequestHandler {
 		if (method.equals("DELETE")) {
 			// Index given and nothing else?
 			if (indexName.length() == 0 || resourceOrPathGiven) {
-				return Response.methodNotAllowed("DELETE", null);
+				return errorObj.methodNotAllowed("DELETE", null);
 			}
 			if (!isPrivateIndex)
-				return Response.forbidden("You can only delete your own private indices.");
+				return errorObj.forbidden("You can only delete your own private indices.");
 			requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
 		} else if (method.equals("PUT")) {
-			return Response.methodNotAllowed("PUT", "Create new index with POST to /blacklab-server");
+			return errorObj.methodNotAllowed("PUT", "Create new index with POST to /blacklab-server");
 		} else {
 			if (method.equals("POST")) {
 				if (indexName.length() == 0 && !resourceOrPathGiven) {
@@ -134,32 +137,32 @@ public abstract class RequestHandler {
 					requestHandler = new RequestHandlerCreateIndex(servlet, request, user, indexName, urlResource, urlPathInfo);
 				} else if (indexName.equals("cache-clear")) {
 					if (resourceOrPathGiven) {
-						return Response.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
+						return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
 					}
 					if (!debugMode) {
-						return Response.unauthorized("You are not authorized to do this.");
+						return errorObj.unauthorized("You are not authorized to do this.");
 					}
 					requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource, urlPathInfo);
 				} else {
 					if (!isPrivateIndex)
-						return Response.forbidden("Can only POST to private indices.");
+						return errorObj.forbidden("Can only POST to private indices.");
 					if (urlResource.equals("docs") && urlPathInfo.length() == 0) {
 						if (!BlsUtils.isValidIndexName(indexName))
-							return Response.illegalIndexName(shortName);
+							return errorObj.illegalIndexName(shortName);
 
 						// POST to /blacklab-server/indexName/docs/ : add data to index
 						requestHandler = new RequestHandlerAddToIndex(servlet, request, user, indexName, urlResource, urlPathInfo);
 					} else {
-						return Response.methodNotAllowed("POST", "Note that retrieval can only be done using GET.");
+						return errorObj.methodNotAllowed("POST", "Note that retrieval can only be done using GET.");
 					}
 				}
 			} else if (method.equals("GET")) {
 				if (indexName.equals("cache-info")) {
 					if (resourceOrPathGiven) {
-						return Response.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
+						return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
 					}
 					if (!debugMode) {
-						return Response.unauthorized("You are not authorized to see this information.");
+						return errorObj.unauthorized("You are not authorized to see this information.");
 					}
 					requestHandler = new RequestHandlerCacheInfo(servlet, request, user, indexName, urlResource, urlPathInfo);
 				} else if (indexName.equals("help")) {
@@ -174,7 +177,7 @@ public abstract class RequestHandler {
 
 						String status = searchManager.getIndexManager().getIndexStatus(indexName);
 						if (!status.equals("available") && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status")) {
-							return Response.unavailable(indexName, status);
+							return errorObj.unavailable(indexName, status);
 						}
 
 						if (debugMode && handlerName.length() > 0 && !handlerName.equals("hits") && !handlerName.equals("docs") && !handlerName.equals("fields") && !handlerName.equals("termfreq") && !handlerName.equals("status")) {
@@ -195,7 +198,7 @@ public abstract class RequestHandler {
 							} else if (!p.contains("/")) {
 								// OK, retrieving metadata
 							} else {
-								return Response.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
+								return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
 							}
 						}
 						else if (handlerName.equals("hits") || handlerName.equals("docs")) {
@@ -207,49 +210,42 @@ public abstract class RequestHandler {
 						}
 
 						if (!availableHandlers.containsKey(handlerName))
-							return Response.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
+							return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
 						Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
 						Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class, HttpServletRequest.class, User.class, String.class, String.class, String.class);
 						//servlet.getSearchManager().getSearcher(indexName); // make sure it's open
 						requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
 					} catch (BlsException e) {
-						return Response.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+						return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
 					} catch (NoSuchMethodException e) {
 						// (can only happen if the required constructor is not available in the RequestHandler subclass)
 						logger.error("Could not get constructor to create request handler", e);
-						return Response.internalError(e, debugMode, 2);
+						return errorObj.internalError(e, debugMode, 2);
 					} catch (IllegalArgumentException e) {
 						logger.error("Could not create request handler", e);
-						return Response.internalError(e, debugMode, 3);
+						return errorObj.internalError(e, debugMode, 3);
 					} catch (InstantiationException e) {
 						logger.error("Could not create request handler", e);
-						return Response.internalError(e, debugMode, 4);
+						return errorObj.internalError(e, debugMode, 4);
 					} catch (IllegalAccessException e) {
 						logger.error("Could not create request handler", e);
-						return Response.internalError(e, debugMode, 5);
+						return errorObj.internalError(e, debugMode, 5);
 					} catch (InvocationTargetException e) {
 						logger.error("Could not create request handler", e);
-						return Response.internalError(e, debugMode, 6);
+						return errorObj.internalError(e, debugMode, 6);
 					}
 				}
 			} else {
-				return Response.internalError("RequestHandler.doGetPost called with wrong method: " + method, debugMode, 10);
+				return errorObj.internalError("RequestHandler.doGetPost called with wrong method: " + method, debugMode, 10);
 			}
 		}
 		if (debugMode)
 			requestHandler.setDebug(debugMode);
+		return requestHandler;
+	}
 
-		// Handle the request
-		try {
-			return requestHandler.handle();
-		} catch (InternalServerError e) {
-			String msg = ServletUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
-			return Response.error(e.getBlsErrorCode(), msg, e.getHttpStatusCode());
-		} catch (BlsException e) {
-			return Response.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
-		} catch (InterruptedException e) {
-			return Response.internalError(e, debugMode, 7);
-		}
+	private boolean isDebugMode() {
+		return debugMode;
 	}
 
 	boolean debugMode;
@@ -297,6 +293,30 @@ public abstract class RequestHandler {
 
 	}
 
+	/**
+	 * Returns the response data type, if we want to override it.
+	 *
+	 * Used for returning doc contents, which are always XML, never JSON.
+	 *
+	 * @return the response data type to use, or null for the user requested one
+	 */
+	public DataFormat getOverrideType() {
+		return null;
+	}
+
+	/**
+	 * May the client cache the response of this operation?
+	 *
+	 * @return false if the client should not cache the response
+	 */
+	public boolean isCacheAllowed() {
+		return true;
+	}
+
+	public boolean omitBlackLabResponseRootElement() {
+		return false;
+	}
+
 	protected boolean isDocsOperation() {
 		return false;
 	}
@@ -323,67 +343,86 @@ public abstract class RequestHandler {
 
 	/**
 	 * Child classes should override this to handle the request.
+	 * @param ds output stream
 	 * @return the response object
+	 *
 	 * @throws BlsException if the query can't be executed
 	 * @throws InterruptedException if the thread was interrupted
 	 */
-	public abstract Response handle() throws BlsException, InterruptedException;
+	public abstract int handle(DataStream ds) throws BlsException, InterruptedException;
 
 	/**
-	 * Get document information (metadata, contents authorization)
+	 * Stream document information (metadata, contents authorization)
 	 *
+	 * @param ds where to stream information
 	 * @param searcher our index
 	 * @param document Lucene document
-	 * @return the document information
 	 */
-	public DataObjectMapElement getDocumentInfo(Searcher searcher, Document document) {
-		DataObjectMapElement docInfo = new DataObjectMapElement();
+	public void dataStreamDocumentInfo(DataStream ds, Searcher searcher, Document document) {
+		ds.startMap();
 		IndexStructure struct = searcher.getIndexStructure();
 		for (String metadataFieldName: struct.getMetadataFields()) {
 			String value = document.get(metadataFieldName);
 			if (value != null)
-				docInfo.put(metadataFieldName, value);
+				ds.entry(metadataFieldName, value);
 		}
 		int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
 		String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
 		if (tokenLengthField != null)
-			docInfo.put("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
-		docInfo.put("mayView", struct.contentViewable());
-		return docInfo;
+			ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
+		ds	.entry("mayView", struct.contentViewable())
+		.endMap();
 	}
 
-	protected DataObjectMapAttribute getFacets(DocResults docsToFacet, JobDescription facetDesc) throws BlsException {
+	protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc) throws BlsException {
 
 		JobFacets facets = (JobFacets)searchMan.search(user, facetDesc, true);
 		Map<String, DocCounts> counts = facets.getCounts();
 
-		DataObjectMapAttribute doFacets = new DataObjectMapAttribute("facet", "name");
+		ds.startMap();
 		for (Entry<String, DocCounts> e: counts.entrySet()) {
 			String facetBy = e.getKey();
 			DocCounts facetCounts = e.getValue();
 			facetCounts.sort(DocGroupProperty.size());
-			DataObjectList doFacet = new DataObjectList("item");
+			ds.startAttrEntry("facet", "name", facetBy)
+				.startList();
 			int n = 0, maxFacetValues = 10;
 			int totalSize = 0;
 			for (DocCount count: facetCounts) {
-				DataObjectMapElement doItem = new DataObjectMapElement();
-				doItem.put("value", count.getIdentity().toString());
-				doItem.put("size", count.size());
-				doFacet.add(doItem);
+				ds.startItem("item").startMap()
+					.entry("value", count.getIdentity().toString())
+					.entry("size", count.size())
+				.endMap().endItem();
 				totalSize += count.size();
 				n++;
 				if (n >= maxFacetValues)
 					break;
 			}
 			if (totalSize < facetCounts.getTotalResults()) {
-				DataObjectMapElement doItem = new DataObjectMapElement();
-				doItem.put("value", "[REST]");
-				doItem.put("size", facetCounts.getTotalResults() - totalSize);
-				doFacet.add(doItem);
+				ds	.startItem("item")
+						.startMap()
+							.entry("value", "[REST]")
+							.entry("size", facetCounts.getTotalResults() - totalSize)
+						.endMap()
+					.endItem();
 			}
-			doFacets.put(facetBy, doFacet);
+			ds	.endList()
+			.endAttrEntry();
 		}
-		return doFacets;
+		ds.endMap();
+	}
+
+	public static void dataStreamDocFields(DataStream ds, IndexStructure struct) {
+		ds.startMap();
+		if (struct.pidField() != null)
+			ds.entry("pidField", struct.pidField());
+		if (struct.titleField() != null)
+			ds.entry("titleField", struct.titleField());
+		if (struct.authorField() != null)
+			ds.entry("authorField", struct.authorField());
+		if (struct.dateField() != null)
+			ds.entry("dateField", struct.dateField());
+		ds.endMap();
 	}
 
 	protected Searcher getSearcher() throws BlsException {
@@ -398,19 +437,6 @@ public abstract class RequestHandler {
 			debug(logger, "Illegal boolean value for parameter '" + "block" + "': " + str);
 			return false;
 		}
-	}
-
-	public static DataObjectMapElement getDocFields(IndexStructure struct) {
-		DataObjectMapElement docFields = new DataObjectMapElement();
-		if (struct.pidField() != null)
-			docFields.put("pidField", struct.pidField());
-		if (struct.titleField() != null)
-			docFields.put("titleField", struct.titleField());
-		if (struct.authorField() != null)
-			docFields.put("authorField", struct.authorField());
-		if (struct.dateField() != null)
-			docFields.put("dateField", struct.dateField());
-		return docFields;
 	}
 
 	/**

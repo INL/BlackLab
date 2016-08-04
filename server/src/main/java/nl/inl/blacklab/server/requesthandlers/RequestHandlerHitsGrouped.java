@@ -2,12 +2,11 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.grouping.HitGroup;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObjectList;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped;
 import nl.inl.blacklab.server.jobs.User;
@@ -21,66 +20,68 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public int handle(DataStream ds) throws BlsException {
 		// Get the window we're interested in
 		JobHitsGrouped search = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), isBlockingOperation());
 		try {
 			// If search is not done yet, indicate this to the user
 			if (!search.finished()) {
-				return Response.busy(servlet);
+				return Response.busy(ds, servlet);
 			}
 
 			// Search is done; construct the results object
 			HitGroups groups = search.getGroups();
-
-			DataObjectList doGroups = null;
-			// The list of groups found
-			// TODO paging..?
-			doGroups = new DataObjectList("hitgroup");
 			int first = searchParam.getInteger("first");
 			if (first < 0)
 				first = 0;
 			int number = searchParam.getInteger("number");
 			if (number < 0 || number > searchMan.config().maxPageSize())
 				number = searchMan.config().defaultPageSize();
+			int numberOfGroupsInWindow = 0;
+			numberOfGroupsInWindow = number;
+			if (first + number > groups.numberOfGroups())
+				numberOfGroupsInWindow = groups.numberOfGroups() - first;
+
+			ds.startMap();
+			ds.startEntry("summary").startMap();
+			Hits hits = search.getHits();
+			ds.startEntry("searchParam");
+			searchParam.dataStream(ds);
+			ds.endEntry();
+			ds	.entry("searchTime", (int)(search.userWaitTime() * 1000))
+				.entry("stillCounting", false)
+				.entry("numberOfHits", hits.countSoFarHitsCounted())
+				.entry("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved())
+				.entry("stoppedCountingHits", hits.maxHitsCounted())
+				.entry("stoppedRetrievingHits", hits.maxHitsRetrieved())
+				.entry("numberOfDocs", hits.countSoFarDocsCounted())
+				.entry("numberOfDocsRetrieved", hits.countSoFarDocsRetrieved())
+				.entry("numberOfGroups", groups.numberOfGroups())
+				.entry("windowFirstResult", first)
+				.entry("requestedWindowSize", number)
+				.entry("actualWindowSize", numberOfGroupsInWindow)
+				.entry("windowHasPrevious", first > 0)
+				.entry("windowHasNext", first + number < groups.numberOfGroups())
+				.entry("largestGroupSize", groups.getLargestGroupSize());
+			ds.endMap().endEntry();
+
+			// The list of groups found
+			ds.startEntry("hitGroups").startList();
 			int i = 0;
 			for (HitGroup group: groups) {
 				if (i >= first && i < first + number) {
-					DataObjectMapElement doGroup = new DataObjectMapElement();
-					doGroup.put("identity", group.getIdentity().serialize());
-					doGroup.put("identityDisplay", group.getIdentity().toString());
-					doGroup.put("size", group.size());
-					doGroups.add(doGroup);
+					ds.startItem("hitgroup").startMap();
+					ds	.entry("identity", group.getIdentity().serialize())
+						.entry("identityDisplay", group.getIdentity().toString())
+						.entry("size", group.size());
+					ds.endMap().endItem();
 				}
 				i++;
 			}
+			ds.endList().endEntry();
+			ds.endMap();
 
-			// The summary
-			DataObjectMapElement summary = new DataObjectMapElement();
-			Hits hits = search.getHits();
-			summary.put("searchParam", searchParam.toDataObject());
-			summary.put("searchTime", (int)(search.userWaitTime() * 1000));
-			summary.put("stillCounting", false);
-			summary.put("numberOfHits", hits.countSoFarHitsCounted());
-			summary.put("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved());
-			summary.put("stoppedCountingHits", hits.maxHitsCounted());
-			summary.put("stoppedRetrievingHits", hits.maxHitsRetrieved());
-			summary.put("numberOfDocs", hits.countSoFarDocsCounted());
-			summary.put("numberOfDocsRetrieved", hits.countSoFarDocsRetrieved());
-			summary.put("numberOfGroups", groups.numberOfGroups());
-			summary.put("windowFirstResult", first);
-			summary.put("requestedWindowSize", number);
-			summary.put("actualWindowSize", doGroups.size());
-			summary.put("windowHasPrevious", first > 0);
-			summary.put("windowHasNext", first + number < groups.numberOfGroups());
-			summary.put("largestGroupSize", groups.getLargestGroupSize());
-
-			// Assemble all the parts
-			DataObjectMapElement response = new DataObjectMapElement();
-			response.put("summary", summary);
-			response.put("hitGroups", doGroups);
-
-			return new Response(response);
+			return HTTP_OK;
 		} finally {
 			search.decrRef();
 		}

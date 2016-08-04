@@ -1,7 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -22,10 +22,8 @@ public class JobWithHits extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
-		DataObjectMapElement d = super.toDataObject(debugInfo);
-		d.put("countHitsRetrieved", hits == null ? -1 : hits.countSoFarDocsRetrieved());
-		return d;
+	protected void dataStreamSubclassEntries(DataStream ds) {
+		ds	.entry("countHitsRetrieved", hits == null ? -1 : hits.countSoFarDocsRetrieved());
 	}
 
 	@Override

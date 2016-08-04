@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.exceptions;
 
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.requesthandlers.Response;
 
 public class IllegalIndexName extends BadRequest {

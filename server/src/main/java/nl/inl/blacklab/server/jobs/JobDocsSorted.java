@@ -1,7 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -30,10 +30,9 @@ public class JobDocsSorted extends JobWithDocs {
 		}
 
 		@Override
-		public DataObjectMapElement toDataObject() {
-			DataObjectMapElement o = super.toDataObject();
-			o.put("sortSettings", sortSettings);
-			return o;
+		public void dataStreamEntries(DataStream ds) {
+			super.dataStreamEntries(ds);
+			ds	.entry("sortSettings", sortSettings);
 		}
 
 	}
@@ -58,10 +57,9 @@ public class JobDocsSorted extends JobWithDocs {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
-		DataObjectMapElement d = super.toDataObject(debugInfo);
-		d.put("numberOfDocResults", docResults == null ? -1 : docResults.size());
-		return d;
+	protected void dataStreamSubclassEntries(DataStream ds) {
+		super.dataStreamSubclassEntries(ds);
+		ds	.entry("numberOfDocResults", docResults == null ? -1 : docResults.size());
 	}
 
 	@Override

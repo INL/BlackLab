@@ -1,7 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -22,11 +22,6 @@ public class JobDocsTotal extends Job {
 		@Override
 		public String uniqueIdentifier() {
 			return super.uniqueIdentifier() + ")";
-		}
-
-		@Override
-		public DataObjectMapElement toDataObject() {
-			return super.toDataObject();
 		}
 
 	}
@@ -59,10 +54,8 @@ public class JobDocsTotal extends Job {
 	}
 
 	@Override
-	public DataObjectMapElement toDataObject(boolean debugInfo) throws BlsException {
-		DataObjectMapElement d = super.toDataObject(debugInfo);
-		d.put("docsCounted", docResults.getOriginalHits() != null ? docResults.getOriginalHits().countSoFarDocsCounted() : -1);
-		return d;
+	protected void dataStreamSubclassEntries(DataStream ds) {
+		ds	.entry("docsCounted", docResults.getOriginalHits() != null ? docResults.getOriginalHits().countSoFarDocsCounted() : -1);
 	}
 
 	@Override

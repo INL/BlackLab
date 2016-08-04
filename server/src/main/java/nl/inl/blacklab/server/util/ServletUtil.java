@@ -11,11 +11,11 @@ import java.util.TimeZone;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.blacklab.server.dataobject.DataFormat;
+import org.apache.log4j.Logger;
+
+import nl.inl.blacklab.datastream.DataFormat;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.util.ExUtil;
-
-import org.apache.log4j.Logger;
 
 public class ServletUtil {
 	private static final Logger logger = Logger.getLogger(ServletUtil.class);

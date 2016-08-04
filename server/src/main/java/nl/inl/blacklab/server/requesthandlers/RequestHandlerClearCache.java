@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
+import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.jobs.User;
 
@@ -15,11 +15,11 @@ public class RequestHandlerClearCache extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() {
+	public int handle(DataStream ds) {
 		if (!debugMode)
-			return Response.forbidden();
+			return Response.forbidden(ds);
 		searchMan.getCache().clearCache();
-		return Response.status("SUCCESS", "Cache cleared succesfully.", HttpServletResponse.SC_OK);
+		return Response.status(ds, "SUCCESS", "Cache cleared succesfully.", HTTP_OK);
 	}
 
 }

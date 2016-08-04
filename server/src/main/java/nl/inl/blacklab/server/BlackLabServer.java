@@ -7,7 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -17,9 +19,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import nl.inl.blacklab.server.dataobject.DataFormat;
-import nl.inl.blacklab.server.dataobject.DataObject;
-import nl.inl.blacklab.server.dataobject.DataObjectPlain;
+import nl.inl.blacklab.datastream.DataFormat;
+import nl.inl.blacklab.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -101,7 +104,7 @@ public class BlackLabServer extends HttpServlet {
 	 */
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
-		writeResponse(request, responseObject, RequestHandler.handle(this, request));
+		handleRequest(request, responseObject);
 	}
 
 	/**
@@ -110,7 +113,7 @@ public class BlackLabServer extends HttpServlet {
 	 */
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
-		writeResponse(request, responseObject, RequestHandler.handle(this, request));
+		handleRequest(request, responseObject);
 	}
 
 	/**
@@ -120,7 +123,7 @@ public class BlackLabServer extends HttpServlet {
 	 */
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
-		writeResponse(request, responseObject, RequestHandler.handle(this, request));
+		handleRequest(request, responseObject);
 	}
 
 	/**
@@ -131,17 +134,18 @@ public class BlackLabServer extends HttpServlet {
 	 */
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse responseObject) {
-		writeResponse(request, responseObject, RequestHandler.handle(this, request));
+		handleRequest(request, responseObject);
 	}
 
-	private void writeResponse(HttpServletRequest request,
-			HttpServletResponse responseObject,
-			Response response) {
+	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
 
+		// === Create RequestHandler object
+		RequestHandler requestHandler = RequestHandler.create(this, request);
+
+		// === Figure stuff out about the request
 		boolean debugMode = searchManager.config().isDebugMode(request.getRemoteAddr());
-
-		// Determine response type
-		DataFormat outputType = response.getOverrideType(); // some responses override the user's request (i.e. article XML)
+		DataFormat outputType = requestHandler.getOverrideType();
+		//DataFormat outputType = response.getOverrideType(); // some responses override the user's request (i.e. article XML)
 		if (outputType == null) {
 			outputType = ServletUtil.getOutputType(request, searchManager.config().defaultOutputType());
 		}
@@ -150,39 +154,72 @@ public class BlackLabServer extends HttpServlet {
 		String callbackFunction = ServletUtil.getParameter(request, "jsonp", "");
 		boolean isJsonp = callbackFunction.length() > 0;
 
+		int cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().clientCacheTimeSec() : 0;
+		//int cacheTime = response.isCacheAllowed() ? searchManager.config().clientCacheTimeSec() : 0;
+
+		boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", debugMode);
+
+		String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : "blacklabResponse";
+
+		// === Handle the request
+		StringWriter buf = new StringWriter();
+		PrintWriter out = new PrintWriter(buf);
+		DataStream ds = DataStream.create(outputType, out, prettyPrint, callbackFunction);
+		ds.startDocument(rootEl);
+		int httpCode;
+		if (isJsonp && !callbackFunction.matches("[_a-zA-Z][_a-zA-Z0-9]+")) {
+			// Illegal JSONP callback name
+			httpCode = Response.badRequest(ds, "JSONP_ILLEGAL_CALLBACK", "Illegal JSONP callback function name. Must be a valid Javascript name.");
+			callbackFunction = "";
+		} else {
+			try {
+				httpCode = requestHandler.handle(ds);
+			} catch (InternalServerError e) {
+				String msg = ServletUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
+				httpCode = Response.error(ds, e.getBlsErrorCode(), msg, e.getHttpStatusCode());
+			} catch (BlsException e) {
+				httpCode = Response.error(ds, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+			} catch (InterruptedException e) {
+				httpCode = Response.internalError(ds, e, debugMode, 7);
+			}
+		}
+		ds.endDocument(rootEl);
+
+		// === Write the response headers
+
 		// Write HTTP headers (status code, encoding, content type and cache)
 		if (!isJsonp) // JSONP request always returns 200 OK because otherwise script doesn't load
-			responseObject.setStatus(response.getHttpStatusCode());
+			responseObject.setStatus(httpCode);
 		responseObject.setCharacterEncoding("utf-8");
 		responseObject.setContentType(ServletUtil.getContentType(outputType));
-		int cacheTime = response.isCacheAllowed() ? searchManager.config().clientCacheTimeSec() : 0;
 		ServletUtil.writeCacheHeaders(responseObject, cacheTime);
 
 		try {
-			// Write the response
-			OutputStreamWriter out = new OutputStreamWriter(responseObject.getOutputStream(), "utf-8");
-			boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", debugMode);
-			if (isJsonp && !callbackFunction.matches("[_a-zA-Z][_a-zA-Z0-9]+")) {
-				response = Response.badRequest("JSONP_ILLEGAL_CALLBACK", "Illegal JSONP callback function name. Must be a valid Javascript name.");
-				callbackFunction = "";
-			}
-			String rootEl = "blacklabResponse";
-			DataObject dataObject = response.getDataObject();
-			if (dataObject instanceof DataObjectPlain && !((DataObjectPlain) dataObject).shouldAddRootElement()) {
-				// Plain objects sometimes don't want root objects (e.g. because they're
-				// full XML documents already)
-				rootEl = null;
-			}
-			dataObject.serializeDocument(rootEl, out, outputType, prettyPrint, callbackFunction);
-			out.flush();
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		} catch (/*ClientAbortException*/ IOException e) {
+			Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), "utf-8");
+			realOut.write(buf.toString());
+			realOut.flush();
+		} catch (IOException e) {
 			// Client cancelled the request midway through.
 			// This is okay, don't raise the alarm.
 			logger.debug("(couldn't send response, client probably cancelled the request)");
 			return;
 		}
+
+		// === Write the response itself
+
+//		try {
+//			DataObject dataObject = response.getDataObject();
+//			String rootEl = omitRootElement ? null : "blacklabResponse";
+//			dataObject.serializeDocument(rootEl, out, outputType, prettyPrint, callbackFunction);
+//			out.flush();
+//		} catch (UnsupportedEncodingException e) {
+//			throw new RuntimeException(e);
+//		} catch (IOException e) {
+//			// Client cancelled the request midway through.
+//			// This is okay, don't raise the alarm.
+//			logger.debug("(couldn't send response, client probably cancelled the request)");
+//			return;
+//		}
 	}
 
 	@Override

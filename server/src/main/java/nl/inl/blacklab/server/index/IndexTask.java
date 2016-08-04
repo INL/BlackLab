@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import org.apache.log4j.Logger;
+
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
@@ -13,8 +15,6 @@ import nl.inl.blacklab.index.IndexListenerDecorator;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
-
-import org.apache.log4j.Logger;
 
 public class IndexTask {
 
