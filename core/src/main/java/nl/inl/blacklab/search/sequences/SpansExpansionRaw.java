@@ -279,8 +279,9 @@ class SpansExpansionRaw extends BLSpans {
 			}
 
 			// No, try the next hit, if there is one
-			if (nextStartPosition() == NO_MORE_POSITIONS) {
-				clauseStart = start = end = NO_MORE_POSITIONS;
+			clauseStart = clause.nextStartPosition();
+			if (clauseStart == NO_MORE_POSITIONS) {
+				start = end = NO_MORE_POSITIONS;
 				return; // No hits left, we're done
 			}
 		}
