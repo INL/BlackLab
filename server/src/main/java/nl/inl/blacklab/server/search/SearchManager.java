@@ -1,6 +1,8 @@
 package nl.inl.blacklab.server.search;
 
 import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
@@ -8,8 +10,6 @@ import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
-import nl.inl.util.json.JSONException;
-import nl.inl.util.json.JSONObject;
 
 public class SearchManager {
 

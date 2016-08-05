@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -28,8 +30,6 @@ import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
-import nl.inl.util.json.JSONArray;
-import nl.inl.util.json.JSONObject;
 
 public class IndexManager {
 	private static final Logger logger = Logger.getLogger(IndexManager.class);

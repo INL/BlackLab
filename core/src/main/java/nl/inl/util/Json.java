@@ -8,8 +8,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 
-import nl.inl.util.json.JSONException;
-import nl.inl.util.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Supports reading/writing commented-JSON files.

@@ -21,6 +21,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
+import org.json.JSONObject;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
@@ -28,7 +29,6 @@ import nl.inl.util.DateUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
-import nl.inl.util.json.JSONObject;
 
 /**
  * Determines the structure of a BlackLab index.
@@ -338,7 +338,6 @@ public class IndexStructure {
 	 * @param indexMetadata the metadata information
 	 * @param fis the Lucene field infos
 	 */
-	@SuppressWarnings("unchecked")
 	private void getFieldInfoFromMetadata(IndexMetadata indexMetadata, FieldInfos fis) {
 
 		// Metadata fields

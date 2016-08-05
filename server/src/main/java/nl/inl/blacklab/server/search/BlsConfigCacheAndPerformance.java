@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.search;
 
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 
 import nl.inl.blacklab.server.util.JsonUtil;
-import nl.inl.util.json.JSONObject;
 
 public class BlsConfigCacheAndPerformance {
 

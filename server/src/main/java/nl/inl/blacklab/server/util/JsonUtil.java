@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.util.json.JSONArray;
-import nl.inl.util.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class JsonUtil {
 

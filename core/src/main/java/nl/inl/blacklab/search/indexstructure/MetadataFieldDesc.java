@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import nl.inl.util.json.JSONException;
-import nl.inl.util.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MetadataFieldDesc extends BaseFieldDesc {
 

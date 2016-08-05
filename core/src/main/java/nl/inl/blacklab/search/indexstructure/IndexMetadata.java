@@ -3,11 +3,12 @@ package nl.inl.blacklab.search.indexstructure;
 import java.io.File;
 import java.io.IOException;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.DateUtil;
 import nl.inl.util.Json;
-import nl.inl.util.json.JSONException;
-import nl.inl.util.json.JSONObject;
 
 /**
  * Reads/writes the indexmetadata.json file, and provides
