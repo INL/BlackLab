@@ -151,6 +151,8 @@ public class BlsConfig {
 			defaultContextSize = 5;
 			maxContextSize = 20;
 			maxSnippetSize = 100;
+			defaultMaxHitsToRetrieve = Searcher.DEFAULT_MAX_RETRIEVE;
+			defaultMaxHitsToCount = Searcher.DEFAULT_MAX_COUNT;
 			maxHitsToRetrieveAllowed = 10000000;
 			maxHitsToCountAllowed = -1;
 			overrideUserIdIps = new HashSet<>();

@@ -91,7 +91,7 @@ public class SearchParameters {
 		defaultParameterValues.put("sensitive", "no");
 	}
 
-	private static String getParameterDefaultValue(String paramName) {
+	private static String getDefault(String paramName) {
 		return defaultParameterValues.get(paramName);
 	}
 
@@ -166,7 +166,7 @@ public class SearchParameters {
 	public String getString(Object key) {
 		String value = map.get(key);
 		if (value == null || value.length() == 0) {
-			value = getParameterDefaultValue(key.toString());
+			value = getDefault(key.toString());
 		}
 		return value;
 	}
