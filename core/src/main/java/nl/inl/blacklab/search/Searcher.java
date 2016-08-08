@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -585,6 +586,27 @@ public abstract class Searcher {
 	public abstract Document document(int doc);
 
 	/**
+	 * Get a set of all (non-deleted) Lucene document ids.
+	 * @return set of ids
+	 */
+	public abstract Set<Integer> docIdSet();
+
+	/** A task to perform on a Lucene document. */
+	public interface LuceneDocTask {
+		void perform(Document doc);
+	}
+
+	/**
+	 * Perform a task on each (non-deleted) Lucene Document.
+	 * @param task task to perform
+	 */
+	public void forEachDocument(LuceneDocTask task) {
+		for (Integer docId: docIdSet()) {
+			task.perform(document(docId));
+		}
+	}
+
+	/**
 	 * Checks if a document has been deleted from the index
 	 * @param doc the document id
 	 * @return true iff it has been deleted
@@ -912,9 +934,7 @@ public abstract class Searcher {
 	 * @param fieldName
 	 *            the name of the field
 	 * @return the field content
-	 * @deprecated use version that takes a docId
 	 */
-	@Deprecated
 	public String getContent(Document d, String fieldName) {
 		if (!contentStores.exists(fieldName)) {
 			// No special content accessor set; assume a stored field
@@ -930,9 +950,7 @@ public abstract class Searcher {
 	 * @param d
 	 *            the Document
 	 * @return the field content
-	 * @deprecated use version that takes a docId
 	 */
-	@Deprecated
 	public String getContent(Document d) {
 		return getContent(d, getMainContentsFieldName());
 	}

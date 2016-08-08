@@ -20,9 +20,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -50,7 +54,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
-
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -673,5 +676,74 @@ public class SearcherImpl extends Searcher implements Closeable {
 		return indexSearcher;
 	}
 
+	@Override
+	public Set<Integer> docIdSet() {
+
+		final IndexReader reader = this.reader;
+
+		final int maxDoc = reader.maxDoc();
+
+		final Bits liveDocs = MultiFields.getLiveDocs(reader);
+
+		return new AbstractSet<Integer>() {
+			@Override
+			public boolean contains(Object o) {
+				Integer i = (Integer)o;
+				return i < maxDoc && !isDeleted(i);
+			}
+
+			boolean isDeleted(Integer i) {
+				return liveDocs != null && !liveDocs.get(i);
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return maxDoc == reader.numDeletedDocs() + 1;
+			}
+
+			@Override
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					int current = -1;
+					int next = -1;
+
+					@Override
+					public boolean hasNext() {
+						if (next < 0)
+							findNext();
+						return next < maxDoc;
+					}
+
+					private void findNext() {
+						next = current + 1;
+						while (next < maxDoc && isDeleted(next)) {
+							next++;
+						}
+					}
+
+					@Override
+					public Integer next() {
+						if (next < 0)
+							findNext();
+						if (next >= maxDoc)
+							throw new NoSuchElementException();
+						current = next;
+						next = -1;
+						return current;
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+
+			@Override
+			public int size() {
+				return maxDoc - reader.numDeletedDocs() - 1;
+			}
+		};
+	}
 
 }

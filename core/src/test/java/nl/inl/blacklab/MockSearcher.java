@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -159,6 +160,11 @@ public class MockSearcher extends Searcher {
 	@Override
 	protected ContentStore openContentStore(String fieldName) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Set<Integer> docIdSet() {
+		return null;
 	}
 
 }
