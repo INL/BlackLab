@@ -345,8 +345,8 @@ public class IndexStructure {
 		while (it.hasNext()) {
 			String fieldName = it.next();
 			JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
-			String displayName = Json.getString(fieldConfig, "displayName", fieldName);
-			String description = Json.getString(fieldConfig, "description", "");
+			String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
+			String fldDescription = Json.getString(fieldConfig, "description", "");
 			String group = Json.getString(fieldConfig, "group", "");
 			String type = Json.getString(fieldConfig, "type", "tokenized");
 			String analyzer = Json.getString(fieldConfig, "analyzer", "DEFAULT");
@@ -359,8 +359,8 @@ public class IndexStructure {
 			boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
 
 			MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
-			fieldDesc.setDisplayName(displayName);
-			fieldDesc.setDescription(description);
+			fieldDesc.setDisplayName(fldDisplayName);
+			fieldDesc.setDescription(fldDescription);
 			fieldDesc.setGroup(group);
 			fieldDesc.setAnalyzer(analyzer);
 			fieldDesc.setUnknownValue(unknownValue);
@@ -376,13 +376,13 @@ public class IndexStructure {
 		while (it.hasNext()) {
 			String fieldName = it.next();
 			JSONObject fieldConfig = indexMetadata.getComplexFieldConfig(fieldName);
-			String displayName = Json.getString(fieldConfig, "displayName", fieldName);
-			String description = Json.getString(fieldConfig, "description", "");
+			String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
+			String fldDescription = Json.getString(fieldConfig, "description", "");
 			String mainProperty = Json.getString(fieldConfig, "mainProperty", "");
 			// TODO: useAnnotation..?
 			ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
-			fieldDesc.setDisplayName(displayName);
-			fieldDesc.setDescription(description);
+			fieldDesc.setDisplayName(fldDisplayName);
+			fieldDesc.setDescription(fldDescription);
 			if (mainProperty.length() > 0)
 				fieldDesc.setMainPropertyName(mainProperty);
 			String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
@@ -763,7 +763,6 @@ public class IndexStructure {
 		}
 
 		out.println("\nMETADATA FIELDS");
-		String titleField = getDocumentTitleField();
 		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
 			if (e.getKey().endsWith("Numeric"))
 				continue; // special case, will probably be removed later

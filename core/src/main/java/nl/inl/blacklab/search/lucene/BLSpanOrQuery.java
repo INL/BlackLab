@@ -128,8 +128,8 @@ public class BLSpanOrQuery extends SpanOrQuery {
 	}
 
 	@Override
-	public String toString(String field) {
-		return super.toString(field);
+	public String toString(String theField) {
+		return super.toString(theField);
 	}
 
 	@Override
@@ -429,9 +429,9 @@ public class BLSpanOrQuery extends SpanOrQuery {
 			}
 
 			@Override
-			public void passHitQueryContextToClauses(HitQueryContext context) {
+			public void passHitQueryContextToClauses(HitQueryContext theContext) {
 				for (BLSpans spans : subSpans) {
-					spans.setHitQueryContext(context);
+					spans.setHitQueryContext(theContext);
 				}
 			}
 

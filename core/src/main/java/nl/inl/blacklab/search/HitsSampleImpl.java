@@ -37,21 +37,21 @@ public class HitsSampleImpl extends HitsSample {
 		selectHits(hits);
 	}
 
-	private void selectHits(Hits hits) {
+	private void selectHits(Hits selectFrom) {
 		// Choose the hits
 		Set<Integer> chosenHitIndices = new TreeSet<>();
 		for (int i = 0; i < numberOfHitsToSelect; i++) {
 			// Choose a hit we haven't chosen yet
 			int hitIndex;
 			do {
-				hitIndex = random.nextInt(hits.size());
+				hitIndex = random.nextInt(selectFrom.size());
 			} while (chosenHitIndices.contains(hitIndex));
 			chosenHitIndices.add(hitIndex);
 		}
 
 		// Add the hits in order of their index
 		for (Integer hitIndex: chosenHitIndices) {
-			Hit hit = hits.get(hitIndex);
+			Hit hit = selectFrom.get(hitIndex);
 			if (hit.doc != previousHitDoc) {
 				docsRetrieved++;
 				docsCounted++;

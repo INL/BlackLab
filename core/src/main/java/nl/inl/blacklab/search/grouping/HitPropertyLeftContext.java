@@ -146,8 +146,8 @@ public class HitPropertyLeftContext extends HitProperty {
 	@Override
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
-		String propName = parts.length > 1 ? parts[1] : "";
-		return serializeReverse() + PropValSerializeUtil.combineParts("left", propName, sensitive ? "s" : "i");
+		String thePropName = parts.length > 1 ? parts[1] : "";
+		return serializeReverse() + PropValSerializeUtil.combineParts("left", thePropName, sensitive ? "s" : "i");
 	}
 
 	public static HitPropertyLeftContext deserialize(Hits hits, String info) {

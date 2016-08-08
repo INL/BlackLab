@@ -120,15 +120,12 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			}
 
 			CapturingReader capturingReader = new CapturingReader(new InputStreamReader(is, "utf-8"));
-			BufferedReader reader = new BufferedReader(capturingReader);
-			try {
+			try (BufferedReader reader = new BufferedReader(capturingReader)) {
 				SAXParserFactory factory = SAXParserFactory.newInstance();
 				factory.setNamespaceAware(true);
 				SAXParser parser;
 				parser = factory.newSAXParser();
 				parser.parse(new InputSource(reader), new MetadataParser());
-			} finally {
-				reader.close();
 			}
 
 			// Combine AuthorName and Pseudonym fields into

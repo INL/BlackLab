@@ -83,15 +83,14 @@ public class TarGzipReader {
 	 */
 	public static void processTar(InputStream tarStream, FileHandler fileHandler) {
 		try {
-			TarArchiveInputStream untarred = new TarArchiveInputStream(tarStream);
-			InputStream uncloseableInputStream = new FilterInputStream(untarred) {
-				@Override
-				public void close() {
-					// Don't close!
-					// (when Reader is GC'ed, closes stream prematurely..?)
-				}
-			};
-			try {
+			try (TarArchiveInputStream untarred = new TarArchiveInputStream(tarStream)) {
+				InputStream uncloseableInputStream = new FilterInputStream(untarred) {
+					@Override
+					public void close() {
+						// Don't close!
+						// (when Reader is GC'ed, closes stream prematurely..?)
+					}
+				};
 				boolean continueReading = true;
 				while(continueReading) {
 					// Go to the next file in the .tar
@@ -105,8 +104,6 @@ public class TarGzipReader {
 					String filePath = tarEntry.getName();
 					continueReading = fileHandler.handle(filePath, uncloseableInputStream);
 				}
-			} finally {
-				untarred.close();
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);

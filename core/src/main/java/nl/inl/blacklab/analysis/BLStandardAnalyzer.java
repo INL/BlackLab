@@ -69,8 +69,7 @@ public class BLStandardAnalyzer extends Analyzer {
 	public static void main(String[] args) throws IOException {
 		String TEST_STR = "Hé jij И!  раскази и повѣсти. Ст]' Дѣдо  	Нисторъ. Ива";
 
-		Analyzer a = new BLStandardAnalyzer();
-		try {
+		try (Analyzer a = new BLStandardAnalyzer()) {
 			TokenStream ts = a.tokenStream("test", new StringReader(TEST_STR));
 			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
 			while (ts.incrementToken()) {
@@ -82,8 +81,6 @@ public class BLStandardAnalyzer extends Analyzer {
 			while (ts2.incrementToken()) {
 				System.out.println(new String(ta.buffer(), 0, ta.length()));
 			}
-		} finally {
-			a.close();
 		}
 	}
 

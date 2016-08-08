@@ -22,11 +22,8 @@ public class Json {
 	 * @param file the file to write to
 	 */
 	public static void write(JSONObject data, File file) {
-		PrintWriter out = FileUtil.openForWriting(file);
-		try {
+		try (PrintWriter out = FileUtil.openForWriting(file)) {
 			out.print(data.toString(2));
-		} finally {
-			out.close();
 		}
 	}
 
@@ -41,11 +38,8 @@ public class Json {
 	 * @throws IOException on I/O error
 	 */
 	public static JSONObject read(File file) throws JSONException, IOException {
-		BufferedReader reader = FileUtil.openForReading(file);
-		try {
+		try (BufferedReader reader = FileUtil.openForReading(file)) {
 			return new JSONObject(readFileStripLineComments(reader));
-		} finally {
-			reader.close();
 		}
 	}
 

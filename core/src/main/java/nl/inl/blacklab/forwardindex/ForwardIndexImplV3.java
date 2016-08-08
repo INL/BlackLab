@@ -415,12 +415,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				deleted[i] = (byte) (e.deleted ? 1 : 0);
 				i++;
 			}
-			RandomAccessFile raf = new RandomAccessFile(tocFile, "rw");
-			try {
-				FileChannel fc = raf.getChannel();
-				long fileSize = SIZEOF_INT + (SIZEOF_LONG + SIZEOF_INT + 1) * n;
-				fc.truncate(fileSize);
-				try {
+			try (RandomAccessFile raf = new RandomAccessFile(tocFile, "rw")) {
+				try (FileChannel fc = raf.getChannel()) {
+					long fileSize = SIZEOF_INT + (SIZEOF_LONG + SIZEOF_INT + 1) * n;
+					fc.truncate(fileSize);
 					MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileSize);
 					buf.putInt(n);
 					LongBuffer lb = buf.asLongBuffer();
@@ -430,11 +428,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 					ib.put(length);
 					buf.position(buf.position() + SIZEOF_INT * n);
 					buf.put(deleted);
-				} finally {
-					fc.close();
 				}
-			} finally {
-				raf.close();
 			}
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);

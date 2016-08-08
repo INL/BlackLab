@@ -1391,7 +1391,7 @@ public abstract class Searcher {
 
 	public abstract String getIndexName();
 
-	public abstract IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer analyzer)
+	public abstract IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
 			throws IOException, CorruptIndexException, LockObtainFailedException;
 
 	public abstract IndexWriter getWriter();

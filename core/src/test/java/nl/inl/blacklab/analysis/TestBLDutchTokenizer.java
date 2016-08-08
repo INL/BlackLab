@@ -29,10 +29,9 @@ public class TestBLDutchTokenizer {
 	@Test
 	public void testBasics() throws IOException {
 		Reader r = new StringReader("\"hond, a.u.b.: bél(len); \t [pre]cursor \t\nzo'n 'Hij zij' ex-man -");
-		Tokenizer ts = new BLDutchTokenizer();
-		ts.setReader(r);
-		ts.reset();
-		try {
+		try (Tokenizer ts = new BLDutchTokenizer()) {
+			ts.setReader(r);
+			ts.reset();
 			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
 			Assert.assertTrue(ts.incrementToken());
 			Assert.assertEquals("hond", new String(ta.buffer(), 0, ta.length()));
@@ -53,8 +52,6 @@ public class TestBLDutchTokenizer {
 			Assert.assertTrue(ts.incrementToken());
 			Assert.assertEquals("-", new String(ta.buffer(), 0, ta.length()));
 			Assert.assertFalse(ts.incrementToken());
-		} finally {
-			ts.close();
 		}
 	}
 

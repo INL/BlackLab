@@ -616,8 +616,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private void ensureContentsFileOpen() {
 		try {
 			if (rafContentsFile == null) {
-				File contentsFile = new File(dir, CONTENTS_FILE_NAME);
-				rafContentsFile = new RandomAccessFile(contentsFile, "rw");
+				File theContentsFile = new File(dir, CONTENTS_FILE_NAME);
+				rafContentsFile = new RandomAccessFile(theContentsFile, "rw");
 				fchContentsFile = rafContentsFile.getChannel();
 			}
 		} catch (FileNotFoundException e) {
@@ -688,10 +688,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			String[] result = new String[n];
 
 			// Open the file
-			FileInputStream fileInputStream = new FileInputStream(contentsFile);
-			try {
-				FileChannel fileChannel = fileInputStream.getChannel();
-				try {
+			try (FileInputStream fileInputStream = new FileInputStream(contentsFile)) {
+				try (FileChannel fileChannel = fileInputStream.getChannel()) {
 					// Retrieve the strings requested
 					for (int i = 0; i < n; i++) {
 						int a = start[i];
@@ -755,11 +753,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 						int firstChar = a - charOffset;
 						result[i] = decoded.substring(firstChar, firstChar + b - a);
 					}
-				} finally {
-					fileChannel.close();
 				}
-			} finally {
-				fileInputStream.close();
 			}
 			return result;
 		} catch (Exception e) {

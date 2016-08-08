@@ -146,8 +146,7 @@ public class VersionFile {
 		try {
 			if (!file.exists())
 				throw new RuntimeException("Version file not found: " + file);
-			BufferedReader r = FileUtil.openForReading(file);
-			try {
+			try (BufferedReader r = FileUtil.openForReading(file)) {
 				String line = r.readLine();
 				if (line == null)
 					throw new RuntimeException("Version file appears to be empty: " + file);
@@ -155,8 +154,6 @@ public class VersionFile {
 				type = info[0];
 				if (info.length > 1)
 					version = info[1];
-			} finally {
-				r.close();
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -164,11 +161,8 @@ public class VersionFile {
 	}
 
 	public void write() {
-		PrintWriter w = FileUtil.openForWriting(file);
-		try {
+		try (PrintWriter w = FileUtil.openForWriting(file)) {
 			w.write(type + "||" + version + "\n");
-		} finally {
-			w.close();
 		}
 	}
 

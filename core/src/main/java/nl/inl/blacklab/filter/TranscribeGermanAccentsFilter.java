@@ -55,14 +55,11 @@ public class TranscribeGermanAccentsFilter extends TokenFilter {
 	public static void main(String[] args) throws IOException {
 		Tokenizer t = new WhitespaceTokenizer();
 		t.setReader(new StringReader("Aachen Düsseldorf Köln Berlin Österreich"));
-		TokenStream ts = new TranscribeGermanAccentsFilter(t);
-		try {
+		try (TokenStream ts = new TranscribeGermanAccentsFilter(t)) {
 			CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
 			while (ts.incrementToken()) {
 				System.out.println(new String(term.buffer(), 0, term.length()));
 			}
-		} finally {
-			ts.close();
 		}
 	}
 

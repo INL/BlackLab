@@ -107,9 +107,9 @@ public class ResultsGrouper extends HitGroups {
 		init(hits, criteria);
 	}
 
-	private void init(Hits hits, HitProperty criteria) {
+	private void init(Hits hits, HitProperty criteria_) {
 		defaultConcField = hits.settings().concordanceField();
-		List<String> requiredContext = criteria.needsContext();
+		List<String> requiredContext = criteria_.needsContext();
 		if (requiredContext != null) {
 			hits.findContext(requiredContext);
 		}

@@ -85,7 +85,7 @@ public class Indexer {
 	/**
 	 * Recursively index files inside a directory? (or archive file, if processArchivesAsDirectories == true)
 	 */
-	boolean recurseSubdirs = true;
+	boolean defaultRecurseSubdirs = true;
 
 	/**
 	 * The class to instantiate for indexing documents. This class must be able to
@@ -171,7 +171,7 @@ public class Indexer {
 	 * @param recurseSubdirs true if we should recurse into subdirs
 	 */
 	public void setRecurseSubdirs(boolean recurseSubdirs) {
-		this.recurseSubdirs = recurseSubdirs;
+		this.defaultRecurseSubdirs = recurseSubdirs;
 	}
 
 	/**
@@ -544,7 +544,7 @@ public class Indexer {
 	 * @throws Exception
 	 */
 	public void index(File file) throws Exception {
-		indexInternal(file, "*.xml", recurseSubdirs);
+		indexInternal(file, "*.xml", defaultRecurseSubdirs);
 	}
 
 	/**
@@ -584,7 +584,7 @@ public class Indexer {
 	 */
 	public void index(File fileToIndex, String glob)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-		indexInternal(fileToIndex, glob, recurseSubdirs);
+		indexInternal(fileToIndex, glob, defaultRecurseSubdirs);
 	}
 
 	/**
@@ -629,11 +629,8 @@ public class Indexer {
 			} else {
 				if (!isSpecialOperatingSystemFile(fileToIndex.getName())) { // skip special OS files
 					try {
-						FileInputStream is = new FileInputStream(fileToIndex);
-						try {
+						try (FileInputStream is = new FileInputStream(fileToIndex)) {
 							indexInputStream(fn, is, glob, recurseSubdirs);
-						} finally {
-							is.close();
 						}
 					} catch (RuntimeException | IOException e) {
 						log("*** Error indexing " + fileToIndex, e);
@@ -739,41 +736,33 @@ public class Indexer {
 		if (!zipFile.exists())
 			throw new FileNotFoundException("ZIP file not found: " + zipFile);
 		Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
-		try {
-			ZipFile z = new ZipFile(zipFile);
-			try {
-				Enumeration<? extends ZipEntry> es = z.entries();
-				while (es.hasMoreElements()) {
-					ZipEntry e = es.nextElement();
-					if (e.isDirectory())
-						continue;
-					String fileName = e.getName();
-					Matcher m = pattGlob.matcher(fileName);
-					boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".gz") || fileName.endsWith(".tgz");
-					boolean skipFile = isSpecialOperatingSystemFile(fileName);
-					if (!skipFile && (m.matches() || isArchive)) {
-						try {
-							InputStream is = z.getInputStream(e);
-							try {
-								if (isArchive) {
-									if (recurseArchives && processArchivesAsDirectories)
-										indexInputStream(fileName, is, glob, recurseArchives);
-								} else {
+		try (ZipFile z = new ZipFile(zipFile)) {
+			Enumeration<? extends ZipEntry> es = z.entries();
+			while (es.hasMoreElements()) {
+				ZipEntry e = es.nextElement();
+				if (e.isDirectory())
+					continue;
+				String fileName = e.getName();
+				Matcher m = pattGlob.matcher(fileName);
+				boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".gz") || fileName.endsWith(".tgz");
+				boolean skipFile = isSpecialOperatingSystemFile(fileName);
+				if (!skipFile && (m.matches() || isArchive)) {
+					try {
+						try (InputStream is = z.getInputStream(e)) {
+							if (isArchive) {
+								if (recurseArchives && processArchivesAsDirectories)
 									indexInputStream(fileName, is, glob, recurseArchives);
-								}
-							} finally {
-								is.close();
+							} else {
+								indexInputStream(fileName, is, glob, recurseArchives);
 							}
-						} catch (RuntimeException | ZipException ex) {
-							log("*** Error indexing file " + fileName + " inside zip archive " + zipFile, ex);
-							terminateIndexing = !getListener().errorOccurred(ex.getMessage(), "zip", zipFile, new File(fileName));
 						}
+					} catch (RuntimeException | ZipException ex) {
+						log("*** Error indexing file " + fileName + " inside zip archive " + zipFile, ex);
+						terminateIndexing = !getListener().errorOccurred(ex.getMessage(), "zip", zipFile, new File(fileName));
 					}
-					if (!continueIndexing())
-						break;
 				}
-			} finally {
-				z.close();
+				if (!continueIndexing())
+					break;
 			}
 		} catch (ZipException e) {
 			log("*** Error opening zip file: " + zipFile, e);

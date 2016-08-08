@@ -218,8 +218,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 					// InputStream is = httpEntity.getContent();
 					InputStream is = (InputStream) methHttpEntityGetContent.invoke(httpEntity);
 
-					BufferedReader b = new BufferedReader(new InputStreamReader(is, "utf-8"));
-					try {
+					try (BufferedReader b = new BufferedReader(new InputStreamReader(is, "utf-8"))) {
 						StringBuilder content = new StringBuilder();
 						while (true) {
 							String line = b.readLine();
@@ -228,8 +227,6 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 							content.append(line);
 						}
 						return content.toString();
-					} finally {
-						b.close();
 					}
 				}
 

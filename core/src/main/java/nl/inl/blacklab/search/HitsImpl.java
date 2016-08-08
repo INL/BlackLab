@@ -1389,12 +1389,12 @@ public class HitsImpl extends Hits {
 	 *    Forward indices for the attributes, or null if none
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
-	 * @param kwics
+	 * @param theKwics
 	 *            where to add the KWICs
 	 */
 	synchronized void makeKwicsSingleDocForwardIndex(ForwardIndex forwardIndex,
 			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices,
-			int wordsAroundHit, Map<Hit, Kwic> kwics) {
+			int wordsAroundHit, Map<Hit, Kwic> theKwics) {
 		if (hits.isEmpty())
 			return;
 
@@ -1482,7 +1482,7 @@ public class HitsImpl extends Hits {
 			}
 			properties.add(concWordFI);
 			Kwic kwic = new Kwic(properties, tokens, contextHitStart, contextRightStart);
-			kwics.put(h, kwic);
+			theKwics.put(h, kwic);
 		}
 
 		if (oldContexts != null) {

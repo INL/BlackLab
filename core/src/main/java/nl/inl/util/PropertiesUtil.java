@@ -46,13 +46,10 @@ public class PropertiesUtil {
 						+ " does not exist or is not a regular file!");
 			}
 
-			Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "iso-8859-1"));
-			try {
+			try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "iso-8859-1"))) {
 				Properties properties = new Properties();
 				properties.load(in);
 				return properties;
-			} finally {
-				in.close();
 			}
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -69,8 +66,8 @@ public class PropertiesUtil {
 	 */
 	public static Properties getFromResource(String resourcePath) throws IOException {
 		Properties properties;
-		InputStream isProps = PropertiesUtil.class.getClassLoader().getResourceAsStream(
-				resourcePath);
+		@SuppressWarnings("resource")
+		InputStream isProps = PropertiesUtil.class.getClassLoader().getResourceAsStream(resourcePath);
 		if (isProps == null) {
 			// TODO: FileNotFoundException?
 			throw new RuntimeException("Properties file not found: " + resourcePath

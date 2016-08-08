@@ -247,13 +247,10 @@ public class SketchToXmlConverter {
 
 	private static void convertFile(SketchToXmlConverter converter, File inFile, File outDir)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException {
-		Reader in = new InputStreamReader(new FileInputStream(inFile), "utf-8");
-		String fn = inFile.getName();
-		String outFn = fn.substring(0, fn.lastIndexOf('.')) + ".xml";
-		try {
+		try (Reader in = new InputStreamReader(new FileInputStream(inFile), "utf-8")) {
+			String fn = inFile.getName();
+			String outFn = fn.substring(0, fn.lastIndexOf('.')) + ".xml";
 			converter.convert(in, outDir, outFn);
-		} finally {
-			in.close();
 		}
 	}
 

@@ -16,13 +16,10 @@
 package nl.inl.blacklab.filter;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.Stack;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.Tokenizer;
-import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
@@ -71,33 +68,6 @@ public abstract class AbstractSynonymFilter extends TokenFilter {
 	 */
 	public AbstractSynonymFilter(TokenStream input) {
 		this(input, true);
-	}
-
-	/**
-	 * @param args
-	 * @throws IOException
-	 */
-	public static void main(String[] args) throws IOException {
-		Tokenizer t = new WhitespaceTokenizer();
-		t.setReader(new StringReader("Dit is een test"));
-		TokenStream ts = new AbstractSynonymFilter(t) {
-			@Override
-			public String[] getSynonyms(String s) {
-				if (s.equals("test"))
-					return new String[] { "testje" };
-				if (s.equals("is"))
-					return new String[] { "zijn" };
-				return null;
-			}
-		};
-		try {
-			CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
-			while (ts.incrementToken()) {
-				System.out.println(new String(term.buffer(), 0, term.length()));
-			}
-		} finally {
-			ts.close();
-		}
 	}
 
 	/**

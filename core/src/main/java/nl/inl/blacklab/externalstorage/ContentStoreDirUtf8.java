@@ -726,59 +726,56 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 			String[] result = new String[n];
 
 			// Open the correct file
-			FileInputStream fileInputStream = new FileInputStream(getContentFile(e.fileId));
-			try {
-				FileChannel fileChannel = fileInputStream.getChannel();
+			try (FileInputStream fileInputStream = new FileInputStream(getContentFile(e.fileId))) {
+				try (FileChannel fileChannel = fileInputStream.getChannel()) {
+					// Retrieve the strings requested
+					for (int i = 0; i < n; i++) {
+						int a = start[i];
+						int b = end[i];
 
-				// Retrieve the strings requested
-				for (int i = 0; i < n; i++) {
-					int a = start[i];
-					int b = end[i];
+						if (a == -1)
+							a = 0;
+						if (b == -1)
+							b = e.entryLengthCharacters;
 
-					if (a == -1)
-						a = 0;
-					if (b == -1)
-						b = e.entryLengthCharacters;
-
-					// Check values
-					if (a < 0 || b < 0) {
-						throw new RuntimeException("Illegal values, start = " + a + ", end = " + b);
-					}
-					if (a > e.entryLengthCharacters || b > e.entryLengthCharacters) {
-						throw new RuntimeException("Value(s) out of range, start = " + a
-								+ ", end = " + b + ", content length = " + e.entryLengthCharacters);
-					}
-					if (b <= a) {
-						throw new RuntimeException(
-								"Tried to read empty or negative length snippet (from " + a
-										+ " to " + b + ")");
-					}
-
-					// 1 - determine what blocks to read
-					int firstBlock = a / e.blockSizeCharacters;
-					int lastBlock = (b - 1) / e.blockSizeCharacters;
-
-					// 2 - read and decode blocks
-					StringBuilder decoded = new StringBuilder();
-					for (int j = firstBlock; j <= lastBlock; j++) {
-						long readStartOffset = e.getBlockStartOffset(j);
-						int bytesToRead = (int) (e.getBlockEndOffset(j) - readStartOffset);
-						ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
-						int bytesRead = fileChannel.read(buffer, readStartOffset);
-						if (bytesRead < bytesToRead) {
-							// Apparently, something went wrong.
-							throw new RuntimeException("Not enough bytes read, " + bytesRead
-									+ " < " + bytesToRead);
+						// Check values
+						if (a < 0 || b < 0) {
+							throw new RuntimeException("Illegal values, start = " + a + ", end = " + b);
 						}
-						decoded.append(decodeBlock(buffer.array(), 0, bytesRead));
-					}
+						if (a > e.entryLengthCharacters || b > e.entryLengthCharacters) {
+							throw new RuntimeException("Value(s) out of range, start = " + a
+									+ ", end = " + b + ", content length = " + e.entryLengthCharacters);
+						}
+						if (b <= a) {
+							throw new RuntimeException(
+									"Tried to read empty or negative length snippet (from " + a
+											+ " to " + b + ")");
+						}
 
-					// 3 - take just what we need
-					int firstChar = a % e.blockSizeCharacters;
-					result[i] = decoded.toString().substring(firstChar, firstChar + b - a);
+						// 1 - determine what blocks to read
+						int firstBlock = a / e.blockSizeCharacters;
+						int lastBlock = (b - 1) / e.blockSizeCharacters;
+
+						// 2 - read and decode blocks
+						StringBuilder decoded = new StringBuilder();
+						for (int j = firstBlock; j <= lastBlock; j++) {
+							long readStartOffset = e.getBlockStartOffset(j);
+							int bytesToRead = (int) (e.getBlockEndOffset(j) - readStartOffset);
+							ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
+							int bytesRead = fileChannel.read(buffer, readStartOffset);
+							if (bytesRead < bytesToRead) {
+								// Apparently, something went wrong.
+								throw new RuntimeException("Not enough bytes read, " + bytesRead
+										+ " < " + bytesToRead);
+							}
+							decoded.append(decodeBlock(buffer.array(), 0, bytesRead));
+						}
+
+						// 3 - take just what we need
+						int firstChar = a % e.blockSizeCharacters;
+						result[i] = decoded.toString().substring(firstChar, firstChar + b - a);
+					}
 				}
-			} finally {
-				fileInputStream.close();
 			}
 			return result;
 		} catch (Exception e) {

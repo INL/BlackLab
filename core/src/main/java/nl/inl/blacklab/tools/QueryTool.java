@@ -447,6 +447,7 @@ public class QueryTool {
 	 * @throws CorruptIndexException
 	 * @throws IOException
 	 */
+	@SuppressWarnings("resource")
 	private static void run(File indexDir, File inputFile, String encoding)
 			throws UnsupportedEncodingException, CorruptIndexException {
 		if (!indexDir.exists() || !indexDir.isDirectory()) {
@@ -472,13 +473,11 @@ public class QueryTool {
 		if (inputFile == null) {
 			// No input file specified; use stdin
 			in = IoUtil.makeBuffered(new InputStreamReader(System.in, encoding));
-		}
-		else {
+		} else {
 			// Open input file
 			in = FileUtil.openForReading(inputFile, "utf-8");
 			batchMode = true;
 		}
-
 		try {
 			QueryTool c = new QueryTool(indexDir, in, out, err);
 			c.commandProcessor();

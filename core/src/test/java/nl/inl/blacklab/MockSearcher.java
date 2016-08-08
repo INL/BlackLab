@@ -106,7 +106,7 @@ public class MockSearcher extends Searcher {
 	}
 
 	@Override
-	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer analyzer)
+	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
 			throws IOException, CorruptIndexException, LockObtainFailedException {
 		return null;
 	}

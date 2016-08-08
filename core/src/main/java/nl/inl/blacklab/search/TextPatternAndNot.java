@@ -80,11 +80,11 @@ public class TextPatternAndNot extends TextPattern {
 			return translator.not(context, translator.and(context, chResultsNot));
 		}
 		// Combination of positive and possibly negative clauses
-		T include = chResults.size() == 1 ? chResults.get(0) : translator.and(context, chResults);
+		T includeResult = chResults.size() == 1 ? chResults.get(0) : translator.and(context, chResults);
 		if (chResultsNot.isEmpty())
-			return include;
-		T exclude = chResultsNot.size() == 1 ? chResultsNot.get(0) : translator.and(context, chResultsNot);
-		return translator.andNot(context, include, exclude);
+			return includeResult;
+		T excludeResult = chResultsNot.size() == 1 ? chResultsNot.get(0) : translator.and(context, chResultsNot);
+		return translator.andNot(context, includeResult, excludeResult);
 	}
 
 	@Override

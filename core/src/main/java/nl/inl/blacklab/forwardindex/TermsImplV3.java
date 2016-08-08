@@ -151,89 +151,85 @@ class TermsImplV3 extends Terms {
 	private void read(File termsFile) {
 		termIndex.clear();
 		try {
-			RandomAccessFile raf = new RandomAccessFile(termsFile, "r");
-			FileChannel fc = raf.getChannel();
-			MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, termsFile.length());
-			try {
-				int n = buf.getInt();
-				IntBuffer ib = buf.asIntBuffer();
-				int[] termStringOffsets = new int[n + 1];
-				terms = new String[n];
+			try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
+				try (FileChannel fc = raf.getChannel()) {
+					MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, termsFile.length());
+					int n = buf.getInt();
+					IntBuffer ib = buf.asIntBuffer();
+					int[] termStringOffsets = new int[n + 1];
+					terms = new String[n];
 
-				if (useBlockBasedTermsFile) {
-					// New format, multiple blocks of term strings if necessary,
-					// so term strings may total over 2 GB.
+					if (useBlockBasedTermsFile) {
+						// New format, multiple blocks of term strings if necessary,
+						// so term strings may total over 2 GB.
 
-					// Read the term string offsets and string data block
-					int currentTerm = 0;
-					while (currentTerm < n) {
-						int numTermsThisBlock = ib.get();
-						ib.get(termStringOffsets, currentTerm, numTermsThisBlock); // term string offsets
+						// Read the term string offsets and string data block
+						int currentTerm = 0;
+						while (currentTerm < n) {
+							int numTermsThisBlock = ib.get();
+							ib.get(termStringOffsets, currentTerm, numTermsThisBlock); // term string offsets
 
-						// Read term strings data
-						int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
-						buf.position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
-						byte[] termStringsThisBlock = new byte[dataBlockSize];
-						buf.get(termStringsThisBlock);
+							// Read term strings data
+							int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
+							buf.position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
+							byte[] termStringsThisBlock = new byte[dataBlockSize];
+							buf.get(termStringsThisBlock);
 
-						// Now instantiate String objects from the offsets and byte data
-						for ( ; currentTerm < n; currentTerm++) {
-							int offset = termStringOffsets[currentTerm];
-							int length = termStringOffsets[currentTerm + 1] - offset;
-							String str = new String(termStringsThisBlock, offset, length, "utf-8");
+							// Now instantiate String objects from the offsets and byte data
+							for ( ; currentTerm < n; currentTerm++) {
+								int offset = termStringOffsets[currentTerm];
+								int length = termStringOffsets[currentTerm + 1] - offset;
+								String str = new String(termStringsThisBlock, offset, length, "utf-8");
 
-							// We need to find term for id while searching
-							terms[currentTerm] = str;
+								// We need to find term for id while searching
+								terms[currentTerm] = str;
+							}
+
+							ib = buf.asIntBuffer();
 						}
 
+					} else {
+						// Old format, single term strings block.
+						// Causes problems when term strings total over 2 GB.
+
+						ib.get(termStringOffsets); // term string offsets
+						int termStringsByteSize = ib.get(); // data block size
+
+						// termStringByteSize fits in an int, and terms
+						// fits in a single byte array. Use the old code.
+						buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
+						byte[] termStrings = new byte[termStringsByteSize];
+						buf.get(termStrings);
 						ib = buf.asIntBuffer();
+
+						// Now instantiate String objects from the offsets and byte data
+						terms = new String[n];
+						for (int id = 0; id < n; id++) {
+							int offset = termStringOffsets[id];
+							int length = termStringOffsets[id + 1] - offset;
+							String str = new String(termStrings, offset, length, "utf-8");
+
+							// We need to find term for id while searching
+							terms[id] = str;
+						}
 					}
 
-				} else {
-					// Old format, single term strings block.
-					// Causes problems when term strings total over 2 GB.
+					if (indexMode) {
+						termIndexBuilt = false;
+						buildTermIndex(); // We need to find id for term while indexing
+						terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
+					} else {
+						termIndexBuilt = false; // termIndex hasn't been filled yet
 
-					ib.get(termStringOffsets); // term string offsets
-					int termStringsByteSize = ib.get(); // data block size
-
-					// termStringByteSize fits in an int, and terms
-					// fits in a single byte array. Use the old code.
-					buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
-					byte[] termStrings = new byte[termStringsByteSize];
-					buf.get(termStrings);
-					ib = buf.asIntBuffer();
-
-					// Now instantiate String objects from the offsets and byte data
-					terms = new String[n];
-					for (int id = 0; id < n; id++) {
-						int offset = termStringOffsets[id];
-						int length = termStringOffsets[id + 1] - offset;
-						String str = new String(termStrings, offset, length, "utf-8");
-
-						// We need to find term for id while searching
-						terms[id] = str;
+						// Read the sort order arrays
+						sortPositionPerId = new int[n];
+						sortPositionPerIdInsensitive = new int[n];
+						ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
+						ib.get(sortPositionPerId);
+						ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
+						ib.get(sortPositionPerIdInsensitive);
 					}
 				}
-
-				if (indexMode) {
-					termIndexBuilt = false;
-					buildTermIndex(); // We need to find id for term while indexing
-					terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
-				} else {
-					termIndexBuilt = false; // termIndex hasn't been filled yet
-
-					// Read the sort order arrays
-					sortPositionPerId = new int[n];
-					sortPositionPerIdInsensitive = new int[n];
-					ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
-					ib.get(sortPositionPerId);
-					ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
-					ib.get(sortPositionPerIdInsensitive);
-				}
-
-			} finally {
-				fc.close();
-				raf.close();
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -247,125 +243,122 @@ class TermsImplV3 extends Terms {
 
 		try {
 			// Open the terms file
-			RandomAccessFile raf = new RandomAccessFile(termsFile, "rw");
-			FileChannel fc = raf.getChannel();
-			int n = termIndex.size();
+			try (RandomAccessFile raf = new RandomAccessFile(termsFile, "rw")) {
+				try (FileChannel fc = raf.getChannel()) {
+					int n = termIndex.size();
 
-			// Fill the terms[] array
-			terms = new String[n];
-			long termStringsByteSize = 0;
-			for (Map.Entry<String, Integer> entry: termIndex.entrySet()) {
-				terms[entry.getValue()] = entry.getKey();
-				termStringsByteSize += entry.getKey().getBytes("utf-8").length;
-			}
-
-			// Calculate the file length and map the file
-			long fileLength = 2 * BYTES_PER_INT + (n + 1) * BYTES_PER_INT + termStringsByteSize + NUM_SORT_BUFFERS * BYTES_PER_INT * n;
-			fc.truncate(fileLength); // truncate if necessary
-			MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileLength);
-			buf.putInt(n); // Start with the number of terms
-			try {
-				IntBuffer ib = buf.asIntBuffer();
-				if (!useBlockBasedTermsFile) {
-					// Terms file is small enough to fit in a single byte array.
-					// Use the old code.
-
-					// Calculate byte offsets for all the terms and fill data array
-					int currentOffset = 0;
-					int[] termStringOffsets = new int[n + 1];
-					byte[] termStrings = new byte[(int)termStringsByteSize];
-					for (int i = 0; i < n; i++) {
-						termStringOffsets[i] = currentOffset;
-						byte[] termBytes = terms[i].getBytes("utf-8");
-						System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
-						currentOffset += termBytes.length;
+					// Fill the terms[] array
+					terms = new String[n];
+					long termStringsByteSize = 0;
+					for (Map.Entry<String, Integer> entry: termIndex.entrySet()) {
+						terms[entry.getValue()] = entry.getKey();
+						termStringsByteSize += entry.getKey().getBytes("utf-8").length;
 					}
-					termStringOffsets[n] = currentOffset;
 
-					// Write offset and data arrays to file
-					ib.put(termStringOffsets);
-					ib.put((int)termStringsByteSize); // size of the data block to follow
-					buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
-					buf.put(termStrings);
-					ib = buf.asIntBuffer();
-				} else {
-					// Terms file is too large to fit in a single byte array.
-					// Use the new code.
-					int currentTerm = 0;
-					long bytesLeftToWrite = termStringsByteSize;
-					int[] termStringOffsets = new int[n];
-					while (currentTerm < n) {
-						int firstTermInBlock = currentTerm;
-						int blockSize = (int)Math.min(bytesLeftToWrite, APPROX_MAX_ARRAY_SIZE);
+					// Calculate the file length and map the file
+					long fileLength = 2 * BYTES_PER_INT + (n + 1) * BYTES_PER_INT + termStringsByteSize + NUM_SORT_BUFFERS * BYTES_PER_INT * n;
+					fc.truncate(fileLength); // truncate if necessary
+					MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileLength);
+					buf.putInt(n); // Start with the number of terms
+
+					IntBuffer ib = buf.asIntBuffer();
+					if (!useBlockBasedTermsFile) {
+						// Terms file is small enough to fit in a single byte array.
+						// Use the old code.
 
 						// Calculate byte offsets for all the terms and fill data array
 						int currentOffset = 0;
-						byte[] termStrings = new byte[blockSize];
-						while (currentTerm < n) {
-							termStringOffsets[currentTerm] = currentOffset;
-							byte[] termBytes = terms[currentTerm].getBytes("utf-8");
-							if (currentOffset + termBytes.length > blockSize) {
-								// Block is full. Write it and continue with next block.
-								break;
-							}
+						int[] termStringOffsets = new int[n + 1];
+						byte[] termStrings = new byte[(int)termStringsByteSize];
+						for (int i = 0; i < n; i++) {
+							termStringOffsets[i] = currentOffset;
+							byte[] termBytes = terms[i].getBytes("utf-8");
 							System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
 							currentOffset += termBytes.length;
-							currentTerm++;
-							bytesLeftToWrite -= termBytes.length;
 						}
+						termStringOffsets[n] = currentOffset;
+
 						// Write offset and data arrays to file
-						int numTermsThisBlock = currentTerm - firstTermInBlock;
-						ib.put(numTermsThisBlock);
-						ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock);
-						ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
-						                       // (doubles as the size of the data block to follow)
-						buf.position(buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock)); // advance past offsets array
-						buf.put(termStrings, 0, currentOffset);
+						ib.put(termStringOffsets);
+						ib.put((int)termStringsByteSize); // size of the data block to follow
+						buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
+						buf.put(termStrings);
 						ib = buf.asIntBuffer();
+					} else {
+						// Terms file is too large to fit in a single byte array.
+						// Use the new code.
+						int currentTerm = 0;
+						long bytesLeftToWrite = termStringsByteSize;
+						int[] termStringOffsets = new int[n];
+						while (currentTerm < n) {
+							int firstTermInBlock = currentTerm;
+							int blockSize = (int)Math.min(bytesLeftToWrite, APPROX_MAX_ARRAY_SIZE);
+
+							// Calculate byte offsets for all the terms and fill data array
+							int currentOffset = 0;
+							byte[] termStrings = new byte[blockSize];
+							while (currentTerm < n) {
+								termStringOffsets[currentTerm] = currentOffset;
+								byte[] termBytes = terms[currentTerm].getBytes("utf-8");
+								if (currentOffset + termBytes.length > blockSize) {
+									// Block is full. Write it and continue with next block.
+									break;
+								}
+								System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
+								currentOffset += termBytes.length;
+								currentTerm++;
+								bytesLeftToWrite -= termBytes.length;
+							}
+							// Write offset and data arrays to file
+							int numTermsThisBlock = currentTerm - firstTermInBlock;
+							ib.put(numTermsThisBlock);
+							ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock);
+							ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
+							                       // (doubles as the size of the data block to follow)
+							buf.position(buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock)); // advance past offsets array
+							buf.put(termStrings, 0, currentOffset);
+							ib = buf.asIntBuffer();
+						}
+
 					}
 
-				}
-
-				// Write the case-sensitive sort order
-				// Because termIndex is a SortedMap, values are returned in key-sorted order.
-				// In other words, the index numbers are in order of sorted terms, so the id
-				// for 'aardvark' comes before the id for 'ape', etc.
-				int i = 0;
-				sortPositionPerId = new int[n];
-				Integer[] insensitive = new Integer[n];
-				for (int id: termIndex.values()) {
-					sortPositionPerId[id] = i;
-					insensitive[i] = id; // fill this so we can re-sort later, faster b/c already partially sorted
-					i++;
-				}
-				ib.put(new int[n]); // NOT USED ANYMORE, JUST FOR FILE COMPATIBILITY
-				ib.put(sortPositionPerId);
-
-				// Now, sort case-insensitively and write those arrays as well
-				Arrays.sort(insensitive, new Comparator<Integer>() {
-					@Override
-					public int compare(Integer a, Integer b) {
-						return collatorInsensitive.compare(terms[a], terms[b]);
+					// Write the case-sensitive sort order
+					// Because termIndex is a SortedMap, values are returned in key-sorted order.
+					// In other words, the index numbers are in order of sorted terms, so the id
+					// for 'aardvark' comes before the id for 'ape', etc.
+					int i = 0;
+					sortPositionPerId = new int[n];
+					Integer[] insensitive = new Integer[n];
+					for (int id: termIndex.values()) {
+						sortPositionPerId[id] = i;
+						insensitive[i] = id; // fill this so we can re-sort later, faster b/c already partially sorted
+						i++;
 					}
-				});
-				// Copy into the sortPositionPerIdInsensitive array, making sure that
-				// identical values get identical sort positions!
-				sortPositionPerIdInsensitive = new int[n];
-				int sortPos = 0;
-				for (i = 0; i < n; i++) {
-					if (i == 0 || collatorInsensitive.compare(terms[insensitive[i - 1]], terms[insensitive[i]]) != 0) {
-						// Not identical to previous value: gets its own sort position.
-						// If a value is identical to the previous one, it gets the same sort position.
-						sortPos = i;
-					}
-					sortPositionPerIdInsensitive[insensitive[i]] = sortPos;
-				}
-				ib.put(new int[n]); // NOT USED ANYMORE, JUST FOR FILE COMPATIBILITY
-				ib.put(sortPositionPerIdInsensitive);
+					ib.put(new int[n]); // NOT USED ANYMORE, JUST FOR FILE COMPATIBILITY
+					ib.put(sortPositionPerId);
 
-			} finally {
-				fc.close();
-				raf.close();
+					// Now, sort case-insensitively and write those arrays as well
+					Arrays.sort(insensitive, new Comparator<Integer>() {
+						@Override
+						public int compare(Integer a, Integer b) {
+							return collatorInsensitive.compare(terms[a], terms[b]);
+						}
+					});
+					// Copy into the sortPositionPerIdInsensitive array, making sure that
+					// identical values get identical sort positions!
+					sortPositionPerIdInsensitive = new int[n];
+					int sortPos = 0;
+					for (i = 0; i < n; i++) {
+						if (i == 0 || collatorInsensitive.compare(terms[insensitive[i - 1]], terms[insensitive[i]]) != 0) {
+							// Not identical to previous value: gets its own sort position.
+							// If a value is identical to the previous one, it gets the same sort position.
+							sortPos = i;
+						}
+						sortPositionPerIdInsensitive[insensitive[i]] = sortPos;
+					}
+					ib.put(new int[n]); // NOT USED ANYMORE, JUST FOR FILE COMPATIBILITY
+					ib.put(sortPositionPerIdInsensitive);
+				}
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);

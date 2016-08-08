@@ -81,12 +81,13 @@ import nl.inl.util.VersionFile;
  */
 public class SearcherImpl extends Searcher implements Closeable {
 
+	@SuppressWarnings("hiding")
 	protected static final Logger logger = Logger.getLogger(SearcherImpl.class);
 
 	/**
 	 * The Lucene index reader
 	 */
-	private IndexReader reader;
+	IndexReader reader;
 
 	/**
 	 * The Lucene IndexSearcher, for dealing with non-Span queries (for per-document scoring)
@@ -559,7 +560,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
-	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer analyzer) throws IOException,
+	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException,
 			CorruptIndexException, LockObtainFailedException {
 		if (!indexDir.exists() && create) {
 			indexDir.mkdir();
@@ -570,8 +571,9 @@ public class SearcherImpl extends Searcher implements Closeable {
 			indexPath = Files.readSymbolicLink(indexPath);
 		}
 		Directory indexLuceneDir = FSDirectory.open(indexPath);
-		Analyzer defaultAnalyzer = analyzer == null ? new BLDutchAnalyzer() : analyzer;
-		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
+		if (useAnalyzer == null)
+			useAnalyzer = new BLDutchAnalyzer();
+		IndexWriterConfig config = Utilities.getIndexWriterConfig(useAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
 		if (create)
@@ -602,14 +604,12 @@ public class SearcherImpl extends Searcher implements Closeable {
 			throw new RuntimeException("Cannot delete documents, not in index mode");
 		try {
 			// Open a fresh reader to execute the query
-			IndexReader reader = DirectoryReader.open(indexWriter, false);
-			try {
+			try (IndexReader freshReader = DirectoryReader.open(indexWriter, false)) {
 				// Execute the query, iterate over the docs and delete from FI and CS.
-				IndexSearcher s = new IndexSearcher(reader);
+				IndexSearcher s = new IndexSearcher(freshReader);
 				Weight w = s.createNormalizedWeight(q, false);
-				LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
-				try {
-					Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
+				try (LeafReader scrw = SlowCompositeReaderWrapper.wrap(freshReader)) {
+					Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(freshReader));
 					if (sc == null)
 						return; // no matching documents
 
@@ -623,15 +623,13 @@ public class SearcherImpl extends Searcher implements Closeable {
 						}
 						if (docId == DocIdSetIterator.NO_MORE_DOCS)
 							break;
-						Document d = reader.document(docId);
+						Document d = freshReader.document(docId);
 
 						deleteFromForwardIndices(d);
 
 						// Delete this document in all content stores
 						contentStores.deleteDocument(d);
 					}
-				} finally {
-					scrw.close();
 				}
 			} finally {
 				reader.close();
@@ -678,8 +676,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 	@Override
 	public Set<Integer> docIdSet() {
-
-		final IndexReader reader = this.reader;
 
 		final int maxDoc = reader.maxDoc();
 
