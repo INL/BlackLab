@@ -195,14 +195,11 @@ public class FileUtil {
 	public static List<String> readLines(File inputFile, String encoding) {
 		try {
 			List<String> result = new ArrayList<>();
-			BufferedReader in = openForReading(inputFile, encoding);
-			try {
+			try (BufferedReader in = openForReading(inputFile, encoding)) {
 				String line;
 				while ((line = in.readLine()) != null) {
 					result.add(line.trim());
 				}
-			} finally {
-				in.close();
 			}
 			return result;
 		} catch (Exception e) {
@@ -396,11 +393,11 @@ public class FileUtil {
 	 * Only works for UTF-8 and UTF16 (LE/BE) for now.
 	 *
 	 * @param inputStream the input stream
-	 * @param defaultEncoding encoding to return if no BOM found
+	 * @param useDefaultEncoding encoding to return if no BOM found
 	 * @return the encoding
 	 * @throws IOException
 	 */
-	public static String detectBomEncoding(BufferedInputStream inputStream, String defaultEncoding) throws IOException {
+	public static String detectBomEncoding(BufferedInputStream inputStream, String useDefaultEncoding) throws IOException {
 		String encoding = "";
 
 		if (!inputStream.markSupported()) {
@@ -428,7 +425,7 @@ public class FileUtil {
 		} else {
 			// Geen BOM maar wel 2 bytes gelezen; "rewind"
 			inputStream.reset();
-			encoding = defaultEncoding; // (we assume, as we haven't found a BOM)
+			encoding = useDefaultEncoding; // (we assume, as we haven't found a BOM)
 		}
 		return encoding;
 	}
@@ -448,11 +445,26 @@ public class FileUtil {
 	 * @param data what to write to the file
 	 */
 	public static void writeFile(File file, String data) {
-		PrintWriter out = openForWriting(file);
-		try {
+		try (PrintWriter out = openForWriting(file)) {
 			out.print(data);
-		} finally {
-			out.close();
 		}
+	}
+
+	/**
+	 * Add a parenthesized number to a file name to get a file name that doesn't exist yet.
+	 *
+	 * @param file the file that exists already
+	 * @return a file with a number added that doesn't exist yet
+	 */
+	public static File addNumberToExistingFileName(File file) {
+		File parentFile = file.getParentFile();
+		String name = file.getName();
+		int number = 2;
+		File newFile;
+		do {
+			newFile = new File(parentFile, name + " (" + number + ")");
+			number++;
+		} while(newFile.exists());
+		return newFile;
 	}
 }
