@@ -808,4 +808,9 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		return toc.get(id).entryLengthCharacters;
 	}
 
+	@Override
+	public Set<Integer> idSet() {
+		return toc.keySet();
+	}
+
 }

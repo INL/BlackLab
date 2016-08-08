@@ -26,6 +26,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -33,6 +34,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
@@ -98,10 +101,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private long writeBufOffset;
 
 	/** The table of contents (where documents start in the tokens file and how long they are) */
-	private ArrayList<TocEntry> toc;
+	ArrayList<TocEntry> toc;
 
 	/** Deleted TOC entries. Always sorted by size. */
-	private ArrayList<TocEntry> deletedTocEntries;
+	ArrayList<TocEntry> deletedTocEntries;
 
 	/** The table of contents (TOC) file, docs.dat */
 	private File tocFile;
@@ -804,6 +807,64 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	@Override
 	protected void setLargeTermsFileSupport(boolean b) {
 		this.useBlockBasedTermsFile = b;
+	}
+
+	@Override
+	public Set<Integer> idSet() {
+		return new AbstractSet<Integer>() {
+			@Override
+			public boolean contains(Object o) {
+				return !toc.get((Integer)o).deleted;
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return toc.size() == deletedTocEntries.size();
+			}
+
+			@Override
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					int current = -1;
+					int next = -1;
+
+					@Override
+					public boolean hasNext() {
+						if (next < 0)
+							findNext();
+						return next < toc.size();
+					}
+
+					private void findNext() {
+						next = current + 1;
+						while (next < toc.size() && toc.get(next).deleted) {
+							next++;
+						}
+					}
+
+					@Override
+					public Integer next() {
+						if (next < 0)
+							findNext();
+						if (next >= toc.size())
+							throw new NoSuchElementException();
+						current = next;
+						next = -1;
+						return current;
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+
+			@Override
+			public int size() {
+				return toc.size() - deletedTocEntries.size();
+			}
+		};
 	}
 
 }

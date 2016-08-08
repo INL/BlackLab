@@ -12,7 +12,8 @@
   streaming the response data using DataStream, saving memory.
 * Allowed previously forbidden all-docs query (now that large document 
   queries are faster and less memory hungry).
-* Preparations to eventually remove nonblocking mode.
+* Removed some settings related to nonblocking mode, as they didn't seem
+  very useful.
 * Made docpid a general way to easily filter on a single document PID.
 
 ## Improvements up to v1.4.1

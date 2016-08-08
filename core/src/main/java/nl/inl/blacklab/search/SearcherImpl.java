@@ -124,7 +124,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 		if (!createNewIndex) {
 			if (!indexMode || VersionFile.exists(indexDir)) {
 				if (!isIndex(indexDir)) {
-					throw new RuntimeException("BlackLab index has wrong type or version! "
+					throw new RuntimeException("Not a BlackLab index, or wrong version! "
 							+ VersionFile.report(indexDir));
 				}
 			}

@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 
@@ -274,4 +275,21 @@ public abstract class ForwardIndex {
 		getTerms().buildTermIndex();
 	}
 
+	/** @return the set of all forward index ids */
+	public abstract Set<Integer> idSet();
+
+	/** A task to perform on a document in the forward index. */
+	public interface ForwardIndexDocTask {
+		public abstract void perform(int fiid, int[] tokenIds);
+	}
+
+	/** Perform a task on each document in the forward index.
+	 * @param task the task to perform
+	 */
+	public void forEachDocument(ForwardIndexDocTask task) {
+		for (Integer fiid: idSet()) {
+			int[] tokenIds = retrievePartsInt(fiid, new int[] {-1}, new int[] {-1}).get(0);
+			task.perform(fiid, tokenIds);
+		}
+	}
 }

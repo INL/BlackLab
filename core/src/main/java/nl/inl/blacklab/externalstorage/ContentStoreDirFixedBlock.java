@@ -26,7 +26,9 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.util.AbstractSet;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
@@ -34,7 +36,9 @@ import java.util.zip.Inflater;
 
 import org.apache.log4j.Logger;
 import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.api.iterator.MutableIntIterator;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
@@ -902,4 +906,35 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		}
 	}
 
+	@Override
+	public Set<Integer> idSet() {
+		final MutableIntSet cids = toc.keySet();
+		final MutableIntIterator it = cids.intIterator();
+		return new AbstractSet<Integer>() {
+			@Override
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					@Override
+					public boolean hasNext() {
+						return it.hasNext();
+					}
+
+					@Override
+					public Integer next() {
+						return it.next();
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+
+			@Override
+			public int size() {
+				return cids.size();
+			}
+		};
+	}
 }

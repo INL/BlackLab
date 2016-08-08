@@ -140,4 +140,21 @@ public abstract class ContentStore {
 		throw new RuntimeException("Unknown content store type " + type);
 	}
 
+	/** @return the set of all content store ids */
+	public abstract Set<Integer> idSet();
+
+	/** A task to perform on a document in the content store. */
+	public interface DocTask {
+		void perform(int cid, String contents);
+	}
+
+	/** Perform a task on each document in the content store.
+	 * @param task the task to perform
+	 */
+	public void forEachDocument(DocTask task) {
+		for (Integer cid: idSet()) {
+			task.perform(cid, retrieve(cid));
+		}
+	}
+
 }

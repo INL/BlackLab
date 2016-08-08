@@ -422,4 +422,9 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 		return toc.get(id).length;
 	}
 
+	@Override
+	public Set<Integer> idSet() {
+		return toc.keySet();
+	}
+
 }

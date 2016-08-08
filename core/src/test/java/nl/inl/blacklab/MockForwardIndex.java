@@ -1,6 +1,7 @@
 package nl.inl.blacklab;
 
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 
@@ -91,6 +92,11 @@ public class MockForwardIndex extends ForwardIndex {
 	protected void setLargeTermsFileSupport(boolean b) {
 		//
 
+	}
+
+	@Override
+	public Set<Integer> idSet() {
+		return null;
 	}
 
 }

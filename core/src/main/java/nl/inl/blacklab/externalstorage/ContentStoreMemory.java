@@ -152,4 +152,9 @@ public class ContentStoreMemory extends ContentStore {
 		return toc.get(id).length();
 	}
 
+	@Override
+	public Set<Integer> idSet() {
+		return toc.keySet();
+	}
+
 }
