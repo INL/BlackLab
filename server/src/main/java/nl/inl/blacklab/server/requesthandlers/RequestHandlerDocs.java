@@ -131,7 +131,7 @@ public class RequestHandlerDocs extends RequestHandler {
 			ds.startMap();
 
 			// The summary
-			ds.startEntry("summary");
+			ds.startEntry("summary").startMap();
 			DocResults docs = searchWindow != null ? total.getDocResults() : group.getResults();
 			Hits hits = docs.getOriginalHits();
 			boolean done = hits == null ? true : hits.doneFetchingHits();
@@ -171,7 +171,7 @@ public class RequestHandlerDocs extends RequestHandler {
 			ds.startEntry("docFields");
 			RequestHandler.dataStreamDocFields(ds, searcher.getIndexStructure());
 			ds.endEntry();
-			ds.endEntry();
+			ds.endMap().endEntry();
 
 			// The hits and document info
 			ds.startEntry("docs").startList();
