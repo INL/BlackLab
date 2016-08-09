@@ -747,10 +747,12 @@ public class QueryTool {
 				} else {
 					Hit h = currentHitSet.get(hitId);
 					Concordance conc = hits.getConcordance(h, snippetSize);
-					String left = stripXML ? XmlUtil.xmlToPlainText(conc.left()) : conc.left();
-					String middle = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
-					String right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
-					outprintln("\n" + StringUtil.wrapToString(left + "[" + middle + "]" + right, 80));
+					String[] concParts;
+					if (stripXML)
+						concParts = conc.partsNoXml();
+					else
+						concParts = conc.parts();
+					outprintln("\n" + StringUtil.wrapToString(concParts[0] + "[" + concParts[1] + "]" + concParts[2], 80));
 				}
 			} else if (lcased.startsWith("highlight ")) {
 				int hitId = parseInt(lcased.substring(8), 1) - 1;

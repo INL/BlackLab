@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.util.XmlUtil;
 
 /**
  * A concordance (left context, hit text, right context).
@@ -119,6 +120,26 @@ public class Concordance {
 	 */
 	public String right() {
 		return fragment.substring(matchEnd);
+	}
+
+	/** Return the three parts of the concordance: left, middle and right.
+	 *  @return an array of concordance parts
+	 */
+	public String[] parts() {
+		return new String[] {left(), match(), right()};
+	}
+
+	/**
+	 * Return the parts of the concordance with XML tags stripped out.
+	 *
+	 * @return an array of three Strings: the left context, the matched text,
+	 *         and the right context.
+	 */
+	public String[] partsNoXml() {
+		String leftContext = XmlUtil.xmlToPlainText(left());
+		String matchedWords = XmlUtil.xmlToPlainText(match());
+		String rightContext = XmlUtil.xmlToPlainText(right());
+		return new String[] {leftContext, matchedWords, rightContext};
 	}
 
 }

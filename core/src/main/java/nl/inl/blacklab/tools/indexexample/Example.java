@@ -30,7 +30,6 @@ import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.HitPropertyHitText;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
-import nl.inl.util.XmlUtil;
 
 /**
  * Simple test program to demonstrate index & search functionality.
@@ -174,9 +173,10 @@ public class Example {
 		for (Hit hit : hits) {
 			Concordance conc = hits.getConcordance(hit);
 			// Strip out XML tags for display.
-			String left = XmlUtil.xmlToPlainText(conc.left());
-			String match = XmlUtil.xmlToPlainText(conc.match());
-			String right = XmlUtil.xmlToPlainText(conc.right());
+			String[] concParts = conc.partsNoXml();
+			String left = concParts[0];
+			String match = concParts[1];
+			String right = concParts[2];
 
 			System.out.printf("[%05d:%06d] %45s[%s]%s\n", hit.doc, hit.start, left, match, right);
 		}
