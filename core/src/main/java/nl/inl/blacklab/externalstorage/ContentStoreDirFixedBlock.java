@@ -107,7 +107,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private static final int TYPICAL_BLOCK_SIZE_CHARACTERS = (int)(BLOCK_SIZE_BYTES * CONSERVATIVE_COMPRESSION_FACTOR);
 
 	/** The expected maximum compression factor */
-	private static final float MAX_COMPRESSION_FACTOR = 15;
+	private static final float MAX_COMPRESSION_FACTOR = 20;
 
 	/** Maximum byte size of unencoded block (we make the zip buffer one larger to detect when buffer space was insufficient) */
 	private static final int MAX_BLOCK_SIZE_BYTES = (int)(BLOCK_SIZE_BYTES * MAX_COMPRESSION_FACTOR);
@@ -808,7 +808,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		byte[] zipbuf = zipbufPool.acquire();
 		boolean doMinCheck = true;
 		try {
-			while(true) {
+			while (true) {
 
 				// Serialize to bytes
 				byte[] encoded;
@@ -820,6 +820,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 						if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
 							break;
 						length -= (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
+						doMinCheck = false;
 					}
 				} catch (UnsupportedEncodingException e) {
 					throw new RuntimeException(e);
