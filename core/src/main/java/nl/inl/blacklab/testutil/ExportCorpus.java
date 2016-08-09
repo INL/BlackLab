@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Searcher.LuceneDocTask;
@@ -49,10 +50,19 @@ public class ExportCorpus {
 	 * @param exportDir directory to export to
 	 */
 	private void export(final File exportDir) {
+
+		final IndexReader reader = searcher.getIndexReader();
+
 		searcher.forEachDocument(new LuceneDocTask() {
+
+			int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+
+			int docsDone = 0;
+
 			@Override
 			public void perform(Document doc) {
 				String fromInputFile = doc.get("fromInputFile");
+				System.out.println(fromInputFile);
 				String xml = searcher.getContent(doc);
 				File file = new File(exportDir, fromInputFile);
 				if (file.exists()) {
@@ -61,6 +71,11 @@ public class ExportCorpus {
 				}
 				try (PrintWriter pw = FileUtil.openForWriting(file)) {
 					pw.write(xml);
+				}
+				docsDone++;
+				if (docsDone % 100 == 0) {
+					int perc = docsDone * 100 / totalDocs;
+					System.out.println(docsDone + " docs exported (" + perc + "%)...");
 				}
 			}
 		});
