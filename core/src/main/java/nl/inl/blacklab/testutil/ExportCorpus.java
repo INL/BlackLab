@@ -62,13 +62,17 @@ public class ExportCorpus {
 			@Override
 			public void perform(Document doc) {
 				String fromInputFile = doc.get("fromInputFile");
-				System.out.println(fromInputFile);
 				String xml = searcher.getContent(doc);
 				File file = new File(exportDir, fromInputFile);
 				if (file.exists()) {
 					// Add a number so we don't have to overwrite the previous file.
+					System.out.println("WARNING: File " + file + " exists, using different name to avoid overwriting...");
 					file = FileUtil.addNumberToExistingFileName(file);
 				}
+				System.out.println(file);
+				File dir = file.getParentFile();
+				if (!dir.exists())
+					dir.mkdirs(); // create any subdirectories required
 				try (PrintWriter pw = FileUtil.openForWriting(file)) {
 					pw.write(xml);
 				}
