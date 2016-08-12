@@ -110,16 +110,13 @@ public class IndexTask {
 					indexer.indexGzip(name, data);
 				} else {
 					// Straight XML data. Read as UTF-8.
-					Reader reader = new BufferedReader(new InputStreamReader(data, "utf-8"));
-					try {
+					try (Reader reader = new BufferedReader(new InputStreamReader(data, "utf-8"))) {
 						logger.debug("Starting indexing");
 						indexer.index(name, reader);
 						logger.debug("Done indexing");
 						if (!anyDocsFound) {
 							indexError = "The file contained no documents in the selected format. Do the corpus and file formats match?";
 						}
-					} finally {
-						reader.close();
 					}
 				}
 			} catch (Exception e) {

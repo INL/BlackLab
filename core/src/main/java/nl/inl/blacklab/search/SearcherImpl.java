@@ -81,7 +81,6 @@ import nl.inl.util.VersionFile;
  */
 public class SearcherImpl extends Searcher implements Closeable {
 
-	@SuppressWarnings("hiding")
 	protected static final Logger logger = Logger.getLogger(SearcherImpl.class);
 
 	/**
