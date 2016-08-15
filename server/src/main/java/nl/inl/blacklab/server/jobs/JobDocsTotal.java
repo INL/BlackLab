@@ -3,7 +3,6 @@ package nl.inl.blacklab.server.jobs;
 import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -40,7 +39,11 @@ public class JobDocsTotal extends Job {
 		setPriorityInternal(); // make sure docResults has the right priority
 		docResults.size();
 		if (Thread.interrupted()) {
-			throw new ServiceUnavailable("Determining total number of docs took too long, cancelled");
+			// We don't throw anymore because that will cause this error to re-throw even when we just
+			// want to look at a page of results. maxHitsCounted is set to true, however, so the application
+			// can detect that we stopped counting at some point.
+			//throw new ServiceUnavailable("Determining total number of docs took too long, cancelled");
+			logger.warn("Determining total number of docs took too long, cancelled");
 		}
 	}
 

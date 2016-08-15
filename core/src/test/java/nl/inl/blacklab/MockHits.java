@@ -212,7 +212,7 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	protected void setMaxHitsCounted(boolean maxHitsCounted) {
+	public void setMaxHitsCounted(boolean maxHitsCounted) {
 		// NOP
 	}
 

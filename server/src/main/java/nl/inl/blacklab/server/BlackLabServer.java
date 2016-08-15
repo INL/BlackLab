@@ -54,7 +54,6 @@ public class BlackLabServer extends HttpServlet {
 
 	}
 
-	@SuppressWarnings("resource")
 	private InputStream openConfigFile() throws ServletException {
 		// Read JSON config file, either from the servlet context directory's parent,
 		// from /etc/blacklab/ or from the classpath.

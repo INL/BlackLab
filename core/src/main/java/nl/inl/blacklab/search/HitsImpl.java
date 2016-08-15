@@ -538,6 +538,9 @@ public class HitsImpl extends Hits {
 						hits.add(offsetHit);
 					}
 				}
+			} catch (InterruptedException e) {
+				maxHitsRetrieved = maxHitsCounted = true; // we've stopped retrieving/counting
+				throw e;
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -647,6 +650,7 @@ public class HitsImpl extends Hits {
 			// Returned value is probably not the correct total number of hits,
 			// but will not cause any crashes. The thread was interrupted anyway,
 			// the value should never be presented to the user.
+			maxHitsCounted = true; // indicate that we've stopped counting
 			Thread.currentThread().interrupt();
 		}
 		return hits.size();
@@ -1714,7 +1718,7 @@ public class HitsImpl extends Hits {
 	}
 
 	@Override
-	protected void setMaxHitsCounted(boolean maxHitsCounted) {
+	public void setMaxHitsCounted(boolean maxHitsCounted) {
 		this.maxHitsCounted = maxHitsCounted;
 	}
 

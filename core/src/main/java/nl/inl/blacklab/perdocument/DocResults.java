@@ -313,6 +313,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		} catch (InterruptedException e) {
 			// Thread was interrupted; return size of the results we have.
 			// Let caller detect and deal with interruption.
+			sourceHits.setMaxHitsCounted(true);
 		}
 		return results.size();
 	}

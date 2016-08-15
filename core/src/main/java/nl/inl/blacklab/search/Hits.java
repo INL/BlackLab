@@ -222,7 +222,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 		setHitQueryContext(copyFrom.getHitQueryContext());
 	}
 
-	protected abstract void setMaxHitsCounted(boolean maxHitsCounted);
+	public abstract void setMaxHitsCounted(boolean maxHitsCounted);
 
 	protected abstract void setMaxHitsRetrieved(boolean maxHitsRetrieved);
 
