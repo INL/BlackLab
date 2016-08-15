@@ -45,7 +45,17 @@ public class BlackLabServer extends HttpServlet {
 		logger.info("Starting BlackLab Server...");
 
 		super.init();
+		try (InputStream is = openConfigFile()) {
+			searchManager = new SearchManager(Json.read(is, "utf-8"));
+		} catch (Exception e) {
+			throw new ServletException("Error initializing SearchManager: " + e.getMessage(), e);
+		}
+		logger.info("BlackLab Server ready.");
 
+	}
+
+	@SuppressWarnings("resource")
+	private InputStream openConfigFile() throws ServletException {
 		// Read JSON config file, either from the servlet context directory's parent,
 		// from /etc/blacklab/ or from the classpath.
 		String configFileName = "blacklab-server.json";
@@ -84,18 +94,7 @@ public class BlackLabServer extends HttpServlet {
 				logger.debug("Reading configuration file from classpath: " + configFileName);
 			}
 		}
-
-		try {
-			try {
-				searchManager = new SearchManager(Json.read(is, "utf-8"));
-			} finally {
-				is.close();
-			}
-		} catch (Exception e) {
-			throw new ServletException("Error initializing SearchManager: " + e.getMessage(), e);
-		}
-		logger.info("BlackLab Server ready.");
-
+		return is;
 	}
 
 	/**
