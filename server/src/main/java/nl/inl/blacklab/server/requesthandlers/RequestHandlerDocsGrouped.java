@@ -47,7 +47,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 				numberOfGroupsInWindow = groups.numberOfGroups() - first;
 
 			// The summary
-			ds.startMap().startEntry("summary");
+			ds.startMap().startEntry("summary").startMap();
 			ds.startEntry("searchParam");
 			searchParam.dataStream(ds);
 			ds.endEntry();
@@ -68,7 +68,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 				.entry("windowHasPrevious", first > 0)
 				.entry("windowHasNext", first + number < groups.numberOfGroups())
 				.entry("largestGroupSize", groups.getLargestGroupSize());
-			ds.endEntry().endMap();
+			ds.endMap().endEntry().endMap();
 
 			// The list of groups found
 			ds.startEntry("docGroups").startList();
