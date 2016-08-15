@@ -19,12 +19,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.UUID;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexWriterConfig.OpenMode;
-import org.apache.lucene.index.LogMergePolicy;
-import org.apache.lucene.index.MergePolicy;
-
 import nl.inl.util.FileUtil.FileTask;
 
 /**
@@ -32,9 +26,9 @@ import nl.inl.util.FileUtil.FileTask;
  *
  * TODO: move to InlJavaLib (deprecate/remove here)
  */
-public class Utilities {
+public class UtilsForTesting {
 
-	private Utilities() {
+	private UtilsForTesting() {
 	}
 
 	/**
@@ -82,20 +76,6 @@ public class Utilities {
 		File file = new File(tempDir, "BlackLabTest_" + name + "_" + UUID.randomUUID().toString());
 		file.mkdir();
 		return file;
-	}
-
-	public static IndexWriterConfig getIndexWriterConfig(Analyzer analyzer, boolean create) {
-		IndexWriterConfig config = new IndexWriterConfig(analyzer);
-		config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
-		config.setRAMBufferSizeMB(150); // faster indexing
-
-		// Set merge factor (if using LogMergePolicy, which is the default up to version LUCENE_32,
-		// so yes)
-		MergePolicy mp = config.getMergePolicy();
-		if (mp instanceof LogMergePolicy) {
-			((LogMergePolicy) mp).setMergeFactor(40); // faster indexing
-		}
-		return config;
 	}
 
 }

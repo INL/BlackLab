@@ -2,9 +2,17 @@
 
 ## Improvements in HEAD
 
+### Fixed
+* Two rare, subtle matching bugs in SpansExpansion and SpansPositionFilter.
+* Fixed indexing bug where the compression code would occasionally get stuck in a loop.  
+
 ### Changed
 * Deprecated TextPattern.toString() methods that take arguments.
 * Gave HitProperty and DocProperty default toString() implementation.
+* Added methods for iterating over all Lucene documents, forward index documents,
+  content store documents.
+* Added a test utility that can export your original corpus from the Lucene 
+  index and content store.
 
 ### BlackLab Server
 * Heavily refactored to be more modular.
@@ -12,9 +20,14 @@
   streaming the response data using DataStream, saving memory.
 * Allowed previously forbidden all-docs query (now that large document 
   queries are faster and less memory hungry).
+* Grouped results are sorted by identity by default now.
+* Made docpid a general way to easily filter on a single document PID.
 * Removed some settings related to nonblocking mode, as they didn't seem
   very useful.
-* Made docpid a general way to easily filter on a single document PID.
+* Used JSON.org library instead of copy of the code.
+* FIXED: if counting hits takes too long, don't error out but show the 
+  results we have.
+
 
 ## Improvements up to v1.4.1
 

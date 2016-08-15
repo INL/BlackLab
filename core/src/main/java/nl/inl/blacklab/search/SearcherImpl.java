@@ -65,7 +65,6 @@ import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.util.ExUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
 
 /**
@@ -572,7 +571,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 		Directory indexLuceneDir = FSDirectory.open(indexPath);
 		if (useAnalyzer == null)
 			useAnalyzer = new BLDutchAnalyzer();
-		IndexWriterConfig config = Utilities.getIndexWriterConfig(useAnalyzer, create);
+		IndexWriterConfig config = LuceneUtil.getIndexWriterConfig(useAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
 		if (create)

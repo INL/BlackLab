@@ -22,6 +22,7 @@ import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -76,6 +77,12 @@ public class StringUtil {
 
 	/** Punctuation. */
 	public static final Pattern PATT_PUNCTUATION = Pattern.compile("\\p{P}");
+
+	/** Dutch locale */
+	private static Locale dutchLocale = new Locale("nl", "NL");
+
+	/** English locale */
+	private static Locale englishLocale = new Locale("en", "GB");
 
 	/** The default collator: Dutch, case-insensitive */
 	protected static Collator dutchInsensitiveCollator = null;
@@ -316,7 +323,7 @@ public class StringUtil {
 	 */
 	public static Collator getDutchInsensitiveCollator() {
 		if (dutchInsensitiveCollator == null) {
-			dutchInsensitiveCollator = Collator.getInstance(LocaleUtil.getDutchLocale());
+			dutchInsensitiveCollator = Collator.getInstance(dutchLocale);
 			dutchInsensitiveCollator.setStrength(Collator.SECONDARY);
 		}
 		return dutchInsensitiveCollator;
@@ -329,7 +336,7 @@ public class StringUtil {
 	 */
 	public static Collator getEnglishInsensitiveCollator() {
 		if (englishInsensitiveCollator == null) {
-			englishInsensitiveCollator = Collator.getInstance(LocaleUtil.getEnglishLocale());
+			englishInsensitiveCollator = Collator.getInstance(englishLocale);
 			englishInsensitiveCollator.setStrength(Collator.SECONDARY);
 		}
 		return englishInsensitiveCollator;

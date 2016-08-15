@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -15,6 +16,7 @@ import java.util.zip.ZipFile;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.input.TeeInputStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
@@ -26,7 +28,6 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
-import nl.inl.util.CapturingReader;
 
 /**
  * Example of a metadata fetcher, a class used to fetch metadata
@@ -41,6 +42,8 @@ import nl.inl.util.CapturingReader;
  * error)
  */
 public class MetadataFetcherSonarCmdi extends MetadataFetcher {
+
+	private static final int INITIAL_CMDI_BYTEBUFFER_SIZE = 1000;
 
 	// TODO: improve structure to avoid test-specific code
 	final static String TEST_FROM_INPUT_FILE = "SoNaR500.Curated.WR-P-E-A_discussion_lists.20130312.tar.gz\\SONAR500/DATA/WR-P-E-A_discussion_lists/WR-P-E-A-0000008066.folia.xml";
@@ -119,8 +122,9 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 				is = new FileInputStream(f);
 			}
 
-			CapturingReader capturingReader = new CapturingReader(new InputStreamReader(is, "utf-8"));
-			try (BufferedReader reader = new BufferedReader(capturingReader)) {
+			ByteArrayOutputStream cmdiBuffer = new ByteArrayOutputStream(INITIAL_CMDI_BYTEBUFFER_SIZE);
+			is = new TeeInputStream(is, cmdiBuffer);
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, "utf-8"))) {
 				SAXParserFactory factory = SAXParserFactory.newInstance();
 				factory.setNamespaceAware(true);
 				SAXParser parser;
@@ -145,7 +149,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 			// Store metadata XML in content store and corresponding id in Lucene document
 			ContentStore cs = ourDocIndexer.getIndexer().getContentStore("metadata");
-			int id = cs.store(capturingReader.getContent());
+			int id = cs.store(cmdiBuffer.toString("utf-8"));
 			luceneDoc.add(new IntField("metadataCid", id, Store.YES));
 
 			if (metadataZipFile == null)

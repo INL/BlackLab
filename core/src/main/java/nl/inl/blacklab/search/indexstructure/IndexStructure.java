@@ -3,16 +3,20 @@ package nl.inl.blacklab.search.indexstructure;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
@@ -25,8 +29,6 @@ import org.json.JSONObject;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.DateUtil;
-import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
 
@@ -34,6 +36,8 @@ import nl.inl.util.StringUtil;
  * Determines the structure of a BlackLab index.
  */
 public class IndexStructure {
+	private static final String INDEX_STRUCT_FILE_ENCODING = "utf-8";
+
 	protected static final Logger logger = Logger.getLogger(IndexStructure.class);
 
 	private static final String METADATA_FILE_NAME = "indexmetadata.json";
@@ -45,6 +49,8 @@ public class IndexStructure {
 	 * 3.1: tag length in payload
 	 */
 	static final String LATEST_INDEX_FORMAT = "3.1";
+
+	public static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, MetadataFieldDesc> metadataFieldInfos;
@@ -177,7 +183,12 @@ public class IndexStructure {
 		boolean usedTemplate = false;
 		if (createNewIndex && indexTemplateFile != null) {
 			// Copy the template file to the index dir and read the metadata again.
-			FileUtil.writeFile(metadataFile, FileUtil.readFile(indexTemplateFile));
+			try {
+				String fileContents = FileUtils.readFileToString(indexTemplateFile, INDEX_STRUCT_FILE_ENCODING);
+				FileUtils.write(metadataFile, fileContents, INDEX_STRUCT_FILE_ENCODING);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 			usedTemplate = true;
 		}
 
@@ -208,7 +219,7 @@ public class IndexStructure {
 		indexFormat = Json.getString(versionInfo, "indexFormat", "");
 		if (initTimestamps) {
 			blackLabBuildTime = Searcher.getBlackLabBuildTime();
-			timeModified = timeCreated = DateUtil.getSqlDateTimeString();
+			timeModified = timeCreated = IndexStructure.getTimestamp();
 		} else {
 			blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
 			timeCreated = Json.getString(versionInfo, "timeCreated", "");
@@ -237,7 +248,7 @@ public class IndexStructure {
 			// Reset version info
 			blackLabBuildTime = Searcher.getBlackLabBuildTime();
 			indexFormat = LATEST_INDEX_FORMAT;
-			timeModified = timeCreated = DateUtil.getSqlDateTimeString();
+			timeModified = timeCreated = IndexStructure.getTimestamp();
 
 			// Clear any recorded values in metadata fields
 			for (MetadataFieldDesc f: metadataFieldInfos.values()) {
@@ -251,7 +262,7 @@ public class IndexStructure {
 	 * will be recorded in the metadata file.
 	 */
 	public void setModified() {
-		timeModified = DateUtil.getSqlDateTimeString();
+		timeModified = IndexStructure.getTimestamp();
 	}
 
 	public void writeMetadata() {
@@ -991,6 +1002,15 @@ public class IndexStructure {
 
 	public void setContentViewable(boolean contentViewable) {
 		this.contentViewable = contentViewable;
+	}
+
+	/**
+	 * Format the current date and time according to the SQL datetime convention.
+	 *
+	 * @return a string representation, e.g. "1980-02-01 00:00:00"
+	 */
+	static String getTimestamp() {
+		return DATETIME_FORMAT.format(new Date());
 	}
 
 }

@@ -11,8 +11,12 @@ import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.LogMergePolicy;
+import org.apache.lucene.index.MergePolicy;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
@@ -35,20 +39,6 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 public class LuceneUtil {
 
 	private LuceneUtil() {
-	}
-
-	/**
-	 * Test if a term occurs in the index
-	 * @param reader the index
-	 * @param term the term
-	 * @return true iff it occurs in the index
-	 */
-	public static boolean termOccursInIndex(IndexReader reader, Term term) {
-		try {
-			return reader.docFreq(term) > 0;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	/**
@@ -361,6 +351,20 @@ public class LuceneUtil {
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
+	}
+
+	public static IndexWriterConfig getIndexWriterConfig(Analyzer analyzer, boolean create) {
+		IndexWriterConfig config = new IndexWriterConfig(analyzer);
+		config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
+		config.setRAMBufferSizeMB(150); // faster indexing
+	
+		// Set merge factor (if using LogMergePolicy, which is the default up to version LUCENE_32,
+		// so yes)
+		MergePolicy mp = config.getMergePolicy();
+		if (mp instanceof LogMergePolicy) {
+			((LogMergePolicy) mp).setMergeFactor(40); // faster indexing
+		}
+		return config;
 	}
 
 }

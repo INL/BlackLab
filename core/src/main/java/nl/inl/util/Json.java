@@ -55,7 +55,7 @@ public class Json {
 	 * @throws IOException on I/O error
 	 */
 	public static JSONObject read(InputStream is, String encoding) throws JSONException, IOException {
-		BufferedReader reader = IoUtil.makeBuffered(new InputStreamReader(is, encoding));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is, encoding));
 		return new JSONObject(readFileStripLineComments(reader));
 	}
 
@@ -70,7 +70,11 @@ public class Json {
 	 * @throws IOException on I/O error
 	 */
 	public static JSONObject read(Reader reader) throws JSONException, IOException {
-		BufferedReader buffReader = IoUtil.makeBuffered(reader);
+		BufferedReader buffReader;
+		if (reader instanceof BufferedReader)
+			buffReader = (BufferedReader) reader;
+		else
+			buffReader = new BufferedReader(reader);
 		return new JSONObject(readFileStripLineComments(buffReader));
 	}
 

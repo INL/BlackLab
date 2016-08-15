@@ -24,7 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.util.Utilities;
+import nl.inl.util.UtilsForTesting;
 
 public class TestTermsV3 {
 	private Terms t;
@@ -37,10 +37,10 @@ public class TestTermsV3 {
 	public void setUp() {
 
 		// Remove any previously left over temp test dirs
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 
 		// Create new test dir
-		dir = Utilities.createBlackLabTestDir("Terms");
+		dir = UtilsForTesting.createBlackLabTestDir("Terms");
 
 		// Store some terms
 		t = new TermsImplV3(true, Collator.getInstance(new Locale("en", "GB")), null, true);
@@ -57,7 +57,7 @@ public class TestTermsV3 {
 	@After
 	public void tearDown() {
 		// Try to remove (some files may be locked though)
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 	}
 
 	/**

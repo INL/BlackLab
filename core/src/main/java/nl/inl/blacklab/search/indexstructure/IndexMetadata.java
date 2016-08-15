@@ -7,7 +7,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.DateUtil;
 import nl.inl.util.Json;
 
 /**
@@ -39,8 +38,8 @@ public class IndexMetadata {
 			"description", "",
 			"versionInfo", Json.object(
 				"blackLabBuildTime", Searcher.getBlackLabBuildTime(),
-				"timeCreated", DateUtil.getSqlDateTimeString(),
-				"timeModified", DateUtil.getSqlDateTimeString(),
+				"timeCreated", IndexStructure.getTimestamp(),
+				"timeModified", IndexStructure.getTimestamp(),
 				"indexFormat", IndexStructure.LATEST_INDEX_FORMAT,
 				"alwaysAddClosingToken", true,
 				"tagLengthInPayload", true),

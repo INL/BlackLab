@@ -15,13 +15,11 @@
  *******************************************************************************/
 package nl.inl.util;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -39,7 +37,7 @@ public class FileUtil {
 	/**
 	 * The default encoding for opening files.
 	 */
-	private static String defaultEncoding = "utf-8";
+	private static final String DEFAULT_ENCODING = "utf-8";
 
 	/**
 	 * Sorts File objects alphabetically, case-insensitively,
@@ -54,25 +52,6 @@ public class FileUtil {
 	};
 
 	/**
-	 * Get the default encoding for opening files.
-	 *
-	 * @return the default encoding
-	 */
-	public static String getDefaultEncoding() {
-		return defaultEncoding;
-	}
-
-	/**
-	 * Set the default encoding for opening files.
-	 *
-	 * @param defaultEncoding
-	 *            the default encoding
-	 */
-	public static void setDefaultEncoding(String defaultEncoding) {
-		FileUtil.defaultEncoding = defaultEncoding;
-	}
-
-	/**
 	 * Opens a file for writing in the default encoding.
 	 *
 	 * Wraps the Writer in a BufferedWriter and PrintWriter for efficient and convenient access.
@@ -82,7 +61,7 @@ public class FileUtil {
 	 * @return write interface into the file
 	 */
 	public static PrintWriter openForWriting(File file) {
-		return openForWriting(file, defaultEncoding);
+		return openForWriting(file, DEFAULT_ENCODING);
 	}
 
 	/**
@@ -106,39 +85,6 @@ public class FileUtil {
 	}
 
 	/**
-	 * Opens a file for appending.
-	 *
-	 * Wraps the Writer in a BufferedWriter and PrintWriter for efficient and convenient access.
-	 *
-	 * @param file
-	 *            the file to open
-	 * @return write interface into the file
-	 */
-	public static PrintWriter openForAppend(File file) {
-		return openForAppend(file, defaultEncoding);
-	}
-
-	/**
-	 * Opens a file for appending.
-	 *
-	 * Wraps the Writer in a BufferedWriter and PrintWriter for efficient and convenient access.
-	 *
-	 * @param file
-	 *            the file to open
-	 * @param encoding
-	 *            the encoding to use, e.g. "utf-8"
-	 * @return write interface into the file
-	 */
-	public static PrintWriter openForAppend(File file, String encoding) {
-		try {
-			return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
-					file, true), encoding)));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
 	 * Opens a file for reading, with the default encoding.
 	 *
 	 * Wraps the Reader in a BufferedReader for efficient and convenient access.
@@ -148,7 +94,7 @@ public class FileUtil {
 	 * @return read interface into the file
 	 */
 	public static BufferedReader openForReading(File file) {
-		return openForReading(file, defaultEncoding);
+		return openForReading(file, DEFAULT_ENCODING);
 	}
 
 	/**
@@ -170,8 +116,6 @@ public class FileUtil {
 		}
 	}
 
-	// TODO: add writeLines()
-
 	/**
 	 * Read a file into a list of lines
 	 *
@@ -180,7 +124,7 @@ public class FileUtil {
 	 * @return list of lines
 	 */
 	public static List<String> readLines(File inputFile) {
-		return readLines(inputFile, defaultEncoding);
+		return readLines(inputFile, DEFAULT_ENCODING);
 	}
 
 	/**
@@ -205,57 +149,6 @@ public class FileUtil {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	/**
-	 * Replaces illegal characters (/, \, :, *, ?, ", <, > and |) in a filename with an underscore.
-	 *
-	 * NOTE: this is not intended for security use, just to make sure filenames aren't
-	 * invalid! For security with untrusted input, allow only a conservative set of characters
-	 * (i.e. [a-zA-Z0-9_\-\.], and forbid "." and "..").
-	 *
-	 * @param filename
-	 *            the filename to sanitize
-	 * @return the sanitized filename
-	 */
-	public static String sanitizeFilename(String filename) {
-		return FileUtil.sanitizeFilename(filename, "_");
-	}
-
-	/**
-	 * Replaces illegal characters (\t, \r, \n, /, \, :, *, ?, ", <, > and |) in a filename with the specified
-	 * character.
-	 *
-	 * NOTE: this is not intended for security use, just to make sure filenames aren't
-	 * invalid! For security with untrusted input, allow only a conservative set of characters
-	 * (i.e. [a-zA-Z0-9_\-\.], and forbid "." and "..").
-	 *
-	 * @param filename
-	 *            the filename to sanitize
-	 * @param invalidChar
-	 *            the replacement character
-	 * @return the sanitized filename
-	 */
-	public static String sanitizeFilename(String filename, String invalidChar) {
-		return filename.replaceAll("[\t\r\n/\\\\:\\*\\?\"<>\\|]", invalidChar);
-	}
-
-	/**
-	 * Get the size of a file or a directory tree
-	 *
-	 * @param root
-	 * @return size of the file or directory tree
-	 */
-	public static long getTreeSize(File root) {
-		long size = 0;
-		if (root.isFile())
-			size = root.length();
-		else {
-			for (File f : root.listFiles()) {
-				size += getTreeSize(f);
-			}
-		}
-		return size;
 	}
 
 	/**
@@ -328,6 +221,24 @@ public class FileUtil {
 	}
 
 	/**
+	 * Add a parenthesized number to a file name to get a file name that doesn't exist yet.
+	 *
+	 * @param file the file that exists already
+	 * @return a file with a number added that doesn't exist yet
+	 */
+	public static File addNumberToExistingFileName(File file) {
+		File parentFile = file.getParentFile();
+		String name = file.getName();
+		int number = 2;
+		File newFile;
+		do {
+			newFile = new File(parentFile, name + " (" + number + ")");
+			number++;
+		} while(newFile.exists());
+		return newFile;
+	}
+
+	/**
 	 * Returns files in a directory, sorted.
 	 *
 	 * Sorts alphabetically, case-insensitively, and puts subdirectories first.
@@ -358,113 +269,5 @@ public class FileUtil {
 		glob = glob.replaceAll("\\*", ".*");
 		glob = glob.replaceAll("\\?", ".");
 		return "^" + glob + "$";
-	}
-
-	/**
-	 * Find a file on the classpath.
-	 *
-	 * @param fn name of the file we're looking for
-	 * @return the file if found, null otherwise
-	 */
-	public static File findOnClasspath(String fn) {
-		String sep = System.getProperty("path.separator");
-		for (String part: System.getProperty("java.class.path").split("\\" + sep)) {
-			File f = new File(part);
-			File dir = f.isFile() ? f.getParentFile() : f;
-			File ourFile = new File(dir, fn);
-			if (ourFile.exists())
-				return ourFile;
-		}
-		return null;
-	}
-
-	/**
-	 * Detect the Unicode encoding of an input stream by looking for a BOM at the current position.
-	 *
-	 * If no BOM is found, the specified default encoding is returned and
-	 * the position of the stream is unchanged.
-	 *
-	 * If a BOM is found, it is interpreted and the corresponding encoding
-	 * is returned. The stream will remain positioned after the BOM.
-	 *
-	 * This method uses InputStream.mark(), which must be supported by the given stream
-	 * (BufferedInputStream supports this).
-	 *
-	 * Only works for UTF-8 and UTF16 (LE/BE) for now.
-	 *
-	 * @param inputStream the input stream
-	 * @param useDefaultEncoding encoding to return if no BOM found
-	 * @return the encoding
-	 * @throws IOException
-	 */
-	public static String detectBomEncoding(BufferedInputStream inputStream, String useDefaultEncoding) throws IOException {
-		String encoding = "";
-
-		if (!inputStream.markSupported()) {
-			throw new RuntimeException("Need support for inputStream.mark()!");
-		}
-
-		inputStream.mark(4); // mark this position so we can reset() later
-		int firstByte  = inputStream.read();
-		int secondByte = inputStream.read();
-		if(firstByte == 0xFF && secondByte == 0xFE) {
-			// BOM voor UTF-16LE
-			encoding = "utf-16le";
-			// We staan nu na de BOM, dus ok
-		} else if(firstByte == 0xFE && secondByte == 0xFF) {
-			// BOM voor UTF-16 LE
-			encoding = "utf-16be";
-			// We staan nu na de BOM, dus ok
-		} else if(firstByte == 0xEF && secondByte == 0xBB) {
-			int thirdByte = inputStream.read();
-			if(thirdByte == 0xBF) {
-				// BOM voor UTF-8
-				encoding = "utf-8";
-			}
-			// We staan nu na de BOM, dus ok
-		} else {
-			// Geen BOM maar wel 2 bytes gelezen; "rewind"
-			inputStream.reset();
-			encoding = useDefaultEncoding; // (we assume, as we haven't found a BOM)
-		}
-		return encoding;
-	}
-
-	/**
-	 * Read an entire file into a String
-	 * @param file the file to read
-	 * @return the file's contents
-	 */
-	public static String readFile(File file) {
-		return StringUtil.join(readLines(file), "\n");
-	}
-
-	/**
-	 * Write a String to a file.
-	 * @param file the file to write
-	 * @param data what to write to the file
-	 */
-	public static void writeFile(File file, String data) {
-		try (PrintWriter out = openForWriting(file)) {
-			out.print(data);
-		}
-	}
-
-	/**
-	 * Add a parenthesized number to a file name to get a file name that doesn't exist yet.
-	 *
-	 * @param file the file that exists already
-	 * @return a file with a number added that doesn't exist yet
-	 */
-	public static File addNumberToExistingFileName(File file) {
-		File parentFile = file.getParentFile();
-		String name = file.getName();
-		int number = 2;
-		File newFile;
-		do {
-			newFile = new File(parentFile, name + " (" + number + ")");
-			number++;
-		} while(newFile.exists());
-		return newFile;
 	}
 }

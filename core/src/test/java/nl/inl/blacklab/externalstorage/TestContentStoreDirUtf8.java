@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.util.Utilities;
+import nl.inl.util.UtilsForTesting;
 
 public class TestContentStoreDirUtf8 {
 	private ContentStore store;
@@ -34,10 +34,10 @@ public class TestContentStoreDirUtf8 {
 	@Before
 	public void setUp() {
 		// Remove any previously left over temp test dirs
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 
 		// Create new test dir
-		dir = Utilities.createBlackLabTestDir("ContentStoreDirUtf8");
+		dir = UtilsForTesting.createBlackLabTestDir("ContentStoreDirUtf8");
 
 		store = new ContentStoreDirUtf8(dir);
 		try {
@@ -61,7 +61,7 @@ public class TestContentStoreDirUtf8 {
 		if (store != null)
 			store.close();
 		// Try to remove (some files may be locked though)
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 	}
 
 	@Test

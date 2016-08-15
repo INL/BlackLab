@@ -1,4 +1,63 @@
+# BlackLab newsletter
+
 **NOTE:** if you want to receive an email alert for this newsletter, drop me a line at [jan.niestadt@inl.nl](mailto:jan.niestadt@inl.nl).
+
+**(August 2016)**
+
+It's been almost three years since the last BlackLab newsletter, so I wasn't kidding when I promised a low-volume email newsletter. :)
+
+BlackLab has made a lot of progress since then, and I thought I should get the word out.
+
+## Why BlackLab?
+
+### Mature
+We started developing and using BlackLab in 2010. It has been through 3 major Lucene releases. 
+For the past 4 years, it's been available on GitHub and has been used and improved by many 
+different people. 
+
+### Well-tested
+Correctness is key when it comes to scientific research. We're dedicated to making sure BlackLab matches every occurrence
+of your query pattern; not an easy feat with a query language as rich as Corpus Query Language. That's why we automatically 
+test how BlackLab handles a difficult queries on a real corpus. 
+
+### Feature-rich
+It allows you to index and search on as many annotation layers as you want, including 
+hierarchical structures like XML. It supports a large subset of the Corpus Query Language and you can
+sort and group your results on different properties, for example "the second word to the left of the matched text".
+You can capture groups of words in the matched text, allowing you to analyse the structure of each of your hits in more detail.
+
+### Fast
+BlackLab performs many query-specific optimizations (see below), which often speed up certain queries by orders of magnitude.
+In performance tests, it beat the Corpus WorkBench on several types of queries.
+
+### Easy to use
+There's an informative project website with an overview, documentation and examples. Whether you want to use the
+webservice version (BlackLab Server) or the Java library (BlackLab Core), it's easy.
+
+### Plug and play 
+There's a beautiful, feature-rich user interface available that works with BlackLab out of the box: WhiteLab.
+WhiteLab has proven itself in the OpenSonar project, and the next version will be even better.
+
+### Future-proof 
+BlackLab has a bright future. It has improved by leaps and bounds, it has many satisfied users, and there's a 
+clear roadmap of where it's going. Support for distributed search and integration with Solr and/or ElasticSearch 
+are high on the list. We'd love to hear from you what you would like to see. 
+
+
+## Faster queries
+- NOT-clauses can be much faster now
+- Containing-clauses also much faster
+- XML element queries in general faster
+
+
+## WhiteLab
+- Query Builder
+- Visualisations
+
+## Smaller index
+BlackLab can store the complete original content of your documents, so you can easily show your documents 
+with matches highlighted. Thanks to more efficient compression, this "content store" now takes up less room on disk. 
+
 
 **(September 2013)**
 

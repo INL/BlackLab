@@ -75,7 +75,6 @@ import nl.inl.blacklab.search.grouping.HitPropertyWordRight;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.util.FileUtil;
-import nl.inl.util.IoUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
@@ -468,7 +467,7 @@ public class QueryTool {
 		BufferedReader in;
 		if (inputFile == null) {
 			// No input file specified; use stdin
-			in = IoUtil.makeBuffered(new InputStreamReader(System.in, encoding));
+			in = new BufferedReader(new InputStreamReader(System.in, encoding));
 		} else {
 			// Open input file
 			in = FileUtil.openForReading(inputFile, "utf-8");

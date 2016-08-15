@@ -15,8 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.tools;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,9 +35,9 @@ import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.util.ExUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.PropertiesUtil;
 
 /**
  * The indexer class and main program for the ANW corpus.
@@ -284,7 +288,7 @@ public class IndexTool {
 	}
 
 	private static void readParametersFromPropertiesFile(File propFile) {
-		Properties p = PropertiesUtil.readFromFile(propFile);
+		Properties p = readPropertiesFromFile(propFile);
 		for (Map.Entry<Object, Object> e: p.entrySet()) {
 			indexerParam.put(e.getKey().toString(), e.getValue().toString());
 		}
@@ -326,5 +330,29 @@ public class IndexTool {
 			System.out.println("  " + format);
 		}
 		System.out.println("  (or specify your own DocIndexer class)");
+	}
+
+	/**
+	 * Read Properties from the specified file
+	 *
+	 * @param file
+	 *            the file to read
+	 * @return the Properties read
+	 */
+	public static Properties readPropertiesFromFile(File file) {
+		try {
+			if (!file.isFile()) {
+				throw new RuntimeException("Property file " + file.getCanonicalPath()
+						+ " does not exist or is not a regular file!");
+			}
+
+			try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "iso-8859-1"))) {
+				Properties properties = new Properties();
+				properties.load(in);
+				return properties;
+			}
+		} catch (Exception e) {
+			throw ExUtil.wrapRuntimeException(e);
+		}
 	}
 }

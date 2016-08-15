@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import nl.inl.util.Utilities;
+import nl.inl.util.UtilsForTesting;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -44,10 +44,10 @@ public class TestContentStoreDirFixedBlock {
 	public void setUp() {
 
 		// Remove any previously left over temp test dirs
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 
 		// Create new test dir
-		dir = Utilities.createBlackLabTestDir("ContentStoreDirNew");
+		dir = UtilsForTesting.createBlackLabTestDir("ContentStoreDirNew");
 
 		store = new ContentStoreDirFixedBlock(dir, false);
 		try {
@@ -77,7 +77,7 @@ public class TestContentStoreDirFixedBlock {
 	public void tearDown() {
 		store.close();
 		// Try to remove (some files may be locked though)
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 	}
 
 	@Test

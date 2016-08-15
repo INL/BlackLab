@@ -22,7 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.util.Utilities;
+import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexPosIncr {
 	private ForwardIndex fi;
@@ -36,10 +36,10 @@ public class TestForwardIndexPosIncr {
 
 	private void setUpForwardIndex() {
 		// Remove any previously left over temp test dirs
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 
 		// Create new test dir
-		File dir = Utilities.createBlackLabTestDir("ForwardIndexPosIncr");
+		File dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexPosIncr");
 
 		fi = ForwardIndex.open(dir, true, null, true);
 		try {
@@ -58,7 +58,7 @@ public class TestForwardIndexPosIncr {
 		if (fi != null)
 			fi.close();
 		// Try to remove (some files may be locked though)
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 	}
 
 	public int[] retrievePart(int id, int start, int end) {

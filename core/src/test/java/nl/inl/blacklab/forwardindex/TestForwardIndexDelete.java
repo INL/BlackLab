@@ -24,7 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.util.Utilities;
+import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexDelete {
 	private ForwardIndex fi;
@@ -41,10 +41,10 @@ public class TestForwardIndexDelete {
 		boolean[] delDoc = {true, false, true, false, true, false};
 
 		// Remove any previously left over temp test dirs
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 
 		// Create new test dir
-		dir = Utilities.createBlackLabTestDir("ForwardIndexDelete");
+		dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
 
 		fi = new ForwardIndexImplV3(dir, true, null, true, true);
 		// Store strings
@@ -88,7 +88,7 @@ public class TestForwardIndexDelete {
 		if (fi != null)
 			fi.close();
 		// Try to remove (some files may be locked though)
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 	}
 
 	/** Adding a document the exact length of a gap. */
