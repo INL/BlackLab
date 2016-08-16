@@ -46,8 +46,10 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 			if (first + number > groups.numberOfGroups())
 				numberOfGroupsInWindow = groups.numberOfGroups() - first;
 
+			ds.startMap();
+
 			// The summary
-			ds.startMap().startEntry("summary").startMap();
+			ds.startEntry("summary").startMap();
 			ds.startEntry("searchParam");
 			searchParam.dataStream(ds);
 			ds.endEntry();
@@ -68,7 +70,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 				.entry("windowHasPrevious", first > 0)
 				.entry("windowHasNext", first + number < groups.numberOfGroups())
 				.entry("largestGroupSize", groups.getLargestGroupSize());
-			ds.endMap().endEntry().endMap();
+			ds.endMap().endEntry();
 
 			// The list of groups found
 			ds.startEntry("docGroups").startList();
@@ -84,6 +86,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 				i++;
 			}
 			ds.endList().endEntry();
+
+			ds.endMap();
 
 			return HTTP_OK;
 		} finally {

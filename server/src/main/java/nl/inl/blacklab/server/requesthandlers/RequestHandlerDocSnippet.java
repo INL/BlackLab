@@ -115,6 +115,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 				ds.contextList(c.getProperties(), c.getTokens());
 			}
 		}
+		ds.endMap();
 	}
 
 	@Override
