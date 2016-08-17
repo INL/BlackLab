@@ -2,37 +2,30 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Iterator;
-import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadBase;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.index.IndexTask;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.util.FileUploadHandler;
+import nl.inl.blacklab.server.util.FileUploadHandler.UploadedFileTask;
 
 /**
  * Display the contents of the cache.
  */
 public class RequestHandlerAddToIndex extends RequestHandler {
-
-	private static final long MAX_UPLOAD_SIZE = 25 * 1024 * 1024;
-
-	private static final int MAX_MEM_UPLOAD_SIZE = 5 * 1024 * 1024;
-
-	private static final File TMP_DIR = new File(System.getProperty("java.io.tmpdir"));
 
 	String indexError = null;
 
@@ -53,118 +46,70 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
 		String status = indexMan.getIndexStatus(indexName);
 		if (!status.equals("available") && !status.equals("empty"))
-			return Response.unavailable(ds, indexName, status);
+			throw new BlsException(HttpServletResponse.SC_CONFLICT, "INDEX_UNAVAILABLE", "The index '" + indexName + "' is not available right now. Status: " + status); //return Response.unavailable(ds, indexName, status);
 
-		// Check that we have a file upload request
-		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-		if (!isMultipart) {
-			return Response.badRequest(ds, "NO_FILE", "Upload a file to add to the index.");
-		}
-		DiskFileItemFactory factory = new DiskFileItemFactory();
-
-		// maximum size that will be stored in memory
-		factory.setSizeThreshold(MAX_MEM_UPLOAD_SIZE);
-		// Location to save data that is larger than maxMemSize.
-		factory.setRepository(TMP_DIR);
-
-		// Create a new file upload handler
-		ServletFileUpload upload = new ServletFileUpload(factory);
-		// maximum file size to be uploaded.
-		upload.setSizeMax(MAX_UPLOAD_SIZE);
-
+		if (!indexMan.indexExists(indexName))
+			throw new IndexNotFound(indexName);
+		final File indexDir = indexMan.getIndexDir(indexName);
+		String newStatus = indexMan.setIndexStatus(indexName, "available|empty", "busy");
 		try {
-			// Parse the request to get file items.
-			List<FileItem> fileItems;
-			try {
-				fileItems = upload.parseRequest(request);
-			} catch (FileUploadBase.SizeLimitExceededException e) {
-				return Response.badRequest(ds, "ERROR_UPLOADING_FILE", "File too large (maximum " + MAX_UPLOAD_SIZE / 1024 / 1024 + " MB)");
-			} catch (FileUploadException e) {
-				return Response.badRequest(ds, "ERROR_UPLOADING_FILE", e.getMessage());
-			}
-
-			// Process the uploaded file items
-			Iterator<FileItem> i = fileItems.iterator();
-
-			if (!indexMan.indexExists(indexName))
-				return Response.indexNotFound(ds, indexName);
-			File indexDir = indexMan.getIndexDir(indexName);
-			int filesDone = 0;
-			String newStatus = indexMan.setIndexStatus(indexName, "available|empty", "busy");
 			indexMan.closeSearcher(indexName);
 			if (!newStatus.equals("busy")) {
-				return Response.internalError(ds, "Could not set index status to busy (status was " + newStatus + ")", debugMode, 28);
+				throw new InternalServerError("Could not set index status to busy (status was " + newStatus + ")", 28);
 			}
-			try {
-				while (i.hasNext()) {
-					FileItem fi = i.next();
-					if (!fi.isFormField()) {
+			FileUploadHandler.handleRequest(ds, request, "data", new UploadedFileTask() {
+				@Override
+				public void handle(FileItem fi) throws Exception {
+					// Get the uploaded file parameters
+					String fileName = fi.getName();
 
-						if (!fi.getFieldName().equals("data"))
-							return Response.badRequest(ds, "CANNOT_UPLOAD_FILE", "Cannot upload file. File should be uploaded using the 'data' field.");
-
-						if (fi.getSize() > MAX_UPLOAD_SIZE)
-							return Response.badRequest(ds, "CANNOT_UPLOAD_FILE", "Cannot upload file. It is larger than the maximum of " + (MAX_UPLOAD_SIZE / 1024 / 1024) + " MB.");
-
-						if (filesDone != 0)
-							return Response.internalError(ds, "Tried to upload more than one file.", debugMode, 14);
-
-						// Get the uploaded file parameters
-						String fileName = fi.getName();
-
-						File tmpFile = null;
-						IndexTask task;
-						IndexListener listener = new IndexListenerReportConsole() {
-							@Override
-							public boolean errorOccurred(String error,
-									String unitType, File unit, File subunit) {
-								indexError = error + " in " + unit +
-										(subunit == null ? "" : " (" + subunit + ")");
-								super.errorOccurred(error, unitType, unit, subunit);
-								return false; // Don't continue indexing
-							}
-						};
-						try {
-							if (fileName.endsWith(".zip")) {
-								// We can only index zip from a file, not from a stream.
-								tmpFile = File.createTempFile("blsupload", ".tmp.zip");
-								fi.write(tmpFile);
-								task = new IndexTask(indexDir, tmpFile, fileName, listener);
-							} else {
-								InputStream data = fi.getInputStream();
-
-								// TODO: do this in the background
-								// TODO: lock the index while indexing
-								// TODO: re-open Searcher after indexing
-								// TODO: keep track of progress
-								// TODO: error handling
-								task = new IndexTask(indexDir, data, fileName, listener);
-							}
-							task.run();
-							if (task.getIndexError() != null) {
-								return Response.internalError(ds, task.getIndexError(), true, 30);
-							}
-						} finally {
-							if (tmpFile != null)
-								tmpFile.delete();
+					File tmpFile = null;
+					IndexTask task;
+					IndexListener listener = new IndexListenerReportConsole() {
+						@Override
+						public boolean errorOccurred(String error,
+								String unitType, File unit, File subunit) {
+							indexError = error + " in " + unit +
+									(subunit == null ? "" : " (" + subunit + ")");
+							super.errorOccurred(error, unitType, unit, subunit);
+							return false; // Don't continue indexing
 						}
+					};
+					try {
+						if (fileName.endsWith(".zip")) {
+							// We can only index zip from a file, not from a stream.
+							tmpFile = File.createTempFile("blsupload", ".tmp.zip");
+							fi.write(tmpFile);
+							task = new IndexTask(indexDir, tmpFile, fileName, listener);
+						} else {
+							InputStream data = fi.getInputStream();
 
-						//searchMan.addIndexTask(indexName, new IndexTask(is, fileName));
-
-						filesDone++;
+							// TODO: do this in the background
+							// TODO: lock the index while indexing
+							// TODO: re-open Searcher after indexing
+							// TODO: keep track of progress
+							// TODO: error handling
+							task = new IndexTask(indexDir, data, fileName, listener);
+						}
+						task.run();
+						if (task.getIndexError() != null) {
+							throw new InternalServerError(task.getIndexError(), 30);
+						}
+					} finally {
+						if (tmpFile != null)
+							tmpFile.delete();
 					}
+
+					//searchMan.addIndexTask(indexName, new IndexTask(is, fileName));
 				}
-			} finally {
-				indexMan.setIndexStatus(indexName, null, "available");
-			}
-		} catch (BlsException ex) {
-			throw ex;
-		} catch (Exception ex) {
-			return Response.internalError(ds, ex, debugMode, 26);
+			});
+		} finally {
+			indexMan.setIndexStatus(indexName, null, "available");
 		}
 
 		if (indexError != null)
-			return Response.badRequest(ds, "INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");
-		return Response.success(ds, "Data added succesfully."); //Response.accepted();
+			throw new BadRequest("INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");
+		return Response.success(ds, "Data added succesfully.");
 	}
+
 }
