@@ -1,8 +1,6 @@
 # Road map
 
 ## Plans for BlackLab 2.0
-
--   Random sampling of large resultsets.
 -   Integrate with Solr and/or ElasticSearch, to allow larger corpora through sharding, etc.
 -   Improve performance on a single machine by combining reverse-index search with forward-index based search techniques.
 -   Add support for tree-like structures to enable e.g. treebanks-like searches.

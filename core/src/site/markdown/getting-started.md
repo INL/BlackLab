@@ -17,9 +17,9 @@ Let's go over these one by one.
 
 The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Groovy, etc.).
 
-For now, this guide will focus on BlackLab Core and Java, but we'll expand it to work with BlackLab Server and other programming languages soon. For more information on BlackLab Server, see the [GitHub project](https://github.com/INL/BlackLab-server).
+For now, this guide will focus on BlackLab Core and Java. For more information on BlackLab Server, see this [overview](blacklab-server-overview.html).
 
-First you need to get the BlackLab library JAR, either by downloading a prebuilt binary, or by building it yourself (it's easy, promise!).
+First you need to get the BlackLab library. The simplest way is to let Maven download it automatically from the Central Repository, but you can also download a prebuilt binary, and it's trivial to build it yourself.
 
 <a id="getting-blacklab"></a>
 
@@ -27,7 +27,9 @@ First you need to get the BlackLab library JAR, either by downloading a prebuilt
 
 ### Maven Central
 
-Starting with version 1.3.2, BlackLab is in Maven Central, so you should be able to simply [add it to your build tool](dependency-info.html).
+BlackLab is in the Maven Central Repository, so you should be able to simply [add it to your build tool](dependency-info.html).
+
+For the available versions, see [here](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22nl.inl.blacklab%22%20AND%20a%3A%22blacklab%22).
 
 ### Downloading a prebuilt binary
 
