@@ -154,7 +154,7 @@ public class ResultsGrouper extends HitGroups {
 	 */
 	@Deprecated
 	public void addHit(Hits hits, int originalHitIndex) {
-		throw new RuntimeException("Directly adding hits to ResultsGrouper no longer supported. Use Hits.groupedBy() instead.");
+		throw new UnsupportedOperationException("Directly adding hits to ResultsGrouper no longer supported. Use Hits.groupedBy() instead.");
 	}
 
 	/**

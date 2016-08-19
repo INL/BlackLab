@@ -28,7 +28,7 @@ public class JobDocs extends JobWithDocs {
 			} else {
 				this.indexName = null;
 				if (!indexName.equals(inputDesc.getIndexName()))
-					throw new RuntimeException("Mismatch between indexnames!");
+					throw new IllegalArgumentException("Mismatch between indexnames!");
 			}
 		}
 

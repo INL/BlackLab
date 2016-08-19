@@ -105,7 +105,7 @@ public class ContentStoreMemory extends ContentStore {
 
 		int n = start.length;
 		if (n != end.length)
-			throw new RuntimeException("start and end must be of equal length");
+			throw new IllegalArgumentException("start and end must be of equal length");
 		String[] result = new String[n];
 		for (int i = 0; i < n; i++) {
 			if (start[i] == -1 && end[i] == -1) {
@@ -114,11 +114,11 @@ public class ContentStoreMemory extends ContentStore {
 				end[i] = content.length();
 			}
 			if (start[i] < 0 || end[i] < 0) {
-				throw new RuntimeException("Illegal values, start = " + start[i] + ", end = "
+				throw new IllegalArgumentException("Illegal values, start = " + start[i] + ", end = "
 						+ end[i]);
 			}
 			if (start[i] > content.length() || end[i] > content.length()) {
-				throw new RuntimeException("Value(s) out of range, start = " + start[i]
+				throw new IllegalArgumentException("Value(s) out of range, start = " + start[i]
 						+ ", end = " + end[i] + ", content length = " + content.length());
 			}
 

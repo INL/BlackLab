@@ -67,7 +67,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 	 */
 	public PropertyDesc getPropertyDesc(String name) {
 		if (!props.containsKey(name))
-			throw new RuntimeException("Property '" + name + "' not found!");
+			throw new IllegalArgumentException("Property '" + name + "' not found!");
 		return props.get(name);
 	}
 
@@ -114,7 +114,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 
 		// See if this is a builtin bookkeeping field or a property.
 		if (parts.length == 1)
-			throw new RuntimeException("Complex field with just basename given, error!");
+			throw new IllegalArgumentException("Complex field with just basename given, error!");
 
 		String propPart = parts[1];
 
@@ -152,7 +152,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 				if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
 					pd.setForwardIndex(true);
 				} else
-					throw new RuntimeException("Unknown property bookkeeping field " + parts[3]);
+					throw new IllegalArgumentException("Unknown property bookkeeping field " + parts[3]);
 			}
 		}
 	}

@@ -345,7 +345,7 @@ public class IndexTool {
 	public static Properties readPropertiesFromFile(File file) {
 		try {
 			if (!file.isFile()) {
-				throw new RuntimeException("Property file " + file.getCanonicalPath()
+				throw new IllegalArgumentException("Property file " + file.getCanonicalPath()
 						+ " does not exist or is not a regular file!");
 			}
 

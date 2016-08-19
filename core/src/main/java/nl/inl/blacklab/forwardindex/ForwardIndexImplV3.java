@@ -201,7 +201,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create, boolean largeTermsFileSupport) {
 		if (!dir.exists()) {
 			if (!create)
-				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
+				throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
 			dir.mkdir();
 		}
 
@@ -617,7 +617,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 			int n = start.length;
 			if (n != end.length)
-				throw new RuntimeException("start and end must be of equal length");
+				throw new IllegalArgumentException("start and end must be of equal length");
 			List<int[]> result = new ArrayList<>(n);
 
 			for (int i = 0; i < n; i++) {
@@ -626,18 +626,18 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				if (end[i] == -1)
 					end[i] = e.length;
 				if (start[i] < 0 || end[i] < 0) {
-					throw new RuntimeException("Illegal values, start = " + start[i] + ", end = "
+					throw new IllegalArgumentException("Illegal values, start = " + start[i] + ", end = "
 							+ end[i]);
 				}
 				if (end[i] > e.length) // Can happen while making KWICs because we don't know the
 										// doc length until here
 					end[i] = e.length;
 				if (start[i] > e.length || end[i] > e.length) {
-					throw new RuntimeException("Value(s) out of range, start = " + start[i]
+					throw new IllegalArgumentException("Value(s) out of range, start = " + start[i]
 							+ ", end = " + end[i] + ", content length = " + e.length);
 				}
 				if (end[i] <= start[i]) {
-					throw new RuntimeException(
+					throw new IllegalArgumentException(
 							"Tried to read empty or negative length snippet (from " + start[i]
 									+ " to " + end[i] + ")");
 				}

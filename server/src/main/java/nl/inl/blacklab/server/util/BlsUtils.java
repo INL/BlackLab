@@ -85,7 +85,7 @@ public class BlsUtils {
 						"Text search pattern required. Please specify 'patt' parameter.");
 			return null; // not required, ok
 		}
-	
+
 		if (language.equals("corpusql")) {
 			try {
 				return CorpusQueryLanguageParser.parse(pattern);
@@ -109,7 +109,7 @@ public class BlsUtils {
 						"Syntax error in ContextQL pattern: " + e.getMessage());
 			}
 		}
-	
+
 		throw new BadRequest("UNKNOWN_PATT_LANG",
 				"Unknown pattern language '" + language
 						+ "'. Supported: corpusql, contextql, luceneql.");
@@ -193,7 +193,7 @@ public class BlsUtils {
 	 */
 	public static void delTree(File root) {
 		if (!root.isDirectory())
-			throw new RuntimeException("Not a directory: " + root);
+			throw new IllegalArgumentException("Not a directory: " + root);
 		for (File f : root.listFiles()) {
 			if (f.isDirectory())
 				delTree(f);

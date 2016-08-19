@@ -444,7 +444,7 @@ public class Indexer {
 	public int addToForwardIndex(String fieldName, List<String> tokens, List<Integer> posIncr) {
 		ForwardIndex forwardIndex = searcher.getForwardIndex(fieldName);
 		if (forwardIndex == null)
-			throw new RuntimeException("No forward index for field " + fieldName);
+			throw new IllegalArgumentException("No forward index for field " + fieldName);
 
 		return forwardIndex.addDocument(tokens, posIncr);
 	}

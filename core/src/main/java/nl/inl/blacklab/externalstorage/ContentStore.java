@@ -135,9 +135,9 @@ public abstract class ContentStore {
 		if (type.equals("utf8"))
 			return new ContentStoreDirUtf8(indexXmlDir, create);
 		if (type.equals("utf16")) {
-			throw new RuntimeException("UTF-16 content store is deprecated. Please re-index your data.");
+			throw new UnsupportedOperationException("UTF-16 content store is deprecated. Please re-index your data.");
 		}
-		throw new RuntimeException("Unknown content store type " + type);
+		throw new UnsupportedOperationException("Unknown content store type " + type);
 	}
 
 	/** @return the set of all content store ids */

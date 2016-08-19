@@ -18,7 +18,7 @@ public class MockTerms extends Terms {
 			if (get(i).equals(term))
 				return i;
 		}
-		throw new RuntimeException("Unknown term '" + term + "'");
+		throw new IllegalArgumentException("Unknown term '" + term + "'");
 	}
 
 	@Override

@@ -720,7 +720,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 			// Sanity-check parameters
 			int n = start.length;
 			if (n != end.length)
-				throw new RuntimeException("start and end must be of equal length");
+				throw new IllegalArgumentException("start and end must be of equal length");
 
 			// Create array for results
 			String[] result = new String[n];
@@ -740,14 +740,14 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 
 						// Check values
 						if (a < 0 || b < 0) {
-							throw new RuntimeException("Illegal values, start = " + a + ", end = " + b);
+							throw new IllegalArgumentException("Illegal values, start = " + a + ", end = " + b);
 						}
 						if (a > e.entryLengthCharacters || b > e.entryLengthCharacters) {
-							throw new RuntimeException("Value(s) out of range, start = " + a
+							throw new IllegalArgumentException("Value(s) out of range, start = " + a
 									+ ", end = " + b + ", content length = " + e.entryLengthCharacters);
 						}
 						if (b <= a) {
-							throw new RuntimeException(
+							throw new IllegalArgumentException(
 									"Tried to read empty or negative length snippet (from " + a
 											+ " to " + b + ")");
 						}

@@ -92,7 +92,7 @@ public class JsonUtil {
 			return listFromJsonArray((JSONArray) jsonStruct);
 		if (jsonStruct instanceof String)
 			return jsonStruct;
-		throw new RuntimeException("Cannot convert " + jsonStruct.getClass().getSimpleName() + " from JSON- to Java object");
+		throw new IllegalArgumentException("Cannot convert " + jsonStruct.getClass().getSimpleName() + " from JSON- to Java object");
 	}
 
 }

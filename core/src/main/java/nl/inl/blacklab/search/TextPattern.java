@@ -308,7 +308,7 @@ public abstract class TextPattern implements Cloneable {
 	public TextPattern noEmpty() {
 		if (!matchesEmptySequence())
 			return this;
-		throw new RuntimeException("noEmpty() must be implemented!");
+		throw new UnsupportedOperationException("noEmpty() must be implemented!");
 	}
 
 }

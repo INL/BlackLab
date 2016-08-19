@@ -157,10 +157,10 @@ public class LuceneUtil {
 		try {
 			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
 			if (terms == null) {
-				throw new RuntimeException("Field " + luceneName + " has no Terms");
+				throw new IllegalArgumentException("Field " + luceneName + " has no Terms");
 			}
 			if (!terms.hasPositions())
-				throw new RuntimeException("Field " + luceneName + " has no character postion information");
+				throw new IllegalArgumentException("Field " + luceneName + " has no character postion information");
 			// String[] docTerms = new String[(int) terms.size()];
 			// final List<BytesRef> termsList = new ArrayList<BytesRef>();
 			TermsEnum termsEnum = terms.iterator();
@@ -225,7 +225,7 @@ public class LuceneUtil {
 		try {
 			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
 			if (terms == null) {
-				throw new RuntimeException("Field " + luceneName + " has no Terms");
+				throw new IllegalArgumentException("Field " + luceneName + " has no Terms");
 			}
 			TermsEnum termsEnum = terms.iterator();
 
@@ -357,7 +357,7 @@ public class LuceneUtil {
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
 		config.setRAMBufferSizeMB(150); // faster indexing
-	
+
 		// Set merge factor (if using LogMergePolicy, which is the default up to version LUCENE_32,
 		// so yes)
 		MergePolicy mp = config.getMergePolicy();

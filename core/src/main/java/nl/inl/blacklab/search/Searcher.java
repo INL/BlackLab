@@ -850,7 +850,7 @@ public abstract class Searcher {
 			// No special content accessor set; assume a stored field
 			String content = d.get(fieldName);
 			if (content == null)
-				throw new RuntimeException("Field not found: " + fieldName);
+				throw new IllegalArgumentException("Field not found: " + fieldName);
 			return getWordsFromString(content, startAtWord, endAtWord);
 		}
 
@@ -1331,7 +1331,7 @@ public abstract class Searcher {
 	public Terms getTerms(String fieldPropName) {
 		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
 		if (forwardIndex == null) {
-			throw new RuntimeException("Field " + fieldPropName + " has no forward index!");
+			throw new IllegalArgumentException("Field " + fieldPropName + " has no forward index!");
 		}
 		return forwardIndex.getTerms();
 	}

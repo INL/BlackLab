@@ -51,7 +51,7 @@ public abstract class TextPatternCombiner extends TextPattern {
 
 			return clone;
 		} catch (CloneNotSupportedException e) {
-			throw new RuntimeException("Clone not supported: " + e.getMessage());
+			throw new UnsupportedOperationException("Clone not supported: " + e.getMessage());
 		}
 	}
 

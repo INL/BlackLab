@@ -345,7 +345,7 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 
 			int n = start.length;
 			if (n != end.length)
-				throw new RuntimeException("start and end must be of equal length");
+				throw new IllegalArgumentException("start and end must be of equal length");
 			String[] result = new String[n];
 
 			File f = getContentFile(e.fileId);
@@ -359,15 +359,15 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 							end[i] = charLength;
 						}
 						if (start[i] < 0 || end[i] < 0) {
-							throw new RuntimeException("Illegal values, start = " + start[i]
+							throw new IllegalArgumentException("Illegal values, start = " + start[i]
 									+ ", end = " + end[i]);
 						}
 						if (start[i] > charLength || end[i] > charLength) {
-							throw new RuntimeException("Value(s) out of range, start = " + start[i]
+							throw new IllegalArgumentException("Value(s) out of range, start = " + start[i]
 									+ ", end = " + end[i] + ", content length = " + charLength);
 						}
 						if (end[i] <= start[i]) {
-							throw new RuntimeException(
+							throw new IllegalArgumentException(
 									"Tried to read empty or negative length snippet (from " + start[i]
 											+ " to " + end[i] + ")");
 						}

@@ -121,7 +121,7 @@ public class ComplexField {
 	public void addPropertyAlternative(String propName, String altName, TokenFilterAdder filterAdder) {
 		ComplexFieldProperty p = properties.get(propName);
 		if (p == null)
-			throw new RuntimeException("Undefined property '" + propName + "'");
+			throw new IllegalArgumentException("Undefined property '" + propName + "'");
 		p.addAlternative(altName, filterAdder);
 	}
 
@@ -201,7 +201,7 @@ public class ComplexField {
 	public ComplexFieldProperty getProperty(String name) {
 		ComplexFieldProperty p = properties.get(name);
 		if (p == null)
-			throw new RuntimeException("Undefined property '" + name + "'");
+			throw new IllegalArgumentException("Undefined property '" + name + "'");
 		return p;
 	}
 
@@ -215,7 +215,7 @@ public class ComplexField {
 	public List<String> getPropertyValues(String name) {
 		ComplexFieldProperty p = properties.get(name);
 		if (p == null)
-			throw new RuntimeException("Undefined property '" + name + "'");
+			throw new IllegalArgumentException("Undefined property '" + name + "'");
 		return p.getValues();
 	}
 
@@ -229,7 +229,7 @@ public class ComplexField {
 	public List<Integer> getPropertyPositionIncrements(String name) {
 		ComplexFieldProperty p = properties.get(name);
 		if (p == null)
-			throw new RuntimeException("Undefined property '" + name + "'");
+			throw new IllegalArgumentException("Undefined property '" + name + "'");
 		return p.getPositionIncrements();
 	}
 
@@ -256,7 +256,7 @@ public class ComplexField {
 	public void addPropertyValue(String name, String value, int posIncr) {
 		ComplexFieldProperty p = properties.get(name);
 		if (p == null)
-			throw new RuntimeException("Undefined property '" + name + "'");
+			throw new IllegalArgumentException("Undefined property '" + name + "'");
 		p.addValue(value, posIncr);
 	}
 

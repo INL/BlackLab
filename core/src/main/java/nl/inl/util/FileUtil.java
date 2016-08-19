@@ -177,7 +177,7 @@ public class FileUtil {
 	 */
 	public static void processTree(File root, FileTask task) {
 		if (!root.isDirectory())
-			throw new RuntimeException("FileUtil.processTree: must be called with a directory! "
+			throw new IllegalArgumentException("FileUtil.processTree: must be called with a directory! "
 					+ root);
 		for (File f : listFilesSorted(root)) {
 			if (f.isFile())

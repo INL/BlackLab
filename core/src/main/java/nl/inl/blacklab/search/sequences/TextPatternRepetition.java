@@ -36,9 +36,9 @@ public class TextPatternRepetition extends TextPattern {
 		this.min = min;
 		this.max = max;
 		if (max != -1 && min > max)
-			throw new RuntimeException("min > max");
+			throw new IllegalArgumentException("min > max");
 		if (min < 0)
-			throw new RuntimeException("min < 0");
+			throw new IllegalArgumentException("min < 0");
 	}
 
 	/**

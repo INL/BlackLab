@@ -287,13 +287,13 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	protected org.apache.lucene.document.FieldType luceneTypeFromIndexStructType(FieldType type) {
 		switch (type) {
 		case NUMERIC:
-			throw new RuntimeException("Numeric types should be indexed using IntField, etc.");
+			throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
 		case TEXT:
 			return indexer.metadataFieldTypeTokenized;
 		case UNTOKENIZED:
 			return indexer.metadataFieldTypeUntokenized;
 		default:
-			throw new RuntimeException("Unknown field type");
+			throw new IllegalArgumentException("Unknown field type: " + type);
 		}
 	}
 

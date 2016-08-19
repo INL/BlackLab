@@ -126,7 +126,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 		if (!createNewIndex) {
 			if (!indexMode || VersionFile.exists(indexDir)) {
 				if (!isIndex(indexDir)) {
-					throw new RuntimeException("Not a BlackLab index, or wrong version! "
+					throw new IllegalArgumentException("Not a BlackLab index, or wrong version! "
 							+ VersionFile.report(indexDir));
 				}
 			}
@@ -305,9 +305,9 @@ public class SearcherImpl extends Searcher implements Closeable {
 	public Document document(int doc) {
 		try {
 			if (doc < 0)
-				throw new RuntimeException("Negative document id");
+				throw new IllegalArgumentException("Negative document id");
 			if (doc >= reader.maxDoc())
-				throw new RuntimeException("Document id >= maxDoc");
+				throw new IllegalArgumentException("Document id >= maxDoc");
 			return reader.document(doc);
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -379,9 +379,9 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, fieldPropName);
 			if (terms == null)
-				throw new RuntimeException("Field " + fieldPropName + " in doc " + doc + " has no term vector");
+				throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + doc + " has no term vector");
 			if (!terms.hasPositions())
-				throw new RuntimeException("Field " + fieldPropName + " in doc " + doc + " has no character postion information");
+				throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + doc + " has no character postion information");
 
 			//int lowestPos = -1, highestPos = -1;
 			int lowestPosFirstChar = -1, highestPosLastChar = -1;
@@ -543,10 +543,10 @@ public class SearcherImpl extends Searcher implements Closeable {
 	public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
 		ComplexFieldDesc complexFieldDesc = indexStructure.getComplexFieldDesc(fieldName);
 		if (complexFieldDesc == null)
-			throw new RuntimeException("Unknown complex field " + fieldName);
+			throw new IllegalArgumentException("Unknown complex field " + fieldName);
 		PropertyDesc mainProperty = complexFieldDesc.getMainProperty();
 		if (mainProperty == null)
-			throw new RuntimeException("Main property not found for " + fieldName);
+			throw new IllegalArgumentException("Main property not found for " + fieldName);
 		String mainPropName = mainProperty.getName();
 		return new QueryExecutionContext(this, fieldName, mainPropName, defaultCaseSensitive,
 				defaultDiacriticsSensitive);
@@ -578,7 +578,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 			VersionFile.write(indexDir, "blacklab", "2");
 		else {
 			if (!isIndex(indexDir)) {
-				throw new RuntimeException("BlackLab index has wrong type or version! "
+				throw new IllegalArgumentException("BlackLab index has wrong type or version! "
 						+ VersionFile.report(indexDir));
 			}
 		}

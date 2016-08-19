@@ -738,7 +738,7 @@ public class StringUtil {
 	 */
 	public static RuleBasedCollator getPerWordCollator(Collator base) {
 		if (!(base instanceof RuleBasedCollator))
-			throw new RuntimeException("Base collator must be rule-based!");
+			throw new IllegalArgumentException("Base collator must be rule-based!");
 
 		try {
 			// Insert a collation rule to sort the space character before the underscore
@@ -762,7 +762,7 @@ public class StringUtil {
 	 */
 	public static RuleBasedCollator getSortDigitsAtEndCollator(Collator base) {
 		if (!(base instanceof RuleBasedCollator))
-			throw new RuntimeException("Base collator must be rule-based!");
+			throw new IllegalArgumentException("Base collator must be rule-based!");
 
 		try {
 			// Insert a collation rule to sort the space character before the underscore

@@ -126,7 +126,7 @@ public class ComplexFieldUtil {
 		case 2:
 			return BookkeepFieldType.LENGTH_TOKENS;
 		default:
-			throw new RuntimeException();
+			throw new IllegalArgumentException("Unknown bookkeeping field: " + bookkeepName);
 		}
 	}
 
@@ -196,7 +196,7 @@ public class ComplexFieldUtil {
 			if (propGiven) {
 				fieldPropName = propName;
 			} else
-				throw new RuntimeException("Must specify a base name, a property name or both: " + fieldName + ", " + propName + ", " + bookkeepName);
+				throw new IllegalArgumentException("Must specify a base name, a property name or both: " + fieldName + ", " + propName + ", " + bookkeepName);
 		} else {
 			fieldPropName = fieldName + (propGiven ? PROP_SEP + propName : "");
 		}
@@ -234,7 +234,7 @@ public class ComplexFieldUtil {
 		String fieldPropName;
 		boolean propGiven = propName != null && propName.length() > 0;
 		if (!propGiven) {
-			throw new RuntimeException("Must specify a property name");
+			throw new IllegalArgumentException("Must specify a property name");
 		}
 		if (fieldName == null || fieldName.length() == 0) {
 			fieldPropName = propName;
@@ -269,7 +269,7 @@ public class ComplexFieldUtil {
 	 */
 	public static String propertyAlternative(String fieldPropName, String altName) {
 		if (altName == null || altName.length() == 0) {
-			throw new RuntimeException("Must specify an alternative name");
+			throw new IllegalArgumentException("Must specify an alternative name");
 		}
 		return fieldPropName + ALT_SEP + altName;
 	}
@@ -341,7 +341,7 @@ public class ComplexFieldUtil {
 
 		// Alternative
 		if (p > a)
-			throw new RuntimeException("Malformed field name, PROP separator after ALT separator");
+			throw new IllegalArgumentException("Malformed field name, PROP separator after ALT separator");
 
 		return new String[] { fieldPropAltName.substring(0, p), fieldPropAltName.substring(p + PROP_SEP_LEN, a),
 				fieldPropAltName.substring(a + ALT_SEP_LEN) };
@@ -414,7 +414,7 @@ public class ComplexFieldUtil {
 
 		// No property given. Alternative?
 		if (altSepPos >= 0) {
-			throw new RuntimeException("Basename+altname is not a valid field name! (" + luceneFieldName + ")");
+			throw new IllegalArgumentException("Basename+altname is not a valid field name! (" + luceneFieldName + ")");
 		}
 
 		if (bookkeepingSepPos >= 0) {
@@ -449,7 +449,7 @@ public class ComplexFieldUtil {
 		}
 		pos = luceneFieldName.indexOf(ALT_SEP);
 		if (pos >= 0) {
-			throw new RuntimeException("Illegal field name: " + luceneFieldName);
+			throw new IllegalArgumentException("Illegal field name: " + luceneFieldName);
 		}
 		return luceneFieldName;
 	}

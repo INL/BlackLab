@@ -54,7 +54,7 @@ public class PropertyDesc {
 			sensitivityDesc = "case/diacritics sensitivity separate";
 			break;
 		default:
-			throw new RuntimeException("Unknown sensitivity " + sensitivity.toString());
+			throw new IllegalArgumentException("Unknown sensitivity " + sensitivity.toString());
 		}
 		return (propName.length() == 0 ? "(default)" : propName)
 				+ (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
@@ -120,7 +120,7 @@ public class PropertyDesc {
 	@Deprecated
 	public AltDesc getAlternativeDesc(String name) {
 		if (!alternatives.containsKey(name))
-			throw new RuntimeException("Alternative '" + name + "' not found!");
+			throw new IllegalArgumentException("Alternative '" + name + "' not found!");
 		return alternatives.get(name);
 	}
 
@@ -186,6 +186,6 @@ public class PropertyDesc {
 		} else if (alt.equals("ci") || alt.equals("di")) {
 			return sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
 		}
-		throw new RuntimeException("Unknown sensitivity alternative ' " + alt + "'! Valid: s, i, ci, di");
+		throw new IllegalArgumentException("Unknown sensitivity alternative ' " + alt + "'! Valid: s, i, ci, di");
 	}
 }

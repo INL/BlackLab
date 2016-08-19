@@ -63,7 +63,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 		this.min = min;
 		this.max = max;
 		if (max != -1 && min > max)
-			throw new RuntimeException("min > max");
+			throw new IllegalArgumentException("min > max");
 	}
 
 	@Override

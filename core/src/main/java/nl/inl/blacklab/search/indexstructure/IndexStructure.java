@@ -542,7 +542,7 @@ public class IndexStructure {
 	 */
 	@Deprecated
 	public boolean hasOffsets(String luceneFieldName) {
-		throw new RuntimeException("hasOffsets() shouldn't be called directly by application; main property is detected automatically");
+		throw new UnsupportedOperationException("hasOffsets() shouldn't be called directly by application; main property is detected automatically");
 		//return hasOffsets(reader, luceneFieldName);
 	}
 
@@ -601,7 +601,7 @@ public class IndexStructure {
 	 * @return the field description */
 	public ComplexFieldDesc getComplexFieldDesc(String fieldName) {
 		if (!complexFields.containsKey(fieldName))
-			throw new RuntimeException("Complex field '" + fieldName + "' not found!");
+			throw new IllegalArgumentException("Complex field '" + fieldName + "' not found!");
 		return complexFields.get(fieldName);
 	}
 
@@ -613,7 +613,7 @@ public class IndexStructure {
 
 	public MetadataFieldDesc getMetadataFieldDesc(String fieldName) {
 		if (!metadataFieldInfos.containsKey(fieldName))
-			throw new RuntimeException("Metadata field '" + fieldName + "' not found!");
+			throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
 		return metadataFieldInfos.get(fieldName);
 	}
 
@@ -893,7 +893,7 @@ public class IndexStructure {
 
 	public void registerMetadataField(String fieldName) {
 		if (fieldName == null)
-			throw new RuntimeException("Tried to register a metadata field with null as name");
+			throw new IllegalArgumentException("Tried to register a metadata field with null as name");
 		if (metadataFieldInfos.containsKey(fieldName))
 			return;
 		// Not registered yet; do so now.

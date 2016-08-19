@@ -231,7 +231,7 @@ public abstract class ForwardIndex {
 
 		if (!dir.exists()) {
 			if (!create)
-				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
+				throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
 			dir.mkdir();
 		}
 
@@ -245,7 +245,7 @@ public abstract class ForwardIndex {
 				} else if (VersionFile.isTypeVersion(dir, "fi", "2")) {
 					version = "2";
 				} else {
-					throw new RuntimeException("Not a forward index or wrong version: "
+					throw new IllegalArgumentException("Not a forward index or wrong version: "
 							+ VersionFile.report(dir) + " (fi " + CURRENT_VERSION + " expected)");
 				}
 			}
@@ -258,7 +258,7 @@ public abstract class ForwardIndex {
 		boolean largeTermsFileSupport = true;
 		switch(version) {
 		case "2":
-			throw new RuntimeException("Forward index version (2) too old for this BlackLab version. Please re-index.");
+			throw new UnsupportedOperationException("Forward index version (2) too old for this BlackLab version. Please re-index.");
 		case "3":
 			largeTermsFileSupport = false;
 			break;

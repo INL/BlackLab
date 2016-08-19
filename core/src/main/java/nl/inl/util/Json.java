@@ -117,11 +117,11 @@ public class Json {
 	public static JSONObject object(Object... keyValues) {
 		JSONObject obj = new JSONObject();
 		if (keyValues.length % 2 != 0) {
-			throw new RuntimeException("Odd number of parameters");
+			throw new IllegalArgumentException("Odd number of parameters");
 		}
 		for (int i = 0; i < keyValues.length; i += 2) {
 			if (!(keyValues[i] instanceof String)) {
-				throw new RuntimeException("Non-string key");
+				throw new IllegalArgumentException("Non-string key");
 			}
 			String key = (String)keyValues[i];
 			Object value = keyValues[i + 1];
@@ -144,7 +144,7 @@ public class Json {
 			object = parent.get(name);
 		if (object != null) {
 			if (!(object instanceof JSONObject))
-				throw new RuntimeException("Not a JSONObject: " + name);
+				throw new IllegalArgumentException("Not a JSONObject: " + name);
 		} else {
 			object = new JSONObject();
 			parent.put(name, object);
