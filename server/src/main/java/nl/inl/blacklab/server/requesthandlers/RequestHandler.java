@@ -131,11 +131,13 @@ public abstract class RequestHandler {
 		} else if (method.equals("PUT")) {
 			return errorObj.methodNotAllowed("PUT", "Create new index with POST to /blacklab-server");
 		} else {
+			boolean postAsGet = false;
 			if (method.equals("POST")) {
 				if (indexName.length() == 0 && !resourceOrPathGiven) {
 					// POST to /blacklab-server/ : create private index
 					requestHandler = new RequestHandlerCreateIndex(servlet, request, user, indexName, urlResource, urlPathInfo);
 				} else if (indexName.equals("cache-clear")) {
+					// Clear the cache
 					if (resourceOrPathGiven) {
 						return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
 					}
@@ -143,7 +145,8 @@ public abstract class RequestHandler {
 						return errorObj.unauthorized("You are not authorized to do this.");
 					}
 					requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource, urlPathInfo);
-				} else {
+				} else if (request.getParameter("data") != null) {
+					// Add document to index
 					if (!isPrivateIndex)
 						return errorObj.forbidden("Can only POST to private indices.");
 					if (urlResource.equals("docs") && urlPathInfo.length() == 0) {
@@ -155,6 +158,10 @@ public abstract class RequestHandler {
 					} else {
 						return errorObj.methodNotAllowed("POST", "Note that retrieval can only be done using GET.");
 					}
+				} else {
+					// Some other POST request; handle it as a GET.
+					// (this allows us to handle very large CQL queries that don't fit in a GET URL)
+					postAsGet = true;
 				}
 			} else if (method.equals("GET")) {
 				if (indexName.equals("cache-info")) {

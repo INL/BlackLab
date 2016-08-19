@@ -192,6 +192,7 @@ public class BlackLabServer extends HttpServlet {
 		responseObject.setContentType(ServletUtil.getContentType(outputType));
 		ServletUtil.writeCacheHeaders(responseObject, cacheTime);
 
+		// === Write the response that was captured in buf
 		try {
 			Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), "utf-8");
 			realOut.write(buf.toString());
@@ -202,22 +203,6 @@ public class BlackLabServer extends HttpServlet {
 			logger.debug("(couldn't send response, client probably cancelled the request)");
 			return;
 		}
-
-		// === Write the response itself
-
-//		try {
-//			DataObject dataObject = response.getDataObject();
-//			String rootEl = omitRootElement ? null : "blacklabResponse";
-//			dataObject.serializeDocument(rootEl, out, outputType, prettyPrint, callbackFunction);
-//			out.flush();
-//		} catch (UnsupportedEncodingException e) {
-//			throw new RuntimeException(e);
-//		} catch (IOException e) {
-//			// Client cancelled the request midway through.
-//			// This is okay, don't raise the alarm.
-//			logger.debug("(couldn't send response, client probably cancelled the request)");
-//			return;
-//		}
 	}
 
 	@Override
