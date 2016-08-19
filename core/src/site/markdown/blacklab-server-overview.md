@@ -66,7 +66,7 @@ Here’s what the various parts of this URL mean:
 	</tr>
 	<tr>
 		<td>resource    </td>
-		<td>what type of information we’re looking for (hits, docs, docs/pid/info, docs/pid/content, …) (see below for the meaning of each resource)</td>
+		<td>what type of information we’re looking for (hits, docs, docs/pid, docs/pid/content, …) (see below for the meaning of each resource)</td>
 	</tr>
 	<tr>
 		<td>pid         </td>
@@ -337,7 +337,7 @@ Documents containing “test”, grouped by author
 
 Metadata of document with specific PID
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802/info
+		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802
 
 The entire original document
 
