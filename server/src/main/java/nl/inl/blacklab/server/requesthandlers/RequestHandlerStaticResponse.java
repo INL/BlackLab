@@ -3,8 +3,8 @@ package nl.inl.blacklab.server.requesthandlers;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 

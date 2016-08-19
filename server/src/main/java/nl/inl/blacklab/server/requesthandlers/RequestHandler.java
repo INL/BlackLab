@@ -12,8 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.datastream.DataFormat;
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocCount;
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocGroupProperty;
@@ -21,6 +19,8 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataFormat;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.JobFacets;

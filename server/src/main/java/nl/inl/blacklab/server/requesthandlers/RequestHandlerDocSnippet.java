@@ -6,7 +6,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Hit;
@@ -14,6 +13,7 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;

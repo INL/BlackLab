@@ -8,8 +8,8 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import nl.inl.blacklab.datastream.DataFormat;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 

@@ -4,7 +4,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocGroup;
 import nl.inl.blacklab.perdocument.DocGroups;
 import nl.inl.blacklab.perdocument.DocProperty;
@@ -19,6 +18,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDocsGrouped;

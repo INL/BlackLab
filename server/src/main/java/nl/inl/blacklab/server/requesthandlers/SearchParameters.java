@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocGroupProperty;
 import nl.inl.blacklab.perdocument.DocGroupPropertyIdentity;
 import nl.inl.blacklab.perdocument.DocProperty;
@@ -24,6 +23,7 @@ import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.GroupProperty;
 import nl.inl.blacklab.search.grouping.GroupPropertyIdentity;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;

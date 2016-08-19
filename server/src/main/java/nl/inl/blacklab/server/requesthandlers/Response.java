@@ -4,8 +4,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
 
 public class Response {
 	static final Logger logger = Logger.getLogger(Response.class);

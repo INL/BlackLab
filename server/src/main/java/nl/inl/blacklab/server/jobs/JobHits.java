@@ -6,10 +6,10 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.HitsSettings;
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;

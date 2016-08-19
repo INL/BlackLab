@@ -8,10 +8,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;

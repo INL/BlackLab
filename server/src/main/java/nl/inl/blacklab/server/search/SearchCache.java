@@ -13,7 +13,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import nl.inl.blacklab.datastream.DataStream;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.exceptions.TooManyRequests;

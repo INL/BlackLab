@@ -19,9 +19,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import nl.inl.blacklab.datastream.DataFormat;
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.RegexpTooLargeException;
+import nl.inl.blacklab.server.datastream.DataFormat;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.datastream;
+package nl.inl.blacklab.server.datastream;
 
 import java.io.PrintWriter;
 import java.util.List;

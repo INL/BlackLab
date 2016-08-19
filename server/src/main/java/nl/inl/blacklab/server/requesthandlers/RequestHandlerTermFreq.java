@@ -6,13 +6,13 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.LuceneUtil;

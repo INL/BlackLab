@@ -9,7 +9,6 @@ import org.apache.lucene.document.Document;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.perdocument.DocResults;
@@ -28,6 +27,7 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped;
