@@ -313,7 +313,7 @@ public abstract class RequestHandler {
 	 * @return false if the client should not cache the response
 	 */
 	public boolean isCacheAllowed() {
-		return true;
+		return request.getMethod().equals("GET");
 	}
 
 	public boolean omitBlackLabResponseRootElement() {

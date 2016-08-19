@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 
 import nl.inl.blacklab.datastream.DataFormat;
 import nl.inl.blacklab.datastream.DataStream;
+import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
@@ -153,7 +154,6 @@ public class BlackLabServer extends HttpServlet {
 		boolean isJsonp = callbackFunction.length() > 0;
 
 		int cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().clientCacheTimeSec() : 0;
-		//int cacheTime = response.isCacheAllowed() ? searchManager.config().clientCacheTimeSec() : 0;
 
 		boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", debugMode);
 
@@ -179,6 +179,10 @@ public class BlackLabServer extends HttpServlet {
 				httpCode = Response.error(ds, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
 			} catch (InterruptedException e) {
 				httpCode = Response.internalError(ds, e, debugMode, 7);
+			} catch (RegexpTooLargeException e) {
+				httpCode = Response.badRequest(ds, "REGEXP_TOO_LARGE", e.getMessage());
+			} catch (RuntimeException e) {
+				httpCode = Response.internalError(ds, e, debugMode, 32);
 			}
 		}
 		ds.endDocument(rootEl);

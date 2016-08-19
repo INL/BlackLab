@@ -58,7 +58,7 @@ public class Response {
 		return httpCode;
 	}
 
-	// Highest internal error code so far: 30
+	// Highest internal error code so far: 32
 
 	public static int internalError(DataStream ds, Exception e, boolean debugMode, int code) {
 		logger.debug("INTERNAL ERROR " + code + ":");

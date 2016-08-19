@@ -19,8 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.PrefixQuery;
+import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene.search.spans.SpanQuery;
+
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternTranslator;
@@ -28,12 +35,6 @@ import nl.inl.blacklab.search.sequences.SpanQueryExpansion;
 import nl.inl.blacklab.search.sequences.SpanQueryFilterNGrams;
 import nl.inl.blacklab.search.sequences.SpanQueryRepetition;
 import nl.inl.blacklab.search.sequences.SpanQuerySequence;
-
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.PrefixQuery;
-import org.apache.lucene.search.RegexpQuery;
-import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.spans.SpanQuery;
 
 /**
  * Translates a TextPattern to a Lucene SpanQuery object.
@@ -58,8 +59,15 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	@Override
 	public SpanQuery regex(QueryExecutionContext context, String value) {
 		String valueNoStartEndMatch = value.replaceAll("\\^|\\$", "");
-		return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
-				new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(valueNoStartEndMatch))));
+		try {
+			return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
+					new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(valueNoStartEndMatch))));
+		} catch (StackOverflowError e) {
+			// If we pass in a really large regular expression, like a huge
+			// list of words combined with OR, stack overflow occurs inside
+			// Lucene's automaton building code and we may end up here.
+			throw new RegexpTooLargeException();
+		}
 	}
 
 	@Override

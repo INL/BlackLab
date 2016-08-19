@@ -704,6 +704,11 @@ Operations that do not return status or error codes and messages (which is all s
 	</tr>
 	<tr>
 		<td>400 Bad Request </td>
+		<td>REGEXP_TOO_LARGE</td>
+		<td>Regular expression too large. (NOTE: maximum size depends on Java stack size)</td>
+	</tr>
+	<tr>
+		<td>400 Bad Request </td>
 		<td>JSONP_ILLEGAL_CALLBACK </td>
 		<td>Illegal JSONP callback function name. Must be a valid Javascript name.</td>
 	</tr>

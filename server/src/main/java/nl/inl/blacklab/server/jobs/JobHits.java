@@ -8,6 +8,7 @@ import org.apache.lucene.search.QueryWrapperFilter;
 
 import nl.inl.blacklab.datastream.DataStream;
 import nl.inl.blacklab.search.HitsSettings;
+import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -110,6 +111,8 @@ public class JobHits extends JobWithHits {
 				ContextSettings contextSettings = jobDesc.getContextSettings();
 				hitsSettings.setConcordanceType(contextSettings.concType());
 				hitsSettings.setContextSize(contextSettings.size());
+			} catch (RegexpTooLargeException e) {
+				throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
 			} catch (RuntimeException e) {
 				throw new InternalServerError("Internal error", 15, e);
 			}
