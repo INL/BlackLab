@@ -30,6 +30,7 @@ import org.xml.sax.SAXException;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
+import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.MetadataFetcherKbDpo.GetKbMetadata.Metadata;
 import nl.inl.util.XmlUtil;
 
@@ -218,7 +219,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 					// InputStream is = httpEntity.getContent();
 					InputStream is = (InputStream) methHttpEntityGetContent.invoke(httpEntity);
 
-					try (BufferedReader b = new BufferedReader(new InputStreamReader(is, "utf-8"))) {
+					try (BufferedReader b = new BufferedReader(new InputStreamReader(is, Indexer.DEFAULT_INPUT_ENCODING))) {
 						StringBuilder content = new StringBuilder();
 						while (true) {
 							String line = b.readLine();

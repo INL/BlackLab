@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.util;
 
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -19,6 +20,8 @@ import nl.inl.util.ExUtil;
 
 public class ServletUtil {
 	private static final Logger logger = Logger.getLogger(ServletUtil.class);
+
+	static final Charset DEFAULT_ENCODING = Charset.forName("utf-8");
 
 	/**
 	 * Returns the value of a servlet parameter
@@ -166,14 +169,11 @@ public class ServletUtil {
 	 */
 	public static PrintStream getPrintStream(HttpServletResponse responseObject) {
 		try {
-			return new PrintStream(responseObject.getOutputStream(), true, "utf-8");
+			return new PrintStream(responseObject.getOutputStream(), true, DEFAULT_ENCODING.name());
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 	}
-
-	/** Output character encoding */
-	static final String OUTPUT_ENCODING = "UTF-8";
 
 	/** The HTTP date format, to use for the cache header */
 	static DateFormat httpDateFormat;

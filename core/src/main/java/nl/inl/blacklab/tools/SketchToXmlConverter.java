@@ -31,6 +31,7 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
 
+import nl.inl.blacklab.index.Indexer;
 import nl.inl.util.FileUtil;
 import nl.inl.util.StringUtil;
 
@@ -292,8 +293,9 @@ public class SketchToXmlConverter {
 		}
 		File outFile = new File(outDir, outFn);
 		Writer out = new OutputStreamWriter(
-				new BufferedOutputStream(new FileOutputStream(outFile)), "utf-8");
-		out.append("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n")
+				new BufferedOutputStream(new FileOutputStream(outFile)), Indexer.DEFAULT_INPUT_ENCODING);
+		String encName = Indexer.DEFAULT_INPUT_ENCODING.name();
+		out.append("<?xml version=\"1.0\" encoding=\"" + encName + "\" ?>\n")
 				.append("<?xml-stylesheet type=\"text/xsl\" href=\"xsl/corpus.xsl\" ?>\n")
 				.append("<docs file=\"" + outFn + "\">\n");
 		return out;
@@ -321,7 +323,7 @@ public class SketchToXmlConverter {
 
 	private static void convertFile(SketchToXmlConverter converter, File inFile, File outDir)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException {
-		try (Reader in = new InputStreamReader(new FileInputStream(inFile), "utf-8")) {
+		try (Reader in = new InputStreamReader(new FileInputStream(inFile), Indexer.DEFAULT_INPUT_ENCODING)) {
 			String fn = inFile.getName();
 			String outFn = fn.substring(0, fn.lastIndexOf('.')) + ".xml";
 			converter.convert(in, outDir, outFn);

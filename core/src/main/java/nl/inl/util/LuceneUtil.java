@@ -1,6 +1,7 @@
 package nl.inl.util;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,6 +38,8 @@ import org.apache.lucene.util.BytesRef;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 public class LuceneUtil {
+
+	static final Charset LUCENE_DEFAULT_CHARSET = Charset.forName("utf-8");
 
 	private LuceneUtil() {
 	}
@@ -304,7 +307,7 @@ public class LuceneUtil {
 			org.apache.lucene.index.Terms terms = index.terms(fieldName);
 			List<String> results = new ArrayList<>();
 			TermsEnum termsEnum = terms.iterator();
-			BytesRef brPrefix = new BytesRef(prefix.getBytes("utf-8"));
+			BytesRef brPrefix = new BytesRef(prefix.getBytes(LUCENE_DEFAULT_CHARSET));
 			termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
 			while (maxResults < 0 || results.size() < maxResults) {
 				BytesRef term = termsEnum.next();

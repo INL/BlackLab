@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+import java.nio.charset.Charset;
 import java.text.Collator;
 import java.util.Enumeration;
 import java.util.List;
@@ -57,6 +58,8 @@ import nl.inl.util.UnicodeReader;
 public class Indexer {
 
 	static final Logger logger = Logger.getLogger(Indexer.class);
+
+	public static final Charset DEFAULT_INPUT_ENCODING = Charset.forName("utf-8");
 
 	/** Our index */
 	Searcher searcher;
@@ -651,7 +654,7 @@ public class Indexer {
 	 * @throws Exception
 	 */
 	public void index(String documentName, InputStream input) throws Exception {
-		indexReader(documentName, new BufferedReader(new UnicodeReader(input, "utf-8")));
+		indexReader(documentName, new BufferedReader(new UnicodeReader(input, DEFAULT_INPUT_ENCODING)));
 	}
 
 	/**
@@ -676,7 +679,7 @@ public class Indexer {
 				// TODO InputStream version of zip, for zips inside another archive
 				logger.warn("Skipped " + name + ", ZIPs inside archives not yet supported");
 			} else {
-				Reader reader = new BufferedReader(new UnicodeReader(is, "utf-8"));
+				Reader reader = new BufferedReader(new UnicodeReader(is, DEFAULT_INPUT_ENCODING));
 				try {
 					indexReader(name, reader);
 				} finally {

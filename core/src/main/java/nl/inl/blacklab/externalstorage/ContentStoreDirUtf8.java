@@ -23,7 +23,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
@@ -48,8 +47,6 @@ import nl.inl.util.ExUtil;
  * offsets might be [0, 1011, 2015, 3020].
  */
 public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
-	private static final String CHAR_ENCODING = "UTF-8";
-
 	/** Table of contents entry */
 	static class TocEntry {
 		/** id of the string */
@@ -572,11 +569,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 	 * @return the byte buffer representation
 	 */
 	protected byte[] encodeBlock(String block) {
-		try {
-			return block.getBytes(CHAR_ENCODING);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		return block.getBytes(DEFAULT_CHARSET);
 	}
 
 	/**
@@ -591,11 +584,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 	 * @return the original String content
 	 */
 	protected String decodeBlock(byte[] buf, int offset, int length) {
-		try {
-			return new String(buf, offset, length, CHAR_ENCODING);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		return new String(buf, offset, length, DEFAULT_CHARSET);
 	}
 
 	/**

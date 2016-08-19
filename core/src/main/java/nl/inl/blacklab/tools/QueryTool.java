@@ -86,6 +86,9 @@ import nl.inl.util.XmlUtil;
  * Simple command-line querying tool for BlackLab indices.
  */
 public class QueryTool {
+
+	static final Charset INPUT_FILE_ENCODING = Charset.forName("utf-8");
+
 	/** Our output writer. */
 	public PrintWriter out;
 
@@ -469,7 +472,7 @@ public class QueryTool {
 			in = new BufferedReader(new InputStreamReader(System.in, encoding));
 		} else {
 			// Open input file
-			in = FileUtil.openForReading(inputFile, "utf-8");
+			in = FileUtil.openForReading(inputFile, INPUT_FILE_ENCODING);
 			batchMode = true;
 		}
 		try {

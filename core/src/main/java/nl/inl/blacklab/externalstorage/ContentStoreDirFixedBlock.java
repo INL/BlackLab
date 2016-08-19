@@ -21,7 +21,6 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
@@ -72,9 +71,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
 	/** Name of the file containing all the original file contents (zipped) */
 	private static final String CONTENTS_FILE_NAME = "file-contents.dat";
-
-	/** Character encoding used for storing contents */
-	private static final String CHAR_ENCODING = "UTF-8";
 
 	/** How many bytes an int consists of (used when repositioning file pointers) */
 	private static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
@@ -812,18 +808,14 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
 				// Serialize to bytes
 				byte[] encoded;
-				try {
-					while (true) {
-						encoded = unwrittenContents.substring(0, length).getBytes(CHAR_ENCODING);
+				while (true) {
+					encoded = unwrittenContents.substring(0, length).getBytes(DEFAULT_CHARSET);
 
-						// Make sure the block fits in our zip buffer
-						if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
-							break;
-						length -= (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
-						doMinCheck = false;
-					}
-				} catch (UnsupportedEncodingException e) {
-					throw new RuntimeException(e);
+					// Make sure the block fits in our zip buffer
+					if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
+						break;
+					length -= (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
+					doMinCheck = false;
 				}
 
 				// Compress
@@ -887,11 +879,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 					// This shouldn't happen because our max block size prevents it
 					throw new RuntimeException("Unzip buffer size insufficient");
 				}
-				try {
-					return new String(zipbuf, 0, resultLength, CHAR_ENCODING);
-				} catch (UnsupportedEncodingException e) {
-					throw new RuntimeException(e);
-				}
+				return new String(zipbuf, 0, resultLength, DEFAULT_CHARSET);
 			} finally {
 				decompresserPool.release(decompresser);
 				zipbufPool.release(zipbuf);

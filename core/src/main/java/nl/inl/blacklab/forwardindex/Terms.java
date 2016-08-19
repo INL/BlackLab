@@ -1,6 +1,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.nio.charset.Charset;
 
 /**
  * Keeps a list of unique terms and their sort positions.
@@ -8,6 +9,8 @@ import java.io.File;
 public abstract class Terms {
 
 	public static final int NO_TERM = -1;
+
+	static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
 
 	/**
 	 * Get the existing index number of a term, or add it to the term list

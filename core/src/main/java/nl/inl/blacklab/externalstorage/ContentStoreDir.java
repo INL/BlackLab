@@ -187,7 +187,7 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 	 * Read the table of contents from the file
 	 */
 	private void readToc() {
-		try (BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream(tocFile), "utf-8"))) {
+		try (BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream(tocFile), DEFAULT_CHARSET))) {
 			while (true) {
 				String line = f.readLine();
 				if (line == null)
@@ -216,7 +216,7 @@ public class ContentStoreDir extends ContentStoreDirAbstract {
 	 */
 	@Override
 	public void close() {
-		try (PrintWriter f = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tocFile), "utf-8"))) {
+		try (PrintWriter f = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tocFile), DEFAULT_CHARSET))) {
 			for (Map.Entry<Integer, TocEntry> e : toc.entrySet()) {
 				f.println(e.getValue().serialize());
 			}

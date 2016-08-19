@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexstructure;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
 import org.json.JSONObject;
 
+import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.Json;
@@ -36,7 +38,7 @@ import nl.inl.util.StringUtil;
  * Determines the structure of a BlackLab index.
  */
 public class IndexStructure {
-	private static final String INDEX_STRUCT_FILE_ENCODING = "utf-8";
+	private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
 	protected static final Logger logger = Logger.getLogger(IndexStructure.class);
 

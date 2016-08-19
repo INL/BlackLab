@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -37,7 +38,7 @@ public class FileUtil {
 	/**
 	 * The default encoding for opening files.
 	 */
-	private static final String DEFAULT_ENCODING = "utf-8";
+	private static final Charset DEFAULT_ENCODING = Charset.forName("utf-8");
 
 	/**
 	 * Sorts File objects alphabetically, case-insensitively,
@@ -76,6 +77,21 @@ public class FileUtil {
 	 * @return write interface into the file
 	 */
 	public static PrintWriter openForWriting(File file, String encoding) {
+		return openForWriting(file, Charset.forName(encoding));
+	}
+
+	/**
+	 * Opens a file for writing.
+	 *
+	 * Wraps the Writer in a BufferedWriter and PrintWriter for efficient and convenient access.
+	 *
+	 * @param file
+	 *            the file to open
+	 * @param encoding
+	 *            the encoding to use, e.g. "utf-8"
+	 * @return write interface into the file
+	 */
+	public static PrintWriter openForWriting(File file, Charset encoding) {
 		try {
 			return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
 					file), encoding)));
@@ -109,6 +125,21 @@ public class FileUtil {
 	 * @return read interface into the file
 	 */
 	public static BufferedReader openForReading(File file, String encoding) {
+		return openForReading(file, Charset.forName(encoding));
+	}
+
+	/**
+	 * Opens a file for reading, with the default encoding.
+	 *
+	 * Wraps the Reader in a BufferedReader for efficient and convenient access.
+	 *
+	 * @param file
+	 *            the file to open
+	 * @param encoding
+	 *            the encoding to use, e.g. "utf-8"
+	 * @return read interface into the file
+	 */
+	public static BufferedReader openForReading(File file, Charset encoding) {
 		try {
 			return new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding));
 		} catch (Exception e) {
@@ -137,6 +168,19 @@ public class FileUtil {
 	 * @return list of lines
 	 */
 	public static List<String> readLines(File inputFile, String encoding) {
+		return readLines(inputFile, Charset.forName(encoding));
+	}
+
+	/**
+	 * Read a file into a list of lines
+	 *
+	 * @param inputFile
+	 *            the file to read
+	 * @param encoding
+	 *            the encoding to use, e.g. "utf-8"
+	 * @return list of lines
+	 */
+	public static List<String> readLines(File inputFile, Charset encoding) {
 		try {
 			List<String> result = new ArrayList<>();
 			try (BufferedReader in = openForReading(inputFile, encoding)) {

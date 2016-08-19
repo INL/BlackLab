@@ -179,7 +179,7 @@ class TermsImplV3 extends Terms {
 							for ( ; currentTerm < n; currentTerm++) {
 								int offset = termStringOffsets[currentTerm];
 								int length = termStringOffsets[currentTerm + 1] - offset;
-								String str = new String(termStringsThisBlock, offset, length, "utf-8");
+								String str = new String(termStringsThisBlock, offset, length, DEFAULT_CHARSET);
 
 								// We need to find term for id while searching
 								terms[currentTerm] = str;
@@ -207,7 +207,7 @@ class TermsImplV3 extends Terms {
 						for (int id = 0; id < n; id++) {
 							int offset = termStringOffsets[id];
 							int length = termStringOffsets[id + 1] - offset;
-							String str = new String(termStrings, offset, length, "utf-8");
+							String str = new String(termStrings, offset, length, DEFAULT_CHARSET);
 
 							// We need to find term for id while searching
 							terms[id] = str;
@@ -252,7 +252,7 @@ class TermsImplV3 extends Terms {
 					long termStringsByteSize = 0;
 					for (Map.Entry<String, Integer> entry: termIndex.entrySet()) {
 						terms[entry.getValue()] = entry.getKey();
-						termStringsByteSize += entry.getKey().getBytes("utf-8").length;
+						termStringsByteSize += entry.getKey().getBytes(DEFAULT_CHARSET).length;
 					}
 
 					// Calculate the file length and map the file
@@ -272,7 +272,7 @@ class TermsImplV3 extends Terms {
 						byte[] termStrings = new byte[(int)termStringsByteSize];
 						for (int i = 0; i < n; i++) {
 							termStringOffsets[i] = currentOffset;
-							byte[] termBytes = terms[i].getBytes("utf-8");
+							byte[] termBytes = terms[i].getBytes(DEFAULT_CHARSET);
 							System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
 							currentOffset += termBytes.length;
 						}
@@ -299,7 +299,7 @@ class TermsImplV3 extends Terms {
 							byte[] termStrings = new byte[blockSize];
 							while (currentTerm < n) {
 								termStringOffsets[currentTerm] = currentOffset;
-								byte[] termBytes = terms[currentTerm].getBytes("utf-8");
+								byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
 								if (currentOffset + termBytes.length > blockSize) {
 									// Block is full. Write it and continue with next block.
 									break;

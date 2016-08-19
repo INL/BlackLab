@@ -10,6 +10,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -35,6 +36,10 @@ import nl.inl.util.LogUtil;
 public class BlackLabServer extends HttpServlet {
 	private static final Logger logger = Logger.getLogger(BlackLabServer.class);
 
+	static final Charset CONFIG_ENCODING = Charset.forName("utf-8");
+
+	static final Charset OUTPUT_ENCODING = Charset.forName("utf-8");
+
 	/** Manages all our searches */
 	private SearchManager searchManager;
 
@@ -47,7 +52,7 @@ public class BlackLabServer extends HttpServlet {
 
 		super.init();
 		try (InputStream is = openConfigFile()) {
-			searchManager = new SearchManager(Json.read(is, "utf-8"));
+			searchManager = new SearchManager(Json.read(is, CONFIG_ENCODING));
 		} catch (Exception e) {
 			throw new ServletException("Error initializing SearchManager: " + e.getMessage(), e);
 		}
@@ -192,13 +197,13 @@ public class BlackLabServer extends HttpServlet {
 		// Write HTTP headers (status code, encoding, content type and cache)
 		if (!isJsonp) // JSONP request always returns 200 OK because otherwise script doesn't load
 			responseObject.setStatus(httpCode);
-		responseObject.setCharacterEncoding("utf-8");
+		responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
 		responseObject.setContentType(ServletUtil.getContentType(outputType));
 		ServletUtil.writeCacheHeaders(responseObject, cacheTime);
 
 		// === Write the response that was captured in buf
 		try {
-			Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), "utf-8");
+			Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
 			realOut.write(buf.toString());
 			realOut.flush();
 		} catch (IOException e) {

@@ -16,6 +16,7 @@
 package nl.inl.blacklab.externalstorage;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.Set;
 
 import nl.inl.util.VersionFile;
@@ -25,6 +26,9 @@ import nl.inl.util.VersionFile;
  * Store string content by integer id. Quickly retrieve (parts of) the string content.
  */
 public abstract class ContentStore {
+
+	static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
+
 	/**
 	 * Store a document.
 	 *

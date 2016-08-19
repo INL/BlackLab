@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.nio.charset.Charset;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,6 +44,22 @@ public class Json {
 		}
 	}
 
+
+	/**
+	 * Read a JSON object from a stream.
+	 *
+	 * The data may be commented using Java-style end-of-line comments (//).
+	 *
+	 * @param is the stream to read from
+	 * @param encoding character encoding to use
+	 * @return the JSON object read
+	 * @throws JSONException if the data read was not valid commented-JSON
+	 * @throws IOException on I/O error
+	 */
+	public static JSONObject read(InputStream is, Charset encoding) throws JSONException, IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is, encoding));
+		return new JSONObject(readFileStripLineComments(reader));
+	}
 	/**
 	 * Read a JSON object from a stream.
 	 *
@@ -55,8 +72,7 @@ public class Json {
 	 * @throws IOException on I/O error
 	 */
 	public static JSONObject read(InputStream is, String encoding) throws JSONException, IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(is, encoding));
-		return new JSONObject(readFileStripLineComments(reader));
+		return read(is, Charset.forName(encoding));
 	}
 
 	/**

@@ -110,7 +110,7 @@ public class IndexTask {
 					indexer.indexGzip(name, data);
 				} else {
 					// Straight XML data. Read as UTF-8.
-					try (Reader reader = new BufferedReader(new InputStreamReader(data, "utf-8"))) {
+					try (Reader reader = new BufferedReader(new InputStreamReader(data, Indexer.DEFAULT_INPUT_ENCODING))) {
 						logger.debug("Starting indexing");
 						indexer.index(name, reader);
 						logger.debug("Done indexing");
