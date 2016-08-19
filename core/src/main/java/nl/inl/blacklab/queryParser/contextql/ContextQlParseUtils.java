@@ -72,7 +72,7 @@ public class ContextQlParseUtils {
 		boolean isContentsSearch = false;
 		String prop = "word";
 		boolean isProperty;
-		if (searcher != null)
+		if (searcher != null && !searcher.getClass().getSimpleName().startsWith("Mock")) // ARGH...
 			isProperty = searcher.getIndexStructure().getMainContentsField().getProperties().contains(field);
 		else
 			isProperty = field.equals("word") || field.equals("lemma") || field.equals("pos"); // common case

@@ -306,7 +306,7 @@ public abstract class Searcher {
 	private Collator collator = Searcher.defaultCollator;
 
 	/** Analyzer used for indexing our metadata fields */
-	protected Analyzer analyzer;
+	protected Analyzer analyzer = new BLStandardAnalyzer();
 
 	/** Structure of our index */
 	protected IndexStructure indexStructure;

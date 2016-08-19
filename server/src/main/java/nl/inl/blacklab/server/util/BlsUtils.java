@@ -232,7 +232,7 @@ public class BlsUtils {
 	 */
 	public static boolean isValidIndexName(String indexName) {
 		if (indexName.contains(":")) {
-			String[] parts = indexName.split(":");
+			String[] parts = indexName.split(":", 2);
 			indexName = parts[1];
 		}
 		return indexName.matches("[a-zA-Z][a-zA-Z0-9_\\-]*");

@@ -1,4 +1,4 @@
-package nl.inl.blacklab;
+package nl.inl.blacklab.testutil;
 
 import java.io.File;
 import java.io.IOException;
@@ -153,7 +153,7 @@ public class MockSearcher extends Searcher {
 		return null;
 	}
 
-	public void setForwardIndex(String fieldPropName, MockForwardIndex forwardIndex) {
+	public void setForwardIndex(String fieldPropName, ForwardIndex forwardIndex) {
 		addForwardIndex(fieldPropName, forwardIndex);
 	}
 
