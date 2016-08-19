@@ -28,7 +28,7 @@ public abstract class DataStream {
 	 * @param code (string) status code
 	 * @param msg the message
 	 * @param checkAgainMs advice for how long to wait before asking again (ms) (if 0, don't include this)
-	 * @deprecated checkAgainMs will be removed when nonblocking mode is removed
+	 * @deprecated checkAgainMs will be removed eventually
 	 */
 	@Deprecated
 	public void statusObject(String code, String msg, int checkAgainMs) {

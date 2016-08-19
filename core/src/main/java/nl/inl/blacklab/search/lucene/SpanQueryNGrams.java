@@ -79,7 +79,7 @@ public class SpanQueryNGrams extends SpanQueryBase {
 	}
 
 	@Override
-	public void extractTerms(@SuppressWarnings("rawtypes") Set terms) {
+	public void extractTerms(Set<Term> terms) {
 		// no terms here
 	}
 

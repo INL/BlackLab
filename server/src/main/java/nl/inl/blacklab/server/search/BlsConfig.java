@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -15,9 +14,6 @@ import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
 public class BlsConfig {
-
-	@SuppressWarnings("unused")
-	private static final Logger logger = Logger.getLogger(BlsConfig.class);
 
 	/** Maximum context size allowed */
 	private int maxContextSize;

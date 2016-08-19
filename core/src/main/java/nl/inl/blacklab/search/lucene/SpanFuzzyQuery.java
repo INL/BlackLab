@@ -141,9 +141,8 @@ public class SpanFuzzyQuery extends SpanQuery {
 	 * @param terms
 	 *            the set the terms should be added to
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public void extractTerms(Set terms) {
+	public void extractTerms(Set<Term> terms) {
 		if (rewrittenFuzzyQuery == null) {
 			throw new RuntimeException("Query must be rewritten prior to calling extractTerms()!");
 		}

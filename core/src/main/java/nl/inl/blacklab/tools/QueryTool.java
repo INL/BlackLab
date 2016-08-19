@@ -442,7 +442,6 @@ public class QueryTool {
 	 * @throws CorruptIndexException
 	 * @throws IOException
 	 */
-	@SuppressWarnings("resource")
 	private static void run(File indexDir, File inputFile, String encoding)
 			throws UnsupportedEncodingException, CorruptIndexException {
 		if (!indexDir.exists() || !indexDir.isDirectory()) {

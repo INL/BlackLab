@@ -36,7 +36,6 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * requests. The static handle() method will dispatch the request to the
  * appropriate subclass.
  */
-@SuppressWarnings("unused")
 public abstract class RequestHandler {
 	static final Logger logger = Logger.getLogger(RequestHandler.class);
 
@@ -117,7 +116,7 @@ public abstract class RequestHandler {
 		}
 
 		// Choose the RequestHandler subclass
-		RequestHandler requestHandler;
+		RequestHandler requestHandler = null;
 
 		String method = request.getMethod();
 		if (method.equals("DELETE")) {
@@ -163,7 +162,8 @@ public abstract class RequestHandler {
 					// (this allows us to handle very large CQL queries that don't fit in a GET URL)
 					postAsGet = true;
 				}
-			} else if (method.equals("GET")) {
+			}
+			if (method.equals("GET") || (method.equals("POST") && postAsGet)) {
 				if (indexName.equals("cache-info")) {
 					if (resourceOrPathGiven) {
 						return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
@@ -243,16 +243,12 @@ public abstract class RequestHandler {
 					}
 				}
 			} else {
-				return errorObj.internalError("RequestHandler.doGetPost called with wrong method: " + method, debugMode, 10);
+				return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode, 10);
 			}
 		}
 		if (debugMode)
 			requestHandler.setDebug(debugMode);
 		return requestHandler;
-	}
-
-	private boolean isDebugMode() {
-		return debugMode;
 	}
 
 	boolean debugMode;

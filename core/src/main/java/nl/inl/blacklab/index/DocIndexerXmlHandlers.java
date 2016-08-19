@@ -781,11 +781,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			String metadataFetcherClassName = getParameter("metadataFetcherClass");
 			if (metadataFetcherClassName != null) {
 				try {
-					Class<?> metadataFetcherClass = Class
-							.forName(metadataFetcherClassName);
-					@SuppressWarnings("unchecked")
-					Constructor<MetadataFetcher> ctor = (Constructor<MetadataFetcher>) metadataFetcherClass
-							.getConstructor(DocIndexer.class);
+					Class<? extends MetadataFetcher> metadataFetcherClass = Class.forName(metadataFetcherClassName).asSubclass(MetadataFetcher.class);
+					Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
 					metadataFetcher = ctor.newInstance(this);
 				} catch (Exception e) {
 					throw new RuntimeException(e);

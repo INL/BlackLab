@@ -212,36 +212,6 @@ public class ServletUtil {
 		}
 	}
 
-	/**
-	 * Write the HTTP headers for the response, including caching, IE8 XSS protection (off!),
-	 * encoding, save as file.
-	 * @param request the request object
-	 * @param response the response object
-	 * @param defaultFormat default output format to use
-	 * @param noCache
-	 *            if true, outputs headers to make sure the page isn't cached.
-	 */
-	@SuppressWarnings("unused")
-	private static void writeResponseHeaders(HttpServletRequest request, HttpServletResponse response, DataFormat defaultFormat) {
-		boolean noCache = false;
-
-		// For the login page: set the no-cache headers for the response,
-		// so he doesn't see the login page again after the user has logged in.
-		if (noCache) {
-			response.setHeader("Pragma", "No-cache");
-			response.setHeader("Cache-Control", "no-cache");
-			response.setDateHeader("Expires", 1);
-		}
-
-		// Make sure IE8 doesn't do "smart" XSS prevention
-		// (i.e. mangle our URLs and scripts for us)
-		response.setIntHeader("X-XSS-Protection", 0);
-
-		// Set the content headers for the response
-		response.setCharacterEncoding(OUTPUT_ENCODING);
-		response.setContentType(ServletUtil.getContentType(getOutputType(request, defaultFormat)));
-	}
-
 	public static String internalErrorMessage(int code) {
 		return "An internal error occurred. Please contact the administrator. Error code: " + code + ".";
 	}
