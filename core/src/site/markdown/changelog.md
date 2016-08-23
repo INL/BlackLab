@@ -2,7 +2,7 @@
 
 ## Improvements in HEAD
 
-## Improvements up to v1.4.1
+## Improvements up to v1.5.0
 
 ### Fixed
 * Two rare, subtle matching bugs in SpansExpansion and SpansPositionFilter.
@@ -14,21 +14,32 @@
 * Added methods for iterating over all Lucene documents, forward index documents,
   content store documents.
 * Added a test utility that can export your original corpus from the Lucene 
-  index and content store.
+  index and content store (nl.inl.blacklab.testutil.ExportCorpus).
+* Many RuntimeExceptions were changed to more specific subclasses like
+  IllegalArgumentException or UnsupportedOperationException.
+* Made it possible to add a metadata field with a fixed value to every
+  document in a single IndexTool run. Useful if you want to combine multiple
+  corpora into a single index: add each corpus in a separate IndexTool run,
+  with a field Corpus with the appropriate name.
 
 ### BlackLab Server
-* Heavily refactored to be more modular.
-* Replaced building a DataObject tree and serializing it with directly
-  streaming the response data using DataStream, saving memory.
+* Made it possible to use POST for queries, so you can execute very large
+  queries (many kilobytes). Note that very long (>30KB) regular expressions 
+  can trigger problems in Lucene though.
 * Allowed previously forbidden all-docs query (now that large document 
   queries are faster and less memory hungry).
 * Grouped results are sorted by identity by default now.
 * Made docpid a general way to easily filter on a single document PID.
+* Replaced building a DataObject tree and serializing it with directly
+  streaming the response data using DataStream, saving memory and time.
+* Heavily refactored to be more modular.
 * Removed some settings related to nonblocking mode, as they didn't seem
   very useful.
 * Used JSON.org library instead of copy of the code.
 * FIXED: if counting hits takes too long, don't error out but show the 
   results we have.
+* FIXED: Do returns results even if counting all the results was interrupted 
+  because it took too long.
 
 
 ## Improvements up to v1.4.1

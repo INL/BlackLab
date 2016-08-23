@@ -4,7 +4,7 @@
 	<parent>
         <groupId>nl.inl.blacklab</groupId>
         <artifactId>blacklab-all</artifactId>
-        <version>1.4.1</version>
+        <version>1.5.0</version>
     </parent>
 	<artifactId>blacklab</artifactId>
 	<packaging>jar</packaging>
