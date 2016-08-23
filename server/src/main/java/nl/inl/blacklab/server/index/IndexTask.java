@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import org.apache.log4j.Logger;
+
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
@@ -13,8 +15,6 @@ import nl.inl.blacklab.index.IndexListenerDecorator;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
-
-import org.apache.log4j.Logger;
 
 public class IndexTask {
 
@@ -110,16 +110,13 @@ public class IndexTask {
 					indexer.indexGzip(name, data);
 				} else {
 					// Straight XML data. Read as UTF-8.
-					Reader reader = new BufferedReader(new InputStreamReader(data, "utf-8"));
-					try {
+					try (Reader reader = new BufferedReader(new InputStreamReader(data, Indexer.DEFAULT_INPUT_ENCODING))) {
 						logger.debug("Starting indexing");
 						indexer.index(name, reader);
 						logger.debug("Done indexing");
 						if (!anyDocsFound) {
 							indexError = "The file contained no documents in the selected format. Do the corpus and file formats match?";
 						}
-					} finally {
-						reader.close();
 					}
 				}
 			} catch (Exception e) {

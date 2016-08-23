@@ -217,9 +217,9 @@ public class HitPropertyContextWords extends HitProperty {
 	@Override
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
-		String propName = parts.length > 1 ? parts[1] : "";
+		String thePropName = parts.length > 1 ? parts[1] : "";
 		String contextWordSpec = serializeContextWordSpec();
-		return serializeReverse() + PropValSerializeUtil.combineParts("context", propName, sensitive ? "s" : "i", contextWordSpec);
+		return serializeReverse() + PropValSerializeUtil.combineParts("context", thePropName, sensitive ? "s" : "i", contextWordSpec);
 	}
 
 	/**

@@ -7,9 +7,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.nio.charset.Charset;
 
-import nl.inl.util.json.JSONException;
-import nl.inl.util.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Supports reading/writing commented-JSON files.
@@ -22,11 +23,8 @@ public class Json {
 	 * @param file the file to write to
 	 */
 	public static void write(JSONObject data, File file) {
-		PrintWriter out = FileUtil.openForWriting(file);
-		try {
+		try (PrintWriter out = FileUtil.openForWriting(file)) {
 			out.print(data.toString(2));
-		} finally {
-			out.close();
 		}
 	}
 
@@ -41,13 +39,11 @@ public class Json {
 	 * @throws IOException on I/O error
 	 */
 	public static JSONObject read(File file) throws JSONException, IOException {
-		BufferedReader reader = FileUtil.openForReading(file);
-		try {
+		try (BufferedReader reader = FileUtil.openForReading(file)) {
 			return new JSONObject(readFileStripLineComments(reader));
-		} finally {
-			reader.close();
 		}
 	}
+
 
 	/**
 	 * Read a JSON object from a stream.
@@ -60,9 +56,23 @@ public class Json {
 	 * @throws JSONException if the data read was not valid commented-JSON
 	 * @throws IOException on I/O error
 	 */
-	public static JSONObject read(InputStream is, String encoding) throws JSONException, IOException {
-		BufferedReader reader = IoUtil.makeBuffered(new InputStreamReader(is, encoding));
+	public static JSONObject read(InputStream is, Charset encoding) throws JSONException, IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is, encoding));
 		return new JSONObject(readFileStripLineComments(reader));
+	}
+	/**
+	 * Read a JSON object from a stream.
+	 *
+	 * The data may be commented using Java-style end-of-line comments (//).
+	 *
+	 * @param is the stream to read from
+	 * @param encoding character encoding to use
+	 * @return the JSON object read
+	 * @throws JSONException if the data read was not valid commented-JSON
+	 * @throws IOException on I/O error
+	 */
+	public static JSONObject read(InputStream is, String encoding) throws JSONException, IOException {
+		return read(is, Charset.forName(encoding));
 	}
 
 	/**
@@ -76,7 +86,11 @@ public class Json {
 	 * @throws IOException on I/O error
 	 */
 	public static JSONObject read(Reader reader) throws JSONException, IOException {
-		BufferedReader buffReader = IoUtil.makeBuffered(reader);
+		BufferedReader buffReader;
+		if (reader instanceof BufferedReader)
+			buffReader = (BufferedReader) reader;
+		else
+			buffReader = new BufferedReader(reader);
 		return new JSONObject(readFileStripLineComments(buffReader));
 	}
 
@@ -119,11 +133,11 @@ public class Json {
 	public static JSONObject object(Object... keyValues) {
 		JSONObject obj = new JSONObject();
 		if (keyValues.length % 2 != 0) {
-			throw new RuntimeException("Odd number of parameters");
+			throw new IllegalArgumentException("Odd number of parameters");
 		}
 		for (int i = 0; i < keyValues.length; i += 2) {
 			if (!(keyValues[i] instanceof String)) {
-				throw new RuntimeException("Non-string key");
+				throw new IllegalArgumentException("Non-string key");
 			}
 			String key = (String)keyValues[i];
 			Object value = keyValues[i + 1];
@@ -146,7 +160,7 @@ public class Json {
 			object = parent.get(name);
 		if (object != null) {
 			if (!(object instanceof JSONObject))
-				throw new RuntimeException("Not a JSONObject: " + name);
+				throw new IllegalArgumentException("Not a JSONObject: " + name);
 		} else {
 			object = new JSONObject();
 			parent.put(name, object);

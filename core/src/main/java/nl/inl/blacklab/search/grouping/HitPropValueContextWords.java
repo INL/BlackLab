@@ -34,20 +34,6 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		return result;
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder b = new StringBuilder();
-		for (int v: valueTokenId) {
-			String word = v < 0 ? "-" : terms.get(v);
-			if (word.length() > 0) {
-				if (b.length() > 0)
-					b.append(" ");
-				b.append(word);
-			}
-		}
-		return b.toString();
-	}
-
 	public static HitPropValue deserialize(Hits hits, String info) {
 		String[] parts = PropValSerializeUtil.splitParts(info);
 		String fieldName = hits.settings().concordanceField();
@@ -64,6 +50,20 @@ public class HitPropValueContextWords extends HitPropValueContext {
 			ids[i - 2] = tokenId;
 		}
 		return new HitPropValueContextWords(hits, propName, ids, sensitive);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		for (int v: valueTokenId) {
+			String word = v < 0 ? "-" : terms.get(v);
+			if (word.length() > 0) {
+				if (b.length() > 0)
+					b.append(" ");
+				b.append(word);
+			}
+		}
+		return b.toString();
 	}
 
 	@Override

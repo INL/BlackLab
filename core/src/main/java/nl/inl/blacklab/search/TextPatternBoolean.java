@@ -117,7 +117,7 @@ public class TextPatternBoolean extends TextPattern {
 
 			return clone;
 		} catch (CloneNotSupportedException e) {
-			throw new RuntimeException("Clone not supported: " + e.getMessage());
+			throw new UnsupportedOperationException("Clone not supported: " + e.getMessage());
 		}
 	}
 
@@ -185,5 +185,9 @@ public class TextPatternBoolean extends TextPattern {
 		return "BOOLEAN(" + clausesToString(must, context) + ", " + clausesToString(should, context) + ", " + clausesToString(mustNot, context) + ")";
 	}
 
+	@Override
+	public String toString() {
+		return "BOOLEAN(" + clausesToString(must) + ", " + clausesToString(should) + ", " + clausesToString(mustNot) + ")";
+	}
 
 }

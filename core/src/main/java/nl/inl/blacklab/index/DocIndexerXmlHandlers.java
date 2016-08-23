@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.parsers.SAXParser;
@@ -101,8 +102,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 				addMetadataField(attributes.getLocalName(i),
 						attributes.getValue(i));
 			}
-			currentLuceneDoc.add(new Field("fromInputFile",
-					currentDocumentName, indexer.metadataFieldTypeUntokenized));
+			currentLuceneDoc.add(new Field("fromInputFile", currentDocumentName, indexer.metadataFieldTypeUntokenized));
+			addMetadataFieldsFromParameters();
 			indexer.getListener().documentStarted(currentDocumentName);
 		}
 
@@ -230,6 +231,20 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			// Stop if required
 			if (!indexer.continueIndexing())
 				throw new MaxDocsReachedException();
+		}
+	}
+
+	/**
+	 * If any metadata fields were supplied in the indexer parameters,
+	 * add them now.
+	 */
+	void addMetadataFieldsFromParameters() {
+		for (Entry<String, String> e: parameters.entrySet()) {
+			if (e.getKey().startsWith("meta-")) {
+				String fieldName = e.getKey().substring(5);
+				String fieldValue = e.getValue();
+				currentLuceneDoc.add(new Field(fieldName, fieldValue, indexer.metadataFieldTypeUntokenized));
+			}
 		}
 	}
 
@@ -766,11 +781,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 			String metadataFetcherClassName = getParameter("metadataFetcherClass");
 			if (metadataFetcherClassName != null) {
 				try {
-					Class<?> metadataFetcherClass = Class
-							.forName(metadataFetcherClassName);
-					@SuppressWarnings("unchecked")
-					Constructor<MetadataFetcher> ctor = (Constructor<MetadataFetcher>) metadataFetcherClass
-							.getConstructor(DocIndexer.class);
+					Class<? extends MetadataFetcher> metadataFetcherClass = Class.forName(metadataFetcherClassName).asSubclass(MetadataFetcher.class);
+					Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
 					metadataFetcher = ctor.newInstance(this);
 				} catch (Exception e) {
 					throw new RuntimeException(e);

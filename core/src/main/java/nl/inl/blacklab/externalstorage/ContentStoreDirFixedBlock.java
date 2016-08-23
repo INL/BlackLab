@@ -21,12 +21,13 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.util.AbstractSet;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
@@ -34,7 +35,9 @@ import java.util.zip.Inflater;
 
 import org.apache.log4j.Logger;
 import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.api.iterator.MutableIntIterator;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
@@ -69,9 +72,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	/** Name of the file containing all the original file contents (zipped) */
 	private static final String CONTENTS_FILE_NAME = "file-contents.dat";
 
-	/** Character encoding used for storing contents */
-	private static final String CHAR_ENCODING = "UTF-8";
-
 	/** How many bytes an int consists of (used when repositioning file pointers) */
 	private static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
 
@@ -103,7 +103,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private static final int TYPICAL_BLOCK_SIZE_CHARACTERS = (int)(BLOCK_SIZE_BYTES * CONSERVATIVE_COMPRESSION_FACTOR);
 
 	/** The expected maximum compression factor */
-	private static final float MAX_COMPRESSION_FACTOR = 15;
+	private static final float MAX_COMPRESSION_FACTOR = 20;
 
 	/** Maximum byte size of unencoded block (we make the zip buffer one larger to detect when buffer space was insufficient) */
 	private static final int MAX_BLOCK_SIZE_BYTES = (int)(BLOCK_SIZE_BYTES * MAX_COMPRESSION_FACTOR);
@@ -612,8 +612,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	private void ensureContentsFileOpen() {
 		try {
 			if (rafContentsFile == null) {
-				File contentsFile = new File(dir, CONTENTS_FILE_NAME);
-				rafContentsFile = new RandomAccessFile(contentsFile, "rw");
+				File theContentsFile = new File(dir, CONTENTS_FILE_NAME);
+				rafContentsFile = new RandomAccessFile(theContentsFile, "rw");
 				fchContentsFile = rafContentsFile.getChannel();
 			}
 		} catch (FileNotFoundException e) {
@@ -678,16 +678,14 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			// Sanity-check parameters
 			int n = start.length;
 			if (n != end.length)
-				throw new RuntimeException("start and end must be of equal length");
+				throw new IllegalArgumentException("start and end must be of equal length");
 
 			// Create array for results
 			String[] result = new String[n];
 
 			// Open the file
-			FileInputStream fileInputStream = new FileInputStream(contentsFile);
-			try {
-				FileChannel fileChannel = fileInputStream.getChannel();
-				try {
+			try (FileInputStream fileInputStream = new FileInputStream(contentsFile)) {
+				try (FileChannel fileChannel = fileInputStream.getChannel()) {
 					// Retrieve the strings requested
 					for (int i = 0; i < n; i++) {
 						int a = start[i];
@@ -700,14 +698,14 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
 						// Check values
 						if (a < 0 || b < 0) {
-							throw new RuntimeException("Illegal values, start = " + a + ", end = " + b);
+							throw new IllegalArgumentException("Illegal values, start = " + a + ", end = " + b);
 						}
 						if (a > e.entryLengthCharacters || b > e.entryLengthCharacters) {
-							throw new RuntimeException("Value(s) out of range, start = " + a
+							throw new IllegalArgumentException("Value(s) out of range, start = " + a
 									+ ", end = " + b + ", content length = " + e.entryLengthCharacters);
 						}
 						if (b <= a) {
-							throw new RuntimeException(
+							throw new IllegalArgumentException(
 									"Tried to read empty or negative length snippet (from " + a
 											+ " to " + b + ")");
 						}
@@ -751,11 +749,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 						int firstChar = a - charOffset;
 						result[i] = decoded.substring(firstChar, firstChar + b - a);
 					}
-				} finally {
-					fileChannel.close();
 				}
-			} finally {
-				fileInputStream.close();
 			}
 			return result;
 		} catch (Exception e) {
@@ -810,21 +804,18 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		byte[] zipbuf = zipbufPool.acquire();
 		boolean doMinCheck = true;
 		try {
-			while(true) {
+			while (true) {
 
 				// Serialize to bytes
 				byte[] encoded;
-				try {
-					while (true) {
-						encoded = unwrittenContents.substring(0, length).getBytes(CHAR_ENCODING);
+				while (true) {
+					encoded = unwrittenContents.substring(0, length).getBytes(DEFAULT_CHARSET);
 
-						// Make sure the block fits in our zip buffer
-						if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
-							break;
-						length -= (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
-					}
-				} catch (UnsupportedEncodingException e) {
-					throw new RuntimeException(e);
+					// Make sure the block fits in our zip buffer
+					if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
+						break;
+					length -= (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
+					doMinCheck = false;
 				}
 
 				// Compress
@@ -888,11 +879,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 					// This shouldn't happen because our max block size prevents it
 					throw new RuntimeException("Unzip buffer size insufficient");
 				}
-				try {
-					return new String(zipbuf, 0, resultLength, CHAR_ENCODING);
-				} catch (UnsupportedEncodingException e) {
-					throw new RuntimeException(e);
-				}
+				return new String(zipbuf, 0, resultLength, DEFAULT_CHARSET);
 			} finally {
 				decompresserPool.release(decompresser);
 				zipbufPool.release(zipbuf);
@@ -902,4 +889,35 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		}
 	}
 
+	@Override
+	public Set<Integer> idSet() {
+		final MutableIntSet cids = toc.keySet();
+		final MutableIntIterator it = cids.intIterator();
+		return new AbstractSet<Integer>() {
+			@Override
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					@Override
+					public boolean hasNext() {
+						return it.hasNext();
+					}
+
+					@Override
+					public Integer next() {
+						return it.next();
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+
+			@Override
+			public int size() {
+				return cids.size();
+			}
+		};
+	}
 }

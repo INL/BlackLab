@@ -95,31 +95,55 @@ public abstract class TextPattern implements Cloneable {
 	}
 
 	@Override
-	public String toString() {
-		return toString(null, Searcher.DEFAULT_CONTENTS_FIELD_NAME);
-	}
+	public abstract String toString();
 
+	/**
+	 * @param searcher searcher object
+	 * @return string representation
+	 * @deprecated toString() shouldn't depend on external information. Use {@link #toString()}.
+	 */
+	@Deprecated
 	public String toString(Searcher searcher) {
-		return toString(searcher, Searcher.DEFAULT_CONTENTS_FIELD_NAME);
+		return toString(searcher.getDefaultExecutionContext());
 	}
 
-//	public String toString(String fieldName) {
-//		return toString(QueryExecutionContext.getSimple(null, fieldName));
-//	}
-
+	/**
+	 * @param searcher searcher object
+	 * @param fieldName contents field name
+	 * @return string representation
+	 * @deprecated toString() shouldn't depend on external information. Use {@link #toString()}.
+	 */
+	@Deprecated
 	public String toString(Searcher searcher, String fieldName) {
 		return toString(searcher.getDefaultExecutionContext());
 	}
 
-	abstract public String toString(QueryExecutionContext context);
+	/**
+	 * @param context the execution context
+	 * @return string representation
+	 * @deprecated toString() shouldn't depend on external information. Use {@link #toString()}.
+	 */
+	@Deprecated
+	public abstract String toString(QueryExecutionContext context);
 
+	protected String clausesToString(List<TextPattern> clauses) {
+		StringBuilder b = new StringBuilder();
+		for (TextPattern clause: clauses) {
+			if (b.length() > 0)
+				b.append(", ");
+			b.append(clause.toString());
+		}
+		return b.toString();
+	}
+
+	@Deprecated
 	protected String clausesToString(List<TextPattern> clauses,
 			QueryExecutionContext context) {
 		StringBuilder b = new StringBuilder();
 		for (TextPattern clause: clauses) {
 			if (b.length() > 0)
 				b.append(", ");
-			b.append(clause.toString(context));
+			b.append(context == null ? clause.toString() : clause.toString(context));
 		}
 		return b.toString();
 	}
@@ -284,7 +308,7 @@ public abstract class TextPattern implements Cloneable {
 	public TextPattern noEmpty() {
 		if (!matchesEmptySequence())
 			return this;
-		throw new RuntimeException("noEmpty() must be implemented!");
+		throw new UnsupportedOperationException("noEmpty() must be implemented!");
 	}
 
 }

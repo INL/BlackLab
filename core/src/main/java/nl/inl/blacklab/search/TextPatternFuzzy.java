@@ -75,8 +75,14 @@ public class TextPatternFuzzy extends TextPattern {
 		return value.hashCode() + 13 * maxEdits + 31 * prefixLength;
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "FUZZY(" + context.luceneField() + ", " + context.optDesensitize(value) + ", " + maxEdits + ", " + prefixLength + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "FUZZY(" + value + ", " + maxEdits + ", " + prefixLength + ")";
 	}
 }

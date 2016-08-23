@@ -59,18 +59,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
 	protected int nDocumentsSkipped = 0;
 
-//	/**
-//	 * The setting to use when creating Field objects that we want to be analyzed
-//	 * (i.e., with or without norms; default is without)
-//	 */
-//	public Field.Index indexAnalyzed = Field.Index.ANALYZED_NO_NORMS;
-//
-//	/**
-//	 * The setting to use when creating Field objects that we don't want to be analyzed
-//	 * (i.e., with or without norms; default is without)
-//	 */
-//	public Field.Index indexNotAnalyzed = Field.Index.NOT_ANALYZED_NO_NORMS;
-
 	/** Do we want to omit norms? (Default: yes) */
 	public boolean omitNorms = true;
 
@@ -92,8 +80,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	 */
 	public void setOmitNorms(boolean b) {
 		omitNorms = b;
-//		indexAnalyzed = b ? Field.Index.ANALYZED_NO_NORMS : Field.Index.ANALYZED;
-//		indexNotAnalyzed = b ? Field.Index.NOT_ANALYZED_NO_NORMS : Field.Index.NOT_ANALYZED;
 	}
 
 	boolean continueIndexing() {
@@ -224,7 +210,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	/**
 	 * Parameters passed to this indexer
 	 */
-	private Map<String, String> parameters = new HashMap<>();
+	protected Map<String, String> parameters = new HashMap<>();
 
 	@Override
 	public boolean hasParameter(String name) {
@@ -301,13 +287,13 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	protected org.apache.lucene.document.FieldType luceneTypeFromIndexStructType(FieldType type) {
 		switch (type) {
 		case NUMERIC:
-			throw new RuntimeException("Numeric types should be indexed using IntField, etc.");
+			throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
 		case TEXT:
 			return indexer.metadataFieldTypeTokenized;
 		case UNTOKENIZED:
 			return indexer.metadataFieldTypeUntokenized;
 		default:
-			throw new RuntimeException("Unknown field type");
+			throw new IllegalArgumentException("Unknown field type: " + type);
 		}
 	}
 

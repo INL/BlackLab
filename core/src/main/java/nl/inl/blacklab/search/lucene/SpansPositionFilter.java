@@ -131,7 +131,7 @@ class SpansPositionFilter extends BLSpans {
 		alreadyAtFirstMatch = false;
 
 		// Are we done yet?
-		if (producerDoc == NO_MORE_DOCS || filterDoc == NO_MORE_DOCS)
+		if (producerDoc == NO_MORE_DOCS /*|| filterDoc == NO_MORE_DOCS*/)
 			return NO_MORE_DOCS;
 
 		// Advance container
@@ -449,7 +449,7 @@ class SpansPositionFilter extends BLSpans {
 				}
 				break;
 			default:
-				throw new RuntimeException("Unknown filter operation " + op);
+				throw new IllegalArgumentException("Unknown filter operation " + op);
 			}
 			// Were we looking for non-matching producer hits, and have we not found any?
 			if (invertedMatch) {
@@ -511,7 +511,7 @@ class SpansPositionFilter extends BLSpans {
 		case MATCHES:
 			return "SpansContaining(" + producer + " " + not + "matches " + filter + ign + ")";
 		default:
-			throw new RuntimeException("Unknown filter operation " + op);
+			throw new IllegalArgumentException("Unknown filter operation " + op);
 		}
 	}
 

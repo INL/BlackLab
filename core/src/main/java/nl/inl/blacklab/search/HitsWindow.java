@@ -64,7 +64,7 @@ public class HitsWindow extends HitsImpl {
 		boolean emptyResultSet = !source.sizeAtLeast(1);
 		if (first < 0 || (emptyResultSet && first > 0) ||
 			(!emptyResultSet && !source.sizeAtLeast(first + 1))) {
-			throw new RuntimeException("First hit out of range");
+			throw new IllegalArgumentException("First hit out of range");
 		}
 
 		// Auto-clamp number

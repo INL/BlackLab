@@ -16,6 +16,7 @@
 package nl.inl.blacklab.externalstorage;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.Set;
 
 import nl.inl.util.VersionFile;
@@ -25,6 +26,9 @@ import nl.inl.util.VersionFile;
  * Store string content by integer id. Quickly retrieve (parts of) the string content.
  */
 public abstract class ContentStore {
+
+	static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
+
 	/**
 	 * Store a document.
 	 *
@@ -135,9 +139,26 @@ public abstract class ContentStore {
 		if (type.equals("utf8"))
 			return new ContentStoreDirUtf8(indexXmlDir, create);
 		if (type.equals("utf16")) {
-			throw new RuntimeException("UTF-16 content store is deprecated. Please re-index your data.");
+			throw new UnsupportedOperationException("UTF-16 content store is deprecated. Please re-index your data.");
 		}
-		throw new RuntimeException("Unknown content store type " + type);
+		throw new UnsupportedOperationException("Unknown content store type " + type);
+	}
+
+	/** @return the set of all content store ids */
+	public abstract Set<Integer> idSet();
+
+	/** A task to perform on a document in the content store. */
+	public interface DocTask {
+		void perform(int cid, String contents);
+	}
+
+	/** Perform a task on each document in the content store.
+	 * @param task the task to perform
+	 */
+	public void forEachDocument(DocTask task) {
+		for (Integer cid: idSet()) {
+			task.perform(cid, retrieve(cid));
+		}
 	}
 
 }

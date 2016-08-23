@@ -12,11 +12,9 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -29,7 +27,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public int handle(DataStream ds) throws BlsException {
 		//TODO: use background job?
 
 		Searcher searcher = getSearcher();
@@ -37,7 +35,10 @@ public class RequestHandlerTermFreq extends RequestHandler {
 		ComplexFieldDesc cfd = struct.getMainContentsField();
 		String propName = searchParam.getString("property");
 		boolean sensitive = searchParam.getBoolean("sensitive");
-		Query q = SearchManager.parseFilter(searcher, searchParam.getString("filter"), searchParam.getString("filterlang"));
+
+		Query q = searchParam.getFilterQuery();
+		if (q == null)
+			return Response.badRequest(ds, "NO_FILTER_GIVEN", "Document filter required. Please specify 'filter' parameter.");
 		Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher.getIndexSearcher(), q, cfd.getName(), propName, sensitive ? "s" : "i");
 
 		TermFrequencyList tfl = new TermFrequencyList(freq.size());
@@ -50,21 +51,23 @@ public class RequestHandlerTermFreq extends RequestHandler {
 		if (first < 0 || first >= tfl.size())
 			first = 0;
 		int number = searchParam.getInteger("number");
-		if (number < 0 || number > searchMan.getMaxPageSize())
-			number = searchMan.getDefaultPageSize();
+		if (number < 0 || number > searchMan.config().maxPageSize())
+			number = searchMan.config().defaultPageSize();
 		int last = first + number;
 		if (last > tfl.size())
 			last = tfl.size();
-		DataObjectMapAttribute termFreq = new DataObjectMapAttribute("term", "text");
-		for (TermFrequency tf: tfl.subList(first, last)) {
-			termFreq.put(tf.term, tf.frequency);
-		}
 
 		// Assemble all the parts
-		DataObjectMapElement response = new DataObjectMapElement();
-		response.put("termFreq", termFreq);
+		ds.startMap();
+		ds.startEntry("termFreq").startMap();
+		//DataObjectMapAttribute termFreq = new DataObjectMapAttribute("term", "text");
+		for (TermFrequency tf: tfl.subList(first, last)) {
+			ds.attrEntry("term", "text", tf.term, tf.frequency);
+		}
+		ds.endMap().endEntry();
+		ds.endMap();
 
-		return new Response(response);
+		return HTTP_OK;
 	}
 
 

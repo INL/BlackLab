@@ -82,9 +82,15 @@ public class TextPatternEdge extends TextPatternCombiner {
 		return super.hashCode() + (rightEdge ? 13 : 0);
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "EDGE(" + clauses.get(0).toString(context) + ", " + rightEdge + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "EDGE(" + clauses.get(0).toString() + ", " + rightEdge + ")";
 	}
 
 }

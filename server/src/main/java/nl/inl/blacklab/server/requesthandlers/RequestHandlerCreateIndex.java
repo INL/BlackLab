@@ -4,8 +4,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.User;
 
 /**
  * Display the contents of the cache.
@@ -16,31 +17,31 @@ public class RequestHandlerCreateIndex extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public int handle(DataStream ds) throws BlsException {
 		// Create index and return success
 		try {
 			String newIndexName = request.getParameter("name");
 			if (newIndexName == null || newIndexName.length() == 0)
-				return Response.badRequest("ILLEGAL_INDEX_NAME", "You didn't specify the required name parameter.");
+				return Response.badRequest(ds, "ILLEGAL_INDEX_NAME", "You didn't specify the required name parameter.");
 			String displayName = request.getParameter("display");
 			String documentFormat = request.getParameter("format");
 
 			debug(logger, "REQ create index: " + newIndexName + ", " + displayName + ", " + documentFormat);
 			if (!user.isLoggedIn() || !newIndexName.startsWith(user.getUserId() + ":")) {
 				logger.debug("(forbidden, cannot create index in another user's area)");
-				return Response.forbidden("You can only create indices in your own private area.");
+				return Response.forbidden(ds, "You can only create indices in your own private area.");
 			}
 
-			searchMan.createIndex(newIndexName, displayName, documentFormat);
+			indexMan.createIndex(newIndexName, displayName, documentFormat);
 
-			return Response.status("SUCCESS", "Index created succesfully.", HttpServletResponse.SC_CREATED);
+			return Response.status(ds, "SUCCESS", "Index created succesfully.", HttpServletResponse.SC_CREATED);
 			//DataObjectMapElement response = DataObject.statusObject("SUCCESS", "Index created succesfully.");
 			//response.put("url", ServletUtil.getServletBaseUrl(request) + "/" + indexName);
 			//return new Response(response);
 		} catch (BlsException e) {
 			throw e;
 		} catch (Exception e) {
-			return Response.internalError(e, debugMode, 11);
+			return Response.internalError(ds, e, debugMode, 11);
 		}
 	}
 }

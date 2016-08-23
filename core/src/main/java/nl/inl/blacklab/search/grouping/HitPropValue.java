@@ -35,9 +35,6 @@ public abstract class HitPropValue implements Comparable<Object> {
 		return compareTo(obj) == 0;
 	}
 
-	@Override
-	public abstract String toString();
-
 	/**
 	 * Convert the String representation of a HitPropValue back into the HitPropValue
 	 * @param hits hits object (for context word related HitPropValues)
@@ -77,4 +74,7 @@ public abstract class HitPropValue implements Comparable<Object> {
 	 * @return the serialized object
 	 */
 	public abstract String serialize();
+
+	@Override
+	public abstract String toString();
 }

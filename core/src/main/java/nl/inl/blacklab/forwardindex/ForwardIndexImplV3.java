@@ -26,6 +26,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -33,6 +34,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
@@ -98,10 +101,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private long writeBufOffset;
 
 	/** The table of contents (where documents start in the tokens file and how long they are) */
-	private ArrayList<TocEntry> toc;
+	ArrayList<TocEntry> toc;
 
 	/** Deleted TOC entries. Always sorted by size. */
-	private ArrayList<TocEntry> deletedTocEntries;
+	ArrayList<TocEntry> deletedTocEntries;
 
 	/** The table of contents (TOC) file, docs.dat */
 	private File tocFile;
@@ -198,7 +201,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create, boolean largeTermsFileSupport) {
 		if (!dir.exists()) {
 			if (!create)
-				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
+				throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
 			dir.mkdir();
 		}
 
@@ -412,12 +415,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				deleted[i] = (byte) (e.deleted ? 1 : 0);
 				i++;
 			}
-			RandomAccessFile raf = new RandomAccessFile(tocFile, "rw");
-			try {
-				FileChannel fc = raf.getChannel();
-				long fileSize = SIZEOF_INT + (SIZEOF_LONG + SIZEOF_INT + 1) * n;
-				fc.truncate(fileSize);
-				try {
+			try (RandomAccessFile raf = new RandomAccessFile(tocFile, "rw")) {
+				try (FileChannel fc = raf.getChannel()) {
+					long fileSize = SIZEOF_INT + (SIZEOF_LONG + SIZEOF_INT + 1) * n;
+					fc.truncate(fileSize);
 					MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileSize);
 					buf.putInt(n);
 					LongBuffer lb = buf.asLongBuffer();
@@ -427,11 +428,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 					ib.put(length);
 					buf.position(buf.position() + SIZEOF_INT * n);
 					buf.put(deleted);
-				} finally {
-					fc.close();
 				}
-			} finally {
-				raf.close();
 			}
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -620,7 +617,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 			int n = start.length;
 			if (n != end.length)
-				throw new RuntimeException("start and end must be of equal length");
+				throw new IllegalArgumentException("start and end must be of equal length");
 			List<int[]> result = new ArrayList<>(n);
 
 			for (int i = 0; i < n; i++) {
@@ -629,18 +626,18 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				if (end[i] == -1)
 					end[i] = e.length;
 				if (start[i] < 0 || end[i] < 0) {
-					throw new RuntimeException("Illegal values, start = " + start[i] + ", end = "
+					throw new IllegalArgumentException("Illegal values, start = " + start[i] + ", end = "
 							+ end[i]);
 				}
 				if (end[i] > e.length) // Can happen while making KWICs because we don't know the
 										// doc length until here
 					end[i] = e.length;
 				if (start[i] > e.length || end[i] > e.length) {
-					throw new RuntimeException("Value(s) out of range, start = " + start[i]
+					throw new IllegalArgumentException("Value(s) out of range, start = " + start[i]
 							+ ", end = " + end[i] + ", content length = " + e.length);
 				}
 				if (end[i] <= start[i]) {
-					throw new RuntimeException(
+					throw new IllegalArgumentException(
 							"Tried to read empty or negative length snippet (from " + start[i]
 									+ " to " + end[i] + ")");
 				}
@@ -804,6 +801,64 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	@Override
 	protected void setLargeTermsFileSupport(boolean b) {
 		this.useBlockBasedTermsFile = b;
+	}
+
+	@Override
+	public Set<Integer> idSet() {
+		return new AbstractSet<Integer>() {
+			@Override
+			public boolean contains(Object o) {
+				return !toc.get((Integer)o).deleted;
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return toc.size() == deletedTocEntries.size();
+			}
+
+			@Override
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					int current = -1;
+					int next = -1;
+
+					@Override
+					public boolean hasNext() {
+						if (next < 0)
+							findNext();
+						return next < toc.size();
+					}
+
+					private void findNext() {
+						next = current + 1;
+						while (next < toc.size() && toc.get(next).deleted) {
+							next++;
+						}
+					}
+
+					@Override
+					public Integer next() {
+						if (next < 0)
+							findNext();
+						if (next >= toc.size())
+							throw new NoSuchElementException();
+						current = next;
+						next = -1;
+						return current;
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+
+			@Override
+			public int size() {
+				return toc.size() - deletedTocEntries.size();
+			}
+		};
 	}
 
 }

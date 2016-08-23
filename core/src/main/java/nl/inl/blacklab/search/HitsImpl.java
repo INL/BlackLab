@@ -538,6 +538,9 @@ public class HitsImpl extends Hits {
 						hits.add(offsetHit);
 					}
 				}
+			} catch (InterruptedException e) {
+				maxHitsRetrieved = maxHitsCounted = true; // we've stopped retrieving/counting
+				throw e;
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -647,6 +650,7 @@ public class HitsImpl extends Hits {
 			// Returned value is probably not the correct total number of hits,
 			// but will not cause any crashes. The thread was interrupted anyway,
 			// the value should never be presented to the user.
+			maxHitsCounted = true; // indicate that we've stopped counting
 			Thread.currentThread().interrupt();
 		}
 		return hits.size();
@@ -1145,7 +1149,7 @@ public class HitsImpl extends Hits {
 			return conc1;
 		}
 
-		throw new RuntimeException("Concordance type is set to CONTENT_STORE, but you can only make KWICs from the forward index. NOTE: if your index has no 'punct' property, concordance type will default to CONTENT_STORE instead of FORWARD_INDEX.");
+		throw new UnsupportedOperationException("Concordance type is set to CONTENT_STORE, but you can only make KWICs from the forward index. NOTE: if your index has no 'punct' property, concordance type will default to CONTENT_STORE instead of FORWARD_INDEX.");
 	}
 
 	/**
@@ -1389,12 +1393,12 @@ public class HitsImpl extends Hits {
 	 *    Forward indices for the attributes, or null if none
 	 * @param wordsAroundHit
 	 *            number of words left and right of hit to fetch
-	 * @param kwics
+	 * @param theKwics
 	 *            where to add the KWICs
 	 */
 	synchronized void makeKwicsSingleDocForwardIndex(ForwardIndex forwardIndex,
 			ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices,
-			int wordsAroundHit, Map<Hit, Kwic> kwics) {
+			int wordsAroundHit, Map<Hit, Kwic> theKwics) {
 		if (hits.isEmpty())
 			return;
 
@@ -1482,7 +1486,7 @@ public class HitsImpl extends Hits {
 			}
 			properties.add(concWordFI);
 			Kwic kwic = new Kwic(properties, tokens, contextHitStart, contextRightStart);
-			kwics.put(h, kwic);
+			theKwics.put(h, kwic);
 		}
 
 		if (oldContexts != null) {
@@ -1714,7 +1718,7 @@ public class HitsImpl extends Hits {
 	}
 
 	@Override
-	protected void setMaxHitsCounted(boolean maxHitsCounted) {
+	public void setMaxHitsCounted(boolean maxHitsCounted) {
 		this.maxHitsCounted = maxHitsCounted;
 	}
 

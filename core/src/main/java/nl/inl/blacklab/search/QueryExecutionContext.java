@@ -55,7 +55,7 @@ public class QueryExecutionContext {
 		this.fieldName = fieldName;
 		String[] parts = propName.split(":", -1);
 		if (parts.length > 2)
-			throw new RuntimeException("propName contains more than one colon!");
+			throw new IllegalArgumentException("propName contains more than one colon!");
 		this.propName = parts[0];
 		this.subpropPrefix = parts.length == 2 ? parts[1] + ComplexFieldUtil.ASCII_UNIT_SEPARATOR : "";
 		this.caseSensitive = caseSensitive;

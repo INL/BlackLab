@@ -10,11 +10,10 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObjectMapAttribute;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.StringUtil;
 
 /**
@@ -27,7 +26,12 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() throws BlsException {
+	public boolean isCacheAllowed() {
+		return false; // Because reindexing might change something
+	}
+
+	@Override
+	public int handle(DataStream ds) throws BlsException {
 
 		int i = urlPathInfo.indexOf('/');
 		String fieldName = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
@@ -39,58 +43,59 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 		Searcher searcher = getSearcher();
 		IndexStructure struct = searcher.getIndexStructure();
 
-		DataObjectMapElement response = new DataObjectMapElement();
+		ds.startMap();
 		if (struct.getComplexFields().contains(fieldName)) {
 			ComplexFieldDesc fieldDesc = struct.getComplexFieldDesc(fieldName);
-			response.put("indexName", indexName);
-			response.put("fieldName", fieldName);
-			response.put("isComplexField", "true");
-			response.put("displayName", fieldDesc.getDisplayName());
-			response.put("description", fieldDesc.getDescription());
-			response.put("hasContentStore", fieldDesc.hasContentStore());
-			response.put("hasXmlTags", fieldDesc.hasXmlTags());
-			response.put("hasLengthTokens", fieldDesc.hasLengthTokens());
-			response.put("mainProperty", fieldDesc.getMainProperty().getName());
-			DataObjectMapAttribute doProps = new DataObjectMapAttribute("property", "name");
+			ds	.entry("indexName", indexName)
+				.entry("fieldName", fieldName)
+				.entry("isComplexField", "true")
+				.entry("displayName", fieldDesc.getDisplayName())
+				.entry("description", fieldDesc.getDescription())
+				.entry("hasContentStore", fieldDesc.hasContentStore())
+				.entry("hasXmlTags", fieldDesc.hasXmlTags())
+				.entry("hasLengthTokens", fieldDesc.hasLengthTokens())
+				.entry("mainProperty", fieldDesc.getMainProperty().getName());
+			ds.startEntry("properties").startMap();
 			for (String propName: fieldDesc.getProperties()) {
 				PropertyDesc propDesc = fieldDesc.getPropertyDesc(propName);
-				DataObjectMapElement doProp = new DataObjectMapElement();
-				doProp.put("hasForwardIndex", propDesc.hasForwardIndex());
-				doProp.put("sensitivity", propDesc.getSensitivity().toString());
-				doProp.put("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative()));
-				doProps.put(propName, doProp);
+				ds.startAttrEntry("property", "name", propName)
+					.startMap()
+						.entry("hasForwardIndex", propDesc.hasForwardIndex())
+						.entry("sensitivity", propDesc.getSensitivity().toString())
+						.entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative()))
+					.endMap()
+				.endAttrEntry();
 			}
-			response.put("properties", doProps);
+			ds.endMap().endEntry();
 		} else {
 			MetadataFieldDesc fd = struct.getMetadataFieldDesc(fieldName);
 			Map<String, Integer> values = fd.getValueDistribution();
 			boolean valueListComplete = fd.isValueListComplete();
 
 			// Assemble response
-			DataObjectMapAttribute doFieldValues = new DataObjectMapAttribute("value", "text");
+			ds	.entry("indexName", indexName)
+				.entry("fieldName", fieldName)
+				.entry("isComplexField", "false")
+				.entry("displayName", fd.getDisplayName())
+				.entry("description", fd.getDescription())
+				.entry("group", fd.getGroup())
+				.entry("type", fd.getType().toString())
+				.entry("analyzer", fd.getAnalyzerName())
+				.entry("unknownCondition", fd.getUnknownCondition().toString())
+				.entry("unknownValue", fd.getUnknownValue());
+			ds.startEntry("fieldValues").startMap();
 			for (Map.Entry<String, Integer> e: values.entrySet()) {
-				doFieldValues.put(e.getKey(), e.getValue());
+				ds.attrEntry("value", "text", e.getKey(), e.getValue());
 			}
-			response.put("indexName", indexName);
-			response.put("fieldName", fieldName);
-			response.put("isComplexField", "false");
-			response.put("displayName", fd.getDisplayName());
-			response.put("description", fd.getDescription());
-			response.put("group", fd.getGroup());
-			response.put("type", fd.getType().toString());
-			response.put("analyzer", fd.getAnalyzerName());
-			response.put("unknownCondition", fd.getUnknownCondition().toString());
-			response.put("unknownValue", fd.getUnknownValue());
-			response.put("fieldValues", doFieldValues);
-			response.put("valueListComplete", valueListComplete);
+			ds.endMap().endEntry()
+				.entry("valueListComplete", valueListComplete);
 		}
+		ds.endMap();
 
 		// Remove any empty settings
-		response.removeEmptyMapValues();
+		//response.removeEmptyMapValues();
 
-		Response responseObj = new Response(response);
-		responseObj.setCacheAllowed(false); // Because reindexing might change something
-		return responseObj;
+		return HTTP_OK;
 	}
 
 }

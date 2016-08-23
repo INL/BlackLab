@@ -27,11 +27,6 @@ public class HitPropValueInt extends HitPropValue {
 		return value == ((HitPropValueInt)obj).value;
 	}
 
-	@Override
-	public String toString() {
-		return value + "";
-	}
-
 	public static HitPropValue deserialize(String info) {
 		int v;
 		try {
@@ -40,6 +35,11 @@ public class HitPropValueInt extends HitPropValue {
 			v = 0;
 		}
 		return new HitPropValueInt(v);
+	}
+
+	@Override
+	public String toString() {
+		return value + "";
 	}
 
 	@Override

@@ -36,7 +36,7 @@ public class BLSpansWrapper extends BLSpans {
 
 	public BLSpansWrapper(Spans source) {
 		if (source == null)
-			throw new RuntimeException("Cannot wrap null Spans!");
+			throw new IllegalArgumentException("Cannot wrap null Spans!");
 
 		if (!(source instanceof TermSpans)) {
 			// For anything but the very basic TermSpans,

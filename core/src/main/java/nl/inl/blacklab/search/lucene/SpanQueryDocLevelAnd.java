@@ -63,13 +63,12 @@ public class SpanQueryDocLevelAnd extends SpanQueryBase {
 	 */
 	@Override
 	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans s0 = clauses[0].getSpans(context, acceptDocs, termContexts);
-		Spans combi = s0;
+		Spans combi = clauses[0].getSpans(context, acceptDocs, termContexts);
 		for (int i = 1; i < clauses.length; i++) {
 			Spans si = clauses[i].getSpans(context, acceptDocs, termContexts);
 			if (combi == null)
 				combi = si;
-			else
+			else if (si != null)
 				combi = new SpansDocLevelAnd(combi, si);
 		}
 

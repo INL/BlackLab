@@ -81,8 +81,14 @@ public class TextPatternTags extends TextPattern {
 		return elementName.hashCode() + attr.hashCode();
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
+		return toString();
+	}
+
+	@Override
+	public String toString() {
 		if (attr != null && !attr.isEmpty())
 			return "TAGS(" + elementName + ", " + StringUtil.join(attr) + ")";
 		return "TAGS(" + elementName + ")";

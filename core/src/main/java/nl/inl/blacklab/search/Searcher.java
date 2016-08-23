@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -59,9 +60,9 @@ public abstract class Searcher {
 	/** When setting how many hits to retrieve/count, this means "no limit". */
 	public final static int UNLIMITED_HITS = -1;
 
-	static final int DEFAULT_MAX_RETRIEVE = 1000000;
+	public static final int DEFAULT_MAX_RETRIEVE = 1000000;
 
-	static final int DEFAULT_MAX_COUNT = Searcher.UNLIMITED_HITS;
+	public static final int DEFAULT_MAX_COUNT = Searcher.UNLIMITED_HITS;
 
 	/** Complex field name for default contents field */
 	public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
@@ -305,7 +306,7 @@ public abstract class Searcher {
 	private Collator collator = Searcher.defaultCollator;
 
 	/** Analyzer used for indexing our metadata fields */
-	protected Analyzer analyzer;
+	protected Analyzer analyzer = new BLStandardAnalyzer();
 
 	/** Structure of our index */
 	protected IndexStructure indexStructure;
@@ -574,6 +575,8 @@ public abstract class Searcher {
 	 * NOTE: you must check if the document isn't deleted using Search.isDeleted()
 	 * first! Lucene 4.0+ allows you to retrieve deleted documents, making you
 	 * responsible for checking whether documents are deleted or not.
+	 * (This doesn't apply to search results; searches should never produce deleted
+	 *  documents. It does apply when you're e.g. iterating over all documents in the index)
 	 *
 	 * @param doc
 	 *            the document id
@@ -581,6 +584,27 @@ public abstract class Searcher {
 	 * @throws RuntimeException if the document doesn't exist (use maxDoc() and isDeleted() to check first!)
 	 */
 	public abstract Document document(int doc);
+
+	/**
+	 * Get a set of all (non-deleted) Lucene document ids.
+	 * @return set of ids
+	 */
+	public abstract Set<Integer> docIdSet();
+
+	/** A task to perform on a Lucene document. */
+	public interface LuceneDocTask {
+		void perform(Document doc);
+	}
+
+	/**
+	 * Perform a task on each (non-deleted) Lucene Document.
+	 * @param task task to perform
+	 */
+	public void forEachDocument(LuceneDocTask task) {
+		for (Integer docId: docIdSet()) {
+			task.perform(document(docId));
+		}
+	}
 
 	/**
 	 * Checks if a document has been deleted from the index
@@ -826,7 +850,7 @@ public abstract class Searcher {
 			// No special content accessor set; assume a stored field
 			String content = d.get(fieldName);
 			if (content == null)
-				throw new RuntimeException("Field not found: " + fieldName);
+				throw new IllegalArgumentException("Field not found: " + fieldName);
 			return getWordsFromString(content, startAtWord, endAtWord);
 		}
 
@@ -910,9 +934,7 @@ public abstract class Searcher {
 	 * @param fieldName
 	 *            the name of the field
 	 * @return the field content
-	 * @deprecated use version that takes a docId
 	 */
-	@Deprecated
 	public String getContent(Document d, String fieldName) {
 		if (!contentStores.exists(fieldName)) {
 			// No special content accessor set; assume a stored field
@@ -928,9 +950,7 @@ public abstract class Searcher {
 	 * @param d
 	 *            the Document
 	 * @return the field content
-	 * @deprecated use version that takes a docId
 	 */
-	@Deprecated
 	public String getContent(Document d) {
 		return getContent(d, getMainContentsFieldName());
 	}
@@ -1311,7 +1331,7 @@ public abstract class Searcher {
 	public Terms getTerms(String fieldPropName) {
 		ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
 		if (forwardIndex == null) {
-			throw new RuntimeException("Field " + fieldPropName + " has no forward index!");
+			throw new IllegalArgumentException("Field " + fieldPropName + " has no forward index!");
 		}
 		return forwardIndex.getTerms();
 	}
@@ -1371,7 +1391,7 @@ public abstract class Searcher {
 
 	public abstract String getIndexName();
 
-	public abstract IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer analyzer)
+	public abstract IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
 			throws IOException, CorruptIndexException, LockObtainFailedException;
 
 	public abstract IndexWriter getWriter();

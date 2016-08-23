@@ -120,8 +120,8 @@ public class HitPropertyWordRight extends HitProperty {
 	@Override
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
-		String propName = parts.length > 1 ? parts[1] : "";
-		return serializeReverse() + PropValSerializeUtil.combineParts("wordright", propName, sensitive ? "s" : "i");
+		String thePropName = parts.length > 1 ? parts[1] : "";
+		return serializeReverse() + PropValSerializeUtil.combineParts("wordright", thePropName, sensitive ? "s" : "i");
 	}
 
 	public static HitPropertyWordRight deserialize(Hits hits, String info) {

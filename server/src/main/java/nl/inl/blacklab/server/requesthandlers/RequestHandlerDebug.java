@@ -3,8 +3,8 @@ package nl.inl.blacklab.server.requesthandlers;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.dataobject.DataObjectMapElement;
-import nl.inl.blacklab.server.search.User;
+import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.jobs.User;
 
 /**
  * Get debug info about the servlet and index.
@@ -16,16 +16,20 @@ public class RequestHandlerDebug extends RequestHandler {
 	}
 
 	@Override
-	public Response handle() {
-		DataObjectMapElement response = new DataObjectMapElement();
-		response.put("indexName", indexName);
-		response.put("resource", urlResource);
-		response.put("rest", urlPathInfo);
-		response.put("queryString", request.getQueryString());
-		response.put("searchParam", servlet.getSearchParameters(request, indexName).toString());
-		Response r = new Response(response);
-		r.setCacheAllowed(false);
-		return r;
+	public boolean isCacheAllowed() {
+		return false;
+	}
+
+	@Override
+	public int handle(DataStream ds) {
+		ds.startMap()
+			.entry("indexName", indexName)
+			.entry("resource", urlResource)
+			.entry("rest", urlPathInfo)
+			.entry("queryString", request.getQueryString())
+			.entry("searchParam", servlet.getSearchParameters(false, request, indexName).toString())
+		.endMap();
+		return HTTP_OK;
 	}
 
 }

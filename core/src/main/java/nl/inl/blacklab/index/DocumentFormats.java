@@ -62,26 +62,24 @@ public class DocumentFormats {
 	 * @param formatIdentifier format identifier, e.g. "tei" or "com.example.MyIndexer"
 	 * @return the DocIndexer class, or null if not found
 	 */
-	@SuppressWarnings("unchecked")
 	public static Class<? extends DocIndexer> getIndexerClass(String formatIdentifier) {
 		// Check if it's a known abbreviation.
-		Class<? extends DocIndexer> docIndexerClass = formats.get(formatIdentifier.toLowerCase());
+		Class<?> docIndexerClass = formats.get(formatIdentifier.toLowerCase());
 		if (docIndexerClass == null) {
 			// No; is it a fully qualified class name?
 			try {
-				docIndexerClass = (Class<? extends DocIndexer>) Class.forName(formatIdentifier);
+				docIndexerClass = Class.forName(formatIdentifier);
 			} catch (Exception e1) {
 				try {
 					// No. Is it a class in the BlackLab indexers package?
-					docIndexerClass = (Class<? extends DocIndexer>) Class
-							.forName("nl.inl.blacklab.indexers." + formatIdentifier);
+					docIndexerClass = Class.forName("nl.inl.blacklab.indexers." + formatIdentifier);
 				} catch (Exception e) {
 					// Couldn't be resolved. That's okay, we'll just return null and let
 					// the application deal with it.
 				}
 			}
 		}
-		return docIndexerClass;
+		return docIndexerClass.asSubclass(DocIndexer.class);
 	}
 
 	/**

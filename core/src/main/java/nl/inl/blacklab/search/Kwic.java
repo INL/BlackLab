@@ -181,16 +181,34 @@ public class Kwic {
 	}
 
 	/**
-	 * Convert this Kwic object to a Concordance object (the same information in XML format).
+	 * Convert this Kwic object to a Concordance object.
+	 *
+	 * This produces XML consisting of &lt;w&gt; tags. The words
+	 * are the text content of the tags. The punctuation is between the tags.
+	 * The other properties are attributes of the tags.
+	 *
 	 * @return the Concordance object
 	 */
 	public Concordance toConcordance() {
+		return toConcordance(true);
+	}
+
+	/**
+	 * Convert this Kwic object to a Concordance object.
+	 *
+	 * This may either consist of only words and punctuation, or include the XML
+	 * tags containing the other properties as well, depending on the parameter.
+	 *
+	 * @param produceXml if true, produces XML. If false, produces human-readable text.
+	 * @return the Concordance object
+	 */
+	public Concordance toConcordance(boolean produceXml) {
 		String[] conc = new String[3];
 		List<String> match = getMatch();
 		String addPunctAfter = !match.isEmpty() ? match.get(0) : "";
-		conc[0] = xmlString(getLeft(), addPunctAfter, true);
-		conc[1] = xmlString(match, null, true);
-		conc[2] = xmlString(getRight(), null, false);
+		conc[0] = xmlString(getLeft(), addPunctAfter, true, produceXml);
+		conc[1] = xmlString(match, null, true, produceXml);
+		conc[2] = xmlString(getRight(), null, false, produceXml);
 		return new Concordance(conc);
 	}
 
@@ -200,27 +218,40 @@ public class Kwic {
 	 * @param context the context List to convert
 	 * @param addPunctAfter if not null, this is appended at the end of the string.
 	 * @param leavePunctBefore if true, no punctuation is added before the first word.
+	 * @param produceXml if true, produces XML with word tags. If false, produces human-readable text.
 	 * @return the XML string
 	 */
-	private String xmlString(List<String> context, String addPunctAfter, boolean leavePunctBefore) {
+	private String xmlString(List<String> context, String addPunctAfter, boolean leavePunctBefore, boolean produceXml) {
 		int valuesPerWord = fragment.properties.size();
 		int numberOfWords = context.size() / valuesPerWord;
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < numberOfWords; i++) {
 			int vIndex = i * valuesPerWord;
 			int j = 0;
-			if (i > 0 || !leavePunctBefore)
-				b.append(StringUtil.escapeXmlChars(context.get(vIndex)));
-			b.append("<w");
-			for (int k = 1; k < fragment.properties.size() - 1; k++) {
-				String name = fragment.properties.get(k);
-				String value = context.get(vIndex + 1 + j);
-				b.append(" ").append(name).append("=\"").append(StringUtil.escapeXmlChars(value)).append("\"");
-				j++;
+			if (i > 0 || !leavePunctBefore) {
+				if (produceXml)
+					b.append(StringUtil.escapeXmlChars(context.get(vIndex)));
+				else
+					b.append(context.get(vIndex));
 			}
-			b.append(">");
-			b.append(StringUtil.escapeXmlChars(context.get(vIndex + 1 + j)));
-			b.append("</w>");
+			if (produceXml) {
+				b.append("<w");
+				for (int k = 1; k < valuesPerWord - 1; k++) {
+					String name = fragment.properties.get(k);
+					String value = context.get(vIndex + 1 + j);
+					b.append(" ").append(name).append("=\"").append(StringUtil.escapeXmlChars(value)).append("\"");
+					j++;
+				}
+				b.append(">");
+			} else {
+				// We're skipping the other properties besides word and punct. Advance j.
+				if (valuesPerWord > 2)
+					j += valuesPerWord - 2;
+			}
+			if (produceXml)
+				b.append(StringUtil.escapeXmlChars(context.get(vIndex + 1 + j))).append("</w>");
+			else
+				b.append(context.get(vIndex + 1 + j));
 		}
 		if (addPunctAfter != null)
 			b.append(addPunctAfter);

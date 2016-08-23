@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import nl.inl.util.json.JSONException;
-import nl.inl.util.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MetadataFieldDesc extends BaseFieldDesc {
 
@@ -76,7 +76,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		} else if (typeName.equals("numeric")) {
 			this.type = FieldType.NUMERIC;
 		} else {
-			throw new RuntimeException("Unknown field type name: " + typeName);
+			throw new IllegalArgumentException("Unknown field type name: " + typeName);
 		}
 	}
 
@@ -102,7 +102,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		} else if (unknownCondition.equals("MISSING_OR_EMPTY")) {
 			this.unknownCondition = UnknownCondition.MISSING_OR_EMPTY;
 		} else {
-			throw new RuntimeException("Unknown unknown condition: " + unknownCondition);
+			throw new IllegalArgumentException("Unknown unknown condition: " + unknownCondition);
 		}
 	}
 

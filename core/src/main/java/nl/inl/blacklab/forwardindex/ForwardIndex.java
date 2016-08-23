@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 
@@ -230,7 +231,7 @@ public abstract class ForwardIndex {
 
 		if (!dir.exists()) {
 			if (!create)
-				throw new RuntimeException("ForwardIndex doesn't exist: " + dir);
+				throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
 			dir.mkdir();
 		}
 
@@ -244,7 +245,7 @@ public abstract class ForwardIndex {
 				} else if (VersionFile.isTypeVersion(dir, "fi", "2")) {
 					version = "2";
 				} else {
-					throw new RuntimeException("Not a forward index or wrong version: "
+					throw new IllegalArgumentException("Not a forward index or wrong version: "
 							+ VersionFile.report(dir) + " (fi " + CURRENT_VERSION + " expected)");
 				}
 			}
@@ -257,7 +258,7 @@ public abstract class ForwardIndex {
 		boolean largeTermsFileSupport = true;
 		switch(version) {
 		case "2":
-			throw new RuntimeException("Forward index version (2) too old for this BlackLab version. Please re-index.");
+			throw new UnsupportedOperationException("Forward index version (2) too old for this BlackLab version. Please re-index.");
 		case "3":
 			largeTermsFileSupport = false;
 			break;
@@ -274,4 +275,21 @@ public abstract class ForwardIndex {
 		getTerms().buildTermIndex();
 	}
 
+	/** @return the set of all forward index ids */
+	public abstract Set<Integer> idSet();
+
+	/** A task to perform on a document in the forward index. */
+	public interface ForwardIndexDocTask {
+		public abstract void perform(int fiid, int[] tokenIds);
+	}
+
+	/** Perform a task on each document in the forward index.
+	 * @param task the task to perform
+	 */
+	public void forEachDocument(ForwardIndexDocTask task) {
+		for (Integer fiid: idSet()) {
+			int[] tokenIds = retrievePartsInt(fiid, new int[] {-1}, new int[] {-1}).get(0);
+			task.perform(fiid, tokenIds);
+		}
+	}
 }

@@ -20,9 +20,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -50,7 +54,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
-
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -62,7 +65,6 @@ import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.util.ExUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.Utilities;
 import nl.inl.util.VersionFile;
 
 /**
@@ -83,7 +85,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	/**
 	 * The Lucene index reader
 	 */
-	private IndexReader reader;
+	IndexReader reader;
 
 	/**
 	 * The Lucene IndexSearcher, for dealing with non-Span queries (for per-document scoring)
@@ -124,7 +126,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 		if (!createNewIndex) {
 			if (!indexMode || VersionFile.exists(indexDir)) {
 				if (!isIndex(indexDir)) {
-					throw new RuntimeException("BlackLab index has wrong type or version! "
+					throw new IllegalArgumentException("Not a BlackLab index, or wrong version! "
 							+ VersionFile.report(indexDir));
 				}
 			}
@@ -303,9 +305,9 @@ public class SearcherImpl extends Searcher implements Closeable {
 	public Document document(int doc) {
 		try {
 			if (doc < 0)
-				throw new RuntimeException("Negative document id");
+				throw new IllegalArgumentException("Negative document id");
 			if (doc >= reader.maxDoc())
-				throw new RuntimeException("Document id >= maxDoc");
+				throw new IllegalArgumentException("Document id >= maxDoc");
 			return reader.document(doc);
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -377,9 +379,9 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 			org.apache.lucene.index.Terms terms = reader.getTermVector(doc, fieldPropName);
 			if (terms == null)
-				throw new RuntimeException("Field " + fieldPropName + " in doc " + doc + " has no term vector");
+				throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + doc + " has no term vector");
 			if (!terms.hasPositions())
-				throw new RuntimeException("Field " + fieldPropName + " in doc " + doc + " has no character postion information");
+				throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + doc + " has no character postion information");
 
 			//int lowestPos = -1, highestPos = -1;
 			int lowestPosFirstChar = -1, highestPosLastChar = -1;
@@ -541,10 +543,10 @@ public class SearcherImpl extends Searcher implements Closeable {
 	public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
 		ComplexFieldDesc complexFieldDesc = indexStructure.getComplexFieldDesc(fieldName);
 		if (complexFieldDesc == null)
-			throw new RuntimeException("Unknown complex field " + fieldName);
+			throw new IllegalArgumentException("Unknown complex field " + fieldName);
 		PropertyDesc mainProperty = complexFieldDesc.getMainProperty();
 		if (mainProperty == null)
-			throw new RuntimeException("Main property not found for " + fieldName);
+			throw new IllegalArgumentException("Main property not found for " + fieldName);
 		String mainPropName = mainProperty.getName();
 		return new QueryExecutionContext(this, fieldName, mainPropName, defaultCaseSensitive,
 				defaultDiacriticsSensitive);
@@ -556,7 +558,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
-	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer analyzer) throws IOException,
+	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException,
 			CorruptIndexException, LockObtainFailedException {
 		if (!indexDir.exists() && create) {
 			indexDir.mkdir();
@@ -567,15 +569,16 @@ public class SearcherImpl extends Searcher implements Closeable {
 			indexPath = Files.readSymbolicLink(indexPath);
 		}
 		Directory indexLuceneDir = FSDirectory.open(indexPath);
-		Analyzer defaultAnalyzer = analyzer == null ? new BLDutchAnalyzer() : analyzer;
-		IndexWriterConfig config = Utilities.getIndexWriterConfig(defaultAnalyzer, create);
+		if (useAnalyzer == null)
+			useAnalyzer = new BLDutchAnalyzer();
+		IndexWriterConfig config = LuceneUtil.getIndexWriterConfig(useAnalyzer, create);
 		IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
 		if (create)
 			VersionFile.write(indexDir, "blacklab", "2");
 		else {
 			if (!isIndex(indexDir)) {
-				throw new RuntimeException("BlackLab index has wrong type or version! "
+				throw new IllegalArgumentException("BlackLab index has wrong type or version! "
 						+ VersionFile.report(indexDir));
 			}
 		}
@@ -599,14 +602,12 @@ public class SearcherImpl extends Searcher implements Closeable {
 			throw new RuntimeException("Cannot delete documents, not in index mode");
 		try {
 			// Open a fresh reader to execute the query
-			IndexReader reader = DirectoryReader.open(indexWriter, false);
-			try {
+			try (IndexReader freshReader = DirectoryReader.open(indexWriter, false)) {
 				// Execute the query, iterate over the docs and delete from FI and CS.
-				IndexSearcher s = new IndexSearcher(reader);
+				IndexSearcher s = new IndexSearcher(freshReader);
 				Weight w = s.createNormalizedWeight(q, false);
-				LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
-				try {
-					Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
+				try (LeafReader scrw = SlowCompositeReaderWrapper.wrap(freshReader)) {
+					Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(freshReader));
 					if (sc == null)
 						return; // no matching documents
 
@@ -620,15 +621,13 @@ public class SearcherImpl extends Searcher implements Closeable {
 						}
 						if (docId == DocIdSetIterator.NO_MORE_DOCS)
 							break;
-						Document d = reader.document(docId);
+						Document d = freshReader.document(docId);
 
 						deleteFromForwardIndices(d);
 
 						// Delete this document in all content stores
 						contentStores.deleteDocument(d);
 					}
-				} finally {
-					scrw.close();
 				}
 			} finally {
 				reader.close();
@@ -673,5 +672,72 @@ public class SearcherImpl extends Searcher implements Closeable {
 		return indexSearcher;
 	}
 
+	@Override
+	public Set<Integer> docIdSet() {
+
+		final int maxDoc = reader.maxDoc();
+
+		final Bits liveDocs = MultiFields.getLiveDocs(reader);
+
+		return new AbstractSet<Integer>() {
+			@Override
+			public boolean contains(Object o) {
+				Integer i = (Integer)o;
+				return i < maxDoc && !isDeleted(i);
+			}
+
+			boolean isDeleted(Integer i) {
+				return liveDocs != null && !liveDocs.get(i);
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return maxDoc == reader.numDeletedDocs() + 1;
+			}
+
+			@Override
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					int current = -1;
+					int next = -1;
+
+					@Override
+					public boolean hasNext() {
+						if (next < 0)
+							findNext();
+						return next < maxDoc;
+					}
+
+					private void findNext() {
+						next = current + 1;
+						while (next < maxDoc && isDeleted(next)) {
+							next++;
+						}
+					}
+
+					@Override
+					public Integer next() {
+						if (next < 0)
+							findNext();
+						if (next >= maxDoc)
+							throw new NoSuchElementException();
+						current = next;
+						next = -1;
+						return current;
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+
+			@Override
+			public int size() {
+				return maxDoc - reader.numDeletedDocs() - 1;
+			}
+		};
+	}
 
 }

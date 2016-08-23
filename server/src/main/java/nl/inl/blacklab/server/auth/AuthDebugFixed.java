@@ -6,8 +6,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.search.User;
 
 /**
  * Authentication system used for debugging.
@@ -30,7 +30,7 @@ public class AuthDebugFixed {
 
 		// Is client on debug IP?
 		SearchManager searchMan = ((BlackLabServer)servlet).getSearchManager();
-		if (!searchMan.mayOverrideUserId(request.getRemoteAddr())) {
+		if (!searchMan.config().overrideUserId(request.getRemoteAddr())) {
 			return User.anonymous(sessionId);
 		}
 

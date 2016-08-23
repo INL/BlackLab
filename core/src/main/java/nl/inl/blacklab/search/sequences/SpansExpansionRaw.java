@@ -100,9 +100,9 @@ class SpansExpansionRaw extends BLSpans {
 		this.min = min;
 		this.max = max;
 		if (max != -1 && min > max)
-			throw new RuntimeException("min > max");
+			throw new IllegalArgumentException("min > max");
 		if (min < 0 || max < -1)
-			throw new RuntimeException("Expansions cannot be negative");
+			throw new IllegalArgumentException("Expansions cannot be negative");
 	}
 
 	/** For test, we don't have an index reader, so use default values (all docs are 5 tokens long)
@@ -279,8 +279,9 @@ class SpansExpansionRaw extends BLSpans {
 			}
 
 			// No, try the next hit, if there is one
-			if (nextStartPosition() == NO_MORE_POSITIONS) {
-				clauseStart = start = end = NO_MORE_POSITIONS;
+			clauseStart = clause.nextStartPosition();
+			if (clauseStart == NO_MORE_POSITIONS) {
+				start = end = NO_MORE_POSITIONS;
 				return; // No hits left, we're done
 			}
 		}

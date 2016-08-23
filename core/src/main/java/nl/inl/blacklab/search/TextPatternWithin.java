@@ -68,9 +68,15 @@ public class TextPatternWithin extends TextPatternCombiner {
 	public int hashCode() {
 		return super.hashCode() + (invert ? 13 : 0);
 	}
+
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "WITHIN(" + clauses.get(0).toString(context) + ", " + clauses.get(1).toString(context) + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "WITHIN(" + clauses.get(0).toString() + ", " + clauses.get(1).toString() + ")";
 	}
 
 }

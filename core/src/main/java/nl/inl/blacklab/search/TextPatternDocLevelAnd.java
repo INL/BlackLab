@@ -76,8 +76,13 @@ public class TextPatternDocLevelAnd extends TextPatternCombiner {
 		return n;
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "DOC-AND(" + clausesToString(clauses, context) + ")";
+	}
+	@Override
+	public String toString() {
+		return "DOC-AND(" + clausesToString(clauses) + ")";
 	}
 }

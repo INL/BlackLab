@@ -107,9 +107,9 @@ public class ResultsGrouper extends HitGroups {
 		init(hits, criteria);
 	}
 
-	private void init(Hits hits, HitProperty criteria) {
+	private void init(Hits hits, HitProperty criteria_) {
 		defaultConcField = hits.settings().concordanceField();
-		List<String> requiredContext = criteria.needsContext();
+		List<String> requiredContext = criteria_.needsContext();
 		if (requiredContext != null) {
 			hits.findContext(requiredContext);
 		}
@@ -154,7 +154,7 @@ public class ResultsGrouper extends HitGroups {
 	 */
 	@Deprecated
 	public void addHit(Hits hits, int originalHitIndex) {
-		throw new RuntimeException("Directly adding hits to ResultsGrouper no longer supported. Use Hits.groupedBy() instead.");
+		throw new UnsupportedOperationException("Directly adding hits to ResultsGrouper no longer supported. Use Hits.groupedBy() instead.");
 	}
 
 	/**

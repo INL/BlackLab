@@ -80,4 +80,10 @@ public abstract class GroupProperty {
 	public void setReverse(boolean reverse) {
 		this.reverse = reverse;
 	}
+
+	@Override
+	public String toString() {
+		return serialize();
+	}
+
 }

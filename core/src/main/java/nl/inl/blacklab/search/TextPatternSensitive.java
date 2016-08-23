@@ -85,8 +85,15 @@ public class TextPatternSensitive extends TextPattern {
 		return (caseSensitive ? 13 : 0) + (diacriticsSensitive ? 31 : 0) + input.hashCode();
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return input.toString(context.withSensitive(caseSensitive, diacriticsSensitive));
+	}
+
+	@Override
+	public String toString() {
+		String sett = caseSensitive ? (diacriticsSensitive ? "s" : "c") : (diacriticsSensitive ? "d" : "i");
+		return "SENSITIVE(" + sett + ", " + input.toString() + ")";
 	}
 }

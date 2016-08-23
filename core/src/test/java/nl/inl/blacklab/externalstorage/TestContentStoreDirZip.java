@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.util.Utilities;
+import nl.inl.util.UtilsForTesting;
 
 public class TestContentStoreDirZip {
 	private ContentStore store;
@@ -35,10 +35,10 @@ public class TestContentStoreDirZip {
 	public void setUp() {
 
 		// Remove any previously left over temp test dirs
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 
 		// Create new test dir
-		dir = Utilities.createBlackLabTestDir("ContentStoreDirZip");
+		dir = UtilsForTesting.createBlackLabTestDir("ContentStoreDirZip");
 
 		store = new ContentStoreDirZip(dir);
 		try {
@@ -59,7 +59,7 @@ public class TestContentStoreDirZip {
 	public void tearDown() {
 		store.close();
 		// Try to remove (some files may be locked though)
-		Utilities.removeBlackLabTestDirs();
+		UtilsForTesting.removeBlackLabTestDirs();
 	}
 
 	@Test

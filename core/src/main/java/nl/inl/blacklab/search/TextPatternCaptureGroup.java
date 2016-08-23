@@ -87,9 +87,15 @@ public class TextPatternCaptureGroup extends TextPattern {
 		return input.hashCode() + groupName.hashCode();
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "CAPTURE(" + input.toString(context) + ", " + groupName + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "CAPTURE(" + input.toString() + ", " + groupName + ")";
 	}
 
 }

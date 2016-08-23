@@ -80,11 +80,11 @@ public class TextPatternAndNot extends TextPattern {
 			return translator.not(context, translator.and(context, chResultsNot));
 		}
 		// Combination of positive and possibly negative clauses
-		T include = chResults.size() == 1 ? chResults.get(0) : translator.and(context, chResults);
+		T includeResult = chResults.size() == 1 ? chResults.get(0) : translator.and(context, chResults);
 		if (chResultsNot.isEmpty())
-			return include;
-		T exclude = chResultsNot.size() == 1 ? chResultsNot.get(0) : translator.and(context, chResultsNot);
-		return translator.andNot(context, include, exclude);
+			return includeResult;
+		T excludeResult = chResultsNot.size() == 1 ? chResultsNot.get(0) : translator.and(context, chResultsNot);
+		return translator.andNot(context, includeResult, excludeResult);
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class TextPatternAndNot extends TextPattern {
 
 			return clone;
 		} catch (CloneNotSupportedException e) {
-			throw new RuntimeException("Clone not supported: " + e.getMessage());
+			throw new UnsupportedOperationException("Clone not supported: " + e.getMessage());
 		}
 	}
 
@@ -226,11 +226,19 @@ public class TextPatternAndNot extends TextPattern {
 		return include.hashCode() + exclude.hashCode();
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		if (exclude.isEmpty())
 			return "AND(" + clausesToString(include, context) + ")";
 		return "ANDNOT([" + clausesToString(include, context) + "], [" + clausesToString(exclude, context) + "])";
+	}
+
+	@Override
+	public String toString() {
+		if (exclude.isEmpty())
+			return "AND(" + clausesToString(include) + ")";
+		return "ANDNOT([" + clausesToString(include) + "], [" + clausesToString(exclude) + "])";
 	}
 
 }

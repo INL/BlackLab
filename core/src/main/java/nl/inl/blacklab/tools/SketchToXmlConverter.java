@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -30,8 +31,8 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
 
+import nl.inl.blacklab.index.Indexer;
 import nl.inl.util.FileUtil;
-import nl.inl.util.PropertiesUtil;
 import nl.inl.util.StringUtil;
 
 /**
@@ -41,16 +42,90 @@ import nl.inl.util.StringUtil;
 public class SketchToXmlConverter {
 	public static void main(String[] args) throws Exception {
 		// Read property file
-		Properties properties = PropertiesUtil.getFromResource("anwcorpus.properties");
+		Properties properties = getPropertiesFromResource("anwcorpus.properties");
 
-		File inDir = PropertiesUtil.getFileProp(properties, "sketchDir", null);
+		File inDir = getFileProp(properties, "sketchDir", null);
 		File listFile = new File(inDir, "lijst.txt");
 
-		File outDir = PropertiesUtil.getFileProp(properties, "inputDir", "input", null);
+		File outDir = getFileProp(properties, "inputDir", "input", null);
 
 		SketchToXmlConverter.convertList(listFile, inDir, outDir);
 	}
 
+	/**
+	 * Read Properties from a resource
+	 *
+	 * @param resourcePath
+	 *            file path, relative to the classpath, where the properties file is
+	 * @return the Properties read
+	 * @throws IOException
+	 */
+	public static Properties getPropertiesFromResource(String resourcePath) throws IOException {
+		Properties properties;
+		InputStream isProps = SketchToXmlConverter.class.getClassLoader().getResourceAsStream(resourcePath);
+		if (isProps == null) {
+			// TODO: FileNotFoundException?
+			throw new IllegalArgumentException("Properties file not found: " + resourcePath
+					+ " (must be accessible from the classpath)");
+		}
+		try {
+			properties = new Properties();
+			properties.load(isProps);
+			return properties;
+		} finally {
+			isProps.close();
+		}
+	}
+
+	/**
+	 * Get a File property from a Properties object.
+	 *
+	 * This may be an absolute file path (starts with / or \ or a Windows drive letter spec), or a
+	 * path relative to basePath
+	 *
+	 * @param properties
+	 *            where to read the value from
+	 * @param name
+	 *            the value's name
+	 * @param basePath
+	 *            base path the file path may be relative to
+	 * @return the file, or null if not found
+	 */
+	public static File getFileProp(Properties properties, String name, File basePath) {
+		return getFileProp(properties, name, null, basePath);
+	}
+
+	/**
+	 * Get a File property from a Properties object.
+	 *
+	 * This may be an absolute file path (starts with / or \ or a Windows drive letter spec), or a
+	 * path relative to basePath
+	 *
+	 * @param properties
+	 *            where to read the value from
+	 * @param name
+	 *            the value's name
+	 * @param defaultValue default value if the property was not specified
+	 * @param basePath
+	 *            base path the file path may be relative to
+	 * @return the file, or null if not found
+	 */
+	public static File getFileProp(Properties properties, String name, String defaultValue, File basePath) {
+		Object prop = properties.get(name);
+		if (prop == null)
+			prop = defaultValue;
+		if (prop == null)
+			return null;
+		File filePath = new File(prop.toString());
+
+		// Is it an absolute path, or no base path given?
+		if (basePath == null || filePath.isAbsolute()) {
+			// Yes; ignore our base directory
+			return filePath;
+		}
+		// Relative path; concatenate with base directory
+		return new File(basePath, filePath.getPath());
+	}
 	private static final int LINES_PER_CHUNK_FILE = 30000;
 
 	boolean inSentence = false;
@@ -218,8 +293,9 @@ public class SketchToXmlConverter {
 		}
 		File outFile = new File(outDir, outFn);
 		Writer out = new OutputStreamWriter(
-				new BufferedOutputStream(new FileOutputStream(outFile)), "utf-8");
-		out.append("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n")
+				new BufferedOutputStream(new FileOutputStream(outFile)), Indexer.DEFAULT_INPUT_ENCODING);
+		String encName = Indexer.DEFAULT_INPUT_ENCODING.name();
+		out.append("<?xml version=\"1.0\" encoding=\"" + encName + "\" ?>\n")
 				.append("<?xml-stylesheet type=\"text/xsl\" href=\"xsl/corpus.xsl\" ?>\n")
 				.append("<docs file=\"" + outFn + "\">\n");
 		return out;
@@ -247,13 +323,10 @@ public class SketchToXmlConverter {
 
 	private static void convertFile(SketchToXmlConverter converter, File inFile, File outDir)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException {
-		Reader in = new InputStreamReader(new FileInputStream(inFile), "utf-8");
-		String fn = inFile.getName();
-		String outFn = fn.substring(0, fn.lastIndexOf('.')) + ".xml";
-		try {
+		try (Reader in = new InputStreamReader(new FileInputStream(inFile), Indexer.DEFAULT_INPUT_ENCODING)) {
+			String fn = inFile.getName();
+			String outFn = fn.substring(0, fn.lastIndexOf('.')) + ".xml";
 			converter.convert(in, outDir, outFn);
-		} finally {
-			in.close();
 		}
 	}
 

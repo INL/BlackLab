@@ -36,9 +36,9 @@ public class TextPatternRepetition extends TextPattern {
 		this.min = min;
 		this.max = max;
 		if (max != -1 && min > max)
-			throw new RuntimeException("min > max");
+			throw new IllegalArgumentException("min > max");
 		if (min < 0)
-			throw new RuntimeException("min < 0");
+			throw new IllegalArgumentException("min < 0");
 	}
 
 	/**
@@ -79,11 +79,6 @@ public class TextPatternRepetition extends TextPattern {
 		// A repetition with min == 0 in isolation would not make sense anyway, only
 		// in terms of surrounding patterns.
 		return translator.repetition(baseTranslated, realMin, max);
-	}
-
-	@Override
-	public String toString() {
-		return "TextPatternRepetition(" + base + ", " + min + ", " + max + ")";
 	}
 
 	@Override
@@ -193,9 +188,15 @@ public class TextPatternRepetition extends TextPattern {
 		return base.hashCode() + 13 * min + 31 * max;
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "REP(" + base.toString(context) + ", " + min + ", " + max + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "REP(" + base.toString() + ", " + min + ", " + max + ")";
 	}
 
 }

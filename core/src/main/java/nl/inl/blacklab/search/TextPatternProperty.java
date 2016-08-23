@@ -87,10 +87,15 @@ public class TextPatternProperty extends TextPattern {
 		return input.hashCode() + propertyName.hashCode();
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return input.toString(context.withProperty(propertyName));
 	}
 
+	@Override
+	public String toString() {
+		return "PROP(" + propertyName + ", " + input.toString() + ")";
+	}
 
 }

@@ -141,9 +141,15 @@ public class TextPatternRegex extends TextPatternTerm {
 		return false;
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "REGEX(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "REGEX(" + value + ")";
 	}
 
 }

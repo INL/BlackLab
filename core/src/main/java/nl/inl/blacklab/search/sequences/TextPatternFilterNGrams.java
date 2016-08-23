@@ -34,11 +34,6 @@ public class TextPatternFilterNGrams extends TextPattern {
 	}
 
 	@Override
-	public String toString() {
-		return "EXPAND(" + clause + ", " + op + ", " + min + "," + max + "]";
-	}
-
-	@Override
 	public boolean matchesEmptySequence() {
 		return clause.matchesEmptySequence() && min == 0;
 	}
@@ -114,9 +109,15 @@ public class TextPatternFilterNGrams extends TextPattern {
 		return clause.hashCode() + op.hashCode() + 13 * min + 31 * max;
 	}
 
+	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
 		return "FILTERNGRAMS(" + clause.toString(context) + ", " + op + ", " + min + ", " + max + ")";
+	}
+
+	@Override
+	public String toString() {
+		return "FILTERNGRAMS(" + clause + ", " + op + ", " + min + ", " + max + ")";
 	}
 
 }

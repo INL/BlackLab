@@ -122,7 +122,7 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 		case MATCHES:
 			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "MATCHES" + adj + ")";
 		default:
-			throw new RuntimeException("Unknown filter operation " + op);
+			throw new IllegalArgumentException("Unknown filter operation " + op);
 		}
 	}
 }

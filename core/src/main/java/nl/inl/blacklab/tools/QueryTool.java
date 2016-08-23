@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
@@ -76,7 +75,6 @@ import nl.inl.blacklab.search.grouping.HitPropertyWordRight;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.util.FileUtil;
-import nl.inl.util.IoUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
@@ -88,6 +86,9 @@ import nl.inl.util.XmlUtil;
  * Simple command-line querying tool for BlackLab indices.
  */
 public class QueryTool {
+
+	static final Charset INPUT_FILE_ENCODING = Charset.forName("utf-8");
+
 	/** Our output writer. */
 	public PrintWriter out;
 
@@ -217,10 +218,7 @@ public class QueryTool {
 		@Override
 		public TextPattern parse(String query) throws ParseException {
 			try {
-				CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
-						query));
-				// parser.setAllowSingleQuotes(true);
-				return parser.query();
+				return CorpusQueryLanguageParser.parse(query);
 			} catch (nl.inl.blacklab.queryParser.corpusql.ParseException e) {
 				throw new ParseException(e.getMessage());
 			} catch (nl.inl.blacklab.queryParser.corpusql.TokenMgrError e) {
@@ -471,14 +469,12 @@ public class QueryTool {
 		BufferedReader in;
 		if (inputFile == null) {
 			// No input file specified; use stdin
-			in = IoUtil.makeBuffered(new InputStreamReader(System.in, encoding));
-		}
-		else {
+			in = new BufferedReader(new InputStreamReader(System.in, encoding));
+		} else {
 			// Open input file
-			in = FileUtil.openForReading(inputFile, "utf-8");
+			in = FileUtil.openForReading(inputFile, INPUT_FILE_ENCODING);
 			batchMode = true;
 		}
-
 		try {
 			QueryTool c = new QueryTool(indexDir, in, out, err);
 			c.commandProcessor();
@@ -748,10 +744,12 @@ public class QueryTool {
 				} else {
 					Hit h = currentHitSet.get(hitId);
 					Concordance conc = hits.getConcordance(h, snippetSize);
-					String left = stripXML ? XmlUtil.xmlToPlainText(conc.left()) : conc.left();
-					String middle = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
-					String right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
-					outprintln("\n" + StringUtil.wrapToString(left + "[" + middle + "]" + right, 80));
+					String[] concParts;
+					if (stripXML)
+						concParts = conc.partsNoXml();
+					else
+						concParts = conc.parts();
+					outprintln("\n" + StringUtil.wrapToString(concParts[0] + "[" + concParts[1] + "]" + concParts[2], 80));
 				}
 			} else if (lcased.startsWith("highlight ")) {
 				int hitId = parseInt(lcased.substring(8), 1) - 1;
@@ -1069,7 +1067,7 @@ public class QueryTool {
 			}
 			pattern = pattern.rewrite();
 			if (verbose)
-				outprintln("TextPattern: " + pattern.toString(searcher, contentsField));
+				outprintln("TextPattern: " + pattern.toString());
 
 			// If the query included filter clauses, use those. Otherwise use the global filter, if any.
 			Query filterForThisQuery = parser.getIncludedFilterQuery();

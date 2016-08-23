@@ -43,7 +43,6 @@ public abstract class HitsSample extends HitsImpl {
 	protected HitsSample(Searcher searcher, List<Hit> hits, float ratio, long seed) {
 		super(searcher, hits);
 		this.ratioOfHitsToSelect = ratio;
-		this.numberOfHitsToSelect = hits.size();
 		this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
 		this.random = new Random(seed);
 	}

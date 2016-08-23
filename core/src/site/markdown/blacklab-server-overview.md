@@ -32,9 +32,7 @@ This page explains how to set up and use BlackLab Server. See the [BlackLab home
 ## Overview
 BlackLab Server is a read-only REST webservice. Only GET requests are supported.
 
-It is stateless: a particular URL will always result in the same response. There’s one exception to this: some requests can be executed in blocking or nonblocking mode, depending on the client’s wishes. In blocking mode, the server doesn’t reply until the search has been completed; in nonblocking mode, the client immediately receives a status response and can check to see whether the search has completed at regular intervals.
-
-When the server has the requested set of results, it might indicate that it is still counting the total number of results, and has counted X so far. The client may keep doing additional requests to update the running count for the user. This way, the user gets to see the first results as soon as possible, and she’ll be able to see that the total number of results is still being counted.
+It is stateless: a particular URL will always result in the same response. There’s one exception to this: when the server has the requested set of results, it might indicate that it is still counting the total number of results, and has counted X so far. The client may keep doing additional requests to update the running count for the user. This way, the user gets to see the first results as soon as possible, and she’ll be able to see that the total number of results is still being counted.
 
 The webservice answers in JSON or XML. Selection of the desired output format is done through the HTTP Accept header (value “application/json” or “application/xml”), or by passing an extra parameter “outputformat” (value “json” or “xml”). If both are specified, the parameter has precedence. If neither are specified, the configured default format is used (usually XML).
 
@@ -68,7 +66,7 @@ Here’s what the various parts of this URL mean:
 	</tr>
 	<tr>
 		<td>resource    </td>
-		<td>what type of information we’re looking for (hits, docs, docs/pid/info, docs/pid/content, …) (see below for the meaning of each resource)</td>
+		<td>what type of information we’re looking for (hits, docs, docs/pid, docs/pid/content, …) (see below for the meaning of each resource)</td>
 	</tr>
 	<tr>
 		<td>pid         </td>
@@ -139,6 +137,10 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>Query language for filter parameter. Supported are lucene (Lucene Query Language) and (limited) contextql (contextual query language).(default: lucene )</td>
 	</tr>
 	<tr>
+		<td>docpid </td>
+		<td>Filter on a single document pid, e.g. “DOC0001” (default: none)</td>
+	</tr>
+	<tr>
 		<td>wordsaroundhit </td>
 		<td>Number of words of context to retrieve for hits- and docs-results (default: 5)</td>
 	</tr>
@@ -187,8 +189,9 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>(snippet/contents operations) First word (0-based) after the snippet/part of the document we want. -1 for document end.</td>
 	</tr>
 	<tr>
-		<td>block </td>
-		<td>Blocking (“yes”) or nonblocking (“no”) request? (default: yes)</td>
+		<td>block (deprecated)</td>
+		<td>Blocking (“yes”) or nonblocking (“no”) request? (default: yes) 
+		    <br/><b>NOTE:</b> nonblocking requests will be removed in a future version.</td>
 	</tr>
 	<tr>
 		<td>waitfortotal </td>
@@ -320,10 +323,6 @@ All occurrences of “test” in the “opensonar” corpus (CorpusQL query)
 
 		http://blacklab.inl.nl/blacklab-server/opensonar/hits?patt="test"
 
-All occurrences of “test” in the “opensonar” corpus, nonblocking
-
-		http://blacklab.inl.nl/blacklab-server/opensonar/hits?patt="test"&block=no
-
 All documents having “guide” in the title and “test” in the contents, sorted by author and date, resultats 61-90
 
 		http://blacklab.inl.nl/blacklab-server/opensonar/docs?filter=title:guide&patt="test"& sort=field:author,field:date&first=61&number=30
@@ -338,7 +337,7 @@ Documents containing “test”, grouped by author
 
 Metadata of document with specific PID
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802/info
+		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802
 
 The entire original document
 
@@ -418,18 +417,6 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	        // (if the "number" GET variable is set to a higher value,
 	        //  the above default page size will be used instead)
 	        "maxPageSize": 3000,
-	
-	        // Default pattern language to use.
-	        // The "pattlang" GET parameter overrides this value.
-	        "defaultPatternLanguage": "corpusql",
-	
-	        // Default filter language to use.
-	        // The "filterlang" GET parameter overrides this value.
-	        "defaultFilterLanguage": "luceneql",
-	
-	        // Should requests be blocking by default?
-	        // The "block" GET parameter overrides this value.
-	        "defaultBlockingMode": true,
 	
 	        // Default number of words around hit.
 	        // The "wordsaroundhit" GET parameter overrides this value.
@@ -550,7 +537,7 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	            // unsorted hits job, etc. Practical upshot of this: 
 	            // number of jobs does not equal number of searches. Don’t
 	            // set this too low.
-	            "maxNumberOfJobs": 20,
+	            "maxNumberOfJobs": 100,
 	
 	            // After how much time will a search job be removed from 
 	            // the cache? (in seconds)
@@ -602,32 +589,7 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	        // responsive but could cause problems if the data (or worse,
 	        // the protocol) changes after an update. A value of an hour 
 	        // or so seems reasonable.
-	        "clientCacheTimeSec": 3600,
-	
-	        // The minimum time to advise a client to wait before checking
-	        // the status of a search again. The lower this is set, the 
-	        // more responsive client applications should become, but the 
-	        // server will have to serve more polling requests. This 
-	        // shouldn&#39;t affect server load too much however, as these are 
-	        // simple, easily-handled requests.
-	        "checkAgainAdviceMinimumMs": 200,
-	
-	        // How to determine the "check again advice time" to give to 
-	        // clients. We divide the search time so far by this number to
-	        // get the advice. E.g. if this is set to 5 (the default), if 
-	        // a search has been running for 10 seconds, clients are 
-	        // advised to wait 2 seconds before checking the status again.
-	        // Higher numbers mean a (slightly) more responsive 
-	        // application at the cost of (slightly) increased server load.
-	        "checkAgainAdviceDivider": 5,
-	
-	        // Even if the client specifies nonblocking mode, the server 
-	        // will always wait a short while for the search to complete, 
-	        // so it can answer short requests immediately without the 
-	        // client having to start polling. This should be set to a 
-	        // fairly low value so the client remains responsive, but high
-	        // enough that simple searches will complete within this time.
-	        "waitTimeInNonblockingModeMs": 100
+	        "clientCacheTimeSec": 3600
 	
 	    },
 	
@@ -739,6 +701,11 @@ Operations that do not return status or error codes and messages (which is all s
 		<td>400 Bad Request </td>
 		<td>GROUP_NOT_FOUND </td>
 		<td>Group not found: GROUPID</td>
+	</tr>
+	<tr>
+		<td>400 Bad Request </td>
+		<td>REGEXP_TOO_LARGE</td>
+		<td>Regular expression too large. (NOTE: maximum size depends on Java stack size)</td>
 	</tr>
 	<tr>
 		<td>400 Bad Request </td>

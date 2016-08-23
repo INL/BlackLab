@@ -63,10 +63,6 @@
         // The "number" GET parameter overrides this value.
         "defaultPageSize": 20,
 
-        // Default pattern language to use.
-        // The "pattlang" GET parameter overrides this value.
-        "defaultPatternLanguage": "corpusql",
-
         // Default sensitivity of searches:
         // - sensitive (case- and diacritics-sensitive)
         // - insensitive (case- and diacritics-insensitive)
@@ -76,14 +72,6 @@
         // You can also override this setting by specifying the desired sensitivity in the pattern:
         // Insensitive search: [lemma="(?i)test"] Sensitive search: [word="(?-i)Test"]
         "defaultSearchSensitivity": "insensitive",
-
-        // Default filter language to use.
-        // The "filterlang" GET parameter override this value.
-        "defaultFilterLanguage": "luceneql",
-
-        // Should requests be blocking by default?
-        // The "block" GET parameter overrides this value.
-        "defaultBlockingMode": true,
 
         // Default number of words around hit.
         // The "wordsaroundhit" GET parameter overrides this value.
@@ -134,6 +122,11 @@
     // ---------------------------------------------------------------
     "performance": {
     
+    	// NOTE: the serverLoadStates part is a PROPOSAL, and is not currently
+    	//       read from the configuration file. Current load management is a
+    	//       simple scheme that orders searches by "worthiness", runs only
+    	//       the top X ones, pauses the Y next ones, and aborts the rest. 
+    	// 
         // Specifies how the server will behave under different loads.
         //
         // Specify the different server loads and their behaviours from 
@@ -228,9 +221,7 @@
             // we can still use the unsorted hits job, etc. Practical upshot of this: number of jobs does not
             // equal number of searches.
             
-        	//@@@ change to searches instead of jobs?
-        
-            "maxNumberOfJobs": 20,
+            "maxNumberOfJobs": 100,
 
             // After how much time will a search job be removed from the cache? (in seconds)
             //"maxJobAgeSec": 3600,
@@ -278,27 +269,6 @@
         // Higher values make clients more responsive but could cause problems if the data (or worse,
         // the protocol) changes after an update. A value of an hour or so seems reasonable.
         "clientCacheTimeSec": 3600
-
-        // The minimum time to advise a client to wait before checking the status of a search again.
-        // The lower this is set, the more responsive client applications should become, but
-        // the server will have to serve more polling requests. This shouldn't affect server load
-        // too much however, as these are simple, easily-handled requests.
-        //"checkAgainAdviceMinimumMs": 200,
-
-        // How to determine the "check again advice time" to give to clients.
-        // We divide the search time so far by this number to get the advice.
-        // E.g. if this is set to 5 (the default), if a search has been running for 10
-        // seconds, clients are advised to wait 2 seconds before checking the status again.
-        // Higher numbers mean a (slightly) more responsive application at the cost of
-        // (slightly) increased server load.
-        //"checkAgainAdviceDivider": 5,
-
-        // Even if the client specifies nonblocking mode, the server will always wait a short while
-        // for the search to complete, so it can answer short requests immediately without the client
-        // having to start polling.
-        // This should be set to a fairly low value so the client remains responsive, but high enough
-        // that simple searches will complete within this time.
-        //"waitTimeInNonblockingModeMs": 100
 
     }
 }

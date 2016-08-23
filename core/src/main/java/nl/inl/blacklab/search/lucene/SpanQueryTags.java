@@ -103,9 +103,8 @@ public class SpanQueryTags extends SpanQuery {
 	 * @param terms
 	 *            the set the terms should be added to
 	 */
-	@SuppressWarnings({ "rawtypes" })
 	@Override
-	public void extractTerms(Set terms) {
+	public void extractTerms(Set<Term> terms) {
 		try {
 			// FIXME: temporary extractTerms hack
 			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);

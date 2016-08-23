@@ -20,12 +20,13 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Set;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.util.ToStringUtils;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * A base class for a SpanQuery with an array of clauses. Provides default implementations of some
@@ -117,9 +118,8 @@ public abstract class SpanQueryBase extends SpanQuery {
 	 * @param terms
 	 *            the set the terms should be added to
 	 */
-	@SuppressWarnings({ "rawtypes" })
 	@Override
-	public void extractTerms(Set terms) {
+	public void extractTerms(Set<Term> terms) {
 		try {
 			// FIXME: temporary extractTerms hack
 			Method methodExtractTerms = SpanQuery.class.
