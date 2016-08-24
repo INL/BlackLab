@@ -19,12 +19,11 @@ Here are a few searches you can try:
   Other values to try: "VRB\*" (verbs), "ADJ\*" (adjectives)
 - **Word form: "coe"** Find a specific historic spelling of "koe"
 
-TODO more complex queries
-
 Please note that this is just a small sample of the capabilities of BlackLab.
 
 More info:
 
 - [List of features](features.html)
+- [Corpus Query Language](corpus-query-language.html)
 - [Test it yourself](getting-started.html)
 - [Frequently Asked Questions](faq.html)

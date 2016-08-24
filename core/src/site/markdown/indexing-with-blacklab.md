@@ -1,9 +1,23 @@
 # Indexing with BlackLab
 
-This page goes into detail about indexing documents with BlackLab.
-For a simple tutorial, see [Adding a new input format](add-input-format.html).
+* <a href="#index-supported-format">Indexing documents in a supported format</a>
+* <a href="#supported-formats">Supported formats</a>
+* <a href="#passing-indexing-parameters">Passing indexing parameters</a>
+* <a href="#sensitivity">Configuring case- and diacritics sensitivity per property</a>
+* <a href="#index-struct">Configuring the index structure</a>
+    * <a href="#disable-fi">When and how to disable the forward index for a property</a>
+* <a href="#index-custom-format">Indexing documents in a custom format</a>
+    * <a href="#word-annotated">Indexing word-annotated XML</a>
+    * <a href="#multiple-values">Multiple values at one position, position gaps and adding property values at an earlier position</a>
+    * <a href="#subproperties">Subproperties, for e.g. making part of speech features separately searchable</a> (EXPERIMENTAL)
+    * <a href="#payloads">Storing extra information with property values, using payloads</a>
+    * <a href="#nonxml">Indexing non-XML file types</a>
+* <a href="#metadata">Metadata</a>
+    * <a href="#metadata-in-document">In-document metadata</a>
+    * <a href="#metadata-external">Metadata from an external source</a>
 
-[TOC]
+
+<a id="index-supported-format"></a>
 
 ## Indexing documents in a supported format
 
@@ -33,6 +47,8 @@ To delete documents from an index:
     
 Here, FILTER_QUERY is a metadata filter query in Lucene query language that matches the documents to delete. Deleting documents and re-adding them can be used to update documents.
 
+<a id="supported-formats"></a>
+
 ## Supported formats
 
 Here's a list of supported input formats:
@@ -46,6 +62,8 @@ Here's a list of supported input formats:
 * alto (OCR XML format; see http://www.loc.gov/standards/alto/)
 
 Adding support for your own format is not hard. See below, or have a look at [Adding an input format](add-input-format.html). To use your own DocIndexer class with IndexTool, specify the fully-qualified class name as the FORMAT parameters.
+
+<a id="passing-indexing-parameters"></a>
 
 ## Passing indexing parameters
 
@@ -63,11 +81,15 @@ Use the DocIndexer.getParameter(name[, defaultValue]) method to retrieve paramet
 
 Configuring an external metadata fetcher (see "Metadata from an external source" below) and case- and diacritics sensitivity (see next section) is also done using a indexing parameter for now. Note that this parameter passing mechanism predates the index structure file (see "Configuring the index structure" below) and is likely to be deprecated in favour of that in future versions.
 
+<a id="sensitivity"></a>
+
 ## Configuring case- and diacritics sensitivity per property
 
 You can also configure what "sensitivity alternatives" (case/diacritics sensitivity) to index for each property, using the "PROPNAME_sensitivity" parameter. Accepted values are "i" (both only insensitive), "s" (both only sensitive), "si" (sensitive and insensitive) and "all" (case/diacritics sensitive and insensitive, so 4 alternatives). What alternatives are indexed determines how specifically you can specify the desired sensitivity when searching.
 
 If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e. word/lemma get "si", punct gets "i", starttag gets "s", others get "i").
+
+<a id="index-struct"></a>
 
 ## Configuring the index structure
 
@@ -133,6 +155,8 @@ Here's a commented example of indextemplate.json (double-slash comments in JSON 
       }
     }
 
+<a id="disable-fi"></a>
+
 ### When and how to disable the forward index for a property
 
 By default, all properties get a forward index. The forward index is the complement to Lucene's reverse index, and can 
@@ -146,11 +170,15 @@ A note about forward indices and indexing multiple values at a single corpus pos
 
 Note that if you want KWICs or snippets that include properties without a forward index (as well the rest of the original XML), you can switch to using the original XML to generate KWICs and snippets, at the cost of speed. To do this, pass usecontent=orig to BlackLab Server, or call Hits.settings().setConcordanceType(ConcordanceType.CONTENT_STORE).
 
+<a id="index-custom-format"></a>
+
 ## Indexing documents in a custom format
 
 See also [Adding an input format](add-input-format.html).
 
 If you have text in a format that isn't supported by BlackLab yet, you will have to create a DocIndexer class to support the format. You can use the DocIndexer classes supplied with BlackLab (see the nl.inl.blacklab.indexers package) for reference, but we'll highlight the most important features here.
+
+<a id="word-annotated"></a>
 
 ### Indexing word-annotated XML
 
@@ -174,6 +202,8 @@ You should probably call consumeCharacterContent(), which clears the buffer of c
 
 The [tutorial](add-input-format.html) develops a simple TEI DocIndexer using the above techniques.
 
+<a id="multiple-values"></a>
+
 ### Multiple values at one position, position gaps and adding property values at an earlier position
 
 The ComplexFieldProperty.addValue(String) method adds a value to a property ("annotation layer") at the next corpus position. Sometimes you may want to add multiple values at a single corpus position, or you may want to skip a number of corpus positions. This can be done using the ComplexFieldProperty.addValue(String, Integer) method; the second parameter is the increment compared to the previous value. The default value for the increment is 1, meaning each value is indexed at the next corpus position.
@@ -183,6 +213,8 @@ To add multiple values to a single corpus position, only use the default increme
 To skip a number of corpus positions when adding a value, use an increment that is higher than 1. So to skip one position (and therefore leave a "gap" one wide), use an increment of 2.
 
 Finally, you may sometimes wish to add values to an earlier corpus position. Say you're at position 100, and you want to add a value to position 50. You can do so using the ComplexFieldProperty.addValueAtPosition(String, Integer) method. The first token has position 0.
+
+<a id="subproperties"></a>
 
 ### Subproperties, for e.g. making part of speech features separately searchable (EXPERIMENTAL)
 
@@ -210,11 +242,15 @@ Note that these subproperties will not have their own forward index; only the ma
 
 Adding a few subproperties per token position like this will make the index slightly larger, but it shouldn't affect performance or index size too much.
 
+<a id="payloads"></a>
+
 ### Storing extra information with property values, using payloads
 
 It is possible to add payloads to property values. When calling addProperty() at the start of the constructor, make sure to use the version that takes a boolean called 'includePayloads', and set it to true. Then use ComplexFieldProperty.addPayload(). You can use null if a particular value has no payload. There's also a addPayloadAtIndex() method to add payloads some time after adding the value itself, but that requires knowing the index in the value list of the value you want to add a payload for, so you should store this index when you add the value.
 
 One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHandler. When you use InlineTagHandler to index an inline element, say a sentence tag, BlackLab will add a value (or several values, if the element has attributes) to the built-in 'starttag' property. When it encounters the end tag, it wil update the start tag value with a payload indication the element length. This is used when searching to determine what matches occur inside certain XML tags.
+
+<a id="nonxml"></a>
 
 ### Indexing non-XML file types
 
@@ -222,13 +258,19 @@ If your input files are not XML or are not tokenized and annotated per word, you
 
 Indexing them directly is not covered here, but involves deriving from DocIndexerAbstract or implementing the DocIndexer interface yourself. If you need help with this, please [contact us](mailto:jan.niestadt@inl.nl).
 
+<a id="metadata"></a>
+
 ## Metadata 
+
+<a id="metadata-in-document"></a>
 
 ### In-document metadata
 
 Some documents contain metadata within the document. You usually want to index these as fields with your document, so you can filter on them later. You do this by adding a handler for the appropriate XML element.
 
 There's a few helper classes for in-document metadata handling. MetadataElementHandler assumes the matched element name is the name of your metadata field and the character content is the value. MetadataAttributesHandler stores all the attributes from the matched element as metadata fields. MetadataNameValueAttributeHandler assumes the matched element has a name attribute and a value attribute (the attribute names can be specified in the constructor) and stores those as metadata fields. You can of course easily add your own handler classes to this if they don't suit your particular style of metadata.
+
+<a id="metadata-external"></a>
 
 ### Metadata from an external source
 
@@ -237,7 +279,4 @@ Sometimes, documents link to external metadata sources, usually using an ID.
 The MetadataFetcher is instantiated by DocIndexerXmlHandlers.getMetadataFetcher(), based on the metadataFetcherClass indexer parameter (see "Passing indexing parameters" above). This class is instantiated with the DocIndexer as a parameter, and the addMetadata() method is called just before adding a document to the index. Your particular MetadataFetcher can inspect the document to find the appropriate ID, fetch the metadata (e.g. from a file, database or webservice) and add it to the document using the DocIndexerXmlHandlers.addMetadataField() method.
 
 Also see the two MetadataFetcher examples in nl.inl.blacklab.indexers.
-
-
-
 

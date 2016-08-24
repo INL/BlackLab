@@ -6,9 +6,6 @@
 - [Corpus Query Language](corpus-query-language.html)<br/>
   All the querying features explained.
 
-- [The Example Application](example-application.html)<br/>
-  An overview of the included example application.
-
 - [Add an Input Format](add-input-format.html)<br/>
   How to use your own XML format with BlackLab.
 

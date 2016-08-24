@@ -1,74 +1,96 @@
 # BlackLab newsletter
 
-**NOTE:** if you want to receive an email alert for this newsletter, drop me a line at [jan.niestadt@inl.nl](mailto:jan.niestadt@inl.nl).
+**NOTE:** if you want to receive an email alert for this very, very occasional newsletter, drop me a line at [jan.niestadt@inl.nl](mailto:jan.niestadt@inl.nl).
 
-**(August 2016)**
+<hr/>
 
-It's been almost three years since the last BlackLab newsletter, so I wasn't kidding when I promised a low-volume email newsletter. :)
+## August 2016
+It's been almost three years since the last BlackLab newsletter, so I wasn't kidding when I promised it would be low-volume. BlackLab has made a lot of progress since then, and I thought I should get the word out.
 
-BlackLab has made a lot of progress since then, and I thought I should get the word out.
+Oh, and I wanted to focus-test a new slogan: *BlackLab, the corpus search engine that must be Lu-cene to be believed*.
 
-"TL;DR" version: BlackLab is alive and kicking! :-)
+No? No. Back to the drawing board, I guess.
 
-### It's been six years already!
-Yes, we started BlackLab in 2010. First there was just a Java library ([BlackLab Core](https://github.com/INL/BlackLab/tree/master/core)), but we've since added a webservice version ([BlackLab Server](https://github.com/INL/BlackLab/tree/master/server)) that's even easier to use. Both projects are now mature, and there's a [project website](https://inl.github.io/BlackLab) with an overview, documentation and examples.
+* <a href="#history">It's been six years already</a>
+* <a href="#whitelab">Polished to a sheen: WhiteLab 2.0 interface</a>
+* <a href="#collab">ColLab: Open Source for the win!</a>
+* <a href="#features">Take it to the maxx(x): Features</a>
+* <a href="#testing">Proof of the Black pudding: Testing</a>
+* <a href="#speed">Cutting corners: Speed</a>
 
-BlackLab's future looks bright; have a look at our [roadmap](http://inl.github.io/BlackLab/roadmap.html) to get an idea of where it's going next. Support for distributed search and integration with Solr and/or ElasticSearch are high on the list. I'd love to hear from you what you would like to see.
+<a id="history"></a>
+
+### It's been six years already
+
+Yes, we started BlackLab in 2010. First there was just a Java library ([BlackLab Core](https://github.com/INL/BlackLab/tree/master/core)), but we've since added a REST webservice ([BlackLab Server](https://github.com/INL/BlackLab/tree/master/server)) so you can easily access BlackLab from any programming language. Both projects are now mature, and there's a [project website](https://inl.github.io/BlackLab) with an overview, documentation and examples, and BlackLab is available from the Maven Central Repository, the industry-standard source for Java libraries.
+
+BlackLab's future looks bright. Version 1.5.0 just came out (see the [change log](changelog.html)). Have a look at our [roadmap](http://inl.github.io/BlackLab/roadmap.html) to get an idea of where it's going next; support for distributed search and integration with Solr and/or ElasticSearch are high on the list. I'd love to hear from you what you would like to see.
+
+<a id="whitelab"></a>
+
+### Polished to a sheen: WhiteLab 2.0 interface
+
+If you're looking for a beautiful, feature-rich user interface for BlackLab, stop looking and check out [WhiteLab 2.0](https://github.com/Taalmonsters/WhiteLab2.0)!
+
+Version 1.0 has already proven itself in the OpenSonar, OpenChechen and VIVA Korpusportaal projects (links below). This new version is even better. It features an improved query builder and some cool visualisations. A neo4j backend is also being developed.
+
+WhiteLab was developed as part of CLARIN/CLARIAH, for Universiteit Tilburg and INL, by Matje van de Camp of [Taalmonsters](http://www.taalmonsters.nl/). 
+
+<a id="collab"></a>
+
+### ColLab: Open Source for the win!
 
 For the past 4 years, BlackLab has been available on GitHub, and it's been used and improved by many different people. The 13 pull requests 14 issues there represent just a fraction of the questions, suggestions and praise we've received via email.
 
 Users of BlackLab include:
-- Northwestern University ([MorphAdorner](https://bitbucket.org/pibburns/corpusindexer), a tool for morphological annotation)
-- University of Tilburg ([OpenSonar](http://opensonar.inl.nl), a Dutch corpus)
-- Allen Institute for Artificial Intelligence ([IKE](https://www.overleaf.com/articles/machine-teaching-for-information-extraction/hxxcqzwmpvdf/viewer.pdf), a knowledge extraction tool)
-- Meertens Institute ([FESLI](http://yago.meertens.knaw.nl/apache/Fesli/), a [bilingual] children's language corpus)
-- Radboud Universiteit (Basilex, a corpus of text written for children, [OpenChechen](http://corpus-studio-web.cttnww-meertens.vm.surfsara.nl/openchechen/), a Chechen corpus).
-- [VIVA](http://viva-afrikaans.org/), Virtuele Instituut Vir Afrikaans (Korpusportaal, an Afrikaans corpus (paid access only))
 
-If you have a cool project not listed here, let me know, and I'll mention it on the project site!
+* INL (of course, we use it for [all](http://brievenalsbuit.inl.nl/zeebrieven/page/search) [our](http://gysseling.corpus.taalbanknederlands.inl.nl/gysseling/page/search) [corpora](http://chn.inl.nl/))
+* Northwestern University ([MorphAdorner](https://bitbucket.org/pibburns/corpusindexer), a tool for morphological annotation)
+* University of Tilburg ([OpenSonar](http://opensonar.inl.nl), a Dutch corpus)
+* Allen Institute for Artificial Intelligence ([IKE](https://www.overleaf.com/articles/machine-teaching-for-information-extraction/hxxcqzwmpvdf/viewer.pdf), a knowledge extraction tool)
+* Meertens Institute ([Fesli](http://yago.meertens.knaw.nl/apache/Fesli/), a [bilingual] children's language corpus)
+* Radboud Universiteit (Basilex, a corpus of text written for children, [OpenChechen](http://corpus-studio-web.cttnww-meertens.vm.surfsara.nl/openchechen/), a Chechen corpus).
+* [VIVA](http://viva-afrikaans.org/), Virtuele Instituut Vir Afrikaans (Korpusportaal, an Afrikaans corpus (paid access only))
 
-There's now a beautiful, feature-rich user interface available that works with BlackLab out of the box: [WhiteLab 2.0](https://github.com/Taalmonsters/WhiteLab2.0). Version 1.0 has already proven itself in the OpenSonar, OpenChechen and VIVA Korpusportaal projects. This new version is even better, featuring an intuitive query builder and some neat visualisations. WhiteLab was developed as part of CLARIN/CLARIAH, for Universiteit Tilburg and INL, by Matje van de Camp of [Taalmonsters](http://www.taalmonsters.nl/). 
+If you're using BlackLab in a project not listed here, let me know, and I'll mention it on the project site!
+
+<a id="features"></a>
+
+### Take it to the maxx(x): Features
+BlackLab allows you to index and search on as many annotation layers as you want, including hierarchical structures like XML. Most users keep it to around 5 layers or so, but we've heard of people going well beyond 20, and BlackLab handles it just fine.
+
+A new addition is random hit sampling. Just let BlackLab select 1% of your results at random. Useful when you don't want to wade through millions of individual results, but you do want to get a sense of what you might find if you did.
+
+BlackLab supports a large and growing [subset of the Corpus Query Language](http://inl.github.io/BlackLab/corpus-query-language.html) and you can sort and group your results on different properties, for example "the second word to the left of the matched text".
+
+You can even capture groups of words in the matched text (just like you can with regular expressions), allowing you to analyse the structure of each of your matches in more detail. The IKE knowledge extraction tool developed by the Allen Institute (see above) uses this feature. You could also implement features like the [Sketch Engine](https://www.sketchengine.co.uk/)'s Word Sketch feature with this.
+
+<a id="testing"></a>
+
+### Proof of the Black pudding: Testing
+For scientific research, it's very important that BlackLab matches *every* occurrence of your query pattern, and getting it just right for every possible query is difficult, to say the least. That's why we run automatic tests with long lists of queries, from simple to very complex, on real corpora. We compare different versions of BlackLab and make sure  nothing breaks. We'll be using this system to test the correctness and performance of other engines as well. The more data, the better.
+
+In addition to those real-world search tests, BlackLab has many "unit tests", that test small parts of the system in isolation. We also run the BlackLab source code through static code analyzers to help us find even more (potential) bugs. Many improvements have already been made thanks to these useful tools.
+
+<a id="speed"></a>
+
+### Cutting corners: Speed
+With some queries, how you approach it greatly influences how long it takes to find matches. Sometimes, rewriting a query to a variant that does the same can speed it up by orders of magnitude. Now, I could teach you, the user, how to perform this arcane magic, but I'll do you one better: BlackLab does it automatically for you.
+
+Examples of queries that are rewritten to much faster alternatives include: queries with negative clauses ([word != "the"]), queries with "containing" or "within" clauses (&lt;s/&gt; containing "in" "the") and XML element queries in general (&lt;ne type="pers" /&gt;).
+
+With these new optimizations, BlackLab seems to be roughly comparable in performance to the Corpus WorkBench, with each system beating the other on some queries (as shown in a paper to be published in the book "CLARIN in the Low Countries"). We have every intention of pulling ahead, though. :-)
 
 
-### Testing: proof of the pudding
-Correctness is key when it comes to scientific research. It's very important that BlackLab matches every occurrence of your query pattern, and getting it just right for every possible query is difficult, to say the least. That's why we automatically test how BlackLab handles many queries, from simple to very complex, on a real corpus. We compare the results from different versions of BlackLab and make sure any changes are improvements. In the future, we'd like to use this system to compare BlackLab to other engines as well, making it easier to compare correctness and performance when choosing a corpus search system.
-
-Apart from real-world search tests, BlackLab also has many unit tests (that test small parts of the system in isolation). In addition, we run the BlackLab source code through static code analyzers to help us find even more (potential) bugs. Many small improvements have already been made thanks to these.
-
-
-### Features: take it to the max!
-BlackLab allows you to index and search on as many annotation layers as you want, including hierarchical structures like XML. Most users keep it to around 5 annotation layers or so, but we've heard of people going well beyond 20, and BlackLab handles it just fine.
-
-A new addition in version 1.4.0 is random hit sampling. Just let BlackLab select 1% of your results at random. Useful when you don't want to wade through millions of individual results, but you do want to get a sense of what you might find if you did.
-
-BlackLab supports a large and growing [subset of the Corpus Query Language](http://inl.github.io/BlackLab/corpus-query-language.html) and you can sort and group your results on different properties, for example "the second word to the left of the matched text". Hey, sometimes research requires very specific things, and it's always nice to know it's possible!
-
-You can even capture groups of words in the matched text (just like you can with regular expressions), allowing you to analyse the structure of each of your matches in more detail.
-
-
-### Speed: cutting corners
-With some queries, how you approach it greatly influences how long it takes to find matches. Sometimes, rewriting a query
-to a variant that does the same can speed it up by orders of magnitude. Now, we could teach you, the user, how to perform this
-arcane magic, but I'll do you one better: BlackLab does it automatically for you.
-
-Examples of queries that are rewritten to much faster alternatives include: queries with negative clauses ([word != "the"]), queries with "containing" or "within" clauses (<s/> containing "in" "the") and XML element queries in general (<ne type="pers" />).
-
-With these new optimizations, BlackLab is roughly comparable in performance to the Corpus WorkBench, with each system beating the other on some queries (as shown in a paper to be published in the book "CLARIN in the Low Countries"). We have every intention of pulling ahead, though. :-)
-
-
-Thanks for reading! Questions and feedback are very welcome (jan.niestadt@inl.nl).
-Until the next newsletter, (I'll try not to wait another three years...)
+Thanks for reading! Questions and feedback are very welcome ([jan.niestadt@inl.nl](mailto:jan.niestadt@inl.nl)).
+Until the next newsletter! (I'll try not to wait another three years...)
 
 
 Jan Niestadt.
 
+<hr/>
 
-
-
-
-
-
-**(September 2013)**
+## September 2013
 
 Hi everyone! More and more people are (thinking of) using BlackLab, and I wanted to keep you all up to date. Hence this newsletter with a quick overview of the latest BlackLab developments.
 
