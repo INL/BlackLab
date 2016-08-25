@@ -9,7 +9,7 @@ This page explains how to set up and use BlackLab Server. See the [BlackLab home
 * [Features](#features)
 * [Overview](#overview)
 * [Requests](#requests)
-* [Sorting, grouping & faceting](#sorting-grouping-faceting)
+* [Sorting, grouping & faceting](#sorting-grouping-filtering-faceting)
 * [Examples](#examples)
 * [Installation](#installation)
 * [Configuration file](#configuration-file)
@@ -157,6 +157,14 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>Identity of one of the groups to view (identity values are returned with the grouping results).</td>
 	</tr>
 	<tr>
+		<td>hitfiltercrit </td>
+		<td>A criterium to filter hits on. Also needs hitfilterval to work. See below. (default: don't filter)<br/>This is useful if you want to view hits in a group, and then be able to group on those hits again. These two parameters essentially supersede the viewgroup parameter: that parameter also allows you to view the hits in a group, but won't allow you to group that subset of hits again. By specifying multiple criteria and values to hitfiltercrit/hitfilterval, you can keep diving deeper into your result set.</td>
+	</tr>
+	<tr>
+		<td>hitfilterval </td>
+		<td>A value (of the specified hitfiltercrit) to filter hits on. (default: don't filter)</td>
+	</tr>
+	<tr>
 		<td>facets </td>
 		<td>Document faceting criteria, comma-separated. See below.  (default: don’t do any faceting)</td>
 	</tr>
@@ -250,9 +258,9 @@ NOTE: using the original content may cause problems with well-formedness; these 
 
 <a id="sorting-grouping-faceting"></a>
 
-## Sorting, grouping & faceting
+## Sorting, grouping, filtering & faceting
 
-The sort, group and facets parameters receive one or more criteria (comma-separated) that indicate what to sort, group or facet on.
+The sort, group, hitfiltercrit and facets parameters receive one or more criteria (comma-separated) that indicate what to sort, group, filter or facet on.
 
 <table>
 	<tr>

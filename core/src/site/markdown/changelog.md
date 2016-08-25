@@ -2,6 +2,15 @@
 
 ## Improvements in HEAD
 
+### Changed
+* Added Hits.filteredBy() to filter Hits on a HitProperty.
+
+### BlackLab Server
+* Added hitfiltercrit and hitfilterval parameters to filter hits on a criterium,
+  like "word left of matched text". This allows you to view the hits in a single group
+  after grouping, and then still allows you to group on these hits again, unlike the
+  existing "viewgroup" parameter.
+
 ## Improvements up to v1.5.0
 
 ### Fixed

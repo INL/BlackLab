@@ -31,6 +31,7 @@ import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.DocGroupSettings;
 import nl.inl.blacklab.server.jobs.DocGroupSortSettings;
 import nl.inl.blacklab.server.jobs.DocSortSettings;
+import nl.inl.blacklab.server.jobs.HitFilterSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
@@ -42,6 +43,7 @@ import nl.inl.blacklab.server.jobs.JobDocsTotal.JobDescDocsTotal;
 import nl.inl.blacklab.server.jobs.JobDocsWindow.JobDescDocsWindow;
 import nl.inl.blacklab.server.jobs.JobFacets.JobDescFacets;
 import nl.inl.blacklab.server.jobs.JobHits.JobDescHits;
+import nl.inl.blacklab.server.jobs.JobHitsFiltered.JobDescHitsFiltered;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped.JobDescHitsGrouped;
 import nl.inl.blacklab.server.jobs.JobHitsSorted.JobDescHitsSorted;
 import nl.inl.blacklab.server.jobs.JobHitsTotal.JobDescHitsTotal;
@@ -117,6 +119,7 @@ public class SearchParameters {
 		"patt", "pattlang",                  // pattern to search for
 		"filter", "filterlang", "docpid",    // docs to search
 		"sample", "samplenum", "sampleseed", // what hits to select
+		"hitfiltercrit", "hitfilterval",
 
 		// How to present results
 		"sort",                         // sorting (grouped) hits/docs
@@ -263,6 +266,12 @@ public class SearchParameters {
 			}
 		}
 		return filterQuery;
+	}
+
+	private HitFilterSettings getHitFilterSettings() {
+		if (!containsKey("hitfiltercrit") || !containsKey("hitfilterval"))
+			return null;
+		return new HitFilterSettings(getString("hitfiltercrit"), getString("hitfilterval"));
 	}
 
 	private SampleSettings getSampleSettings() {
@@ -441,12 +450,19 @@ public class SearchParameters {
 	public JobDescription hitsSorted() throws BlsException {
 		HitSortSettings hitsSortSettings = hitsSortSettings();
 		if (hitsSortSettings == null)
-			return hits();
-		return new JobDescHitsSorted(hits(), hitsSortSettings);
+			return hitsFiltered();
+		return new JobDescHitsSorted(hitsFiltered(), hitsSortSettings);
 	}
 
 	public JobDescription hitsTotal() throws BlsException {
-		return new JobDescHitsTotal(hits());
+		return new JobDescHitsTotal(hitsFiltered());
+	}
+
+	public JobDescription hitsFiltered() throws BlsException {
+		HitFilterSettings hitFilterSettings = getHitFilterSettings();
+		if (hitFilterSettings == null)
+			return hits();
+		return new JobDescHitsFiltered(hits(), hitFilterSettings);
 	}
 
 	public JobDescription hits() throws BlsException {

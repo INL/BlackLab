@@ -12,6 +12,7 @@ import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.grouping.HitGroups;
+import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
@@ -453,6 +454,26 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 */
 	public Hits sortedBy(final HitProperty sortProp) {
 		return sortedBy(sortProp, false, searcher.isDefaultSearchCaseSensitive());
+	}
+
+	/**
+	 * Select only the hits where the specified property has the specified value.
+	 * @param property property to select on, e.g. "word left of hit"
+	 * @param value value to select on, e.g. 'the'
+	 * @return filtered hits
+	 */
+	public Hits filteredBy(HitProperty property, HitPropValue value) {
+		List<String> requiredContext = property.needsContext();
+		findContext(requiredContext);
+
+		List<Hit> filtered = new ArrayList<>();
+		for (int i = 0; i < size(); i++) {
+			if (property.get(i).equals(value))
+				filtered.add(get(i));
+		}
+		Hits hits = new HitsImpl(searcher, filtered);
+		hits.copySettingsFrom(this);
+		return hits;
 	}
 
 	/**

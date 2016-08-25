@@ -128,6 +128,10 @@ public abstract class JobDescription {
 		return null;
 	}
 
+	public HitFilterSettings getHitFilterSettings() {
+		return null;
+	}
+
 	public void dataStreamEntries(DataStream ds) {
 		ds	.entry("jobClass", jobClass.getSimpleName())
 			.entry("inputDesc", inputDesc == null ? "(none)" : inputDesc.toString());
