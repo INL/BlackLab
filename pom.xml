@@ -9,10 +9,107 @@
 	<packaging>pom</packaging>
 	<version>1.4.0</version>
 	<name>BlackLab Corpus Search</name>
+	<description>The parent project for BlackLab Core and BlackLab Server.</description>
+	<url>https://github.com/INL/BlackLab</url>
 
 	<modules>
 		<module>core</module>
 		<module>server</module>
 	</modules>
+
+	<licenses>
+		<license>
+			<name>The Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<scm>
+		<url>https://github.com/INL/BlackLab</url>
+		<connection>scm:git:git://github.com/INL/BlackLab.git</connection>
+		<developerConnection>scm:git:git@github.com:INL/BlackLab.git</developerConnection>
+	</scm>
+
+	<developers>
+		<developer>
+			<id>jan-niestadt</id>
+			<name>Jan Niestadt</name>
+			<email>jan.niestadt@inl.nl</email>
+			<url>https://github.com/jan-niestadt</url>
+			<organization>INL</organization>
+			<organizationUrl>http://www.inl.nl</organizationUrl>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>Europe/Amsterdam</timezone>
+		</developer>
+		
+		<developer>
+			<id>JesseDeDoes</id>
+			<name>Jesse de Does</name>
+			<email>jesse.dedoes@inl.nl</email>
+			<url>https://github.com/JesseDeDoes</url>
+			<organization>INL</organization>
+			<organizationUrl>http://www.inl.nl</organizationUrl>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>Europe/Amsterdam</timezone>
+		</developer>
+	</developers>
+
+	<!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+
+	<build>
+		<plugins>
+			<!-- Deploy a release to the OSSRH Nexus Repository Manager (for deploying to Maven Central) -->
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.3</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>false</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<!-- Sign components using GPG -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>			
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
