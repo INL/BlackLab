@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
@@ -341,6 +342,16 @@ class SpansNot extends BLSpans {
 			return;
 		if (clause != null)
 			clause.getCapturedGroups(capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return 0;
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		// nothing to collect
 	}
 
 }

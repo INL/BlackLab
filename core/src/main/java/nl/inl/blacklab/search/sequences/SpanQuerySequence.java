@@ -16,20 +16,24 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
 import nl.inl.blacklab.search.lucene.SpansUnique;
-
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -58,41 +62,76 @@ public class SpanQuerySequence extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
-		BLSpans combi = BLSpansWrapper.optWrap(clauses[0].getSpans(context, acceptDocs, termContexts));
-		if (combi == null)
-			return null;
-		for (int i = 1; i < clauses.length; i++) {
-			BLSpans si = BLSpansWrapper.optWrap(clauses[i].getSpans(context, acceptDocs, termContexts));
-			if (si == null)
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		List<SpanWeight> weights = new ArrayList<>();
+		for (SpanQuery clause: clauses) {
+			weights.add(clause.createWeight(searcher, needsScores));
+		}
+		Map<Term, TermContext> contexts = needsScores ? getTermContexts(weights.toArray(new SpanWeight[0])) : null;
+		return new SpanWeightSequence(weights, searcher, contexts);
+	}
+
+	public class SpanWeightSequence extends SpanWeight {
+
+		final List<SpanWeight> weights;
+
+		public SpanWeightSequence(List<SpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQuerySequence.this, searcher, terms);
+			this.weights = weights;
+		}
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			for (SpanWeight weight: weights) {
+				weight.extractTerms(terms);
+			}
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			for (SpanWeight weight: weights) {
+				weight.extractTermContexts(contexts);
+			}
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans combi = BLSpansWrapper.optWrap(weights.get(0).getSpans(context, requiredPostings));
+			if (combi == null)
 				return null;
+			for (int i = 1; i < weights.size(); i++) {
+				BLSpans si = BLSpansWrapper.optWrap(weights.get(i).getSpans(context, requiredPostings));
+				if (si == null)
+					return null;
 
-			// Note: the spans coming from SequenceSpansRaw are not sorted by end point.
-			// This is okay in this loop because combi is used as the left part of the next
-			// sequence (so it is explicitly sorted by end point when we put it back in
-			// SequenceSpansRaw for the next part of the sequence), but before returning the
-			// final spans, we wrap it in a per-document (start-point) sorter.
-			if (si.hitsStartPointSorted() && si.hitsHaveUniqueStart() &&
-					combi.hitsEndPointSorted() && combi.hitsHaveUniqueEnd()) {
-				// We can take a shortcut because of what we know about the Spans we're combining.
-				combi = new SpansSequenceSimple(combi, si);
+				// Note: the spans coming from SequenceSpansRaw are not sorted by end point.
+				// This is okay in this loop because combi is used as the left part of the next
+				// sequence (so it is explicitly sorted by end point when we put it back in
+				// SequenceSpansRaw for the next part of the sequence), but before returning the
+				// final spans, we wrap it in a per-document (start-point) sorter.
+				if (si.hitsStartPointSorted() && si.hitsHaveUniqueStart() &&
+						combi.hitsEndPointSorted() && combi.hitsHaveUniqueEnd()) {
+					// We can take a shortcut because of what we know about the Spans we're combining.
+					combi = new SpansSequenceSimple(combi, si);
+				}
+				else {
+					combi = new SpansSequenceRaw(combi, si);
+				}
 			}
-			else {
-				combi = new SpansSequenceRaw(combi, si);
+
+			// Sort the resulting spans by start point.
+			// Note that duplicates may have formed by combining spans from left and right. Eliminate
+			// these duplicates now (hence the 'true').
+			boolean sorted = combi.hitsStartPointSorted();
+			boolean unique = combi.hitsAreUnique();
+			if (!sorted) {
+				combi = new PerDocumentSortedSpans(combi, false, !unique);
+			} else if (!unique) {
+				combi = new SpansUnique(combi);
 			}
+			return combi;
 		}
 
-		// Sort the resulting spans by start point.
-		// Note that duplicates may have formed by combining spans from left and right. Eliminate
-		// these duplicates now (hence the 'true').
-		boolean sorted = combi.hitsStartPointSorted();
-		boolean unique = combi.hitsAreUnique();
-		if (!sorted) {
-			combi = new PerDocumentSortedSpans(combi, false, !unique);
-		} else if (!unique) {
-			combi = new SpansUnique(combi);
-		}
-		return combi;
 	}
 
 	@Override

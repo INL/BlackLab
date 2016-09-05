@@ -19,21 +19,18 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
+import org.apache.lucene.search.spans.SpanWeight;
 
 /*
  * This is my SpanFuzzyQuery. It is released under the Apache licensence. Just paste it in. (Karl
@@ -50,7 +47,7 @@ import org.apache.lucene.util.Bits;
  *
  * @author Karl Wettin <kalle@snigel.net>
  */
-public class SpanFuzzyQuery extends SpanQuery {
+public class SpanFuzzyQuery extends BLSpanQuery {
 	public final static int defaultMaxEdits = 2;
 
 	public final static int defaultPrefixLength = 0;
@@ -60,8 +57,6 @@ public class SpanFuzzyQuery extends SpanQuery {
 	private final int maxEdits;
 
 	private final int prefixLength;
-
-	private Query rewrittenFuzzyQuery = null;
 
 	public SpanFuzzyQuery(Term term) {
 		this(term, defaultMaxEdits, defaultPrefixLength);
@@ -85,20 +80,18 @@ public class SpanFuzzyQuery extends SpanQuery {
 	public Query rewrite(IndexReader reader) throws IOException {
 		FuzzyQuery fuzzyQuery = new FuzzyQuery(term, maxEdits, prefixLength);
 
-		rewrittenFuzzyQuery = fuzzyQuery.rewrite(reader);
+		Query rewrittenFuzzyQuery = fuzzyQuery.rewrite(reader);
 		if (rewrittenFuzzyQuery instanceof BooleanQuery) {
 			// BooleanQuery; make SpanQueries from each of the TermQueries and combine with OR
-			BooleanClause[] clauses = ((BooleanQuery) rewrittenFuzzyQuery).getClauses();
-			SpanQuery[] spanQueries = new SpanQuery[clauses.length];
-			for (int i = 0; i < clauses.length; i++) {
-				BooleanClause clause = clauses[i];
+			List<BooleanClause> clauses = ((BooleanQuery) rewrittenFuzzyQuery).clauses();
+			SpanQuery[] spanQueries = new SpanQuery[clauses.size()];
+			for (int i = 0; i < clauses.size(); i++) {
+				BooleanClause clause = clauses.get(i);
 
 				TermQuery termQuery = (TermQuery) clause.getQuery();
 
 				// ONLY DIFFERENCE WITH SpanFuzzyQuery:
-				// Use a BLSpanTermQuery instead of default Lucene one
-				// because we need to override getField() to only return the base field name,
-				// not the complete field name with the property.
+				// Use a BLSpanTermQuery instead of default Lucene one.
 				spanQueries[i] = new BLSpanTermQuery(termQuery.getTerm());
 				spanQueries[i].setBoost(termQuery.getBoost());
 			}
@@ -115,13 +108,8 @@ public class SpanFuzzyQuery extends SpanQuery {
 
 	}
 
-	/**
-	 * Expert: Returns the matches for this query in an index. Used internally to search for spans.
-	 *
-	 * @return the spans object
-	 */
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term, TermContext> termContexts) {
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		throw new UnsupportedOperationException("Query should have been rewritten");
 	}
 
@@ -133,30 +121,6 @@ public class SpanFuzzyQuery extends SpanQuery {
 	@Override
 	public String getField() {
 		return term.field();
-	}
-
-	/**
-	 * Add all terms to the supplied set
-	 *
-	 * @param terms
-	 *            the set the terms should be added to
-	 */
-	@Override
-	public void extractTerms(Set<Term> terms) {
-		if (rewrittenFuzzyQuery == null) {
-			throw new RuntimeException("Query must be rewritten prior to calling extractTerms()!");
-		}
-		if (rewrittenFuzzyQuery instanceof BooleanQuery) {
-			// Extract terms from clauses
-			BooleanClause[] clauses = ((BooleanQuery) rewrittenFuzzyQuery).getClauses();
-			for (BooleanClause clause: clauses) {
-				TermQuery termQuery = (TermQuery) clause.getQuery();
-				terms.add(termQuery.getTerm());
-			}
-		} else {
-			// Just a single term, not a BooleanQuery
-			terms.add(((TermQuery) rewrittenFuzzyQuery).getTerm());
-		}
 	}
 
 	/**
@@ -178,8 +142,6 @@ public class SpanFuzzyQuery extends SpanQuery {
 	 */
 	@Override
 	public String toString(String field) {
-		if (rewrittenFuzzyQuery == null)
-			return "SpanFuzzyQuery(" + term.text() + ")";
-		return "SpanFuzzyQuery(" + rewrittenFuzzyQuery.toString() + ")";
+		return "SpanFuzzyQuery(" + term.text() + ")";
 	}
 }

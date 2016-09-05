@@ -15,11 +15,16 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.io.IOException;
+
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.MockHits;
-import nl.inl.blacklab.testutil.MockSearcher;
+import nl.inl.blacklab.MockSearcher;
+import nl.inl.blacklab.MockSpans;
 
 public class TestHits {
 
@@ -37,6 +42,23 @@ public class TestHits {
 			Assert.assertEquals(aEnd[i], hit.end);
 			i++;
 		}
+	}
+	@Test
+	public void testMockSpans() throws IOException {
+		int[] aDoc = new int[]   { 1, 2 };
+		int[] aStart = new int[] { 1, 2 };
+		int[] aEnd = new int[]   { 2, 3 };
+		Spans spans = new MockSpans(aDoc, aStart, aEnd);
+		Assert.assertNotEquals(DocIdSetIterator.NO_MORE_DOCS, spans.nextDoc());
+		Assert.assertEquals(1, spans.docID());
+		Assert.assertEquals(1, spans.nextStartPosition());
+		Assert.assertEquals(2, spans.endPosition());
+		Assert.assertEquals(Spans.NO_MORE_POSITIONS, spans.nextStartPosition());
+		Assert.assertNotEquals(DocIdSetIterator.NO_MORE_DOCS, spans.nextDoc());
+		Assert.assertEquals(2, spans.docID());
+		Assert.assertEquals(2, spans.nextStartPosition());
+		Assert.assertEquals(3, spans.endPosition());
+		Assert.assertEquals(Spans.NO_MORE_POSITIONS, spans.nextStartPosition());
 	}
 
 }

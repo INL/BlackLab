@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
@@ -154,6 +155,16 @@ public class SpansUnique extends BLSpans {
 		if (!childClausesCaptureGroups)
 			return;
 		src.getCapturedGroups(capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return src.width();
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		src.collect(collector);
 	}
 
 }

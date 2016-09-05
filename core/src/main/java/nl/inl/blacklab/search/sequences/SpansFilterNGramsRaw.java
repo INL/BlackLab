@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.sequences;
 import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
@@ -409,5 +410,15 @@ class SpansFilterNGramsRaw extends BLSpans {
 		if (!childClausesCaptureGroups)
 			return;
 		clause.getCapturedGroups(capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return clause.width();
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		clause.collect(collector);
 	}
 }

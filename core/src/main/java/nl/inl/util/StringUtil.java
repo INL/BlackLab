@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 
 /**
- * Een collectie reguliere expressies om verschillende patronen uit Strings te filteren.
+ * A collection of String-related utility methods and regular expression patterns.
  */
 public class StringUtil {
 	/** String containing nbsp character (decimal 160 = hex A0) */

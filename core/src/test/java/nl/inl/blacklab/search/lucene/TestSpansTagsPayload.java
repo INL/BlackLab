@@ -31,7 +31,7 @@ public class TestSpansTagsPayload {
 		int[] aStart = { 10, 1, 4 };
 		int[] aEnd   = { 21, 2, 6 };
 		Spans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
-		Spans spans = new SpansTagsPayload(a);
+		Spans spans = new SpansTags(a);
 
 		int[] expDoc   = {  1, 2, 2 };
 		int[] expStart = { 10, 1, 4 };
@@ -47,7 +47,7 @@ public class TestSpansTagsPayload {
 		int[] aEnd   = { 7, 5 };
 		Spans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
 
-		Spans spans = new SpansTagsPayload(a);
+		Spans spans = new SpansTags(a);
 
 		int[] expDoc   = { 1, 1 };
 		int[] expStart = { 2, 4 };
@@ -70,7 +70,7 @@ public class TestSpansTagsPayload {
 		int[] aEnd   = { 2, 7 };
 		Spans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
 
-		Spans spans = new SpansTagsPayload(a);
+		Spans spans = new SpansTags(a);
 
 		int[] expDoc   = { 1, 1};
 		int[] expStart = { 2, 4};
@@ -86,7 +86,7 @@ public class TestSpansTagsPayload {
 		int[] aEnd   = { 5, 7, 17, 15 };
 		Spans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
 
-		Spans spans = new SpansTagsPayload(a);
+		Spans spans = new SpansTags(a);
 		spans.advance(2);
 
 		int[] expDoc   = { 2,  2};

@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,8 +36,9 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.api.tuple.primitive.IntIntPair;
@@ -122,9 +122,12 @@ public class HitsImpl extends Hits {
 	protected List<String> contextFieldsPropName;
 
 	/**
-	 * Our SpanQuery, for getting the next Spans when the current one's done.
+	 * Our SpanQuery.
 	 */
 	protected SpanQuery spanQuery;
+
+	/** The SpanWeight for our SpanQuery, from which we can get the next Spans when the current one's done. */
+	private SpanWeight weight;
 
 	/**
 	 * The LeafReaderContexts we should query in succession.
@@ -287,7 +290,8 @@ public class HitsImpl extends Hits {
 			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
 			termContexts = new HashMap<>();
 			Set<Term> terms = new HashSet<>();
-			extractTermsFromSpanQuery(terms);
+			weight = spanQuery.createWeight(searcher.getIndexSearcher(), false);
+			weight.extractTerms(terms);
 			etiquette = new ThreadPriority();
 			for (Term term: terms) {
 				try {
@@ -305,7 +309,6 @@ public class HitsImpl extends Hits {
 			currentSourceSpans = null;
 			atomicReaderContexts = reader == null ? null : reader.leaves();
 			atomicReaderContextIndex = -1;
-			//sourceSpans = BLSpansWrapper.optWrap(spanQuery.getSpans(srw != null ? srw.getContext() : null, srw != null ? srw.getLiveDocs() : null, termContexts));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -374,17 +377,17 @@ public class HitsImpl extends Hits {
 		settings.setConcordanceField(concordanceFieldPropName);
 	}
 
-	private void extractTermsFromSpanQuery(Set<Term> terms) {
-		try {
-			// FIXME: temporary extractTerms hack
-			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
-			methodExtractTerms.setAccessible(true);
-		    methodExtractTerms.invoke(spanQuery, terms);
-			//spanQuery.extractTerms(terms);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+//	private void extractTermsFromSpanQuery(Set<Term> terms) {
+//		try {
+//			// FIXME: temporary extractTerms hack
+//			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
+//			methodExtractTerms.setAccessible(true);
+//		    methodExtractTerms.invoke(spanQuery, terms);
+//			//spanQuery.extractTerms(terms);
+//		} catch (Exception e) {
+//			throw new RuntimeException(e);
+//		}
+//	}
 
 	/** Sets the desired context size.
 	 * @param contextSize the context size (number of words to fetch around hits)
@@ -466,8 +469,8 @@ public class HitsImpl extends Hits {
 								// Get the atomic reader context and get the next Spans from it.
 								LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
 								currentDocBase = context.docBase;
-								Bits liveDocs = context.reader().getLiveDocs();
-								currentSourceSpans = BLSpansWrapper.optWrapSortUniq(spanQuery.getSpans(context, liveDocs, termContexts));
+								Spans spans = weight.getSpans(context, Postings.OFFSETS);
+								currentSourceSpans = BLSpansWrapper.optWrapSortUniq(spans);
 							} else {
 								// TESTING
 								currentDocBase = 0;
@@ -475,7 +478,8 @@ public class HitsImpl extends Hits {
 									sourceSpansFullyRead = true;
 									return;
 								}
-								currentSourceSpans = BLSpansWrapper.optWrapSortUniq(spanQuery.getSpans(null, null, termContexts));
+								Spans spans = weight.getSpans(null, Postings.OFFSETS);
+								currentSourceSpans = BLSpansWrapper.optWrapSortUniq(spans);
 							}
 
 							if (currentSourceSpans != null) {

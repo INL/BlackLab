@@ -331,7 +331,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 		try {
 			Weight w = indexSearcher.createNormalizedWeight(q, true);
 			LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
-			Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(reader));
+			Scorer sc = w.scorer(scrw.getContext());
 			return sc;
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -392,7 +392,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 			// Iterate over terms
 			TermsEnum termsEnum = terms.iterator();
 			while (termsEnum.next() != null) {
-				PostingsEnum dpe = termsEnum.postings(null, null, PostingsEnum.POSITIONS);
+				PostingsEnum dpe = termsEnum.postings(null, PostingsEnum.POSITIONS);
 
 				// Iterate over docs containing this term (NOTE: should be only one doc!)
 				while (dpe.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
@@ -607,7 +607,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 				IndexSearcher s = new IndexSearcher(freshReader);
 				Weight w = s.createNormalizedWeight(q, false);
 				try (LeafReader scrw = SlowCompositeReaderWrapper.wrap(freshReader)) {
-					Scorer sc = w.scorer(scrw.getContext(), MultiFields.getLiveDocs(freshReader));
+					Scorer sc = w.scorer(scrw.getContext());
 					if (sc == null)
 						return; // no matching documents
 

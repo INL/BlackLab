@@ -20,8 +20,11 @@ package nl.inl.blacklab;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Collections;
+
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -32,17 +35,118 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
  * from these arrays.
  */
 public class MockSpans extends BLSpans {
+
+	private final class MockPostingsEnum extends PostingsEnum {
+		private int currentDoc = -1;
+		private int currentHit = -1;
+		private boolean alreadyAtFirstMatch = false;
+
+		@Override
+		public int nextDoc() throws IOException {
+			if (currentDoc != NO_MORE_DOCS) {
+				alreadyAtFirstMatch = false;
+				while (currentHit < doc.length && (currentHit == -1 || doc[currentHit] == currentDoc) ) {
+					currentHit++;
+				}
+				if (currentHit >= doc.length) {
+					currentDoc = NO_MORE_DOCS;
+					return NO_MORE_DOCS;
+				}
+				alreadyAtFirstMatch = true;
+				currentDoc = doc[currentHit];
+			}
+			return currentDoc;
+		}
+
+		@Override
+		public int docID() {
+			return currentDoc;
+		}
+
+		@Override
+		public long cost() {
+			return 0;
+		}
+
+		@Override
+		public int advance(int target) throws IOException {
+			if (currentDoc != NO_MORE_DOCS) {
+				alreadyAtFirstMatch = false;
+				do {
+					currentDoc = nextDoc();
+				} while(currentDoc != NO_MORE_DOCS && currentDoc < target);
+			}
+			return currentDoc;
+		}
+
+		@Override
+		public int startOffset() throws IOException {
+			if (currentHit < 0 || alreadyAtFirstMatch)
+				return -1;
+			if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
+				return NO_MORE_POSITIONS;
+			return start[currentHit];
+		}
+
+		@Override
+		public int nextPosition() throws IOException {
+			if (currentDoc == NO_MORE_DOCS)
+				return NO_MORE_POSITIONS;
+			if (alreadyAtFirstMatch) {
+				alreadyAtFirstMatch = false;
+				return startOffset();
+			}
+			if (currentHit < 0)
+				throw new RuntimeException("nextDoc() not called yet!");
+			if (currentHit < doc.length && doc[currentHit] == currentDoc) {
+				currentHit++;
+				return startOffset(); // may return NO_MORE_POSITIONS if we're at the next doc
+			}
+			return NO_MORE_POSITIONS;
+		}
+
+		@Override
+		public BytesRef getPayload() throws IOException {
+			if (payloads == null)
+				return null;
+			if (currentHit < 0 || alreadyAtFirstMatch)
+				return null;
+			if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
+				return null;
+			return new BytesRef(payloads[currentHit]);
+		}
+
+		@Override
+		public int freq() throws IOException {
+			// Find start of next document
+			int i;
+			for (i = currentHit + 1; i < doc.length && doc[i] == currentDoc; i++);
+			return i - currentHit;
+		}
+
+		@Override
+		public int endOffset() throws IOException {
+			if (currentHit < 0 || alreadyAtFirstMatch)
+				return -1;
+			if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
+				return NO_MORE_POSITIONS;
+			return end[currentHit];
+		}
+	}
+
 	private int[] doc;
 
 	private int[] start;
 
 	private int[] end;
 
-	private int currentDoc = -1;
+	private MockPostingsEnum postings;
 
-	private int currentHit = -1;
+	private MyTermSpans spans;
 
-	private boolean alreadyAtFirstMatch = false;
+	private boolean noMoreDocs = false;
+
+	private boolean noMoreHitsInDoc = true;
 
 	private boolean singleTokenSpans;
 
@@ -51,6 +155,8 @@ public class MockSpans extends BLSpans {
 	private boolean uniqueSpans;
 
 	private byte[][] payloads = null;
+
+	private int endPos = -1;
 
 	public MockSpans(int[] doc, int[] start, int[] end) {
 		this.doc = doc;
@@ -79,20 +185,19 @@ public class MockSpans extends BLSpans {
 			prevStart = start[i];
 			prevEnd = end[i];
 		}
+
+		postings = new MockPostingsEnum();
+		spans = new MyTermSpans(postings, new Term("test", "dummy"));
 	}
 
 	@Override
 	public int docID() {
-		return currentDoc;
+		return spans.docID();
 	}
 
 	@Override
 	public int endPosition() {
-		if (currentHit < 0 || alreadyAtFirstMatch)
-			return -1;
-		if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
-			return NO_MORE_POSITIONS;
-		return end[currentHit];
+		return endPos; //spans.endPosition();
 	}
 
 	private void setPayloadsInt(int[] aEnd) {
@@ -103,73 +208,48 @@ public class MockSpans extends BLSpans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() {
-		if (payloads == null)
-			return null;
-		if (currentHit < 0 || alreadyAtFirstMatch)
-			return null;
-		if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
-			return null;
-		return Collections.singleton(payloads[currentHit]);
+	public int nextDoc() throws IOException {
+		if (noMoreDocs)
+			throw new RuntimeException("Called nextDoc() on exhausted spans!");
+		endPos = -1;
+		int docId = spans.nextDoc();
+		if (docId == NO_MORE_DOCS)
+			noMoreDocs = true;
+		else
+			noMoreHitsInDoc = false;
+		return docId;
 	}
 
 	@Override
-	public boolean isPayloadAvailable() {
-		return payloads != null;
-	}
-
-	@Override
-	public int nextDoc() {
-		if (currentDoc != NO_MORE_DOCS) {
-			alreadyAtFirstMatch = false;
-			while (currentHit < doc.length && (currentHit == -1 || doc[currentHit] == currentDoc) ) {
-				currentHit++;
-			}
-			if (currentHit >= doc.length) {
-				currentDoc = NO_MORE_DOCS;
-				return NO_MORE_DOCS;
-			}
-			alreadyAtFirstMatch = true;
-			currentDoc = doc[currentHit];
+	public int nextStartPosition() throws IOException {
+		if (noMoreHitsInDoc)
+			throw new RuntimeException("Called nextStartPosition() on hit-exhausted spans!");
+		int startPos = spans.nextStartPosition();
+		endPos = startPos == NO_MORE_POSITIONS ? NO_MORE_POSITIONS : postings.endOffset();
+		if (startPos == NO_MORE_POSITIONS) {
+			noMoreHitsInDoc = true;
 		}
-		return currentDoc;
-	}
-
-	@Override
-	public int nextStartPosition() {
-		if (currentDoc == NO_MORE_DOCS)
-			return NO_MORE_POSITIONS;
-		if (alreadyAtFirstMatch) {
-			alreadyAtFirstMatch = false;
-			return startPosition();
-		}
-		if (currentHit < 0)
-			throw new RuntimeException("nextDoc() not called yet!");
-		if (currentHit < doc.length && doc[currentHit] == currentDoc) {
-			currentHit++;
-			return startPosition(); // may return NO_MORE_POSITIONS if we're at the next doc
-		}
-		return NO_MORE_POSITIONS;
+		return startPos;
 	}
 
 	@Override
 	public int advance(int target) throws IOException {
-		if (currentDoc != NO_MORE_DOCS) {
-			alreadyAtFirstMatch = false;
-			do {
-				currentDoc = nextDoc();
-			} while(currentDoc != NO_MORE_DOCS && currentDoc < target);
-		}
-		return currentDoc;
+		if (noMoreDocs)
+			throw new RuntimeException("Called advance() on exhausted spans!");
+		endPos = -1;
+		if (target <= spans.docID())
+			throw new IllegalArgumentException("target <= doc (" + target + " <= " + spans.docID() + ")");
+		int docId = spans.advance(target);
+		if (docId == NO_MORE_DOCS)
+			noMoreDocs = true;
+		else
+			noMoreHitsInDoc = false;
+		return docId;
 	}
 
 	@Override
 	public int startPosition() {
-		if (currentHit < 0 || alreadyAtFirstMatch)
-			return -1;
-		if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
-			return NO_MORE_POSITIONS;
-		return start[currentHit];
+		return spans.startPosition();
 	}
 
 	@Override
@@ -241,6 +321,16 @@ public class MockSpans extends BLSpans {
 			aEnd[i] = aStart[i] + 1;
 		}
 		return fromLists(aDoc, aStart, aEnd);
+	}
+
+	@Override
+	public int width() {
+		return 0;
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		collector.collectLeaf(postings, -1, null);
 	}
 
 }

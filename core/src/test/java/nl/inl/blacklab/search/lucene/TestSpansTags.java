@@ -37,7 +37,7 @@ public class TestSpansTags {
 		int[] bEnd   = { 22, 3, 7 };
 		Spans b = new MockSpans(bDoc, bStart, bEnd);
 
-		SpansTags spans = new SpansTags(a, b);
+		SpansTagsOld spans = new SpansTagsOld(a, b);
 
 		int[] expDoc   = {  1, 2, 2 };
 		int[] expStart = { 10, 1, 4 };
@@ -58,7 +58,7 @@ public class TestSpansTags {
 		int[] bEnd   = { 6, 8 };
 		Spans b = new MockSpans(bDoc, bStart, bEnd);
 
-		SpansTags spans = new SpansTags(a, b);
+		SpansTagsOld spans = new SpansTagsOld(a, b);
 
 		int[] expDoc   = { 1, 1 };
 		int[] expStart = { 2, 4 };
@@ -86,7 +86,7 @@ public class TestSpansTags {
 		int[] bEnd   = { 3, 8 };
 		Spans b = new MockSpans(bDoc, bStart, bEnd);
 
-		SpansTags spans = new SpansTags(a, b);
+		SpansTagsOld spans = new SpansTagsOld(a, b);
 
 		int[] expDoc   = { 1, 1};
 		int[] expStart = { 2, 4};
@@ -107,7 +107,7 @@ public class TestSpansTags {
 		int[] bEnd   = { 6, 8, 16, 18 };
 		Spans b = new MockSpans(bDoc, bStart, bEnd);
 
-		SpansTags spans = new SpansTags(a, b);
+		SpansTagsOld spans = new SpansTagsOld(a, b);
 		spans.advance(2);
 
 		int[] expDoc   = { 2,  2};

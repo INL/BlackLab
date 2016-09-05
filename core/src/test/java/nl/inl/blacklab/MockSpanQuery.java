@@ -15,21 +15,24 @@
  *******************************************************************************/
 package nl.inl.blacklab;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
  * Stub SpanQuery class for testing. Takes arrays and iterates through 'hits'
  * from these arrays.
  */
-public class MockSpanQuery extends SpanQuery {
+public class MockSpanQuery extends BLSpanQuery {
 	private int[] doc;
 
 	private int[] start;
@@ -50,25 +53,34 @@ public class MockSpanQuery extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext arg0, Bits arg1, Map<Term, TermContext> arg2) {
-		return new MockSpans(doc, start, end);
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		return new SpanWeight(this, searcher, null) {
+
+			@Override
+			public void extractTerms(Set<Term> terms) {
+				// NOP
+			}
+
+			@Override
+			public void extractTermContexts(Map<Term, TermContext> contexts) {
+				// NOP
+			}
+
+			@Override
+			public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+				return new MockSpans(doc, start, end);
+			}
+		};
 	}
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryStub()";
+		return "MockSpanQuery()";
 	}
 
 	@Override
 	public String getField() {
-		return "stub";
+		return "dummy";
 	}
-
-	@Override
-	public void extractTerms(Set<Term> terms) {
-		// (no terms)
-	}
-
-
 
 }

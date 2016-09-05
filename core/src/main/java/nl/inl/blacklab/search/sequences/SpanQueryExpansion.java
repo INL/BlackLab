@@ -17,13 +17,15 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
@@ -78,26 +80,53 @@ public class SpanQueryExpansion extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts) throws IOException {
-		Spans spansSource = clauses[0].getSpans(context, acceptDocs, termContexts);
-		if (spansSource == null)
-			return null;
-		BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses[0].getField(), spansSource, expandToLeft, min, max);
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
+		return new SpanWeightExpansion(weight, searcher, needsScores ? getTermContexts(weight) : null);
+	}
 
-		// Note: the spans coming from SpansExpansion are not sorted properly.
-		// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
+	public class SpanWeightExpansion extends SpanWeight {
 
-		// Sort the resulting spans by start point.
-		// Note that duplicates may have formed by combining spans from left and right. Eliminate
-		// these duplicates now (hence the 'true').
-		boolean sorted = spans.hitsStartPointSorted();
-		boolean unique = spans.hitsAreUnique();
-		if (!sorted) {
-			return new PerDocumentSortedSpans(spans, false, !unique);
-		} else if (!unique) {
-			return new SpansUnique(spans);
+		final SpanWeight weight;
+
+		public SpanWeightExpansion(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryExpansion.this, searcher, terms);
+			this.weight = weight;
 		}
-		return spans;
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			weight.extractTerms(terms);
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			weight.extractTermContexts(contexts);
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans spansSource = weight.getSpans(context, requiredPostings);
+			if (spansSource == null)
+				return null;
+			BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses[0].getField(), spansSource, expandToLeft, min, max);
+
+			// Note: the spans coming from SpansExpansion are not sorted properly.
+			// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
+
+			// Sort the resulting spans by start point.
+			// Note that duplicates may have formed by combining spans from left and right. Eliminate
+			// these duplicates now (hence the 'true').
+			boolean sorted = spans.hitsStartPointSorted();
+			boolean unique = spans.hitsAreUnique();
+			if (!sorted) {
+				return new PerDocumentSortedSpans(spans, false, !unique);
+			} else if (!unique) {
+				return new SpansUnique(spans);
+			}
+			return spans;
+		}
+
 	}
 
 	@Override

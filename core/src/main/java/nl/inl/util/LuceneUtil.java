@@ -75,11 +75,12 @@ public class LuceneUtil {
 			return result;
 		}
 
-		BooleanQuery q = new BooleanQuery();
+		BooleanQuery.Builder bb = new BooleanQuery.Builder();
 		for (String s: searchTerms) {
 			FuzzyQuery fq = new FuzzyQuery(new Term(luceneName, s), maxEdits);
-			q.add(fq, Occur.SHOULD);
+			bb.add(fq, Occur.SHOULD);
 		}
+		BooleanQuery q = bb.build();
 
 		try {
 			Query rewritten = q.rewrite(reader);
@@ -173,7 +174,7 @@ public class LuceneUtil {
 			int numFound = 0;
 			String[] concordanceWords = new String[end - start + 1];
 			while (termsEnum.next() != null) {
-				docPosEnum = termsEnum.postings(null, docPosEnum, PostingsEnum.POSITIONS);
+				docPosEnum = termsEnum.postings(docPosEnum, PostingsEnum.POSITIONS);
 				while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 					// NOTE: .docId() will always return 0 in this case
 					//if (docPosEnum.docID() != doc)
@@ -235,7 +236,7 @@ public class LuceneUtil {
 			// Verzamel concordantiewoorden uit term vector
 			PostingsEnum postingsEnum = null;
 			while (termsEnum.next() != null) {
-				postingsEnum = termsEnum.postings(null, postingsEnum, PostingsEnum.FREQS);
+				postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.FREQS);
 				String term = termsEnum.term().utf8ToString();
 				Integer n = freq.get(term);
 				if (n == null) {
@@ -343,7 +344,7 @@ public class LuceneUtil {
 					throw new RuntimeException("arc == null");
 				if (arc.reader() == null)
 					throw new RuntimeException("arc.reader() == null");
-				Scorer scorer = weight.scorer(arc, arc.reader().getLiveDocs());
+				Scorer scorer = weight.scorer(arc);
 				if (scorer != null) {
 					while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 						getFrequenciesFromTermVector(indexReader, scorer.docID() + arc.docBase, luceneField, freq);

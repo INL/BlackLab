@@ -16,12 +16,9 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.util.ToStringUtils;
@@ -33,7 +30,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  * abstract methods in SpanQuery.
  */
 
-public abstract class SpanQueryBase extends SpanQuery {
+public abstract class SpanQueryBase extends BLSpanQuery {
 	/**
 	 * The field name for this query. The "base" part is only applicable when dealing with complex
 	 * fields: the base field name of "contents" and "contents%pos" would both be "contents".
@@ -110,31 +107,6 @@ public abstract class SpanQueryBase extends SpanQuery {
 	@Override
 	public String getField() {
 		return baseFieldName;
-	}
-
-	/**
-	 * Add all terms to the supplied set
-	 *
-	 * @param terms
-	 *            the set the terms should be added to
-	 */
-	@Override
-	public void extractTerms(Set<Term> terms) {
-		try {
-			// FIXME: temporary extractTerms hack
-			Method methodExtractTerms = SpanQuery.class.
-			        getDeclaredMethod("extractTerms", Set.class);
-			methodExtractTerms.setAccessible(true);
-
-			for (final SpanQuery clause : clauses) {
-				if (clause != null) { // <-- happens when searching for []
-					methodExtractTerms.invoke(clause, terms);
-					//clause.extractTerms(terms);
-				}
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	@Override

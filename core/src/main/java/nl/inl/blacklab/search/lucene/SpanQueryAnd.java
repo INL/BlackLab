@@ -16,15 +16,19 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 
 /**
  * Combines SpanQueries using AND. Note that this means that only matches with the same document id,
@@ -44,17 +48,49 @@ public class SpanQueryAnd extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs,
-			Map<Term, TermContext> termContexts) throws IOException {
-		Spans combi = clauses[0].getSpans(context, acceptDocs, termContexts);
-		for (int i = 1; i < clauses.length; i++) {
-			Spans si = clauses[i].getSpans(context, acceptDocs, termContexts);
-			if (combi == null || si == null)
-				return null; // if no hits in one of the clauses, no hits in and query
-			combi = new SpansAnd(combi, si);
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		List<SpanWeight> weights = new ArrayList<>();
+		for (SpanQuery clause: clauses) {
+			weights.add(clause.createWeight(searcher, needsScores));
+		}
+		Map<Term, TermContext> contexts = needsScores ? getTermContexts(weights.toArray(new SpanWeight[0])) : null;
+		return new SpanWeightAnd(weights, searcher, contexts);
+	}
+
+	public class SpanWeightAnd extends SpanWeight {
+
+		final List<SpanWeight> weights;
+
+		public SpanWeightAnd(List<SpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryAnd.this, searcher, terms);
+			this.weights = weights;
 		}
 
-		return combi;
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			for (SpanWeight weight: weights) {
+				weight.extractTerms(terms);
+			}
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			for (SpanWeight weight: weights) {
+				weight.extractTermContexts(contexts);
+			}
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans combi = weights.get(0).getSpans(context, requiredPostings);
+			for (int i = 1; i < weights.size(); i++) {
+				Spans si = weights.get(i).getSpans(context, requiredPostings);
+				if (combi == null || si == null)
+					return null; // if no hits in one of the clauses, no hits in and query
+				combi = new SpansAnd(combi, si);
+			}
+			return combi;
+		}
 	}
 
 	@Override

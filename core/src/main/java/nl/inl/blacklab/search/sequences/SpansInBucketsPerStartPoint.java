@@ -73,7 +73,8 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 	public int nextDoc() throws IOException {
 		if (currentDoc != NO_MORE_DOCS) {
 			currentDoc = source.nextDoc();
-			currentSpansStart = source.nextStartPosition();
+			if (currentDoc != NO_MORE_DOCS)
+				currentSpansStart = source.nextStartPosition();
 			currentBucketStart = -1; // no bucket yet
 		}
 		return currentDoc;

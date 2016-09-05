@@ -105,11 +105,11 @@ public class ContextQlParseUtils {
 				tp = new TextPatternSequence(clauses.toArray(new TextPattern[0]));
 			}
 			else {
-				PhraseQuery pq = new PhraseQuery();
+				PhraseQuery.Builder pb = new PhraseQuery.Builder();
 				for (int i = 0; i < parts.length; i++) {
-					pq.add(new Term(field, parts[i]));
+					pb.add(new Term(field, parts[i]));
 				}
-				q = pq;
+				q = pb.build();
 			}
 		}
 

@@ -16,11 +16,11 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
+
+import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Combines two Spans using AND. Note that this means that only matches with the same document id,
@@ -75,8 +75,13 @@ class SpansAnd extends BLSpans {
 		alreadyAtFirstMatch = false;
 		if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
 			return NO_MORE_DOCS;
+		currentDoc[0] = spans[0].nextDoc();
+		currentStart[0] = -1;
+		if (currentDoc[0] == NO_MORE_DOCS)
+			return NO_MORE_DOCS;
 		int laggingSpans = currentDoc[0] < currentDoc[1] ? 0 : 1;
-		catchUpDoc(laggingSpans);
+		if (currentDoc[laggingSpans] < currentDoc[1 - laggingSpans])
+			catchUpDoc(laggingSpans);
 		return synchronizeDoc();
 	}
 
@@ -192,9 +197,6 @@ class SpansAnd extends BLSpans {
 		if (currentStart[laggingSpans] != NO_MORE_POSITIONS && currentStart[laggingSpans] < catchUpTo || currentStart[laggingSpans] == -1) {
 			currentStart[laggingSpans] = spans[laggingSpans].advanceStartPosition(catchUpTo);
 		}
-//		while (currentStart[laggingSpans] != NO_MORE_POSITIONS && currentStart[laggingSpans] < catchUpTo || currentStart[laggingSpans] == -1) {
-//			currentStart[laggingSpans] = spans[laggingSpans].nextStartPosition();
-//		}
 	}
 
 	private void catchUpMatchEnd(int laggingSpans) throws IOException {
@@ -208,9 +210,11 @@ class SpansAnd extends BLSpans {
 	@Override
 	public int advance(int doc) throws IOException {
 		// Skip beiden tot aan doc
-		currentDoc[0] = spans[0].advance(doc);
+		int docID0 = spans[0].docID();
+		currentDoc[0] = docID0 < doc ? spans[0].advance(doc) : docID0;
 		currentStart[0] = -1; // not started yet
-		currentDoc[1] = spans[1].advance(doc);
+		int docID1 = spans[1].docID();
+		currentDoc[1] = docID1 < doc ? spans[1].advance(doc) : docID1;
 		currentStart[1] = -1; // not started yet
 		return synchronizeDoc();
 	}
@@ -262,18 +266,14 @@ class SpansAnd extends BLSpans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() throws IOException {
-		Collection<byte[]> payload = spans[0].getPayload();
-		if (payload == null)
-			payload = spans[1].getPayload();
-		return payload;
+	public int width() {
+		return Math.max(spans[0].width(), spans[1].width());
 	}
 
 	@Override
-	public boolean isPayloadAvailable() throws IOException {
-		return spans[0].isPayloadAvailable() || spans[1].isPayloadAvailable();
+	public void collect(SpanCollector collector) throws IOException {
+		spans[0].collect(collector);
+		spans[1].collect(collector);
 	}
-
-
 
 }

@@ -16,22 +16,22 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 
 /**
  * Makes sure the resulting hits do not contain consecutive duplicate hits. These may arise when
  * e.g. combining multiple SpanFuzzyQueries with OR.
  */
-public class SpanQueryUnique extends SpanQuery {
+public class SpanQueryUnique extends BLSpanQuery {
 	private SpanQuery src;
 
 	public SpanQueryUnique(SpanQuery src) {
@@ -39,11 +39,37 @@ public class SpanQueryUnique extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans srcSpans = src.getSpans(context, acceptDocs, termContexts);
-		if (srcSpans == null)
-			return null;
-		return new SpansUnique(srcSpans);
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		SpanWeight weight = src.createWeight(searcher, needsScores);
+		return new SpanWeightUnique(weight, searcher, needsScores ? getTermContexts(weight) : null);
+	}
+
+	public class SpanWeightUnique extends SpanWeight {
+
+		final SpanWeight weight;
+
+		public SpanWeightUnique(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryUnique.this, searcher, terms);
+			this.weight = weight;
+		}
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			weight.extractTerms(terms);
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			weight.extractTermContexts(contexts);
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans srcSpans = weight.getSpans(context, requiredPostings);
+			if (srcSpans == null)
+				return null;
+			return new SpansUnique(srcSpans);
+		}
 	}
 
 	@Override
@@ -54,20 +80,5 @@ public class SpanQueryUnique extends SpanQuery {
 	@Override
 	public String getField() {
 		return src.getField();
-	}
-
-	@Override
-	protected void extractTerms(Set<Term> terms) {
-		try {
-			// FIXME: temporary extractTerms hack
-			Method methodExtractTerms = SpanQuery.class.
-			        getDeclaredMethod("extractTerms", Set.class);
-			methodExtractTerms.setAccessible(true);
-
-		    methodExtractTerms.invoke(src, terms);
-			//src.extractTerms(terms);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 }

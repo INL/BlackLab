@@ -16,9 +16,9 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Comparator;
 
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Hit;
@@ -90,20 +90,6 @@ public class PerDocumentSortedSpans extends BLSpans {
 		if (indexInBucket >= bucketedSpans.bucketSize())
 			return NO_MORE_POSITIONS;
 		return curEnd;
-	}
-
-	@Override
-	public Collection<byte[]> getPayload() {
-		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
-			return null;
-		return bucketedSpans.getPayload(indexInBucket);
-	}
-
-	@Override
-	public boolean isPayloadAvailable() {
-		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
-			return false;
-		return bucketedSpans.isPayloadAvailable(indexInBucket);
 	}
 
 	@Override
@@ -221,5 +207,17 @@ public class PerDocumentSortedSpans extends BLSpans {
 		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
 			return;
 		bucketedSpans.getCapturedGroups(indexInBucket, capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return 0; // should maybe be bucketedSpans.width(indexInBucket) ? but we don't use .width()
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		// BucketedSpans should collect payload as well, but for now, we don't use
+		// payload beyond a "simple" SpanQuery like SpanQueryTags.
+		// bucketedSpans.collect(collector);
 	}
 }

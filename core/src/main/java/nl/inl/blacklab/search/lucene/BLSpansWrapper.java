@@ -16,8 +16,11 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
+import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.SpanOrQuery;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.TermSpans;
 
@@ -56,18 +59,8 @@ public class BLSpansWrapper extends BLSpans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() throws IOException {
-		return source.getPayload();
-	}
-
-	@Override
 	public int hashCode() {
 		return source.hashCode();
-	}
-
-	@Override
-	public boolean isPayloadAvailable() throws IOException {
-		return source.isPayloadAvailable();
 	}
 
 	@Override
@@ -111,6 +104,33 @@ public class BLSpansWrapper extends BLSpans {
 			return new SpansUnique(result);
 		}
 		return new PerDocumentSortedSpans(result, false, !result.hitsAreUnique());
+	}
+
+	/**
+	 * Rewrite a SpanQuery after rewrite() to a BLSpanQuery equivalent.
+	 *
+	 * This is used for BLSpanOrQuery and BLSpanMultiTermQueryWrapper: we
+	 * let Lucene rewrite these for us, but the result needs to be BL-ified
+	 * so we know we'll get BLSpans (which contain extra methods for optimization).
+	 *
+	 * @param spanQuery the SpanQuery to BL-ify (if it isn't a BLSpanQuery already)
+	 * @return resulting BLSpanQuery, or the input query if it was one already
+	 */
+	public static SpanQuery blSpanQueryFrom(SpanQuery spanQuery) {
+		if (spanQuery instanceof BLSpanQuery || spanQuery instanceof BLSpanMultiTermQueryWrapper ||
+				spanQuery instanceof BLSpanTermQuery || spanQuery instanceof BLSpanOrQuery) {
+			// Already BL-derived, no wrapper needed.
+			return spanQuery;
+		} else if (spanQuery instanceof SpanOrQuery) {
+			// Translate to a BLSpanOrQuery, recursively translating the clauses.
+			return BLSpanOrQuery.from((SpanOrQuery) spanQuery);
+		} else if (spanQuery instanceof SpanTermQuery) {
+			// Translate to a BLSpanTermQuery.
+			return BLSpanTermQuery.from((SpanTermQuery) spanQuery);
+		} else {
+			// After rewrite, we shouldn't encounter any other non-BLSpanQuery classes.
+			throw new UnsupportedOperationException("Cannot BL-ify " + spanQuery.getClass().getSimpleName());
+		}
 	}
 
 	@Override
@@ -160,6 +180,16 @@ public class BLSpansWrapper extends BLSpans {
 	@Override
 	public int advance(int target) throws IOException {
 		return source.advance(target);
+	}
+
+	@Override
+	public int width() {
+		return source.width();
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		source.collect(collector);
 	}
 
 }

@@ -16,8 +16,8 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
@@ -486,16 +486,6 @@ class SpansPositionFilter extends BLSpans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() throws IOException {
-		return producer.getPayload();
-	}
-
-	@Override
-	public boolean isPayloadAvailable() throws IOException {
-		return producer.isPayloadAvailable();
-	}
-
-	@Override
 	public String toString() {
 		String not = invert ? "not " : "";
 		String ign = (leftAdjust != 0 || rightAdjust != 0) ? ", " + leftAdjust + ", " + rightAdjust : "";
@@ -562,6 +552,16 @@ class SpansPositionFilter extends BLSpans {
 			return;
 		producer.getCapturedGroups(capturedGroups);
 		filter.getCapturedGroups(filterIndex, capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return producer.width();
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		producer.collect(collector);
 	}
 
 }

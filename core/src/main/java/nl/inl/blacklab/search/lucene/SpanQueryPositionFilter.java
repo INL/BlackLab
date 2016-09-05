@@ -17,15 +17,16 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 import nl.inl.blacklab.search.TextPatternPositionFilter;
-
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 
 /**
  * Filters hits from a producer query based on the hit positions of a filter query.
@@ -93,17 +94,48 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans spansProd = clauses[0].getSpans(context, acceptDocs, termContexts);
-		if (spansProd == null)
-			return null;
-		Spans spansFilter = clauses[1].getSpans(context, acceptDocs, termContexts);
-		if (spansFilter == null) {
-			// No filter hits. If it's a positive filter, that means no producer hits can match.
-			// If it's a negative filter, all producer hits match.
-			return invert ? spansProd : null;
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		SpanWeight prodWeight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight filterWeight = clauses[1].createWeight(searcher, needsScores);
+		Map<Term, TermContext> contexts = needsScores ? getTermContexts(prodWeight, filterWeight) : null;
+		return new SpanWeightPositionFilter(prodWeight, filterWeight, searcher, contexts);
+	}
+
+	public class SpanWeightPositionFilter extends SpanWeight {
+
+		final SpanWeight prodWeight, filterWeight;
+
+		public SpanWeightPositionFilter(SpanWeight prodWeight, SpanWeight filterWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryPositionFilter.this, searcher, terms);
+			this.prodWeight = prodWeight;
+			this.filterWeight = filterWeight;
 		}
-		return new SpansPositionFilter(spansProd, spansFilter, op, invert, leftAdjust, rightAdjust);
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			prodWeight.extractTerms(terms);
+			filterWeight.extractTerms(terms);
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			prodWeight.extractTermContexts(contexts);
+			filterWeight.extractTermContexts(contexts);
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans spansProd = prodWeight.getSpans(context, requiredPostings);
+			if (spansProd == null)
+				return null;
+			Spans spansFilter = filterWeight.getSpans(context, requiredPostings);
+			if (spansFilter == null) {
+				// No filter hits. If it's a positive filter, that means no producer hits can match.
+				// If it's a negative filter, all producer hits match.
+				return invert ? spansProd : null;
+			}
+			return new SpansPositionFilter(spansProd, spansFilter, op, invert, leftAdjust, rightAdjust);
+		}
 	}
 
 	@Override

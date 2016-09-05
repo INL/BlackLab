@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
@@ -367,6 +368,18 @@ class SpansSequenceRaw extends BLSpans {
 			return;
 		left.getCapturedGroups(capturedGroups);
 		right.getCapturedGroups(indexInBucket, capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return left.width(); // should be + right.width(); but not implemented for now and we don't use .width()
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		left.collect(collector);
+		//right.collect(collector); should probably be called as well, but not implemented, and not necessary for now
+		// (we only use payloads in SpansTags)
 	}
 
 }

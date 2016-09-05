@@ -9,13 +9,13 @@ import org.junit.Test;
 
 import nl.inl.blacklab.MockForwardIndex;
 import nl.inl.blacklab.MockHits;
+import nl.inl.blacklab.MockSearcher;
 import nl.inl.blacklab.MockTerms;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyDecade;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextPart;
 import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextStart;
-import nl.inl.blacklab.testutil.MockSearcher;
 
 public class TestHitPropertySerialize {
 

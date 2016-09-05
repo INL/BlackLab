@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.apache.lucene.search.spans.Spans;
 
@@ -55,29 +54,11 @@ public abstract class SpansAbstract extends Spans {
 	@Override
 	public abstract int endPosition();
 
-	/**
-	 * @throws IOException
-	 *             on IO error
-	 */
-	@Override
-	public Collection<byte[]> getPayload() throws IOException {
-		return null;
-	}
-
 	@Override
 	public long cost() {
 		// returns a completely arbitrary constant value, but it's for
 		// optimizing scoring and we don't generally use that
 		return 100;
-	}
-
-	/**
-	 * @throws IOException
-	 *             on IO error
-	 */
-	@Override
-	public boolean isPayloadAvailable() throws IOException {
-		return false;
 	}
 
 }

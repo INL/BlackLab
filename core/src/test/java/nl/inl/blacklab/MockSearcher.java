@@ -1,4 +1,4 @@
-package nl.inl.blacklab.testutil;
+package nl.inl.blacklab;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +16,9 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.store.LockObtainFailedException;
+import org.mockito.Mockito;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -150,7 +152,9 @@ public class MockSearcher extends Searcher {
 
 	@Override
 	public IndexSearcher getIndexSearcher() {
-		return null;
+		IndexSearcher searcher = Mockito.mock(IndexSearcher.class);
+		Mockito.when(searcher.getSimilarity(Mockito.anyBoolean())).thenReturn(new DefaultSimilarity());
+		return searcher;
 	}
 
 	public void setForwardIndex(String fieldPropName, ForwardIndex forwardIndex) {

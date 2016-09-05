@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,10 +23,11 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.ToStringUtils;
 
 /**
@@ -35,7 +35,7 @@ import org.apache.lucene.util.ToStringUtils;
  * Produces all spans from the "include" part, except for those
  * in documents that occur in the "exclude" part.
  */
-public class SpanQueryDocLevelAndNot extends SpanQuery {
+public class SpanQueryDocLevelAndNot extends BLSpanQuery {
 	private SpanQuery[] clauses = null;
 
 	public SpanQueryDocLevelAndNot(SpanQuery include, SpanQuery exclude) {
@@ -93,49 +93,45 @@ public class SpanQueryDocLevelAndNot extends SpanQuery {
 		return clauses[0].getField();
 	}
 
-	/**
-	 * Constructs a Spans object (consisting of WrappedTypedSpans and/or AndSpans objects) that
-	 * contains all spans from the include clause in documents that don't contain the exclude
-	 * spans.
-	 *
-	 * @param context the index reader context
-	 * @param acceptDocs document filter
-	 * @param termContexts the term contexts (?)
-	 * @return the Spans object, or null on error
-	 * @throws IOException
-	 */
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term, TermContext> termContexts)  throws IOException {
-		Spans includespans = clauses[0].getSpans(context, acceptDocs, termContexts);
-		if (includespans == null)
-			return null;
-		Spans excludespans = clauses[1].getSpans(context, acceptDocs, termContexts);
-		if (excludespans == null)
-			return includespans;
-		Spans combi = new SpansDocLevelAndNot(includespans, excludespans);
-		return combi;
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		SpanWeight includeWeight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight excludeWeight = clauses[1].createWeight(searcher, needsScores);
+		Map<Term, TermContext> contexts = needsScores ? getTermContexts(includeWeight) : null;
+		return new SpanWeightDocLevelAndNot(includeWeight, excludeWeight, searcher, contexts);
 	}
 
-	/**
-	 * Add all terms to the supplied set
-	 *
-	 * @param terms
-	 *            the set the terms should be added to
-	 */
-	@Override
-	public void extractTerms(Set<Term> terms) {
-		try {
-			// FIXME: temporary extractTerms hack
-			Method methodExtractTerms = SpanQuery.class.
-			        getDeclaredMethod("extractTerms", Set.class);
-			methodExtractTerms.setAccessible(true);
+	public class SpanWeightDocLevelAndNot extends SpanWeight {
 
-			for (final SpanQuery clause : getClauses()) {
-			    methodExtractTerms.invoke(clause, terms);
-				//clause.extractTerms(terms);
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		final SpanWeight includeWeight, excludeWeight;
+
+		public SpanWeightDocLevelAndNot(SpanWeight includeWeight, SpanWeight excludeWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryDocLevelAndNot.this, searcher, terms);
+			this.includeWeight = includeWeight;
+			this.excludeWeight = excludeWeight;
+		}
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			includeWeight.extractTerms(terms);
+			excludeWeight.extractTerms(terms);
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			includeWeight.extractTermContexts(contexts);
+			excludeWeight.extractTermContexts(contexts);
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans includeSpans = includeWeight.getSpans(context, requiredPostings);
+			if (includeSpans == null)
+				return null;
+			Spans excludeSpans = excludeWeight.getSpans(context, requiredPostings);
+			if (excludeSpans == null)
+				return includeSpans;
+			return new SpansDocLevelAndNot(includeSpans, excludeSpans);
 		}
 	}
 

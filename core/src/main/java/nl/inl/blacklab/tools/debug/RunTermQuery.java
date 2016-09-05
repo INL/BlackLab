@@ -26,7 +26,9 @@ import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.util.LuceneUtil;
@@ -127,7 +129,7 @@ public class RunTermQuery {
 
 			if (terms.hasPositions()) {
 				// Verzamel concordantiewoorden uit term vector
-				PostingsEnum docPosEnum = termsEnum.postings(null, null, PostingsEnum.POSITIONS);
+				PostingsEnum docPosEnum = termsEnum.postings(null, PostingsEnum.POSITIONS);
 				System.out.println("    POSITIONS:");
 				while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 
@@ -152,7 +154,7 @@ public class RunTermQuery {
 				}
 			} else {
 				// No positions
-				PostingsEnum postingsEnum = termsEnum.postings(null, null, PostingsEnum.FREQS);
+				PostingsEnum postingsEnum = termsEnum.postings(null, PostingsEnum.FREQS);
 				System.out.println("\n    DOCS:");
 				while (postingsEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 					System.out.println(
@@ -207,6 +209,8 @@ public class RunTermQuery {
 	}
 
 	private static void doSpanQuery(Term term, IndexReader reader) throws IOException {
+		IndexSearcher searcher = new IndexSearcher(reader);
+
 		SpanQuery spanQuery = new SpanTermQuery(term);
 		spanQuery = (SpanQuery) spanQuery.rewrite(reader);
 
@@ -221,8 +225,9 @@ public class RunTermQuery {
 
 		System.out.println("USING LEAVES:");
 		boolean hitsFound = false;
+		SpanWeight weight = spanQuery.createWeight(searcher, false);
 		for (LeafReaderContext arc: reader.leaves()) {
-			Spans spans = spanQuery.getSpans(arc, arc.reader().getLiveDocs(), termContexts);
+			Spans spans = weight.getSpans(arc, Postings.OFFSETS);
 			while(spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 				while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
 					int doc = arc.docBase + spans.docID();
@@ -237,7 +242,7 @@ public class RunTermQuery {
 
 		System.out.println("USING SLOWCOMPOSITEREADERWRAPPER:");
 		LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
-		Spans spans = spanQuery.getSpans(scrw.getContext(), scrw.getLiveDocs(), termContexts);
+		Spans spans = weight.getSpans(scrw.getContext(), Postings.OFFSETS);
 		hitsFound = false;
 		while(spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
 			while(spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {

@@ -50,7 +50,6 @@ public class CompleteQuery {
 	public CompleteQuery and(CompleteQuery other) {
 		TextPattern a, b, c;
 		Query d, e, f;
-		BooleanQuery bq;
 
 		a = contentsQuery;
 		b = other.contentsQuery;
@@ -62,10 +61,10 @@ public class CompleteQuery {
 		d = filterQuery;
 		e = other.filterQuery;
 		if (d != null && e != null) {
-			bq = new BooleanQuery();
-			bq.add(d, Occur.MUST);
-			bq.add(e, Occur.MUST);
-			f = bq;
+			BooleanQuery.Builder bb = new BooleanQuery.Builder();
+			bb.add(d, Occur.MUST);
+			bb.add(e, Occur.MUST);
+			f = bb.build();
 		}
 		else
 			f = d == null ? e : d;
@@ -85,7 +84,6 @@ public class CompleteQuery {
 	public CompleteQuery or(CompleteQuery other) {
 		TextPattern a, b, c;
 		Query d, e, f;
-		BooleanQuery bq;
 
 		a = contentsQuery;
 		b = other.contentsQuery;
@@ -103,10 +101,10 @@ public class CompleteQuery {
 			c = a == null ? b : a;
 
 		if (d != null && e != null) {
-			bq = new BooleanQuery();
-			bq.add(d, Occur.SHOULD);
-			bq.add(e, Occur.SHOULD);
-			f = bq;
+			BooleanQuery.Builder bb = new BooleanQuery.Builder();
+			bb.add(d, Occur.SHOULD);
+			bb.add(e, Occur.SHOULD);
+			f = bb.build();
 		}
 		else
 			f = d == null ? e : d;
@@ -127,7 +125,6 @@ public class CompleteQuery {
 	public CompleteQuery not(CompleteQuery other) {
 		TextPattern a, b, c;
 		Query d, e, f;
-		BooleanQuery bq;
 
 		a = contentsQuery;
 		b = other.contentsQuery;
@@ -139,10 +136,10 @@ public class CompleteQuery {
 		d = filterQuery;
 		e = other.filterQuery;
 		if (d != null && e != null) {
-			bq = new BooleanQuery();
-			bq.add(d, Occur.MUST);
-			bq.add(e, Occur.MUST_NOT);
-			f = bq;
+			BooleanQuery.Builder bb = new BooleanQuery.Builder();
+			bb.add(d, Occur.MUST);
+			bb.add(e, Occur.MUST_NOT);
+			f = bb.build();
 		}
 		else {
 			if (e != null && d == null)

@@ -1,9 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+package nl.inl.blacklab.search.lucene;
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -12,50 +15,51 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *******************************************************************************/
-/**
- *
  */
-package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-
-import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
+import org.apache.lucene.search.spans.SpanWeight;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
  * (the complex field name instead of the full Lucene field name) in order to be
- * able to combine queries in different Lucene fields using AND and OR.
- *
- * TODO: investigate FieldMaskingSpanQuery, which seems to have the same
- * purpose. However, we need all our SpanQuery and Spans classes to be
- * BL-derived because we need to have BL-specific methods available on them
- * (i.e. for token tagging).
+ * able to combine queries in different Lucene fields using AND and OR. Also makes
+ * sure the SpanWeight returned by createWeight() produces a BLSpans, not a regular
+ * Spans.
  */
-public class BLSpanTermQuery extends SpanQuery {
+public class BLSpanTermQuery extends SpanTermQuery {
 
-	SpanTermQuery q;
-
+	/** Construct a SpanTermQuery matching the named term's spans.
+	 *
+	 * @param term term to search
+	 */
 	public BLSpanTermQuery(Term term) {
-		q = new SpanTermQuery(term);
+		super(term);
+	}
+
+	public BLSpanTermQuery(SpanTermQuery termQuery) {
+		super(termQuery.getTerm());
 	}
 
 	/**
-	 * Wrap a SpanTermQuery (see BLSpanTermQuery.from())
-	 * @param q query to wrap
+	 * Expert: Construct a SpanTermQuery matching the named term's spans, using
+	 * the provided TermContext.
+	 *
+	 * @param term term to search
+	 * @param context TermContext to use to search the term
 	 */
-	BLSpanTermQuery(SpanTermQuery q) {
-		this.q = q;
+	public BLSpanTermQuery(Term term, TermContext context) {
+		super(term, context);
 	}
 
 	/**
@@ -72,60 +76,45 @@ public class BLSpanTermQuery extends SpanQuery {
 	 */
 	@Override
 	public String getField() {
-		return ComplexFieldUtil.getBaseName(q.getField());
-	}
-
-	/**
-	 * Overridden frmo SpanTermQuery to return a BLSpans instead.
-	 */
-	@Override
-	public Spans getSpans(final LeafReaderContext context, Bits acceptDocs,
-			Map<Term, TermContext> termContexts) throws IOException {
-		Spans spans = q.getSpans(context, acceptDocs, termContexts);
-		if (spans == null)
-			return null;
-		return new BLSpansWrapper(spans);
+		return ComplexFieldUtil.getBaseName(term.field());
 	}
 
 	@Override
-	public String toString(String arg0) {
-		return q.toString();
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		final TermContext context;
+		final IndexReaderContext topContext = searcher.getTopReaderContext();
+		if (termContext == null || termContext.topReaderContext != topContext) {
+			context = TermContext.build(topContext, term);
+		} else {
+			context = termContext;
+		}
+		Map<Term, TermContext> contexts = needsScores ? Collections.singletonMap(term, context) : null;
+		SpanTermWeight weight = new SpanTermWeight(context, searcher, contexts);
+		return new BLSpanWeightWrapper(weight, searcher, contexts);
 	}
 
 	@Override
-	public void extractTerms(Set<Term> terms) {
-		q.extractTerms(terms);
-	}
-
-	@Override
-	public void setBoost(float b) {
-		q.setBoost(b);
-	}
-
-	@Override
-	public float getBoost() {
-		return q.getBoost();
+	public String toString(String field) {
+		return "BL" + super.toString(field);
 	}
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() ^ q.hashCode();
+		return super.hashCode() ^ 0xB1ACC1AB;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (super.equals(obj)) {
-			return q.equals(((BLSpanTermQuery)obj).q);
+		if (this == obj)
+			return true;
+		if (!super.equals(obj)) {
+			return false;
 		}
-		return false;
+		BLSpanTermQuery other = (BLSpanTermQuery) obj;
+		return term.equals(other.term);
 	}
 
-	/**
-	 * Wrap a SpanTermQuery.
-	 * @param q query to wrap
-	 * @return wrapped query
-	 */
-	static BLSpanTermQuery from (SpanTermQuery q) {
+	public static BLSpanTermQuery from(SpanTermQuery q) {
 		return new BLSpanTermQuery(q);
 	}
 

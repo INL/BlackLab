@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
@@ -147,6 +148,16 @@ public class SpansFiltered extends BLSpans {
 		if (!childClausesCaptureGroups)
 			return;
 		spans.getCapturedGroups(capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return spans.width();
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		spans.collect(collector);
 	}
 
 }

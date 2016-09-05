@@ -19,7 +19,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.MockHits;
-import nl.inl.blacklab.testutil.MockSearcher;
+import nl.inl.blacklab.MockSearcher;
 
 public class TestHitsSample {
 

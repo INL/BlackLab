@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
@@ -276,6 +277,17 @@ class SpansRepetition extends BLSpans {
 	public void getCapturedGroups(Span[] capturedGroups) {
 		int index = firstToken + tokenLength - 1; // use the last match for captured groups
 		source.getCapturedGroups(index, capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return 0; // should be source.width(); but not currently supported and we don't use .width()
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		// Should be  source.collect(collector); but not currently supported and we don't use
+		// payloads except in simple queries like SpanQueryTags.
 	}
 
 

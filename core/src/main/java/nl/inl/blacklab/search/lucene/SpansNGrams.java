@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.search.Span;
@@ -278,6 +279,16 @@ class SpansNGrams extends BLSpans {
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
 		// no clause, no groups
+	}
+
+	@Override
+	public int width() {
+		return 0;
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		// nothing to collect
 	}
 
 }

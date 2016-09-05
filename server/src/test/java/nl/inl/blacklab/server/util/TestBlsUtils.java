@@ -7,6 +7,7 @@ import org.apache.lucene.search.WildcardQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.MockSearcher;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternProperty;
@@ -14,7 +15,6 @@ import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternWildcard;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.testutil.MockSearcher;
 
 public class TestBlsUtils {
 

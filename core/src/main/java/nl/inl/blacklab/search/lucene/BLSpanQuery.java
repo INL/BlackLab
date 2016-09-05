@@ -13,34 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.perdocument;
+package nl.inl.blacklab.search.lucene;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.lucene.search.spans.SpanQuery;
 
-import nl.inl.blacklab.MockHits;
-import nl.inl.blacklab.MockSearcher;
-import nl.inl.blacklab.search.Hits;
-
-public class TestDocResults {
-
-	@Test
-	public void testDocResultsIterate() {
-		int[] aDoc = new int[] { 1, 1, 2, 3, 3 };
-		int[] aStart = new int[] { 1, 2, 3, 4, 5 };
-		int[] aEnd = new int[] { 2, 3, 4, 5, 6 };
-
-		Hits hits = new MockHits(new MockSearcher(), aDoc, aStart, aEnd);
-		DocResults drs = hits.perDocResults();
-
-		int[] expDoc = new int[] {1, 2, 3};
-		int[] expHits = new int[] {2, 1, 2};
-		int i = 0;
-		for (DocResult dr: drs) {
-			Assert.assertEquals(expDoc[i], dr.getDocId());
-			Assert.assertEquals(expHits[i], dr.getNumberOfHits());
-			i++;
-		}
-	}
-
+/**
+ * A base class for a BlackLab SpanQuery. All our queries must be
+ * derived from this so we know they will produce BLSpans (which
+ * contains extra methods for optimization).
+ */
+public abstract class BLSpanQuery extends SpanQuery {
+	//
 }

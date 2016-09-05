@@ -16,8 +16,8 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
@@ -155,16 +155,6 @@ public class SpansDocLevelAndNot extends BLSpans {
 	}
 
 	@Override
-	public Collection<byte[]> getPayload() throws IOException {
-		return includeSpans.getPayload();
-	}
-
-	@Override
-	public boolean isPayloadAvailable() throws IOException {
-		return includeSpans.isPayloadAvailable();
-	}
-
-	@Override
 	public boolean hitsEndPointSorted() {
 		return includeSpans.hitsEndPointSorted();
 	}
@@ -209,5 +199,15 @@ public class SpansDocLevelAndNot extends BLSpans {
 		if (!childClausesCaptureGroups)
 			return;
 		includeSpans.getCapturedGroups(capturedGroups);
+	}
+
+	@Override
+	public int width() {
+		return includeSpans.width();
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		includeSpans.collect(collector);
 	}
 }

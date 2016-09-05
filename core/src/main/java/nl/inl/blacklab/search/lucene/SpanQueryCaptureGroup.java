@@ -17,13 +17,15 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 
 /**
  * Captures its clause as a captured group.
@@ -43,11 +45,38 @@ public class SpanQueryCaptureGroup extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans spans = clauses[0].getSpans(context, acceptDocs, termContexts);
-		if (spans == null)
-			return null;
-		return new SpansCaptureGroup(spans, name);
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
+		return new SpanWeightCaptureGroup(weight, searcher, needsScores ? getTermContexts(weight) : null);
+	}
+
+	public class SpanWeightCaptureGroup extends SpanWeight {
+
+		final SpanWeight weight;
+
+		public SpanWeightCaptureGroup(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryCaptureGroup.this, searcher, terms);
+			this.weight = weight;
+		}
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			weight.extractTerms(terms);
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			weight.extractTermContexts(contexts);
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans spans = weight.getSpans(context, requiredPostings);
+			if (spans == null)
+				return null;
+			return new SpansCaptureGroup(spans, name);
+		}
+
 	}
 
 	@Override

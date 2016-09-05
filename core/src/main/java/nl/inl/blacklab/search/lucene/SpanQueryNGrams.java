@@ -23,10 +23,11 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 
 /**
  * Returns all n-grams of certain lengths.
@@ -56,8 +57,23 @@ public class SpanQueryNGrams extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		return new SpansNGrams(ignoreLastToken, context.reader(), baseFieldName, min, max);
+	public SpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
+		return new SpanWeight(SpanQueryNGrams.this, searcher, null) {
+			@Override
+			public void extractTerms(Set<Term> terms) {
+				// No terms
+			}
+
+			@Override
+			public void extractTermContexts(Map<Term, TermContext> contexts) {
+				// No terms
+			}
+
+			@Override
+			public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+				return new SpansNGrams(ignoreLastToken, context.reader(), baseFieldName, min, max);
+			}
+		};
 	}
 
 	@Override
@@ -76,11 +92,6 @@ public class SpanQueryNGrams extends SpanQueryBase {
 	@Override
 	public Query rewrite(IndexReader reader) throws IOException {
 		return this; // cannot rewrite
-	}
-
-	@Override
-	public void extractTerms(Set<Term> terms) {
-		// no terms here
 	}
 
 }

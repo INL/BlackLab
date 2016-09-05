@@ -17,16 +17,18 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
-
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.QueryExecutionContext;
 
 /**
  * Old version of SpanQueryTags.
@@ -66,12 +68,43 @@ public class SpanQueryTagsOld extends SpanQueryBase {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans startTags = clauses[0].getSpans(context, acceptDocs, termContexts);
-		Spans endTags = clauses[1].getSpans(context, acceptDocs, termContexts);
-		if (startTags == null || endTags == null)
-			return null;
-		return new SpansTags(startTags, endTags);
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		SpanWeight startWeight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight endWeight = clauses[1].createWeight(searcher, needsScores);
+		Map<Term, TermContext> contexts = needsScores ? getTermContexts(startWeight, endWeight) : null;
+		return new SpanWeightTagsOld(startWeight, endWeight, searcher, contexts);
+	}
+
+	public class SpanWeightTagsOld extends SpanWeight {
+
+		final SpanWeight startWeight, endWeight;
+
+		public SpanWeightTagsOld(SpanWeight startWeight, SpanWeight endWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryTagsOld.this, searcher, terms);
+			this.startWeight = startWeight;
+			this.endWeight = endWeight;
+		}
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			startWeight.extractTerms(terms);
+			endWeight.extractTerms(terms);
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			startWeight.extractTermContexts(contexts);
+			endWeight.extractTermContexts(contexts);
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans startTags = startWeight.getSpans(context, requiredPostings);
+			Spans endTags = endWeight.getSpans(context, requiredPostings);
+			if (startTags == null || endTags == null)
+				return null;
+			return new SpansTagsOld(startTags, endTags);
+		}
 	}
 
 	@Override

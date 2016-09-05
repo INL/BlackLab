@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
@@ -158,6 +159,16 @@ class SpansCaptureGroup extends BLSpans {
 
 		// Place our start and end position at the correct index in the array
 		capturedGroups[groupIndex] = this.getSpan();
+	}
+
+	@Override
+	public int width() {
+		return clause.width();
+	}
+
+	@Override
+	public void collect(SpanCollector collector) throws IOException {
+		clause.collect(collector);
 	}
 
 }

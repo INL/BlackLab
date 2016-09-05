@@ -16,17 +16,16 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.QueryExecutionContext;
@@ -36,12 +35,8 @@ import nl.inl.blacklab.search.QueryExecutionContext;
  * Returns spans corresponding to a certain element (tag) type.
  *
  * For example, SpanQueryTags("ne") will give us spans for all the <ne> elements in the document.
- *
- * NOTE: this does not work with nested tags yet, as it just searches for all open and close tags
- * and matches the first open tag with the first close tag, etc.
- *
  */
-public class SpanQueryTags extends SpanQuery {
+public class SpanQueryTags extends BLSpanQuery {
 
 	SpanTermQuery clause;
 
@@ -58,11 +53,37 @@ public class SpanQueryTags extends SpanQuery {
 	}
 
 	@Override
-	public Spans getSpans(LeafReaderContext context, Bits acceptDocs, Map<Term,TermContext> termContexts)  throws IOException {
-		Spans startTags = clause.getSpans(context, acceptDocs, termContexts);
-		if (startTags == null)
-			return null;
-		return new SpansTagsPayload(startTags);
+	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		SpanWeight weight = clause.createWeight(searcher, needsScores);
+		return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
+	}
+
+	public class SpanWeightTags extends SpanWeight {
+
+		final SpanWeight weight;
+
+		public SpanWeightTags(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryTags.this, searcher, terms);
+			this.weight = weight;
+		}
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			weight.extractTerms(terms);
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			weight.extractTermContexts(contexts);
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans startTags = weight.getSpans(context, requiredPostings);
+			if (startTags == null)
+				return null;
+			return new SpansTags(startTags);
+		}
 	}
 
 	@Override
@@ -95,24 +116,6 @@ public class SpanQueryTags extends SpanQuery {
 	@Override
 	public String getField() {
 		return baseFieldName;
-	}
-
-	/**
-	 * Add all terms to the supplied set
-	 *
-	 * @param terms
-	 *            the set the terms should be added to
-	 */
-	@Override
-	public void extractTerms(Set<Term> terms) {
-		try {
-			// FIXME: temporary extractTerms hack
-			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
-			methodExtractTerms.setAccessible(true);
-			methodExtractTerms.invoke(clause, terms);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	@Override

@@ -65,7 +65,6 @@ public class TestUtil {
 				Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": end pos", expected.endPosition(), actual.endPosition());
 				if (actualStartPos == Spans.NO_MORE_POSITIONS) {
 					Assert.assertEquals(StringUtil.ordinal(docNumber) + " doc id", actualDocId, actual.docID());
-					Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": start pos", Spans.NO_MORE_POSITIONS, actual.nextStartPosition());
 					Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": start pos", Spans.NO_MORE_POSITIONS, actual.startPosition());
 					Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": end pos", Spans.NO_MORE_POSITIONS, actual.endPosition());
 					break;
