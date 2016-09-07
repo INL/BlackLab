@@ -20,10 +20,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -73,6 +75,17 @@ public class SpanQueryNot extends SpanQueryBase {
 		SpanQueryNot spanQueryNot = new SpanQueryNot(fieldName);
 		spanQueryNot.setIgnoreLastToken(ignoreLastToken);
 		return spanQueryNot;
+	}
+
+	@Override
+	public Query rewrite(IndexReader reader) throws IOException {
+		SpanQuery[] rewritten = rewriteClauses(reader);
+		if (rewritten == null)
+			return this;
+		SpanQueryNot result = new SpanQueryNot(rewritten[0]);
+		if (ignoreLastToken)
+			result.setIgnoreLastToken(true);
+		return result;
 	}
 
 	@Override

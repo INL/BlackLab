@@ -19,11 +19,13 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -38,6 +40,12 @@ public class SpanQueryFiltered extends SpanQueryBase {
 	public SpanQueryFiltered(SpanQuery source, Filter filter) {
 		super(source);
 		this.filter = filter;
+	}
+
+	@Override
+	public Query rewrite(IndexReader reader) throws IOException {
+		SpanQuery[] rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryFiltered(rewritten[0], filter);
 	}
 
 	@Override

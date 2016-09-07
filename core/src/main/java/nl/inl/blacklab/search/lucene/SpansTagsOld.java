@@ -310,4 +310,10 @@ class SpansTagsOld extends BLSpans {
 	public void collect(SpanCollector collector) throws IOException {
 		// nothing to collect
 	}
+
+	@Override
+	public float positionsCost() {
+		return 0;
+	}
+
 }

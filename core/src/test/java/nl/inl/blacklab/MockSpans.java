@@ -187,7 +187,7 @@ public class MockSpans extends BLSpans {
 		}
 
 		postings = new MockPostingsEnum();
-		spans = new MyTermSpans(postings, new Term("test", "dummy"));
+		spans = new MyTermSpans(postings, new Term("test", "dummy"), 1);
 	}
 
 	@Override
@@ -331,6 +331,11 @@ public class MockSpans extends BLSpans {
 	@Override
 	public void collect(SpanCollector collector) throws IOException {
 		collector.collectLeaf(postings, -1, null);
+	}
+
+	@Override
+	public float positionsCost() {
+		return 0;
 	}
 
 }

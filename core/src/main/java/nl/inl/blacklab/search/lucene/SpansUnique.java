@@ -167,4 +167,9 @@ public class SpansUnique extends BLSpans {
 		src.collect(collector);
 	}
 
+	@Override
+	public float positionsCost() {
+		return src.positionsCost();
+	}
+
 }

@@ -22,10 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -45,6 +47,12 @@ public class SpanQueryAnd extends SpanQueryBase {
 
 	public SpanQueryAnd(SpanQuery[] _clauses) {
 		super(_clauses);
+	}
+
+	@Override
+	public Query rewrite(IndexReader reader) throws IOException {
+		SpanQuery[] rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryAnd(rewritten);
 	}
 
 	@Override

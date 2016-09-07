@@ -382,4 +382,9 @@ class SpansSequenceRaw extends BLSpans {
 		// (we only use payloads in SpansTags)
 	}
 
+	@Override
+	public float positionsCost() {
+		return left.positionsCost();
+	}
+
 }

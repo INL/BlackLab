@@ -290,5 +290,9 @@ class SpansRepetition extends BLSpans {
 		// payloads except in simple queries like SpanQueryTags.
 	}
 
+	@Override
+	public float positionsCost() {
+		return 0;
+	}
 
 }

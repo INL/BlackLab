@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.apache.lucene.search.payloads.PayloadSpanCollector;
+import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
@@ -108,6 +108,9 @@ class SpansTags extends BLSpans {
 		tags.collect(collector);
 	}
 
-
+	@Override
+	public float positionsCost() {
+		return tags.positionsCost();
+	}
 
 }

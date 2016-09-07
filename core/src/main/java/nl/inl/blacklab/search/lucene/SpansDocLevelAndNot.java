@@ -210,4 +210,9 @@ public class SpansDocLevelAndNot extends BLSpans {
 	public void collect(SpanCollector collector) throws IOException {
 		includeSpans.collect(collector);
 	}
+
+	@Override
+	public float positionsCost() {
+		return includeSpans.positionsCost();
+	}
 }

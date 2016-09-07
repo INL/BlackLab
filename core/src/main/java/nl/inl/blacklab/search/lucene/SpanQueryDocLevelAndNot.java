@@ -28,69 +28,22 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.ToStringUtils;
 
 /**
  * A SpanQuery for a document-level AND NOT query.
  * Produces all spans from the "include" part, except for those
  * in documents that occur in the "exclude" part.
  */
-public class SpanQueryDocLevelAndNot extends BLSpanQuery {
-	private SpanQuery[] clauses = null;
+public class SpanQueryDocLevelAndNot extends SpanQueryBase {
 
 	public SpanQueryDocLevelAndNot(SpanQuery include, SpanQuery exclude) {
-		clauses = new SpanQuery[] { include, exclude };
+		super(include, exclude);
 	}
 
 	@Override
 	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQueryDocLevelAndNot clone = null;
-
-		for (int i = 0; i < clauses.length; i++) {
-			SpanQuery c = clauses[i];
-			SpanQuery query = (SpanQuery) c.rewrite(reader);
-			if (query != c) { // clause rewrote: must clone
-				if (clone == null)
-					clone = (SpanQueryDocLevelAndNot) clone();
-				clone.clauses[i] = query;
-			}
-		}
-		if (clone != null) {
-			return clone; // some clauses rewrote
-		}
-		return this; // no clauses rewrote
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || this.getClass() != o.getClass())
-			return false;
-
-		final SpanQueryDocLevelAndNot that = (SpanQueryDocLevelAndNot) o;
-
-		if (!clauses.equals(that.clauses))
-			return false;
-
-		return getBoost() == that.getBoost();
-	}
-
-	@Override
-	public int hashCode() {
-		int h = 0;
-		h ^= clauses.hashCode();
-		h ^= (h << 10) | (h >>> 23);
-		h ^= Float.floatToRawIntBits(getBoost());
-		return h;
-	}
-
-	/**
-	 * @return name of search field
-	 */
-	@Override
-	public String getField() {
-		return clauses[0].getField();
+		SpanQuery[] rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryDocLevelAndNot(rewritten[0], rewritten[1]);
 	}
 
 	@Override
@@ -138,10 +91,6 @@ public class SpanQueryDocLevelAndNot extends BLSpanQuery {
 	@Override
 	public String toString(String field) {
 		return "spanAndNot([include=" + clauses[0].toString(field) + ", exclude="
-				+ clauses[1].toString(field) + "])" + ToStringUtils.boost(getBoost());
-	}
-
-	public SpanQuery[] getClauses() {
-		return clauses;
+				+ clauses[1].toString(field) + "])";
 	}
 }

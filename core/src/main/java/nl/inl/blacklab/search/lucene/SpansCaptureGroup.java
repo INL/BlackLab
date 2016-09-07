@@ -171,4 +171,9 @@ class SpansCaptureGroup extends BLSpans {
 		clause.collect(collector);
 	}
 
+	@Override
+	public float positionsCost() {
+		return clause.positionsCost();
+	}
+
 }

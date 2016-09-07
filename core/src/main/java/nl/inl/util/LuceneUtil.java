@@ -346,8 +346,9 @@ public class LuceneUtil {
 					throw new RuntimeException("arc.reader() == null");
 				Scorer scorer = weight.scorer(arc);
 				if (scorer != null) {
-					while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-						getFrequenciesFromTermVector(indexReader, scorer.docID() + arc.docBase, luceneField, freq);
+					DocIdSetIterator it = scorer.iterator();
+					while (it.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+						getFrequenciesFromTermVector(indexReader, it.docID() + arc.docBase, luceneField, freq);
 					}
 				}
 			}

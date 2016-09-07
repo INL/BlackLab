@@ -192,4 +192,9 @@ public class BLSpansWrapper extends BLSpans {
 		source.collect(collector);
 	}
 
+	@Override
+	public float positionsCost() {
+		return source.positionsCost();
+	}
+
 }

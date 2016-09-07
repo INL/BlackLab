@@ -93,17 +93,14 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 				// ONLY DIFFERENCE WITH SpanFuzzyQuery:
 				// Use a BLSpanTermQuery instead of default Lucene one.
 				spanQueries[i] = new BLSpanTermQuery(termQuery.getTerm());
-				spanQueries[i].setBoost(termQuery.getBoost());
 			}
 			SpanQuery query = new BLSpanOrQuery(spanQueries);
-			query.setBoost(fuzzyQuery.getBoost());
 			return query;
 		}
 
 		// Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
 		SpanQuery query = new BLSpanOrQuery(new BLSpanTermQuery(
 				((TermQuery) rewrittenFuzzyQuery).getTerm()));
-		query.setBoost(fuzzyQuery.getBoost());
 		return query;
 
 	}

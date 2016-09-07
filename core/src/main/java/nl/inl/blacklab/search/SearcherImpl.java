@@ -607,15 +607,16 @@ public class SearcherImpl extends Searcher implements Closeable {
 				IndexSearcher s = new IndexSearcher(freshReader);
 				Weight w = s.createNormalizedWeight(q, false);
 				try (LeafReader scrw = SlowCompositeReaderWrapper.wrap(freshReader)) {
-					Scorer sc = w.scorer(scrw.getContext());
-					if (sc == null)
+					Scorer scorer = w.scorer(scrw.getContext());
+					if (scorer == null)
 						return; // no matching documents
 
 					// Iterate over matching docs
+					DocIdSetIterator it = scorer.iterator();
 					while (true) {
 						int docId;
 						try {
-							docId = sc.nextDoc();
+							docId = it.nextDoc();
 						} catch (IOException e) {
 							throw new RuntimeException(e);
 						}

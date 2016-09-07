@@ -160,4 +160,9 @@ public class SpansFiltered extends BLSpans {
 		spans.collect(collector);
 	}
 
+	@Override
+	public float positionsCost() {
+		return spans.positionsCost();
+	}
+
 }

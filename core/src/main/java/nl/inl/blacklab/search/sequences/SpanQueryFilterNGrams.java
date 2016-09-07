@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -78,6 +80,17 @@ public class SpanQueryFilterNGrams extends SpanQueryBase {
 
 		final SpanQueryFilterNGrams that = (SpanQueryFilterNGrams) o;
 		return op == that.op && min == that.min && max == that.max;
+	}
+
+	@Override
+	public Query rewrite(IndexReader reader) throws IOException {
+		SpanQuery[] rewritten = rewriteClauses(reader);
+		if (rewritten == null)
+			return this;
+		SpanQueryFilterNGrams result = new SpanQueryFilterNGrams(rewritten[0], op, min, max);
+		if (ignoreLastToken)
+			result.setIgnoreLastToken(true);
+		return result;
 	}
 
 	@Override
@@ -137,7 +150,6 @@ public class SpanQueryFilterNGrams extends SpanQueryBase {
 		h ^= min << 10;
 		h ^= max << 5;
 		h ^= op.hashCode();
-		h ^= Float.floatToRawIntBits(getBoost());
 		return h;
 	}
 

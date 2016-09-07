@@ -33,6 +33,7 @@ import org.apache.lucene.search.DisjunctionDISIApproximation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.search.spans.ScoringWrapperSpans;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -44,7 +45,9 @@ import nl.inl.blacklab.search.Span;
 
 /** Matches the union of its clauses.
  */
-public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
+public final class BLSpanOrQuery extends SpanQuery {
+
+	SpanOrQuery inner;
 
 	String field;
 
@@ -53,15 +56,11 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 	 * @param clauses clauses to OR together
 	 */
 	public BLSpanOrQuery(SpanQuery... clauses) {
-		super(clauses);
-		this.field = super.getField();
+		inner = new SpanOrQuery(clauses);
+		this.field = inner.getField();
 	}
 
-	@Override
-	public BLSpanOrQuery clone() {
-		return BLSpanOrQuery.from(super.clone());
-	}
-
+	// BL
 	static BLSpanOrQuery from(SpanOrQuery in) {
 		SpanQuery[] clauses = in.getClauses();
 		SpanQuery[] blClauses = new SpanQuery[clauses.length];
@@ -69,8 +68,14 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 			blClauses[i] = BLSpansWrapper.blSpanQueryFrom(clauses[i]);
 		}
 		BLSpanOrQuery out = new BLSpanOrQuery(blClauses);
-		out.setBoost(in.getBoost());
 		return out;
+	}
+
+	/** Return the clauses whose spans are matched.
+	 * @return the clauses
+	 */
+	public SpanQuery[] getClauses() {
+		return inner.getClauses();
 	}
 
 	/**
@@ -92,12 +97,15 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 
 	@Override
 	public Query rewrite(IndexReader reader) throws IOException {
-		return BLSpansWrapper.blSpanQueryFrom((SpanQuery)super.rewrite(reader));
+		SpanQuery rewritten = (SpanQuery)inner.rewrite(reader);
+		if (rewritten == this)
+			return this;
+		return BLSpansWrapper.blSpanQueryFrom(rewritten);
 	}
 
 	@Override
 	public String toString(String field) {
-		return "BL" + super.toString();
+		return inner.toString();
 	}
 
 	@Override
@@ -105,20 +113,20 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 		if (this == o)
 			return true;
 		if (o instanceof BLSpanOrQuery) {
-			return super.equals(o);
+			return inner.equals(((BLSpanOrQuery)o).inner);
 		}
 		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() ^ 0xB1ACC1AB;
+		return inner.hashCode() ^ 0xB1ACC1AB;
 	}
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		List<SpanWeight> subWeights = new ArrayList<>(getClauses().length);
-		for (SpanQuery q: getClauses()) {
+		List<SpanWeight> subWeights = new ArrayList<>(inner.getClauses().length);
+		for (SpanQuery q: inner.getClauses()) {
 			subWeights.add(q.createWeight(searcher, false));
 		}
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(subWeights) : null;
@@ -167,7 +175,7 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 			boolean clausesAllSameLengthSetter = true;
 			int clauseLengthSetter = -1;
 
-			final ArrayList<BLSpans> subSpans = new ArrayList<>(getClauses().length);
+			final ArrayList<BLSpans> subSpans = new ArrayList<>(inner.getClauses().length);
 
 			for (SpanWeight w: subWeights) {
 				BLSpans spans = BLSpansWrapper.optWrap(w.getSpans(context, requiredPostings));
@@ -191,16 +199,18 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 			if (subSpans.isEmpty()) {
 				return null;
 			} else if (subSpans.size() == 1) {
-				return BLSpansWrapper.optWrap(subSpans.get(0));
+				return BLSpansWrapper.optWrap(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
 			}
 
-			final DisiPriorityQueue<Spans> byDocQueue = new DisiPriorityQueue<>(subSpans.size());
+			final DisiPriorityQueue byDocQueue = new DisiPriorityQueue(subSpans.size());
 			for (Spans spans: subSpans) {
-				byDocQueue.add(new DisiWrapper<>(spans));
+				byDocQueue.add(new DisiWrapper(spans));
 			}
 
-			final SpanPositionQueue byPositionQueue = new SpanPositionQueue(subSpans.size());
-                                                                                // when empty use -1
+			final SpanPositionQueue byPositionQueue = new SpanPositionQueue(subSpans.size()); // when
+																								// empty
+																								// use
+																								// -1
 
 			// BL
 			final boolean clausesAllSameLength = clausesAllSameLengthSetter;
@@ -217,7 +227,7 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 				@Override
 				public int nextDoc() throws IOException {
 					topPositionSpans = null;
-					DisiWrapper<Spans> topDocSpans = byDocQueue.top();
+					DisiWrapper topDocSpans = byDocQueue.top();
 					int currentDoc = topDocSpans.doc;
 					do {
 						topDocSpans.doc = topDocSpans.iterator.nextDoc();
@@ -229,7 +239,7 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 				@Override
 				public int advance(int target) throws IOException {
 					topPositionSpans = null;
-					DisiWrapper<Spans> topDocSpans = byDocQueue.top();
+					DisiWrapper topDocSpans = byDocQueue.top();
 					do {
 						topDocSpans.doc = topDocSpans.iterator.advance(target);
 						topDocSpans = byDocQueue.updateTop();
@@ -239,36 +249,68 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 
 				@Override
 				public int docID() {
-					DisiWrapper<Spans> topDocSpans = byDocQueue.top();
+					DisiWrapper topDocSpans = byDocQueue.top();
 					return topDocSpans.doc;
 				}
 
 				@Override
 				public TwoPhaseIterator asTwoPhaseIterator() {
-					boolean hasApproximation = false;
-					for (DisiWrapper<Spans> w: byDocQueue) {
+					float sumMatchCost = 0; // See also DisjunctionScorer.asTwoPhaseIterator()
+					long sumApproxCost = 0;
+
+					for (DisiWrapper w: byDocQueue) {
 						if (w.twoPhaseView != null) {
-							hasApproximation = true;
-							break;
+							long costWeight = (w.cost <= 1) ? 1 : w.cost;
+							sumMatchCost += w.twoPhaseView.matchCost() * costWeight;
+							sumApproxCost += costWeight;
 						}
 					}
 
-					if (!hasApproximation) { // none of the sub spans supports approximations
+					if (sumApproxCost == 0) { // no sub spans supports approximations
+						computePositionsCost();
 						return null;
 					}
 
-					return new TwoPhaseIterator(new DisjunctionDISIApproximation<Spans>(byDocQueue)) {
+					final float matchCost = sumMatchCost / sumApproxCost;
+
+					return new TwoPhaseIterator(new DisjunctionDISIApproximation(byDocQueue)) {
 						@Override
 						public boolean matches() throws IOException {
 							return twoPhaseCurrentDocMatches();
 						}
+
+						@Override
+						public float matchCost() {
+							return matchCost;
+						}
 					};
+				}
+
+				float positionsCost = -1;
+
+				void computePositionsCost() {
+					float sumPositionsCost = 0;
+					long sumCost = 0;
+					for (DisiWrapper w: byDocQueue) {
+						long costWeight = (w.cost <= 1) ? 1 : w.cost;
+						sumPositionsCost += w.spans.positionsCost() * costWeight;
+						sumCost += costWeight;
+					}
+					positionsCost = sumPositionsCost / sumCost;
+				}
+
+				@Override
+				public float positionsCost() {
+					// This may be called when asTwoPhaseIterator returned null,
+					// which happens when none of the sub spans supports approximations.
+					assert positionsCost > 0;
+					return positionsCost;
 				}
 
 				int lastDocTwoPhaseMatched = -1;
 
 				boolean twoPhaseCurrentDocMatches() throws IOException {
-					DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
+					DisiWrapper listAtCurrentDoc = byDocQueue.topList();
 					// remove the head of the list as long as it does not match
 					final int currentDoc = listAtCurrentDoc.doc;
 					while (listAtCurrentDoc.twoPhaseView != null) {
@@ -292,9 +334,9 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 				void fillPositionQueue() throws IOException { // called at first nextStartPosition
 					assert byPositionQueue.size() == 0;
 					// add all matching Spans at current doc to byPositionQueue
-					DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
+					DisiWrapper listAtCurrentDoc = byDocQueue.topList();
 					while (listAtCurrentDoc != null) {
-						Spans spansAtDoc = listAtCurrentDoc.iterator;
+						Spans spansAtDoc = listAtCurrentDoc.spans;
 						if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc) { // matched by
 																				// DisjunctionDisiApproximation
 							if (listAtCurrentDoc.twoPhaseView != null) { // matched by approximation
@@ -359,7 +401,7 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 
 				@Override
 				public String toString() {
-					return "spanOr(" + BLSpanOrQuery.this + ")@" + docID() + ": " + startPosition() + " - " + endPosition();
+					return "BLspanOr(" + BLSpanOrQuery.this + ")@" + docID() + ": " + startPosition() + " - " + endPosition();
 				}
 
 				long cost = -1;
@@ -430,57 +472,6 @@ public class BLSpanOrQuery extends SpanOrQuery implements Cloneable {
 						return;
 					((BLSpans) topPositionSpans).getCapturedGroups(capturedGroups);
 				}
-
-				// NOTE 2016-07-01: the version below has a bug. Try searching for "marines" "had" "l.*" in the Brown corpus;
-				//  you won't find anything, but searching for "marines" "had" "la.*" will. The version below will skip over
-				//  some hits some of the time to cause this bug. For now, we're using the naive (slower) default implementation
-				//  in BLSpans.
-//				@Override
-//				public int advanceStartPosition(int target) throws IOException {
-//					// (JN: adapted from fillPositionQueue())
-//
-//					byPositionQueue.clear(); // start with empty position queue and re-add spans
-//
-//					// add all matching Spans at current doc to byPositionQueue
-//					DisiWrapper<Spans> listAtCurrentDoc = byDocQueue.topList();
-//					while (listAtCurrentDoc != null) {
-//						Spans spansAtDoc = listAtCurrentDoc.iterator;
-//						if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc) { // matched
-//																				// by
-//																				// DisjunctionDisiApproximation
-//							if (listAtCurrentDoc.twoPhaseView != null) { // matched
-//																			// by
-//																			// approximation
-//								if (listAtCurrentDoc.lastApproxNonMatchDoc == listAtCurrentDoc.doc) { // matches()
-//																										// returned
-//																										// false
-//									spansAtDoc = null;
-//								} else {
-//									if (listAtCurrentDoc.lastApproxMatchDoc != listAtCurrentDoc.doc) {
-//										if (!listAtCurrentDoc.twoPhaseView
-//												.matches()) {
-//											spansAtDoc = null;
-//										}
-//									}
-//								}
-//							}
-//						}
-//
-//						if (spansAtDoc != null) {
-//							assert spansAtDoc.docID() == listAtCurrentDoc.doc;
-//							//JN assert spansAtDoc.startPosition() == -1;
-//							BLSpans.advanceStartPosition(spansAtDoc, target);
-//							if (spansAtDoc.startPosition() != NO_MORE_POSITIONS) // JN WAS: assert spansAtDoc.startPosition() != NO_MORE_POSITIONS
-//								byPositionQueue.add(spansAtDoc);
-//						}
-//						listAtCurrentDoc = listAtCurrentDoc.next;
-//					}
-//					if (byPositionQueue.size() == 0)
-//						return NO_MORE_POSITIONS;
-//
-//					topPositionSpans = byPositionQueue.top();
-//					return topPositionSpans.startPosition();
-//				}
 			};
 		}
 	}

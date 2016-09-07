@@ -243,12 +243,17 @@ public class SpansDocLevelAnd extends BLSpans {
 
 	@Override
 	public int width() {
-		return spans[currentSpansIndex].width();
+		return Math.max(spans[0].width(), spans[1].width());
 	}
 
 	@Override
 	public void collect(SpanCollector collector) throws IOException {
 		spans[currentSpansIndex].collect(collector);
+	}
+
+	@Override
+	public float positionsCost() {
+		return Math.max(spans[0].positionsCost(), spans[1].positionsCost());
 	}
 
 }

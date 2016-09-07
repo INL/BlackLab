@@ -16,7 +16,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.mockito.Mockito;
 
@@ -153,7 +153,7 @@ public class MockSearcher extends Searcher {
 	@Override
 	public IndexSearcher getIndexSearcher() {
 		IndexSearcher searcher = Mockito.mock(IndexSearcher.class);
-		Mockito.when(searcher.getSimilarity(Mockito.anyBoolean())).thenReturn(new DefaultSimilarity());
+		Mockito.when(searcher.getSimilarity(Mockito.anyBoolean())).thenReturn(new BM25Similarity());
 		return searcher;
 	}
 

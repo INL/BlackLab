@@ -20,10 +20,13 @@ import java.util.Map;
 import java.util.Set;
 
 import nl.inl.blacklab.search.TextPatternPositionFilter;
+
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -91,6 +94,12 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	@Deprecated
 	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, boolean invert) {
 		this(producer, filter, TextPatternPositionFilter.Operation.CONTAINING, invert, 0, 0);
+	}
+
+	@Override
+	public Query rewrite(IndexReader reader) throws IOException {
+		SpanQuery[] rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryPositionFilter(rewritten[0], rewritten[1], op, invert, leftAdjust, rightAdjust);
 	}
 
 	@Override

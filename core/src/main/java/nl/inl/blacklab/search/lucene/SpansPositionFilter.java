@@ -564,4 +564,9 @@ class SpansPositionFilter extends BLSpans {
 		producer.collect(collector);
 	}
 
+	@Override
+	public float positionsCost() {
+		return producer.positionsCost();
+	}
+
 }

@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -77,6 +79,17 @@ public class SpanQueryExpansion extends SpanQueryBase {
 
 		final SpanQueryExpansion that = (SpanQueryExpansion) o;
 		return expandToLeft == that.expandToLeft && min == that.min && max == that.max;
+	}
+
+	@Override
+	public Query rewrite(IndexReader reader) throws IOException {
+		SpanQuery[] rewritten = rewriteClauses(reader);
+		if (rewritten == null)
+			return this;
+		SpanQueryExpansion result = new SpanQueryExpansion(rewritten[0], expandToLeft, min, max);
+		if (ignoreLastToken)
+			result.setIgnoreLastToken(true);
+		return result;
 	}
 
 	@Override
@@ -136,7 +149,6 @@ public class SpanQueryExpansion extends SpanQueryBase {
 		h ^= min << 10;
 		h ^= max << 5;
 		h ^= expandToLeft ? 1 : 0;
-		h ^= Float.floatToRawIntBits(getBoost());
 		return h;
 	}
 

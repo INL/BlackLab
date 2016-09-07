@@ -220,4 +220,9 @@ public class PerDocumentSortedSpans extends BLSpans {
 		// payload beyond a "simple" SpanQuery like SpanQueryTags.
 		// bucketedSpans.collect(collector);
 	}
+
+	@Override
+	public float positionsCost() {
+		return 0; // should maybe be bucketedSpans.positionsCost()
+	}
 }

@@ -276,4 +276,9 @@ class SpansAnd extends BLSpans {
 		spans[1].collect(collector);
 	}
 
+	@Override
+	public float positionsCost() {
+		return Math.max(spans[0].positionsCost(), spans[1].positionsCost());
+	}
+
 }

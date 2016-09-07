@@ -159,10 +159,11 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		if (scorer == null)
 			return; // no matches, empty result set
 		try {
+			DocIdSetIterator it = scorer.iterator();
 			while (true) {
 				int docId;
 				try {
-					docId = scorer.nextDoc();
+					docId = it.nextDoc();
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}

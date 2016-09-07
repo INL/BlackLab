@@ -21,7 +21,6 @@ import java.util.Collection;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.util.ToStringUtils;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
@@ -94,7 +93,7 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 		if (!clauses.equals(that.clauses))
 			return false;
 
-		return (getBoost() == that.getBoost());
+		return true;
 	}
 
 	/**
@@ -113,27 +112,22 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 	public int hashCode() {
 		int h = clauses.hashCode();
 		h ^= (h << 10) | (h >>> 23);
-		h ^= Float.floatToRawIntBits(getBoost());
 		return h;
 	}
 
-	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQueryBase clone = null;
+	public abstract Query rewrite(IndexReader reader) throws IOException;
+
+	protected SpanQuery[] rewriteClauses(IndexReader reader) throws IOException {
+		SpanQuery[] rewritten = new SpanQuery[clauses.length];
+		boolean someRewritten = false;
 		for (int i = 0; i < clauses.length; i++) {
 			SpanQuery c = clauses[i];
 			SpanQuery query = c == null ? null : (SpanQuery) c.rewrite(reader);
-			if (query != c) {
-				// clause rewritten: must clone
-				if (clone == null)
-					clone = (SpanQueryBase) clone();
-				clone.clauses[i] = query;
-			}
+			rewritten[i] = query;
+			if (query != c)
+				someRewritten = true;
 		}
-		if (clone != null) {
-			return clone; // some clauses rewritten
-		}
-		return this; // no clauses rewritten
+		return someRewritten ? rewritten : null;
 	}
 
 	public String clausesToString(String field) {
@@ -145,7 +139,6 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 				buffer.append(", ");
 			}
 		}
-		buffer.append(ToStringUtils.boost(getBoost()));
 		return buffer.toString();
 	}
 }

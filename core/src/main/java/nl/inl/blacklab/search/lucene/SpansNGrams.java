@@ -291,4 +291,9 @@ class SpansNGrams extends BLSpans {
 		// nothing to collect
 	}
 
+	@Override
+	public float positionsCost() {
+		return 0;
+	}
+
 }

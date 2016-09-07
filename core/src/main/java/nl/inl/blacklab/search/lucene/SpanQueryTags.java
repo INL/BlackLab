@@ -103,7 +103,7 @@ public class SpanQueryTags extends BLSpanQuery {
 		if (!clause.equals(that.clause))
 			return false;
 
-		return (getBoost() == that.getBoost());
+		return true;
 	}
 
 	/**
@@ -122,7 +122,6 @@ public class SpanQueryTags extends BLSpanQuery {
 	public int hashCode() {
 		int h = clause.hashCode();
 		h ^= (h << 10) | (h >>> 23);
-		h ^= Float.floatToRawIntBits(getBoost());
 		return h;
 	}
 }

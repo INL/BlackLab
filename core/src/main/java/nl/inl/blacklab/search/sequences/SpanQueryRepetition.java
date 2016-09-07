@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -61,6 +63,12 @@ public class SpanQueryRepetition extends SpanQueryBase {
 
 		final SpanQueryRepetition that = (SpanQueryRepetition) o;
 		return min == that.min && max == that.max;
+	}
+
+	@Override
+	public Query rewrite(IndexReader reader) throws IOException {
+		SpanQuery[] rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryRepetition(rewritten[0], min, max);
 	}
 
 	@Override
@@ -104,7 +112,6 @@ public class SpanQueryRepetition extends SpanQueryBase {
 		h ^= (h << 10) | (h >>> 23);
 		h ^= min << 10;
 		h ^= max << 5;
-		h ^= Float.floatToRawIntBits(getBoost());
 		return h;
 	}
 
