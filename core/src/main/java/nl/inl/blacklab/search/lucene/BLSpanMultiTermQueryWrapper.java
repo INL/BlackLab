@@ -39,7 +39,16 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 		if (!(q instanceof SpanQuery))
 			throw new UnsupportedOperationException(
 					"You can only use BLSpanMultiTermQueryWrapper with a suitable SpanRewriteMethod.");
-		return BLSpansWrapper.blSpanQueryFrom((SpanQuery) q);
+		SpanQuery result = BLSpansWrapper.blSpanQueryFrom((SpanQuery) q);
+		if (result.getField() == null) {
+			if (result instanceof BLSpanOrQuery) {
+				((BLSpanOrQuery) result).setField(getField());
+			} else {
+				throw new RuntimeException("BLSpanMultiTermQueryWrapper rewritten to " +
+						result.getClass().getSimpleName() + ", getField() == null");
+			}
+		}
+		return result;
 	}
 
 }

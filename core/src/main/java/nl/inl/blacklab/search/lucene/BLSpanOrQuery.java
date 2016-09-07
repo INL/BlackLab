@@ -100,7 +100,17 @@ public final class BLSpanOrQuery extends SpanQuery {
 		SpanQuery rewritten = (SpanQuery)inner.rewrite(reader);
 		if (rewritten == this)
 			return this;
-		return BLSpansWrapper.blSpanQueryFrom(rewritten);
+		SpanQuery result = BLSpansWrapper.blSpanQueryFrom(rewritten);
+		if (result.getField() == null) {
+			if (result instanceof BLSpanOrQuery) {
+				((BLSpanOrQuery) result).setField(getField());
+			} else {
+				throw new RuntimeException("BLSpanOrQuery rewritten to " +
+						result.getClass().getSimpleName() + ", getField() == null");
+			}
+		}
+
+		return result;
 	}
 
 	@Override

@@ -31,16 +31,16 @@ public class TestSearches {
 		testIndex.close();
 	}
 
-	@Test
-	public void testSearches() throws ParseException {
-		testSimple();
-		testSequences();
-		testMatchAll();
-		testOptional();
-		testRepetition();
-		testStringRegexes();
-		testTags();
-	}
+//	@Test
+//	public void testSearches() throws ParseException {
+//		testSimple();
+//		testSequences();
+//		testMatchAll();
+//		testOptional();
+//		testRepetition();
+//		testStringRegexes();
+//		testTags();
+//	}
 
 	@Test
 	public void testSimple() throws ParseException {
@@ -129,6 +129,13 @@ public class TestSearches {
 				"quick [brown] fox",
 				"the [lazy] dog");
 		Assert.assertEquals(expected, testIndex.findConc(" [pos='adj']{1,} "));
+	}
+
+	@Test
+	public void testRepetitionNoResults() throws ParseException {
+		expected = Arrays.asList();
+		Assert.assertEquals(expected, testIndex.findConc("[pos='PD.*']+ '(?i)getal'"));
+
 	}
 
 	@Test
