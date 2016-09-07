@@ -2,9 +2,7 @@ package nl.inl.blacklab.server.jobs;
 
 
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryWrapperFilter;
 
 import nl.inl.blacklab.search.HitsSettings;
 import nl.inl.blacklab.search.RegexpTooLargeException;
@@ -87,7 +85,7 @@ public class JobHits extends JobWithHits {
 	protected TextPattern textPattern;
 
 	/** The parsed filter */
-	protected Filter filter;
+	protected Query filter;
 
 	public JobHits(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
@@ -98,8 +96,7 @@ public class JobHits extends JobWithHits {
 		try {
 			textPattern = jobDesc.getPattern();
 			//debug(logger, "Textpattern: " + textPattern);
-			Query q = jobDesc.getFilterQuery();
-			filter = q == null ? null : new QueryWrapperFilter(q);
+			filter = jobDesc.getFilterQuery();
 			try {
 				hits = searcher.find(textPattern, filter);
 
@@ -125,7 +122,7 @@ public class JobHits extends JobWithHits {
 		return textPattern;
 	}
 
-	public Filter getDocumentFilter() {
+	public Query getDocumentFilter() {
 		return filter;
 	}
 

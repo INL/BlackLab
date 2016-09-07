@@ -26,6 +26,8 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -33,11 +35,34 @@ import org.apache.lucene.search.spans.Spans;
 /**
  * Filters a SpanQuery.
  */
+@SuppressWarnings("deprecation")
 public class SpanQueryFiltered extends SpanQueryBase {
 
-	private Filter filter;
+	private Query filter;
 
+	/**
+	 * Filter a SpanQuery.
+	 *
+	 * @param source the query to filter
+	 * @param filter the filter query
+	 * @deprecated supply a Query as a filter instead of the deprecated Filter class
+	 */
+	@Deprecated
 	public SpanQueryFiltered(SpanQuery source, Filter filter) {
+		super(source);
+		if (!(filter instanceof QueryWrapperFilter)) {
+			throw new UnsupportedOperationException("Filter must be a QueryWrapperFilter!");
+		}
+		this.filter = ((QueryWrapperFilter) filter).getQuery();
+	}
+
+	/**
+	 * Filter a SpanQuery.
+	 *
+	 * @param source the query to filter
+	 * @param filter the filter query
+	 */
+	public SpanQueryFiltered(SpanQuery source, Query filter) {
 		super(source);
 		this.filter = filter;
 	}
@@ -51,16 +76,20 @@ public class SpanQueryFiltered extends SpanQueryBase {
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
-		return new SpanWeightFiltered(weight, searcher, needsScores ? getTermContexts(weight) : null);
+		Weight filterWeight = filter.createWeight(searcher, false);
+		return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
 	public class SpanWeightFiltered extends SpanWeight {
 
 		final SpanWeight weight;
 
-		public SpanWeightFiltered(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		final Weight filterWeight;
+
+		public SpanWeightFiltered(SpanWeight weight, Weight filterWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryFiltered.this, searcher, terms);
 			this.weight = weight;
+			this.filterWeight = filterWeight;
 		}
 
 		@Override
@@ -78,7 +107,7 @@ public class SpanQueryFiltered extends SpanQueryBase {
 			Spans result = weight.getSpans(context, requiredPostings);
 			if (result == null)
 				return null;
-			return new SpansFiltered(result, filter.getDocIdSet(context, null));
+			return new SpansFiltered(result, filterWeight.scorer(context));
 		}
 
 	}

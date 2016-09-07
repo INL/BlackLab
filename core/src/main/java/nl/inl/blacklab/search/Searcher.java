@@ -27,7 +27,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
@@ -620,11 +619,35 @@ public abstract class Searcher {
 	public abstract int maxDoc();
 
 	@Deprecated
-	public SpanQuery filterDocuments(SpanQuery query, Filter filter) {
+	public SpanQuery filterDocuments(SpanQuery query, org.apache.lucene.search.Filter filter) {
 		return new SpanQueryFiltered(query, filter);
 	}
 
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Filter filter) {
+	@Deprecated
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, org.apache.lucene.search.Filter filter) {
+		if (filter == null || filter instanceof org.apache.lucene.search.QueryWrapperFilter) {
+			Query filterQuery = filter == null ? null : ((org.apache.lucene.search.QueryWrapperFilter) filter).getQuery();
+			return createSpanQuery(pattern, fieldName, filterQuery);
+		}
+		throw new UnsupportedOperationException("Filter must be a QueryWrapperFilter!");
+	}
+
+	@Deprecated
+	public SpanQuery createSpanQuery(TextPattern pattern, org.apache.lucene.search.Filter filter) {
+		return createSpanQuery(pattern, getMainContentsFieldName(), filter);
+	}
+
+	@Deprecated
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
+		return createSpanQuery(pattern, fieldName, (org.apache.lucene.search.Filter)null);
+	}
+
+	@Deprecated
+	public SpanQuery createSpanQuery(TextPattern pattern) {
+		return createSpanQuery(pattern, getMainContentsFieldName(), (org.apache.lucene.search.Filter)null);
+	}
+
+	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Query filter) {
 		// Convert to SpanQuery
 		pattern = pattern.rewrite();
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
@@ -633,21 +656,6 @@ public abstract class Searcher {
 		if (filter != null)
 			spanQuery = new SpanQueryFiltered(spanQuery, filter);
 		return spanQuery;
-	}
-
-	@Deprecated
-	public SpanQuery createSpanQuery(TextPattern pattern, Filter filter) {
-		return createSpanQuery(pattern, getMainContentsFieldName(), filter);
-	}
-
-	@Deprecated
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
-		return createSpanQuery(pattern, fieldName, (Filter)null);
-	}
-
-	@Deprecated
-	public SpanQuery createSpanQuery(TextPattern pattern) {
-		return createSpanQuery(pattern, getMainContentsFieldName(), (Filter)null);
 	}
 
 	/**
@@ -694,11 +702,24 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(TextPattern pattern, String fieldName, Filter filter)
+	public Hits find(TextPattern pattern, String fieldName, Query filter)
 			throws BooleanQuery.TooManyClauses {
 		Hits hits = Hits.fromSpanQuery(this, createSpanQuery(pattern, fieldName, filter));
 		hits.settings.setConcordanceField(fieldName);
 		return hits;
+	}
+
+	public Hits find(TextPattern pattern, Query filter) {
+		return find(pattern, getMainContentsFieldName(), filter);
+	}
+
+	@Deprecated
+	public Hits find(TextPattern pattern, String fieldName, org.apache.lucene.search.Filter filter) {
+		if (filter == null || filter instanceof org.apache.lucene.search.QueryWrapperFilter) {
+			Query filterQuery = filter == null ? null : ((org.apache.lucene.search.QueryWrapperFilter) filter).getQuery();
+			return find(createSpanQuery(pattern, fieldName, filterQuery), fieldName);
+		}
+		throw new UnsupportedOperationException("Filter must be a QueryWrapperFilter!");
 	}
 
 	/**
@@ -713,7 +734,8 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(TextPattern pattern, Filter filter) throws BooleanQuery.TooManyClauses {
+	@Deprecated
+	public Hits find(TextPattern pattern, org.apache.lucene.search.Filter filter) throws BooleanQuery.TooManyClauses {
 		return find(pattern, getMainContentsFieldName(), filter);
 	}
 

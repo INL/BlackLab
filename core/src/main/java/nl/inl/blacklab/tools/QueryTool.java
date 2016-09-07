@@ -37,9 +37,7 @@ import java.util.regex.Pattern;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.perdocument.DocResult;
@@ -1073,7 +1071,7 @@ public class QueryTool {
 			Query filterForThisQuery = parser.getIncludedFilterQuery();
 			if (filterForThisQuery == null)
 				filterForThisQuery = filterQuery;
-			Filter filter = filterForThisQuery == null ? null : new QueryWrapperFilter(filterForThisQuery);
+			Query filter = filterForThisQuery == null ? null : filterForThisQuery;
 
 			// Execute search
 			SpanQuery spanQuery = searcher.createSpanQuery(pattern, contentsField, filter);
