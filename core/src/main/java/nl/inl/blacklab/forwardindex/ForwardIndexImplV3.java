@@ -30,21 +30,14 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
-import org.apache.lucene.uninverting.UninvertingReader;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.ExUtil;
 
 /**
@@ -137,65 +130,23 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	 *  the actual file may be larger because we reserve space at the end. */
 	private long tokenFileEndPosition = 0;
 
-	/** Index reader, for getting documents (for translating from Lucene doc id to fiid) */
-	private IndexReader reader;
-
-	/** fiid field name in the Lucene index (for translating from Lucene doc id to fiid) */
-	private String fiidFieldName;
-
-	/** Cached fiid field */
-	private NumericDocValues cachedFiids;
+	/** How we look up forward index id in the index. */
+	private FiidLookup fiidLookup;
 
 	/** Are we in index mode (i.e. writing to forward index) or not? */
 	private boolean indexMode;
-
-	private UninvertingReader uninv;
 
 	/** If true, we use the new, block-based terms file, that can grow larger than 2 GB. */
 	private boolean useBlockBasedTermsFile = true;
 
 	@Override
 	public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
-		this.reader = reader;
-		this.fiidFieldName = ComplexFieldUtil.forwardIndexIdField(lucenePropFieldName);
-		try {
-			LeafReader srw = SlowCompositeReaderWrapper.wrap(reader);
-			Map<String, UninvertingReader.Type> fields = new HashMap<>();
-			fields.put(fiidFieldName, UninvertingReader.Type.INTEGER);
-			uninv = new UninvertingReader(srw, fields);
-			cachedFiids = uninv.getNumericDocValues(fiidFieldName);
-
-			// Check if the cache was retrieved OK
-			boolean allZeroes = true;
-			int numToCheck = Math.min(NUMBER_OF_CACHE_ENTRIES_TO_CHECK, srw.maxDoc());
-			for (int i = 0; i < numToCheck; i++) {
-				// (NOTE: we don't check if document wasn't deleted, but that shouldn't matter here)
-				if (cachedFiids.get(i) != 0) {
-					allZeroes = false;
-					break;
-				}
-			}
-			if (allZeroes) {
-				// Tokens lengths weren't saved in the index, skip cache
-				cachedFiids = null;
-			}
-
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		fiidLookup = new FiidLookup(reader, lucenePropFieldName);
 	}
 
 	@Override
 	public int luceneDocIdToFiid(int docId) {
-		if (cachedFiids != null)
-			return (int)cachedFiids.get(docId);
-
-		// Not cached; find fiid by reading stored value from Document now
-		try {
-			return Integer.parseInt(reader.document(docId).get(fiidFieldName));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		return (int)fiidLookup.get(docId);
 	}
 
 	ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create, boolean largeTermsFileSupport) {
