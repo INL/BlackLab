@@ -3,6 +3,8 @@ package nl.inl.blacklab.search;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -11,6 +13,8 @@ import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 
 public class TestSearches {
 
@@ -30,17 +34,6 @@ public class TestSearches {
 	public static void tearDown() {
 		testIndex.close();
 	}
-
-//	@Test
-//	public void testSearches() throws ParseException {
-//		testSimple();
-//		testSequences();
-//		testMatchAll();
-//		testOptional();
-//		testRepetition();
-//		testStringRegexes();
-//		testTags();
-//	}
 
 	@Test
 	public void testSimple() throws ParseException {
@@ -63,6 +56,20 @@ public class TestSearches {
 				"the [Force] be",
 				"the [question]");
 		Assert.assertEquals(expected, testIndex.findConc(" [pos='nou'] "));
+	}
+
+	@Test
+	public void testSimpleDocFilter() throws ParseException {
+		expected = Arrays.asList("May [the] Force");
+		Assert.assertEquals(expected, testIndex.findConc(" 'the' ", new SingleDocIdFilter(1)));
+	}
+
+	@Test
+	public void testFilteredQuery() throws ParseException {
+		expected = Arrays.asList("[The] quick", "over [the] lazy");
+		BLSpanTermQuery patternQuery = new BLSpanTermQuery(new Term("contents%word@i", "the"));
+		TermQuery filterQuery = new TermQuery(new Term("contents%word@i", "fox"));
+		Assert.assertEquals(expected, testIndex.findConc(new SpanQueryFiltered(patternQuery, filterQuery)));
 	}
 
 	@Test

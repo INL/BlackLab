@@ -5,6 +5,9 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanQuery;
+
 import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -13,7 +16,6 @@ import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.tools.indexexample.DocIndexerExample;
 import nl.inl.util.StringUtil;
 
@@ -117,25 +119,54 @@ public class TestIndex {
 	 * @throws ParseException
 	 */
 	public List<String> findConc(String query) throws ParseException {
-		Hits hits = find(query);
+		Hits hits = find(query, null);
 		return getConcordances(hits);
+	}
+
+	/**
+	 * Find concordances from a Corpus Query Language query.
+	 *
+	 * @param pattern CorpusQL pattern to find
+	 * @param filter how to filter the query
+	 * @return the resulting BlackLab text pattern
+	 * @throws ParseException
+	 */
+	public List<String> findConc(String pattern, Query filter) throws ParseException {
+		return getConcordances(find(pattern, filter));
 	}
 
 	/**
 	 * Find hits from a Corpus Query Language query.
 	 *
-	 * @param query
-	 *            the query to parse
+	 * @param pattern CorpusQL pattern to find
+	 * @param filter how to filter the query
 	 * @return the resulting BlackLab text pattern
 	 * @throws ParseException
 	 */
-	public Hits find(String query) throws ParseException {
-		// Parse query using the CorpusQL parser
-		TextPattern tp = CorpusQueryLanguageParser.parse(query);
+	public Hits find(String pattern, Query filter) throws ParseException {
+		return searcher.find(CorpusQueryLanguageParser.parse(pattern), filter);
+	}
 
-		// Execute the search
-		Hits hits = searcher.find(tp);
-		return hits;
+	/**
+	 * Find hits from a Corpus Query Language query.
+	 *
+	 * @param pattern CorpusQL pattern to find
+	 * @return the resulting BlackLab text pattern
+	 * @throws ParseException
+	 */
+	public Hits find(String pattern) throws ParseException {
+		return find(pattern, null);
+	}
+
+	/**
+	 * Find hits from a Corpus Query Language query.
+	 *
+	 * @param query what to find
+	 * @return the resulting BlackLab text pattern
+	 * @throws ParseException
+	 */
+	public List<String> findConc(SpanQuery query) throws ParseException {
+		return getConcordances(searcher.find(query));
 	}
 
 	/**

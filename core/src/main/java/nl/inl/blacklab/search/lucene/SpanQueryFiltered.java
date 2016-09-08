@@ -70,7 +70,8 @@ public class SpanQueryFiltered extends SpanQueryBase {
 	@Override
 	public Query rewrite(IndexReader reader) throws IOException {
 		SpanQuery[] rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryFiltered(rewritten[0], filter);
+		Query rewrittenFilter = filter.rewrite(reader);
+		return rewritten == null ? this : new SpanQueryFiltered(rewritten[0], rewrittenFilter);
 	}
 
 	@Override
