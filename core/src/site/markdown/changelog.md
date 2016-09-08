@@ -3,7 +3,17 @@
 ## Improvements in HEAD
 
 ### Changed
+* Indexer.index(File) now indexes all files by default instead of *.xml.
+  If you want to index *.xml, use Indexer.index(File, String glob).
+  IndexTool still defaults to *.xml; specify different glob if you want
+  to index other file types.
 * Added Hits.filteredBy() to filter Hits on a HitProperty.
+* Upgraded from Lucene 5.2.1 to 5.5.2. Also made some preparations for
+  eventually upgrading to Lucene 6.x.
+  Deprecated methods that use the deprecated Filter and replaced them with
+  a variant that takes Query.
+* Removed several (long-)deprecated methods.
+* SpanQueryFiltered.rewrite() rewrites its filter as well.
 
 ### BlackLab Server
 * Added hitfiltercrit and hitfilterval parameters to filter hits on a criterium,

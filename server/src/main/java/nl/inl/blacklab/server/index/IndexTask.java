@@ -101,7 +101,7 @@ public class IndexTask {
 			try {
 				if (data == null && dataFile != null) {
 					// Used for zip files, possibly other types in the future.
-					indexer.index(dataFile);
+					indexer.index(dataFile, "*.xml");
 				} else if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
 					// Tar gzipped data; read directly from stream.
 					indexer.indexTarGzip(name, data, "*.xml", true);

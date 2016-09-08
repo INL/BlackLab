@@ -256,9 +256,9 @@ public class IndexTool {
 				// Real wildcard glob
 				indexer.index(inputDir, glob);
 			} else {
-				// Single file; just index that, with no glob specified
+				// Single file. Use "*.xml" as the glob by default.
 				// (so if it's an archive, we'll just process all .xml files within)
-				indexer.index(new File(inputDir, glob));
+				indexer.index(new File(inputDir, glob), "*.xml");
 			}
 		} catch (Exception e) {
 			System.err.println("An error occurred, aborting indexing (changes will be rolled back). Error details follow.");

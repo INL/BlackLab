@@ -41,6 +41,8 @@ For example, if you have TEI data in /tmp/my-tei/ and want to create an index as
 
 Your data is indexed and placed in a new BlackLab index in the "test-index" directory.
 
+NOTE: if you don't specify a glob, IndexTool will index \*.xml by default. You can specify a glob (like "\*.txt" or "\*" for all files) to change this.
+
 To delete documents from an index:
 
     java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool delete INDEX_DIR FILTER_QUERY

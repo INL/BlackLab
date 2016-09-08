@@ -456,7 +456,9 @@ public class Indexer {
 	/**
 	 * Index the file or directory specified.
 
-	 * By default, indexes only .xml files in a directory.
+	 * Indexes all files in a directory or archive (previously
+	 * only indexed *.xml; specify a glob if you want this
+	 * behaviour back, see index(File, String)).
 	 *
 	 * Recurses into subdirs only if that setting is enabled.
 	 *
@@ -465,7 +467,7 @@ public class Indexer {
 	 * @throws Exception
 	 */
 	public void index(File file) throws Exception {
-		indexInternal(file, "*.xml", defaultRecurseSubdirs);
+		indexInternal(file, "*", defaultRecurseSubdirs);
 	}
 
 	/**
@@ -623,9 +625,9 @@ public class Indexer {
 				if (e.isDirectory())
 					continue;
 				String fileName = e.getName();
-				Matcher m = pattGlob.matcher(fileName);
 				boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".gz") || fileName.endsWith(".tgz");
 				boolean skipFile = isSpecialOperatingSystemFile(fileName);
+				Matcher m = pattGlob.matcher(fileName);
 				if (!skipFile && (m.matches() || isArchive)) {
 					try {
 						try (InputStream is = z.getInputStream(e)) {
