@@ -29,8 +29,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.store.LockObtainFailedException;
 
@@ -768,35 +766,6 @@ public abstract class Searcher {
 	public Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses {
 		return find(pattern, getMainContentsFieldName(), null);
 	}
-
-	/**
-	 * Find matching documents and their scores for a pattern.
-	 *
-	 * You can pass in both a SpanQuery or a regular Query.
-	 *
-	 * @param q
-	 * @return object that can iterate over matching docs and provide their scores. NOTE: null can
-	 *         be returned if there were no matches!
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 * @deprecated use getIndexSearcher() and find them yourself
-	 */
-	@Deprecated
-	public abstract Scorer findDocScores(Query q);
-
-	/**
-	 * Find the top-scoring documents.
-	 *
-	 * @param q
-	 *            the query
-	 *
-	 * @param n
-	 *            number of top documents to return
-	 * @return the documents
-	 * @deprecated use getIndexSearcher() and find them yourself
-	 */
-	@Deprecated
-	public abstract TopDocs findTopDocs(Query q, int n);
 
 	/**
 	 * Get character positions from word positions.

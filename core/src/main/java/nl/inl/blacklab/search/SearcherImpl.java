@@ -37,10 +37,9 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
@@ -48,12 +47,12 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
+
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -326,29 +325,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 	}
 
 	@Override
-	@Deprecated
-	public Scorer findDocScores(Query q) {
-		try {
-			Weight w = indexSearcher.createNormalizedWeight(q, true);
-			LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
-			Scorer sc = w.scorer(scrw.getContext());
-			return sc;
-		} catch (IOException e) {
-			throw ExUtil.wrapRuntimeException(e);
-		}
-	}
-
-	@Override
-	@Deprecated
-	public TopDocs findTopDocs(Query q, int n) {
-		try {
-			return indexSearcher.search(q, n);
-		} catch (IOException e) {
-			throw ExUtil.wrapRuntimeException(e);
-		}
-	}
-
-	@Override
 	public void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
 			boolean fillInDefaultsIfNotFound) {
 
@@ -606,8 +582,8 @@ public class SearcherImpl extends Searcher implements Closeable {
 				// Execute the query, iterate over the docs and delete from FI and CS.
 				IndexSearcher s = new IndexSearcher(freshReader);
 				Weight w = s.createNormalizedWeight(q, false);
-				try (LeafReader scrw = SlowCompositeReaderWrapper.wrap(freshReader)) {
-					Scorer scorer = w.scorer(scrw.getContext());
+				for (LeafReaderContext leafContext: freshReader.leaves()) {
+					Scorer scorer = w.scorer(leafContext);
 					if (scorer == null)
 						return; // no matching documents
 
@@ -616,7 +592,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 					while (true) {
 						int docId;
 						try {
-							docId = it.nextDoc();
+							docId = it.nextDoc() + leafContext.docBase;
 						} catch (IOException e) {
 							throw new RuntimeException(e);
 						}
@@ -660,12 +636,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 	@Override
 	public List<String> getFieldTerms(String fieldName, int maxResults) {
-		try {
-			LeafReader srw = SlowCompositeReaderWrapper.wrap(reader);
-			return LuceneUtil.getFieldTerms(srw, fieldName, maxResults);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		return LuceneUtil.getFieldTerms(reader, fieldName, maxResults);
 	}
 
 	@Override

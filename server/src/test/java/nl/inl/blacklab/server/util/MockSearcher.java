@@ -14,8 +14,6 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.mockito.ArgumentMatchers;
@@ -62,20 +60,6 @@ public class MockSearcher extends Searcher {
 	public int maxDoc() {
 		//
 		return 0;
-	}
-
-	@Override
-	@Deprecated
-	public Scorer findDocScores(Query q) {
-		//
-		return null;
-	}
-
-	@Override
-	@Deprecated
-	public TopDocs findTopDocs(Query q, int n) {
-		//
-		return null;
 	}
 
 	@Override
