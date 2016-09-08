@@ -153,7 +153,11 @@ class TermsImplV3 extends Terms {
 		try {
 			try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
 				try (FileChannel fc = raf.getChannel()) {
-					MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, termsFile.length());
+					long fileLength = termsFile.length();
+					long remainingFileLength = fileLength;
+					long fileMapStart = 0;
+					long fileMapLength = Math.min(Integer.MAX_VALUE, fileLength);
+					MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 					int n = buf.getInt();
 					IntBuffer ib = buf.asIntBuffer();
 					int[] termStringOffsets = new int[n + 1];
@@ -166,6 +170,7 @@ class TermsImplV3 extends Terms {
 						// Read the term string offsets and string data block
 						int currentTerm = 0;
 						while (currentTerm < n) {
+
 							int numTermsThisBlock = ib.get();
 							ib.get(termStringOffsets, currentTerm, numTermsThisBlock); // term string offsets
 
@@ -185,7 +190,16 @@ class TermsImplV3 extends Terms {
 								terms[currentTerm] = str;
 							}
 
-							ib = buf.asIntBuffer();
+							// Re-map a new part of the file before we read the next block.
+							// (and before we read the sort buffers)
+							long bytesRead = buf.position();
+							fileMapStart += bytesRead;
+							remainingFileLength -= bytesRead;
+							fileMapLength = Math.min(Integer.MAX_VALUE, remainingFileLength);
+							if (fileMapLength > 0) {
+								buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+								ib = buf.asIntBuffer();
+							}
 						}
 
 					} else {
@@ -256,13 +270,15 @@ class TermsImplV3 extends Terms {
 					}
 
 					// Calculate the file length and map the file
-					long fileLength = 2 * BYTES_PER_INT + (n + 1) * BYTES_PER_INT + termStringsByteSize + NUM_SORT_BUFFERS * BYTES_PER_INT * n;
-					fc.truncate(fileLength); // truncate if necessary
-					MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileLength);
-					buf.putInt(n); // Start with the number of terms
-
-					IntBuffer ib = buf.asIntBuffer();
+					MappedByteBuffer buf;
+					IntBuffer ib;
 					if (!useBlockBasedTermsFile) {
+						long fileLength = 2 * BYTES_PER_INT + (n + 1) * BYTES_PER_INT + termStringsByteSize + NUM_SORT_BUFFERS * BYTES_PER_INT * n;
+						fc.truncate(fileLength); // truncate if necessary
+						buf = fc.map(MapMode.READ_WRITE, (long) 0, fileLength);
+						buf.putInt(n); // Start with the number of terms
+						ib = buf.asIntBuffer();
+
 						// Terms file is small enough to fit in a single byte array.
 						// Use the old code.
 
@@ -285,6 +301,12 @@ class TermsImplV3 extends Terms {
 						buf.put(termStrings);
 						ib = buf.asIntBuffer();
 					} else {
+						long fileMapStart = 0, fileMapLength = Integer.MAX_VALUE;
+						buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
+						buf.putInt(n); // Start with the number of terms      //@4
+						ib = buf.asIntBuffer();
+						long fileLength = BYTES_PER_INT;
+
 						// Terms file is too large to fit in a single byte array.
 						// Use the new code.
 						int currentTerm = 0;
@@ -309,17 +331,35 @@ class TermsImplV3 extends Terms {
 								currentTerm++;
 								bytesLeftToWrite -= termBytes.length;
 							}
+
 							// Write offset and data arrays to file
 							int numTermsThisBlock = currentTerm - firstTermInBlock;
-							ib.put(numTermsThisBlock);
-							ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock);
+
+							long blockSizeBytes = 2 * BYTES_PER_INT + numTermsThisBlock * BYTES_PER_INT + currentOffset;
+
+							ib.put(numTermsThisBlock); //@4
+							ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock); //@4 * numTermsThisBlock
 							ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
-							                       // (doubles as the size of the data block to follow)
-							buf.position(buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock)); // advance past offsets array
-							buf.put(termStrings, 0, currentOffset);
+							                       // (doubles as the size of the data block to follow) //@4
+							int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
+							buf.position(newPosition); // advance past offsets array
+							buf.put(termStrings, 0, currentOffset); //@blockSize (max. APPROX_MAX_ARRAY_SIZE)
+							ib = buf.asIntBuffer();
+							fileLength += blockSizeBytes;
+
+							// Re-map a new part of the file before we write the next block.
+							// (and eventually, the sort buffers, see below)
+							fileMapStart += buf.position();
+							buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
 							ib = buf.asIntBuffer();
 						}
 
+						// Determine total file length (by adding the sort buffer byte length to the
+						// running total) and truncate the file if necessary
+						// (we can do this now, even though we still have to write the sort buffers,
+						// because we know how large the file will eventually be)
+						fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * n;
+						fc.truncate(fileLength);
 					}
 
 					// Write the case-sensitive sort order
