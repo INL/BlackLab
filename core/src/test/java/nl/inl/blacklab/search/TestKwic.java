@@ -31,18 +31,6 @@ public class TestKwic {
 		Assert.assertEquals(expRight, conc.right());
 	}
 
-	@SuppressWarnings("deprecation")
-	@Test
-	public void testKwicOldConstructor() {
-		Kwic kwic = new Kwic(props, left, match, right);
-
-		Assert.assertEquals(expLeft + expMatch + expRight, kwic.getFullXml());
-		Assert.assertEquals(left, kwic.getLeft());
-		Assert.assertEquals(match, kwic.getMatch());
-		Assert.assertEquals(right, kwic.getRight());
-		Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.getLeft("word"));
-	}
-
 	@Test
 	public void testKwicNewConstructor() {
 		Kwic kwic = new Kwic(props, tokens, 2, 3);

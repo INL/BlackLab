@@ -275,79 +275,6 @@ public class ComplexFieldUtil {
 	}
 
 	/**
-	 * Construct a complex field name from its component parts.
-	 *
-	 * @param fieldName
-	 *            the base field name
-	 * @param propName
-	 *            the property name
-	 * @return the combined complex field name
-	 * @deprecated replace with either propertyField or bookkeepingField
-	 */
-	@Deprecated
-	public static String fieldName(String fieldName, String propName) {
-		return fieldName(fieldName, propName, null);
-	}
-
-	/**
-	 * Construct a complex field name from its component parts.
-	 *
-	 * @param fieldName
-	 *            the base field name
-	 * @param propName
-	 *            the property name
-	 * @param altName
-	 *            the alternative name
-	 * @return the combined complex field name
-	 * @deprecated replace with either propertyField or bookkeepingField
-	 */
-	@Deprecated
-	public static String fieldName(String fieldName, String propName, String altName) {
-		return propertyField(fieldName, propName, altName);
-	}
-
-	/**
-	 * Split a complex field name into its component parts: base name, property name, and
-	 * alternative. The last two are both optional; either or both may be present.
-	 *
-	 * Example: the name "contents%lemma@s" will be split into "contents", "lemma" and "s".
-	 *
-	 * @param fieldPropAltName
-	 *            the field name
-	 * @return the component parts base name, property name and alternative. Missing parts will be
-	 *         empty strings.
-	 * @deprecated Not used anywhere, superseded by getNameComponents()
-	 */
-	@Deprecated
-	public static String[] split(String fieldPropAltName) {
-		int p = fieldPropAltName.indexOf(PROP_SEP);
-		int a = fieldPropAltName.indexOf(ALT_SEP);
-		if (p < 0) {
-			// No property
-			if (a < 0) {
-				// No alternative
-				return new String[] { fieldPropAltName, "", "" };
-			}
-			return new String[] { fieldPropAltName.substring(0, a), "",
-					fieldPropAltName.substring(a + ALT_SEP_LEN) };
-		}
-
-		// Property
-		if (a < 0) {
-			// No alternative
-			return new String[] { fieldPropAltName.substring(0, p), fieldPropAltName.substring(p + PROP_SEP_LEN),
-					"" };
-		}
-
-		// Alternative
-		if (p > a)
-			throw new IllegalArgumentException("Malformed field name, PROP separator after ALT separator");
-
-		return new String[] { fieldPropAltName.substring(0, p), fieldPropAltName.substring(p + PROP_SEP_LEN, a),
-				fieldPropAltName.substring(a + ALT_SEP_LEN) };
-	}
-
-	/**
 	 * Gets the different components of a complex field property (alternative) name.
 	 *
 	 * @param luceneFieldName
@@ -455,46 +382,6 @@ public class ComplexFieldUtil {
 	}
 
 	/**
-	 * Get the "alternative" part of the complex field property. An alternative of a property is,
-	 * for example, a case-sensitive version of the property. For the alternatives "contents@s"
-	 * or "contents%lemma@s" this method produces "s".
-	 *
-	 * @param fieldPropAltName
-	 *            the field plus property plus alternative name we want to get the alternative from
-	 * @return the alternative name
-	 * @deprecated use getNameComponents
-	 */
-	@Deprecated
-	public static String getAlternative(String fieldPropAltName) {
-		int pos = fieldPropAltName.lastIndexOf(ALT_SEP);
-		if (pos < 0)
-			return "";
-		return fieldPropAltName.substring(pos + ALT_SEP_LEN);
-	}
-
-	/**
-	 * Get the "property" part of the complex field property. For the field name "contents_lemma" or
-	 * "contents%lemma@s" this method produces "lemma".
-	 *
-	 * @param fieldPropAltName
-	 *            the field plus property plus alternative name we want to get the alternative from
-	 * @return the alternative name
-	 * @deprecated use getNameComponents
-	 */
-	@Deprecated
-	public static String getProperty(String fieldPropAltName) {
-		int pos = fieldPropAltName.indexOf(PROP_SEP);
-		if (pos < 0)
-			return ""; // No property
-
-		// See if there's an alternative we need to get rid of
-		int posA = fieldPropAltName.lastIndexOf(ALT_SEP);
-		if (posA < 0)
-			return fieldPropAltName.substring(pos + PROP_SEP_LEN);
-		return fieldPropAltName.substring(pos + PROP_SEP_LEN, posA); // Strip off alternative
-	}
-
-	/**
 	 * Checks if the given fieldName actually points to an alternative property (for example, a
 	 * case-sensitive version of a property).
 	 *
@@ -516,45 +403,6 @@ public class ComplexFieldUtil {
 		// We're looking for an alternative
 		String altSuffix = ALT_SEP + altName;
 		return fieldPropAltName.endsWith(altSuffix);
-	}
-
-	/**
-	 * Checks if the given fieldName actually points to the specified property (for example, the
-	 * lemma or the POS of the original token).
-	 *
-	 * Example: the fieldName "contents%lemma" indicates the "lemma" property of the "contents"
-	 * complex field.
-	 *
-	 * Field names may also include an "alternative", for example a case-sensitive version. For
-	 * example, "contents%lemma@s" is the "s" alternative of the "lemma" property. However,
-	 * alternatives are not tested for in this method, just the property name.
-	 *
-	 * @param fieldPropAltName
-	 *            the full fieldname, possibly including a property and/or alternative
-	 * @param propName
-	 *            the property to test for
-	 * @return true if the fieldName indicates the specified alternative
-	 * @deprecated use getNameComponents()
-	 */
-	@Deprecated
-	public static boolean isProperty(String fieldPropAltName, String propName) {
-		if (propName.length() == 0) {
-			// No property, therefore no property separator
-			return fieldPropAltName.indexOf(PROP_SEP) < 0;
-		}
-
-		// We're looking for a property, either at the end of the fieldName or right before the ALT
-		// separator
-		String firstBit = PROP_SEP + propName;
-		int pos = fieldPropAltName.indexOf(firstBit);
-		if (pos < 0)
-			return false; // Not found
-		int endOfFirstBit = pos + firstBit.length();
-
-		// Should occur at the end, or should be followed by ALT separator
-		return fieldPropAltName.length() == endOfFirstBit
-				|| fieldPropAltName.length() >= endOfFirstBit + ALT_SEP_LEN
-				&& fieldPropAltName.substring(endOfFirstBit, endOfFirstBit + ALT_SEP_LEN).equals(ALT_SEP);
 	}
 
 	public static String mainPropertyField(IndexStructure structure, String fieldName) {

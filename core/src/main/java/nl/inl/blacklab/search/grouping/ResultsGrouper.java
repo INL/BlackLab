@@ -22,11 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.search.spans.SpanQuery;
-
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.Searcher;
 
 /**
  * Groups results on the basis of a list of criteria, and provide random access to the resulting
@@ -68,28 +65,6 @@ public class ResultsGrouper extends HitGroups {
 	private int largestGroupSize = 0;
 
 	/**
-	 * Construct a ResultsGrouper object, by grouping the supplied spans.
-	 *
-	 * @param searcher
-	 *            our Searcher object
-	 * @param source
-	 *            the Spans to group
-	 * @param criteria
-	 *            the criteria to group on
-	 * @param defaultConcField
-	 *            the default concordance field
-	 * @deprecated use Hits.groupedBy(criteria).
-	 */
-	@Deprecated
-	public ResultsGrouper(Searcher searcher, SpanQuery source, HitProperty criteria,
-			String defaultConcField) {
-		super(searcher, criteria);
-		Hits hits = Hits.fromSpanQuery(searcher, source);
-		hits.settings().setConcordanceField(defaultConcField);
-		init(hits, criteria);
-	}
-
-	/**
 	 * Construct a ResultsGrouper object, by grouping the supplied hits.
 	 *
 	 * NOTE: this will be made package-private in a future release.
@@ -99,12 +74,20 @@ public class ResultsGrouper extends HitGroups {
 	 *            the hits to group
 	 * @param criteria
 	 *            the criteria to group on
-	 * @deprecated use Hits.groupedBy(criteria). Constructor will be made package-private eventually.
 	 */
-	@Deprecated
-	public ResultsGrouper(Hits hits, HitProperty criteria) {
+	ResultsGrouper(Hits hits, HitProperty criteria) {
 		super(hits.getSearcher(), criteria);
 		init(hits, criteria);
+	}
+
+	/**
+	 * Don't use this; use Hits.groupedBy().
+	 * @param hits hits to group
+	 * @param criteria criteria to group by
+	 * @return grouped hits
+	 */
+	public static ResultsGrouper _fromHits(Hits hits, HitProperty criteria) {
+		return new ResultsGrouper(hits, criteria);
 	}
 
 	private void init(Hits hits, HitProperty criteria_) {
@@ -141,20 +124,6 @@ public class ResultsGrouper extends HitGroups {
 		// If the group identities are context words, we should possibly merge
 		// some groups if they have identical sort orders (up to now, we've grouped on
 		// token id, not sort order).
-	}
-
-	/**
-	 * Add a hit to the appropriate group. NO LONGER SUPPORTED, WILL THROW AN EXCEPTION!
-	 *
-	 * @param hits
-	 *    the hits object this hit is in
-	 * @param originalHitIndex
-	 *    original (before sorting) index of the hit
-	 * @deprecated No longer supported, will throw an exception. Use Hits.groupedBy() instead.
-	 */
-	@Deprecated
-	public void addHit(Hits hits, int originalHitIndex) {
-		throw new UnsupportedOperationException("Directly adding hits to ResultsGrouper no longer supported. Use Hits.groupedBy() instead.");
 	}
 
 	/**

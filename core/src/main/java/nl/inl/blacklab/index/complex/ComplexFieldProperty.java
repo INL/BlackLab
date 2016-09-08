@@ -178,27 +178,6 @@ public class ComplexFieldProperty {
 		}
 	}
 
-//	@Deprecated
-//	public void addToLuceneDoc(Document doc, String fieldName, List<Integer> startChars,
-//			List<Integer> endChars) {
-//		for (String altName : alternatives.keySet()) {
-//			//doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
-//			//		getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
-//			doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
-//					getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
-//		}
-//	}
-
-	/**
-	 * @param altName
-	 * @param filterAdder
-	 * @deprecated use SensitivitySetting, or create additional properties
-	 */
-	@Deprecated
-	public void addAlternative(String altName, TokenFilterAdder filterAdder) {
-		alternatives.put(altName, filterAdder);
-	}
-
 	public List<String> getValues() {
 		return Collections.unmodifiableList(values);
 	}

@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexstructure;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -102,28 +101,6 @@ public class PropertyDesc {
 		return sensitivity;
 	}
 
-	/** Get the set of names of alternatives for this property
-	 * @return the names
-	 * @deprecated use getSensitivity
-	 */
-	@Deprecated
-	public Collection<String> getAlternatives() {
-		return alternatives.keySet();
-	}
-
-	/**
-	 * Get an alternative's description.
-	 * @param name name of the alternative
-	 * @return the description
-	 * @deprecated use getSensitivity instead of querying individual alternatives
-	 */
-	@Deprecated
-	public AltDesc getAlternativeDesc(String name) {
-		if (!alternatives.containsKey(name))
-			throw new IllegalArgumentException("Alternative '" + name + "' not found!");
-		return alternatives.get(name);
-	}
-
 	/**
 	 * Detect which alternative is the one containing character offsets.
 	 *
@@ -147,19 +124,6 @@ public class PropertyDesc {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Return which alternative contains character offset information.
-	 *
-	 * Note that there may not be such an alternative.
-	 *
-	 * @return the alternative, or null if there is none.
-	 * @deprecated use offsetsAlternative()
-	 */
-	@Deprecated
-	public AltDesc getOffsetsAlternative() {
-		return offsetsAlternative;
 	}
 
 	/**

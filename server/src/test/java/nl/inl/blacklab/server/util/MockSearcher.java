@@ -3,7 +3,6 @@ package nl.inl.blacklab.server.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -11,7 +10,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.similarities.BM25Similarity;
@@ -116,18 +114,6 @@ public class MockSearcher extends Searcher {
 	@Override
 	public DocResults queryDocuments(Query documentFilterQuery) {
 		return null;
-	}
-
-	@Override
-	@Deprecated
-	public Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName) {
-		return null;
-	}
-
-	@Override
-	@Deprecated
-	public void collectDocuments(Query query, Collector collector) {
-		//
 	}
 
 	@Override

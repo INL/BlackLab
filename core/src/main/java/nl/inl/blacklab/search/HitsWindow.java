@@ -50,11 +50,9 @@ public class HitsWindow extends HitsImpl {
 	 *            the first hit in our window
 	 * @param windowSize
 	 *            the size of our window
-	 * @deprecated use Hits.window(first, windowSize).
 	 */
-	@Deprecated
-	public HitsWindow(Hits source, int first, int windowSize) {
-		super(source.getSearcher(), source.settings().concordanceField(), (List<Hit>)null);
+	HitsWindow(Hits source, int first, int windowSize) {
+		super(source.getSearcher(), (List<Hit>)null);
 		this.source = source;
 		this.first = first;
 		this.windowSize = windowSize;
@@ -152,17 +150,6 @@ public class HitsWindow extends HitsImpl {
 	@Override
 	public int size() {
 		return hits.size();
-	}
-
-	/**
-	 * How many hits are available in the original source Hits object?
-	 *
-	 * @return total number of hits
-	 * @deprecated use sourceSize() or sourceTotalSize()
-	 */
-	@Deprecated
-	public int totalHits() {
-		return source.size();
 	}
 
 	/**

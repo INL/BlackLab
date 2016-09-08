@@ -59,26 +59,6 @@ class TokenStreamFromList extends TokenStream {
 	 */
 	protected PayloadAttribute payloadAttr = null;
 
-//	@Deprecated
-//	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments) {
-//		this(tokens, increments, null);
-//	}
-//
-//	@Deprecated
-//	public TokenStreamFromList(Iterable<String> tokens, Iterable<Integer> increments, Iterable<BytesRef> payload) {
-//		clearAttributes();
-//		termAttr = addAttribute(CharTermAttribute.class);
-//		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
-//		positionIncrementAttr.setPositionIncrement(1);
-//
-//		iterator = tokens.iterator();
-//		incrementIt = increments.iterator();
-//		if (payload != null) {
-//			payloadAttr = addAttribute(PayloadAttribute.class);
-//			payloadIt = payload.iterator();
-//		}
-//	}
-
 	public TokenStreamFromList(Iterable<String> tokens, IntIterable increments, Iterable<BytesRef> payload) {
 		clearAttributes();
 		termAttr = addAttribute(CharTermAttribute.class);

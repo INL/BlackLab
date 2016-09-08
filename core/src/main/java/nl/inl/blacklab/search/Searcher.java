@@ -26,7 +26,6 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -635,14 +634,22 @@ public abstract class Searcher {
 		return createSpanQuery(pattern, getMainContentsFieldName(), filter);
 	}
 
+	/**
+	 * @deprecated use version that takes a filter, and pass null for no filter
+	 */
+	@SuppressWarnings("javadoc")
 	@Deprecated
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
-		return createSpanQuery(pattern, fieldName, (org.apache.lucene.search.Filter)null);
+		return createSpanQuery(pattern, fieldName, (Query)null);
 	}
 
+	/**
+	 * @deprecated use version that takes a filter, and pass null for no filter
+	 */
+	@SuppressWarnings("javadoc")
 	@Deprecated
 	public SpanQuery createSpanQuery(TextPattern pattern) {
-		return createSpanQuery(pattern, getMainContentsFieldName(), (org.apache.lucene.search.Filter)null);
+		return createSpanQuery(pattern, getMainContentsFieldName(), (Query)null);
 	}
 
 	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Query filter) {
@@ -711,6 +718,10 @@ public abstract class Searcher {
 		return find(pattern, getMainContentsFieldName(), filter);
 	}
 
+	/**
+	 * @deprecated use version that takes a Query as a filter
+	 */
+	@SuppressWarnings("javadoc")
 	@Deprecated
 	public Hits find(TextPattern pattern, String fieldName, org.apache.lucene.search.Filter filter) {
 		if (filter == null || filter instanceof org.apache.lucene.search.QueryWrapperFilter) {
@@ -731,6 +742,7 @@ public abstract class Searcher {
 	 * @return the hits found
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
+	 * @deprecated use version that takes a Query as a filter
 	 */
 	@Deprecated
 	public Hits find(TextPattern pattern, org.apache.lucene.search.Filter filter) throws BooleanQuery.TooManyClauses {
@@ -1278,21 +1290,6 @@ public abstract class Searcher {
 		hitsSettings().setContextSize(defaultContextSize);
 	}
 
-
-	/**
-	 * Factory method to create a directory content store.
-	 *
-	 * @param indexXmlDir
-	 *            the content store directory
-	 * @param create if true, create a new content store even if one exists
-	 * @return the content store
-	 * @deprecated renamed to openContentStore()
-	 */
-	@Deprecated
-	public ContentStore getContentStoreDir(File indexXmlDir, boolean create) {
-		return openContentStore(indexXmlDir, create);
-	}
-
 	/**
 	 * Factory method to create a directory content store.
 	 *
@@ -1405,58 +1402,13 @@ public abstract class Searcher {
 	}
 
 	/**
-	 * Get the analyzer to use for indexing.
-	 * (strips things like wildcards, etc.)
-	 * @return the analyzer
-	 * @deprecated use getAnalyzer() (we can use the same analyzer for indexing and searching after all because wildcard queries are never analyzed)
-	 */
-	@Deprecated
-	public Analyzer getIndexAnalyzer() {
-		return getAnalyzer();
-	}
-
-	/**
-	 * Get the analyzer to use for parsing document filters while searching.
-	 * (leaves wildcards alone)
-	 * @return the analyzer
-	 * @deprecated use getAnalyzer() (we can use the same analyzer for indexing and searching after all because wildcard queries are never analyzed)
-	 */
-	@Deprecated
-	public Analyzer getSearchAnalyzer() {
-		return getAnalyzer();
-	}
-
-	/**
 	 * Perform a document query only (no hits)
 	 * @param documentFilterQuery the document-level query
 	 * @return the matching documents
 	 */
-	@SuppressWarnings("deprecation") // DocResults constructor will be made package-private eventually
 	public DocResults queryDocuments(Query documentFilterQuery) {
-		return new DocResults(this, documentFilterQuery);
+		return DocResults._fromQuery(this, documentFilterQuery);
 	}
-
-	/**
-	 * Determine the term frequencies in a set of documents (defined by the filter query)
-	 *
-	 * @param documentFilterQuery what set of documents to get the term frequencies for
-	 * @param fieldName complex field name, i.e. contents
-	 * @param propName property name, i.e. word, lemma, pos, etc.
-	 * @param altName alternative name, i.e. s, i (case-sensitivity)
-	 * @return the term frequency map
-	 * @deprecated Use Searcher.getIndexSearcher() and LuceneUtil.termFrequencies instead
-	 */
-	@Deprecated
-	public abstract Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName);
-
-	/**
-	 * Perform a document query and collect the results through a Collector.
-	 * @param query query to execute
-	 * @param collector object that receives each document hit
-	 * @deprecated use getIndexSearcher() and find them yourself.
-	 */
-	@Deprecated
-	public abstract void collectDocuments(Query query, Collector collector);
 
 	/**
 	 * Return the list of terms that occur in a field.

@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search;
 
 import java.util.AbstractList;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,27 +38,6 @@ public class Kwic {
 	int hitStart;
 
 	int hitEnd;
-
-	/**
-	 * Construct a Kwic object
-	 *
-	 * @param properties
-	 *            What properties are stored in what order for this Kwic (e.g. word, lemma, pos)
-	 * @param left
-	 * @param match
-	 * @param right
-	 * @deprecated use contructor that takes a single list of tokens and two offsets
-	 */
-	@Deprecated
-	public Kwic(List<String> properties, List<String> left, List<String> match, List<String> right) {
-		List<String> tokens = new ArrayList<>();
-		tokens.addAll(left);
-		tokens.addAll(match);
-		tokens.addAll(right);
-		fragment = new DocContentsFromForwardIndex(properties, tokens);
-		hitStart = left.size() / properties.size();
-		hitEnd = hitStart + match.size() / properties.size();
-	}
 
 	/**
 	 * Construct a Kwic object

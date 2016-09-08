@@ -15,15 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.Spans;
-
-import nl.inl.blacklab.search.lucene.BLSpans;
 
 /**
  * Class for a hit. Normally, hits are iterated over in a Lucene Spans object, but in some places,
@@ -34,47 +26,6 @@ import nl.inl.blacklab.search.lucene.BLSpans;
  * when iterating over hundreds of thousands of hits.
  */
 public class Hit implements Comparable<Hit>, Cloneable {
-	/**
-	 * Get the hit object from a Spans object.
-	 *
-	 * This method makes sure Hit objects aren't reinstantiated unnecessarily, as well as making
-	 * sure Hit subclass objects aren't squashed back into regular Hit objects.
-	 *
-	 * Subclasses of Hit should implement their own version of this function to make sure they
-	 * return the proper type.
-	 *
-	 * @param spans
-	 *            the Spans to get the Hit from
-	 * @return the Hit [subclass] object
-	 * @deprecated use BLSpans.getHit()
-	 */
-	@Deprecated
-	public static Hit getHit(BLSpans spans) {
-		return spans.getHit();
-	}
-
-	/**
-	 * Retrieve a list of Hit objects from a Spans.
-	 *
-	 * @param spans
-	 *            where to retrieve the hits
-	 * @return the list of hits
-	 * @deprecated use Hits class
-	 */
-	@Deprecated
-	public static List<Hit> hitList(BLSpans spans) {
-		List<Hit> result = new ArrayList<>();
-		try {
-			while (spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-				while(spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
-					result.add(spans.getHit());
-				}
-			}
-			return result;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
 
 	@Override
 	public boolean equals(Object with) {

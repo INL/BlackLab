@@ -58,15 +58,6 @@ public class HitGroup extends Group {
 		return results.size();
 	}
 
-	/**
-	 * @param result
-	 * @deprecated use constructor that takes a list of Hit objects instead
-	 */
-	@Deprecated
-	public void add(Hit result) {
-		results.add(result);
-	}
-
 	@Override
 	public String toString() {
 		return "GroupOfHits, identity = " + groupIdentity + ", size = " + results.size();

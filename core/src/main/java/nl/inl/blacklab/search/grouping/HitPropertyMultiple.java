@@ -94,12 +94,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 		return criteria.hashCode();
 	}
 
-	@Deprecated
-	public void addCriterium(HitProperty crit) {
-		criteria.add(crit);
-		determineContextNeeded();
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder str = new StringBuilder();

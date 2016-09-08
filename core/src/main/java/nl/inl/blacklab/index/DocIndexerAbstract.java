@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.util.CountingReader;
 
@@ -86,15 +85,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		return indexer.continueIndexing();
 	}
 
-	/**
-	 * Starts capturing of content.
-	 * @deprecated pass the field name you're capturing content for
-	 */
-	@Deprecated
-	public void startCaptureContent() {
-		startCaptureContent(Searcher.DEFAULT_CONTENTS_FIELD_NAME);
-	}
-
 	public void startCaptureContent(String fieldName) {
 		captureContent = true;
 		captureContentFieldName = fieldName;
@@ -150,16 +140,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 	public void processContent(String contentToProcess) {
 		if (captureContent)
 			appendContent(contentToProcess);
-	}
-
-	/**
-	 * Returns the current position in the original XML content in chars.
-	 * @return the current char position.
-	 * @deprecated renamed to getCharacterPositionInContent() for clarity
-	 */
-	@Deprecated
-	public int getContentPosition() {
-		return charsContentAlreadyStored + content.length();
 	}
 
 	/**

@@ -536,18 +536,6 @@ public class IndexStructure {
 		return type;
 	}
 
-	/** See if a field has character offset information stored.
-	 *
-	 * @param luceneFieldName the field name to inspect
-	 * @return true if it has offsets, false if not
-	 * @deprecated throws an exception. Shouldn't be used directly by applications; main property is detected automatically
-	 */
-	@Deprecated
-	public boolean hasOffsets(String luceneFieldName) {
-		throw new UnsupportedOperationException("hasOffsets() shouldn't be called directly by application; main property is detected automatically");
-		//return hasOffsets(reader, luceneFieldName);
-	}
-
 	static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
 		// Iterate over documents in the index until we find a property
 		// for this complex field that has stored character offsets. This is
@@ -617,16 +605,6 @@ public class IndexStructure {
 		if (!metadataFieldInfos.containsKey(fieldName))
 			throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
 		return metadataFieldInfos.get(fieldName);
-	}
-
-	/** Get the type of one metadata field
-	 * @param fieldName name of the field
-	 * @return the type of field
-	 * @deprecated use getMetadataFieldDesc(fieldName).getType() instead
-	 */
-	@Deprecated
-	public FieldType getMetadataType(String fieldName) {
-		return getMetadataFieldDesc(fieldName).getType();
 	}
 
 	/**
@@ -710,15 +688,6 @@ public class IndexStructure {
 	 */
 	public String pidField() {
 		return pidField;
-	}
-
-	/**
-	 * @return the title field
-	 * @deprecated renamed to titleField()
-	 */
-	@Deprecated
-	public String getDocumentTitleField() {
-		return titleField();
 	}
 
 	/**
@@ -927,6 +896,8 @@ public class IndexStructure {
 	}
 
 	/**
+	 * Don't use this.
+	 *
 	 * Change the pid field. Do not use this method.
 	 *
 	 * This exists only to support a deprecated configuration setting in BlackLab Server
@@ -941,6 +912,8 @@ public class IndexStructure {
 	}
 
 	/**
+	 * Don't use this.
+	 *
 	 * Change the content viewable setting. Do not use this method.
 	 *
 	 * This exists only to support a deprecated configuration setting in BlackLab Server

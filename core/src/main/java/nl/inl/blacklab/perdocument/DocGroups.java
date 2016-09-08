@@ -55,11 +55,8 @@ public class DocGroups implements Iterable<DocGroup> {
 	 *            the results to group.
 	 * @param groupBy
 	 *            the criterium to group on.
-	 * @deprecated use DocResults.groupedBy(docProperty). This constructor
-	 *      	   will be made package private eventually.
 	 */
-	@Deprecated
-	public DocGroups(DocResults docResults, DocProperty groupBy) {
+	DocGroups(DocResults docResults, DocProperty groupBy) {
 		this.docResults = docResults;
 		searcher = docResults.getSearcher();
 		this.groupBy = groupBy;
@@ -90,18 +87,6 @@ public class DocGroups implements Iterable<DocGroup> {
 
 	public DocGroup getGroup(HitPropValue groupId) {
 		return groups.get(groupId);
-	}
-
-	/**
-	 * Order the groups based on the specified group property.
-	 *
-	 * @param prop the property to sort on
-	 * @param sortReverse if true, perform reverse sort
-	 * @deprecated renamed to sort()
-	 */
-	@Deprecated
-	public void sortGroups(DocGroupProperty prop, boolean sortReverse) {
-		sort(prop, sortReverse);
 	}
 
 	/**

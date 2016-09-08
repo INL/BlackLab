@@ -25,9 +25,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.nio.charset.Charset;
-import java.text.Collator;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -134,29 +132,6 @@ public class Indexer {
 	}
 
 	/**
-	 * Set the collator to use for sorting (passed to ForwardIndex to keep a sorted list of terms).
-	 * Defaults to English collator.
-	 * @param collator the collator
-	 * @deprecated use Searcher.setDefaultCollator()
-	 */
-	@Deprecated
-	static public void setCollator(Collator collator) {
-		Searcher.setDefaultCollator(collator);
-	}
-
-	/**
-	 * When we encounter a zipfile, do we descend into it like it was a directory?
-	 *
-	 * @param b
-	 *            if true, treats zipfiles like a directory and processes all the files inside
-	 * @deprecated renamed to setProcessArchivesAsDirectories()
-	 */
-	@Deprecated
-	public void setProcessZipFilesAsDirectories(boolean b) {
-		setProcessArchivesAsDirectories(b);
-	}
-
-	/**
 	 * When we encounter a zip or tgz file, do we descend into it like it was a directory?
 	 *
 	 * Note that for accessing large ZIP files, you need Java 7 which supports the
@@ -175,25 +150,6 @@ public class Indexer {
 	 */
 	public void setRecurseSubdirs(boolean recurseSubdirs) {
 		this.defaultRecurseSubdirs = recurseSubdirs;
-	}
-
-	/**
-	 * Construct Indexer
-	 *
-	 * @param directory
-	 *            the main BlackLab index directory
-	 * @param create
-	 *            if true, creates a new index; otherwise, appends to existing index
-	 * @param docIndexerClass how to index the files
-	 * @param contentsFieldName name of the main contents field
-	 * @throws IOException
-	 * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
-	 * @deprecated use version without contents field name
-	 */
-	@Deprecated
-	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass,
-			String contentsFieldName) throws IOException, DocumentFormatException {
-		this(directory, create, docIndexerClass);
 	}
 
 	/**
@@ -327,17 +283,6 @@ public class Indexer {
 	}
 
 	/**
-	 * Set number of documents after which we should stop.
-	 * Useful when testing.
-	 * @param n number of documents after which to stop
-	 * @deprecated renamed to setMaxNumberOfDocsToIndex
-	 */
-	@Deprecated
-	public void setMaxDocs(int n) {
-		setMaxNumberOfDocsToIndex(n);
-	}
-
-	/**
 	 * Call this to roll back any changes made to the index this session.
 	 * Calling close() will automatically commit any changes. If you call this
 	 * method, then call close(), no changes will be committed.
@@ -422,37 +367,6 @@ public class Indexer {
 	}
 
 	/**
-	 * Add a list of tokens to a forward index.
-	 *
-	 * @param fieldName what forward index to add this to
-	 * @param tokens the tokens to add
-	 * @return the id assigned to the content
-	 * @deprecated use the version that takes a ComplexFieldProperty insteads
-	 */
-	@Deprecated
-	public int addToForwardIndex(String fieldName, List<String> tokens) {
-		return addToForwardIndex(fieldName, tokens, null);
-	}
-
-	/**
-	 * Add a list of tokens to a forward index
-	 *
-	 * @param fieldName what forward index to add this to
-	 * @param tokens the tokens to add
-	 * @param posIncr position increment associated with each token, or null if always 1
-	 * @return the id assigned to the content
-	 * @deprecated use the version that takes a ComplexFieldProperty instead
-	 */
-	@Deprecated
-	public int addToForwardIndex(String fieldName, List<String> tokens, List<Integer> posIncr) {
-		ForwardIndex forwardIndex = searcher.getForwardIndex(fieldName);
-		if (forwardIndex == null)
-			throw new IllegalArgumentException("No forward index for field " + fieldName);
-
-		return forwardIndex.addDocument(tokens, posIncr);
-	}
-
-	/**
 	 * Add a list of tokens to a forward index
 	 *
 	 * @param fieldName what forward index to add this to
@@ -460,7 +374,11 @@ public class Indexer {
 	 * @return the id assigned to the content
 	 */
 	public int addToForwardIndex(String fieldName, ComplexFieldProperty prop) {
-		return addToForwardIndex(fieldName, prop.getValues(), prop.getPositionIncrements());
+		ForwardIndex forwardIndex = searcher.getForwardIndex(fieldName);
+		if (forwardIndex == null)
+			throw new IllegalArgumentException("No forward index for field " + fieldName);
+
+		return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
 	}
 
 	/**
@@ -551,28 +469,6 @@ public class Indexer {
 	}
 
 	/**
-	 * Index the file or directory specified.
-	 *
-	 * By default, indexes only .xml files in a directory.
-	 *
-	 * @param fileToIndex
-	 *            the input file or directory
-	 * @param recurseSubdirs
-	 *            recursively index subdirectories? (overrides the setting)
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws Exception
-	 * @deprecated recurseSubdirs is now a setting instead of a parameter (defaults to true)
-	 */
-	@Deprecated
-	public void index(File fileToIndex, boolean recurseSubdirs)
-			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-		 // default glob
-		index(fileToIndex, "*.xml", recurseSubdirs);
-	}
-
-	/**
 	 * Index a group of files in a directory or archive.
 	 *
 	 * Recurses into subdirs only if that setting is enabled.
@@ -588,25 +484,6 @@ public class Indexer {
 	public void index(File fileToIndex, String glob)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
 		indexInternal(fileToIndex, glob, defaultRecurseSubdirs);
-	}
-
-	/**
-	 * Index a group of files in a directory or archive.
-	 *
-	 * @param fileToIndex
-	 *            directory or archive to index
-	 * @param glob what files to index
-	 * @param recurseSubdirs whether or not to index subdirectories (overrides the setting)
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws Exception
-	 * @throws IOException
-	 * @deprecated recurseSubdirs is now a setting instead of a parameter (defaults to true)
-	 */
-	@Deprecated
-	public void index(File fileToIndex, String glob, boolean recurseSubdirs)
-			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-		indexInternal(fileToIndex, glob, recurseSubdirs);
 	}
 
 	/**

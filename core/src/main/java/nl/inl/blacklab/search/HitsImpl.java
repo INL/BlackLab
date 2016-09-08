@@ -1061,9 +1061,7 @@ public class HitsImpl extends Hits {
 	 * You shouldn't have to call this manually, as it's automatically called when
 	 * you call getKwic() for the first time.
 	 *
-	 * @deprecated define an appropriate HitsWindow and call getKwic(); findKwics() will be called automatically.
 	 */
-	@Deprecated
 	synchronized void findKwics() {
 		try {
 			ensureAllHitsRead();
@@ -1236,17 +1234,6 @@ public class HitsImpl extends Hits {
 		for (int i = 0; i < hitsInSameDoc.size(); i++) {
 			contexts[firstHitIndex + i] = hitsObj.getHitContext(i);
 		}
-	}
-
-	/**
-	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
-	 * @deprecated client should not need this, should only be used internally
-	 */
-	@Override
-	@Deprecated
-	public synchronized void clearConcordances() {
-		concordances = null;
-		kwics = null;
 	}
 
 	/**

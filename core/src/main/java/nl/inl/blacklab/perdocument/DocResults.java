@@ -29,7 +29,6 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
-import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
@@ -79,22 +78,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		return searcher;
 	}
 
-	/**
-	 * @param r
-	 * @deprecated use constructor that takes a list of results instead
-	 */
-	@Deprecated
-	public void add(DocResult r) {
-		try {
-			ensureAllResultsRead();
-		} catch (InterruptedException e) {
-			// Thread was interrupted; don't complete the operation but return
-			// and let the caller detect and deal with the interruption.
-			return;
-		}
-		results.add(r);
-	}
-
 	boolean sourceHitsFullyRead() {
 		if (sourceHits == null)
 			return true;
@@ -107,10 +90,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	 * Construct per-document results objects from a Hits object
 	 * @param searcher search object
 	 * @param hits the hits to view per-document
-	 * @deprecated use Hits.perDocResults()
 	 */
-	@Deprecated
-	public DocResults(Searcher searcher, Hits hits) {
+	DocResults(Searcher searcher, Hits hits) {
 		this.searcher = searcher;
 		try {
 			sourceHits = hits;
@@ -121,16 +102,14 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	}
 
 	/**
+	 * Don't use this; use Hits.perDocResults().
 	 *
-	 * @param searcher
-	 * @param field
-	 * @param query
-	 * @deprecated use Hits.perDocResults()
+	 * @param searcher searcher object
+	 * @param hits hits to get per-doc result for
+	 * @return the per-document results.
 	 */
-	@Deprecated
-	public DocResults(Searcher searcher, String field, SpanQuery query) {
-		this(searcher, Hits.fromSpanQuery(searcher, query));
-		sourceHits.settings().setConcordanceField(field);
+	static public DocResults _fromHits(Searcher searcher, Hits hits) {
+		return new DocResults(searcher, hits);
 	}
 
 	/**
@@ -179,13 +158,22 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	}
 
 	/**
+	 * Don't use this, use Searcher.queryDocuments().
+	 *
+	 * @param searcher searcher object
+	 * @param query query to execute
+	 * @return per-document results
+	 */
+	public static DocResults _fromQuery(Searcher searcher, Query query) {
+		return new DocResults(searcher, query);
+	}
+
+	/**
 	 * Find documents whose metadata matches the specified query
 	 * @param searcher searcher object
 	 * @param query metadata query, or null to match all documents
-	 * @deprecated use Searcher.queryDocuments(); this constructor will be made package-private eventually
 	 */
-	@Deprecated
-	public DocResults(Searcher searcher, Query query) {
+	DocResults(Searcher searcher, Query query) {
 
 		this.searcher = searcher;
 
@@ -239,23 +227,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 
 	DocResults(Searcher searcher) {
 		this.searcher = searcher;
-	}
-
-	/**
-	 * Get the list of results
-	 * @return the list of results
-	 * @deprecated Breaks optimizations. Use iterator or subList() instead.
-	 */
-	@Deprecated
-	public List<DocResult> getResults() {
-		try {
-			ensureAllResultsRead();
-		} catch (InterruptedException e) {
-			// Thread was interrupted; don't complete the operation but return
-			// the results we have.
-			// Let caller detect and deal with interruption.
-		}
-		return results;
 	}
 
 	/**
@@ -426,16 +397,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	}
 
 	/**
-	 * Were all hits retrieved, or did we stop because there were too many?
-	 * @return true if all hits were retrieved
-	 * @deprecated renamed to maxHitsRetrieved()
-	 */
-	@Deprecated
-	public boolean tooManyHits() {
-		return maxHitsRetrieved();
-	}
-
-	/**
 	 * Did we stop retrieving hits because we reached the maximum?
 	 * @return true if we reached the maximum and stopped retrieving hits
 	 */
@@ -518,7 +479,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	 * @param docProp the document property to group on (i.e. number of hits in doc, value of metadata field, etc.)
 	 * @return the grouped results
 	 */
-	@SuppressWarnings("deprecation") // DocGroups constructor will be made package private eventually
 	public DocGroups groupedBy(DocProperty docProp) {
 		return new DocGroups(this, docProp);
 	}
@@ -529,7 +489,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	 * @param number maximum number of document results to include
 	 * @return the window
 	 */
-	@SuppressWarnings("deprecation") // DocResultsWindow constructor will be made package private eventually
 	public DocResultsWindow window(int first, int number) {
 		return new DocResultsWindow(this, first, number);
 	}

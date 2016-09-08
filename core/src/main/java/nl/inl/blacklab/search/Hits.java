@@ -268,16 +268,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	}
 
 	/**
-	 * Were all hits retrieved, or did we stop because there were too many?
-	 * @return true if all hits were retrieved
-	 * @deprecated renamed to maxHitsRetrieved()
-	 */
-	@Deprecated
-	public boolean tooManyHits() {
-		return maxHitsRetrieved();
-	}
-
-	/**
 	 * Did we stop retrieving hits because we reached the maximum?
 	 * @return true if we reached the maximum and stopped retrieving hits
 	 */
@@ -483,9 +473,8 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 *            the hit property to group on
 	 * @return a HitGroups object representing the grouped hits
 	 */
-	@SuppressWarnings("deprecation") // ResultsGrouper constructor will be made package-private eventually
 	public HitGroups groupedBy(final HitProperty criteria) {
-		return new ResultsGrouper(this, criteria);
+		return ResultsGrouper._fromHits(this, criteria);
 	}
 
 	/**
@@ -493,9 +482,8 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 *
 	 * @return the per-document view.
 	 */
-	@SuppressWarnings("deprecation") // DocResults constructor will be made package-private eventually
 	public DocResults perDocResults() {
-		return new DocResults(getSearcher(), this);
+		return DocResults._fromHits(getSearcher(), this);
 	}
 
 	/**
@@ -784,13 +772,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	public abstract void findContext(List<String> fieldProps);
 
 	/**
-	 * Clear any cached concordances so new ones will be created on next call to getConcordance().
-	 * @deprecated client should not need this, should be triggered by settings changes
-	 */
-	@Deprecated
-	public abstract void clearConcordances();
-
-	/**
 	 * Count occurrences of context words around hit.
 	 *
 	 * Uses the default contents field for collocations, and the default
@@ -866,24 +847,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	public abstract List<String> getContextFieldPropName();
 
 	/**
-	 * Retrieve a sublist of hits.
-	 *
-	 * If toIndex is beyond the last hit, will return a list up to and
-	 * including the last hit.
-	 *
-	 * @param fromIndex first hit to include in the resulting list
-	 * @param toIndex first hit not to include in the resulting list
-	 * @return the sublist
-	 * @deprecated use window()
-	 */
-	@Override
-	@Deprecated
-	public List<Hit> subList(int fromIndex, int toIndex) {
-		return getHits().subList(fromIndex, toIndex);
-	}
-
-
-	/**
 	 * Get a window into this list of hits.
 	 *
 	 * Use this if you're displaying part of the resultset, like
@@ -898,7 +861,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 * @param windowSize size of the window
 	 * @return the window
 	 */
-	@SuppressWarnings("deprecation") // we'll make it package-private instead of removing the method
 	public HitsWindow window(int first, int windowSize) {
 		return new HitsWindow(this, first, windowSize);
 	}

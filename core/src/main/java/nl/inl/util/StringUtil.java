@@ -542,21 +542,6 @@ public class StringUtil {
 	}
 
 	/**
-	 * Wrap text at the specified number of characters
-	 *
-	 * @param message
-	 *            the text to wrap
-	 * @param wrapAt
-	 *            the maximum number of characters per line
-	 * @return the wrapped text
-	 * @deprecated use wrap()
-	 */
-	@Deprecated
-	public static String wrapText(String message, int wrapAt) {
-		return join(wrap(message, wrapAt), "\n");
-	}
-
-	/**
 	 * Wrap text at the specified number of characters,
 	 * adding newlines at the right places.
 	 *
@@ -708,20 +693,6 @@ public class StringUtil {
 	}
 
 	/**
-	 * Convert the first character in a string to uppercase.
-	 * @param str the string to be capitalized
-	 * @return the capitalized string
-	 * @deprecated use StringUtils.capitalize() from commons-lang
-	 */
-	@Deprecated
-	public static String capitalizeFirst(String str) {
-		return StringUtils.capitalize(str);
-//		if (str.length() == 0)
-//			return str;
-//		return str.substring(0, 1).toUpperCase() + str.substring(1);
-	}
-
-	/**
 	 * Returns a new collator that takes spaces into account (unlike the default Java collators,
 	 * which ignore spaces), so we can sort "per word".
 	 *
@@ -837,7 +808,10 @@ public class StringUtil {
 		String spaceified = lcaseUcase.matcher(camelCaseString).replaceAll("$1 $2");
 		if (dashesToSpaces)
 			spaceified = spaceified.replace('-', ' ');
-		return capitalizeFirst(spaceified.toLowerCase());
+		return StringUtils.capitalize(spaceified.toLowerCase());
+		//		if (str.length() == 0)
+		//			return str;
+		//		return str.substring(0, 1).toUpperCase() + str.substring(1);
 	}
 
 	/**

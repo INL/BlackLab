@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 
@@ -41,66 +40,6 @@ public class DocResult {
 	}
 
 	/**
-	 * Construct a DocResult
-	 * @param searcher searcher object
-	 * @param concField concordance field
-	 * @param docId Lucene document id
-	 * @param document Lucene document
-	 * @deprecated use version that doesn't take a Document (will be loaded lazily)
-	 */
-	@Deprecated
-	public DocResult(Searcher searcher, String concField, int docId, Document document) {
-		this(searcher, concField, docId, document, 0.0f);
-	}
-
-	/**
-	 * Construct a DocResult
-	 * @param searcher searcher object
-	 * @param concField concordance field
-	 * @param docId Lucene document id
-	 * @param document Lucene document
-	 * @param score document score
-	 * @deprecated use version that doesn't take a Document (will be loaded lazily)
-	 */
-	@Deprecated
-	public DocResult(Searcher searcher, String concField, int docId, Document document, float score) {
-		this(searcher, concField, docId, score);
-	}
-
-	/**
-	 * Construct a DocResult.
-	 *
-	 * @param searcher the index we searched
-	 * @param concField concordance field (e.g. "contents")
-	 * @param doc the Lucene document id
-	 * @param document the Lucene document (NOTE: this is ignored, just pass null)
-	 * @param docHits hits in the document
-	 * @deprecated use the version that takes a Hits object
-	 */
-	@Deprecated
-	public DocResult(Searcher searcher, String concField, int doc, Document document, List<Hit> docHits) {
-		this.docId = doc;
-		this.score = 0.0f;
-		hits = Hits.fromList(searcher, docHits);
-		hits.settings().setConcordanceField(concField);
-	}
-
-	/**
-	 * Construct a DocResult.
-	 *
-	 * @param searcher the index we searched
-	 * @param concField concordance field (e.g. "contents")
-	 * @param doc the Lucene document id
-	 * @param document the Lucene document (NOTE: this is ignored, just pass null)
-	 * @param docHits hits in the document
-	 * @deprecated use version that doesn't take a Document (will be loaded lazily)
-	 */
-	@Deprecated
-	public DocResult(Searcher searcher, String concField, int doc, Document document, Hits docHits) {
-		this(searcher, concField, doc, docHits);
-	}
-
-	/**
 	 * Construct a DocResult.
 	 *
 	 * @param searcher the index we searched
@@ -114,30 +53,8 @@ public class DocResult {
 		hits = docHits;
 	}
 
-	/**
-	 * Add a hit to the list of hits.
-	 *
-	 * @param hit
-	 * @deprecated use constructor that takes a Hits object instead
-	 */
-	@Deprecated
-	void addHit(Hit hit) {
-		hits.add(hit);
-	}
-
 	public Document getDocument() {
 		return hits.getSearcher().document(docId);
-	}
-
-	/**
-	 * Get all the hits in the document
-	 * @return all hits in the document
-	 * @deprecated inefficient when making concordances. Use getNumberOfHits() or
-	 *   getHits(int max) to retrieve some or all of the hits as needed
-	 */
-	@Deprecated
-	public Hits getHits() {
-		return hits;
 	}
 
 	/**

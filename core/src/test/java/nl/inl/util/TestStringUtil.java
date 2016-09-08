@@ -18,6 +18,7 @@ package nl.inl.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -54,12 +55,11 @@ public class TestStringUtil {
 				StringUtil.escapeDoubleQuotedString("Newline \n Return \r Windows line end \r\n"));
 	}
 
-	@SuppressWarnings("deprecation")
 	@Test
 	public void testCapitalize() {
-		Assert.assertEquals("Aap", StringUtil.capitalizeFirst("aap"));
-		Assert.assertEquals("AAP", StringUtil.capitalizeFirst("AAP"));
-		Assert.assertEquals("'aap'", StringUtil.capitalizeFirst("'aap'"));
+		Assert.assertEquals("Aap", StringUtils.capitalize("aap"));
+		Assert.assertEquals("AAP", StringUtils.capitalize("AAP"));
+		Assert.assertEquals("'aap'", StringUtils.capitalize("'aap'"));
 	}
 
 }

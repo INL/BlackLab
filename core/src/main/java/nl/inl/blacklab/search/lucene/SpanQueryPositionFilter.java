@@ -83,19 +83,6 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 		this.rightAdjust = rightAdjust;
 	}
 
-	/**
-	 * Produce hits containing filter hits.
-	 *
-	 * @param producer hits we may be interested in
-	 * @param filter how we determine what producer hits we're interested in
-	 * @param invert produce hits that don't match filter instead?
-	 * @deprecated specify operation explicitly
-	 */
-	@Deprecated
-	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, boolean invert) {
-		this(producer, filter, TextPatternPositionFilter.Operation.CONTAINING, invert, 0, 0);
-	}
-
 	@Override
 	public Query rewrite(IndexReader reader) throws IOException {
 		SpanQuery[] rewritten = rewriteClauses(reader);

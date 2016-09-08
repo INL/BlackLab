@@ -166,12 +166,6 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	@Deprecated
-	public void clearConcordances() {
-		// NOP
-	}
-
-	@Override
 	public TermFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
 		throw new UnsupportedOperationException();
 	}

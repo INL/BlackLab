@@ -39,15 +39,6 @@ public class DocGroup {
 		results = new DocResults(searcher, resultList);
 	}
 
-	/**
-	 * @param e
-	 * @deprecated use constructor that takes a list of results
-	 */
-	@Deprecated
-	public void add(DocResult e) {
-		results.add(e);
-	}
-
 	public HitPropValue getIdentity() {
 		return groupIdentity;
 	}

@@ -33,24 +33,6 @@ public class Concordance {
 	int matchEnd;
 
 	/**
-	 * @deprecated use method left()
-	 */
-	@Deprecated
-	public String left;
-
-	/**
-	 * @deprecated use method match()
-	 */
-	@Deprecated
-	public String hit;
-
-	/**
-	 * @deprecated use method right()
-	 */
-	@Deprecated
-	public String right;
-
-	/**
 	 * Construct a concordance.
 	 *
 	 * @param conc array containing left part, match part and right part of the concordance
@@ -59,9 +41,6 @@ public class Concordance {
 		fragment = conc[0] + conc[1] + conc[2];
 		matchStart = conc[0].length();
 		matchEnd = matchStart + conc[1].length();
-		left = left();
-		hit = match();
-		right = right();
 	}
 
 	/**
@@ -78,9 +57,6 @@ public class Concordance {
 		fragment = contents;
 		this.matchStart = matchStart;
 		this.matchEnd = matchEnd;
-		left = left();
-		hit = match();
-		right = right();
 	}
 
 	@Override
@@ -102,16 +78,6 @@ public class Concordance {
 	 */
 	public String match() {
 		return fragment.substring(matchStart, matchEnd);
-	}
-
-	/**
-	 * Return the matched part of the content.
-	 * @return the matched part of the content.
-	 * @deprecated renamed to match()
-	 */
-	@Deprecated
-	public String hit() {
-		return match();
 	}
 
 	/**

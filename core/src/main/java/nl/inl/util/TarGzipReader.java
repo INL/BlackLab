@@ -28,26 +28,6 @@ public class TarGzipReader {
 	}
 
 	/**
-	 * Checks if we can process .tar.gz files
-	 * @return true iff we can process .tar.gz files
-	 * @deprecated always returns true
-	 */
-	@Deprecated
-	public static boolean canProcessTarGzip() {
-		return true;
-	}
-
-	/**
-	 * Checks if we can process .tar files
-	 * @return true iff we can process .tar.gz files
-	 * @deprecated always returns true
-	 */
-	@Deprecated
-	public static boolean canProcessTar() {
-		return true;
-	}
-
-	/**
 	 * Process a .tar.gz file and call the handler for each normal file in the archive.
 	 * @param tarGzipStream the .tar.gz input stream to decompress
 	 * @param fileHandler the handler to call for each regular file

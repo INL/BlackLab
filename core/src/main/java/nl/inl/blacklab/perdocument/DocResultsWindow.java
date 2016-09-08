@@ -33,10 +33,8 @@ public class DocResultsWindow extends DocResults {
 	 * @param source
 	 * @param first
 	 * @param numberPerPage
-	 * @deprecated use DocResults.window() instead
 	 */
-	@Deprecated
-	public DocResultsWindow(DocResults source, int first, int numberPerPage) {
+	DocResultsWindow(DocResults source, int first, int numberPerPage) {
 		super(source.getSearcher());
 		this.source = source;
 		this.first = first;

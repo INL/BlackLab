@@ -101,19 +101,6 @@ class SpansPositionFilter extends BLSpans {
 		this.rightAdjust = rightAdjust;
 	}
 
-	/**
-	 * Find hits containing other hits.
-	 *
-	 * @param containers the containers we may be interested in.
-	 * @param filter we only want containers that contain at least on hit from this filter.
-	 * @deprecated specify op explicitly
-	 * @param invert if true, produce hits that don't match the filter instead
-	 */
-	@Deprecated
-	public SpansPositionFilter(Spans containers, Spans filter, boolean invert) {
-		this(containers, filter, TextPatternPositionFilter.Operation.CONTAINING, invert, 0, 0);
-	}
-
 	@Override
 	public int docID() {
 		return producerDoc;

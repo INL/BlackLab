@@ -42,7 +42,6 @@ import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -614,22 +613,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 			indexWriter.deleteDocuments(q);
 
 		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	@Deprecated
-	public Map<String, Integer> termFrequencies(Query documentFilterQuery, String fieldName, String propName, String altName) {
-		return LuceneUtil.termFrequencies(getIndexSearcher(), documentFilterQuery, fieldName, propName, altName);
-	}
-
-	@Override
-	@Deprecated
-	public void collectDocuments(Query query, Collector collector) {
-		try {
-			indexSearcher.search(query, collector);
-		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
