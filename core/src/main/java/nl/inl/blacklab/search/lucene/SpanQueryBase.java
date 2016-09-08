@@ -96,6 +96,13 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 		return true;
 	}
 
+	@Override
+	public int hashCode() {
+		int h = clauses.hashCode();
+		h ^= (h << 10) | (h >>> 23);
+		return h;
+	}
+
 	/**
 	 * Returns the name of the search field. In the case of a complex field, the clauses may
 	 * actually query different properties of the same complex field (e.g. "description" and
@@ -106,13 +113,6 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 	@Override
 	public String getField() {
 		return baseFieldName;
-	}
-
-	@Override
-	public int hashCode() {
-		int h = clauses.hashCode();
-		h ^= (h << 10) | (h >>> 23);
-		return h;
 	}
 
 	public abstract Query rewrite(IndexReader reader) throws IOException;

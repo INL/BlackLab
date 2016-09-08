@@ -141,4 +141,22 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 	public String toString(String field) {
 		return "SpanFuzzyQuery(" + term.text() + ")";
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o instanceof SpanFuzzyQuery) {
+			final SpanFuzzyQuery that = (SpanFuzzyQuery) o;
+			return term.equals(that.term) && maxEdits == that.maxEdits && prefixLength == that.prefixLength;
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int h = term.hashCode();
+		h ^= maxEdits * 13 + prefixLength * 37;
+		return h;
+	}
 }

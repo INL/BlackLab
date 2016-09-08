@@ -83,4 +83,20 @@ public class MockSpanQuery extends BLSpanQuery {
 		return "dummy";
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o instanceof MockSpanQuery) {
+			final MockSpanQuery that = (MockSpanQuery) o;
+			return doc.equals(that.doc) && start.equals(that.start) && end.equals(that.end) && isSimple == that.isSimple;
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return doc.hashCode() ^ start.hashCode() ^ end.hashCode() ^ (isSimple ? 0x23357649 : 0);
+	}
+
 }

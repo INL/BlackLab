@@ -81,4 +81,20 @@ public class SpanQueryUnique extends BLSpanQuery {
 	public String getField() {
 		return src.getField();
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o instanceof SpanQueryUnique) {
+			final SpanQueryUnique that = (SpanQueryUnique) o;
+			return src.equals(that.src);
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return src.hashCode() ^ 0x98764038;
+	}
 }

@@ -23,5 +23,14 @@ import org.apache.lucene.search.spans.SpanQuery;
  * contains extra methods for optimization).
  */
 public abstract class BLSpanQuery extends SpanQuery {
-	//
+
+	@Override
+	public abstract String toString(String field);
+
+	@Override
+	public abstract int hashCode();
+
+	@Override
+	public abstract boolean equals(Object obj);
+
 }
