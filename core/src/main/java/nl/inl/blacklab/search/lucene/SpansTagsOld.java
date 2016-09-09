@@ -23,10 +23,6 @@ import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
-import nl.inl.blacklab.search.sequences.SpansInBuckets;
-import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
-import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
 
 /**
  * Gets spans for a certain XML element.

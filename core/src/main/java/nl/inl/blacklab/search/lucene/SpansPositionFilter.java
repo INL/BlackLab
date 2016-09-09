@@ -22,9 +22,6 @@ import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
-import nl.inl.blacklab.search.sequences.SpanComparatorStartPoint;
-import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocument;
-import nl.inl.blacklab.search.sequences.SpansInBucketsPerDocumentSorted;
 
 /**
  * Finds hits from a set that contain one or more hits from the second set,

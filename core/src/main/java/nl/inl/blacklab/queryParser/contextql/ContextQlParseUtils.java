@@ -12,8 +12,8 @@ import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternProperty;
+import nl.inl.blacklab.search.TextPatternSequence;
 import nl.inl.blacklab.search.TextPatternWildcard;
-import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 public class ContextQlParseUtils {
 

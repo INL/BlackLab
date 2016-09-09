@@ -27,7 +27,7 @@ import org.apache.lucene.search.spans.Spans;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.sequences.SpansInBuckets;
+import nl.inl.blacklab.search.lucene.SpansInBuckets;
 
 /**
  * Stub SpansInBuckets class for testing. Takes arrays and iterates through 'hits'

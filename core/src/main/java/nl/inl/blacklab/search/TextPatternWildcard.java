@@ -15,8 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
-
 /**
  * A textpattern matching a simple wildcard expression.
  *

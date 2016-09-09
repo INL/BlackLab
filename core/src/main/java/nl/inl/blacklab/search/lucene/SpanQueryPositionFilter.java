@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.search.TextPatternPositionFilter;
-
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -28,6 +26,8 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.TextPatternPositionFilter;
 
 /**
  * Filters hits from a producer query based on the hit positions of a filter query.

@@ -21,7 +21,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 
-import nl.inl.blacklab.search.sequences.SpansInBuckets;
+import nl.inl.blacklab.search.lucene.SpansInBuckets;
 import nl.inl.util.StringUtil;
 
 public class TestUtil {

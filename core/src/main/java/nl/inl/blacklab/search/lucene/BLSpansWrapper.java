@@ -25,7 +25,6 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.TermSpans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.sequences.PerDocumentSortedSpans;
 
 
 /**

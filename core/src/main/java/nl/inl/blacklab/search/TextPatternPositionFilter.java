@@ -15,10 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
-import nl.inl.blacklab.search.sequences.TextPatternFilterNGrams;
-import nl.inl.blacklab.search.sequences.TextPatternSequence;
-
 /**
  * A TextPattern searching for TextPatterns that contain a hit from another TextPattern. This may be
  * used to search for sentences containing a certain word, etc.

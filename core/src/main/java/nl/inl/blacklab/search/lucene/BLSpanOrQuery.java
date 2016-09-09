@@ -114,8 +114,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	@Override
 	public boolean matchesEmptySequence() {
-		for (SpanQuery cl: inner.getClauses()) {
-			if (((BLSpanQuery)cl).matchesEmptySequence())
+		for (BLSpanQuery cl: getClauses()) {
+			if (cl.matchesEmptySequence())
 				return true;
 		}
 		return false;

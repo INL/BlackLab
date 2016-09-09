@@ -14,6 +14,12 @@
   a variant that takes Query.
 * Removed several (long-)deprecated methods.
 * SpanQueryFiltered.rewrite() rewrites its filter as well.
+* BLSpanQuery is now the base class of all our SpanQuery classes, and is
+  used throughout the code. Only the API hasn't been updated yet, but
+  will throw IllegalArgumentException if a SpanQuery argument is not a 
+  BLSpanQuery.
+* Moved all TextPattern classes to nl.inl.blacklab.search package.
+  Moved all SpanQuery/Spans classes to nl.inl.blacklab.search.lucene.
 
 ### BlackLab Server
 * Added hitfiltercrit and hitfilterval parameters to filter hits on a criterium,

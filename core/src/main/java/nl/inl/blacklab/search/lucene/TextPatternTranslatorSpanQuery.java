@@ -30,10 +30,6 @@ import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternTranslator;
-import nl.inl.blacklab.search.sequences.SpanQueryExpansion;
-import nl.inl.blacklab.search.sequences.SpanQueryFilterNGrams;
-import nl.inl.blacklab.search.sequences.SpanQueryRepetition;
-import nl.inl.blacklab.search.sequences.SpanQuerySequence;
 
 /**
  * Translates a TextPattern to a Lucene BLSpanQuery object.

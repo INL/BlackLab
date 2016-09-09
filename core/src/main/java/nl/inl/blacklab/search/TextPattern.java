@@ -18,10 +18,6 @@ package nl.inl.blacklab.search;
 import java.util.List;
 
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
-import nl.inl.blacklab.search.sequences.TextPatternAnyToken;
-import nl.inl.blacklab.search.sequences.TextPatternExpansion;
-import nl.inl.blacklab.search.sequences.TextPatternRepetition;
-import nl.inl.blacklab.search.sequences.TextPatternSequence;
 
 /**
  * Describes some pattern of words in a content field. The point of this interface is to provide an
@@ -204,7 +200,7 @@ public abstract class TextPattern implements Cloneable {
 	 * @param b first max. repetitions value
 	 * @return sum of the max. repetitions values
 	 */
-	protected int addRepetitionMaxValues(int a, int b) {
+	protected static int addRepetitionMaxValues(int a, int b) {
 		// Is either value infinite?
 		if (a == -1 || b == -1)
 			return -1; // Yes, result is infinite
