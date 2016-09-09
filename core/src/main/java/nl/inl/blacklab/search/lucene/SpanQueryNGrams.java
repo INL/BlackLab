@@ -29,7 +29,7 @@ import org.apache.lucene.search.spans.Spans;
 /**
  * Returns all n-grams of certain lengths.
  */
-public class SpanQueryNGrams extends SpanQueryBase {
+public class SpanQueryNGrams extends BLSpanQueryAbstract {
 
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;

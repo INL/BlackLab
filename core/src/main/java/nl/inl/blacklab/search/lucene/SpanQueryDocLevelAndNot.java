@@ -32,7 +32,7 @@ import org.apache.lucene.search.spans.Spans;
  * Produces all spans from the "include" part, except for those
  * in documents that occur in the "exclude" part.
  */
-public class SpanQueryDocLevelAndNot extends SpanQueryBase {
+public class SpanQueryDocLevelAndNot extends BLSpanQueryAbstract {
 
 	public SpanQueryDocLevelAndNot(BLSpanQuery include, BLSpanQuery exclude) {
 		super(include, exclude);

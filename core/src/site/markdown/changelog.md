@@ -20,6 +20,8 @@
   BLSpanQuery.
 * Moved all TextPattern classes to nl.inl.blacklab.search package.
   Moved all SpanQuery/Spans classes to nl.inl.blacklab.search.lucene.
+  Made some internal TextPattern methods package-private.
+* Renamed SpanQueryBase to BLSpanQueryAbstract.
 
 ### BlackLab Server
 * Added hitfiltercrit and hitfilterval parameters to filter hits on a criterium,

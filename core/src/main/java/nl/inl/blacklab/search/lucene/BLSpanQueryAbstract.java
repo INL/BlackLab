@@ -28,7 +28,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  * abstract methods in SpanQuery.
  */
 
-public abstract class SpanQueryBase extends BLSpanQuery {
+public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 	/**
 	 * The field name for this query. The "base" part is only applicable when dealing with complex
 	 * fields: the base field name of "contents" and "contents%pos" would both be "contents".
@@ -37,24 +37,24 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 
 	protected BLSpanQuery[] clauses;
 
-	public SpanQueryBase() {
+	public BLSpanQueryAbstract() {
 		//
 	}
 
-	public SpanQueryBase(BLSpanQuery first, BLSpanQuery second) {
+	public BLSpanQueryAbstract(BLSpanQuery first, BLSpanQuery second) {
 		clauses = new BLSpanQuery[2];
 		clauses[0] = first;
 		clauses[1] = second;
 		determineBaseFieldName();
 	}
 
-	public SpanQueryBase(BLSpanQuery clause) {
+	public BLSpanQueryAbstract(BLSpanQuery clause) {
 		clauses = new BLSpanQuery[1];
 		clauses[0] = clause;
 		determineBaseFieldName();
 	}
 
-	public SpanQueryBase(Collection<BLSpanQuery> clauscol) {
+	public BLSpanQueryAbstract(Collection<BLSpanQuery> clauscol) {
 		clauses = new BLSpanQuery[clauscol.size()];
 		int k = 0;
 		for (BLSpanQuery s : clauscol) {
@@ -63,7 +63,7 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 		determineBaseFieldName();
 	}
 
-	public SpanQueryBase(BLSpanQuery[] _clauses) {
+	public BLSpanQueryAbstract(BLSpanQuery[] _clauses) {
 		clauses = _clauses;
 		determineBaseFieldName();
 	}
@@ -87,7 +87,7 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 		if (o == null || this.getClass() != o.getClass())
 			return false;
 
-		final SpanQueryBase that = (SpanQueryBase) o;
+		final BLSpanQueryAbstract that = (BLSpanQueryAbstract) o;
 
 		if (!clauses.equals(that.clauses))
 			return false;

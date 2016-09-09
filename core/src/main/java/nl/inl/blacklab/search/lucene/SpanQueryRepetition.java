@@ -35,7 +35,7 @@ import org.apache.lucene.search.spans.Spans;
  * and 1 hit of length 3. In the future, this should be made configurable (to specifically
  * support greedy/reluctant matching, etc.)
  */
-public class SpanQueryRepetition extends SpanQueryBase {
+public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	private int min;
 
 	private int max;

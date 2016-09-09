@@ -43,7 +43,7 @@ import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
  * Spans generated from this query will be sorted by start point and then by end point, and any
  * duplicates generated will be discarded.
  */
-public class SpanQueryFilterNGrams extends SpanQueryBase {
+public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	/** How to expand the hits */
 	private Operation op;

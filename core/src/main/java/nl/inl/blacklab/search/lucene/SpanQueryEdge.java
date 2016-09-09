@@ -32,7 +32,7 @@ import org.apache.lucene.search.spans.Spans;
  *
  * Note that the results of this query are zero-length spans.
  */
-public class SpanQueryEdge extends SpanQueryBase {
+public class SpanQueryEdge extends BLSpanQueryAbstract {
 
 	/** if true, return the right edges; if false, the left */
 	private boolean rightEdge;

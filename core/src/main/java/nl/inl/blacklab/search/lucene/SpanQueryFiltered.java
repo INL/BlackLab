@@ -35,7 +35,7 @@ import org.apache.lucene.search.spans.Spans;
  * Filters a SpanQuery.
  */
 @SuppressWarnings("deprecation")
-public class SpanQueryFiltered extends SpanQueryBase {
+public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
 	private Query filter;
 

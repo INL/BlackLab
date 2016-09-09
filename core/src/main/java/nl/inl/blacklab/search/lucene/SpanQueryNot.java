@@ -35,7 +35,7 @@ import org.apache.lucene.search.spans.Spans;
  *
  * Each token is returned as a single hit.
  */
-public class SpanQueryNot extends SpanQueryBase {
+public class SpanQueryNot extends BLSpanQueryAbstract {
 
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;

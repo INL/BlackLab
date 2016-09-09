@@ -45,7 +45,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
  * and matches the first open tag with the first close tag, etc.
  *
  */
-public class SpanQueryTagsOld extends SpanQueryBase {
+public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 
 	private String tagName;
 

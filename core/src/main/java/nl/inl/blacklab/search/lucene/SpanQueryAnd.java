@@ -35,7 +35,7 @@ import org.apache.lucene.search.spans.Spans;
  * Combines SpanQueries using AND. Note that this means that only matches with the same document id,
  * the same start and the same end positions in all SpanQueries will be kept.
  */
-public class SpanQueryAnd extends SpanQueryBase {
+public class SpanQueryAnd extends BLSpanQueryAbstract {
 	public SpanQueryAnd(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}

@@ -37,7 +37,7 @@ import nl.inl.blacklab.search.TextPatternPositionFilter;
  * * find hits from the producer that start at the same position as a hit from the filter
  * * find hits from the producer that end at the same position as a hit from the filter
  */
-public class SpanQueryPositionFilter extends SpanQueryBase {
+public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
 	/** Filter operation to apply */
 	private TextPatternPositionFilter.Operation op;

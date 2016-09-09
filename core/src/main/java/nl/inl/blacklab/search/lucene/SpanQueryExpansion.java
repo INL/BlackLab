@@ -41,7 +41,7 @@ import org.apache.lucene.search.spans.Spans;
  * Spans generated from this query will be sorted by start point and then by end point, and any
  * duplicates generated will be discarded.
  */
-public class SpanQueryExpansion extends SpanQueryBase {
+public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	/** Whether to expand to left (true) or right (false) */
 	private boolean expandToLeft;

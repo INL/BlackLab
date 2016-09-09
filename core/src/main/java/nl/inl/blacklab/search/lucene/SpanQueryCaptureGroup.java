@@ -30,7 +30,7 @@ import org.apache.lucene.search.spans.Spans;
 /**
  * Captures its clause as a captured group.
  */
-public class SpanQueryCaptureGroup extends SpanQueryBase {
+public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 
 	private String name;
 

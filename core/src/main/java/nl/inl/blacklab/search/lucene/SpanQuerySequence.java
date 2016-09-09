@@ -43,7 +43,7 @@ import org.apache.lucene.search.spans.Spans;
  *
  * See SpanSequenceRaw for details on the matching process.
  */
-public class SpanQuerySequence extends SpanQueryBase {
+public class SpanQuerySequence extends BLSpanQueryAbstract {
 	public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}

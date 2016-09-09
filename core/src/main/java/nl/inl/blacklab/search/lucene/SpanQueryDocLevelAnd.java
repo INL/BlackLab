@@ -43,7 +43,7 @@ import org.apache.lucene.search.spans.Spans;
 /**
  * A SpanQuery for and AND-construction at the document level.
  */
-public class SpanQueryDocLevelAnd extends SpanQueryBase {
+public class SpanQueryDocLevelAnd extends BLSpanQueryAbstract {
 	public SpanQueryDocLevelAnd(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}
