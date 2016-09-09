@@ -28,7 +28,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
@@ -48,7 +47,7 @@ public class SpanQueryFiltered extends SpanQueryBase {
 	 * @deprecated supply a Query as a filter instead of the deprecated Filter class
 	 */
 	@Deprecated
-	public SpanQueryFiltered(SpanQuery source, Filter filter) {
+	public SpanQueryFiltered(BLSpanQuery source, Filter filter) {
 		super(source);
 		if (!(filter instanceof QueryWrapperFilter)) {
 			throw new UnsupportedOperationException("Filter must be a QueryWrapperFilter!");
@@ -62,14 +61,14 @@ public class SpanQueryFiltered extends SpanQueryBase {
 	 * @param source the query to filter
 	 * @param filter the filter query
 	 */
-	public SpanQueryFiltered(SpanQuery source, Query filter) {
+	public SpanQueryFiltered(BLSpanQuery source, Query filter) {
 		super(source);
 		this.filter = filter;
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		Query rewrittenFilter = filter.rewrite(reader);
 		return rewritten == null ? this : new SpanQueryFiltered(rewritten[0], rewrittenFilter);
 	}

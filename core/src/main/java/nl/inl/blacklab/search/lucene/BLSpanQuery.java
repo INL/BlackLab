@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
+import java.io.IOException;
+
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.SpanQuery;
 
 /**
@@ -32,5 +35,25 @@ public abstract class BLSpanQuery extends SpanQuery {
 
 	@Override
 	public abstract boolean equals(Object obj);
+
+	/**
+	 * Does this query match the empty sequence?
+	 *
+	 * For example, the query [word="cow"]* matches the empty sequence. We need to know this so we
+	 * can rewrite to the appropriate queries. A query of the form "AB*" would be translated into
+	 * "A|AB+", so each component of the query actually generates non-empty matches.
+	 *
+	 * We default to no because most queries don't match the empty sequence.
+	 *
+	 * @return true if this pattern matches the empty sequence, false otherwise
+	 */
+	public boolean matchesEmptySequence() {
+		return false;
+	}
+
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		return this;
+	}
 
 }

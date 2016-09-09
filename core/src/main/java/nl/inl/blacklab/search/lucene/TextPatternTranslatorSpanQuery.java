@@ -23,7 +23,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.QueryExecutionContext;
@@ -37,27 +36,27 @@ import nl.inl.blacklab.search.sequences.SpanQueryRepetition;
 import nl.inl.blacklab.search.sequences.SpanQuerySequence;
 
 /**
- * Translates a TextPattern to a Lucene SpanQuery object.
+ * Translates a TextPattern to a Lucene BLSpanQuery object.
  */
-public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQuery> {
+public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<BLSpanQuery> {
 
 	@Override
-	public SpanQuery and(QueryExecutionContext context, List<SpanQuery> clauses) {
+	public BLSpanQuery and(QueryExecutionContext context, List<BLSpanQuery> clauses) {
 		return new SpanQueryAnd(clauses);
 	}
 
 	@Override
-	public SpanQuery andNot(QueryExecutionContext context, SpanQuery include, SpanQuery exclude) {
+	public BLSpanQuery andNot(QueryExecutionContext context, BLSpanQuery include, BLSpanQuery exclude) {
 		return new SpanQueryPositionFilter(include, exclude, TextPatternPositionFilter.Operation.MATCHES, true);
 	}
 
 	@Override
-	public SpanQuery or(QueryExecutionContext context, List<SpanQuery> clauses) {
-		return new BLSpanOrQuery(clauses.toArray(new SpanQuery[] {}));
+	public BLSpanQuery or(QueryExecutionContext context, List<BLSpanQuery> clauses) {
+		return new BLSpanOrQuery(clauses.toArray(new BLSpanQuery[] {}));
 	}
 
 	@Override
-	public SpanQuery regex(QueryExecutionContext context, String value) {
+	public BLSpanQuery regex(QueryExecutionContext context, String value) {
 		String valueNoStartEndMatch = value.replaceAll("\\^|\\$", "");
 		try {
 			return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
@@ -71,25 +70,25 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	}
 
 	@Override
-	public SpanQuery sequence(QueryExecutionContext context, List<SpanQuery> clauses) {
+	public BLSpanQuery sequence(QueryExecutionContext context, List<BLSpanQuery> clauses) {
 		return new SpanQuerySequence(clauses);
 	}
 
 	@Override
-	public SpanQuery docLevelAnd(QueryExecutionContext context, List<SpanQuery> clauses) {
+	public BLSpanQuery docLevelAnd(QueryExecutionContext context, List<BLSpanQuery> clauses) {
 		return new SpanQueryDocLevelAnd(clauses);
 	}
 
 	@Override
-	public SpanQuery fuzzy(QueryExecutionContext context, String value, int maxEdits, int prefixLength) {
+	public BLSpanQuery fuzzy(QueryExecutionContext context, String value, int maxEdits, int prefixLength) {
 		String valuePrefix = context.subpropPrefix(); // for searching in "subproperties" (e.g. PoS features)
 		prefixLength += valuePrefix.length();
 		return new SpanFuzzyQuery(new Term(context.luceneField(), valuePrefix + context.optDesensitize(value)), maxEdits, prefixLength);
 	}
 
 	@Override
-	public SpanQuery tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
-		SpanQuery allTags;
+	public BLSpanQuery tags(QueryExecutionContext context, String elementName, Map<String, String> attr) {
+		BLSpanQuery allTags;
 		if (context.tagLengthInPayload()) {
 			// Modern index, with tag length in payload
 			allTags = new SpanQueryTags(context, elementName);
@@ -101,7 +100,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 			return allTags;
 
 		// Construct attribute filters
-		List<SpanQuery> attrFilters = new ArrayList<>();
+		List<BLSpanQuery> attrFilters = new ArrayList<>();
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		for (Map.Entry<String,String> e: attr.entrySet()) {
 			String value = optInsensitive(context, "@" + e.getKey() + "__" + e.getValue());
@@ -111,29 +110,29 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 		// Filter the tags
 		// (NOTE: only works for start tags and full elements because attribute values
 		//  are indexed at the start tag!)
-		SpanQuery filter = new SpanQueryAnd(attrFilters);
+		BLSpanQuery filter = new SpanQueryAnd(attrFilters);
 		return new SpanQueryPositionFilter(allTags, filter, TextPatternPositionFilter.Operation.STARTS_AT, false);
 	}
 
 	@Override
-	public SpanQuery positionFilter(QueryExecutionContext context,
-			SpanQuery producer, SpanQuery filter, Operation op, boolean invert,
+	public BLSpanQuery positionFilter(QueryExecutionContext context,
+			BLSpanQuery producer, BLSpanQuery filter, Operation op, boolean invert,
 			int leftAdjust, int rightAdjust) {
 		return new SpanQueryPositionFilter(producer, filter, op, invert, leftAdjust, rightAdjust);
 	}
 
 	@Override
-	public SpanQuery startsAt(QueryExecutionContext context, SpanQuery producer, SpanQuery filter) {
+	public BLSpanQuery startsAt(QueryExecutionContext context, BLSpanQuery producer, BLSpanQuery filter) {
 		return new SpanQueryPositionFilter(producer, filter, TextPatternPositionFilter.Operation.STARTS_AT, false);
 	}
 
 	@Override
-	public SpanQuery endsAt(QueryExecutionContext context, SpanQuery producer, SpanQuery filter) {
+	public BLSpanQuery endsAt(QueryExecutionContext context, BLSpanQuery producer, BLSpanQuery filter) {
 		return new SpanQueryPositionFilter(producer, filter, TextPatternPositionFilter.Operation.ENDS_AT, false);
 	}
 
 	@Override
-	public SpanQuery term(QueryExecutionContext context, String value) {
+	public BLSpanQuery term(QueryExecutionContext context, String value) {
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,
 		// not the complete field name with the property.
@@ -141,59 +140,59 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 	}
 
 	@Override
-	public SpanQuery expand(QueryExecutionContext context, SpanQuery clause, boolean expandToLeft, int min, int max) {
+	public BLSpanQuery expand(QueryExecutionContext context, BLSpanQuery clause, boolean expandToLeft, int min, int max) {
 		SpanQueryExpansion spanQueryExpansion = new SpanQueryExpansion(clause, expandToLeft, min, max);
 		spanQueryExpansion.setIgnoreLastToken(context.alwaysHasClosingToken());
 		return spanQueryExpansion;
 	}
 
 	@Override
-	public SpanQuery filterNGrams(QueryExecutionContext context, SpanQuery clause, Operation op, int min, int max) {
+	public BLSpanQuery filterNGrams(QueryExecutionContext context, BLSpanQuery clause, Operation op, int min, int max) {
 		return new SpanQueryFilterNGrams(clause, op, min, max);
 	}
 
 	@Override
-	public SpanQuery repetition(SpanQuery clause, int min, int max) {
+	public BLSpanQuery repetition(BLSpanQuery clause, int min, int max) {
 		return new SpanQueryRepetition(clause, min, max);
 	}
 
 	@Override
-	public SpanQuery docLevelAndNot(SpanQuery include, SpanQuery exclude) {
+	public BLSpanQuery docLevelAndNot(BLSpanQuery include, BLSpanQuery exclude) {
 		return new SpanQueryDocLevelAndNot(include, exclude);
 	}
 
 	@Override
-	public SpanQuery wildcard(QueryExecutionContext context, String value) {
+	public BLSpanQuery wildcard(QueryExecutionContext context, String value) {
 		return new BLSpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(context.luceneField(),
 				context.subpropPrefix() + context.optDesensitize(value))));
 	}
 
 	@Override
-	public SpanQuery prefix(QueryExecutionContext context, String value) {
+	public BLSpanQuery prefix(QueryExecutionContext context, String value) {
 		return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
 				context.subpropPrefix() + context.optDesensitize(value))));
 	}
 
 	@Override
-	public SpanQuery not(QueryExecutionContext context, SpanQuery clause) {
+	public BLSpanQuery not(QueryExecutionContext context, BLSpanQuery clause) {
 		SpanQueryNot spanQueryNot = new SpanQueryNot(clause);
 		spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
 		return spanQueryNot;
 	}
 
 	@Override
-	public SpanQuery any(QueryExecutionContext context, int min, int max) {
+	public BLSpanQuery any(QueryExecutionContext context, int min, int max) {
 		return new SpanQueryNGrams(context.alwaysHasClosingToken(), context.luceneField(), min, max);
 		//return SpanQueryNot.matchAllTokens(context.alwaysHasClosingToken(), context.luceneField());
 	}
 
 	@Override
-	public SpanQuery edge(SpanQuery clause, boolean rightEdge) {
+	public BLSpanQuery edge(BLSpanQuery clause, boolean rightEdge) {
 		return new SpanQueryEdge(clause, rightEdge);
 	}
 
 	@Override
-	public SpanQuery captureGroup(SpanQuery clause, String name) {
+	public BLSpanQuery captureGroup(BLSpanQuery clause, String name) {
 		return new SpanQueryCaptureGroup(clause, name);
 	}
 

@@ -6,6 +6,8 @@ import java.util.Random;
 
 import org.apache.lucene.search.spans.SpanQuery;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+
 public abstract class HitsSample extends HitsImpl {
 
 	public final static long RANDOM_SEED = Long.MIN_VALUE;
@@ -87,6 +89,8 @@ public abstract class HitsSample extends HitsImpl {
 	public static HitsSample fromSpanQuery(Searcher searcher, SpanQuery query, float ratio, long seed) {
 		// We can later provide an optimized version that uses a HitsSampleSpans or somesuch
 		// (this class could save memory by only storing the hits we're interested in)
+		if (!(query instanceof BLSpanQuery))
+			throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
 		return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query), ratio, seed);
 	}
 
@@ -102,6 +106,8 @@ public abstract class HitsSample extends HitsImpl {
 	public static HitsSample fromSpanQuery(Searcher searcher, SpanQuery query, int number, long seed) {
 		// We can later provide an optimized version that uses a HitsSampleSpans or somesuch
 		// (this class could save memory by only storing the hits we're interested in)
+		if (!(query instanceof BLSpanQuery))
+			throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
 		return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query), number, seed);
 	}
 

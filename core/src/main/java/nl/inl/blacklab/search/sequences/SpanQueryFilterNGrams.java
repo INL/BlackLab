@@ -24,12 +24,11 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
 import nl.inl.blacklab.search.lucene.SpansUnique;
@@ -62,7 +61,7 @@ public class SpanQueryFilterNGrams extends SpanQueryBase {
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;
 
-	public SpanQueryFilterNGrams(SpanQuery clause, Operation op, int min, int max) {
+	public SpanQueryFilterNGrams(BLSpanQuery clause, Operation op, int min, int max) {
 		super(clause);
 		this.op = op;
 		this.min = min;
@@ -83,8 +82,8 @@ public class SpanQueryFilterNGrams extends SpanQueryBase {
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		if (rewritten == null)
 			return this;
 		SpanQueryFilterNGrams result = new SpanQueryFilterNGrams(rewritten[0], op, min, max);

@@ -116,10 +116,10 @@ public class BLSpansWrapper extends BLSpans {
 	 * @param spanQuery the SpanQuery to BL-ify (if it isn't a BLSpanQuery already)
 	 * @return resulting BLSpanQuery, or the input query if it was one already
 	 */
-	public static SpanQuery blSpanQueryFrom(SpanQuery spanQuery) {
+	public static BLSpanQuery blSpanQueryFrom(SpanQuery spanQuery) {
 		if (spanQuery instanceof BLSpanQuery) {
 			// Already BL-derived, no wrapper needed.
-			return spanQuery;
+			return (BLSpanQuery) spanQuery;
 		} else if (spanQuery instanceof SpanOrQuery) {
 			// Translate to a BLSpanOrQuery, recursively translating the clauses.
 			return BLSpanOrQuery.from((SpanOrQuery) spanQuery);

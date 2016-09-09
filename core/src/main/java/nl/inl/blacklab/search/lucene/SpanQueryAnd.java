@@ -27,7 +27,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -37,21 +36,21 @@ import org.apache.lucene.search.spans.Spans;
  * the same start and the same end positions in all SpanQueries will be kept.
  */
 public class SpanQueryAnd extends SpanQueryBase {
-	public SpanQueryAnd(SpanQuery first, SpanQuery second) {
+	public SpanQueryAnd(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}
 
-	public SpanQueryAnd(Collection<SpanQuery> clauscol) {
+	public SpanQueryAnd(Collection<BLSpanQuery> clauscol) {
 		super(clauscol);
 	}
 
-	public SpanQueryAnd(SpanQuery[] _clauses) {
+	public SpanQueryAnd(BLSpanQuery[] _clauses) {
 		super(_clauses);
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		return rewritten == null ? this : new SpanQueryAnd(rewritten);
 	}
 

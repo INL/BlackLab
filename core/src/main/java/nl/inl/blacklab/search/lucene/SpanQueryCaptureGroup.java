@@ -24,8 +24,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
@@ -41,14 +39,14 @@ public class SpanQueryCaptureGroup extends SpanQueryBase {
 	 * @param query the query to determine edges from
 	 * @param name captured group name
 	 */
-	public SpanQueryCaptureGroup(SpanQuery query, String name) {
+	public SpanQueryCaptureGroup(BLSpanQuery query, String name) {
 		super(query);
 		this.name = name;
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		return rewritten == null ? this : new SpanQueryCaptureGroup(rewritten[0], name);
 	}
 

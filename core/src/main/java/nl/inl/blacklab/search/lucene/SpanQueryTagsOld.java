@@ -19,13 +19,10 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
@@ -55,7 +52,7 @@ public class SpanQueryTagsOld extends SpanQueryBase {
 	public SpanQueryTagsOld(QueryExecutionContext context, String tagName) {
 		super();
 		this.tagName = tagName;
-		clauses = new SpanQuery[2];
+		clauses = new BLSpanQuery[2];
 		baseFieldName = context.fieldName();
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		String startTagFieldName = startTagContext.luceneField();
@@ -67,11 +64,6 @@ public class SpanQueryTagsOld extends SpanQueryBase {
 		// not the complete field name with the property.
 		clauses[0] = new BLSpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));
 		clauses[1] = new BLSpanTermQuery(new Term(endTagFieldName, endTagContext.optDesensitize(tagName)));
-	}
-
-	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		return this; // nothing to rewrite
 	}
 
 	@Override

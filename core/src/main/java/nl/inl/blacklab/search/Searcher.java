@@ -45,6 +45,7 @@ import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.VersionFile;
@@ -616,12 +617,14 @@ public abstract class Searcher {
 	public abstract int maxDoc();
 
 	@Deprecated
-	public SpanQuery filterDocuments(SpanQuery query, org.apache.lucene.search.Filter filter) {
-		return new SpanQueryFiltered(query, filter);
+	public BLSpanQuery filterDocuments(SpanQuery query, org.apache.lucene.search.Filter filter) {
+		if (!(query instanceof BLSpanQuery))
+			throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
+		return new SpanQueryFiltered((BLSpanQuery) query, filter);
 	}
 
 	@Deprecated
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, org.apache.lucene.search.Filter filter) {
+	public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName, org.apache.lucene.search.Filter filter) {
 		if (filter == null || filter instanceof org.apache.lucene.search.QueryWrapperFilter) {
 			Query filterQuery = filter == null ? null : ((org.apache.lucene.search.QueryWrapperFilter) filter).getQuery();
 			return createSpanQuery(pattern, fieldName, filterQuery);
@@ -630,7 +633,7 @@ public abstract class Searcher {
 	}
 
 	@Deprecated
-	public SpanQuery createSpanQuery(TextPattern pattern, org.apache.lucene.search.Filter filter) {
+	public BLSpanQuery createSpanQuery(TextPattern pattern, org.apache.lucene.search.Filter filter) {
 		return createSpanQuery(pattern, getMainContentsFieldName(), filter);
 	}
 
@@ -639,7 +642,7 @@ public abstract class Searcher {
 	 */
 	@SuppressWarnings("javadoc")
 	@Deprecated
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
+	public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
 		return createSpanQuery(pattern, fieldName, (Query)null);
 	}
 
@@ -648,16 +651,15 @@ public abstract class Searcher {
 	 */
 	@SuppressWarnings("javadoc")
 	@Deprecated
-	public SpanQuery createSpanQuery(TextPattern pattern) {
+	public BLSpanQuery createSpanQuery(TextPattern pattern) {
 		return createSpanQuery(pattern, getMainContentsFieldName(), (Query)null);
 	}
 
-	public SpanQuery createSpanQuery(TextPattern pattern, String fieldName, Query filter) {
+	public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName, Query filter) {
 		// Convert to SpanQuery
 		pattern = pattern.rewrite();
 		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
-		SpanQuery spanQuery = pattern.translate(spanQueryTranslator,
-				getDefaultExecutionContext(fieldName));
+		BLSpanQuery spanQuery = pattern.translate(spanQueryTranslator, getDefaultExecutionContext(fieldName));
 		if (filter != null)
 			spanQuery = new SpanQueryFiltered(spanQuery, filter);
 		return spanQuery;
@@ -675,6 +677,8 @@ public abstract class Searcher {
 	 *             if a wildcard or regular expression term is overly broad
 	 */
 	public Hits find(SpanQuery query, String fieldNameConc) throws BooleanQuery.TooManyClauses {
+		if (!(query instanceof BLSpanQuery))
+			throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
 		Hits hits = Hits.fromSpanQuery(this, query);
 		hits.settings.setConcordanceField(fieldNameConc);
 		return hits;
@@ -689,7 +693,7 @@ public abstract class Searcher {
 	 * @throws BooleanQuery.TooManyClauses
 	 *             if a wildcard or regular expression term is overly broad
 	 */
-	public Hits find(SpanQuery query) throws BooleanQuery.TooManyClauses {
+	public Hits find(BLSpanQuery query) throws BooleanQuery.TooManyClauses {
 		return Hits.fromSpanQuery(this, query);
 	}
 

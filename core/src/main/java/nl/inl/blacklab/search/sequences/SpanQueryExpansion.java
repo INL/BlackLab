@@ -24,11 +24,10 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
 import nl.inl.blacklab.search.lucene.SpansUnique;
@@ -61,7 +60,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;
 
-	public SpanQueryExpansion(SpanQuery clause, boolean expandToLeft, int min, int max) {
+	public SpanQueryExpansion(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
 		super(clause);
 		this.expandToLeft = expandToLeft;
 		this.min = min;
@@ -82,8 +81,8 @@ public class SpanQueryExpansion extends SpanQueryBase {
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		if (rewritten == null)
 			return this;
 		SpanQueryExpansion result = new SpanQueryExpansion(rewritten[0], expandToLeft, min, max);

@@ -38,7 +38,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.perdocument.DocResult;
 import nl.inl.blacklab.perdocument.DocResults;
@@ -72,6 +71,7 @@ import nl.inl.blacklab.search.grouping.HitPropertyWordLeft;
 import nl.inl.blacklab.search.grouping.HitPropertyWordRight;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
@@ -1074,7 +1074,7 @@ public class QueryTool {
 			Query filter = filterForThisQuery == null ? null : filterForThisQuery;
 
 			// Execute search
-			SpanQuery spanQuery = searcher.createSpanQuery(pattern, contentsField, filter);
+			BLSpanQuery spanQuery = searcher.createSpanQuery(pattern, contentsField, filter);
 			if (verbose)
 				outprintln("SpanQuery: " + spanQuery.toString(contentsField));
 			hits = searcher.find(spanQuery);

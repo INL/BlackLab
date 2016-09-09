@@ -29,7 +29,6 @@ import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 
 /*
@@ -77,14 +76,14 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		FuzzyQuery fuzzyQuery = new FuzzyQuery(term, maxEdits, prefixLength);
 
 		Query rewrittenFuzzyQuery = fuzzyQuery.rewrite(reader);
 		if (rewrittenFuzzyQuery instanceof BooleanQuery) {
 			// BooleanQuery; make SpanQueries from each of the TermQueries and combine with OR
 			List<BooleanClause> clauses = ((BooleanQuery) rewrittenFuzzyQuery).clauses();
-			SpanQuery[] spanQueries = new SpanQuery[clauses.size()];
+			BLSpanQuery[] spanQueries = new BLSpanQuery[clauses.size()];
 			for (int i = 0; i < clauses.size(); i++) {
 				BooleanClause clause = clauses.get(i);
 
@@ -94,12 +93,12 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 				// Use a BLSpanTermQuery instead of default Lucene one.
 				spanQueries[i] = new BLSpanTermQuery(termQuery.getTerm());
 			}
-			SpanQuery query = new BLSpanOrQuery(spanQueries);
+			BLSpanQuery query = new BLSpanOrQuery(spanQueries);
 			return query;
 		}
 
 		// Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
-		SpanQuery query = new BLSpanOrQuery(new BLSpanTermQuery(
+		BLSpanQuery query = new BLSpanOrQuery(new BLSpanTermQuery(
 				((TermQuery) rewrittenFuzzyQuery).getTerm()));
 		return query;
 

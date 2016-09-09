@@ -24,8 +24,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
@@ -36,13 +34,13 @@ import org.apache.lucene.search.spans.Spans;
  */
 public class SpanQueryDocLevelAndNot extends SpanQueryBase {
 
-	public SpanQueryDocLevelAndNot(SpanQuery include, SpanQuery exclude) {
+	public SpanQueryDocLevelAndNot(BLSpanQuery include, BLSpanQuery exclude) {
 		super(include, exclude);
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		return rewritten == null ? this : new SpanQueryDocLevelAndNot(rewritten[0], rewritten[1]);
 	}
 

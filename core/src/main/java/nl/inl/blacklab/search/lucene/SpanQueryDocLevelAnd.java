@@ -36,7 +36,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -45,21 +44,21 @@ import org.apache.lucene.search.spans.Spans;
  * A SpanQuery for and AND-construction at the document level.
  */
 public class SpanQueryDocLevelAnd extends SpanQueryBase {
-	public SpanQueryDocLevelAnd(SpanQuery first, SpanQuery second) {
+	public SpanQueryDocLevelAnd(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}
 
-	public SpanQueryDocLevelAnd(Collection<SpanQuery> clauscol) {
+	public SpanQueryDocLevelAnd(Collection<BLSpanQuery> clauscol) {
 		super(clauscol);
 	}
 
-	public SpanQueryDocLevelAnd(SpanQuery[] _clauses) {
+	public SpanQueryDocLevelAnd(BLSpanQuery[] _clauses) {
 		super(_clauses);
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		return rewritten == null ? this : new SpanQueryDocLevelAnd(rewritten);
 	}
 

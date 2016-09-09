@@ -27,11 +27,10 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
@@ -51,28 +50,28 @@ import nl.inl.blacklab.search.lucene.SpansUnique;
  * See SpanSequenceRaw for details on the matching process.
  */
 public class SpanQuerySequence extends SpanQueryBase {
-	public SpanQuerySequence(SpanQuery first, SpanQuery second) {
+	public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}
 
-	public SpanQuerySequence(Collection<SpanQuery> clauscol) {
+	public SpanQuerySequence(Collection<BLSpanQuery> clauscol) {
 		super(clauscol);
 	}
 
-	public SpanQuerySequence(SpanQuery[] _clauses) {
+	public SpanQuerySequence(BLSpanQuery[] _clauses) {
 		super(_clauses);
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		return rewritten == null ? this : new SpanQuerySequence(rewritten);
 	}
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		List<SpanWeight> weights = new ArrayList<>();
-		for (SpanQuery clause: clauses) {
+		for (BLSpanQuery clause: clauses) {
 			weights.add(clause.createWeight(searcher, needsScores));
 		}
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(weights.toArray(new SpanWeight[0])) : null;

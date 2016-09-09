@@ -25,7 +25,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -41,15 +40,15 @@ public class SpanQueryNot extends SpanQueryBase {
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;
 
-	public SpanQueryNot(SpanQuery query) {
+	public SpanQueryNot(BLSpanQuery query) {
 		super(query);
 	}
 
-	public SpanQueryNot(Collection<SpanQuery> clauscol) {
+	public SpanQueryNot(Collection<BLSpanQuery> clauscol) {
 		super(clauscol);
 	}
 
-	public SpanQueryNot(SpanQuery[] _clauses) {
+	public SpanQueryNot(BLSpanQuery[] _clauses) {
 		super(_clauses);
 	}
 
@@ -58,7 +57,7 @@ public class SpanQueryNot extends SpanQueryBase {
 	 * @param matchAllTokensFieldName what field to match all tokens in
 	 */
 	private SpanQueryNot(String matchAllTokensFieldName) {
-		clauses = new SpanQuery[1];
+		clauses = new BLSpanQuery[1];
 		clauses[0] = null;
 		baseFieldName = matchAllTokensFieldName;
 	}
@@ -71,15 +70,15 @@ public class SpanQueryNot extends SpanQueryBase {
 	 * @param fieldName the field from which to match
 	 * @return the resulting query
 	 */
-	public static SpanQuery matchAllTokens(boolean ignoreLastToken, String fieldName) {
+	public static BLSpanQuery matchAllTokens(boolean ignoreLastToken, String fieldName) {
 		SpanQueryNot spanQueryNot = new SpanQueryNot(fieldName);
 		spanQueryNot.setIgnoreLastToken(ignoreLastToken);
 		return spanQueryNot;
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		if (rewritten == null)
 			return this;
 		SpanQueryNot result = new SpanQueryNot(rewritten[0]);

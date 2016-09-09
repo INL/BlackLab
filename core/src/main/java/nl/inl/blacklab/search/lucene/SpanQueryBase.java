@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
@@ -36,35 +35,35 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 	 */
 	String baseFieldName = "";
 
-	protected SpanQuery[] clauses;
+	protected BLSpanQuery[] clauses;
 
 	public SpanQueryBase() {
 		//
 	}
 
-	public SpanQueryBase(SpanQuery first, SpanQuery second) {
-		clauses = new SpanQuery[2];
+	public SpanQueryBase(BLSpanQuery first, BLSpanQuery second) {
+		clauses = new BLSpanQuery[2];
 		clauses[0] = first;
 		clauses[1] = second;
 		determineBaseFieldName();
 	}
 
-	public SpanQueryBase(SpanQuery clause) {
-		clauses = new SpanQuery[1];
+	public SpanQueryBase(BLSpanQuery clause) {
+		clauses = new BLSpanQuery[1];
 		clauses[0] = clause;
 		determineBaseFieldName();
 	}
 
-	public SpanQueryBase(Collection<SpanQuery> clauscol) {
-		clauses = new SpanQuery[clauscol.size()];
+	public SpanQueryBase(Collection<BLSpanQuery> clauscol) {
+		clauses = new BLSpanQuery[clauscol.size()];
 		int k = 0;
-		for (SpanQuery s : clauscol) {
+		for (BLSpanQuery s : clauscol) {
 			clauses[k++] = s;
 		}
 		determineBaseFieldName();
 	}
 
-	public SpanQueryBase(SpanQuery[] _clauses) {
+	public SpanQueryBase(BLSpanQuery[] _clauses) {
 		clauses = _clauses;
 		determineBaseFieldName();
 	}
@@ -115,14 +114,12 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 		return baseFieldName;
 	}
 
-	public abstract Query rewrite(IndexReader reader) throws IOException;
-
-	protected SpanQuery[] rewriteClauses(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = new SpanQuery[clauses.length];
+	protected BLSpanQuery[] rewriteClauses(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = new BLSpanQuery[clauses.length];
 		boolean someRewritten = false;
 		for (int i = 0; i < clauses.length; i++) {
-			SpanQuery c = clauses[i];
-			SpanQuery query = c == null ? null : (SpanQuery) c.rewrite(reader);
+			BLSpanQuery c = clauses[i];
+			BLSpanQuery query = c == null ? null : (BLSpanQuery) c.rewrite(reader);
 			rewritten[i] = query;
 			if (query != c)
 				someRewritten = true;

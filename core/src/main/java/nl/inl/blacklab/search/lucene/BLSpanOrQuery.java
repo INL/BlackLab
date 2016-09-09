@@ -31,7 +31,6 @@ import org.apache.lucene.search.DisiPriorityQueue;
 import org.apache.lucene.search.DisiWrapper;
 import org.apache.lucene.search.DisjunctionDISIApproximation;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.ScoringWrapperSpans;
 import org.apache.lucene.search.spans.SpanCollector;
@@ -55,7 +54,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	 * All clauses must have the same field.
 	 * @param clauses clauses to OR together
 	 */
-	public BLSpanOrQuery(SpanQuery... clauses) {
+	public BLSpanOrQuery(BLSpanQuery... clauses) {
 		inner = new SpanOrQuery(clauses);
 		this.field = inner.getField();
 	}
@@ -63,7 +62,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	// BL
 	static BLSpanOrQuery from(SpanOrQuery in) {
 		SpanQuery[] clauses = in.getClauses();
-		SpanQuery[] blClauses = new SpanQuery[clauses.length];
+		BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];
 		for (int i = 0; i < clauses.length; i++) {
 			blClauses[i] = BLSpansWrapper.blSpanQueryFrom(clauses[i]);
 		}
@@ -74,8 +73,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	/** Return the clauses whose spans are matched.
 	 * @return the clauses
 	 */
-	public SpanQuery[] getClauses() {
-		return inner.getClauses();
+	public BLSpanQuery[] getClauses() {
+		return (BLSpanQuery[])inner.getClauses();
 	}
 
 	/**
@@ -96,11 +95,11 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		SpanQuery rewritten = (SpanQuery)inner.rewrite(reader);
 		if (rewritten == this)
 			return this;
-		SpanQuery result = BLSpansWrapper.blSpanQueryFrom(rewritten);
+		BLSpanQuery result = BLSpansWrapper.blSpanQueryFrom(rewritten);
 		if (result.getField() == null) {
 			if (result instanceof BLSpanOrQuery) {
 				((BLSpanOrQuery) result).setField(getField());
@@ -111,6 +110,15 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		}
 
 		return result;
+	}
+
+	@Override
+	public boolean matchesEmptySequence() {
+		for (SpanQuery cl: inner.getClauses()) {
+			if (((BLSpanQuery)cl).matchesEmptySequence())
+				return true;
+		}
+		return false;
 	}
 
 	@Override

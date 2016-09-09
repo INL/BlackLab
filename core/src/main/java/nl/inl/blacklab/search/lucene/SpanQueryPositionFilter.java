@@ -26,8 +26,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
@@ -61,7 +59,7 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	 * @param op operation used to determine what producer hits we're interested in (containing, within, startsat, endsat)
 	 * @param invert produce hits that don't match filter instead?
 	 */
-	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, TextPatternPositionFilter.Operation op, boolean invert) {
+	public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, TextPatternPositionFilter.Operation op, boolean invert) {
 		this(producer, filter, op, invert, 0, 0);
 	}
 
@@ -75,7 +73,7 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	 * @param leftAdjust how to adjust the left edge of the producer hits while matching
 	 * @param rightAdjust how to adjust the right edge of the producer hits while matching
 	 */
-	public SpanQueryPositionFilter(SpanQuery producer, SpanQuery filter, TextPatternPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
+	public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, TextPatternPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
 		super(producer, filter);
 		this.op = op;
 		this.invert = invert;
@@ -84,8 +82,8 @@ public class SpanQueryPositionFilter extends SpanQueryBase {
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		return rewritten == null ? this : new SpanQueryPositionFilter(rewritten[0], rewritten[1], op, invert, leftAdjust, rightAdjust);
 	}
 

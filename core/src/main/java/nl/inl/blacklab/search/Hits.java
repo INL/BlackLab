@@ -16,6 +16,7 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.ThreadPriority;
 
@@ -121,6 +122,8 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 * @return hits found
 	 */
 	public static Hits fromSpanQuery(Searcher searcher, SpanQuery query) {
+		if (!(query instanceof BLSpanQuery))
+			throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
 		return new HitsImpl(searcher, query);
 	}
 

@@ -24,11 +24,10 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryBase;
 
 /**
@@ -44,7 +43,7 @@ public class SpanQueryRepetition extends SpanQueryBase {
 
 	private int max;
 
-	public SpanQueryRepetition(SpanQuery clause, int min, int max) {
+	public SpanQueryRepetition(BLSpanQuery clause, int min, int max) {
 		super(clause);
 		this.min = min;
 		this.max = max;
@@ -66,8 +65,8 @@ public class SpanQueryRepetition extends SpanQueryBase {
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
-		SpanQuery[] rewritten = rewriteClauses(reader);
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery[] rewritten = rewriteClauses(reader);
 		return rewritten == null ? this : new SpanQueryRepetition(rewritten[0], min, max);
 	}
 

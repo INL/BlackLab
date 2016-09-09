@@ -50,6 +50,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.util.StringUtil;
@@ -124,7 +125,7 @@ public class HitsImpl extends Hits {
 	/**
 	 * Our SpanQuery.
 	 */
-	protected SpanQuery spanQuery;
+	protected BLSpanQuery spanQuery;
 
 	/** The SpanWeight for our SpanQuery, from which we can get the next Spans when the current one's done. */
 	private SpanWeight weight;
@@ -287,7 +288,9 @@ public class HitsImpl extends Hits {
 		this(searcher, (List<Hit>)null);
 		try {
 			IndexReader reader = searcher.getIndexReader();
-			spanQuery = (SpanQuery) sourceQuery.rewrite(reader);
+			if (!(sourceQuery instanceof BLSpanQuery))
+				throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
+			spanQuery = ((BLSpanQuery)sourceQuery).rewrite(reader);
 			termContexts = new HashMap<>();
 			Set<Term> terms = new HashSet<>();
 			weight = spanQuery.createWeight(searcher.getIndexSearcher(), false);

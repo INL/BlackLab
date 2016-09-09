@@ -19,11 +19,11 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
@@ -32,10 +32,19 @@ import org.apache.lucene.search.spans.Spans;
  * e.g. combining multiple SpanFuzzyQueries with OR.
  */
 public class SpanQueryUnique extends BLSpanQuery {
-	private SpanQuery src;
+	private BLSpanQuery src;
 
-	public SpanQueryUnique(SpanQuery src) {
+	public SpanQueryUnique(BLSpanQuery src) {
 		this.src = src;
+	}
+
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		BLSpanQuery rewritten = src.rewrite(reader);
+		if (rewritten != src) {
+			return new SpanQueryUnique(rewritten);
+		}
+		return this;
 	}
 
 	@Override

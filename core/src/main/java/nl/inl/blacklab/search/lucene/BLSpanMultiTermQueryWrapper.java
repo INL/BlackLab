@@ -38,12 +38,12 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	}
 
 	@Override
-	public Query rewrite(IndexReader reader) throws IOException {
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		Query q = query.rewrite(reader);
 		if (!(q instanceof SpanQuery))
 			throw new UnsupportedOperationException(
 					"You can only use BLSpanMultiTermQueryWrapper with a suitable SpanRewriteMethod.");
-		SpanQuery result = BLSpansWrapper.blSpanQueryFrom((SpanQuery) q);
+		BLSpanQuery result = BLSpansWrapper.blSpanQueryFrom((SpanQuery) q);
 		if (result.getField() == null) {
 			if (result instanceof BLSpanOrQuery) {
 				((BLSpanOrQuery) result).setField(getField());

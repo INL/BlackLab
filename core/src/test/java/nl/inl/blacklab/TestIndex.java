@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
@@ -16,6 +15,7 @@ import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.tools.indexexample.DocIndexerExample;
 import nl.inl.util.StringUtil;
 
@@ -165,7 +165,7 @@ public class TestIndex {
 	 * @return the resulting BlackLab text pattern
 	 * @throws ParseException
 	 */
-	public List<String> findConc(SpanQuery query) throws ParseException {
+	public List<String> findConc(BLSpanQuery query) throws ParseException {
 		return getConcordances(searcher.find(query));
 	}
 
