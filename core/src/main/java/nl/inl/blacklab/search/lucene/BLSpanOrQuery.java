@@ -45,7 +45,7 @@ import nl.inl.blacklab.search.Span;
 
 /** Matches the union of its clauses.
  */
-public final class BLSpanOrQuery extends SpanQuery {
+public final class BLSpanOrQuery extends BLSpanQuery {
 
 	SpanOrQuery inner;
 

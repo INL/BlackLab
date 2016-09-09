@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import org.apache.lucene.search.spans.SpanQuery;
 
 /**
- * A base class for a BlackLab SpanQuery. All our queries must be
+ * A required interface for a BlackLab SpanQuery. All our queries must be
  * derived from this so we know they will produce BLSpans (which
  * contains extra methods for optimization).
  */

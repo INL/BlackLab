@@ -117,8 +117,7 @@ public class BLSpansWrapper extends BLSpans {
 	 * @return resulting BLSpanQuery, or the input query if it was one already
 	 */
 	public static SpanQuery blSpanQueryFrom(SpanQuery spanQuery) {
-		if (spanQuery instanceof BLSpanQuery || spanQuery instanceof BLSpanMultiTermQueryWrapper ||
-				spanQuery instanceof BLSpanTermQuery || spanQuery instanceof BLSpanOrQuery) {
+		if (spanQuery instanceof BLSpanQuery) {
 			// Already BL-derived, no wrapper needed.
 			return spanQuery;
 		} else if (spanQuery instanceof SpanOrQuery) {

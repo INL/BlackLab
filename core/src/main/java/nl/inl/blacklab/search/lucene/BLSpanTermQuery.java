@@ -26,6 +26,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
@@ -37,18 +38,23 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  * sure the SpanWeight returned by createWeight() produces a BLSpans, not a regular
  * Spans.
  */
-public class BLSpanTermQuery extends SpanTermQuery {
+public class BLSpanTermQuery extends BLSpanQuery {
+
+	SpanTermQuery query;
+
+	private TermContext termContext;
 
 	/** Construct a SpanTermQuery matching the named term's spans.
 	 *
 	 * @param term term to search
 	 */
 	public BLSpanTermQuery(Term term) {
-		super(term);
+		query = new SpanTermQuery(term);
+		termContext = null;
 	}
 
-	public BLSpanTermQuery(SpanTermQuery termQuery) {
-		super(termQuery.getTerm());
+	BLSpanTermQuery(SpanTermQuery termQuery) {
+		this(termQuery.getTerm());
 	}
 
 	/**
@@ -59,7 +65,8 @@ public class BLSpanTermQuery extends SpanTermQuery {
 	 * @param context TermContext to use to search the term
 	 */
 	public BLSpanTermQuery(Term term, TermContext context) {
-		super(term, context);
+		query = new SpanTermQuery(term, context);
+		termContext = context;
 	}
 
 	/**
@@ -76,7 +83,7 @@ public class BLSpanTermQuery extends SpanTermQuery {
 	 */
 	@Override
 	public String getField() {
-		return ComplexFieldUtil.getBaseName(term.field());
+		return ComplexFieldUtil.getBaseName(query.getTerm().field());
 	}
 
 	@Override
@@ -84,34 +91,34 @@ public class BLSpanTermQuery extends SpanTermQuery {
 		final TermContext context;
 		final IndexReaderContext topContext = searcher.getTopReaderContext();
 		if (termContext == null || termContext.topReaderContext != topContext) {
-			context = TermContext.build(topContext, term);
+			context = TermContext.build(topContext, query.getTerm());
 		} else {
 			context = termContext;
 		}
-		Map<Term, TermContext> contexts = needsScores ? Collections.singletonMap(term, context) : null;
-		SpanTermWeight weight = new SpanTermWeight(context, searcher, contexts);
+		Map<Term, TermContext> contexts = needsScores ? Collections.singletonMap(query.getTerm(), context) : null;
+		SpanTermWeight weight = query.new SpanTermWeight(context, searcher, contexts);
 		return new BLSpanWeightWrapper(weight, searcher, contexts);
 	}
 
 	@Override
 	public String toString(String field) {
-		return "BL" + super.toString(field);
+		return "BL" + query.toString(field);
 	}
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() ^ 0xB1ACC1AB;
+		return query.hashCode() ^ 0xB1ACC1AB;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj)) {
-			return false;
+		if (obj instanceof BLSpanTermQuery) {
+			BLSpanTermQuery other = (BLSpanTermQuery) obj;
+			return query.equals(other.query);
 		}
-		BLSpanTermQuery other = (BLSpanTermQuery) obj;
-		return term.equals(other.term);
+		return false;
 	}
 
 	public static BLSpanTermQuery from(SpanTermQuery q) {
