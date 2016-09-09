@@ -174,7 +174,7 @@ public abstract class TextPattern implements Cloneable {
 	 *
 	 * @return true if it is, false if not
 	 */
-	protected boolean okayToInvertForOptimization() {
+	boolean okayToInvertForOptimization() {
 		return false;
 	}
 
@@ -186,7 +186,7 @@ public abstract class TextPattern implements Cloneable {
 	 *
 	 * @return true if it's negative-only, false if not
 	 */
-	public boolean isSingleTokenNot() {
+	boolean isSingleTokenNot() {
 		return false;
 	}
 
@@ -217,7 +217,7 @@ public abstract class TextPattern implements Cloneable {
 	 * @param previousPart the part occurring before this one in a sequence
 	 * @return a combined repetition text pattern, or null if it can't be combined
 	 */
-	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
+	TextPattern combineWithPrecedingPart(TextPattern previousPart) {
 		if (previousPart instanceof TextPatternRepetition) {
 			// Repetition clause.
 			TextPatternRepetition rep = (TextPatternRepetition) previousPart;
@@ -301,7 +301,7 @@ public abstract class TextPattern implements Cloneable {
 	 * Return a version of this clause that cannot match the empty sequence.
 	 * @return a version that doesn't match the empty sequence
 	 */
-	public TextPattern noEmpty() {
+	TextPattern noEmpty() {
 		if (!matchesEmptySequence())
 			return this;
 		throw new UnsupportedOperationException("noEmpty() must be implemented!");
