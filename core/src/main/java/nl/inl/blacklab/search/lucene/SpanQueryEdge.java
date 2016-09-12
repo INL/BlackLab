@@ -54,6 +54,21 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 0;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return 0;
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
 		return new SpanWeightEdge(weight, searcher, needsScores ? getTermContexts(weight) : null);

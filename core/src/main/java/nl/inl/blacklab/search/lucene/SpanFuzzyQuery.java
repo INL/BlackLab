@@ -105,6 +105,21 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 1;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return 1;
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		throw new UnsupportedOperationException("Query should have been rewritten");
 	}

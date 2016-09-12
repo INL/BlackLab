@@ -56,6 +56,21 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		return clauses[0].hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		return clauses[0].getMinLength();
+	}
+
+	@Override
+	public int getMaxLength() {
+		return clauses[0].getMaxLength();
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
 		return new SpanWeightCaptureGroup(weight, searcher, needsScores ? getTermContexts(weight) : null);

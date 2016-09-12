@@ -69,27 +69,6 @@ public abstract class TextPattern implements Cloneable {
 		return translate(translator, searcher.getDefaultExecutionContext());
 	}
 
-	/**
-	 * Does this TextPattern match the empty sequence?
-	 *
-	 * For example, the query [word="cow"]* matches the empty sequence. We need to know this so we
-	 * can generate the appropriate queries. A query of the form "AB*" would be translated into
-	 * "A|AB+", so each component of the query actually generates non-empty matches.
-	 *
-	 * When translating, the translator will usually generate a query that doesn't match the empty
-	 * sequence, because this is not a practical query to execute. It is up to the translator to
-	 * make sure the empty-sequence-matching property of the pattern is correctly dealt with at a
-	 * higher level (usually by executing two alternative queries, one with and one without the part
-	 * that would match the empty sequence). It uses this method to do so.
-	 *
-	 * We default to no because most queries don't match the empty sequence.
-	 *
-	 * @return true if this pattern matches the empty sequence, false otherwise
-	 */
-	public boolean matchesEmptySequence() {
-		return false;
-	}
-
 	@Override
 	public abstract String toString();
 
@@ -158,6 +137,37 @@ public abstract class TextPattern implements Cloneable {
 	}
 
 	/**
+	 * Does this TextPattern match the empty sequence?
+	 *
+	 * For example, the query [word="cow"]* matches the empty sequence. We need to know this so we
+	 * can generate the appropriate queries. A query of the form "AB*" would be translated into
+	 * "A|AB+", so each component of the query actually generates non-empty matches.
+	 *
+	 * When translating, the translator will usually generate a query that doesn't match the empty
+	 * sequence, because this is not a practical query to execute. It is up to the translator to
+	 * make sure the empty-sequence-matching property of the pattern is correctly dealt with at a
+	 * higher level (usually by executing two alternative queries, one with and one without the part
+	 * that would match the empty sequence). It uses this method to do so.
+	 *
+	 * We default to no because most queries don't match the empty sequence.
+	 *
+	 * @return true if this pattern matches the empty sequence, false otherwise
+	 */
+	public boolean matchesEmptySequence() {
+		return false;
+	}
+
+	/**
+	 * Return a version of this clause that cannot match the empty sequence.
+	 * @return a version that doesn't match the empty sequence
+	 */
+	TextPattern noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		throw new UnsupportedOperationException("noEmpty() must be implemented!");
+	}
+
+	/**
 	 * Return an inverted version of this TextPattern.
 	 *
 	 * @return the inverted TextPattern
@@ -188,24 +198,6 @@ public abstract class TextPattern implements Cloneable {
 	 */
 	boolean isSingleTokenNot() {
 		return false;
-	}
-
-	/**
-	 * Add two values for maximum number of repetitions, taking "infinite" into account.
-	 *
-	 * -1 repetitions means infinite. Adding infinite to any other value
-	 * produces infinite again.
-	 *
-	 * @param a first max. repetitions value
-	 * @param b first max. repetitions value
-	 * @return sum of the max. repetitions values
-	 */
-	protected static int addRepetitionMaxValues(int a, int b) {
-		// Is either value infinite?
-		if (a == -1 || b == -1)
-			return -1; // Yes, result is infinite
-		// Add regular values
-		return a + b;
 	}
 
 	/**
@@ -281,9 +273,6 @@ public abstract class TextPattern implements Cloneable {
 		return null;
 	}
 
-	@Override
-	public abstract boolean equals(Object obj);
-
 	public boolean producesSingleTokens() {
 		return hasConstantLength() && getMinLength() == 1;
 	}
@@ -294,17 +283,28 @@ public abstract class TextPattern implements Cloneable {
 
 	public abstract int getMaxLength();
 
+	/**
+	 * Add two values for maximum number of repetitions, taking "infinite" into account.
+	 *
+	 * -1 repetitions means infinite. Adding infinite to any other value
+	 * produces infinite again.
+	 *
+	 * @param a first max. repetitions value
+	 * @param b first max. repetitions value
+	 * @return sum of the max. repetitions values
+	 */
+	protected static int addRepetitionMaxValues(int a, int b) {
+		// Is either value infinite?
+		if (a == -1 || b == -1)
+			return -1; // Yes, result is infinite
+		// Add regular values
+		return a + b;
+	}
+
+	@Override
+	public abstract boolean equals(Object obj);
+
 	@Override
 	public abstract int hashCode();
-
-	/**
-	 * Return a version of this clause that cannot match the empty sequence.
-	 * @return a version that doesn't match the empty sequence
-	 */
-	TextPattern noEmpty() {
-		if (!matchesEmptySequence())
-			return this;
-		throw new UnsupportedOperationException("noEmpty() must be implemented!");
-	}
 
 }

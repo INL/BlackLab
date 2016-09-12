@@ -48,6 +48,26 @@ public class SpanQueryUnique extends BLSpanQuery {
 	}
 
 	@Override
+	public boolean matchesEmptySequence() {
+		return src.matchesEmptySequence();
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return src.hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		return src.getMinLength();
+	}
+
+	@Override
+	public int getMaxLength() {
+		return src.getMaxLength();
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = src.createWeight(searcher, needsScores);
 		return new SpanWeightUnique(weight, searcher, needsScores ? getTermContexts(weight) : null);

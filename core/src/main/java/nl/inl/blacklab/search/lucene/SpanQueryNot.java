@@ -88,6 +88,21 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 1;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return 1;
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanQuery query = clauses[0];
 		SpanWeight weight = query == null ? null : query.createWeight(searcher, needsScores);

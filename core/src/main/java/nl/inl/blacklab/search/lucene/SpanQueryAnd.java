@@ -55,6 +55,27 @@ public class SpanQueryAnd extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		if (clauses.length == 0)
+			return true;
+		return clauses[0].hasConstantLength();
+	}
+
+	@Override
+	public int getMinLength() {
+		if (clauses.length == 0)
+			return 1;
+		return Math.max(clauses[0].getMinLength(), clauses[1].getMinLength());
+	}
+
+	@Override
+	public int getMaxLength() {
+		if (clauses.length == 0)
+			return 1;
+		return Math.min(clauses[0].getMaxLength(), clauses[1].getMaxLength());
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		List<SpanWeight> weights = new ArrayList<>();
 		for (SpanQuery clause: clauses) {

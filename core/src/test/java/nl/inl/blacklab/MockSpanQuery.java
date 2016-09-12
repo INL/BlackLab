@@ -53,6 +53,21 @@ public class MockSpanQuery extends BLSpanQuery {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		return false;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 0;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return -1;
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		return new SpanWeight(this, searcher, null) {
 

@@ -113,6 +113,37 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		int l = getClauses()[0].getMinLength();
+		for (BLSpanQuery clause: getClauses()) {
+			if (!clause.hasConstantLength() || clause.getMinLength() != l)
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		int n = Integer.MAX_VALUE;
+		for (BLSpanQuery clause: getClauses()) {
+			n = Math.min(n, clause.getMinLength());
+		}
+		return n;
+	}
+
+	@Override
+	public int getMaxLength() {
+		int n = 0;
+		for (BLSpanQuery clause: getClauses()) {
+			int l = clause.getMaxLength();
+			if (l < 0)
+				return -1; // infinite
+			n = Math.max(n, l);
+		}
+		return n;
+	}
+
+	@Override
 	public boolean matchesEmptySequence() {
 		for (BLSpanQuery cl: getClauses()) {
 			if (cl.matchesEmptySequence())

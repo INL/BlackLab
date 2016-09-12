@@ -30,18 +30,7 @@ import org.apache.lucene.search.spans.Spans;
 import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 
 /**
- * Expands the source spans to the left and right by the given ranges.
- *
- * This is used to support sequences including subsequences of completely unknown tokens (like
- * "apple" []{2, 4} "pear" to find apple and pear with 2 to 4 tokens in between).
- *
- * Note that this class will generate all possible expansions, so if you call it with left-expansion
- * of between 2 to 4 tokens, it will generate 3 new hits for every hit from the source spans: one
- * hit with 2 more tokens to the left, one hit with 3 more tokens to the left, and one hit with 4
- * more tokens to the left.
- *
- * Spans generated from this query will be sorted by start point and then by end point, and any
- * duplicates generated will be discarded.
+ * Return n-grams contained in the from the source spans hits.
  */
 public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
@@ -89,6 +78,21 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		return min == max;
+	}
+
+	@Override
+	public int getMinLength() {
+		return min;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return max;
+	}
+
+	@Override
 	public boolean matchesEmptySequence() {
 		return clauses[0].matchesEmptySequence() && min == 0;
 	}
@@ -125,7 +129,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 				return null;
 			BLSpans spans = new SpansFilterNGramsRaw(ignoreLastToken, context.reader(), clauses[0].getField(), spansSource, op, min, max);
 
-			// Note: the spans coming from SpansExpansion are not sorted properly.
+			// Note: the spans coming from SpansFilterNGramsRaw are not sorted properly.
 			// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
 
 			// Sort the resulting spans by start point.
@@ -155,7 +159,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryExpansion(" + clauses[0] + ", " + op + ", " + min + ", " + max
+		return "SpanQueryFilterNGrams(" + clauses[0] + ", " + op + ", " + min + ", " + max
 				+ ")";
 	}
 
