@@ -15,6 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.PrefixQuery;
+
+import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+
 /**
  * A TextPattern matching words that start with the specified prefix.
  */
@@ -24,8 +30,16 @@ public class TextPatternPrefix extends TextPatternTerm {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.prefix(context, translator.optInsensitive(context, value));
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		try {
+			return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
+					context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
+		} catch (StackOverflowError e) {
+			// If we pass in a prefix expression matching a lot of words,
+			// stack overflow may occur inside Lucene's automaton building
+			// code and we may end up here.
+			throw new RegexpTooLargeException();
+		}
 	}
 
 	@Override

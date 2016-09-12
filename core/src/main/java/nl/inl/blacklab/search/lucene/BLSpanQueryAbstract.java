@@ -33,7 +33,7 @@ public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 	 * The field name for this query. The "base" part is only applicable when dealing with complex
 	 * fields: the base field name of "contents" and "contents%pos" would both be "contents".
 	 */
-	String baseFieldName = "";
+	protected String baseFieldName = "";
 
 	protected BLSpanQuery[] clauses;
 

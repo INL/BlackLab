@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
 
 /**
  * TextPattern for capturing a subclause as a named "group".
@@ -37,49 +39,14 @@ public class TextPatternCaptureGroup extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.captureGroup(input.translate(translator, context), groupName);
-	}
-
-	@Override
-	public TextPattern rewrite() {
-		TextPattern rewritten = input.rewrite();
-		if (rewritten == input)
-			return this; // Nothing to rewrite
-		return new TextPatternCaptureGroup(rewritten, groupName);
-	}
-
-	@Override
-	public boolean matchesEmptySequence() {
-		return input.matchesEmptySequence();
-	}
-
-	@Override
-	public TextPattern noEmpty() {
-		if (!matchesEmptySequence())
-			return this;
-		return new TextPatternCaptureGroup(input.noEmpty(), groupName);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		return new SpanQueryCaptureGroup(input.translate(context), groupName);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		// Capture group clauses are unique.
 		return obj == this;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return input.hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		return input.getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		return input.getMaxLength();
 	}
 
 	@Override

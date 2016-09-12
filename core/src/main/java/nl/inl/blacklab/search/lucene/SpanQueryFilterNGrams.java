@@ -78,6 +78,19 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean matchesEmptySequence() {
+		return clauses[0].matchesEmptySequence() && min == 0;
+	}
+
+	@Override
+	public BLSpanQuery noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		int newMin = min == 0 ? 1 : min;
+		return new SpanQueryFilterNGrams(clauses[0].noEmpty(), op, newMin, max);
+	}
+
+	@Override
 	public boolean hasConstantLength() {
 		return min == max;
 	}
@@ -93,8 +106,20 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean matchesEmptySequence() {
-		return clauses[0].matchesEmptySequence() && min == 0;
+	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+		if ((op == Operation.CONTAINING_AT_END || op == Operation.ENDS_AT) && previousPart instanceof SpanQueryAnyToken) {
+			// Expand to left following any token clause. Combine.
+			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
+			return new SpanQueryFilterNGrams(clauses[0], op, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
+		}
+		if ((op == Operation.CONTAINING_AT_START || op == Operation.STARTS_AT) && max != min) {
+			// Expand to right with range of tokens. Combine with previous part to likely
+			// reduce the number of hits we'll have to expand.
+			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses[0]);
+			seq = seq.rewrite(reader);
+			return new SpanQueryFilterNGrams(seq, op, min, max);
+		}
+		return super.combineWithPrecedingPart(previousPart, reader);
 	}
 
 	@Override

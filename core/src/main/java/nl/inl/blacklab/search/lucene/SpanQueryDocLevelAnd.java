@@ -63,6 +63,36 @@ public class SpanQueryDocLevelAnd extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		if (clauses.length == 0)
+			return true;
+		int l = clauses[0].getMinLength();
+		for (BLSpanQuery clause: clauses) {
+			if (!clause.hasConstantLength() || clause.getMinLength() != l)
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int getMinLength() {
+		int n = Integer.MAX_VALUE;
+		for (BLSpanQuery clause: clauses) {
+			n = Math.min(n, clause.getMinLength());
+		}
+		return n;
+	}
+
+	@Override
+	public int getMaxLength() {
+		int n = 0;
+		for (BLSpanQuery clause: clauses) {
+			n = Math.max(n, clause.getMaxLength());
+		}
+		return n;
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		List<SpanWeight> weights = new ArrayList<>();
 		for (SpanQuery clause: clauses) {

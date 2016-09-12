@@ -17,6 +17,9 @@ package nl.inl.blacklab.search;
 
 import org.apache.lucene.index.Term;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanFuzzyQuery;
+
 /**
  * A TextPattern matching a word with fuzzy matching.
  */
@@ -42,8 +45,11 @@ public class TextPatternFuzzy extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.fuzzy(context, value, maxEdits, prefixLength);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		int prefixLength1 = prefixLength;
+		String valuePrefix = context.subpropPrefix(); // for searching in "subproperties" (e.g. PoS features)
+		prefixLength1 += valuePrefix.length();
+		return new SpanFuzzyQuery(new Term(context.luceneField(), valuePrefix + context.optDesensitize(value)), maxEdits, prefixLength1);
 	}
 
 	@Override
@@ -53,21 +59,6 @@ public class TextPatternFuzzy extends TextPattern {
 			return value.equals(tp.value) && maxEdits == tp.maxEdits && prefixLength == tp.prefixLength;
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 1;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 1;
 	}
 
 	@Override

@@ -54,7 +54,34 @@ public class SpanQueryNGrams extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean matchesEmptySequence() {
+		return min == 0;
+	}
+
+	@Override
+	BLSpanQuery noEmpty() {
+		return new SpanQueryNGrams(ignoreLastToken, baseFieldName, min == 0 ? 1 : min, max);
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return min == max;
+	}
+
+	@Override
+	public int getMinLength() {
+		return min;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return max;
+	}
+
+	@Override
 	public SpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
+		if (min == 0)
+			throw new RuntimeException("Query should have been rewritten! (min==0)");
 		return new SpanWeight(SpanQueryNGrams.this, searcher, null) {
 			@Override
 			public void extractTerms(Set<Term> terms) {

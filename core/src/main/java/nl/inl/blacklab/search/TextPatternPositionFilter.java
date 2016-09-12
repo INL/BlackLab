@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+
 /**
  * A TextPattern searching for TextPatterns that contain a hit from another TextPattern. This may be
  * used to search for sentences containing a certain word, etc.
@@ -92,10 +95,10 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		T trContainers = clauses.get(0).translate(translator, context);
-		T trSearch = clauses.get(1).translate(translator, context);
-		return translator.positionFilter(context, trContainers, trSearch, op, invert, leftAdjust, rightAdjust);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		BLSpanQuery trContainers = clauses.get(0).translate(context);
+		BLSpanQuery trSearch = clauses.get(1).translate(context);
+		return new SpanQueryPositionFilter(trContainers, trSearch, op, invert, leftAdjust, rightAdjust);
 	}
 
 	@Override
@@ -104,55 +107,6 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 			return super.equals(obj) && ((TextPatternPositionFilter)obj).invert == invert;
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return clauses.get(0).hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		return clauses.get(0).getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		return clauses.get(0).getMaxLength();
-	}
-
-	@Override
-	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
-		if (previousPart.hasConstantLength()) {
-			// We "gobble up" the previous part and adjust our left matching edge.
-			// This should make filtering more efficient, since we will likely have fewer hits to filter.
-			TextPatternPositionFilter result = (TextPatternPositionFilter)clone();
-			result.clauses.set(0, new TextPatternSequence(previousPart, clauses.get(0)));
-			result.adjustLeft(previousPart.getMinLength());
-			return result;
-		}
-		return super.combineWithPrecedingPart(previousPart);
-	}
-
-	@Override
-	public TextPattern rewrite() {
-		TextPattern producer = clauses.get(0).rewrite();
-		TextPattern filter = clauses.get(1).rewrite();
-
-		if (!invert && op != Operation.STARTS_AT && op != Operation.ENDS_AT && producer instanceof TextPatternAnyToken) {
-			// We're filtering "all n-grams of length min-max".
-			// Use the special optimized TextPatternFilterNGrams.
-			TextPatternAnyToken tp = (TextPatternAnyToken)producer;
-			return new TextPatternFilterNGrams(filter, op, tp.getMinLength(), tp.getMaxLength());
-		}
-
-		if (producer != clauses.get(0) || filter != clauses.get(1)) {
-			TextPatternPositionFilter result = new TextPatternPositionFilter(producer, filter, op, invert);
-			result.leftAdjust = leftAdjust;
-			result.rightAdjust = rightAdjust;
-			return result;
-		}
-		return this;
 	}
 
 	@Override

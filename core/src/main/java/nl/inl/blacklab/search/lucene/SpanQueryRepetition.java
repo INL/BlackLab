@@ -46,8 +46,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 		this.max = max;
 		if (max != -1 && min > max)
 			throw new IllegalArgumentException("min > max");
-		if (min < 1)
-			throw new IllegalArgumentException("min < 1");
+		if (min < 0)
+			throw new IllegalArgumentException("min < 0");
 	}
 
 	@Override
@@ -77,7 +77,51 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public BLSpanQuery noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		int newMin = min == 0 ? 1 : min;
+		return new SpanQueryRepetition(clauses[0].noEmpty(), newMin, max);
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return clauses[0].hasConstantLength() && min == max;
+	}
+
+	@Override
+	public int getMinLength() {
+		return clauses[0].getMinLength() * min;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return max < 0 ? Integer.MAX_VALUE : clauses[0].getMaxLength() * max;
+	}
+
+	@Override
+	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+		if (previousPart instanceof SpanQueryRepetition) {
+			// Repetition clause.
+			SpanQueryRepetition rep = (SpanQueryRepetition) previousPart;
+			BLSpanQuery prevCl = rep.getClause();
+			if (prevCl.equals(clauses[0])) {
+				// Same clause; combine repetitions
+				return new SpanQueryRepetition(clauses[0], min + rep.getMinRep(), addRepetitionMaxValues(rep.getMaxRep(), max));
+			}
+		} else {
+			if (previousPart.equals(clauses[0])) {
+				// Same clause; add one to min and max
+				return new SpanQueryRepetition(clauses[0], min + 1, addRepetitionMaxValues(max, 1));
+			}
+		}
+		return super.combineWithPrecedingPart(previousPart, reader);
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		if (min < 1)
+			throw new RuntimeException("Query should have been rewritten! (min < 1)");
 		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
 		return new SpanWeightRepetition(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
@@ -124,4 +168,17 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	public String toString(String field) {
 		return "SpanQueryRepetition(" + clauses[0] + ", " + min + ", " + max + ")";
 	}
+
+	public BLSpanQuery getClause() {
+		return clauses[0];
+	}
+
+	public int getMinRep() {
+		return min;
+	}
+
+	public int getMaxRep() {
+		return max;
+	}
+
 }

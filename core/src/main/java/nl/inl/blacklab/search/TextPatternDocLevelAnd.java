@@ -18,6 +18,9 @@ package nl.inl.blacklab.search;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryDocLevelAnd;
+
 /**
  * A TextPattern returning hits from all clauses, but only in documents that match all clauses.
  */
@@ -27,14 +30,14 @@ public class TextPatternDocLevelAnd extends TextPatternCombiner {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		List<T> chResults = new ArrayList<>(clauses.size());
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
 		for (TextPattern cl : clauses) {
-			chResults.add(cl.translate(translator, context));
+			chResults.add(cl.translate(context));
 		}
 		if (chResults.size() == 1)
 			return chResults.get(0);
-		return translator.docLevelAnd(context, chResults);
+		return new SpanQueryDocLevelAnd(chResults);
 	}
 
 	@Override
@@ -43,37 +46,6 @@ public class TextPatternDocLevelAnd extends TextPatternCombiner {
 			return super.equals(obj);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		int l = clauses.get(0).getMinLength();
-		for (TextPattern clause: clauses) {
-			if (!clause.hasConstantLength() || clause.getMinLength() != l)
-				return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		int n = Integer.MAX_VALUE;
-		for (TextPattern clause: clauses) {
-			n = Math.min(n, clause.getMinLength());
-		}
-		return n;
-	}
-
-	@Override
-	public int getMaxLength() {
-		int n = 0;
-		for (TextPattern clause: clauses) {
-			int l = clause.getMaxLength();
-			if (l < 0)
-				return -1; // infinite
-			n = Math.max(n, l);
-		}
-		return n;
 	}
 
 	@Deprecated

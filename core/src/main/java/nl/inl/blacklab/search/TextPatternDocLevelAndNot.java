@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryDocLevelAndNot;
+
 /**
  * A TextPattern returning hits from the "include" clause, but only in documents where the "exclude"
  * clause doesn't occur.
@@ -31,18 +34,8 @@ public class TextPatternDocLevelAndNot extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.docLevelAndNot(include.translate(translator, context),
-				exclude.translate(translator, context));
-	}
-
-	@Override
-	public TextPattern rewrite() {
-		TextPattern inclRewr = include.rewrite();
-		TextPattern exclRewr = exclude.rewrite();
-		if (inclRewr == include && exclRewr == exclude)
-			return this; // Nothing to rewrite
-		return new TextPatternDocLevelAndNot(inclRewr, exclRewr);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		return new SpanQueryDocLevelAndNot(include.translate(context), exclude.translate(context));
 	}
 
 	@Override
@@ -52,21 +45,6 @@ public class TextPatternDocLevelAndNot extends TextPattern {
 					exclude.equals(((TextPatternDocLevelAndNot) obj).exclude);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return include.hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		return include.getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		return include.getMaxLength();
 	}
 
 	@Override

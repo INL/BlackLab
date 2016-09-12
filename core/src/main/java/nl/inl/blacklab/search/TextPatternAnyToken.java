@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryNGrams;
+
 /**
  * A 'gap' of a number of tokens we don't care about, with minimum and maximum length.
  *
@@ -46,33 +49,8 @@ public class TextPatternAnyToken extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		int realMin = min;
-		if (realMin == 0) {
-			// This can happen if the whole query is optional, so
-			// it's impossible to build an alternative without this clause.
-			// In this case, min == 0 has no real meaning and we simply
-			// behave the same as if min == 1.
-			realMin = 1;
-		}
-		return translator.any(context, realMin, max);
-
-//		if (realMin == 1 && max == 1)
-//			return any;
-//
-//		return translator.repetition(any, realMin, max);
-	}
-
-	@Override
-	public boolean matchesEmptySequence() {
-		return min == 0;
-	}
-
-	@Override
-	public TextPattern noEmpty() {
-		if (min > 0)
-			return this;
-		return new TextPatternAnyToken(1, max);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		return new SpanQueryNGrams(context.alwaysHasClosingToken(), context.luceneField(), min, max);
 	}
 
 	@Override
@@ -82,40 +60,6 @@ public class TextPatternAnyToken extends TextPattern {
 			return min == tp.min && max == tp.max;
 		}
 		return false;
-	}
-
-	@Override
-	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
-		if (previousPart instanceof TextPatternAnyToken) {
-			TextPatternAnyToken tp = (TextPatternAnyToken)previousPart;
-			return new TextPatternAnyToken(min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
-		} else if (previousPart instanceof TextPatternExpansion) {
-			TextPatternExpansion tp = (TextPatternExpansion) previousPart;
-			if (!tp.expandToLeft) {
-				// Any token clause after expand to right; combine.
-				return new TextPatternExpansion(tp.clause, tp.expandToLeft, tp.min + min, (max == -1 || tp.max == -1) ? -1 : tp.max + max);
-			}
-		}
-		TextPattern combo = super.combineWithPrecedingPart(previousPart);
-		if (combo == null) {
-			combo = new TextPatternExpansion(previousPart, false, min, max);
-		}
-		return combo;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return min == max;
-	}
-
-	@Override
-	public int getMinLength() {
-		return min;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return max;
 	}
 
 	@Override

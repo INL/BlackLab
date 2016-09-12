@@ -18,6 +18,8 @@ package nl.inl.blacklab.search;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+
 /**
  * Abstract base class for combining several text patterns into a single new compound TextPattern
  */
@@ -35,7 +37,7 @@ public abstract class TextPatternCombiner extends TextPattern {
 	}
 
 	@Override
-	public abstract <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context);
+	public abstract BLSpanQuery translate(QueryExecutionContext context);
 
 	public void addClause(TextPattern clause) {
 		clauses.add(clause);
@@ -62,28 +64,6 @@ public abstract class TextPatternCombiner extends TextPattern {
 			clauses.add(i, newChild);
 			i++;
 		}
-	}
-
-	/**
-	 * Rewrites the query by calling rewrite() on its children and, if any of its
-	 * children are rewritten, cloning this with the rewritten children.
-	 * @return the rewritten query (or, if no rewriting was necessary, this)
-	 */
-	@Override
-	public TextPattern rewrite() {
-		TextPatternCombiner clone = null;
-		for (TextPattern child : clauses) {
-			TextPattern rewritten = child.rewrite();
-			if (rewritten != child) {
-				if (clone == null)
-					clone = (TextPatternCombiner) clone();
-				clone.replaceClause(child, rewritten);
-			}
-		}
-		if (clone != null) {
-			return clone;
-		}
-		return this;
 	}
 
 	@Override

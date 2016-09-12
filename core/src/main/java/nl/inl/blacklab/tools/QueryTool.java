@@ -1063,7 +1063,7 @@ public class QueryTool {
 				errprintln("No query to execute.");
 				return;
 			}
-			pattern = pattern.rewrite();
+			//pattern = pattern.rewrite();
 			if (verbose)
 				outprintln("TextPattern: " + pattern.toString());
 

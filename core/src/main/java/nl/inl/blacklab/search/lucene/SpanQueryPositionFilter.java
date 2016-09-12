@@ -108,6 +108,19 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+		if (previousPart.hasConstantLength()) {
+			// We "gobble up" the previous part and adjust our left matching edge.
+			// This should make filtering more efficient, since we will likely have fewer hits to filter.
+			SpanQueryPositionFilter result = (SpanQueryPositionFilter)copy();
+			result.clauses[0] = new SpanQuerySequence(previousPart, clauses[0]);
+			result.adjustLeft(previousPart.getMinLength());
+			return result;
+		}
+		return super.combineWithPrecedingPart(previousPart, reader);
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight prodWeight = clauses[0].createWeight(searcher, needsScores);
 		SpanWeight filterWeight = clauses[1].createWeight(searcher, needsScores);
@@ -170,5 +183,31 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 		default:
 			throw new IllegalArgumentException("Unknown filter operation " + op);
 		}
+	}
+
+	public SpanQueryPositionFilter copy() {
+		return new SpanQueryPositionFilter(clauses[0], clauses[1], op, invert, leftAdjust, rightAdjust);
+	}
+
+	/**
+	 * Adjust the left edge of the producer hits for matching only.
+	 *
+	 * That is, the original producer hit is returned, not the adjusted one.
+	 *
+	 * @param delta how to adjust the edge
+	 */
+	public void adjustLeft(int delta) {
+		leftAdjust += delta;
+	}
+
+	/**
+	 * Adjust the right edge of the producer hits for matching only.
+	 *
+	 * That is, the original producer hit is returned, not the adjusted one.
+	 *
+	 * @param delta how to adjust the edge
+	 */
+	public void adjustRight(int delta) {
+		rightAdjust += delta;
 	}
 }

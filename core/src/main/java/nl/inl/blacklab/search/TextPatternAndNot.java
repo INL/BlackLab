@@ -16,11 +16,15 @@
 package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryAnd;
+import nl.inl.blacklab.search.lucene.SpanQueryNot;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+
 /**
- * AND query for combining different properties from a complex field.
+ * AND (NOT) query for combining different properties from a complex field.
  *
  * Note that when generating a SpanQuery, the Span start and end are also matched! Therefore only
  * two hits in the same document at the same start and end position will produce a match. This is
@@ -44,47 +48,31 @@ public class TextPatternAndNot extends TextPattern {
 		exclude.addAll(excludeClauses);
 	}
 
-	public void replaceClause(TextPattern oldClause, TextPattern... newClauses) {
-		int i = include.indexOf(oldClause);
-		include.remove(i);
-		for (TextPattern newChild: newClauses) {
-			include.add(i, newChild);
-			i++;
-		}
-	}
-
-	public void replaceClauseNot(TextPattern oldClause, TextPattern... newClauses) {
-		int i = exclude.indexOf(oldClause);
-		exclude.remove(i);
-		for (TextPattern newChild: newClauses) {
-			exclude.add(i, newChild);
-			i++;
-		}
-	}
-
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		List<T> chResults = new ArrayList<>(include.size());
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		List<BLSpanQuery> chResults = new ArrayList<>(include.size());
 		for (TextPattern cl : include) {
-			chResults.add(cl.translate(translator, context));
+			chResults.add(cl.translate(context));
 		}
-		List<T> chResultsNot = new ArrayList<>(exclude.size());
+		List<BLSpanQuery> chResultsNot = new ArrayList<>(exclude.size());
 		for (TextPattern cl : exclude) {
-			chResultsNot.add(cl.translate(translator, context));
+			chResultsNot.add(cl.translate(context));
 		}
 		if (chResults.size() == 1 && chResultsNot.isEmpty()) {
 			// Single positive clause
 			return chResults.get(0);
 		} else if (chResults.isEmpty()) {
 			// All negative clauses, so it's really just a NOT query. Should've been rewritten, but ok.
-			return translator.not(context, translator.and(context, chResultsNot));
+			SpanQueryNot spanQueryNot = new SpanQueryNot(new SpanQueryAnd(chResultsNot));
+			spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
+			return spanQueryNot;
 		}
 		// Combination of positive and possibly negative clauses
-		T includeResult = chResults.size() == 1 ? chResults.get(0) : translator.and(context, chResults);
+		BLSpanQuery includeResult = chResults.size() == 1 ? chResults.get(0) : new SpanQueryAnd(chResults);
 		if (chResultsNot.isEmpty())
 			return includeResult;
-		T excludeResult = chResultsNot.size() == 1 ? chResultsNot.get(0) : translator.and(context, chResultsNot);
-		return translator.andNot(context, includeResult, excludeResult);
+		BLSpanQuery excludeResult = chResultsNot.size() == 1 ? chResultsNot.get(0) : new SpanQueryAnd(chResultsNot);
+		return new SpanQueryPositionFilter(includeResult, excludeResult, TextPatternPositionFilter.Operation.MATCHES, true);
 	}
 
 	@Override
@@ -103,122 +91,12 @@ public class TextPatternAndNot extends TextPattern {
 	}
 
 	@Override
-	public TextPattern inverted() {
-		if (exclude.isEmpty()) {
-			// In this case, it's better to just wrap this in TextPatternNot,
-			// so it will be recognized by other rewrite()s.
-			return super.inverted();
-		}
-
-		// ! ( (a & b) & !(c & d) ) --> !a | !b | (c & d)
-		List<TextPattern> inclNeg = new ArrayList<>();
-		for (TextPattern tp: include) {
-			inclNeg.add(tp.inverted());
-		}
-		if (exclude.size() == 1)
-			inclNeg.add(exclude.get(0));
-		else
-			inclNeg.add(new TextPatternAndNot(exclude.toArray(new TextPattern[0])));
-		return new TextPatternOr(inclNeg.toArray(new TextPattern[0]));
-	}
-
-	@Override
-	protected boolean okayToInvertForOptimization() {
-		// Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
-		return producesSingleTokens() && !exclude.isEmpty();
-	}
-
-	@Override
-	public boolean isSingleTokenNot() {
-		return producesSingleTokens() && include.isEmpty();
-	}
-
-	@Override
-	public TextPattern rewrite() {
-
-		// Flatten nested AND queries, and invert negative-only clauses.
-		// This doesn't change the query because the AND operator is associative.
-		boolean anyRewritten = false;
-		List<TextPattern> rewrittenCl = new ArrayList<>();
-		List<TextPattern> rewrittenNotCl = new ArrayList<>();
-		boolean isNot = false;
-		for (List<TextPattern> cl: Arrays.asList(include, exclude)) {
-			for (TextPattern child: cl) {
-				List<TextPattern> clPos = isNot ? rewrittenNotCl : rewrittenCl;
-				List<TextPattern> clNeg = isNot ? rewrittenCl : rewrittenNotCl;
-				TextPattern rewritten = child.rewrite();
-				String className = rewritten.getClass().getSimpleName();
-				boolean isTPAndNot = className.equals("TextPatternAndNot") || className.equals("TextPatternAnd"); // TODO: Ugly, but TPSeq derives from TPAndNot...
-				if (!isTPAndNot && rewritten.isSingleTokenNot()) {
-					// "Switch sides": invert the clause, and
-					// swap the lists we add clauses to.
-					rewritten = rewritten.inverted();
-					List<TextPattern> temp = clPos;
-					clPos = clNeg;
-					clNeg = temp;
-					anyRewritten = true;
-				}
-				if (isTPAndNot) {
-					// Flatten.
-					// Child AND operation we want to flatten into this AND operation.
-					// Replace the child, incorporating its children into this AND operation.
-					clPos.addAll(((TextPatternAndNot)rewritten).include);
-					clNeg.addAll(((TextPatternAndNot)rewritten).exclude);
-					anyRewritten = true;
-				} else {
-					// Just add it.
-					clPos.add(rewritten);
-					if (rewritten != child)
-						anyRewritten = true;
-				}
-			}
-			isNot = true;
-		}
-
-		if (rewrittenCl.isEmpty()) {
-			// All-negative; node should be rewritten to OR.
-			if (rewrittenNotCl.size() == 1)
-				return rewrittenCl.get(0).inverted();
-			return (new TextPatternOr(rewrittenNotCl.toArray(new TextPattern[0]))).inverted();
-		}
-
-		if (anyRewritten) {
-			// Some clauses were rewritten.
-			return new TextPatternAndNot(rewrittenCl, rewrittenNotCl);
-		}
-
-		// Node need not be rewritten; return as-is
-		return this;
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternAndNot) {
 			return include.equals(((TextPatternAndNot) obj).include) &&
 					exclude.equals(((TextPatternAndNot) obj).exclude);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		if (include.isEmpty())
-			return true;
-		return include.get(0).hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		if (include.isEmpty())
-			return 1;
-		return include.get(0).getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		if (include.isEmpty())
-			return 1;
-		return include.get(0).getMaxLength();
 	}
 
 	@Override

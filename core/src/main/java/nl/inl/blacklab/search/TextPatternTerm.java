@@ -17,6 +17,9 @@ package nl.inl.blacklab.search;
 
 import org.apache.lucene.index.Term;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+
 /**
  * A TextPattern matching a word.
  */
@@ -36,8 +39,8 @@ public class TextPatternTerm extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.term(context, translator.optInsensitive(context, value));
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		return new BLSpanTermQuery(new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value))));
 	}
 
 	@Override
@@ -46,21 +49,6 @@ public class TextPatternTerm extends TextPattern {
 			return value.equals(((TextPatternTerm) obj).value);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 1;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 1;
 	}
 
 	@Override

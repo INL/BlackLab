@@ -20,6 +20,8 @@ import java.io.IOException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.SpanQuery;
 
+import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
+
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
  * derived from this so we know they will produce BLSpans (which
@@ -99,79 +101,76 @@ public abstract class BLSpanQuery extends SpanQuery {
 		return false;
 	}
 
-	// TODO: translate to BLSpanQuery!
-//	/**
-//	 * Try to combine with the previous part into a repetition pattern.
-//	 *
-//	 * This optimized queries like "blah" "blah" into "blah"{2}, which
-//	 * executes more efficiently.
-//	 *
-//	 * @param previousPart the part occurring before this one in a sequence
-//	 * @return a combined repetition text pattern, or null if it can't be combined
-//	 */
-//	BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart) {
-//		if (previousPart instanceof SpanQueryRepetition) {
-//			// Repetition clause.
-//			SpanQueryRepetition rep = (SpanQueryRepetition) previousPart;
-//			TextPattern prevCl = rep.getClause();
-//			if (equals(prevCl)) {
-//				// Same clause; add one to rep's min and max
-//				return new TextPatternRepetition(this, 1 + rep.getMin(), addRepetitionMaxValues(rep.getMax(), 1));
-//			}
-//		}
-//		if (equals(previousPart)) {
-//			// Same clause; create repetition with min and max equals 2.
-//			return new TextPatternRepetition(this, 2, 2);
-//		}
-//		if (previousPart instanceof TextPatternAnyToken) {
-//			TextPatternAnyToken tp = (TextPatternAnyToken)previousPart;
-//			return new TextPatternExpansion(this, true, tp.getMinLength(), tp.getMaxLength());
-//		}
-//		if (previousPart instanceof TextPatternExpansion) {
-//			TextPatternExpansion tp = (TextPatternExpansion)previousPart;
-//			if (tp.isExpandToLeft() && tp.getMinExpand() != tp.getMaxExpand()) {
-//				// Expand to left with a range of tokens. Combine with this part to likely
-//				// reduce the number of hits we'll have to expand.
-//				TextPattern seq = new TextPatternSequence(tp.getClause(), this);
-//				seq = seq.rewrite();
-//				return new TextPatternExpansion(seq, true, tp.getMinExpand(), tp.getMaxExpand());
-//			}
-//		}
-//		if (hasConstantLength()) {
-//			if (previousPart instanceof TextPatternPositionFilter) {
-//				// We are "gobbled up" by the previous part and adjust its right matching edge inward.
-//				// This should make filtering more efficient, since we will likely have fewer hits to filter.
-//				try {
-//					TextPatternPositionFilter result = (TextPatternPositionFilter)previousPart.clone();
-//					result.clauses.set(0, new TextPatternSequence(result.clauses.get(0), this));
-//					result.adjustRight(-getMinLength());
-//					return result;
-//				} catch (CloneNotSupportedException e) {
-//					throw new RuntimeException(e);
-//				}
-//			}
-//			if (isSingleTokenNot() && previousPart.hasConstantLength()) {
-//				// Negative, single-token child after constant-length part.
-//				// Rewrite to NOTCONTAINING clause, incorporating previous part.
-//				int prevLen = previousPart.getMinLength();
-//				TextPattern container = new TextPatternExpansion(previousPart, false, 1, 1);
-//				TextPatternPositionFilter result = new TextPatternPositionFilter(container, inverted(), Operation.CONTAINING, true);
-//				result.adjustLeft(prevLen);
-//				return result;
-//			}
-//			if (previousPart.isSingleTokenNot()) {
-//				// Constant-length child after negative, single-token part.
-//				// Rewrite to NOTCONTAINING clause, incorporating previous part.
-//				int myLen = getMinLength();
-//				TextPattern container = new TextPatternExpansion(this, true, 1, 1);
-//				TextPatternPositionFilter result = new TextPatternPositionFilter(container, previousPart.inverted(), Operation.CONTAINING, true);
-//				result.adjustRight(-myLen);
-//				return result;
-//			}
-//		}
-//
-//		return null;
-//	}
+	/**
+	 * Try to combine with the previous part into a repetition pattern.
+	 *
+	 * This optimized queries like "blah" "blah" into "blah"{2}, which
+	 * executes more efficiently.
+	 *
+	 * @param previousPart the part occurring before this one in a sequence
+	 * @param reader the index reader
+	 * @return a combined repetition text pattern, or null if it can't be combined
+	 * @throws IOException
+	 */
+	BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+		if (previousPart instanceof SpanQueryRepetition) {
+			// Repetition clause.
+			SpanQueryRepetition rep = (SpanQueryRepetition) previousPart;
+			BLSpanQuery prevCl = rep.getClause();
+			if (equals(prevCl)) {
+				// Same clause; add one to rep's min and max
+				return new SpanQueryRepetition(this, 1 + rep.getMinRep(), addRepetitionMaxValues(rep.getMaxRep(), 1));
+			}
+		}
+		if (equals(previousPart)) {
+			// Same clause; create repetition with min and max equals 2.
+			return new SpanQueryRepetition(this, 2, 2);
+		}
+		if (previousPart instanceof SpanQueryAnyToken) {
+			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
+			return new SpanQueryExpansion(this, true, tp.getMinLength(), tp.getMaxLength());
+		}
+		if (previousPart instanceof SpanQueryExpansion) {
+			SpanQueryExpansion tp = (SpanQueryExpansion)previousPart;
+			if (tp.isExpandToLeft() && tp.getMinExpand() != tp.getMaxExpand()) {
+				// Expand to left with a range of tokens. Combine with this part to likely
+				// reduce the number of hits we'll have to expand.
+				BLSpanQuery seq = new SpanQuerySequence(tp.getClause(), this);
+				seq = seq.rewrite(reader);
+				return new SpanQueryExpansion(seq, true, tp.getMinExpand(), tp.getMaxExpand());
+			}
+		}
+		if (hasConstantLength()) {
+			if (previousPart instanceof SpanQueryPositionFilter) {
+				// We are "gobbled up" by the previous part and adjust its right matching edge inward.
+				// This should make filtering more efficient, since we will likely have fewer hits to filter.
+				SpanQueryPositionFilter result = ((SpanQueryPositionFilter)previousPart).copy();
+				result.clauses[0] = new SpanQuerySequence(result.clauses[0], this);
+				result.adjustRight(-getMinLength());
+				return result;
+			}
+			if (isSingleTokenNot() && previousPart.hasConstantLength()) {
+				// Negative, single-token child after constant-length part.
+				// Rewrite to NOTCONTAINING clause, incorporating previous part.
+				int prevLen = previousPart.getMinLength();
+				BLSpanQuery container = new SpanQueryExpansion(previousPart, false, 1, 1);
+				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, inverted(), Operation.CONTAINING, true);
+				result.adjustLeft(prevLen);
+				return result;
+			}
+			if (previousPart.isSingleTokenNot()) {
+				// Constant-length child after negative, single-token part.
+				// Rewrite to NOTCONTAINING clause, incorporating previous part.
+				int myLen = getMinLength();
+				BLSpanQuery container = new SpanQueryExpansion(this, true, 1, 1);
+				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, previousPart.inverted(), Operation.CONTAINING, true);
+				result.adjustRight(-myLen);
+				return result;
+			}
+		}
+
+		return null;
+	}
 
 	/**
 	 * Are all our hits single tokens?

@@ -53,6 +53,21 @@ public class SpanQueryTags extends BLSpanQuery {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		return false;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 0;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return Integer.MAX_VALUE;
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = clause.createWeight(searcher, needsScores);
 		return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
@@ -123,5 +138,9 @@ public class SpanQueryTags extends BLSpanQuery {
 		int h = clause.hashCode();
 		h ^= (h << 10) | (h >>> 23);
 		return h;
+	}
+
+	public String getElementName() {
+		return tagName;
 	}
 }

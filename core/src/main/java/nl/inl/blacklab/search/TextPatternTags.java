@@ -15,11 +15,20 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import nl.inl.util.StringUtil;
-
 import org.apache.lucene.index.Term;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryAnd;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.lucene.SpanQueryTags;
+import nl.inl.blacklab.search.lucene.SpanQueryTagsOld;
+import nl.inl.util.StringUtil;
 
 /**
  * A TextPattern matching a word.
@@ -44,8 +53,32 @@ public class TextPatternTags extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.tags(context, translator.optInsensitive(context, elementName), attr);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		String elementName1 = optInsensitive(context, elementName);
+		BLSpanQuery allTags;
+		if (context.tagLengthInPayload()) {
+			// Modern index, with tag length in payload
+			allTags = new SpanQueryTags(context, elementName1);
+		} else {
+			// Older index, with end tags stored in separate property
+			allTags = new SpanQueryTagsOld(context, elementName1);
+		}
+		if (attr == null || attr.isEmpty())
+			return allTags;
+
+		// Construct attribute filters
+		List<BLSpanQuery> attrFilters = new ArrayList<>();
+		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
+		for (Map.Entry<String,String> e: attr.entrySet()) {
+			String value = optInsensitive(context, "@" + e.getKey() + "__" + e.getValue());
+			attrFilters.add((BLSpanQuery) new BLSpanTermQuery(new Term(startTagContext.luceneField(), startTagContext.subpropPrefix() + startTagContext.optDesensitize(value))));
+		}
+
+		// Filter the tags
+		// (NOTE: only works for start tags and full elements because attribute values
+		//  are indexed at the start tag!)
+		BLSpanQuery filter = new SpanQueryAnd(attrFilters);
+		return new SpanQueryPositionFilter(allTags, filter, TextPatternPositionFilter.Operation.STARTS_AT, false);
 	}
 
 	@Override
@@ -55,21 +88,6 @@ public class TextPatternTags extends TextPattern {
 			return elementName.equals(tp.elementName) && attr.equals(tp.attr);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return false;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 0;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return -1;
 	}
 
 	public String getElementName() {

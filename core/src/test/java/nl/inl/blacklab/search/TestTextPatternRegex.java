@@ -25,7 +25,6 @@ public class TestTextPatternRegex {
 		TextPattern r = new TextPatternRegex("");
 		Assert.assertEquals("", ((TextPatternRegex)r).getValue());
 
-		r = r.rewrite();
 		Assert.assertTrue(r instanceof TextPatternTerm);
 		Assert.assertEquals("", ((TextPatternTerm)r).getValue());
 	}
@@ -34,9 +33,5 @@ public class TestTextPatternRegex {
 	public void testBasicPattern() {
 		TextPattern r = new TextPatternRegex("bla");
 		Assert.assertEquals("bla", ((TextPatternRegex)r).getValue());
-
-		r = r.rewrite();
-		Assert.assertTrue(r instanceof TextPatternWildcard);
-		Assert.assertEquals("*bla*", ((TextPatternWildcard)r).getValue());
 	}
 }

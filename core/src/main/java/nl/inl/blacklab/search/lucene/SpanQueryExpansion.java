@@ -92,6 +92,46 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public BLSpanQuery noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		int newMin = min == 0 ? 1 : min;
+		return new SpanQueryExpansion(clauses[0].noEmpty(), expandToLeft, newMin, max);
+	}
+
+	@Override
+	public boolean hasConstantLength() {
+		return clauses[0].hasConstantLength() && min == max;
+	}
+
+	@Override
+	public int getMinLength() {
+		return clauses[0].getMinLength() + min;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return max < 0 ? Integer.MAX_VALUE : clauses[0].getMaxLength() + max;
+	}
+
+	@Override
+	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+		if (expandToLeft && previousPart instanceof SpanQueryAnyToken) {
+			// Expand to left following any token clause. Combine.
+			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
+			return new SpanQueryExpansion(clauses[0], expandToLeft, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
+		}
+		if (!expandToLeft && max != min) {
+			// Expand to right with range of tokens. Combine with previous part to likely
+			// reduce the number of hits we'll have to expand.
+			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses[0]);
+			seq = seq.rewrite(reader);
+			return new SpanQueryExpansion(seq, false, min, max);
+		}
+		return super.combineWithPrecedingPart(previousPart, reader);
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
 		return new SpanWeightExpansion(weight, searcher, needsScores ? getTermContexts(weight) : null);
@@ -163,6 +203,22 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	 */
 	public void setIgnoreLastToken(boolean ignoreLastToken) {
 		this.ignoreLastToken = ignoreLastToken;
+	}
+
+	public boolean isExpandToLeft() {
+		return expandToLeft;
+	}
+
+	public int getMinExpand() {
+		return min;
+	}
+
+	public int getMaxExpand() {
+		return max;
+	}
+
+	public BLSpanQuery getClause() {
+		return clauses[0];
 	}
 
 }

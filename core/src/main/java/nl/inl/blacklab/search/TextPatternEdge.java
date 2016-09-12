@@ -15,8 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-
-
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryEdge;
 
 /**
  * Returns either the left edge or right edge of the specified query.
@@ -33,9 +33,8 @@ public class TextPatternEdge extends TextPatternCombiner {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		//throw new RuntimeException("Cannot search for isolated NOT query (must always be AND NOT)");
-		return translator.edge(clauses.get(0).translate(translator, context), rightEdge);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		return new SpanQueryEdge(clauses.get(0).translate(context), rightEdge);
 	}
 
 	@Override
@@ -44,21 +43,6 @@ public class TextPatternEdge extends TextPatternCombiner {
 			return super.equals(obj) && ((TextPatternEdge)obj).rightEdge == rightEdge;
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 0;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 0;
 	}
 
 	public boolean isRightEdge() {

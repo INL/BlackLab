@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+
 /**
  * TextPattern for wrapping another TextPattern so that it applies to a certain word property.
  *
@@ -43,16 +45,8 @@ public class TextPatternSensitive extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return input.translate(translator, context.withSensitive(caseSensitive, diacriticsSensitive));
-	}
-
-	@Override
-	public TextPattern rewrite() {
-		TextPattern rewritten = input.rewrite();
-		if (rewritten == input)
-			return this; // Nothing to rewrite
-		return new TextPatternSensitive(caseSensitive, diacriticsSensitive, rewritten);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		return input.translate(context.withSensitive(caseSensitive, diacriticsSensitive));
 	}
 
 	@Override
@@ -63,21 +57,6 @@ public class TextPatternSensitive extends TextPattern {
 					input.equals(tp.input);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return input.hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		return input.getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		return input.getMaxLength();
 	}
 
 	@Override

@@ -107,4 +107,20 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 	public String toString(String field) {
 		return "SpanQueryEdge(" + clausesToString(field) + ")";
 	}
+
+	public boolean isRightEdge() {
+		return rightEdge;
+	}
+
+	public String getElementName() {
+		BLSpanQuery cl = clauses[0];
+		if (cl instanceof SpanQueryTags) {
+			return ((SpanQueryTags)cl).getElementName();
+		}
+		return null;
+	}
+
+	public BLSpanQuery getClause() {
+		return clauses[0];
+	}
 }

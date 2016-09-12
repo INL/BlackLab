@@ -47,7 +47,6 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.lucene.TextPatternTranslatorSpanQuery;
 import nl.inl.util.VersionFile;
 
 public abstract class Searcher {
@@ -657,9 +656,8 @@ public abstract class Searcher {
 
 	public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName, Query filter) {
 		// Convert to SpanQuery
-		pattern = pattern.rewrite();
-		TextPatternTranslatorSpanQuery spanQueryTranslator = new TextPatternTranslatorSpanQuery();
-		BLSpanQuery spanQuery = pattern.translate(spanQueryTranslator, getDefaultExecutionContext(fieldName));
+		//pattern = pattern.rewrite();
+		BLSpanQuery spanQuery = pattern.translate(getDefaultExecutionContext(fieldName));
 		if (filter != null)
 			spanQuery = new SpanQueryFiltered(spanQuery, filter);
 		return spanQuery;

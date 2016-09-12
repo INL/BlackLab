@@ -67,6 +67,21 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public boolean hasConstantLength() {
+		return false;
+	}
+
+	@Override
+	public int getMinLength() {
+		return 0;
+	}
+
+	@Override
+	public int getMaxLength() {
+		return -1;
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight startWeight = clauses[0].createWeight(searcher, needsScores);
 		SpanWeight endWeight = clauses[1].createWeight(searcher, needsScores);

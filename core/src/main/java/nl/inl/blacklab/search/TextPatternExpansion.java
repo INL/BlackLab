@@ -1,5 +1,8 @@
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
+
 public class TextPatternExpansion extends TextPattern {
 
 	protected TextPattern clause;
@@ -24,21 +27,10 @@ public class TextPatternExpansion extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.expand(context, clause.translate(translator, context), expandToLeft, min, max);
-	}
-
-	@Override
-	public boolean matchesEmptySequence() {
-		return clause.matchesEmptySequence() && min == 0;
-	}
-
-	@Override
-	public TextPattern noEmpty() {
-		if (!matchesEmptySequence())
-			return this;
-		int newMin = min == 0 ? 1 : min;
-		return new TextPatternExpansion(clause.noEmpty(), expandToLeft, newMin, max);
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		SpanQueryExpansion spanQueryExpansion = new SpanQueryExpansion(clause.translate(context), expandToLeft, min, max);
+		spanQueryExpansion.setIgnoreLastToken(context.alwaysHasClosingToken());
+		return spanQueryExpansion;
 	}
 
 	@Override
@@ -50,21 +42,6 @@ public class TextPatternExpansion extends TextPattern {
 		return false;
 	}
 
-	@Override
-	public boolean hasConstantLength() {
-		return clause.hasConstantLength() && min == max;
-	}
-
-	@Override
-	public int getMinLength() {
-		return clause.getMinLength() + min;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return max < 0 ? -1 : clause.getMaxLength() + max;
-	}
-
 	public int getMinExpand() {
 		return min;
 	}
@@ -73,38 +50,12 @@ public class TextPatternExpansion extends TextPattern {
 		return max;
 	}
 
-	@Override
-	public TextPattern combineWithPrecedingPart(TextPattern previousPart) {
-		if (expandToLeft && previousPart instanceof TextPatternAnyToken) {
-			// Expand to left following any token clause. Combine.
-			TextPatternAnyToken tp = (TextPatternAnyToken)previousPart;
-			return new TextPatternExpansion(clause, expandToLeft, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
-		}
-		if (!expandToLeft && max != min) {
-			// Expand to right with range of tokens. Combine with previous part to likely
-			// reduce the number of hits we'll have to expand.
-			TextPattern seq = new TextPatternSequence(previousPart, clause);
-			seq = seq.rewrite();
-			return new TextPatternExpansion(seq, false, min, max);
-		}
-		return super.combineWithPrecedingPart(previousPart);
-	}
-
 	public boolean isExpandToLeft() {
 		return expandToLeft;
 	}
 
 	public TextPattern getClause() {
 		return clause;
-	}
-
-	@Override
-	public TextPattern rewrite() {
-		TextPattern rewritten = clause.rewrite();
-		if (rewritten != clause) {
-			return new TextPatternExpansion(rewritten, expandToLeft, min, max);
-		}
-		return this;
 	}
 
 	@Override

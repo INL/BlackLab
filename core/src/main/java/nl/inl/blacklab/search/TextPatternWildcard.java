@@ -15,6 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.WildcardQuery;
+
+import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+
 /**
  * A textpattern matching a simple wildcard expression.
  *
@@ -27,8 +33,19 @@ public class TextPatternWildcard extends TextPatternTerm {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.wildcard(context, translator.optInsensitive(context, value));
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		TextPattern result = rewrite();
+		if (result != this)
+			return result.translate(context);
+		try {
+			return new BLSpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(context.luceneField(),
+					context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
+		} catch (StackOverflowError e) {
+			// If we pass in a really large wildcard expression,
+			// stack overflow might occurs inside Lucene's automaton building
+			// code and we may end up here.
+			throw new RegexpTooLargeException();
+		}
 	}
 
 	/**
@@ -37,7 +54,6 @@ public class TextPatternWildcard extends TextPatternTerm {
 	 *
 	 * @return the TextPattern
 	 */
-	@Override
 	public TextPattern rewrite() {
 		// Hey, maybe it doesn't even contain wildcards?
 		if (value.indexOf("*") < 0 && value.indexOf("?") < 0) {

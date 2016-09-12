@@ -15,6 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.RegexpQuery;
+
+import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.StringUtil;
 
 
@@ -25,9 +30,6 @@ public class TextPatternRegex extends TextPatternTerm {
 	/**
 	 * Instantiate a regex TextPattern.
 	 *
-	 * NOTE: consider using the factory method getAppropriatePattern() instead. It will choose the
-	 * (likely) fastest TextPattern class, given your regular expression.
-	 *
 	 * @param value
 	 */
 	public TextPatternRegex(String value) {
@@ -35,8 +37,20 @@ public class TextPatternRegex extends TextPatternTerm {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return translator.regex(context, translator.optInsensitive(context, value));
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		TextPattern result = rewrite();
+		if (result != this)
+			return result.translate(context);
+		String valueNoStartEndMatch = optInsensitive(context, value).replaceAll("\\^|\\$", "");
+		try {
+			return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
+					new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(valueNoStartEndMatch))));
+		} catch (StackOverflowError e) {
+			// If we pass in a really large regular expression, like a huge
+			// list of words combined with OR, stack overflow occurs inside
+			// Lucene's automaton building code and we may end up here.
+			throw new RegexpTooLargeException();
+		}
 	}
 
 	/**
@@ -46,7 +60,6 @@ public class TextPatternRegex extends TextPatternTerm {
 	 *
 	 * @return the TextPattern
 	 */
-	@Override
 	public TextPattern rewrite() {
 		TextPattern result = this;
 
@@ -107,19 +120,17 @@ public class TextPatternRegex extends TextPatternTerm {
 		if (StringUtil.escapeRegexCharacters(wildcard).equals(wildcard)) {
 			// Nope! Safe to turn this into a wildcard query.
 
-			// Turn into wildcard query
+			// Turn into wildcard query (or prefix, or term, because we call rewrite())
 			wildcard = wildcard.replaceAll("##ASTERISK##", "*");
 			wildcard = wildcard.replaceAll("##QUESTIONMARK##", "?");
-			TextPattern wildcardPattern = new TextPatternWildcard(wildcard);
+			TextPattern wildcardPattern = new TextPatternWildcard(wildcard).rewrite();
 
 			// Optionally make it case-insensitive
 			if (searchCaseInsensitively) {
 				wildcardPattern = new TextPatternSensitive(false, false, wildcardPattern);
 			}
 
-			// Let TextPatternWildcard sort out the rest
-			// (may be turned into a prefix or term query if possible).
-			result = wildcardPattern.rewrite();
+			result = wildcardPattern;
 		}
 
 		if (forceCaseSensitive) {

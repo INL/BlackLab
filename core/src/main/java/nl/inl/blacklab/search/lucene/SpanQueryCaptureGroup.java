@@ -56,6 +56,13 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public BLSpanQuery noEmpty() {
+		if (!matchesEmptySequence())
+			return this;
+		return new SpanQueryCaptureGroup(clauses[0].noEmpty(), name);
+	}
+
+	@Override
 	public boolean hasConstantLength() {
 		return clauses[0].hasConstantLength();
 	}

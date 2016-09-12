@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
  * TextPattern for wrapping another TextPattern so that it applies to a certain word property.
@@ -34,28 +35,8 @@ public class TextPatternProperty extends TextPattern {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		return input.translate(translator, context.withProperty(propertyName));
-	}
-
-	@Override
-	public TextPattern rewrite() {
-		TextPattern rewritten = input.rewrite();
-		if (rewritten == input)
-			return this; // Nothing to rewrite
-		return new TextPatternProperty(propertyName, rewritten);
-	}
-
-	@Override
-	public boolean matchesEmptySequence() {
-		return input.matchesEmptySequence();
-	}
-
-	@Override
-	public TextPattern noEmpty() {
-		if (!matchesEmptySequence())
-			return this;
-		return new TextPatternProperty(propertyName, input.noEmpty());
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		return input.translate(context.withProperty(propertyName));
 	}
 
 	@Override
@@ -65,21 +46,6 @@ public class TextPatternProperty extends TextPattern {
 			return input.equals(tp.input) && propertyName.equals(tp.propertyName);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return input.hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		return input.getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		return input.getMaxLength();
 	}
 
 	@Override

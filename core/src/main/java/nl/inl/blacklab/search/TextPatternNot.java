@@ -15,8 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-
-
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryNot;
 
 /**
  * NOT operator for TextPattern queries at token and sequence level.
@@ -29,39 +29,10 @@ public class TextPatternNot extends TextPatternCombiner {
 	}
 
 	@Override
-	public <T> T translate(TextPatternTranslator<T> translator, QueryExecutionContext context) {
-		//throw new RuntimeException("Cannot search for isolated NOT query (must always be AND NOT)");
-		return translator.not(context, clauses.get(0).translate(translator, context));
-	}
-
-	@Override
-	public TextPattern inverted() {
-		return clauses.get(0); // Just return our clause, dropping the NOT operation
-	}
-
-	@Override
-	protected boolean okayToInvertForOptimization() {
-		// Yes, inverting is actually an improvement
-		return true;
-	}
-
-	@Override
-	public boolean isSingleTokenNot() {
-		return true;
-	}
-
-	/**
-	 * Rewrites NOT queries by returning the inverted rewritten clause.
-	 *
-	 * This eliminates double-NOT constructions which would be relatively inefficient
-	 * to execute.
-	 */
-	@Override
-	public TextPattern rewrite() {
-		TextPattern rewritten = clauses.get(0).rewrite();
-		if (rewritten == clauses.get(0) && !rewritten.okayToInvertForOptimization())
-			return this; // Nothing to rewrite
-		return rewritten.inverted();
+	public BLSpanQuery translate(QueryExecutionContext context) {
+		SpanQueryNot spanQueryNot = new SpanQueryNot(clauses.get(0).translate(context));
+		spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
+		return spanQueryNot;
 	}
 
 	@Override
@@ -70,21 +41,6 @@ public class TextPatternNot extends TextPatternCombiner {
 			return super.equals(obj);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 1;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 1;
 	}
 
 	@Deprecated
