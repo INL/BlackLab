@@ -16,6 +16,8 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -145,7 +147,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 				// We are "gobbled up" by the previous part and adjust its right matching edge inward.
 				// This should make filtering more efficient, since we will likely have fewer hits to filter.
 				SpanQueryPositionFilter result = ((SpanQueryPositionFilter)previousPart).copy();
-				result.clauses[0] = new SpanQuerySequence(result.clauses[0], this);
+				result.clauses.set(0, new SpanQuerySequence(result.clauses.get(0), this));
 				result.adjustRight(-getMinLength());
 				return result;
 			}
@@ -215,4 +217,20 @@ public abstract class BLSpanQuery extends SpanQuery {
 		// Add regular values
 		return a + b;
 	}
+
+	static <T extends SpanQuery> String clausesToString(String field, List<T> clauses) {
+		StringBuilder b = new StringBuilder();
+		for (T clause: clauses) {
+			if (b.length() > 0)
+				b.append(", ");
+			b.append(clause.toString(field));
+		}
+		return b.toString();
+	}
+
+	@SafeVarargs
+	static <T extends SpanQuery> String clausesToString(String field, T... clauses) {
+		return clausesToString(field, Arrays.asList(clauses));
+	}
+
 }

@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,40 +47,40 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryCaptureGroup(rewritten[0], name);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryCaptureGroup(rewritten.get(0), name);
 	}
 
 	@Override
 	public boolean matchesEmptySequence() {
-		return clauses[0].matchesEmptySequence();
+		return clauses.get(0).matchesEmptySequence();
 	}
 
 	@Override
 	public BLSpanQuery noEmpty() {
 		if (!matchesEmptySequence())
 			return this;
-		return new SpanQueryCaptureGroup(clauses[0].noEmpty(), name);
+		return new SpanQueryCaptureGroup(clauses.get(0).noEmpty(), name);
 	}
 
 	@Override
 	public boolean hasConstantLength() {
-		return clauses[0].hasConstantLength();
+		return clauses.get(0).hasConstantLength();
 	}
 
 	@Override
 	public int getMinLength() {
-		return clauses[0].getMinLength();
+		return clauses.get(0).getMinLength();
 	}
 
 	@Override
 	public int getMaxLength() {
-		return clauses[0].getMaxLength();
+		return clauses.get(0).getMaxLength();
 	}
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightCaptureGroup(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
@@ -114,6 +115,6 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryCaptureGroup(" + clausesToString(field) + ", " + name + ")";
+		return "CAPTURE(" + clausesToString(field) + ", " + name + ")";
 	}
 }

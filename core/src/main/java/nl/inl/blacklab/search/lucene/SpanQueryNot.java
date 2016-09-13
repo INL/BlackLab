@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +26,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
@@ -53,12 +53,11 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	}
 
 	/**
-	 * A SpanQuery that simply matches all tokens in a field
+	 * A BLSpanQuery that simply matches all tokens in a field
 	 * @param matchAllTokensFieldName what field to match all tokens in
 	 */
 	private SpanQueryNot(String matchAllTokensFieldName) {
-		clauses = new BLSpanQuery[1];
-		clauses[0] = null;
+		clauses = Arrays.asList((BLSpanQuery)null);
 		baseFieldName = matchAllTokensFieldName;
 	}
 
@@ -78,10 +77,17 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
-		if (rewritten == null)
+		BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
+
+		// Can we cancel out a double not?
+		if (rewritten.okayToInvertForOptimization())
+			return rewritten.inverted(); // yes
+
+		// No, must remain a NOT
+		if (rewritten == clauses.get(0)) {
 			return this;
-		SpanQueryNot result = new SpanQueryNot(rewritten[0]);
+		}
+		SpanQueryNot result = new SpanQueryNot(rewritten);
 		if (ignoreLastToken)
 			result.setIgnoreLastToken(true);
 		return result;
@@ -103,8 +109,32 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public BLSpanQuery inverted() {
+		return clauses.get(0); // Just return our clause, dropping the NOT operation
+	}
+
+	@Override
+	protected boolean okayToInvertForOptimization() {
+		// Yes, inverting is actually an improvement
+		return true;
+	}
+
+	@Override
+	public boolean isSingleTokenNot() {
+		return true;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof SpanQueryNot) {
+			return super.equals(obj);
+		}
+		return false;
+	}
+
+	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanQuery query = clauses[0];
+		BLSpanQuery query = clauses.get(0);
 		SpanWeight weight = query == null ? null : query.createWeight(searcher, needsScores);
 		return new SpanWeightNot(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
@@ -140,7 +170,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryNot(" + (clauses[0] == null ? "" : clausesToString(field)) + ")";
+		return "NOT(" + (clauses.get(0) == null ? "" : clausesToString(field)) + ")";
 	}
 
 	/** Set whether to ignore the last token.

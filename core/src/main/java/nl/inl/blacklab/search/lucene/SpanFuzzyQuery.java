@@ -153,7 +153,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 	 */
 	@Override
 	public String toString(String field) {
-		return "SpanFuzzyQuery(" + term.text() + ")";
+		return "FUZZY(" + term.text() + ")";
 	}
 
 	@Override

@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,9 +28,10 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.search.TextPatternPositionFilter;
 
 /**
  * Combines SpanQueries using AND. Note that this means that only matches with the same document id,
@@ -50,35 +52,99 @@ public class SpanQueryAnd extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryAnd(rewritten);
+		// Flatten nested AND queries, and invert negative-only clauses.
+		// This doesn't change the query because the AND operator is associative.
+		boolean anyRewritten = false;
+		List<BLSpanQuery> rewrittenCl = new ArrayList<>();
+		List<BLSpanQuery> rewrittenNotCl = new ArrayList<>();
+		for (BLSpanQuery child: clauses) {
+			List<BLSpanQuery> clPos = rewrittenCl;
+			List<BLSpanQuery> clNeg = rewrittenNotCl;
+			BLSpanQuery rewritten = child.rewrite(reader);
+			boolean isTPAndNot = rewritten instanceof SpanQueryAndNot;
+			if (!isTPAndNot && rewritten.isSingleTokenNot()) {
+				// "Switch sides": invert the clause, and
+				// swap the lists we add clauses to.
+				rewritten = rewritten.inverted();
+				List<BLSpanQuery> temp = clPos;
+				clPos = clNeg;
+				clNeg = temp;
+				anyRewritten = true;
+			}
+			if (isTPAndNot) {
+				// Flatten.
+				// Child ANDNOT operation we want to flatten into this ANDNOT operation.
+				// Replace the child, incorporating its children into this ANDNOT operation.
+				clPos.addAll(((SpanQueryAndNot)rewritten).getIncludeClauses());
+				clNeg.addAll(((SpanQueryAndNot)rewritten).getExcludeClauses());
+				anyRewritten = true;
+			} else if (rewritten instanceof SpanQueryAnd) {
+				// Flatten.
+				// Child AND operation we want to flatten into this AND operation.
+				// Replace the child, incorporating its children into this AND operation.
+				clPos.addAll(((SpanQueryAnd)rewritten).getClauses());
+				anyRewritten = true;
+			} else {
+				// Just add it.
+				clPos.add(rewritten);
+				if (rewritten != child)
+					anyRewritten = true;
+			}
+		}
+
+		if (rewrittenCl.isEmpty()) {
+			// All-negative; node should be rewritten to OR.
+			if (rewrittenNotCl.size() == 1)
+				return rewrittenCl.get(0).inverted().rewrite(reader);
+			return (new BLSpanOrQuery(rewrittenNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
+		}
+
+		if (!anyRewritten) {
+			rewrittenCl = clauses;
+			rewrittenNotCl = Collections.emptyList();
+		}
+
+		if (rewrittenCl.size() == 1 && rewrittenNotCl.isEmpty()) {
+			// Single positive clause
+			return rewrittenCl.get(0);
+		} else if (rewrittenCl.isEmpty()) {
+			// All negative clauses, so it's really just a NOT query. Should've been rewritten, but ok.
+			return new SpanQueryNot(new SpanQueryAnd(rewrittenNotCl)).rewrite(reader);
+		}
+
+		// Combination of positive and possibly negative clauses
+		BLSpanQuery includeResult = rewrittenCl.size() == 1 ? rewrittenCl.get(0) : new SpanQueryAnd(rewrittenCl);
+		if (rewrittenNotCl.isEmpty())
+			return includeResult;
+		BLSpanQuery excludeResult = rewrittenNotCl.size() == 1 ? rewrittenNotCl.get(0) : new SpanQueryAnd(rewrittenNotCl);
+		return new SpanQueryPositionFilter(includeResult, excludeResult, TextPatternPositionFilter.Operation.MATCHES, true).rewrite(reader);
 	}
 
 	@Override
 	public boolean hasConstantLength() {
-		if (clauses.length == 0)
+		if (clauses.isEmpty())
 			return true;
-		return clauses[0].hasConstantLength();
+		return clauses.get(0).hasConstantLength();
 	}
 
 	@Override
 	public int getMinLength() {
-		if (clauses.length == 0)
+		if (clauses.isEmpty())
 			return 1;
-		return Math.max(clauses[0].getMinLength(), clauses[1].getMinLength());
+		return Math.max(clauses.get(0).getMinLength(), clauses.get(1).getMinLength());
 	}
 
 	@Override
 	public int getMaxLength() {
-		if (clauses.length == 0)
+		if (clauses.isEmpty())
 			return 1;
-		return Math.min(clauses[0].getMaxLength(), clauses[1].getMaxLength());
+		return Math.min(clauses.get(0).getMaxLength(), clauses.get(1).getMaxLength());
 	}
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		List<SpanWeight> weights = new ArrayList<>();
-		for (SpanQuery clause: clauses) {
+		for (BLSpanQuery clause: clauses) {
 			weights.add(clause.createWeight(searcher, needsScores));
 		}
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(weights.toArray(new SpanWeight[0])) : null;
@@ -123,6 +189,14 @@ public class SpanQueryAnd extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryAnd(" + clausesToString(field) + ")";
+		return "AND(" + clausesToString(field) + ")";
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof SpanQueryAnd) {
+			return clauses.equals(((SpanQueryAnd) obj).clauses);
+		}
+		return false;
 	}
 }

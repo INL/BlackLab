@@ -103,7 +103,7 @@ public class SpanQueryUnique extends BLSpanQuery {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryUnique(" + src + ")";
+		return "UNIQ(" + src + ")";
 	}
 
 	@Override

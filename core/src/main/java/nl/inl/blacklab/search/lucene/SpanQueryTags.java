@@ -23,7 +23,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
@@ -38,7 +37,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
  */
 public class SpanQueryTags extends BLSpanQuery {
 
-	SpanTermQuery clause;
+	BLSpanTermQuery clause;
 
 	private String tagName;
 
@@ -49,7 +48,7 @@ public class SpanQueryTags extends BLSpanQuery {
 		baseFieldName = context.fieldName();
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		String startTagFieldName = startTagContext.luceneField();
-		this.clause = new SpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));
+		this.clause = new BLSpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));
 	}
 
 	@Override
@@ -103,7 +102,7 @@ public class SpanQueryTags extends BLSpanQuery {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryTagsPayload(" + tagName + ")";
+		return "TAGS(" + tagName + ")";
 	}
 
 	@Override

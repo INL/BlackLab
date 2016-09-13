@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,29 +41,29 @@ public class SpanQueryDocLevelAndNot extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryDocLevelAndNot(rewritten[0], rewritten[1]);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryDocLevelAndNot(rewritten.get(0), rewritten.get(1));
 	}
 
 	@Override
 	public boolean hasConstantLength() {
-		return clauses[0].hasConstantLength();
+		return clauses.get(0).hasConstantLength();
 	}
 
 	@Override
 	public int getMinLength() {
-		return clauses[0].getMinLength();
+		return clauses.get(0).getMinLength();
 	}
 
 	@Override
 	public int getMaxLength() {
-		return clauses[0].getMaxLength();
+		return clauses.get(0).getMaxLength();
 	}
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight includeWeight = clauses[0].createWeight(searcher, needsScores);
-		SpanWeight excludeWeight = clauses[1].createWeight(searcher, needsScores);
+		SpanWeight includeWeight = clauses.get(0).createWeight(searcher, needsScores);
+		SpanWeight excludeWeight = clauses.get(1).createWeight(searcher, needsScores);
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(includeWeight) : null;
 		return new SpanWeightDocLevelAndNot(includeWeight, excludeWeight, searcher, contexts);
 	}
@@ -103,7 +104,7 @@ public class SpanQueryDocLevelAndNot extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "spanAndNot([include=" + clauses[0].toString(field) + ", exclude="
-				+ clauses[1].toString(field) + "])";
+		return "DOC-ANDNOT([include=" + clauses.get(0).toString(field) + ", exclude="
+				+ clauses.get(1).toString(field) + "])";
 	}
 }

@@ -66,12 +66,12 @@ public class TextPatternExpansion extends TextPattern {
 	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
-		return "EXPAND(" + clause.toString(context) + ", " + expandToLeft + ", " + min + ", " + max + ")";
+		return "EXPAND(" + clause.toString(context) + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + max + ")";
 	}
 
 	@Override
 	public String toString() {
-		return "EXPAND(" + clause + ", " + expandToLeft + ", " + min + ", " + max + ")";
+		return "EXPAND(" + clause + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + max + ")";
 	}
 
 }

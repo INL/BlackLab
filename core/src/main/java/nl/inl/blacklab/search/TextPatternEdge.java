@@ -69,12 +69,12 @@ public class TextPatternEdge extends TextPatternCombiner {
 	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
-		return "EDGE(" + clauses.get(0).toString(context) + ", " + rightEdge + ")";
+		return "EDGE(" + clauses.get(0).toString(context) + ", " + (rightEdge ? "R" : "L") + ")";
 	}
 
 	@Override
 	public String toString() {
-		return "EDGE(" + clauses.get(0).toString() + ", " + rightEdge + ")";
+		return "EDGE(" + clauses.get(0).toString() + ", " + (rightEdge ? "R" : "L") + ")";
 	}
 
 }

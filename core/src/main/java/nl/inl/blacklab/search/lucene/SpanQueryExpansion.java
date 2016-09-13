@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,10 +78,10 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
 		if (rewritten == null)
 			return this;
-		SpanQueryExpansion result = new SpanQueryExpansion(rewritten[0], expandToLeft, min, max);
+		SpanQueryExpansion result = new SpanQueryExpansion(rewritten.get(0), expandToLeft, min, max);
 		if (ignoreLastToken)
 			result.setIgnoreLastToken(true);
 		return result;
@@ -88,7 +89,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean matchesEmptySequence() {
-		return clauses[0].matchesEmptySequence() && min == 0;
+		return clauses.get(0).matchesEmptySequence() && min == 0;
 	}
 
 	@Override
@@ -96,22 +97,22 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		if (!matchesEmptySequence())
 			return this;
 		int newMin = min == 0 ? 1 : min;
-		return new SpanQueryExpansion(clauses[0].noEmpty(), expandToLeft, newMin, max);
+		return new SpanQueryExpansion(clauses.get(0).noEmpty(), expandToLeft, newMin, max);
 	}
 
 	@Override
 	public boolean hasConstantLength() {
-		return clauses[0].hasConstantLength() && min == max;
+		return clauses.get(0).hasConstantLength() && min == max;
 	}
 
 	@Override
 	public int getMinLength() {
-		return clauses[0].getMinLength() + min;
+		return clauses.get(0).getMinLength() + min;
 	}
 
 	@Override
 	public int getMaxLength() {
-		return max < 0 ? Integer.MAX_VALUE : clauses[0].getMaxLength() + max;
+		return max < 0 ? Integer.MAX_VALUE : clauses.get(0).getMaxLength() + max;
 	}
 
 	@Override
@@ -119,12 +120,12 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		if (expandToLeft && previousPart instanceof SpanQueryAnyToken) {
 			// Expand to left following any token clause. Combine.
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			return new SpanQueryExpansion(clauses[0], expandToLeft, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
+			return new SpanQueryExpansion(clauses.get(0), expandToLeft, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
 		}
 		if (!expandToLeft && max != min) {
 			// Expand to right with range of tokens. Combine with previous part to likely
 			// reduce the number of hits we'll have to expand.
-			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses[0]);
+			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));
 			seq = seq.rewrite(reader);
 			return new SpanQueryExpansion(seq, false, min, max);
 		}
@@ -133,7 +134,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightExpansion(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
@@ -161,7 +162,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 			Spans spansSource = weight.getSpans(context, requiredPostings);
 			if (spansSource == null)
 				return null;
-			BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses[0].getField(), spansSource, expandToLeft, min, max);
+			BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(), spansSource, expandToLeft, min, max);
 
 			// Note: the spans coming from SpansExpansion are not sorted properly.
 			// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
@@ -193,7 +194,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryExpansion(" + clauses[0] + ", " + expandToLeft + ", " + min + ", " + max
+		return "EXPAND(" + clauses.get(0) + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + max
 				+ ")";
 	}
 
@@ -218,7 +219,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	}
 
 	public BLSpanQuery getClause() {
-		return clauses[0];
+		return clauses.get(0);
 	}
 
 }

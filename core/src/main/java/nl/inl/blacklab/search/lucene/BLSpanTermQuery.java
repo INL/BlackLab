@@ -117,7 +117,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
 	@Override
 	public String toString(String field) {
-		return "BL" + query.toString(field);
+		return "TERM(" + query + ")";
 	}
 
 	@Override

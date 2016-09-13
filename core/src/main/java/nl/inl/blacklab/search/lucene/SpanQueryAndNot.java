@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
@@ -183,10 +182,10 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		throw new RuntimeException("Query should have been rewritten!");
 	}
 
-	@Override
 	public String toString(String field) {
-		return "spanAndNot([include=" + StringUtils.join(include, ";") + ", exclude="
-				+ StringUtils.join(exclude, ";") + "])";
+		if (exclude.isEmpty())
+			return "AND(" + clausesToString(field, include) + ")";
+		return "ANDNOT([" + clausesToString(field, include) + "], [" + clausesToString(field, exclude) + "])";
 	}
 
 	@Override
@@ -196,5 +195,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		if (exclude.size() > 0)
 			return exclude.get(0).getField();
 		throw new RuntimeException("Query has no clauses");
+	}
+
+	public List<BLSpanQuery> getIncludeClauses() {
+		return include;
+	}
+
+	public List<BLSpanQuery> getExcludeClauses() {
+		return include;
 	}
 }

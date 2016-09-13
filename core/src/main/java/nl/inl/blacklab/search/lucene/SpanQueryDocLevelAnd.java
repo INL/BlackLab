@@ -58,15 +58,15 @@ public class SpanQueryDocLevelAnd extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
 		return rewritten == null ? this : new SpanQueryDocLevelAnd(rewritten);
 	}
 
 	@Override
 	public boolean hasConstantLength() {
-		if (clauses.length == 0)
+		if (clauses.isEmpty())
 			return true;
-		int l = clauses[0].getMinLength();
+		int l = clauses.get(0).getMinLength();
 		for (BLSpanQuery clause: clauses) {
 			if (!clause.hasConstantLength() || clause.getMinLength() != l)
 				return false;
@@ -140,6 +140,6 @@ public class SpanQueryDocLevelAnd extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryDocLevelAnd(" + clausesToString(field) + ")";
+		return "DOC-AND(" + clausesToString(field) + ")";
 	}
 }

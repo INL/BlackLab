@@ -34,7 +34,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
 	@Override
 	public String toString(String field) {
-		return "BL" + query.toString(field);
+		return "SPANWRAP(" + query.getWrappedQuery() + ")";
 	}
 
 	@Override

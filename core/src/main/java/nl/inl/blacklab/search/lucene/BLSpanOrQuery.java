@@ -169,7 +169,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	@Override
 	public String toString(String field) {
-		return inner.toString();
+		return "OR(" + clausesToString(field, inner.getClauses()) + ")";
 	}
 
 	@Override

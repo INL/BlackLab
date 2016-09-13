@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,28 +84,28 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryPositionFilter(rewritten[0], rewritten[1], op, invert, leftAdjust, rightAdjust);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryPositionFilter(rewritten.get(0), rewritten.get(1), op, invert, leftAdjust, rightAdjust);
 	}
 
 	@Override
 	public boolean matchesEmptySequence() {
-		return clauses[0].matchesEmptySequence();
+		return clauses.get(0).matchesEmptySequence();
 	}
 
 	@Override
 	public boolean hasConstantLength() {
-		return clauses[0].hasConstantLength();
+		return clauses.get(0).hasConstantLength();
 	}
 
 	@Override
 	public int getMinLength() {
-		return clauses[0].getMinLength();
+		return clauses.get(0).getMinLength();
 	}
 
 	@Override
 	public int getMaxLength() {
-		return clauses[0].getMaxLength();
+		return clauses.get(0).getMaxLength();
 	}
 
 	@Override
@@ -113,7 +114,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 			// We "gobble up" the previous part and adjust our left matching edge.
 			// This should make filtering more efficient, since we will likely have fewer hits to filter.
 			SpanQueryPositionFilter result = (SpanQueryPositionFilter)copy();
-			result.clauses[0] = new SpanQuerySequence(previousPart, clauses[0]);
+			result.clauses.set(0, new SpanQuerySequence(previousPart, clauses.get(0)));
 			result.adjustLeft(previousPart.getMinLength());
 			return result;
 		}
@@ -122,8 +123,8 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight prodWeight = clauses[0].createWeight(searcher, needsScores);
-		SpanWeight filterWeight = clauses[1].createWeight(searcher, needsScores);
+		SpanWeight prodWeight = clauses.get(0).createWeight(searcher, needsScores);
+		SpanWeight filterWeight = clauses.get(1).createWeight(searcher, needsScores);
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(prodWeight, filterWeight) : null;
 		return new SpanWeightPositionFilter(prodWeight, filterWeight, searcher, contexts);
 	}
@@ -171,22 +172,22 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 		String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
 		switch(op) {
 		case WITHIN:
-			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "WITHIN" + adj + ")";
+			return "POSFILTER(" + clausesToString(field) + ", " + not + "WITHIN" + adj + ")";
 		case CONTAINING:
-			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "CONTAINING" + adj + ")";
+			return "POSFILTER(" + clausesToString(field) + ", " + not + "CONTAINING" + adj + ")";
 		case ENDS_AT:
-			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "ENDS_AT" + adj + ")";
+			return "POSFILTER(" + clausesToString(field) + ", " + not + "ENDS_AT" + adj + ")";
 		case STARTS_AT:
-			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "STARTS_AT" + adj + ")";
+			return "POSFILTER(" + clausesToString(field) + ", " + not + "STARTS_AT" + adj + ")";
 		case MATCHES:
-			return "SQPositionFilter(" + clausesToString(field) + ", " + not + "MATCHES" + adj + ")";
+			return "POSFILTER(" + clausesToString(field) + ", " + not + "MATCHES" + adj + ")";
 		default:
 			throw new IllegalArgumentException("Unknown filter operation " + op);
 		}
 	}
 
 	public SpanQueryPositionFilter copy() {
-		return new SpanQueryPositionFilter(clauses[0], clauses[1], op, invert, leftAdjust, rightAdjust);
+		return new SpanQueryPositionFilter(clauses.get(0), clauses.get(1), op, invert, leftAdjust, rightAdjust);
 	}
 
 	/**

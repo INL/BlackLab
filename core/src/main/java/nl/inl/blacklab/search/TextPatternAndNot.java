@@ -62,7 +62,7 @@ public class TextPatternAndNot extends TextPattern {
 			// Single positive clause
 			return chResults.get(0);
 		} else if (chResults.isEmpty()) {
-			// All negative clauses, so it's really just a NOT query. Should've been rewritten, but ok.
+			// All negative clauses, so it's really just a NOT query.
 			SpanQueryNot spanQueryNot = new SpanQueryNot(new SpanQueryAnd(chResultsNot));
 			spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
 			return spanQueryNot;

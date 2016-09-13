@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,7 +51,7 @@ public class SpanQueryNGrams extends BLSpanQueryAbstract {
 		baseFieldName = fieldName;
 		this.min = min;
 		this.max = max;
-		clauses = new BLSpanQuery[0];
+		clauses = Collections.emptyList();
 	}
 
 	@Override
@@ -102,7 +103,7 @@ public class SpanQueryNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryNGrams(" + min + ", " + max + ")";
+		return "NGRAMS(" + min + ", " + max + ")";
 	}
 
 	/** Set whether to ignore the last token.

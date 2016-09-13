@@ -16,10 +16,12 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
@@ -35,44 +37,37 @@ public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 	 */
 	protected String baseFieldName = "";
 
-	protected BLSpanQuery[] clauses;
+	protected List<BLSpanQuery> clauses;
 
 	public BLSpanQueryAbstract() {
 		//
 	}
 
 	public BLSpanQueryAbstract(BLSpanQuery first, BLSpanQuery second) {
-		clauses = new BLSpanQuery[2];
-		clauses[0] = first;
-		clauses[1] = second;
+		clauses = Arrays.asList(first, second);
 		determineBaseFieldName();
 	}
 
 	public BLSpanQueryAbstract(BLSpanQuery clause) {
-		clauses = new BLSpanQuery[1];
-		clauses[0] = clause;
+		clauses = Arrays.asList(clause);
 		determineBaseFieldName();
 	}
 
 	public BLSpanQueryAbstract(Collection<BLSpanQuery> clauscol) {
-		clauses = new BLSpanQuery[clauscol.size()];
-		int k = 0;
-		for (BLSpanQuery s : clauscol) {
-			clauses[k++] = s;
-		}
+		clauses = new ArrayList<>(clauscol);
 		determineBaseFieldName();
 	}
 
 	public BLSpanQueryAbstract(BLSpanQuery[] _clauses) {
-		clauses = _clauses;
+		clauses = Arrays.asList(_clauses);
 		determineBaseFieldName();
 	}
 
 	private void determineBaseFieldName() {
-		if (clauses.length > 0) {
-			baseFieldName = ComplexFieldUtil.getBaseName(clauses[0].getField());
-			for (int i = 1; i < clauses.length; i++) {
-				String f = ComplexFieldUtil.getBaseName(clauses[i].getField());
+		if (clauses.size() > 0) {
+			baseFieldName = ComplexFieldUtil.getBaseName(clauses.get(0).getField());
+			for (int i = 1; i < clauses.size(); i++) {
+				String f = ComplexFieldUtil.getBaseName(clauses.get(i).getField());
 				if (!baseFieldName.equals(f))
 					throw new RuntimeException("Mix of incompatible fields in query ("
 							+ baseFieldName + " and " + f + ")");
@@ -89,10 +84,10 @@ public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 
 		final BLSpanQueryAbstract that = (BLSpanQueryAbstract) o;
 
-		if (!clauses.equals(that.clauses))
-			return false;
+		if (clauses.equals(that.clauses))
+			return true;
 
-		return true;
+		return false;
 	}
 
 	@Override
@@ -114,13 +109,16 @@ public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 		return baseFieldName;
 	}
 
-	protected BLSpanQuery[] rewriteClauses(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = new BLSpanQuery[clauses.length];
+	List<BLSpanQuery> getClauses() {
+		return clauses;
+	}
+
+	protected List<BLSpanQuery> rewriteClauses(IndexReader reader) throws IOException {
+		List<BLSpanQuery> rewritten = new ArrayList<>(clauses.size());
 		boolean someRewritten = false;
-		for (int i = 0; i < clauses.length; i++) {
-			BLSpanQuery c = clauses[i];
+		for (BLSpanQuery c: clauses) {
 			BLSpanQuery query = c == null ? null : (BLSpanQuery) c.rewrite(reader);
-			rewritten[i] = query;
+			rewritten.add(query);
 			if (query != c)
 				someRewritten = true;
 		}
@@ -129,12 +127,11 @@ public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 
 	public String clausesToString(String field) {
 		StringBuilder buffer = new StringBuilder();
-		for (int i = 0; i < clauses.length; i++) {
-			SpanQuery clause = clauses[i];
-			buffer.append(clause.toString(field));
-			if (i != clauses.length - 1) {
+		for (BLSpanQuery clause: clauses) {
+			if (buffer.length() > 0) {
 				buffer.append(", ");
 			}
+			buffer.append(clause.toString(field));
 		}
 		return buffer.toString();
 	}

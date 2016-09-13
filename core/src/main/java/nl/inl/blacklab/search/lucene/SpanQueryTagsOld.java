@@ -16,6 +16,8 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,7 +54,6 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 	public SpanQueryTagsOld(QueryExecutionContext context, String tagName) {
 		super();
 		this.tagName = tagName;
-		clauses = new BLSpanQuery[2];
 		baseFieldName = context.fieldName();
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		String startTagFieldName = startTagContext.luceneField();
@@ -62,8 +63,10 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,
 		// not the complete field name with the property.
-		clauses[0] = new BLSpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));
-		clauses[1] = new BLSpanTermQuery(new Term(endTagFieldName, endTagContext.optDesensitize(tagName)));
+		clauses = new ArrayList<BLSpanQuery>(Arrays.asList(
+			new BLSpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName))),
+			new BLSpanTermQuery(new Term(endTagFieldName, endTagContext.optDesensitize(tagName)))
+		));
 	}
 
 	@Override
@@ -83,8 +86,8 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight startWeight = clauses[0].createWeight(searcher, needsScores);
-		SpanWeight endWeight = clauses[1].createWeight(searcher, needsScores);
+		SpanWeight startWeight = clauses.get(0).createWeight(searcher, needsScores);
+		SpanWeight endWeight = clauses.get(1).createWeight(searcher, needsScores);
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(startWeight, endWeight) : null;
 		return new SpanWeightTagsOld(startWeight, endWeight, searcher, contexts);
 	}
@@ -123,6 +126,6 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryTags(" + tagName + ")";
+		return "TAGS(" + tagName + ")";
 	}
 }

@@ -111,24 +111,6 @@ public abstract class TextPattern implements Cloneable {
 		return b.toString();
 	}
 
-	/**
-	 * Add two values for maximum number of repetitions, taking "infinite" into account.
-	 *
-	 * -1 repetitions means infinite. Adding infinite to any other value
-	 * produces infinite again.
-	 *
-	 * @param a first max. repetitions value
-	 * @param b first max. repetitions value
-	 * @return sum of the max. repetitions values
-	 */
-	protected static int addRepetitionMaxValues(int a, int b) {
-		// Is either value infinite?
-		if (a == -1 || b == -1)
-			return -1; // Yes, result is infinite
-		// Add regular values
-		return a + b;
-	}
-
 	@Override
 	public abstract boolean equals(Object obj);
 

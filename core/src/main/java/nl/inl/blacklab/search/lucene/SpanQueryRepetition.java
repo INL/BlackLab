@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -63,8 +64,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryRepetition(rewritten[0], min, max);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryRepetition(rewritten.get(0), min, max);
 	}
 
 	/**
@@ -73,7 +74,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	 */
 	@Override
 	public boolean matchesEmptySequence() {
-		return clauses[0].matchesEmptySequence() || min == 0;
+		return clauses.get(0).matchesEmptySequence() || min == 0;
 	}
 
 	@Override
@@ -81,22 +82,22 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 		if (!matchesEmptySequence())
 			return this;
 		int newMin = min == 0 ? 1 : min;
-		return new SpanQueryRepetition(clauses[0].noEmpty(), newMin, max);
+		return new SpanQueryRepetition(clauses.get(0).noEmpty(), newMin, max);
 	}
 
 	@Override
 	public boolean hasConstantLength() {
-		return clauses[0].hasConstantLength() && min == max;
+		return clauses.get(0).hasConstantLength() && min == max;
 	}
 
 	@Override
 	public int getMinLength() {
-		return clauses[0].getMinLength() * min;
+		return clauses.get(0).getMinLength() * min;
 	}
 
 	@Override
 	public int getMaxLength() {
-		return max < 0 ? Integer.MAX_VALUE : clauses[0].getMaxLength() * max;
+		return max < 0 ? Integer.MAX_VALUE : clauses.get(0).getMaxLength() * max;
 	}
 
 	@Override
@@ -105,14 +106,14 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 			// Repetition clause.
 			SpanQueryRepetition rep = (SpanQueryRepetition) previousPart;
 			BLSpanQuery prevCl = rep.getClause();
-			if (prevCl.equals(clauses[0])) {
+			if (prevCl.equals(clauses.get(0))) {
 				// Same clause; combine repetitions
-				return new SpanQueryRepetition(clauses[0], min + rep.getMinRep(), addRepetitionMaxValues(rep.getMaxRep(), max));
+				return new SpanQueryRepetition(clauses.get(0), min + rep.getMinRep(), addRepetitionMaxValues(rep.getMaxRep(), max));
 			}
 		} else {
-			if (previousPart.equals(clauses[0])) {
+			if (previousPart.equals(clauses.get(0))) {
 				// Same clause; add one to min and max
-				return new SpanQueryRepetition(clauses[0], min + 1, addRepetitionMaxValues(max, 1));
+				return new SpanQueryRepetition(clauses.get(0), min + 1, addRepetitionMaxValues(max, 1));
 			}
 		}
 		return super.combineWithPrecedingPart(previousPart, reader);
@@ -122,7 +123,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		if (min < 1)
 			throw new RuntimeException("Query should have been rewritten! (min < 1)");
-		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightRepetition(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
@@ -166,11 +167,11 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryRepetition(" + clauses[0] + ", " + min + ", " + max + ")";
+		return "REP(" + clauses.get(0) + ", " + min + ", " + max + ")";
 	}
 
 	public BLSpanQuery getClause() {
-		return clauses[0];
+		return clauses.get(0);
 	}
 
 	public int getMinRep() {

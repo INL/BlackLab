@@ -146,7 +146,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
 	@Override
 	public String toString(String field) {
-		return "spanAny(" + min + ", " + max + ")";
+		return "ANYTOKEN(" + min + ", " + max + ")";
 	}
 
 	@Override

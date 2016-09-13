@@ -156,7 +156,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 					// Child sequence we want to flatten into this sequence.
 					// Replace the child, incorporating the child sequence into the rewritten sequence
 					flat.remove(i);
-					flat.addAll(i, Arrays.asList(((SpanQuerySequence)child).clauses));
+					flat.addAll(i, ((SpanQuerySequence)rewritten).clauses);
 				} else {
 					// Replace the child with the rewritten version
 					flat.set(i, rewritten);
@@ -408,6 +408,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQuerySequence(" + clausesToString(field) + ")";
+		return "SEQ(" + clausesToString(field) + ")";
 	}
 }

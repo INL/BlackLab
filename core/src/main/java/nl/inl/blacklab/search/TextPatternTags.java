@@ -77,7 +77,11 @@ public class TextPatternTags extends TextPattern {
 		// Filter the tags
 		// (NOTE: only works for start tags and full elements because attribute values
 		//  are indexed at the start tag!)
-		BLSpanQuery filter = new SpanQueryAnd(attrFilters);
+		BLSpanQuery filter;
+		if (attrFilters.size() == 1)
+			filter = attrFilters.get(0);
+		else
+			filter = new SpanQueryAnd(attrFilters);
 		return new SpanQueryPositionFilter(allTags, filter, TextPatternPositionFilter.Operation.STARTS_AT, false);
 	}
 

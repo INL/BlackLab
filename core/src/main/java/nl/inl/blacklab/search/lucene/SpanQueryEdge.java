@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,8 +50,8 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryEdge(rewritten[0], rightEdge);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
+		return rewritten == null ? this : new SpanQueryEdge(rewritten.get(0), rightEdge);
 	}
 
 	@Override
@@ -70,7 +71,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightEdge(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
@@ -105,7 +106,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryEdge(" + clausesToString(field) + ")";
+		return "EDGE(" + clausesToString(field) + ", " + (rightEdge ? "R" : "L") + ")";
 	}
 
 	public boolean isRightEdge() {
@@ -113,7 +114,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 	}
 
 	public String getElementName() {
-		BLSpanQuery cl = clauses[0];
+		BLSpanQuery cl = clauses.get(0);
 		if (cl instanceof SpanQueryTags) {
 			return ((SpanQueryTags)cl).getElementName();
 		}
@@ -121,6 +122,6 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 	}
 
 	public BLSpanQuery getClause() {
-		return clauses[0];
+		return clauses.get(0);
 	}
 }

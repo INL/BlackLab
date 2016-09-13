@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,34 +69,34 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
 		Query rewrittenFilter = filter.rewrite(reader);
-		return rewritten == null ? this : new SpanQueryFiltered(rewritten[0], rewrittenFilter);
+		return rewritten == null ? this : new SpanQueryFiltered(rewritten.get(0), rewrittenFilter);
 	}
 
 	@Override
 	public boolean matchesEmptySequence() {
-		return clauses[0].matchesEmptySequence();
+		return clauses.get(0).matchesEmptySequence();
 	}
 
 	@Override
 	public boolean hasConstantLength() {
-		return clauses[0].hasConstantLength();
+		return clauses.get(0).hasConstantLength();
 	}
 
 	@Override
 	public int getMinLength() {
-		return clauses[0].getMinLength();
+		return clauses.get(0).getMinLength();
 	}
 
 	@Override
 	public int getMaxLength() {
-		return clauses[0].getMaxLength();
+		return clauses.get(0).getMaxLength();
 	}
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		Weight filterWeight = filter.createWeight(searcher, false);
 		return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
@@ -134,6 +135,6 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryFiltered(" + clausesToString(field) + ", " + filter + ")";
+		return "FILTER(" + clausesToString(field) + ", " + filter + ")";
 	}
 }

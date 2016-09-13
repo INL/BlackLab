@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,10 +69,10 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery[] rewritten = rewriteClauses(reader);
+		List<BLSpanQuery> rewritten = rewriteClauses(reader);
 		if (rewritten == null)
 			return this;
-		SpanQueryFilterNGrams result = new SpanQueryFilterNGrams(rewritten[0], op, min, max);
+		SpanQueryFilterNGrams result = new SpanQueryFilterNGrams(rewritten.get(0), op, min, max);
 		if (ignoreLastToken)
 			result.setIgnoreLastToken(true);
 		return result;
@@ -79,7 +80,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean matchesEmptySequence() {
-		return clauses[0].matchesEmptySequence() && min == 0;
+		return clauses.get(0).matchesEmptySequence() && min == 0;
 	}
 
 	@Override
@@ -87,7 +88,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 		if (!matchesEmptySequence())
 			return this;
 		int newMin = min == 0 ? 1 : min;
-		return new SpanQueryFilterNGrams(clauses[0].noEmpty(), op, newMin, max);
+		return new SpanQueryFilterNGrams(clauses.get(0).noEmpty(), op, newMin, max);
 	}
 
 	@Override
@@ -110,12 +111,12 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 		if ((op == Operation.CONTAINING_AT_END || op == Operation.ENDS_AT) && previousPart instanceof SpanQueryAnyToken) {
 			// Expand to left following any token clause. Combine.
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			return new SpanQueryFilterNGrams(clauses[0], op, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
+			return new SpanQueryFilterNGrams(clauses.get(0), op, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
 		}
 		if ((op == Operation.CONTAINING_AT_START || op == Operation.STARTS_AT) && max != min) {
 			// Expand to right with range of tokens. Combine with previous part to likely
 			// reduce the number of hits we'll have to expand.
-			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses[0]);
+			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));
 			seq = seq.rewrite(reader);
 			return new SpanQueryFilterNGrams(seq, op, min, max);
 		}
@@ -124,7 +125,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
+		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightFilterNGrams(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
@@ -152,7 +153,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 			Spans spansSource = weight.getSpans(context, requiredPostings);
 			if (spansSource == null)
 				return null;
-			BLSpans spans = new SpansFilterNGramsRaw(ignoreLastToken, context.reader(), clauses[0].getField(), spansSource, op, min, max);
+			BLSpans spans = new SpansFilterNGramsRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(), spansSource, op, min, max);
 
 			// Note: the spans coming from SpansFilterNGramsRaw are not sorted properly.
 			// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
@@ -184,7 +185,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "SpanQueryFilterNGrams(" + clauses[0] + ", " + op + ", " + min + ", " + max
+		return "FILTERNGRAMS(" + clauses.get(0) + ", " + op + ", " + min + ", " + max
 				+ ")";
 	}
 
