@@ -68,6 +68,53 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 		return rewritten == null ? this : new SpanQueryRepetition(rewritten.get(0), min, max);
 	}
 
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) {
+		BLSpanQuery baseRewritten = clauses.get(0).rewrite(reader);
+		if (min == 1 && max == 1)
+			return baseRewritten;
+		if (baseRewritten instanceof SpanQueryAnyToken) {
+			// Repeating anytoken clause can sometimes be expressed as simple anytoken clause
+			SpanQueryAnyToken tp = (SpanQueryAnyToken)baseRewritten;
+			if (tp.min == 1 && tp.max == 1) {
+				// Repeat of a single any token
+				return new SpanQueryAnyToken(min, max, );
+			} else if (min == max && tp.min == tp.max) {
+				// Exact number of any tokens
+				int n = min * tp.min;
+				return new SpanQueryAnyToken(n, n);
+			}
+		} else if (baseRewritten.isSingleTokenNot() && min > 0) {
+			// Rewrite to anytokens-not-containing form so we can optimize it
+			// (note the check for min > 0 above, because position filter cannot match the empty sequence)
+			int l = baseRewritten.getMinLength();
+			BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(l, l), min, max);
+			container = container.rewrite();
+			return new SpanQueryPositionFilter(container, baseRewritten.inverted(), Operation.CONTAINING, true);
+		} else if (baseRewritten instanceof SpanQueryRepetition) {
+			SpanQueryRepetition tp = (SpanQueryRepetition)baseRewritten;
+			if (max == -1 && tp.max == -1) {
+				if (min >= 0 && min <= 1 && tp.min >= 0 && tp.min <= 1) {
+					// A++, A+*, A*+, A**. Rewrite to single repetition.
+					return new SpanQueryRepetition(tp.base, min * tp.min, max);
+				}
+			} else {
+				if (min == 0 && max == 1 && tp.min == 0 && tp.max == 1) {
+					// A?? == A?
+					return tp;
+				}
+				if (min == 1 && max == 1) {
+					// A{x,y}{1,1} == A{x,y}
+					return new SpanQueryRepetition(tp.base, tp.min, tp.max);
+				}
+				// (other cases like A{1,1}{x,y} should have been rewritten already)
+			}
+		}
+		if (baseRewritten == base)
+			return this;
+		return new SpanQueryRepetition(baseRewritten, min, max);
+	}
+
 	/**
 	 * Repetition query matches the empty sequence iff min == 0 or its
 	 * base clause matches the empty sequence.

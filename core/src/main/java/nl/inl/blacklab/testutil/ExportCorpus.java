@@ -4,17 +4,21 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import org.apache.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Searcher.LuceneDocTask;
 import nl.inl.util.FileUtil;
+import nl.inl.util.LogUtil;
 
 /** Export the original corpus from a BlackLab index. */
 public class ExportCorpus {
 
 	public static void main(String[] args) throws IOException {
+		LogUtil.initLog4jIfNotAlready(Level.DEBUG);
+
 		if (args.length != 2) {
 			System.out.println("Usage: ExportCorpus <indexDir> <exportDir>");
 			System.exit(1);
@@ -37,13 +41,16 @@ public class ExportCorpus {
 		}
 
 		ExportCorpus exportCorpus = new ExportCorpus(indexDir);
+		System.out.println("Calling export()...");
 		exportCorpus.export(exportDir);
 	}
 
 	Searcher searcher;
 
 	public ExportCorpus(File indexDir) throws IOException {
+		System.out.println("Open index " + indexDir + "...");
 		searcher = Searcher.open(indexDir);
+		System.out.println("Done.");
 	}
 
 	/** Export the whole corpus.
@@ -51,8 +58,10 @@ public class ExportCorpus {
 	 */
 	private void export(final File exportDir) {
 
+		System.out.println("Getting IndexReader...");
 		final IndexReader reader = searcher.getIndexReader();
 
+		System.out.println("Calling forEachDocument()...");
 		searcher.forEachDocument(new LuceneDocTask() {
 
 			int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
@@ -62,8 +71,10 @@ public class ExportCorpus {
 			@Override
 			public void perform(Document doc) {
 				String fromInputFile = doc.get("fromInputFile");
+				System.out.println("Getting content for " + fromInputFile + "...");
 				String xml = searcher.getContent(doc);
 				File file = new File(exportDir, fromInputFile);
+				System.out.println("Got content, exporting to " + file + "...");
 				if (file.exists()) {
 					// Add a number so we don't have to overwrite the previous file.
 					System.out.println("WARNING: File " + file + " exists, using different name to avoid overwriting...");
