@@ -17,8 +17,6 @@ package nl.inl.util;
 
 import java.text.Collator;
 import java.text.Normalizer;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -51,18 +49,6 @@ public class StringUtil {
 	/** Matcht een niet-lege string die alleen whitespace bevat */
 	public final static Pattern PATT_ONLY_WHITESPACE = Pattern.compile("^\\s+$");
 
-	/** Match een XML tag */
-	private final static Pattern PATT_XML_TAG = Pattern.compile("<[^>]+>");
-
-	/** Match een dubbele quote */
-	private final static Pattern PATT_DOUBLE_QUOTE = Pattern.compile("\"");
-
-	/** Match een enkele quote */
-	private final static Pattern PATT_SINGLE_QUOTE = Pattern.compile("'");
-
-	/** Pattern matching nbsp character (decimal 160 = hex A0) */
-	private static final Pattern PATT_NON_BREAKING_SPACE = Pattern.compile(STR_NON_BREAKING_SPACE);
-
 	/**
 	 * Matches Unicode diacritics composition characters, which are separated out by the Normalizer
 	 * and then discarded using this regex.
@@ -90,28 +76,6 @@ public class StringUtil {
 	private static Collator englishInsensitiveCollator;
 
 	private StringUtil() {
-	}
-
-	/**
-	 * Replaces space with non-breaking space so the browser doesn't word-wrap
-	 *
-	 * @param input
-	 *            the string with spaces
-	 * @return the string with non-breaking spaces
-	 */
-	public static String makeNonBreaking(String input) {
-		return PATT_WHITESPACE.matcher(input).replaceAll(STR_NON_BREAKING_SPACE);
-	}
-
-	/**
-	 * Replaces non-breaking spaces with normal spaces.
-	 *
-	 * @param string
-	 *            the input
-	 * @return the result
-	 */
-	public static String convertNbspToSpace(String string) {
-		return PATT_NON_BREAKING_SPACE.matcher(string).replaceAll(" ");
 	}
 
 	/**
@@ -159,35 +123,6 @@ public class StringUtil {
 		return result.trim();
 	}
 
-	/**
-	 * Escape capital letters with the specified escape string.
-	 *
-	 * NOTE: this only works properly on ASCII strings!
-	 *
-	 * This can be used to compensate for case-insensitive filesystems.
-	 *
-	 * @param str
-	 *            the string in which to escape capitals
-	 * @param escapeString
-	 *            the string to add in front of each capital
-	 * @return the escaped string
-	 */
-	public static String escapeCapitals(String str, String escapeString) {
-		// TODO: eliminate Latin char assumption; define static Pattern
-		return str.replaceAll("[A-Z]", escapeString + "$0");
-	}
-
-	/**
-	 * Escape csv special character (quote)
-	 *
-	 * @param termStr
-	 *            the string to escape characters in
-	 * @return the escaped string
-	 */
-	public static String escapeCsvCharacters(String termStr) {
-		return PATT_DOUBLE_QUOTE.matcher(termStr).replaceAll("\"\"");
-	}
-
 	static final Pattern regexCharacters = Pattern.compile("([\\|\\\\\\?\\*\\+\\(\\)\\[\\]\\-\\^\\$\\{\\}\\.])");
 
 	/**
@@ -201,33 +136,6 @@ public class StringUtil {
 		Matcher m = regexCharacters.matcher(termStr);
 		termStr = m.replaceAll("\\\\$1");
 		return termStr;
-	}
-
-	/**
-	 * Escape regex special characters
-	 *
-	 * @param termStr
-	 *            the string to escape characters in
-	 * @return the escaped string
-	 */
-	public static boolean containsRegexCharacters(String termStr) {
-		Matcher m = regexCharacters.matcher(termStr);
-		return m.matches();
-	}
-
-	/**
-	 * Escape the wildcard characters * and ? in a string with a \
-	 *
-	 * @param result
-	 *            the original string
-	 * @return the string with the wildcard characters escaped with a \.
-	 */
-	public static String escapeWildcardCharacters(String result) {
-		// Escape regex-characters
-		Pattern p = Pattern.compile("([\\?\\*])");
-		Matcher m = p.matcher(result);
-		result = m.replaceAll("\\\\$1");
-		return result;
 	}
 
 	/**
@@ -267,47 +175,6 @@ public class StringUtil {
 	}
 
 	/**
-	 * Escape a string for inclusion in JSON output.
-	 *
-	 * Conforms to the JSON.org spec for strings.
-	 *
-	 * @param input the input string
-	 * @return the JSON-escaped output string
-	 */
-	public static String escapeJson(String input) {
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < input.length(); i++) {
-			char c = input.charAt(i);
-			// One of the characters with its own escape?
-			int x = "\"\\\b\f\n\r\t".indexOf(c);
-			if (x < 0) {
-				// No; other control character?
-				if (c < 32) {
-					// Yes. Use numeric escape
-					result.append(String.format("\\u%04x", (int)c));
-				} else {
-					// No, normal char; no problem
-					result.append(c);
-				}
-			} else {
-				// Double quote, backslash, bell, form feed,
-				// newline, return or tab. Add special escape
-				// depending on the character.
-				switch (x) {
-				case 0: result.append("\\\""); break;
-				case 1: result.append("\\\\"); break;
-				case 2: result.append("\\b"); break;
-				case 3: result.append("\\f"); break;
-				case 4: result.append("\\n"); break;
-				case 5: result.append("\\r"); break;
-				case 6: result.append("\\t"); break;
-				}
-			}
-		}
-		return result.toString();
-	}
-
-	/**
 	 * Get the default collator.
 	 *
 	 * @return the default collator.
@@ -340,17 +207,6 @@ public class StringUtil {
 			englishInsensitiveCollator.setStrength(Collator.SECONDARY);
 		}
 		return englishInsensitiveCollator;
-	}
-
-	/**
-	 * Checks if the specified string is made up of whitespace only.
-	 *
-	 * @param string
-	 *            the string to check
-	 * @return true if the specified string is only whitespace, false otherwise
-	 */
-	public static boolean isWhitespace(String string) {
-		return PATT_ONLY_WHITESPACE.matcher(string).matches();
 	}
 
 	/**
@@ -475,38 +331,6 @@ public class StringUtil {
 	}
 
 	/**
-	 * Limit a string to a certain length, adding an ellipsis if desired.
-	 *
-	 * Tries to cut the string at a word boundary, but will cut through words if necessary.
-	 *
-	 * @param str
-	 *            the string
-	 * @param preferredLength
-	 *            the preferred maximum length for the result string
-	 * @param overshootAllowed
-	 *            the number of characters the string may run beyond the preferred length without
-	 *            resorting to cutting
-	 * @param addEllipsis
-	 *            whether or not to add three periods (...) to a string after cutting
-	 * @return the resulting string. This is at most
-	 *         <code>preferredLength + max(overshootAllowed, 3)</code> long (if addEllipsis is
-	 *         true).
-	 */
-	public static String limitStringToLength(String str, int preferredLength, int overshootAllowed, boolean addEllipsis) {
-		String result = str;
-		if (result.length() > preferredLength + overshootAllowed) {
-			int i = result.substring(0, preferredLength + 1).lastIndexOf(" ");
-			if (i >= 1)
-				result = result.substring(0, i);
-			else
-				result = result.substring(0, preferredLength);
-			if (addEllipsis)
-				result += "...";
-		}
-		return result.trim();
-	}
-
-	/**
 	 * Replace adjacent whitespace characters with a single space
 	 *
 	 * @param s
@@ -516,29 +340,6 @@ public class StringUtil {
 	public static String normalizeWhitespace(String s) {
 		Matcher m = PATT_WHITESPACE.matcher(s);
 		return m.replaceAll(" ");
-	}
-
-	/**
-	 * Remove XML tags from a string
-	 *
-	 * @param s
-	 *            the source string
-	 * @return the string with tags removed
-	 */
-	public static String removeTags(String s) {
-		return PATT_XML_TAG.matcher(s).replaceAll(""); // tags verwijderen
-	}
-
-	/**
-	 * Unescape XML special characters (<, >, & and ")
-	 *
-	 * @param source
-	 *            the string with XML characters escaped as XML entities
-	 * @return the unescaped string
-	 */
-	public static String unescapeXmlChars(String source) {
-		// TODO: define static Patterns for these
-		return source.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&").replaceAll("&quot;", "\"");
 	}
 
 	/**
@@ -596,16 +397,6 @@ public class StringUtil {
 	}
 
 	/**
-	 * Remove leading whitespace from a string.
-	 *
-	 * @param input a string
-	 * @return the string without leading whitespace
-	 */
-	public static String ltrim(String input) {
-		return PATT_LEADING_WHITESPACE.matcher(input).replaceAll("");
-	}
-
-	/**
 	 * Remove trailing whitespace from a string.
 	 *
 	 * @param input a string
@@ -640,17 +431,6 @@ public class StringUtil {
 
 		// Remove diacritics
 		return PATT_DIACRITICS.matcher(normalized).replaceAll("");
-	}
-
-	/**
-	 * Replace any punctuation characters with a space.
-	 *
-	 * @param input
-	 *            the input string
-	 * @return the string without punctuation
-	 */
-	public static String removePunctuation(String input) {
-		return PATT_PUNCTUATION.matcher(input).replaceAll(" ");
 	}
 
 	/**
@@ -690,70 +470,6 @@ public class StringUtil {
 	 */
 	public static String pluralize(String singular, String plural, long number) {
 		return number == 1 ? singular : plural;
-	}
-
-	/**
-	 * Returns a new collator that takes spaces into account (unlike the default Java collators,
-	 * which ignore spaces), so we can sort "per word".
-	 *
-	 * Example: with the default collator, "cat dog" would be sorted after "catapult" (a after d).
-	 * With the per-word collator, "cat dog" would be sorted before "catapult" (cat before
-	 * catapult).
-	 *
-	 * NOTE: the base collator must be a RuleBasedCollator, but the argument has type Collator for
-	 * convenience (not having to explicitly cast when calling)
-	 *
-	 * @param base
-	 *            the collator to base the per-word collator on.
-	 * @return the per-word collator
-	 */
-	public static RuleBasedCollator getPerWordCollator(Collator base) {
-		if (!(base instanceof RuleBasedCollator))
-			throw new IllegalArgumentException("Base collator must be rule-based!");
-
-		try {
-			// Insert a collation rule to sort the space character before the underscore
-			RuleBasedCollator ruleBasedCollator = (RuleBasedCollator) base;
-			String rules = ruleBasedCollator.getRules();
-			return new RuleBasedCollator(rules.replaceAll("<'_'", "<' '<'_'"));
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Returns a new collator that sort digits at the end of the alphabet instead of the beginning.
-	 *
-	 * NOTE: the base collator must be a RuleBasedCollator, but the argument has type Collator for
-	 * convenience (not having to explicitly cast when calling)
-	 *
-	 * @param base
-	 *            the collator to base the new collator on.
-	 * @return the new collator
-	 */
-	public static RuleBasedCollator getSortDigitsAtEndCollator(Collator base) {
-		if (!(base instanceof RuleBasedCollator))
-			throw new IllegalArgumentException("Base collator must be rule-based!");
-
-		try {
-			// Insert a collation rule to sort the space character before the underscore
-			RuleBasedCollator ruleBasedCollator = (RuleBasedCollator) base;
-			String rules = ruleBasedCollator.getRules();
-			rules = rules.replaceAll("<0<1<2<3<4<5<6<7<8<9", "");
-			rules += "<0<1<2<3<4<5<6<7<8<9";
-			return new RuleBasedCollator(rules);
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Escape any apostrophes in the string, for when we want to single-quote it.
-	 * @param str the string to escape
-	 * @return the escaped string
-	 */
-	public static String escapeApostrophe(String str) {
-		return PATT_SINGLE_QUOTE.matcher(str).replaceAll("\\\\'");
 	}
 
 	/**

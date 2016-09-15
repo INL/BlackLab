@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.search.DocIdSetIterator;
@@ -206,18 +205,6 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 	@Override
 	public long cost() {
 		return 300; // (arbitrary value. This is used for scoring, which we don't use yet)
-	}
-
-	@Override
-	public Collection<byte[]> getPayload(int indexInBucket) {
-		// FIXME implement (optional) getPayload() here
-		return null;
-	}
-
-	@Override
-	public boolean isPayloadAvailable(int indexInBucket) {
-		// FIXME implement (optional) isPayloadAvailable() here
-		return false;
 	}
 
 }

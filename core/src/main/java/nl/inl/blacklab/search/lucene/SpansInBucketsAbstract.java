@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -109,16 +108,6 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	@Override
 	public Hit getHit(int indexInBucket) {
 		return bucket.get(indexInBucket);
-	}
-
-	@Override
-	public Collection<byte[]> getPayload(int indexInBucket) {
-		return bucket.get(indexInBucket).getPayload();
-	}
-
-	@Override
-	public boolean isPayloadAvailable(int indexInBucket) {
-		return bucket.get(indexInBucket).isPayloadAvailable();
 	}
 
 	public SpansInBucketsAbstract(Spans source) {

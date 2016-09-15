@@ -19,8 +19,6 @@
 package nl.inl.blacklab;
 
 import java.io.IOException;
-import java.util.Collection;
-
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 
@@ -140,16 +138,6 @@ public class MockSpansInBuckets implements SpansInBuckets {
 		if (currentBucket >= bucketDoc.length)
 			return null;
 		return new Hit(docID(), startPosition(i), endPosition(i));
-	}
-
-	@Override
-	public Collection<byte[]> getPayload(int indexInBucket) {
-		return null;
-	}
-
-	@Override
-	public boolean isPayloadAvailable(int indexInBucket) {
-		return false;
 	}
 
 	@Override

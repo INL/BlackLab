@@ -177,18 +177,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 
 		this.searcher = searcher;
 
-		// FIXME: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
+		// TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
 		//    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
-//		IndexSearcher indexSearcher = searcher.getIndexSearcher();
-//		IndexReader reader = indexSearcher.getIndexReader();
-//		Weight weight = indexSearcher.createNormalizedWeight(query);
-//		Map<String, Integer> freq = new HashMap<String, Integer>();
-//		for (LeafReaderContext arc: reader.leaves()) {
-//			Scorer scorer = weight.scorer(arc, true, false, arc.reader().getLiveDocs());
-//			while (scorer.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-//				//ddd
-//			}
-//		}
 
 		try {
 			searcher.getIndexSearcher().search(query, new SimpleCollector() {

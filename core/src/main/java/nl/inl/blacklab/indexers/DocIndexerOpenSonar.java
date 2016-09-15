@@ -253,29 +253,6 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
 		});
 	}
 
-	/*
-	List<String> untokenizedFields = Arrays.asList(
-		"Country",
-		"LicentieCode",
-		"LicenseDetails",
-		"CollectionName"
-	);
-	*/
-
-	@Override
-	public void addMetadataField(String name, String value) {
-
-		/*
-		// FIXME HACK: See if we need to substitute token-ending characters
-		if (untokenizedFields.contains(name)) {
-			// Yes; substitute token-ending characters for underscore in these fields!
-			value = value.replaceAll("[\\s\\./]", "_");
-		}
-		*/
-
-		super.addMetadataField(name, value);
-	}
-
 	public static void main(String[] args) {
 		System.out.println("NL B".replaceAll("[\\s\\./]", "_"));
 		System.out.println("NL/B".replaceAll("[\\s\\./]", "_"));

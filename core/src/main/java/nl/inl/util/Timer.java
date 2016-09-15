@@ -48,7 +48,6 @@ public class Timer {
 	/**
 	 * Describe the elapsed time in a human-readable way.
 	 *
-	 * TODO: why only elapsed time? Generalise to describe any supplied interval.
 	 * @param reportMsec if true, also reports milliseconds
 	 *
 	 * @return human-readable string for the elapsed time.

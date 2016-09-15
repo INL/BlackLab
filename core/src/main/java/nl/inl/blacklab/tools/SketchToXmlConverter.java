@@ -64,7 +64,6 @@ public class SketchToXmlConverter {
 		Properties properties;
 		InputStream isProps = SketchToXmlConverter.class.getClassLoader().getResourceAsStream(resourcePath);
 		if (isProps == null) {
-			// TODO: FileNotFoundException?
 			throw new IllegalArgumentException("Properties file not found: " + resourcePath
 					+ " (must be accessible from the classpath)");
 		}

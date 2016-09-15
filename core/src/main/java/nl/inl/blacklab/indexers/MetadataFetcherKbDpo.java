@@ -352,7 +352,6 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 			ourDocIndexer.addMetadataField("date", metadata.date);
 			ourDocIndexer.addMetadataField("ppn", metadata.ppn);
 		} else {
-			// TODO: improve error reporting
 			System.err.println("DPO number not found for imageFileName " + fileName);
 			return;
 		}

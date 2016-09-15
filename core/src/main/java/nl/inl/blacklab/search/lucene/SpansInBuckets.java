@@ -16,8 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
-
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Hit;
@@ -65,10 +63,6 @@ public interface SpansInBuckets {
 	int endPosition(int index);
 
 	Hit getHit(int index);
-
-	Collection<byte[]> getPayload(int indexInBucket);
-
-	boolean isPayloadAvailable(int indexInBucket);
 
 	/**
 	 * Go to the next document.

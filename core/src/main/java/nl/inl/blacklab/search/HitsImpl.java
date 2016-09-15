@@ -380,18 +380,6 @@ public class HitsImpl extends Hits {
 		settings.setConcordanceField(concordanceFieldPropName);
 	}
 
-//	private void extractTermsFromSpanQuery(Set<Term> terms) {
-//		try {
-//			// FIXME: temporary extractTerms hack
-//			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
-//			methodExtractTerms.setAccessible(true);
-//		    methodExtractTerms.invoke(spanQuery, terms);
-//			//spanQuery.extractTerms(terms);
-//		} catch (Exception e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
-
 	/** Sets the desired context size.
 	 * @param contextSize the context size (number of words to fetch around hits)
 	 * @deprecated use settings().setContextSize()
@@ -1282,7 +1270,6 @@ public class HitsImpl extends Hits {
 		boolean caseSensitive = searcher.isDefaultSearchCaseSensitive();
 		boolean diacSensitive = searcher.isDefaultSearchDiacriticsSensitive();
 		TermFrequencyList collocations = new TermFrequencyList(coll.size());
-		// TODO: get collocations for multiple contexts?
 		Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
 		Map<String, Integer> wordFreq = new HashMap<>();
 		for (IntIntPair e: coll.keyValuesView()) {

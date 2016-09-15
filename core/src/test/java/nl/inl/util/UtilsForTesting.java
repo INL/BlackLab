@@ -22,9 +22,7 @@ import java.util.UUID;
 import nl.inl.util.FileUtil.FileTask;
 
 /**
- * Misc. utilities that haven't yet found a place in InlJavaLib.
- *
- * TODO: move to InlJavaLib (deprecate/remove here)
+ * Misc. testing utilities.
  */
 public class UtilsForTesting {
 

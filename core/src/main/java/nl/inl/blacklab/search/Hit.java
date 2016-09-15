@@ -15,8 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import java.util.Collection;
-
 /**
  * Class for a hit. Normally, hits are iterated over in a Lucene Spans object, but in some places,
  * it makes sense to place hits in separate objects: when caching or sorting hits, or just for
@@ -93,15 +91,6 @@ public class Hit implements Comparable<Hit>, Cloneable {
 	protected Object clone() {
 		Hit hit = new Hit(doc, start, end);
 		return hit;
-	}
-
-	public Collection<byte[]> getPayload() {
-		// FIXME: option to store payload in Hit, probably using subclass
-		return null;
-	}
-
-	public boolean isPayloadAvailable() {
-		return false;
 	}
 
 }

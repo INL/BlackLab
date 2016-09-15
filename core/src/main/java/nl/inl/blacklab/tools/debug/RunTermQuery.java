@@ -1,13 +1,8 @@
 package nl.inl.blacklab.tools.debug;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -16,7 +11,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
@@ -27,8 +21,8 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
+import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.util.LuceneUtil;
@@ -214,13 +208,6 @@ public class RunTermQuery {
 		SpanQuery spanQuery = new SpanTermQuery(term);
 		spanQuery = (SpanQuery) spanQuery.rewrite(reader);
 
-		Map<Term, TermContext> termContexts = new HashMap<>();
-		TreeSet<Term> terms = new TreeSet<>();
-		extractTermsFromSpanQuery(spanQuery, terms);
-		for (Term termForContext: terms) {
-			termContexts.put(termForContext, TermContext.build(reader.getContext(), termForContext));
-		}
-
 		System.out.println("SPANQUERY");
 
 		System.out.println("USING LEAVES:");
@@ -253,20 +240,6 @@ public class RunTermQuery {
 		if (!hitsFound)
 			System.out.println("  (no hits)");
 		System.out.println("");
-	}
-
-	private static void extractTermsFromSpanQuery(SpanQuery spanQuery,
-			TreeSet<Term> terms) {
-		try {
-			// FIXME: temporary extractTerms hack
-			Method methodExtractTerms = SpanQuery.class.getDeclaredMethod("extractTerms", Set.class);
-			methodExtractTerms.setAccessible(true);
-		    methodExtractTerms.invoke(spanQuery, terms);
-			//spanQuery.extractTerms(terms);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-
 	}
 
 	private static void usage() {

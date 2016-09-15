@@ -37,22 +37,9 @@ public class TestStringUtil {
 	}
 
 	@Test
-	public void testRemovePunctuation() {
-		Assert.assertEquals("Hé  jij1 ", StringUtil.removePunctuation("Hé, jij1!"));
-	}
-
-	@Test
 	public void testEscapeXmlChars() {
 		Assert.assertEquals("Test &lt; &amp; &gt; &quot; test",
 				StringUtil.escapeXmlChars("Test < & > \" test"));
-	}
-
-	@Test
-	public void testEscapeDoubleQuotedString() {
-		Assert.assertEquals("Test \\\" test \\\\ test",
-				StringUtil.escapeDoubleQuotedString("Test \" test \\ test"));
-		Assert.assertEquals("Newline \\n Return \\r Windows line end \\r\\n",
-				StringUtil.escapeDoubleQuotedString("Newline \n Return \r Windows line end \r\n"));
 	}
 
 	@Test

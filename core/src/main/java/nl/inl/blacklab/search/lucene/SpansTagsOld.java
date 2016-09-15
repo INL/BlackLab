@@ -270,9 +270,10 @@ class SpansTagsOld extends BLSpans {
 
 	@Override
 	public boolean hitsHaveUniqueStart() {
-		// TODO: what happens if two of the same starttags occur at the same position..?
+		// What happens if two of the same starttags occur at the same position..?
 		// Right now, we assume this doesn't happen, and it usually doesn't, but if it
 		// does, can it cause a mismatched tag problem?
+		// [solved by new SpansTags]
 		return true;
 	}
 

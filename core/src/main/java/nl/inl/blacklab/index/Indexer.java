@@ -555,8 +555,7 @@ public class Indexer {
 			} else if (name.endsWith(".gz")) {
 				indexGzip(name, is);
 			} else if (name.endsWith(".zip")) {
-				// TODO InputStream version of zip, for zips inside another archive
-				logger.warn("Skipped " + name + ", ZIPs inside archives not yet supported");
+				logger.warn("Skipped " + name + ", ZIPs inside archives not supported");
 			} else {
 				Reader reader = new BufferedReader(new UnicodeReader(is, DEFAULT_INPUT_ENCODING));
 				try {

@@ -1152,7 +1152,6 @@ public abstract class Searcher {
 		if (!contentStores.exists(fieldName)) {
 			String[] content;
 			// No special content accessor set; assume a non-complex stored field
-			// TODO: check with index structure?
 			String luceneName = fieldName; // <- non-complex, so this works
 			String fieldContent = d.get(luceneName);
 			content = new String[starts.length];

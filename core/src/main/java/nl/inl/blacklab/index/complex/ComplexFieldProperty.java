@@ -147,7 +147,6 @@ public class ComplexFieldProperty {
 	TokenStream getTokenStream(String altName, IntArrayList startChars, IntArrayList endChars) {
 		TokenStream ts;
 		if (includeOffsets) {
-			// FIXME: make TokenStreamWithOffsets work with payloads as well
 			ts = new TokenStreamWithOffsets(values, increments, startChars, endChars);
 		} else {
 			ts = new TokenStreamFromList(values, increments, payloads);

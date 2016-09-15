@@ -160,7 +160,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 		// TODO: we need to create the analyzer before opening the index, because
 		//   we can't change the analyzer attached to the IndexWriter (and passing a different
-		//   analyzer in addDocument() is going away in Lucene 5.x).
+		//   analyzer in addDocument() went away in Lucene 5.x).
 		//   For now, if we're in index mode, we re-open the index with the analyzer we determined.
 		logger.debug("  Creating analyzers...");
 		createAnalyzers();
