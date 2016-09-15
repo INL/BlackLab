@@ -96,20 +96,64 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		SpanQuery rewritten = (SpanQuery)inner.rewrite(reader);
-		if (rewritten == this)
-			return this;
-		BLSpanQuery result = BLSpansWrapper.blSpanQueryFrom(rewritten);
-		if (result.getField() == null) {
-			if (result instanceof BLSpanOrQuery) {
-				((BLSpanOrQuery) result).setField(getField());
+
+		// Flatten nested OR queries.
+		// This doesn't change the query because the OR operator is associative.
+		boolean anyRewritten = false;
+		boolean hasNotChild = false;
+		boolean allClausesSingleToken = true;
+		List<BLSpanQuery> rewrittenCl = new ArrayList<>();
+		for (SpanQuery ch: inner.getClauses()) {
+			BLSpanQuery child = (BLSpanQuery)ch;
+			BLSpanQuery rewritten = child.rewrite(reader);
+			if (rewritten instanceof BLSpanOrQuery) {
+				// Flatten.
+				// Child OR operation we want to flatten into this OR operation.
+				// Replace the child, incorporating its children into this OR operation.
+				for (SpanQuery cl: ((BLSpanOrQuery)rewritten).getClauses()) {
+					BLSpanQuery clause = (BLSpanQuery)cl;
+					if (!clause.hasConstantLength() || clause.getMaxLength() != 1)
+						allClausesSingleToken = false;
+					rewrittenCl.add(clause);
+				}
+				anyRewritten = true;
 			} else {
-				throw new RuntimeException("BLSpanOrQuery rewritten to " +
-						result.getClass().getSimpleName() + ", getField() == null");
+				if (rewritten.isSingleTokenNot())
+					hasNotChild = true;
+				// Just add it.
+				rewrittenCl.add(rewritten);
+				if (rewritten != child)
+					anyRewritten = true;
+				if (!rewritten.hasConstantLength() || rewritten.getMaxLength() != 1)
+					allClausesSingleToken = false;
 			}
 		}
 
-		return result;
+		// Rewrites OR queries containing some NOT children into "NAND" queries.
+		// (only possible if all OR queries have token length 1!)
+		// This helps us isolate problematic subclauses which we can then rewrite to
+		// more efficient NOTCONTAINING clauses.
+		if (hasNotChild && allClausesSingleToken) {
+			// At least one clause starts with NOT.
+			// Node should be rewritten to AND. Invert all clauses.
+			for (int i = 0; i < rewrittenCl.size(); i++) {
+				rewrittenCl.set(i, rewrittenCl.get(i).inverted());
+			}
+			// Note extra rewrite at the end to make sure AND NOT structure is correctly built.
+			if (rewrittenCl.size() == 1)
+				return rewrittenCl.get(0).inverted();
+			return (new SpanQueryAnd(rewrittenCl).inverted()).rewrite(reader);
+		}
+
+		if (anyRewritten) {
+			// Some clauses were rewritten.
+			if (rewrittenCl.size() == 1)
+				return rewrittenCl.get(0);
+			return new BLSpanOrQuery(rewrittenCl.toArray(new BLSpanQuery[0]));
+		}
+
+		// Node need not be rewritten; return as-is
+		return this;
 	}
 
 	@Override

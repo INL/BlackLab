@@ -16,10 +16,16 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPatternAnyToken;
@@ -51,31 +57,6 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
 	public void setAlwaysHasClosingToken(boolean alwaysHasClosingToken) {
 		this.alwaysHasClosingToken = alwaysHasClosingToken;
-	}
-
-	public BLSpanQuery repeat(int nmin, int nmax) {
-		if (nmin == 1 && nmax == 1)
-			return this;
-		if (min == 1 && max == 1) {
-			SpanQueryAnyToken result = new SpanQueryAnyToken(nmin, nmax, luceneField);
-			if (!alwaysHasClosingToken)
-				result.setAlwaysHasClosingToken(false);
-			return result;
-		}
-		return new SpanQueryRepetition(this, nmin, nmax);
-	}
-
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) {
-		int realMin = min;
-		if (realMin == 0) {
-			// This can happen if the whole query is optional, so
-			// it's impossible to build an alternative without this clause.
-			// In this case, min == 0 has no real meaning and we simply
-			// behave the same as if min == 1.
-			realMin = 1;
-		}
-		return new SpanQueryNGrams(alwaysHasClosingToken, luceneField, realMin, max);
 	}
 
 	@Override
@@ -114,12 +95,16 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 			SpanQueryExpansion tp = (SpanQueryExpansion) previousPart;
 			if (!tp.isExpandToLeft()) {
 				// Any token clause after expand to right; combine.
-				return new SpanQueryExpansion(tp.getClause(), tp.isExpandToLeft(), tp.getMinExpand() + min, (max == -1 || tp.getMaxExpand() == -1) ? -1 : tp.getMaxExpand() + max);
+				SpanQueryExpansion result = new SpanQueryExpansion(tp.getClause(), tp.isExpandToLeft(), tp.getMinExpand() + min, (max == -1 || tp.getMaxExpand() == -1) ? -1 : tp.getMaxExpand() + max);
+				result.setIgnoreLastToken(tp.ignoreLastToken);
+				return result;
 			}
 		}
 		BLSpanQuery combo = super.combineWithPrecedingPart(previousPart, reader);
 		if (combo == null) {
-			combo = new SpanQueryExpansion(previousPart, false, min, max);
+			SpanQueryExpansion exp = new SpanQueryExpansion(previousPart, false, min, max);
+			exp.setIgnoreLastToken(alwaysHasClosingToken);
+			combo = exp;
 		}
 		return combo;
 	}
@@ -140,8 +125,24 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		throw new RuntimeException("Query should have been rewritten!");
+	public SpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
+		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
+		return new SpanWeight(SpanQueryAnyToken.this, searcher, null) {
+			@Override
+			public void extractTerms(Set<Term> terms) {
+				// No terms
+			}
+
+			@Override
+			public void extractTermContexts(Map<Term, TermContext> contexts) {
+				// No terms
+			}
+
+			@Override
+			public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+				return new SpansNGrams(alwaysHasClosingToken, context.reader(), luceneField, realMin, max);
+			}
+		};
 	}
 
 	@Override
@@ -157,5 +158,9 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	@Override
 	public int hashCode() {
 		return min + 31 * max + luceneField.hashCode() + (alwaysHasClosingToken ? 37 : 0);
+	}
+
+	public boolean getAlwaysHasClosingToken() {
+		return alwaysHasClosingToken;
 	}
 }

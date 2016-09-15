@@ -53,6 +53,11 @@ public class SpanQueryUnique extends BLSpanQuery {
 	}
 
 	@Override
+	public BLSpanQuery noEmpty() {
+		return new SpanQueryUnique(src.noEmpty());
+	}
+
+	@Override
 	public boolean hasConstantLength() {
 		return src.hasConstantLength();
 	}

@@ -18,7 +18,6 @@ package nl.inl.blacklab.search;
 import java.util.List;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.util.StringUtil;
 
 /**
  * Describes some pattern of words in a content field. The point of this interface is to provide an
@@ -118,11 +117,12 @@ public abstract class TextPattern implements Cloneable {
 	public abstract int hashCode();
 
 	String optInsensitive(QueryExecutionContext context, String value) {
-		if (!context.diacriticsSensitive())
-			value = StringUtil.removeAccents(value);
-		if (!context.caseSensitive())
-			value = value.toLowerCase();
-		return value;
+		return context.optDesensitize(value);
+//		if (!context.diacriticsSensitive())
+//			value = StringUtil.removeAccents(value);
+//		if (!context.caseSensitive())
+//			value = value.toLowerCase();
+//		return value;
 	}
 
 }

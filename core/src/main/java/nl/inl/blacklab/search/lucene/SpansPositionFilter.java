@@ -21,7 +21,6 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.TextPatternPositionFilter;
 
 /**
  * Finds hits from a set that contain one or more hits from the second set,
@@ -49,7 +48,7 @@ class SpansPositionFilter extends BLSpans {
 	private int filterIndex = -1;
 
 	/** What filter operation to use */
-	private TextPatternPositionFilter.Operation op;
+	private SpanQueryPositionFilter.Operation op;
 
 	/** How to adjust the left edge of the producer hits while matching */
 	private int leftAdjust;
@@ -81,7 +80,7 @@ class SpansPositionFilter extends BLSpans {
 	 * @param leftAdjust how to adjust the left edge of the producer hits while matching
 	 * @param rightAdjust how to adjust the right edge of the producer hits while matching
 	 */
-	public SpansPositionFilter(Spans producer, Spans filter, TextPatternPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
+	public SpansPositionFilter(Spans producer, Spans filter, SpanQueryPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
 		this.producer = BLSpansWrapper.optWrapSort(producer);
 		this.op = op;
 		this.invert = invert;

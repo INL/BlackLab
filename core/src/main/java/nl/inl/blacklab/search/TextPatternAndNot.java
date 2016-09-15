@@ -72,7 +72,7 @@ public class TextPatternAndNot extends TextPattern {
 		if (chResultsNot.isEmpty())
 			return includeResult;
 		BLSpanQuery excludeResult = chResultsNot.size() == 1 ? chResultsNot.get(0) : new SpanQueryAnd(chResultsNot);
-		return new SpanQueryPositionFilter(includeResult, excludeResult, TextPatternPositionFilter.Operation.MATCHES, true);
+		return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES, true);
 	}
 
 	@Override

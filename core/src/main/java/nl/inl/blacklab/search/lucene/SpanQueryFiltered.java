@@ -80,6 +80,11 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 	}
 
 	@Override
+	public BLSpanQuery noEmpty() {
+		return clauses.get(0).noEmpty();
+	}
+
+	@Override
 	public boolean hasConstantLength() {
 		return clauses.get(0).hasConstantLength();
 	}

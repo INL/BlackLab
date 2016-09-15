@@ -68,7 +68,9 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	 *     token and ignore it (special closing token is required for punctuation after the last word)
 	 * @param fieldName the field from which to match
 	 * @return the resulting query
+	 * @deprecated use SpanQueryNGrams
 	 */
+	@Deprecated
 	public static BLSpanQuery matchAllTokens(boolean ignoreLastToken, String fieldName) {
 		SpanQueryNot spanQueryNot = new SpanQueryNot(fieldName);
 		spanQueryNot.setIgnoreLastToken(ignoreLastToken);

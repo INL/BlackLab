@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,8 +26,6 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
-
-import nl.inl.blacklab.search.TextPatternPositionFilter;
 
 /**
  * Filters hits from a producer query based on the hit positions of a filter query.
@@ -41,7 +38,7 @@ import nl.inl.blacklab.search.TextPatternPositionFilter;
 public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
 	/** Filter operation to apply */
-	private TextPatternPositionFilter.Operation op;
+	private SpanQueryPositionFilter.Operation op;
 
 	/** Return producer spans that DON'T match the filter instead? */
 	private boolean invert;
@@ -60,7 +57,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	 * @param op operation used to determine what producer hits we're interested in (containing, within, startsat, endsat)
 	 * @param invert produce hits that don't match filter instead?
 	 */
-	public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, TextPatternPositionFilter.Operation op, boolean invert) {
+	public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanQueryPositionFilter.Operation op, boolean invert) {
 		this(producer, filter, op, invert, 0, 0);
 	}
 
@@ -74,7 +71,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	 * @param leftAdjust how to adjust the left edge of the producer hits while matching
 	 * @param rightAdjust how to adjust the right edge of the producer hits while matching
 	 */
-	public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, TextPatternPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
+	public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanQueryPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
 		super(producer, filter);
 		this.op = op;
 		this.invert = invert;
@@ -84,13 +81,23 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		List<BLSpanQuery> rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryPositionFilter(rewritten.get(0), rewritten.get(1), op, invert, leftAdjust, rightAdjust);
-	}
+		BLSpanQuery producer = clauses.get(0).rewrite(reader);
+		BLSpanQuery filter = clauses.get(1).rewrite(reader);
 
-	@Override
-	public boolean matchesEmptySequence() {
-		return clauses.get(0).matchesEmptySequence();
+		if (!invert && op != SpanQueryPositionFilter.Operation.STARTS_AT && op != SpanQueryPositionFilter.Operation.ENDS_AT && producer instanceof SpanQueryAnyToken) {
+			// We're filtering "all n-grams of length min-max".
+			// Use the special optimized SpanQueryFilterNGrams.
+			SpanQueryAnyToken tp = (SpanQueryAnyToken)producer;
+			return new SpanQueryFilterNGrams(filter, op, tp.getMinLength(), tp.getMaxLength());
+		}
+
+		if (producer != clauses.get(0) || filter != clauses.get(1)) {
+			SpanQueryPositionFilter result = new SpanQueryPositionFilter(producer, filter, op, invert);
+			result.leftAdjust = leftAdjust;
+			result.rightAdjust = rightAdjust;
+			return result;
+		}
+		return this;
 	}
 
 	@Override
@@ -110,15 +117,16 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
-		if (previousPart.hasConstantLength()) {
+		BLSpanQuery result = super.combineWithPrecedingPart(previousPart, reader);
+		if (result == null && previousPart.hasConstantLength()) {
 			// We "gobble up" the previous part and adjust our left matching edge.
 			// This should make filtering more efficient, since we will likely have fewer hits to filter.
-			SpanQueryPositionFilter result = (SpanQueryPositionFilter)copy();
-			result.clauses.set(0, new SpanQuerySequence(previousPart, clauses.get(0)));
-			result.adjustLeft(previousPart.getMinLength());
-			return result;
+			SpanQueryPositionFilter r = (SpanQueryPositionFilter)copy();
+			r.clauses.set(0, new SpanQuerySequence(previousPart, clauses.get(0)));
+			r.adjustLeft(previousPart.getMinLength());
+			result = r;
 		}
-		return super.combineWithPrecedingPart(previousPart, reader);
+		return result;
 	}
 
 	@Override
@@ -166,24 +174,37 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 		}
 	}
 
+	/** The different positional operations */
+	public enum Operation {
+
+		/** Producer hit contains filter hit */
+		CONTAINING,
+
+		/** Producer hit contained in filter hit */
+		WITHIN,
+
+		/** Producer hit starts at filter hit */
+		STARTS_AT,
+
+		/** Producer hit ends at filter hit */
+		ENDS_AT,
+
+		/** Producer hit exactly matches filter hit */
+		MATCHES,
+
+		/** Producer hit contains filter hit, at its end */
+		CONTAINING_AT_START,
+
+		/** Producer hit contains filter hit, at its start*/
+		CONTAINING_AT_END
+
+	}
+
 	@Override
 	public String toString(String field) {
 		String not = invert ? "NOT" : "";
 		String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
-		switch(op) {
-		case WITHIN:
-			return "POSFILTER(" + clausesToString(field) + ", " + not + "WITHIN" + adj + ")";
-		case CONTAINING:
-			return "POSFILTER(" + clausesToString(field) + ", " + not + "CONTAINING" + adj + ")";
-		case ENDS_AT:
-			return "POSFILTER(" + clausesToString(field) + ", " + not + "ENDS_AT" + adj + ")";
-		case STARTS_AT:
-			return "POSFILTER(" + clausesToString(field) + ", " + not + "STARTS_AT" + adj + ")";
-		case MATCHES:
-			return "POSFILTER(" + clausesToString(field) + ", " + not + "MATCHES" + adj + ")";
-		default:
-			throw new IllegalArgumentException("Unknown filter operation " + op);
-		}
+		return "POSFILTER(" + clausesToString(field) + ", " + not + op + adj + ")";
 	}
 
 	public SpanQueryPositionFilter copy() {

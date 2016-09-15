@@ -97,7 +97,9 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		if (!matchesEmptySequence())
 			return this;
 		int newMin = min == 0 ? 1 : min;
-		return new SpanQueryExpansion(clauses.get(0).noEmpty(), expandToLeft, newMin, max);
+		SpanQueryExpansion result = new SpanQueryExpansion(clauses.get(0).noEmpty(), expandToLeft, newMin, max);
+		result.setIgnoreLastToken(ignoreLastToken);
+		return result;
 	}
 
 	@Override
@@ -127,7 +129,9 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 			// reduce the number of hits we'll have to expand.
 			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));
 			seq = seq.rewrite(reader);
-			return new SpanQueryExpansion(seq, false, min, max);
+			SpanQueryExpansion result = new SpanQueryExpansion(seq, false, min, max);
+			result.setIgnoreLastToken(ignoreLastToken);
+			return result;
 		}
 		return super.combineWithPrecedingPart(previousPart, reader);
 	}

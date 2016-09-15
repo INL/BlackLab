@@ -24,8 +24,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.search.TextPatternPositionFilter;
-
 /**
  * A SpanQuery for an AND NOT query.
  * Produces all spans from the "include" part, except for those
@@ -139,7 +137,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		if (rewrittenNotCl.isEmpty())
 			return includeResult.rewrite(reader);
 		BLSpanQuery excludeResult = rewrittenNotCl.size() == 1 ? rewrittenNotCl.get(0) : new SpanQueryAnd(rewrittenNotCl);
-		return new SpanQueryPositionFilter(includeResult, excludeResult, TextPatternPositionFilter.Operation.MATCHES, true).rewrite(reader);
+		return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES, true).rewrite(reader);
 	}
 
 	@Override

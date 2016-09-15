@@ -1,8 +1,8 @@
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFilterNGrams;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 
 public class TextPatternFilterNGrams extends TextPattern {
 

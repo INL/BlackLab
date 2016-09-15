@@ -16,9 +16,12 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -27,7 +30,7 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.util.StringUtil;
 
 /**
  *
@@ -43,12 +46,39 @@ public class SpanQueryTags extends BLSpanQuery {
 
 	private String baseFieldName;
 
-	public SpanQueryTags(QueryExecutionContext context, String tagName) {
+	private Map<String, String> attr;
+
+	private String startTagFieldName;
+
+	public SpanQueryTags(String startTagFieldName, String tagName, Map<String, String> attr) {
 		this.tagName = tagName;
-		baseFieldName = context.fieldName();
-		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
-		String startTagFieldName = startTagContext.luceneField();
-		this.clause = new BLSpanTermQuery(new Term(startTagFieldName, startTagContext.optDesensitize(tagName)));
+		baseFieldName = ComplexFieldUtil.getBaseName(startTagFieldName);
+		this.startTagFieldName = startTagFieldName;
+		this.clause = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
+		this.attr = attr != null && attr.isEmpty() ? null : attr;
+	}
+
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		if (attr == null)
+			return this;
+
+		// Construct attribute filters
+		List<BLSpanQuery> attrFilters = new ArrayList<>();
+		for (Map.Entry<String,String> e: attr.entrySet()) {
+			String value = "@" + e.getKey() + "__" + e.getValue();
+			attrFilters.add((BLSpanQuery) new BLSpanTermQuery(new Term(startTagFieldName, value)));
+		}
+
+		// Filter the tags
+		// (NOTE: only works for start tags and full elements because attribute values
+		//  are indexed at the start tag!)
+		BLSpanQuery filter;
+		if (attrFilters.size() == 1)
+			filter = attrFilters.get(0);
+		else
+			filter = new SpanQueryAnd(attrFilters);
+		return new SpanQueryPositionFilter(new SpanQueryTags(startTagFieldName, tagName, null), filter, SpanQueryPositionFilter.Operation.STARTS_AT, false);
 	}
 
 	@Override
@@ -68,6 +98,8 @@ public class SpanQueryTags extends BLSpanQuery {
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		if (attr != null)
+			throw new RuntimeException("Query should've been rewritten! (attr != null)");
 		SpanWeight weight = clause.createWeight(searcher, needsScores);
 		return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
@@ -102,6 +134,8 @@ public class SpanQueryTags extends BLSpanQuery {
 
 	@Override
 	public String toString(String field) {
+		if (attr != null && !attr.isEmpty())
+			return "TAGS(" + tagName + ", " + StringUtil.join(attr) + ")";
 		return "TAGS(" + tagName + ")";
 	}
 
@@ -116,6 +150,13 @@ public class SpanQueryTags extends BLSpanQuery {
 
 		if (!clause.equals(that.clause))
 			return false;
+		if (attr == null) {
+			if (that.attr != null) {
+				return false;
+			}
+		} else if (!attr.equals(that.attr)) {
+			return false;
+		}
 
 		return true;
 	}
@@ -135,6 +176,8 @@ public class SpanQueryTags extends BLSpanQuery {
 	@Override
 	public int hashCode() {
 		int h = clause.hashCode();
+		if (attr != null)
+			h ^= attr.hashCode();
 		h ^= (h << 10) | (h >>> 23);
 		return h;
 	}

@@ -24,34 +24,8 @@ import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
  */
 public class TextPatternPositionFilter extends TextPatternCombiner {
 
-	/** The different positional operations */
-	public enum Operation {
-
-		/** Producer hit contains filter hit */
-		CONTAINING,
-
-		/** Producer hit contained in filter hit */
-		WITHIN,
-
-		/** Producer hit starts at filter hit */
-		STARTS_AT,
-
-		/** Producer hit ends at filter hit */
-		ENDS_AT,
-
-		/** Producer hit exactly matches filter hit */
-		MATCHES,
-
-		/** Producer hit contains filter hit, at its end */
-		CONTAINING_AT_START,
-
-		/** Producer hit contains filter hit, at its start*/
-		CONTAINING_AT_END
-
-	}
-
 	/** The hits we're (possibly) looking for */
-	TextPatternPositionFilter.Operation op;
+	SpanQueryPositionFilter.Operation op;
 
 	/** Whether to invert the filter operation */
 	boolean invert;
@@ -62,11 +36,11 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
 	/** How to adjust the right edge of the producer hits while matching */
 	int rightAdjust = 0;
 
-	public TextPatternPositionFilter(TextPattern producer, TextPattern filter, TextPatternPositionFilter.Operation op) {
+	public TextPatternPositionFilter(TextPattern producer, TextPattern filter, SpanQueryPositionFilter.Operation op) {
 		this(producer, filter, op, false);
 	}
 
-	public TextPatternPositionFilter(TextPattern producer, TextPattern filter, TextPatternPositionFilter.Operation op, boolean invert) {
+	public TextPatternPositionFilter(TextPattern producer, TextPattern filter, SpanQueryPositionFilter.Operation op, boolean invert) {
 		super(producer, filter);
 		this.op = op;
 		this.invert = invert;

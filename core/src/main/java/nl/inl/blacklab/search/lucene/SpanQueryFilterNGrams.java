@@ -28,15 +28,13 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
-
 /**
  * Return n-grams contained in the from the source spans hits.
  */
 public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	/** How to expand the hits */
-	private Operation op;
+	private SpanQueryPositionFilter.Operation op;
 
 	/** Minimum number of tokens to expand */
 	private int min;
@@ -47,7 +45,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;
 
-	public SpanQueryFilterNGrams(BLSpanQuery clause, Operation op, int min, int max) {
+	public SpanQueryFilterNGrams(BLSpanQuery clause, SpanQueryPositionFilter.Operation op, int min, int max) {
 		super(clause);
 		this.op = op;
 		this.min = min;
@@ -108,12 +106,12 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
-		if ((op == Operation.CONTAINING_AT_END || op == Operation.ENDS_AT) && previousPart instanceof SpanQueryAnyToken) {
+		if ((op == SpanQueryPositionFilter.Operation.CONTAINING_AT_END || op == SpanQueryPositionFilter.Operation.ENDS_AT) && previousPart instanceof SpanQueryAnyToken) {
 			// Expand to left following any token clause. Combine.
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
 			return new SpanQueryFilterNGrams(clauses.get(0), op, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
 		}
-		if ((op == Operation.CONTAINING_AT_START || op == Operation.STARTS_AT) && max != min) {
+		if ((op == SpanQueryPositionFilter.Operation.CONTAINING_AT_START || op == SpanQueryPositionFilter.Operation.STARTS_AT) && max != min) {
 			// Expand to right with range of tokens. Combine with previous part to likely
 			// reduce the number of hits we'll have to expand.
 			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));

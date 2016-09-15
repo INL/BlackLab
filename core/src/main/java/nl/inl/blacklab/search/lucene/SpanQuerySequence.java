@@ -31,8 +31,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
-
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
  * significant: a hit from the first span must be followed by a hit from the second.
@@ -121,18 +119,18 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 									}
 									BLSpanQuery producer = start.getClause();
 									BLSpanQuery filter = new SpanQuerySequence(search.toArray(new BLSpanQuery[0]));
-									Operation op;
+									SpanQueryPositionFilter.Operation op;
 									if (startAny) {
 										if (endAny) {
-											op = Operation.CONTAINING;
+											op = SpanQueryPositionFilter.Operation.CONTAINING;
 										} else {
-											op = Operation.CONTAINING_AT_END;
+											op = SpanQueryPositionFilter.Operation.CONTAINING_AT_END;
 										}
 									} else {
 										if (endAny) {
-											op = Operation.CONTAINING_AT_START;
+											op = SpanQueryPositionFilter.Operation.CONTAINING_AT_START;
 										} else {
-											op = Operation.MATCHES;
+											op = SpanQueryPositionFilter.Operation.MATCHES;
 										}
 									}
 									flat.add(i, new SpanQueryPositionFilter(producer, filter, op, false));

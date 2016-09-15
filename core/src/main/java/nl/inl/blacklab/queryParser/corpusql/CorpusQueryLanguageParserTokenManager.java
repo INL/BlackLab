@@ -11,7 +11,6 @@ import nl.inl.blacklab.search.TextPatternEdge;
 import nl.inl.blacklab.search.TextPatternNot;
 import nl.inl.blacklab.search.TextPatternOr;
 import nl.inl.blacklab.search.TextPatternPositionFilter;
-import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternRepetition;
@@ -19,6 +18,7 @@ import nl.inl.blacklab.search.TextPatternSequence;
 import nl.inl.blacklab.search.TextPatternTags;
 import nl.inl.blacklab.search.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 
 /** Token Manager. */
 @SuppressWarnings("all")public class CorpusQueryLanguageParserTokenManager implements CorpusQueryLanguageParserConstants {

@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import nl.inl.blacklab.MockSpans;
 import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 import nl.inl.blacklab.search.lucene.SpansFilterNGramsRaw;
 
 import org.apache.lucene.search.spans.Spans;
@@ -35,7 +34,7 @@ public class TestSpansExpandToNGram {
 			new int[] { 2, 3 }
 		);
 
-		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, Operation.CONTAINING, 2, 3);
+		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, SpanQueryPositionFilter.Operation.CONTAINING, 2, 3);
 		spans.setTest(true); // for test, all documents are 5 long
 
 		Spans exp = new MockSpans(
@@ -54,7 +53,7 @@ public class TestSpansExpandToNGram {
 			new int[] { 2, 3 }
 		);
 
-		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, Operation.CONTAINING_AT_END, 2, 3);
+		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, SpanQueryPositionFilter.Operation.CONTAINING_AT_END, 2, 3);
 		spans.setTest(true); // for test, all documents are 5 long
 
 		Spans exp = new MockSpans(
@@ -73,7 +72,7 @@ public class TestSpansExpandToNGram {
 			new int[] { 2, 3 }
 		);
 
-		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, Operation.CONTAINING_AT_START, 2, 3);
+		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, SpanQueryPositionFilter.Operation.CONTAINING_AT_START, 2, 3);
 		spans.setTest(true); // for test, all documents are 5 long
 
 		Spans exp = new MockSpans(
@@ -92,7 +91,7 @@ public class TestSpansExpandToNGram {
 			new int[] { 5, 5 }
 		);
 
-		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, Operation.WITHIN, 2, 3);
+		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, SpanQueryPositionFilter.Operation.WITHIN, 2, 3);
 		spans.setTest(true); // for test, all documents are 5 long
 
 		Spans exp = new MockSpans(
@@ -111,7 +110,7 @@ public class TestSpansExpandToNGram {
 			new int[] { 2, 4, 4, 6 }
 		);
 
-		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, Operation.MATCHES, 2, 3);
+		SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a, SpanQueryPositionFilter.Operation.MATCHES, 2, 3);
 		spans.setTest(true); // for test, all documents are 5 long
 
 		Spans exp = new MockSpans(

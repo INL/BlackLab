@@ -31,8 +31,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.TextPatternPositionFilter;
-
 /**
  * Combines SpanQueries using AND. Note that this means that only matches with the same document id,
  * the same start and the same end positions in all SpanQueries will be kept.
@@ -117,7 +115,7 @@ public class SpanQueryAnd extends BLSpanQueryAbstract {
 		if (rewrittenNotCl.isEmpty())
 			return includeResult;
 		BLSpanQuery excludeResult = rewrittenNotCl.size() == 1 ? rewrittenNotCl.get(0) : new SpanQueryAnd(rewrittenNotCl);
-		return new SpanQueryPositionFilter(includeResult, excludeResult, TextPatternPositionFilter.Operation.MATCHES, true).rewrite(reader);
+		return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES, true).rewrite(reader);
 	}
 
 	@Override

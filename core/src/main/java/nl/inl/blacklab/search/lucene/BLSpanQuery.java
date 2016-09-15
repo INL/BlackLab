@@ -22,8 +22,6 @@ import java.util.List;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spans.SpanQuery;
 
-import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
-
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
  * derived from this so we know they will produce BLSpans (which
@@ -130,7 +128,9 @@ public abstract class BLSpanQuery extends SpanQuery {
 		}
 		if (previousPart instanceof SpanQueryAnyToken) {
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			return new SpanQueryExpansion(this, true, tp.getMinLength(), tp.getMaxLength());
+			SpanQueryExpansion result = new SpanQueryExpansion(this, true, tp.getMinLength(), tp.getMaxLength());
+			result.setIgnoreLastToken(tp.getAlwaysHasClosingToken());
+			return result;
 		}
 		if (previousPart instanceof SpanQueryExpansion) {
 			SpanQueryExpansion tp = (SpanQueryExpansion)previousPart;
@@ -139,7 +139,9 @@ public abstract class BLSpanQuery extends SpanQuery {
 				// reduce the number of hits we'll have to expand.
 				BLSpanQuery seq = new SpanQuerySequence(tp.getClause(), this);
 				seq = seq.rewrite(reader);
-				return new SpanQueryExpansion(seq, true, tp.getMinExpand(), tp.getMaxExpand());
+				SpanQueryExpansion result = new SpanQueryExpansion(seq, true, tp.getMinExpand(), tp.getMaxExpand());
+				result.setIgnoreLastToken(tp.ignoreLastToken);
+				return result;
 			}
 		}
 		if (hasConstantLength()) {
@@ -156,7 +158,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 				// Rewrite to NOTCONTAINING clause, incorporating previous part.
 				int prevLen = previousPart.getMinLength();
 				BLSpanQuery container = new SpanQueryExpansion(previousPart, false, 1, 1);
-				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, inverted(), Operation.CONTAINING, true);
+				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
 				result.adjustLeft(prevLen);
 				return result;
 			}
@@ -165,7 +167,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 				// Rewrite to NOTCONTAINING clause, incorporating previous part.
 				int myLen = getMinLength();
 				BLSpanQuery container = new SpanQueryExpansion(this, true, 1, 1);
-				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, previousPart.inverted(), Operation.CONTAINING, true);
+				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, previousPart.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
 				result.adjustRight(-myLen);
 				return result;
 			}

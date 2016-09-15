@@ -22,7 +22,6 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.TextPatternPositionFilter.Operation;
 
 /**
  * Expands the source spans to the left and right to form N-grams.
@@ -53,7 +52,7 @@ class SpansFilterNGramsRaw extends BLSpans {
 	private int srcStart = -1;
 
 	/** How to expand the hits */
-	private Operation op;
+	private SpanQueryPositionFilter.Operation op;
 
 	/** Minimum number of tokens to expand */
 	private int min;
@@ -84,9 +83,9 @@ class SpansFilterNGramsRaw extends BLSpans {
 
 	private boolean alreadyAtFirstHit;
 
-	public SpansFilterNGramsRaw(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause, Operation op, int min, int max) {
+	public SpansFilterNGramsRaw(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause, SpanQueryPositionFilter.Operation op, int min, int max) {
 		subtractFromLength = ignoreLastToken ? 1 : 0;
-		if (op != Operation.CONTAINING_AT_END && op != Operation.ENDS_AT && op != Operation.MATCHES) {
+		if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT && op != SpanQueryPositionFilter.Operation.MATCHES) {
 			// We need to know document length to properly do expansion to the right
 			// TODO: cache this in Searcher..?
 			lengthGetter = new DocFieldLengthGetter(reader, fieldName);
@@ -362,13 +361,13 @@ class SpansFilterNGramsRaw extends BLSpans {
 	@Override
 	public boolean hitsEndPointSorted() {
 		return clause.hitsEndPointSorted() &&
-			(op == Operation.CONTAINING_AT_END || op == Operation.ENDS_AT || op == Operation.MATCHES || min == max);
+			(op == SpanQueryPositionFilter.Operation.CONTAINING_AT_END || op == SpanQueryPositionFilter.Operation.ENDS_AT || op == SpanQueryPositionFilter.Operation.MATCHES || min == max);
 	}
 
 	@Override
 	public boolean hitsStartPointSorted() {
 		return clause.hitsStartPointSorted() &&
-			(op == Operation.CONTAINING_AT_START || op == Operation.STARTS_AT || op == Operation.MATCHES || min == max);
+			(op == SpanQueryPositionFilter.Operation.CONTAINING_AT_START || op == SpanQueryPositionFilter.Operation.STARTS_AT || op == SpanQueryPositionFilter.Operation.MATCHES || min == max);
 	}
 
 	@Override

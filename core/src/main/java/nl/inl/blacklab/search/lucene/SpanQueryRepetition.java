@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,13 +63,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		List<BLSpanQuery> rewritten = rewriteClauses(reader);
-		return rewritten == null ? this : new SpanQueryRepetition(rewritten.get(0), min, max);
-	}
-
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) {
-		BLSpanQuery baseRewritten = clauses.get(0).rewrite(reader);
+		BLSpanQuery base = clauses.get(0);
+		BLSpanQuery baseRewritten = base.rewrite(reader);
 		if (min == 1 && max == 1)
 			return baseRewritten;
 		if (baseRewritten instanceof SpanQueryAnyToken) {
@@ -78,25 +72,25 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)baseRewritten;
 			if (tp.min == 1 && tp.max == 1) {
 				// Repeat of a single any token
-				return new SpanQueryAnyToken(min, max, );
+				return new SpanQueryAnyToken(min, max, base.getField());
 			} else if (min == max && tp.min == tp.max) {
 				// Exact number of any tokens
 				int n = min * tp.min;
-				return new SpanQueryAnyToken(n, n);
+				return new SpanQueryAnyToken(n, n, base.getField());
 			}
 		} else if (baseRewritten.isSingleTokenNot() && min > 0) {
 			// Rewrite to anytokens-not-containing form so we can optimize it
 			// (note the check for min > 0 above, because position filter cannot match the empty sequence)
 			int l = baseRewritten.getMinLength();
-			BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(l, l), min, max);
-			container = container.rewrite();
-			return new SpanQueryPositionFilter(container, baseRewritten.inverted(), Operation.CONTAINING, true);
+			BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(l, l, base.getField()), min, max);
+			container = container.rewrite(reader);
+			return new SpanQueryPositionFilter(container, baseRewritten.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
 		} else if (baseRewritten instanceof SpanQueryRepetition) {
 			SpanQueryRepetition tp = (SpanQueryRepetition)baseRewritten;
 			if (max == -1 && tp.max == -1) {
 				if (min >= 0 && min <= 1 && tp.min >= 0 && tp.min <= 1) {
 					// A++, A+*, A*+, A**. Rewrite to single repetition.
-					return new SpanQueryRepetition(tp.base, min * tp.min, max);
+					return new SpanQueryRepetition(tp.clauses.get(0), min * tp.min, max);
 				}
 			} else {
 				if (min == 0 && max == 1 && tp.min == 0 && tp.max == 1) {
@@ -105,7 +99,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 				}
 				if (min == 1 && max == 1) {
 					// A{x,y}{1,1} == A{x,y}
-					return new SpanQueryRepetition(tp.base, tp.min, tp.max);
+					return new SpanQueryRepetition(tp.clauses.get(0), tp.min, tp.max);
 				}
 				// (other cases like A{1,1}{x,y} should have been rewritten already)
 			}
