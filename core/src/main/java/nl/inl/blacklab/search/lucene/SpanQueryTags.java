@@ -82,21 +82,6 @@ public class SpanQueryTags extends BLSpanQuery {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return false;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 0;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return Integer.MAX_VALUE;
-	}
-
-	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		if (attr != null)
 			throw new RuntimeException("Query should've been rewritten! (attr != null)");
@@ -184,5 +169,45 @@ public class SpanQueryTags extends BLSpanQuery {
 
 	public String getElementName() {
 		return tagName;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return false;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return 0;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return Integer.MAX_VALUE;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return false;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return false;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return false;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return false;
 	}
 }

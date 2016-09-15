@@ -119,24 +119,81 @@ public class SpanQueryAnd extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
+	public boolean hitsAllSameLength() {
 		if (clauses.isEmpty())
 			return true;
-		return clauses.get(0).hasConstantLength();
+		for (BLSpanQuery clause: clauses) {
+			if (clause.hitsAllSameLength())
+				return true;
+		}
+		return true;
 	}
 
 	@Override
-	public int getMinLength() {
+	public int hitsLengthMin() {
 		if (clauses.isEmpty())
 			return 1;
-		return Math.max(clauses.get(0).getMinLength(), clauses.get(1).getMinLength());
+		int l = 0;
+		for (BLSpanQuery clause: clauses) {
+			if (clause.hitsLengthMin() > l)
+				l = clause.hitsLengthMin();
+		}
+		return l;
 	}
 
 	@Override
-	public int getMaxLength() {
+	public int hitsLengthMax() {
 		if (clauses.isEmpty())
 			return 1;
-		return Math.min(clauses.get(0).getMaxLength(), clauses.get(1).getMaxLength());
+		int l = Integer.MAX_VALUE;
+		for (BLSpanQuery clause: clauses) {
+			if (clause.hitsLengthMax() < l)
+				l = clause.hitsLengthMax();
+		}
+		return l;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return hitsStartPointSorted() && hitsAllSameLength();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		if (clauses.isEmpty())
+			return true;
+		for (BLSpanQuery clause: clauses) {
+			if (clause.hitsHaveUniqueStart())
+				return true;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		if (clauses.isEmpty())
+			return true;
+		for (BLSpanQuery clause: clauses) {
+			if (clause.hitsHaveUniqueEnd())
+				return true;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		if (clauses.isEmpty())
+			return true;
+		for (BLSpanQuery clause: clauses) {
+			if (clause.hitsAreUnique())
+				return true;
+		}
+		return true;
 	}
 
 	@Override

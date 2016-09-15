@@ -81,7 +81,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 		} else if (baseRewritten.isSingleTokenNot() && min > 0) {
 			// Rewrite to anytokens-not-containing form so we can optimize it
 			// (note the check for min > 0 above, because position filter cannot match the empty sequence)
-			int l = baseRewritten.getMinLength();
+			int l = baseRewritten.hitsLengthMin();
 			BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(l, l, base.getField()), min, max);
 			container = container.rewrite(reader);
 			return new SpanQueryPositionFilter(container, baseRewritten.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
@@ -124,21 +124,6 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 			return this;
 		int newMin = min == 0 ? 1 : min;
 		return new SpanQueryRepetition(clauses.get(0).noEmpty(), newMin, max);
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return clauses.get(0).hasConstantLength() && min == max;
-	}
-
-	@Override
-	public int getMinLength() {
-		return clauses.get(0).getMinLength() * min;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return max < 0 ? Integer.MAX_VALUE : clauses.get(0).getMaxLength() * max;
 	}
 
 	@Override
@@ -221,6 +206,46 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
 	public int getMaxRep() {
 		return max;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return clauses.get(0).hitsAllSameLength() && min == max;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return clauses.get(0).hitsLengthMin() * min;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return max < 0 ? Integer.MAX_VALUE : clauses.get(0).hitsLengthMax() * max;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return clauses.get(0).hitsEndPointSorted() && min == max;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return clauses.get(0).hitsHaveUniqueStart() && min == max;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return clauses.get(0).hitsHaveUniqueEnd() && min == max;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 
 }

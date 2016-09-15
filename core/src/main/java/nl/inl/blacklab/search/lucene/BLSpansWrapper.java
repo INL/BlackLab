@@ -40,6 +40,10 @@ public class BLSpansWrapper extends BLSpans {
 		if (source == null)
 			throw new IllegalArgumentException("Cannot wrap null Spans!");
 
+		if (source instanceof BLSpans) {
+			throw new IllegalArgumentException("No need to wrap spans, already a BLSpans");
+		}
+
 		if (!(source instanceof TermSpans)) {
 			// For anything but the very basic TermSpans,
 			// this wrapper shouldn't be used anymore because everything is already BLSpans.

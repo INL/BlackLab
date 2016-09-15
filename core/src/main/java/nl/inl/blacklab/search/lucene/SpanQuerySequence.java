@@ -103,7 +103,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 									boolean startAny = false;
 									if (search.get(0) instanceof SpanQueryAnyToken) {
 										SpanQueryAnyToken any1 = (SpanQueryAnyToken)search.get(0);
-										if (any1.getMinLength() == 0 && any1.getMaxLength() == -1) {
+										if (any1.hitsLengthMin() == 0 && any1.hitsLengthMax() == -1) {
 											startAny = true;
 											search.remove(0);
 										}
@@ -112,7 +112,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 									int last = search.size() - 1;
 									if (search.get(last) instanceof SpanQueryAnyToken) {
 										SpanQueryAnyToken any2 = (SpanQueryAnyToken)search.get(last);
-										if (any2.getMinLength() == 0 && any2.getMaxLength() == -1) {
+										if (any2.hitsLengthMin() == 0 && any2.hitsLengthMax() == -1) {
 											endAny = true;
 											search.remove(last);
 										}
@@ -302,36 +302,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		for (BLSpanQuery clause: clauses) {
-			if (!clause.hasConstantLength())
-				return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		int n = 0;
-		for (BLSpanQuery clause: clauses) {
-			n += clause.getMinLength();
-		}
-		return n;
-	}
-
-	@Override
-	public int getMaxLength() {
-		int n = 0;
-		for (BLSpanQuery clause: clauses) {
-			int max = clause.getMaxLength();
-			if (max == Integer.MAX_VALUE)
-				return max; // infinite
-			n += max;
-		}
-		return n;
-	}
-
-	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		List<SpanWeight> weights = new ArrayList<>();
 		for (BLSpanQuery clause: clauses) {
@@ -407,5 +377,73 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	@Override
 	public String toString(String field) {
 		return "SEQ(" + clausesToString(field) + ")";
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		for (BLSpanQuery clause: clauses) {
+			if (!clause.hitsAllSameLength())
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		int n = 0;
+		for (BLSpanQuery clause: clauses) {
+			n += clause.hitsLengthMin();
+		}
+		return n;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		int n = 0;
+		for (BLSpanQuery clause: clauses) {
+			int max = clause.hitsLengthMax();
+			if (max == Integer.MAX_VALUE)
+				return max; // infinite
+			n += max;
+		}
+		return n;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		for (int i = 1; i < clauses.size(); i++) {
+			if (!clauses.get(i).hitsAllSameLength())
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true; // we guarantuee this in getSpans()
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		for (BLSpanQuery clause: clauses) {
+			if (!clause.hitsHaveUniqueStart())
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		for (BLSpanQuery clause: clauses) {
+			if (!clause.hitsHaveUniqueEnd())
+				return false;
+		}
+		return true;
+
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
 	}
 }

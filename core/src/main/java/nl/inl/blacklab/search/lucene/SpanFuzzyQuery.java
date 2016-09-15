@@ -105,21 +105,6 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 1;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 1;
-	}
-
-	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		throw new UnsupportedOperationException("Query should have been rewritten");
 	}
@@ -172,5 +157,45 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 		int h = term.hashCode();
 		h ^= maxEdits * 13 + prefixLength * 37;
 		return h;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return 1;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return 1;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 }

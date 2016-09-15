@@ -81,22 +81,47 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery noEmpty() {
-		return clauses.get(0).noEmpty();
+		return new SpanQueryFiltered(clauses.get(0).noEmpty(), filter);
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return clauses.get(0).hasConstantLength();
+	public boolean hitsAllSameLength() {
+		return clauses.get(0).hitsAllSameLength();
 	}
 
 	@Override
-	public int getMinLength() {
-		return clauses.get(0).getMinLength();
+	public int hitsLengthMin() {
+		return clauses.get(0).hitsLengthMin();
 	}
 
 	@Override
-	public int getMaxLength() {
-		return clauses.get(0).getMaxLength();
+	public int hitsLengthMax() {
+		return clauses.get(0).hitsLengthMax();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return clauses.get(0).hitsEndPointSorted();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return clauses.get(0).hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return clauses.get(0).hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return clauses.get(0).hitsAreUnique();
 	}
 
 	@Override

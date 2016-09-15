@@ -103,21 +103,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return clauses.get(0).hasConstantLength() && min == max;
-	}
-
-	@Override
-	public int getMinLength() {
-		return clauses.get(0).getMinLength() + min;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return max < 0 ? Integer.MAX_VALUE : clauses.get(0).getMaxLength() + max;
-	}
-
-	@Override
 	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
 		if (expandToLeft && previousPart instanceof SpanQueryAnyToken) {
 			// Expand to left following any token clause. Combine.
@@ -224,6 +209,48 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	public BLSpanQuery getClause() {
 		return clauses.get(0);
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return clauses.get(0).hitsAllSameLength() && min == max;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return clauses.get(0).hitsLengthMin() + min;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return max < 0 ? Integer.MAX_VALUE : clauses.get(0).hitsLengthMax() + max;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return clauses.get(0).hitsEndPointSorted() && (expandToLeft || !expandToLeft && min == max);
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true; // (we do this in getSpans()
+		             // WAS: clauses.get(0).hitsStartPointSorted() && (!expandToLeft || expandToLeft && min == max);
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return clauses.get(0).hitsHaveUniqueStart() && min == max;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return clauses.get(0).hitsHaveUniqueEnd() && min == max;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true; // (we do this in getSpans()
+		             // WAS: clauses.get(0).hitsAreUnique() && min == max;
 	}
 
 }

@@ -112,7 +112,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 				// Replace the child, incorporating its children into this OR operation.
 				for (SpanQuery cl: ((BLSpanOrQuery)rewritten).getClauses()) {
 					BLSpanQuery clause = (BLSpanQuery)cl;
-					if (!clause.hasConstantLength() || clause.getMaxLength() != 1)
+					if (!clause.hitsAllSameLength() || clause.hitsLengthMax() != 1)
 						allClausesSingleToken = false;
 					rewrittenCl.add(clause);
 				}
@@ -124,7 +124,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 				rewrittenCl.add(rewritten);
 				if (rewritten != child)
 					anyRewritten = true;
-				if (!rewritten.hasConstantLength() || rewritten.getMaxLength() != 1)
+				if (!rewritten.hitsAllSameLength() || rewritten.hitsLengthMax() != 1)
 					allClausesSingleToken = false;
 			}
 		}
@@ -178,37 +178,67 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		int l = ((BLSpanQuery)getClauses()[0]).getMinLength();
+	public boolean hitsAllSameLength() {
+		int l = ((BLSpanQuery)getClauses()[0]).hitsLengthMin();
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
-			if (!clause.hasConstantLength() || clause.getMinLength() != l)
+			if (!clause.hitsAllSameLength() || clause.hitsLengthMin() != l)
 				return false;
 		}
 		return true;
 	}
 
 	@Override
-	public int getMinLength() {
+	public int hitsLengthMin() {
 		int n = Integer.MAX_VALUE;
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
-			n = Math.min(n, clause.getMinLength());
+			n = Math.min(n, clause.hitsLengthMin());
 		}
 		return n;
 	}
 
 	@Override
-	public int getMaxLength() {
+	public int hitsLengthMax() {
 		int n = 0;
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
-			int l = clause.getMaxLength();
+			int l = clause.hitsLengthMax();
 			if (l < 0)
 				return -1; // infinite
 			n = Math.max(n, l);
 		}
 		return n;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		// Cannot guarantee because we're merging from different sources.
+		return false;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		// Our way of merging guarantees this, as it should for almost all BLSpans
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		// Cannot guarantee because we're merging from different sources.
+		return false;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		// Cannot guarantee because we're merging from different sources.
+		return false;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		// Cannot guarantee because we're merging from different sources.
+		return false;
 	}
 
 	@Override

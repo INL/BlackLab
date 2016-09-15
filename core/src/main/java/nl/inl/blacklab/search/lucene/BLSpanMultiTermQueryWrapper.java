@@ -56,21 +56,6 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 1;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 1;
-	}
-
-	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores)
 			throws IOException {
 		throw new IllegalArgumentException("Rewrite first!");
@@ -90,6 +75,46 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 			return query.equals(other.query);
 		}
 		return false;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return 1;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return 1;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 
 }

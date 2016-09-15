@@ -110,21 +110,6 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return min == max;
-	}
-
-	@Override
-	public int getMinLength() {
-		return min;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return max;
-	}
-
-	@Override
 	public SpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
 		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
 		return new SpanWeight(SpanQueryAnyToken.this, searcher, null) {
@@ -162,5 +147,45 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
 	public boolean getAlwaysHasClosingToken() {
 		return alwaysHasClosingToken;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return min == max;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return min;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return max;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return hitsAllSameLength();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return min == max;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return min == max;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 }

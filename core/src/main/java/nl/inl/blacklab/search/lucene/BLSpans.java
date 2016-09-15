@@ -33,7 +33,7 @@ import nl.inl.blacklab.search.Span;
  * The default implementation is appropriate for Spans classes that return only
  * single-term hits.
  */
-public abstract class BLSpans extends SpansAbstract {
+public abstract class BLSpans extends Spans {
 
 	/** Should we ask our clauses for captured groups?
 	 *  If the clauses don't capture any groups, this will be set to false
@@ -201,5 +201,12 @@ public abstract class BLSpans extends SpansAbstract {
 			pos = spans.nextStartPosition();
 		} while(pos < target && pos != NO_MORE_POSITIONS);
 		return pos;
+	}
+
+	@Override
+	public long cost() {
+		// returns a completely arbitrary constant value, but it's for
+		// optimizing scoring and we don't generally use that
+		return 100;
 	}
 }

@@ -58,21 +58,6 @@ public class SpanQueryUnique extends BLSpanQuery {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return src.hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		return src.getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		return src.getMaxLength();
-	}
-
-	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = src.createWeight(searcher, needsScores);
 		return new SpanWeightUnique(weight, searcher, needsScores ? getTermContexts(weight) : null);
@@ -130,5 +115,45 @@ public class SpanQueryUnique extends BLSpanQuery {
 	@Override
 	public int hashCode() {
 		return src.hashCode() ^ 0x98764038;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return src.hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return src.hitsLengthMin();
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return src.hitsLengthMax();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return src.hitsEndPointSorted();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return src.hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return src.hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 }

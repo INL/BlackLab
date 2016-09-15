@@ -90,21 +90,6 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return min == max;
-	}
-
-	@Override
-	public int getMinLength() {
-		return min;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return max;
-	}
-
-	@Override
 	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
 		if ((op == SpanQueryPositionFilter.Operation.CONTAINING_AT_END || op == SpanQueryPositionFilter.Operation.ENDS_AT) && previousPart instanceof SpanQueryAnyToken) {
 			// Expand to left following any token clause. Combine.
@@ -193,6 +178,46 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	 */
 	public void setIgnoreLastToken(boolean ignoreLastToken) {
 		this.ignoreLastToken = ignoreLastToken;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return min == max;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return min;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return max;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return hitsAllSameLength();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return min == max;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return min == max;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 
 }

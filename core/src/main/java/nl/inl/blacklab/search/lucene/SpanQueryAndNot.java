@@ -150,27 +150,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		if (include.isEmpty())
-			return true;
-		return include.get(0).hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		if (include.isEmpty())
-			return 1;
-		return include.get(0).getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		if (include.isEmpty())
-			return 1;
-		return include.get(0).getMaxLength();
-	}
-
-	@Override
 	public int hashCode() {
 		return include.hashCode() + exclude.hashCode();
 	}
@@ -201,5 +180,83 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
 	public List<BLSpanQuery> getExcludeClauses() {
 		return include;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		if (include.isEmpty())
+			return true;
+		for (BLSpanQuery clause: include) {
+			if (clause.hitsAllSameLength())
+				return true;
+		}
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		if (include.isEmpty())
+			return 1;
+		int l = 0;
+		for (BLSpanQuery clause: include) {
+			if (clause.hitsLengthMin() > l)
+				l = clause.hitsLengthMin();
+		}
+		return l;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		if (include.isEmpty())
+			return 1;
+		int l = Integer.MAX_VALUE;
+		for (BLSpanQuery clause: include) {
+			if (clause.hitsLengthMax() < l)
+				l = clause.hitsLengthMax();
+		}
+		return l;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return hitsStartPointSorted() && hitsAllSameLength();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		if (include.isEmpty())
+			return true;
+		for (BLSpanQuery clause: include) {
+			if (clause.hitsHaveUniqueStart())
+				return true;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		if (include.isEmpty())
+			return true;
+		for (BLSpanQuery clause: include) {
+			if (clause.hitsHaveUniqueEnd())
+				return true;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		if (include.isEmpty())
+			return true;
+		for (BLSpanQuery clause: include) {
+			if (clause.hitsAreUnique())
+				return true;
+		}
+		return true;
 	}
 }

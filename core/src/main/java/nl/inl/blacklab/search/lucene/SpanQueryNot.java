@@ -96,21 +96,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 1;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 1;
-	}
-
-	@Override
 	public BLSpanQuery inverted() {
 		return clauses.get(0); // Just return our clause, dropping the NOT operation
 	}
@@ -181,6 +166,46 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	 */
 	public void setIgnoreLastToken(boolean ignoreLastToken) {
 		this.ignoreLastToken = ignoreLastToken;
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return 1;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return 1;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 
 }

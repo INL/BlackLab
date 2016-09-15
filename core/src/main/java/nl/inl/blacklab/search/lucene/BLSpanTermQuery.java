@@ -40,6 +40,10 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  */
 public class BLSpanTermQuery extends BLSpanQuery {
 
+	public static BLSpanTermQuery from(SpanTermQuery q) {
+		return new BLSpanTermQuery(q);
+	}
+
 	SpanTermQuery query;
 
 	private TermContext termContext;
@@ -87,21 +91,6 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 1;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 1;
-	}
-
-	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		final TermContext context;
 		final IndexReaderContext topContext = searcher.getTopReaderContext();
@@ -136,8 +125,44 @@ public class BLSpanTermQuery extends BLSpanQuery {
 		return false;
 	}
 
-	public static BLSpanTermQuery from(SpanTermQuery q) {
-		return new BLSpanTermQuery(q);
+	@Override
+	public boolean hitsAllSameLength() {
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return 1;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return 1;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return true;
 	}
 
 }

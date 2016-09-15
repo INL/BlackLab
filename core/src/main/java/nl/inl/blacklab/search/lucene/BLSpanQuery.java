@@ -128,7 +128,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 		}
 		if (previousPart instanceof SpanQueryAnyToken) {
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			SpanQueryExpansion result = new SpanQueryExpansion(this, true, tp.getMinLength(), tp.getMaxLength());
+			SpanQueryExpansion result = new SpanQueryExpansion(this, true, tp.hitsLengthMin(), tp.hitsLengthMax());
 			result.setIgnoreLastToken(tp.getAlwaysHasClosingToken());
 			return result;
 		}
@@ -144,19 +144,19 @@ public abstract class BLSpanQuery extends SpanQuery {
 				return result;
 			}
 		}
-		if (hasConstantLength()) {
+		if (hitsAllSameLength()) {
 			if (previousPart instanceof SpanQueryPositionFilter) {
 				// We are "gobbled up" by the previous part and adjust its right matching edge inward.
 				// This should make filtering more efficient, since we will likely have fewer hits to filter.
 				SpanQueryPositionFilter result = ((SpanQueryPositionFilter)previousPart).copy();
 				result.clauses.set(0, new SpanQuerySequence(result.clauses.get(0), this));
-				result.adjustRight(-getMinLength());
+				result.adjustRight(-hitsLengthMin());
 				return result;
 			}
-			if (isSingleTokenNot() && previousPart.hasConstantLength()) {
+			if (isSingleTokenNot() && previousPart.hitsAllSameLength()) {
 				// Negative, single-token child after constant-length part.
 				// Rewrite to NOTCONTAINING clause, incorporating previous part.
-				int prevLen = previousPart.getMinLength();
+				int prevLen = previousPart.hitsLengthMin();
 				BLSpanQuery container = new SpanQueryExpansion(previousPart, false, 1, 1);
 				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
 				result.adjustLeft(prevLen);
@@ -165,7 +165,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 			if (previousPart.isSingleTokenNot()) {
 				// Constant-length child after negative, single-token part.
 				// Rewrite to NOTCONTAINING clause, incorporating previous part.
-				int myLen = getMinLength();
+				int myLen = hitsLengthMin();
 				BLSpanQuery container = new SpanQueryExpansion(this, true, 1, 1);
 				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, previousPart.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
 				result.adjustRight(-myLen);
@@ -181,26 +181,60 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 * @return true if they are, false if not
 	 */
 	public boolean producesSingleTokens() {
-		return hasConstantLength() && getMinLength() == 1;
+		return hitsAllSameLength() && hitsLengthMin() == 1;
 	}
 
 	/**
 	 * Do our hits have constant length?
 	 * @return true if they do, false if not
 	 */
-	public abstract boolean hasConstantLength();
+	public abstract boolean hitsAllSameLength();
 
 	/**
 	 * How long could our shortest hit be?
 	 * @return length of the shortest hit possible
 	 */
-	public abstract int getMinLength();
+	public abstract int hitsLengthMin();
 
 	/**
 	 * How long could our longest hit be?
 	 * @return length of the longest hit possible, or Integer.MAX_VALUE if unlimited
 	 */
-	public abstract int getMaxLength();
+	public abstract int hitsLengthMax();
+
+	/**
+	 * When hit B follows hit A, is it guaranteed that B.end &gt;= A.end?
+	 * Also, if A.end == B.end, is B.start &gt; A.start?
+	 *
+	 * @return true if this is guaranteed, false if not
+	 */
+	public abstract boolean hitsEndPointSorted();
+
+	/**
+	 * When hit B follows hit A, is it guaranteed that B.start &gt;= A.start?
+	 * Also, if A.start == B.start, is B.end &gt; A.end?
+	 *
+	 * @return true if this is guaranteed, false if not
+	 */
+	public abstract boolean hitsStartPointSorted();
+
+	/**
+	 * Is it guaranteed that no two hits have the same start position?
+	 * @return true if this is guaranteed, false if not
+	 */
+	public abstract boolean hitsHaveUniqueStart();
+
+	/**
+	 * Is it guaranteed that no two hits have the same end position?
+	 * @return true if this is guaranteed, false if not
+	 */
+	public abstract boolean hitsHaveUniqueEnd();
+
+	/**
+	 * Is it guaranteed that no two hits have the same start and end position?
+	 * @return true if this is guaranteed, false if not
+	 */
+	public abstract boolean hitsAreUnique();
 
 	/**
 	 * Add two values for maximum number of repetitions, taking "infinite" into account.

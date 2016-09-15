@@ -88,7 +88,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 			// We're filtering "all n-grams of length min-max".
 			// Use the special optimized SpanQueryFilterNGrams.
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)producer;
-			return new SpanQueryFilterNGrams(filter, op, tp.getMinLength(), tp.getMaxLength());
+			return new SpanQueryFilterNGrams(filter, op, tp.hitsLengthMin(), tp.hitsLengthMax());
 		}
 
 		if (producer != clauses.get(0) || filter != clauses.get(1)) {
@@ -101,29 +101,14 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return clauses.get(0).hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		return clauses.get(0).getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		return clauses.get(0).getMaxLength();
-	}
-
-	@Override
 	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
 		BLSpanQuery result = super.combineWithPrecedingPart(previousPart, reader);
-		if (result == null && previousPart.hasConstantLength()) {
+		if (result == null && previousPart.hitsAllSameLength()) {
 			// We "gobble up" the previous part and adjust our left matching edge.
 			// This should make filtering more efficient, since we will likely have fewer hits to filter.
 			SpanQueryPositionFilter r = (SpanQueryPositionFilter)copy();
 			r.clauses.set(0, new SpanQuerySequence(previousPart, clauses.get(0)));
-			r.adjustLeft(previousPart.getMinLength());
+			r.adjustLeft(previousPart.hitsLengthMin());
 			result = r;
 		}
 		return result;
@@ -231,5 +216,55 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	 */
 	public void adjustRight(int delta) {
 		rightAdjust += delta;
+	}
+
+	@Override
+	public boolean matchesEmptySequence() {
+		return clauses.get(0).matchesEmptySequence();
+	}
+
+	@Override
+	public BLSpanQuery noEmpty() {
+		return new SpanQueryPositionFilter(clauses.get(0).noEmpty(), clauses.get(1), op, invert, leftAdjust, rightAdjust);
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return clauses.get(0).hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return clauses.get(0).hitsLengthMin();
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return clauses.get(0).hitsLengthMax();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return true;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return clauses.get(0).hitsEndPointSorted();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return clauses.get(0).hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return clauses.get(0).hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return clauses.get(0).hitsAreUnique();
 	}
 }

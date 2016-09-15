@@ -41,30 +41,44 @@ public class MockSpanQuery extends BLSpanQuery {
 
 	boolean isSimple;
 
+	private boolean singleTokenSpans;
+
+	private boolean sortedSpans;
+
+	private boolean uniqueSpans;
+
 	public MockSpanQuery(int[] doc, int[] start, int[] end, boolean isSimple) {
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
 		this.isSimple = isSimple;
+
+		sortedSpans = singleTokenSpans = uniqueSpans = true;
+		int prevDoc = -1, prevStart = -1, prevEnd = -1;
+		for (int i = 0; i < doc.length; i++) {
+			if (end[i] - start[i] > 1) {
+				// Some hits are longer than 1 token
+				singleTokenSpans = false;
+			}
+			if (doc[i] == prevDoc) {
+				if (prevStart > start[i] || prevStart == start[i] && prevEnd > end[i]) {
+					// Violates sorted rule (sorted by start point, then endpoint)
+					sortedSpans = false;
+				}
+				if (prevStart == start[i] && prevEnd == end[i]) {
+					// Duplicate, so not unique
+					// (this check only works if the spans is sorted but we take that into account below)
+					uniqueSpans = false;
+				}
+			}
+			prevDoc = doc[i];
+			prevStart = start[i];
+			prevEnd = end[i];
+		}
 	}
 
 	public MockSpanQuery(int[] doc, int[] start, int[] end) {
 		this(doc, start, end, false);
-	}
-
-	@Override
-	public boolean hasConstantLength() {
-		return false;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 0;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return -1;
 	}
 
 	@Override
@@ -112,6 +126,46 @@ public class MockSpanQuery extends BLSpanQuery {
 	@Override
 	public int hashCode() {
 		return doc.hashCode() ^ start.hashCode() ^ end.hashCode() ^ (isSimple ? 0x23357649 : 0);
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return singleTokenSpans;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return singleTokenSpans ? 1 : 0;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return singleTokenSpans ? 1 : Integer.MAX_VALUE;
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return singleTokenSpans && sortedSpans;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return sortedSpans;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return singleTokenSpans && sortedSpans && uniqueSpans;
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return singleTokenSpans && sortedSpans && uniqueSpans;
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return sortedSpans && uniqueSpans;
 	}
 
 }

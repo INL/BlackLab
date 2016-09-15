@@ -64,21 +64,6 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return clauses.get(0).hasConstantLength();
-	}
-
-	@Override
-	public int getMinLength() {
-		return clauses.get(0).getMinLength();
-	}
-
-	@Override
-	public int getMaxLength() {
-		return clauses.get(0).getMaxLength();
-	}
-
-	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightCaptureGroup(weight, searcher, needsScores ? getTermContexts(weight) : null);
@@ -116,5 +101,45 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 	@Override
 	public String toString(String field) {
 		return "CAPTURE(" + clausesToString(field) + ", " + name + ")";
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return clauses.get(0).hitsAllSameLength();
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return clauses.get(0).hitsLengthMin();
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return clauses.get(0).hitsLengthMax();
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return clauses.get(0).hitsStartPointSorted();
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return clauses.get(0).hitsEndPointSorted();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return clauses.get(0).hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return clauses.get(0).hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return clauses.get(0).hitsAreUnique();
 	}
 }

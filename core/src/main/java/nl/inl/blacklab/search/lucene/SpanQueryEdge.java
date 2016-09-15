@@ -55,21 +55,6 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public boolean hasConstantLength() {
-		return true;
-	}
-
-	@Override
-	public int getMinLength() {
-		return 0;
-	}
-
-	@Override
-	public int getMaxLength() {
-		return 0;
-	}
-
-	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightEdge(weight, searcher, needsScores ? getTermContexts(weight) : null);
@@ -123,5 +108,45 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
 	public BLSpanQuery getClause() {
 		return clauses.get(0);
+	}
+
+	@Override
+	public boolean hitsAllSameLength() {
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin() {
+		return 0;
+	}
+
+	@Override
+	public int hitsLengthMax() {
+		return 0;
+	}
+
+	@Override
+	public boolean hitsStartPointSorted() {
+		return rightEdge ? clauses.get(0).hitsEndPointSorted() : clauses.get(0).hitsStartPointSorted();
+	}
+
+	@Override
+	public boolean hitsEndPointSorted() {
+		return hitsStartPointSorted();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueStart() {
+		return rightEdge ? clauses.get(0).hitsHaveUniqueEnd() : clauses.get(0).hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsHaveUniqueEnd() {
+		return hitsHaveUniqueStart();
+	}
+
+	@Override
+	public boolean hitsAreUnique() {
+		return hitsHaveUniqueStart();
 	}
 }
