@@ -116,41 +116,6 @@ public class SpansUnique extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return src.hitsEndPointSorted();
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return src.hitsAllSameLength();
-	}
-
-	@Override
-	public int hitsLength() {
-		return src.hitsLength();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return src.hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return src.hitsHaveUniqueEnd();
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		src.setHitQueryContext(context);
 	}

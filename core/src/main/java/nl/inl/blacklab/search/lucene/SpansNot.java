@@ -299,41 +299,6 @@ class SpansNot extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return true;
-	}
-
-	@Override
-	public int hitsLength() {
-		return 1;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		if (clause != null)
 			clause.setHitQueryContext(context);

@@ -233,33 +233,6 @@ class SpansAnd extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsAllSameLength() {
-		return spans[0].hitsAllSameLength() || spans[1].hitsAllSameLength();
-	}
-
-	@Override
-	public int hitsLength() {
-		if (spans[0].hitsAllSameLength())
-			return spans[0].hitsLength();
-		return spans[1].hitsLength();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return spans[0].hitsHaveUniqueStart() || spans[1].hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return spans[0].hitsHaveUniqueEnd() || spans[1].hitsHaveUniqueEnd();
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return spans[0].hitsAreUnique() || spans[1].hitsAreUnique();
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		spans[0].setHitQueryContext(context);
 		spans[1].setHitQueryContext(context);

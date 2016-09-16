@@ -107,41 +107,6 @@ class SpansCaptureGroup extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsStartPointSorted() {
-		return clause.hitsStartPointSorted();
-	}
-
-	@Override
-	public boolean hitsEndPointSorted() {
-		return clause.hitsEndPointSorted();
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return clause.hitsAllSameLength();
-	}
-
-	@Override
-	public int hitsLength() {
-		return clause.hitsLength();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return clause.hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return clause.hitsHaveUniqueEnd();
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return clause.hitsAreUnique();
-	}
-
-	@Override
 	public void setHitQueryContext(HitQueryContext context) {
 		super.setHitQueryContext(context);
 		this.groupIndex = context.registerCapturedGroup(name);

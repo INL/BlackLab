@@ -148,12 +148,6 @@ public class MockSpans extends BLSpans {
 
 	private boolean noMoreHitsInDoc = true;
 
-	private boolean singleTokenSpans;
-
-	private boolean sortedSpans;
-
-	private boolean uniqueSpans;
-
 	private byte[][] payloads = null;
 
 	private int endPos = -1;
@@ -162,30 +156,6 @@ public class MockSpans extends BLSpans {
 		this.doc = doc;
 		this.start = start;
 		this.end = end;
-
-		sortedSpans = singleTokenSpans = uniqueSpans = true;
-		int prevDoc = -1, prevStart = -1, prevEnd = -1;
-		for (int i = 0; i < doc.length; i++) {
-			if (end[i] - start[i] > 1) {
-				// Some hits are longer than 1 token
-				singleTokenSpans = false;
-			}
-			if (doc[i] == prevDoc) {
-				if (prevStart > start[i] || prevStart == start[i] && prevEnd > end[i]) {
-					// Violates sorted rule (sorted by start point, then endpoint)
-					sortedSpans = false;
-				}
-				if (prevStart == start[i] && prevEnd == end[i]) {
-					// Duplicate, so not unique
-					// (this check only works if the spans is sorted but we take that into account below)
-					uniqueSpans = false;
-				}
-			}
-			prevDoc = doc[i];
-			prevStart = start[i];
-			prevEnd = end[i];
-		}
-
 		postings = new MockPostingsEnum();
 		spans = new MyTermSpans(postings, new Term("test", "dummy"), 1);
 	}
@@ -250,41 +220,6 @@ public class MockSpans extends BLSpans {
 	@Override
 	public int startPosition() {
 		return spans.startPosition();
-	}
-
-	@Override
-	public boolean hitsEndPointSorted() {
-		return singleTokenSpans && sortedSpans;
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return sortedSpans;
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return singleTokenSpans;
-	}
-
-	@Override
-	public int hitsLength() {
-		return singleTokenSpans ? 1 : -1;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return singleTokenSpans && sortedSpans && uniqueSpans;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return singleTokenSpans && sortedSpans && uniqueSpans;
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return sortedSpans && uniqueSpans;
 	}
 
 	@Override

@@ -42,66 +42,6 @@ public abstract class BLSpans extends Spans {
 	protected boolean childClausesCaptureGroups = true;
 
 	/**
-	 * When hit B follows hit A, is it guaranteed that B.end &gt;= A.end?
-	 * Also, if A.end == B.end, is B.start &gt; A.start?
-	 *
-	 * @return true if this is guaranteed, false if not
-	 */
-	public boolean hitsEndPointSorted() {
-		return true;
-	}
-
-	/**
-	 * When hit B follows hit A, is it guaranteed that B.start &gt;= A.start?
-	 * Also, if A.start == B.start, is B.end &gt; A.end?
-	 *
-	 * @return true if this is guaranteed, false if not
-	 */
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
-
-	/**
-	 * Are all hits the same number of tokens long?
-	 * @return true if this is guaranteed, false if not
-	 */
-	public boolean hitsAllSameLength() {
-		return true;
-	}
-
-	/**
-	 * If all hits are the same number of tokens long, how long?
-	 * @return the length if all hits are guaranteed to be the same length and that length is known, or a negative number otherwise.
-	 */
-	public int hitsLength() {
-		return 1;
-	}
-
-	/**
-	 * Is it guaranteed that no two hits have the same start position?
-	 * @return true if this is guaranteed, false if not
-	 */
-	public boolean hitsHaveUniqueStart() {
-		return true;
-	}
-
-	/**
-	 * Is it guaranteed that no two hits have the same end position?
-	 * @return true if this is guaranteed, false if not
-	 */
-	public boolean hitsHaveUniqueEnd() {
-		return true;
-	}
-
-	/**
-	 * Is it guaranteed that no two hits have the same start and end position?
-	 * @return true if this is guaranteed, false if not
-	 */
-	public boolean hitsAreUnique() {
-		return true;
-	}
-
-	/**
 	 * Makes a new Hit object from the document id, start and end positions.
 	 *
 	 * Subclasses that already have a Hit object available should override this and return the

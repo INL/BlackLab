@@ -237,41 +237,6 @@ class SpansNGrams extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return min == max;
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return min == max;
-	}
-
-	@Override
-	public int hitsLength() {
-		return min;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return min == max;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return min == max;
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
-
-	@Override
 	protected void passHitQueryContextToClauses(HitQueryContext context) {
 		// no clause, nothing to do
 	}

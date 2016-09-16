@@ -300,41 +300,6 @@ class SpansExpansionRaw extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return clause.hitsEndPointSorted() && (expandToLeft || !expandToLeft && min == max);
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return clause.hitsStartPointSorted() && (!expandToLeft || expandToLeft && min == max);
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return clause.hitsAllSameLength() && min == max;
-	}
-
-	@Override
-	public int hitsLength() {
-		return hitsAllSameLength() ? clause.hitsLength() + min : -1;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return clause.hitsHaveUniqueStart() && min == max;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return clause.hitsHaveUniqueEnd() && min == max;
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return clause.hitsAreUnique() && min == max;
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		clause.setHitQueryContext(context);
 	}

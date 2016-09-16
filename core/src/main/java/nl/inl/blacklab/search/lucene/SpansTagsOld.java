@@ -250,45 +250,6 @@ class SpansTagsOld extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return false;
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return false;
-	}
-
-	@Override
-	public int hitsLength() {
-		return -1;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		// What happens if two of the same starttags occur at the same position..?
-		// Right now, we assume this doesn't happen, and it usually doesn't, but if it
-		// does, can it cause a mismatched tag problem?
-		// [solved by new SpansTags]
-		return true;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		spans[0].setHitQueryContext(context);
 		spans[1].setHitQueryContext(context);

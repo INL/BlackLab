@@ -239,41 +239,6 @@ class SpansRepetition extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return spansSource.hitsEndPointSorted() && min == max;
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return spansSource.hitsAllSameLength() && min == max;
-	}
-
-	@Override
-	public int hitsLength() {
-		return hitsAllSameLength() ? spansSource.hitsLength() * min : -1;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return spansSource.hitsHaveUniqueStart() && min == max;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return spansSource.hitsHaveUniqueEnd() && min == max;
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		source.setHitQueryContext(context);
 	}

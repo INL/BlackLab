@@ -310,29 +310,12 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		@Override
 		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
 
-			// BL: Create a clauseList and compute clauseLength and clausesAllSameLength
-			// for the anonymous BLSpan class
-			boolean clausesAllSameLengthSetter = true;
-			int clauseLengthSetter = -1;
-
 			final ArrayList<BLSpans> subSpans = new ArrayList<>(inner.getClauses().length);
 
 			for (SpanWeight w: subWeights) {
 				BLSpans spans = BLSpansWrapper.optWrap(w.getSpans(context, requiredPostings));
 				if (spans != null) {
 					subSpans.add(spans);
-
-					// BL: see if this clauses violates the same-length property
-					if (spans.hitsAllSameLength()
-							&& (clauseLengthSetter == -1 || clauseLengthSetter == spans
-									.hitsLength())) {
-						// This clause doesn't violate the all-same-length
-						// requirements
-						clauseLengthSetter = spans.hitsLength();
-					} else {
-						// This clause does violate the all-same-length requirements
-						clausesAllSameLengthSetter = false;
-					}
 				}
 			}
 
@@ -351,15 +334,6 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 																								// empty
 																								// use
 																								// -1
-
-			// BL
-			final boolean clausesAllSameLength = clausesAllSameLengthSetter;
-			final int clauseLength;
-			if (clausesAllSameLength) {
-				clauseLength = clauseLengthSetter;
-			} else {
-				clauseLength = -1;
-			}
 
 			return new BLSpans() {
 				Spans topPositionSpans = null;
@@ -555,48 +529,6 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 						}
 					}
 					return cost;
-				}
-
-				// BL: added guarantee-methods
-
-				@Override
-				public boolean hitsEndPointSorted() {
-					return false; // cannot guarantee because we're merging from
-									// different sources
-				}
-
-				@Override
-				public boolean hitsStartPointSorted() {
-					return true; // our way of merging guarantees this, as it should
-									// for almost all BLSpans
-				}
-
-				@Override
-				public boolean hitsAllSameLength() {
-					return clausesAllSameLength;
-				}
-
-				@Override
-				public int hitsLength() {
-					return clauseLength;
-				}
-
-				@Override
-				public boolean hitsHaveUniqueStart() {
-					return false; // cannot guarantee because we're merging from
-									// different sources
-				}
-
-				@Override
-				public boolean hitsHaveUniqueEnd() {
-					return false; // cannot guarantee because we're merging from
-									// different sources
-				}
-
-				@Override
-				public boolean hitsAreUnique() {
-					return false; // cannot guarantee because we're merging from
-									// different sources
 				}
 
 				@Override

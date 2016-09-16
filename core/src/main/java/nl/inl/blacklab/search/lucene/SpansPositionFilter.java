@@ -484,41 +484,6 @@ class SpansPositionFilter extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return producer.hitsEndPointSorted();
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return producer.hitsAllSameLength();
-	}
-
-	@Override
-	public int hitsLength() {
-		return producer.hitsLength();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return producer.hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return producer.hitsHaveUniqueEnd();
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return producer.hitsAreUnique();
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		producer.setHitQueryContext(context);
 		filter.setHitQueryContext(context);

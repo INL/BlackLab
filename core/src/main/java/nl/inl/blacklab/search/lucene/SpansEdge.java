@@ -95,41 +95,6 @@ class SpansEdge extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return hitsStartPointSorted();
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return rightEdge ? clause.hitsEndPointSorted() : clause.hitsStartPointSorted();
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return true;
-	}
-
-	@Override
-	public int hitsLength() {
-		return 0;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return rightEdge ? clause.hitsHaveUniqueEnd() : clause.hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return hitsHaveUniqueStart();
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		clause.setHitQueryContext(context);
 	}

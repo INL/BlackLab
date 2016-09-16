@@ -325,41 +325,6 @@ class SpansSequenceRaw extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return left.hitsHaveUniqueEnd() && origRight.hitsAllSameLength();
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return left.hitsAllSameLength();
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return left.hitsAllSameLength() && origRight.hitsAllSameLength();
-	}
-
-	@Override
-	public int hitsLength() {
-		return hitsAllSameLength() ? left.hitsLength() + origRight.hitsLength() : -1;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return left.hitsHaveUniqueStart() && origRight.hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return left.hitsHaveUniqueEnd() && origRight.hitsHaveUniqueEnd();
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		left.setHitQueryContext(context);
 		right.setHitQueryContext(context);

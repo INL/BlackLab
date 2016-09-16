@@ -94,38 +94,6 @@ public class BLSpansWrapper extends BLSpans {
 		return new BLSpansWrapper(spans);
 	}
 
-	@Deprecated
-	public static BLSpans optWrapSort(Spans spans) {
-		if (spans == null)
-			return null;
-		BLSpans result;
-		if (spans instanceof BLSpans)
-			result = (BLSpans)spans;
-		else
-			result = new BLSpansWrapper(spans);
-		if (!result.hitsStartPointSorted())
-			result = new PerDocumentSortedSpans(result, PerDocumentSortedSpans.cmpStartPoint, false);
-		return result;
-	}
-
-	@Deprecated
-	public static BLSpans optWrapSortUniq(Spans spans) {
-		if (spans == null)
-			return null;
-		BLSpans result;
-		if (spans instanceof BLSpans)
-			result = (BLSpans)spans;
-		else
-			result = new BLSpansWrapper(spans);
-		if (result.hitsStartPointSorted()) {
-			if (result.hitsAreUnique()) {
-				return result;
-			}
-			return new SpansUnique(result);
-		}
-		return new PerDocumentSortedSpans(result, PerDocumentSortedSpans.cmpStartPoint, !result.hitsAreUnique());
-	}
-
 	/**
 	 * Rewrite a SpanQuery after rewrite() to a BLSpanQuery equivalent.
 	 *

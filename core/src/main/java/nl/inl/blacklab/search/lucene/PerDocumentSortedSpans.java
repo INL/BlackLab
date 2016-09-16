@@ -45,14 +45,10 @@ public class PerDocumentSortedSpans extends BLSpans {
 
 	private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
-	/** Sort hits by end point instead of by start point? */
-	private boolean sortByEndPoint;
-
 	public PerDocumentSortedSpans(Spans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
 		this.source = BLSpansWrapper.optWrap(src);
 
 		// Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
-		this.sortByEndPoint = comparator instanceof SpanComparatorEndPoint;
 		bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
 
 		this.eliminateDuplicates = eliminateDuplicates;
@@ -149,41 +145,6 @@ public class PerDocumentSortedSpans extends BLSpans {
 	@Override
 	public String toString() {
 		return bucketedSpans.toString();
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return source.hitsAllSameLength();
-	}
-
-	@Override
-	public int hitsLength() {
-		return source.hitsLength();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return source.hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return source.hitsHaveUniqueEnd();
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return source.hitsAreUnique() || eliminateDuplicates;
-	}
-
-	@Override
-	public boolean hitsEndPointSorted() {
-		return sortByEndPoint ? true : hitsAllSameLength();
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return sortByEndPoint ? hitsAllSameLength() : true;
 	}
 
 	@Override

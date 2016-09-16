@@ -216,41 +216,6 @@ class SpansSequenceSimple extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return right.hitsEndPointSorted();
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return left.hitsStartPointSorted();
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return left.hitsAllSameLength() && right.hitsAllSameLength();
-	}
-
-	@Override
-	public int hitsLength() {
-		return hitsAllSameLength() ? left.hitsLength() + right.hitsLength() : -1;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return left.hitsHaveUniqueStart();
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return right.hitsHaveUniqueEnd();
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		left.setHitQueryContext(context);
 		right.setHitQueryContext(context);

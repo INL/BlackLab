@@ -359,43 +359,6 @@ class SpansFilterNGramsRaw extends BLSpans {
 	}
 
 	@Override
-	public boolean hitsEndPointSorted() {
-		return clause.hitsEndPointSorted() &&
-			(op == SpanQueryPositionFilter.Operation.CONTAINING_AT_END || op == SpanQueryPositionFilter.Operation.ENDS_AT || op == SpanQueryPositionFilter.Operation.MATCHES || min == max);
-	}
-
-	@Override
-	public boolean hitsStartPointSorted() {
-		return clause.hitsStartPointSorted() &&
-			(op == SpanQueryPositionFilter.Operation.CONTAINING_AT_START || op == SpanQueryPositionFilter.Operation.STARTS_AT || op == SpanQueryPositionFilter.Operation.MATCHES || min == max);
-	}
-
-	@Override
-	public boolean hitsAllSameLength() {
-		return min == max;
-	}
-
-	@Override
-	public int hitsLength() {
-		return min == max ? min : -1;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return false;
-	}
-
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return false;
-	}
-
-	@Override
-	public boolean hitsAreUnique() {
-		return false;
-	}
-
-	@Override
 	public void passHitQueryContextToClauses(HitQueryContext context) {
 		clause.setHitQueryContext(context);
 	}
