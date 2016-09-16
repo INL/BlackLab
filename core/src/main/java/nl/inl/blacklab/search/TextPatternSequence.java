@@ -34,30 +34,13 @@ public class TextPatternSequence extends TextPatternAndNot {
 	public BLSpanQuery translate(QueryExecutionContext context) {
 		if (!exclude.isEmpty())
 			throw new RuntimeException("clausesNot not empty!");
-
 		List<BLSpanQuery> chResults = new ArrayList<>();
-
-		// Keep track of which clauses can match the empty sequence. Use this to build alternatives
-		// at the end. (see makeAlternatives)
-//		List<Boolean> matchesEmptySeq = new ArrayList<Boolean>();
-
-		// Translate the clauses
 		for (TextPattern cl: include) {
-			// Translate this part of the sequence
-			BLSpanQuery translated = cl.translate(context);
-
-			chResults.add(translated);
-//			matchesEmptySeq.add(translatedMatchesEmpty);
+			chResults.add(cl.translate(context));
 		}
-
-		// Is it still a sequence, or just one part?
 		if (chResults.size() == 1)
 			return chResults.get(0); // just one part, return that
-
 		return new SpanQuerySequence(chResults);
-
-		// Multiple parts; create sequence object
-		//return makeAlternatives(translator, context, chResults, matchesEmptySeq);
 	}
 
 	@Override
