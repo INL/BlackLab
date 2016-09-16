@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.util;
+package nl.inl.blacklab.server.util;
 
 /**
  * Utilities to do with JVM memory.

@@ -20,7 +20,7 @@ import nl.inl.blacklab.server.exceptions.TooManyRequests;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.util.MemoryUtil;
+import nl.inl.blacklab.server.util.MemoryUtil;
 import nl.inl.util.ThreadPriority;
 import nl.inl.util.ThreadPriority.Level;
 

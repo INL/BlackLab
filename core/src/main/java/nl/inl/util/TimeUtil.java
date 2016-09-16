@@ -20,14 +20,6 @@ public class TimeUtil {
 	private TimeUtil() {
 	}
 
-	public static double secondsSince(long startTime) {
-		return (System.currentTimeMillis() - startTime) / 1000.0;
-	}
-
-	public static long millisToSeconds(long timeMillis) {
-		return Math.round(timeMillis / 1e3);
-	}
-
 	/**
 	 * Describe the elapsed time in a human-readable way.
 	 *

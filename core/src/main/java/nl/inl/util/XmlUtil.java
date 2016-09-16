@@ -15,17 +15,12 @@
  *******************************************************************************/
 package nl.inl.util;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.Document;
 import org.xml.sax.ErrorHandler;
@@ -38,8 +33,6 @@ import org.xml.sax.SAXParseException;
  */
 public class XmlUtil {
 	private static boolean namespaceAware = false;
-
-	static TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
 	public static boolean isNamespaceAware() {
 		return namespaceAware;
@@ -84,14 +77,6 @@ public class XmlUtil {
 		} catch (ParserConfigurationException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public static Transformer getXsltTransformer(File xsltFile) {
-		try {
-			return transformerFactory.newTransformer(new StreamSource(xsltFile));
-		} catch (TransformerConfigurationException e) {
 			throw new RuntimeException(e);
 		}
 	}
