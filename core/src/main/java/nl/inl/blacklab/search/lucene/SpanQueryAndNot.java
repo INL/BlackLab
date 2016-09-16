@@ -19,15 +19,23 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.search.spans.Spans;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * A SpanQuery for an AND NOT query.
- * Produces all spans from the "include" part, except for those
- * match a span in the "exclude" part.
+ * Produces all spans matching all the "include" parts, except for those
+ * that match any span in the "exclude" part.
  */
 public class SpanQueryAndNot extends BLSpanQuery {
 
@@ -36,8 +44,21 @@ public class SpanQueryAndNot extends BLSpanQuery {
 	private List<BLSpanQuery> exclude;
 
 	public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
-		this.include = include;
-		this.exclude = exclude;
+		this.include = include == null ? new ArrayList<BLSpanQuery>() : include;
+		this.exclude = exclude == null ? new ArrayList<BLSpanQuery>() : exclude;
+		checkBaseFieldName();
+	}
+
+	private void checkBaseFieldName() {
+		if (include.size() > 0) {
+			String baseFieldName = ComplexFieldUtil.getBaseName(include.get(0).getField());
+			for (BLSpanQuery clause: include) {
+				String f = ComplexFieldUtil.getBaseName(clause.getField());
+				if (!baseFieldName.equals(f))
+					throw new RuntimeException("Mix of incompatible fields in query ("
+							+ baseFieldName + " and " + f + ")");
+			}
+		}
 	}
 
 	@Override
@@ -77,13 +98,47 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		// Flatten nested AND queries, and invert negative-only clauses.
 		// This doesn't change the query because the AND operator is associative.
 		boolean anyRewritten = false;
-		List<BLSpanQuery> rewrittenCl = new ArrayList<>();
-		List<BLSpanQuery> rewrittenNotCl = new ArrayList<>();
+		List<BLSpanQuery> flatCl = new ArrayList<>();
+		List<BLSpanQuery> flatNotCl = new ArrayList<>();
 		boolean isNot = false;
 		for (List<BLSpanQuery> cl: Arrays.asList(include, exclude)) {
 			for (BLSpanQuery child: cl) {
-				List<BLSpanQuery> clPos = isNot ? rewrittenNotCl : rewrittenCl;
-				List<BLSpanQuery> clNeg = isNot ? rewrittenCl : rewrittenNotCl;
+				List<BLSpanQuery> clPos = isNot ? flatNotCl : flatCl;
+				List<BLSpanQuery> clNeg = isNot ? flatCl : flatNotCl;
+				boolean isTPAndNot = child instanceof SpanQueryAndNot;
+				if (!isTPAndNot && child.isSingleTokenNot()) {
+					// "Switch sides": invert the clause, and
+					// swap the lists we add clauses to.
+					child = child.inverted();
+					List<BLSpanQuery> temp = clPos;
+					clPos = clNeg;
+					clNeg = temp;
+					anyRewritten = true;
+					isTPAndNot = child instanceof SpanQueryAndNot;
+				}
+				if (isTPAndNot) {
+					// Flatten.
+					// Child AND operation we want to flatten into this AND operation.
+					// Replace the child, incorporating its children into this AND operation.
+					clPos.addAll(((SpanQueryAndNot)child).include);
+					clNeg.addAll(((SpanQueryAndNot)child).exclude);
+					anyRewritten = true;
+				} else {
+					// Just add it.
+					clPos.add(child);
+				}
+			}
+			isNot = true;
+		}
+
+		// Rewrite clauses, and again flatten/invert if necessary.
+		List<BLSpanQuery> rewrCl = new ArrayList<>();
+		List<BLSpanQuery> rewrNotCl = new ArrayList<>();
+		isNot = false;
+		for (List<BLSpanQuery> cl: Arrays.asList(flatCl, flatNotCl)) {
+			for (BLSpanQuery child: cl) {
+				List<BLSpanQuery> clPos = isNot ? rewrNotCl : rewrCl;
+				List<BLSpanQuery> clNeg = isNot ? rewrCl : rewrNotCl;
 				BLSpanQuery rewritten = child.rewrite(reader);
 				boolean isTPAndNot = rewritten instanceof SpanQueryAndNot;
 				if (!isTPAndNot && rewritten.isSingleTokenNot()) {
@@ -94,6 +149,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 					clPos = clNeg;
 					clNeg = temp;
 					anyRewritten = true;
+					isTPAndNot = rewritten instanceof SpanQueryAndNot;
 				}
 				if (isTPAndNot) {
 					// Flatten.
@@ -112,31 +168,31 @@ public class SpanQueryAndNot extends BLSpanQuery {
 			isNot = true;
 		}
 
-		if (rewrittenCl.isEmpty()) {
+		if (rewrCl.isEmpty()) {
 			// All-negative; node should be rewritten to OR.
-			if (rewrittenNotCl.size() == 1)
-				return rewrittenCl.get(0).inverted().rewrite(reader);
-			return (new BLSpanOrQuery(rewrittenNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
+			if (rewrNotCl.size() == 1)
+				return rewrCl.get(0).inverted().rewrite(reader);
+			return (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
 		}
 
-		if (!anyRewritten) {
-			rewrittenCl = include;
-			rewrittenNotCl = exclude;
-		}
-
-		if (rewrittenCl.size() == 1 && rewrittenNotCl.isEmpty()) {
+		if (rewrCl.size() == 1 && rewrNotCl.isEmpty()) {
 			// Single positive clause
-			return rewrittenCl.get(0);
-		} else if (rewrittenCl.isEmpty()) {
+			return rewrCl.get(0);
+		} else if (rewrCl.isEmpty()) {
 			// All negative clauses, so it's really just a NOT query. Should've been rewritten, but ok.
-			return new SpanQueryNot(new SpanQueryAnd(rewrittenNotCl)).rewrite(reader);
+			return new SpanQueryNot(new SpanQueryAndNot(rewrNotCl, null)).rewrite(reader);
+		}
+
+		if (!anyRewritten && exclude.isEmpty()) {
+			// Nothing needs to be rewritten.
+			return this;
 		}
 
 		// Combination of positive and possibly negative clauses
-		BLSpanQuery includeResult = rewrittenCl.size() == 1 ? rewrittenCl.get(0) : new SpanQueryAnd(rewrittenCl);
-		if (rewrittenNotCl.isEmpty())
+		BLSpanQuery includeResult = rewrCl.size() == 1 ? rewrCl.get(0) : new SpanQueryAndNot(rewrCl, null);
+		if (rewrNotCl.isEmpty())
 			return includeResult.rewrite(reader);
-		BLSpanQuery excludeResult = rewrittenNotCl.size() == 1 ? rewrittenNotCl.get(0) : new SpanQueryAnd(rewrittenNotCl);
+		BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0) : new SpanQueryAndNot(rewrNotCl, null);
 		return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES, true).rewrite(reader);
 	}
 
@@ -156,7 +212,51 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		throw new RuntimeException("Query should have been rewritten!");
+		if (exclude.size() > 0)
+			throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
+
+		List<SpanWeight> weights = new ArrayList<>();
+		for (BLSpanQuery clause: include) {
+			weights.add(clause.createWeight(searcher, needsScores));
+		}
+		Map<Term, TermContext> contexts = needsScores ? getTermContexts(weights.toArray(new SpanWeight[0])) : null;
+		return new SpanWeightAnd(weights, searcher, contexts);
+	}
+
+	public class SpanWeightAnd extends SpanWeight {
+
+		final List<SpanWeight> weights;
+
+		public SpanWeightAnd(List<SpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQueryAndNot.this, searcher, terms);
+			this.weights = weights;
+		}
+
+		@Override
+		public void extractTerms(Set<Term> terms) {
+			for (SpanWeight weight: weights) {
+				weight.extractTerms(terms);
+			}
+		}
+
+		@Override
+		public void extractTermContexts(Map<Term, TermContext> contexts) {
+			for (SpanWeight weight: weights) {
+				weight.extractTermContexts(contexts);
+			}
+		}
+
+		@Override
+		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			Spans combi = weights.get(0).getSpans(context, requiredPostings);
+			for (int i = 1; i < weights.size(); i++) {
+				Spans si = weights.get(i).getSpans(context, requiredPostings);
+				if (combi == null || si == null)
+					return null; // if no hits in one of the clauses, no hits in and query
+				combi = new SpansAnd(combi, si);
+			}
+			return combi;
+		}
 	}
 
 	public String toString(String field) {

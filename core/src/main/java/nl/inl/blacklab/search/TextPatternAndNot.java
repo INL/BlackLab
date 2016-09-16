@@ -19,9 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryAnd;
-import nl.inl.blacklab.search.lucene.SpanQueryNot;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.lucene.SpanQueryAndNot;
 
 /**
  * AND (NOT) query for combining different properties from a complex field.
@@ -58,21 +56,7 @@ public class TextPatternAndNot extends TextPattern {
 		for (TextPattern cl : exclude) {
 			chResultsNot.add(cl.translate(context));
 		}
-		if (chResults.size() == 1 && chResultsNot.isEmpty()) {
-			// Single positive clause
-			return chResults.get(0);
-		} else if (chResults.isEmpty()) {
-			// All negative clauses, so it's really just a NOT query.
-			SpanQueryNot spanQueryNot = new SpanQueryNot(new SpanQueryAnd(chResultsNot));
-			spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
-			return spanQueryNot;
-		}
-		// Combination of positive and possibly negative clauses
-		BLSpanQuery includeResult = chResults.size() == 1 ? chResults.get(0) : new SpanQueryAnd(chResults);
-		if (chResultsNot.isEmpty())
-			return includeResult;
-		BLSpanQuery excludeResult = chResultsNot.size() == 1 ? chResultsNot.get(0) : new SpanQueryAnd(chResultsNot);
-		return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES, true);
+		return new SpanQueryAndNot(chResults, chResultsNot);
 	}
 
 	@Override

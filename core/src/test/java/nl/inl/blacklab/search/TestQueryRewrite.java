@@ -127,10 +127,7 @@ public class TestQueryRewrite {
 	public void testRewriteNestedAnd() {
 		assertRewrite("[word = 'a' & lemma = 'b' & pos != 'c']",
 				"AND(TERM(contents%word@i:a), AND(TERM(contents%lemma@i:b), NOT(TERM(contents%pos@i:c))))",
-				"AND(TERM(contents%word@i:a), POSFILTER(TERM(contents%lemma@i:b), TERM(contents%pos@i:c), NOTMATCHES))");
-		// @@@ Waarom niet rewritten naar:
-		// POSFILTER(AND(TERM(contents%word@i:a), TERM(contents%lemma@i:b)), TERM(contents%pos@i:c), NOTMATCHES)
-		// ? Is ws. efficienter omdat je minder hoeft te filteren.
+				"POSFILTER(AND(TERM(contents%word@i:a), TERM(contents%lemma@i:b)), TERM(contents%pos@i:c), NOTMATCHES)");
 	}
 
 	@Test
