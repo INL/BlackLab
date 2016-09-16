@@ -33,12 +33,12 @@ public class TestSpansSequence {
 		int[] aDoc   = { 1, 1, 1 };
 		int[] aStart = { 1, 1, 2 };
 		int[] aEnd   = { 2, 3, 4 };
-		Spans a = new MockSpans(aDoc, aStart, aEnd);
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
 		int[] bDoc   = { 1, 1, 1 };
 		int[] bStart = { 2, 2, 3 };
 		int[] bEnd   = { 4, 5, 4 };
-		Spans b = new MockSpans(bDoc, bStart, bEnd);
+		BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
 		Spans spans = new SpansSequenceRaw(a, b);
 
@@ -84,12 +84,12 @@ public class TestSpansSequence {
 		int[] aDoc   = { 1, 2, 2 };
 		int[] aStart = { 1, 2, 4 };
 		int[] aEnd   = { 2, 3, 5 };
-		Spans a = new MockSpans(aDoc, aStart, aEnd);
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
 		int[] bDoc   = { 1, 2 };
 		int[] bStart = { 5, 3 };
 		int[] bEnd   = { 6, 4 };
-		Spans b = new MockSpans(bDoc, bStart, bEnd);
+		BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
 		Spans spans = new SpansSequenceRaw(a, b);
 

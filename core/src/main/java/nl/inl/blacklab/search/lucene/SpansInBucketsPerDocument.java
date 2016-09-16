@@ -28,7 +28,7 @@ import org.apache.lucene.search.spans.Spans;
  * per-document hits into a normal Spans object again.
  */
 public class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
-	public SpansInBucketsPerDocument(Spans source) {
+	public SpansInBucketsPerDocument(BLSpans source) {
 		super(source);
 	}
 

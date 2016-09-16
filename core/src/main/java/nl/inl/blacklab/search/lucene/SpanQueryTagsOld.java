@@ -27,9 +27,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.StringUtil;
 
@@ -100,20 +97,20 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		if (attr != null)
 			throw new RuntimeException("Query should've been rewritten! (attr != null)");
-		SpanWeight startWeight = clauses.get(0).createWeight(searcher, needsScores);
-		SpanWeight endWeight = clauses.get(1).createWeight(searcher, needsScores);
+		BLSpanWeight startWeight = clauses.get(0).createWeight(searcher, needsScores);
+		BLSpanWeight endWeight = clauses.get(1).createWeight(searcher, needsScores);
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(startWeight, endWeight) : null;
 		return new SpanWeightTagsOld(startWeight, endWeight, searcher, contexts);
 	}
 
-	public class SpanWeightTagsOld extends SpanWeight {
+	public class SpanWeightTagsOld extends BLSpanWeight {
 
-		final SpanWeight startWeight, endWeight;
+		final BLSpanWeight startWeight, endWeight;
 
-		public SpanWeightTagsOld(SpanWeight startWeight, SpanWeight endWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightTagsOld(BLSpanWeight startWeight, BLSpanWeight endWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryTagsOld.this, searcher, terms);
 			this.startWeight = startWeight;
 			this.endWeight = endWeight;
@@ -132,9 +129,9 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans startTags = startWeight.getSpans(context, requiredPostings);
-			Spans endTags = endWeight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans startTags = startWeight.getSpans(context, requiredPostings);
+			BLSpans endTags = endWeight.getSpans(context, requiredPostings);
 			if (startTags == null || endTags == null)
 				return null;
 			return new SpansTagsOld(startTags, endTags);

@@ -18,7 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
@@ -56,8 +55,8 @@ class SpansTagsOld extends BLSpans {
 	 * @param startTags start tags
 	 * @param endTags end tags
 	 */
-	public SpansTagsOld(Spans startTags, Spans endTags) {
-		Spans[] origSpans = { startTags, endTags };
+	public SpansTagsOld(BLSpans startTags, BLSpans endTags) {
+		BLSpans[] origSpans = { startTags, endTags };
 		for (int i = 0; i < 2; i++) {
 			spans[i] = new SpansInBucketsPerDocument(origSpans[i]);
 		}

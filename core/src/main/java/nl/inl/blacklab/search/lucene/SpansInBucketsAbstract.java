@@ -25,8 +25,6 @@ import java.util.Map;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
-
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 
@@ -49,7 +47,7 @@ import nl.inl.blacklab.search.Span;
  *
  */
 abstract class SpansInBucketsAbstract implements SpansInBuckets {
-	protected Spans source;
+	protected BLSpans source;
 
 	protected int currentDoc = -1;
 
@@ -75,12 +73,12 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	protected boolean clauseCapturesGroups = true;
 
 	protected void addHitFromSource() {
-		Hit hit = new Hit(source.docID(), source.startPosition(), source.endPosition());
+		Hit hit = source.getHit();
 		bucket.add(hit);
 		if (doCapturedGroups) {
 			// Store captured group information
 			Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
-			((BLSpans)source).getCapturedGroups(capturedGroups);
+			source.getCapturedGroups(capturedGroups);
 			capturedGroupsPerHit.put(hit, capturedGroups);
 		}
 		bucketSize++;
@@ -110,7 +108,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 		return bucket.get(indexInBucket);
 	}
 
-	public SpansInBucketsAbstract(Spans source) {
+	public SpansInBucketsAbstract(BLSpans source) {
 		this.source = source;
 	}
 
@@ -201,7 +199,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 		int before = context.getCaptureRegisterNumber();
 		if (source instanceof BLSpans)
 			((BLSpans) source).setHitQueryContext(context);
-		else if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
+		else //OLD: if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
 			System.err.println("### SpansInBucketsAbstract: " + source + ", not a BLSpans ###");
 		if (context.getCaptureRegisterNumber() == before) {
 			// Our clause doesn't capture any groups; optimize

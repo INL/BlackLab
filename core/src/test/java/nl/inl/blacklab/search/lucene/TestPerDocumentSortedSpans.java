@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.Spans;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,7 +32,7 @@ public class TestPerDocumentSortedSpans {
 		int[] doc   = { 1, 1, 1, 2, 2 };
 		int[] start = { 1, 1, 4, 2, 2 };
 		int[] end   = { 8, 6, 5, 4, 3 };
-		Spans spans = new MockSpans(doc, start, end);
+		BLSpans spans = new MockSpans(doc, start, end);
 		hpd = new PerDocumentSortedSpans(spans, PerDocumentSortedSpans.cmpEndPoint, false);
 	}
 
@@ -42,7 +41,7 @@ public class TestPerDocumentSortedSpans {
 		int[] doc   = { 1, 1, 1, 2, 2 };
 		int[] start = { 4, 1, 1, 2, 2 };
 		int[] end   = { 5, 6, 8, 3, 4 };
-		Spans exp = new MockSpans(doc, start, end);
+		BLSpans exp = new MockSpans(doc, start, end);
 		TestUtil.assertEquals(exp, hpd);
 	}
 

@@ -29,7 +29,6 @@ import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.spans.SpanWeight;
 
 /*
  * This is my SpanFuzzyQuery. It is released under the Apache licensence. Just paste it in. (Karl
@@ -105,7 +104,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		throw new UnsupportedOperationException("Query should have been rewritten");
 	}
 

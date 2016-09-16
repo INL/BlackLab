@@ -71,21 +71,7 @@ public class BLSpansWrapper extends BLSpans {
 		return source.toString();
 	}
 
-	public static BLSpans optWrap(Spans spans, boolean sort, boolean removeDuplicates) {
-		if (spans == null)
-			return null;
-		BLSpans result;
-		if (spans instanceof BLSpans)
-			result = (BLSpans)spans;
-		else
-			result = new BLSpansWrapper(spans);
-		if (sort)
-			return new PerDocumentSortedSpans(result, PerDocumentSortedSpans.cmpStartPoint, removeDuplicates);
-		if (removeDuplicates)
-			return new SpansUnique(result);
-		return result;
-	}
-
+	@Deprecated
 	public static BLSpans optWrap(Spans spans) {
 		if (spans == null)
 			return null;
@@ -151,7 +137,15 @@ public class BLSpansWrapper extends BLSpans {
 
 	@Override
 	public int advanceStartPosition(int target) throws IOException {
-		return BLSpans.advanceStartPosition(source, target);
+		if (source instanceof BLSpans) {
+			return ((BLSpans) source).advanceStartPosition(target);
+		}
+		// Naive implementations; subclasses may provide a faster version.
+		int pos;
+		do {
+			pos = source.nextStartPosition();
+		} while(pos < target && pos != NO_MORE_POSITIONS);
+		return pos;
 	}
 
 	@Override

@@ -29,7 +29,7 @@ public class TestSpansUnique {
 		int[] aDoc   = {  1,  1,  2,  3,  3 };
 		int[] aStart = { 10, 10, 10,  1,  1 };
 		int[] aEnd   = { 11, 11, 11,  2,  2 };
-		Spans a = new MockSpans(aDoc, aStart, aEnd);
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
 		Spans spans = new SpansUnique(a);
 

@@ -26,8 +26,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Returns all tokens that do not occur in the matches
@@ -120,17 +118,17 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		BLSpanQuery query = clauses.get(0);
-		SpanWeight weight = query == null ? null : query.createWeight(searcher, needsScores);
+		BLSpanWeight weight = query == null ? null : query.createWeight(searcher, needsScores);
 		return new SpanWeightNot(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightNot extends SpanWeight {
+	public class SpanWeightNot extends BLSpanWeight {
 
-		final SpanWeight weight;
+		final BLSpanWeight weight;
 
-		public SpanWeightNot(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightNot(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryNot.this, searcher, terms);
 			this.weight = weight;
 		}
@@ -148,10 +146,10 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
 			if (!clauses.get(0).hitsStartPointSorted())
-				spans = BLSpansWrapper.optWrap(spans, true, false);
+				spans = BLSpans.optSortUniq(spans, true, false);
 			return new SpansNot(ignoreLastToken, context.reader(), baseFieldName, spans);
 		}
 

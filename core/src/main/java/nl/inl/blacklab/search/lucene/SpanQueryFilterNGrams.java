@@ -25,8 +25,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Return n-grams contained in the from the source spans hits.
@@ -107,16 +105,16 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightFilterNGrams(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightFilterNGrams extends SpanWeight {
+	public class SpanWeightFilterNGrams extends BLSpanWeight {
 
-		final SpanWeight weight;
+		final BLSpanWeight weight;
 
-		public SpanWeightFilterNGrams(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightFilterNGrams(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryFilterNGrams.this, searcher, terms);
 			this.weight = weight;
 		}
@@ -132,8 +130,8 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans spansSource = weight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans spansSource = weight.getSpans(context, requiredPostings);
 			if (spansSource == null)
 				return null;
 			BLSpans spans = new SpansFilterNGramsRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(), spansSource, op, min, max);

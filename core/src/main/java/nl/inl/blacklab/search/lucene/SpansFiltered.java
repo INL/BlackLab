@@ -20,8 +20,6 @@ import java.io.IOException;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -38,8 +36,8 @@ public class SpansFiltered extends BLSpans {
 
 	boolean more;
 
-	public SpansFiltered(Spans spans, Scorer filterDocs) throws IOException {
-		this.spans = BLSpansWrapper.optWrap(spans);
+	public SpansFiltered(BLSpans spans, Scorer filterDocs) throws IOException {
+		this.spans = spans;
 		docIdSetIter = filterDocs.iterator();
 		more = false;
 		if (docIdSetIter != null) {

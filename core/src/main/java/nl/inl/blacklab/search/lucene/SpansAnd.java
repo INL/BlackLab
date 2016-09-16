@@ -18,7 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
 
@@ -46,9 +45,9 @@ class SpansAnd extends BLSpans {
 	 * @param leftClause left clause
 	 * @param rightClause right clause
 	 */
-	public SpansAnd(Spans leftClause, Spans rightClause) {
-		spans[0] = BLSpansWrapper.optWrap(leftClause); //BLSpansWrapper.optWrapSort(leftClause);
-		spans[1] = BLSpansWrapper.optWrap(rightClause); //BLSpansWrapper.optWrapSort(rightClause);
+	public SpansAnd(BLSpans leftClause, BLSpans rightClause) {
+		spans[0] = leftClause;
+		spans[1] = rightClause;
 		currentDoc[0] = currentDoc[1] = -1;
 		currentStart[0] = currentStart[1] = -1;
 	}

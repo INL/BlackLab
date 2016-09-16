@@ -59,7 +59,6 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		this.field = inner.getField();
 	}
 
-	// BL
 	static BLSpanOrQuery from(SpanOrQuery in) {
 		SpanQuery[] clauses = in.getClauses();
 		BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];
@@ -264,33 +263,34 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		List<SpanWeight> subWeights = new ArrayList<>(inner.getClauses().length);
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		List<BLSpanWeight> subWeights = new ArrayList<>(inner.getClauses().length);
 		for (SpanQuery q: inner.getClauses()) {
-			subWeights.add(q.createWeight(searcher, false));
+			BLSpanWeight weight = ((BLSpanQuery)q).createWeight(searcher, false);
+			subWeights.add(weight);
 		}
-		Map<Term, TermContext> contexts = needsScores ? getTermContexts(subWeights) : null;
+		Map<Term, TermContext> contexts = needsScores ? getTermContexts(subWeights.toArray(new SpanWeight[0])) : null;
 		return new SpanOrWeight(searcher, contexts, subWeights);
 	}
 
-	public class SpanOrWeight extends SpanWeight {
-		final List<SpanWeight> subWeights;
+	public class SpanOrWeight extends BLSpanWeight {
+		final List<BLSpanWeight> subWeights;
 
-		public SpanOrWeight(IndexSearcher searcher, Map<Term, TermContext> terms, List<SpanWeight> subWeights) throws IOException {
+		public SpanOrWeight(IndexSearcher searcher, Map<Term, TermContext> terms, List<BLSpanWeight> subWeights) throws IOException {
 			super(BLSpanOrQuery.this, searcher, terms);
 			this.subWeights = subWeights;
 		}
 
 		@Override
 		public void extractTerms(Set<Term> terms) {
-			for (final SpanWeight w: subWeights) {
+			for (final BLSpanWeight w: subWeights) {
 				w.extractTerms(terms);
 			}
 		}
 
 		@Override
 		public void extractTermContexts(Map<Term, TermContext> contexts) {
-			for (SpanWeight w: subWeights) {
+			for (BLSpanWeight w: subWeights) {
 				w.extractTermContexts(contexts);
 			}
 		}
@@ -308,12 +308,12 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
 
-			final ArrayList<BLSpans> subSpans = new ArrayList<>(inner.getClauses().length);
+			final ArrayList<Spans> subSpans = new ArrayList<>(inner.getClauses().length);
 
 			for (SpanWeight w: subWeights) {
-				BLSpans spans = BLSpansWrapper.optWrap(w.getSpans(context, requiredPostings));
+				Spans spans = w.getSpans(context, requiredPostings);
 				if (spans != null) {
 					subSpans.add(spans);
 				}
@@ -322,7 +322,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 			if (subSpans.isEmpty()) {
 				return null;
 			} else if (subSpans.size() == 1) {
-				return BLSpansWrapper.optWrap(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
+				return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
 			}
 
 			final DisiPriorityQueue byDocQueue = new DisiPriorityQueue(subSpans.size());
@@ -531,10 +531,12 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 					return cost;
 				}
 
+				// BL
+
 				@Override
 				public void passHitQueryContextToClauses(HitQueryContext theContext) {
-					for (BLSpans spans : subSpans) {
-						spans.setHitQueryContext(theContext);
+					for (Spans spans : subSpans) {
+						((BLSpans)spans).setHitQueryContext(theContext);
 					}
 				}
 

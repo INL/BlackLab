@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.Spans;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +34,7 @@ public class TestSpansInBucketsPerStartPoint {
 		int[] doc   = { 1, 1, 1, 2, 2, 2 };
 		int[] start = { 1, 1, 3, 3, 5, 5 };
 		int[] end   = { 2, 3, 4, 5, 6, 7 };
-		Spans spans = new MockSpans(doc, start, end);
+		BLSpans spans = new MockSpans(doc, start, end);
 		hpd = new SpansInBucketsPerStartPoint(spans);
 	}
 

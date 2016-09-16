@@ -45,7 +45,8 @@ public abstract class BLSpans extends Spans {
 	 * Makes a new Hit object from the document id, start and end positions.
 	 *
 	 * Subclasses that already have a Hit object available should override this and return the
-	 * existing Hit object, to avoid excessive Hit instantiations.	 *
+	 * existing Hit object, to avoid excessive Hit instantiations.
+	 *
 	 * @return the Hit object for the current hit
 	 */
 	public Hit getHit() {
@@ -120,33 +121,21 @@ public abstract class BLSpans extends Spans {
 		return pos;
 	}
 
-	/**
-	 * Advance the start position in the current doc to target or beyond.
-	 *
-	 * Always at least advances to the next hit, even if the current start
-	 * position is already at or beyond the target.
-	 *
-	 * @param spans the spans to operate on
-	 * @param target target start position to advance to
-	 * @return new start position, or Spans.NO_MORE_POSITIONS if we're done with this document
-	 * @throws IOException
-	 */
-	public static int advanceStartPosition(Spans spans, int target) throws IOException {
-		if (spans instanceof BLSpans) {
-			return ((BLSpans) spans).advanceStartPosition(target);
-		}
-		// Naive implementations; subclasses may provide a faster version.
-		int pos;
-		do {
-			pos = spans.nextStartPosition();
-		} while(pos < target && pos != NO_MORE_POSITIONS);
-		return pos;
-	}
-
 	@Override
 	public long cost() {
 		// returns a completely arbitrary constant value, but it's for
 		// optimizing scoring and we don't generally use that
 		return 100;
+	}
+
+	public static BLSpans optSortUniq(BLSpans spans, boolean sort, boolean removeDuplicates) {
+		if (spans == null)
+			return null;
+		BLSpans result = spans;
+		if (sort)
+			return new PerDocumentSortedSpans(result, PerDocumentSortedSpans.cmpStartPoint, removeDuplicates);
+		if (removeDuplicates)
+			return new SpansUnique(result);
+		return result;
 	}
 }

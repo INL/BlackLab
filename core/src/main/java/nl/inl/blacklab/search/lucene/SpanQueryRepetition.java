@@ -24,8 +24,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Finds repeated consecutive hits.
@@ -146,18 +144,18 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		if (min < 1)
 			throw new RuntimeException("Query should have been rewritten! (min < 1)");
-		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
+		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightRepetition(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightRepetition extends SpanWeight {
+	public class SpanWeightRepetition extends BLSpanWeight {
 
-		final SpanWeight weight;
+		final BLSpanWeight weight;
 
-		public SpanWeightRepetition(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightRepetition(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryRepetition.this, searcher, terms);
 			this.weight = weight;
 		}
@@ -173,11 +171,11 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans spans = weight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans spans = weight.getSpans(context, requiredPostings);
 			if (spans == null)
 				return null;
-			BLSpans blSpans = BLSpansWrapper.optWrap(spans, !hitsStartPointSorted(), !hitsAreUnique());
+			BLSpans blSpans = BLSpans.optSortUniq(spans, !hitsStartPointSorted(), !hitsAreUnique());
 			return new SpansRepetition(blSpans, min, max);
 		}
 

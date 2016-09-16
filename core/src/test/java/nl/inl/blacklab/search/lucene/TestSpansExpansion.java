@@ -29,7 +29,7 @@ public class TestSpansExpansion {
 		int[] aDoc   = { 1, 2 };
 		int[] aStart = { 1, 2 };
 		int[] aEnd   = { 2, 3 };
-		Spans a = new MockSpans(aDoc, aStart, aEnd);
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
 		SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, false, 1, 2);
 		spans.setTest(true); // for test, all documents are 5 long
@@ -46,7 +46,7 @@ public class TestSpansExpansion {
 		int[] aDoc   = { 1, 1, 1 };
 		int[] aStart = { 0, 3, 4 };
 		int[] aEnd   = { 1, 4, 5 };
-		Spans a = new MockSpans(aDoc, aStart, aEnd);
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
 		SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, false, 1, -1);
 		spans.setTest(true); // for test, all documents are 5 long
@@ -63,7 +63,7 @@ public class TestSpansExpansion {
 		int[] aDoc   = { 1, 2 };
 		int[] aStart = { 1, 2 };
 		int[] aEnd   = { 2, 3 };
-		Spans a = new MockSpans(aDoc, aStart, aEnd);
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
 		SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, true, 2, 3);
 

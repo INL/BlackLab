@@ -25,8 +25,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Captures its clause as a captured group.
@@ -64,16 +62,16 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		return new SpanWeightCaptureGroup(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightCaptureGroup extends SpanWeight {
+	public class SpanWeightCaptureGroup extends BLSpanWeight {
 
-		final SpanWeight weight;
+		final BLSpanWeight weight;
 
-		public SpanWeightCaptureGroup(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightCaptureGroup(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryCaptureGroup.this, searcher, terms);
 			this.weight = weight;
 		}
@@ -89,8 +87,8 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans spans = weight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans spans = weight.getSpans(context, requiredPostings);
 			if (spans == null)
 				return null;
 			return new SpansCaptureGroup(spans, name);

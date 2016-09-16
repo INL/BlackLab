@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
 
 /**
@@ -42,6 +43,9 @@ public abstract class BLSpanQuery extends SpanQuery {
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		return this;
 	}
+
+	@Override
+	public abstract BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException;
 
 	/**
 	 * Does this query match the empty sequence?

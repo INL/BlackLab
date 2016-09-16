@@ -10,9 +10,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Hit;
 
 /**
@@ -52,16 +49,16 @@ public class SpanQuerySorted extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = src.createWeight(searcher, needsScores);
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		BLSpanWeight weight = src.createWeight(searcher, needsScores);
 		return new SpanWeightSorted(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightSorted extends SpanWeight {
+	public class SpanWeightSorted extends BLSpanWeight {
 
-		final SpanWeight weight;
+		final BLSpanWeight weight;
 
-		public SpanWeightSorted(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightSorted(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQuerySorted.this, searcher, terms);
 			this.weight = weight;
 		}
@@ -77,8 +74,8 @@ public class SpanQuerySorted extends BLSpanQuery {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans srcSpans = weight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans srcSpans = weight.getSpans(context, requiredPostings);
 			if (srcSpans == null)
 				return null;
 			Comparator<Hit> comparator = sortByEndpoint ? PerDocumentSortedSpans.cmpEndPoint : PerDocumentSortedSpans.cmpStartPoint;

@@ -52,7 +52,6 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.BLSpansWrapper;
 import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
 
@@ -352,10 +351,10 @@ public class HitsImpl extends Hits {
 	 * @param source
 	 *            where to retrieve the Hit objects from
 	 */
-	HitsImpl(Searcher searcher, Spans source) {
+	HitsImpl(Searcher searcher, BLSpans source) {
 		this(searcher, (List<Hit>)null);
 
-		currentSourceSpans = BLSpansWrapper.optWrap(source);
+		currentSourceSpans = source;
 		try {
 			sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
 		} catch (IOException e) {
@@ -378,7 +377,7 @@ public class HitsImpl extends Hits {
 	 * @deprecated if you need a different concordance field, set it manually
 	 */
 	@Deprecated
-	HitsImpl(Searcher searcher, String concordanceFieldPropName, Spans source) {
+	HitsImpl(Searcher searcher, String concordanceFieldPropName, BLSpans source) {
 		this(searcher, source);
 		settings.setConcordanceField(concordanceFieldPropName);
 	}

@@ -38,8 +38,8 @@ public class SpansUnique extends BLSpans {
 	 *
 	 * @param src (startpoint-sorted) Spans to make unique
 	 */
-	public SpansUnique(Spans src) {
-		this.src = BLSpansWrapper.optWrap(src); //Sort
+	public SpansUnique(BLSpans src) {
+		this.src = src; //Sort
 	}
 
 	@Override

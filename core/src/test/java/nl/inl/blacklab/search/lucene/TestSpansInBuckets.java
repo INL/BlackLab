@@ -24,7 +24,6 @@ import nl.inl.blacklab.search.lucene.SpansInBuckets;
 import nl.inl.blacklab.search.lucene.SpansInBucketsPerDocument;
 
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +36,7 @@ public class TestSpansInBuckets {
 		int[] doc   = { 1, 4, 4, 5 };
 		int[] start = { 1, 2, 3, 4 };
 		int[] end   = { 5, 6, 7, 8 };
-		Spans spans = new MockSpans(doc, start, end);
+		BLSpans spans = new MockSpans(doc, start, end);
 		hpd = new SpansInBucketsPerDocument(spans);
 	}
 

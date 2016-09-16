@@ -28,7 +28,7 @@ public class TestSpansExpandToNGram {
 
 	@Test
 	public void testNGramsContaining() throws IOException {
-		Spans a = new MockSpans(
+		BLSpans a = new MockSpans(
 			new int[] { 1, 2 },
 			new int[] { 1, 2 },
 			new int[] { 2, 3 }
@@ -47,7 +47,7 @@ public class TestSpansExpandToNGram {
 
 	@Test
 	public void testNGramsContainingAtEnd() throws IOException {
-		Spans a = new MockSpans(
+		BLSpans a = new MockSpans(
 			new int[] { 1, 2 },
 			new int[] { 1, 2 },
 			new int[] { 2, 3 }
@@ -66,7 +66,7 @@ public class TestSpansExpandToNGram {
 
 	@Test
 	public void testNGramsContainingAtStart() throws IOException {
-		Spans a = new MockSpans(
+		BLSpans a = new MockSpans(
 			new int[] { 1, 2 },
 			new int[] { 1, 2 },
 			new int[] { 2, 3 }
@@ -85,7 +85,7 @@ public class TestSpansExpandToNGram {
 
 	@Test
 	public void testNGramsWithin() throws IOException {
-		Spans a = new MockSpans(
+		BLSpans a = new MockSpans(
 			new int[] { 1, 2 },
 			new int[] { 1, 2 },
 			new int[] { 5, 5 }
@@ -104,7 +104,7 @@ public class TestSpansExpandToNGram {
 
 	@Test
 	public void testNGramsMatches() throws IOException {
-		Spans a = new MockSpans(
+		BLSpans a = new MockSpans(
 			new int[] { 1, 1, 2, 2 },
 			new int[] { 1, 1, 2, 2 },
 			new int[] { 2, 4, 4, 6 }

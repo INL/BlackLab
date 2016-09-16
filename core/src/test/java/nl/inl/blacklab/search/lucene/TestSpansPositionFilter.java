@@ -26,18 +26,18 @@ import org.junit.Test;
 public class TestSpansPositionFilter {
 
 	private static SpansPositionFilter getSpans(boolean swap, SpanQueryPositionFilter.Operation type, boolean invert) {
-		Spans a = MockSpans.fromLists(
+		BLSpans a = MockSpans.fromLists(
 			new int[] {  0,  1,  1,  2,  2,  2,  3 },
 			new int[] { 10, 10, 20, 10, 10, 30, 20 },
 			new int[] { 20, 15, 25, 15, 20, 35, 25 }
 		);
-		Spans b = MockSpans.fromLists(
+		BLSpans b = MockSpans.fromLists(
 			new int[] {  1,  2,  3 },
 			new int[] { 11, 22, 20 },
 			new int[] { 12, 23, 25 }
 		);
 		if (swap) {
-			Spans c = a;
+			BLSpans c = a;
 			a = b;
 			b = c;
 		}

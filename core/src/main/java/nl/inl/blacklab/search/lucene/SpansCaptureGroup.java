@@ -18,8 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -44,8 +42,8 @@ class SpansCaptureGroup extends BLSpans {
 	 * @param clause the clause to capture
 	 * @param name group name
 	 */
-	public SpansCaptureGroup(Spans clause, String name) {
-		this.clause = BLSpansWrapper.optWrap(clause);
+	public SpansCaptureGroup(BLSpans clause, String name) {
+		this.clause = clause;
 		this.name = name;
 	}
 

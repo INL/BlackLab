@@ -8,8 +8,6 @@ import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanWeight;
-
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
@@ -56,7 +54,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores)
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores)
 			throws IOException {
 		throw new IllegalArgumentException("Rewrite first!");
 	}

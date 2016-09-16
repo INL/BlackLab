@@ -24,9 +24,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPatternAnyToken;
 
@@ -110,9 +107,9 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
+	public BLSpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
 		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
-		return new SpanWeight(SpanQueryAnyToken.this, searcher, null) {
+		return new BLSpanWeight(SpanQueryAnyToken.this, searcher, null) {
 			@Override
 			public void extractTerms(Set<Term> terms) {
 				// No terms
@@ -124,7 +121,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 			}
 
 			@Override
-			public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
 				return new SpansNGrams(alwaysHasClosingToken, context.reader(), luceneField, realMin, max);
 			}
 		};

@@ -29,8 +29,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Filters a SpanQuery.
@@ -125,19 +123,19 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
 		Weight filterWeight = filter.createWeight(searcher, false);
 		return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightFiltered extends SpanWeight {
+	public class SpanWeightFiltered extends BLSpanWeight {
 
-		final SpanWeight weight;
+		final BLSpanWeight weight;
 
 		final Weight filterWeight;
 
-		public SpanWeightFiltered(SpanWeight weight, Weight filterWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightFiltered(BLSpanWeight weight, Weight filterWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryFiltered.this, searcher, terms);
 			this.weight = weight;
 			this.filterWeight = filterWeight;
@@ -154,8 +152,8 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans result = weight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans result = weight.getSpans(context, requiredPostings);
 			if (result == null)
 				return null;
 			return new SpansFiltered(result, filterWeight.scorer(context));

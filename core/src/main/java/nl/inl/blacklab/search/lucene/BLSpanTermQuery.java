@@ -20,14 +20,15 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.IndexReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
-import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
@@ -91,7 +92,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		final TermContext context;
 		final IndexReaderContext topContext = searcher.getTopReaderContext();
 		if (termContext == null || termContext.topReaderContext != topContext) {
@@ -100,8 +101,23 @@ public class BLSpanTermQuery extends BLSpanQuery {
 			context = termContext;
 		}
 		Map<Term, TermContext> contexts = needsScores ? Collections.singletonMap(query.getTerm(), context) : null;
-		SpanTermWeight weight = query.new SpanTermWeight(context, searcher, contexts);
-		return new BLSpanWeightWrapper(weight, searcher, contexts);
+		final SpanTermWeight weight = query.new SpanTermWeight(context, searcher, contexts);
+		return new BLSpanWeight(query, searcher, contexts) {
+			@Override
+			public void extractTermContexts(Map<Term, TermContext> contexts) {
+				weight.extractTermContexts(contexts);
+			}
+
+			@Override
+			public BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException {
+				return new BLSpansWrapper(weight.getSpans(ctx, requiredPostings));
+			}
+
+			@Override
+			public void extractTerms(Set<Term> terms) {
+				weight.extractTerms(terms);
+			}
+		};
 	}
 
 	@Override

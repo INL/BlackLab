@@ -18,8 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -91,13 +89,13 @@ class SpansSequenceRaw extends BLSpans {
 	 * @param leftClause (endpoint-sorted) left clause
 	 * @param rightClause (startpoint-sorted) right clause
 	 */
-	public SpansSequenceRaw(Spans leftClause, Spans rightClause) {
+	public SpansSequenceRaw(BLSpans leftClause, BLSpans rightClause) {
 		// Sort the left spans by (1) document (2) end point (3) start point
-		left = (BLSpans)leftClause; //new PerDocumentSortedSpans(leftClause, PerDocumentSortedSpans.cmpEndPoint, false);
+		left = leftClause; //new PerDocumentSortedSpans(leftClause, PerDocumentSortedSpans.cmpEndPoint, false);
 
 		// From the right spans, let us extract all end points belonging with a start point.
 		// Already start point sorted.
-		origRight = BLSpansWrapper.optWrap(rightClause); //Sort
+		origRight = rightClause; //Sort
 		right = new SpansInBucketsPerStartPoint(origRight);
 	}
 

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.grouping.HitGroups;
@@ -17,6 +16,7 @@ import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.ThreadPriority;
 
@@ -142,7 +142,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 *            where to retrieve the Hit objects from
 	 * @return hits found
 	 */
-	public static Hits fromSpans(Searcher searcher, String concordanceFieldPropName, Spans source) {
+	public static Hits fromSpans(Searcher searcher, String concordanceFieldPropName, BLSpans source) {
 		Hits hits = new HitsImpl(searcher, source);
 		hits.settings.setConcordanceField(concordanceFieldPropName);
 		return hits;

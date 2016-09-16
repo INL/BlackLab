@@ -18,8 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 
@@ -82,8 +80,8 @@ class SpansPositionFilter extends BLSpans {
 	 * @param leftAdjust how to adjust the left edge of the producer hits while matching
 	 * @param rightAdjust how to adjust the right edge of the producer hits while matching
 	 */
-	public SpansPositionFilter(Spans producer, SpansInBuckets filter, boolean filterFixedLength, Operation op, boolean invert, int leftAdjust, int rightAdjust) {
-		this.producer = BLSpansWrapper.optWrap(producer); // Sort
+	public SpansPositionFilter(BLSpans producer, SpansInBuckets filter, boolean filterFixedLength, Operation op, boolean invert, int leftAdjust, int rightAdjust) {
+		this.producer = producer; // Sort
 		this.op = op;
 		this.invert = invert;
 		this.filter = filter;

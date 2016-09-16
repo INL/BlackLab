@@ -23,10 +23,9 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.BLSpans;
 
 /**
  * Stub SpanQuery class for testing. Takes arrays and iterates through 'hits'
@@ -82,8 +81,8 @@ public class MockSpanQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		return new SpanWeight(this, searcher, null) {
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		return new BLSpanWeight(this, searcher, null) {
 
 			@Override
 			public void extractTerms(Set<Term> terms) {
@@ -96,7 +95,7 @@ public class MockSpanQuery extends BLSpanQuery {
 			}
 
 			@Override
-			public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
 				return new MockSpans(doc, start, end);
 			}
 		};

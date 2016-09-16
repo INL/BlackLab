@@ -18,8 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Comparator;
 
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Hit;
 
 /**
@@ -31,7 +29,7 @@ import nl.inl.blacklab.search.Hit;
 public class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
 	private Comparator<Hit> comparator;
 
-	public SpansInBucketsPerDocumentSorted(Spans source, Comparator<Hit> comparator) {
+	public SpansInBucketsPerDocumentSorted(BLSpans source, Comparator<Hit> comparator) {
 		super(source);
 		this.comparator = comparator;
 	}

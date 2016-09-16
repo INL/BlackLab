@@ -27,12 +27,12 @@ import org.junit.Test;
 
 public class TestSpansAnd {
 	private static SpansAnd getSpans() {
-		Spans a = MockSpans.fromLists(
+		BLSpans a = MockSpans.fromLists(
 			new int[] {  1,  1,  2,  2,  2,  3 },
 			new int[] { 10, 20, 10, 10, 30, 10 },
 			new int[] { 15, 25, 15, 20, 35, 15 }
 		);
-		Spans b = MockSpans.fromLists(
+		BLSpans b = MockSpans.fromLists(
 			new int[] {  1,  2,  2,  3 },
 			new int[] { 10, 10, 20, 20 },
 			new int[] { 15, 20, 25, 25 }

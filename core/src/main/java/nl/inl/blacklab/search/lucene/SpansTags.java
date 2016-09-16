@@ -20,8 +20,6 @@ import java.nio.ByteBuffer;
 
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -29,11 +27,11 @@ import nl.inl.blacklab.search.Span;
  */
 class SpansTags extends BLSpans {
 
-	private Spans tags;
+	private BLSpans tags;
 
 	private int end = -1; // -1: not nexted yet. -2: payload not read yet.
 
-	public SpansTags(Spans startTags) {
+	public SpansTags(BLSpans startTags) {
 		this.tags = startTags;
 	}
 

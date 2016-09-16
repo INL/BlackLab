@@ -18,8 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -40,8 +38,8 @@ class SpansEdge extends BLSpans {
 	 * @param clause the clause to get an edge from
 	 * @param rightEdge whether or not to get the right edge
 	 */
-	public SpansEdge(Spans clause, boolean rightEdge) {
-		this.clause = BLSpansWrapper.optWrap(clause);
+	public SpansEdge(BLSpans clause, boolean rightEdge) {
+		this.clause = clause;
 		this.rightEdge = rightEdge;
 	}
 

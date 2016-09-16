@@ -29,7 +29,7 @@ public class TestSpansNot {
 
 	private static SpansNot getSpans() {
 		// NOTE: in doc 1, all tokens except 0-1 match; in doc 3, all tokens match
-		Spans a = MockSpans.fromLists(
+		BLSpans a = MockSpans.fromLists(
 			new int[] { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 5 },
 			new int[] { 0, 1, 2, 3, 1, 2, 3, 4, 1, 3, 0, 1, 2, 3, 4, 0 },
 			new int[] { 1, 2, 3, 4, 2, 3, 4, 5, 2, 4, 1, 2, 3, 4, 5, 5 }

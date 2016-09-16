@@ -24,8 +24,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Filters hits from a producer query based on the hit positions of a filter query.
@@ -117,18 +115,18 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		SpanWeight prodWeight = clauses.get(0).createWeight(searcher, needsScores);
-		SpanWeight filterWeight = clauses.get(1).createWeight(searcher, needsScores);
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		BLSpanWeight prodWeight = clauses.get(0).createWeight(searcher, needsScores);
+		BLSpanWeight filterWeight = clauses.get(1).createWeight(searcher, needsScores);
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(prodWeight, filterWeight) : null;
 		return new SpanWeightPositionFilter(prodWeight, filterWeight, searcher, contexts);
 	}
 
-	public class SpanWeightPositionFilter extends SpanWeight {
+	public class SpanWeightPositionFilter extends BLSpanWeight {
 
-		final SpanWeight prodWeight, filterWeight;
+		final BLSpanWeight prodWeight, filterWeight;
 
-		public SpanWeightPositionFilter(SpanWeight prodWeight, SpanWeight filterWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightPositionFilter(BLSpanWeight prodWeight, BLSpanWeight filterWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryPositionFilter.this, searcher, terms);
 			this.prodWeight = prodWeight;
 			this.filterWeight = filterWeight;
@@ -147,13 +145,13 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans spansProd = prodWeight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans spansProd = prodWeight.getSpans(context, requiredPostings);
 			if (spansProd == null)
 				return null;
 			if (!clauses.get(0).hitsStartPointSorted())
 				spansProd = new PerDocumentSortedSpans(spansProd, PerDocumentSortedSpans.cmpStartPoint, false);
-			Spans spansFilter = filterWeight.getSpans(context, requiredPostings);
+			BLSpans spansFilter = filterWeight.getSpans(context, requiredPostings);
 			if (spansFilter == null) {
 				// No filter hits. If it's a positive filter, that means no producer hits can match.
 				// If it's a negative filter, all producer hits match.

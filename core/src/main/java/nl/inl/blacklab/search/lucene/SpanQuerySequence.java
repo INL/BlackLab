@@ -29,7 +29,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -302,8 +301,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		List<SpanWeight> weights = new ArrayList<>();
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+		List<BLSpanWeight> weights = new ArrayList<>();
 		for (BLSpanQuery clause: clauses) {
 			weights.add(clause.createWeight(searcher, needsScores));
 		}
@@ -311,11 +310,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		return new SpanWeightSequence(weights, searcher, contexts);
 	}
 
-	public class SpanWeightSequence extends SpanWeight {
+	public class SpanWeightSequence extends BLSpanWeight {
 
-		final List<SpanWeight> weights;
+		final List<BLSpanWeight> weights;
 
-		public SpanWeightSequence(List<SpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightSequence(List<BLSpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQuerySequence.this, searcher, terms);
 			this.weights = weights;
 		}
@@ -335,15 +334,15 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			BLSpans combi = BLSpansWrapper.optWrap(weights.get(0).getSpans(context, requiredPostings));
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans combi = weights.get(0).getSpans(context, requiredPostings);
 			if (combi == null)
 				return null;
 			boolean combiUniqueEnds = clauses.get(0).hitsHaveUniqueEnd();
 			boolean combiEndpointSorted = clauses.get(0).hitsEndPointSorted();
 			for (int i = 1; i < weights.size(); i++) {
-				SpanWeight weight = weights.get(i);
-				BLSpans si = BLSpansWrapper.optWrap(weight.getSpans(context, requiredPostings));
+				BLSpanWeight weight = weights.get(i);
+				BLSpans si = weight.getSpans(context, requiredPostings);
 				if (si == null)
 					return null;
 

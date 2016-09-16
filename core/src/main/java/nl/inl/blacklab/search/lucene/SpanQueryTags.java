@@ -26,9 +26,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.StringUtil;
 
@@ -82,18 +79,18 @@ public class SpanQueryTags extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		if (attr != null)
 			throw new RuntimeException("Query should've been rewritten! (attr != null)");
-		SpanWeight weight = clause.createWeight(searcher, needsScores);
+		BLSpanWeight weight = clause.createWeight(searcher, needsScores);
 		return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightTags extends SpanWeight {
+	public class SpanWeightTags extends BLSpanWeight {
 
-		final SpanWeight weight;
+		final BLSpanWeight weight;
 
-		public SpanWeightTags(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightTags(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryTags.this, searcher, terms);
 			this.weight = weight;
 		}
@@ -109,8 +106,8 @@ public class SpanQueryTags extends BLSpanQuery {
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans startTags = weight.getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans startTags = weight.getSpans(context, requiredPostings);
 			if (startTags == null)
 				return null;
 			return new SpansTags(startTags);

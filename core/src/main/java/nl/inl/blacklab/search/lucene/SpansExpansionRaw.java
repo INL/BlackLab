@@ -19,8 +19,6 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -85,14 +83,14 @@ class SpansExpansionRaw extends BLSpans {
 
 	private boolean alreadyAtFirstHit;
 
-	public SpansExpansionRaw(boolean ignoreLastToken, LeafReader reader, String fieldName, Spans clause, boolean expandToLeft, int min, int max) {
+	public SpansExpansionRaw(boolean ignoreLastToken, LeafReader reader, String fieldName, BLSpans clause, boolean expandToLeft, int min, int max) {
 		subtractFromLength = ignoreLastToken ? 1 : 0;
 		if (!expandToLeft) {
 			// We need to know document length to properly do expansion to the right
 			// TODO: cache this in Searcher..?
 			lengthGetter = new DocFieldLengthGetter(reader, fieldName);
 		}
-		this.clause = BLSpansWrapper.optWrap(clause);
+		this.clause = clause;
 		this.expandToLeft = expandToLeft;
 		this.min = min;
 		this.max = max;

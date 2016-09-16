@@ -28,8 +28,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
@@ -211,11 +209,11 @@ public class SpanQueryAndNot extends BLSpanQuery {
 	}
 
 	@Override
-	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		if (exclude.size() > 0)
 			throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
 
-		List<SpanWeight> weights = new ArrayList<>();
+		List<BLSpanWeight> weights = new ArrayList<>();
 		for (BLSpanQuery clause: include) {
 			weights.add(clause.createWeight(searcher, needsScores));
 		}
@@ -223,42 +221,42 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		return new SpanWeightAnd(weights, searcher, contexts);
 	}
 
-	public class SpanWeightAnd extends SpanWeight {
+	public class SpanWeightAnd extends BLSpanWeight {
 
-		final List<SpanWeight> weights;
+		final List<BLSpanWeight> weights;
 
-		public SpanWeightAnd(List<SpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+		public SpanWeightAnd(List<BLSpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
 			super(SpanQueryAndNot.this, searcher, terms);
 			this.weights = weights;
 		}
 
 		@Override
 		public void extractTerms(Set<Term> terms) {
-			for (SpanWeight weight: weights) {
+			for (BLSpanWeight weight: weights) {
 				weight.extractTerms(terms);
 			}
 		}
 
 		@Override
 		public void extractTermContexts(Map<Term, TermContext> contexts) {
-			for (SpanWeight weight: weights) {
+			for (BLSpanWeight weight: weights) {
 				weight.extractTermContexts(contexts);
 			}
 		}
 
 		@Override
-		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			Spans combi = weights.get(0).getSpans(context, requiredPostings);
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			BLSpans combi = weights.get(0).getSpans(context, requiredPostings);
 			if (combi == null)
 				return null; // if no hits in one of the clauses, no hits in AND query
 			if (!((BLSpanQuery)weights.get(0).getQuery()).hitsStartPointSorted())
-				combi = BLSpansWrapper.optWrap(combi, true, false);
+				combi = BLSpans.optSortUniq(combi, true, false);
 			for (int i = 1; i < weights.size(); i++) {
-				Spans si = weights.get(i).getSpans(context, requiredPostings);
+				BLSpans si = weights.get(i).getSpans(context, requiredPostings);
 				if (si == null)
 					return null; // if no hits in one of the clauses, no hits in AND query
 				if (!((BLSpanQuery)weights.get(i).getQuery()).hitsStartPointSorted())
-					si = BLSpansWrapper.optWrap(si, true, false);
+					si = BLSpans.optSortUniq(si, true, false);
 				combi = new SpansAnd(combi, si);
 			}
 			return combi;

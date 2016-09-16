@@ -25,7 +25,7 @@ import org.apache.lucene.search.spans.Spans;
  * This is used for repetition regex operators such as * and +.
  */
 class SpansInBucketsConsecutive extends SpansInBucketsAbstract {
-	public SpansInBucketsConsecutive(Spans source) {
+	public SpansInBucketsConsecutive(BLSpans source) {
 		super(source);
 	}
 

@@ -23,15 +23,21 @@ import org.junit.Test;
 import nl.inl.blacklab.MockSpans;
 import nl.inl.blacklab.TestUtil;
 
-public class TestSpansTagsPayload {
+public class TestSpansTagsOld {
 
 	@Test
 	public void test() throws IOException {
 		int[] aDoc   = {  1, 2, 2 };
 		int[] aStart = { 10, 1, 4 };
-		int[] aEnd   = { 21, 2, 6 };
-		Spans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
-		Spans spans = new SpansTags(a);
+		int[] aEnd   = { 11, 2, 5 };
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
+
+		int[] bDoc   = {  1, 2, 2 };
+		int[] bStart = { 21, 2, 6 };
+		int[] bEnd   = { 22, 3, 7 };
+		BLSpans b = new MockSpans(bDoc, bStart, bEnd);
+
+		SpansTagsOld spans = new SpansTagsOld(a, b);
 
 		int[] expDoc   = {  1, 2, 2 };
 		int[] expStart = { 10, 1, 4 };
@@ -44,10 +50,15 @@ public class TestSpansTagsPayload {
 	public void testNested() throws IOException {
 		int[] aDoc   = { 1, 1 };
 		int[] aStart = { 2, 4 };
-		int[] aEnd   = { 7, 5 };
-		Spans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
+		int[] aEnd   = { 3, 5 };
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
-		Spans spans = new SpansTags(a);
+		int[] bDoc   = { 1, 1 };
+		int[] bStart = { 5, 7 };
+		int[] bEnd   = { 6, 8 };
+		BLSpans b = new MockSpans(bDoc, bStart, bEnd);
+
+		SpansTagsOld spans = new SpansTagsOld(a, b);
 
 		int[] expDoc   = { 1, 1 };
 		int[] expStart = { 2, 4 };
@@ -67,10 +78,15 @@ public class TestSpansTagsPayload {
 	public void testEmptyTag() throws IOException {
 		int[] aDoc   = { 1, 1 };
 		int[] aStart = { 2, 4 };
-		int[] aEnd   = { 2, 7 };
-		Spans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
+		int[] aEnd   = { 3, 5 };
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
-		Spans spans = new SpansTags(a);
+		int[] bDoc   = { 1, 1 };
+		int[] bStart = { 2, 7 };
+		int[] bEnd   = { 3, 8 };
+		BLSpans b = new MockSpans(bDoc, bStart, bEnd);
+
+		SpansTagsOld spans = new SpansTagsOld(a, b);
 
 		int[] expDoc   = { 1, 1};
 		int[] expStart = { 2, 4};
@@ -83,10 +99,15 @@ public class TestSpansTagsPayload {
 	public void testSkip() throws IOException {
 		int[] aDoc   = { 1, 1,  2,  2 };
 		int[] aStart = { 2, 4, 12, 14 };
-		int[] aEnd   = { 5, 7, 17, 15 };
-		Spans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
+		int[] aEnd   = { 3, 5, 13, 15 };
+		BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
-		Spans spans = new SpansTags(a);
+		int[] bDoc   = { 1, 1,  2,  2 };
+		int[] bStart = { 5, 7, 15, 17 };
+		int[] bEnd   = { 6, 8, 16, 18 };
+		BLSpans b = new MockSpans(bDoc, bStart, bEnd);
+
+		SpansTagsOld spans = new SpansTagsOld(a, b);
 		spans.advance(2);
 
 		int[] expDoc   = { 2,  2};
