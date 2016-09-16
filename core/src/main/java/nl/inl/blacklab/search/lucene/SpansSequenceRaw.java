@@ -320,7 +320,7 @@ class SpansSequenceRaw extends BLSpans {
 
 	@Override
 	public boolean hitsEndPointSorted() {
-		return origRight.hitsAllSameLength();
+		return left.hitsHaveUniqueEnd() && origRight.hitsAllSameLength();
 	}
 
 	@Override

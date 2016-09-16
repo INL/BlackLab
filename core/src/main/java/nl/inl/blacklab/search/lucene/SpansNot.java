@@ -85,6 +85,9 @@ class SpansNot extends BLSpans {
 
 	/**
 	 * Constructs a SpansNot.
+	 *
+	 * Clause must be start-point sorted.
+	 *
 	 * @param ignoreLastToken if true, we assume the last token is always a special closing token and ignore it
 	 * @param reader the index reader, for getting field lengths
 	 * @param fieldName the field name, for getting field lengths
@@ -95,7 +98,7 @@ class SpansNot extends BLSpans {
 		liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);
 		subtractFromLength = ignoreLastToken ? 1 : 0;
 		this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
-		this.clause = clause == null ? null : BLSpansWrapper.optWrapSort(clause);
+		this.clause = clause == null ? null : BLSpansWrapper.optWrap(clause); //Sort(clause);
 	}
 
 	/**

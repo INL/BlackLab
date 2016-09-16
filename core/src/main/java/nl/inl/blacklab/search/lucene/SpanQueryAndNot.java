@@ -249,10 +249,16 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		@Override
 		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
 			Spans combi = weights.get(0).getSpans(context, requiredPostings);
+			if (combi == null)
+				return null; // if no hits in one of the clauses, no hits in AND query
+			if (!((BLSpanQuery)weights.get(0).getQuery()).hitsStartPointSorted())
+				combi = BLSpansWrapper.optWrap(combi, true, false);
 			for (int i = 1; i < weights.size(); i++) {
 				Spans si = weights.get(i).getSpans(context, requiredPostings);
-				if (combi == null || si == null)
-					return null; // if no hits in one of the clauses, no hits in and query
+				if (si == null)
+					return null; // if no hits in one of the clauses, no hits in AND query
+				if (!((BLSpanQuery)weights.get(i).getQuery()).hitsStartPointSorted())
+					si = BLSpansWrapper.optWrap(si, true, false);
 				combi = new SpansAnd(combi, si);
 			}
 			return combi;

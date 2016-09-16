@@ -269,4 +269,20 @@ public abstract class BLSpanQuery extends SpanQuery {
 		return clausesToString(field, Arrays.asList(clauses));
 	}
 
+	public static BLSpanQuery ensureSortedUnique(BLSpanQuery spanQuery) {
+		if (spanQuery.hitsStartPointSorted()) {
+			if (spanQuery.hitsAreUnique())
+				return spanQuery;
+			return new SpanQueryUnique(spanQuery);
+		}
+		return new SpanQuerySorted(spanQuery, false, !spanQuery.hitsAreUnique());
+	}
+
+	public static BLSpanQuery ensureSorted(BLSpanQuery spanQuery) {
+		if (spanQuery.hitsStartPointSorted()) {
+			return spanQuery;
+		}
+		return new SpanQuerySorted(spanQuery, false, false);
+	}
+
 }

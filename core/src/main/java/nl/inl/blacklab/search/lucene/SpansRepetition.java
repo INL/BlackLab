@@ -18,7 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
 
@@ -53,9 +52,18 @@ class SpansRepetition extends BLSpans {
 
 	private boolean alreadyAtFirstMatch = false;
 
-	public SpansRepetition(Spans source, int min, int max) {
+	/**
+	 * Construct SpansRepetition.
+	 *
+	 * Source must be start-point sorted and unique.
+	 *
+	 * @param source spans to find repetitions in
+	 * @param min minimum number of repetitions
+	 * @param max maximum number of repetitions
+	 */
+	public SpansRepetition(BLSpans source, int min, int max) {
 		// Find all consecutive matches in this Spans
-		spansSource = BLSpansWrapper.optWrapSortUniq(source);
+		spansSource = source;
 		this.source = new SpansInBucketsConsecutive(spansSource);
 		this.min = min;
 		this.max = max;

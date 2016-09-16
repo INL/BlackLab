@@ -138,6 +138,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 				return null;
 			BLSpans spans = new SpansFilterNGramsRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(), spansSource, op, min, max);
 
+			/*
 			// Note: the spans coming from SpansFilterNGramsRaw are not sorted properly.
 			// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
 
@@ -151,6 +152,8 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 			} else if (!unique) {
 				return new SpansUnique(spans);
 			}
+			*/
+
 			return spans;
 		}
 
@@ -202,7 +205,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean hitsStartPointSorted() {
-		return true;
+		return clauses.get(0).hitsStartPointSorted() && clauses.get(0).hitsLengthMax() >= min;
 	}
 
 	@Override
@@ -217,7 +220,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean hitsAreUnique() {
-		return true;
+		return clauses.get(0).hitsAreUnique() && clauses.get(0).hitsLengthMax() >= min;
 	}
 
 }

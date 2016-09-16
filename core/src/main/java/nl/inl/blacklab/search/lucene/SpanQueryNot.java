@@ -150,6 +150,8 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 		@Override
 		public Spans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
 			Spans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
+			if (!clauses.get(0).hitsStartPointSorted())
+				spans = BLSpansWrapper.optWrap(spans, true, false);
 			return new SpansNot(ignoreLastToken, context.reader(), baseFieldName, spans);
 		}
 

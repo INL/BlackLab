@@ -71,6 +71,21 @@ public class BLSpansWrapper extends BLSpans {
 		return source.toString();
 	}
 
+	public static BLSpans optWrap(Spans spans, boolean sort, boolean removeDuplicates) {
+		if (spans == null)
+			return null;
+		BLSpans result;
+		if (spans instanceof BLSpans)
+			result = (BLSpans)spans;
+		else
+			result = new BLSpansWrapper(spans);
+		if (sort)
+			return new PerDocumentSortedSpans(result, false, removeDuplicates);
+		if (removeDuplicates)
+			return new SpansUnique(result);
+		return result;
+	}
+
 	public static BLSpans optWrap(Spans spans) {
 		if (spans == null)
 			return null;
@@ -92,6 +107,7 @@ public class BLSpansWrapper extends BLSpans {
 		return result;
 	}
 
+	@Deprecated
 	public static BLSpans optWrapSortUniq(Spans spans) {
 		if (spans == null)
 			return null;

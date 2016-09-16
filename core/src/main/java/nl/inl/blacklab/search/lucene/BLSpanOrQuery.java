@@ -179,6 +179,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	@Override
 	public boolean hitsAllSameLength() {
+		if (getClauses().length == 0)
+			return true;
 		int l = ((BLSpanQuery)getClauses()[0]).hitsLengthMin();
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;

@@ -38,9 +38,17 @@ class SpansAnd extends BLSpans {
 
 	private boolean alreadyAtFirstMatch = false;
 
+	/**
+	 * Construct SpansAnd.
+	 *
+	 * Clauses must be start-point sorted.
+	 *
+	 * @param leftClause left clause
+	 * @param rightClause right clause
+	 */
 	public SpansAnd(Spans leftClause, Spans rightClause) {
-		spans[0] = BLSpansWrapper.optWrapSort(leftClause);
-		spans[1] = BLSpansWrapper.optWrapSort(rightClause);
+		spans[0] = BLSpansWrapper.optWrap(leftClause); //BLSpansWrapper.optWrapSort(leftClause);
+		spans[1] = BLSpansWrapper.optWrap(rightClause); //BLSpansWrapper.optWrapSort(rightClause);
 		currentDoc[0] = currentDoc[1] = -1;
 		currentStart[0] = currentStart[1] = -1;
 	}

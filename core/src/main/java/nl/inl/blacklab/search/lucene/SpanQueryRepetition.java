@@ -177,7 +177,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 			Spans spans = weight.getSpans(context, requiredPostings);
 			if (spans == null)
 				return null;
-			return new SpansRepetition(spans, min, max);
+			BLSpans blSpans = BLSpansWrapper.optWrap(spans, !hitsStartPointSorted(), !hitsAreUnique());
+			return new SpansRepetition(blSpans, min, max);
 		}
 
 	}

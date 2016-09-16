@@ -293,6 +293,7 @@ public class HitsImpl extends Hits {
 			spanQuery = ((BLSpanQuery)sourceQuery).rewrite(reader);
 			termContexts = new HashMap<>();
 			Set<Term> terms = new HashSet<>();
+			spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
 			weight = spanQuery.createWeight(searcher.getIndexSearcher(), false);
 			weight.extractTerms(terms);
 			etiquette = new ThreadPriority();
@@ -344,6 +345,8 @@ public class HitsImpl extends Hits {
 	 * If possible, don't use this constructor, use the one that takes
 	 * a SpanQuery, as it's more efficient.
 	 *
+	 * Note that the Spans provided must be start-point sorted and contain unique hits.
+	 *
 	 * @param searcher
 	 *            the searcher object
 	 * @param source
@@ -352,7 +355,7 @@ public class HitsImpl extends Hits {
 	HitsImpl(Searcher searcher, Spans source) {
 		this(searcher, (List<Hit>)null);
 
-		currentSourceSpans = BLSpansWrapper.optWrapSortUniq(source);
+		currentSourceSpans = BLSpansWrapper.optWrap(source);
 		try {
 			sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
 		} catch (IOException e) {
@@ -460,8 +463,8 @@ public class HitsImpl extends Hits {
 								// Get the atomic reader context and get the next Spans from it.
 								LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
 								currentDocBase = context.docBase;
-								Spans spans = weight.getSpans(context, Postings.OFFSETS);
-								currentSourceSpans = BLSpansWrapper.optWrapSortUniq(spans);
+								BLSpans spans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
+								currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
 							} else {
 								// TESTING
 								currentDocBase = 0;
@@ -469,8 +472,8 @@ public class HitsImpl extends Hits {
 									sourceSpansFullyRead = true;
 									return;
 								}
-								Spans spans = weight.getSpans(null, Postings.OFFSETS);
-								currentSourceSpans = BLSpansWrapper.optWrapSortUniq(spans);
+								BLSpans spans = (BLSpans) weight.getSpans(null, Postings.OFFSETS);
+								currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
 							}
 
 							if (currentSourceSpans != null) {

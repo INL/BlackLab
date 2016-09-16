@@ -359,6 +359,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				}
 			}
 
+			/*
 			// Sort the resulting spans by start point.
 			// Note that duplicates may have formed by combining spans from left and right. Eliminate
 			// these duplicates now (hence the 'true').
@@ -368,7 +369,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				combi = new PerDocumentSortedSpans(combi, false, !unique);
 			} else if (!unique) {
 				combi = new SpansUnique(combi);
-			}
+			}*/
+
 			return combi;
 		}
 
@@ -411,6 +413,10 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean hitsEndPointSorted() {
+		for (int i = 0; i < clauses.size() - 1; i++) {
+			if (!clauses.get(i).hitsHaveUniqueEnd())
+				return false;
+		}
 		for (int i = 1; i < clauses.size(); i++) {
 			if (!clauses.get(i).hitsAllSameLength())
 				return false;
@@ -420,7 +426,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean hitsStartPointSorted() {
-		return true; // we guarantuee this in getSpans()
+		for (int i = 0; i < clauses.size() - 1; i++) {
+			if (!clauses.get(i).hitsAllSameLength())
+				return false;
+		}
+		return true;
 	}
 
 	@Override

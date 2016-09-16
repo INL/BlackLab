@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -28,21 +13,27 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Makes sure the resulting hits do not contain consecutive duplicate hits. These may arise when
- * e.g. combining multiple SpanFuzzyQueries with OR.
+ * Ensure hits from a SpanQuery are sorted by start- or endpoint
+ * (within document), and optionally eliminate duplicate hits.
  */
-public class SpanQueryUnique extends BLSpanQuery {
+public class SpanQuerySorted extends BLSpanQuery {
 	private BLSpanQuery src;
 
-	public SpanQueryUnique(BLSpanQuery src) {
-		this.src = BLSpanQuery.ensureSorted(src);
+	boolean sortByEndpoint;
+
+	boolean eliminateDuplicates;
+
+	public SpanQuerySorted(BLSpanQuery src, boolean sortByEndpoint, boolean eliminateDuplicates) {
+		this.src = src;
+		this.sortByEndpoint = sortByEndpoint;
+		this.eliminateDuplicates = eliminateDuplicates;
 	}
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		BLSpanQuery rewritten = src.rewrite(reader);
 		if (rewritten != src) {
-			return new SpanQueryUnique(rewritten);
+			return new SpanQuerySorted(rewritten, sortByEndpoint, eliminateDuplicates);
 		}
 		return this;
 	}
@@ -54,21 +45,21 @@ public class SpanQueryUnique extends BLSpanQuery {
 
 	@Override
 	public BLSpanQuery noEmpty() {
-		return new SpanQueryUnique(src.noEmpty());
+		return new SpanQuerySorted(src.noEmpty(), sortByEndpoint, eliminateDuplicates);
 	}
 
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = src.createWeight(searcher, needsScores);
-		return new SpanWeightUnique(weight, searcher, needsScores ? getTermContexts(weight) : null);
+		return new SpanWeightSorted(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightUnique extends SpanWeight {
+	public class SpanWeightSorted extends SpanWeight {
 
 		final SpanWeight weight;
 
-		public SpanWeightUnique(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
-			super(SpanQueryUnique.this, searcher, terms);
+		public SpanWeightSorted(SpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
+			super(SpanQuerySorted.this, searcher, terms);
 			this.weight = weight;
 		}
 
@@ -87,13 +78,13 @@ public class SpanQueryUnique extends BLSpanQuery {
 			Spans srcSpans = weight.getSpans(context, requiredPostings);
 			if (srcSpans == null)
 				return null;
-			return new SpansUnique(srcSpans);
+			return new PerDocumentSortedSpans(srcSpans, sortByEndpoint, eliminateDuplicates);
 		}
 	}
 
 	@Override
 	public String toString(String field) {
-		return "UNIQ(" + src + ")";
+		return "SORT(" + src + ", " + (sortByEndpoint ? "END" : "START") + ", " + eliminateDuplicates + ")";
 	}
 
 	@Override
@@ -105,16 +96,16 @@ public class SpanQueryUnique extends BLSpanQuery {
 	public boolean equals(Object o) {
 		if (this == o)
 			return true;
-		if (o instanceof SpanQueryUnique) {
-			final SpanQueryUnique that = (SpanQueryUnique) o;
-			return src.equals(that.src);
+		if (o instanceof SpanQuerySorted) {
+			final SpanQuerySorted that = (SpanQuerySorted) o;
+			return src.equals(that.src) && sortByEndpoint == that.sortByEndpoint && eliminateDuplicates == that.eliminateDuplicates;
 		}
 		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return src.hashCode() ^ 0x98764038;
+		return src.hashCode() ^ 0x98764038 ^ (sortByEndpoint ? 31 : 0) ^ (eliminateDuplicates ? 37 : 0);
 	}
 
 	@Override

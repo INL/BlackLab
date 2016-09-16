@@ -153,6 +153,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 				return null;
 			BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(), spansSource, expandToLeft, min, max);
 
+			/*
 			// Note: the spans coming from SpansExpansion are not sorted properly.
 			// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
 
@@ -165,7 +166,8 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 				return new PerDocumentSortedSpans(spans, false, !unique);
 			} else if (!unique) {
 				return new SpansUnique(spans);
-			}
+			}*/
+
 			return spans;
 		}
 
@@ -233,8 +235,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean hitsStartPointSorted() {
-		return true; // (we do this in getSpans()
-		             // WAS: clauses.get(0).hitsStartPointSorted() && (!expandToLeft || expandToLeft && min == max);
+		return clauses.get(0).hitsStartPointSorted() && (!expandToLeft || expandToLeft && min == max);
 	}
 
 	@Override
@@ -249,8 +250,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean hitsAreUnique() {
-		return true; // (we do this in getSpans()
-		             // WAS: clauses.get(0).hitsAreUnique() && min == max;
+		return clauses.get(0).hitsAreUnique() && min == max;
 	}
 
 }
