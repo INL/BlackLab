@@ -87,6 +87,8 @@ public class SpanQueryUnique extends BLSpanQuery {
 			Spans srcSpans = weight.getSpans(context, requiredPostings);
 			if (srcSpans == null)
 				return null;
+			if (!src.hitsStartPointSorted())
+				return new PerDocumentSortedSpans(srcSpans, PerDocumentSortedSpans.cmpStartPoint, true);
 			return new SpansUnique(srcSpans);
 		}
 	}

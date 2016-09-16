@@ -56,8 +56,13 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 	/** Does our clause capture any groups? If not, we don't need to mess with those */
 	protected boolean clauseCapturesGroups = true;
 
+	/**
+	 * Construct SpansInBucketsPerStartPoint.
+	 *
+	 * @param source (startpoint-sorted) source spans
+	 */
 	public SpansInBucketsPerStartPoint(Spans source) {
-		this.source = BLSpansWrapper.optWrapSort(source);
+		this.source = BLSpansWrapper.optWrap(source); //Sort
 	}
 
 	@Override

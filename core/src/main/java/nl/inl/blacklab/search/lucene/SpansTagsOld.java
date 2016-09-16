@@ -47,18 +47,19 @@ class SpansTagsOld extends BLSpans {
 	/** Ends of hits in current document */
 	private IntArrayList ends = new IntArrayList();
 
+	/**
+	 * Construct SpansTagsOld.
+	 *
+	 * startTags and endTags should be startpoint-sorted,
+	 * which they always are by default.
+	 *
+	 * @param startTags start tags
+	 * @param endTags end tags
+	 */
 	public SpansTagsOld(Spans startTags, Spans endTags) {
 		Spans[] origSpans = { startTags, endTags };
 		for (int i = 0; i < 2; i++) {
-			boolean sorted = false;
-			if (origSpans[i] instanceof BLSpans)
-				sorted = ((BLSpans) origSpans[i]).hitsStartPointSorted();
-			else
-				startTags = BLSpansWrapper.optWrap(origSpans[i]);
-			if (sorted)
-				spans[i] = new SpansInBucketsPerDocument(origSpans[i]);
-			else
-				spans[i] = new SpansInBucketsPerDocumentSorted(origSpans[i], cmpStartPoint);
+			spans[i] = new SpansInBucketsPerDocument(origSpans[i]);
 		}
 		currentDoc[0] = currentDoc[1] = -1;
 	}

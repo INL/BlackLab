@@ -33,8 +33,13 @@ public class SpansUnique extends BLSpans {
 
 	private int currentStart = Spans.NO_MORE_POSITIONS;
 
+	/**
+	 * Construct SpansUnique.
+	 *
+	 * @param src (startpoint-sorted) Spans to make unique
+	 */
 	public SpansUnique(Spans src) {
-		this.src = BLSpansWrapper.optWrapSort(src);
+		this.src = BLSpansWrapper.optWrap(src); //Sort
 	}
 
 	@Override

@@ -37,6 +37,8 @@ import org.apache.lucene.search.spans.Spans;
  */
 public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
+	static SpanComparatorStartPoint cmpStartPoint = new SpanComparatorStartPoint();
+
 	/** Filter operation to apply */
 	private SpanQueryPositionFilter.Operation op;
 
@@ -149,13 +151,24 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 			Spans spansProd = prodWeight.getSpans(context, requiredPostings);
 			if (spansProd == null)
 				return null;
+			if (!clauses.get(0).hitsStartPointSorted())
+				spansProd = new PerDocumentSortedSpans(spansProd, PerDocumentSortedSpans.cmpStartPoint, false);
 			Spans spansFilter = filterWeight.getSpans(context, requiredPostings);
 			if (spansFilter == null) {
 				// No filter hits. If it's a positive filter, that means no producer hits can match.
 				// If it's a negative filter, all producer hits match.
 				return invert ? spansProd : null;
 			}
-			return new SpansPositionFilter(spansProd, spansFilter, op, invert, leftAdjust, rightAdjust);
+			boolean filterFixedLength = clauses.get(1).hitsAllSameLength();
+			SpansInBuckets filter;
+			if (clauses.get(1).hitsStartPointSorted()) {
+				// Already start point sorted; no need to sort buckets again
+				filter = new SpansInBucketsPerDocument(spansFilter);
+			} else {
+				// Not sorted yet; sort buckets
+				filter = new SpansInBucketsPerDocumentSorted(spansFilter, cmpStartPoint);
+			}
+			return new SpansPositionFilter(spansProd, filter, filterFixedLength, op, invert, leftAdjust, rightAdjust);
 		}
 	}
 

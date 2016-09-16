@@ -36,7 +36,13 @@ public class TestSpansPositionFilter {
 			new int[] { 11, 22, 20 },
 			new int[] { 12, 23, 25 }
 		);
-		return new SpansPositionFilter(swap ? b : a, swap ? a : b, type, invert, 0, 0);
+		if (swap) {
+			Spans c = a;
+			a = b;
+			b = c;
+		}
+		SpansInBuckets bb = new SpansInBucketsPerDocument(b);
+		return new SpansPositionFilter(a, bb, false, type, invert, 0, 0);
 	}
 
 	@Test

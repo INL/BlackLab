@@ -48,19 +48,11 @@ public class PerDocumentSortedSpans extends BLSpans {
 	/** Sort hits by end point instead of by start point? */
 	private boolean sortByEndPoint;
 
-	public PerDocumentSortedSpans(Spans src, boolean sortByEndPoint, boolean eliminateDuplicates) {
+	public PerDocumentSortedSpans(Spans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
 		this.source = BLSpansWrapper.optWrap(src);
 
 		// Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
-		this.sortByEndPoint = sortByEndPoint;
-		Comparator<Hit> comparator = null;
-		if (sortByEndPoint) {
-			if (!source.hitsEndPointSorted())
-				comparator = cmpEndPoint;
-		} else {
-			if (!source.hitsStartPointSorted())
-				comparator = cmpStartPoint;
-		}
+		this.sortByEndPoint = comparator instanceof SpanComparatorEndPoint;
 		bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
 
 		this.eliminateDuplicates = eliminateDuplicates;

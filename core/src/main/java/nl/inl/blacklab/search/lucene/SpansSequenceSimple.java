@@ -46,14 +46,14 @@ class SpansSequenceSimple extends BLSpans {
 	public SpansSequenceSimple(BLSpans leftClause, BLSpans rightClause) {
 		left = leftClause;
 		right = rightClause;
-		if (!right.hitsStartPointSorted())
-			throw new IllegalArgumentException("Right hits not start point sorted!");
-		if (!right.hitsHaveUniqueStart())
-			throw new IllegalArgumentException("Right hits don't have unique start points!");
-		if (!left.hitsEndPointSorted())
-			throw new IllegalArgumentException("Left hits not end point sorted!");
-		if (!left.hitsHaveUniqueEnd())
-			throw new IllegalArgumentException("Left hits don't have unique end points!");
+//		if (!right.hitsStartPointSorted())
+//			throw new IllegalArgumentException("Right hits not start point sorted!");
+//		if (!right.hitsHaveUniqueStart())
+//			throw new IllegalArgumentException("Right hits don't have unique start points!");
+//		if (!left.hitsEndPointSorted())
+//			throw new IllegalArgumentException("Left hits not end point sorted!");
+//		if (!left.hitsHaveUniqueEnd())
+//			throw new IllegalArgumentException("Left hits don't have unique end points!");
 	}
 
 	@Override

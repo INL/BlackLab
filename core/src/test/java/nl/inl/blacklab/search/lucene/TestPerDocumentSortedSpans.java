@@ -34,7 +34,7 @@ public class TestPerDocumentSortedSpans {
 		int[] start = { 1, 1, 4, 2, 2 };
 		int[] end   = { 8, 6, 5, 4, 3 };
 		Spans spans = new MockSpans(doc, start, end);
-		hpd = new PerDocumentSortedSpans(spans, true, false);
+		hpd = new PerDocumentSortedSpans(spans, PerDocumentSortedSpans.cmpEndPoint, false);
 	}
 
 	@Test

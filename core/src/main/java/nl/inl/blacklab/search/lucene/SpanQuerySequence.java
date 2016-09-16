@@ -339,8 +339,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			BLSpans combi = BLSpansWrapper.optWrap(weights.get(0).getSpans(context, requiredPostings));
 			if (combi == null)
 				return null;
+			boolean combiUniqueEnds = clauses.get(0).hitsHaveUniqueEnd();
+			boolean combiEndpointSorted = clauses.get(0).hitsEndPointSorted();
 			for (int i = 1; i < weights.size(); i++) {
-				BLSpans si = BLSpansWrapper.optWrap(weights.get(i).getSpans(context, requiredPostings));
+				SpanWeight weight = weights.get(i);
+				BLSpans si = BLSpansWrapper.optWrap(weight.getSpans(context, requiredPostings));
 				if (si == null)
 					return null;
 
@@ -349,13 +352,20 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				// sequence (so it is explicitly sorted by end point when we put it back in
 				// SequenceSpansRaw for the next part of the sequence), but before returning the
 				// final spans, we wrap it in a per-document (start-point) sorter.
-				if (si.hitsStartPointSorted() && si.hitsHaveUniqueStart() &&
-						combi.hitsEndPointSorted() && combi.hitsHaveUniqueEnd()) {
+				if (combiUniqueEnds && combiEndpointSorted &&
+					clauses.get(i).hitsStartPointSorted() && clauses.get(i).hitsHaveUniqueStart()) {
 					// We can take a shortcut because of what we know about the Spans we're combining.
 					combi = new SpansSequenceSimple(combi, si);
-				}
-				else {
+					combiEndpointSorted = clauses.get(i).hitsAllSameLength();
+					combiUniqueEnds = clauses.get(i).hitsHaveUniqueEnd();
+				} else {
+					if (!combiEndpointSorted)
+						combi = new PerDocumentSortedSpans(combi, PerDocumentSortedSpans.cmpEndPoint, false);
+					if (!clauses.get(i).hitsStartPointSorted())
+						si = new PerDocumentSortedSpans(si, PerDocumentSortedSpans.cmpStartPoint, false);
 					combi = new SpansSequenceRaw(combi, si);
+					combiUniqueEnds = combiUniqueEnds && clauses.get(i).hitsHaveUniqueEnd();
+					combiEndpointSorted = clauses.get(i).hitsAllSameLength();
 				}
 			}
 

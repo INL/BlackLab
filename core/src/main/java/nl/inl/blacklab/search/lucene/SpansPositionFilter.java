@@ -21,19 +21,18 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 
 /**
  * Finds hits from a set that contain one or more hits from the second set,
  * or finds hits from a set that are contained by hit(s) from the second set.
  */
 class SpansPositionFilter extends BLSpans {
-	static SpanComparatorStartPoint cmpStartPoint = new SpanComparatorStartPoint();
-
 	/** The spans we're (possibly) looking for */
 	private BLSpans producer;
 
 	/** The spans we use to filter the producer spans */
-	private SpansInBucketsPerDocument filter;
+	private SpansInBuckets filter;
 
 	/** What doc is the producer in? */
 	private int producerDoc = -1;
@@ -48,7 +47,7 @@ class SpansPositionFilter extends BLSpans {
 	private int filterIndex = -1;
 
 	/** What filter operation to use */
-	private SpanQueryPositionFilter.Operation op;
+	private Operation op;
 
 	/** How to adjust the left edge of the producer hits while matching */
 	private int leftAdjust;
@@ -73,26 +72,22 @@ class SpansPositionFilter extends BLSpans {
 	/**
 	 * Find hits from producer, filtered by the filter according to the specified op
 	 *
+	 * Both producer and filter should be start-point sorted.
+	 *
 	 * @param producer the hits we may be interested in
 	 * @param filter the hits used to filter the producer hits
+	 * @param filterFixedLength true if the filter hits are all the same length. Used for optimization.
 	 * @param op filter operation to use
 	 * @param invert if true, produce hits that DON'T match the filter instead
 	 * @param leftAdjust how to adjust the left edge of the producer hits while matching
 	 * @param rightAdjust how to adjust the right edge of the producer hits while matching
 	 */
-	public SpansPositionFilter(Spans producer, Spans filter, SpanQueryPositionFilter.Operation op, boolean invert, int leftAdjust, int rightAdjust) {
-		this.producer = BLSpansWrapper.optWrapSort(producer);
+	public SpansPositionFilter(Spans producer, SpansInBuckets filter, boolean filterFixedLength, Operation op, boolean invert, int leftAdjust, int rightAdjust) {
+		this.producer = BLSpansWrapper.optWrap(producer); // Sort
 		this.op = op;
 		this.invert = invert;
-		filterFixedLength = filter instanceof BLSpans && ((BLSpans)filter).hitsAllSameLength();
-		if (!(filter instanceof BLSpans) || (filter instanceof BLSpans && ((BLSpans)filter).hitsStartPointSorted())) {
-			// Already start point sorted; no need to sort buckets again
-			this.filter = new SpansInBucketsPerDocument(filter);
-		}
-		else {
-			// Not sorted yet; sort buckets
-			this.filter = new SpansInBucketsPerDocumentSorted(filter, cmpStartPoint);
-		}
+		this.filter = filter;
+		this.filterFixedLength = filterFixedLength;
 		this.leftAdjust = leftAdjust;
 		this.rightAdjust = rightAdjust;
 	}

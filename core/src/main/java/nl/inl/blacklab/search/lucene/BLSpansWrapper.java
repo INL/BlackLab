@@ -80,7 +80,7 @@ public class BLSpansWrapper extends BLSpans {
 		else
 			result = new BLSpansWrapper(spans);
 		if (sort)
-			return new PerDocumentSortedSpans(result, false, removeDuplicates);
+			return new PerDocumentSortedSpans(result, PerDocumentSortedSpans.cmpStartPoint, removeDuplicates);
 		if (removeDuplicates)
 			return new SpansUnique(result);
 		return result;
@@ -94,6 +94,7 @@ public class BLSpansWrapper extends BLSpans {
 		return new BLSpansWrapper(spans);
 	}
 
+	@Deprecated
 	public static BLSpans optWrapSort(Spans spans) {
 		if (spans == null)
 			return null;
@@ -103,7 +104,7 @@ public class BLSpansWrapper extends BLSpans {
 		else
 			result = new BLSpansWrapper(spans);
 		if (!result.hitsStartPointSorted())
-			result = new PerDocumentSortedSpans(result, false, false);
+			result = new PerDocumentSortedSpans(result, PerDocumentSortedSpans.cmpStartPoint, false);
 		return result;
 	}
 
@@ -122,7 +123,7 @@ public class BLSpansWrapper extends BLSpans {
 			}
 			return new SpansUnique(result);
 		}
-		return new PerDocumentSortedSpans(result, false, !result.hitsAreUnique());
+		return new PerDocumentSortedSpans(result, PerDocumentSortedSpans.cmpStartPoint, !result.hitsAreUnique());
 	}
 
 	/**

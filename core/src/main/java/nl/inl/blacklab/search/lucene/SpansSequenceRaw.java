@@ -85,13 +85,19 @@ class SpansSequenceRaw extends BLSpans {
 	 */
 	private boolean alreadyAtFirstMatch = false;
 
+	/**
+	 * Construct SpansSequenceRaw.
+	 *
+	 * @param leftClause (endpoint-sorted) left clause
+	 * @param rightClause (startpoint-sorted) right clause
+	 */
 	public SpansSequenceRaw(Spans leftClause, Spans rightClause) {
 		// Sort the left spans by (1) document (2) end point (3) start point
-		left = new PerDocumentSortedSpans(leftClause, true, false);
+		left = (BLSpans)leftClause; //new PerDocumentSortedSpans(leftClause, PerDocumentSortedSpans.cmpEndPoint, false);
 
 		// From the right spans, let us extract all end points belonging with a start point.
 		// Already start point sorted.
-		origRight = BLSpansWrapper.optWrapSort(rightClause);
+		origRight = BLSpansWrapper.optWrap(rightClause); //Sort
 		right = new SpansInBucketsPerStartPoint(origRight);
 	}
 
