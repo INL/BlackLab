@@ -23,6 +23,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
 
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
  * derived from this so we know they will produce BLSpans (which
@@ -287,6 +290,10 @@ public abstract class BLSpanQuery extends SpanQuery {
 			return spanQuery;
 		}
 		return new SpanQuerySorted(spanQuery, false, false);
+	}
+
+	public NfaFragment getNfa(TokenPropMapper propMapper) {
+		throw new UnsupportedOperationException();
 	}
 
 }

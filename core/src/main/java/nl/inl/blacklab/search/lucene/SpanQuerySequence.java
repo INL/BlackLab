@@ -30,6 +30,11 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
  * significant: a hit from the first span must be followed by a hit from the second.
@@ -464,5 +469,17 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	@Override
 	public boolean hitsAreUnique() {
 		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
+	}
+
+	@Override
+	public NfaFragment getNfa(TokenPropMapper propMapper) {
+		NfaFragment frag = null;
+		for (BLSpanQuery clause: clauses) {
+			if (frag == null)
+				frag = clause.getNfa(propMapper);
+			else
+				frag.sequence(clause.getNfa(propMapper));
+		}
+		return frag;
 	}
 }

@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.lucene;
  */
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,9 @@ import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -179,6 +183,17 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	@Override
 	public boolean hitsAreUnique() {
 		return true;
+	}
+
+	@Override
+	public NfaFragment getNfa(TokenPropMapper propMapper) {
+		Term term = query.getTerm();
+		String propertyName = ComplexFieldUtil.getNameComponents(term.field())[1];
+		int propertyNumber = propMapper.getPropertyNumber(propertyName);
+		String propertyValue = term.text();
+		int termNumber = propMapper.getTermNumber(propertyNumber, propertyValue);
+		NfaState state = NfaState.token(propertyNumber, termNumber, null);
+		return new NfaFragment(state, Arrays.asList(state));
 	}
 
 }

@@ -25,6 +25,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+
 /**
  * Finds repeated consecutive hits.
  *
@@ -245,6 +248,13 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	@Override
 	public boolean hitsAreUnique() {
 		return true;
+	}
+
+	@Override
+	public NfaFragment getNfa(TokenPropMapper propMapper) {
+		NfaFragment frag = clauses.get(0).getNfa(propMapper);
+		frag.repeat(min, max);
+		return frag;
 	}
 
 }
