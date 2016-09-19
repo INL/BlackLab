@@ -292,4 +292,9 @@ public abstract class ForwardIndex {
 			task.perform(fiid, tokenIds);
 		}
 	}
+
+	public int getToken(int fiid, int pos) {
+		// Slow/naive implementation, subclasses should override
+		return retrievePartsInt(fiid, new int[] {pos}, new int[] {pos + 1}).get(0)[0];
+	}
 }

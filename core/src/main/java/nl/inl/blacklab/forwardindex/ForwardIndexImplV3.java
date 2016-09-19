@@ -811,5 +811,4 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			}
 		};
 	}
-
 }

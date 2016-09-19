@@ -762,7 +762,15 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 
 						// 3 - take just what we need
 						int firstChar = a % e.blockSizeCharacters;
-						result[i] = decoded.toString().substring(firstChar, firstChar + b - a);
+						String decodedStr = decoded.toString();
+						try {
+							result[i] = decodedStr.substring(firstChar, firstChar + b - a);
+						} catch (StringIndexOutOfBoundsException e1) {
+							System.err.println("ERROR!\ndecodedStr.length() = " + decodedStr.length() + "\n" +
+									"firstChar = " + firstChar + "\na = " + a + "\nb = " + b);
+							System.err.flush();
+							throw e1;
+						}
 					}
 				}
 			}

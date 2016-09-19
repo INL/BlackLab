@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,6 +27,9 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPatternAnyToken;
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
 /**
  * A SpanQuery matching a number of tokens without any restrictions.
@@ -185,4 +189,11 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	public boolean hitsAreUnique() {
 		return true;
 	}
+
+	@Override
+	public NfaFragment getNfa(TokenPropMapper propMapper) {
+		NfaState state = NfaState.anyToken(null);
+		return new NfaFragment(state, Arrays.asList(state));
+	}
+
 }

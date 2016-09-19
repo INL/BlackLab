@@ -30,9 +30,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
-import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
 /**
@@ -478,7 +476,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			if (frag == null)
 				frag = clause.getNfa(propMapper);
 			else
-				frag.sequence(clause.getNfa(propMapper));
+				frag.append(clause.getNfa(propMapper));
 		}
 		return frag;
 	}
