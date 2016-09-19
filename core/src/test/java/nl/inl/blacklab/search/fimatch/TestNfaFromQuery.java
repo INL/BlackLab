@@ -86,7 +86,7 @@ public class TestNfaFromQuery {
 
 	private static final List<Integer> NO_MATCHES = Collections.emptyList();
 
-	private void test(BLSpanQuery q, TokenPropMapper propMapper, int startPos, int direction, int tests, List<Integer> matches) {
+	private static void test(BLSpanQuery q, TokenPropMapper propMapper, int startPos, int direction, int tests, List<Integer> matches) {
 		// The NFA
 		NfaFragment frag = q.getNfa(propMapper);
 		frag.append(new NfaFragment(NfaState.match(), null)); // finish NFA
@@ -99,13 +99,25 @@ public class TestNfaFromQuery {
 		}
 	}
 
+	private static SpanQueryRepetition rep(BLSpanTermQuery clause, int min, int max) {
+		return new SpanQueryRepetition(clause, min, max);
+	}
+
+	private static BLSpanTermQuery term(String w) {
+		return new BLSpanTermQuery(new Term("contents%word", w));
+	}
+
+	private static SpanQuerySequence seq(BLSpanQuery... clauses) {
+		return new SpanQuerySequence(clauses);
+	}
+
 	@Test
 	public void testNfaSingleWord() {
 		// The test document
 		TokenPropMapper propMapper = new MockTokenPropMapper(new String[] {"This", "is", "a", "test"});
 
 		// The query
-		BLSpanQuery q = new BLSpanTermQuery(new Term("contents%word", "test"));
+		BLSpanQuery q = term("test");
 
 		test(q, propMapper, 0,  1, 5, Arrays.asList(3));
 		test(q, propMapper, 3, -1, 5, Arrays.asList(0));
@@ -117,9 +129,7 @@ public class TestNfaFromQuery {
 		TokenPropMapper propMapper = new MockTokenPropMapper(new String[] {"This", "is", "a", "test"});
 
 		// The query
-		BLSpanQuery a = new BLSpanTermQuery(new Term("contents%word", "a"));
-		BLSpanQuery test = new BLSpanTermQuery(new Term("contents%word", "test"));
-		BLSpanQuery q = new SpanQuerySequence(a, test);
+		BLSpanQuery q = seq(term("a"), term("test"));
 
 		test(q, propMapper, 0,  1, 5, Arrays.asList(2));
 		test(q, propMapper, 3, -1, 5, NO_MATCHES);
@@ -131,10 +141,21 @@ public class TestNfaFromQuery {
 		TokenPropMapper propMapper = new MockTokenPropMapper(new String[] {"This", "is", "very", "very", "very", "fun"});
 
 		// The query
-		BLSpanQuery very = new BLSpanTermQuery(new Term("contents%word", "very"));
-		BLSpanQuery q = new SpanQueryRepetition(very, 1, -1);
+		BLSpanQuery q = rep(term("very"), 1, -1);
 
 		test(q, propMapper, 0,  1, 6, Arrays.asList(2, 3, 4));
 		test(q, propMapper, 5, -1, 6, Arrays.asList(1, 2, 3));
+	}
+
+	@Test
+	public void testNfaRep2() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper(new String[] {"This", "is", "very", "very", "very", "fun"});
+
+		// The query
+		BLSpanQuery q = seq(term("is"), rep(term("very"), 1, 2));
+
+		test(q, propMapper, 0,  1, 6, Arrays.asList(1));
+		test(q, propMapper, 5, -1, 6, NO_MATCHES);
 	}
 }
