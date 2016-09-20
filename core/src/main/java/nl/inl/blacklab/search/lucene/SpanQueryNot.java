@@ -27,6 +27,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+
 /**
  * Returns all tokens that do not occur in the matches
  * of the specified query.
@@ -206,6 +209,18 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	@Override
 	public boolean hitsAreUnique() {
 		return true;
+	}
+
+	@Override
+	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+		NfaFragment nfa = clauses.get(0).getNfa(propMapper, direction);
+		nfa.invert();
+		return nfa;
+	}
+
+	@Override
+	public boolean canMakeNfa() {
+		return clauses.get(0).canMakeNfa();
 	}
 
 }

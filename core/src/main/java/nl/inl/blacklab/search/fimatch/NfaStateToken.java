@@ -1,7 +1,8 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents both a state in an NFA, and a complete NFA
@@ -9,7 +10,7 @@ import java.util.List;
  */
 public class NfaStateToken extends NfaState {
 
-	private static final int ANY_TOKEN = -1;
+	static final int ANY_TOKEN = Integer.MAX_VALUE;
 
 	/** What property we're trying to match */
 	private int propertyNumber;
@@ -34,12 +35,12 @@ public class NfaStateToken extends NfaState {
 	 * @param matchEnds where to collect the matches found, or null if we don't want to collect them
 	 * @return true if any (new) matches were found, false if not
 	 */
-	public boolean findMatches(TokenSource tokenSource, int pos, List<Integer> matchEnds) {
+	public boolean findMatchesInternal(TokenSource tokenSource, int pos, Set<Integer> matchEnds) {
 		// Token state. Check if it matches token from token source, and if so, continue.
 		if (inputToken == ANY_TOKEN && tokenSource.validPos(pos) || tokenSource.getToken(propertyNumber, pos) == inputToken) {
 			if (nextState == null)
 				throw new RuntimeException("nextState == null in token state (" + propertyNumber + ", " + inputToken + ")");
-			return nextState.findMatches(tokenSource, pos + 1, matchEnds);
+			return nextState.findMatchesInternal(tokenSource, pos + 1, matchEnds);
 		}
 		return false;
 	}
@@ -51,7 +52,7 @@ public class NfaStateToken extends NfaState {
 	}
 
 	@Override
-	NfaStateToken copyInternal(Collection<NfaState> dangling) {
+	NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
 		NfaStateToken copy = new NfaStateToken(propertyNumber, inputToken, nextState);
 		if (nextState == null)
 			dangling.add(copy);
@@ -59,7 +60,9 @@ public class NfaStateToken extends NfaState {
 	}
 
 	@Override
-	public void setNextState(NfaState state) {
+	public void setNextState(int i, NfaState state) {
+		if (i != 0)
+			throw new RuntimeException("Token state only has one next state");
 		nextState = state;
 	}
 

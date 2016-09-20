@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,8 +9,13 @@ import org.apache.lucene.index.Term;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.search.lucene.BLSpanOrQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryAnd;
+import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
+import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
+import nl.inl.blacklab.search.lucene.SpanQueryNot;
 import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
 
@@ -23,7 +27,7 @@ public class TestNfaFromQuery {
 
 		private final Map<String, Integer> terms = new HashMap<>();
 
-		public MockTokenPropMapper(String[] document) {
+		public MockTokenPropMapper(String... document) {
 			this.termIds = new int[document.length];
 			for (int i = 0; i < document.length; i++) {
 				Integer termId = terms.get(document[i]);
@@ -48,7 +52,7 @@ public class TestNfaFromQuery {
 				throw new IllegalArgumentException("Unknown property " + propertyNumber);
 			Integer termId = terms.get(propertyValue);
 			if (termId == null)
-				throw new IllegalArgumentException("Unknown word " + propertyValue);
+				return -1; //throw new IllegalArgumentException("Unknown word " + propertyValue);
 			return termId;
 		}
 
@@ -84,18 +88,18 @@ public class TestNfaFromQuery {
 		}
 	}
 
-	private static final List<Integer> NO_MATCHES = Collections.emptyList();
+//	private static final List<Integer> NO_MATCHES = Collections.emptyList();
 
 	private static void test(BLSpanQuery q, TokenPropMapper propMapper, int startPos, int direction, int tests, List<Integer> matches) {
 		// The NFA
-		NfaFragment frag = q.getNfa(propMapper);
+		NfaFragment frag = q.getNfa(propMapper, direction);
 		frag.append(new NfaFragment(NfaState.match(), null)); // finish NFA
 		NfaState start = frag.getStartingState();
 
 		// Forward matching
 		TokenSource tokenSource = propMapper.tokenSource(0, startPos, direction);
 		for (int i = 0; i < tests; i++) {
-			Assert.assertEquals(matches.contains(i), start.matches(tokenSource, i));
+			Assert.assertEquals("Test " + i, matches.contains(i), start.matches(tokenSource, i));
 		}
 	}
 
@@ -111,10 +115,30 @@ public class TestNfaFromQuery {
 		return new SpanQuerySequence(clauses);
 	}
 
+	private static BLSpanOrQuery or(BLSpanQuery... clauses) {
+		return new BLSpanOrQuery(clauses);
+	}
+
+	private static SpanQueryAnd and(BLSpanQuery... clauses) {
+		return new SpanQueryAnd(clauses);
+	}
+
+	private static SpanQueryAnyToken any(int min, int max) {
+		return new SpanQueryAnyToken(min, max, "contents%word");
+	}
+
+	private static SpanQueryExpansion exp(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
+		return new SpanQueryExpansion(clause, expandToLeft, min, max);
+	}
+
+	private static SpanQueryNot not(BLSpanQuery clause) {
+		return new SpanQueryNot(clause);
+	}
+
 	@Test
 	public void testNfaSingleWord() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper(new String[] {"This", "is", "a", "test"});
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "a", "test");
 
 		// The query
 		BLSpanQuery q = term("test");
@@ -126,19 +150,19 @@ public class TestNfaFromQuery {
 	@Test
 	public void testNfaSequence() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper(new String[] {"This", "is", "a", "test"});
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "a", "test");
 
 		// The query
 		BLSpanQuery q = seq(term("a"), term("test"));
 
 		test(q, propMapper, 0,  1, 5, Arrays.asList(2));
-		test(q, propMapper, 3, -1, 5, NO_MATCHES);
+		test(q, propMapper, 3, -1, 5, Arrays.asList(0));
 	}
 
 	@Test
 	public void testNfaRep1() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper(new String[] {"This", "is", "very", "very", "very", "fun"});
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = rep(term("very"), 1, -1);
@@ -150,12 +174,84 @@ public class TestNfaFromQuery {
 	@Test
 	public void testNfaRep2() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper(new String[] {"This", "is", "very", "very", "very", "fun"});
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = seq(term("is"), rep(term("very"), 1, 2));
 
 		test(q, propMapper, 0,  1, 6, Arrays.asList(1));
-		test(q, propMapper, 5, -1, 6, NO_MATCHES);
+		test(q, propMapper, 5, -1, 6, Arrays.asList(2, 3));
+	}
+
+	@Test
+	public void testNfaOr() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+
+		// The query
+		BLSpanQuery q = or(seq(term("is"), term("very")), seq(term("very"), term("fun")));
+
+		test(q, propMapper, 0,  1, 6, Arrays.asList(1, 4));
+		test(q, propMapper, 5, -1, 6, Arrays.asList(0, 3));
+	}
+
+	@Test
+	public void testNfaAny() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+
+		// The query
+		BLSpanQuery q = any(3, 3);
+
+		test(q, propMapper, 0,  1, 6, Arrays.asList(0, 1, 2, 3));
+		test(q, propMapper, 5, -1, 6, Arrays.asList(0, 1, 2, 3));
+	}
+
+	@Test
+	public void testNfaAnd() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+
+		// The query
+		BLSpanQuery q = and(seq(term("very"), term("very"), any(1, 1)), seq(any(1,1), term("very"), term("very")));
+
+		test(q, propMapper, 0,  1, 6, Arrays.asList(2));
+		test(q, propMapper, 5, -1, 6, Arrays.asList(1));
+	}
+
+	@Test
+	public void testNfaExpansionLeft() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+
+		// The query
+		BLSpanQuery q = exp(term("very"), true, 1, 2);
+
+		test(q, propMapper, 0,  1, 6, Arrays.asList(0, 1, 2, 3));
+		test(q, propMapper, 5, -1, 6, Arrays.asList(1, 2, 3));
+	}
+
+	@Test
+	public void testNfaExpansionRight() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+
+		// The query
+		BLSpanQuery q = exp(term("is"), false, 0, 3);
+
+		test(q, propMapper, 0,  1, 6, Arrays.asList(1));
+		test(q, propMapper, 5, -1, 6, Arrays.asList(1, 2, 3, 4));
+	}
+
+	@Test
+	public void testNfaNot() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+
+		// The query
+		BLSpanQuery q = not(term("very"));
+
+		test(q, propMapper, 0,  1, 6, Arrays.asList(0, 1, 5));
+		test(q, propMapper, 5, -1, 6, Arrays.asList(0, 4, 5));
 	}
 }

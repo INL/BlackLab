@@ -2,9 +2,11 @@ package nl.inl.blacklab.search.fimatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A fragment of an NFA being built.
@@ -30,10 +32,6 @@ public class NfaFragment {
 
 	private void setStartingState(NfaState start) {
 		this.startingState = start;
-	}
-
-	private Collection<NfaState> getDanglingArrows() {
-		return danglingArrows;
 	}
 
 	public NfaFragment copy() {
@@ -70,7 +68,7 @@ public class NfaFragment {
 		// Create the max part, depending on whether it's infinite or not.
 		if (max < 0) {
 			// Infinite. Loop back to start of last link added.
-			NfaState loopBack = NfaState.split(link.getStartingState(), null);
+			NfaState loopBack = NfaState.or(link.getStartingState(), null);
 			for (NfaState d: danglingArrows) {
 				d.fillDangling(loopBack);
 			}
@@ -90,8 +88,8 @@ public class NfaFragment {
 			}
 			// Make optional clause fragment (note that if min == 0, this link
 			// will already be in its correct place)
-			NfaState start = NfaState.split(link.getStartingState(), null);
-			List<NfaState> escapeArrows = new ArrayList<>();
+			NfaState start = NfaState.or(link.getStartingState(), null);
+			Set<NfaState> escapeArrows = new HashSet<>();
 			escapeArrows.add(start);
 			link.setStartingState(start);
 
@@ -112,12 +110,21 @@ public class NfaFragment {
 				if (i < numberOfLinksToAdd - 1)
 					link = link.copy(); // this will be the next link
 			}
-			// Escape arrows have been filled in by append(). Set them to null again so
+			// Escape arrows may have been filled in by append(). Set them to null again so
 			// they will be treated as dangling arrows.
 			for (NfaState state: escapeArrows) {
-				state.setNextState2(null);
+				state.setNextState(1, null);
 				danglingArrows.add(state);
 			}
 		}
+	}
+
+	public void invert() {
+		NfaState not = new NfaStateNot(startingState);
+		startingState = not;
+	}
+
+	public Collection<NfaState> getDanglingArrows() {
+		return danglingArrows;
 	}
 }

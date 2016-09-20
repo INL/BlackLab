@@ -1,15 +1,15 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class NfaStateMatch extends NfaState {
 
 	@Override
-	public boolean findMatches(TokenSource tokenSource, int pos,
-			List<Integer> matchEnds) {
+	public boolean findMatchesInternal(TokenSource tokenSource, int pos, Set<Integer> matchEnds) {
 		if (matchEnds != null)
-			matchEnds.add(pos);
+			matchEnds.add(pos + 1);
 		return true;
 	}
 
@@ -19,12 +19,12 @@ public class NfaStateMatch extends NfaState {
 	}
 
 	@Override
-	NfaState copyInternal(Collection<NfaState> dangling) {
+	NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
 		return this; // immutable, singleton
 	}
 
 	@Override
-	public void setNextState(NfaState state) {
+	public void setNextState(int i, NfaState state) {
 		throw new UnsupportedOperationException("Match state has no next state");
 	}
 

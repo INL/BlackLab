@@ -25,6 +25,8 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.spans.SpanQuery;
+
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.TextPatternAnyToken;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
@@ -191,9 +193,19 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper) {
+	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
 		NfaState state = NfaState.anyToken(null);
-		return new NfaFragment(state, Arrays.asList(state));
+		NfaFragment frag = new NfaFragment(state, Arrays.asList(state));
+		if (realMin != 1 || max != 1) {
+			frag.repeat(realMin, max);
+		}
+		return frag;
+	}
+
+	@Override
+	public boolean canMakeNfa() {
+		return true;
 	}
 
 }

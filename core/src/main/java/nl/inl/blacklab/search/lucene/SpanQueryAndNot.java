@@ -27,8 +27,12 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
 /**
  * A SpanQuery for an AND NOT query.
@@ -363,4 +367,31 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		}
 		return true;
 	}
+
+	@Override
+	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+		if (exclude.size() > 0)
+			throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
+		List<NfaState> nfaClauses = new ArrayList<>();
+		List<NfaState> dangling = new ArrayList<>();
+		for (BLSpanQuery clause: include) {
+			NfaFragment nfa = clause.getNfa(propMapper, direction);
+			nfaClauses.add(nfa.getStartingState());
+			dangling.addAll(nfa.getDanglingArrows());
+		}
+		NfaState and = NfaState.and(nfaClauses);
+		return new NfaFragment(and, dangling);
+	}
+
+	@Override
+	public boolean canMakeNfa() {
+		if (exclude.size() > 0)
+			return false;
+		for (BLSpanQuery clause: include) {
+			if (!clause.canMakeNfa())
+				return false;
+		}
+		return true;
+	}
+
 }

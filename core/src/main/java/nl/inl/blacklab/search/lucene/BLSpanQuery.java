@@ -292,8 +292,12 @@ public abstract class BLSpanQuery extends SpanQuery {
 		return new SpanQuerySorted(spanQuery, false, false);
 	}
 
-	public NfaFragment getNfa(TokenPropMapper propMapper) {
-		throw new UnsupportedOperationException();
+	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+		throw new UnsupportedOperationException("Cannot create NFA; query should have been rewritten or cannot be matched using forward index");
+	}
+
+	public boolean canMakeNfa() {
+		return false;
 	}
 
 }

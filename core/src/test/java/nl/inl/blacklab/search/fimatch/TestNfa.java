@@ -33,7 +33,7 @@ public class TestNfa {
 		// Test simple NFA matching ab|ba
 		NfaState ab = NfaState.token(0, 'a', NfaState.token(0, 'b', NfaState.match()));
 		NfaState ba = NfaState.token(0, 'b', NfaState.token(0, 'a', NfaState.match()));
-		NfaState start = NfaState.split(ab, ba);
+		NfaState start = NfaState.or(ab, ba);
 
 		// Forward matching
 		StringTokenSource tokenSource = new StringTokenSource("abatoir", 0, 1);
@@ -54,9 +54,9 @@ public class TestNfa {
 	public void testNfaRepetition() {
 		// Test NFA matching ac*e
 		NfaState c = NfaState.token(0, 'c', null);
-		NfaState split = NfaState.split(c, NfaState.token(0, 'e', NfaState.match()));
+		NfaState split = NfaState.or(c, NfaState.token(0, 'e', NfaState.match()));
 		NfaState start = NfaState.token(0, 'a', split);
-		c.setNextState(split); // loopback
+		c.setNextState(0, split); // loopback
 
 		// Forward matching
 		Assert.assertTrue(start.matches(new StringTokenSource("access", 0, 1), 0));

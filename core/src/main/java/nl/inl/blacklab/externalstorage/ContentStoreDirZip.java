@@ -74,7 +74,7 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
 		zipbufPool = new SimpleResourcePool<byte[]>(POOL_SIZE){
 			@Override
 			public byte[] createResource() {
-				return new byte[newEntryBlockSizeCharacters * 2];
+				return new byte[newEntryBlockSizeCharacters * 3];
 			}
 		};
 	}
@@ -115,6 +115,9 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
 			if (compressedDataLength <= 0) {
 				throw new RuntimeException("Error, deflate returned " + compressedDataLength);
 			}
+			if (compressedDataLength == zipbuf.length) {
+				throw new RuntimeException("Error, deflate returned size of zipbuf, this indicates insufficient space");
+			}
 			return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
 		} finally {
 			compresserPool.release(compresser);
@@ -134,6 +137,10 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
 				int resultLength = decompresser.inflate(zipbuf);
 				if (resultLength <= 0) {
 					throw new RuntimeException("Error, inflate returned " + resultLength);
+				}
+				if (!decompresser.finished()) {
+					// This shouldn't happen because our max block size prevents it
+					throw new RuntimeException("Unzip buffer size insufficient");
 				}
 				return super.decodeBlock(zipbuf, 0, resultLength);
 			} finally {

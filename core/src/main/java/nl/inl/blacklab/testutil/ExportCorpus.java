@@ -72,20 +72,29 @@ public class ExportCorpus {
 			public void perform(Document doc) {
 				String fromInputFile = doc.get("fromInputFile");
 				System.out.println("Getting content for " + fromInputFile + "...");
-				String xml = searcher.getContent(doc);
-				File file = new File(exportDir, fromInputFile);
-				System.out.println("Got content, exporting to " + file + "...");
-				if (file.exists()) {
-					// Add a number so we don't have to overwrite the previous file.
-					System.out.println("WARNING: File " + file + " exists, using different name to avoid overwriting...");
-					file = FileUtil.addNumberToExistingFileName(file);
-				}
-				System.out.println(file);
-				File dir = file.getParentFile();
-				if (!dir.exists())
-					dir.mkdirs(); // create any subdirectories required
-				try (PrintWriter pw = FileUtil.openForWriting(file)) {
-					pw.write(xml);
+				try {
+					String xml = searcher.getContent(doc);
+					File file = new File(exportDir, fromInputFile);
+					System.out.println("Got content, exporting to " + file + "...");
+					if (file.exists()) {
+						// Add a number so we don't have to overwrite the previous file.
+						System.out.println("WARNING: File " + file + " exists, using different name to avoid overwriting...");
+						file = FileUtil.addNumberToExistingFileName(file);
+					}
+					System.out.println(file);
+					File dir = file.getParentFile();
+					if (!dir.exists())
+						dir.mkdirs(); // create any subdirectories required
+					try (PrintWriter pw = FileUtil.openForWriting(file)) {
+						pw.write(xml);
+					}
+				} catch (RuntimeException e) {
+					// HACK: a bug in an older content store implementation can cause this
+					//   when exporting an older index. Report and continue.
+					System.out.flush();
+					e.printStackTrace(System.err);
+					System.err.println("### Error exporting " + fromInputFile + ", skipping ###");
+					System.err.flush();
 				}
 				docsDone++;
 				if (docsDone % 100 == 0) {

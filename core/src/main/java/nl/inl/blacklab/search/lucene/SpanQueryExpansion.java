@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,6 +26,11 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.fimatch.NfaStateAnyToken;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -249,6 +255,30 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	@Override
 	public boolean hitsAreUnique() {
 		return clauses.get(0).hitsAreUnique() && min == max;
+	}
+
+	@Override
+	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+		if (max < 0)
+			throw new UnsupportedOperationException("Unlimited expansion using forward index not implemented");
+		NfaFragment nfa = clauses.get(0).getNfa(propMapper, direction);
+		NfaState any = new NfaStateAnyToken(null);
+		NfaFragment frag = new NfaFragment(any, Arrays.asList(any));
+		frag.repeat(min, max);
+		if (expandToLeft && direction == 1 || !expandToLeft && direction == -1) {
+			// Prepend nfa with stretch of anytokens
+			frag.append(nfa);
+			nfa = frag;
+		} else {
+			// Append stretch of anytokens to nfa
+			nfa.append(frag);
+		}
+		return nfa;
+	}
+
+	@Override
+	public boolean canMakeNfa() {
+		return max >= 0 && clauses.get(0).canMakeNfa();
 	}
 
 }

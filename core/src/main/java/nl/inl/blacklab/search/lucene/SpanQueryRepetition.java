@@ -251,10 +251,15 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper) {
-		NfaFragment frag = clauses.get(0).getNfa(propMapper);
+	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+		NfaFragment frag = clauses.get(0).getNfa(propMapper, direction);
 		frag.repeat(min, max);
 		return frag;
+	}
+
+	@Override
+	public boolean canMakeNfa() {
+		return clauses.get(0).canMakeNfa();
 	}
 
 }

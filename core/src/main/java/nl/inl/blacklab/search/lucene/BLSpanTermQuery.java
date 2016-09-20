@@ -186,7 +186,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper) {
+	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
 		Term term = query.getTerm();
 		String propertyName = ComplexFieldUtil.getNameComponents(term.field())[1];
 		int propertyNumber = propMapper.getPropertyNumber(propertyName);
@@ -194,6 +194,11 @@ public class BLSpanTermQuery extends BLSpanQuery {
 		int termNumber = propMapper.getTermNumber(propertyNumber, propertyValue);
 		NfaState state = NfaState.token(propertyNumber, termNumber, null);
 		return new NfaFragment(state, Arrays.asList(state));
+	}
+
+	@Override
+	public boolean canMakeNfa() {
+		return true;
 	}
 
 }

@@ -470,14 +470,26 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper) {
+	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
 		NfaFragment frag = null;
-		for (BLSpanQuery clause: clauses) {
+		int start = direction == 1 ? 0 : clauses.size() - 1;
+		int end   = direction == 1 ? clauses.size() : -1;
+		for (int i = start; i != end; i += direction) {
+			BLSpanQuery clause = clauses.get(i);
 			if (frag == null)
-				frag = clause.getNfa(propMapper);
+				frag = clause.getNfa(propMapper, direction);
 			else
-				frag.append(clause.getNfa(propMapper));
+				frag.append(clause.getNfa(propMapper, direction));
 		}
 		return frag;
+	}
+
+	@Override
+	public boolean canMakeNfa() {
+		for (BLSpanQuery clause: clauses) {
+			if (!clause.canMakeNfa())
+				return false;
+		}
+		return true;
 	}
 }
