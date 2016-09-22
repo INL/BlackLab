@@ -70,7 +70,7 @@ Here’s what the various parts of this URL mean:
 	</tr>
 	<tr>
 		<td>pid         </td>
-		<td>persistent identifier for the document. This refers to a metadata field that must be configured per corpus (in the index metadata JSON file; see documentation about indexing with BlackLab). Any field that uniquely identifies the document and won’t change in the future will do. You can retrieve documents with this pid, and result sets will use it to refer to the corresponding documents.><br/><br/><b>NOTE:</b> BlackLab Server will use the Lucene document id instead of a true persistent identifier if your corpus has no persistent identifier configured, but this is not recommended: Lucene document ids can change if you re-index or compact the index, so bookmarked URLs may not always return to the same information.</td>
+		<td>persistent identifier for the document. This refers to a metadata field that must be configured per corpus (in the index metadata JSON file; see documentation about indexing with BlackLab). Any field that uniquely identifies the document and won’t change in the future will do. You can retrieve documents with this pid, and result sets will use it to refer to the corresponding documents.><br/><br/><b>NOTE:</b> BlackLab Server will use the Lucene document id instead of a true persistent identifier if your corpus has no persistent identifier configured (using "pidField" in the index template file - see [Indexing with BlackLab](indexing-with-blacklab.html)), but this is not recommended: Lucene document ids can change if you re-index or compact the index, so bookmarked URLs may not always return to the same information.</td>
 	</tr>
 	<tr>
 		<td>parameters  </td>
