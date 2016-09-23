@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +89,7 @@ public class TestNfaFromQuery {
 		}
 	}
 
-//	private static final List<Integer> NO_MATCHES = Collections.emptyList();
+	private static final List<Integer> NO_MATCHES = Collections.emptyList();
 
 	private static void test(BLSpanQuery q, TokenPropMapper propMapper, int startPos, int direction, int tests, List<Integer> matches) {
 		// The NFA
@@ -103,7 +104,7 @@ public class TestNfaFromQuery {
 		}
 	}
 
-	private static SpanQueryRepetition rep(BLSpanTermQuery clause, int min, int max) {
+	private static SpanQueryRepetition rep(BLSpanQuery clause, int min, int max) {
 		return new SpanQueryRepetition(clause, min, max);
 	}
 
@@ -253,5 +254,29 @@ public class TestNfaFromQuery {
 
 		test(q, propMapper, 0,  1, 6, Arrays.asList(0, 1, 5));
 		test(q, propMapper, 5, -1, 6, Arrays.asList(0, 4, 5));
+	}
+
+	@Test
+	public void testNfaComplex1() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
+
+		// The query: []? "is" ("lots" "and"){1,3} [word != "lots"] "of"
+		BLSpanQuery q = seq(exp(term("is"), true, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), not(term("lots")), term("of"));
+
+		test(q, propMapper, 0,  1, 8, NO_MATCHES);  // ERROR
+		test(q, propMapper, 8, -1, 8, NO_MATCHES);
+	}
+
+	@Test
+	public void testNfaComplex2() {
+		// The test document
+		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
+
+		// The query: []? "is" ("lots" "and"){1,3} "lots" "of"
+		BLSpanQuery q = seq(exp(term("is"), true, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), term("lots"), term("of"));
+
+		test(q, propMapper, 0,  1, 8, Arrays.asList(0, 1));
+		test(q, propMapper, 8, -1, 8, Arrays.asList(1));
 	}
 }
