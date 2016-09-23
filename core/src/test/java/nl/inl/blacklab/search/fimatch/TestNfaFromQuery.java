@@ -94,8 +94,7 @@ public class TestNfaFromQuery {
 	private static void test(BLSpanQuery q, TokenPropMapper propMapper, int startPos, int direction, int tests, List<Integer> matches) {
 		// The NFA
 		NfaFragment frag = q.getNfa(propMapper, direction);
-		frag.append(new NfaFragment(NfaState.match(), null)); // finish NFA
-		NfaState start = frag.getStartingState();
+		NfaState start = frag.finish();
 
 		// Forward matching
 		TokenSource tokenSource = propMapper.tokenSource(0, startPos, direction);

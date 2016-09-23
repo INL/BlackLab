@@ -127,4 +127,9 @@ public class NfaFragment {
 	public Collection<NfaState> getDanglingArrows() {
 		return danglingArrows;
 	}
+
+	public NfaState finish() {
+		append(new NfaFragment(NfaState.match(), null)); // finish NFA
+		return startingState;
+	}
 }

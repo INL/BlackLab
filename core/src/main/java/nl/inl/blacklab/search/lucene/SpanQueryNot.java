@@ -28,6 +28,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
 /**
@@ -214,6 +215,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	@Override
 	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
 		NfaFragment nfa = clauses.get(0).getNfa(propMapper, direction);
+		nfa.finish();
 		nfa.invert();
 		return nfa;
 	}
