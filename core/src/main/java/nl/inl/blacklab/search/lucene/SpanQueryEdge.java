@@ -147,4 +147,9 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 	public boolean hitsAreUnique() {
 		return hitsHaveUniqueStart();
 	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		return clauses.get(0).estimatedNumberOfHits(reader);
+	}
 }

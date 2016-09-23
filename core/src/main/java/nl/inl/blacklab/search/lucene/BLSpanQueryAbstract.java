@@ -37,6 +37,8 @@ public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 	 */
 	protected String baseFieldName = "";
 
+	protected String luceneFieldName = "";
+
 	protected List<BLSpanQuery> clauses;
 
 	public BLSpanQueryAbstract() {
@@ -65,6 +67,7 @@ public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 
 	private void determineBaseFieldName() {
 		if (clauses.size() > 0) {
+			luceneFieldName = clauses.get(0).getRealField();
 			baseFieldName = ComplexFieldUtil.getBaseName(clauses.get(0).getField());
 			for (int i = 1; i < clauses.size(); i++) {
 				String f = ComplexFieldUtil.getBaseName(clauses.get(i).getField());
@@ -107,6 +110,11 @@ public abstract class BLSpanQueryAbstract extends BLSpanQuery {
 	@Override
 	public String getField() {
 		return baseFieldName;
+	}
+
+	@Override
+	public String getRealField() {
+		return luceneFieldName;
 	}
 
 	List<BLSpanQuery> getClauses() {

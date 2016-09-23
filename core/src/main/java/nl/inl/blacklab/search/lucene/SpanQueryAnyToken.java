@@ -25,11 +25,12 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+
 import nl.inl.blacklab.search.TextPatternAnyToken;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.util.LuceneUtil;
 
 /**
  * A SpanQuery matching a number of tokens without any restrictions.
@@ -137,8 +138,8 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	}
 
 	@Override
-	public String getField() {
-		return ComplexFieldUtil.getBaseName(luceneField);
+	public String getRealField() {
+		return luceneField;
 	}
 
 	@Override
@@ -204,6 +205,13 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	@Override
 	public boolean canMakeNfa() {
 		return true;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		// Should be rewritten, and if not, it matches all positions in the index.
+		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
+		return LuceneUtil.getSumTotalTermFreq(reader, luceneField) * numberOfExpansionSteps;
 	}
 
 }

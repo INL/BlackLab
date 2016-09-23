@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
@@ -112,6 +113,11 @@ public class MockSpanQuery extends BLSpanQuery {
 	}
 
 	@Override
+	public String getRealField() {
+		return "dummy";
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o)
 			return true;
@@ -165,6 +171,11 @@ public class MockSpanQuery extends BLSpanQuery {
 	@Override
 	public boolean hitsAreUnique() {
 		return sortedSpans && uniqueSpans;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		return 0;
 	}
 
 }

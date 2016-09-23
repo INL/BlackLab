@@ -281,4 +281,10 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		return max >= 0 && clauses.get(0).canMakeNfa();
 	}
 
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
+		return clauses.get(0).estimatedNumberOfHits(reader) * numberOfExpansionSteps;
+	}
+
 }

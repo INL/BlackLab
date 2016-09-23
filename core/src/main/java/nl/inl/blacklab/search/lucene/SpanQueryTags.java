@@ -156,6 +156,11 @@ public class SpanQueryTags extends BLSpanQuery {
 	}
 
 	@Override
+	public String getRealField() {
+		return startTagFieldName;
+	}
+
+	@Override
 	public int hashCode() {
 		int h = clause.hashCode();
 		if (attr != null)
@@ -206,5 +211,10 @@ public class SpanQueryTags extends BLSpanQuery {
 	@Override
 	public boolean hitsAreUnique() {
 		return false;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		return clause.estimatedNumberOfHits(reader);
 	}
 }

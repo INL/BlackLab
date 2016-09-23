@@ -281,6 +281,15 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		throw new RuntimeException("Query has no clauses");
 	}
 
+	@Override
+	public String getRealField() {
+		if (include.size() > 0)
+			return include.get(0).getRealField();
+		if (exclude.size() > 0)
+			return exclude.get(0).getRealField();
+		throw new RuntimeException("Query has no clauses");
+	}
+
 	public List<BLSpanQuery> getIncludeClauses() {
 		return include;
 	}
@@ -391,6 +400,18 @@ public class SpanQueryAndNot extends BLSpanQuery {
 				return false;
 		}
 		return true;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		// Excludes should have been rewritten, so we only look at includes.
+		// We return the least frequent clause since we can skip over the more
+		// frequent ones, or match them using the forward index.
+		long cost = Integer.MAX_VALUE;
+		for (BLSpanQuery clause: include) {
+			cost = Math.min(cost, clause.estimatedNumberOfHits(reader));
+		}
+		return cost;
 	}
 
 }

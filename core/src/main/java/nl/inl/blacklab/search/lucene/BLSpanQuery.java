@@ -23,6 +23,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
@@ -299,5 +300,33 @@ public abstract class BLSpanQuery extends SpanQuery {
 	public boolean canMakeNfa() {
 		return false;
 	}
+
+	/**
+	 * Return an very rough indication of how many hits this
+	 * clause might return.
+	 *
+	 * Used to decide what parts of the query
+	 * to match using the forward index.
+	 *
+	 * Based on term frequency, which are combined using simple
+	 * rules of thumb.
+	 *
+	 * Another way to think of this is an indication of how much
+	 * computation this clause will require when matching using the
+	 * reverse index.
+	 *
+	 * @param reader the index reader
+	 *
+	 * @return rough estimation of the number of hits
+	 */
+	public abstract long estimatedNumberOfHits(IndexReader reader);
+
+	@Override
+	public String getField() {
+		// Return only base name of complex field!
+		return ComplexFieldUtil.getBaseName(getRealField());
+	}
+
+	public abstract String getRealField();
 
 }

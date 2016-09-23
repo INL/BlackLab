@@ -53,6 +53,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	String field;
 
+	private String luceneField;
+
 	/** Construct a SpanOrQuery merging the provided clauses.
 	 * All clauses must have the same field.
 	 * @param clauses clauses to OR together
@@ -60,6 +62,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	public BLSpanOrQuery(BLSpanQuery... clauses) {
 		inner = new SpanOrQuery(clauses);
 		this.field = inner.getField();
+		this.luceneField = clauses[0].getRealField();
 	}
 
 	static BLSpanOrQuery from(SpanOrQuery in) {
@@ -94,6 +97,11 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	@Override
 	public String getField() {
 		return field;
+	}
+
+	@Override
+	public String getRealField() {
+		return luceneField;
 	}
 
 	@Override
@@ -574,6 +582,18 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 				return false;
 		}
 		return true;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		// Add the costs of our clauses, since we won't
+		// be able to skip any hits.
+		int cost = 0;
+		for (SpanQuery cl: getClauses()) {
+			BLSpanQuery clause = (BLSpanQuery)cl;
+			cost += clause.estimatedNumberOfHits(reader);
+		}
+		return cost;
 	}
 
 }

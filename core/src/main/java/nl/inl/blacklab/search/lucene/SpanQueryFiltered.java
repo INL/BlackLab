@@ -165,4 +165,9 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 	public String toString(String field) {
 		return "FILTER(" + clausesToString(field) + ", " + filter + ")";
 	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		return clauses.get(0).estimatedNumberOfHits(reader);
+	}
 }

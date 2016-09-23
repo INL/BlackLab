@@ -94,13 +94,14 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
 			return new SpanQueryFilterNGrams(clauses.get(0), op, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
 		}
-		if ((op == SpanQueryPositionFilter.Operation.CONTAINING_AT_START || op == SpanQueryPositionFilter.Operation.STARTS_AT) && max != min) {
-			// Expand to right with range of tokens. Combine with previous part to likely
-			// reduce the number of hits we'll have to expand.
-			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));
-			seq = seq.rewrite(reader);
-			return new SpanQueryFilterNGrams(seq, op, min, max);
-		}
+		// FIXME: commented out code below is incorrect?
+//		if ((op == SpanQueryPositionFilter.Operation.CONTAINING_AT_START || op == SpanQueryPositionFilter.Operation.STARTS_AT) && max != min) {
+//			// Expand to right with range of tokens. Combine with previous part to likely
+//			// reduce the number of hits we'll have to expand.
+//			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));
+//			seq = seq.rewrite(reader);
+//			return new SpanQueryFilterNGrams(seq, op, min, max);
+//		}
 		return super.combineWithPrecedingPart(previousPart, reader);
 	}
 
@@ -219,6 +220,12 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	@Override
 	public boolean hitsAreUnique() {
 		return clauses.get(0).hitsAreUnique() && clauses.get(0).hitsLengthMax() >= min;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
+		return clauses.get(0).estimatedNumberOfHits(reader) * numberOfExpansionSteps;
 	}
 
 }

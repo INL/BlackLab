@@ -108,13 +108,8 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 		throw new UnsupportedOperationException("Query should have been rewritten");
 	}
 
-	/**
-	 * Returns the name of the field matched by this query.
-	 *
-	 * @return name of the field
-	 */
 	@Override
-	public String getField() {
+	public String getRealField() {
 		return term.field();
 	}
 
@@ -196,5 +191,10 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 	@Override
 	public boolean hitsAreUnique() {
 		return true;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		return 0; // should be rewritten
 	}
 }

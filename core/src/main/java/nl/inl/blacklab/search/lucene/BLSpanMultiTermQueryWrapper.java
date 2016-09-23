@@ -8,7 +8,6 @@ import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanQuery;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * Subclasses SpanMultiTermQueryWrapper so it correctly produces
@@ -22,12 +21,6 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
 	public BLSpanMultiTermQueryWrapper(Q query) {
 		this.query = new SpanMultiTermQueryWrapper<Q>(query);
-	}
-
-	@Override
-	public String getField() {
-		// Return only base name of complex field!
-		return ComplexFieldUtil.getBaseName(query.getField());
 	}
 
 	@Override
@@ -114,5 +107,16 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	public boolean hitsAreUnique() {
 		return true;
 	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		return 0; // should be rewritten
+	}
+
+	@Override
+	public String getRealField() {
+		return query.getField();
+	}
+
 
 }

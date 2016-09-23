@@ -28,8 +28,8 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.search.fimatch.NfaFragment;
-import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.util.LuceneUtil;
 
 /**
  * Returns all tokens that do not occur in the matches
@@ -223,6 +223,13 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	@Override
 	public boolean canMakeNfa() {
 		return clauses.get(0).canMakeNfa();
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		// Should be rewritten, but if it can't, calculate a rough indication of the number of token hits
+		long freq = clauses.get(0).estimatedNumberOfHits(reader);
+		return LuceneUtil.getSumTotalTermFreq(reader, getRealField()) - freq;
 	}
 
 }

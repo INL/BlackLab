@@ -102,6 +102,11 @@ public class SpanQueryUnique extends BLSpanQuery {
 	}
 
 	@Override
+	public String getRealField() {
+		return src.getRealField();
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o)
 			return true;
@@ -155,5 +160,10 @@ public class SpanQueryUnique extends BLSpanQuery {
 	@Override
 	public boolean hitsAreUnique() {
 		return true;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		return src.estimatedNumberOfHits(reader);
 	}
 }

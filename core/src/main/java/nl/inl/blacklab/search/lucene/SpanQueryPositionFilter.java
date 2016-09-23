@@ -278,4 +278,9 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	public boolean hitsAreUnique() {
 		return clauses.get(0).hitsAreUnique();
 	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		return clauses.get(0).estimatedNumberOfHits(reader);
+	}
 }

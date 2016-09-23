@@ -374,4 +374,16 @@ public class LuceneUtil {
 		return config;
 	}
 
+	public static long getSumTotalTermFreq(IndexReader reader, String luceneField) {
+		long totalTerms = 0;
+		try {
+			for (LeafReaderContext ctx: reader.leaves()) {
+				totalTerms += ctx.reader().terms(luceneField).getSumTotalTermFreq();
+			}
+			return totalTerms;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }

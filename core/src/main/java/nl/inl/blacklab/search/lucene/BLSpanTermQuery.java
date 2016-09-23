@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -78,21 +79,9 @@ public class BLSpanTermQuery extends BLSpanQuery {
 		termContext = context;
 	}
 
-	/**
-	 * Overriding getField to return only the name of the complex field, not the
-	 * property name or alt name following after that.
-	 *
-	 * i.e. for 'contents%lemma@s', this method will just return 'contents',
-	 * which is the complex field we're searching.
-	 *
-	 * This makes it possible to use termqueries with different fieldnames in
-	 * the same AND or OR query.
-	 *
-	 * @return String field
-	 */
 	@Override
-	public String getField() {
-		return ComplexFieldUtil.getBaseName(query.getTerm().field());
+	public String getRealField() {
+		return query.getTerm().field();
 	}
 
 	@Override
@@ -199,6 +188,15 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	@Override
 	public boolean canMakeNfa() {
 		return true;
+	}
+
+	@Override
+	public long estimatedNumberOfHits(IndexReader reader) {
+		try {
+			return reader.totalTermFreq(query.getTerm());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }
