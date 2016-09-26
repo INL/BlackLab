@@ -62,7 +62,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	public BLSpanOrQuery(BLSpanQuery... clauses) {
 		inner = new SpanOrQuery(clauses);
 		this.field = inner.getField();
-		this.luceneField = clauses[0].getRealField();
+		this.luceneField = clauses.length > 0 ? clauses[0].getRealField() : field;
 	}
 
 	static BLSpanOrQuery from(SpanOrQuery in) {
