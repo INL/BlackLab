@@ -40,7 +40,7 @@ public class SpansFiltered extends BLSpans {
 
 	public SpansFiltered(Spans spans, Scorer filterDocs) throws IOException {
 		this.spans = BLSpansWrapper.optWrap(spans);
-		docIdSetIter = filterDocs.iterator();
+		docIdSetIter = filterDocs == null ? null : filterDocs.iterator();
 		more = false;
 		if (docIdSetIter != null) {
 			more = (docIdSetIter.nextDoc() != NO_MORE_DOCS);
