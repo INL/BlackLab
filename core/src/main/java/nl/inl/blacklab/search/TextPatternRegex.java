@@ -133,6 +133,9 @@ public class TextPatternRegex extends TextPatternTerm {
 			result = wildcardPattern;
 		}
 
+		if (result == this && !newValue.equals(value))
+			result = new TextPatternRegex(newValue);
+
 		if (forceCaseSensitive) {
 			// Pattern started with (?-i) or (?c) to force it to be case sensitive
 			result = new TextPatternSensitive(true, true, result);

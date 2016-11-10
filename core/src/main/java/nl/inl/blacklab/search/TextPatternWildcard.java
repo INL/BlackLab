@@ -75,6 +75,9 @@ public class TextPatternWildcard extends TextPatternTerm {
 			return new TextPatternPrefix(prefix);
 		}
 
+		if (!newValue.equals(value))
+			return new TextPatternWildcard(newValue);
+
 		// Can't simplify, just return ourselves
 		return this;
 	}
