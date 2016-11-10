@@ -62,16 +62,16 @@ public class TextPatternWildcard extends TextPatternTerm {
 		}
 
 		// Replace multiple consecutive asterisks with a single one
-		value = value.replaceAll("\\*+", "*");
+		String newValue = value.replaceAll("\\*+", "*");
 
 		// Is is "any word"?
-		if (value.equals("*"))
+		if (newValue.equals("*"))
 			return new TextPatternAnyToken(1, 1);
 
 		// Is it a prefix query? ("bla*")
-		if (value.indexOf('*') == value.length() - 1 && value.indexOf('?') < 0) {
+		if (newValue.indexOf('*') == newValue.length() - 1 && newValue.indexOf('?') < 0) {
 			// Yes!
-			String prefix = value.substring(0, value.length() - 1);
+			String prefix = newValue.substring(0, newValue.length() - 1);
 			return new TextPatternPrefix(prefix);
 		}
 

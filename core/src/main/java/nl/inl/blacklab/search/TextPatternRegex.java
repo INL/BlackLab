@@ -66,24 +66,24 @@ public class TextPatternRegex extends TextPatternTerm {
         // If there's a case-sensitivity toggle flag after a
         // start-of-string match, put the flag first so we can
 		// easily detect it below.
-		value = value.replaceAll("^\\^(\\(\\?\\-?\\w+\\))", "$1^");
+		String newValue = value.replaceAll("^\\^(\\(\\?\\-?\\w+\\))", "$1^");
 
 		// Do we want to force a case-sensitive search?
 		boolean forceCaseSensitive = false;
 		boolean forceCaseInsensitive = false;
-		if (value.startsWith("(?-i)")) {
+		if (newValue.startsWith("(?-i)")) {
 			forceCaseSensitive = true;
-			value = value.substring(5);
-		} else if (value.startsWith("(?c)")) {
+			newValue = newValue.substring(5);
+		} else if (newValue.startsWith("(?c)")) {
 			forceCaseSensitive = true;
-			value = value.substring(4);
-		} else if (value.startsWith("(?i)")) {
+			newValue = newValue.substring(4);
+		} else if (newValue.startsWith("(?i)")) {
 			forceCaseInsensitive = true;
-			value = value.substring(4);
+			newValue = newValue.substring(4);
 		}
 
 		// Try to convert to a wildcard query.
-		String wildcard = value;
+		String wildcard = newValue;
 		if (wildcard.length() > 0) {
 			// Wildcard expressions always start at beginning
 			if (wildcard.charAt(0) == '^') {
