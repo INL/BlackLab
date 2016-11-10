@@ -309,6 +309,15 @@ public class SearchCache {
 			cacheConfig.autoAdjustMaxConcurrent();
 		}
 
+		for (Entry<String, Job> e: cachedSearches.entrySet()) {
+			String key = e.getKey();
+			Job job = e.getValue();
+			String uniqId = job.getDescription().uniqueIdentifier();
+			if (!key.equals(uniqId)) {
+				logger.error("### Cached job's key has changed. OLD=" + key + ", NEW=" + uniqId);
+			}
+		}
+
 		List<Job> searches = new ArrayList<>(cachedSearches.values());
 
 		// Sort the searches based on descending "worthiness"
@@ -326,7 +335,6 @@ public class SearchCache {
 			// pretty arbitrary number, but will keep on being removed every
 			// call until enough free mem has been reclaimed
 			minSearchesToRemove = cacheConfig.getNumberOfJobsToPurgeWhenBelowTargetMem();
-			logger.debug("Not enough free mem, will remove some searches.");
 		}
 
 		// Look at searches from least worthy to worthiest.
@@ -344,9 +352,11 @@ public class SearchCache {
 
 			} else {
 				boolean removeBecauseOfCacheSizeOrAge = false;
+				boolean isCacheTooBig = false;
+				boolean isSearchTooOld = false;
 				if (lookAtCacheSizeAndSearchAccessTime) {
-					boolean isCacheTooBig = cacheTooBig();
-					boolean isSearchTooOld = false;
+					isCacheTooBig = cacheTooBig();
+					isSearchTooOld = false;
 					if (!isCacheTooBig)
 						isSearchTooOld = searchTooOld(search1);
 					removeBecauseOfCacheSizeOrAge = isCacheTooBig || isSearchTooOld;
@@ -355,6 +365,12 @@ public class SearchCache {
 					// Search is too old or cache is too big. Keep removing searches until that's no
 					// longer the case
 					// logger.debug("Remove from cache: " + search);
+					if (minSearchesToRemove > 0)
+						logger.debug("Not enough free mem, removing: " + search1);
+					else if (isCacheTooBig)
+						logger.debug("Cache too large, removing: " + search1);
+					else
+						logger.debug("Searchjob too old, removing: " + search1);
 					removeFromCache(search1);
 					removed.add(search1);
 
@@ -447,7 +463,11 @@ public class SearchCache {
 	}
 
 	private void removeFromCache(Job search) {
-		cachedSearches.remove(search.getDescription().uniqueIdentifier());
+		String identifier = search.getDescription().uniqueIdentifier();
+		Job removed = cachedSearches.remove(identifier);
+		if (removed == null) {
+			logger.error("Tried to remove search, but not found: " + identifier);
+		}
 		search.decrRef();
 		cacheSizeBytes -= search.estimateSizeBytes();
 	}

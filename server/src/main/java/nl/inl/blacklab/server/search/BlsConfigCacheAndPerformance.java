@@ -94,7 +94,7 @@ public class BlsConfigCacheAndPerformance {
 			maxNumberOfJobs = JsonUtil.getIntProp(settings, "maxNumberOfJobs", 20);
 			maxSizeMegs = JsonUtil.getIntProp(settings, "maxSizeMegs", -1);
 			minFreeMemTargetMegs = JsonUtil.getIntProp(settings, "targetFreeMemMegs", 100);
-			numberOfJobsToPurgeWhenBelowTargetMem = JsonUtil.getIntProp(settings, "numberOfJobsToPurgeWhenBelowTargetMem", 100);
+			numberOfJobsToPurgeWhenBelowTargetMem = JsonUtil.getIntProp(settings, "numberOfJobsToPurgeWhenBelowTargetMem", 2);
 		}
 
 		JSONObject serverLoadSettings = null;
