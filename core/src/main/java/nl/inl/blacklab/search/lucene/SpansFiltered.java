@@ -38,7 +38,7 @@ public class SpansFiltered extends BLSpans {
 
 	public SpansFiltered(BLSpans spans, Scorer filterDocs) throws IOException {
 		this.spans = spans;
-		docIdSetIter = filterDocs.iterator();
+		docIdSetIter = filterDocs == null ? null : filterDocs.iterator(); //docIdSetIter = filterDocs.iterator();
 		more = false;
 		if (docIdSetIter != null) {
 			more = (docIdSetIter.nextDoc() != NO_MORE_DOCS);
