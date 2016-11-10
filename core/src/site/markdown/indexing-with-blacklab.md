@@ -115,14 +115,16 @@ Here's a commented example of indextemplate.json (double-slash comments in JSON 
         "namingScheme": "DEFAULT",   // ..or "NO_SPECIAL_CHARS" (the alternate naming scheme,
                                      //  which can be used to avoid problems with e.g. Solr)
                                      // (if omitted, DEFAULT is used)
-        "titleField":  "title",  // (detected if omitted; may be used by application to display
-                                 //  document titles)
-        "authorField": "author", // (may be used by application to display document author)
-        "dateField":   "date",   // (may be used by application to display document date)
-        "pidField":    "id",     // (may be used by application to uniquely refer to documents;
-                                 //  may be used by (future versions of) BlackLab to directly 
-                                 //  update documents without the client having to manually delete
-                                 //  the previous version)
+        "titleField":  "title",  // ((optional, detected if omitted); field in the index containing
+                                 //  document title; may be used by applications)
+        "authorField": "author", // ((optional) field in the index containing author information;
+                                 //  may be used by applications)
+        "dateField":   "date",   // ((optional) field in the index containing document date 
+                                 // information; may be used by applications)
+        "pidField":    "id",     // ((optional, recommended) field in the index containing unique 
+                                 //  document id; may be used by applications to refer to documents;
+                                 //  may be used by BlackLab to directly update documents without 
+                                 //  the client having to manually delete the previous version)
         "defaultAnalyzerName": "DEFAULT",   // The type of analyzer to use for metadata fields
                                             // by default (DEFAULT|whitespace|standard|nontokenizing)
         "contentViewable": false, // is the user allowed to retrieve whole documents? 
