@@ -95,7 +95,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
 		}
 		Map<Term, TermContext> contexts = needsScores ? Collections.singletonMap(query.getTerm(), context) : null;
 		final SpanTermWeight weight = query.new SpanTermWeight(context, searcher, contexts);
-		return new BLSpanWeight(query, searcher, contexts) {
+		return new BLSpanWeight(this, searcher, contexts) {
 			@Override
 			public void extractTermContexts(Map<Term, TermContext> contexts) {
 				weight.extractTermContexts(contexts);
