@@ -31,6 +31,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
+import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
@@ -103,7 +104,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
 			@Override
 			public BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException {
-				return new BLSpansWrapper(weight.getSpans(ctx, requiredPostings));
+				Spans spans = weight.getSpans(ctx, requiredPostings);
+				return spans == null ? null : new BLSpansWrapper(spans);
 			}
 
 			@Override
