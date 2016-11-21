@@ -269,4 +269,9 @@ public class Kwic {
 		return fragment;
 	}
 
+	@Override
+	public String toString() {
+		return toConcordance().toString();
+	}
+
 }
