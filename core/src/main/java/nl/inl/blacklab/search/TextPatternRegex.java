@@ -41,7 +41,7 @@ public class TextPatternRegex extends TextPatternTerm {
 		TextPattern result = rewrite();
 		if (result != this)
 			return result.translate(context);
-		String valueNoStartEndMatch = optInsensitive(context, value).replaceAll("\\^|\\$", "");
+		String valueNoStartEndMatch = optInsensitive(context, value).replaceAll("^\\^|\\$$", "");
 		try {
 			return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
 					new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(valueNoStartEndMatch))));

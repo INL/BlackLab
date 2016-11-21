@@ -293,4 +293,10 @@ public class TestQueryRewrite {
 		assertRewriteResult("[]{1,2} within 'a' 'b' 'c'", "FILTERNGRAMS(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), WITHIN, 1, 2)");
 	}
 
+	@Test
+	public void testRewriteRegexWithExclude() {
+		assertRewriteResult("'qu[^a]ck'", "OR(TERM(contents%word@i:quick))");
+	}
+
+
 }
