@@ -58,7 +58,7 @@ public class TextPatternTranslatorSpanQuery extends TextPatternTranslator<SpanQu
 
 	@Override
 	public SpanQuery regex(QueryExecutionContext context, String value) {
-		String valueNoStartEndMatch = value.replaceAll("\\^|\\$", "");
+		String valueNoStartEndMatch = value.replaceAll("^\\^|\\$$", "");
 		try {
 			return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
 					new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(valueNoStartEndMatch))));
