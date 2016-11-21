@@ -70,7 +70,7 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 			new BLSpanTermQuery(new Term(startTagFieldName, tagName)),
 			new BLSpanTermQuery(new Term(endTagFieldName, tagName))
 		));
-		this.attr = attr.isEmpty() ? null : attr;
+		this.attr = attr == null || attr.isEmpty() ? null : attr;
 	}
 
 	@Override
