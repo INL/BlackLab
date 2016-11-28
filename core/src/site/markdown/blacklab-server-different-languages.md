@@ -366,7 +366,7 @@ Javascript with jQuery:
 	require 'open-uri'
 
 	# The BlackLab Server url for searching "mycorpus" (not a real URL)
-	BASE_URL = "http://corpus.inl.nl/blacklab/mycorpus/"
+	BASE_URL = "http://corpus.ivdnt.org/blacklab/mycorpus/"
 
 	# Simulate fetching URL?
 	DEBUG = true

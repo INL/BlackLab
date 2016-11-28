@@ -9,4 +9,4 @@
 -   Make it easier to write bug-free threaded applications (Hits class might have to become immutable)
 -   Make the content store optional, and make it easier for applications to provide their own way of accessing the original content (for hits highlighting).
 -   Experiment with a new type of forward index that combines word+pos+lemma, taking less memory and improving performance.
--   Integrate improvements and suggestions from the community (indexers, parsers, features, …?) ([mail us](mailto:jan.niestadt@inl.nl))
+-   Integrate improvements and suggestions from the community (indexers, parsers, features, …?) ([mail us](mailto:jan.niestadt@ivdnt.org))

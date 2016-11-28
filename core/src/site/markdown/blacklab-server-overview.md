@@ -54,7 +54,7 @@ Here’s what the various parts of this URL mean:
 	</tr>
 	<tr>
 		<td>server      </td>
-		<td>the server name, e.g. “blacklab.inl.nl”</td>
+		<td>the server name, e.g. “blacklab.ivdnt.org”</td>
 	</tr>
 	<tr>
 		<td>webservice  </td>
@@ -321,39 +321,39 @@ For examples of using BlackLab Server from (many) different programming language
 
 Information about the webservice; list of available indices
 
-		http://blacklab.inl.nl/blacklab-server/ (trailing slash optional)
+		http://blacklab.ivdnt.org/blacklab-server/ (trailing slash optional)
 
 Information about the “opensonar” corpus (structure, fields, human-readable names)
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/ (trailing slash optional)
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/ (trailing slash optional)
 
 All occurrences of “test” in the “opensonar” corpus (CorpusQL query)
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/hits?patt="test"
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/hits?patt="test"
 
 All documents having “guide” in the title and “test” in the contents, sorted by author and date, resultats 61-90
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs?filter=title:guide&patt="test"& sort=field:author,field:date&first=61&number=30
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs?filter=title:guide&patt="test"& sort=field:author,field:date&first=61&number=30
 
 Occurrences of “test”, grouped by the word left of each hit
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/hits?patt="test"&group=wordleft
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/hits?patt="test"&group=wordleft
 
 Documents containing “test”, grouped by author
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs?patt="test"&group=field:author
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs?patt="test"&group=field:author
 
 Metadata of document with specific PID
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802
 
 The entire original document
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802/contents
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents
 
 The entire document, with occurrences of “test” highlighted (with <hl/\> tags)
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802/contents?patt="test"
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents?patt="test"
 
 ### Output
 

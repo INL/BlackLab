@@ -18,4 +18,4 @@ If you view a BlackLab Lucene index in the Luke index viewer (you would need to 
 
 The search part of the main function should be pretty self-explanatory, and hopefully demonstrates how easy it is to use BlackLab. Two things perhaps require some clarification: the statement "hits.findConcordances()" uses the forward index (a special way of storing the originally indexed content that allows us to quickly assemble specific parts of documents) to build XML context snippet for each of the hits found, so they can be displayed. The following loop uses the utility method xmlToPlainText to strip out any XML tags in the snippet.
 
-That hopefully explains the basics of indexing and searching with BlackLab. If part of this is still unclear, or you have additional questions, don't hesitate to [contact me](mailto:jan.niestadt@inl.nl).
+That hopefully explains the basics of indexing and searching with BlackLab. If part of this is still unclear, or you have additional questions, don't hesitate to [contact me](mailto:jan.niestadt@ivdnt.org).

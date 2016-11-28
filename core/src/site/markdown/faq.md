@@ -72,6 +72,6 @@ We intend to keep improving BlackLab. For an overview of our future plans, check
 
 More questions?
 ---------------
-For technical questions about BlackLab, contact [Jan Niestadt](mailto:jan.niestadt@inl.nl).
+For technical questions about BlackLab, contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org).
 
 I'm always happy to chat with fellow search geeks!

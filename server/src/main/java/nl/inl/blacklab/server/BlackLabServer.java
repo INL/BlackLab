@@ -230,7 +230,7 @@ public class BlackLabServer extends HttpServlet {
 	@Override
 	public String getServletInfo() {
 		return "Provides corpus search services on one or more BlackLab indices.\n"
-				+ "Source available at http://github.com/INL/\n"
+				+ "Source available at http://github.com/INL/BlackLab\n"
 				+ "(C) 2013,2014-... Instituut voor Nederlandse Lexicologie.\n"
 				+ "Licensed under the Apache License.\n";
 	}
