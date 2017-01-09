@@ -1,6 +1,6 @@
 # Improving Search Speed
 
-At the Institute for the Dutch Language, we use a tool called [vmtouch](http://hoytech.com/vmtouch/) written by Doug Hoyte to 'lock' our forward indices in the operating system's disk cache, keeping them in memory at all times. This speeds up sorting and grouping operations, as well as generating (large amounts of) KWICs (keyword-in-context results).
+At the Dutch Language Institute, we use a tool called [vmtouch](http://hoytech.com/vmtouch/) written by Doug Hoyte to 'lock' our forward indices in the operating system's disk cache, keeping them in memory at all times. This speeds up sorting and grouping operations, as well as generating (large amounts of) KWICs (keyword-in-context results).
 
 vmtouch is a tool that can "lock" a file in disk cache. It benefits applications that need to perform fast random access to large files (i.e. several gigabytes). Corpus search applications fall into this domain: they need random access to the "forward index" component of the index to do fast sorting and grouping.
 
