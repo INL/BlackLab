@@ -77,11 +77,13 @@ public class BlackLabServer extends HttpServlet {
 				throw new RuntimeException(e);
 			}
 		} else {
-			File configFileInEtc = new File("/etc/blacklab", configFileName);
-			if (configFileInEtc.exists()) {
+			configFile = new File("/etc/blacklab", configFileName);
+			if (!configFile.exists())
+				configFile = new File("/vol1/etc/blacklab", configFileName); // UGLY, will fix later
+			if (configFile.exists()) {
 				try {
-					logger.debug("Reading configuration file " + configFileInEtc);
-					is = new BufferedInputStream(new FileInputStream(configFileInEtc));
+					logger.debug("Reading configuration file " + configFile);
+					is = new BufferedInputStream(new FileInputStream(configFile));
 				} catch (FileNotFoundException e) {
 					throw new RuntimeException(e);
 				}
