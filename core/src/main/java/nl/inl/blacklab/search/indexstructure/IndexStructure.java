@@ -230,9 +230,9 @@ public class IndexStructure {
 		alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
 		tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
 		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
-		if (fis.size() == 0 && !createNewIndex) {
-			throw new RuntimeException("Lucene index contains no fields!");
-		}
+		//if (fis.size() == 0 && !createNewIndex) {
+		//	throw new RuntimeException("Lucene index contains no fields!");
+		//}
 		setNamingScheme(indexMetadata, fis);
 		defaultUnknownCondition = indexMetadata.getDefaultUnknownCondition();
 		defaultUnknownValue = indexMetadata.getDefaultUnknownValue();
