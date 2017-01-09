@@ -242,7 +242,8 @@ public abstract class RequestHandler {
 						return errorObj.internalError(e, debugMode, 6);
 					}
 				}
-			} else {
+			}
+			if (requestHandler == null) {
 				return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode, 10);
 			}
 		}
