@@ -249,15 +249,36 @@ public abstract class Searcher {
 	 *
 	 * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if
 	 *   the timestamp could not be found for some reason (i.e. not running from a
-	 *   JAR, or JAR was not created with the Ant buildscript).
+	 *   JAR, or key not found in manifest).
 	 */
 	public static String getBlackLabBuildTime() {
+		return getValueFromManifest("Build-Time", "UNKNOWN");
+	}
+
+	/**
+	 * Return the BlackLab version.
+	 *
+	 * @return BlackLab version, or UNKNOWN if the version could not be found
+	 *   for some reason (i.e. not running from a JAR, or key not found in manifest).
+	 */
+	public static String getBlackLabVersion() {
+		return getValueFromManifest("Implementation-Version", "UNKNOWN");
+	}
+
+	/**
+	 * Get a value from the manifest file, if available.
+	 *
+	 * @param key key to get the value for, e.g. "Build-Time".
+	 * @param defaultValue value to return if no manifest found or key not found
+	 * @return value from the manifest, or the default value if not found
+	 */
+	static String getValueFromManifest(String key, String defaultValue) {
 		try {
 			URL res = Searcher.class.getResource(Searcher.class.getSimpleName() + ".class");
 			URLConnection conn = res.openConnection();
 			if (!(conn instanceof JarURLConnection)) {
 				// Not running from a JAR, no manifest to read
-				return "UNKNOWN";
+				return defaultValue;
 			}
 			JarURLConnection jarConn = (JarURLConnection) res.openConnection();
 			Manifest mf = jarConn.getManifest();
@@ -265,14 +286,12 @@ public abstract class Searcher {
 			if (mf != null) {
 				Attributes atts = mf.getMainAttributes();
 				if (atts != null) {
-					value = atts.getValue("Build-Time");
-					if (value == null)
-						value = atts.getValue("Build-Date"); // Old name for this info
+					value = atts.getValue(key);
 				}
 			}
-			return value == null ? "UNKNOWN" : value;
+			return value == null ? defaultValue : value;
 		} catch (IOException e) {
-			throw new RuntimeException("Could not read build date from manifest", e);
+			throw new RuntimeException("Could not read '" + key + "' from manifest", e);
 		}
 	}
 
