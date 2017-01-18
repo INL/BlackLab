@@ -5,7 +5,7 @@ A webservice that allows you to use corpus search engine BlackLab from any progr
 
 **WARNING: This is a beta version, available for review and testing. There may still be bugs or performance issues. **
 
-Please see the [full overview](https://github.com/INL/BlackLab-server/wiki/BlackLab-Server-overview) of the webservice for more information.
+Please see the [full overview](http://inl.github.io/BlackLab/blacklab-server-overview.html) of the webservice for more information.
 
 Here's some simple example URLs:
 

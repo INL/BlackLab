@@ -20,7 +20,7 @@ public class RequestHandlerBlsHelp extends RequestHandler {
 		String urlPrefix = servlet.getServletContext().getContextPath() + "/";
 		String urlIndexPrefix = servlet.getServletContext().getContextPath() + "/myIndexName/";
 		ds.startMap()
-			.entry("readme", "This simple help response gives some examples of BlackLab Server URLs. For the complete documentation, please refer to the official project page on GitHub (https://github.com/INL/BlackLab-server)")
+			.entry("readme", "This simple help response gives some examples of BlackLab Server URLs. For the complete documentation, please refer to the official project page on GitHub (https://github.com/INL/BlackLab)")
 			.entry("serverInfo", urlPrefix)
 			.entry("indexInfo", urlIndexPrefix)
 			.entry("detailedFieldInfo", urlIndexPrefix + "fields/myFieldName")
