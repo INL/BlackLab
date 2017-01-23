@@ -14,6 +14,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.perdocument.DocGroupProperty;
 import nl.inl.blacklab.perdocument.DocGroupPropertyIdentity;
+import nl.inl.blacklab.perdocument.DocGroupPropertySize;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyMultiple;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -23,6 +24,7 @@ import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.GroupProperty;
 import nl.inl.blacklab.search.grouping.GroupPropertyIdentity;
+import nl.inl.blacklab.search.grouping.GroupPropertySize;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -363,8 +365,11 @@ public class SearchParameters {
 				}
 			}
 		}
-		if (sortProp == null)
-			sortProp = new DocGroupPropertyIdentity();
+		if (sortProp == null) {
+			// By default, show largest group first
+			sortProp = new DocGroupPropertySize();
+			reverse = true;
+		}
 		return new DocGroupSortSettings(sortProp, reverse);
 	}
 
@@ -401,8 +406,11 @@ public class SearchParameters {
 				}
 			}
 		}
-		if (sortProp == null)
-			sortProp = new GroupPropertyIdentity();
+		if (sortProp == null) {
+			// By default, show largest group first
+			sortProp = new GroupPropertySize();
+			reverse = true;
+		}
 		return new HitGroupSortSettings(sortProp, reverse);
 	}
 
