@@ -321,6 +321,7 @@ public abstract class DataStream {
 						.endEntry()
 						.entry("test", "bla")
 						.attrEntry("test", "attr", "key", "value")
+						.indent().startCompact().startAttrEntry("test", "attr", "key2").value("value2").endAttrEntry().endCompact().newline()
 					.endMap()
 				.endEntry()
 			.endDocument("test");
