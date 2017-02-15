@@ -150,6 +150,17 @@ public class RequestHandlerDocs extends RequestHandler {
 					.entry("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved())
 					.entry("stoppedCountingHits", hits.maxHitsCounted())
 					.entry("stoppedRetrievingHits", hits.maxHitsRetrieved());
+			} else if (group != null) {
+				// TODO: it would be more consistent to also have numberOfHits when viewing
+				//   a single group from a grouped documents results, but this is harder to
+				//   determine; group.getResults().getOriginalHits() returns null in this case,
+				//   so we would have to iterate over the DocResults and sum up the hits ourselves.
+				int numberOfHits = 0;
+				for (DocResult dr: group.getResults()) {
+					numberOfHits += dr.getNumberOfHits();
+				}
+				ds	.entry("numberOfHits", numberOfHits)
+					.entry("numberOfHitsRetrieved", numberOfHits);
 			}
 			if (hits != null || group != null) {
 				int numberOfDocsCounted = hits == null ? group.getResults().size() : hits.countSoFarDocsCounted();
