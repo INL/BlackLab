@@ -213,6 +213,9 @@ public abstract class RequestHandler {
 								String viewgroup = request.getParameter("viewgroup");
 								if (viewgroup == null || viewgroup.length() == 0)
 									handlerName += "-grouped"; // list of groups instead of contents
+							} else if (request.getParameter("viewgroup") != null) {
+								// "viewgroup" parameter without "group" parameter; error.
+								return errorObj.badRequest("ERROR_IN_GROUP_VALUE", "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
 							}
 						}
 

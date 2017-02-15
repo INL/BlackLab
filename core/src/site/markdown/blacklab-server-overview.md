@@ -703,7 +703,8 @@ Operations that do not return status or error codes and messages (which is all s
 	<tr>
 		<td>400 Bad Request </td>
 		<td>ERROR_IN_GROUP_VALUE </td>
-		<td>Parameter &#39;viewgroup&#39; has an illegal value: GROUPID</td>
+		<td>Parameter &#39;viewgroup&#39; has an illegal value: GROUPID /<br/>
+		    Parameter 'viewgroup' specified, but required 'group' parameter is missing.</td>
 	</tr>
 	<tr>
 		<td>400 Bad Request </td>
