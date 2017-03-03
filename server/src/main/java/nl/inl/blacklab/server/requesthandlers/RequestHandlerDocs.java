@@ -14,6 +14,7 @@ import nl.inl.blacklab.perdocument.DocResultsWindow;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValue;
@@ -171,6 +172,14 @@ public class RequestHandlerDocs extends RequestHandler {
 			} else {
 				ds	.entry("numberOfDocs", docs.countSoFarDocsCounted())
 					.entry("numberOfDocsRetrieved", docs.countSoFarDocsRetrieved());
+			}
+			if (hits instanceof HitsSample) {
+				HitsSample sample = ((HitsSample)hits);
+				ds.entry("sampleSeed", sample.seed());
+				if (sample.exactNumberGiven())
+					ds.entry("sampleSize", sample.numberOfHitsToSelect());
+				else
+					ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
 			}
 			ds	.entry("windowFirstResult", window.first())
 				.entry("requestedWindowSize", searchParam.getInteger("number"))
