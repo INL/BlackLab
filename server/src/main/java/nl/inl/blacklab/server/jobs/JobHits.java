@@ -95,6 +95,8 @@ public class JobHits extends JobWithHits {
 	public void performSearch() throws BlsException {
 		try {
 			textPattern = jobDesc.getPattern();
+			if (textPattern == null)
+				throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
 			//debug(logger, "Textpattern: " + textPattern);
 			filter = jobDesc.getFilterQuery();
 			try {
