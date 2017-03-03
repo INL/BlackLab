@@ -589,7 +589,8 @@ public class HitsImpl extends Hits {
 
 		// If we need context, make sure we have it.
 		List<String> requiredContext = sortProp.needsContext();
-		findContext(requiredContext);
+		if (requiredContext != null)
+			findContext(requiredContext);
 
 		// Perform the actual sort.
 		Arrays.sort(sortOrder, sortProp);
