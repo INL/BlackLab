@@ -77,7 +77,7 @@ public class SpanQueryFiltered extends SpanQueryBase {
 	@Override
 	public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		SpanWeight weight = clauses[0].createWeight(searcher, needsScores);
-		Weight filterWeight = filter.createWeight(searcher, false);
+		Weight filterWeight = filter.rewrite(searcher.getIndexReader()).createWeight(searcher, false);
 		return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
