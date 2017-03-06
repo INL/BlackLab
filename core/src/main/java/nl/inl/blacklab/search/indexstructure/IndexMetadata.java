@@ -38,6 +38,7 @@ public class IndexMetadata {
 			"description", "",
 			"versionInfo", Json.object(
 				"blackLabBuildTime", Searcher.getBlackLabBuildTime(),
+				"blackLabVersion", Searcher.getBlackLabVersion(),
 				"timeCreated", IndexStructure.getTimestamp(),
 				"timeModified", IndexStructure.getTimestamp(),
 				"indexFormat", IndexStructure.LATEST_INDEX_FORMAT,

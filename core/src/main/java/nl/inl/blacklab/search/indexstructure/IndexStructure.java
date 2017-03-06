@@ -82,6 +82,9 @@ public class IndexStructure {
 	/** When BlackLab.jar was built */
 	private String blackLabBuildTime;
 
+	/** BlackLab version used to (initially) create index */
+	private String blackLabVersion;
+
 	/** Format the index uses */
 	private String indexFormat;
 
@@ -221,9 +224,11 @@ public class IndexStructure {
 		indexFormat = Json.getString(versionInfo, "indexFormat", "");
 		if (initTimestamps) {
 			blackLabBuildTime = Searcher.getBlackLabBuildTime();
+			blackLabVersion = Searcher.getBlackLabVersion();
 			timeModified = timeCreated = IndexStructure.getTimestamp();
 		} else {
 			blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
+			blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
 			timeCreated = Json.getString(versionInfo, "timeCreated", "");
 			timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
 		}
@@ -249,6 +254,7 @@ public class IndexStructure {
 
 			// Reset version info
 			blackLabBuildTime = Searcher.getBlackLabBuildTime();
+			blackLabVersion = Searcher.getBlackLabVersion();
 			indexFormat = LATEST_INDEX_FORMAT;
 			timeModified = timeCreated = IndexStructure.getTimestamp();
 
@@ -278,6 +284,7 @@ public class IndexStructure {
 		root.put("tokenCount", tokenCount);
 		root.put("versionInfo", Json.object(
 			"blackLabBuildTime", blackLabBuildTime,
+			"blackLabVersion", blackLabVersion,
 			"indexFormat", indexFormat,
 			"timeCreated", timeCreated,
 			"timeModified", timeModified,
@@ -842,6 +849,14 @@ public class IndexStructure {
 	 */
 	public String getIndexBlackLabBuildTime() {
 		return blackLabBuildTime;
+	}
+
+	/**
+	 * When was the BlackLab.jar used for indexing built?
+	 * @return date/time stamp
+	 */
+	public String getIndexBlackLabVersion() {
+		return blackLabVersion;
 	}
 
 	/**
