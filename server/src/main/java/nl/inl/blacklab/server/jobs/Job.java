@@ -593,6 +593,13 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		if (refsToJob == REFS_INVALID)
 			throw new RuntimeException("Cannot decrement refs, job was already cleaned up!");
 		refsToJob--;
+		if (refsToJob < 0) {
+			// Because of a bug in the reference counting mechanism, this sometimes happens
+			// and will lead to the "Cannot decrement refs, job was already cleaned up!" error.
+			// For now, we reset the refsToJob to -1 to prevent this error.
+			logger.error("Job has negative reference count: " + this);
+			refsToJob = -1;
+		}
 		if (refsToJob == 1) {
 			// Only in cache; set the last accessed time so we
 			// know for how long it's been ignored.

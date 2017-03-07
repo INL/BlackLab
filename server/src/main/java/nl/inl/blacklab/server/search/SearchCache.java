@@ -177,6 +177,8 @@ public class SearchCache {
 				put(job);
 				runningJobs.add(job);
 				performSearch = true;
+			} else {
+				job.incrRef();
 			}
 		}
 
