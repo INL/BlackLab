@@ -171,25 +171,30 @@ public class BlackLabServer extends HttpServlet {
 		PrintWriter out = new PrintWriter(buf);
 		DataStream ds = DataStream.create(outputType, out, prettyPrint, callbackFunction);
 		ds.startDocument(rootEl);
+		StringWriter errorBuf = new StringWriter();
+		PrintWriter errorOut = new PrintWriter(errorBuf);
+		DataStream es = DataStream.create(outputType, errorOut, prettyPrint, callbackFunction);
+		es.outputProlog();
+		int errorBufLengthBefore = errorBuf.getBuffer().length();
 		int httpCode;
 		if (isJsonp && !callbackFunction.matches("[_a-zA-Z][_a-zA-Z0-9]+")) {
 			// Illegal JSONP callback name
-			httpCode = Response.badRequest(ds, "JSONP_ILLEGAL_CALLBACK", "Illegal JSONP callback function name. Must be a valid Javascript name.");
+			httpCode = Response.badRequest(es, "JSONP_ILLEGAL_CALLBACK", "Illegal JSONP callback function name. Must be a valid Javascript name.");
 			callbackFunction = "";
 		} else {
 			try {
 				httpCode = requestHandler.handle(ds);
 			} catch (InternalServerError e) {
 				String msg = ServletUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
-				httpCode = Response.error(ds, e.getBlsErrorCode(), msg, e.getHttpStatusCode());
+				httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode());
 			} catch (BlsException e) {
-				httpCode = Response.error(ds, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+				httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
 			} catch (InterruptedException e) {
-				httpCode = Response.internalError(ds, e, debugMode, 7);
+				httpCode = Response.internalError(es, e, debugMode, 7);
 			} catch (RegexpTooLargeException e) {
-				httpCode = Response.badRequest(ds, "REGEXP_TOO_LARGE", e.getMessage());
+				httpCode = Response.badRequest(es, "REGEXP_TOO_LARGE", e.getMessage());
 			} catch (RuntimeException e) {
-				httpCode = Response.internalError(ds, e, debugMode, 32);
+				httpCode = Response.internalError(es, e, debugMode, 32);
 			}
 		}
 		ds.endDocument(rootEl);
@@ -206,7 +211,9 @@ public class BlackLabServer extends HttpServlet {
 		// === Write the response that was captured in buf
 		try {
 			Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
-			realOut.write(buf.toString());
+			boolean errorOccurred = errorBuf.getBuffer().length() > errorBufLengthBefore;
+			StringWriter writeWhat = errorOccurred ? errorBuf : buf;
+			realOut.write(writeWhat.toString());
 			realOut.flush();
 		} catch (IOException e) {
 			// Client cancelled the request midway through.

@@ -238,6 +238,8 @@ public class StringUtil {
 	 * @return the escaped string
 	 */
 	public static String escapeXmlChars(String source) {
+		if (source == null)
+			source = "";
 		int estResultLength = source.length() * 5 / 4; // reasonable estimate of max. space needed
 		StringBuilder sb = new StringBuilder(estResultLength);
 		int start = 0;

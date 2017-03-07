@@ -166,6 +166,10 @@ public abstract class DataStream {
 		return this;
 	}
 
+	public void outputProlog() {
+		// subclasses may override
+	}
+
 	public abstract DataStream startDocument(String rootEl);
 
 	public abstract DataStream endDocument(String rootEl);

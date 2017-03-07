@@ -44,10 +44,15 @@ public class DataStreamXml extends DataStream {
 	}
 
 	@Override
+	public void outputProlog() {
+		print("<?xml version=\"1.0\" encoding=\"utf-8\" ?>").newline();
+	}
+
+	@Override
 	public DataStream startDocument(String rootEl) {
 		if (rootEl == null)
 			return this;
-		print("<?xml version=\"1.0\" encoding=\"utf-8\" ?>").newline();
+		outputProlog();
 		startOpenEl(rootEl);
 		return endOpenEl();
 	}
