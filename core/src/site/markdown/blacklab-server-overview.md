@@ -125,6 +125,10 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>Query language for the patt parameter. (default: corpusql, Corpus Query Language. Also supported: contextql, Contextual Query Language (only very basic support though)) and lucene (Lucene Query Language).</td>
 	</tr>
 	<tr>
+		<td>pattgapdata </td>
+		<td>(Corpus Query Language only) Data (TSV, tab-separated values) to put in gaps in query. You may leave 'gaps' in the double-quoted strings in your query that can be filled in from tabular data. The gaps should be denoted by @@, e.g. [lemma="@@"] or [word="@@cat"]. For each row in your TSV data, will fill in the row data in the gaps. The queries resulting from all the rows are combined using OR. For example, if your query is "The" "@@" "@@" and your TSV data is "white\tcat\nblack\tdog", this will execute the query ("The" "white" "cat") | ("The" "black" "dog"). Please note that if you want to pass a large amount of data, you should use a POST request as the amount of data you can pass in a GET request is limited (with opinions on a safe maximum size varying between 255 and 2048 bytes). Large amounts of data </td>
+	</tr>
+	<tr>
 		<td>pattfield </td>
 		<td>Content field to search. (default: the main contents field, corpus-specific. Usually “contents”.)</td>
 	</tr>

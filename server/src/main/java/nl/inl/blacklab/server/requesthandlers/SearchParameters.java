@@ -9,6 +9,7 @@ import java.util.TreeMap;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.Query;
@@ -17,6 +18,7 @@ import nl.inl.blacklab.perdocument.DocGroupProperty;
 import nl.inl.blacklab.perdocument.DocGroupPropertySize;
 import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocPropertyMultiple;
+import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.Searcher;
@@ -55,6 +57,7 @@ import nl.inl.blacklab.server.jobs.SampleSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
+import nl.inl.blacklab.server.util.GapFiller;
 import nl.inl.blacklab.server.util.ParseUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
@@ -117,7 +120,7 @@ public class SearchParameters {
 	/** Parameters involved in search */
 	private static final List<String> NAMES = Arrays.asList(
 		// What to search for
-		"patt", "pattlang",                  // pattern to search for
+		"patt", "pattlang", "pattgapdata",   // pattern to search for
 		"filter", "filterlang", "docpid",    // docs to search
 		"sample", "samplenum", "sampleseed", // what hits to select
 		"hitfiltercrit", "hitfilterval",
@@ -242,8 +245,20 @@ public class SearchParameters {
 	private TextPattern getPattern() throws BlsException {
 		if (pattern == null) {
 			String patt = getString("patt");
-			if (patt != null && patt.length() > 0)
-				pattern = BlsUtils.parsePatt(getSearcher(), patt, getString("pattlang"));
+			if (!StringUtils.isBlank(patt)) {
+				String pattGapData = getString("pattgapdata");
+				String pattLang = getString("pattlang");
+				if (pattLang.equals("corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
+					// CQL query with gaps, and TSV data to put in the gaps
+					try {
+						pattern = GapFiller.parseGapQuery(patt, pattGapData);
+					} catch (ParseException e) {
+						throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
+					}
+				} else {
+					pattern = BlsUtils.parsePatt(getSearcher(), patt, pattLang);
+				}
+			}
 		}
 		return pattern;
 	}
