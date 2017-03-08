@@ -9,7 +9,8 @@ import java.util.Map.Entry;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.perdocument.DocCount;
@@ -37,7 +38,7 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * appropriate subclass.
  */
 public abstract class RequestHandler {
-	static final Logger logger = Logger.getLogger(RequestHandler.class);
+	static final Logger logger = LogManager.getLogger(RequestHandler.class);
 
 	public static final int HTTP_OK = HttpServletResponse.SC_OK;
 

@@ -9,7 +9,8 @@ import java.util.TreeMap;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.perdocument.DocGroupProperty;
@@ -63,7 +64,7 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * We create the necessary JobDescriptions from this.
  */
 public class SearchParameters {
-	private static final Logger logger = Logger.getLogger(SearchParameters.class);
+	private static final Logger logger = LogManager.getLogger(SearchParameters.class);
 
 	// TODO: move to SearchParameters?
 	/** Default values for request parameters */

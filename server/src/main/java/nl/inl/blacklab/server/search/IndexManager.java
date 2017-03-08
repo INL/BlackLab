@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -32,7 +33,7 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
 public class IndexManager {
-	private static final Logger logger = Logger.getLogger(IndexManager.class);
+	private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
 	private static final int MAX_USER_INDICES = 10;
 

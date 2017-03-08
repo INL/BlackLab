@@ -28,7 +28,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
@@ -61,7 +62,6 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.util.ExUtil;
-import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
 
@@ -78,7 +78,7 @@ import nl.inl.util.VersionFile;
  */
 public class SearcherImpl extends Searcher implements Closeable {
 
-	protected static final Logger logger = Logger.getLogger(SearcherImpl.class);
+	protected static final Logger logger = LogManager.getLogger(SearcherImpl.class);
 
 	/**
 	 * The Lucene index reader
@@ -129,9 +129,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 				}
 			}
 		}
-
-		// If we didn't provide log4j.properties on the classpath, initialise it using default settings.
-		LogUtil.initLog4jIfNotAlready();
 
 		logger.debug("Constructing Searcher...");
 

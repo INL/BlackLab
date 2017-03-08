@@ -17,8 +17,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -31,10 +31,9 @@ import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.util.Json;
-import nl.inl.util.LogUtil;
 
 public class BlackLabServer extends HttpServlet {
-	private static final Logger logger = Logger.getLogger(BlackLabServer.class);
+	private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
 
 	static final Charset CONFIG_ENCODING = Charset.forName("utf-8");
 
@@ -46,7 +45,7 @@ public class BlackLabServer extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		// Default init if no log4j.properties found
-		LogUtil.initLog4jIfNotAlready(Level.DEBUG);
+		//LogUtil.initLog4jIfNotAlready(Level.DEBUG);
 
 		logger.info("Starting BlackLab Server...");
 

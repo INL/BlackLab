@@ -51,8 +51,19 @@ public class HitPropertyContextWords extends HitProperty {
 
 	/** A stretch of words from the (surroundings of) the matched text. */
 	public static class ContextPart {
+
+		/*
+		 * More generic:
+		 * - part/dir (left / hit / hitFromEnd / right)
+		 * - startOffset (=firstWord)
+		 * - direction
+		 * - maxLength (terminated by end of part)
+		 */
+
 		public ContextStart startFrom;
+
 		public int firstWord;
+
 		public int lastWord;
 
 		public ContextPart(ContextStart startFrom, int firstWord, int lastWord) {

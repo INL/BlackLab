@@ -2,12 +2,13 @@ package nl.inl.blacklab.server.exceptions;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.requesthandlers.Response;
 
 public class InternalServerError extends BlsException {
-	static final Logger logger = Logger.getLogger(Response.class);
+	static final Logger logger = LogManager.getLogger(Response.class);
 
 	private int internalErrorCode;
 

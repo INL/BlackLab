@@ -2,13 +2,14 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 
 public class Response {
-	static final Logger logger = Logger.getLogger(Response.class);
+	static final Logger logger = LogManager.getLogger(Response.class);
 
 	/**
 	 * Stream a busy response with "check again" advice.

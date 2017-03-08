@@ -19,7 +19,8 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -51,7 +52,7 @@ import nl.inl.util.VersionFile;
 
 public abstract class Searcher {
 
-	protected static final Logger logger = Logger.getLogger(Searcher.class);
+	protected static final Logger logger = LogManager.getLogger(Searcher.class);
 
 	/** When setting how many hits to retrieve/count, this means "no limit". */
 	public final static int UNLIMITED_HITS = -1;

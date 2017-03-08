@@ -6,7 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -18,7 +19,7 @@ import nl.inl.blacklab.server.exceptions.NotAuthorized;
 
 public class IndexTask {
 
-	private static final Logger logger = Logger.getLogger(IndexTask.class);
+	private static final Logger logger = LogManager.getLogger(IndexTask.class);
 
 	private static final long MAX_TOKEN_COUNT = 500000;
 

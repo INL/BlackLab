@@ -35,7 +35,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.util.ExUtil;
@@ -46,7 +47,7 @@ import nl.inl.util.ExUtil;
  */
 class ForwardIndexImplV3 extends ForwardIndex {
 
-	protected static final Logger logger = Logger.getLogger(ForwardIndexImplV3.class);
+	protected static final Logger logger = LogManager.getLogger(ForwardIndexImplV3.class);
 
 	/** The number of cached fiids we check to see if this field is set anywhere. */
 	static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;

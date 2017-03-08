@@ -12,14 +12,15 @@ import java.util.TimeZone;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.util.ExUtil;
 
 public class ServletUtil {
-	private static final Logger logger = Logger.getLogger(ServletUtil.class);
+	private static final Logger logger = LogManager.getLogger(ServletUtil.class);
 
 	static final Charset DEFAULT_ENCODING = Charset.forName("utf-8");
 

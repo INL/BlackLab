@@ -11,7 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -25,7 +26,7 @@ import nl.inl.util.ThreadPriority;
 import nl.inl.util.ThreadPriority.Level;
 
 public class SearchCache {
-	private static final Logger logger = Logger.getLogger(SearchCache.class);
+	private static final Logger logger = LogManager.getLogger(SearchCache.class);
 
 	/**
 	 * What we can do to a query in response to the server load.

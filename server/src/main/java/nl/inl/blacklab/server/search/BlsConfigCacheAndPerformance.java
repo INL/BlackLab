@@ -1,13 +1,14 @@
 package nl.inl.blacklab.server.search;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import nl.inl.blacklab.server.util.JsonUtil;
 
 public class BlsConfigCacheAndPerformance {
 
-	private static final Logger logger = Logger.getLogger(BlsConfigCacheAndPerformance.class);
+	private static final Logger logger = LogManager.getLogger(BlsConfigCacheAndPerformance.class);
 
 	/** Maximum size in MB to target, or -1 for no limit. NOT IMPLEMENTED YET. */
 	private long maxSizeMegs = -1;

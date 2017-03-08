@@ -5,7 +5,8 @@ import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.Searcher;
@@ -19,7 +20,7 @@ import nl.inl.util.ThreadPriority.Level;
 
 public abstract class Job implements Comparable<Job>, Prioritizable {
 
-	protected static final Logger logger = Logger.getLogger(Job.class);
+	protected static final Logger logger = LogManager.getLogger(Job.class);
 
 	private static final double ALMOST_ZERO = 0.0001;
 

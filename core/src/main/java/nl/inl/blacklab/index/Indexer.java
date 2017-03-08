@@ -33,7 +33,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.CorruptIndexException;
@@ -55,7 +56,7 @@ import nl.inl.util.UnicodeReader;
  */
 public class Indexer {
 
-	static final Logger logger = Logger.getLogger(Indexer.class);
+	static final Logger logger = LogManager.getLogger(Indexer.class);
 
 	public static final Charset DEFAULT_INPUT_ENCODING = Charset.forName("utf-8");
 

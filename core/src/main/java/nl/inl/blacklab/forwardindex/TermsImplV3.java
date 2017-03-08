@@ -27,7 +27,8 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.impl.factory.Maps;
 
 /**
@@ -48,7 +49,7 @@ class TermsImplV3 extends Terms {
 	/** Number of bytes per int */
 	private static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
 
-	protected static final Logger logger = Logger.getLogger(TermsImplV3.class);
+	protected static final Logger logger = LogManager.getLogger(TermsImplV3.class);
 
 	/** Search mode only: the terms, by index number. */
 	String[] terms;
