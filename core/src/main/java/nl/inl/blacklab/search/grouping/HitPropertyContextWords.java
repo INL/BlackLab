@@ -317,13 +317,19 @@ public class HitPropertyContextWords extends HitProperty {
 			int firstWord = 0;
 			int lastWord = Integer.MAX_VALUE; // == "as much as possible"
 			if (part.length() > 1) {
-				String[] numbers = part.substring(1).split("\\-");
-				try {
-					firstWord = Integer.parseInt(numbers[0]) - 1;
-					if (numbers.length > 1)
-						lastWord = Integer.parseInt(numbers[1]) - 1;
-				} catch (NumberFormatException e) {
-					// ignore and accept the defaults
+				if (part.contains("-")) {
+					// Two numbers, or a number followed by a dash ("until end of part")
+					String[] numbers = part.substring(1).split("\\-");
+					try {
+						firstWord = Integer.parseInt(numbers[0]) - 1;
+						if (numbers.length > 1)
+							lastWord = Integer.parseInt(numbers[1]) - 1;
+					} catch (NumberFormatException e) {
+						// ignore and accept the defaults
+					}
+				} else {
+					// Single number: single word
+					firstWord = lastWord = Integer.parseInt(part) - 1;
 				}
 			}
 			result.add(new ContextPart(startFrom, firstWord, lastWord));
