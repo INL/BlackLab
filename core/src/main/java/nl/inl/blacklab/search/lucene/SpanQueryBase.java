@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.lucene.index.IndexReader;
@@ -98,7 +99,7 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 
 	@Override
 	public int hashCode() {
-		int h = clauses.hashCode();
+		int h = Arrays.hashCode(clauses);
 		h ^= (h << 10) | (h >>> 23);
 		return h;
 	}

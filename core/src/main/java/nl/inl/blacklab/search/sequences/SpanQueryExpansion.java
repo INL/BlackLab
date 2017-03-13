@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.sequences;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -144,7 +145,7 @@ public class SpanQueryExpansion extends SpanQueryBase {
 
 	@Override
 	public int hashCode() {
-		int h = clauses.hashCode();
+		int h = Arrays.hashCode(clauses);
 		h ^= (h << 10) | (h >>> 23);
 		h ^= min << 10;
 		h ^= max << 5;

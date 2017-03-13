@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+
 import nl.inl.blacklab.search.Hits;
 
 public class HitPropValueMultiple extends HitPropValue {
@@ -16,11 +18,7 @@ public class HitPropValueMultiple extends HitPropValue {
 
 	@Override
 	public int hashCode() {
-		int result = 0;
-		for (HitPropValue v: value) {
-			result ^= v.hashCode();
-		}
-		return result;
+		return Arrays.hashCode(value);
 	}
 
 	public static HitPropValueMultiple deserialize(Hits hits, String info) {
