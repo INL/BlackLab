@@ -281,9 +281,8 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 	</tr>
 	<tr>
 		<td>context</td>
-		<td>More generic context words expression, giving the user more control at the cost of a bit of speed. Examples:
-		    context:word:s:H1-1;E1-1 (first (H1-1) and last (E1-1) matched word), context:word:s:H2 (all but the first matched word), context:word:s:R2-3 (second and third 
-		    word to the right of the match), context:word:s:L1 (left context, starting from first word to the left of the hit, i.e. the same as left:word:s)</td>
+		<td>More generic context words expression, giving the user more control at the cost of a bit of speed. Example:
+		    context:word:s:H1-2 (first two matched words). See below for a complete specification.</td>
 	</tr>
 	<tr>
 		<td>wordleft / wordright </td>
@@ -310,6 +309,19 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 		<td>(for sorting grouping results) Sort by group size, descending by default.</td>
 	</tr>
 </table>
+
+### Grouping/sorting on context words
+
+Criteria like "context:word:s:H1-2" (first two matched words) allow fine control over what to group or sort on.
+
+Like with criteria such as left, right or hit, you can vary the property to group or sort on (e.g. word/lemma/pos, or other options depending on your data set). You may specify whether to sort/group case- and accent-sensitively (s) or insensitively (i).
+
+The final parameter to a "context:" criterium is the specification. This consists of one or more parts separated by a semicolon. Each part consists of an "anchor" and number(s) to indicate a stretch of words. The anchor can be H (hit text), E (hit text, but counted from the end of the hit), L (words to the left of the hit) or R (words to the right of the hit). The number or numbers after the anchor specify what words you want from this part. A single number indicates a single word; 1 is the first word, 2 the second word, etc. So "E2" means "the second-to-last word of the hit". Two numbers separated by a dash indicate a stretch of words. So "H1-2" means "the first two words of the hit", and "E2-1" means "the second-to-last word followed by the last word". A single number followed by a dash means "as much as possible from this part, starting from this word". So "H2-" means "the entire hit text except the first word".
+
+A few more examples:
+- context:word:s:H1;E1 (the first and last matched word)
+- context:word:s:R2-3 (second and third word to the right of the match)
+- context:word:s:L1- (left context, starting from first word to the left of the hit, i.e. the same as "left:word:s". How many words of context are used depends on the 'wordsaroundhit' parameter, which defaults to 5)
 
 <a id="examples"></a>
 

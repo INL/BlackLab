@@ -30,6 +30,8 @@ import nl.inl.blacklab.search.Searcher;
  */
 public class HitPropertyContextWords extends HitProperty {
 
+	final int MAX_HIT_LENGTH = 10;
+
 	/** A location in the hit context to start a stretch of words from. */
 	public enum ContextStart {
 		LEFT_OF_HIT("L"),          // left context of the hit
@@ -49,7 +51,10 @@ public class HitPropertyContextWords extends HitProperty {
 		}
 	}
 
-	/** A stretch of words from the (surroundings of) the matched text. */
+	/** A stretch of words from the (surroundings of) the matched text.
+	 *  Note the public members because usage of this object in
+	 *  sorting/grouping is performance-critical.
+	 */
 	public static class ContextPart {
 
 		/*
@@ -64,21 +69,43 @@ public class HitPropertyContextWords extends HitProperty {
 
 		public int firstWord;
 
-		public int lastWord;
+		//public int lastWord;
+
+		/** Direction: 1 = default direction, -1 = reverse direction.
+		 *  Default direction is right for ContextStart.HIT_TEXT_FROM_START and ContextStart.RIGHT_OF_HIT,
+		 *  left for ContextStart.HIT_TEXT_FROM_END and ContextStart.LEFT_OF_HIT.
+		 */
+		public int direction;
+
+		public int maxLength;
 
 		public ContextPart(ContextStart startFrom, int firstWord, int lastWord) {
 			this.startFrom = startFrom;
 			this.firstWord = firstWord;
-			this.lastWord = lastWord;
+			if (lastWord == Integer.MAX_VALUE) {
+				this.direction = 1;
+				this.maxLength = Integer.MAX_VALUE;
+			} else {
+				this.direction = firstWord <= lastWord ? 1 : -1;
+				this.maxLength = Math.abs(firstWord - lastWord) + 1;
+			}
+		}
+
+		public ContextPart(ContextStart startFrom, int firstWord, int direction, int maxLength) {
+			this.startFrom = startFrom;
+			this.firstWord = firstWord;
+			this.direction = direction;
+			this.maxLength = maxLength < 0 ? Integer.MAX_VALUE : maxLength;
 		}
 
 		@Override
 		public String toString() {
-			return startFrom.toString() + (firstWord + 1) + (lastWord >= 0 ? "-" + (lastWord + 1) : "");
+			return startFrom.toString() + (firstWord + 1) + (maxLength != Integer.MAX_VALUE ? "-" + (firstWord + direction * (maxLength - 1) + 1) : "");
 		}
 
-		public int getNumberOfWords() {
-			return lastWord - firstWord + 1;
+		public int getAbsoluteDirection() {
+			boolean defaultRight = startFrom == ContextStart.HIT_TEXT_FROM_START || startFrom == ContextStart.RIGHT_OF_HIT;
+			return defaultRight ? direction : -direction;
 		}
 	}
 
@@ -108,36 +135,42 @@ public class HitPropertyContextWords extends HitProperty {
 			this.luceneFieldName = ComplexFieldUtil.propertyField(field, property);
 			this.propName = property;
 		}
-		//this.terms = searcher.getTerms(luceneFieldName);
 		this.sensitive = sensitive;
 		this.words = words;
 		if (words == null) {
+			// "entire hit text"
 			this.words = new ArrayList<>();
-			this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, hits.settings().contextSize())); // "entire hit text"
+			this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1, hits.settings().contextSize()));
 		} else {
+			// Determine the maximum length of each part, by limiting it to the
+			// maximum possible given the anchor point, direction and first word.
 			for (ContextPart part: words) {
-				if (part.lastWord == -1) {
-					// "as much as possible"
+				if (part.direction < 0) {
+					// Reverse direction, so back towards our anchor point.
+					part.maxLength = Math.min(part.maxLength, part.firstWord + 1);
+				} else {
+					// Default direction, so away from our anchor point.
 					switch(part.startFrom) {
 					case HIT_TEXT_FROM_END:
 					case HIT_TEXT_FROM_START:
-						// Entire left or right context
-						part.lastWord = hits.settings().contextSize() - 1;
+						// Limit to length of hit text. We don't know how long the hits will be;
+						// Assume hits won't be more than 10 tokens.
+						part.maxLength = Math.min(part.maxLength, MAX_HIT_LENGTH - part.firstWord);
 						break;
 					default:
-					case LEFT_OF_HIT:
-					case RIGHT_OF_HIT:
-						// "whole hit". We don't know how long the hits will be;
-						// Assume hits won't be more than 10 tokens.
-						part.lastWord = 9;
+						// Limit to length of left or right context.
+						part.maxLength = Math.min(part.maxLength, hits.settings().contextSize() - part.firstWord);
 						break;
 					}
+					if (part.maxLength < 0)
+						part.maxLength = 0;
 				}
 			}
 		}
+		// Add the maximum length of each part so we know the length of the context array needed
 		totalWords = 0;
 		for (ContextPart contextWordDef: this.words) {
-			totalWords += contextWordDef.getNumberOfWords();
+			totalWords += contextWordDef.maxLength;
 		}
 	}
 
@@ -150,62 +183,56 @@ public class HitPropertyContextWords extends HitProperty {
 
 		int[] dest = new int[totalWords];
 		int destIndex = 0;
-		for (ContextPart contextWordDef: words) {
-			//
-			int srcStartIndex, srcDirection, finalValidSrcIndex;
-			switch(contextWordDef.startFrom) {
+		for (ContextPart ctxPart: words) {
+			// Determine anchor position, direction to move in, and edge of part (left/hit/right)
+			int srcStartIndex, srcDirection, firstInvalidSrcIndex;
+            srcDirection = ctxPart.getAbsoluteDirection();
+			int firstWordSrcIndex;
+			switch (ctxPart.startFrom) {
 			case LEFT_OF_HIT:
 	            srcStartIndex = contextHitStart - 1;  // first word before hit
-	            srcDirection = -1;                    // move to the left
-	            finalValidSrcIndex = 0;               // end of left context
+				firstWordSrcIndex = srcStartIndex - ctxPart.firstWord;
+	            firstInvalidSrcIndex = srcDirection < 0 ? -1 : contextHitStart; // end/start of left context
 				break;
 			case RIGHT_OF_HIT:
 				srcStartIndex = contextRightStart;       // first word after hit
-	            srcDirection = 1;                        // move to the right
-	            finalValidSrcIndex = contextLength - 1; // end of right context
+				firstWordSrcIndex = srcStartIndex + ctxPart.firstWord;
+	            firstInvalidSrcIndex = srcDirection > 0 ? contextLength : contextRightStart - 1; // end/start of right context
 				break;
 			case HIT_TEXT_FROM_END:
 				srcStartIndex = contextRightStart - 1; // last hit word
-	            srcDirection = -1;                     // move to the left
-	            finalValidSrcIndex = contextHitStart;  // first hit word
+				firstWordSrcIndex = srcStartIndex - ctxPart.firstWord;
+	            firstInvalidSrcIndex = srcDirection < 0 ? contextHitStart : contextRightStart - 1;  // first/last hit word
 				break;
-			default:
-			case HIT_TEXT_FROM_START:
+			case HIT_TEXT_FROM_START: default:
 				srcStartIndex = contextHitStart;            // first hit word
-	            srcDirection = 1;                           // move to the right
-	            finalValidSrcIndex = contextRightStart - 1; // last hit word
+				firstWordSrcIndex = srcStartIndex + ctxPart.firstWord;
+	            firstInvalidSrcIndex = srcDirection > 0 ? contextRightStart : contextHitStart - 1; // last/first hit word
 				break;
 			}
-			int firstWordSrcIndex, stopAtSrcIndex;
+			// Determine start position, stop position
+			boolean valuesToCopy = true;
 			if (srcDirection > 0) {
-				firstWordSrcIndex = srcStartIndex + contextWordDef.firstWord;
-				if (firstWordSrcIndex > finalValidSrcIndex) {
-					firstWordSrcIndex = -1; // no values
-				}
-				stopAtSrcIndex = srcStartIndex + contextWordDef.lastWord + 1;
-				if (stopAtSrcIndex > finalValidSrcIndex + 1)
-					stopAtSrcIndex = finalValidSrcIndex + 1;
+				firstInvalidSrcIndex = Math.min(firstInvalidSrcIndex, srcStartIndex + ctxPart.firstWord + ctxPart.maxLength);
+				if (firstWordSrcIndex >= firstInvalidSrcIndex)
+					valuesToCopy = false; // there are no values to copy
 			} else {
-				firstWordSrcIndex = srcStartIndex - contextWordDef.firstWord;
-				if (firstWordSrcIndex < finalValidSrcIndex) {
-					firstWordSrcIndex = -1; // no values
-				}
-				stopAtSrcIndex = srcStartIndex - contextWordDef.lastWord - 1;
-				if (stopAtSrcIndex < finalValidSrcIndex - 1)
-					stopAtSrcIndex = finalValidSrcIndex - 1;
+				firstInvalidSrcIndex = Math.max(firstInvalidSrcIndex, srcStartIndex - ctxPart.firstWord - ctxPart.maxLength);
+				if (firstWordSrcIndex <= firstInvalidSrcIndex)
+					valuesToCopy = false; // there are no values to copy
 			}
 			// Copy the words we want to our dest array
 			int valuesCopied = 0;
 			int contextStartIndex = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-			if (firstWordSrcIndex >= 0) {
-				for (int srcIndex = firstWordSrcIndex; srcIndex != finalValidSrcIndex + 1 && srcIndex != stopAtSrcIndex; srcIndex += srcDirection) {
+			if (valuesToCopy) {
+				for (int srcIndex = firstWordSrcIndex; srcIndex != firstInvalidSrcIndex; srcIndex += srcDirection) {
 					dest[destIndex] = context[contextStartIndex + srcIndex];
 					destIndex++;
 					valuesCopied++;
 				}
 			}
 			// If we don't have enough (e.g. because the hit is shorter), add dummy values
-			for ( ; valuesCopied < contextWordDef.lastWord - contextWordDef.firstWord + 1; valuesCopied++) {
+			for ( ; valuesCopied < ctxPart.maxLength; valuesCopied++) {
 				dest[destIndex] = Terms.NO_TERM;
 				destIndex++;
 			}
@@ -288,7 +315,7 @@ public class HitPropertyContextWords extends HitProperty {
 				break;
 			}
 			int firstWord = 0;
-			int lastWord = -1; // -1 == "as much as possible"
+			int lastWord = Integer.MAX_VALUE; // == "as much as possible"
 			if (part.length() > 1) {
 				String[] numbers = part.substring(1).split("\\-");
 				try {
