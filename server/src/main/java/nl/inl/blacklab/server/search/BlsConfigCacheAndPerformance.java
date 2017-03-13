@@ -35,6 +35,12 @@ public class BlsConfigCacheAndPerformance {
 	/** Max time searches are allowed to run (5 minutes) */
 	private int maxSearchTimeSec = 5 * 60;
 
+	/** After how many seconds should we pause counting if client isn't checking the status anymore? */
+	private int abandonedCountPauseTimeSec = 10;
+
+	/** After how many seconds should we abort counting if client isn't checking the status anymore? */
+	private int abandonedCountAbortTimeSec = 600;
+
 	/**
 	 * If enabled, this makes sure the SearchCache will follow the behaviour
 	 * rules set in blacklab-server.json to lowprio/pause searches in certain
@@ -114,8 +120,10 @@ public class BlsConfigCacheAndPerformance {
 				logger.debug("Autodetect maxConcurrentSearches: " + maxConcurrentSearches);
 			}
 
-			maxPausedSearches = 10;
 			maxPausedSearches = JsonUtil.getIntProp(serverLoadSettings, "maxPausedSearches", 10);
+
+			abandonedCountPauseTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountPauseTimeSec", 10);
+			abandonedCountAbortTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountAbortTimeSec", 600);
 		}
 
 	}
@@ -162,6 +170,14 @@ public class BlsConfigCacheAndPerformance {
 
 	public int getMaxSearchTimeSec() {
 		return maxSearchTimeSec;
+	}
+
+	public int getAbandonedCountPauseTimeSec() {
+		return abandonedCountPauseTimeSec;
+	}
+
+	public int getAbandonedCountAbortTimeSec() {
+		return abandonedCountAbortTimeSec;
 	}
 
 	public void autoAdjustMaxConcurrent() {

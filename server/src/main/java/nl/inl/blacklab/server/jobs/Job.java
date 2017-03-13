@@ -243,7 +243,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		// Both jobs are old.
 		// Are they searching or counting?
 		boolean count1 = this instanceof JobHitsTotal || this instanceof JobDocsTotal;
-		boolean count2 = this instanceof JobHitsTotal || this instanceof JobDocsTotal;
+		boolean count2 = o instanceof JobHitsTotal || o instanceof JobDocsTotal;
 		if (count1 != count2) {
 			// One is counting, the other is searching: search is worthiest.
 			return count2 ? WORTHY1 : WORTHY2;
@@ -631,6 +631,18 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		if (finished())
 			return (System.currentTimeMillis() - lastAccessed) / 1000.0;
 		return 0;
+	}
+
+	/**
+	 * Return how long it's been since this search was accessed.
+	 *
+	 * A search is accessed whenever a client requests results, or
+	 * a status update for a running search.
+	 *
+	 * @return the time in seconds since the last access
+	 */
+	public double timeSinceLastAccess() {
+		return (System.currentTimeMillis() - lastAccessed) / 1000.0;
 	}
 
 	/**

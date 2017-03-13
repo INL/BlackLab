@@ -504,47 +504,31 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	    // ---------------------------------------------------------------
 	    "performance": {
 	
-	        // Settings to make sure running operations (fetching results, 
-	        // sorting, grouping) behave. Note that a search job may consist
-	        // of several of these operations. NOTE: EXPERIMENTAL!
-	        "operations": {
-	        
-	            // An operation that takes really
-	            // long should be interrupted. After how many seconds we should interrupt
-	            // an operation? (default: 240 == 4 mins)
-	            // (Note that a search job may consist of several operations, but long search
-	            // jobs should be detected and aborted eventually as well - this is just an 
-	            // extra safeguard for stopping out of control searches earlier)
-	            "interruptAfterSec": 240
-	            
-	            // Threads that run for a while should sleep occasionally to give
-	            // other threads a chance as well. If they didn&#39;t, they could end up
-	            // hogging the CPU. We don&#39;t start this sleeping behaviour immediately,
-	            // because threads that finish quickly don&#39;t pose much of a problem.
-	            // After how many seconds should we sleep occasionally? (default: 5)
-	            "startSleepingAfterSec": 5,
+	        // Settings for controlling server load
+	        "serverLoad": {
 	
-	            // The longer a search job is running, the longer we sleep. This
-	            // determines how fast the part of the cycle the sleep takes will
-	            // increase per second. The higher you set this, the worse long
-	            // jobs will run, but the nicer they will play with other jobs.
-	            // (default: 0.004 == 0.4% increase/s)
-	            "sleepPartIncreaseSpeed": 0.004,
-	        
-	            // This determines the maximum part of the cycle we&#39;ll devote to
-	            // sleep. The higher you set this, the worse (REALLY) long jobs 
-	            // will run, but the nicer they will play with other jobs
-	            // (default: 0.5 == 50%)
-	            "maxSleepPart": 0.5,
-	        
-	            // When sleeping occasionally, we think in "cycles": a period of activity
-	            // followed by a period of sleeping. Longer cycles are more efficient
-	            // because of less thread switching.
-	            // How many ms should 1 wake/sleep cycle take? (default: 1000)
-	            "wakeSleepCycleMs": 1000,
-	        
+	            // Maximum number of concurrent searches.
+	            // Should be set no higher than the number of cores in the machine. 
+	            "maxConcurrentSearches": 4,
+	
+	            // Maximum number of paused searched.
+	            // Pausing too many searches will just fill up memory, so don't
+	            // set this too high. 
+	            "maxPausedSearches": 10,
+	
+	            // Long-running counts take up a lot of CPU and memory. If a client hasn't
+	            // checked the status of a count, we'd like to pause it and eventually abort
+	            // it so we don't waste resources on something nobody's interested in anymore.
+	            // This setting controls after how many seconds such an "abandoned" count is
+	            // paused. The client might come back to it, so we don't abort it right away.
+	            "abandonedCountPauseTimeSec": 10,
+	
+	            // Similar to the previous setting, this setting controls after how many seconds
+	            // an "abandoned" count is aborted.
+	            "abandonedCountAbortTimeSec": 600
+	
 	        },
-	
+    
 	        // Settings for job caching.
 	        "cache": {
 	            // How many search jobs will we cache at most? (or -1 for 
