@@ -382,7 +382,6 @@ public class SearchParameters {
 		if (sortProp == null) {
 			// By default, show largest group first
 			sortProp = new DocGroupPropertySize();
-			reverse = true;
 		}
 		return new DocGroupSortSettings(sortProp, reverse);
 	}
@@ -423,7 +422,6 @@ public class SearchParameters {
 		if (sortProp == null) {
 			// By default, show largest group first
 			sortProp = new GroupPropertySize();
-			reverse = true;
 		}
 		return new HitGroupSortSettings(sortProp, reverse);
 	}
