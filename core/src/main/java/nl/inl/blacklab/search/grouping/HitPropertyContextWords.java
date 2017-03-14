@@ -329,7 +329,7 @@ public class HitPropertyContextWords extends HitProperty {
 					}
 				} else {
 					// Single number: single word
-					firstWord = lastWord = Integer.parseInt(part) - 1;
+					firstWord = lastWord = Integer.parseInt(part.substring(1)) - 1;
 				}
 			}
 			result.add(new ContextPart(startFrom, firstWord, lastWord));
