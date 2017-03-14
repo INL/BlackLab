@@ -1,7 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
@@ -41,13 +40,6 @@ public abstract class Terms {
 	 * Clear the Terms object.
 	 */
 	public abstract void clear();
-
-	/**
-	 * Close the Terms object.
-	 *
-	 * @throws IOException on error
-	 */
-	public abstract void close() throws IOException;
 
 	/**
 	 * Write the terms file

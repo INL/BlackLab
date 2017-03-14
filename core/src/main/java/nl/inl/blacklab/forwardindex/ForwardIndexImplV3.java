@@ -16,7 +16,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -52,12 +51,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	/** The number of cached fiids we check to see if this field is set anywhere. */
 	static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
 
-	/**
-	 * If true, we want to disable actual I/O and assign random term id's instead.
-	 * (used to test the impact of I/O on sorting/grouping)
-	 */
-	private static final boolean TESTING_IO_IMPACT = false;
-
 	/** Java has as limit of 2GB for MappedByteBuffer.
 	 *  But this could be worked around using arrays of MappedByteBuffers, see:
 	 *  http://stackoverflow.com/questions/5675748/java-memorymapping-big-files
@@ -71,12 +64,6 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	 *  we're using 1GB for now.
 	 */
 	static int preferredChunkSizeBytes = MAX_DIRECT_BUFFER_SIZE / 2;
-
-	/**
-	 * Use memory mapping to access the file.
-	 * Turn this off for testing.
-	 */
-	static boolean useMemoryMapping = true;
 
 	/** Size of a long in bytes. */
 	private static final int SIZEOF_LONG = Long.SIZE / Byte.SIZE;
@@ -113,7 +100,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private Terms terms;
 
 	/** Handle for the tokens file */
-	private RandomAccessFile tokensFp;
+	private RandomAccessFile writeTokensFp;
 
 	/** Mapping into the tokens file */
 	private List<ByteBuffer> tokensFileChunks = null;
@@ -122,7 +109,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	private List<Long> tokensFileChunkOffsetBytes = null;
 
 	/** File channel for the tokens file */
-	private FileChannel tokensFileChannel;
+	private FileChannel writeTokensFileChannel;
 
 	/** Has the table of contents been modified? */
 	private boolean tocModified = false;
@@ -151,6 +138,11 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	}
 
 	ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create, boolean largeTermsFileSupport) {
+
+		if (!indexMode && create) {
+			throw new IllegalArgumentException("Tried to create new forward index, but not in index mode");
+		}
+
 		if (!dir.exists()) {
 			if (!create)
 				throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
@@ -174,35 +166,28 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		deletedTocEntries = new ArrayList<>();
 		try {
 			setLargeTermsFileSupport(largeTermsFileSupport);
-			boolean existing = false;
 			if (tocFile.exists()) {
 				readToc();
 				terms = new TermsImplV3(indexMode, collator, termsFile, useBlockBasedTermsFile);
-				existing = true;
 				tocModified = false;
 			} else {
+				if (!indexMode) {
+					throw new IllegalArgumentException("No TOC found, and not in index mode!");
+				}
 				terms = new TermsImplV3(indexMode, collator, null, true);
 				tokensFile.createNewFile();
 				tokensFileChunks = null;
 				tocModified = true;
 				terms.setBlockBasedFile(useBlockBasedTermsFile);
 			}
-			openTokensFile();
-
 			// Tricks to speed up reading
-			if (existing && !create) {
-				if (!indexMode && useMemoryMapping) {
-
-					// Memory-map the file
-					// NOTE: We only use this in search mode right now.
-					// @@@ add support for mapped write? (need to re-map as the file grows in size)
-					memoryMapTokensFile(false);
-
-				} else {
-					// Don't use memory mapping. Just read from file channel.
-				}
+			if (indexMode) {
+				// Index mode. Open for writing.
+				openTokensFileForWriting();
+			} else {
+				// Memory-map the file for reading.
+				openTokensFileForReading();
 			}
-
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -212,66 +197,65 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		}
 	}
 
-	private void openTokensFile() throws FileNotFoundException {
-		tokensFp = new RandomAccessFile(tokensFile, indexMode ? "rw" : "r");
-		tokensFileChannel = tokensFp.getChannel();
+	/**
+	 * Open the tokens file for writing.
+	 * @throws IOException on error
+	 */
+	protected void openTokensFileForWriting() throws IOException {
+		writeTokensFp = new RandomAccessFile(tokensFile, "rw");
+		writeTokensFileChannel = writeTokensFp.getChannel();
 	}
 
-	private void memoryMapTokensFile(boolean keepInMemory) throws IOException {
+	/**
+	 * Memory-map the tokens file for reading.
+	 * @throws IOException
+	 */
+	private void openTokensFileForReading() throws IOException {
+		try (RandomAccessFile tokensFp = new RandomAccessFile(tokensFile, "r");
+				FileChannel tokensFileChannel = tokensFp.getChannel()) {
+			// Map the tokens file in chunks of 2GB each. When retrieving documents, we always
+			// read it from just one chunk, not multiple, but because each chunk begins at a
+			// document start, documents of up to 2G tokens can be processed. We could get around
+			// this limitation by reading from multiple chunks, but this would make the code
+			// more complex.
+			tokensFileChunks = new ArrayList<>();
+			tokensFileChunkOffsetBytes = new ArrayList<>();
+			long mappedBytes = 0;
+			long tokenFileEndBytes = tokenFileEndPosition * SIZEOF_INT;
+			while (mappedBytes < tokenFileEndBytes) {
+				// Find the last TOC entry start point that's also in the previous mapping
+				// (or right the first byte after the previous mapping).
 
-		// Map the tokens file in chunks of 2GB each. When retrieving documents, we always
-		// read it from just one chunk, not multiple, but because each chunk begins at a
-		// document start, documents of up to 2G tokens can be processed. We could get around
-		// this limitation by reading from multiple chunks, but this would make the code
-		// more complex.
-		tokensFileChunks = new ArrayList<>();
-		tokensFileChunkOffsetBytes = new ArrayList<>();
-		long mappedBytes = 0;
-		long tokenFileEndBytes = tokenFileEndPosition * SIZEOF_INT;
-		while (mappedBytes < tokenFileEndBytes) {
-			// Find the last TOC entry start point that's also in the previous mapping
-			// (or right the first byte after the previous mapping).
-
-			// Look for the largest entryOffset that's no larger than mappedBytes.
-			TocEntry mapNextChunkFrom = null;
-			for (TocEntry e: toc) {
-				if (e.offset <= mappedBytes && (mapNextChunkFrom == null || e.offset > mapNextChunkFrom.offset))
-					mapNextChunkFrom = e;
-			}
-
-			// Uses binary search.
-			int min = 0, max = toc.size();
-			while (max - min > 1) {
-				int middle = (min + max) / 2;
-				long middleVal = toc.get(middle).offset * SIZEOF_INT;
-				if (middleVal <= mappedBytes) {
-					min = middle;
-				} else {
-					max = middle;
+				// Look for the largest entryOffset that's no larger than mappedBytes.
+				TocEntry mapNextChunkFrom = null;
+				for (TocEntry e: toc) {
+					if (e.offset <= mappedBytes && (mapNextChunkFrom == null || e.offset > mapNextChunkFrom.offset))
+						mapNextChunkFrom = e;
 				}
-			}
-			long startOfNextMappingBytes = toc.get(min).offset * SIZEOF_INT;
 
-			// Map this chunk
-			long sizeBytes = tokenFileEndBytes - startOfNextMappingBytes;
-			if (sizeBytes > preferredChunkSizeBytes)
-				sizeBytes = preferredChunkSizeBytes;
-
-			ByteBuffer mapping;
-			if (keepInMemory) {
-				mapping = ByteBuffer.allocate((int) sizeBytes);
-				tokensFileChannel.position(startOfNextMappingBytes);
-				int bytesRead = tokensFileChannel.read(mapping);
-				if (bytesRead != mapping.capacity()) {
-					throw new RuntimeException("Could not read tokens file chunk into memory!");
+				// Uses binary search.
+				int min = 0, max = toc.size();
+				while (max - min > 1) {
+					int middle = (min + max) / 2;
+					long middleVal = toc.get(middle).offset * SIZEOF_INT;
+					if (middleVal <= mappedBytes) {
+						min = middle;
+					} else {
+						max = middle;
+					}
 				}
-			} else {
-				mapping = tokensFileChannel.map(FileChannel.MapMode.READ_ONLY,
-						startOfNextMappingBytes, sizeBytes);
+				long startOfNextMappingBytes = toc.get(min).offset * SIZEOF_INT;
+
+				// Map this chunk
+				long sizeBytes = tokenFileEndBytes - startOfNextMappingBytes;
+				if (sizeBytes > preferredChunkSizeBytes)
+					sizeBytes = preferredChunkSizeBytes;
+
+				ByteBuffer mapping = tokensFileChannel.map(FileChannel.MapMode.READ_ONLY, startOfNextMappingBytes, sizeBytes);
+				tokensFileChunks.add(mapping);
+				tokensFileChunkOffsetBytes.add(startOfNextMappingBytes);
+				mappedBytes = startOfNextMappingBytes + sizeBytes;
 			}
-			tokensFileChunks.add(mapping);
-			tokensFileChunkOffsetBytes.add(startOfNextMappingBytes);
-			mappedBytes = startOfNextMappingBytes + sizeBytes;
 		}
 	}
 
@@ -284,9 +268,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 		// delete data files and empty TOC
 		try {
-			if (tokensFp == null)
-				openTokensFile();
-			tokensFp.setLength(0);
+			if (writeTokensFp == null) {
+				openTokensFileForWriting();
+			}
+			writeTokensFp.setLength(0);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -367,20 +352,19 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				deleted[i] = (byte) (e.deleted ? 1 : 0);
 				i++;
 			}
-			try (RandomAccessFile raf = new RandomAccessFile(tocFile, "rw")) {
-				try (FileChannel fc = raf.getChannel()) {
-					long fileSize = SIZEOF_INT + (SIZEOF_LONG + SIZEOF_INT + 1) * n;
-					fc.truncate(fileSize);
-					MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileSize);
-					buf.putInt(n);
-					LongBuffer lb = buf.asLongBuffer();
-					lb.put(offset);
-					buf.position(buf.position() + SIZEOF_LONG * n);
-					IntBuffer ib = buf.asIntBuffer();
-					ib.put(length);
-					buf.position(buf.position() + SIZEOF_INT * n);
-					buf.put(deleted);
-				}
+			try (RandomAccessFile raf = new RandomAccessFile(tocFile, "rw");
+				FileChannel fc = raf.getChannel()) {
+				long fileSize = SIZEOF_INT + (SIZEOF_LONG + SIZEOF_INT + 1) * n;
+				fc.truncate(fileSize);
+				MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileSize);
+				buf.putInt(n);
+				LongBuffer lb = buf.asLongBuffer();
+				lb.put(offset);
+				buf.position(buf.position() + SIZEOF_LONG * n);
+				IntBuffer ib = buf.asIntBuffer();
+				ib.put(length);
+				buf.position(buf.position() + SIZEOF_INT * n);
+				buf.put(deleted);
 			}
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -396,14 +380,14 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				terms.write(termsFile);
 			}
 
-			if (tokensFileChannel != null) {
+			// Close the FileChannel and RandomAccessFile (indexMode only)
+			if (writeTokensFileChannel != null) {
 				// Cannot truncate if still mapped; cannot force demapping.
 				//tokensFileChannel.truncate(tokenFileEndPosition * SIZEOF_INT);
-				tokensFileChannel.close();
+				writeTokensFileChannel.close();
 			}
-
-			if (tokensFp != null)
-				tokensFp.close();
+			if (writeTokensFp != null)
+				writeTokensFp.close();
 
 		} catch (Exception e) {
 			throw ExUtil.wrapRuntimeException(e);
@@ -513,7 +497,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			if (writeBuffer == null || writeBufOffset > newDocumentOffset || writeBufEnd < newDocumentOffset + numberOfTokens) {
 				// No, remap it
 				writeBufOffset = newDocumentOffset;
-				MappedByteBuffer byteBuffer = tokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
+				MappedByteBuffer byteBuffer = writeTokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
 						writeBufOffset * SIZEOF_INT, (numberOfTokens + mapReserve)
 								* SIZEOF_INT);
 				writeBuffer = byteBuffer.asIntBuffer();
@@ -596,11 +580,11 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 				// Get an IntBuffer to read the desired content
 				IntBuffer ib = null;
-				boolean inMem = false;
+				boolean mapped = false;
 				if (tokensFileChunks != null) {
-					// Yes, the tokens file has either been fully loaded into memory or
-					// is mapped into memory. Get an int buffer into the file.
-					inMem = true;
+					// Yes, the tokens file has has been mapped to memory.
+					// Get an int buffer into the file.
+					mapped = true;
 
 					// Figure out which chunk to access.
 					ByteBuffer whichChunk = null;
@@ -625,37 +609,26 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
 				int snippetLength = end[i] - start[i];
 				int[] snippet = new int[snippetLength];
-				if (TESTING_IO_IMPACT) {
-					// We're testing how much impact forward index I/O has on sorting/grouping.
-					// Fill the array with random token ids instead of reading them from the
-					// file.
-					int numberOfTerms = terms.numberOfTerms();
-					for (int j = 0; j < snippetLength; j++) {
-						int randomTermId = (int) Math.random() * numberOfTerms;
-						snippet[j] = randomTermId;
-					}
+				if (mapped) {
+					// The file is mem-mapped (search mode).
+					// Position us at the correct place in the file.
+					ib.position(start[i]);
 				} else {
-					if (inMem) {
-						// The file is mem-mapped.
-						// Position us at the correct place in the file.
-						ib.position(start[i]);
-					} else {
-						// Not mapped. Explicitly read the part we require from disk into an int
-						// buffer.
-						long offset = e.offset + start[i];
+					// Chunks are not mapped (index mode).
+					// Explicitly read the part we require from disk into an int buffer.
+					long offset = e.offset + start[i];
 
-						int bytesToRead = snippetLength * SIZEOF_INT;
-						ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
-						int bytesRead = tokensFileChannel.read(buffer, offset * SIZEOF_INT);
-						if (bytesRead < bytesToRead) {
-							throw new RuntimeException("Not enough bytes read: " + bytesRead
-									+ " < " + bytesToRead);
-						}
-						buffer.position(0);
-						ib = buffer.asIntBuffer();
+					int bytesToRead = snippetLength * SIZEOF_INT;
+					ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
+					int bytesRead = writeTokensFileChannel.read(buffer, offset * SIZEOF_INT);
+					if (bytesRead < bytesToRead) {
+						throw new RuntimeException("Not enough bytes read: " + bytesRead
+								+ " < " + bytesToRead);
 					}
-					ib.get(snippet);
+					buffer.position(0);
+					ib = buffer.asIntBuffer();
 				}
+				ib.get(snippet);
 				result.add(snippet);
 			}
 

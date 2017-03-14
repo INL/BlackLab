@@ -16,7 +16,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -54,15 +53,6 @@ class TermsImplV3 extends Terms {
 	private static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
 
 	protected static final Logger logger = LogManager.getLogger(TermsImplV3.class);
-
-	///** Search mode only: the terms, by index number. */
-	//String[] terms;
-
-	/** File handle of terms file */
-	RandomAccessFile termsFileFp;
-
-	/** File channel into terms file */
-	FileChannel termsFileChannel;
 
 	/** A mapped block from the terms file */
 	static class TermStringBlock {
@@ -211,98 +201,86 @@ class TermsImplV3 extends Terms {
 		termIndexBuilt = true;
 	}
 
-	@Override
-	public void close() throws IOException {
-		if (termsFileChannel != null) {
-			termsFileChannel.close();
-			termsFileChannel = null;
-		}
-		if (termsFileFp != null) {
-			termsFileFp.close();
-			termsFileFp = null;
-		}
-	}
-
 	private void read(File termsFile) {
 		termIndex.clear();
 		try {
-			termsFileFp = new RandomAccessFile(termsFile, "r");
-			termsFileChannel = termsFileFp.getChannel();
+			try (RandomAccessFile termsFileFp = new RandomAccessFile(termsFile, "r")) {
+				try (FileChannel termsFileChannel = termsFileFp.getChannel()) {
 
-			long fileLength = termsFile.length();
-			long fileMapStart = 0;
-			long fileMapLength = Math.min(Integer.MAX_VALUE, fileLength);
-			MappedByteBuffer buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
-			int n = buf.getInt();
-			fileMapStart += BYTES_PER_INT;
-			IntBuffer ib = buf.asIntBuffer();
-			//int[] termStringOffsets = new int[n + 1];
-			//terms = new String[n];
-			numberOfTerms = n;
+					long fileLength = termsFile.length();
+					long fileMapStart = 0;
+					long fileMapLength = Math.min(Integer.MAX_VALUE, fileLength);
+					MappedByteBuffer buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+					int n = buf.getInt();
+					fileMapStart += BYTES_PER_INT;
+					IntBuffer ib = buf.asIntBuffer();
+					numberOfTerms = n;
 
-			termStringBlocks = new ArrayList<>();
-			if (useBlockBasedTermsFile) {
-				// New format, multiple blocks of term strings if necessary,
-				// so term strings may total over 2 GB.
+					termStringBlocks = new ArrayList<>();
+					if (useBlockBasedTermsFile) {
+						// New format, multiple blocks of term strings if necessary,
+						// so term strings may total over 2 GB.
 
-				// Read the term string offsets and string data block
-				int currentTerm = 0;
-				while (currentTerm < n) {
+						// Read the term string offsets and string data block
+						int currentTerm = 0;
+						while (currentTerm < n) {
 
-					int numTermsThisBlock = ib.get();
-					currentTerm += numTermsThisBlock;
-					int[] termStringOffsets = new int[numTermsThisBlock + 1];
-					ib.get(termStringOffsets, 0, numTermsThisBlock); // term string offsets
+							int numTermsThisBlock = ib.get();
+							currentTerm += numTermsThisBlock;
+							int[] termStringOffsets = new int[numTermsThisBlock + 1];
+							ib.get(termStringOffsets, 0, numTermsThisBlock); // term string offsets
 
-					// Read term strings data
-					int termStringsByteSize = termStringOffsets[numTermsThisBlock] = ib.get();
-					fileMapStart += (numTermsThisBlock + 2) * BYTES_PER_INT;
-					ByteBuffer termStringBuf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, termStringsByteSize);
-					termStringBlocks.add(new TermStringBlock(termStringBuf, numTermsThisBlock, termStringOffsets));
+							// Read term strings data
+							int termStringsByteSize = termStringOffsets[numTermsThisBlock] = ib.get();
+							fileMapStart += (numTermsThisBlock + 2) * BYTES_PER_INT;
+							ByteBuffer termStringBuf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, termStringsByteSize);
+							termStringBlocks.add(new TermStringBlock(termStringBuf, numTermsThisBlock, termStringOffsets));
 
-					// Re-map a new part of the file before we read the next block.
-					// (and before we read the sort buffers)
-					fileMapStart += termStringsByteSize;
-					fileMapLength = Math.min(Integer.MAX_VALUE, fileLength - fileMapStart);
-					if (fileMapLength > 0) {
-						buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+							// Re-map a new part of the file before we read the next block.
+							// (and before we read the sort buffers)
+							fileMapStart += termStringsByteSize;
+							fileMapLength = Math.min(Integer.MAX_VALUE, fileLength - fileMapStart);
+							if (fileMapLength > 0) {
+								buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+								ib = buf.asIntBuffer();
+							}
+						}
+
+					} else {
+						// Old format, single term strings block.
+						// Causes problems when term strings total over 2 GB.
+
+						int numTermsThisBlock = n;
+						int[] termStringOffsets = new int[numTermsThisBlock + 1];
+						ib.get(termStringOffsets); // term string offsets
+
+						// Read term strings data
+						int termStringsByteSize = ib.get(); // data block size
+						fileMapStart += (numTermsThisBlock + 2) * BYTES_PER_INT;
+						ByteBuffer termStringBuf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, termStringsByteSize);
+						termStringBlocks.add(new TermStringBlock(termStringBuf, numTermsThisBlock, termStringOffsets));
+
+						fileMapStart += termStringsByteSize;
+						buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileLength - fileMapStart);
 						ib = buf.asIntBuffer();
 					}
+
+					if (indexMode) {
+						termIndexBuilt = false;
+						buildTermIndex(); // We need to find id for term while indexing
+						//terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
+					} else {
+						termIndexBuilt = false; // termIndex hasn't been filled yet
+
+						// Read the sort order arrays
+						sortPositionPerId = new int[n];
+						sortPositionPerIdInsensitive = new int[n];
+						ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
+						ib.get(sortPositionPerId);
+						ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
+						ib.get(sortPositionPerIdInsensitive);
+					}
 				}
-
-			} else {
-				// Old format, single term strings block.
-				// Causes problems when term strings total over 2 GB.
-
-				int numTermsThisBlock = n;
-				int[] termStringOffsets = new int[numTermsThisBlock + 1];
-				ib.get(termStringOffsets); // term string offsets
-
-				// Read term strings data
-				int termStringsByteSize = ib.get(); // data block size
-				fileMapStart += (numTermsThisBlock + 2) * BYTES_PER_INT;
-				ByteBuffer termStringBuf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, termStringsByteSize);
-				termStringBlocks.add(new TermStringBlock(termStringBuf, numTermsThisBlock, termStringOffsets));
-
-				fileMapStart += termStringsByteSize;
-				buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileLength - fileMapStart);
-				ib = buf.asIntBuffer();
-			}
-
-			if (indexMode) {
-				termIndexBuilt = false;
-				buildTermIndex(); // We need to find id for term while indexing
-				//terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
-			} else {
-				termIndexBuilt = false; // termIndex hasn't been filled yet
-
-				// Read the sort order arrays
-				sortPositionPerId = new int[n];
-				sortPositionPerIdInsensitive = new int[n];
-				ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
-				ib.get(sortPositionPerId);
-				ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
-				ib.get(sortPositionPerIdInsensitive);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
