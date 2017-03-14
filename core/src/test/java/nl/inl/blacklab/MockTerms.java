@@ -1,6 +1,7 @@
 package nl.inl.blacklab;
 
 import java.io.File;
+import java.io.IOException;
 
 import nl.inl.blacklab.forwardindex.Terms;
 
@@ -25,6 +26,11 @@ public class MockTerms extends Terms {
 	public void clear() {
 		//
 
+	}
+
+	@Override
+	public void close() throws IOException {
+		//
 	}
 
 	@Override
