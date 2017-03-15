@@ -558,25 +558,6 @@ public abstract class Searcher {
 	}
 
 	/**
-	 * Builds index for Terms.indexOf() method.
-	 *
-	 * This makes sure the first call to Terms.indexOf() in search mode will be fast.
-	 * Subsequent calls are always fast. (Terms.indexOf() is only used in search mode
-	 * by HitPropValue.deserialize(), so if you're not sure if you need to call this
-	 * method in your application, you probably don't.
-	 *
-	 * This used to be public, but it's called automatically now in search mode, so
-	 * there's no need to call it manually anymore.
-	 */
-	protected void warmUpForwardIndices() {
-		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
-			logger.debug("    (warmup-thread) Building term indices for forward index " + e.getKey() + "...");
-			e.getValue().warmUp(); //getTerms().buildTermIndex();
-		}
-		logger.debug("    (warmup-thread) Done.");
-	}
-
-	/**
 	 * Get information about the structure of the BlackLab index.
 	 *
 	 * @return the structure object

@@ -101,12 +101,16 @@ class TermsImplV3 extends Terms {
 	/** How many terms total are there? (always valid) */
 	int numberOfTerms = 0;
 
+	/** The index number of each sorting position. Inverse of sortPositionPerId[] array.
+	 *  Only valid when indexMode == false. */
+	int[] idPerSortPosition;
+
 	/** The sorting position for each index number. Inverse of idPerSortPosition[]
 	 *  array. Only valid when indexMode == false. */
 	int[] sortPositionPerId;
 
-	/** The case-insensitive sorting position for each index number. Inverse of idPerSortPosition[]
-	 *  array. Only valid when indexMode == false. */
+	/** The case-insensitive sorting position for each index number.
+	 *  Only valid when indexMode == false. */
 	int[] sortPositionPerIdInsensitive;
 
 	/**
@@ -164,6 +168,28 @@ class TermsImplV3 extends Terms {
 
 	@Override
 	public int indexOf(String term) {
+
+		if (!indexMode && idPerSortPosition != null) {
+			// Do a binary search to find term
+			// Note that the binary search is done on the sorted terms,
+			// so we need to guess an ordinal, convert it to a term index,
+			// then check the term string, and repeat until we find a match.
+			int min = 0, max = idPerSortPosition.length - 1;
+			while (true) {
+				int guessedOrdinal = (min + max) / 2;
+				int guessedIndex = idPerSortPosition[guessedOrdinal];
+				String guessedTerm = get(guessedIndex);
+				int cmp = collator.compare(term, guessedTerm);
+				if (cmp == 0)
+					return guessedIndex; // found
+				if (cmp < 0)
+					max = guessedOrdinal - 1;
+				else
+					min = guessedOrdinal + 1;
+				if (max < min)
+					return NO_TERM; // not found
+			}
+		}
 
 		if (!termIndexBuilt) {
 			// We havent' filled termIndex based on terms[] yet.
@@ -267,7 +293,7 @@ class TermsImplV3 extends Terms {
 
 					if (indexMode) {
 						termIndexBuilt = false;
-						buildTermIndex(); // We need to find id for term while indexing
+						buildTermIndex(); // We need to find id for term quickly while indexing
 						//terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
 					} else {
 						termIndexBuilt = false; // termIndex hasn't been filled yet
@@ -279,6 +305,13 @@ class TermsImplV3 extends Terms {
 						ib.get(sortPositionPerId);
 						ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
 						ib.get(sortPositionPerIdInsensitive);
+
+						// Invert sortPositionPerId[] array, so we can later do a binary search through our
+						// terms to find a specific one. (only needed to deserialize sort/group criteria from URL)
+						idPerSortPosition = new int[n];
+						for (int i = 0; i < n; i++) {
+							idPerSortPosition[sortPositionPerId[i]] = i;
+						}
 					}
 				}
 			}

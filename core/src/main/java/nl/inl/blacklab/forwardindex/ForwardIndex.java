@@ -266,10 +266,6 @@ public abstract class ForwardIndex {
 
 	protected abstract void setLargeTermsFileSupport(boolean b);
 
-	public void warmUp() {
-		getTerms().buildTermIndex();
-	}
-
 	/** @return the set of all forward index ids */
 	public abstract Set<Integer> idSet();
 
