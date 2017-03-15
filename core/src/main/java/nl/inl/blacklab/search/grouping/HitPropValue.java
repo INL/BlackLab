@@ -4,7 +4,8 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.Hits;
 import nl.inl.util.StringUtil;
@@ -17,7 +18,7 @@ import nl.inl.util.StringUtil;
  * sorting of large results sets)
  */
 public abstract class HitPropValue implements Comparable<Object> {
-	protected static final Logger logger = Logger.getLogger(HitPropValue.class);
+	protected static final Logger logger = LogManager.getLogger(HitPropValue.class);
 
 	/**
 	 * Collator to use for string comparison while sorting/grouping

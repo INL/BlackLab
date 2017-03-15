@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Hits;
@@ -27,11 +29,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
 	@Override
 	public int hashCode() {
-		int result = 0;
-		for (int v: valueSortOrder) {
-			result ^= ((Integer) v).hashCode();
-		}
-		return result;
+		return Arrays.hashCode(valueSortOrder);
 	}
 
 	public static HitPropValue deserialize(Hits hits, String info) {

@@ -6,6 +6,7 @@ import nl.inl.blacklab.perdocument.DocGroup;
 import nl.inl.blacklab.perdocument.DocGroups;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -60,6 +61,14 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 					.entry("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved())
 					.entry("stoppedCountingHits", hits.maxHitsCounted())
 					.entry("stoppedRetrievingHits", hits.maxHitsRetrieved());
+			}
+			if (hits instanceof HitsSample) {
+				HitsSample sample = ((HitsSample)hits);
+				ds.entry("sampleSeed", sample.seed());
+				if (sample.exactNumberGiven())
+					ds.entry("sampleSize", sample.numberOfHitsToSelect());
+				else
+					ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
 			}
 			ds	.entry("numberOfDocs", docResults.countSoFarDocsCounted())
 				.entry("numberOfDocsRetrieved", docResults.countSoFarDocsRetrieved())

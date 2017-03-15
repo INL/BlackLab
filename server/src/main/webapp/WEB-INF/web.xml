@@ -6,10 +6,6 @@
     <servlet-class>nl.inl.blacklab.server.BlackLabServer</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>default</servlet-name>
-    <url-pattern>/blstests/*</url-pattern>
-  </servlet-mapping>
-  <servlet-mapping>
     <servlet-name>blacklab-server</servlet-name>
     <url-pattern>/</url-pattern>
   </servlet-mapping>

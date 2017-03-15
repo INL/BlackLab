@@ -48,6 +48,7 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 
 		ds.startEntry("versionInfo").startMap()
 			.entry("blackLabBuildTime", struct.getIndexBlackLabBuildTime())
+			.entry("blackLabVersion", struct.getIndexBlackLabVersion())
 			.entry("indexFormat", struct.getIndexFormat())
 			.entry("timeCreated", struct.getTimeCreated())
 			.entry("timeModified", struct.getTimeModified())

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.search;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,7 +14,7 @@ import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 
 public class SearchManager {
 
-	private static final Logger logger = Logger.getLogger(SearchManager.class);
+	private static final Logger logger = LogManager.getLogger(SearchManager.class);
 
 	/** Our config */
 	private BlsConfig config;

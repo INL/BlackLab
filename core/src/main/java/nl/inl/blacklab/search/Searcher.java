@@ -19,7 +19,8 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -51,7 +52,7 @@ import nl.inl.util.VersionFile;
 
 public abstract class Searcher {
 
-	protected static final Logger logger = Logger.getLogger(Searcher.class);
+	protected static final Logger logger = LogManager.getLogger(Searcher.class);
 
 	/** When setting how many hits to retrieve/count, this means "no limit". */
 	public final static int UNLIMITED_HITS = -1;
@@ -249,15 +250,36 @@ public abstract class Searcher {
 	 *
 	 * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if
 	 *   the timestamp could not be found for some reason (i.e. not running from a
-	 *   JAR, or JAR was not created with the Ant buildscript).
+	 *   JAR, or key not found in manifest).
 	 */
 	public static String getBlackLabBuildTime() {
+		return getValueFromManifest("Build-Time", "UNKNOWN");
+	}
+
+	/**
+	 * Return the BlackLab version.
+	 *
+	 * @return BlackLab version, or UNKNOWN if the version could not be found
+	 *   for some reason (i.e. not running from a JAR, or key not found in manifest).
+	 */
+	public static String getBlackLabVersion() {
+		return getValueFromManifest("Implementation-Version", "UNKNOWN");
+	}
+
+	/**
+	 * Get a value from the manifest file, if available.
+	 *
+	 * @param key key to get the value for, e.g. "Build-Time".
+	 * @param defaultValue value to return if no manifest found or key not found
+	 * @return value from the manifest, or the default value if not found
+	 */
+	static String getValueFromManifest(String key, String defaultValue) {
 		try {
 			URL res = Searcher.class.getResource(Searcher.class.getSimpleName() + ".class");
 			URLConnection conn = res.openConnection();
 			if (!(conn instanceof JarURLConnection)) {
 				// Not running from a JAR, no manifest to read
-				return "UNKNOWN";
+				return defaultValue;
 			}
 			JarURLConnection jarConn = (JarURLConnection) res.openConnection();
 			Manifest mf = jarConn.getManifest();
@@ -265,14 +287,12 @@ public abstract class Searcher {
 			if (mf != null) {
 				Attributes atts = mf.getMainAttributes();
 				if (atts != null) {
-					value = atts.getValue("Build-Time");
-					if (value == null)
-						value = atts.getValue("Build-Date"); // Old name for this info
+					value = atts.getValue(key);
 				}
 			}
-			return value == null ? "UNKNOWN" : value;
+			return value == null ? defaultValue : value;
 		} catch (IOException e) {
-			throw new RuntimeException("Could not read build date from manifest", e);
+			throw new RuntimeException("Could not read '" + key + "' from manifest", e);
 		}
 	}
 
@@ -535,25 +555,6 @@ public abstract class Searcher {
 			fi.close();
 		}
 
-	}
-
-	/**
-	 * Builds index for Terms.indexOf() method.
-	 *
-	 * This makes sure the first call to Terms.indexOf() in search mode will be fast.
-	 * Subsequent calls are always fast. (Terms.indexOf() is only used in search mode
-	 * by HitPropValue.deserialize(), so if you're not sure if you need to call this
-	 * method in your application, you probably don't.
-	 *
-	 * This used to be public, but it's called automatically now in search mode, so
-	 * there's no need to call it manually anymore.
-	 */
-	protected void warmUpForwardIndices() {
-		for (Map.Entry<String, ForwardIndex> e: forwardIndices.entrySet()) {
-			logger.debug("    (warmup-thread) Building term indices for forward index " + e.getKey() + "...");
-			e.getValue().warmUp(); //getTerms().buildTermIndex();
-		}
-		logger.debug("    (warmup-thread) Done.");
 	}
 
 	/**

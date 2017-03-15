@@ -17,17 +17,21 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.impl.factory.Maps;
 
 /**
@@ -48,17 +52,65 @@ class TermsImplV3 extends Terms {
 	/** Number of bytes per int */
 	private static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
 
-	protected static final Logger logger = Logger.getLogger(TermsImplV3.class);
+	protected static final Logger logger = LogManager.getLogger(TermsImplV3.class);
 
-	/** Search mode only: the terms, by index number. */
-	String[] terms;
+	/** A mapped block from the terms file */
+	static class TermStringBlock {
+
+		/** The mapped block */
+		private ByteBuffer buffer;
+
+		/** Number of term strings in this block */
+		private int numberOfTerms;
+
+		/** Offsets of the term strings in this block */
+		private int[] offsets;
+
+		public TermStringBlock(ByteBuffer buffer, int numberOfTerms, int[] offsets) {
+			super();
+			this.buffer = buffer;
+			this.numberOfTerms = numberOfTerms;
+			this.offsets = offsets;
+		}
+
+		/** Get a term string from this block
+		 * @param i term string index in this block
+		 * @return corresponding term string
+		 */
+		public String get(int i) {
+			int termOffset = offsets[i];
+			int termLength = offsets[i + 1] - termOffset;
+			buffer.position(termOffset);
+			byte[] termBytes = new byte[termLength];
+			buffer.get(termBytes);
+			return new String(termBytes, DEFAULT_CHARSET);
+		}
+
+		/** Get the number of terms in this block.
+		 *  @return number of terms in this block.
+		 */
+		public int numberOfTerms() {
+			return numberOfTerms;
+		}
+
+	}
+
+	/** Mapped blocks from the terms file */
+	List<TermStringBlock> termStringBlocks;
+
+	/** How many terms total are there? (always valid) */
+	int numberOfTerms = 0;
+
+	/** The index number of each sorting position. Inverse of sortPositionPerId[] array.
+	 *  Only valid when indexMode == false. */
+	int[] idPerSortPosition;
 
 	/** The sorting position for each index number. Inverse of idPerSortPosition[]
 	 *  array. Only valid when indexMode == false. */
 	int[] sortPositionPerId;
 
-	/** The case-insensitive sorting position for each index number. Inverse of idPerSortPosition[]
-	 *  array. Only valid when indexMode == false. */
+	/** The case-insensitive sorting position for each index number.
+	 *  Only valid when indexMode == false. */
 	int[] sortPositionPerIdInsensitive;
 
 	/**
@@ -86,6 +138,11 @@ class TermsImplV3 extends Terms {
 	/** Use new blocks-based terms file, that can grow larger than 2 GB? */
 	private boolean useBlockBasedTermsFile = true;
 
+	/** The maximum block size to use while writing the terms file.
+	 *  Ususally around the limit of 2GB, but for testing, we can set this to
+	 *  a lower value. */
+	private int maxBlockSize = APPROX_MAX_ARRAY_SIZE;
+
 	TermsImplV3(boolean indexMode, Collator collator, File termsFile, boolean useBlockBasedTermsFile) {
 		this.indexMode = indexMode;
 		if (collator == null)
@@ -112,6 +169,28 @@ class TermsImplV3 extends Terms {
 	@Override
 	public int indexOf(String term) {
 
+		if (!indexMode && idPerSortPosition != null) {
+			// Do a binary search to find term
+			// Note that the binary search is done on the sorted terms,
+			// so we need to guess an ordinal, convert it to a term index,
+			// then check the term string, and repeat until we find a match.
+			int min = 0, max = idPerSortPosition.length - 1;
+			while (true) {
+				int guessedOrdinal = (min + max) / 2;
+				int guessedIndex = idPerSortPosition[guessedOrdinal];
+				String guessedTerm = get(guessedIndex);
+				int cmp = collator.compare(term, guessedTerm);
+				if (cmp == 0)
+					return guessedIndex; // found
+				if (cmp < 0)
+					max = guessedOrdinal - 1;
+				else
+					min = guessedOrdinal + 1;
+				if (max < min)
+					return NO_TERM; // not found
+			}
+		}
+
 		if (!termIndexBuilt) {
 			// We havent' filled termIndex based on terms[] yet.
 			// Do so now. (so the first call to this method might be
@@ -134,8 +213,8 @@ class TermsImplV3 extends Terms {
 	public synchronized void buildTermIndex() {
 		if (termIndexBuilt)
 			return;
-		for (int i = 0; i < terms.length; i++) {
-			termIndex.put(terms[i], i);
+		for (int i = 0; i < numberOfTerms(); i++) {
+			termIndex.put(get(i), i);
 		}
 		termIndexBuilt = true;
 	}
@@ -151,18 +230,19 @@ class TermsImplV3 extends Terms {
 	private void read(File termsFile) {
 		termIndex.clear();
 		try {
-			try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
-				try (FileChannel fc = raf.getChannel()) {
+			try (RandomAccessFile termsFileFp = new RandomAccessFile(termsFile, "r")) {
+				try (FileChannel termsFileChannel = termsFileFp.getChannel()) {
+
 					long fileLength = termsFile.length();
-					long remainingFileLength = fileLength;
 					long fileMapStart = 0;
 					long fileMapLength = Math.min(Integer.MAX_VALUE, fileLength);
-					MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+					MappedByteBuffer buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 					int n = buf.getInt();
+					fileMapStart += BYTES_PER_INT;
 					IntBuffer ib = buf.asIntBuffer();
-					int[] termStringOffsets = new int[n + 1];
-					terms = new String[n];
+					numberOfTerms = n;
 
+					termStringBlocks = new ArrayList<>();
 					if (useBlockBasedTermsFile) {
 						// New format, multiple blocks of term strings if necessary,
 						// so term strings may total over 2 GB.
@@ -172,32 +252,22 @@ class TermsImplV3 extends Terms {
 						while (currentTerm < n) {
 
 							int numTermsThisBlock = ib.get();
-							ib.get(termStringOffsets, currentTerm, numTermsThisBlock); // term string offsets
+							currentTerm += numTermsThisBlock;
+							int[] termStringOffsets = new int[numTermsThisBlock + 1];
+							ib.get(termStringOffsets, 0, numTermsThisBlock); // term string offsets
 
 							// Read term strings data
-							int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
-							buf.position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
-							byte[] termStringsThisBlock = new byte[dataBlockSize];
-							buf.get(termStringsThisBlock);
-
-							// Now instantiate String objects from the offsets and byte data
-							for ( ; currentTerm < n; currentTerm++) {
-								int offset = termStringOffsets[currentTerm];
-								int length = termStringOffsets[currentTerm + 1] - offset;
-								String str = new String(termStringsThisBlock, offset, length, DEFAULT_CHARSET);
-
-								// We need to find term for id while searching
-								terms[currentTerm] = str;
-							}
+							int termStringsByteSize = termStringOffsets[numTermsThisBlock] = ib.get();
+							fileMapStart += (numTermsThisBlock + 2) * BYTES_PER_INT;
+							ByteBuffer termStringBuf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, termStringsByteSize);
+							termStringBlocks.add(new TermStringBlock(termStringBuf, numTermsThisBlock, termStringOffsets));
 
 							// Re-map a new part of the file before we read the next block.
 							// (and before we read the sort buffers)
-							long bytesRead = buf.position();
-							fileMapStart += bytesRead;
-							remainingFileLength -= bytesRead;
-							fileMapLength = Math.min(Integer.MAX_VALUE, remainingFileLength);
+							fileMapStart += termStringsByteSize;
+							fileMapLength = Math.min(Integer.MAX_VALUE, fileLength - fileMapStart);
 							if (fileMapLength > 0) {
-								buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+								buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 								ib = buf.asIntBuffer();
 							}
 						}
@@ -206,32 +276,25 @@ class TermsImplV3 extends Terms {
 						// Old format, single term strings block.
 						// Causes problems when term strings total over 2 GB.
 
+						int numTermsThisBlock = n;
+						int[] termStringOffsets = new int[numTermsThisBlock + 1];
 						ib.get(termStringOffsets); // term string offsets
+
+						// Read term strings data
 						int termStringsByteSize = ib.get(); // data block size
+						fileMapStart += (numTermsThisBlock + 2) * BYTES_PER_INT;
+						ByteBuffer termStringBuf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, termStringsByteSize);
+						termStringBlocks.add(new TermStringBlock(termStringBuf, numTermsThisBlock, termStringOffsets));
 
-						// termStringByteSize fits in an int, and terms
-						// fits in a single byte array. Use the old code.
-						buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
-						byte[] termStrings = new byte[termStringsByteSize];
-						buf.get(termStrings);
+						fileMapStart += termStringsByteSize;
+						buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileLength - fileMapStart);
 						ib = buf.asIntBuffer();
-
-						// Now instantiate String objects from the offsets and byte data
-						terms = new String[n];
-						for (int id = 0; id < n; id++) {
-							int offset = termStringOffsets[id];
-							int length = termStringOffsets[id + 1] - offset;
-							String str = new String(termStrings, offset, length, DEFAULT_CHARSET);
-
-							// We need to find term for id while searching
-							terms[id] = str;
-						}
 					}
 
 					if (indexMode) {
 						termIndexBuilt = false;
-						buildTermIndex(); // We need to find id for term while indexing
-						terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
+						buildTermIndex(); // We need to find id for term quickly while indexing
+						//terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
 					} else {
 						termIndexBuilt = false; // termIndex hasn't been filled yet
 
@@ -242,12 +305,33 @@ class TermsImplV3 extends Terms {
 						ib.get(sortPositionPerId);
 						ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
 						ib.get(sortPositionPerIdInsensitive);
+
+						// Invert sortPositionPerId[] array, so we can later do a binary search through our
+						// terms to find a specific one. (only needed to deserialize sort/group criteria from URL)
+						idPerSortPosition = new int[n];
+						for (int i = 0; i < n; i++) {
+							idPerSortPosition[sortPositionPerId[i]] = i;
+						}
 					}
 				}
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public String get(Integer index) {
+		assert index >= 0 && index < numberOfTerms : "Term index out of range (" + index + ", numterms = " + numberOfTerms + ")";
+
+		// See what term strings block this term is in
+		int blockStart = 0;
+		for (TermStringBlock bl: termStringBlocks) {
+			if (index < blockStart + bl.numberOfTerms)
+				return bl.get(index - blockStart);
+			blockStart += bl.numberOfTerms();
+		}
+		throw new RuntimeException("Term index out of range, not caught before!");
 	}
 
 	@Override
@@ -262,7 +346,7 @@ class TermsImplV3 extends Terms {
 					int n = termIndex.size();
 
 					// Fill the terms[] array
-					terms = new String[n];
+					final String[] terms = new String[n];
 					long termStringsByteSize = 0;
 					for (Map.Entry<String, Integer> entry: termIndex.entrySet()) {
 						terms[entry.getValue()] = entry.getKey();
@@ -314,7 +398,7 @@ class TermsImplV3 extends Terms {
 						int[] termStringOffsets = new int[n];
 						while (currentTerm < n) {
 							int firstTermInBlock = currentTerm;
-							int blockSize = (int)Math.min(bytesLeftToWrite, APPROX_MAX_ARRAY_SIZE);
+							int blockSize = (int)Math.min(bytesLeftToWrite, maxBlockSize);
 
 							// Calculate byte offsets for all the terms and fill data array
 							int currentOffset = 0;
@@ -343,7 +427,7 @@ class TermsImplV3 extends Terms {
 							                       // (doubles as the size of the data block to follow) //@4
 							int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
 							buf.position(newPosition); // advance past offsets array
-							buf.put(termStrings, 0, currentOffset); //@blockSize (max. APPROX_MAX_ARRAY_SIZE)
+							buf.put(termStrings, 0, currentOffset); //@blockSize (max. maxBlockSize)
 							ib = buf.asIntBuffer();
 							fileLength += blockSizeBytes;
 
@@ -406,14 +490,8 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
-	public String get(Integer index) {
-		assert index >= 0 && index < terms.length : "Term index out of range (" + index + ", numterms = " + terms.length + ")";
-		return terms[index];
-	}
-
-	@Override
 	public int numberOfTerms() {
-		return sortPositionPerId.length;
+		return numberOfTerms;
 	}
 
 	@Override
@@ -451,6 +529,10 @@ class TermsImplV3 extends Terms {
 	@Override
 	protected void setBlockBasedFile(boolean useBlockBasedTermsFile) {
 		this.useBlockBasedTermsFile = useBlockBasedTermsFile;
+	}
+
+	public void setMaxBlockSize(int maxBlockSize) {
+		this.maxBlockSize = maxBlockSize;
 	}
 
 }

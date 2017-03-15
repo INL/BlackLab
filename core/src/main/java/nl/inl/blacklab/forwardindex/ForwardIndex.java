@@ -87,11 +87,6 @@ public abstract class ForwardIndex {
 	 * NOTE: if offset and length are both -1, retrieves the whole content. This is used by the
 	 * retrieve(id) method.
 	 *
-	 * NOTE2: Mapped file IO on Windows has some issues that sometimes cause an OutOfMemoryError on
-	 * the FileChannel.map() call (which makes no sense, because memory mapping only uses address
-	 * space, it doesn't try to read the whole file). Possibly this could be solved by using 64-bit
-	 * Java, but we haven't tried. For now we just disable memory mapping on Windows.
-	 *
 	 * @param fiid
 	 *            forward index document id
 	 * @param start
@@ -270,10 +265,6 @@ public abstract class ForwardIndex {
 	}
 
 	protected abstract void setLargeTermsFileSupport(boolean b);
-
-	public void warmUp() {
-		getTerms().buildTermIndex();
-	}
 
 	/** @return the set of all forward index ids */
 	public abstract Set<Integer> idSet();

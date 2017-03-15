@@ -44,10 +44,15 @@ public class DataStreamXml extends DataStream {
 	}
 
 	@Override
+	public void outputProlog() {
+		print("<?xml version=\"1.0\" encoding=\"utf-8\" ?>").newline();
+	}
+
+	@Override
 	public DataStream startDocument(String rootEl) {
 		if (rootEl == null)
 			return this;
-		print("<?xml version=\"1.0\" encoding=\"utf-8\" ?>").newline();
+		outputProlog();
 		startOpenEl(rootEl);
 		return endOpenEl();
 	}
@@ -76,7 +81,17 @@ public class DataStreamXml extends DataStream {
 	}
 
 	@Override
+	public DataStream item(String name, Object value) {
+		return indent().startCompact().startItem(name).value(value).endItem().endCompact().newline();
+	}
+
+	@Override
 	public DataStream item(String name, int value) {
+		return indent().startCompact().startItem(name).value(value).endItem().endCompact().newline();
+	}
+
+	@Override
+	public DataStream item(String name, long value) {
 		return indent().startCompact().startItem(name).value(value).endItem().endCompact().newline();
 	}
 
@@ -116,7 +131,17 @@ public class DataStreamXml extends DataStream {
 	}
 
 	@Override
+	public DataStream entry(String key, Object value) {
+		return indent().startCompact().startEntry(key).value(value).endEntry().endCompact().newline();
+	}
+
+	@Override
 	public DataStream entry(String key, int value) {
+		return indent().startCompact().startEntry(key).value(value).endEntry().endCompact().newline();
+	}
+
+	@Override
+	public DataStream entry(String key, long value) {
 		return indent().startCompact().startEntry(key).value(value).endEntry().endCompact().newline();
 	}
 
@@ -141,44 +166,44 @@ public class DataStreamXml extends DataStream {
 	}
 
 	@Override
+	public DataStream attrEntry(String elementName, String attrName, String key, Object value) {
+		return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry().endCompact().newline();
+	}
+
+	@Override
+	public DataStream attrEntry(String elementName, String attrName, String key, long value) {
+		return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry().endCompact().newline();
+	}
+
+	@Override
 	public DataStream attrEntry(String elementName, String attrName, String key, String value) {
-		return indent().startCompact()
-			.startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-			.endCompact().newline();
+		return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry().endCompact().newline();
 	}
 
 	@Override
 	public DataStream attrEntry(String elementName, String attrName, String key, int value) {
-		return indent().startCompact()
-				.startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-				.endCompact().newline();
+		return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry().endCompact().newline();
 	}
 
 	@Override
 	public DataStream attrEntry(String elementName, String attrName, String key, double value) {
-		return indent().startCompact()
-				.startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-				.endCompact().newline();
+		return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry().endCompact().newline();
 	}
 
 	@Override
 	public DataStream attrEntry(String elementName, String attrName, String key, boolean value) {
-		return indent().startCompact()
-				.startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-				.endCompact().newline();
+		return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry().endCompact().newline();
 	}
 
 	@Override
-	public DataStream startAttrEntry(String elementName, String attrName,
-			String key) {
+	public DataStream startAttrEntry(String elementName, String attrName, String key) {
 		startOpenEl(elementName);
 		attr(attrName, key);
 		return endOpenEl();
 	}
 
 	@Override
-	public DataStream startAttrEntry(String elementName, String attrName,
-			int key) {
+	public DataStream startAttrEntry(String elementName, String attrName, int key) {
 		return startEntry(Integer.toString(key));
 	}
 

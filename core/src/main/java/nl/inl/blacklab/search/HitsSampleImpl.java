@@ -28,8 +28,10 @@ public class HitsSampleImpl extends HitsSample {
 
 	HitsSampleImpl(Hits hits, int number, long seed) {
 		super(hits.getSearcher(), number, seed);
-		if (number < 0 || number > hits.size())
-			throw new IllegalArgumentException("ratio must be in the range 0-1");
+		if (number < 0)
+			throw new IllegalArgumentException("Negative sample number specified");
+		if (number > hits.size())
+			numberOfHitsToSelect = number = hits.size(); // default to all hits in this case
 
 		// Determine how many hits there are, and how many to choose
 		ratioOfHitsToSelect = (float)number / hits.size();

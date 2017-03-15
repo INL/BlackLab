@@ -54,7 +54,7 @@ Here’s what the various parts of this URL mean:
 	</tr>
 	<tr>
 		<td>server      </td>
-		<td>the server name, e.g. “blacklab.inl.nl”</td>
+		<td>the server name, e.g. “blacklab.ivdnt.org”</td>
 	</tr>
 	<tr>
 		<td>webservice  </td>
@@ -70,7 +70,7 @@ Here’s what the various parts of this URL mean:
 	</tr>
 	<tr>
 		<td>pid         </td>
-		<td>persistent identifier for the document. This refers to a metadata field that must be configured per corpus (in the index metadata JSON file; see documentation about indexing with BlackLab). Any field that uniquely identifies the document and won’t change in the future will do. You can retrieve documents with this pid, and result sets will use it to refer to the corresponding documents.><br/><br/><b>NOTE:</b> BlackLab Server will use the Lucene document id instead of a true persistent identifier if your corpus has no persistent identifier configured, but this is not recommended: Lucene document ids can change if you re-index or compact the index, so bookmarked URLs may not always return to the same information.</td>
+		<td>persistent identifier for the document. This refers to a metadata field that must be configured per corpus (in the index metadata JSON file; see documentation about indexing with BlackLab). Any field that uniquely identifies the document and won’t change in the future will do. You can retrieve documents with this pid, and result sets will use it to refer to the corresponding documents.><br/><br/><b>NOTE:</b> BlackLab Server will use the Lucene document id instead of a true persistent identifier if your corpus has no persistent identifier configured (using "pidField" in the index template file - see [Indexing with BlackLab](indexing-with-blacklab.html)), but this is not recommended: Lucene document ids can change if you re-index or compact the index, so bookmarked URLs may not always return to the same information.</td>
 	</tr>
 	<tr>
 		<td>parameters  </td>
@@ -123,6 +123,10 @@ Below is an overview of parameters that can be passed to the various resources. 
 	<tr>
 		<td>pattlang </td>
 		<td>Query language for the patt parameter. (default: corpusql, Corpus Query Language. Also supported: contextql, Contextual Query Language (only very basic support though)) and lucene (Lucene Query Language).</td>
+	</tr>
+	<tr>
+		<td>pattgapdata </td>
+		<td>(Corpus Query Language only) Data (TSV, tab-separated values) to put in gaps in query. You may leave 'gaps' in the double-quoted strings in your query that can be filled in from tabular data. The gaps should be denoted by @@, e.g. [lemma="@@"] or [word="@@cat"]. For each row in your TSV data, will fill in the row data in the gaps. The queries resulting from all the rows are combined using OR. For example, if your query is "The" "@@" "@@" and your TSV data is "white\tcat\nblack\tdog", this will execute the query ("The" "white" "cat") | ("The" "black" "dog"). Please note that if you want to pass a large amount of data, you should use a POST request as the amount of data you can pass in a GET request is limited (with opinions on a safe maximum size varying between 255 and 2048 bytes). Large amounts of data </td>
 	</tr>
 	<tr>
 		<td>pattfield </td>
@@ -277,9 +281,8 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 	</tr>
 	<tr>
 		<td>context</td>
-		<td>More generic context words expression, giving the user more control at the cost of a bit of speed. Examples:
-		    context:word:s:H1-1;E1-1 (first (H1-1) and last (E1-1) matched word), context:word:s:H2 (all but the first matched word), context:word:s:R2-3 (second and third 
-		    word to the right of the match), context:word:s:L1 (left context, starting from first word to the left of the hit, i.e. the same as left:word:s)</td>
+		<td>More generic context words expression, giving the user more control at the cost of a bit of speed. Example:
+		    context:word:s:H1-2 (first two matched words). See below for a complete specification.</td>
 	</tr>
 	<tr>
 		<td>wordleft / wordright </td>
@@ -307,6 +310,19 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 	</tr>
 </table>
 
+### Grouping/sorting on context words
+
+Criteria like "context:word:s:H1-2" (first two matched words) allow fine control over what to group or sort on.
+
+Like with criteria such as left, right or hit, you can vary the property to group or sort on (e.g. word/lemma/pos, or other options depending on your data set). You may specify whether to sort/group case- and accent-sensitively (s) or insensitively (i).
+
+The final parameter to a "context:" criterium is the specification. This consists of one or more parts separated by a semicolon. Each part consists of an "anchor" and number(s) to indicate a stretch of words. The anchor can be H (hit text), E (hit text, but counted from the end of the hit), L (words to the left of the hit) or R (words to the right of the hit). The number or numbers after the anchor specify what words you want from this part. A single number indicates a single word; 1 is the first word, 2 the second word, etc. So "E2" means "the second-to-last word of the hit". Two numbers separated by a dash indicate a stretch of words. So "H1-2" means "the first two words of the hit", and "E2-1" means "the second-to-last word followed by the last word". A single number followed by a dash means "as much as possible from this part, starting from this word". So "H2-" means "the entire hit text except the first word".
+
+A few more examples:
+- context:word:s:H1;E1 (the first and last matched word)
+- context:word:s:R2-3 (second and third word to the right of the match)
+- context:word:s:L1- (left context, starting from first word to the left of the hit, i.e. the same as "left:word:s". How many words of context are used depends on the 'wordsaroundhit' parameter, which defaults to 5)
+
 <a id="examples"></a>
 
 ## Examples
@@ -321,39 +337,39 @@ For examples of using BlackLab Server from (many) different programming language
 
 Information about the webservice; list of available indices
 
-		http://blacklab.inl.nl/blacklab-server/ (trailing slash optional)
+		http://blacklab.ivdnt.org/blacklab-server/ (trailing slash optional)
 
 Information about the “opensonar” corpus (structure, fields, human-readable names)
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/ (trailing slash optional)
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/ (trailing slash optional)
 
 All occurrences of “test” in the “opensonar” corpus (CorpusQL query)
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/hits?patt="test"
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/hits?patt="test"
 
 All documents having “guide” in the title and “test” in the contents, sorted by author and date, resultats 61-90
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs?filter=title:guide&patt="test"& sort=field:author,field:date&first=61&number=30
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs?filter=title:guide&patt="test"& sort=field:author,field:date&first=61&number=30
 
 Occurrences of “test”, grouped by the word left of each hit
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/hits?patt="test"&group=wordleft
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/hits?patt="test"&group=wordleft
 
 Documents containing “test”, grouped by author
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs?patt="test"&group=field:author
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs?patt="test"&group=field:author
 
 Metadata of document with specific PID
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802
 
 The entire original document
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802/contents
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents
 
 The entire document, with occurrences of “test” highlighted (with <hl/\> tags)
 
-		http://blacklab.inl.nl/blacklab-server/opensonar/docs/0345391802/contents?patt="test"
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents?patt="test"
 
 ### Output
 
@@ -488,47 +504,31 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	    // ---------------------------------------------------------------
 	    "performance": {
 	
-	        // Settings to make sure running operations (fetching results, 
-	        // sorting, grouping) behave. Note that a search job may consist
-	        // of several of these operations. NOTE: EXPERIMENTAL!
-	        "operations": {
-	        
-	            // An operation that takes really
-	            // long should be interrupted. After how many seconds we should interrupt
-	            // an operation? (default: 240 == 4 mins)
-	            // (Note that a search job may consist of several operations, but long search
-	            // jobs should be detected and aborted eventually as well - this is just an 
-	            // extra safeguard for stopping out of control searches earlier)
-	            "interruptAfterSec": 240
-	            
-	            // Threads that run for a while should sleep occasionally to give
-	            // other threads a chance as well. If they didn&#39;t, they could end up
-	            // hogging the CPU. We don&#39;t start this sleeping behaviour immediately,
-	            // because threads that finish quickly don&#39;t pose much of a problem.
-	            // After how many seconds should we sleep occasionally? (default: 5)
-	            "startSleepingAfterSec": 5,
+	        // Settings for controlling server load
+	        "serverLoad": {
 	
-	            // The longer a search job is running, the longer we sleep. This
-	            // determines how fast the part of the cycle the sleep takes will
-	            // increase per second. The higher you set this, the worse long
-	            // jobs will run, but the nicer they will play with other jobs.
-	            // (default: 0.004 == 0.4% increase/s)
-	            "sleepPartIncreaseSpeed": 0.004,
-	        
-	            // This determines the maximum part of the cycle we&#39;ll devote to
-	            // sleep. The higher you set this, the worse (REALLY) long jobs 
-	            // will run, but the nicer they will play with other jobs
-	            // (default: 0.5 == 50%)
-	            "maxSleepPart": 0.5,
-	        
-	            // When sleeping occasionally, we think in "cycles": a period of activity
-	            // followed by a period of sleeping. Longer cycles are more efficient
-	            // because of less thread switching.
-	            // How many ms should 1 wake/sleep cycle take? (default: 1000)
-	            "wakeSleepCycleMs": 1000,
-	        
+	            // Maximum number of concurrent searches.
+	            // Should be set no higher than the number of cores in the machine. 
+	            "maxConcurrentSearches": 4,
+	
+	            // Maximum number of paused searched.
+	            // Pausing too many searches will just fill up memory, so don't
+	            // set this too high. 
+	            "maxPausedSearches": 10,
+	
+	            // Long-running counts take up a lot of CPU and memory. If a client hasn't
+	            // checked the status of a count, we'd like to pause it and eventually abort
+	            // it so we don't waste resources on something nobody's interested in anymore.
+	            // This setting controls after how many seconds such an "abandoned" count is
+	            // paused. The client might come back to it, so we don't abort it right away.
+	            "abandonedCountPauseTimeSec": 10,
+	
+	            // Similar to the previous setting, this setting controls after how many seconds
+	            // an "abandoned" count is aborted.
+	            "abandonedCountAbortTimeSec": 600
+	
 	        },
-	
+    
 	        // Settings for job caching.
 	        "cache": {
 	            // How many search jobs will we cache at most? (or -1 for 
@@ -703,7 +703,8 @@ Operations that do not return status or error codes and messages (which is all s
 	<tr>
 		<td>400 Bad Request </td>
 		<td>ERROR_IN_GROUP_VALUE </td>
-		<td>Parameter &#39;viewgroup&#39; has an illegal value: GROUPID</td>
+		<td>Parameter &#39;viewgroup&#39; has an illegal value: GROUPID /<br/>
+		    Parameter 'viewgroup' specified, but required 'group' parameter is missing.</td>
 	</tr>
 	<tr>
 		<td>400 Bad Request </td>

@@ -166,6 +166,10 @@ public abstract class DataStream {
 		return this;
 	}
 
+	public void outputProlog() {
+		// subclasses may override
+	}
+
 	public abstract DataStream startDocument(String rootEl);
 
 	public abstract DataStream endDocument(String rootEl);
@@ -321,6 +325,7 @@ public abstract class DataStream {
 						.endEntry()
 						.entry("test", "bla")
 						.attrEntry("test", "attr", "key", "value")
+						.indent().startCompact().startAttrEntry("test", "attr", "key2").value("value2").endAttrEntry().endCompact().newline()
 					.endMap()
 				.endEntry()
 			.endDocument("test");

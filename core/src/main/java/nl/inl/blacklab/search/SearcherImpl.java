@@ -28,7 +28,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
@@ -61,7 +62,6 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.util.ExUtil;
-import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
 
@@ -78,7 +78,7 @@ import nl.inl.util.VersionFile;
  */
 public class SearcherImpl extends Searcher implements Closeable {
 
-	protected static final Logger logger = Logger.getLogger(SearcherImpl.class);
+	protected static final Logger logger = LogManager.getLogger(SearcherImpl.class);
 
 	/**
 	 * The Lucene index reader
@@ -100,9 +100,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 	/** The index writer. Only valid in indexMode. */
 	private IndexWriter indexWriter = null;
-
-	/** Thread that automatically warms up the forward indices, if enabled. */
-	private Thread warmUpForwardIndicesThread;
 
 	/**
 	 * Open an index.
@@ -129,9 +126,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 				}
 			}
 		}
-
-		// If we didn't provide log4j.properties on the classpath, initialise it using default settings.
-		LogUtil.initLog4jIfNotAlready();
 
 		logger.debug("Constructing Searcher...");
 
@@ -274,22 +268,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 			if (indexWriter != null) {
 				indexWriter.commit();
 				indexWriter.close();
-			}
-
-			// See if the forward index warmup thread is running, and if so, stop it
-			if (warmUpForwardIndicesThread != null && warmUpForwardIndicesThread.isAlive()) {
-				warmUpForwardIndicesThread.interrupt();
-
-				// Wait for a maximum of a second for the thread to close down gracefully
-				int i = 0;
-				while (warmUpForwardIndicesThread.isAlive() && i < 10) {
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException e) {
-						// OK
-					}
-					i++;
-				}
 			}
 
 			super.close();
@@ -473,18 +451,6 @@ public class SearcherImpl extends Searcher implements Closeable {
 					getForwardIndex(fieldProp);
 				}
 			}
-		}
-
-		if (!indexMode) {
-			logger.debug("  Starting thread to build term indices for forward indices...");
-			// Start a background thread to build term indices
-			warmUpForwardIndicesThread = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					warmUpForwardIndices(); // speed up first call to Terms.indexOf()
-				}
-			});
-			warmUpForwardIndicesThread.start();
 		}
 	}
 

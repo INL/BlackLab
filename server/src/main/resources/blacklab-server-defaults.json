@@ -122,94 +122,31 @@
     // ---------------------------------------------------------------
     "performance": {
     
-    	// NOTE: the serverLoadStates part is a PROPOSAL, and is not currently
-    	//       read from the configuration file. Current load management is a
-    	//       simple scheme that orders searches by "worthiness", runs only
-    	//       the top X ones, pauses the Y next ones, and aborts the rest. 
-    	// 
-        // Specifies how the server will behave under different loads.
-        //
-        // Specify the different server loads and their behaviours from 
-        // heaviest to lightest load (because load states are checked in order,
-        // so the first matching state is the one we choose).
-        //
-        // The values for the options are made up of simple clauses, shown below.
-        // Clauses may be combined using "or".
-        // 
-        // always:      matches all searches
-        // never:       matches no searches
-        // age <n>:     matches searches that were started at least n seconds ago
-        // ignored <n>: matches searches that have not been referenced (except by the
-        //              cache) for at least n seconds.
-        // paused <n>:  matches searches that have been paused for at least n seconds
-        // cached <n>:  matches finished searches for which the results have been cached 
-        //              for at least n seconds.
-        //
-        // (the default of 7 == HEAVY seems to be a good setup for an 8-core machine)
-        //
-        // If you change these rules, be careful not to create situations that 
-        // are irreversible (like searches getting paused but never resumed), or 
-        // 'oscillating' situations (searches getting paused, resumed, paused, resumed, 
-        // etc.)!
-        "serverLoadStates": [
+    	// Settings for controlling server load
+    	"serverLoad": {
+    	
+    		// Maximum number of concurrent searches.
+    		// Should be set no higher than the number of cores in the machine. 
+    		"maxConcurrentSearches": 4,
+    		
+    		// Maximum number of paused searched.
+    		// Pausing too many searches will just fill up memory, so don't
+    		// set this too high. 
+            "maxPausedSearches": 10,
             
-            {
-                "name": "HEAVY",
-                "minSearches": 7, // at least 7 concurrent queries
-                
-                // How should we behave in this state?
-                "discardResults":   "cached 450",  // When to remove search results from the cache
-                "lowerPriority":    "always",      // When to lower priority of a query
-                "raisePriority":    "never",       // When to raise priority of a query
-                "pauseCount":       "always",      // When to pause a count
-                "pauseSearch":      "age 60",      // When to pause a search
-                "resumeSearch":     "never",       // Resume searches or not?
-                "abortCount":       "ignored 60 or age 300",  // When to abort a count
-                "abortSearch":      "ignored 300 or age 900", // When to abort a search
-                "queueNewSearches": "always",      // Queue new searches?
-                "refuseSearch":     "always"       // If we cannot lower the load, refuse new searches
-            },
+            // Long-running counts take up a lot of CPU and memory. If a client hasn't
+            // checked the status of a count, we'd like to pause it and eventually abort
+            // it so we don't waste resources on something nobody's interested in anymore.
+            // This setting controls after how many seconds such an "abandoned" count is
+            // paused. The client might come back to it, so we don't abort it right away.
+            "abandonedCountPauseTimeSec": 10,
             
-            {
-                "name": "MEDIUM",
-                "minSearches": 5, // at least 5 concurrent queries
-                
-                // How should we behave in this state?
-                "discardResults":   "cached 900",  // When to remove search results from the cache
-                "lowerPriority":    "age 60",      // When to lower priority of a query
-                "raisePriority":    "never",       // When to raise priority of a query
-                "pauseCount":       "age 60",      // When to pause a count
-                "pauseSearch":      "age 300",     // When to pause a search
-                "resumeSearch":     "never",       // Resume searches or not?
-                "abortCount":       "ignored 300", // When to abort a count
-                "abortSearch":      "ignored 900", // When to abort a search
-                "queueNewSearches": "never",       // Queue new searches?
-                "refuseSearch":     "never"        // Refuse new searches if we cannot lower the load?
-            },
-            
-            // 0+ concurrent searches: light load
-            {
-                "name": "LIGHT",
-            	// (no minSearches setting here because it's the last state,
-            	//  so we're in this state whenever we're not in the other states)
-                
-                // How should we behave in this state? (NOTE: these are the default values for these options)
-                "discardResults":   "cached 1800", // When to remove search results from the cache
-                "lowerPriority":    "never",       // When to lower priority of a query
-                "raisePriority":    "always",      // When to raise priority of a query
-                "pauseCount":       "never",       // When to pause a count
-                "pauseSearch":      "never",       // When to pause a search
-                "resumeSearch":     "paused 30",   // Resume searches or not?
-                                                   // NOTE: we check that it's been paused for a while to
-                                                   // avoid 'oscillation'
-                "abortCount":       "never",       // When to abort a count
-                "abortSearch":      "never",       // When to abort a search
-                "queueNewSearches": "never",       // Queue new searches?
-                "refuseSearch":     "never"        // Refuse new searches if we cannot lower the load?
-            }
-            
-        ],
-
+            // Similar to the previous setting, this setting controls after how many seconds
+            // an "abandoned" count is aborted.
+            "abandonedCountAbortTimeSec": 600
+    		
+    	},
+    
         // Settings for job caching.
         "cache": {
             // How many search jobs will we cache at most? (or -1 for no limit)

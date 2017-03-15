@@ -1,6 +1,6 @@
 # BlackLab newsletter
 
-**NOTE:** if you want to receive an email alert for this very, very occasional newsletter, drop me a line at [jan.niestadt@inl.nl](mailto:jan.niestadt@inl.nl).
+**NOTE:** if you want to receive an email alert for this very, very occasional newsletter, drop me a line at [jan.niestadt@ivdnt.org](mailto:jan.niestadt@ivdnt.org).
 
 <hr/>
 
@@ -82,7 +82,7 @@ Examples of queries that are rewritten to much faster alternatives include: quer
 With these new optimizations, BlackLab seems to be roughly comparable in performance to the Corpus WorkBench, with each system beating the other on some queries (as shown in a paper to be published in the book "CLARIN in the Low Countries"). We have every intention of pulling ahead, though. :-)
 
 
-Thanks for reading! Questions and feedback are very welcome ([jan.niestadt@inl.nl](mailto:jan.niestadt@inl.nl)).
+Thanks for reading! Questions and feedback are very welcome ([jan.niestadt@ivdnt.org](mailto:jan.niestadt@ivdnt.org)).
 Until the next newsletter! (I'll try not to wait another three years...)
 
 
@@ -151,4 +151,4 @@ Past, present and future
 
 Want to know about every recent improvement in BlackLab? Check out the [changelog](/Changelog "changelog") page. Or, if you'd rather look to the future, the [roadmap](/Roadmap "roadmap") gives a good overview of where we're headed.
 
-If you have any questions about BlackLab, or suggestions of course, don't hesitate to contact me at **jan.niestadt@inl.nl**. Also, I will be at eLex 2013 in Tallinn in October, so if you're going there as well, we can meet to talk shop!
+If you have any questions about BlackLab, or suggestions of course, don't hesitate to contact me at **jan.niestadt@ivdnt.org**. Also, I will be at eLex 2013 in Tallinn in October, so if you're going there as well, we can meet to talk shop!

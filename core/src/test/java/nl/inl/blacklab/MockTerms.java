@@ -1,7 +1,6 @@
 package nl.inl.blacklab;
 
 import java.io.File;
-
 import nl.inl.blacklab.forwardindex.Terms;
 
 public class MockTerms extends Terms {

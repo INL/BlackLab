@@ -44,6 +44,7 @@ public class TestTermsV3 {
 
 		// Store some terms
 		t = new TermsImplV3(true, Collator.getInstance(new Locale("en", "GB")), null, true);
+		((TermsImplV3)t).setMaxBlockSize(10);
 		for (int i = 0; i < str.length; i++) {
 			t.indexOf(str[i]);
 		}

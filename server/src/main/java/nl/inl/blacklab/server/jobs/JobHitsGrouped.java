@@ -63,6 +63,8 @@ public class JobHitsGrouped extends Job {
 		hits = ((JobWithHits)inputJob).getHits();
 		setPriorityInternal();
 		HitGroupSettings groupSett = jobDesc.getHitGroupSettings();
+		if (groupSett == null)
+			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "No group property specified.");
 		HitProperty groupProp = null;
 		groupProp = HitProperty.deserialize(hits, groupSett.groupBy());
 		if (groupProp == null)

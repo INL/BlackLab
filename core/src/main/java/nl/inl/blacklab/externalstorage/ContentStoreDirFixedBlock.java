@@ -33,7 +33,8 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.iterator.MutableIntIterator;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
@@ -55,7 +56,7 @@ import nl.inl.util.SimpleResourcePool;
  * Free blocks will be re-used to save space.
  */
 public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
-	private static final Logger logger = Logger.getLogger(ContentStoreDirFixedBlock.class);
+	private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
 
 	/** The type of content store. Written to version file and detected when opening. */
 	private static final String CONTENT_STORE_TYPE_NAME = "fixedblock";

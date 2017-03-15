@@ -30,7 +30,8 @@ public class RequestHandlerServerInfo extends RequestHandler {
 		Collection<String> indices = indexMan.getAllAvailableIndices(user.getUserId());
 
 		ds.startMap()
-			.entry("blacklabBuildTime", Searcher.getBlackLabBuildTime());
+			.entry("blacklabBuildTime", Searcher.getBlackLabBuildTime())
+			.entry("blacklabVersion", Searcher.getBlackLabVersion());
 
 		ds.startEntry("indices").startMap();
 		//DataObjectMapAttribute doIndices = new DataObjectMapAttribute("index", "name");

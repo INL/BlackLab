@@ -5,7 +5,8 @@ import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.Searcher;
@@ -19,7 +20,7 @@ import nl.inl.util.ThreadPriority.Level;
 
 public abstract class Job implements Comparable<Job>, Prioritizable {
 
-	protected static final Logger logger = Logger.getLogger(Job.class);
+	protected static final Logger logger = LogManager.getLogger(Job.class);
 
 	private static final double ALMOST_ZERO = 0.0001;
 
@@ -242,7 +243,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		// Both jobs are old.
 		// Are they searching or counting?
 		boolean count1 = this instanceof JobHitsTotal || this instanceof JobDocsTotal;
-		boolean count2 = this instanceof JobHitsTotal || this instanceof JobDocsTotal;
+		boolean count2 = o instanceof JobHitsTotal || o instanceof JobDocsTotal;
 		if (count1 != count2) {
 			// One is counting, the other is searching: search is worthiest.
 			return count2 ? WORTHY1 : WORTHY2;
@@ -593,6 +594,13 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		if (refsToJob == REFS_INVALID)
 			throw new RuntimeException("Cannot decrement refs, job was already cleaned up!");
 		refsToJob--;
+		if (refsToJob < 0) {
+			// Because of a bug in the reference counting mechanism, this sometimes happens
+			// and will lead to the "Cannot decrement refs, job was already cleaned up!" error.
+			// For now, we reset the refsToJob to -1 to prevent this error.
+			logger.error("Job has negative reference count: " + this);
+			refsToJob = -1;
+		}
 		if (refsToJob == 1) {
 			// Only in cache; set the last accessed time so we
 			// know for how long it's been ignored.
@@ -623,6 +631,18 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		if (finished())
 			return (System.currentTimeMillis() - lastAccessed) / 1000.0;
 		return 0;
+	}
+
+	/**
+	 * Return how long it's been since this search was accessed.
+	 *
+	 * A search is accessed whenever a client requests results, or
+	 * a status update for a running search.
+	 *
+	 * @return the time in seconds since the last access
+	 */
+	public double timeSinceLastAccess() {
+		return (System.currentTimeMillis() - lastAccessed) / 1000.0;
 	}
 
 	/**

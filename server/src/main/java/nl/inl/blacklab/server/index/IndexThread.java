@@ -2,13 +2,14 @@ package nl.inl.blacklab.server.index;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A (background) thread for indexing.
  */
 final public class IndexThread extends Thread implements UncaughtExceptionHandler {
-	protected static final Logger logger = Logger.getLogger(IndexThread.class);
+	protected static final Logger logger = LogManager.getLogger(IndexThread.class);
 
 	/** If search execution failed, this is the exception that was thrown */
 	Throwable thrownException = null;

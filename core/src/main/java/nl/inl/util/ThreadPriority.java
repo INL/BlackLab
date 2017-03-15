@@ -1,6 +1,7 @@
 package nl.inl.util;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.Prioritizable;
 
@@ -22,7 +23,7 @@ public class ThreadPriority implements Prioritizable {
 		RUNNING
 	}
 
-	protected static final Logger logger = Logger.getLogger(ThreadPriority.class);
+	protected static final Logger logger = LogManager.getLogger(ThreadPriority.class);
 
 	/** Do we want to enable this functionality? (default: false) */
 	private static boolean enabled = false;

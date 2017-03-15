@@ -4,7 +4,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -24,7 +25,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 
 public class BlsUtils {
-	private static final Logger logger = Logger.getLogger(BlsUtils.class);
+	private static final Logger logger = LogManager.getLogger(BlsUtils.class);
 
 	public static Query parseFilter(Searcher searcher, String filter,
 			String filterLang) throws BlsException {

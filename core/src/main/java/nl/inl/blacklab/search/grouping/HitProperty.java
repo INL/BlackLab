@@ -20,7 +20,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.Hits;
 
@@ -28,7 +29,7 @@ import nl.inl.blacklab.search.Hits;
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
 public abstract class HitProperty implements Comparator<Object> {
-	protected static final Logger logger = Logger.getLogger(HitProperty.class);
+	protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
 	/** The Hits object we're looking at */
 	protected Hits hits;

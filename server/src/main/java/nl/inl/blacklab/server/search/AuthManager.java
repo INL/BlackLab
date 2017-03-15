@@ -6,13 +6,14 @@ import java.util.Map;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.jobs.User;
 
 public class AuthManager {
 
-	private static final Logger logger = Logger.getLogger(AuthManager.class);
+	private static final Logger logger = LogManager.getLogger(AuthManager.class);
 
 	/** The authentication object, giving information about the currently logged-in user
         (or at least a session id) */

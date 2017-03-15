@@ -9,7 +9,8 @@ import java.util.Map.Entry;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.perdocument.DocCount;
@@ -37,7 +38,7 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * appropriate subclass.
  */
 public abstract class RequestHandler {
-	static final Logger logger = Logger.getLogger(RequestHandler.class);
+	static final Logger logger = LogManager.getLogger(RequestHandler.class);
 
 	public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
@@ -213,6 +214,9 @@ public abstract class RequestHandler {
 								String viewgroup = request.getParameter("viewgroup");
 								if (viewgroup == null || viewgroup.length() == 0)
 									handlerName += "-grouped"; // list of groups instead of contents
+							} else if (request.getParameter("viewgroup") != null) {
+								// "viewgroup" parameter without "group" parameter; error.
+								return errorObj.badRequest("ERROR_IN_GROUP_VALUE", "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
 							}
 						}
 
@@ -242,7 +246,8 @@ public abstract class RequestHandler {
 						return errorObj.internalError(e, debugMode, 6);
 					}
 				}
-			} else {
+			}
+			if (requestHandler == null) {
 				return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode, 10);
 			}
 		}

@@ -18,7 +18,8 @@ package nl.inl.blacklab.perdocument;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
@@ -29,7 +30,7 @@ import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
  * ...)
  */
 public abstract class DocProperty {
-	protected static final Logger logger = Logger.getLogger(DocProperty.class);
+	protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
 	/** Reverse comparison result or not? */
 	protected boolean reverse = false;

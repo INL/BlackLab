@@ -2,13 +2,14 @@ package nl.inl.blacklab.server.jobs;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A (background) thread the search is executed in.
  */
 final class SearchThread extends Thread implements UncaughtExceptionHandler {
-	protected static final Logger logger = Logger.getLogger(SearchThread.class);
+	protected static final Logger logger = LogManager.getLogger(SearchThread.class);
 
 	/** The job to execute */
 	private Job search;

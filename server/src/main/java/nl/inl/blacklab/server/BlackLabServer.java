@@ -17,8 +17,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -31,10 +31,9 @@ import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.util.Json;
-import nl.inl.util.LogUtil;
 
 public class BlackLabServer extends HttpServlet {
-	private static final Logger logger = Logger.getLogger(BlackLabServer.class);
+	private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
 
 	static final Charset CONFIG_ENCODING = Charset.forName("utf-8");
 
@@ -46,7 +45,7 @@ public class BlackLabServer extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		// Default init if no log4j.properties found
-		LogUtil.initLog4jIfNotAlready(Level.DEBUG);
+		//LogUtil.initLog4jIfNotAlready(Level.DEBUG);
 
 		logger.info("Starting BlackLab Server...");
 
@@ -77,11 +76,13 @@ public class BlackLabServer extends HttpServlet {
 				throw new RuntimeException(e);
 			}
 		} else {
-			File configFileInEtc = new File("/etc/blacklab", configFileName);
-			if (configFileInEtc.exists()) {
+			configFile = new File("/etc/blacklab", configFileName);
+			if (!configFile.exists())
+				configFile = new File("/vol1/etc/blacklab", configFileName); // UGLY, will fix later
+			if (configFile.exists()) {
 				try {
-					logger.debug("Reading configuration file " + configFileInEtc);
-					is = new BufferedInputStream(new FileInputStream(configFileInEtc));
+					logger.debug("Reading configuration file " + configFile);
+					is = new BufferedInputStream(new FileInputStream(configFile));
 				} catch (FileNotFoundException e) {
 					throw new RuntimeException(e);
 				}
@@ -169,25 +170,30 @@ public class BlackLabServer extends HttpServlet {
 		PrintWriter out = new PrintWriter(buf);
 		DataStream ds = DataStream.create(outputType, out, prettyPrint, callbackFunction);
 		ds.startDocument(rootEl);
+		StringWriter errorBuf = new StringWriter();
+		PrintWriter errorOut = new PrintWriter(errorBuf);
+		DataStream es = DataStream.create(outputType, errorOut, prettyPrint, callbackFunction);
+		es.outputProlog();
+		int errorBufLengthBefore = errorBuf.getBuffer().length();
 		int httpCode;
 		if (isJsonp && !callbackFunction.matches("[_a-zA-Z][_a-zA-Z0-9]+")) {
 			// Illegal JSONP callback name
-			httpCode = Response.badRequest(ds, "JSONP_ILLEGAL_CALLBACK", "Illegal JSONP callback function name. Must be a valid Javascript name.");
+			httpCode = Response.badRequest(es, "JSONP_ILLEGAL_CALLBACK", "Illegal JSONP callback function name. Must be a valid Javascript name.");
 			callbackFunction = "";
 		} else {
 			try {
 				httpCode = requestHandler.handle(ds);
 			} catch (InternalServerError e) {
 				String msg = ServletUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
-				httpCode = Response.error(ds, e.getBlsErrorCode(), msg, e.getHttpStatusCode());
+				httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode());
 			} catch (BlsException e) {
-				httpCode = Response.error(ds, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+				httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
 			} catch (InterruptedException e) {
-				httpCode = Response.internalError(ds, e, debugMode, 7);
+				httpCode = Response.internalError(es, e, debugMode, 7);
 			} catch (RegexpTooLargeException e) {
-				httpCode = Response.badRequest(ds, "REGEXP_TOO_LARGE", e.getMessage());
+				httpCode = Response.badRequest(es, "REGEXP_TOO_LARGE", e.getMessage());
 			} catch (RuntimeException e) {
-				httpCode = Response.internalError(ds, e, debugMode, 32);
+				httpCode = Response.internalError(es, e, debugMode, 32);
 			}
 		}
 		ds.endDocument(rootEl);
@@ -204,7 +210,9 @@ public class BlackLabServer extends HttpServlet {
 		// === Write the response that was captured in buf
 		try {
 			Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
-			realOut.write(buf.toString());
+			boolean errorOccurred = errorBuf.getBuffer().length() > errorBufLengthBefore;
+			StringWriter writeWhat = errorOccurred ? errorBuf : buf;
+			realOut.write(writeWhat.toString());
 			realOut.flush();
 		} catch (IOException e) {
 			// Client cancelled the request midway through.
@@ -230,7 +238,7 @@ public class BlackLabServer extends HttpServlet {
 	@Override
 	public String getServletInfo() {
 		return "Provides corpus search services on one or more BlackLab indices.\n"
-				+ "Source available at http://github.com/INL/\n"
+				+ "Source available at http://github.com/INL/BlackLab\n"
 				+ "(C) 2013,2014-... Instituut voor Nederlandse Lexicologie.\n"
 				+ "Licensed under the Apache License.\n";
 	}

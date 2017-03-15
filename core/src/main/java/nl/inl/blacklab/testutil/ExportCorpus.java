@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import org.apache.log4j.Level;
+import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
@@ -17,7 +17,7 @@ import nl.inl.util.LogUtil;
 public class ExportCorpus {
 
 	public static void main(String[] args) throws IOException {
-		LogUtil.initLog4jIfNotAlready(Level.DEBUG);
+		LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
 		if (args.length != 2) {
 			System.out.println("Usage: ExportCorpus <indexDir> <exportDir>");

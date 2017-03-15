@@ -337,6 +337,8 @@ public class QueryTool {
 	 */
 	public static void main(String[] args) throws IOException {
 
+		LogUtil.setupBasicLoggingConfig();
+
 		// Parse command line
 		File indexDir = null;
 		File inputFile = null;
@@ -380,7 +382,6 @@ public class QueryTool {
 			return;
 		}
 
-		LogUtil.initLog4jIfNotAlready();
 		run(indexDir, inputFile, encoding);
 	}
 

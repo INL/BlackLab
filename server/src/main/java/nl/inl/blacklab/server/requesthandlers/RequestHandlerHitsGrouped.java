@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.grouping.HitGroup;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -63,6 +64,14 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 				.entry("windowHasPrevious", first > 0)
 				.entry("windowHasNext", first + number < groups.numberOfGroups())
 				.entry("largestGroupSize", groups.getLargestGroupSize());
+			if (hits instanceof HitsSample) {
+				HitsSample sample = ((HitsSample)hits);
+				ds.entry("sampleSeed", sample.seed());
+				if (sample.exactNumberGiven())
+					ds.entry("sampleSize", sample.numberOfHitsToSelect());
+				else
+					ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
+			}
 			ds.endMap().endEntry();
 
 			// The list of groups found

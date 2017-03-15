@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
 	http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -8,7 +7,7 @@
 		<groupId>nl.inl.blacklab</groupId>
 		<artifactId>blacklab-all</artifactId>
 		<version>1.6.0-SNAPSHOT</version>
-    </parent>
+	</parent>
 	<artifactId>blacklab-server</artifactId>
 	<packaging>war</packaging>
 
@@ -129,7 +128,8 @@
 				</dependencies>
 			</plugin>
 
-			<!-- Generates a "build number" (just a timestamp in our case) to put in the manifest -->
+			<!-- Generates a "build number" (just a timestamp in our case) to put 
+				in the manifest -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>buildnumber-maven-plugin</artifactId>
@@ -240,52 +240,15 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties> 
+	</properties>
 
 	<dependencies>
 
-		<!-- 
 		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-analyzers-common</artifactId>
-			<version>4.2.1</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-core</artifactId>
-			<version>4.2.1</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-highlighter</artifactId>
-			<version>4.2.1</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-queries</artifactId>
-			<version>4.2.1</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-queryparser</artifactId>
-			<version>4.2.1</version>
-			<scope>compile</scope>
-		</dependency>
-		 -->
-
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>1.2.17</version>
-			<scope>compile</scope>
+		    <groupId>org.apache.logging.log4j</groupId>
+		    <artifactId>log4j-core</artifactId>
+		    <version>2.8</version>
+			<!-- <scope>compile</scope> -->
 			<exclusions>
 				<exclusion>
 					<groupId>com.sun.jmx</groupId>
@@ -311,6 +274,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-web</artifactId>
+			<version>2.8.1</version>
+		</dependency>
+
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
@@ -318,12 +287,12 @@
 		</dependency>
 
 		<dependency>
-		    <groupId>org.mockito</groupId>
-		    <artifactId>mockito-core</artifactId>
-		    <version>2.1.0-beta.121</version>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>2.7.14</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
@@ -341,22 +310,31 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.4</version>
-			<scope>compile</scope>
+			<version>2.5</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
-			<version>1.9</version>
-			<scope>compile</scope>
+			<version>1.13</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>commons-fileupload</groupId>
 			<artifactId>commons-fileupload</artifactId>
-			<version>1.3.1</version>
-			<scope>compile</scope>
+			<version>1.3.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.4</version>
 		</dependency>
 
 	</dependencies>
@@ -379,8 +357,7 @@
 							<report>plugin-management</report>
 							<report>plugins</report>
 							<report>project-team</report>
-							<!-- <report>mailing-list</report>
-							<report>cim</report>--> 
+							<!-- <report>mailing-list</report> <report>cim</report> -->
 							<report>scm</report>
 							<report>summary</report>
 						</reports>
@@ -437,10 +414,8 @@
 					<sourceEncoding>utf-8</sourceEncoding>
 					<minimumTokens>100</minimumTokens>
 					<targetJdk>1.7</targetJdk>
-					<!-- <excludes>
-						<exclude>**/queryParser/**/*</exclude>
-						<exclude>**/util/json/**/*</exclude>
-					</excludes> -->
+					<!-- <excludes> <exclude>**/queryParser/**/*</exclude> <exclude>**/util/json/**/*</exclude> 
+						</excludes> -->
 				</configuration>
 			</plugin>
 
@@ -524,10 +499,10 @@
 						</reports>
 					</reportSet>
 				</reportSets>
-			</plugin>			
+			</plugin>
 
 		</plugins>
 
 	</reporting>
-	
+
 </project>

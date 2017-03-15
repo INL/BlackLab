@@ -191,7 +191,7 @@ public class IndexTool {
 		}
 
 		// Init log4j
-		LogUtil.initLog4jIfNotAlready();
+		LogUtil.setupBasicLoggingConfig();
 
 		propFile = findFile("indexer.properties", indexDir, inputDir);
 		if (propFile != null && propFile.canRead())

@@ -18,8 +18,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
@@ -40,7 +41,7 @@ import nl.inl.util.StringUtil;
 public class IndexStructure {
 	private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
-	protected static final Logger logger = Logger.getLogger(IndexStructure.class);
+	protected static final Logger logger = LogManager.getLogger(IndexStructure.class);
 
 	private static final String METADATA_FILE_NAME = "indexmetadata.json";
 
@@ -81,6 +82,9 @@ public class IndexStructure {
 
 	/** When BlackLab.jar was built */
 	private String blackLabBuildTime;
+
+	/** BlackLab version used to (initially) create index */
+	private String blackLabVersion;
 
 	/** Format the index uses */
 	private String indexFormat;
@@ -221,18 +225,20 @@ public class IndexStructure {
 		indexFormat = Json.getString(versionInfo, "indexFormat", "");
 		if (initTimestamps) {
 			blackLabBuildTime = Searcher.getBlackLabBuildTime();
+			blackLabVersion = Searcher.getBlackLabVersion();
 			timeModified = timeCreated = IndexStructure.getTimestamp();
 		} else {
 			blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
+			blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
 			timeCreated = Json.getString(versionInfo, "timeCreated", "");
 			timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
 		}
 		alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
 		tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
 		FieldInfos fis = MultiFields.getMergedFieldInfos(reader);
-		if (fis.size() == 0 && !createNewIndex) {
-			throw new RuntimeException("Lucene index contains no fields!");
-		}
+		//if (fis.size() == 0 && !createNewIndex) {
+		//	throw new RuntimeException("Lucene index contains no fields!");
+		//}
 		setNamingScheme(indexMetadata, fis);
 		defaultUnknownCondition = indexMetadata.getDefaultUnknownCondition();
 		defaultUnknownValue = indexMetadata.getDefaultUnknownValue();
@@ -249,6 +255,7 @@ public class IndexStructure {
 
 			// Reset version info
 			blackLabBuildTime = Searcher.getBlackLabBuildTime();
+			blackLabVersion = Searcher.getBlackLabVersion();
 			indexFormat = LATEST_INDEX_FORMAT;
 			timeModified = timeCreated = IndexStructure.getTimestamp();
 
@@ -278,6 +285,7 @@ public class IndexStructure {
 		root.put("tokenCount", tokenCount);
 		root.put("versionInfo", Json.object(
 			"blackLabBuildTime", blackLabBuildTime,
+			"blackLabVersion", blackLabVersion,
 			"indexFormat", indexFormat,
 			"timeCreated", timeCreated,
 			"timeModified", timeModified,
@@ -842,6 +850,14 @@ public class IndexStructure {
 	 */
 	public String getIndexBlackLabBuildTime() {
 		return blackLabBuildTime;
+	}
+
+	/**
+	 * When was the BlackLab.jar used for indexing built?
+	 * @return date/time stamp
+	 */
+	public String getIndexBlackLabVersion() {
+		return blackLabVersion;
 	}
 
 	/**

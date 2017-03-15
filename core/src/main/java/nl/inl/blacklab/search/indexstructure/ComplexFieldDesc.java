@@ -7,16 +7,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexReader;
+
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
 
-import org.apache.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
-
 /** Description of a complex field */
 public class ComplexFieldDesc extends BaseFieldDesc {
-	protected static final Logger logger = Logger.getLogger(ComplexFieldDesc.class);
+	protected static final Logger logger = LogManager.getLogger(ComplexFieldDesc.class);
 
 	/** This complex field's properties */
 	private Map<String, PropertyDesc> props;

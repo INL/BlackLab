@@ -11,7 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -19,13 +20,16 @@ import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.exceptions.TooManyRequests;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDescription;
+import nl.inl.blacklab.server.jobs.JobDocsTotal;
+import nl.inl.blacklab.server.jobs.JobHitsTotal;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.MemoryUtil;
 import nl.inl.util.ThreadPriority;
 import nl.inl.util.ThreadPriority.Level;
 
 public class SearchCache {
-	private static final Logger logger = Logger.getLogger(SearchCache.class);
+
+	private static final Logger logger = LogManager.getLogger(SearchCache.class);
 
 	/**
 	 * What we can do to a query in response to the server load.
@@ -177,6 +181,8 @@ public class SearchCache {
 				put(job);
 				runningJobs.add(job);
 				performSearch = true;
+			} else {
+				job.incrRef();
 			}
 		}
 
@@ -201,6 +207,8 @@ public class SearchCache {
 
 	/**
 	 * Get a search from the cache if present.
+	 *
+	 * If found, resets the last access time for the search.
 	 *
 	 * @param jobDesc the search parameters
 	 * @return the Search if found, or null if not
@@ -404,22 +412,31 @@ public class SearchCache {
 				// Later we'll integrate the two.
 			} else if (search.isWaitingForOtherJob()) {
 				// Waiting, not taking up any CPU. Can run normally, but doesn't take a core.
-				applyAction(search, ServerLoadQueryAction.RUN_NORMALLY);
+				applyAction(search, ServerLoadQueryAction.RUN_NORMALLY, "waiting for other job");
 			} else {
 				// Running search. Run, pause or abort?
-				if (coresLeft > 0) {
+				boolean isCount = search instanceof JobHitsTotal || search instanceof JobDocsTotal;
+				if (isCount && search.timeSinceLastAccess() > cacheConfig.getAbandonedCountPauseTimeSec() && pauseSlotsLeft > 0) {
+					// This is a long-running count that seems to have been abandoned by the client.
+					// First we'll pause it so it doesn't consume CPU resources. Eventually we'll
+					// abort it so its memory is freed up.
+					if (search.timeSinceLastAccess() <= cacheConfig.getAbandonedCountAbortTimeSec()) {
+						pauseSlotsLeft--;
+						applyAction(search, ServerLoadQueryAction.PAUSE, "abandoned count");
+					} else {
+						applyAction(search, ServerLoadQueryAction.ABORT, "abandoned count");
+					}
+				} else if (coresLeft > 0) {
 					// A core is available. Run the search.
 					coresLeft--;
-					applyAction(search, ServerLoadQueryAction.RUN_NORMALLY);
+					applyAction(search, ServerLoadQueryAction.RUN_NORMALLY, "core available");
 				} else if (pauseSlotsLeft > 0) {
 					// No cores, but a pause slot is left. Pause it.
-					logger.debug("LOADMGR: no cores left for search: " + search);
 					pauseSlotsLeft--;
-					applyAction(search, ServerLoadQueryAction.PAUSE);
+					applyAction(search, ServerLoadQueryAction.PAUSE, "no cores left");
 				} else {
 					// No cores or pause slots. Abort the search.
-					logger.debug("LOADMGR: no pause slots left, aborting: " + search);
-					applyAction(search, ServerLoadQueryAction.ABORT);
+					applyAction(search, ServerLoadQueryAction.ABORT, "no cores or pause slots left");
 				}
 			}
 		}
@@ -431,32 +448,32 @@ public class SearchCache {
 	 *
 	 * @param search the search
 	 * @param action the action to apply
+	 * @param reason the reason for this action, so we can log it
 	 */
-	private void applyAction(Job search, ServerLoadQueryAction action) {
+	private void applyAction(Job search, ServerLoadQueryAction action, String reason) {
 		// See what to do with the current search
 		switch (action) {
 		case RUN_NORMALLY:
-			// "No action": if paused, keep paused; if running, run normally (not low prio)
 			if (search.getPriorityLevel() != Level.RUNNING) {
-				logger.debug("LOADMGR: Resuming search: " + search);
+				logger.debug("LOADMGR: Resuming search: " + search + " (" + reason + ")");
 				search.setPriorityLevel(Level.RUNNING);
 			}
 			break;
 		case PAUSE:
 			if (search.getPriorityLevel() != Level.PAUSED) {
-				logger.debug("LOADMGR: Pausing search: " + search + " (was: " + search.getPriorityLevel() + ")");
+				logger.debug("LOADMGR: Pausing search: " + search + " (was: " + search.getPriorityLevel() + ") (" + reason + ")");
 				search.setPriorityLevel(Level.PAUSED);
 			}
 			break;
 		case ABORT:
 			if (!search.finished()) {
 				// TODO: Maybe we should blacklist certain searches for a time?
-				logger.warn("LOADMGR: Aborting search: " + search);
+				logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
 				abortSearch(search);
 			}
 			break;
 		case REMOVE_FROM_CACHE:
-			logger.debug("LOADMGR: Discarding from cache: " + search);
+			logger.debug("LOADMGR: Discarding from cache: " + search + " (" + reason + ")");
 			removeFromCache(search);
 			break;
 		}
