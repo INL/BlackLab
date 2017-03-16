@@ -30,7 +30,9 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
 /**
@@ -47,6 +49,13 @@ import nl.inl.blacklab.search.fimatch.TokenPropMapper;
  * See SpanSequenceRaw for details on the matching process.
  */
 public class SpanQuerySequence extends BLSpanQueryAbstract {
+
+	/**
+	 * The ratio of estimated numbers of hits that we use to decide
+	 * whether or not to try NFA-matching with two clauses / subsequences.
+	 */
+	private static final int NFA_FACTOR = 100;
+
 	public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}
@@ -196,9 +205,44 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			}
 		}
 
+		// See if we want to match some parts of the sequence using the forward index.
+		// We're looking for clauses with many hits adjacent to clauses with much fewer
+		// hits. Matching the more frequent one using an NFA on the forward index starting
+		// from the hits of the less frequent one saves time and memory.
+		List<BLSpanQuery> nfaCombined = new ArrayList<>();
+		for (BLSpanQuery child: seqCombined) {
+			// Do we have a previous part?
+			BLSpanQuery previousPart = nfaCombined.isEmpty() ? null : nfaCombined.get(nfaCombined.size() - 1);
+			if (previousPart == null) {
+				nfaCombined.add(child);
+				continue;
+			}
+			// Could we make an NFA out of this clause?
+			BLSpanQuery tryComb = null;
+			if (child.canMakeNfa()) {
+				// Yes, see if it's worth it to combine with it.
+				long numPrev = Math.max(1, previousPart.estimatedNumberOfHits(reader));
+				long numThis = child.estimatedNumberOfHits(reader);
+				if (numThis / numPrev > NFA_FACTOR) {
+					// Yes, worth it.
+					TokenPropMapper tokenPropMapper = TokenPropMapper.fromSearcher(Searcher.fromIndexReader(reader), getField());
+					NfaState nfa = child.getNfa(tokenPropMapper, 1).getStartingState();
+					tryComb = new SpanQueryFiSeq(previousPart, false, nfa, 1, tokenPropMapper);
+				}
+			}
+			if (tryComb != null) {
+				// Success! Remove previous part and add combined
+				anyRewritten = true;
+				nfaCombined.remove(nfaCombined.size() - 1);
+				nfaCombined.add(tryComb.rewrite(reader));
+			} else {
+				nfaCombined.add(child);
+			}
+		}
+
 		// If any part of the sequence matches the empty sequence, we must
 		// rewrite it to several alternatives combined with OR. Do so now.
-		List<List<BLSpanQuery>> results = makeAlternatives(seqCombined, reader);
+		List<List<BLSpanQuery>> results = makeAlternatives(nfaCombined, reader);
 		if (results.size() == 1 && !anyRewritten)
 			return this;
 		List<BLSpanQuery> orCl = new ArrayList<>();

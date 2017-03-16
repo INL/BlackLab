@@ -171,6 +171,10 @@ public class SearcherImpl extends Searcher implements Closeable {
 			reader = DirectoryReader.open(indexWriter, false);
 		}
 
+		// Register ourselves in the mapping from IndexReader to Searcher,
+		// so we can find the corresponding Searcher object from within Lucene code
+		searcherFromIndexReader.put(reader, this);
+
 		// Detect and open the ContentStore for the contents field
 		if (!createNewIndex) {
 			logger.debug("  Determining main contents field name...");

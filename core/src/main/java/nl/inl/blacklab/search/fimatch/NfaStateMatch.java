@@ -7,9 +7,9 @@ import java.util.Set;
 public class NfaStateMatch extends NfaState {
 
 	@Override
-	public boolean findMatchesInternal(TokenSource tokenSource, int pos, Set<Integer> matchEnds) {
+	public boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
 		if (matchEnds != null)
-			matchEnds.add(pos + 1);
+			matchEnds.add(pos + direction);
 		return true;
 	}
 
@@ -26,6 +26,26 @@ public class NfaStateMatch extends NfaState {
 	@Override
 	public void setNextState(int i, NfaState state) {
 		throw new UnsupportedOperationException("Match state has no next state");
+	}
+
+	@Override
+	public boolean matchesEmptySequence(Set<NfaState> statesVisited) {
+		return true;
+	}
+
+	@Override
+	public boolean hitsAllSameLength(Set<NfaState> statesVisited) {
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin(Set<NfaState> statesVisited) {
+		return 0;
+	}
+
+	@Override
+	public int hitsLengthMax(Set<NfaState> statesVisited) {
+		return 0;
 	}
 
 }

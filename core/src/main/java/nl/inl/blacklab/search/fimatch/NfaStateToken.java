@@ -35,12 +35,13 @@ public class NfaStateToken extends NfaState {
 	 * @param matchEnds where to collect the matches found, or null if we don't want to collect them
 	 * @return true if any (new) matches were found, false if not
 	 */
-	public boolean findMatchesInternal(TokenSource tokenSource, int pos, Set<Integer> matchEnds) {
+	public boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
 		// Token state. Check if it matches token from token source, and if so, continue.
-		if (inputToken == ANY_TOKEN && tokenSource.validPos(pos) || tokenSource.getToken(propertyNumber, pos) == inputToken) {
+		int actualToken = tokenSource.getToken(propertyNumber, pos);
+		if (inputToken == ANY_TOKEN && actualToken >= 0 || actualToken == inputToken) {
 			if (nextState == null)
 				throw new RuntimeException("nextState == null in token state (" + propertyNumber + ", " + inputToken + ")");
-			return nextState.findMatchesInternal(tokenSource, pos + 1, matchEnds);
+			return nextState.findMatchesInternal(tokenSource, pos + direction, direction, matchEnds);
 		}
 		return false;
 	}
@@ -64,6 +65,26 @@ public class NfaStateToken extends NfaState {
 		if (i != 0)
 			throw new RuntimeException("Token state only has one next state");
 		nextState = state;
+	}
+
+	@Override
+	public boolean matchesEmptySequence(Set<NfaState> statesVisited) {
+		return false;
+	}
+
+	@Override
+	public boolean hitsAllSameLength(Set<NfaState> statesVisited) {
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin(Set<NfaState> statesVisited) {
+		return 1;
+	}
+
+	@Override
+	public int hitsLengthMax(Set<NfaState> statesVisited) {
+		return 1;
 	}
 
 }

@@ -169,8 +169,12 @@ class TermsImplV3 extends Terms {
 	@Override
 	public int indexOf(String term) {
 
-		if (!indexMode && idPerSortPosition != null) {
-			// Do a binary search to find term
+		// Do we have the term index available (fastest method)?
+		if (!termIndexBuilt) {
+
+			// No. (this means we are in search mode, because in
+			//      index mode the term index is always available)
+			// Do a binary search to find term.
 			// Note that the binary search is done on the sorted terms,
 			// so we need to guess an ordinal, convert it to a term index,
 			// then check the term string, and repeat until we find a match.
@@ -191,14 +195,7 @@ class TermsImplV3 extends Terms {
 			}
 		}
 
-		if (!termIndexBuilt) {
-			// We havent' filled termIndex based on terms[] yet.
-			// Do so now. (so the first call to this method might be
-			// slow in search mode, but it's only used to deserialize
-			// HitPropValueContext*, which doesn't happen a lot)
-			buildTermIndex();
-		}
-
+		// Use the available term index.
 		Integer index = termIndex.get(term);
 		if (index != null)
 			return index;

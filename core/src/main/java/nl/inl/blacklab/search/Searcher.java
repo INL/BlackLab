@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -88,6 +89,12 @@ public abstract class Searcher {
 
 	/** Analyzer that doesn't tokenize */
 	final protected static Analyzer nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
+
+	final protected static Map<IndexReader, Searcher> searcherFromIndexReader = new IdentityHashMap<>();
+
+	public static Searcher fromIndexReader(IndexReader reader) {
+		return searcherFromIndexReader.get(reader);
+	}
 
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).

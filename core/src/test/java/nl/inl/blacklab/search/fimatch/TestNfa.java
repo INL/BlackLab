@@ -9,8 +9,7 @@ public class TestNfa {
 
 		private String input;
 
-		StringTokenSource(String input, int pos, int dir) {
-			super(pos, dir);
+		StringTokenSource(String input) {
 			this.input = input;
 		}
 
@@ -18,13 +17,11 @@ public class TestNfa {
 		public int getToken(int propIndex, int pos) {
 			if (!validPos(pos))
 				return -1;
-			return input.charAt(startingPosition + pos * direction);
+			return input.charAt(pos);
 		}
 
-		@Override
 		public boolean validPos(int pos) {
-			int p = startingPosition + pos * direction;
-			return p >= 0 && p < input.length();
+			return pos >= 0 && pos < input.length();
 		}
 	}
 
@@ -35,19 +32,11 @@ public class TestNfa {
 		NfaState ba = NfaState.token(0, 'b', NfaState.token(0, 'a', NfaState.match()));
 		NfaState start = NfaState.or(ab, ba);
 
-		// Forward matching
-		StringTokenSource tokenSource = new StringTokenSource("abatoir", 0, 1);
-		Assert.assertTrue(start.matches(tokenSource, 0));
-		Assert.assertTrue(start.matches(tokenSource, 1));
-		Assert.assertFalse(start.matches(tokenSource, 2));
-		Assert.assertFalse(start.matches(tokenSource, 6));
-
-		// Backward matching
-		tokenSource = new StringTokenSource("abatoir", 3, -1);
-		Assert.assertFalse(start.matches(tokenSource, 0));
-		Assert.assertTrue(start.matches(tokenSource, 1));
-		Assert.assertTrue(start.matches(tokenSource, 2));
-		Assert.assertFalse(start.matches(tokenSource, 3));
+		StringTokenSource tokenSource = new StringTokenSource("abatoir");
+		Assert.assertTrue(start.matches(tokenSource, 0, 1));
+		Assert.assertTrue(start.matches(tokenSource, 1, 1));
+		Assert.assertFalse(start.matches(tokenSource, 2, 1));
+		Assert.assertFalse(start.matches(tokenSource, 6, 1));
 	}
 
 	@Test
@@ -59,11 +48,14 @@ public class TestNfa {
 		c.setNextState(0, split); // loopback
 
 		// Forward matching
-		Assert.assertTrue(start.matches(new StringTokenSource("access", 0, 1), 0));
-		Assert.assertTrue(start.matches(new StringTokenSource("aces", 0, 1), 0));
-		Assert.assertTrue(start.matches(new StringTokenSource("aether", 0, 1), 0));
-		Assert.assertFalse(start.matches(new StringTokenSource("acquire", 0, 1), 0));
-		Assert.assertFalse(start.matches(new StringTokenSource("cesium", 0, 1), 0));
+		Assert.assertTrue(start.matches(new StringTokenSource("access"), 0, 1));
+		Assert.assertTrue(start.matches(new StringTokenSource("aces"), 0, 1));
+		Assert.assertTrue(start.matches(new StringTokenSource("aether"), 0, 1));
+		Assert.assertFalse(start.matches(new StringTokenSource("acquire"), 0, 1));
+		Assert.assertFalse(start.matches(new StringTokenSource("cesium"), 0, 1));
+
+		// Backward matching
+		Assert.assertTrue(start.matches(new StringTokenSource("ideaal"), 3, -1));
 	}
 
 }

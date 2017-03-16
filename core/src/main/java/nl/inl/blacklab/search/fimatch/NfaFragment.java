@@ -132,4 +132,10 @@ public class NfaFragment {
 		append(new NfaFragment(NfaState.match(), null)); // finish NFA
 		return startingState;
 	}
+
+	@Override
+	public String toString() {
+		return "NfaFragment";
+	}
+
 }

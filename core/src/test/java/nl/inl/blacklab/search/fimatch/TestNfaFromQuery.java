@@ -58,10 +58,10 @@ public class TestNfaFromQuery {
 		}
 
 		@Override
-		public TokenSource tokenSource(int fiid, int startingPosition, int direction) {
+		public TokenSource tokenSource(int fiid) {
 			if (fiid != 0)
 				throw new IllegalArgumentException("Unknown document " + fiid);
-			return new IntArrayTokenSource(termIds, startingPosition, direction);
+			return new IntArrayTokenSource(termIds);
 		}
 
 	}
@@ -70,8 +70,7 @@ public class TestNfaFromQuery {
 
 		private int[] input;
 
-		IntArrayTokenSource(int[] input, int pos, int dir) {
-			super(pos, dir);
+		IntArrayTokenSource(int[] input) {
 			this.input = input;
 		}
 
@@ -79,13 +78,11 @@ public class TestNfaFromQuery {
 		public int getToken(int propIndex, int pos) {
 			if (!validPos(pos))
 				return -1;
-			return input[startingPosition + pos * direction];
+			return input[pos];
 		}
 
-		@Override
 		public boolean validPos(int pos) {
-			int p = startingPosition + pos * direction;
-			return p >= 0 && p < input.length;
+			return pos >= 0 && pos < input.length;
 		}
 	}
 
@@ -96,10 +93,9 @@ public class TestNfaFromQuery {
 		NfaFragment frag = q.getNfa(propMapper, direction);
 		NfaState start = frag.finish();
 
-		// Forward matching
-		TokenSource tokenSource = propMapper.tokenSource(0, startPos, direction);
+		TokenSource tokenSource = propMapper.tokenSource(0);
 		for (int i = 0; i < tests; i++) {
-			Assert.assertEquals("Test " + i, matches.contains(i), start.matches(tokenSource, i));
+			Assert.assertEquals("Test " + i, matches.contains(i), start.matches(tokenSource, startPos + direction * i, direction));
 		}
 	}
 

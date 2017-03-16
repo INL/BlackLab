@@ -20,7 +20,7 @@ public class NfaStateAnd extends NfaState {
 	}
 
 	@Override
-	public boolean findMatchesInternal(TokenSource tokenSource, int pos, Set<Integer> matchEnds) {
+	public boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
 		// Split state. Find matches for all alternatives.
 		int i = 0;
 		Set<Integer> newHitsFound = null;
@@ -28,7 +28,7 @@ public class NfaStateAnd extends NfaState {
 			if (nextState == null)
 				throw new RuntimeException("nextState[" + i + "] == null in AND state");
 			i++;
-			Set<Integer> matchesForClause = nextState.findMatches(tokenSource, pos);
+			Set<Integer> matchesForClause = nextState.findMatches(tokenSource, pos, direction);
 			if (newHitsFound == null) {
 				newHitsFound = matchesForClause;
 			} else {
@@ -71,6 +71,76 @@ public class NfaStateAnd extends NfaState {
 	@Override
 	public void setNextState(int i, NfaState state) {
 		this.nextStates.set(i, state);
+	}
+
+	@Override
+	public boolean matchesEmptySequence(Set<NfaState> statesVisited) {
+		if (statesVisited.contains(this)) {
+			// We've found a cycle. Stop processing, and just return the
+			// "safest" (least-guarantee) answer. In this case: we can't
+			// guarantee that this DOESN'T match the empty sequence.
+			return true;
+		}
+		statesVisited.add(this);
+		for (NfaState nextState: nextStates) {
+			if (!nextState.matchesEmptySequence(statesVisited))
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean hitsAllSameLength(Set<NfaState> statesVisited) {
+		if (statesVisited.contains(this)) {
+			// We've found a cycle. Stop processing, and just return the
+			// "safest" (least-guarantee) answer. In this case: we can't
+			// guarantee that hits are all the same length.
+			return false;
+		}
+		statesVisited.add(this);
+		for (NfaState nextState: nextStates) {
+			// If any of the following states has all-same-length hits,
+			// this state must also have them.
+			if (nextState.hitsAllSameLength(statesVisited))
+				return true;
+		}
+		return true;
+	}
+
+	@Override
+	public int hitsLengthMin(Set<NfaState> statesVisited) {
+		int hitLengthMin = Integer.MAX_VALUE;
+		if (statesVisited.contains(this)) {
+			// We've found a cycle. Stop processing, and just return the
+			// "safest" (least-guarantee) answer. In this case: the smallest
+			// hit might be 0 long.
+			return 0;
+		}
+		statesVisited.add(this);
+		for (NfaState nextState: nextStates) {
+			int i = nextState.hitsLengthMin(statesVisited);
+			if (i < hitLengthMin)
+				hitLengthMin = i;
+		}
+		return hitLengthMin;
+	}
+
+	@Override
+	public int hitsLengthMax(Set<NfaState> statesVisited) {
+		int hitLengthMax = 0;
+		if (statesVisited.contains(this)) {
+			// We've found a cycle. Stop processing, and just return the
+			// "safest" (least-guarantee) answer. In this case: the largest
+			// hit might be "infinitely" large.
+			return Integer.MAX_VALUE;
+		}
+		statesVisited.add(this);
+		for (NfaState nextState: nextStates) {
+			int i = nextState.hitsLengthMax(statesVisited);
+			if (i > hitLengthMax)
+				hitLengthMax = i;
+		}
+		return hitLengthMax;
 	}
 
 }

@@ -16,11 +16,11 @@ public abstract class Terms {
 	 * Get the existing index number of a term, or add it to the term list
 	 * and assign it a new index number.
 	 *
-	 * In index mode, this is fast. In search mode, the first call to this
-	 * method might be slow (because the mapping has to be built), but later
-	 * calls will be fast.
+	 * In index mode, this is fast. In search mode, this is slower, because
+	 * we have to do a binary search through the memory-mapped terms file.
+	 * However, this is only done rarely.
 	 *
-	 * If you want the first call in search mode to be fast, call
+	 * If you care about this being fast, call
 	 * buildTermIndex() at the start of your application.
 	 *
 	 * @param term the term to get the index number for

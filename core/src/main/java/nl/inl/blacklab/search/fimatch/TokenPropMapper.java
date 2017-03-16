@@ -1,11 +1,17 @@
 package nl.inl.blacklab.search.fimatch;
 
+import nl.inl.blacklab.search.Searcher;
+
 /**
  * Maps property name to property number, term string to term number,
  * and allows you to instantiante a token source for matching from a
  * certain position in a document.
  */
 public abstract class TokenPropMapper {
+
+	public static TokenPropMapper fromSearcher(Searcher searcher, String searchField) {
+		return new TokenPropMapperImpl(searcher, searchField);
+	}
 
 	public TokenPropMapper() {
 		super();
@@ -32,10 +38,8 @@ public abstract class TokenPropMapper {
 	/**
 	 * Get a token source.
 	 * @param fiid document (forward index) id
-	 * @param startingPosition first token the TokenSource should produce
-	 * @param direction 1 for a left-to-right TokenSource, -1 for a right-to-left one
 	 * @return the token source
 	 */
-	public abstract TokenSource tokenSource(int fiid, int startingPosition, int direction);
+	public abstract TokenSource tokenSource(int fiid);
 
 }

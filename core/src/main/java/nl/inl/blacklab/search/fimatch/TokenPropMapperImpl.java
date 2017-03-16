@@ -27,6 +27,11 @@ class TokenPropMapperImpl extends TokenPropMapper {
 
 	private List<ForwardIndex> fis = new ArrayList<>();
 
+	TokenPropMapperImpl(Searcher searcher, String searchField) {
+		this.searcher = searcher;
+		this.complexFieldBaseName = searchField;
+	}
+
 	/**
 	 * Get the index number corresponding to the given property name.
 	 *
@@ -55,8 +60,8 @@ class TokenPropMapperImpl extends TokenPropMapper {
 	}
 
 	@Override
-	public TokenSource tokenSource(int fiid, int startingPosition, int direction) {
-		return new TokenSourceImpl(fis, fiid, startingPosition, direction);
+	public TokenSource tokenSource(int fiid) {
+		return new TokenSourceImpl(fis, fiid);
 	}
 
 }

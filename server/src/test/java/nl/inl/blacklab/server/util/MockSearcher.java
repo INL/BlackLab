@@ -28,6 +28,10 @@ public class MockSearcher extends Searcher {
 	public MockSearcher() {
 		mainContentsFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
 		hitsSettings().setContextSize(5);
+
+		// Register ourselves in the mapping from IndexReader to Searcher,
+		// so we can find the corresponding Searcher object from within Lucene code
+		searcherFromIndexReader.put(null, this);
 	}
 
 	@Override
