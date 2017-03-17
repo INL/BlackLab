@@ -179,9 +179,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		if (rewrCl.size() == 1 && rewrNotCl.isEmpty()) {
 			// Single positive clause
 			return rewrCl.get(0);
-		} else if (rewrCl.isEmpty()) {
-			// All negative clauses, so it's really just a NOT query. Should've been rewritten, but ok.
-			return new SpanQueryNot(new SpanQueryAndNot(rewrNotCl, null)).rewrite(reader);
 		}
 
 		if (!anyRewritten && exclude.isEmpty()) {
@@ -193,7 +190,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		BLSpanQuery includeResult = rewrCl.size() == 1 ? rewrCl.get(0) : new SpanQueryAndNot(rewrCl, null);
 		if (rewrNotCl.isEmpty())
 			return includeResult.rewrite(reader);
-		BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0) : new SpanQueryAndNot(rewrNotCl, null);
+		BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0) : new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]));
 		return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES, true).rewrite(reader);
 	}
 
