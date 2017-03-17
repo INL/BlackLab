@@ -33,6 +33,11 @@ public class SpanQuerySorted extends BLSpanQuery {
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		BLSpanQuery rewritten = src.rewrite(reader);
 		if (rewritten != src) {
+			boolean mustDedupe = eliminateDuplicates && !rewritten.hitsAreUnique();
+			boolean mustSort = !sortByEndpoint && !rewritten.hitsStartPointSorted() ||
+				sortByEndpoint && !rewritten.hitsEndPointSorted();
+			if (!mustDedupe && !mustSort)
+				return rewritten;
 			return new SpanQuerySorted(rewritten, sortByEndpoint, eliminateDuplicates);
 		}
 		return this;

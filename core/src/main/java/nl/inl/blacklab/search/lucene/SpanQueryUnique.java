@@ -40,6 +40,8 @@ public class SpanQueryUnique extends BLSpanQuery {
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		BLSpanQuery rewritten = src.rewrite(reader);
 		if (rewritten != src) {
+			if (rewritten.hitsAreUnique())
+				return rewritten;
 			return new SpanQueryUnique(rewritten);
 		}
 		return this;
