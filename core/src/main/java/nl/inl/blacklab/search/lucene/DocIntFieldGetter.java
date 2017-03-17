@@ -33,7 +33,7 @@ public class DocIntFieldGetter implements Closeable {
 
 	public DocIntFieldGetter(LeafReader reader, String fieldName) {
 		this.reader = reader;
-		intFieldName = ComplexFieldUtil.lengthTokensField(fieldName);
+		intFieldName = fieldName;
 
 		// Cache the lengths for this field to speed things up
 		try {

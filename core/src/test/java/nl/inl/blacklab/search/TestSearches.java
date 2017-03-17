@@ -15,6 +15,7 @@ import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.lucene.SpanQuerySequence;
 
 public class TestSearches {
 
@@ -198,6 +199,15 @@ public class TestSearches {
 		expected = Arrays.asList(
 				"lazy [dog]");
 		Assert.assertEquals(expected, testIndex.findConc(" 'dog' </s> "));
+	}
+
+	@Test
+	public void testNfaMatching() throws ParseException {
+		expected = Arrays.asList(
+				"[May] the");
+		SpanQuerySequence.setNfaFactor(2);
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' "));
+		SpanQuerySequence.setNfaFactor(SpanQuerySequence.DEFAULT_NFA_FACTOR);
 	}
 
 }

@@ -51,10 +51,19 @@ import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 	/**
+	 * The default value of nfaFactor.
+	 */
+	public static final int DEFAULT_NFA_FACTOR = 100;
+
+	/**
 	 * The ratio of estimated numbers of hits that we use to decide
 	 * whether or not to try NFA-matching with two clauses / subsequences.
 	 */
-	private static final int NFA_FACTOR = 100;
+	private static int nfaFactor = DEFAULT_NFA_FACTOR;
+
+	public static void setNfaFactor(int nfaFactor) {
+		SpanQuerySequence.nfaFactor = nfaFactor;
+	}
 
 	public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
@@ -223,10 +232,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				// Yes, see if it's worth it to combine with it.
 				long numPrev = Math.max(1, previousPart.estimatedNumberOfHits(reader));
 				long numThis = child.estimatedNumberOfHits(reader);
-				if (numThis / numPrev > NFA_FACTOR) {
+				if (numThis / numPrev > nfaFactor) {
 					// Yes, worth it.
 					TokenPropMapper tokenPropMapper = TokenPropMapper.fromSearcher(Searcher.fromIndexReader(reader), getField());
-					NfaState nfa = child.getNfa(tokenPropMapper, 1).getStartingState();
+					NfaFragment nfaFrag = child.getNfa(tokenPropMapper, 1);
+					NfaState nfa = nfaFrag.finish();
 					tryComb = new SpanQueryFiSeq(previousPart, false, nfa, 1, tokenPropMapper);
 				}
 			}
