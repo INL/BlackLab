@@ -21,7 +21,9 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
@@ -33,6 +35,32 @@ import nl.inl.blacklab.search.fimatch.TokenPropMapper;
  * contains extra methods for optimization).
  */
 public abstract class BLSpanQuery extends SpanQuery {
+
+	/**
+	 * Rewrite a SpanQuery after rewrite() to a BLSpanQuery equivalent.
+	 *
+	 * This is used for BLSpanOrQuery and BLSpanMultiTermQueryWrapper: we
+	 * let Lucene rewrite these for us, but the result needs to be BL-ified
+	 * so we know we'll get BLSpans (which contain extra methods for optimization).
+	 *
+	 * @param spanQuery the SpanQuery to BL-ify (if it isn't a BLSpanQuery already)
+	 * @return resulting BLSpanQuery, or the input query if it was one already
+	 */
+	public static BLSpanQuery wrap(SpanQuery spanQuery) {
+		if (spanQuery instanceof BLSpanQuery) {
+			// Already BL-derived, no wrapper needed.
+			return (BLSpanQuery) spanQuery;
+		} else if (spanQuery instanceof SpanOrQuery) {
+			// Translate to a BLSpanOrQuery, recursively translating the clauses.
+			return BLSpanOrQuery.from((SpanOrQuery) spanQuery);
+		} else if (spanQuery instanceof SpanTermQuery) {
+			// Translate to a BLSpanTermQuery.
+			return BLSpanTermQuery.from((SpanTermQuery) spanQuery);
+		} else {
+			// After rewrite, we shouldn't encounter any other non-BLSpanQuery classes.
+			throw new UnsupportedOperationException("Cannot BL-ify " + spanQuery.getClass().getSimpleName());
+		}
+	}
 
 	@Override
 	public abstract String toString(String field);
