@@ -111,7 +111,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		if (expandToLeft && previousPart instanceof SpanQueryAnyToken) {
 			// Expand to left following any token clause. Combine.
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			return new SpanQueryExpansion(clauses.get(0), expandToLeft, min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max);
+			return new SpanQueryExpansion(clauses.get(0), expandToLeft, min + tp.min, addRepetitionMaxValues(max, tp.max));
 		}
 		if (!expandToLeft && max != min) {
 			// Expand to right with range of tokens. Combine with previous part to likely

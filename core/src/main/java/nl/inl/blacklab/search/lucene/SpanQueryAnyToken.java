@@ -89,7 +89,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
 		if (previousPart instanceof SpanQueryAnyToken) {
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			SpanQueryAnyToken result = new SpanQueryAnyToken(min + tp.min, (max == -1 || tp.max == -1) ? -1 : max + tp.max, luceneField);
+			SpanQueryAnyToken result = new SpanQueryAnyToken(min + tp.min, addRepetitionMaxValues(max, tp.max), luceneField);
 			if (!alwaysHasClosingToken)
 				result.setAlwaysHasClosingToken(false);
 			return result;
