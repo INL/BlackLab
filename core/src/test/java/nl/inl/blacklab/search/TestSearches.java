@@ -204,7 +204,7 @@ public class TestSearches {
 	@Test
 	public void testNfaMatching() throws ParseException {
 		expected = Arrays.asList(
-				"[May] the");
+				"[May the] Force");
 		SpanQuerySequence.setNfaFactor(2);
 		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' "));
 		SpanQuerySequence.setNfaFactor(SpanQuerySequence.DEFAULT_NFA_FACTOR);

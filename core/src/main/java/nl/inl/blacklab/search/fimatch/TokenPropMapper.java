@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
+import org.apache.lucene.index.LeafReader;
+
 import nl.inl.blacklab.search.Searcher;
 
 /**
@@ -36,10 +38,48 @@ public abstract class TokenPropMapper {
 	public abstract int getTermNumber(int propertyNumber, String propertyValue);
 
 	/**
-	 * Get a token source.
-	 * @param fiid document (forward index) id
-	 * @return the token source
+	 * Get the number of properties
+	 * @return number of properties
 	 */
-	public abstract TokenSource tokenSource(int fiid);
+	public abstract int numberOfProperties();
+
+	/**
+	 * Get a PropMapper object specific to this index reader.
+	 * 
+	 * @param reader index reader
+	 * @return reader-specific PropMapper object
+	 */
+	public abstract ReaderTokenPropMapper getReaderTokenPropMapper(LeafReader reader);
+	
+	public abstract class ReaderTokenPropMapper {
+		
+		protected LeafReader reader;
+		
+		ReaderTokenPropMapper(LeafReader reader) {
+			this.reader = reader;
+		}
+		
+		/**
+		 * Get a token source, which we can use to get tokens from a document 
+		 * for different properties.
+		 *  
+		 * @param docId Lucene document id
+		 * @param reader the index reader
+		 * @return the token source
+		 */
+		public abstract TokenSource tokenSource(int id);
+
+		public abstract int getDocLength(int docId);
+
+		public abstract int[] getChunk(int propIndex, int docId, int start, int end);
+
+		public abstract int getFiid(int propIndex, int docId);
+
+		public int numberOfProperties() {
+			return TokenPropMapper.this.numberOfProperties();
+		}
+
+	}
+
 
 }

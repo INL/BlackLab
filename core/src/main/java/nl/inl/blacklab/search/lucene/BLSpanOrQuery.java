@@ -145,7 +145,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		// (only possible if all OR queries have token length 1!)
 		// This saves on NOT queries and helps us isolate problematic subclauses which
 		// we can then rewrite to more efficient NOTCONTAINING clauses.
-		if (onlyNotClauses && allClausesSingleToken) {
+		if (rewrittenCl.size() > 0 && onlyNotClauses && allClausesSingleToken) {
 			// At least one clause starts with NOT.
 			// Node should be rewritten to AND. Invert all clauses.
 			for (int i = 0; i < rewrittenCl.size(); i++) {

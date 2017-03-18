@@ -228,7 +228,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			}
 			// Could we make an NFA out of this clause?
 			BLSpanQuery tryComb = null;
-			if (child.canMakeNfa()) {
+			if (nfaFactor > 0 && child.canMakeNfa()) {
 				// Yes, see if it's worth it to combine with it.
 				long numPrev = Math.max(1, previousPart.estimatedNumberOfHits(reader));
 				long numThis = child.estimatedNumberOfHits(reader);
@@ -554,5 +554,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			cost = Math.min(cost, clause.estimatedNumberOfHits(reader));
 		}
 		return cost;
+	}
+
+	public static void setNfaMatchingEnabled(boolean b) {
+		nfaFactor = b ? DEFAULT_NFA_FACTOR : -1;
 	}
 }

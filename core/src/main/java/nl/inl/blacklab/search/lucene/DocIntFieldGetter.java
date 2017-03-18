@@ -10,8 +10,6 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.uninverting.UninvertingReader;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-
 /**
  * Used to get an integer field value for a document.
  *

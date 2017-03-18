@@ -25,7 +25,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 
@@ -117,8 +116,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 			if (anchorSpans == null)
 				return null;
 			// @@@ make sure anchor hits are unique?
-			DocIntFieldGetter fiidGetter = new DocIntFieldGetter(context.reader(), ComplexFieldUtil.forwardIndexIdField(field));
-			return new SpansFiSeq(anchorSpans, startOfAnchor, nfa, direction, propMapper, fiidGetter);
+			return new SpansFiSeq(anchorSpans, startOfAnchor, nfa, direction, propMapper.getReaderTokenPropMapper(context.reader()));
 		}
 	}
 

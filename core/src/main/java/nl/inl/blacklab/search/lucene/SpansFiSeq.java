@@ -23,7 +23,7 @@ import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.TokenPropMapper.ReaderTokenPropMapper;
 import nl.inl.blacklab.search.fimatch.TokenSource;
 
 /**
@@ -59,10 +59,7 @@ class SpansFiSeq extends BLSpans {
 	private int direction;
 
 	/** Maps from term strings to term indices for each property. */
-	private TokenPropMapper propMapper;
-
-	/** Used to quickly get forward index id for document. */
-	private DocIntFieldGetter fiidGetter;
+	private ReaderTokenPropMapper propMapper;
 
 	/** Iterator over NFA-matched endpoints */
 	private Iterator<Integer> matchEndPointIt;
@@ -70,13 +67,12 @@ class SpansFiSeq extends BLSpans {
 	/** Current NFA-matched endpoint */
 	private int currentMatchEndPoint = -1;
 
-	public SpansFiSeq(BLSpans anchorSpans, boolean startOfAnchor, NfaState nfa, int direction, TokenPropMapper propMapper, DocIntFieldGetter fiidGetter) {
+	public SpansFiSeq(BLSpans anchorSpans, boolean startOfAnchor, NfaState nfa, int direction, ReaderTokenPropMapper propMapper) {
 		this.anchor = anchorSpans;
 		this.startOfAnchor = startOfAnchor;
 		this.nfa = nfa;
 		this.direction = direction;
 		this.propMapper = propMapper;
-		this.fiidGetter = fiidGetter;
 	}
 
 	@Override
@@ -113,8 +109,7 @@ class SpansFiSeq extends BLSpans {
 			currentDocTokenSource = null;
 			return NO_MORE_DOCS; // no more containers; we're done.
 		}
-		int anchorDocFiid = fiidGetter.getFieldValue(anchorDoc);
-		currentDocTokenSource = propMapper.tokenSource(anchorDocFiid);
+		currentDocTokenSource = propMapper.tokenSource(anchorDoc);
 
 		// Find first matching anchor span from here
 		return findDocWithMatch();
@@ -191,8 +186,7 @@ class SpansFiSeq extends BLSpans {
 			// Advance to the next container.
 			anchorDoc = anchor.nextDoc();
 			if (anchorDoc != NO_MORE_DOCS) {
-				int anchorDocFiid = fiidGetter.getFieldValue(anchorDoc);
-				currentDocTokenSource = propMapper.tokenSource(anchorDocFiid);
+				currentDocTokenSource = propMapper.tokenSource(anchorDoc);
 			} else {
 				currentDocTokenSource = null;
 			}
@@ -240,8 +234,7 @@ class SpansFiSeq extends BLSpans {
 			currentDocTokenSource = null;
 			return NO_MORE_DOCS;
 		}
-		int anchorDocFiid = fiidGetter.getFieldValue(anchorDoc);
-		currentDocTokenSource = propMapper.tokenSource(anchorDocFiid);
+		currentDocTokenSource = propMapper.tokenSource(anchorDoc);
 
 		// Find first matching anchor span from here
 		return findDocWithMatch();

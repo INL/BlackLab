@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Term;
 import org.junit.Assert;
 import org.junit.Test;
@@ -58,10 +59,43 @@ public class TestNfaFromQuery {
 		}
 
 		@Override
-		public TokenSource tokenSource(int fiid) {
-			if (fiid != 0)
-				throw new IllegalArgumentException("Unknown document " + fiid);
-			return new IntArrayTokenSource(termIds);
+		public int numberOfProperties() {
+			return 1;
+		}
+
+		@Override
+		public ReaderTokenPropMapper getReaderTokenPropMapper(LeafReader reader) {
+			return new ReaderTokenPropMapper(reader) {
+
+				@Override
+				public TokenSource tokenSource(int docId) {
+					if (docId != 0)
+						throw new IllegalArgumentException("Unknown document " + docId);
+					return new IntArrayTokenSource(termIds);
+				}
+
+				@Override
+				public int getDocLength(int docId) {
+					if (docId != 0)
+						throw new IllegalArgumentException("Unknown document " + docId);
+					return termIds.length;
+				}
+
+				@Override
+				public int[] getChunk(int propIndex, int docId, int start, int end) {
+					if (propIndex != 0)
+						throw new IllegalArgumentException("Unknown property " + propIndex);
+					if (docId != 0)
+						throw new IllegalArgumentException("Unknown document " + docId);
+					return Arrays.copyOfRange(termIds, start, end);
+				}
+
+				@Override
+				public int getFiid(int propIndex, int docId) {
+					return 0;
+				}
+				
+			};
 		}
 
 	}
@@ -93,7 +127,7 @@ public class TestNfaFromQuery {
 		NfaFragment frag = q.getNfa(propMapper, direction);
 		NfaState start = frag.finish();
 
-		TokenSource tokenSource = propMapper.tokenSource(0);
+		TokenSource tokenSource = propMapper.getReaderTokenPropMapper(null).tokenSource(0);
 		for (int i = 0; i < tests; i++) {
 			Assert.assertEquals("Test " + i, matches.contains(i), start.matches(tokenSource, startPos + direction * i, direction));
 		}

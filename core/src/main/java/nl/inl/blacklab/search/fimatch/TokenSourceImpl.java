@@ -3,7 +3,9 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import org.apache.lucene.index.LeafReader;
+
+import nl.inl.blacklab.search.fimatch.TokenPropMapper.ReaderTokenPropMapper;
 
 /** Source of tokens for the forward index matching process. */
 class TokenSourceImpl extends TokenSource {
@@ -11,11 +13,11 @@ class TokenSourceImpl extends TokenSource {
 	/** Default size for our chunks */
 	private static final int CHUNK_SIZE = 10;
 
-	/** Forward indices */
-	private List<ForwardIndex> fis;
+	/** Where to get our forward indices and forward index ids (fiids) */
+	private ReaderTokenPropMapper propMapper;
 
-	/** Forward index id of the document we're looking at*/
-	private int fiid;
+	/** Lucene document id of the document we're looking at*/
+	private int docId;
 
 	/** Number of tokens in document. */
 	private int docLengthTokens;
@@ -23,19 +25,13 @@ class TokenSourceImpl extends TokenSource {
 	/** Chunks of the document from the forward index, for each of the properties. */
 	private List<List<int[]>> allPropChunks = new ArrayList<>();
 
-	/** Helper array for fetching chunks. Allocate it once to save time. */
-	private int[] starts = new int[] {0};
-
-	/** Helper array for fetching chunks. Allocate it once to save time. */
-	private int[] ends = new int[] {0};
-
-	public TokenSourceImpl(List<ForwardIndex> fis, int fiid) {
-		this.fis = fis;
-		this.fiid = fiid;
-		this.docLengthTokens = fis.get(0).getDocLength(fiid);
+	public TokenSourceImpl(ReaderTokenPropMapper propMapper, int docId, LeafReader reader) {
+		this.propMapper = propMapper;
+		this.docId = docId;
+		this.docLengthTokens = propMapper.getDocLength(docId);
 
 		// Create empty lists of chunks for each property
-		for (int i = 0; i < fis.size(); i++) {
+		for (int i = 0; i < propMapper.numberOfProperties(); i++) {
 			allPropChunks.add(new ArrayList<int[]>());
 		}
 	}
@@ -76,13 +72,12 @@ class TokenSourceImpl extends TokenSource {
 	 * @return the chunk
 	 */
 	protected int[] fetchChunk(int propIndex, int number) {
-		int chunkStart = number * CHUNK_SIZE;
-		starts[0] = chunkStart;
-		ends[0] = chunkStart + CHUNK_SIZE;
-		if (ends[0] > docLengthTokens) {
-			ends[0] = docLengthTokens;
+		int start = number * CHUNK_SIZE;
+		int end = start + CHUNK_SIZE;
+		if (end > docLengthTokens) {
+			end = docLengthTokens;
 		}
-		return fis.get(propIndex).retrievePartsInt(fiid, starts, ends).get(0);
+		return propMapper.getChunk(propIndex, docId, start, end);
 	}
 
 }

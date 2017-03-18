@@ -9,7 +9,7 @@ public class NfaStateMatch extends NfaState {
 	@Override
 	public boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
 		if (matchEnds != null)
-			matchEnds.add(pos + direction);
+			matchEnds.add(pos);
 		return true;
 	}
 
