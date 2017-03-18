@@ -75,38 +75,38 @@ public abstract class NfaState {
 	/**
 	 * Find all matches for this NFA in the token source.
 	 *
-	 * @param tokenSource where to read tokens from
+	 * @param fiDoc where to read tokens from
 	 * @param pos current matching position
 	 * @param direction matching direction
 	 * @param matchEnds where to collect the matches found, or null if we don't want to collect them
 	 * @return true if any (new) matches were found, false if not
 	 */
-	abstract boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds);
+	abstract boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds);
 
 	/**
 	 * Find all matches for this NFA in the token source.
 	 *
-	 * @param tokenSource where to read tokens from
+	 * @param fiDoc where to read tokens from
 	 * @param pos current matching position
 	 * @param direction matching direction
 	 * @return the matches found, if any
 	 */
-	public SortedSet<Integer> findMatches(TokenSource tokenSource, int pos, int direction) {
+	public SortedSet<Integer> findMatches(ForwardIndexDocument fiDoc, int pos, int direction) {
 		SortedSet<Integer> results = new TreeSet<>();
-		findMatchesInternal(tokenSource, pos, direction, results);
+		findMatchesInternal(fiDoc, pos, direction, results);
 		return results;
 	}
 
 	/**
 	 * Does the token source match this NFA?
 	 *
-	 * @param tokenSource where to read tokens from
+	 * @param fiDoc where to read tokens from
 	 * @param pos current matching position
 	 * @param direction matching direction
-	 * @return true if tokenSource matches, false if not
+	 * @return true if fiDoc matches, false if not
 	 */
-	public boolean matches(TokenSource tokenSource, int pos, int direction) {
-		return findMatchesInternal(tokenSource, pos, direction, null);
+	public boolean matches(ForwardIndexDocument fiDoc, int pos, int direction) {
+		return findMatchesInternal(fiDoc, pos, direction, null);
 	}
 
 	/**

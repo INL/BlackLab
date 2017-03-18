@@ -61,7 +61,7 @@ class TermsImplV3 extends Terms {
 		private ByteBuffer buffer;
 
 		/** Number of term strings in this block */
-		private int numberOfTerms;
+		int numberOfTerms;
 
 		/** Offsets of the term strings in this block */
 		private int[] offsets;
@@ -356,7 +356,7 @@ class TermsImplV3 extends Terms {
 					if (!useBlockBasedTermsFile) {
 						long fileLength = 2 * BYTES_PER_INT + (n + 1) * BYTES_PER_INT + termStringsByteSize + NUM_SORT_BUFFERS * BYTES_PER_INT * n;
 						fc.truncate(fileLength); // truncate if necessary
-						buf = fc.map(MapMode.READ_WRITE, (long) 0, fileLength);
+						buf = fc.map(MapMode.READ_WRITE, 0, fileLength);
 						buf.putInt(n); // Start with the number of terms
 						ib = buf.asIntBuffer();
 

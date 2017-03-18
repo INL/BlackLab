@@ -43,7 +43,7 @@ import org.apache.lucene.util.PriorityQueue;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /** Matches the union of its clauses.
  */
@@ -79,7 +79,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	 * @return the clauses
 	 */
 	public SpanQuery[] getClauses() {
-		return (SpanQuery[])inner.getClauses();
+		return inner.getClauses();
 	}
 
 	/**
@@ -315,6 +315,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 				super(maxSize, false); // do not prepopulate
 			}
 
+			@Override
 			protected boolean lessThan(Spans s1, Spans s2) {
 				int start1 = s1.startPosition();
 				int start2 = s2.startPosition();
@@ -566,12 +567,12 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		List<NfaState> states = new ArrayList<>();
 		List<NfaState> dangling = new ArrayList<>();
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
-			NfaFragment frag = clause.getNfa(propMapper, direction);
+			NfaFragment frag = clause.getNfa(fiAccessor, direction);
 			states.add(frag.getStartingState());
 			dangling.addAll(frag.getDanglingArrows());
 		}

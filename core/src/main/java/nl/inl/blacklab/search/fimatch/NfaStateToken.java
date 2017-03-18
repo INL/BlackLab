@@ -30,18 +30,19 @@ public class NfaStateToken extends NfaState {
 	/**
 	 * Find all matches for this NFA in the token source.
 	 *
-	 * @param tokenSource where to read tokens from
+	 * @param fiDoc where to read tokens from
 	 * @param pos current matching position
 	 * @param matchEnds where to collect the matches found, or null if we don't want to collect them
 	 * @return true if any (new) matches were found, false if not
 	 */
-	public boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
+	@Override
+	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// Token state. Check if it matches token from token source, and if so, continue.
-		int actualToken = tokenSource.getToken(propertyNumber, pos);
+		int actualToken = fiDoc.getToken(propertyNumber, pos);
 		if (inputToken == ANY_TOKEN && actualToken >= 0 || actualToken == inputToken) {
 			if (nextState == null)
 				throw new RuntimeException("nextState == null in token state (" + propertyNumber + ", " + inputToken + ")");
-			return nextState.findMatchesInternal(tokenSource, pos + direction, direction, matchEnds);
+			return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
 		}
 		return false;
 	}

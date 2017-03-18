@@ -32,13 +32,13 @@ import org.apache.lucene.search.IndexSearcher;
 public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	/** How to expand the hits */
-	private SpanQueryPositionFilter.Operation op;
+	SpanQueryPositionFilter.Operation op;
 
 	/** Minimum number of tokens to expand */
-	private int min;
+	int min;
 
 	/** Maximum number of tokens to expand (-1 = infinite) */
-	private int max;
+	int max;
 
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;

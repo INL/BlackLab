@@ -20,7 +20,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	SpanMultiTermQueryWrapper<Q> query;
 
 	public BLSpanMultiTermQueryWrapper(Q query) {
-		this.query = new SpanMultiTermQueryWrapper<Q>(query);
+		this.query = new SpanMultiTermQueryWrapper<>(query);
 	}
 
 	@Override

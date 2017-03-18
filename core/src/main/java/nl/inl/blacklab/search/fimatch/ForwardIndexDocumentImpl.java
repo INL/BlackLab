@@ -5,16 +5,16 @@ import java.util.List;
 
 import org.apache.lucene.index.LeafReader;
 
-import nl.inl.blacklab.search.fimatch.TokenPropMapper.ReaderTokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
 
 /** Source of tokens for the forward index matching process. */
-class TokenSourceImpl extends TokenSource {
+class ForwardIndexDocumentImpl extends ForwardIndexDocument {
 
 	/** Default size for our chunks */
 	private static final int CHUNK_SIZE = 10;
 
 	/** Where to get our forward indices and forward index ids (fiids) */
-	private ReaderTokenPropMapper propMapper;
+	private ForwardIndexAccessorLeafReader fiAccessor;
 
 	/** Lucene document id of the document we're looking at*/
 	private int docId;
@@ -25,13 +25,13 @@ class TokenSourceImpl extends TokenSource {
 	/** Chunks of the document from the forward index, for each of the properties. */
 	private List<List<int[]>> allPropChunks = new ArrayList<>();
 
-	public TokenSourceImpl(ReaderTokenPropMapper propMapper, int docId, LeafReader reader) {
-		this.propMapper = propMapper;
+	public ForwardIndexDocumentImpl(ForwardIndexAccessorLeafReader fiAccessor, int docId, LeafReader reader) {
+		this.fiAccessor = fiAccessor;
 		this.docId = docId;
-		this.docLengthTokens = propMapper.getDocLength(docId);
+		this.docLengthTokens = fiAccessor.getDocLength(docId);
 
 		// Create empty lists of chunks for each property
-		for (int i = 0; i < propMapper.numberOfProperties(); i++) {
+		for (int i = 0; i < fiAccessor.getNumberOfProperties(); i++) {
 			allPropChunks.add(new ArrayList<int[]>());
 		}
 	}
@@ -77,7 +77,7 @@ class TokenSourceImpl extends TokenSource {
 		if (end > docLengthTokens) {
 			end = docLengthTokens;
 		}
-		return propMapper.getChunk(propIndex, docId, start, end);
+		return fiAccessor.getChunk(propIndex, docId, start, end);
 	}
 
 }

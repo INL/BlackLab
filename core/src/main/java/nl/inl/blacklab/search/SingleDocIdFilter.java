@@ -20,7 +20,7 @@ import org.apache.lucene.search.Weight;
  */
 public class SingleDocIdFilter extends Query {
 
-	private int luceneDocId;
+	int luceneDocId;
 
 	public SingleDocIdFilter(int luceneDocId) {
 		this.luceneDocId = luceneDocId;

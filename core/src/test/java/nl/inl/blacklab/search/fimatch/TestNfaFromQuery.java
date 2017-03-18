@@ -23,13 +23,13 @@ import nl.inl.blacklab.search.lucene.SpanQuerySequence;
 
 public class TestNfaFromQuery {
 
-	static class MockTokenPropMapper extends TokenPropMapper {
+	static class MockForwardIndexAccessor extends ForwardIndexAccessor {
 
-		private int[] termIds;
+		int[] termIds;
 
 		private final Map<String, Integer> terms = new HashMap<>();
 
-		public MockTokenPropMapper(String... document) {
+		public MockForwardIndexAccessor(String... document) {
 			this.termIds = new int[document.length];
 			for (int i = 0; i < document.length; i++) {
 				Integer termId = terms.get(document[i]);
@@ -64,14 +64,14 @@ public class TestNfaFromQuery {
 		}
 
 		@Override
-		public ReaderTokenPropMapper getReaderTokenPropMapper(LeafReader reader) {
-			return new ReaderTokenPropMapper(reader) {
+		public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
+			return new ForwardIndexAccessorLeafReader(reader) {
 
 				@Override
-				public TokenSource tokenSource(int docId) {
+				public ForwardIndexDocument getForwardIndexDoc(int docId) {
 					if (docId != 0)
 						throw new IllegalArgumentException("Unknown document " + docId);
-					return new IntArrayTokenSource(termIds);
+					return new ForwardIndexDocumentIntArray(termIds);
 				}
 
 				@Override
@@ -100,11 +100,11 @@ public class TestNfaFromQuery {
 
 	}
 
-	static class IntArrayTokenSource extends TokenSource {
+	static class ForwardIndexDocumentIntArray extends ForwardIndexDocument {
 
 		private int[] input;
 
-		IntArrayTokenSource(int[] input) {
+		ForwardIndexDocumentIntArray(int[] input) {
 			this.input = input;
 		}
 
@@ -122,14 +122,14 @@ public class TestNfaFromQuery {
 
 	private static final List<Integer> NO_MATCHES = Collections.emptyList();
 
-	private static void test(BLSpanQuery q, TokenPropMapper propMapper, int startPos, int direction, int tests, List<Integer> matches) {
+	private static void test(BLSpanQuery q, ForwardIndexAccessor fiAccessor, int startPos, int direction, int tests, List<Integer> matches) {
 		// The NFA
-		NfaFragment frag = q.getNfa(propMapper, direction);
+		NfaFragment frag = q.getNfa(fiAccessor, direction);
 		NfaState start = frag.finish();
 
-		TokenSource tokenSource = propMapper.getReaderTokenPropMapper(null).tokenSource(0);
+		ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).getForwardIndexDoc(0);
 		for (int i = 0; i < tests; i++) {
-			Assert.assertEquals("Test " + i, matches.contains(i), start.matches(tokenSource, startPos + direction * i, direction));
+			Assert.assertEquals("Test " + i, matches.contains(i), start.matches(fiDoc, startPos + direction * i, direction));
 		}
 	}
 
@@ -168,144 +168,144 @@ public class TestNfaFromQuery {
 	@Test
 	public void testNfaSingleWord() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "a", "test");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "a", "test");
 
 		// The query
 		BLSpanQuery q = term("test");
 
-		test(q, propMapper, 0,  1, 5, Arrays.asList(3));
-		test(q, propMapper, 3, -1, 5, Arrays.asList(0));
+		test(q, fiAccessor, 0,  1, 5, Arrays.asList(3));
+		test(q, fiAccessor, 3, -1, 5, Arrays.asList(0));
 	}
 
 	@Test
 	public void testNfaSequence() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "a", "test");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "a", "test");
 
 		// The query
 		BLSpanQuery q = seq(term("a"), term("test"));
 
-		test(q, propMapper, 0,  1, 5, Arrays.asList(2));
-		test(q, propMapper, 3, -1, 5, Arrays.asList(0));
+		test(q, fiAccessor, 0,  1, 5, Arrays.asList(2));
+		test(q, fiAccessor, 3, -1, 5, Arrays.asList(0));
 	}
 
 	@Test
 	public void testNfaRep1() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = rep(term("very"), 1, -1);
 
-		test(q, propMapper, 0,  1, 6, Arrays.asList(2, 3, 4));
-		test(q, propMapper, 5, -1, 6, Arrays.asList(1, 2, 3));
+		test(q, fiAccessor, 0,  1, 6, Arrays.asList(2, 3, 4));
+		test(q, fiAccessor, 5, -1, 6, Arrays.asList(1, 2, 3));
 	}
 
 	@Test
 	public void testNfaRep2() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = seq(term("is"), rep(term("very"), 1, 2));
 
-		test(q, propMapper, 0,  1, 6, Arrays.asList(1));
-		test(q, propMapper, 5, -1, 6, Arrays.asList(2, 3));
+		test(q, fiAccessor, 0,  1, 6, Arrays.asList(1));
+		test(q, fiAccessor, 5, -1, 6, Arrays.asList(2, 3));
 	}
 
 	@Test
 	public void testNfaOr() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = or(seq(term("is"), term("very")), seq(term("very"), term("fun")));
 
-		test(q, propMapper, 0,  1, 6, Arrays.asList(1, 4));
-		test(q, propMapper, 5, -1, 6, Arrays.asList(0, 3));
+		test(q, fiAccessor, 0,  1, 6, Arrays.asList(1, 4));
+		test(q, fiAccessor, 5, -1, 6, Arrays.asList(0, 3));
 	}
 
 	@Test
 	public void testNfaAny() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = any(3, 3);
 
-		test(q, propMapper, 0,  1, 6, Arrays.asList(0, 1, 2, 3));
-		test(q, propMapper, 5, -1, 6, Arrays.asList(0, 1, 2, 3));
+		test(q, fiAccessor, 0,  1, 6, Arrays.asList(0, 1, 2, 3));
+		test(q, fiAccessor, 5, -1, 6, Arrays.asList(0, 1, 2, 3));
 	}
 
 	@Test
 	public void testNfaAnd() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = and(seq(term("very"), term("very"), any(1, 1)), seq(any(1,1), term("very"), term("very")));
 
-		test(q, propMapper, 0,  1, 6, Arrays.asList(2));
-		test(q, propMapper, 5, -1, 6, Arrays.asList(1));
+		test(q, fiAccessor, 0,  1, 6, Arrays.asList(2));
+		test(q, fiAccessor, 5, -1, 6, Arrays.asList(1));
 	}
 
 	@Test
 	public void testNfaExpansionLeft() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = exp(term("very"), true, 1, 2);
 
-		test(q, propMapper, 0,  1, 6, Arrays.asList(0, 1, 2, 3));
-		test(q, propMapper, 5, -1, 6, Arrays.asList(1, 2, 3));
+		test(q, fiAccessor, 0,  1, 6, Arrays.asList(0, 1, 2, 3));
+		test(q, fiAccessor, 5, -1, 6, Arrays.asList(1, 2, 3));
 	}
 
 	@Test
 	public void testNfaExpansionRight() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = exp(term("is"), false, 0, 3);
 
-		test(q, propMapper, 0,  1, 6, Arrays.asList(1));
-		test(q, propMapper, 5, -1, 6, Arrays.asList(1, 2, 3, 4));
+		test(q, fiAccessor, 0,  1, 6, Arrays.asList(1));
+		test(q, fiAccessor, 5, -1, 6, Arrays.asList(1, 2, 3, 4));
 	}
 
 	@Test
 	public void testNfaNot() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "very", "very", "very", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
 		BLSpanQuery q = not(term("very"));
 
-		test(q, propMapper, 0,  1, 6, Arrays.asList(0, 1, 5));
-		test(q, propMapper, 5, -1, 6, Arrays.asList(0, 4, 5));
+		test(q, fiAccessor, 0,  1, 6, Arrays.asList(0, 1, 5));
+		test(q, fiAccessor, 5, -1, 6, Arrays.asList(0, 4, 5));
 	}
 
 	@Test
 	public void testNfaComplex1() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
 
 		// The query: []? "is" ("lots" "and"){1,3} [word != "lots"] "of"
 		BLSpanQuery q = seq(exp(term("is"), true, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), not(term("lots")), term("of"));
 
-		test(q, propMapper, 0,  1, 8, NO_MATCHES);  // ERROR
-		test(q, propMapper, 8, -1, 8, NO_MATCHES);
+		test(q, fiAccessor, 0,  1, 8, NO_MATCHES);  // ERROR
+		test(q, fiAccessor, 8, -1, 8, NO_MATCHES);
 	}
 
 	@Test
 	public void testNfaComplex2() {
 		// The test document
-		TokenPropMapper propMapper = new MockTokenPropMapper("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
 
 		// The query: []? "is" ("lots" "and"){1,3} "lots" "of"
 		BLSpanQuery q = seq(exp(term("is"), true, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), term("lots"), term("of"));
 
-		test(q, propMapper, 0,  1, 8, Arrays.asList(0, 1));
-		test(q, propMapper, 8, -1, 8, Arrays.asList(1));
+		test(q, fiAccessor, 0,  1, 8, Arrays.asList(0, 1));
+		test(q, fiAccessor, 8, -1, 8, Arrays.asList(1));
 	}
 }

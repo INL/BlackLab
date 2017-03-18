@@ -20,7 +20,7 @@ public class NfaStateAnd extends NfaState {
 	}
 
 	@Override
-	public boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
+	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// Split state. Find matches for all alternatives.
 		int i = 0;
 		Set<Integer> newHitsFound = null;
@@ -28,7 +28,7 @@ public class NfaStateAnd extends NfaState {
 			if (nextState == null)
 				throw new RuntimeException("nextState[" + i + "] == null in AND state");
 			i++;
-			Set<Integer> matchesForClause = nextState.findMatches(tokenSource, pos, direction);
+			Set<Integer> matchesForClause = nextState.findMatches(fiDoc, pos, direction);
 			if (newHitsFound == null) {
 				newHitsFound = matchesForClause;
 			} else {

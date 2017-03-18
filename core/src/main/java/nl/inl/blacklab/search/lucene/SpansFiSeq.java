@@ -23,8 +23,8 @@ import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper.ReaderTokenPropMapper;
-import nl.inl.blacklab.search.fimatch.TokenSource;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
+import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 
 /**
  * Finds hits using the forward index, by matching an NFA from anchor points.
@@ -38,7 +38,7 @@ class SpansFiSeq extends BLSpans {
 	private int anchorDoc = -1;
 
 	/** Where to get forward index tokens for the current doc */
-	private TokenSource currentDocTokenSource;
+	private ForwardIndexDocument currentFiDoc;
 
 	/** What start pos is the anchor at? */
 	private int anchorStart = -1;
@@ -59,7 +59,7 @@ class SpansFiSeq extends BLSpans {
 	private int direction;
 
 	/** Maps from term strings to term indices for each property. */
-	private ReaderTokenPropMapper propMapper;
+	private ForwardIndexAccessorLeafReader fiAccessor;
 
 	/** Iterator over NFA-matched endpoints */
 	private Iterator<Integer> matchEndPointIt;
@@ -67,12 +67,12 @@ class SpansFiSeq extends BLSpans {
 	/** Current NFA-matched endpoint */
 	private int currentMatchEndPoint = -1;
 
-	public SpansFiSeq(BLSpans anchorSpans, boolean startOfAnchor, NfaState nfa, int direction, ReaderTokenPropMapper propMapper) {
+	public SpansFiSeq(BLSpans anchorSpans, boolean startOfAnchor, NfaState nfa, int direction, ForwardIndexAccessorLeafReader fiAccessor) {
 		this.anchor = anchorSpans;
 		this.startOfAnchor = startOfAnchor;
 		this.nfa = nfa;
 		this.direction = direction;
-		this.propMapper = propMapper;
+		this.fiAccessor = fiAccessor;
 	}
 
 	@Override
@@ -106,10 +106,10 @@ class SpansFiSeq extends BLSpans {
 		anchorDoc = anchor.nextDoc();
 		anchorStart = -1;
 		if (anchorDoc == NO_MORE_DOCS) {
-			currentDocTokenSource = null;
+			currentFiDoc = null;
 			return NO_MORE_DOCS; // no more containers; we're done.
 		}
-		currentDocTokenSource = propMapper.tokenSource(anchorDoc);
+		currentFiDoc = fiAccessor.getForwardIndexDoc(anchorDoc);
 
 		// Find first matching anchor span from here
 		return findDocWithMatch();
@@ -186,9 +186,9 @@ class SpansFiSeq extends BLSpans {
 			// Advance to the next container.
 			anchorDoc = anchor.nextDoc();
 			if (anchorDoc != NO_MORE_DOCS) {
-				currentDocTokenSource = propMapper.tokenSource(anchorDoc);
+				currentFiDoc = fiAccessor.getForwardIndexDoc(anchorDoc);
 			} else {
-				currentDocTokenSource = null;
+				currentFiDoc = null;
 			}
 			anchorStart = -1;
 		}
@@ -207,7 +207,7 @@ class SpansFiSeq extends BLSpans {
 
 			// We're at the first unchecked anchor spans. Does our NFA match?
 			int anchorPos = startOfAnchor ? anchorStart : anchor.endPosition();
-			SortedSet<Integer> setMatchEndpoints = nfa.findMatches(currentDocTokenSource, anchorPos, direction);
+			SortedSet<Integer> setMatchEndpoints = nfa.findMatches(currentFiDoc, anchorPos, direction);
 			if (setMatchEndpoints.size() > 0) {
 				matchEndPointIt = setMatchEndpoints.iterator();
 				currentMatchEndPoint = matchEndPointIt.next();
@@ -231,10 +231,10 @@ class SpansFiSeq extends BLSpans {
 		anchorDoc = anchor.advance(doc);
 		anchorStart = -1;
 		if (anchorDoc == NO_MORE_DOCS) {
-			currentDocTokenSource = null;
+			currentFiDoc = null;
 			return NO_MORE_DOCS;
 		}
-		currentDocTokenSource = propMapper.tokenSource(anchorDoc);
+		currentFiDoc = fiAccessor.getForwardIndexDoc(anchorDoc);
 
 		// Find first matching anchor span from here
 		return findDocWithMatch();

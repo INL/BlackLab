@@ -33,11 +33,11 @@ import nl.inl.blacklab.search.lucene.BLSpans;
  * from these arrays.
  */
 public class MockSpanQuery extends BLSpanQuery {
-	private int[] doc;
+	int[] doc;
 
-	private int[] start;
+	int[] start;
 
-	private int[] end;
+	int[] end;
 
 	boolean isSimple;
 

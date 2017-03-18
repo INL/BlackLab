@@ -20,7 +20,7 @@ public class NfaStateOr extends NfaState {
 	}
 
 	@Override
-	public boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
+	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// OR/Split state. Find matches for all alternatives.
 		int i = 0;
 		boolean result = false;
@@ -28,7 +28,7 @@ public class NfaStateOr extends NfaState {
 			if (nextState == null)
 				throw new RuntimeException("nextState[" + i + "] == null in OR state");
 			i++;
-			boolean a = nextState.findMatchesInternal(tokenSource, pos, direction, matchEnds);
+			boolean a = nextState.findMatchesInternal(fiDoc, pos, direction, matchEnds);
 			if (a && matchEnds == null)
 				return true; // we don't care about the match ends, just that there are matches
 			result |= a;

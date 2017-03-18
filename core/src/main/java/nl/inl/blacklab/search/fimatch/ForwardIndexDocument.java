@@ -1,7 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 /** Source of tokens for the forward index matching process. */
-public abstract class TokenSource {
+public abstract class ForwardIndexDocument {
 
 	/** Return token at specified position.
 	 *

@@ -15,8 +15,8 @@ public class NfaStateNot extends NfaState {
 	}
 
 	@Override
-	boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
-		boolean clauseMatches = clause.findMatchesInternal(tokenSource, pos, direction, null);
+	boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
+		boolean clauseMatches = clause.findMatchesInternal(fiDoc, pos, direction, null);
 		if (clauseMatches)
 			return false;
 		// No matches found at this position, therefore this token IS a match.

@@ -26,7 +26,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.search.fimatch.NfaFragment;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * Finds repeated consecutive hits.
@@ -37,9 +37,9 @@ import nl.inl.blacklab.search.fimatch.TokenPropMapper;
  * support greedy/reluctant matching, etc.)
  */
 public class SpanQueryRepetition extends BLSpanQueryAbstract {
-	private int min;
+	int min;
 
-	private int max;
+	int max;
 
 	public SpanQueryRepetition(BLSpanQuery clause, int min, int max) {
 		super(clause);
@@ -247,8 +247,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
-		NfaFragment frag = clauses.get(0).getNfa(propMapper, direction);
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		NfaFragment frag = clauses.get(0).getNfa(fiAccessor, direction);
 		frag.repeat(min, max);
 		return frag;
 	}

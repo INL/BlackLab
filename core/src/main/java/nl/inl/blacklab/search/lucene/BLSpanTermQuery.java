@@ -36,7 +36,7 @@ import org.apache.lucene.search.spans.Spans;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -177,12 +177,12 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		Term term = query.getTerm();
 		String propertyName = ComplexFieldUtil.getNameComponents(term.field())[1];
-		int propertyNumber = propMapper.getPropertyNumber(propertyName);
+		int propertyNumber = fiAccessor.getPropertyNumber(propertyName);
 		String propertyValue = term.text();
-		int termNumber = propMapper.getTermNumber(propertyNumber, propertyValue);
+		int termNumber = fiAccessor.getTermNumber(propertyNumber, propertyValue);
 		NfaState state = NfaState.token(propertyNumber, termNumber, null);
 		return new NfaFragment(state, Arrays.asList(state));
 	}

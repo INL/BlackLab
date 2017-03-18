@@ -31,7 +31,7 @@ import org.apache.lucene.search.spans.SpanWeight;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * A SpanQuery for an AND NOT query.
@@ -265,6 +265,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		}
 	}
 
+	@Override
 	public String toString(String field) {
 		if (exclude.isEmpty())
 			return "AND(" + clausesToString(field, include) + ")";
@@ -376,13 +377,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		if (exclude.size() > 0)
 			throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
 		List<NfaState> nfaClauses = new ArrayList<>();
 		List<NfaState> dangling = new ArrayList<>();
 		for (BLSpanQuery clause: include) {
-			NfaFragment nfa = clause.getNfa(propMapper, direction);
+			NfaFragment nfa = clause.getNfa(fiAccessor, direction);
 			nfaClauses.add(nfa.getStartingState());
 			dangling.addAll(nfa.getDanglingArrows());
 		}

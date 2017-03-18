@@ -64,7 +64,7 @@ public class SpanQueryTags extends BLSpanQuery {
 		List<BLSpanQuery> attrFilters = new ArrayList<>();
 		for (Map.Entry<String,String> e: attr.entrySet()) {
 			String value = "@" + e.getKey() + "__" + e.getValue();
-			attrFilters.add((BLSpanQuery) new BLSpanTermQuery(new Term(startTagFieldName, value)));
+			attrFilters.add(new BLSpanTermQuery(new Term(startTagFieldName, value)));
 		}
 
 		// Filter the tags

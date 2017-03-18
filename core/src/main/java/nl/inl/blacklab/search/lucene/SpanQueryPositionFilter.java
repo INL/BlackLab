@@ -38,16 +38,16 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	static SpanComparatorStartPoint cmpStartPoint = new SpanComparatorStartPoint();
 
 	/** Filter operation to apply */
-	private SpanQueryPositionFilter.Operation op;
+	SpanQueryPositionFilter.Operation op;
 
 	/** Return producer spans that DON'T match the filter instead? */
-	private boolean invert;
+	boolean invert;
 
 	/** How to adjust the left edge of the producer hits while matching */
-	private int leftAdjust;
+	int leftAdjust;
 
 	/** How to adjust the right edge of the producer hits while matching */
-	private int rightAdjust;
+	int rightAdjust;
 
 	/**
 	 * Produce hits that match filter hits.
@@ -106,7 +106,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 		if (result == null && previousPart.hitsAllSameLength()) {
 			// We "gobble up" the previous part and adjust our left matching edge.
 			// This should make filtering more efficient, since we will likely have fewer hits to filter.
-			SpanQueryPositionFilter r = (SpanQueryPositionFilter)copy();
+			SpanQueryPositionFilter r = copy();
 			r.clauses.set(0, new SpanQuerySequence(previousPart, clauses.get(0)));
 			r.adjustLeft(previousPart.hitsLengthMin());
 			result = r;

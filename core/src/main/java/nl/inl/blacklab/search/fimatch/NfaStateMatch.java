@@ -7,7 +7,7 @@ import java.util.Set;
 public class NfaStateMatch extends NfaState {
 
 	@Override
-	public boolean findMatchesInternal(TokenSource tokenSource, int pos, int direction, Set<Integer> matchEnds) {
+	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		if (matchEnds != null)
 			matchEnds.add(pos);
 		return true;

@@ -30,7 +30,7 @@ import org.apache.lucene.search.IndexSearcher;
  * e.g. combining multiple SpanFuzzyQueries with OR.
  */
 public class SpanQueryUnique extends BLSpanQuery {
-	private BLSpanQuery src;
+	BLSpanQuery src;
 
 	public SpanQueryUnique(BLSpanQuery src) {
 		this.src = BLSpanQuery.ensureSorted(src);

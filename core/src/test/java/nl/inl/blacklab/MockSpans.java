@@ -41,6 +41,10 @@ public class MockSpans extends BLSpans {
 		private int currentHit = -1;
 		private boolean alreadyAtFirstMatch = false;
 
+		public MockPostingsEnum() {
+			// NOP
+		}
+
 		@Override
 		public int nextDoc() throws IOException {
 			if (currentDoc != NO_MORE_DOCS) {
@@ -120,7 +124,9 @@ public class MockSpans extends BLSpans {
 		public int freq() throws IOException {
 			// Find start of next document
 			int i;
-			for (i = currentHit + 1; i < doc.length && doc[i] == currentDoc; i++);
+			for (i = currentHit + 1; i < doc.length && doc[i] == currentDoc; i++) {
+				// NOP
+			}
 			return i - currentHit;
 		}
 
@@ -134,11 +140,11 @@ public class MockSpans extends BLSpans {
 		}
 	}
 
-	private int[] doc;
+	int[] doc;
 
-	private int[] start;
+	int[] start;
 
-	private int[] end;
+	int[] end;
 
 	private MockPostingsEnum postings;
 
@@ -148,7 +154,7 @@ public class MockSpans extends BLSpans {
 
 	private boolean noMoreHitsInDoc = true;
 
-	private byte[][] payloads = null;
+	byte[][] payloads = null;
 
 	private int endPos = -1;
 

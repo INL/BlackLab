@@ -31,7 +31,7 @@ import org.apache.lucene.search.IndexSearcher;
  */
 public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 
-	private String name;
+	String name;
 
 	/**
 	 * Construct SpanQueryCaptureGroup object.

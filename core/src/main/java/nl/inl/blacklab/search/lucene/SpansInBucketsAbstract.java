@@ -178,7 +178,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 		}
 
 		bucketSize = 0;
-		doCapturedGroups = clauseCapturesGroups && source instanceof BLSpans && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
+		doCapturedGroups = clauseCapturesGroups && hitQueryContext != null && hitQueryContext.numberOfCapturedGroups() > 0;
 		gatherHits();
 		return currentDoc;
 	}
@@ -197,10 +197,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 	public void setHitQueryContext(HitQueryContext context) {
 		this.hitQueryContext = context;
 		int before = context.getCaptureRegisterNumber();
-		if (source instanceof BLSpans)
-			((BLSpans) source).setHitQueryContext(context);
-		else //OLD: if (!(source instanceof TermSpans)) // TermSpans is ok because it is a leaf in the tree
-			System.err.println("### SpansInBucketsAbstract: " + source + ", not a BLSpans ###");
+		source.setHitQueryContext(context);
 		if (context.getCaptureRegisterNumber() == before) {
 			// Our clause doesn't capture any groups; optimize
 			clauseCapturesGroups = false;

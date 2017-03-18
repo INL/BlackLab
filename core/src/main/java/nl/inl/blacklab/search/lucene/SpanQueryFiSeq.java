@@ -26,7 +26,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * Find hits that match the specified NFA, starting from the
@@ -35,13 +35,13 @@ import nl.inl.blacklab.search.fimatch.TokenPropMapper;
  */
 public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
-	private NfaState nfa;
+	NfaState nfa;
 
-	private int direction;
+	int direction;
 
-	private boolean startOfAnchor;
+	boolean startOfAnchor;
 
-	private TokenPropMapper propMapper;
+	ForwardIndexAccessor fiAccessor;
 
 	/**
 	 *
@@ -49,21 +49,21 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	 * @param startOfAnchor if true, use the starts of anchor hits; if false, use the ends
 	 * @param nfa the NFA to use for matching
 	 * @param direction the direction to match in (-1 = right-to-left, 1 = left-to-right)
-	 * @param propMapper maps between term strings and term indices for each property
+	 * @param fiAccessor maps between term strings and term indices for each property
 	 */
-	public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaState nfa, int direction, TokenPropMapper propMapper) {
+	public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaState nfa, int direction, ForwardIndexAccessor fiAccessor) {
 		super(anchor);
 		this.nfa = nfa;
 		this.startOfAnchor = startOfAnchor;
 		this.direction = direction;
-		this.propMapper = propMapper;
+		this.fiAccessor = fiAccessor;
 	}
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
 		if (rewritten != clauses.get(0)) {
-			SpanQueryFiSeq result = new SpanQueryFiSeq(rewritten, startOfAnchor, nfa, direction, propMapper);
+			SpanQueryFiSeq result = new SpanQueryFiSeq(rewritten, startOfAnchor, nfa, direction, fiAccessor);
 			return result;
 		}
 		return this;
@@ -116,7 +116,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 			if (anchorSpans == null)
 				return null;
 			// @@@ make sure anchor hits are unique?
-			return new SpansFiSeq(anchorSpans, startOfAnchor, nfa, direction, propMapper.getReaderTokenPropMapper(context.reader()));
+			return new SpansFiSeq(anchorSpans, startOfAnchor, nfa, direction, fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
 		}
 	}
 
@@ -126,7 +126,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	}
 
 	public SpanQueryFiSeq copy() {
-		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfa, direction, propMapper);
+		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfa, direction, fiAccessor);
 	}
 
 	@Override
@@ -149,10 +149,9 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		if (startOfAnchor && direction == -1 || !startOfAnchor && direction == 1) {
 			// Non-overlapping; add the two values
 			return clauses.get(0).hitsLengthMin() + nfa.hitsLengthMin(NfaState.emptySet());
-		} else {
-			// Overlapping; use the largest value
-			return Math.max(clauses.get(0).hitsLengthMin(), nfa.hitsLengthMin(NfaState.emptySet()));
 		}
+		// Overlapping; use the largest value
+		return Math.max(clauses.get(0).hitsLengthMin(), nfa.hitsLengthMin(NfaState.emptySet()));
 	}
 
 	@Override
@@ -160,10 +159,9 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		if (startOfAnchor && direction == -1 || !startOfAnchor && direction == 1) {
 			// Non-overlapping; add the two values
 			return clauses.get(0).hitsLengthMax() + nfa.hitsLengthMax(NfaState.emptySet());
-		} else {
-			// Overlapping; use the largest value
-			return Math.min(clauses.get(0).hitsLengthMax(), nfa.hitsLengthMax(NfaState.emptySet()));
 		}
+		// Overlapping; use the largest value
+		return Math.min(clauses.get(0).hitsLengthMax(), nfa.hitsLengthMax(NfaState.emptySet()));
 	}
 
 	@Override

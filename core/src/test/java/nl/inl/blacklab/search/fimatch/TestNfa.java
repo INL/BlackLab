@@ -5,11 +5,11 @@ import org.junit.Test;
 
 public class TestNfa {
 
-	class StringTokenSource extends TokenSource {
+	class ForwardIndexDocumentString extends ForwardIndexDocument {
 
 		private String input;
 
-		StringTokenSource(String input) {
+		ForwardIndexDocumentString(String input) {
 			this.input = input;
 		}
 
@@ -32,11 +32,11 @@ public class TestNfa {
 		NfaState ba = NfaState.token(0, 'b', NfaState.token(0, 'a', NfaState.match()));
 		NfaState start = NfaState.or(ab, ba);
 
-		StringTokenSource tokenSource = new StringTokenSource("abatoir");
-		Assert.assertTrue(start.matches(tokenSource, 0, 1));
-		Assert.assertTrue(start.matches(tokenSource, 1, 1));
-		Assert.assertFalse(start.matches(tokenSource, 2, 1));
-		Assert.assertFalse(start.matches(tokenSource, 6, 1));
+		ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
+		Assert.assertTrue(start.matches(fiDoc, 0, 1));
+		Assert.assertTrue(start.matches(fiDoc, 1, 1));
+		Assert.assertFalse(start.matches(fiDoc, 2, 1));
+		Assert.assertFalse(start.matches(fiDoc, 6, 1));
 	}
 
 	@Test
@@ -48,14 +48,14 @@ public class TestNfa {
 		c.setNextState(0, split); // loopback
 
 		// Forward matching
-		Assert.assertTrue(start.matches(new StringTokenSource("access"), 0, 1));
-		Assert.assertTrue(start.matches(new StringTokenSource("aces"), 0, 1));
-		Assert.assertTrue(start.matches(new StringTokenSource("aether"), 0, 1));
-		Assert.assertFalse(start.matches(new StringTokenSource("acquire"), 0, 1));
-		Assert.assertFalse(start.matches(new StringTokenSource("cesium"), 0, 1));
+		Assert.assertTrue(start.matches(new ForwardIndexDocumentString("access"), 0, 1));
+		Assert.assertTrue(start.matches(new ForwardIndexDocumentString("aces"), 0, 1));
+		Assert.assertTrue(start.matches(new ForwardIndexDocumentString("aether"), 0, 1));
+		Assert.assertFalse(start.matches(new ForwardIndexDocumentString("acquire"), 0, 1));
+		Assert.assertFalse(start.matches(new ForwardIndexDocumentString("cesium"), 0, 1));
 
 		// Backward matching
-		Assert.assertTrue(start.matches(new StringTokenSource("ideaal"), 3, -1));
+		Assert.assertTrue(start.matches(new ForwardIndexDocumentString("ideaal"), 3, -1));
 	}
 
 }

@@ -29,7 +29,7 @@ import org.apache.lucene.search.IndexSearcher;
 import nl.inl.blacklab.search.TextPatternAnyToken;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -47,9 +47,9 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	 */
 	protected int max;
 
-	private boolean alwaysHasClosingToken = true;
+	boolean alwaysHasClosingToken = true;
 
-	private String luceneField;
+	String luceneField;
 
 	public SpanQueryAnyToken(int min, int max, String luceneField) {
 		this.min = min;
@@ -192,7 +192,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
 		NfaState state = NfaState.anyToken(null);
 		NfaFragment frag = new NfaFragment(state, Arrays.asList(state));

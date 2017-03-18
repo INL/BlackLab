@@ -14,25 +14,30 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 
 /**
- * Maps property name to property number, term string to term number,
- * and allows you to instantiante a token source for matching from a
- * certain position in a document.
+ * Allows the forward index matching subsystem to access the forward indices,
+ * including an easy and fast way to read any property at any position from a document.
  */
-class TokenPropMapperImpl extends TokenPropMapper {
+class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
+	/** Our Searcher object */
 	private Searcher searcher;
 
-	private String complexFieldBaseName;
+	/** Field name, e.g. "contents" */
+	String complexFieldBaseName;
 
+	/** The property index for each property name */
 	private Map<String, Integer> propertyNumbers = new HashMap<>();
 
-	private List<String> propertyNames = new ArrayList<>();
+	/** The property names for each property */
+	List<String> propertyNames = new ArrayList<>();
 
+	/** The forward index for each property */
+	List<ForwardIndex> fis = new ArrayList<>();
+
+	/** The terms object for each property */
 	private List<Terms> terms = new ArrayList<>();
 
-	private List<ForwardIndex> fis = new ArrayList<>();
-
-	TokenPropMapperImpl(Searcher searcher, String searchField) {
+	ForwardIndexAccessorImpl(Searcher searcher, String searchField) {
 		this.searcher = searcher;
 		this.complexFieldBaseName = searchField;
 	}
@@ -43,6 +48,7 @@ class TokenPropMapperImpl extends TokenPropMapper {
 	 * @param propertyName property to get the index for
 	 * @return index for this property
 	 */
+	@Override
 	public int getPropertyNumber(String propertyName) {
 		Integer n = propertyNumbers.get(propertyName);
 		if (n == null) {
@@ -57,6 +63,7 @@ class TokenPropMapperImpl extends TokenPropMapper {
 		return n;
 	}
 
+	@Override
 	public int getTermNumber(int propertyNumber, String propertyValue) {
 		return terms.get(propertyNumber).indexOf(propertyValue);
 	}
@@ -71,18 +78,18 @@ class TokenPropMapperImpl extends TokenPropMapper {
 	}
 
 	@Override
-	public ReaderTokenPropMapper getReaderTokenPropMapper(LeafReader reader) {
-		return new ReaderTokenPropMapperImpl(reader);
+	public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
+		return new ForwardIndexAccessorLeafReaderImpl(reader);
 	}
 	
-	class ReaderTokenPropMapperImpl extends ReaderTokenPropMapper {
+	class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
 		
 		private List<DocIntFieldGetter> fiidGetters;
 
-		ReaderTokenPropMapperImpl(LeafReader reader) {
+		ForwardIndexAccessorLeafReaderImpl(LeafReader reader) {
 			super(reader);
 			fiidGetters = new ArrayList<>();
-			for (int i = 0; i < numberOfProperties(); i++)
+			for (int i = 0; i < getNumberOfProperties(); i++)
 				fiidGetters.add(null);
 		}
 		
@@ -106,16 +113,19 @@ class TokenPropMapperImpl extends TokenPropMapper {
 		 * @param reader the index reader
 		 * @return the token source
 		 */
-		public TokenSource tokenSource(int id) {
-			return new TokenSourceImpl(this, id, reader);
+		@Override
+		public ForwardIndexDocument getForwardIndexDoc(int id) {
+			return new ForwardIndexDocumentImpl(this, id, reader);
 		}
 
+		@Override
 		public int getDocLength(int docId) {
 			return fis.get(0).getDocLength(getFiid(0, docId));
 		}
 
 		int[] starts = {0}, ends = {0};
 		
+		@Override
 		public int[] getChunk(int propIndex, int docId, int start, int end) {
 			starts[0] = start;
 			ends[0] = end;
@@ -123,12 +133,14 @@ class TokenPropMapperImpl extends TokenPropMapper {
 			return fis.get(propIndex).retrievePartsInt(fiid, starts, ends).get(0);
 		}
 
+		@Override
 		public int getFiid(int propIndex, int docId) {
 			return fiidGetter(propIndex).getFieldValue(docId);
 		}
 
-		public int numberOfProperties() {
-			return TokenPropMapperImpl.this.numberOfProperties();
+		@Override
+		public int getNumberOfProperties() {
+			return ForwardIndexAccessorImpl.this.numberOfProperties();
 		}
 
 	}

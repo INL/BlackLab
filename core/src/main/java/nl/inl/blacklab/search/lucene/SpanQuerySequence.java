@@ -33,7 +33,7 @@ import org.apache.lucene.search.spans.SpanWeight;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -234,10 +234,10 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				long numThis = child.estimatedNumberOfHits(reader);
 				if (numThis / numPrev > nfaFactor) {
 					// Yes, worth it.
-					TokenPropMapper tokenPropMapper = TokenPropMapper.fromSearcher(Searcher.fromIndexReader(reader), getField());
-					NfaFragment nfaFrag = child.getNfa(tokenPropMapper, 1);
+					ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), getField());
+					NfaFragment nfaFrag = child.getNfa(fiAccessor, 1);
 					NfaState nfa = nfaFrag.finish();
-					tryComb = new SpanQueryFiSeq(previousPart, false, nfa, 1, tokenPropMapper);
+					tryComb = new SpanQueryFiSeq(previousPart, false, nfa, 1, fiAccessor);
 				}
 			}
 			if (tryComb != null) {
@@ -524,16 +524,16 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		NfaFragment frag = null;
 		int start = direction == 1 ? 0 : clauses.size() - 1;
 		int end   = direction == 1 ? clauses.size() : -1;
 		for (int i = start; i != end; i += direction) {
 			BLSpanQuery clause = clauses.get(i);
 			if (frag == null)
-				frag = clause.getNfa(propMapper, direction);
+				frag = clause.getNfa(fiAccessor, direction);
 			else
-				frag.append(clause.getNfa(propMapper, direction));
+				frag.append(clause.getNfa(fiAccessor, direction));
 		}
 		return frag;
 	}

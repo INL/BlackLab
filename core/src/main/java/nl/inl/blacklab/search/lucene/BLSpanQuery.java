@@ -27,7 +27,7 @@ import org.apache.lucene.search.spans.SpanTermQuery;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
@@ -321,7 +321,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 		return new SpanQuerySorted(spanQuery, false, false);
 	}
 
-	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		throw new UnsupportedOperationException("Cannot create NFA; query should have been rewritten or cannot be matched using forward index");
 	}
 

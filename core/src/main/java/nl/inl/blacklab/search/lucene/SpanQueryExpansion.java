@@ -30,7 +30,7 @@ import org.apache.lucene.search.IndexSearcher;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.NfaStateAnyToken;
-import nl.inl.blacklab.search.fimatch.TokenPropMapper;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -49,13 +49,13 @@ import nl.inl.blacklab.search.fimatch.TokenPropMapper;
 public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	/** Whether to expand to left (true) or right (false) */
-	private boolean expandToLeft;
+	boolean expandToLeft;
 
 	/** Minimum number of tokens to expand */
-	private int min;
+	int min;
 
 	/** Maximum number of tokens to expand (-1 = infinite) */
-	private int max;
+	int max;
 
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;
@@ -258,10 +258,10 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(TokenPropMapper propMapper, int direction) {
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		if (max < 0)
 			throw new UnsupportedOperationException("Unlimited expansion using forward index not implemented");
-		NfaFragment nfa = clauses.get(0).getNfa(propMapper, direction);
+		NfaFragment nfa = clauses.get(0).getNfa(fiAccessor, direction);
 		NfaState any = new NfaStateAnyToken(null);
 		NfaFragment frag = new NfaFragment(any, Arrays.asList(any));
 		frag.repeat(min, max);

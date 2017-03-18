@@ -34,7 +34,7 @@ import org.apache.lucene.search.IndexSearcher;
 public class SpanQueryEdge extends BLSpanQueryAbstract {
 
 	/** if true, return the right edges; if false, the left */
-	private boolean rightEdge;
+	boolean rightEdge;
 
 	/**
 	 * Construct SpanQueryEdge object.
