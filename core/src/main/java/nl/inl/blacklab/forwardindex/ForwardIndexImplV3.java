@@ -74,7 +74,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	/** The number of integer positions to reserve when mapping the file for writing. */
 	final static int WRITE_MAP_RESERVE = 250000; // 250K integers = 1M bytes
 
-	/** The memory mapped write buffer */
+	/** The memory mapped write int buffer */
 	private IntBuffer writeBuffer;
 
 	/** Buffer offset (position in file of start of writeBuffer) in integer positions
@@ -271,7 +271,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			if (writeTokensFp == null) {
 				openTokensFileForWriting();
 			}
-			writeTokensFp.setLength(0);
+			
+			if (File.separatorChar != '\\') // causes problems on Windows
+				writeTokensFp.setLength(0);
+			
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -497,7 +500,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			if (writeBuffer == null || writeBufOffset > newDocumentOffset || writeBufEnd < newDocumentOffset + numberOfTokens) {
 				// No, remap it
 				writeBufOffset = newDocumentOffset;
-				MappedByteBuffer byteBuffer = writeTokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
+				ByteBuffer byteBuffer = writeTokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
 						writeBufOffset * SIZEOF_INT, (numberOfTokens + mapReserve)
 								* SIZEOF_INT);
 				writeBuffer = byteBuffer.asIntBuffer();
