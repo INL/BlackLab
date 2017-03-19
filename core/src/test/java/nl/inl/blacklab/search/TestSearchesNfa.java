@@ -44,10 +44,10 @@ public class TestSearchesNfa {
 		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' "));
 	}
 
-	@Test
-	public void testNfa2() throws ParseException {
-		expected = Arrays.asList("[May the] Force");
-		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the'+ "));
-	}
+//	@Test
+//	public void testNfa2() throws ParseException {
+//		expected = Arrays.asList("[May the] Force");
+//		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the'+ "));
+//	}
 
 }
