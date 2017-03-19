@@ -44,10 +44,14 @@ import org.eclipse.collections.impl.factory.Maps;
  * saves and loads faster, and includes the case-insensitive sorting order.
  */
 class TermsImplV3 extends Terms {
-	/** Maximum size for blocks of terms. We set this to a lower value on Windows because we can't properly
+	/** We set this to a lower value on Windows because we can't properly
 	 *  truncate the file due to the file still being mapped (there is no clean way to unmap a mapped file in Java,
 	 *  and Windows doesn't allow truncating a mapped file). The lower value on Windows prevents too much wasted space. */
-	private static final int DEFAULT_MAX_BLOCK_SIZE = File.separatorChar == '\\' ? 100000000 : Integer.MAX_VALUE - 100;
+	private static final int MAX_MAP_SIZE = File.separatorChar == '\\' ? 100000000 : Integer.MAX_VALUE;
+
+	/** Maximum size for blocks of terms. Because we also store offsets, and offsets and string data have to fit into
+	 *  a single mapped area, this should always be significantly smaller than MAX_MAP_SIZE. */
+	private static final int DEFAULT_MAX_BLOCK_SIZE = MAX_MAP_SIZE * 2 / 3;
 
 	/** Number of sort buffers we store in the terms file (case-sensitive/insensitive and inverted buffers for both as well) */
 	private static final int NUM_SORT_BUFFERS = 4;
@@ -146,6 +150,12 @@ class TermsImplV3 extends Terms {
 	 *  a lower value. */
 	private int maxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
 
+	/** The maximum block size to use while writing the terms file.
+	 *  Ususally around the limit of 2GB, but for testing, we can set this to
+	 *  a lower value. Note that this should be significantly larger than maxBlockSize,
+	 *  because we also need to store offsets. */
+	private int maxMapSize = Math.max(MAX_MAP_SIZE, maxBlockSize  * 3 / 2);
+
 	TermsImplV3(boolean indexMode, Collator collator, File termsFile, boolean useBlockBasedTermsFile) {
 		this.indexMode = indexMode;
 		if (collator == null)
@@ -235,7 +245,7 @@ class TermsImplV3 extends Terms {
 
 					long fileLength = termsFile.length();
 					long fileMapStart = 0;
-					long fileMapLength = Math.min(maxBlockSize, fileLength);
+					long fileMapLength = Math.min(maxMapSize, fileLength);
 					MappedByteBuffer buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 					int n = buf.getInt();
 					fileMapStart += BYTES_PER_INT;
@@ -265,7 +275,7 @@ class TermsImplV3 extends Terms {
 							// Re-map a new part of the file before we read the next block.
 							// (and before we read the sort buffers)
 							fileMapStart += termStringsByteSize;
-							fileMapLength = Math.min(maxBlockSize, fileLength - fileMapStart);
+							fileMapLength = Math.min(maxMapSize, fileLength - fileMapStart);
 							if (fileMapLength > 0) {
 								buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 								ib = buf.asIntBuffer();
@@ -385,7 +395,7 @@ class TermsImplV3 extends Terms {
 						buf.put(termStrings);
 						ib = buf.asIntBuffer();
 					} else {
-						long fileMapStart = 0, fileMapLength = maxBlockSize;
+						long fileMapStart = 0, fileMapLength = maxMapSize;
 						buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
 						buf.putInt(n); // Start with the number of terms      //@4
 						ib = buf.asIntBuffer();
@@ -534,6 +544,7 @@ class TermsImplV3 extends Terms {
 
 	public void setMaxBlockSize(int maxBlockSize) {
 		this.maxBlockSize = maxBlockSize;
+		maxMapSize = Math.max(MAX_MAP_SIZE, maxBlockSize * 3 / 2);
 	}
 
 }
