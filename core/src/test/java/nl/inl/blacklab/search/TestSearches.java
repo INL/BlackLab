@@ -201,13 +201,4 @@ public class TestSearches {
 		Assert.assertEquals(expected, testIndex.findConc(" 'dog' </s> "));
 	}
 
-	@Test
-	public void testNfaMatching() throws ParseException {
-		expected = Arrays.asList(
-				"[May the] Force");
-		SpanQuerySequence.setNfaFactor(2);
-		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' "));
-		SpanQuerySequence.setNfaFactor(SpanQuerySequence.DEFAULT_NFA_FACTOR);
-	}
-
 }
