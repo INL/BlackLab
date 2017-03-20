@@ -47,11 +47,10 @@ class TermsImplV3 extends Terms {
 	/** We set this to a lower value on Windows because we can't properly
 	 *  truncate the file due to the file still being mapped (there is no clean way to unmap a mapped file in Java,
 	 *  and Windows doesn't allow truncating a mapped file). The lower value on Windows prevents too much wasted space. */
-	private static final int MAX_MAP_SIZE = File.separatorChar == '\\' ? 100000000 : Integer.MAX_VALUE;
+	private static final int DEFAULT_MAX_MAP_SIZE = File.separatorChar == '\\' ? 100000000 : Integer.MAX_VALUE - 100;
 
-	/** Maximum size for blocks of terms. Because we also store offsets, and offsets and string data have to fit into
-	 *  a single mapped area, this should always be significantly smaller than MAX_MAP_SIZE. */
-	private static final int DEFAULT_MAX_BLOCK_SIZE = MAX_MAP_SIZE * 2 / 3;
+	/** Maximum size for blocks of term strings. */
+	private static final int DEFAULT_MAX_BLOCK_SIZE = DEFAULT_MAX_MAP_SIZE;
 
 	/** Number of sort buffers we store in the terms file (case-sensitive/insensitive and inverted buffers for both as well) */
 	private static final int NUM_SORT_BUFFERS = 4;
@@ -154,7 +153,7 @@ class TermsImplV3 extends Terms {
 	 *  Ususally around the limit of 2GB, but for testing, we can set this to
 	 *  a lower value. Note that this should be significantly larger than maxBlockSize,
 	 *  because we also need to store offsets. */
-	private int maxMapSize = Math.max(MAX_MAP_SIZE, maxBlockSize  * 3 / 2);
+	private int maxMapSize = DEFAULT_MAX_MAP_SIZE;
 
 	TermsImplV3(boolean indexMode, Collator collator, File termsFile, boolean useBlockBasedTermsFile) {
 		this.indexMode = indexMode;
@@ -543,8 +542,9 @@ class TermsImplV3 extends Terms {
 	}
 
 	public void setMaxBlockSize(int maxBlockSize) {
+		if ((long)maxBlockSize > ((long)DEFAULT_MAX_MAP_SIZE))
+			throw new RuntimeException("Max. block size too large, max. " + DEFAULT_MAX_MAP_SIZE );
 		this.maxBlockSize = maxBlockSize;
-		maxMapSize = Math.max(MAX_MAP_SIZE, maxBlockSize * 3 / 2);
 	}
 
 }

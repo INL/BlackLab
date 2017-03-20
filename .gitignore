@@ -12,3 +12,6 @@ target
 
 # vi temporary files
 *.swp
+
+# log files, such as JVM crash files
+*.log

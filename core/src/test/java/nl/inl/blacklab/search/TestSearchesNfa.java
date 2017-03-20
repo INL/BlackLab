@@ -3,18 +3,13 @@ package nl.inl.blacklab.search;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.TermQuery;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
-import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
 
 public class TestSearchesNfa {

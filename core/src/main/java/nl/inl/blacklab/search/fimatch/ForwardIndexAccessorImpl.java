@@ -81,9 +81,9 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 	public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
 		return new ForwardIndexAccessorLeafReaderImpl(reader);
 	}
-	
+
 	class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
-		
+
 		private List<DocIntFieldGetter> fiidGetters;
 
 		ForwardIndexAccessorLeafReaderImpl(LeafReader reader) {
@@ -92,7 +92,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 			for (int i = 0; i < getNumberOfProperties(); i++)
 				fiidGetters.add(null);
 		}
-		
+
 		DocIntFieldGetter fiidGetter(int propIndex) {
 			DocIntFieldGetter g = fiidGetters.get(propIndex);
 			if (g == null) {
@@ -104,13 +104,12 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 			}
 			return g;
 		}
-		
+
 		/**
-		 * Get a token source, which we can use to get tokens from a document 
+		 * Get a token source, which we can use to get tokens from a document
 		 * for different properties.
-		 *  
-		 * @param docId Lucene document id
-		 * @param reader the index reader
+		 *
+		 * @param id Lucene document id
 		 * @return the token source
 		 */
 		@Override
@@ -124,12 +123,12 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 		}
 
 		int[] starts = {0}, ends = {0};
-		
+
 		@Override
 		public int[] getChunk(int propIndex, int docId, int start, int end) {
 			starts[0] = start;
 			ends[0] = end;
-			int fiid = fiidGetter(propIndex).getFieldValue(docId); 
+			int fiid = fiidGetter(propIndex).getFieldValue(docId);
 			return fis.get(propIndex).retrievePartsInt(fiid, starts, ends).get(0);
 		}
 

@@ -15,7 +15,6 @@ import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.lucene.SpanQuerySequence;
 
 public class TestSearches {
 
