@@ -62,17 +62,14 @@ public class SketchToXmlConverter {
 	 */
 	public static Properties getPropertiesFromResource(String resourcePath) throws IOException {
 		Properties properties;
-		InputStream isProps = SketchToXmlConverter.class.getClassLoader().getResourceAsStream(resourcePath);
-		if (isProps == null) {
-			throw new IllegalArgumentException("Properties file not found: " + resourcePath
-					+ " (must be accessible from the classpath)");
-		}
-		try {
+		try (InputStream isProps = SketchToXmlConverter.class.getClassLoader().getResourceAsStream(resourcePath)) {
+			if (isProps == null) {
+				throw new IllegalArgumentException("Properties file not found: " + resourcePath
+						+ " (must be accessible from the classpath)");
+			}
 			properties = new Properties();
 			properties.load(isProps);
 			return properties;
-		} finally {
-			isProps.close();
 		}
 	}
 
