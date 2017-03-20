@@ -21,6 +21,20 @@ public class MockTerms extends Terms {
 	}
 
 	@Override
+	public int indexOf(String term, boolean sensitive) {
+		for (int i = 0; i < numberOfTerms(); i++) {
+			if (sensitive) {
+				if (get(i).equals(term))
+					return i;
+			} else {
+				if (get(i).equalsIgnoreCase(term))
+					return i;
+			}
+		}
+		throw new IllegalArgumentException("Unknown term '" + term + "'");
+	}
+
+	@Override
 	public void clear() {
 		//
 

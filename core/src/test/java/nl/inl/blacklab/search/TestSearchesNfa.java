@@ -23,7 +23,7 @@ public class TestSearchesNfa {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		SpanQuerySequence.setNfaFactor(2);
+		SpanQuerySequence.setNfaFactor(1);
 		testIndex = new TestIndex();
 	}
 
@@ -39,10 +39,22 @@ public class TestSearchesNfa {
 		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' "));
 	}
 
-//	@Test
-//	public void testNfa2() throws ParseException {
-//		expected = Arrays.asList("[May the] Force");
-//		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the'+ "));
-//	}
+	@Test
+	public void testNfa2() throws ParseException {
+		expected = Arrays.asList("[May the] Force");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the'+ "));
+	}
+
+	@Test
+	public void testNfa3() throws ParseException {
+		expected = Arrays.asList("[May the Force be with you]");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' ('force' 'be' 'with') 'you' "));
+	}
+
+	@Test
+	public void testNfa4() throws ParseException {
+		expected = Arrays.asList("[May the Force be with] you");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' '.*e'+ 'with' "));
+	}
 
 }

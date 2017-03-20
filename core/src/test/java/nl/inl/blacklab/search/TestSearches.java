@@ -200,4 +200,9 @@ public class TestSearches {
 		Assert.assertEquals(expected, testIndex.findConc(" 'dog' </s> "));
 	}
 
+	@Test
+	public void testNfa4() throws ParseException {
+		expected = Arrays.asList("[May the Force be with] you");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' '.*e'+ 'with' "));
+	}
 }

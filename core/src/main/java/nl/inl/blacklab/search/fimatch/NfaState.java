@@ -156,8 +156,20 @@ public abstract class NfaState {
 
 	@Override
 	public String toString() {
-		return "NfaState";
+		Map<NfaState, Integer> stateNrs = new IdentityHashMap<>();
+		return "NFA:" + dump(stateNrs);
 	}
+
+	public String dump(Map<NfaState, Integer> stateNrs) {
+		Integer n = stateNrs.get(this);
+		if (n != null)
+			return "#" + n;
+		n = stateNrs.size() + 1;
+		stateNrs.put(this, n);
+		return "#" + n + ":" + dumpInternal(stateNrs);
+	}
+
+	protected abstract String dumpInternal(Map<NfaState, Integer> stateNrs);
 
 	/**
 	 * Does this NFA match the empty sequence?

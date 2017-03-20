@@ -60,4 +60,9 @@ public class NfaStateNot extends NfaState {
 		return 1;
 	}
 
+	@Override
+	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
+		return "NOT(" + (clause == null ? "null" : clause.dump(stateNrs)) + ")";
+	}
+
 }

@@ -48,4 +48,9 @@ public class NfaStateMatch extends NfaState {
 		return 0;
 	}
 
+	@Override
+	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
+		return "MATCH()";
+	}
+
 }

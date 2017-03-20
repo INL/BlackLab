@@ -29,6 +29,8 @@ public class TestNfaFromQuery {
 
 		private final Map<String, Integer> terms = new HashMap<>();
 
+		private final Map<String, Integer> termsInsensitive = new HashMap<>();
+
 		public MockForwardIndexAccessor(String... document) {
 			this.termIds = new int[document.length];
 			for (int i = 0; i < document.length; i++) {
@@ -36,6 +38,7 @@ public class TestNfaFromQuery {
 				if (termId == null) {
 					termId = terms.size();
 					terms.put(document[i], termId);
+					termsInsensitive.put(document[i].toLowerCase(), termId);
 				}
 				termIds[i] = termId;
 			}
@@ -49,10 +52,10 @@ public class TestNfaFromQuery {
 		}
 
 		@Override
-		public int getTermNumber(int propertyNumber, String propertyValue) {
+		public int getTermNumber(int propertyNumber, String propertyValue, boolean sensitive) {
 			if (propertyNumber != 0)
 				throw new IllegalArgumentException("Unknown property " + propertyNumber);
-			Integer termId = terms.get(propertyValue);
+			Integer termId = sensitive ? terms.get(propertyValue) : termsInsensitive.get(propertyValue.toLowerCase());
 			if (termId == null)
 				return -1; //throw new IllegalArgumentException("Unknown word " + propertyValue);
 			return termId;

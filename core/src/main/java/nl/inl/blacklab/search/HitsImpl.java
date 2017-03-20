@@ -291,6 +291,7 @@ public class HitsImpl extends Hits {
 			if (!(sourceQuery instanceof BLSpanQuery))
 				throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
 			spanQuery = ((BLSpanQuery)sourceQuery).rewrite(reader);
+			System.err.println(spanQuery.toString());
 			termContexts = new HashMap<>();
 			Set<Term> terms = new HashSet<>();
 			spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);

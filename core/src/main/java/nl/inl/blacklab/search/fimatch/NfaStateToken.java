@@ -19,7 +19,7 @@ public class NfaStateToken extends NfaState {
 	private int inputToken;
 
 	/** The next state if a matching token was found. */
-	private NfaState nextState;
+	protected NfaState nextState;
 
 	public NfaStateToken(int propertyNumber, int inputToken, NfaState nextState) {
 		this.propertyNumber = propertyNumber;
@@ -86,6 +86,11 @@ public class NfaStateToken extends NfaState {
 	@Override
 	public int hitsLengthMax(Set<NfaState> statesVisited) {
 		return 1;
+	}
+
+	@Override
+	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
+		return "TOKEN(" + inputToken + "," + (nextState == null ? "null" : nextState.dump(stateNrs)) + ")";
 	}
 
 }

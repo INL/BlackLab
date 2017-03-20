@@ -111,6 +111,10 @@ class TermsImplV3 extends Terms {
 	 *  Only valid when indexMode == false. */
 	int[] idPerSortPosition;
 
+	/** The index number of each case-insensitive sorting position. Inverse of 
+	 *  sortPositionPerIdInsensitive[] array. Only valid when indexMode == false. */
+	int[] idPerSortPositionInsensitive;
+
 	/** The sorting position for each index number. Inverse of idPerSortPosition[]
 	 *  array. Only valid when indexMode == false. */
 	int[] sortPositionPerId;
@@ -180,6 +184,14 @@ class TermsImplV3 extends Terms {
 
 	@Override
 	public int indexOf(String term) {
+		return indexOf(term, true);
+	}
+	
+	@Override
+	public int indexOf(String term, boolean sensitive) {
+		
+		int[] idLookup = sensitive ? idPerSortPosition : idPerSortPositionInsensitive;
+		Collator coll = sensitive ? collator : collatorInsensitive;
 
 		// Do we have the term index available (fastest method)?
 		if (!termIndexBuilt) {
@@ -190,12 +202,12 @@ class TermsImplV3 extends Terms {
 			// Note that the binary search is done on the sorted terms,
 			// so we need to guess an ordinal, convert it to a term index,
 			// then check the term string, and repeat until we find a match.
-			int min = 0, max = idPerSortPosition.length - 1;
+			int min = 0, max = idLookup.length - 1;
 			while (true) {
 				int guessedOrdinal = (min + max) / 2;
-				int guessedIndex = idPerSortPosition[guessedOrdinal];
+				int guessedIndex = idLookup[guessedOrdinal];
 				String guessedTerm = get(guessedIndex);
-				int cmp = collator.compare(term, guessedTerm);
+				int cmp = coll.compare(term, guessedTerm);
 				if (cmp == 0)
 					return guessedIndex; // found
 				if (cmp < 0)
@@ -318,8 +330,10 @@ class TermsImplV3 extends Terms {
 						// Invert sortPositionPerId[] array, so we can later do a binary search through our
 						// terms to find a specific one. (only needed to deserialize sort/group criteria from URL)
 						idPerSortPosition = new int[n];
+						idPerSortPositionInsensitive = new int[n];
 						for (int i = 0; i < n; i++) {
 							idPerSortPosition[sortPositionPerId[i]] = i;
+							idPerSortPositionInsensitive[sortPositionPerIdInsensitive[i]] = i;
 						}
 					}
 				}

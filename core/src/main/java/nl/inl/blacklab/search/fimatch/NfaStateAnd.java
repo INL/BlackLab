@@ -143,4 +143,15 @@ public class NfaStateAnd extends NfaState {
 		return hitLengthMax;
 	}
 
+	@Override
+	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
+		StringBuilder b = new StringBuilder();
+		for (NfaState s: nextStates) {
+			if (b.length() > 0)
+				b.append(",");
+			b.append(s == null ? "null" : s.dump(stateNrs));
+		}
+		return "AND(" + b.toString() + ")";
+	}
+
 }

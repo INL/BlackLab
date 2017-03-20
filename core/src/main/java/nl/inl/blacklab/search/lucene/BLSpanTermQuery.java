@@ -179,10 +179,12 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	@Override
 	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		Term term = query.getTerm();
-		String propertyName = ComplexFieldUtil.getNameComponents(term.field())[1];
+		String[] comp = ComplexFieldUtil.getNameComponents(term.field());
+		String propertyName = comp[1];
+		boolean sensitive = comp.length > 2 && comp[2].equals("s"); 
 		int propertyNumber = fiAccessor.getPropertyNumber(propertyName);
 		String propertyValue = term.text();
-		int termNumber = fiAccessor.getTermNumber(propertyNumber, propertyValue);
+		int termNumber = fiAccessor.getTermNumber(propertyNumber, propertyValue, sensitive);
 		NfaState state = NfaState.token(propertyNumber, termNumber, null);
 		return new NfaFragment(state, Arrays.asList(state));
 	}

@@ -31,10 +31,11 @@ public abstract class ForwardIndexAccessor {
 	 *
 	 * @param propertyNumber which property to get term number for
 	 * @param propertyValue which term string to get term number for
+	 * @param sensitive match case sensitively or not?
 	 * @return term number for this term in this property
 	 *
 	 */
-	public abstract int getTermNumber(int propertyNumber, String propertyValue);
+	public abstract int getTermNumber(int propertyNumber, String propertyValue, boolean sensitive);
 
 	/**
 	 * Get the number of properties

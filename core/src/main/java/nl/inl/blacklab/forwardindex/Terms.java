@@ -29,6 +29,23 @@ public abstract class Terms {
 	public abstract int indexOf(String term);
 
 	/**
+	 * Get the existing index number of a term, or add it to the term list
+	 * and assign it a new index number.
+	 *
+	 * In index mode, this is fast. In search mode, this is slower, because
+	 * we have to do a binary search through the memory-mapped terms file.
+	 * However, this is only done rarely.
+	 *
+	 * If you care about this being fast, call
+	 * buildTermIndex() at the start of your application.
+	 *
+	 * @param term the term to get the index number for
+	 * @param sensitive compare case- and accent-sensitively?
+	 * @return the term's index number
+	 */
+	public abstract int indexOf(String term, boolean sensitive);
+
+	/**
 	 * Build the index from term to term id. Depending on the terms
 	 * implementation, this may speed up the first call to indexOf().
 	 */
