@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,13 +23,16 @@ public class NfaStateAnd extends NfaState {
 	@Override
 	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// Split state. Find matches for all alternatives.
-		int i = 0;
 		Set<Integer> newHitsFound = null;
 		for (NfaState nextState: nextStates) {
-			if (nextState == null)
-				throw new RuntimeException("nextState[" + i + "] == null in AND state");
-			i++;
-			Set<Integer> matchesForClause = nextState.findMatches(fiDoc, pos, direction);
+			Set<Integer> matchesForClause;
+			if (nextState == null) {
+				// null stands for the matching state.
+				matchesForClause = new HashSet<>();
+				matchesForClause.add(pos);
+			} else {
+				matchesForClause = nextState.findMatches(fiDoc, pos, direction);
+			}
 			if (newHitsFound == null) {
 				newHitsFound = matchesForClause;
 			} else {
@@ -149,7 +153,7 @@ public class NfaStateAnd extends NfaState {
 		for (NfaState s: nextStates) {
 			if (b.length() > 0)
 				b.append(",");
-			b.append(s == null ? "null" : s.dump(stateNrs));
+			b.append(dump(s, stateNrs));
 		}
 		return "AND(" + b.toString() + ")";
 	}

@@ -12,11 +12,12 @@ import java.util.TreeSet;
 /**
  * Represents both a state in an NFA, and a complete NFA
  * with this as the starting state.
+ *
+ * (Note that the "matching state" is simply represented as null
+ *  in the NFAs we build, which is convenient when possibly appending
+ *  other NFAs to it later)
  */
 public abstract class NfaState {
-
-	/** Singleton instance of the final state */
-	private static final NfaState THE_MATCH_STATE = new NfaStateMatch();
 
 	/** Singleton instance of the non-match final state */
 	private static final NfaState THE_NO_MATCH_STATE = new NfaStateNoMatch();
@@ -27,10 +28,11 @@ public abstract class NfaState {
 	 * @param propertyNumber what property to match
 	 * @param inputToken what token to match
 	 * @param nextState what state to go to after a succesful match
+	 * @param dbgTokenString (debug) the token string, so we can see it in the debug output
 	 * @return the state object
 	 */
-	public static NfaState token(int propertyNumber, int inputToken, NfaState nextState) {
-		return new NfaStateToken(propertyNumber, inputToken, nextState);
+	public static NfaState token(int propertyNumber, int inputToken, NfaState nextState, String dbgTokenString) {
+		return new NfaStateToken(propertyNumber, inputToken, nextState, dbgTokenString);
 	}
 
 	public static NfaState anyToken(NfaState nextState) {
@@ -65,14 +67,6 @@ public abstract class NfaState {
 	 */
 	public static NfaState and(List<NfaState> nfaClauses) {
 		return new NfaStateAnd(nfaClauses);
-	}
-
-	/**
-	 * Return the match (final) state.
-	 * @return the match (final) state
-	 */
-	public static NfaState match() {
-		return THE_MATCH_STATE;
 	}
 
 	public static NfaState noMatch() {
@@ -165,6 +159,10 @@ public abstract class NfaState {
 	public String toString() {
 		Map<NfaState, Integer> stateNrs = new IdentityHashMap<>();
 		return "NFA:" + dump(stateNrs);
+	}
+
+	public static String dump(NfaState state, Map<NfaState, Integer> stateNrs) {
+		return state == null ? "MATCH()" : state.dump(stateNrs);
 	}
 
 	public String dump(Map<NfaState, Integer> stateNrs) {

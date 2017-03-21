@@ -215,7 +215,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	@Override
 	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		NfaFragment nfa = clauses.get(0).getNfa(fiAccessor, direction);
-		nfa.finish();
+		//nfa.finish();
 		nfa.invert();
 		return nfa;
 	}

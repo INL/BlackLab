@@ -31,9 +31,8 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.fimatch.NfaFragment;
-import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.NfaFragment;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -236,8 +235,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 					// Yes, worth it.
 					ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), getField());
 					NfaFragment nfaFrag = child.getNfa(fiAccessor, 1);
-					NfaState nfa = nfaFrag.finish();
-					tryComb = new SpanQueryFiSeq(previousPart, false, nfa, 1, fiAccessor);
+					if (previousPart instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)previousPart).getDirection() == 1) {
+						((SpanQueryFiSeq)previousPart).appendNfa(nfaFrag);
+						tryComb = previousPart;
+					} else {
+						tryComb = new SpanQueryFiSeq(previousPart, false, nfaFrag, 1, fiAccessor);
+					}
 				}
 			}
 			if (tryComb != null) {

@@ -28,8 +28,8 @@ public class TestNfa {
 	@Test
 	public void testNfaSimple() {
 		// Test simple NFA matching ab|ba
-		NfaState ab = NfaState.token(0, 'a', NfaState.token(0, 'b', NfaState.match()));
-		NfaState ba = NfaState.token(0, 'b', NfaState.token(0, 'a', NfaState.match()));
+		NfaState ab = NfaState.token(0, 'a', NfaState.token(0, 'b', null, "b"), "a");
+		NfaState ba = NfaState.token(0, 'b', NfaState.token(0, 'a', null, "a"), "b");
 		NfaState start = NfaState.or(ab, ba);
 
 		ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
@@ -42,9 +42,9 @@ public class TestNfa {
 	@Test
 	public void testNfaRepetition() {
 		// Test NFA matching ac*e
-		NfaState c = NfaState.token(0, 'c', null);
-		NfaState split = NfaState.or(c, NfaState.token(0, 'e', NfaState.match()));
-		NfaState start = NfaState.token(0, 'a', split);
+		NfaState c = NfaState.token(0, 'c', null, "c");
+		NfaState split = NfaState.or(c, NfaState.token(0, 'e', null, "e"));
+		NfaState start = NfaState.token(0, 'a', split, "a");
 		c.setNextState(0, split); // loopback
 
 		// Forward matching

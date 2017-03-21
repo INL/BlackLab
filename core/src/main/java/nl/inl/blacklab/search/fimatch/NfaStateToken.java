@@ -21,10 +21,14 @@ public class NfaStateToken extends NfaState {
 	/** The next state if a matching token was found. */
 	protected NfaState nextState;
 
-	public NfaStateToken(int propertyNumber, int inputToken, NfaState nextState) {
+	/** (debug) The token string, so we can see it in debug output */
+	private String dbgTokenString;
+
+	public NfaStateToken(int propertyNumber, int inputToken, NfaState nextState, String dbgTokenString) {
 		this.propertyNumber = propertyNumber;
 		this.inputToken = inputToken;
 		this.nextState = nextState;
+		this.dbgTokenString = dbgTokenString;
 	}
 
 	/**
@@ -40,8 +44,12 @@ public class NfaStateToken extends NfaState {
 		// Token state. Check if it matches token from token source, and if so, continue.
 		int actualToken = fiDoc.getToken(propertyNumber, pos);
 		if (inputToken == ANY_TOKEN && actualToken >= 0 || actualToken == inputToken) {
-			if (nextState == null)
-				throw new RuntimeException("nextState == null in token state (" + propertyNumber + ", " + inputToken + ")");
+			if (nextState == null) {
+				// null stands for the match state
+				if (matchEnds != null)
+					matchEnds.add(pos + direction);
+				return true;
+			}
 			return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
 		}
 		return false;
@@ -55,7 +63,7 @@ public class NfaStateToken extends NfaState {
 
 	@Override
 	NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-		NfaStateToken copy = new NfaStateToken(propertyNumber, inputToken, nextState);
+		NfaStateToken copy = new NfaStateToken(propertyNumber, inputToken, nextState, dbgTokenString);
 		if (nextState == null)
 			dangling.add(copy);
 		return copy;
@@ -90,7 +98,7 @@ public class NfaStateToken extends NfaState {
 
 	@Override
 	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
-		return "TOKEN(" + inputToken + "," + (nextState == null ? "null" : nextState.dump(stateNrs)) + ")";
+		return "TOKEN(" + dbgTokenString + "," + dump(nextState, stateNrs) + ")";
 	}
 
 }

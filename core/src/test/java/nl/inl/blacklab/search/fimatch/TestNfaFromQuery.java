@@ -31,7 +31,10 @@ public class TestNfaFromQuery {
 
 		private final Map<String, Integer> terms = new HashMap<>();
 
+		private final String[] termsById;
+
 		public MockForwardIndexAccessor(String... document) {
+			termsById = document;
 			this.termIds = new int[document.length];
 			for (int i = 0; i < document.length; i++) {
 				Integer termId = terms.get(document[i]);
@@ -105,6 +108,13 @@ public class TestNfaFromQuery {
 			};
 		}
 
+		@Override
+		public String getTerm(int propIndex, int t) {
+			if (propIndex != 0)
+				throw new IllegalArgumentException("Unknown property " + propIndex);
+			return termsById[t];
+		}
+
 	}
 
 	static class ForwardIndexDocumentIntArray extends ForwardIndexDocument {
@@ -132,7 +142,8 @@ public class TestNfaFromQuery {
 	private static void test(BLSpanQuery q, ForwardIndexAccessor fiAccessor, int startPos, int direction, int tests, List<Integer> matches) {
 		// The NFA
 		NfaFragment frag = q.getNfa(fiAccessor, direction);
-		NfaState start = frag.finish();
+		System.err.println(frag);
+		NfaState start = frag.getStartingState(); //finish();
 
 		ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).getForwardIndexDoc(0);
 		for (int i = 0; i < tests; i++) {
@@ -290,6 +301,18 @@ public class TestNfaFromQuery {
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(0, 1, 5));
 		test(q, fiAccessor, 5, -1, 6, Arrays.asList(0, 4, 5));
+	}
+
+	@Test
+	public void testNfaComplex0() {
+		// The test document
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
+
+		// The query: []? "is" ("lots" "and"){1,3} [word != "lots"] "of"
+		BLSpanQuery q = seq(not(term("lots")), term("of"));
+
+		test(q, fiAccessor, 0,  1, 8, NO_MATCHES);  // ERROR
+		test(q, fiAccessor, 8, -1, 8, Arrays.asList(8));
 	}
 
 	@Test

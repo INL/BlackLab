@@ -8,31 +8,41 @@ public class NfaStateNot extends NfaState {
 
 	private NfaState clause;
 
-	public NfaStateNot(NfaState clause) {
+	private NfaState nextState;
+
+	public NfaStateNot(NfaState clause, NfaState nextState) {
 		this.clause = clause;
-		if (clause == null)
-			throw new IllegalArgumentException("NOT clause cannot be null");
+		this.nextState = nextState;
 	}
 
 	@Override
 	boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
+		if (clause == null) {
+			// null stands for the match state, therefore this does not match
+			return false;
+		}
 		boolean clauseMatches = clause.findMatchesInternal(fiDoc, pos, direction, null);
 		if (clauseMatches)
 			return false;
-		// No matches found at this position, therefore this token IS a match.
-		if (matchEnds != null)
-			matchEnds.add(pos + direction);
-		return true;
+		// No matches found at this position, therefore this token does match.
+		if (nextState == null) {
+			// null stands for the match state
+			if (matchEnds != null)
+				matchEnds.add(pos + direction);
+			return true;
+		}
+		return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
 	}
 
 	@Override
 	void fillDangling(NfaState state) {
-		// nothing to do
+		if (nextState == null)
+			nextState = state;
 	}
 
 	@Override
 	NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-		return new NfaStateNot(clause.copy(dangling, copiesMade));
+		return new NfaStateNot(clause.copy(dangling, copiesMade), nextState.copy(dangling, copiesMade));
 	}
 
 	@Override
@@ -62,7 +72,7 @@ public class NfaStateNot extends NfaState {
 
 	@Override
 	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
-		return "NOT(" + (clause == null ? "null" : clause.dump(stateNrs)) + ")";
+		return "NOT(" + dump(clause, stateNrs) + "," + dump(nextState, stateNrs) + ")";
 	}
 
 }

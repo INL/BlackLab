@@ -4,6 +4,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A transition+state that never matches anything.
+ *
+ * (note that the opposite, the "match state", is simply
+ *  represented by null in our NFAs)
+ */
 public class NfaStateNoMatch extends NfaState {
 
 	@Override

@@ -82,6 +82,11 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 		return new ForwardIndexAccessorLeafReaderImpl(reader);
 	}
 
+	@Override
+	public String getTerm(int propIndex, int t) {
+		return fis.get(propIndex).getTerms().get(t);
+	}
+
 	class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
 
 		private List<DocIntFieldGetter> fiidGetters;

@@ -120,22 +120,24 @@ public class NfaFragment {
 	}
 
 	public void invert() {
-		NfaState not = new NfaStateNot(startingState);
+		NfaState not = new NfaStateNot(startingState, null);
 		startingState = not;
+		danglingArrows.clear();
+		danglingArrows.add(not);
 	}
 
 	public Collection<NfaState> getDanglingArrows() {
 		return danglingArrows;
 	}
 
-	public NfaState finish() {
-		append(new NfaFragment(NfaState.match(), null)); // finish NFA
-		return startingState;
-	}
+//	public NfaState finish() {
+//		append(new NfaFragment(NfaState.match(), null)); // finish NFA
+//		return startingState;
+//	}
 
 	@Override
 	public String toString() {
-		return "NfaFragment";
+		return "NfaFragment:" + startingState;
 	}
 
 }

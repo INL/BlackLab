@@ -22,16 +22,20 @@ public class NfaStateOr extends NfaState {
 	@Override
 	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// OR/Split state. Find matches for all alternatives.
-		int i = 0;
 		boolean result = false;
 		for (NfaState nextState: nextStates) {
-			if (nextState == null)
-				throw new RuntimeException("nextState[" + i + "] == null in OR state");
-			i++;
-			boolean a = nextState.findMatchesInternal(fiDoc, pos, direction, matchEnds);
-			if (a && matchEnds == null)
+			boolean matchesFound = false;
+			if (nextState == null) {
+				// null stands for the matching state.
+				if (matchEnds != null)
+					matchEnds.add(pos);
+				matchesFound = true;
+			} else {
+				matchesFound = nextState.findMatchesInternal(fiDoc, pos, direction, matchEnds);
+			}
+			if (matchesFound && matchEnds == null)
 				return true; // we don't care about the match ends, just that there are matches
-			result |= a;
+			result |= matchesFound;
 		}
 		return result;
 	}
@@ -144,7 +148,7 @@ public class NfaStateOr extends NfaState {
 		for (NfaState s: nextStates) {
 			if (b.length() > 0)
 				b.append(",");
-			b.append(s == null ? "null" : s.dump(stateNrs));
+			b.append(dump(s, stateNrs));
 		}
 		return "OR(" + b.toString() + ")";
 	}

@@ -113,5 +113,7 @@ public abstract class ForwardIndexAccessor {
 
 	}
 
+	public abstract String getTerm(int propIndex, int t);
+
 
 }

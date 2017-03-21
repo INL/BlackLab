@@ -25,8 +25,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaState;
 
 /**
  * Find hits that match the specified NFA, starting from the
@@ -35,7 +36,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
  */
 public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
-	NfaState nfa;
+	NfaFragment nfaFrag;
 
 	int direction;
 
@@ -47,13 +48,13 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	 *
 	 * @param anchor hits to use as anchor to start NFA matching
 	 * @param startOfAnchor if true, use the starts of anchor hits; if false, use the ends
-	 * @param nfa the NFA to use for matching
+	 * @param nfaFrag the NFA to use for matching
 	 * @param direction the direction to match in (-1 = right-to-left, 1 = left-to-right)
 	 * @param fiAccessor maps between term strings and term indices for each property
 	 */
-	public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaState nfa, int direction, ForwardIndexAccessor fiAccessor) {
+	public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaFragment nfaFrag, int direction, ForwardIndexAccessor fiAccessor) {
 		super(anchor);
-		this.nfa = nfa;
+		this.nfaFrag = nfaFrag;
 		this.startOfAnchor = startOfAnchor;
 		this.direction = direction;
 		this.fiAccessor = fiAccessor;
@@ -63,7 +64,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
 		if (rewritten != clauses.get(0)) {
-			SpanQueryFiSeq result = new SpanQueryFiSeq(rewritten, startOfAnchor, nfa, direction, fiAccessor);
+			SpanQueryFiSeq result = new SpanQueryFiSeq(rewritten, startOfAnchor, nfaFrag, direction, fiAccessor);
 			return result;
 		}
 		return this;
@@ -116,18 +117,18 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 			if (anchorSpans == null)
 				return null;
 			// @@@ make sure anchor hits are unique?
-			return new SpansFiSeq(anchorSpans, startOfAnchor, nfa, direction, fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
+			return new SpansFiSeq(anchorSpans, startOfAnchor, nfaFrag.getStartingState(), direction, fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
 		}
 	}
 
 	@Override
 	public String toString(String field) {
-		return "FISEQ(" + clausesToString(field) + ", " + nfa + ", " + direction + ")";
+		return "FISEQ(" + clausesToString(field) + ", " + nfaFrag + ", " + direction + ")";
 	}
 
-	public SpanQueryFiSeq copy() {
-		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfa, direction, fiAccessor);
-	}
+//	public SpanQueryFiSeq copy() {
+//		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfaFrag, direction, fiAccessor);
+//	}
 
 	@Override
 	public boolean matchesEmptySequence() {
@@ -141,11 +142,13 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean hitsAllSameLength() {
+		NfaState nfa = nfaFrag.getStartingState();
 		return clauses.get(0).hitsAllSameLength() && nfa.hitsAllSameLength(NfaState.emptySet());
 	}
 
 	@Override
 	public int hitsLengthMin() {
+		NfaState nfa = nfaFrag.getStartingState();
 		if (startOfAnchor && direction == -1 || !startOfAnchor && direction == 1) {
 			// Non-overlapping; add the two values
 			return clauses.get(0).hitsLengthMin() + nfa.hitsLengthMin(NfaState.emptySet());
@@ -156,6 +159,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
 	@Override
 	public int hitsLengthMax() {
+		NfaState nfa = nfaFrag.getStartingState();
 		if (startOfAnchor && direction == -1 || !startOfAnchor && direction == 1) {
 			// Non-overlapping; add the two values
 			return clauses.get(0).hitsLengthMax() + nfa.hitsLengthMax(NfaState.emptySet());
@@ -196,5 +200,13 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	@Override
 	public long estimatedNumberOfHits(IndexReader reader) {
 		return clauses.get(0).estimatedNumberOfHits(reader);
+	}
+
+	public int getDirection() {
+		return direction;
+	}
+
+	public void appendNfa(NfaFragment newNfaFrag) {
+		nfaFrag.append(newNfaFrag);
 	}
 }
