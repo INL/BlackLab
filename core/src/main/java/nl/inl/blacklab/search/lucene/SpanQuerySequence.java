@@ -33,6 +33,7 @@ import org.apache.lucene.search.spans.SpanWeight;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the other. The order is
@@ -195,6 +196,43 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	static boolean combineAdjacentClauses(List<BLSpanQuery> cl, IndexReader reader, String fieldName) throws IOException {
 
 		boolean anyRewritten = false;
+
+		// Rewrite adjacent clauses according to rewriting precedence rules
+		boolean anyRewrittenThisCycle = true;
+		while (anyRewrittenThisCycle) {
+			anyRewrittenThisCycle = false;
+
+			// Find the highest-priority rewrite possible
+			int highestPrio = Integer.MAX_VALUE, highestPrioIndex = -1;
+			ClauseCombiner highestPrioCombiner = null;
+			BLSpanQuery left = null, right = cl.size() == 0 ? null : cl.get(0);
+			for (int i = 1; i < cl.size(); i++) {
+				// See if any combiners apply, and if the priority is higher than found so far.
+				left = right;
+				right = cl.get(i);
+				for (ClauseCombiner combiner: ClauseCombiner.getAll()) {
+					int prio = combiner.priority(left, right);
+					if (prio < highestPrio) {
+						highestPrio = prio;
+						highestPrioIndex = i;
+						highestPrioCombiner = combiner;
+					}
+				}
+			}
+			// Any combiners found?
+			if (highestPrio < Integer.MAX_VALUE) {
+				// Yes, execute the highest-prio combiner
+				left = cl.get(highestPrioIndex - 1);
+				right = cl.get(highestPrioIndex);
+				BLSpanQuery combined = highestPrioCombiner.combine(left, right);
+				cl.remove(highestPrioIndex);
+				cl.set(highestPrioIndex - 1, combined);
+				anyRewrittenThisCycle = true;
+			}
+			if (anyRewrittenThisCycle)
+				anyRewritten = true;
+		}
+
 		// Now, see what parts of the sequence can be combined into more efficient queries:
 		// - repeating clauses can be turned into a single repetition clause.
 		// - anytoken clauses can be combined into expansion clauses, which can be

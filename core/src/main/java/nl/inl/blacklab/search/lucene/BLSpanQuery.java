@@ -149,19 +149,19 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 * @throws IOException
 	 */
 	BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
-		if (previousPart instanceof SpanQueryRepetition) {
-			// Repetition clause.
-			SpanQueryRepetition rep = (SpanQueryRepetition) previousPart;
-			BLSpanQuery prevCl = rep.getClause();
-			if (equals(prevCl)) {
-				// Same clause; add one to rep's min and max
-				return new SpanQueryRepetition(this, 1 + rep.getMinRep(), addRepetitionMaxValues(rep.getMaxRep(), 1));
-			}
-		}
-		if (equals(previousPart)) {
-			// Same clause; create repetition with min and max equals 2.
-			return new SpanQueryRepetition(this, 2, 2);
-		}
+//		if (previousPart instanceof SpanQueryRepetition) {
+//			// Repetition clause.
+//			SpanQueryRepetition rep = (SpanQueryRepetition) previousPart;
+//			BLSpanQuery prevCl = rep.getClause();
+//			if (equals(prevCl)) {
+//				// Same clause; add one to rep's min and max
+//				return new SpanQueryRepetition(this, 1 + rep.getMinRep(), addRepetitionMaxValues(rep.getMaxRep(), 1));
+//			}
+//		}
+//		if (equals(previousPart)) {
+//			// Same clause; create repetition with min and max equals 2.
+//			return new SpanQueryRepetition(this, 2, 2);
+//		}
 		if (previousPart instanceof SpanQueryAnyToken) {
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
 			SpanQueryExpansion result = new SpanQueryExpansion(this, true, tp.hitsLengthMin(), tp.hitsLengthMax());
@@ -282,7 +282,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 * @param b first max. repetitions value
 	 * @return sum of the max. repetitions values
 	 */
-	static int addRepetitionMaxValues(int a, int b) {
+	public static int addRepetitionMaxValues(int a, int b) {
 		// Is either value infinite?
 		if (a == -1 || b == -1)
 			return -1; // Yes, result is infinite
