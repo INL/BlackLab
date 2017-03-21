@@ -18,8 +18,10 @@ package nl.inl.blacklab.search.lucene;
  */
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,9 +36,9 @@ import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -181,11 +183,26 @@ public class BLSpanTermQuery extends BLSpanQuery {
 		Term term = query.getTerm();
 		String[] comp = ComplexFieldUtil.getNameComponents(term.field());
 		String propertyName = comp[1];
-		boolean sensitive = comp.length > 2 && comp[2].equals("s"); 
+		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(term.field());
+		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(term.field());
 		int propertyNumber = fiAccessor.getPropertyNumber(propertyName);
 		String propertyValue = term.text();
-		int termNumber = fiAccessor.getTermNumber(propertyNumber, propertyValue, sensitive);
-		NfaState state = NfaState.token(propertyNumber, termNumber, null);
+		List<Integer> termNumbers = fiAccessor.getTermNumbers(propertyNumber, propertyValue, caseSensitive, diacSensitive);
+		NfaState state;
+		if (termNumbers.size() == 0) {
+			// No matching terms; just fail when matching gets to here
+			state = NfaState.noMatch();
+		} else if (termNumbers.size() == 1) {
+			// Single matching term
+			state = NfaState.token(propertyNumber, termNumbers.get(0), null);
+		} else {
+			// Multiple matching terms; generate OR state.
+			List<NfaState> st = new ArrayList<>();
+			for (Integer t: termNumbers) {
+				st.add(NfaState.token(propertyNumber, t, null));
+			}
+			state = NfaState.or(st);
+		}
 		return new NfaFragment(state, Arrays.asList(state));
 	}
 

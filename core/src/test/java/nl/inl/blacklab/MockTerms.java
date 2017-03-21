@@ -1,6 +1,9 @@
 package nl.inl.blacklab;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import nl.inl.blacklab.forwardindex.Terms;
 
 public class MockTerms extends Terms {
@@ -21,17 +24,18 @@ public class MockTerms extends Terms {
 	}
 
 	@Override
-	public int indexOf(String term, boolean sensitive) {
+	public List<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive) {
+		List<Integer> results = new ArrayList<>();
 		for (int i = 0; i < numberOfTerms(); i++) {
-			if (sensitive) {
+			if (caseSensitive) {
 				if (get(i).equals(term))
-					return i;
+					results.add(i);
 			} else {
 				if (get(i).equalsIgnoreCase(term))
-					return i;
+					results.add(i);
 			}
 		}
-		throw new IllegalArgumentException("Unknown term '" + term + "'");
+		return results;
 	}
 
 	@Override

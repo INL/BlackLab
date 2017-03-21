@@ -232,7 +232,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				// Yes, see if it's worth it to combine with it.
 				long numPrev = Math.max(1, previousPart.estimatedNumberOfHits(reader));
 				long numThis = child.estimatedNumberOfHits(reader);
-				if (numThis / numPrev > nfaFactor) {
+				if (nfaFactor == Integer.MAX_VALUE || numThis / numPrev > nfaFactor) {
 					// Yes, worth it.
 					ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), getField());
 					NfaFragment nfaFrag = child.getNfa(fiAccessor, 1);

@@ -1,0 +1,72 @@
+package nl.inl.blacklab.search.fimatch;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import nl.inl.blacklab.TestIndex;
+import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.search.lucene.SpanQuerySequence;
+
+public class TestSearchesNfa {
+
+	static TestIndex testIndex;
+
+	/**
+	 * Expected search results;
+	 */
+	List<String> expected;
+
+	@BeforeClass
+	public static void setUp() throws Exception {
+		SpanQuerySequence.setNfaFactor(Integer.MAX_VALUE);
+		testIndex = new TestIndex();
+	}
+
+	@AfterClass
+	public static void tearDown() {
+		testIndex.close();
+		SpanQuerySequence.setNfaFactor(SpanQuerySequence.DEFAULT_NFA_FACTOR);
+	}
+
+	@Test
+	public void testNfa1() throws ParseException {
+		expected = Arrays.asList("[May the] Force");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' "));
+	}
+
+	@Test
+	public void testNfa2() throws ParseException {
+		expected = Arrays.asList("[May the] Force");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the'+ "));
+	}
+
+	@Test
+	public void testNfa3() throws ParseException {
+		expected = Arrays.asList("[May the Force be with you]");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' ('force' 'be' 'with') 'you' "));
+	}
+
+	@Test
+	public void testNfa4a() throws ParseException {
+		expected = Arrays.asList("[May the Force be with] you");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' '.*e'+ 'with' "));
+	}
+
+	@Test
+	public void testNfa4b() throws ParseException {
+		expected = Arrays.asList("[May the Force be with] you");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' '(?-i).*e'+ 'with' "));
+	}
+
+	@Test
+	public void testNfa4c() throws ParseException {
+		expected = Arrays.asList("[The quick] brown", "May [the Force] be");
+		Assert.assertEquals(expected, testIndex.findConc(" 'the' '.*c.' "));
+	}
+
+}

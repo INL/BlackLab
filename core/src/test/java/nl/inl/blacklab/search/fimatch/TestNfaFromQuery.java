@@ -1,10 +1,12 @@
 package nl.inl.blacklab.search.fimatch;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Term;
@@ -29,8 +31,6 @@ public class TestNfaFromQuery {
 
 		private final Map<String, Integer> terms = new HashMap<>();
 
-		private final Map<String, Integer> termsInsensitive = new HashMap<>();
-
 		public MockForwardIndexAccessor(String... document) {
 			this.termIds = new int[document.length];
 			for (int i = 0; i < document.length; i++) {
@@ -38,7 +38,6 @@ public class TestNfaFromQuery {
 				if (termId == null) {
 					termId = terms.size();
 					terms.put(document[i], termId);
-					termsInsensitive.put(document[i].toLowerCase(), termId);
 				}
 				termIds[i] = termId;
 			}
@@ -52,13 +51,18 @@ public class TestNfaFromQuery {
 		}
 
 		@Override
-		public int getTermNumber(int propertyNumber, String propertyValue, boolean sensitive) {
+		public List<Integer> getTermNumbers(int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
 			if (propertyNumber != 0)
 				throw new IllegalArgumentException("Unknown property " + propertyNumber);
-			Integer termId = sensitive ? terms.get(propertyValue) : termsInsensitive.get(propertyValue.toLowerCase());
-			if (termId == null)
-				return -1; //throw new IllegalArgumentException("Unknown word " + propertyValue);
-			return termId;
+			if (caseSensitive)
+				return Arrays.asList(terms.get(propertyValue));
+			List<Integer> results = new ArrayList<>();
+			for (Entry<String, Integer> e: terms.entrySet()) {
+				if (e.getKey().equalsIgnoreCase(propertyValue)) {
+					results.add(e.getValue());
+				}
+			}
+			return results;
 		}
 
 		@Override
@@ -97,7 +101,7 @@ public class TestNfaFromQuery {
 				public int getFiid(int propIndex, int docId) {
 					return 0;
 				}
-				
+
 			};
 		}
 

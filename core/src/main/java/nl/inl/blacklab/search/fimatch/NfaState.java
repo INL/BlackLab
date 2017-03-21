@@ -18,6 +18,9 @@ public abstract class NfaState {
 	/** Singleton instance of the final state */
 	private static final NfaState THE_MATCH_STATE = new NfaStateMatch();
 
+	/** Singleton instance of the non-match final state */
+	private static final NfaState THE_NO_MATCH_STATE = new NfaStateNoMatch();
+
 	/**
 	 * Build a token state.
 	 *
@@ -70,6 +73,10 @@ public abstract class NfaState {
 	 */
 	public static NfaState match() {
 		return THE_MATCH_STATE;
+	}
+
+	public static NfaState noMatch() {
+		return THE_NO_MATCH_STATE;
 	}
 
 	/**

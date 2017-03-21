@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.List;
 
 /**
  * Keeps a list of unique terms and their sort positions.
@@ -29,21 +30,17 @@ public abstract class Terms {
 	public abstract int indexOf(String term);
 
 	/**
-	 * Get the existing index number of a term, or add it to the term list
-	 * and assign it a new index number.
+	 * Get the index number(s) of terms matching a string.
 	 *
-	 * In index mode, this is fast. In search mode, this is slower, because
-	 * we have to do a binary search through the memory-mapped terms file.
-	 * However, this is only done rarely.
-	 *
-	 * If you care about this being fast, call
-	 * buildTermIndex() at the start of your application.
+	 * This is used in search mode when translating queries into NFAs. Depending on
+	 * case-sensitivity settings, a single term string may match multiple terms.
 	 *
 	 * @param term the term to get the index number for
-	 * @param sensitive compare case- and accent-sensitively?
-	 * @return the term's index number
+	 * @param caseSensitive compare case-sensitively? (currently switches both case- and diacritics-sensitivity)
+	 * @param diacSensitive compare diacritics-sensitively? (currently ignored)
+	 * @return index numbers for the matching term(s)
 	 */
-	public abstract int indexOf(String term, boolean sensitive);
+	public abstract List<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive);
 
 	/**
 	 * Build the index from term to term id. Depending on the terms

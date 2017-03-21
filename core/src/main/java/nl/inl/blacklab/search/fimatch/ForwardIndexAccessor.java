@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
+import java.util.List;
+
 import org.apache.lucene.index.LeafReader;
 
 import nl.inl.blacklab.search.Searcher;
@@ -31,11 +33,12 @@ public abstract class ForwardIndexAccessor {
 	 *
 	 * @param propertyNumber which property to get term number for
 	 * @param propertyValue which term string to get term number for
-	 * @param sensitive match case sensitively or not?
+	 * @param caseSensitive match case sensitively or not?
+	 * @param diacSensitive match case sensitively or not? (currently ignored)
 	 * @return term number for this term in this property
 	 *
 	 */
-	public abstract int getTermNumber(int propertyNumber, String propertyValue, boolean sensitive);
+	public abstract List<Integer> getTermNumbers(int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive);
 
 	/**
 	 * Get the number of properties
@@ -45,24 +48,24 @@ public abstract class ForwardIndexAccessor {
 
 	/**
 	 * Get an accessor for forward index documents from this leafreader.
-	 * 
+	 *
 	 * @param reader index reader
 	 * @return reader-specific accessor
 	 */
 	public abstract ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader);
-	
+
 	public abstract class ForwardIndexAccessorLeafReader {
-		
+
 		protected LeafReader reader;
-		
+
 		ForwardIndexAccessorLeafReader(LeafReader reader) {
 			this.reader = reader;
 		}
-		
+
 		/**
-		 * Get a token source, which we can use to get tokens from a document 
+		 * Get a token source, which we can use to get tokens from a document
 		 * for different properties.
-		 *  
+		 *
 		 * @param docId Lucene document id
 		 * @return the token source
 		 */
@@ -77,7 +80,7 @@ public abstract class ForwardIndexAccessor {
 
 		/**
 		 * Get a chunk of tokens from a forward index
-		 * 
+		 *
 		 * @param propIndex property to get tokens for
 		 * @param docId Lucene document id
 		 * @param start first token to get
@@ -88,7 +91,7 @@ public abstract class ForwardIndexAccessor {
 
 		/**
 		 * Get the forward index id for the specified property and document.
-		 * 
+		 *
 		 * @param propIndex property to get tokens for
 		 * @param docId Lucene document id
 		 * @return document length in tokens
@@ -97,11 +100,11 @@ public abstract class ForwardIndexAccessor {
 
 		/**
 		 * Get the number of mapped properties.
-		 * 
+		 *
 		 * Properties are mapped before the matching starts, so we can
-		 * simply pass a property index instead of property names, which 
-		 * would be too slow. 
-		 * 
+		 * simply pass a property index instead of property names, which
+		 * would be too slow.
+		 *
 		 * @return number of mapped properties.
 		 */
 		public int getNumberOfProperties() {

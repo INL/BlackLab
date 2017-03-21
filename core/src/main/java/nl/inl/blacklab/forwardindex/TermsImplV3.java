@@ -25,6 +25,7 @@ import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,7 @@ class TermsImplV3 extends Terms {
 	 *  Only valid when indexMode == false. */
 	int[] idPerSortPosition;
 
-	/** The index number of each case-insensitive sorting position. Inverse of 
+	/** The index number of each case-insensitive sorting position. Inverse of
 	 *  sortPositionPerIdInsensitive[] array. Only valid when indexMode == false. */
 	int[] idPerSortPositionInsensitive;
 
@@ -184,15 +185,6 @@ class TermsImplV3 extends Terms {
 
 	@Override
 	public int indexOf(String term) {
-		return indexOf(term, true);
-	}
-	
-	@Override
-	public int indexOf(String term, boolean sensitive) {
-		
-		int[] idLookup = sensitive ? idPerSortPosition : idPerSortPositionInsensitive;
-		Collator coll = sensitive ? collator : collatorInsensitive;
-
 		// Do we have the term index available (fastest method)?
 		if (!termIndexBuilt) {
 
@@ -202,12 +194,12 @@ class TermsImplV3 extends Terms {
 			// Note that the binary search is done on the sorted terms,
 			// so we need to guess an ordinal, convert it to a term index,
 			// then check the term string, and repeat until we find a match.
-			int min = 0, max = idLookup.length - 1;
+			int min = 0, max = idPerSortPosition.length - 1;
 			while (true) {
 				int guessedOrdinal = (min + max) / 2;
-				int guessedIndex = idLookup[guessedOrdinal];
+				int guessedIndex = idPerSortPosition[guessedOrdinal];
 				String guessedTerm = get(guessedIndex);
-				int cmp = coll.compare(term, guessedTerm);
+				int cmp = collator.compare(term, guessedTerm);
 				if (cmp == 0)
 					return guessedIndex; // found
 				if (cmp < 0)
@@ -228,6 +220,53 @@ class TermsImplV3 extends Terms {
 		index = termIndex.size();
 		termIndex.put(term, index);
 		return index;
+	}
+
+	@Override
+	public List<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive) {
+		// NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
+		//  right now, diacSensitive is ignored and caseSensitive is used for both.
+		int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
+		Collator coll = caseSensitive ? collator : collatorInsensitive;
+
+		// No. (this means we are in search mode, because in
+		//      index mode the term index is always available)
+		// Do a binary search to find term.
+		// Note that the binary search is done on the sorted terms,
+		// so we need to guess an ordinal, convert it to a term index,
+		// then check the term string, and repeat until we find a match.
+		int min = 0, max = idLookup.length - 1;
+		while (max >= min) {
+			int guessedOrdinal = (min + max) / 2;
+			int guessedIndex = idLookup[guessedOrdinal];
+			String guessedTerm = get(guessedIndex);
+			int cmp = coll.compare(term, guessedTerm);
+			if (cmp == 0) {
+				// Found a match. Look both ways to see if there's more matching terms.
+				List<Integer> terms = new ArrayList<>();
+				terms.add(guessedIndex);
+				if (!caseSensitive || !diacSensitive) {
+					for (int testOrdinal = guessedOrdinal - 1; testOrdinal >= min; testOrdinal--) {
+						int testIndex = idLookup[testOrdinal];
+						if (coll.compare(term, get(testIndex)) != 0)
+							break;
+						terms.add(testIndex);
+					}
+					for (int testOrdinal = guessedOrdinal + 1; testOrdinal <= max; testOrdinal++) {
+						int testIndex = idLookup[testOrdinal];
+						if (coll.compare(term, get(testIndex)) != 0)
+							break;
+						terms.add(testIndex);
+					}
+				}
+				return terms; // found
+			}
+			if (cmp < 0)
+				max = guessedOrdinal - 1;
+			else
+				min = guessedOrdinal + 1;
+		}
+		return Collections.emptyList(); // not found
 	}
 
 	@Override
