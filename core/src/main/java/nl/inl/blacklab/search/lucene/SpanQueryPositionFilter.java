@@ -100,19 +100,19 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 		return this;
 	}
 
-	@Override
-	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
-		BLSpanQuery result = super.combineWithPrecedingPart(previousPart, reader);
-		if (result == null && previousPart.hitsAllSameLength()) {
-			// We "gobble up" the previous part and adjust our left matching edge.
-			// This should make filtering more efficient, since we will likely have fewer hits to filter.
-			SpanQueryPositionFilter r = copy();
-			r.clauses.set(0, new SpanQuerySequence(previousPart, clauses.get(0)));
-			r.adjustLeft(previousPart.hitsLengthMin());
-			result = r;
-		}
-		return result;
-	}
+//	@Override
+//	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+//		BLSpanQuery result = super.combineWithPrecedingPart(previousPart, reader);
+//		if (result == null && previousPart.hitsAllSameLength()) {
+//			// We "gobble up" the previous part and adjust our left matching edge.
+//			// This should make filtering more efficient, since we will likely have fewer hits to filter.
+//			SpanQueryPositionFilter r = copy();
+//			r.clauses.set(0, new SpanQuerySequence(previousPart, clauses.get(0)));
+//			r.adjustLeft(previousPart.hitsLengthMin());
+//			result = r;
+//		}
+//		return result;
+//	}
 
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
@@ -282,5 +282,25 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	@Override
 	public long estimatedNumberOfHits(IndexReader reader) {
 		return clauses.get(0).estimatedNumberOfHits(reader);
+	}
+
+	/**
+	 * Create a new position filter query with a constant-length clause added to our producer.
+	 * 
+	 * leftAdjust and rightAdjust are updated according to the clause's length, so it is not
+	 * actually filtered.
+	 * 
+	 * @param clause clause to add
+	 * @param addToRight if true, add to the right; if false, to the left
+	 * @return new position filter query with clause internalized
+	 */
+	public BLSpanQuery internalize(BLSpanQuery clause, boolean addToRight) {
+		if (!clause.hitsAllSameLength())
+			throw new RuntimeException("Trying to internalize non-constant-length clause: " + clause);
+		BLSpanQuery producer = clauses.get(0);
+		SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(producer, clause, addToRight);
+		if (addToRight)
+			return new SpanQueryPositionFilter(seq, clauses.get(1), op, invert, leftAdjust, rightAdjust - clause.hitsLengthMin());
+		return new SpanQueryPositionFilter(seq, clauses.get(1), op, invert, leftAdjust + clause.hitsLengthMin(), rightAdjust);
 	}
 }

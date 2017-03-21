@@ -250,10 +250,10 @@ public class TestQueryRewrite {
 	public void testRewriteProblematicNegativeClauses() {
 		assertRewriteResult("'b' [word != 'a']", "POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 1, 0)");
 		assertRewriteResult("'b' [word != 'a']{2}", "POSFILTER(EXPAND(TERM(contents%word@i:b), R, 2, 2), TERM(contents%word@i:a), NOTCONTAINING, 1, 0)");
-		assertRewriteResult("'b' 'c' [word != 'a']{2}", "POSFILTER(SEQ(TERM(contents%word@i:b), EXPAND(TERM(contents%word@i:c), R, 2, 2)), TERM(contents%word@i:a), NOTCONTAINING, 2, 0)");
-		assertRewriteResult("[word != 'a']{2} 'b' 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i:b), L, 2, 2), TERM(contents%word@i:c)), TERM(contents%word@i:a), NOTCONTAINING, 0, -2)");
+		assertRewriteResult("'b' 'c' [word != 'a']{2}", "POSFILTER(EXPAND(SEQ(TERM(contents%word@i:b), TERM(contents%word@i:c)), R, 2, 2), TERM(contents%word@i:a), NOTCONTAINING, 2, 0)");
+		assertRewriteResult("[word != 'a']{2} 'b' 'c'", "POSFILTER(EXPAND(SEQ(TERM(contents%word@i:b), TERM(contents%word@i:c)), L, 2, 2), TERM(contents%word@i:a), NOTCONTAINING, 0, -2)");
 		assertRewriteResult("'a' [word != 'b']{1,20} 'c'", "POSFILTER(SEQ(EXPAND(TERM(contents%word@i:a), R, 1, 20), TERM(contents%word@i:c)), TERM(contents%word@i:b), NOTCONTAINING, 1, -1)");
-		assertRewriteResult("[word != 'a']? 'b' [word != 'c']?", "OR(POSFILTER(POSFILTER(EXPAND(EXPAND(TERM(contents%word@i:b), L, 1, 1), R, 1, 1), TERM(contents%word@i:c), NOTCONTAINING, 2, 0), TERM(contents%word@i:a), NOTCONTAINING, 0, -2), POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:c), NOTCONTAINING, 1, 0), POSFILTER(EXPAND(TERM(contents%word@i:b), L, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 0, -1), TERM(contents%word@i:b))");
+		assertRewriteResult("[word != 'a']? 'b' [word != 'c']?", "OR(POSFILTER(EXPAND(POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:c), NOTCONTAINING, 1, 0), L, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 0, -2), POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:c), NOTCONTAINING, 1, 0), POSFILTER(EXPAND(TERM(contents%word@i:b), L, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 0, -1), TERM(contents%word@i:b))");
 		assertRewriteResult("[word != 'a'] [pos='V.*']?", "OR(POSFILTER(EXPAND(TERM(contents%pos@i:vrb), L, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 0, -1), NOT(TERM(contents%word@i:a)))");
 		assertRewriteResult("[pos='V.*']? [word != 'a']", "OR(POSFILTER(EXPAND(TERM(contents%pos@i:vrb), R, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 1, 0), NOT(TERM(contents%word@i:a)))");
 	}

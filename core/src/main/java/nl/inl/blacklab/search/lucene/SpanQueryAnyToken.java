@@ -85,31 +85,32 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 		return false;
 	}
 
-	@Override
-	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
-		if (previousPart instanceof SpanQueryAnyToken) {
-			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			SpanQueryAnyToken result = new SpanQueryAnyToken(min + tp.min, addRepetitionMaxValues(max, tp.max), luceneField);
-			if (!alwaysHasClosingToken)
-				result.setAlwaysHasClosingToken(false);
-			return result;
-		} else if (previousPart instanceof SpanQueryExpansion) {
-			SpanQueryExpansion tp = (SpanQueryExpansion) previousPart;
-			if (!tp.isExpandToLeft()) {
-				// Any token clause after expand to right; combine.
-				SpanQueryExpansion result = new SpanQueryExpansion(tp.getClause(), tp.isExpandToLeft(), tp.getMinExpand() + min, (max == -1 || tp.getMaxExpand() == -1) ? -1 : tp.getMaxExpand() + max);
-				result.setIgnoreLastToken(tp.ignoreLastToken);
-				return result;
-			}
-		}
-		BLSpanQuery combo = super.combineWithPrecedingPart(previousPart, reader);
-		if (combo == null) {
-			SpanQueryExpansion exp = new SpanQueryExpansion(previousPart, false, min, max);
-			exp.setIgnoreLastToken(alwaysHasClosingToken);
-			combo = exp;
-		}
-		return combo;
-	}
+//	@Override
+//	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+//		if (previousPart instanceof SpanQueryAnyToken) {
+//			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
+//			SpanQueryAnyToken result = new SpanQueryAnyToken(min + tp.min, addRepetitionMaxValues(max, tp.max), luceneField);
+//			if (!alwaysHasClosingToken)
+//				result.setAlwaysHasClosingToken(false);
+//			return result;
+//		} else
+//		if (previousPart instanceof SpanQueryExpansion) {
+//			SpanQueryExpansion tp = (SpanQueryExpansion) previousPart;
+//			if (!tp.isExpandToLeft()) {
+//				// Any token clause after expand to right; combine.
+//				SpanQueryExpansion result = new SpanQueryExpansion(tp.getClause(), tp.isExpandToLeft(), tp.getMinExpand() + min, (max == -1 || tp.getMaxExpand() == -1) ? -1 : tp.getMaxExpand() + max);
+//				result.setIgnoreLastToken(tp.ignoreLastToken);
+//				return result;
+//			}
+//		}
+//		BLSpanQuery combo = super.combineWithPrecedingPart(previousPart, reader);
+//		if (combo == null) {
+//			SpanQueryExpansion exp = new SpanQueryExpansion(previousPart, false, min, max);
+//			exp.setIgnoreLastToken(alwaysHasClosingToken);
+//			combo = exp;
+//		}
+//		return combo;
+//	}
 
 	@Override
 	public BLSpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
@@ -212,6 +213,15 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 		// Should be rewritten, and if not, it matches all positions in the index.
 		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
 		return LuceneUtil.getSumTotalTermFreq(reader, luceneField) * numberOfExpansionSteps;
+	}
+
+	public BLSpanQuery addRep(int addMin, int addMax) {
+		int nMin = min + addMin;
+		int nMax = BLSpanQuery.addRepetitionMaxValues(max, addMax);
+		SpanQueryAnyToken q = new SpanQueryAnyToken(nMin, nMax, luceneField);
+		if (!alwaysHasClosingToken)
+			q.setAlwaysHasClosingToken(false);
+		return q;
 	}
 
 }

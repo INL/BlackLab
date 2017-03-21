@@ -123,8 +123,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 		return new SpanQueryRepetition(clauses.get(0).noEmpty(), newMin, max);
 	}
 
-	@Override
-	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+//	@Override
+//	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
 //		if (previousPart instanceof SpanQueryRepetition) {
 //			// Repetition clause.
 //			SpanQueryRepetition rep = (SpanQueryRepetition) previousPart;
@@ -139,8 +139,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 //				return new SpanQueryRepetition(clauses.get(0), min + 1, addRepetitionMaxValues(max, 1));
 //			}
 //		}
-		return super.combineWithPrecedingPart(previousPart, reader);
-	}
+//		return super.combineWithPrecedingPart(previousPart, reader);
+//	}
 
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {

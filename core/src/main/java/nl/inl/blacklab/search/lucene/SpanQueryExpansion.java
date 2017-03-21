@@ -60,6 +60,10 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	/** if true, we assume the last token is always a special closing token and ignore it */
 	boolean ignoreLastToken = false;
 
+	public boolean isIgnoreLastToken() {
+		return ignoreLastToken;
+	}
+
 	public SpanQueryExpansion(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
 		super(clause);
 		this.expandToLeft = expandToLeft;
@@ -106,24 +110,24 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		return result;
 	}
 
-	@Override
-	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
-		if (expandToLeft && previousPart instanceof SpanQueryAnyToken) {
-			// Expand to left following any token clause. Combine.
-			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			return new SpanQueryExpansion(clauses.get(0), expandToLeft, min + tp.min, addRepetitionMaxValues(max, tp.max));
-		}
-		if (!expandToLeft && max != min) {
-			// Expand to right with range of tokens. Combine with previous part to likely
-			// reduce the number of hits we'll have to expand.
-			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));
-			seq = seq.rewrite(reader);
-			SpanQueryExpansion result = new SpanQueryExpansion(seq, false, min, max);
-			result.setIgnoreLastToken(ignoreLastToken);
-			return result;
-		}
-		return super.combineWithPrecedingPart(previousPart, reader);
-	}
+//	@Override
+//	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
+//		if (expandToLeft && previousPart instanceof SpanQueryAnyToken) {
+//			// Expand to left following any token clause. Combine.
+//			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
+//			return new SpanQueryExpansion(clauses.get(0), expandToLeft, min + tp.min, addRepetitionMaxValues(max, tp.max));
+//		}
+//		if (!expandToLeft && max != min) {
+//			// Expand to right with range of tokens. Combine with previous part to likely
+//			// reduce the number of hits we'll have to expand.
+//			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));
+//			seq = seq.rewrite(reader);
+//			SpanQueryExpansion result = new SpanQueryExpansion(seq, false, min, max);
+//			result.setIgnoreLastToken(ignoreLastToken);
+//			return result;
+//		}
+//		return super.combineWithPrecedingPart(previousPart, reader);
+//	}
 
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
@@ -285,6 +289,29 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	public long estimatedNumberOfHits(IndexReader reader) {
 		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
 		return clauses.get(0).estimatedNumberOfHits(reader) * numberOfExpansionSteps;
+	}
+
+	public BLSpanQuery addExpand(int addMin, int addMax) {
+		int nMin = min + addMin;
+		int nMax = addRepetitionMaxValues(max, addMax);
+		SpanQueryExpansion result = new SpanQueryExpansion(clauses.get(0), expandToLeft, nMin, nMax);
+		result.setIgnoreLastToken(isIgnoreLastToken());
+		return result;
+	}
+
+	/**
+	 * "Gobble up" a clause into the clause we're expanding.
+	 * 
+	 * If we're expanding to the left, the clause is added to the right of what we were expanding, and vice versa.
+	 * 
+	 * @param clause clause to gobble up
+	 * @return new expansion with the additional clause
+	 */
+	public BLSpanQuery internalize(BLSpanQuery clause) {
+		SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, expandToLeft);
+		SpanQueryExpansion result = new SpanQueryExpansion(seq, expandToLeft, min, max);
+		result.setIgnoreLastToken(ignoreLastToken);
+		return result;
 	}
 
 }

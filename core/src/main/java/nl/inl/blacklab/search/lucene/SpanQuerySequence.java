@@ -203,7 +203,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			anyRewrittenThisCycle = false;
 
 			// Find the highest-priority rewrite possible
-			int highestPrio = Integer.MAX_VALUE, highestPrioIndex = -1;
+			int highestPrio = ClauseCombiner.CANNOT_COMBINE, highestPrioIndex = -1;
 			ClauseCombiner highestPrioCombiner = null;
 			BLSpanQuery left = null, right = cl.size() == 0 ? null : cl.get(0);
 			for (int i = 1; i < cl.size(); i++) {
@@ -220,11 +220,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				}
 			}
 			// Any combiners found?
-			if (highestPrio < Integer.MAX_VALUE) {
+			if (highestPrio < ClauseCombiner.CANNOT_COMBINE) {
 				// Yes, execute the highest-prio combiner
 				left = cl.get(highestPrioIndex - 1);
 				right = cl.get(highestPrioIndex);
 				BLSpanQuery combined = highestPrioCombiner.combine(left, right);
+				combined = combined.rewrite(reader); // just to be safe
 				cl.remove(highestPrioIndex);
 				cl.set(highestPrioIndex - 1, combined);
 				anyRewrittenThisCycle = true;
@@ -241,23 +242,21 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		//   adjacent constant-length query parts.
 		for (int i = 0; i < cl.size(); i++) {
 			BLSpanQuery child = cl.get(i);
-			BLSpanQuery combined = child;
-
 			// Do we have a previous part?
 			if (i == 0)
 				continue; // no, can't combine
 			BLSpanQuery previousPart = cl.get(i - 1);
 
 			// Yes, try to combine with it.
-			BLSpanQuery tryComb = combined.combineWithPrecedingPart(previousPart, reader);
-			if (tryComb == null)
+			BLSpanQuery combined = child.combineWithPrecedingPart(previousPart, reader);
+			if (combined == null)
 				continue; // can't combine
 
 			// Success! Remove previous part and keep trying with the part before that.
 			anyRewritten = true;
 			cl.remove(i);
 			i--;
-			cl.set(i, tryComb);
+			cl.set(i, combined);
 			i--;
 		}
 
@@ -608,5 +607,44 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 	public static void setNfaMatchingEnabled(boolean b) {
 		nfaFactor = b ? DEFAULT_NFA_FACTOR : -1;
+	}
+
+	/**
+	 * Create a new sequence with a clause added to it.
+	 * 
+	 * @param clause clause to add
+	 * @param addToRight if true, add to the right; if false, to the left
+	 * @return new sequence with clause added
+	 */
+	public SpanQuerySequence internalize(BLSpanQuery clause, boolean addToRight) {
+		List<BLSpanQuery> cl = new ArrayList<>(clauses);
+		if (addToRight)
+			cl.add(clause);
+		else
+			cl.add(0, clause);
+		return new SpanQuerySequence(cl);
+	}
+
+	/**
+	 * Either add a clause to an existing SpanQuerySequence, or create a new 
+	 * SpanQuerySequence with the two specified clauses.
+	 * 
+	 * @param whereToInternalize existing sequence, or existing non-sequence clause
+	 * @param clauseToInternalize clause to add to sequence or add to existing clause
+	 * @param addToRight if true, add new clause to the right of existing; if false, to the left
+	 * @return the expanded or newly created sequence
+	 */
+	public static SpanQuerySequence sequenceInternalize(BLSpanQuery whereToInternalize, BLSpanQuery clauseToInternalize, boolean addToRight) {
+		SpanQuerySequence seq;
+		if (whereToInternalize instanceof SpanQuerySequence) {
+			seq = (SpanQuerySequence)whereToInternalize;
+			seq = seq.internalize(clauseToInternalize, addToRight);
+		} else {
+			if (addToRight)
+				seq = new SpanQuerySequence(whereToInternalize, clauseToInternalize);
+			else
+				seq = new SpanQuerySequence(clauseToInternalize, whereToInternalize);
+		}
+		return seq;
 	}
 }

@@ -109,7 +109,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 *
 	 * @return the inverted TextPattern
 	 */
-	BLSpanQuery inverted() {
+	public BLSpanQuery inverted() {
 		return new SpanQueryNot(this);
 	}
 
@@ -133,7 +133,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 *
 	 * @return true if it's negative-only, false if not
 	 */
-	boolean isSingleTokenNot() {
+	public boolean isSingleTokenNot() {
 		return false;
 	}
 
@@ -162,52 +162,52 @@ public abstract class BLSpanQuery extends SpanQuery {
 //			// Same clause; create repetition with min and max equals 2.
 //			return new SpanQueryRepetition(this, 2, 2);
 //		}
-		if (previousPart instanceof SpanQueryAnyToken) {
-			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-			SpanQueryExpansion result = new SpanQueryExpansion(this, true, tp.hitsLengthMin(), tp.hitsLengthMax());
-			result.setIgnoreLastToken(tp.getAlwaysHasClosingToken());
-			return result;
-		}
-		if (previousPart instanceof SpanQueryExpansion) {
-			SpanQueryExpansion tp = (SpanQueryExpansion)previousPart;
-			if (tp.isExpandToLeft() && tp.getMinExpand() != tp.getMaxExpand()) {
-				// Expand to left with a range of tokens. Combine with this part to likely
-				// reduce the number of hits we'll have to expand.
-				BLSpanQuery seq = new SpanQuerySequence(tp.getClause(), this);
-				seq = seq.rewrite(reader);
-				SpanQueryExpansion result = new SpanQueryExpansion(seq, true, tp.getMinExpand(), tp.getMaxExpand());
-				result.setIgnoreLastToken(tp.ignoreLastToken);
-				return result;
-			}
-		}
-		if (hitsAllSameLength()) {
-			if (previousPart instanceof SpanQueryPositionFilter) {
-				// We are "gobbled up" by the previous part and adjust its right matching edge inward.
-				// This should make filtering more efficient, since we will likely have fewer hits to filter.
-				SpanQueryPositionFilter result = ((SpanQueryPositionFilter)previousPart).copy();
-				result.clauses.set(0, new SpanQuerySequence(result.clauses.get(0), this));
-				result.adjustRight(-hitsLengthMin());
-				return result;
-			}
-			if (isSingleTokenNot() && previousPart.hitsAllSameLength()) {
-				// Negative, single-token child after constant-length part.
-				// Rewrite to NOTCONTAINING clause, incorporating previous part.
-				int prevLen = previousPart.hitsLengthMin();
-				BLSpanQuery container = new SpanQueryExpansion(previousPart, false, 1, 1);
-				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
-				result.adjustLeft(prevLen);
-				return result;
-			}
-			if (previousPart.isSingleTokenNot()) {
-				// Constant-length child after negative, single-token part.
-				// Rewrite to NOTCONTAINING clause, incorporating previous part.
-				int myLen = hitsLengthMin();
-				BLSpanQuery container = new SpanQueryExpansion(this, true, 1, 1);
-				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, previousPart.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
-				result.adjustRight(-myLen);
-				return result;
-			}
-		}
+//		if (previousPart instanceof SpanQueryAnyToken) {
+//			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
+//			SpanQueryExpansion result = new SpanQueryExpansion(this, true, tp.hitsLengthMin(), tp.hitsLengthMax());
+//			result.setIgnoreLastToken(tp.getAlwaysHasClosingToken());
+//			return result;
+//		}
+//		if (previousPart instanceof SpanQueryExpansion) {
+//			SpanQueryExpansion tp = (SpanQueryExpansion)previousPart;
+//			if (tp.isExpandToLeft() && tp.getMinExpand() != tp.getMaxExpand()) {
+//				// Expand to left with a range of tokens. Combine with this part to likely
+//				// reduce the number of hits we'll have to expand.
+//				BLSpanQuery seq = new SpanQuerySequence(tp.getClause(), this);
+//				seq = seq.rewrite(reader);
+//				SpanQueryExpansion result = new SpanQueryExpansion(seq, true, tp.getMinExpand(), tp.getMaxExpand());
+//				result.setIgnoreLastToken(tp.ignoreLastToken);
+//				return result;
+//			}
+//		}
+//		if (hitsAllSameLength()) {
+//			if (previousPart instanceof SpanQueryPositionFilter) {
+//				// We are "gobbled up" by the previous part and adjust its right matching edge inward.
+//				// This should make filtering more efficient, since we will likely have fewer hits to filter.
+//				SpanQueryPositionFilter result = ((SpanQueryPositionFilter)previousPart).copy();
+//				result.clauses.set(0, new SpanQuerySequence(result.clauses.get(0), this));
+//				result.adjustRight(-hitsLengthMin());
+//				return result;
+//			}
+//			if (isSingleTokenNot() && previousPart.hitsAllSameLength()) {
+//				// Negative, single-token child after constant-length part.
+//				// Rewrite to NOTCONTAINING clause, incorporating previous part.
+//				int prevLen = previousPart.hitsLengthMin();
+//				BLSpanQuery container = new SpanQueryExpansion(previousPart, false, 1, 1);
+//				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
+//				result.adjustLeft(prevLen);
+//				return result;
+//			}
+//			if (previousPart.isSingleTokenNot()) {
+//				// Constant-length child after negative, single-token part.
+//				// Rewrite to NOTCONTAINING clause, incorporating previous part.
+//				int myLen = hitsLengthMin();
+//				BLSpanQuery container = new SpanQueryExpansion(this, true, 1, 1);
+//				SpanQueryPositionFilter result = new SpanQueryPositionFilter(container, previousPart.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
+//				result.adjustRight(-myLen);
+//				return result;
+//			}
+//		}
 
 		return null;
 	}
