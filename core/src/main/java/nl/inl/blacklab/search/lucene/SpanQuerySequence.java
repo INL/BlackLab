@@ -76,49 +76,62 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		super(_clauses);
 	}
 
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-
+	/**
+	 * Flatten nested sequences in clauses array.
+	 *
+	 * Flattens in-place.
+	 *
+	 * @param clauses clauses which may need flattening
+	 * @return true if any rewriting was done, false if not
+	 */
+	private static boolean flattenSequence(List<BLSpanQuery> clauses) {
 		boolean anyRewritten = false;
-
-		// Flatten nested sequences.
-		// This doesn't change the query because the sequence operator is associative.
-		List<BLSpanQuery> flat = new ArrayList<>();
-		for (BLSpanQuery child: clauses) {
-			boolean nestedSequence = child instanceof SpanQuerySequence;
-			if (nestedSequence) {
-				// Child sequence we want to flatten into this sequence.
-				// Replace the child, incorporating the child sequence into the rewritten sequence
-				((SpanQuerySequence)child).getFlatSequence(flat);
+		for (int i = 0; i < clauses.size(); i++) {
+			BLSpanQuery child = clauses.get(i);
+			if (child instanceof SpanQuerySequence) {
+				clauses.remove(i);
+				clauses.addAll(i, ((SpanQuerySequence)child).getClauses());
 				anyRewritten = true;
-			} else {
-				// Not nested
-				flat.add(child);
 			}
 		}
+		return anyRewritten;
+	}
+
+	/**
+	 * Try to match separate start and end tags in this sequence, and convert into a
+     * position filter (e.g. containing) query.
+     *
+     * For example:
+     *  <s> []* 'bla' []* </s> ==> <s/> containing 'bla'
+     *
+	 * @param clauses clauses in which to find matching tags
+	 * @return true if any rewriting was done, false if not
+	 */
+	protected boolean matchingTagsToPosFilter(List<BLSpanQuery> clauses) {
+		boolean anyRewritten = false;
 
 		// Try to match separate start and end tags in this sequence, and convert into a
 		// containing query. (<s> []* 'bla' []* </s> ==> <s/> containing 'bla')
-		for (int i = 0; i < flat.size(); i++) {
-			BLSpanQuery clause = flat.get(i);
+		for (int i = 0; i < clauses.size(); i++) {
+			BLSpanQuery clause = clauses.get(i);
 			if (clause instanceof SpanQueryEdge) {
 				SpanQueryEdge start = (SpanQueryEdge)clause;
 				if (!start.isRightEdge()) {
 					String tagName = start.getElementName();
 					if (tagName != null) {
 						// Start tag found. Is there a matching end tag?
-						for (int j = i + 1; j < flat.size(); j++) {
-							BLSpanQuery clause2 = flat.get(j);
+						for (int j = i + 1; j < clauses.size(); j++) {
+							BLSpanQuery clause2 = clauses.get(j);
 							if (clause2 instanceof SpanQueryEdge) {
 								SpanQueryEdge end = (SpanQueryEdge)clause2;
 								if (end.isRightEdge() && end.getElementName().equals(tagName)) {
 									// Found start and end tags in sequence. Convert to containing query.
 									List<BLSpanQuery> search = new ArrayList<>();
-									flat.remove(i); // start tag
+									clauses.remove(i); // start tag
 									for (int k = 0; k < j - i - 1; k++) {
-										search.add(flat.remove(i));
+										search.add(clauses.remove(i));
 									}
-									flat.remove(i); // end tag
+									clauses.remove(i); // end tag
 									boolean startAny = false;
 									if (search.get(0) instanceof SpanQueryAnyToken) {
 										SpanQueryAnyToken any1 = (SpanQueryAnyToken)search.get(0);
@@ -152,7 +165,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 											op = SpanQueryPositionFilter.Operation.MATCHES;
 										}
 									}
-									flat.add(i, new SpanQueryPositionFilter(producer, filter, op, false));
+									clauses.add(i, new SpanQueryPositionFilter(producer, filter, op, false));
 									anyRewritten = true;
 								}
 							}
@@ -161,70 +174,66 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				}
 			}
 		}
+		return anyRewritten;
+	}
 
+	static boolean rewriteClauses(List<BLSpanQuery> clauses, IndexReader reader) throws IOException {
+		boolean anyRewritten = false;
 		// Rewrite all clauses and flatten again if necessary.
-		for (int i = 0; i < flat.size(); i++) {
-			BLSpanQuery child = flat.get(i);
+		for (int i = 0; i < clauses.size(); i++) {
+			BLSpanQuery child = clauses.get(i);
 			BLSpanQuery rewritten = child.rewrite(reader);
-			boolean nestedSequence = rewritten instanceof SpanQuerySequence;
-			if (child != rewritten || nestedSequence) {
+			if (child != rewritten) {
+				// Replace the child with the rewritten version
 				anyRewritten = true;
-				if (nestedSequence) {
-					// Child sequence we want to flatten into this sequence.
-					// Replace the child, incorporating the child sequence into the rewritten sequence
-					flat.remove(i);
-					flat.addAll(i, ((SpanQuerySequence)rewritten).clauses);
-				} else {
-					// Replace the child with the rewritten version
-					flat.set(i, rewritten);
-				}
+				clauses.set(i, rewritten);
 			}
 		}
+		return anyRewritten;
+	}
 
+	static boolean combineAdjacentClauses(List<BLSpanQuery> cl, IndexReader reader, String fieldName) throws IOException {
+
+		boolean anyRewritten = false;
 		// Now, see what parts of the sequence can be combined into more efficient queries:
 		// - repeating clauses can be turned into a single repetition clause.
 		// - anytoken clauses can be combined into expansion clauses, which can be
 		//   combined again into distance queries
 		// - negative clauses can be rewritten to NOTCONTAINING clauses and combined with
 		//   adjacent constant-length query parts.
-		List<BLSpanQuery> seqCombined = new ArrayList<>();
-		for (BLSpanQuery child: flat) {
+		for (int i = 0; i < cl.size(); i++) {
+			BLSpanQuery child = cl.get(i);
 			BLSpanQuery combined = child;
-			while (true) {
-				// Do we have a previous part?
-				BLSpanQuery previousPart = seqCombined.isEmpty() ? null : seqCombined.get(seqCombined.size() - 1);
-				if (previousPart == null)
-					break;
-				// Yes, try to combine with it.
-				BLSpanQuery tryComb = combined.combineWithPrecedingPart(previousPart, reader);
-				if (tryComb == null)
-					break;
-				// Success! Remove previous part and keep trying with the part before that.
-				anyRewritten = true;
-				seqCombined.remove(seqCombined.size() - 1);
-				combined = tryComb;
-			}
-			if (combined == child) {
-				// Could not be combined.
-				seqCombined.add(child);
-			} else {
-				// Combined with previous clause(s).
-				seqCombined.add(combined.rewrite(reader));
-			}
+
+			// Do we have a previous part?
+			if (i == 0)
+				continue; // no, can't combine
+			BLSpanQuery previousPart = cl.get(i - 1);
+
+			// Yes, try to combine with it.
+			BLSpanQuery tryComb = combined.combineWithPrecedingPart(previousPart, reader);
+			if (tryComb == null)
+				continue; // can't combine
+
+			// Success! Remove previous part and keep trying with the part before that.
+			anyRewritten = true;
+			cl.remove(i);
+			i--;
+			cl.set(i, tryComb);
+			i--;
 		}
 
 		// See if we want to match some parts of the sequence using the forward index.
 		// We're looking for clauses with many hits adjacent to clauses with much fewer
 		// hits. Matching the more frequent one using an NFA on the forward index starting
 		// from the hits of the less frequent one saves time and memory.
-		List<BLSpanQuery> nfaCombined = new ArrayList<>();
-		for (BLSpanQuery child: seqCombined) {
+		for (int i = 0; i < cl.size(); i++) {
+			BLSpanQuery child = cl.get(i);
 			// Do we have a previous part?
-			BLSpanQuery previousPart = nfaCombined.isEmpty() ? null : nfaCombined.get(nfaCombined.size() - 1);
-			if (previousPart == null) {
-				nfaCombined.add(child);
-				continue;
-			}
+			if (i == 0)
+				break;
+			BLSpanQuery previousPart = cl.get(i - 1);
+
 			// Could we make an NFA out of this clause?
 			BLSpanQuery tryComb = null;
 			if (nfaFactor > 0 && child.canMakeNfa()) {
@@ -233,7 +242,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				long numThis = child.estimatedNumberOfHits(reader);
 				if (nfaFactor == Integer.MAX_VALUE || numThis / numPrev > nfaFactor) {
 					// Yes, worth it.
-					ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), getField());
+					ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), fieldName);
 					NfaFragment nfaFrag = child.getNfa(fiAccessor, 1);
 					if (previousPart instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)previousPart).getDirection() == 1) {
 						((SpanQueryFiSeq)previousPart).appendNfa(nfaFrag);
@@ -246,16 +255,43 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			if (tryComb != null) {
 				// Success! Remove previous part and add combined
 				anyRewritten = true;
-				nfaCombined.remove(nfaCombined.size() - 1);
-				nfaCombined.add(tryComb.rewrite(reader));
-			} else {
-				nfaCombined.add(child);
+				cl.remove(i);
+				i--;
+				cl.set(i, tryComb);
 			}
 		}
 
+		return anyRewritten;
+	}
+
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+
+		boolean anyRewritten = false;
+
+		// Make a copy, because our methods rewrite things in-place.
+		List<BLSpanQuery> cl = new ArrayList<>(clauses);
+
+		// Flatten nested sequences.
+		// This doesn't change the query because the sequence operator is associative.
+		anyRewritten |= flattenSequence(cl);
+
+		// Find matching tags and rewrite them to position filter (e.g. containing) to execute more efficiently
+		anyRewritten |= matchingTagsToPosFilter(cl);
+
+		// Rewrite each clause
+		anyRewritten |= rewriteClauses(cl, reader);
+
+		// Re-flatten in case a rewrite generated a new nested sequence
+		if (anyRewritten)
+			flattenSequence(cl);
+
+		// Try to combine adjacent clauses into more efficient ones
+		anyRewritten |= combineAdjacentClauses(cl, reader, getField());
+
 		// If any part of the sequence matches the empty sequence, we must
 		// rewrite it to several alternatives combined with OR. Do so now.
-		List<List<BLSpanQuery>> results = makeAlternatives(nfaCombined, reader);
+		List<List<BLSpanQuery>> results = makeAlternatives(cl, reader);
 		if (results.size() == 1 && !anyRewritten)
 			return this;
 		List<BLSpanQuery> orCl = new ArrayList<>();
@@ -327,21 +363,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		if (tailMatchesEmpty)
 			results.add(Arrays.asList(headNoEmpty));
 		return results;
-	}
-
-	private List<BLSpanQuery> getFlatSequence(List<BLSpanQuery> flat) {
-		for (BLSpanQuery child: clauses) {
-			boolean nestedSequence = child instanceof SpanQuerySequence;
-			if (nestedSequence) {
-				// Child sequence we want to flatten into this sequence.
-				// Replace the child, incorporating the child sequence into the rewritten sequence
-				((SpanQuerySequence)child).getFlatSequence(flat);
-			} else {
-				// Not nested
-				flat.add(child);
-			}
-		}
-		return flat;
 	}
 
 	@Override
@@ -427,18 +448,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 					combiEndpointSorted = clauses.get(i).hitsAllSameLength();
 				}
 			}
-
-			/*
-			// Sort the resulting spans by start point.
-			// Note that duplicates may have formed by combining spans from left and right. Eliminate
-			// these duplicates now (hence the 'true').
-			boolean sorted = combi.hitsStartPointSorted();
-			boolean unique = combi.hitsAreUnique();
-			if (!sorted) {
-				combi = new PerDocumentSortedSpans(combi, false, !unique);
-			} else if (!unique) {
-				combi = new SpansUnique(combi);
-			}*/
 
 			return combi;
 		}
