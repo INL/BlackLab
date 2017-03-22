@@ -50,6 +50,8 @@ public class NfaStateOr extends NfaState {
 
 	@Override
 	NfaStateOr copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+		NfaStateOr copy = new NfaStateOr();
+		copiesMade.put(this, copy);
 		List<NfaState> clauseCopies = new ArrayList<>();
 		boolean hasNulls = false;
 		for (NfaState nextState: nextStates) {
@@ -59,7 +61,7 @@ public class NfaStateOr extends NfaState {
 				nextState = nextState.copy(dangling, copiesMade);
 			clauseCopies.add(nextState);
 		}
-		NfaStateOr copy = new NfaStateOr(clauseCopies);
+		copy.nextStates.addAll(clauseCopies);
 		if (hasNulls)
 			dangling.add(copy);
 		return copy;
@@ -67,7 +69,7 @@ public class NfaStateOr extends NfaState {
 
 	@Override
 	public void setNextState(int input, NfaState state) {
-		this.nextStates.set(input, state);
+		nextStates.set(input, state);
 	}
 
 	@Override

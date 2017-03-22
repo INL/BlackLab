@@ -129,9 +129,7 @@ public abstract class NfaState {
 		NfaState existingCopy = copiesMade.get(this);
 		if (existingCopy != null)
 			return existingCopy;
-		NfaState copy = copyInternal(dangling, copiesMade);
-		copiesMade.put(this, copy);
-		return copy;
+		return copyInternal(dangling, copiesMade);
 	}
 
 	/**

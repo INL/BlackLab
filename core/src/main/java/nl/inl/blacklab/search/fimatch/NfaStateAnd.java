@@ -59,6 +59,8 @@ public class NfaStateAnd extends NfaState {
 	NfaStateAnd copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
 		List<NfaState> clauseCopies = new ArrayList<>();
 		boolean hasNulls = false;
+		NfaStateAnd copy = new NfaStateAnd();
+		copiesMade.put(this, copy);
 		for (NfaState nextState: nextStates) {
 			if (nextState == null)
 				hasNulls = true;
@@ -66,7 +68,7 @@ public class NfaStateAnd extends NfaState {
 				nextState = nextState.copy(dangling, copiesMade);
 			clauseCopies.add(nextState);
 		}
-		NfaStateAnd copy = new NfaStateAnd(clauseCopies);
+		copy.nextStates.addAll(clauseCopies);
 		if (hasNulls)
 			dangling.add(copy);
 		return copy;

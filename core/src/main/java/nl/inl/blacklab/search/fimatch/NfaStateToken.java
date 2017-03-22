@@ -63,7 +63,10 @@ public class NfaStateToken extends NfaState {
 
 	@Override
 	NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-		NfaStateToken copy = new NfaStateToken(propertyNumber, inputToken, nextState, dbgTokenString);
+		NfaStateToken copy = new NfaStateToken(propertyNumber, inputToken, null, dbgTokenString);
+		copiesMade.put(this, copy);
+		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
+		copy.nextState = nextStateCopy;
 		if (nextState == null)
 			dangling.add(copy);
 		return copy;

@@ -15,6 +15,10 @@ public class NfaStateNot extends NfaState {
 		this.nextState = nextState;
 	}
 
+	private NfaStateNot() {
+		// OK, used by copyInternal()
+	}
+
 	@Override
 	boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		if (clause == null) {
@@ -42,7 +46,13 @@ public class NfaStateNot extends NfaState {
 
 	@Override
 	NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-		return new NfaStateNot(clause.copy(dangling, copiesMade), nextState.copy(dangling, copiesMade));
+		NfaStateNot copy = new NfaStateNot();
+		copiesMade.put(this, copy);
+		NfaState clauseCopy = clause == null ? null : clause.copy(dangling, copiesMade);
+		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
+		copy.clause = clauseCopy;
+		copy.nextState = nextStateCopy;
+		return copy;
 	}
 
 	@Override
