@@ -108,7 +108,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
 	@Override
 	public String toString(String field) {
-		return "ANYTOKEN(" + min + ", " + max + ")";
+		return "ANYTOKEN(" + min + ", " + inf(max) + ")";
 	}
 
 	@Override
@@ -190,7 +190,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
 	public BLSpanQuery addRep(int addMin, int addMax) {
 		int nMin = min + addMin;
-		int nMax = BLSpanQuery.addRepetitionMaxValues(max, addMax);
+		int nMax = BLSpanQuery.addMaxValues(max, addMax);
 		SpanQueryAnyToken q = new SpanQueryAnyToken(nMin, nMax, luceneField);
 		if (!alwaysHasClosingToken)
 			q.setAlwaysHasClosingToken(false);

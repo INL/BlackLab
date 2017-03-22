@@ -25,6 +25,13 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * for example, a SpanQuery object or a String, depending on our needs.
  */
 public abstract class TextPattern implements Cloneable {
+
+	public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
+
+	static String inf(int max) {
+		return BLSpanQuery.inf(max);
+	}
+
 	/**
 	 * Default constructor; does nothing.
 	 */

@@ -36,6 +36,8 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
  */
 public abstract class BLSpanQuery extends SpanQuery {
 
+	public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
+
 	/**
 	 * Rewrite a SpanQuery after rewrite() to a BLSpanQuery equivalent.
 	 *
@@ -200,17 +202,20 @@ public abstract class BLSpanQuery extends SpanQuery {
 	/**
 	 * Add two values for maximum number of repetitions, taking "infinite" into account.
 	 *
-	 * -1 repetitions means infinite. Adding infinite to any other value
-	 * produces infinite again.
+	 * -1 or Integer.MAX_VALUE means infinite. Adding infinite to any other value
+	 * produces infinite again (-1 if either value is -1; otherwise, Integer.MAX_VALUE
+	 * if either value is Integer.MAX_VALUE).
 	 *
 	 * @param a first max. repetitions value
 	 * @param b first max. repetitions value
 	 * @return sum of the max. repetitions values
 	 */
-	public static int addRepetitionMaxValues(int a, int b) {
+	public static int addMaxValues(int a, int b) {
+		if (a < 0 || b < 0)
+			throw new RuntimeException("max values cannot be negative (possible use of old -1 == max, now BLSpanQuery.MAX_UNLIMITED)");
 		// Is either value infinite?
-		if (a == -1 || b == -1)
-			return -1; // Yes, result is infinite
+		if (a == Integer.MAX_VALUE || b == Integer.MAX_VALUE)
+			return Integer.MAX_VALUE; // Yes, result is infinite
 		// Add regular values
 		return a + b;
 	}
@@ -281,5 +286,9 @@ public abstract class BLSpanQuery extends SpanQuery {
 	}
 
 	public abstract String getRealField();
+
+	public static String inf(int max) {
+		return max == MAX_UNLIMITED ? "INF" : "" + max;
+	}
 
 }

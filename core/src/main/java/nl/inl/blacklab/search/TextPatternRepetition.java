@@ -31,11 +31,11 @@ public class TextPatternRepetition extends TextPattern {
 	public TextPatternRepetition(TextPattern base, int min, int max) {
 		this.base = base;
 		this.min = min;
-		this.max = max;
-		if (max != -1 && min > max)
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
 			throw new IllegalArgumentException("min > max");
-		if (min < 0)
-			throw new IllegalArgumentException("min < 0");
+		if (min < 0 || this.max < 0)
+			throw new IllegalArgumentException("min or max can't be negative");
 	}
 
 	@Override
@@ -77,12 +77,12 @@ public class TextPatternRepetition extends TextPattern {
 	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
-		return "REP(" + base.toString(context) + ", " + min + ", " + max + ")";
+		return "REP(" + base.toString(context) + ", " + min + ", " + inf(max) + ")";
 	}
 
 	@Override
 	public String toString() {
-		return "REP(" + base.toString() + ", " + min + ", " + max + ")";
+		return "REP(" + base.toString() + ", " + min + ", " + inf(max) + ")";
 	}
 
 }

@@ -120,7 +120,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 									boolean startAny = false;
 									if (search.get(0) instanceof SpanQueryAnyToken) {
 										SpanQueryAnyToken any1 = (SpanQueryAnyToken)search.get(0);
-										if (any1.hitsLengthMin() == 0 && any1.hitsLengthMax() == -1) {
+										if (any1.hitsLengthMin() == 0 && any1.hitsLengthMax() == MAX_UNLIMITED) {
 											startAny = true;
 											search.remove(0);
 										}
@@ -129,7 +129,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 									int last = search.size() - 1;
 									if (search.get(last) instanceof SpanQueryAnyToken) {
 										SpanQueryAnyToken any2 = (SpanQueryAnyToken)search.get(last);
-										if (any2.hitsLengthMin() == 0 && any2.hitsLengthMax() == -1) {
+										if (any2.hitsLengthMin() == 0 && any2.hitsLengthMax() == MAX_UNLIMITED) {
 											endAny = true;
 											search.remove(last);
 										}

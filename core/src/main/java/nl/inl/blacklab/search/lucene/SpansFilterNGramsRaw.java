@@ -55,7 +55,7 @@ class SpansFilterNGramsRaw extends BLSpans {
 	/** Minimum number of tokens to expand */
 	private int min;
 
-	/** Maximum number of tokens to expand (-1 = infinite) */
+	/** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
 	private int max;
 
 	/** End of the current source hit */
@@ -91,10 +91,10 @@ class SpansFilterNGramsRaw extends BLSpans {
 		this.clause = clause;
 		this.op = op;
 		this.min = min;
-		this.max = max;
-		if (max != -1 && min > max)
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
 			throw new IllegalArgumentException("min > max");
-		if (min < 0 || max < -1)
+		if (min < 0 || this.max < 0)
 			throw new IllegalArgumentException("Expansions cannot be negative");
 	}
 
@@ -260,7 +260,7 @@ class SpansFilterNGramsRaw extends BLSpans {
 			switch (op) {
 			case MATCHES:
 				int len = srcEnd - srcStart;
-				if (len >= min && (max == -1 || len <= max)) {
+				if (len >= min && len <= max) {
 					// Only one n-gram
 					start = srcStart;
 					end = srcEnd;
@@ -353,7 +353,7 @@ class SpansFilterNGramsRaw extends BLSpans {
 
 	@Override
 	public String toString() {
-		return "SpansExpansion(" + clause + ", " + op + ", " + min + ", " + max + ")";
+		return "SpansExpansion(" + clause + ", " + op + ", " + min + ", " + inf(max) + ")";
 	}
 
 	@Override

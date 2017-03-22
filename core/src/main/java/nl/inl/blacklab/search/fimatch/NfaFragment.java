@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+
 /**
  * A fragment of an NFA being built.
  * Contains a starting state and a list of dangling end states
@@ -66,7 +68,7 @@ public class NfaFragment {
 		}
 
 		// Create the max part, depending on whether it's infinite or not.
-		if (max < 0) {
+		if (max == BLSpanQuery.MAX_UNLIMITED) {
 			// Infinite. Loop back to start of last link added.
 			NfaState loopBack = NfaState.or(link.getStartingState(), null);
 			for (NfaState d: danglingArrows) {
@@ -129,11 +131,6 @@ public class NfaFragment {
 	public Collection<NfaState> getDanglingArrows() {
 		return danglingArrows;
 	}
-
-//	public NfaState finish() {
-//		append(new NfaFragment(NfaState.match(), null)); // finish NFA
-//		return startingState;
-//	}
 
 	@Override
 	public String toString() {

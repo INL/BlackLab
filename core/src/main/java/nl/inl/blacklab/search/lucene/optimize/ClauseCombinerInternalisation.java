@@ -23,7 +23,7 @@ class ClauseCombinerInternalisation extends ClauseCombiner {
 		POSFILTER_CONST,
 		CONST_POSFILTER,
 	}
-	
+
 	Type getType(BLSpanQuery left, BLSpanQuery right) {
 		boolean leftExpand = left instanceof SpanQueryExpansion;
 		boolean rightExpand = right instanceof SpanQueryExpansion;
@@ -45,7 +45,7 @@ class ClauseCombinerInternalisation extends ClauseCombiner {
 			return Type.CONST_POSFILTER;
 		return null;
 	}
-	
+
 	@Override
 	public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
 		return getType(left, right) == null ? CANNOT_COMBINE : PRIORITY;

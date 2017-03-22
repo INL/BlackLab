@@ -46,7 +46,7 @@ class SpansRepetition extends BLSpans {
 
 	private int firstToken;
 
-	private int tokenLength;
+	private int numRepetitions;
 
 	private BLSpans spansSource;
 
@@ -66,11 +66,11 @@ class SpansRepetition extends BLSpans {
 		spansSource = source;
 		this.source = new SpansInBucketsConsecutive(spansSource);
 		this.min = min;
-		this.max = max;
-		if (max != -1 && min > max)
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
 			throw new IllegalArgumentException("min > max");
-		if (min < 1)
-			throw new IllegalArgumentException("min < 1");
+		if (min < 1 || this.max < 1)
+			throw new IllegalArgumentException("min and max must be at least 1");
 	}
 
 	@Override
@@ -84,7 +84,7 @@ class SpansRepetition extends BLSpans {
 			return -1; // .nextStartPosition() not called yet
 		if (!moreBuckets)
 			return NO_MORE_POSITIONS;
-		return source.endPosition(firstToken + tokenLength - 1);
+		return source.endPosition(firstToken + numRepetitions - 1);
 	}
 
 	@Override
@@ -141,7 +141,7 @@ class SpansRepetition extends BLSpans {
 				// This stretch is large enough to get a repetition hit;
 				// Position us at the first hit and remember we're already there.
 				firstToken = 0;
-				tokenLength = min;
+				numRepetitions = min;
 				currentDoc = source.docID();
 				return source.startPosition(firstToken);
 			}
@@ -170,16 +170,16 @@ class SpansRepetition extends BLSpans {
 		}
 
 		// Go to the next hit length for this start point in the current bucket.
-		tokenLength++;
+		numRepetitions++;
 
 		// Find the first valid hit in the bucket
-		if ((max != -1 && tokenLength > max) || firstToken + tokenLength > source.bucketSize()) {
+		if (numRepetitions > max || firstToken + numRepetitions > source.bucketSize()) {
 			// On to the next start point.
 			firstToken++;
-			tokenLength = min;
+			numRepetitions = min;
 		}
 
-		if (firstToken + tokenLength <= source.bucketSize()) {
+		if (firstToken + numRepetitions <= source.bucketSize()) {
 			// Still a valid rep. hit.
 			return source.startPosition(firstToken);
 		}
@@ -235,7 +235,7 @@ class SpansRepetition extends BLSpans {
 
 	@Override
 	public String toString() {
-		return "SpansRepetition(" + source + ", " + min + ", " + max + ")";
+		return "SpansRepetition(" + source + ", " + min + ", " + inf(max) + ")";
 	}
 
 	@Override
@@ -245,7 +245,7 @@ class SpansRepetition extends BLSpans {
 
 	@Override
 	public void getCapturedGroups(Span[] capturedGroups) {
-		int index = firstToken + tokenLength - 1; // use the last match for captured groups
+		int index = firstToken + numRepetitions - 1; // use the last match for captured groups
 		source.getCapturedGroups(index, capturedGroups);
 	}
 

@@ -37,7 +37,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 	/** Minimum number of tokens to expand */
 	int min;
 
-	/** Maximum number of tokens to expand (-1 = infinite) */
+	/** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
 	int max;
 
 	/** if true, we assume the last token is always a special closing token and ignore it */
@@ -47,9 +47,11 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 		super(clause);
 		this.op = op;
 		this.min = min;
-		this.max = max;
-		if (max != -1 && min > max)
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
 			throw new IllegalArgumentException("min > max");
+		if (min < 0 || this.max < 0)
+			throw new IllegalArgumentException("min, max cannot be negative");
 	}
 
 	@Override
@@ -118,23 +120,6 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 			if (spansSource == null)
 				return null;
 			BLSpans spans = new SpansFilterNGramsRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(), spansSource, op, min, max);
-
-			/*
-			// Note: the spans coming from SpansFilterNGramsRaw are not sorted properly.
-			// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
-
-			// Sort the resulting spans by start point.
-			// Note that duplicates may have formed by combining spans from left and right. Eliminate
-			// these duplicates now (hence the 'true').
-			boolean sorted = spans.hitsStartPointSorted();
-			boolean unique = spans.hitsAreUnique();
-			if (!sorted) {
-				return new PerDocumentSortedSpans(spans, false, !unique);
-			} else if (!unique) {
-				return new SpansUnique(spans);
-			}
-			*/
-
 			return spans;
 		}
 
@@ -152,7 +137,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "FILTERNGRAMS(" + clauses.get(0) + ", " + op + ", " + min + ", " + max
+		return "FILTERNGRAMS(" + clauses.get(0) + ", " + op + ", " + min + ", " + inf(max)
 				+ ")";
 	}
 
@@ -206,7 +191,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
 	@Override
 	public long estimatedNumberOfHits(IndexReader reader) {
-		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
+		int numberOfExpansionSteps = max == MAX_UNLIMITED ? 50 : max - min + 1;
 		return clauses.get(0).estimatedNumberOfHits(reader) * numberOfExpansionSteps;
 	}
 

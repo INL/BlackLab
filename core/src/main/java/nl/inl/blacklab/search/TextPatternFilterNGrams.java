@@ -24,7 +24,11 @@ public class TextPatternFilterNGrams extends TextPattern {
 		this.clause = clause;
 		this.op = op;
 		this.min = min;
-		this.max = max;
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
+			throw new IllegalArgumentException("min > max");
+		if (min < 0 || this.max < 0)
+			throw new IllegalArgumentException("min or max can't be negative");
 	}
 
 	@Override
@@ -57,12 +61,12 @@ public class TextPatternFilterNGrams extends TextPattern {
 	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
-		return "FILTERNGRAMS(" + clause.toString(context) + ", " + op + ", " + min + ", " + max + ")";
+		return "FILTERNGRAMS(" + clause.toString(context) + ", " + op + ", " + min + ", " + inf(max) + ")";
 	}
 
 	@Override
 	public String toString() {
-		return "FILTERNGRAMS(" + clause + ", " + op + ", " + min + ", " + max + ")";
+		return "FILTERNGRAMS(" + clause + ", " + op + ", " + min + ", " + inf(max) + ")";
 	}
 
 }

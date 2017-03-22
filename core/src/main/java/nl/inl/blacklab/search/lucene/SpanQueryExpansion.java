@@ -54,7 +54,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	/** Minimum number of tokens to expand */
 	int min;
 
-	/** Maximum number of tokens to expand (-1 = infinite) */
+	/** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
 	int max;
 
 	/** if true, we assume the last token is always a special closing token and ignore it */
@@ -68,9 +68,11 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		super(clause);
 		this.expandToLeft = expandToLeft;
 		this.min = min;
-		this.max = max;
-		if (max != -1 && min > max)
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
 			throw new IllegalArgumentException("min > max");
+		if (min < 0 || this.max < 0)
+			throw new IllegalArgumentException("Expansions cannot be negative");
 	}
 
 	@Override
@@ -141,22 +143,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 			if (spansSource == null)
 				return null;
 			BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(), spansSource, expandToLeft, min, max);
-
-			/*
-			// Note: the spans coming from SpansExpansion are not sorted properly.
-			// Before returning the final spans, we wrap it in a per-document (start-point) sorter.
-
-			// Sort the resulting spans by start point.
-			// Note that duplicates may have formed by combining spans from left and right. Eliminate
-			// these duplicates now (hence the 'true').
-			boolean sorted = spans.hitsStartPointSorted();
-			boolean unique = spans.hitsAreUnique();
-			if (!sorted) {
-				return new PerDocumentSortedSpans(spans, false, !unique);
-			} else if (!unique) {
-				return new SpansUnique(spans);
-			}*/
-
 			return spans;
 		}
 
@@ -174,8 +160,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "EXPAND(" + clauses.get(0) + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + max
-				+ ")";
+		return "EXPAND(" + clauses.get(0) + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + inf(max) + ")";
 	}
 
 	/** Set whether to ignore the last token.
@@ -214,7 +199,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public int hitsLengthMax() {
-		return max < 0 ? Integer.MAX_VALUE : clauses.get(0).hitsLengthMax() + max;
+		return addMaxValues(clauses.get(0).hitsLengthMax(), max);
 	}
 
 	@Override
@@ -244,7 +229,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-		if (max < 0)
+		if (max == MAX_UNLIMITED)
 			throw new UnsupportedOperationException("Unlimited expansion using forward index not implemented");
 		NfaFragment nfa = clauses.get(0).getNfa(fiAccessor, direction);
 		NfaState any = new NfaStateAnyToken(null);
@@ -263,18 +248,18 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean canMakeNfa() {
-		return max >= 0 && clauses.get(0).canMakeNfa();
+		return max != MAX_UNLIMITED && clauses.get(0).canMakeNfa();
 	}
 
 	@Override
 	public long estimatedNumberOfHits(IndexReader reader) {
-		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
+		int numberOfExpansionSteps = max == MAX_UNLIMITED ? 50 : max - min + 1;
 		return clauses.get(0).estimatedNumberOfHits(reader) * numberOfExpansionSteps;
 	}
 
 	public BLSpanQuery addExpand(int addMin, int addMax) {
 		int nMin = min + addMin;
-		int nMax = addRepetitionMaxValues(max, addMax);
+		int nMax = addMaxValues(max, addMax);
 		SpanQueryExpansion result = new SpanQueryExpansion(clauses.get(0), expandToLeft, nMin, nMax);
 		result.setIgnoreLastToken(isIgnoreLastToken());
 		return result;

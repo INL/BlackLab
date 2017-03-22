@@ -39,6 +39,6 @@ class ClauseCombinerRepetition extends ClauseCombiner {
 			rightMin = r.getMinRep();
 			rightMax = r.getMaxRep();
 		}
-		return new SpanQueryRepetition(leftCl, leftMin + rightMin, BLSpanQuery.addRepetitionMaxValues(leftMax, rightMax));
+		return new SpanQueryRepetition(leftCl, leftMin + rightMin, BLSpanQuery.addMaxValues(leftMax, rightMax));
 	}
 }

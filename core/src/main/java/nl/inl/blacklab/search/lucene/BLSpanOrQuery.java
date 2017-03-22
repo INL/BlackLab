@@ -211,7 +211,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 			BLSpanQuery clause = (BLSpanQuery)cl;
 			n = Math.min(n, clause.hitsLengthMin());
 		}
-		return n;
+		return n == Integer.MAX_VALUE ? 0 : n;
 	}
 
 	@Override
@@ -220,9 +220,9 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
 			int l = clause.hitsLengthMax();
-			if (l < 0)
-				return -1; // infinite
 			n = Math.max(n, l);
+			if (n == Integer.MAX_VALUE)
+				return n; // infinite
 		}
 		return n;
 	}

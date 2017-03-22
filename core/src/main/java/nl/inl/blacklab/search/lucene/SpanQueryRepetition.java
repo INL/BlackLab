@@ -44,11 +44,11 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	public SpanQueryRepetition(BLSpanQuery clause, int min, int max) {
 		super(clause);
 		this.min = min;
-		this.max = max;
-		if (max != -1 && min > max)
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
 			throw new IllegalArgumentException("min > max");
-		if (min < 0)
-			throw new IllegalArgumentException("min < 0");
+		if (min < 0 || this.max < 0)
+			throw new IllegalArgumentException("min or max can't be negative");
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 			return new SpanQueryPositionFilter(container, baseRewritten.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
 		} else if (baseRewritten instanceof SpanQueryRepetition) {
 			SpanQueryRepetition tp = (SpanQueryRepetition)baseRewritten;
-			if (max == -1 && tp.max == -1) {
+			if (max == MAX_UNLIMITED && tp.max == MAX_UNLIMITED) {
 				if (min >= 0 && min <= 1 && tp.min >= 0 && tp.min <= 1) {
 					// A++, A+*, A*+, A**. Rewrite to single repetition.
 					return new SpanQueryRepetition(tp.clauses.get(0), min * tp.min, max);
@@ -172,7 +172,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
 	@Override
 	public String toString(String field) {
-		return "REP(" + clauses.get(0) + ", " + min + ", " + max + ")";
+		return "REP(" + clauses.get(0) + ", " + min + ", " + inf(max) + ")";
 	}
 
 	public BLSpanQuery getClause() {
@@ -199,7 +199,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
 	@Override
 	public int hitsLengthMax() {
-		return max < 0 ? Integer.MAX_VALUE : clauses.get(0).hitsLengthMax() * max;
+		int clMax = clauses.get(0).hitsLengthMax();
+		return max == MAX_UNLIMITED || clMax == MAX_UNLIMITED ? MAX_UNLIMITED : clMax * max;
 	}
 
 	@Override

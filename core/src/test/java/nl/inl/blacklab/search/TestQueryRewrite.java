@@ -225,7 +225,7 @@ public class TestQueryRewrite {
 	public void testRewriteAny() {
 		assertRewriteResult("[]{0,1}", "ANYTOKEN(0, 1)");
 		assertRewriteResult("[]{2,3}", "ANYTOKEN(2, 3)");
-		assertRewriteResult("[]{2,}", "ANYTOKEN(2, -1)");
+		assertRewriteResult("[]{2,}", "ANYTOKEN(2, INF)");
 	}
 
 	@Test
@@ -261,22 +261,22 @@ public class TestQueryRewrite {
 
 	@Test
 	public void testRewriteRepetition() {
-		assertRewriteResult("('a'*)* 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, -1), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
-		assertRewriteResult("('a'+)* 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, -1), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
-		assertRewriteResult("('a'*)+ 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, -1), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
-		assertRewriteResult("('a'+)+", "REP(TERM(contents%word@i:a), 1, -1)");
+		assertRewriteResult("('a'*)* 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, INF), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
+		assertRewriteResult("('a'+)* 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, INF), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
+		assertRewriteResult("('a'*)+ 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, INF), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
+		assertRewriteResult("('a'+)+", "REP(TERM(contents%word@i:a), 1, INF)");
 		assertRewriteResult("('a'?)? 'b'", "OR(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
 		assertRewriteResult("('a'{2,3}){1,1}", "REP(TERM(contents%word@i:a), 2, 3)");
 		assertRewriteResult("('a'{1,1}){2,3}", "REP(TERM(contents%word@i:a), 2, 3)");
 		assertRewriteResult("'a'{1,1}", "TERM(contents%word@i:a)");
 		assertRewriteResult("'a'? 'b'?", "OR(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), TERM(contents%word@i:b), TERM(contents%word@i:a))");
-		assertRewriteResult("'a' 'a'*", "REP(TERM(contents%word@i:a), 1, -1)");
+		assertRewriteResult("'a' 'a'*", "REP(TERM(contents%word@i:a), 1, INF)");
 		assertRewriteResult("'a'? 'a'? 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, 2), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
-		assertRewriteResult("'a'* 'a'", "REP(TERM(contents%word@i:a), 1, -1)");
-		assertRewriteResult("'a'* 'a'* 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, -1), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
-		assertRewriteResult("'a' 'a'+", "REP(TERM(contents%word@i:a), 2, -1)");
-		assertRewriteResult("'a'+ 'a'", "REP(TERM(contents%word@i:a), 2, -1)");
-		assertRewriteResult("'a'+ 'a'+", "REP(TERM(contents%word@i:a), 2, -1)");
+		assertRewriteResult("'a'* 'a'", "REP(TERM(contents%word@i:a), 1, INF)");
+		assertRewriteResult("'a'* 'a'* 'b'", "OR(SEQ(REP(TERM(contents%word@i:a), 1, INF), TERM(contents%word@i:b)), TERM(contents%word@i:b))");
+		assertRewriteResult("'a' 'a'+", "REP(TERM(contents%word@i:a), 2, INF)");
+		assertRewriteResult("'a'+ 'a'", "REP(TERM(contents%word@i:a), 2, INF)");
+		assertRewriteResult("'a'+ 'a'+", "REP(TERM(contents%word@i:a), 2, INF)");
 	}
 
 	@Test

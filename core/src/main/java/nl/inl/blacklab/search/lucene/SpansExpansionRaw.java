@@ -57,7 +57,7 @@ class SpansExpansionRaw extends BLSpans {
 	/** Minimum number of tokens to expand */
 	private int min;
 
-	/** Maximum number of tokens to expand (-1 = infinite) */
+	/** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
 	private int max;
 
 	/** Start of the current expanded hit */
@@ -93,10 +93,10 @@ class SpansExpansionRaw extends BLSpans {
 		this.clause = clause;
 		this.expandToLeft = expandToLeft;
 		this.min = min;
-		this.max = max;
-		if (max != -1 && min > max)
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
 			throw new IllegalArgumentException("min > max");
-		if (min < 0 || max < -1)
+		if (min < 0 || this.max < 0)
 			throw new IllegalArgumentException("Expansions cannot be negative");
 	}
 
@@ -258,7 +258,7 @@ class SpansExpansionRaw extends BLSpans {
 				}
 				maxExpandSteps = tokenLength - end;
 			}
-			if (max == -1) {
+			if (max == MAX_UNLIMITED) {
 				// Infinite expansion; just use max
 				expandStepsLeft = maxExpandSteps;
 			}
@@ -294,7 +294,7 @@ class SpansExpansionRaw extends BLSpans {
 
 	@Override
 	public String toString() {
-		return "SpansExpansion(" + clause + ", " + expandToLeft + ", " + min + ", " + max + ")";
+		return "SpansExpansion(" + clause + ", " + expandToLeft + ", " + min + ", " + inf(max) + ")";
 	}
 
 	@Override

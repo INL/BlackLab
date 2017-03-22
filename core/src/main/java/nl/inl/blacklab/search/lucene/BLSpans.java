@@ -35,6 +35,8 @@ import nl.inl.blacklab.search.Span;
  */
 public abstract class BLSpans extends Spans {
 
+	public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
+
 	/** Should we ask our clauses for captured groups?
 	 *  If the clauses don't capture any groups, this will be set to false
 	 *  to improve performance.
@@ -126,6 +128,10 @@ public abstract class BLSpans extends Spans {
 		// returns a completely arbitrary constant value, but it's for
 		// optimizing scoring and we don't generally use that
 		return 100;
+	}
+
+	static String inf(int max) {
+		return BLSpanQuery.inf(max);
 	}
 
 	public static BLSpans optSortUniq(BLSpans spans, boolean sort, boolean removeDuplicates) {

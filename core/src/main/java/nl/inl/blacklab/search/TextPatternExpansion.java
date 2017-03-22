@@ -23,7 +23,11 @@ public class TextPatternExpansion extends TextPattern {
 		this.clause = clause;
 		this.expandToLeft = expandToLeft;
 		this.min = min;
-		this.max = max;
+		this.max = max == -1 ? MAX_UNLIMITED : max;
+		if (min > this.max)
+			throw new IllegalArgumentException("min > max");
+		if (min < 0 || this.max < 0)
+			throw new IllegalArgumentException("min or max can't be negative");
 	}
 
 	@Override
@@ -66,12 +70,12 @@ public class TextPatternExpansion extends TextPattern {
 	@Deprecated
 	@Override
 	public String toString(QueryExecutionContext context) {
-		return "EXPAND(" + clause.toString(context) + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + max + ")";
+		return "EXPAND(" + clause.toString(context) + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + inf(max) + ")";
 	}
 
 	@Override
 	public String toString() {
-		return "EXPAND(" + clause + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + max + ")";
+		return "EXPAND(" + clause + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + inf(max) + ")";
 	}
 
 }

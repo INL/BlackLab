@@ -175,7 +175,7 @@ public class TestNfaFromQuery {
 		return new SpanQueryAnyToken(min, max, "contents%word");
 	}
 
-	private static SpanQueryExpansion exp(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
+	private static BLSpanQuery exp(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
 		return new SpanQueryExpansion(clause, expandToLeft, min, max);
 	}
 
@@ -213,7 +213,7 @@ public class TestNfaFromQuery {
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
 		// The query
-		BLSpanQuery q = rep(term("very"), 1, -1);
+		BLSpanQuery q = rep(term("very"), 1, BLSpanQuery.MAX_UNLIMITED);
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(2, 3, 4));
 		test(q, fiAccessor, 5, -1, 6, Arrays.asList(1, 2, 3));
