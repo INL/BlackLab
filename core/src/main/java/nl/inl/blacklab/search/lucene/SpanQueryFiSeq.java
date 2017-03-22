@@ -197,4 +197,8 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		newNfaFrag.append(fragToAppend);
 		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, newNfaFrag, direction, fiAccessor);
 	}
+
+	public ForwardIndexAccessor getFiAccessor() {
+		return fiAccessor;
+	}
 }

@@ -84,6 +84,8 @@ class SpansFiSeq extends BLSpans {
 	public int startPosition() {
 		if (alreadyAtFirstMatch)
 			return -1; // nextStartPosition() hasn't been called yet
+		if (anchorStart == NO_MORE_POSITIONS || anchorStart < 0)
+			return anchorStart;
 		return direction < 0 ? Math.min(currentMatchEndPoint + 1, anchorStart) : anchorStart;
 	}
 
@@ -91,6 +93,9 @@ class SpansFiSeq extends BLSpans {
 	public int endPosition() {
 		if (alreadyAtFirstMatch)
 			return -1; // nextStartPosition() hasn't been called yet
+		int endPos = anchor.endPosition();
+		if (endPos == NO_MORE_POSITIONS || endPos < 0)
+			return endPos;
 		return direction > 0 ? Math.max(currentMatchEndPoint, anchor.endPosition()) : anchor.endPosition();
 	}
 
@@ -207,6 +212,8 @@ class SpansFiSeq extends BLSpans {
 
 			// We're at the first unchecked anchor spans. Does our NFA match?
 			int anchorPos = startOfAnchor ? anchorStart : anchor.endPosition();
+			if (direction < 0)
+				anchorPos--;
 			SortedSet<Integer> setMatchEndpoints = nfa.findMatches(currentFiDoc, anchorPos, direction);
 			if (setMatchEndpoints.size() > 0) {
 				matchEndPointIt = setMatchEndpoints.iterator();
