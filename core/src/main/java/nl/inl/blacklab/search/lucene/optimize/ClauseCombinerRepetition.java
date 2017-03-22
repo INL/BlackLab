@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.lucene.optimize;
 
+import org.apache.lucene.index.IndexReader;
+
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
 
@@ -11,7 +13,7 @@ class ClauseCombinerRepetition extends ClauseCombiner {
 	private static final int PRIORITY = 1;
 
 	@Override
-	public int priority(BLSpanQuery left, BLSpanQuery right) {
+	public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
 		if (left.equals(right))
 			return 1;
 		BLSpanQuery leftCl = left instanceof SpanQueryRepetition ? ((SpanQueryRepetition)left).getClause() : left;
@@ -20,8 +22,8 @@ class ClauseCombinerRepetition extends ClauseCombiner {
 	}
 
 	@Override
-	public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right) {
-		if (!canCombine(left, right))
+	public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
+		if (!canCombine(left, right, reader))
 			throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
 		BLSpanQuery leftCl = left;
 		int leftMin = 1, leftMax = 1;

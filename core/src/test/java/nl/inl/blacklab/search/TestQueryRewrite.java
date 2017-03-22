@@ -28,7 +28,7 @@ import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQuerySequence;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 
 public class TestQueryRewrite {
 
@@ -40,11 +40,12 @@ public class TestQueryRewrite {
 	public static void setUp() throws Exception {
 		testIndex = new TestIndex();
 		searcher = testIndex.getSearcher();
-		SpanQuerySequence.setNfaMatchingEnabled(false);
+		ClauseCombinerNfa.setNfaMatchingEnabled(false);
 	}
 
 	@AfterClass
 	public static void tearDown() {
+		ClauseCombinerNfa.setNfaMatchingEnabled(true);
 		searcher.close();
 		testIndex.close();
 	}

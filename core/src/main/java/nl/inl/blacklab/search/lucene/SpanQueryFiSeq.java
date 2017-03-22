@@ -70,21 +70,6 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		return this;
 	}
 
-	// @Override
-	// public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader)
-	// throws IOException {
-	// BLSpanQuery result = super.combineWithPrecedingPart(previousPart, reader);
-	// if (result == null && previousPart.hitsAllSameLength()) {
-	// // We "gobble up" the previous part and adjust our left matching edge.
-	// // This should make filtering more efficient, since we will likely have fewer hits to filter.
-	// SpanQueryFiSeq r = (SpanQueryFiSeq)copy();
-	// r.clauses.set(0, new SpanQuerySequence(previousPart, clauses.get(0)));
-	// r.adjustLeft(previousPart.hitsLengthMin());
-	// result = r;
-	// }
-	// return result;
-	// }
-
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, needsScores);
@@ -117,7 +102,8 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 			if (anchorSpans == null)
 				return null;
 			// @@@ make sure anchor hits are unique?
-			return new SpansFiSeq(anchorSpans, startOfAnchor, nfaFrag.getStartingState(), direction, fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
+			return new SpansFiSeq(anchorSpans, startOfAnchor, nfaFrag.getStartingState(), direction,
+					fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
 		}
 	}
 
@@ -126,9 +112,9 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		return "FISEQ(" + clausesToString(field) + ", " + nfaFrag + ", " + direction + ")";
 	}
 
-//	public SpanQueryFiSeq copy() {
-//		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfaFrag, direction, fiAccessor);
-//	}
+	// public SpanQueryFiSeq copy() {
+	// return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfaFrag, direction, fiAccessor);
+	// }
 
 	@Override
 	public boolean matchesEmptySequence() {
@@ -206,7 +192,9 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		return direction;
 	}
 
-	public void appendNfa(NfaFragment newNfaFrag) {
-		nfaFrag.append(newNfaFrag);
+	public SpanQueryFiSeq appendNfa(NfaFragment fragToAppend) {
+		NfaFragment newNfaFrag = nfaFrag.copy();
+		newNfaFrag.append(fragToAppend);
+		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, newNfaFrag, direction, fiAccessor);
 	}
 }

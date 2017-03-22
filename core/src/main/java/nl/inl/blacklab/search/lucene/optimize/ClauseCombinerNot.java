@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.lucene.optimize;
 
+import org.apache.lucene.index.IndexReader;
+
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
@@ -27,12 +29,12 @@ class ClauseCombinerNot extends ClauseCombiner {
 	}
 	
 	@Override
-	public int priority(BLSpanQuery left, BLSpanQuery right) {
+	public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
 		return getType(left, right) == null ? CANNOT_COMBINE : PRIORITY;
 	}
 
 	@Override
-	public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right) {
+	public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
 		SpanQueryPositionFilter posf;
 		BLSpanQuery container;
 		switch(getType(left, right)) {

@@ -110,25 +110,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		return result;
 	}
 
-//	@Override
-//	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
-//		if (expandToLeft && previousPart instanceof SpanQueryAnyToken) {
-//			// Expand to left following any token clause. Combine.
-//			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-//			return new SpanQueryExpansion(clauses.get(0), expandToLeft, min + tp.min, addRepetitionMaxValues(max, tp.max));
-//		}
-//		if (!expandToLeft && max != min) {
-//			// Expand to right with range of tokens. Combine with previous part to likely
-//			// reduce the number of hits we'll have to expand.
-//			BLSpanQuery seq = new SpanQuerySequence(previousPart, clauses.get(0));
-//			seq = seq.rewrite(reader);
-//			SpanQueryExpansion result = new SpanQueryExpansion(seq, false, min, max);
-//			result.setIgnoreLastToken(ignoreLastToken);
-//			return result;
-//		}
-//		return super.combineWithPrecedingPart(previousPart, reader);
-//	}
-
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
@@ -301,9 +282,9 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
 	/**
 	 * "Gobble up" a clause into the clause we're expanding.
-	 * 
+	 *
 	 * If we're expanding to the left, the clause is added to the right of what we were expanding, and vice versa.
-	 * 
+	 *
 	 * @param clause clause to gobble up
 	 * @return new expansion with the additional clause
 	 */

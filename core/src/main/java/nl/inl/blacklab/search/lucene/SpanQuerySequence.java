@@ -30,7 +30,6 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
@@ -49,21 +48,6 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
  * See SpanSequenceRaw for details on the matching process.
  */
 public class SpanQuerySequence extends BLSpanQueryAbstract {
-
-	/**
-	 * The default value of nfaFactor.
-	 */
-	public static final int DEFAULT_NFA_FACTOR = 100;
-
-	/**
-	 * The ratio of estimated numbers of hits that we use to decide
-	 * whether or not to try NFA-matching with two clauses / subsequences.
-	 */
-	private static int nfaFactor = DEFAULT_NFA_FACTOR;
-
-	public static void setNfaFactor(int nfaFactor) {
-		SpanQuerySequence.nfaFactor = nfaFactor;
-	}
 
 	public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
@@ -205,13 +189,13 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			// Find the highest-priority rewrite possible
 			int highestPrio = ClauseCombiner.CANNOT_COMBINE, highestPrioIndex = -1;
 			ClauseCombiner highestPrioCombiner = null;
-			BLSpanQuery left = null, right = cl.size() == 0 ? null : cl.get(0);
+			BLSpanQuery left, right;
 			for (int i = 1; i < cl.size(); i++) {
 				// See if any combiners apply, and if the priority is higher than found so far.
-				left = right;
+				left = cl.get(i - 1);
 				right = cl.get(i);
 				for (ClauseCombiner combiner: ClauseCombiner.getAll()) {
-					int prio = combiner.priority(left, right);
+					int prio = combiner.priority(left, right, reader);
 					if (prio < highestPrio) {
 						highestPrio = prio;
 						highestPrioIndex = i;
@@ -224,7 +208,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				// Yes, execute the highest-prio combiner
 				left = cl.get(highestPrioIndex - 1);
 				right = cl.get(highestPrioIndex);
-				BLSpanQuery combined = highestPrioCombiner.combine(left, right);
+				BLSpanQuery combined = highestPrioCombiner.combine(left, right, reader);
 				combined = combined.rewrite(reader); // just to be safe
 				cl.remove(highestPrioIndex);
 				cl.set(highestPrioIndex - 1, combined);
@@ -232,70 +216,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			}
 			if (anyRewrittenThisCycle)
 				anyRewritten = true;
-		}
-
-		// Now, see what parts of the sequence can be combined into more efficient queries:
-		// - repeating clauses can be turned into a single repetition clause.
-		// - anytoken clauses can be combined into expansion clauses, which can be
-		//   combined again into distance queries
-		// - negative clauses can be rewritten to NOTCONTAINING clauses and combined with
-		//   adjacent constant-length query parts.
-		for (int i = 0; i < cl.size(); i++) {
-			BLSpanQuery child = cl.get(i);
-			// Do we have a previous part?
-			if (i == 0)
-				continue; // no, can't combine
-			BLSpanQuery previousPart = cl.get(i - 1);
-
-			// Yes, try to combine with it.
-			BLSpanQuery combined = child.combineWithPrecedingPart(previousPart, reader);
-			if (combined == null)
-				continue; // can't combine
-
-			// Success! Remove previous part and keep trying with the part before that.
-			anyRewritten = true;
-			cl.remove(i);
-			i--;
-			cl.set(i, combined);
-			i--;
-		}
-
-		// See if we want to match some parts of the sequence using the forward index.
-		// We're looking for clauses with many hits adjacent to clauses with much fewer
-		// hits. Matching the more frequent one using an NFA on the forward index starting
-		// from the hits of the less frequent one saves time and memory.
-		for (int i = 0; i < cl.size(); i++) {
-			BLSpanQuery child = cl.get(i);
-			// Do we have a previous part?
-			if (i == 0)
-				break;
-			BLSpanQuery previousPart = cl.get(i - 1);
-
-			// Could we make an NFA out of this clause?
-			BLSpanQuery tryComb = null;
-			if (nfaFactor > 0 && child.canMakeNfa()) {
-				// Yes, see if it's worth it to combine with it.
-				long numPrev = Math.max(1, previousPart.estimatedNumberOfHits(reader));
-				long numThis = child.estimatedNumberOfHits(reader);
-				if (nfaFactor == Integer.MAX_VALUE || numThis / numPrev > nfaFactor) {
-					// Yes, worth it.
-					ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), fieldName);
-					NfaFragment nfaFrag = child.getNfa(fiAccessor, 1);
-					if (previousPart instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)previousPart).getDirection() == 1) {
-						((SpanQueryFiSeq)previousPart).appendNfa(nfaFrag);
-						tryComb = previousPart;
-					} else {
-						tryComb = new SpanQueryFiSeq(previousPart, false, nfaFrag, 1, fiAccessor);
-					}
-				}
-			}
-			if (tryComb != null) {
-				// Success! Remove previous part and add combined
-				anyRewritten = true;
-				cl.remove(i);
-				i--;
-				cl.set(i, tryComb);
-			}
 		}
 
 		return anyRewritten;
@@ -605,13 +525,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		return cost;
 	}
 
-	public static void setNfaMatchingEnabled(boolean b) {
-		nfaFactor = b ? DEFAULT_NFA_FACTOR : -1;
-	}
-
 	/**
 	 * Create a new sequence with a clause added to it.
-	 * 
+	 *
 	 * @param clause clause to add
 	 * @param addToRight if true, add to the right; if false, to the left
 	 * @return new sequence with clause added
@@ -626,9 +542,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	}
 
 	/**
-	 * Either add a clause to an existing SpanQuerySequence, or create a new 
+	 * Either add a clause to an existing SpanQuerySequence, or create a new
 	 * SpanQuerySequence with the two specified clauses.
-	 * 
+	 *
 	 * @param whereToInternalize existing sequence, or existing non-sequence clause
 	 * @param clauseToInternalize clause to add to sequence or add to existing clause
 	 * @param addToRight if true, add new clause to the right of existing; if false, to the left

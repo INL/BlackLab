@@ -85,33 +85,6 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 		return false;
 	}
 
-//	@Override
-//	public BLSpanQuery combineWithPrecedingPart(BLSpanQuery previousPart, IndexReader reader) throws IOException {
-//		if (previousPart instanceof SpanQueryAnyToken) {
-//			SpanQueryAnyToken tp = (SpanQueryAnyToken)previousPart;
-//			SpanQueryAnyToken result = new SpanQueryAnyToken(min + tp.min, addRepetitionMaxValues(max, tp.max), luceneField);
-//			if (!alwaysHasClosingToken)
-//				result.setAlwaysHasClosingToken(false);
-//			return result;
-//		} else
-//		if (previousPart instanceof SpanQueryExpansion) {
-//			SpanQueryExpansion tp = (SpanQueryExpansion) previousPart;
-//			if (!tp.isExpandToLeft()) {
-//				// Any token clause after expand to right; combine.
-//				SpanQueryExpansion result = new SpanQueryExpansion(tp.getClause(), tp.isExpandToLeft(), tp.getMinExpand() + min, (max == -1 || tp.getMaxExpand() == -1) ? -1 : tp.getMaxExpand() + max);
-//				result.setIgnoreLastToken(tp.ignoreLastToken);
-//				return result;
-//			}
-//		}
-//		BLSpanQuery combo = super.combineWithPrecedingPart(previousPart, reader);
-//		if (combo == null) {
-//			SpanQueryExpansion exp = new SpanQueryExpansion(previousPart, false, min, max);
-//			exp.setIgnoreLastToken(alwaysHasClosingToken);
-//			combo = exp;
-//		}
-//		return combo;
-//	}
-
 	@Override
 	public BLSpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
 		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional

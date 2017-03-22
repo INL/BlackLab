@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
-import nl.inl.blacklab.search.lucene.SpanQuerySequence;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 
 public class TestSearchesNfa {
 
@@ -24,14 +24,14 @@ public class TestSearchesNfa {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		SpanQuerySequence.setNfaFactor(Integer.MAX_VALUE);
+		ClauseCombinerNfa.setNfaFactor(ClauseCombinerNfa.MAX_NFA_FACTOR);
 		testIndex = new TestIndex();
 	}
 
 	@AfterClass
 	public static void tearDown() {
 		testIndex.close();
-		SpanQuerySequence.setNfaFactor(SpanQuerySequence.DEFAULT_NFA_FACTOR);
+		ClauseCombinerNfa.setNfaFactor(ClauseCombinerNfa.DEFAULT_NFA_FACTOR);
 	}
 
 	@Test
