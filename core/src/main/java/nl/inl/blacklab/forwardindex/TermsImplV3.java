@@ -112,9 +112,10 @@ class TermsImplV3 extends Terms {
 	 *  Only valid when indexMode == false. */
 	int[] idPerSortPosition;
 
-	/** The index number of each case-insensitive sorting position. Inverse of
+	/** The index numbers of each case-insensitive sorting position. Inverse of
 	 *  sortPositionPerIdInsensitive[] array. Only valid when indexMode == false. */
-	int[] idPerSortPositionInsensitive;
+	List<List<Integer>> idsPerSortPositionInsensitive;
+//	int[] idPerSortPositionInsensitive;
 
 	/** The sorting position for each index number. Inverse of idPerSortPosition[]
 	 *  array. Only valid when indexMode == false. */
@@ -222,12 +223,42 @@ class TermsImplV3 extends Terms {
 		return index;
 	}
 
+	private List<Integer> indexOfInsensitive(String term) {
+		Collator coll = collatorInsensitive;
+
+		// No. (this means we are in search mode, because in
+		//      index mode the term index is always available)
+		// Do a binary search to find term.
+		// Note that the binary search is done on the sorted terms,
+		// so we need to guess an ordinal, convert it to a term index,
+		// then check the term string, and repeat until we find a match.
+		int min = 0, max = idsPerSortPositionInsensitive.size() - 1;
+		while (max >= min) {
+			int guessedOrdinal = (min + max) / 2;
+			List<Integer> guessedIndices = idsPerSortPositionInsensitive.get(guessedOrdinal);
+			int guessedIndex = guessedIndices.get(0);
+			String guessedTerm = get(guessedIndex);
+			int cmp = coll.compare(term, guessedTerm);
+			if (cmp == 0) {
+				return guessedIndices;
+			}
+			if (cmp < 0)
+				max = guessedOrdinal - 1;
+			else
+				min = guessedOrdinal + 1;
+		}
+		return Collections.emptyList(); // not found
+	}
+
 	@Override
 	public List<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive) {
 		// NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
 		//  right now, diacSensitive is ignored and caseSensitive is used for both.
-		int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
-		Collator coll = caseSensitive ? collator : collatorInsensitive;
+		if (!caseSensitive) {
+			return indexOfInsensitive(term);
+		}
+		int[] idLookup = idPerSortPosition;
+		Collator coll = collator;
 
 		// No. (this means we are in search mode, because in
 		//      index mode the term index is always available)
@@ -369,10 +400,29 @@ class TermsImplV3 extends Terms {
 						// Invert sortPositionPerId[] array, so we can later do a binary search through our
 						// terms to find a specific one. (only needed to deserialize sort/group criteria from URL)
 						idPerSortPosition = new int[n];
-						idPerSortPositionInsensitive = new int[n];
+						idsPerSortPositionInsensitive = new ArrayList<>(n);
+						for (int i = 0; i < n; i++) {
+							idsPerSortPositionInsensitive.add(null);
+						}
+						//idPerSortPositionInsensitive = new int[n];
+						int uniqueSortPositions = 0;
 						for (int i = 0; i < n; i++) {
 							idPerSortPosition[sortPositionPerId[i]] = i;
-							idPerSortPositionInsensitive[sortPositionPerIdInsensitive[i]] = i;
+							//idPerSortPositionInsensitive[sortPositionPerIdInsensitive[i]] = i;
+							int sortPosIns = sortPositionPerIdInsensitive[i];
+							List<Integer> indices = idsPerSortPositionInsensitive.get(sortPosIns);
+							if (indices == null) {
+								indices = new ArrayList<>();
+								idsPerSortPositionInsensitive.set(sortPosIns, indices);
+								uniqueSortPositions++;
+							}
+							indices.add(i);
+						}
+						for (int i = 0; i < n && i < idsPerSortPositionInsensitive.size(); i++) {
+							if (idsPerSortPositionInsensitive.get(i) == null) {
+								idsPerSortPositionInsensitive.remove(i);
+								i--;
+							}
 						}
 					}
 				}
