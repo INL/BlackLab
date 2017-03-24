@@ -134,7 +134,7 @@ public class NfaFragment {
 
 	@Override
 	public String toString() {
-		return "NfaFragment:" + startingState;
+		return startingState.toString();
 	}
 
 }

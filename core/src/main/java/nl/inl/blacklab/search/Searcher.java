@@ -789,6 +789,41 @@ public abstract class Searcher {
 		return find(pattern, getMainContentsFieldName(), null);
 	}
 
+	public QueryExplanation explain(TextPattern pattern) throws BooleanQuery.TooManyClauses {
+		return explain(pattern, getMainContentsFieldName());
+	}
+	
+	/**
+	 * Explain how a TextPattern is converted to a SpanQuery and rewritten to an
+	 * optimized version to be executed by Lucene.
+	 *
+	 * @param pattern the pattern to explain
+	 * @param fieldName which field to find the pattern in
+	 * @return the explanation
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	public QueryExplanation explain(TextPattern pattern, String fieldName) throws BooleanQuery.TooManyClauses {
+		return explain(createSpanQuery(pattern, fieldName, null), fieldName);
+	}
+	
+	/**
+	 * Explain how a SpanQuery is rewritten to an optimized version to be executed by Lucene.
+	 *
+	 * @param query the query to explain
+	 * @param fieldName which field to find the pattern in
+	 * @return the explanation
+	 * @throws BooleanQuery.TooManyClauses
+	 *             if a wildcard or regular expression term is overly broad
+	 */
+	public QueryExplanation explain(BLSpanQuery query, String fieldName) throws BooleanQuery.TooManyClauses {
+		try {
+			return new QueryExplanation(query, query.rewrite(getIndexReader()));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	/**
 	 * Get character positions from word positions.
 	 *

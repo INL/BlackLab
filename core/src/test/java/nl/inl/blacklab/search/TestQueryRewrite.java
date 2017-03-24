@@ -15,10 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import java.io.IOException;
 import java.io.StringReader;
 
-import org.apache.lucene.search.Query;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -66,24 +64,17 @@ public class TestQueryRewrite {
 	}
 
 	void assertRewrite(String cql, String before, String after) {
-		BLSpanQuery original = searcher.createSpanQuery(getPatternFromCql(cql), searcher.getMainContentsFieldName(), (Query)null);
-		Assert.assertEquals(before, original.toString());
-		try {
-			BLSpanQuery rewritten = original.rewrite(searcher.getIndexReader());
-			Assert.assertEquals(after, rewritten.toString());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		QueryExplanation explanation = searcher.explain(getPatternFromCql(cql));
+		if (before != null) {
+			BLSpanQuery original = explanation.getOriginalQuery();
+			Assert.assertEquals(before, original.toString());
 		}
+		BLSpanQuery rewritten = explanation.getRewrittenQuery();
+		Assert.assertEquals(after, rewritten.toString());
 	}
 
 	void assertRewriteResult(String cql, String after) {
-		BLSpanQuery original = searcher.createSpanQuery(getPatternFromCql(cql), searcher.getMainContentsFieldName(), (Query)null);
-		try {
-			BLSpanQuery rewritten = original.rewrite(searcher.getIndexReader());
-			Assert.assertEquals(after, rewritten.toString());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		assertRewrite(cql, null, after);
 	}
 
 	@Test

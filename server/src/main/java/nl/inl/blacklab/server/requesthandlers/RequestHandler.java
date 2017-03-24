@@ -62,6 +62,7 @@ public abstract class RequestHandler {
 		availableHandlers.put("status", RequestHandlerIndexStatus.class);
 		availableHandlers.put("termfreq", RequestHandlerTermFreq.class);
 		availableHandlers.put("", RequestHandlerIndexStructure.class);
+		availableHandlers.put("explain", RequestHandlerExplain.class);
 	}
 
 	/**
