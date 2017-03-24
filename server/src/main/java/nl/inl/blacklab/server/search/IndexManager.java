@@ -249,12 +249,18 @@ public class IndexManager {
 			boolean addToCache, String userIdPrefix) {
 		// Look for the index in this collection dir
 		File dir = new File(collection, name);
+		if (dir.canRead() && !Searcher.isIndex(dir))
+			dir = new File(dir, "index");
 		if (dir.canRead() && Searcher.isIndex(dir)) {
 			// Found it. Add to the cache and return
 			IndexParam p = new IndexParam(dir);
 			if (addToCache)
 				indexParam.put(userIdPrefix + name, p);
 			return p;
+		}
+		// Also look in subdirs
+		for (File f : collection.listFiles(BlsUtils.readableDirFilter)) {
+			findIndexInCollection(name, f, addToCache, userIdPrefix);
 		}
 		return null;
 	}
@@ -516,12 +522,7 @@ public class IndexManager {
 
 		// Scan collections for any new indices
 		for (File dir : collectionsDirs) {
-			for (File f : dir.listFiles(BlsUtils.readableDirFilter)) {
-				if (!indexParam.containsKey(f.getName()) && Searcher.isIndex(f)) {
-					// New one; add it
-					indexParam.put(f.getName(), new IndexParam(f));
-				}
-			}
+			scanTreeForIndices(dir);
 		}
 
 		// Gather list of public indices, and
@@ -540,6 +541,20 @@ public class IndexManager {
 		}
 
 		return indices;
+	}
+
+	private void scanTreeForIndices(File dir) {
+		for (File f : dir.listFiles(BlsUtils.readableDirFilter)) {
+			String name = f.getName();
+			if (name.equals("index"))
+				name = f.getParentFile().getName();
+			if (!indexParam.containsKey(name) && Searcher.isIndex(f)) {
+				// New one; add it
+				indexParam.put(name, new IndexParam(f));
+			} else {
+				scanTreeForIndices(f);
+			}
+		}
 	}
 
 	/**

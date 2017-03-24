@@ -19,11 +19,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
 
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
@@ -42,33 +44,37 @@ public class BlackLabServer extends HttpServlet {
 	/** Manages all our searches */
 	private SearchManager searchManager;
 
+	private boolean configRead = false;
+
 	@Override
 	public void init() throws ServletException {
 		// Default init if no log4j.properties found
 		//LogUtil.initLog4jIfNotAlready(Level.DEBUG);
 
 		logger.info("Starting BlackLab Server...");
-
 		super.init();
-		try (InputStream is = openConfigFile()) {
-			searchManager = new SearchManager(Json.read(is, CONFIG_ENCODING));
-		} catch (Exception e) {
-			throw new ServletException("Error initializing SearchManager: " + e.getMessage(), e);
-		}
 		logger.info("BlackLab Server ready.");
-
 	}
 
-	private InputStream openConfigFile() throws ServletException {
+	private InputStream openConfigFile() throws BlsException {
 		// Read JSON config file, either from the servlet context directory's parent,
 		// from /etc/blacklab/ or from the classpath.
 		String configFileName = "blacklab-server.json";
 		String realPath = getServletContext().getRealPath(".");
 		logger.debug("Running from dir: " + realPath);
-		File configFile = new File(realPath + "/../" + configFileName);
+		String webappsDir = realPath + "/../";
+		File configFile = new File(webappsDir + configFileName);
 		InputStream is;
+		if (!configFile.exists())
+			configFile = new File("/etc/blacklab", configFileName);
+		if (!configFile.exists())
+			configFile = new File("/vol1/etc/blacklab", configFileName); // UGLY, will fix later
+		String tmpDir = System.getProperty("java.io.tmpdir");
+		if (!configFile.exists()) {
+			configFile = new File(tmpDir, configFileName);
+		}
 		if (configFile.exists()) {
-			// Read from webapps dir
+			// Read from dir
 			try {
 				logger.debug("Reading configuration file " + configFile);
 				is = new BufferedInputStream(new FileInputStream(configFile));
@@ -76,29 +82,27 @@ public class BlackLabServer extends HttpServlet {
 				throw new RuntimeException(e);
 			}
 		} else {
-			configFile = new File("/etc/blacklab", configFileName);
-			if (!configFile.exists())
-				configFile = new File("/vol1/etc/blacklab", configFileName); // UGLY, will fix later
-			if (configFile.exists()) {
-				try {
-					logger.debug("Reading configuration file " + configFile);
-					is = new BufferedInputStream(new FileInputStream(configFile));
-				} catch (FileNotFoundException e) {
-					throw new RuntimeException(e);
-				}
-			} else {
-				// Read from classpath
-				logger.debug(configFileName + " not found in webapps dir; searching classpath...");
-				is = getClass().getClassLoader().getResourceAsStream(configFileName);
-				if (is == null) {
-					logger.debug(configFileName + " not found on classpath either. Using internal defaults.");
-					configFileName = "blacklab-server-defaults.json"; // internal defaults file
-					is = getClass().getClassLoader().getResourceAsStream(configFileName);
-					if (is == null)
-						throw new ServletException("Could not find " + configFileName + "!");
-				}
-				logger.debug("Reading configuration file from classpath: " + configFileName);
+			// Read from classpath
+			logger.debug(configFileName + " not found in webapps dir; searching classpath...");
+			is = getClass().getClassLoader().getResourceAsStream(configFileName);
+			if (is == null) {
+				logger.debug(configFileName + " not found on classpath either. Using internal defaults.");
+//				configFileName = "blacklab-server-defaults.json"; // internal defaults file
+//				is = getClass().getClassLoader().getResourceAsStream(configFileName);
+//				if (is == null) {
+//					throw new ServletException("Could not find " + configFileName + "!");
+//				}
+				
+				throw new ConfigurationException("Couldn't find blacklab-server.json in " + webappsDir + ", /etc/blacklab/, " + tmpDir + ", or on classpath. Please place " +
+				"blacklab-server.json in one of these locations containing at least the following:\n" +
+				"{\n" +
+				"  \"indexCollections\": [\n" +
+				"    \"/my/indices\" \n" +
+				"  ]\n" +
+				"}\n\n" +
+				"With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
 			}
+			logger.debug("Reading configuration file from classpath: " + configFileName);
 		}
 		return is;
 	}
@@ -143,6 +147,31 @@ public class BlackLabServer extends HttpServlet {
 	}
 
 	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
+		
+		if (!configRead) {
+			try {
+				readConfig();
+			} catch (BlsException e) {
+				// Write HTTP headers (status code, encoding, content type and cache)
+				responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
+				responseObject.setContentType("text/xml");
+				ServletUtil.writeCacheHeaders(responseObject, 0);
+
+				// === Write the response that was captured in buf
+				try {
+					Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
+					realOut.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
+							"<blacklabResponse><error><code>INTERNAL_ERROR</code><message><![CDATA[ " + e.getMessage() + " ]]></message></error></blacklabResponse>");
+					realOut.flush();
+				} catch (IOException e2) {
+					// Client cancelled the request midway through.
+					// This is okay, don't raise the alarm.
+					logger.debug("(couldn't send response, client probably cancelled the request)");
+				}
+				return;
+			}
+		}
 
 		// === Create RequestHandler object
 		RequestHandler requestHandler = RequestHandler.create(this, request);
@@ -219,6 +248,16 @@ public class BlackLabServer extends HttpServlet {
 			// This is okay, don't raise the alarm.
 			logger.debug("(couldn't send response, client probably cancelled the request)");
 			return;
+		}
+	}
+
+	private void readConfig() throws BlsException {
+		try (InputStream is = openConfigFile()) {
+			searchManager = new SearchManager(Json.read(is, CONFIG_ENCODING));
+		} catch (JSONException e) {
+			throw new ConfigurationException("Invalid JSON in configuration file", e);
+		} catch (IOException e) {
+			throw new ConfigurationException("Error reading configuration file", e);
 		}
 	}
 
