@@ -192,9 +192,11 @@ public class BLSpanTermQuery extends BLSpanQuery {
 		if (termNumbers.size() == 0) {
 			// No matching terms; just fail when matching gets to here
 			state = NfaState.noMatch();
+			return new NfaFragment(state, Arrays.asList(new NfaState[0]));
 		} else if (termNumbers.size() == 1) {
 			// Single matching term
 			state = NfaState.token(propertyNumber, termNumbers.get(0), null, fiAccessor.getTerm(propertyNumber, termNumbers.get(0)));
+			return new NfaFragment(state, Arrays.asList(state));
 		} else {
 			// Multiple matching terms; generate OR state.
 			List<NfaState> st = new ArrayList<>();
@@ -202,8 +204,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
 				st.add(NfaState.token(propertyNumber, t, null, fiAccessor.getTerm(propertyNumber, t)));
 			}
 			state = NfaState.or(st);
+			return new NfaFragment(state, st);
 		}
-		return new NfaFragment(state, Arrays.asList(state));
 	}
 
 	@Override
