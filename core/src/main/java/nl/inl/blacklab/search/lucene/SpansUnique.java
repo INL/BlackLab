@@ -39,7 +39,7 @@ public class SpansUnique extends BLSpans {
 	 * @param src (startpoint-sorted) Spans to make unique
 	 */
 	public SpansUnique(BLSpans src) {
-		this.src = src; //Sort
+		this.src = src; // NOTE: must be startpoint sorted! (caller's responsibility)
 	}
 
 	@Override

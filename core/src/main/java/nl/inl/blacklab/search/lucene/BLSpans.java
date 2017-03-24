@@ -138,7 +138,7 @@ public abstract class BLSpans extends Spans {
 		if (spans == null)
 			return null;
 		BLSpans result = spans;
-		if (sort)
+		if (sort || removeDuplicates)
 			return new PerDocumentSortedSpans(result, PerDocumentSortedSpans.cmpStartPoint, removeDuplicates);
 		if (removeDuplicates)
 			return new SpansUnique(result);

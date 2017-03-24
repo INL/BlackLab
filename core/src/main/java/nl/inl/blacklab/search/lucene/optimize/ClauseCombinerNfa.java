@@ -99,7 +99,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 		if (factor > 0) {
 			// Forward
 			if (left instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)left).getDirection() == 1) {
-				// Existing forward FISEQ; add NFA to it.
+				// Existing forward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
 				ForwardIndexAccessor fiAccessor = ((SpanQueryFiSeq)left).getFiAccessor();
 				NfaFragment nfaFrag = right.getNfa(fiAccessor, 1);
 				return ((SpanQueryFiSeq)left).appendNfa(nfaFrag);
@@ -112,7 +112,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
 		// Backward
 		if (right instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)right).getDirection() == -1) {
-			// Existing backward FISEQ; add NFA to it.
+			// Existing backward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
 			ForwardIndexAccessor fiAccessor = ((SpanQueryFiSeq)right).getFiAccessor();
 			NfaFragment nfaFrag = left.getNfa(fiAccessor, -1);
 			return ((SpanQueryFiSeq)right).appendNfa(nfaFrag);

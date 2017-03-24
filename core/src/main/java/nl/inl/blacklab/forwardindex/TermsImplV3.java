@@ -405,7 +405,6 @@ class TermsImplV3 extends Terms {
 							idsPerSortPositionInsensitive.add(null);
 						}
 						//idPerSortPositionInsensitive = new int[n];
-						int uniqueSortPositions = 0;
 						for (int i = 0; i < n; i++) {
 							idPerSortPosition[sortPositionPerId[i]] = i;
 							//idPerSortPositionInsensitive[sortPositionPerIdInsensitive[i]] = i;
@@ -414,7 +413,6 @@ class TermsImplV3 extends Terms {
 							if (indices == null) {
 								indices = new ArrayList<>();
 								idsPerSortPositionInsensitive.set(sortPosIns, indices);
-								uniqueSortPositions++;
 							}
 							indices.add(i);
 						}
