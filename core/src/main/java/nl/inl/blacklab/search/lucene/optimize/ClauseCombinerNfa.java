@@ -100,27 +100,23 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 			// Forward
 			if (left instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)left).getDirection() == 1) {
 				// Existing forward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
-				ForwardIndexAccessor fiAccessor = ((SpanQueryFiSeq)left).getFiAccessor();
-				NfaFragment nfaFrag = right.getNfa(fiAccessor, 1);
-				return ((SpanQueryFiSeq)left).appendNfa(nfaFrag);
+				return ((SpanQueryFiSeq)left).appendNfa(right);
 			}
 			// New FISEQ.
 			ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), right.getField());
 			NfaFragment nfaFrag = right.getNfa(fiAccessor, 1);
-			return new SpanQueryFiSeq(left, false, nfaFrag, 1, fiAccessor);
+			return new SpanQueryFiSeq(left, false, nfaFrag, right, 1, fiAccessor);
 		}
 
 		// Backward
 		if (right instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)right).getDirection() == -1) {
 			// Existing backward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
-			ForwardIndexAccessor fiAccessor = ((SpanQueryFiSeq)right).getFiAccessor();
-			NfaFragment nfaFrag = left.getNfa(fiAccessor, -1);
-			return ((SpanQueryFiSeq)right).appendNfa(nfaFrag);
+			return ((SpanQueryFiSeq)right).appendNfa(left);
 		}
 		// New FISEQ.
 		ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), left.getField());
 		NfaFragment nfaFrag = left.getNfa(fiAccessor, -1);
-		return new SpanQueryFiSeq(right, true, nfaFrag, -1, fiAccessor);
+		return new SpanQueryFiSeq(right, true, nfaFrag, left, -1, fiAccessor);
 
 	}
 

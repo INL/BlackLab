@@ -27,7 +27,6 @@ import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaFragment;
-import nl.inl.blacklab.search.fimatch.NfaState;
 
 /**
  * Find hits that match the specified NFA, starting from the
@@ -36,11 +35,13 @@ import nl.inl.blacklab.search.fimatch.NfaState;
  */
 public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
+	boolean startOfAnchor;
+
 	NfaFragment nfaFrag;
 
-	int direction;
+	private BLSpanQuery nfaQuery;
 
-	boolean startOfAnchor;
+	int direction;
 
 	ForwardIndexAccessor fiAccessor;
 
@@ -49,13 +50,15 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	 * @param anchor hits to use as anchor to start NFA matching
 	 * @param startOfAnchor if true, use the starts of anchor hits; if false, use the ends
 	 * @param nfaFrag the NFA to use for matching
+	 * @param nfaQuery the query that generated the NFA, so we can still use its guarantee methods for optimization
 	 * @param direction the direction to match in (-1 = right-to-left, 1 = left-to-right)
 	 * @param fiAccessor maps between term strings and term indices for each property
 	 */
-	public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaFragment nfaFrag, int direction, ForwardIndexAccessor fiAccessor) {
+	public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaFragment nfaFrag, BLSpanQuery nfaQuery, int direction, ForwardIndexAccessor fiAccessor) {
 		super(anchor);
-		this.nfaFrag = nfaFrag;
 		this.startOfAnchor = startOfAnchor;
+		this.nfaFrag = nfaFrag;
+		this.nfaQuery = nfaQuery;
 		this.direction = direction;
 		this.fiAccessor = fiAccessor;
 	}
@@ -64,7 +67,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
 		if (rewritten != clauses.get(0)) {
-			SpanQueryFiSeq result = new SpanQueryFiSeq(rewritten, startOfAnchor, nfaFrag, direction, fiAccessor);
+			SpanQueryFiSeq result = new SpanQueryFiSeq(rewritten, startOfAnchor, nfaFrag, nfaQuery, direction, fiAccessor);
 			return result;
 		}
 		return this;
@@ -129,59 +132,60 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
 	@Override
 	public boolean hitsAllSameLength() {
-		NfaState nfa = nfaFrag.getStartingState();
-		return clauses.get(0).hitsAllSameLength() && nfa.hitsAllSameLength(NfaState.emptySet());
+		return clauses.get(0).hitsAllSameLength() && nfaQuery.hitsAllSameLength();
 	}
 
 	@Override
 	public int hitsLengthMin() {
-		NfaState nfa = nfaFrag.getStartingState();
 		if (startOfAnchor && direction == -1 || !startOfAnchor && direction == 1) {
 			// Non-overlapping; add the two values
-			return clauses.get(0).hitsLengthMin() + nfa.hitsLengthMin(NfaState.emptySet());
+			return clauses.get(0).hitsLengthMin() + nfaQuery.hitsLengthMin();
 		}
 		// Overlapping; use the largest value
-		return Math.max(clauses.get(0).hitsLengthMin(), nfa.hitsLengthMin(NfaState.emptySet()));
+		return Math.max(clauses.get(0).hitsLengthMin(), nfaQuery.hitsLengthMin());
 	}
 
 	@Override
 	public int hitsLengthMax() {
-		NfaState nfa = nfaFrag.getStartingState();
 		if (startOfAnchor && direction == -1 || !startOfAnchor && direction == 1) {
 			// Non-overlapping; add the two values
-			return clauses.get(0).hitsLengthMax() + nfa.hitsLengthMax(NfaState.emptySet());
+			return clauses.get(0).hitsLengthMax() + nfaQuery.hitsLengthMax();
 		}
 		// Overlapping; use the largest value
-		return Math.min(clauses.get(0).hitsLengthMax(), nfa.hitsLengthMax(NfaState.emptySet()));
+		return Math.min(clauses.get(0).hitsLengthMax(), nfaQuery.hitsLengthMax());
 	}
 
 	@Override
 	public boolean hitsStartPointSorted() {
 		if (direction == 1)
 			return clauses.get(0).hitsStartPointSorted();
-		return false; // can't easily guarantee this because we're matching right-to-left
+		return clauses.get(0).hitsStartPointSorted() && nfaQuery.hitsAllSameLength();
 	}
 
 	@Override
 	public boolean hitsEndPointSorted() {
 		if (direction == -1)
 			return clauses.get(0).hitsEndPointSorted();
-		return false; // can't easily guarantee this because we're matching left-to-right
+		return clauses.get(0).hitsEndPointSorted() && nfaQuery.hitsAllSameLength();
 	}
 
 	@Override
 	public boolean hitsHaveUniqueStart() {
-		return clauses.get(0).hitsHaveUniqueStart();
+		if (direction == 1)
+			return clauses.get(0).hitsHaveUniqueStart();
+		return clauses.get(0).hitsHaveUniqueStart() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueStart();
 	}
 
 	@Override
 	public boolean hitsHaveUniqueEnd() {
-		return false;
+		if (direction == -1)
+			return clauses.get(0).hitsHaveUniqueEnd();
+		return clauses.get(0).hitsHaveUniqueEnd() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueEnd();
 	}
 
 	@Override
 	public boolean hitsAreUnique() {
-		return clauses.get(0).hitsHaveUniqueStart() && direction == 1 || clauses.get(0).hitsHaveUniqueEnd() && direction == -1;
+		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
 	}
 
 	@Override
@@ -193,10 +197,19 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		return direction;
 	}
 
-	public SpanQueryFiSeq appendNfa(NfaFragment fragToAppend) {
+	/**
+	 * Append a new NFA fragment to (a copy of) our existing NFA, and return a new SpanQueryFiSeq using it.
+	 *  
+	 * @param fragToAppend new NFA fragment to add
+	 * @param originalQuery query that yielded this NFA
+	 * @return newly created, expanded SpanQueryFiSeq
+	 */
+	public SpanQueryFiSeq appendNfa(BLSpanQuery originalQuery) {
 		NfaFragment newNfaFrag = nfaFrag.copy();
-		newNfaFrag.append(fragToAppend);
-		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, newNfaFrag, direction, fiAccessor);
+		newNfaFrag.append(originalQuery.getNfa(fiAccessor, direction));
+		boolean addToRight = direction == 1;
+		SpanQuerySequence newNfaQuery = SpanQuerySequence.sequenceInternalize(nfaQuery, originalQuery, addToRight);
+		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, newNfaFrag, newNfaQuery, direction, fiAccessor);
 	}
 
 	public ForwardIndexAccessor getFiAccessor() {
