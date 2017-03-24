@@ -252,9 +252,9 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
+	public long reverseMatchingCost(IndexReader reader) {
 		int numberOfExpansionSteps = max == MAX_UNLIMITED ? 50 : max - min + 1;
-		return clauses.get(0).estimatedNumberOfHits(reader) * numberOfExpansionSteps;
+		return clauses.get(0).reverseMatchingCost(reader) * numberOfExpansionSteps;
 	}
 
 	public BLSpanQuery addExpand(int addMin, int addMax) {

@@ -214,7 +214,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
+	public long reverseMatchingCost(IndexReader reader) {
 		try {
 			return reader.totalTermFreq(query.getTerm());
 		} catch (IOException e) {

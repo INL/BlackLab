@@ -403,13 +403,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
+	public long reverseMatchingCost(IndexReader reader) {
 		// Excludes should have been rewritten, so we only look at includes.
 		// We return the least frequent clause since we can skip over the more
 		// frequent ones, or match them using the forward index.
 		long cost = Integer.MAX_VALUE;
 		for (BLSpanQuery clause: include) {
-			cost = Math.min(cost, clause.estimatedNumberOfHits(reader));
+			cost = Math.min(cost, clause.reverseMatchingCost(reader));
 		}
 		return cost;
 	}

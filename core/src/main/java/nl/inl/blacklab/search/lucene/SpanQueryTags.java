@@ -214,7 +214,7 @@ public class SpanQueryTags extends BLSpanQuery {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
-		return clause.estimatedNumberOfHits(reader);
+	public long reverseMatchingCost(IndexReader reader) {
+		return clause.reverseMatchingCost(reader);
 	}
 }

@@ -52,8 +52,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 			return 0;
 		boolean leftEmpty = left.matchesEmptySequence();
 		boolean rightEmpty = right.matchesEmptySequence();
-		long numLeft = Math.max(1, left.estimatedNumberOfHits(reader));
-		long numRight = Math.max(1, right.estimatedNumberOfHits(reader));
+		long numLeft = Math.max(1, left.reverseMatchingCost(reader));
+		long numRight = Math.max(1, right.reverseMatchingCost(reader));
 		boolean leftNfa = left.canMakeNfa();
 		boolean rightNfa = right.canMakeNfa();
 		boolean backwardPossible = leftNfa && !rightEmpty;

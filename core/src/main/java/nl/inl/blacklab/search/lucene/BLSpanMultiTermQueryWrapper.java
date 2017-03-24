@@ -109,7 +109,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
+	public long reverseMatchingCost(IndexReader reader) {
 		return 0; // should be rewritten
 	}
 

@@ -167,7 +167,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
-		return clauses.get(0).estimatedNumberOfHits(reader);
+	public long reverseMatchingCost(IndexReader reader) {
+		return clauses.get(0).reverseMatchingCost(reader);
 	}
 }

@@ -277,7 +277,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 *
 	 * @return rough estimation of the number of hits
 	 */
-	public abstract long estimatedNumberOfHits(IndexReader reader);
+	public abstract long reverseMatchingCost(IndexReader reader);
 
 	@Override
 	public String getField() {

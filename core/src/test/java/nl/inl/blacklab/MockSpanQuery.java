@@ -174,7 +174,7 @@ public class MockSpanQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
+	public long reverseMatchingCost(IndexReader reader) {
 		return 0;
 	}
 

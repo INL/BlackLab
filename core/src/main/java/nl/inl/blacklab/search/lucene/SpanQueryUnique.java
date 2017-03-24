@@ -165,7 +165,7 @@ public class SpanQueryUnique extends BLSpanQuery {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
-		return src.estimatedNumberOfHits(reader);
+	public long reverseMatchingCost(IndexReader reader) {
+		return src.reverseMatchingCost(reader);
 	}
 }

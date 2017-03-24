@@ -189,8 +189,8 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
-		return clauses.get(0).estimatedNumberOfHits(reader);
+	public long reverseMatchingCost(IndexReader reader) {
+		return clauses.get(0).reverseMatchingCost(reader);
 	}
 
 	public int getDirection() {
@@ -215,4 +215,25 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	public ForwardIndexAccessor getFiAccessor() {
 		return fiAccessor;
 	}
+
+	@Override
+	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		NfaFragment anchorNfa = clauses.get(0).getNfa(fiAccessor, direction);
+		if (direction == 1) {
+			// Forward. Append original NFA to anchor NFA.
+			anchorNfa.append(nfaFrag);
+			return anchorNfa;
+		}
+		// Backward. Append anchor NFA to copy of original NFA.
+		NfaFragment result = nfaFrag.copy();
+		result.append(anchorNfa);
+		return result;
+	}
+
+	@Override
+	public boolean canMakeNfa() {
+		return clauses.get(0).canMakeNfa();
+	}
+	
+	
 }

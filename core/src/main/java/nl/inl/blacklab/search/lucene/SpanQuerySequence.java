@@ -517,10 +517,10 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
+	public long reverseMatchingCost(IndexReader reader) {
 		long cost = Integer.MAX_VALUE;
 		for (BLSpanQuery clause: clauses) {
-			cost = Math.min(cost, clause.estimatedNumberOfHits(reader));
+			cost = Math.min(cost, clause.reverseMatchingCost(reader));
 		}
 		return cost;
 	}

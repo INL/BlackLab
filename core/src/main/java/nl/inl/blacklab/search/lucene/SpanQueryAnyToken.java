@@ -182,7 +182,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
+	public long reverseMatchingCost(IndexReader reader) {
 		// Should be rewritten, and if not, it matches all positions in the index.
 		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
 		return LuceneUtil.getSumTotalTermFreq(reader, luceneField) * numberOfExpansionSteps;

@@ -194,7 +194,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public long estimatedNumberOfHits(IndexReader reader) {
+	public long reverseMatchingCost(IndexReader reader) {
 		return 0; // should be rewritten
 	}
 }
