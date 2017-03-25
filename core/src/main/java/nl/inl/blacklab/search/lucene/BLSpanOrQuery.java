@@ -229,13 +229,12 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	@Override
 	public boolean hitsEndPointSorted() {
-		// Cannot guarantee because we're merging from different sources.
-		return false;
+		return hitsAllSameLength();
 	}
 
 	@Override
 	public boolean hitsStartPointSorted() {
-		// Our way of merging guarantees this, as it should for almost all BLSpans
+		// Our way of merging guarantees this
 		return true;
 	}
 

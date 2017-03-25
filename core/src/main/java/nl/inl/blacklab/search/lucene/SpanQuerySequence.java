@@ -245,7 +245,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 		// Try to combine adjacent clauses into more efficient ones
 		anyRewritten |= combineAdjacentClauses(cl, reader, getField());
-
+		
 		// If any part of the sequence matches the empty sequence, we must
 		// rewrite it to several alternatives combined with OR. Do so now.
 		List<List<BLSpanQuery>> results = makeAlternatives(cl, reader);
@@ -261,6 +261,63 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		if (orCl.size() == 1)
 			return orCl.get(0);
 		return new BLSpanOrQuery(orCl.toArray(new BLSpanQuery[0])).rewrite(reader);
+	}
+
+	/**
+	 * For possibly empty clauses, combine them with a neighbour into a binary-tree
+	 * structure. This differs from the approach of makeAlternatives() which produces
+	 * a OR of several longer sequences. That approach is probably more efficient with Lucene
+	 * (because it allows more optimizations on the longer sequences produced), while this
+	 * approach is probably more efficient for NFAs (because we don't have to follow many long 
+	 * paths in the NFA).
+	 * 
+	 * @param cl clauses
+	 * @param reader index reader
+	 * @return alternatives tree
+	 */
+	@SuppressWarnings("unused")
+	private static boolean makeAlternativesLocally(List<BLSpanQuery> cl, IndexReader reader) {
+		boolean anyRewritten = false;
+		while (true) {
+			// Find two clauses to combine to OR, preferring to combine one that matches
+			// the empty sequence with one that does not.
+			int bestIndex = -1;
+			boolean bestBothEmpty = true;
+			for (int i = 1; i < cl.size(); i++) {
+				BLSpanQuery left = cl.get(i - 1);
+				BLSpanQuery right = cl.get(i);
+				boolean leftEmpty = left.matchesEmptySequence();
+				boolean rightEmpty = right.matchesEmptySequence();
+				// Does either clause matcht the empty sequence, and are these two
+				// the best candidates to combine right now?
+				if ((leftEmpty || rightEmpty) && bestBothEmpty || (!bestBothEmpty && (!leftEmpty || !rightEmpty))) {
+					bestBothEmpty = leftEmpty && rightEmpty;
+					bestIndex = i;
+				}
+			}
+			if (bestIndex < 0)
+				return anyRewritten; // we're done
+			// Combine the clauses we found
+			BLSpanQuery left = cl.get(bestIndex - 1);
+			BLSpanQuery right = cl.get(bestIndex);
+			boolean leftEmpty = left.matchesEmptySequence();
+			boolean rightEmpty = right.matchesEmptySequence();
+			BLSpanQuery combi;
+			BLSpanQuery both = new SpanQuerySequence(left, right);
+			if (leftEmpty && rightEmpty) {
+				// 4 alternatives: neither, left only, right only, or both
+				combi = new SpanQueryRepetition(new BLSpanOrQuery(left, right, both), 0, 1);
+			} else if (leftEmpty) {
+				// 2 alternatives: right only, or both
+				combi = new BLSpanOrQuery(right, both);
+			} else {
+				// 2 alternatives: left only, or both
+				combi = new BLSpanOrQuery(left, both);
+			}
+			cl.remove(bestIndex - 1);
+			cl.set(bestIndex - 1, combi);
+			anyRewritten = true;
+		}
 	}
 
 	/**
@@ -284,7 +341,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			//  in the caller if the input matched the empty sequence)
 			return Arrays.asList(Arrays.asList(parts.get(0).noEmpty().rewrite(reader)));
 		}
-
+	
 		// Recursively determine the query for the "tail" of the list,
 		// and whether it matches the empty sequence or not.
 		List<BLSpanQuery> partsTail = parts.subList(1, parts.size());
@@ -296,7 +353,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			}
 		}
 		List<List<BLSpanQuery>> altTail = makeAlternatives(partsTail, reader);
-
+	
 		// Now, add the head part and check if that matches the empty sequence.
 		return combine(parts.get(0), altTail, restMatchesEmpty, reader);
 	}
@@ -370,40 +427,113 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				weight.extractTermContexts(contexts);
 			}
 		}
+		
+		class CombiPart {
+			BLSpans spans;
+			
+			boolean uniqueStart;
+			
+			boolean uniqueEnd;
+			
+			boolean startSorted;
+			
+			boolean endSorted;
 
-		@Override
-		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			BLSpans combi = weights.get(0).getSpans(context, requiredPostings);
-			if (combi == null)
-				return null;
-			boolean combiUniqueEnds = clauses.get(0).hitsHaveUniqueEnd();
-			boolean combiEndpointSorted = clauses.get(0).hitsEndPointSorted();
-			for (int i = 1; i < weights.size(); i++) {
-				BLSpanWeight weight = weights.get(i);
-				BLSpans si = weight.getSpans(context, requiredPostings);
-				if (si == null)
-					return null;
-
-				// Note: the spans coming from SequenceSpansRaw may not be sorted by end point.
-				// We keep track of this and sort them manually if necessary.
-				if (combiUniqueEnds && combiEndpointSorted &&
-					clauses.get(i).hitsStartPointSorted() && clauses.get(i).hitsHaveUniqueStart()) {
-					// We can take a shortcut because of what we know about the Spans we're combining.
-					combi = new SpansSequenceSimple(combi, si);
-					combiEndpointSorted = clauses.get(i).hitsAllSameLength();
-					combiUniqueEnds = clauses.get(i).hitsHaveUniqueEnd();
-				} else {
-					if (!combiEndpointSorted)
-						combi = new PerDocumentSortedSpans(combi, PerDocumentSortedSpans.cmpEndPoint, false);
-					if (!clauses.get(i).hitsStartPointSorted())
-						si = new PerDocumentSortedSpans(si, PerDocumentSortedSpans.cmpStartPoint, false);
-					combi = new SpansSequenceRaw(combi, si);
-					combiUniqueEnds = combiUniqueEnds && clauses.get(i).hitsHaveUniqueEnd();
-					combiEndpointSorted = clauses.get(i).hitsAllSameLength();
+			private boolean sameLength;
+			
+			public CombiPart(BLSpanWeight weight, final LeafReaderContext context, Postings requiredPostings) throws IOException {
+				this.spans = weight.getSpans(context, requiredPostings);
+				BLSpanQuery q = (BLSpanQuery)weight.getQuery();
+				if (q != null) {
+					this.uniqueStart = q.hitsHaveUniqueStart();
+					this.uniqueEnd = q.hitsHaveUniqueEnd();
+					this.startSorted = q.hitsStartPointSorted();
+					this.endSorted = q.hitsEndPointSorted();
+					this.sameLength = q.hitsAllSameLength();
 				}
 			}
 
-			return combi;
+			public CombiPart(BLSpans spans, boolean hitsHaveUniqueStart, boolean hitsHaveUniqueEnd,
+					boolean hitsStartPointSorted, boolean hitsEndPointSorted, boolean hitsAllSameLength) {
+				super();
+				this.spans = spans;
+				this.uniqueStart = hitsHaveUniqueStart;
+				this.uniqueEnd = hitsHaveUniqueEnd;
+				this.startSorted = hitsStartPointSorted;
+				this.endSorted = hitsEndPointSorted;
+				this.sameLength = hitsAllSameLength;
+			}
+			
+			@Override
+			public String toString() {
+				return spans.toString();
+			}
+			
+		}
+
+		@Override
+		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+			List<CombiPart> parts = new ArrayList<>();
+			for (int i = 0; i < weights.size(); i++) {
+				CombiPart part = new CombiPart(weights.get(i), context, requiredPostings);
+				if (part.spans == null)
+					return null;
+				parts.add(part);
+			}
+			
+			// First, combine as many clauses as possible into SpansSequenceSimple,
+			// which works for simple clauses and is the most efficient to execute.
+			// OPT: it might be even better to favour combining low-frequency terms first,
+			//      as that minimizes useless skipping through non-matching docs.
+			for (int i = 1; i < parts.size(); i++) {
+				CombiPart left = parts.get(i - 1);
+				CombiPart right = parts.get(i);
+				CombiPart newPart = null;
+				if (left.endSorted && right.startSorted) {
+					if (!left.uniqueEnd) {
+						// TODO: make unique
+					}
+					if (!right.uniqueStart) {
+						// TODO: make unique
+					}
+				}
+				if (left.uniqueEnd && left.endSorted &&
+					right.startSorted && right.uniqueStart) {
+					// We can take a shortcut because of what we know about the Spans we're combining.
+					SpansSequenceSimple newSpans = new SpansSequenceSimple(left.spans, right.spans);
+					newPart = new CombiPart(newSpans, left.uniqueStart, right.uniqueEnd, left.startSorted, right.sameLength, left.sameLength && right.sameLength);
+					parts.remove(i - 1);
+					parts.set(i - 1, newPart);
+					i--;
+				}
+			}
+
+			// Now, combine the rest (if any) using the more expensive SpansSequenceRaw,
+			// that takes more complex sequences into account.
+			while (parts.size() > 1) {
+				CombiPart left = parts.get(0);
+				CombiPart right = parts.get(1);
+
+				// Note: the spans coming from SequenceSpansRaw may not be sorted by end point.
+				// We keep track of this and sort them manually if necessary.
+				CombiPart newPart = null;
+				if (!left.endSorted)
+					left.spans = new PerDocumentSortedSpans(left.spans, PerDocumentSortedSpans.cmpEndPoint, false);
+				if (!right.startSorted)
+					right.spans = new PerDocumentSortedSpans(right.spans, PerDocumentSortedSpans.cmpStartPoint, false);
+				BLSpans newSpans = new SpansSequenceRaw(left.spans, right.spans);
+				newPart = new CombiPart(newSpans, 
+						left.uniqueStart && left.uniqueEnd && right.uniqueStart,
+						left.uniqueEnd && right.uniqueStart && right.uniqueEnd,
+						left.startSorted,
+						right.sameLength,
+						left.sameLength && right.sameLength
+						);
+				parts.remove(0);
+				parts.set(0, newPart);
+			}
+
+			return parts.get(0).spans;
 		}
 
 	}

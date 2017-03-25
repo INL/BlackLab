@@ -96,7 +96,7 @@ public class TestSearches {
 	}
 
 	@Test
-	public void testOptional() throws ParseException {
+	public void testOptional1() throws ParseException {
 		expected = Arrays.asList(
 				"be [with you]",
 				"with [you]",
@@ -104,7 +104,10 @@ public class TestSearches {
 				"find [That] is"
 				);
 		Assert.assertEquals(expected, testIndex.findConc(" []? [pos='pro'] "));
+	}
 
+	@Test
+	public void testOptional2() throws ParseException {
 		expected = Arrays.asList(
 				"with [you]",
 				"find [That] is",
@@ -112,6 +115,10 @@ public class TestSearches {
 				);
 		Assert.assertEquals(expected, testIndex.findConc(" [pos='pro'] []? "));
 
+	}
+
+	@Test
+	public void testOptional3() throws ParseException {
 		expected = Arrays.asList(
 				"be [with] you",
 				"be [with you]",
@@ -205,4 +212,13 @@ public class TestSearches {
 		expected = Arrays.asList("[May the Force be with] you");
 		Assert.assertEquals(expected, testIndex.findConc(" 'May' '.*e'+ 'with' "));
 	}
+
+	@Test
+	public void testOnlyRepetition() throws ParseException {
+		expected = Arrays.asList("[The] quick", "over [the] lazy", "May [the] Force", "is [the] question");
+		Assert.assertEquals(expected, testIndex.findConc("[lemma='.*he']{0,10}"));
+	}
+	
+	
+	
 }

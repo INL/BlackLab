@@ -200,7 +200,7 @@ public class SpanQueryTags extends BLSpanQuery {
 
 	@Override
 	public boolean hitsHaveUniqueStart() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -210,7 +210,7 @@ public class SpanQueryTags extends BLSpanQuery {
 
 	@Override
 	public boolean hitsAreUnique() {
-		return false;
+		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
 	}
 
 	@Override
