@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.Span;
  * This allows us to only consider certain documents (say, only documents in a certain domain) when
  * executing our query.
  */
-public class SpansFiltered extends BLSpans {
+class SpansFiltered extends BLSpans {
 	BLSpans spans;
 
 	/** Set of accepted docs. NOTE: this is not segment-based, but for the whole index! */

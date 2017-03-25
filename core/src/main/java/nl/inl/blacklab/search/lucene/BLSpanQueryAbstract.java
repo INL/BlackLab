@@ -29,8 +29,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  * A base class for a SpanQuery with an array of clauses. Provides default implementations of some
  * abstract methods in SpanQuery.
  */
-
-public abstract class BLSpanQueryAbstract extends BLSpanQuery {
+abstract class BLSpanQueryAbstract extends BLSpanQuery {
 	/**
 	 * The field name for this query. The "base" part is only applicable when dealing with complex
 	 * fields: the base field name of "contents" and "contents%pos" would both be "contents".

@@ -108,7 +108,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 		return new SpanWeightPositionFilter(prodWeight, filterWeight, searcher, contexts);
 	}
 
-	public class SpanWeightPositionFilter extends BLSpanWeight {
+	class SpanWeightPositionFilter extends BLSpanWeight {
 
 		final BLSpanWeight prodWeight, filterWeight;
 

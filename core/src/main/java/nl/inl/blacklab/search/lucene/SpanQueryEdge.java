@@ -58,7 +58,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 		return new SpanWeightEdge(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightEdge extends BLSpanWeight {
+	class SpanWeightEdge extends BLSpanWeight {
 
 		final BLSpanWeight weight;
 

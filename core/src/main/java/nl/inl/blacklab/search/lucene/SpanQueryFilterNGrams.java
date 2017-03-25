@@ -95,7 +95,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 		return new SpanWeightFilterNGrams(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightFilterNGrams extends BLSpanWeight {
+	class SpanWeightFilterNGrams extends BLSpanWeight {
 
 		final BLSpanWeight weight;
 

@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.Searcher;
  * This is used by SpanQueryNot and SpanQueryExpansion to make sure
  * we don't go beyond the document end.
  */
-public class DocFieldLengthGetter implements Closeable {
+class DocFieldLengthGetter implements Closeable {
 	/** We check some cache entries to see if document lengths were saved in the index or not.
 	 * (These days, they should always be saved, but we do this in case someone uses an old index)
 	 */

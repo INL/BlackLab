@@ -25,7 +25,9 @@ import nl.inl.blacklab.search.Span;
 
 /**
  * Gets spans for a certain XML element.
+ * @deprecated used for old indices that soon won't be supported anymore
  */
+@Deprecated
 class SpansTagsOld extends BLSpans {
 	private static final int ARRAYLIST_REALLOC_THRESHOLD = 1000;
 

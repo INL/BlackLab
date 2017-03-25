@@ -27,7 +27,7 @@ import org.apache.lucene.search.spans.Spans;
  * retrieving some extra information). Afterwards we can use HitsPerDocumentSpans to convert the
  * per-document hits into a normal Spans object again.
  */
-public class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
+class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
 	public SpansInBucketsPerDocument(BLSpans source) {
 		super(source);
 	}

@@ -21,9 +21,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.MockSearcher;
-import nl.inl.blacklab.MockSpanQuery;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.MockSpanQuery;
 
 public class TestResultsGrouper {
 	int[] doc = { 1, 2, 1, 3, 2, 1 };

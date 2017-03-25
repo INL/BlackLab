@@ -223,7 +223,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		return new SpanWeightAnd(weights, searcher, contexts);
 	}
 
-	public class SpanWeightAnd extends BLSpanWeight {
+	class SpanWeightAnd extends BLSpanWeight {
 
 		final List<BLSpanWeight> weights;
 

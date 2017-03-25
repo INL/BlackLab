@@ -29,7 +29,7 @@ import org.apache.lucene.search.IndexSearcher;
  * Makes sure the resulting hits do not contain consecutive duplicate hits. These may arise when
  * e.g. combining multiple SpanFuzzyQueries with OR.
  */
-public class SpanQueryUnique extends BLSpanQuery {
+class SpanQueryUnique extends BLSpanQuery {
 	BLSpanQuery src;
 
 	public SpanQueryUnique(BLSpanQuery src) {
@@ -63,7 +63,7 @@ public class SpanQueryUnique extends BLSpanQuery {
 		return new SpanWeightUnique(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightUnique extends BLSpanWeight {
+	class SpanWeightUnique extends BLSpanWeight {
 
 		final BLSpanWeight weight;
 

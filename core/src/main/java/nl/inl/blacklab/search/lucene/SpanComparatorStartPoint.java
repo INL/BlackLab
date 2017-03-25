@@ -23,7 +23,7 @@ import nl.inl.blacklab.search.Hit;
 /**
  * Compare two hits (assumed to be in the same document) by start point, then by end point.
  */
-public class SpanComparatorStartPoint implements Comparator<Hit> {
+class SpanComparatorStartPoint implements Comparator<Hit> {
 	@Override
 	public int compare(Hit o1, Hit o2) {
 		if (o2.start != o1.start)

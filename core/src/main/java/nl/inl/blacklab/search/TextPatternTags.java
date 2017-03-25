@@ -29,6 +29,7 @@ import nl.inl.util.StringUtil;
 /**
  * A TextPattern matching a word.
  */
+@SuppressWarnings("deprecation")
 public class TextPatternTags extends TextPattern {
 
 	protected String elementName;

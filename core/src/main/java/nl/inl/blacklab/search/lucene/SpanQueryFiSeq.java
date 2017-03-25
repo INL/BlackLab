@@ -80,7 +80,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		return new SpanWeightFiSeq(anchorWeight, searcher, contexts);
 	}
 
-	public class SpanWeightFiSeq extends BLSpanWeight {
+	class SpanWeightFiSeq extends BLSpanWeight {
 
 		final BLSpanWeight anchorWeight;
 

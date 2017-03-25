@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.Span;
 /**
  * Sort the given Spans per document, according to the given comparator.
  */
-public class PerDocumentSortedSpans extends BLSpans {
+class PerDocumentSortedSpans extends BLSpans {
 
 	final static Comparator<Hit> cmpStartPoint = new SpanComparatorStartPoint();
 

@@ -348,7 +348,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		return new SpanWeightSequence(weights, searcher, contexts);
 	}
 
-	public class SpanWeightSequence extends BLSpanWeight {
+	class SpanWeightSequence extends BLSpanWeight {
 
 		final List<BLSpanWeight> weights;
 
@@ -384,11 +384,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				if (si == null)
 					return null;
 
-				// Note: the spans coming from SequenceSpansRaw are not sorted by end point.
-				// This is okay in this loop because combi is used as the left part of the next
-				// sequence (so it is explicitly sorted by end point when we put it back in
-				// SequenceSpansRaw for the next part of the sequence), but before returning the
-				// final spans, we wrap it in a per-document (start-point) sorter.
+				// Note: the spans coming from SequenceSpansRaw may not be sorted by end point.
+				// We keep track of this and sort them manually if necessary.
 				if (combiUniqueEnds && combiEndpointSorted &&
 					clauses.get(i).hitsStartPointSorted() && clauses.get(i).hitsHaveUniqueStart()) {
 					// We can take a shortcut because of what we know about the Spans we're combining.

@@ -129,7 +129,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 		return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightFiltered extends BLSpanWeight {
+	class SpanWeightFiltered extends BLSpanWeight {
 
 		final BLSpanWeight weight;
 

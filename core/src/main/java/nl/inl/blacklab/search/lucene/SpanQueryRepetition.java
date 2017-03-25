@@ -131,7 +131,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 		return new SpanWeightRepetition(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightRepetition extends BLSpanWeight {
+	class SpanWeightRepetition extends BLSpanWeight {
 
 		final BLSpanWeight weight;
 

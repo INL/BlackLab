@@ -13,7 +13,7 @@ import org.apache.lucene.search.spans.SpanWeight;
  * Base class for our SpanWeight classes.
  * Ensures that getSpans returns a BLSpans.
  */
-public abstract class BLSpanWeight extends SpanWeight {
+abstract class BLSpanWeight extends SpanWeight {
 
 	public BLSpanWeight(SpanQuery query, IndexSearcher searcher, Map<Term, TermContext> termContexts) throws IOException {
 		super(query, searcher, termContexts);

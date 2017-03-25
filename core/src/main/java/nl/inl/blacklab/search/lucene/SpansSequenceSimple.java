@@ -23,12 +23,10 @@ import nl.inl.blacklab.search.Span;
 
 /**
  * Simple version of sequence Spans. Assumes that:
- * - right side is ordered by start point (this is true by default in Lucene)
- * - left side is ordered by end point (true if start point sorted and all
- *   hits are the same length)
- * - left side end points and right side start points are unique (true
- *   if all hits are the same length and there are no duplicate hits (which
- *   should be true in Lucene by default, tho not 100% sure))
+ * - right side is ordered by start point, and start points are unique
+ * - left side is ordered by end point, and end points are unique
+ * 
+ * The client should ensure these properties are true.
  */
 class SpansSequenceSimple extends BLSpans {
 	private BLSpans left;
@@ -46,14 +44,6 @@ class SpansSequenceSimple extends BLSpans {
 	public SpansSequenceSimple(BLSpans leftClause, BLSpans rightClause) {
 		left = leftClause;
 		right = rightClause;
-//		if (!right.hitsStartPointSorted())
-//			throw new IllegalArgumentException("Right hits not start point sorted!");
-//		if (!right.hitsHaveUniqueStart())
-//			throw new IllegalArgumentException("Right hits don't have unique start points!");
-//		if (!left.hitsEndPointSorted())
-//			throw new IllegalArgumentException("Left hits not end point sorted!");
-//		if (!left.hitsHaveUniqueEnd())
-//			throw new IllegalArgumentException("Left hits don't have unique end points!");
 	}
 
 	@Override

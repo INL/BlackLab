@@ -23,6 +23,7 @@ import org.junit.Test;
 import nl.inl.blacklab.MockSpans;
 import nl.inl.blacklab.TestUtil;
 
+@SuppressWarnings("deprecation")
 public class TestSpansTagsOld {
 
 	@Test

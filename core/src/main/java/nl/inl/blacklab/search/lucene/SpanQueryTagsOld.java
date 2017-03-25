@@ -45,7 +45,9 @@ import nl.inl.util.StringUtil;
  * NOTE: this does not work with nested tags yet, as it just searches for all open and close tags
  * and matches the first open tag with the first close tag, etc.
  *
+ * @deprecated used for old indices that soon won't be supported anymore
  */
+@Deprecated
 public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 
 	private String tagName;
@@ -106,7 +108,7 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 		return new SpanWeightTagsOld(startWeight, endWeight, searcher, contexts);
 	}
 
-	public class SpanWeightTagsOld extends BLSpanWeight {
+	class SpanWeightTagsOld extends BLSpanWeight {
 
 		final BLSpanWeight startWeight, endWeight;
 

@@ -67,7 +67,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 		return new SpanWeightCaptureGroup(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightCaptureGroup extends BLSpanWeight {
+	class SpanWeightCaptureGroup extends BLSpanWeight {
 
 		final BLSpanWeight weight;
 

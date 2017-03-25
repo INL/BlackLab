@@ -26,7 +26,7 @@ import nl.inl.blacklab.search.Hit;
  *
  * Hits are sorted by the given comparator.
  */
-public class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
+class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
 	private Comparator<Hit> comparator;
 
 	public SpansInBucketsPerDocumentSorted(BLSpans source, Comparator<Hit> comparator) {

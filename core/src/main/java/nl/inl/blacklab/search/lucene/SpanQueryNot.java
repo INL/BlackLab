@@ -128,7 +128,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 		return new SpanWeightNot(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightNot extends BLSpanWeight {
+	class SpanWeightNot extends BLSpanWeight {
 
 		final BLSpanWeight weight;
 

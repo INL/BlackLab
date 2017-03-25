@@ -86,7 +86,7 @@ public class SpanQueryTags extends BLSpanQuery {
 		return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
-	public class SpanWeightTags extends BLSpanWeight {
+	class SpanWeightTags extends BLSpanWeight {
 
 		final BLSpanWeight weight;
 
