@@ -245,7 +245,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 		// Try to combine adjacent clauses into more efficient ones
 		anyRewritten |= combineAdjacentClauses(cl, reader, getField());
-		
+
 		// If any part of the sequence matches the empty sequence, we must
 		// rewrite it to several alternatives combined with OR. Do so now.
 		List<List<BLSpanQuery>> results = makeAlternatives(cl, reader);
@@ -268,9 +268,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	 * structure. This differs from the approach of makeAlternatives() which produces
 	 * a OR of several longer sequences. That approach is probably more efficient with Lucene
 	 * (because it allows more optimizations on the longer sequences produced), while this
-	 * approach is probably more efficient for NFAs (because we don't have to follow many long 
+	 * approach is probably more efficient for NFAs (because we don't have to follow many long
 	 * paths in the NFA).
-	 * 
+	 *
 	 * @param cl clauses
 	 * @param reader index reader
 	 * @return alternatives tree
@@ -341,7 +341,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			//  in the caller if the input matched the empty sequence)
 			return Arrays.asList(Arrays.asList(parts.get(0).noEmpty().rewrite(reader)));
 		}
-	
+
 		// Recursively determine the query for the "tail" of the list,
 		// and whether it matches the empty sequence or not.
 		List<BLSpanQuery> partsTail = parts.subList(1, parts.size());
@@ -353,7 +353,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			}
 		}
 		List<List<BLSpanQuery>> altTail = makeAlternatives(partsTail, reader);
-	
+
 		// Now, add the head part and check if that matches the empty sequence.
 		return combine(parts.get(0), altTail, restMatchesEmpty, reader);
 	}
@@ -427,20 +427,20 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				weight.extractTermContexts(contexts);
 			}
 		}
-		
+
 		class CombiPart {
 			BLSpans spans;
-			
+
 			boolean uniqueStart;
-			
+
 			boolean uniqueEnd;
-			
+
 			boolean startSorted;
-			
+
 			boolean endSorted;
 
-			private boolean sameLength;
-			
+			boolean sameLength;
+
 			public CombiPart(BLSpanWeight weight, final LeafReaderContext context, Postings requiredPostings) throws IOException {
 				this.spans = weight.getSpans(context, requiredPostings);
 				BLSpanQuery q = (BLSpanQuery)weight.getQuery();
@@ -463,12 +463,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				this.endSorted = hitsEndPointSorted;
 				this.sameLength = hitsAllSameLength;
 			}
-			
+
 			@Override
 			public String toString() {
 				return spans.toString();
 			}
-			
+
 		}
 
 		@Override
@@ -480,7 +480,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 					return null;
 				parts.add(part);
 			}
-			
+
 			// First, combine as many clauses as possible into SpansSequenceSimple,
 			// which works for simple clauses and is the most efficient to execute.
 			// OPT: it might be even better to favour combining low-frequency terms first,
@@ -522,7 +522,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				if (!right.startSorted)
 					right.spans = new PerDocumentSortedSpans(right.spans, PerDocumentSortedSpans.cmpStartPoint, false);
 				BLSpans newSpans = new SpansSequenceRaw(left.spans, right.spans);
-				newPart = new CombiPart(newSpans, 
+				newPart = new CombiPart(newSpans,
 						left.uniqueStart && left.uniqueEnd && right.uniqueStart,
 						left.uniqueEnd && right.uniqueStart && right.uniqueEnd,
 						left.startSorted,

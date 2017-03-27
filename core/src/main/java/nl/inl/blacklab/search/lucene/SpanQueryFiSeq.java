@@ -199,8 +199,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
 	/**
 	 * Append a new NFA fragment to (a copy of) our existing NFA, and return a new SpanQueryFiSeq using it.
-	 *  
-	 * @param fragToAppend new NFA fragment to add
+	 *
 	 * @param originalQuery query that yielded this NFA
 	 * @return newly created, expanded SpanQueryFiSeq
 	 */
@@ -234,6 +233,6 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	public boolean canMakeNfa() {
 		return clauses.get(0).canMakeNfa();
 	}
-	
-	
+
+
 }
