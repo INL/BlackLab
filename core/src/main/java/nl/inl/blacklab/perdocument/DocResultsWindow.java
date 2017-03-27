@@ -17,11 +17,13 @@ package nl.inl.blacklab.perdocument;
 
 import java.util.ArrayList;
 
+import nl.inl.blacklab.search.ResultsWindow;
+
 /**
  * A list of DocResult objects (document-level query results). The list may be sorted by calling
  * DocResults.sort().
  */
-public class DocResultsWindow extends DocResults {
+public class DocResultsWindow extends DocResults implements ResultsWindow {
 	private DocResults source;
 
 	private int first;
@@ -59,40 +61,73 @@ public class DocResultsWindow extends DocResults {
 		}
 	}
 
+	@Override
 	public boolean hasNext() {
 		return source.sizeAtLeast(first + numberPerPage + 1);
 	}
 
+	@Override
 	public boolean hasPrevious() {
 		return first > 0;
 	}
 
+	@Override
 	public int nextFrom() {
 		return first + results.size();
 	}
 
+	@Override
 	public int prevFrom() {
 		return first - numberPerPage;
 	}
 
+	@Override
 	public int first() {
 		return first;
 	}
 
+	@Override
 	public int last() {
 		return first + results.size() - 1;
 	}
 
+	/**
+	 * Return the number of results.
+	 * @return number of results
+	 * @deprecated use ResultsWindow.size()
+	 */
+	@Deprecated
 	public int number() {
 		return results.size();
 	}
 
+	/**
+	 * Return the total number of results
+	 * @return total number of results
+	 * @deprecated use ResultsWindow.sourceSize()
+	 */
+	@Deprecated
 	public int totalResults() {
-		return source.size();
+		return sourceSize();
 	}
 
 	public DocResults getOriginalDocs() {
 		return source;
+	}
+
+	@Override
+	public int sourceSize() {
+		return source.size();
+	}
+
+	@Override
+	public int sourceTotalSize() {
+		return source.totalSize();
+	}
+
+	@Override
+	public int requestedWindowSize() {
+		return numberPerPage;
 	}
 
 }

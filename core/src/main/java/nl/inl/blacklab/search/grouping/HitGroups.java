@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.Searcher;
  * provides random access to the hits. Note that this means that all hits found must be retrieved,
  * which may be unfeasible for large results sets.
  */
-public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGroup> {
+public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGroup>, DocOrHitGroups {
 	Searcher searcher;
 
 	public HitGroups(Searcher searcher, HitProperty groupCriteria) {
@@ -90,6 +90,7 @@ public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGr
 	 *
 	 * @return the number of hits
 	 */
+	@Override
 	public abstract int getTotalResults();
 
 	/**
@@ -97,6 +98,7 @@ public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGr
 	 *
 	 * @return size of the largest group
 	 */
+	@Override
 	public abstract int getLargestGroupSize();
 
 	/**
@@ -104,5 +106,6 @@ public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGr
 	 *
 	 * @return number of groups
 	 */
+	@Override
 	public abstract int numberOfGroups();
 }

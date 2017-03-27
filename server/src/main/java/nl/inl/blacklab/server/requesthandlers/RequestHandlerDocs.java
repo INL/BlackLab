@@ -14,9 +14,9 @@ import nl.inl.blacklab.perdocument.DocResultsWindow;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.grouping.DocOrHitGroups;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -133,59 +133,9 @@ public class RequestHandlerDocs extends RequestHandler {
 
 			// The summary
 			ds.startEntry("summary").startMap();
-			DocResults docs = searchWindow != null ? total.getDocResults() : group.getResults();
-			Hits hits = docs.getOriginalHits();
-			boolean done = hits == null ? true : hits.doneFetchingHits();
-			ds.startEntry("searchParam");
-			searchParam.dataStream(ds);
-			ds.endEntry();
-			ds.entry("searchTime", (int)(search.userWaitTime() * 1000));
-			if (total != null)
-				ds.entry("countTime", (int)(total.userWaitTime() * 1000));
-			ds.entry("stillCounting", !done);
-			if (searchGrouped == null && hits != null) {
-				int numberOfHitsCounted = hits.countSoFarHitsCounted();
-				if (total != null && total.threwException())
-					numberOfHitsCounted = -1;
-				ds	.entry("numberOfHits", numberOfHitsCounted)
-					.entry("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved())
-					.entry("stoppedCountingHits", hits.maxHitsCounted())
-					.entry("stoppedRetrievingHits", hits.maxHitsRetrieved());
-			} else if (group != null) {
-				// TODO: it would be more consistent to also have numberOfHits when viewing
-				//   a single group from a grouped documents results, but this is harder to
-				//   determine; group.getResults().getOriginalHits() returns null in this case,
-				//   so we would have to iterate over the DocResults and sum up the hits ourselves.
-				int numberOfHits = 0;
-				for (DocResult dr: group.getResults()) {
-					numberOfHits += dr.getNumberOfHits();
-				}
-				ds	.entry("numberOfHits", numberOfHits)
-					.entry("numberOfHitsRetrieved", numberOfHits);
-			}
-			if (hits != null || group != null) {
-				int numberOfDocsCounted = hits == null ? group.getResults().size() : hits.countSoFarDocsCounted();
-				if (total != null && total.threwException())
-					numberOfDocsCounted = -1;
-				ds	.entry("numberOfDocs", numberOfDocsCounted)
-					.entry("numberOfDocsRetrieved", hits == null ? group.getResults().size() : hits.countSoFarDocsRetrieved());
-			} else {
-				ds	.entry("numberOfDocs", docs.countSoFarDocsCounted())
-					.entry("numberOfDocsRetrieved", docs.countSoFarDocsRetrieved());
-			}
-			if (hits instanceof HitsSample) {
-				HitsSample sample = ((HitsSample)hits);
-				ds.entry("sampleSeed", sample.seed());
-				if (sample.exactNumberGiven())
-					ds.entry("sampleSize", sample.numberOfHitsToSelect());
-				else
-					ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
-			}
-			ds	.entry("windowFirstResult", window.first())
-				.entry("requestedWindowSize", searchParam.getInteger("number"))
-				.entry("actualWindowSize", window.size())
-				.entry("windowHasPrevious", window.hasPrevious())
-				.entry("windowHasNext", window.hasNext());
+			DocResults docResults = group == null ? total.getDocResults() : group.getResults();
+			double totalTime = total.threwException() ? -1 : total.userWaitTime();
+			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, (Hits)null, group != null, docResults, (DocOrHitGroups)null, window);
 			if (includeTokenCount)
 				ds.entry("tokensInMatchingDocuments", totalTokens);
 			ds.startEntry("docFields");

@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.Prioritizable;
+import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -18,6 +19,7 @@ import nl.inl.util.ExUtil;
 import nl.inl.util.ThreadPriority;
 import nl.inl.util.ThreadPriority.Level;
 
+@SuppressWarnings("unused")
 public abstract class Job implements Comparable<Job>, Prioritizable {
 
 	protected static final Logger logger = LogManager.getLogger(Job.class);

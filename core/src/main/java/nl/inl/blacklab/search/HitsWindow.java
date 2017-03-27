@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Represents a subset of a Hits object, for example a page of hits.
  */
-public class HitsWindow extends HitsImpl {
+public class HitsWindow extends HitsImpl implements ResultsWindow {
 	/**
 	 * Number of hits in the window
 	 */
@@ -90,6 +90,7 @@ public class HitsWindow extends HitsImpl {
 	 *
 	 * @return true if there are, false if not.
 	 */
+	@Override
 	public boolean hasNext() {
 		return source.sizeAtLeast(first + windowSize + 1);
 	}
@@ -99,6 +100,7 @@ public class HitsWindow extends HitsImpl {
 	 *
 	 * @return true if there are, false if not.
 	 */
+	@Override
 	public boolean hasPrevious() {
 		return first > 0;
 	}
@@ -108,6 +110,7 @@ public class HitsWindow extends HitsImpl {
 	 *
 	 * @return index of the first hit beyond our window
 	 */
+	@Override
 	public int nextFrom() {
 		return first + hits.size();
 	}
@@ -117,6 +120,7 @@ public class HitsWindow extends HitsImpl {
 	 *
 	 * @return index of the start hit for the previous page
 	 */
+	@Override
 	public int prevFrom() {
 		return first - windowSize;
 	}
@@ -126,6 +130,7 @@ public class HitsWindow extends HitsImpl {
 	 *
 	 * @return index of the first hit
 	 */
+	@Override
 	public int first() {
 		return first;
 	}
@@ -135,6 +140,7 @@ public class HitsWindow extends HitsImpl {
 	 *
 	 * @return index of the last hit
 	 */
+	@Override
 	public int last() {
 		return first + hits.size() - 1;
 	}
@@ -157,6 +163,7 @@ public class HitsWindow extends HitsImpl {
 	 *
 	 * @return total number of hits
 	 */
+	@Override
 	public int sourceSize() {
 		return source.size();
 	}
@@ -168,6 +175,7 @@ public class HitsWindow extends HitsImpl {
 	 *
 	 * @return total number of hits
 	 */
+	@Override
 	public int sourceTotalSize() {
 		return source.totalSize();
 	}
@@ -178,6 +186,11 @@ public class HitsWindow extends HitsImpl {
 	 */
 	public Hits getOriginalHits() {
 		return source;
+	}
+
+	@Override
+	public int requestedWindowSize() {
+		return windowSize;
 	}
 
 }

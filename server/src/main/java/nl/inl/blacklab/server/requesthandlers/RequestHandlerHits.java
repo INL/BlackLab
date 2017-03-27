@@ -15,17 +15,20 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.grouping.DocOrHitGroups;
 import nl.inl.blacklab.search.grouping.HitGroup;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -49,6 +52,12 @@ public class RequestHandlerHits extends RequestHandler {
 		JobHitsGrouped searchGrouped = null;
 		JobHitsWindow searchWindow = null;
 		JobHitsTotal total = null;
+
+		// In debug mode, we can experiment with the forward index matching NFA threshold this way.
+		// Lower numbers means more NFAs. E.g. 10 means if adjacent words differ in frequency by a factor
+		// of 10, create an NFA.
+		if (debugMode && searchParam.getInteger("fimatch") >= 0)
+			ClauseCombinerNfa.setNfaFactor(searchParam.getInteger("fimatch"));
 
 		// Do we want to view a single group after grouping?
 		String groupBy = searchParam.getString("group");
@@ -151,44 +160,21 @@ public class RequestHandlerHits extends RequestHandler {
 			// The summary
 			ds.startEntry("summary").startMap();
 			Hits hits = searchWindow != null ? hits = searchWindow.getWindow().getOriginalHits() : group.getHits();
-			boolean done = hits.doneFetchingHits();
-			ds.startEntry("searchParam");
-			searchParam.dataStream(ds);
-			ds.endEntry();
-			ds.entry("searchTime", (int)(search.userWaitTime() * 1000));
-			if (total != null)
-				ds.entry("countTime", (int)(total.userWaitTime() * 1000));
-			ds.entry("stillCounting", !done);
-			int totalHitsCounted = hits.countSoFarHitsCounted();
-			if (total != null && total.threwException()) {
-				// indicate that something went wrong while counting;
-				// i.e. timeout
-				totalHitsCounted = -1;
-			}
-			ds	.entry("numberOfHits", totalHitsCounted)
-				.entry("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved())
-				.entry("stoppedCountingHits", hits.maxHitsCounted())
-				.entry("stoppedRetrievingHits", hits.maxHitsRetrieved())
-				.entry("numberOfDocs", hits.countSoFarDocsCounted())
-				.entry("numberOfDocsRetrieved", hits.countSoFarDocsRetrieved());
-			if (hits instanceof HitsSample) {
-				HitsSample sample = ((HitsSample)hits);
-				ds.entry("sampleSeed", sample.seed());
-				if (sample.exactNumberGiven())
-					ds.entry("sampleSize", sample.numberOfHitsToSelect());
-				else
-					ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
-			}
-			ds.entry("windowFirstResult", window.first())
-				.entry("requestedWindowSize", searchParam.getInteger("number"))
-				.entry("actualWindowSize", window.size())
-				.entry("windowHasPrevious", window.hasPrevious())
-				.entry("windowHasNext", window.hasNext());
+			double totalTime = total.threwException() ? -1 : total.userWaitTime();
+			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, hits, false, (DocResults)null, (DocOrHitGroups)null, window);
 			if (includeTokenCount)
 				ds.entry("tokensInMatchingDocuments", totalTokens);
 			ds.startEntry("docFields");
 			RequestHandler.dataStreamDocFields(ds, searcher.getIndexStructure());
 			ds.endEntry();
+			if (searchParam.getBoolean("explain")) {
+				TextPattern tp = searchParam.getPattern();
+				QueryExplanation explanation = searcher.explain(tp);
+				ds.startEntry("explanation").startMap()
+					.entry("originalQuery", explanation.getOriginalQuery())
+					.entry("rewrittenQuery", explanation.getRewrittenQuery())
+				.endMap().endEntry();
+			}
 			ds.endMap().endEntry();
 
 			ds.startEntry("hits").startList();

@@ -95,6 +95,8 @@ public class SearchParameters {
 		defaultParameterValues.put("maxretrieve", "1000000");
 		defaultParameterValues.put("maxcount", "10000000");
 		defaultParameterValues.put("sensitive", "no");
+		defaultParameterValues.put("fimatch", "-1");
+		defaultParameterValues.put("explain", "no");
 	}
 
 	private static String getDefault(String paramName) {
@@ -124,13 +126,15 @@ public class SearchParameters {
 		"filter", "filterlang", "docpid",    // docs to search
 		"sample", "samplenum", "sampleseed", // what hits to select
 		"hitfiltercrit", "hitfilterval",
+		"fimatch",                           // [debug] set NFA FI matching threshold
 
 		// How to present results
 		"sort",                         // sorting (grouped) hits/docs
 		"first", "number",              // results window
 		"wordsaroundhit", "usecontent", // concordances
 		"hitstart", "hitend",           // doc snippets
-		  "wordstart", "wordend",
+		"wordstart", "wordend",
+		"explain",                      // explain query rewriting?
 
 		// How to process results
 		"facets",                       // include facet information?
@@ -242,7 +246,7 @@ public class SearchParameters {
 		return getPattern() != null;
 	}
 
-	private TextPattern getPattern() throws BlsException {
+	public TextPattern getPattern() throws BlsException {
 		if (pattern == null) {
 			String patt = getString("patt");
 			if (!StringUtils.isBlank(patt)) {
@@ -311,7 +315,7 @@ public class SearchParameters {
 		return new MaxSettings(maxRetrieve, maxCount);
 	}
 
-	private WindowSettings getWindowSettings() {
+	WindowSettings getWindowSettings() {
 		int first = getInteger("first");
 		int size = getInteger("number");
 		return new WindowSettings(first, size);

@@ -36,6 +36,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 	/**
 	 * The ratio of estimated numbers of hits that we use to decide
 	 * whether or not to try NFA-matching with two clauses / subsequences.
+	 * The lower the number, the more we use NFA-matching.
 	 */
 	private static int nfaFactor = DEFAULT_NFA_FACTOR;
 

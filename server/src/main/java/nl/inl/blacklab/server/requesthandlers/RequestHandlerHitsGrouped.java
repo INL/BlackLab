@@ -2,8 +2,9 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.HitsSample;
+import nl.inl.blacklab.search.ResultsWindow;
 import nl.inl.blacklab.search.grouping.HitGroup;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -11,11 +12,13 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.jobs.WindowSettings;
 
 /**
  * Request handler for grouped hit results.
  */
 public class RequestHandlerHitsGrouped extends RequestHandler {
+
 	public RequestHandlerHitsGrouped(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
 		super(servlet, request, user, indexName, urlResource, urlPathPart);
 	}
@@ -31,54 +34,25 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 			}
 
 			// Search is done; construct the results object
-			HitGroups groups = search.getGroups();
-			int first = searchParam.getInteger("first");
-			if (first < 0)
-				first = 0;
-			int number = searchParam.getInteger("number");
-			if (number < 0 || number > searchMan.config().maxPageSize())
-				number = searchMan.config().defaultPageSize();
-			int numberOfGroupsInWindow = 0;
-			numberOfGroupsInWindow = number;
-			if (first + number > groups.numberOfGroups())
-				numberOfGroupsInWindow = groups.numberOfGroups() - first;
+			final HitGroups groups = search.getGroups();
 
 			ds.startMap();
 			ds.startEntry("summary").startMap();
 			Hits hits = search.getHits();
-			ds.startEntry("searchParam");
-			searchParam.dataStream(ds);
-			ds.endEntry();
-			ds	.entry("searchTime", (int)(search.userWaitTime() * 1000))
-				.entry("stillCounting", false)
-				.entry("numberOfHits", hits.countSoFarHitsCounted())
-				.entry("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved())
-				.entry("stoppedCountingHits", hits.maxHitsCounted())
-				.entry("stoppedRetrievingHits", hits.maxHitsRetrieved())
-				.entry("numberOfDocs", hits.countSoFarDocsCounted())
-				.entry("numberOfDocsRetrieved", hits.countSoFarDocsRetrieved())
-				.entry("numberOfGroups", groups.numberOfGroups())
-				.entry("windowFirstResult", first)
-				.entry("requestedWindowSize", number)
-				.entry("actualWindowSize", numberOfGroupsInWindow)
-				.entry("windowHasPrevious", first > 0)
-				.entry("windowHasNext", first + number < groups.numberOfGroups())
-				.entry("largestGroupSize", groups.getLargestGroupSize());
-			if (hits instanceof HitsSample) {
-				HitsSample sample = ((HitsSample)hits);
-				ds.entry("sampleSeed", sample.seed());
-				if (sample.exactNumberGiven())
-					ds.entry("sampleSize", sample.numberOfHitsToSelect());
-				else
-					ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
-			}
+			WindowSettings windowSettings = searchParam.getWindowSettings();
+			final int first = windowSettings.first() < 0 ? 0 : windowSettings.first();
+			final int requestedWindowSize = windowSettings.size() < 0 || windowSettings.size() > searchMan.config().maxPageSize() ? searchMan.config().defaultPageSize() : windowSettings.size();
+			int totalResults = groups.numberOfGroups();
+			final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first : requestedWindowSize;
+			ResultsWindow ourWindow = new ResultsWindowImpl(totalResults, first, requestedWindowSize, actualWindowSize);
+			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, hits, false, (DocResults)null, groups, ourWindow);
 			ds.endMap().endEntry();
 
 			// The list of groups found
 			ds.startEntry("hitGroups").startList();
 			int i = 0;
 			for (HitGroup group: groups) {
-				if (i >= first && i < first + number) {
+				if (i >= first && i < first + requestedWindowSize) {
 					ds.startItem("hitgroup").startMap();
 					ds	.entry("identity", group.getIdentity().serialize())
 						.entry("identityDisplay", group.getIdentity().toString())

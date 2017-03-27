@@ -25,12 +25,13 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.grouping.DocOrHitGroups;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 
 /**
  * Applies grouping to the results in a DocResults object.
  */
-public class DocGroups implements Iterable<DocGroup> {
+public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
 	Map<HitPropValue, DocGroup> groups = new HashMap<>();
 
 	List<DocGroup> orderedGroups = new ArrayList<>();
@@ -110,14 +111,17 @@ public class DocGroups implements Iterable<DocGroup> {
 		return getGroups().iterator();
 	}
 
+	@Override
 	public int numberOfGroups() {
 		return groups.size();
 	}
 
+	@Override
 	public int getLargestGroupSize() {
 		return largestGroupSize;
 	}
 
+	@Override
 	public int getTotalResults() {
 		return totalResults;
 	}

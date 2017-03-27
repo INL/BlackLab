@@ -74,8 +74,15 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	 */
 	private int partialDocId = -1;
 
-	public Searcher getSearcher() {
-		return searcher;
+	/**
+	 * Don't use this; use Hits.perDocResults().
+	 *
+	 * @param searcher searcher object
+	 * @param hits hits to get per-doc result for
+	 * @return the per-document results.
+	 */
+	static public DocResults _fromHits(Searcher searcher, Hits hits) {
+		return new DocResults(searcher, hits);
 	}
 
 	boolean sourceHitsFullyRead() {
@@ -99,17 +106,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	/**
-	 * Don't use this; use Hits.perDocResults().
-	 *
-	 * @param searcher searcher object
-	 * @param hits hits to get per-doc result for
-	 * @return the per-document results.
-	 */
-	static public DocResults _fromHits(Searcher searcher, Hits hits) {
-		return new DocResults(searcher, hits);
 	}
 
 	/**
@@ -462,6 +458,10 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		if (i >= results.size())
 			return null;
 		return results.get(i);
+	}
+
+	public Searcher getSearcher() {
+		return searcher;
 	}
 
 	/**
