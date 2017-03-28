@@ -16,7 +16,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
@@ -92,7 +91,7 @@ public class BlackLabServer extends HttpServlet {
 //				if (is == null) {
 //					throw new ServletException("Could not find " + configFileName + "!");
 //				}
-				
+
 				throw new ConfigurationException("Couldn't find blacklab-server.json in " + webappsDir + ", /etc/blacklab/, " + tmpDir + ", or on classpath. Please place " +
 				"blacklab-server.json in one of these locations containing at least the following:\n" +
 				"{\n" +
@@ -147,10 +146,11 @@ public class BlackLabServer extends HttpServlet {
 	}
 
 	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
-		
+
 		if (!configRead) {
 			try {
 				readConfig();
+				configRead = true;
 			} catch (BlsException e) {
 				// Write HTTP headers (status code, encoding, content type and cache)
 				responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -174,10 +174,10 @@ public class BlackLabServer extends HttpServlet {
 		}
 
 		// === Create RequestHandler object
-		RequestHandler requestHandler = RequestHandler.create(this, request);
+		boolean debugMode = searchManager.config().isDebugMode(request.getRemoteAddr());
+		RequestHandler requestHandler = RequestHandler.create(this, request, debugMode);
 
 		// === Figure stuff out about the request
-		boolean debugMode = searchManager.config().isDebugMode(request.getRemoteAddr());
 		DataFormat outputType = requestHandler.getOverrideType();
 		//DataFormat outputType = response.getOverrideType(); // some responses override the user's request (i.e. article XML)
 		if (outputType == null) {
