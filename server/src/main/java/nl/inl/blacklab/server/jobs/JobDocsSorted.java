@@ -14,8 +14,8 @@ public class JobDocsSorted extends JobWithDocs {
 
 		DocSortSettings sortSettings;
 
-		public JobDescDocsSorted(JobDescription hitsToSort, DocSortSettings sortSettings) {
-			super(JobDocsSorted.class, hitsToSort);
+		public JobDescDocsSorted(JobDescription hitsToSort, SearchSettings searchSettings, DocSortSettings sortSettings) {
+			super(JobDocsSorted.class, hitsToSort, searchSettings);
 			this.sortSettings = sortSettings;
 		}
 

@@ -17,8 +17,8 @@ public class JobDocsGrouped extends Job {
 
 		private DocGroupSortSettings groupSortSettings;
 
-		public JobDescDocsGrouped(JobDescription docsToGroup, DocGroupSettings groupSettings, DocGroupSortSettings groupSortSettings) {
-			super(JobDocsGrouped.class, docsToGroup);
+		public JobDescDocsGrouped(JobDescription docsToGroup, SearchSettings searchSettings, DocGroupSettings groupSettings, DocGroupSortSettings groupSortSettings) {
+			super(JobDocsGrouped.class, docsToGroup, searchSettings);
 			this.groupSettings = groupSettings;
 			this.groupSortSettings = groupSortSettings;
 		}

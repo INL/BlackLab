@@ -16,8 +16,8 @@ public class JobDocsWindow extends Job {
 
 		WindowSettings windowSettings;
 
-		public JobDescDocsWindow(JobDescription inputDesc, WindowSettings windowSettings) {
-			super(JobDocsWindow.class, inputDesc);
+		public JobDescDocsWindow(JobDescription inputDesc, SearchSettings searchSettings, WindowSettings windowSettings) {
+			super(JobDocsWindow.class, inputDesc, searchSettings);
 			this.windowSettings = windowSettings;
 		}
 

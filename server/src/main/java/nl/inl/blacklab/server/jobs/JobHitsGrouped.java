@@ -19,8 +19,8 @@ public class JobHitsGrouped extends Job {
 
 		private HitGroupSortSettings groupSortSettings;
 
-		public JobDescHitsGrouped(JobDescription hitsToGroup, HitGroupSettings groupSettings, HitGroupSortSettings groupSortSettings) {
-			super(JobHitsGrouped.class, hitsToGroup);
+		public JobDescHitsGrouped(JobDescription hitsToGroup, SearchSettings searchSettings, HitGroupSettings groupSettings, HitGroupSortSettings groupSortSettings) {
+			super(JobHitsGrouped.class, hitsToGroup, searchSettings);
 			this.groupSettings = groupSettings;
 			this.groupSortSettings = groupSortSettings;
 		}

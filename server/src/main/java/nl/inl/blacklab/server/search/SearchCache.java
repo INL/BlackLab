@@ -158,7 +158,8 @@ public class SearchCache {
 		boolean performSearch = false;
 		Job job;
 		synchronized (this) {
-			job = get(jobDesc);
+			boolean useCache = jobDesc.getSearchSettings().isUseCache();
+			job = useCache ? get(jobDesc) : null;
 			if (job == null) {
 				// Not found in cache
 
@@ -178,8 +179,10 @@ public class SearchCache {
 				// Create a new search object with these parameters and place it in the cache
 				job = jobDesc.createJob(searchMan, user);
 				job.incrRef();
-				put(job);
-				runningJobs.add(job);
+				if (useCache) {
+					put(job);
+					runningJobs.add(job);
+				}
 				performSearch = true;
 			} else {
 				job.incrRef();

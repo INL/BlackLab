@@ -14,8 +14,8 @@ public class JobDocsTotal extends Job {
 
 		JobDescription inputDesc;
 
-		public JobDescDocsTotal(JobDescription inputDesc) {
-			super(JobDocsTotal.class, inputDesc);
+		public JobDescDocsTotal(JobDescription inputDesc, SearchSettings searchSettings) {
+			super(JobDocsTotal.class, inputDesc, searchSettings);
 		}
 
 		@Override

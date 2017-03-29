@@ -22,7 +22,9 @@ public abstract class JobDescription {
 
 	JobDescription inputDesc;
 
-	public JobDescription(Class<? extends Job> jobClass, JobDescription inputDesc) {
+	private SearchSettings searchSettings;
+
+	public JobDescription(Class<? extends Job> jobClass, JobDescription inputDesc, SearchSettings searchSettings) {
 		try {
 			this.jobClass = jobClass;
 			jobClassCtor = jobClass.getConstructor(SearchManager.class, User.class, JobDescription.class);
@@ -30,6 +32,7 @@ public abstract class JobDescription {
 			throw new RuntimeException(e);
 		}
 		this.inputDesc = inputDesc;
+		this.searchSettings = searchSettings;
 	}
 
 	public JobDescription getInputDesc() {
@@ -70,6 +73,10 @@ public abstract class JobDescription {
 	@Override
 	public String toString() {
 		return uniqueIdentifier();
+	}
+
+	public SearchSettings getSearchSettings() {
+		return searchSettings;
 	}
 
 	/**

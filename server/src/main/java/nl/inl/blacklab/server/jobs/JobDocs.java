@@ -20,8 +20,8 @@ public class JobDocs extends JobWithDocs {
 
 		private String indexName;
 
-		public JobDescDocs(JobDescription hitsToGroup, Query filterQuery, String indexName) {
-			super(JobDocs.class, hitsToGroup);
+		public JobDescDocs(JobDescription hitsToGroup, SearchSettings searchSettings, Query filterQuery, String indexName) {
+			super(JobDocs.class, hitsToGroup, searchSettings);
 			this.filterQuery = filterQuery;
 			if (hitsToGroup == null) {
 				this.indexName = indexName;

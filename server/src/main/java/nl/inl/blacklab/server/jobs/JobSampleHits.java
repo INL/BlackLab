@@ -16,8 +16,8 @@ public class JobSampleHits extends JobWithHits {
 
 		SampleSettings sampleSettings;
 
-		public JobDescSampleHits(JobDescription hitsToSample, SampleSettings settings) {
-			super(JobSampleHits.class, hitsToSample);
+		public JobDescSampleHits(JobDescription hitsToSample, SearchSettings searchSettings, SampleSettings settings) {
+			super(JobSampleHits.class, hitsToSample, searchSettings);
 			this.sampleSettings = settings;
 		}
 

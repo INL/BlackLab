@@ -15,8 +15,8 @@ public class JobHitsSorted extends JobWithHits {
 
 		HitSortSettings sortSettings;
 
-		public JobDescHitsSorted(JobDescription hitsToSort, HitSortSettings sortSettings) {
-			super(JobHitsSorted.class, hitsToSort);
+		public JobDescHitsSorted(JobDescription hitsToSort, SearchSettings searchSettings, HitSortSettings sortSettings) {
+			super(JobHitsSorted.class, hitsToSort, searchSettings);
 			this.sortSettings = sortSettings;
 		}
 

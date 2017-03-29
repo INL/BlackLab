@@ -17,8 +17,8 @@ public class JobHitsFiltered extends JobWithHits {
 
 		HitFilterSettings filterSettings;
 
-		public JobDescHitsFiltered(JobDescription hitsToFilter, HitFilterSettings filterSettings) {
-			super(JobHitsFiltered.class, hitsToFilter);
+		public JobDescHitsFiltered(JobDescription hitsToFilter, SearchSettings searchSettings, HitFilterSettings filterSettings) {
+			super(JobHitsFiltered.class, hitsToFilter, searchSettings);
 			this.filterSettings = filterSettings;
 		}
 

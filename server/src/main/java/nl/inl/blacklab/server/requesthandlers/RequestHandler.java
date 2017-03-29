@@ -75,11 +75,10 @@ public abstract class RequestHandler {
 	 *
 	 * @param servlet the servlet object
 	 * @param request the request object
+	 * @param debugMode debug mode request? Allows extra parameters to be used
 	 * @return the response data
 	 */
-	public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request) {
-		boolean debugMode = servlet.getSearchManager().config().isDebugMode(request.getRemoteAddr());
-
+	public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode) {
 		// See if a user is logged in
 		SearchManager searchManager = servlet.getSearchManager();
 		User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
@@ -145,7 +144,7 @@ public abstract class RequestHandler {
 				} else if (indexName.equals("cache-clear")) {
 					// Clear the cache
 					if (resourceOrPathGiven) {
-						return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
+						return errorObj.unknownOperation(indexName);
 					}
 					if (!debugMode) {
 						return errorObj.unauthorized("You are not authorized to do this.");
@@ -173,7 +172,7 @@ public abstract class RequestHandler {
 			if (method.equals("GET") || (method.equals("POST") && postAsGet)) {
 				if (indexName.equals("cache-info")) {
 					if (resourceOrPathGiven) {
-						return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
+						return errorObj.unknownOperation(indexName);
 					}
 					if (!debugMode) {
 						return errorObj.unauthorized("You are not authorized to see this information.");
@@ -212,7 +211,7 @@ public abstract class RequestHandler {
 							} else if (!p.contains("/")) {
 								// OK, retrieving metadata
 							} else {
-								return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
+								return errorObj.unknownOperation(urlPathInfo);
 							}
 						}
 						else if (handlerName.equals("hits") || handlerName.equals("docs")) {
@@ -227,7 +226,7 @@ public abstract class RequestHandler {
 						}
 
 						if (!availableHandlers.containsKey(handlerName))
-							return errorObj.badRequest("UNKNOWN_OPERATION", "Unknown operation. Check your URL.");
+							return errorObj.unknownOperation(handlerName);
 						Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
 						Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class, HttpServletRequest.class, User.class, String.class, String.class, String.class);
 						//servlet.getSearchManager().getSearcher(indexName); // make sure it's open

@@ -20,8 +20,8 @@ public class JobFacets extends Job {
 
 		private List<DocProperty> facets;
 
-		public JobDescFacets(JobDescription docsToFacet, List<DocProperty> facets) {
-			super(JobFacets.class, docsToFacet);
+		public JobDescFacets(JobDescription docsToFacet, SearchSettings searchSettings, List<DocProperty> facets) {
+			super(JobFacets.class, docsToFacet, searchSettings);
 			this.facets = facets;
 		}
 

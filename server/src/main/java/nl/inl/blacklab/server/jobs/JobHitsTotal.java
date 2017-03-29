@@ -12,8 +12,8 @@ public class JobHitsTotal extends Job {
 
 	public static class JobDescHitsTotal extends JobDescription {
 
-		public JobDescHitsTotal(JobDescription inputDesc) {
-			super(JobHitsTotal.class, inputDesc);
+		public JobDescHitsTotal(JobDescription inputDesc, SearchSettings searchSettings) {
+			super(JobHitsTotal.class, inputDesc, searchSettings);
 		}
 
 		@Override
@@ -41,7 +41,14 @@ public class JobHitsTotal extends Job {
 			// want to look at a page of results. maxHitsCounted is set to true, however, so the application
 			// can detect that we stopped counting at some point.
 			//throw new ServiceUnavailable("Determining total number of hits took too long, cancelled");
-			logger.warn("Determining total number of hits took too long, cancelled");
+			if (threwException()) {
+				logger.warn("Exception occurred while counting hits: " + getThrownException().getMessage());
+			} else {
+				if (!jobDesc.getSearchSettings().isUseCache())
+					logger.warn("Search not cached, count aborted immediately.");
+				else
+					logger.warn("Determining total number of hits took too long, cancelled");
+			}
 		}
 	}
 

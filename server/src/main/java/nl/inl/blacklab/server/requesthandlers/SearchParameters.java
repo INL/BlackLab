@@ -54,6 +54,7 @@ import nl.inl.blacklab.server.jobs.JobHitsWindow.JobDescHitsWindow;
 import nl.inl.blacklab.server.jobs.JobSampleHits.JobDescSampleHits;
 import nl.inl.blacklab.server.jobs.MaxSettings;
 import nl.inl.blacklab.server.jobs.SampleSettings;
+import nl.inl.blacklab.server.jobs.SearchSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
@@ -96,6 +97,7 @@ public class SearchParameters {
 		defaultParameterValues.put("maxcount", "10000000");
 		defaultParameterValues.put("sensitive", "no");
 		defaultParameterValues.put("fimatch", "-1");
+		defaultParameterValues.put("usecache", "yes");
 		defaultParameterValues.put("explain", "no");
 	}
 
@@ -116,6 +118,7 @@ public class SearchParameters {
 				continue;
 			param.put(name, value);
 		}
+		param.setDebugMode(searchMan.config().isDebugMode(request.getRemoteAddr()));
 		return param;
 	}
 
@@ -126,7 +129,10 @@ public class SearchParameters {
 		"filter", "filterlang", "docpid",    // docs to search
 		"sample", "samplenum", "sampleseed", // what hits to select
 		"hitfiltercrit", "hitfilterval",
+
+		// How to search
 		"fimatch",                           // [debug] set NFA FI matching threshold
+		"usecache",                          // [debug] use cache or bypass it?
 
 		// How to present results
 		"sort",                         // sorting (grouped) hits/docs
@@ -153,6 +159,8 @@ public class SearchParameters {
 	/** The search manager, for querying default value for missing parameters */
 	private SearchManager searchManager;
 
+	private boolean debugMode;
+
 	private Map<String, String> map = new TreeMap<>();
 
 	/** The pattern, if parsed already */
@@ -168,6 +176,10 @@ public class SearchParameters {
 	private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
 		this.searchManager = searchManager;
 		this.isDocsOperation = isDocsOperation;
+	}
+
+	private void setDebugMode(boolean debugMode) {
+		this.debugMode = debugMode;
 	}
 
 	public String put(String key, String value) {
@@ -240,6 +252,12 @@ public class SearchParameters {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public SearchSettings getSearchSettings() {
+		int fiMatchNfaFactor = getInteger("fimatch");
+		boolean useCache = getBoolean("usecache");
+		return new SearchSettings(debugMode, fiMatchNfaFactor, useCache);
 	}
 
 	public boolean hasPattern() throws BlsException {
@@ -461,73 +479,73 @@ public class SearchParameters {
 		WindowSettings windowSettings = getWindowSettings();
 		if (windowSettings == null)
 			return hitsSample();
-		return new JobDescHitsWindow(hitsSample(), windowSettings);
+		return new JobDescHitsWindow(hitsSample(), getSearchSettings(), windowSettings);
 	}
 
 	public JobDescription hitsSample() throws BlsException {
 		SampleSettings sampleSettings = getSampleSettings();
 		if (sampleSettings == null)
 			return hitsSorted();
-		return new JobDescSampleHits(hitsSorted(), sampleSettings);
+		return new JobDescSampleHits(hitsSorted(), getSearchSettings(), sampleSettings);
 	}
 
 	public JobDescription hitsSorted() throws BlsException {
 		HitSortSettings hitsSortSettings = hitsSortSettings();
 		if (hitsSortSettings == null)
 			return hitsFiltered();
-		return new JobDescHitsSorted(hitsFiltered(), hitsSortSettings);
+		return new JobDescHitsSorted(hitsFiltered(), getSearchSettings(), hitsSortSettings);
 	}
 
 	public JobDescription hitsTotal() throws BlsException {
-		return new JobDescHitsTotal(hitsFiltered());
+		return new JobDescHitsTotal(hitsFiltered(), getSearchSettings());
 	}
 
 	public JobDescription hitsFiltered() throws BlsException {
 		HitFilterSettings hitFilterSettings = getHitFilterSettings();
 		if (hitFilterSettings == null)
 			return hits();
-		return new JobDescHitsFiltered(hits(), hitFilterSettings);
+		return new JobDescHitsFiltered(hits(), getSearchSettings(), hitFilterSettings);
 	}
 
 	public JobDescription hits() throws BlsException {
-		return new JobDescHits(getIndexName(), getPattern(), getFilterQuery(), getMaxSettings(), getContextSettings());
+		return new JobDescHits(getSearchSettings(), getIndexName(), getPattern(), getFilterQuery(), getMaxSettings(), getContextSettings());
 	}
 
 	public JobDescription docsWindow() throws BlsException {
 		WindowSettings windowSettings = getWindowSettings();
 		if (windowSettings == null)
 			return docsSorted();
-		return new JobDescDocsWindow(docsSorted(), windowSettings);
+		return new JobDescDocsWindow(docsSorted(), getSearchSettings(), windowSettings);
 	}
 
 	public JobDescription docsSorted() throws BlsException {
 		DocSortSettings docSortSettings = docSortSettings();
 		if (docSortSettings == null)
 			return docs();
-		return new JobDescDocsSorted(docs(), docSortSettings);
+		return new JobDescDocsSorted(docs(), getSearchSettings(), docSortSettings);
 	}
 
 	public JobDescription docsTotal() throws BlsException {
-		return new JobDescDocsTotal(docs());
+		return new JobDescDocsTotal(docs(), getSearchSettings());
 	}
 
 	public JobDescription docs() throws BlsException {
 		TextPattern pattern = getPattern();
 		if (pattern != null)
-			return new JobDescDocs(hitsSample(), getFilterQuery(), getIndexName());
-		return new JobDescDocs(null, getFilterQuery(), getIndexName());
+			return new JobDescDocs(hitsSample(), getSearchSettings(), getFilterQuery(), getIndexName());
+		return new JobDescDocs(null, getSearchSettings(), getFilterQuery(), getIndexName());
 	}
 
 	public JobDescription hitsGrouped() throws BlsException {
-		return new JobDescHitsGrouped(hitsSample(), hitGroupSettings(), hitGroupSortSettings());
+		return new JobDescHitsGrouped(hitsSample(), getSearchSettings(), hitGroupSettings(), hitGroupSortSettings());
 	}
 
 	public JobDescription docsGrouped() throws BlsException {
-		return new JobDescDocsGrouped(docs(), docGroupSettings(), docGroupSortSettings());
+		return new JobDescDocsGrouped(docs(), getSearchSettings(), docGroupSettings(), docGroupSortSettings());
 	}
 
 	public JobDescription facets() throws BlsException {
-		return new JobDescFacets(docs(), getFacets());
+		return new JobDescFacets(docs(), getSearchSettings(), getFacets());
 	}
 
 	public boolean hasFacets() {

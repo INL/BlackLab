@@ -28,7 +28,6 @@ import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -52,12 +51,6 @@ public class RequestHandlerHits extends RequestHandler {
 		JobHitsGrouped searchGrouped = null;
 		JobHitsWindow searchWindow = null;
 		JobHitsTotal total = null;
-
-		// In debug mode, we can experiment with the forward index matching NFA threshold this way.
-		// Lower numbers means more NFAs. E.g. 10 means if adjacent words differ in frequency by a factor
-		// of 10, create an NFA.
-		if (debugMode && searchParam.getInteger("fimatch") >= 0)
-			ClauseCombinerNfa.setNfaFactor(searchParam.getInteger("fimatch"));
 
 		// Do we want to view a single group after grouping?
 		String groupBy = searchParam.getString("group");

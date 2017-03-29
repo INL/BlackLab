@@ -7,6 +7,7 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.search.HitsSettings;
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -30,8 +31,8 @@ public class JobHits extends JobWithHits {
 
 		private ContextSettings contextSettings;
 
-		public JobDescHits(String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings, ContextSettings contextSettings) {
-			super(JobHits.class, null);
+		public JobDescHits(SearchSettings searchSettings, String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings, ContextSettings contextSettings) {
+			super(JobHits.class, null, searchSettings);
 			this.indexName = indexName;
 			this.pattern = pattern;
 			this.filterQuery = filterQuery;
@@ -100,6 +101,14 @@ public class JobHits extends JobWithHits {
 			//debug(logger, "Textpattern: " + textPattern);
 			filter = jobDesc.getFilterQuery();
 			try {
+
+				// In debug mode, we can experiment with the forward index matching NFA threshold this way.
+				// Lower numbers means more NFAs. E.g. 10 means if adjacent words differ in frequency by a factor
+				// of 10, create an NFA.
+				SearchSettings searchSett = jobDesc.getSearchSettings();
+				if (searchSett.isDebugMode() && searchSett.getFiMatchNfaFactor() != -1)
+					ClauseCombinerNfa.setNfaFactor(searchSett.getFiMatchNfaFactor());
+
 				hits = searcher.find(textPattern, filter);
 
 				// Set the max retrieve/count value

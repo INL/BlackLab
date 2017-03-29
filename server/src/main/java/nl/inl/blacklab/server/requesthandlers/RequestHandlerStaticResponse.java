@@ -137,6 +137,10 @@ public class RequestHandlerStaticResponse extends RequestHandler {
 		return error(code, message, HttpServletResponse.SC_BAD_REQUEST);
 	}
 
+	public RequestHandler unknownOperation(String operationName) {
+		return badRequest("UNKNOWN_OPERATION", "Unknown operation '" + operationName + "'. Check your URL.");
+	}
+
 	public RequestHandlerStaticResponse unavailable(String indexName, String status) {
 		return error("INDEX_UNAVAILABLE", "The index '" + indexName + "' is not available right now. Status: " + status, HttpServletResponse.SC_CONFLICT);
 	}
