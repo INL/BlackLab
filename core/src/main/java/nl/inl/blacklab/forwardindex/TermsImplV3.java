@@ -86,9 +86,11 @@ class TermsImplV3 extends Terms {
 		 * @param i term string index in this block
 		 * @return corresponding term string
 		 */
-		public String get(int i) {
+		public synchronized String get(int i) {
 			int termOffset = offsets[i];
 			int termLength = offsets[i + 1] - termOffset;
+			if (termLength == 0)
+				return "";
 			buffer.position(termOffset);
 			byte[] termBytes = new byte[termLength];
 			buffer.get(termBytes);
