@@ -27,7 +27,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.util.LuceneUtil;
 
@@ -213,8 +213,8 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-		NfaFragment nfa = clauses.get(0).getNfa(fiAccessor, direction);
+	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		Nfa nfa = clauses.get(0).getNfa(fiAccessor, direction);
 		//nfa.finish();
 		nfa.invert();
 		return nfa;

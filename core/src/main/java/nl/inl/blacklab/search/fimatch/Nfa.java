@@ -14,13 +14,13 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * A fragment of an NFA being built.
  * Contains a starting state and a list of dangling end states
  */
-public class NfaFragment {
+public class Nfa {
 
 	NfaState startingState;
 
 	Collection<NfaState> danglingArrows;
 
-	public NfaFragment(NfaState startingState, Collection<NfaState> danglingArrows) {
+	public Nfa(NfaState startingState, Collection<NfaState> danglingArrows) {
 		this.startingState = startingState;
 		this.danglingArrows = danglingArrows;
 		this.danglingArrows = new ArrayList<>();
@@ -36,14 +36,14 @@ public class NfaFragment {
 		this.startingState = start;
 	}
 
-	public NfaFragment copy() {
+	public Nfa copy() {
 		List<NfaState> dangling = new ArrayList<>();
 		Map<NfaState, NfaState> copiesMade = new IdentityHashMap<>();
 		NfaState copy = startingState.copy(dangling, copiesMade);
-		return new NfaFragment(copy, dangling);
+		return new Nfa(copy, dangling);
 	}
 
-	public void append(NfaFragment state) {
+	public void append(Nfa state) {
 		for (NfaState d: danglingArrows) {
 			d.fillDangling(state.getStartingState());
 		}
@@ -59,7 +59,7 @@ public class NfaFragment {
 		// max == infinite)
 
 		// Create the min part
-		NfaFragment link = this; // we'll loop back to link later if max == infinite
+		Nfa link = this; // we'll loop back to link later if max == infinite
 		if (min > 1) {
 			for (int i = 1; i < min; i++) {
 				link = link.copy();

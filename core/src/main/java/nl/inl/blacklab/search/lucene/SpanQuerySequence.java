@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -31,7 +32,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 
 /**
@@ -48,7 +49,6 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
  * See SpanSequenceRaw for details on the matching process.
  */
 public class SpanQuerySequence extends BLSpanQueryAbstract {
-
 	public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}
@@ -183,7 +183,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 		// Rewrite adjacent clauses according to rewriting precedence rules
 		boolean anyRewrittenThisCycle = true;
+		int pass = 0;
 		while (anyRewrittenThisCycle) {
+			System.err.println("combineAdj pass " + pass + ": " + StringUtils.join(cl, ", "));
+			pass++;
+
 			anyRewrittenThisCycle = false;
 
 			// Find the highest-priority rewrite possible
@@ -249,8 +253,14 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		// If any part of the sequence matches the empty sequence, we must
 		// rewrite it to several alternatives combined with OR. Do so now.
 		List<List<BLSpanQuery>> results = makeAlternatives(cl, reader);
-		if (results.size() == 1 && !anyRewritten)
+		if (results.size() == 1 && !anyRewritten) {
+			// Nothing rewritten. If this is a sequence of length one, just return the clause;
+			// otherwise return this object unchanged.
+			List<BLSpanQuery> seq = results.get(0);
+			if (seq.size() == 1)
+				return seq.get(0);
 			return this;
+		}
 		List<BLSpanQuery> orCl = new ArrayList<>();
 		for (List<BLSpanQuery> seq: results) {
 			if (seq.size() == 1)
@@ -620,8 +630,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-		NfaFragment frag = null;
+	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		Nfa frag = null;
 		int start = direction == 1 ? 0 : clauses.size() - 1;
 		int end   = direction == 1 ? clauses.size() : -1;
 		for (int i = start; i != end; i += direction) {

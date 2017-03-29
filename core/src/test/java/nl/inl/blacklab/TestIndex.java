@@ -52,6 +52,20 @@ public class TestIndex {
 		+ "<w l='the' p='art'>the</w> "
 		+ "<w l='question' p='nou'>question</w>."
 		+ "</s></doc>",
+
+		"<doc> <w>noot</w> "
+		+ "<w>mier</w> "
+		+ "<w>aap</w> "
+		+ "<w>mier</w> "
+		+ "<w>mier</w> "
+		+ "<w>mier</w> "
+		+ "<w>noot</w> "
+		+ "<w>noot</w> "
+		+ "<w>aap</w> "
+		+ "<w>aap</w> "
+		+ "<w>aap</w> "
+		+ "<w>aap</w> "
+		+ "</doc>",
 	};
 
 	/**

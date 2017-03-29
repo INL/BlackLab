@@ -26,7 +26,8 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
@@ -251,7 +252,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 		return new SpanQuerySorted(spanQuery, false, false);
 	}
 
-	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		throw new UnsupportedOperationException("Cannot create NFA; query should have been rewritten or cannot be matched using forward index");
 	}
 
@@ -286,6 +287,13 @@ public abstract class BLSpanQuery extends SpanQuery {
 	}
 
 	public abstract String getRealField();
+
+	public NfaTwoWay getNfaTwoWay(ForwardIndexAccessor fiAccessor, int nativeDirection) {
+		Nfa nfa = getNfa(fiAccessor, nativeDirection);
+		Nfa nfaRev = getNfa(fiAccessor, -nativeDirection);
+		NfaTwoWay nfaTwoWay = new NfaTwoWay(nfa, nfaRev);
+		return nfaTwoWay;
+	}
 
 	public static String inf(int max) {
 		return max == MAX_UNLIMITED ? "INF" : "" + max;

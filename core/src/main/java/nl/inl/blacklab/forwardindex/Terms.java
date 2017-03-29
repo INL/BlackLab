@@ -2,7 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Keeps a list of unique terms and their sort positions.
@@ -40,7 +40,7 @@ public abstract class Terms {
 	 * @param diacSensitive compare diacritics-sensitively? (currently ignored)
 	 * @return index numbers for the matching term(s)
 	 */
-	public abstract List<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive);
+	public abstract Set<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive);
 
 	/**
 	 * Build the index from term to term id. Depending on the terms

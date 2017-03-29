@@ -25,7 +25,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
@@ -73,16 +73,16 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 			SpanQueryAnyToken tp = (SpanQueryAnyToken)baseRewritten;
 			if (tp.min == 1 && tp.max == 1) {
 				// Repeat of a single any token
-				return new SpanQueryAnyToken(min, max, base.getField());
+				return new SpanQueryAnyToken(min, max, base.getRealField());
 			} else if (min == max && tp.min == tp.max) {
 				// Exact number of any tokens
 				int n = min * tp.min;
-				return new SpanQueryAnyToken(n, n, base.getField());
+				return new SpanQueryAnyToken(n, n, base.getRealField());
 			}
 		} else if (baseRewritten.isSingleTokenNot() && min > 0) {
 			// Rewrite to anytokens-not-containing form so we can optimize it
 			// (note the check for min > 0 above, because position filter cannot match the empty sequence)
-			BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(1, 1, base.getField()), min, max);
+			BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(1, 1, base.getRealField()), min, max);
 			container = container.rewrite(reader);
 			return new SpanQueryPositionFilter(container, baseRewritten.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
 		} else if (baseRewritten instanceof SpanQueryRepetition) {
@@ -228,8 +228,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-		NfaFragment frag = clauses.get(0).getNfa(fiAccessor, direction);
+	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		Nfa frag = clauses.get(0).getNfa(fiAccessor, direction);
 		frag.repeat(min, max);
 		return frag;
 	}

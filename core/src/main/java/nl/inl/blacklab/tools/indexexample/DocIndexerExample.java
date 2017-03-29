@@ -49,8 +49,14 @@ public class DocIndexerExample extends DocIndexerXmlHandlers {
 			public void startElement(String uri, String localName, String qName,
 					Attributes attributes) {
 				super.startElement(uri, localName, qName, attributes);
-				propLemma.addValue(attributes.getValue("l"));
-				propPartOfSpeech.addValue(attributes.getValue("p"));
+				String lemma = attributes.getValue("l");
+				if (lemma == null)
+					lemma = "";
+				propLemma.addValue(lemma);
+				String pos = attributes.getValue("p");
+				if (pos == null)
+					pos = "";
+				propPartOfSpeech.addValue(pos);
 				propPunct.addValue(consumeCharacterContent());
 			}
 

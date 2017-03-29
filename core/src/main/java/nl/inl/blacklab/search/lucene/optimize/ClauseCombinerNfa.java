@@ -4,7 +4,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
 
@@ -88,7 +88,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 		int absFactor = Math.abs(factor);
 		if (absFactor < nfaFactor)
 			return CANNOT_COMBINE;
-		return factor > 0 ? FORWARD_PRIORITY + absFactor : BACKWARD_PRIORITY + absFactor;
+		return factor > 0 ? FORWARD_PRIORITY + 10000 / absFactor : BACKWARD_PRIORITY + 10000 / absFactor;
 	}
 
 	@Override
@@ -105,8 +105,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 			}
 			// New FISEQ.
 			ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), right.getField());
-			NfaFragment nfaFrag = right.getNfa(fiAccessor, 1);
-			return new SpanQueryFiSeq(left, false, nfaFrag, right, 1, fiAccessor);
+			NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, 1);
+			return new SpanQueryFiSeq(left, false, nfaTwoWay, right, 1, fiAccessor);
 		}
 
 		// Backward
@@ -116,8 +116,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 		}
 		// New FISEQ.
 		ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader), left.getField());
-		NfaFragment nfaFrag = left.getNfa(fiAccessor, -1);
-		return new SpanQueryFiSeq(right, true, nfaFrag, left, -1, fiAccessor);
+		NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, -1);
+		return new SpanQueryFiSeq(right, true, nfaTwoWay, left, -1, fiAccessor);
 
 	}
 

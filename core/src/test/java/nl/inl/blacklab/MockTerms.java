@@ -1,8 +1,8 @@
 package nl.inl.blacklab;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import nl.inl.blacklab.forwardindex.Terms;
 
@@ -24,8 +24,8 @@ public class MockTerms extends Terms {
 	}
 
 	@Override
-	public List<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive) {
-		List<Integer> results = new ArrayList<>();
+	public Set<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive) {
+		Set<Integer> results = new HashSet<>();
 		for (int i = 0; i < numberOfTerms(); i++) {
 			if (caseSensitive) {
 				if (get(i).equals(term))

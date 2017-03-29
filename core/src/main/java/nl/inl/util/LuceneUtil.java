@@ -378,7 +378,10 @@ public class LuceneUtil {
 		long totalTerms = 0;
 		try {
 			for (LeafReaderContext ctx: reader.leaves()) {
-				totalTerms += ctx.reader().terms(luceneField).getSumTotalTermFreq();
+				Terms terms = ctx.reader().terms(luceneField);
+				if (terms == null)
+					throw new RuntimeException("Field " + luceneField + " does not exist!");
+				totalTerms += terms.getSumTotalTermFreq();
 			}
 			return totalTerms;
 		} catch (IOException e) {

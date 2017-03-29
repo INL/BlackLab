@@ -31,7 +31,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 
 /**
@@ -343,8 +343,8 @@ class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-		NfaFragment frag = null;
+	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		Nfa frag = null;
 		int start = direction == 1 ? 0 : clauses.size() - 1;
 		int end   = direction == 1 ? clauses.size() : -1;
 		for (int i = start; i != end; i += direction) {

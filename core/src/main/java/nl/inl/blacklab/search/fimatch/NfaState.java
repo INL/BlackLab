@@ -35,6 +35,19 @@ public abstract class NfaState {
 		return new NfaStateToken(propertyNumber, inputToken, nextState, dbgTokenString);
 	}
 
+	/**
+	 * Build a token state.
+	 *
+	 * @param propertyNumber what property to match
+	 * @param inputTokens what tokens to match
+	 * @param nextState what state to go to after a succesful match
+	 * @param dbgTokenString (debug) the token string, so we can see it in the debug output
+	 * @return the state object
+	 */
+	public static NfaState token(int propertyNumber, Set<Integer> inputTokens, NfaState nextState, String dbgTokenString) {
+		return new NfaStateToken(propertyNumber, inputTokens, nextState, dbgTokenString);
+	}
+
 	public static NfaState anyToken(NfaState nextState) {
 		return new NfaStateAnyToken(nextState);
 	}

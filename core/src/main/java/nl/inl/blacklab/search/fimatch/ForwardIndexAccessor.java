@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReader;
 
@@ -38,7 +38,7 @@ public abstract class ForwardIndexAccessor {
 	 * @return term number for this term in this property
 	 *
 	 */
-	public abstract List<Integer> getTermNumbers(int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive);
+	public abstract Set<Integer> getTermNumbers(int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive);
 
 	/**
 	 * Get the number of properties

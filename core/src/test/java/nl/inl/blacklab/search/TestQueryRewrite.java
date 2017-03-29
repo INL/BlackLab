@@ -278,7 +278,7 @@ public class TestQueryRewrite {
 		assertRewriteResult("<s> []* 'a' 'b' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), CONTAINING_AT_END)");
 		assertRewriteResult("<s> 'a' 'b' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), MATCHES)");
 		assertRewriteResult("<s> ('a' 'b') 'c' </s>", "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), MATCHES)");
-		assertRewriteResult("<s test='1'> 'a' </s>", "POSFILTER(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), SEQ(TERM(contents%word@i:a)), MATCHES)");
+		assertRewriteResult("<s test='1'> 'a' </s>", "POSFILTER(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), TERM(contents%word@i:a), MATCHES)");
 	}
 
 	@Test

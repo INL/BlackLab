@@ -41,7 +41,7 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.PriorityQueue;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
@@ -566,16 +566,16 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	}
 
 	@Override
-	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		List<NfaState> states = new ArrayList<>();
 		List<NfaState> dangling = new ArrayList<>();
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
-			NfaFragment frag = clause.getNfa(fiAccessor, direction);
+			Nfa frag = clause.getNfa(fiAccessor, direction);
 			states.add(frag.getStartingState());
 			dangling.addAll(frag.getDanglingArrows());
 		}
-		return new NfaFragment(NfaState.or(states), dangling);
+		return new Nfa(NfaState.or(states), dangling);
 	}
 
 	@Override

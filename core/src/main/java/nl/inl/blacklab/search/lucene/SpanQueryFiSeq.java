@@ -26,7 +26,8 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 
 /**
  * Find hits that match the specified NFA, starting from the
@@ -37,7 +38,8 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
 	boolean startOfAnchor;
 
-	NfaFragment nfaFrag;
+	/** Our NFA, both in our own direction and the opposite direction. */
+	NfaTwoWay nfa;
 
 	private BLSpanQuery nfaQuery;
 
@@ -49,15 +51,15 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	 *
 	 * @param anchor hits to use as anchor to start NFA matching
 	 * @param startOfAnchor if true, use the starts of anchor hits; if false, use the ends
-	 * @param nfaFrag the NFA to use for matching
+	 * @param nfa the NFA to use for matching
 	 * @param nfaQuery the query that generated the NFA, so we can still use its guarantee methods for optimization
 	 * @param direction the direction to match in (-1 = right-to-left, 1 = left-to-right)
 	 * @param fiAccessor maps between term strings and term indices for each property
 	 */
-	public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaFragment nfaFrag, BLSpanQuery nfaQuery, int direction, ForwardIndexAccessor fiAccessor) {
+	public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaTwoWay nfa, BLSpanQuery nfaQuery, int direction, ForwardIndexAccessor fiAccessor) {
 		super(anchor);
 		this.startOfAnchor = startOfAnchor;
-		this.nfaFrag = nfaFrag;
+		this.nfa = nfa;
 		this.nfaQuery = nfaQuery;
 		this.direction = direction;
 		this.fiAccessor = fiAccessor;
@@ -67,7 +69,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
 		if (rewritten != clauses.get(0)) {
-			SpanQueryFiSeq result = new SpanQueryFiSeq(rewritten, startOfAnchor, nfaFrag, nfaQuery, direction, fiAccessor);
+			SpanQueryFiSeq result = new SpanQueryFiSeq(rewritten, startOfAnchor, nfa, nfaQuery, direction, fiAccessor);
 			return result;
 		}
 		return this;
@@ -106,14 +108,14 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 				return null;
 			if (!clauses.get(0).hitsAreUnique())
 				anchorSpans = BLSpans.optSortUniq(anchorSpans, false, true);
-			return new SpansFiSeq(anchorSpans, startOfAnchor, nfaFrag.getStartingState(), direction,
+			return new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
 					fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
 		}
 	}
 
 	@Override
 	public String toString(String field) {
-		return "FISEQ(" + clausesToString(field) + ", " + nfaFrag + ", " + direction + ")";
+		return "FISEQ(" + clausesToString(field) + ", " + nfa.getNfa() + ", " + direction + ")";
 	}
 
 	// public SpanQueryFiSeq copy() {
@@ -204,11 +206,11 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	 * @return newly created, expanded SpanQueryFiSeq
 	 */
 	public SpanQueryFiSeq appendNfa(BLSpanQuery originalQuery) {
-		NfaFragment newNfaFrag = nfaFrag.copy();
-		newNfaFrag.append(originalQuery.getNfa(fiAccessor, direction));
+		NfaTwoWay newNfa = nfa.copy();
+		newNfa.append(originalQuery.getNfaTwoWay(fiAccessor, direction));
 		boolean addToRight = direction == 1;
 		SpanQuerySequence newNfaQuery = SpanQuerySequence.sequenceInternalize(nfaQuery, originalQuery, addToRight);
-		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, newNfaFrag, newNfaQuery, direction, fiAccessor);
+		return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, newNfa, newNfaQuery, direction, fiAccessor);
 	}
 
 	public ForwardIndexAccessor getFiAccessor() {
@@ -216,15 +218,27 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-		NfaFragment anchorNfa = clauses.get(0).getNfa(fiAccessor, direction);
+	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		Nfa anchorNfa = clauses.get(0).getNfa(fiAccessor, direction);
 		if (direction == 1) {
+			if (this.direction == -1) {
+				// Reverse our original NFA and append to to anchor NFA.
+				anchorNfa.append(nfa.getNfaReverse());
+				return anchorNfa;
+			}
 			// Forward. Append original NFA to anchor NFA.
-			anchorNfa.append(nfaFrag);
+			anchorNfa.append(nfa.getNfa());
 			return anchorNfa;
 		}
-		// Backward. Append anchor NFA to copy of original NFA.
-		NfaFragment result = nfaFrag.copy();
+		// Backward. Append anchor NFA to copy of original (reverse) NFA.
+		if (this.direction == 1) {
+			// Reverse our original NFA and append anchor to it.
+			Nfa reverse = nfa.getNfaReverse().copy();
+			reverse.append(anchorNfa);
+			return reverse;
+		}
+		// Forward. Append anchor NFA t ocopy of original NFA.
+		Nfa result = nfa.getNfa().copy();
 		result.append(anchorNfa);
 		return result;
 	}

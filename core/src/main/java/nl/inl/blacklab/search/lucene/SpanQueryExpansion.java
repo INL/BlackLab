@@ -27,7 +27,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.search.fimatch.NfaFragment;
+import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.NfaStateAnyToken;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -91,6 +91,8 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		List<BLSpanQuery> rewritten = rewriteClauses(reader);
 		if (rewritten == null)
 			return this;
+		if (min == 0 && max == 0)
+			return rewritten.get(0); // not really an expansion
 		SpanQueryExpansion result = new SpanQueryExpansion(rewritten.get(0), expandToLeft, min, max);
 		if (ignoreLastToken)
 			result.setIgnoreLastToken(true);
@@ -228,12 +230,12 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public NfaFragment getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		if (max == MAX_UNLIMITED)
 			throw new UnsupportedOperationException("Unlimited expansion using forward index not implemented");
-		NfaFragment nfa = clauses.get(0).getNfa(fiAccessor, direction);
+		Nfa nfa = clauses.get(0).getNfa(fiAccessor, direction);
 		NfaState any = new NfaStateAnyToken(null);
-		NfaFragment frag = new NfaFragment(any, Arrays.asList(any));
+		Nfa frag = new Nfa(any, Arrays.asList(any));
 		frag.repeat(min, max);
 		if (expandToLeft && direction == 1 || !expandToLeft && direction == -1) {
 			// Prepend nfa with stretch of anytokens

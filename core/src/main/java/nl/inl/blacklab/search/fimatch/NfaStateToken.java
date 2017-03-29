@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,7 +17,10 @@ public class NfaStateToken extends NfaState {
 	private int propertyNumber;
 
 	/** The this state accepts. */
-	private int inputToken;
+	private Set<Integer> inputTokens;
+
+	/** Do we accept any token? */
+	private boolean acceptAnyToken = false;
 
 	/** The next state if a matching token was found. */
 	protected NfaState nextState;
@@ -26,7 +30,18 @@ public class NfaStateToken extends NfaState {
 
 	public NfaStateToken(int propertyNumber, int inputToken, NfaState nextState, String dbgTokenString) {
 		this.propertyNumber = propertyNumber;
-		this.inputToken = inputToken;
+		inputTokens = new HashSet<>();
+		if (inputToken == ANY_TOKEN)
+			acceptAnyToken = true;
+		else
+			inputTokens.add(inputToken);
+		this.nextState = nextState;
+		this.dbgTokenString = dbgTokenString;
+	}
+
+	public NfaStateToken(int propertyNumber, Set<Integer> inputTokens, NfaState nextState, String dbgTokenString) {
+		this.propertyNumber = propertyNumber;
+		this.inputTokens = new HashSet<>(inputTokens);
 		this.nextState = nextState;
 		this.dbgTokenString = dbgTokenString;
 	}
@@ -43,7 +58,7 @@ public class NfaStateToken extends NfaState {
 	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// Token state. Check if it matches token from token source, and if so, continue.
 		int actualToken = fiDoc.getToken(propertyNumber, pos);
-		if (inputToken == ANY_TOKEN && actualToken >= 0 || actualToken == inputToken) {
+		if (acceptAnyToken && actualToken >= 0 || inputTokens.contains(actualToken)) {
 			if (nextState == null) {
 				// null stands for the match state
 				if (matchEnds != null)
@@ -63,7 +78,7 @@ public class NfaStateToken extends NfaState {
 
 	@Override
 	NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-		NfaStateToken copy = new NfaStateToken(propertyNumber, inputToken, null, dbgTokenString);
+		NfaStateToken copy = new NfaStateToken(propertyNumber, inputTokens, null, dbgTokenString);
 		copiesMade.put(this, copy);
 		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
 		copy.nextState = nextStateCopy;

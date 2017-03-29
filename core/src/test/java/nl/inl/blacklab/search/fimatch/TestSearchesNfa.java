@@ -24,7 +24,7 @@ public class TestSearchesNfa {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		ClauseCombinerNfa.setNfaFactor(ClauseCombinerNfa.MAX_NFA_FACTOR);
+		ClauseCombinerNfa.setNfaFactor(1);
 		testIndex = new TestIndex();
 	}
 
@@ -41,9 +41,15 @@ public class TestSearchesNfa {
 	}
 
 	@Test
-	public void testSequence2() throws ParseException {
+	public void testSequence2a() throws ParseException {
 		expected = Arrays.asList("[May the Force be with you]");
 		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' ('force' 'be' 'with') 'you' "));
+	}
+
+	@Test
+	public void testSequence2b() throws ParseException {
+		expected = Arrays.asList("[May the Force be with you]");
+		Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' 'force' 'be' 'with' 'you' "));
 	}
 
 	@Test
@@ -117,5 +123,23 @@ public class TestSearchesNfa {
 		expected = Arrays.asList("[May the Force] be");
 		Assert.assertEquals(expected, testIndex.findConc(" 'May' []+ 'Force' "));
 	}
+
+//	@Test
+//	public void testRelativeFreqs1() throws ParseException {
+//		expected = Arrays.asList("aap [noot mier aap] noot");
+//		Assert.assertEquals(expected, testIndex.findConc(" 'noot' 'mier' 'aap' "));
+//	}
+
+	@Test
+	public void testRelativeFreqs2() throws ParseException {
+		expected = Arrays.asList("[noot mier aap] mier");
+		Assert.assertEquals(expected, testIndex.findConc(" 'noot' 'mier' 'aap' "));
+	}
+//
+//	@Test
+//	public void testRelativeFreqs3() throws ParseException {
+//		expected = Arrays.asList("noot [mier aap noot] aap");
+//		Assert.assertEquals(expected, testIndex.findConc(" 'mier' 'aap' 'noot' "));
+//	}
 
 }
