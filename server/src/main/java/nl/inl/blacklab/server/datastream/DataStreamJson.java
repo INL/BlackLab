@@ -3,7 +3,7 @@ package nl.inl.blacklab.server.datastream;
 import java.io.PrintWriter;
 import java.util.List;
 
-import nl.inl.util.StringUtil;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  * Class to stream out JSON data.
@@ -92,7 +92,7 @@ public class DataStreamJson extends DataStream {
 
 	@Override
 	public DataStream startEntry(String key) {
-		return optSep().newlineIndent().print("\"").print(StringUtil.escapeDoubleQuotedString(key)).print("\":").space();
+		return optSep().newlineIndent().print("\"").print(StringEscapeUtils.escapeJson(key)).print("\":").space();
 	}
 
 	@Override
@@ -124,13 +124,13 @@ public class DataStreamJson extends DataStream {
 			optSep();
 			newlineIndent();
 			String name = names.get(k);
-			print("\"").print(StringUtil.escapeDoubleQuotedString(name)).print("\":[");
+			print("\"").print(StringEscapeUtils.escapeJson(name)).print("\":[");
 			for (int i = 0; i < numberOfWords; i++) {
 				if (i > 0)
 					print(",");
 				int vIndex = i * valuesPerWord;
 				String value = values.get(vIndex + k);
-				print("\"").print(StringUtil.escapeDoubleQuotedString(value)).print("\"");
+				print("\"").print(StringEscapeUtils.escapeJson(value)).print("\"");
 			}
 			out.append("]");
 		}
@@ -140,7 +140,7 @@ public class DataStreamJson extends DataStream {
 	@Override
 	public DataStream value(String value) {
 		return value == null ? print("null") :
-			print("\"").print(StringUtil.escapeDoubleQuotedString(value)).print("\"");
+			print("\"").print(StringEscapeUtils.escapeJson(value)).print("\"");
 	}
 
 	@Override

@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.util.StringUtil;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  * Class to stream out XML data.
@@ -26,7 +26,7 @@ public class DataStreamXml extends DataStream {
 	}
 
 	private DataStream attr(String key, String value) {
-		return print(" ").print(key).print("=\"").print(StringUtil.escapeXmlChars(value)).print("\"");
+		return print(" ").print(key).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
 	}
 
 	private DataStream endOpenEl() {
@@ -221,16 +221,16 @@ public class DataStreamXml extends DataStream {
 			int vIndex = i * valuesPerWord;
 			int j = 0;
 			indent();
-			print(StringUtil.escapeXmlChars(values.get(vIndex)));
+			print(StringEscapeUtils.escapeXml10(values.get(vIndex)));
 			print("<w");
 			for (int k = 1; k < names.size() - 1; k++) {
 				String name = names.get(k);
 				String value = values.get(vIndex + 1 + j);
-				print(" ").print(name).print("=\"").print(StringUtil.escapeXmlChars(value)).print("\"");
+				print(" ").print(name).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
 				j++;
 			}
 			print(">");
-			print(StringUtil.escapeXmlChars(values.get(vIndex + 1 + j)));
+			print(StringEscapeUtils.escapeXml10(values.get(vIndex + 1 + j)));
 			print("</w>");
 			newline();
 		}
@@ -243,7 +243,7 @@ public class DataStreamXml extends DataStream {
 		if (value == null)
 			print("(null)");
 		else
-			print(StringUtil.escapeXmlChars(value));
+			print(StringEscapeUtils.escapeXml10(value));
 		return newline();
 	}
 
