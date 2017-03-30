@@ -155,4 +155,12 @@ public class NfaStateOr extends NfaState {
 		return "OR(" + b.toString() + ")";
 	}
 
+	@Override
+	void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+		for (NfaState s: nextStates) {
+			if (s != null)
+				s.lookupPropertyNumbers(fiAccessor, statesVisited);
+		}
+	}
+
 }

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
+import java.util.Map;
+
 /** Stores a (partial) NFA and its reverse. */
 public class NfaTwoWay {
 
@@ -29,6 +31,11 @@ public class NfaTwoWay {
 		Nfa r = part.getNfaReverse().copy();
 		r.append(nfaReverse);
 		nfaReverse = r;
+	}
+
+	public void lookupPropertyNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+		nfa.lookupPropertyNumbers(fiAccessor, statesVisited);
+		nfaReverse.lookupPropertyNumbers(fiAccessor, statesVisited);
 	}
 
 }

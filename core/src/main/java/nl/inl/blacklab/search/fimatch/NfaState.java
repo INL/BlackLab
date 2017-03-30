@@ -25,31 +25,29 @@ public abstract class NfaState {
 	/**
 	 * Build a token state.
 	 *
-	 * @param propertyNumber what property to match
+	 * @param luceneField what property to match
 	 * @param inputToken what token to match
 	 * @param nextState what state to go to after a succesful match
-	 * @param dbgTokenString (debug) the token string, so we can see it in the debug output
 	 * @return the state object
 	 */
-	public static NfaState token(int propertyNumber, int inputToken, NfaState nextState, String dbgTokenString) {
-		return new NfaStateToken(propertyNumber, inputToken, nextState, dbgTokenString);
+	public static NfaState token(String luceneField, String inputToken, NfaState nextState) {
+		return new NfaStateToken(luceneField, inputToken, nextState);
 	}
 
 	/**
 	 * Build a token state.
 	 *
-	 * @param propertyNumber what property to match
+	 * @param luceneField what property to match
 	 * @param inputTokens what tokens to match
 	 * @param nextState what state to go to after a succesful match
-	 * @param dbgTokenString (debug) the token string, so we can see it in the debug output
 	 * @return the state object
 	 */
-	public static NfaState token(int propertyNumber, Set<Integer> inputTokens, NfaState nextState, String dbgTokenString) {
-		return new NfaStateToken(propertyNumber, inputTokens, nextState, dbgTokenString);
+	public static NfaState token(String luceneField, Set<String> inputTokens, NfaState nextState) {
+		return new NfaStateToken(luceneField, inputTokens, nextState);
 	}
 
-	public static NfaState anyToken(NfaState nextState) {
-		return new NfaStateAnyToken(nextState);
+	public static NfaState anyToken(String luceneField, NfaState nextState) {
+		return new NfaStateAnyToken(luceneField, nextState);
 	}
 
 	/**
@@ -218,5 +216,14 @@ public abstract class NfaState {
 	public static Set<NfaState> emptySet() {
 		return Collections.newSetFromMap(new IdentityHashMap<NfaState, Boolean>());
 	}
+
+	public final void lookupPropertyNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+		if (statesVisited.containsKey(this))
+			return;
+		statesVisited.put(this, true);
+		lookupPropertyNumbersInternal(fiAccessor, statesVisited);
+	}
+
+	abstract void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited);
 
 }

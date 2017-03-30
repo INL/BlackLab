@@ -65,8 +65,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 	}
 
 	@Override
-	public Set<Integer> getTermNumbers(int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
-		return terms.get(propertyNumber).indexOf(propertyValue, caseSensitive, diacSensitive);
+	public void getTermNumbers(Set<Integer> results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
+		terms.get(propertyNumber).indexOf(results, propertyValue, caseSensitive, diacSensitive);
 	}
 
 	public int getTermAtPosition(int fiid, int propertyNumber, int pos) {

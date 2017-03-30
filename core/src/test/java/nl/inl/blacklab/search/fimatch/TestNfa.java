@@ -1,9 +1,47 @@
 package nl.inl.blacklab.search.fimatch;
 
+import java.util.IdentityHashMap;
+import java.util.Set;
+
+import org.apache.lucene.index.LeafReader;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class TestNfa {
+
+	final class MockFiAccessor extends ForwardIndexAccessor {
+		@Override
+		public int numberOfProperties() {
+			return 1;
+		}
+
+		@Override
+		public void getTermNumbers(Set<Integer> results, int propertyNumber, String propertyValue, boolean caseSensitive,
+				boolean diacSensitive) {
+			if (propertyNumber != 0)
+				throw new RuntimeException("only 0 is valid property");
+			if (propertyValue.length() > 1)
+				throw new RuntimeException("only words of length 1 are valid");
+			results.add((int)propertyValue.charAt(0));
+		}
+
+		@Override
+		public String getTerm(int propIndex, int t) {
+			return null;
+		}
+
+		@Override
+		public int getPropertyNumber(String propertyName) {
+			if (!propertyName.equals("word"))
+				throw new RuntimeException("only 'word' is valid property");
+			return 0;
+		}
+
+		@Override
+		public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
+			return null;
+		}
+	}
 
 	class ForwardIndexDocumentString extends ForwardIndexDocument {
 
@@ -28,9 +66,10 @@ public class TestNfa {
 	@Test
 	public void testNfaSimple() {
 		// Test simple NFA matching ab|ba
-		NfaState ab = NfaState.token(0, 'a', NfaState.token(0, 'b', null, "b"), "a");
-		NfaState ba = NfaState.token(0, 'b', NfaState.token(0, 'a', null, "a"), "b");
+		NfaState ab = NfaState.token("contents%word@i", "a", NfaState.token("contents%word@i", "b", null));
+		NfaState ba = NfaState.token("contents%word@i", "b", NfaState.token("contents%word@i", "a", null));
 		NfaState start = NfaState.or(ab, ba);
+		start.lookupPropertyNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
 
 		ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
 		Assert.assertTrue(start.matches(fiDoc, 0, 1));
@@ -42,10 +81,11 @@ public class TestNfa {
 	@Test
 	public void testNfaRepetition() {
 		// Test NFA matching ac*e
-		NfaState c = NfaState.token(0, 'c', null, "c");
-		NfaState split = NfaState.or(c, NfaState.token(0, 'e', null, "e"));
-		NfaState start = NfaState.token(0, 'a', split, "a");
+		NfaState c = NfaState.token("contents%word@i", "c", null);
+		NfaState split = NfaState.or(c, NfaState.token("contents%word@i", "e", null));
+		NfaState start = NfaState.token("contents%word@i", "a", split);
 		c.setNextState(0, split); // loopback
+		start.lookupPropertyNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
 
 		// Forward matching
 		Assert.assertTrue(start.matches(new ForwardIndexDocumentString("access"), 0, 1));

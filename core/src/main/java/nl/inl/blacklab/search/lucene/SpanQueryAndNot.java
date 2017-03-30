@@ -45,8 +45,8 @@ public class SpanQueryAndNot extends BLSpanQuery {
 	private List<BLSpanQuery> exclude;
 
 	public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
-		this.include = include == null ? new ArrayList<>() : include;
-		this.exclude = exclude == null ? new ArrayList<>() : exclude;
+		this.include = include == null ? new ArrayList<BLSpanQuery>() : include;
+		this.exclude = exclude == null ? new ArrayList<BLSpanQuery>() : exclude;
 		if (this.include.size() == 0 && this.exclude.size() == 0)
 			throw new RuntimeException("ANDNOT query without clauses");
 		checkBaseFieldName();

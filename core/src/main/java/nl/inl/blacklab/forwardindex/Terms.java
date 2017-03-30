@@ -35,12 +35,12 @@ public abstract class Terms {
 	 * This is used in search mode when translating queries into NFAs. Depending on
 	 * case-sensitivity settings, a single term string may match multiple terms.
 	 *
+	 * @param results (out) index numbers for the matching term(s)
 	 * @param term the term to get the index number for
 	 * @param caseSensitive compare case-sensitively? (currently switches both case- and diacritics-sensitivity)
 	 * @param diacSensitive compare diacritics-sensitively? (currently ignored)
-	 * @return index numbers for the matching term(s)
 	 */
-	public abstract Set<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive);
+	public abstract void indexOf(Set<Integer> results, String term, boolean caseSensitive, boolean diacSensitive);
 
 	/**
 	 * Build the index from term to term id. Depending on the terms

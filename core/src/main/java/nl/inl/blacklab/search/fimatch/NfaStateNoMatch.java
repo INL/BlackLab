@@ -57,4 +57,9 @@ public class NfaStateNoMatch extends NfaState {
 		return "NOMATCH()";
 	}
 
+	@Override
+	void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+		// NOP
+	}
+
 }

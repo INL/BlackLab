@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,6 +28,7 @@ import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 
 /**
@@ -77,6 +79,10 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+
+		// Finalize our NFA, so it looks up property numbers for its property names.
+		nfa.lookupPropertyNumbers(fiAccessor, new IdentityHashMap<NfaState,Boolean>());
+
 		BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, needsScores);
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(anchorWeight) : null;
 		return new SpanWeightFiSeq(anchorWeight, searcher, contexts);

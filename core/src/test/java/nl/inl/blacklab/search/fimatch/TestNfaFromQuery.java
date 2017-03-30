@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -55,21 +55,18 @@ public class TestNfaFromQuery {
 		}
 
 		@Override
-		public Set<Integer> getTermNumbers(int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
+		public void getTermNumbers(Set<Integer> results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
 			if (propertyNumber != 0)
 				throw new IllegalArgumentException("Unknown property " + propertyNumber);
 			if (caseSensitive) {
-				HashSet<Integer> result = new HashSet<>();
-				result.add(terms.get(propertyValue));
-				return result;
+				results.add(terms.get(propertyValue));
+				return;
 			}
-			Set<Integer> results = new HashSet<>();
 			for (Entry<String, Integer> e: terms.entrySet()) {
 				if (e.getKey().equalsIgnoreCase(propertyValue)) {
 					results.add(e.getValue());
 				}
 			}
-			return results;
 		}
 
 		@Override
@@ -146,6 +143,7 @@ public class TestNfaFromQuery {
 	private static void test(BLSpanQuery q, ForwardIndexAccessor fiAccessor, int startPos, int direction, int tests, List<Integer> matches) {
 		// The NFA
 		Nfa frag = q.getNfa(fiAccessor, direction);
+		frag.lookupPropertyNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
 		//System.err.println(frag);
 		NfaState start = frag.getStartingState(); //finish();
 

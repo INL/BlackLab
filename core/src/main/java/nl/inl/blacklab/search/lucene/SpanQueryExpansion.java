@@ -234,7 +234,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		if (max == MAX_UNLIMITED)
 			throw new UnsupportedOperationException("Unlimited expansion using forward index not implemented");
 		Nfa nfa = clauses.get(0).getNfa(fiAccessor, direction);
-		NfaState any = new NfaStateAnyToken(null);
+		NfaState any = new NfaStateAnyToken(clauses.get(0).getRealField(), null);
 		Nfa frag = new Nfa(any, Arrays.asList(any));
 		frag.repeat(min, max);
 		if (expandToLeft && direction == 1 || !expandToLeft && direction == -1) {

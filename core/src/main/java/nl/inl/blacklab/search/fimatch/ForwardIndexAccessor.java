@@ -31,14 +31,14 @@ public abstract class ForwardIndexAccessor {
 	/**
 	 * Get the term number for a given term string.
 	 *
+	 * @param results (out) term number for this term in this property
 	 * @param propertyNumber which property to get term number for
 	 * @param propertyValue which term string to get term number for
 	 * @param caseSensitive match case sensitively or not?
 	 * @param diacSensitive match case sensitively or not? (currently ignored)
-	 * @return term number for this term in this property
 	 *
 	 */
-	public abstract Set<Integer> getTermNumbers(int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive);
+	public abstract void getTermNumbers(Set<Integer> results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive);
 
 	/**
 	 * Get the number of properties

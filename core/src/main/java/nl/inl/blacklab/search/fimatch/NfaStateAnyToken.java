@@ -5,8 +5,8 @@ import java.util.Map;
 
 public class NfaStateAnyToken extends NfaStateToken {
 
-	public NfaStateAnyToken(NfaState nextState) {
-		super(0, ANY_TOKEN, nextState, "ANY");
+	public NfaStateAnyToken(String luceneField, NfaState nextState) {
+		super(luceneField, ANY_TOKEN, nextState);
 	}
 
 	@Override
@@ -17,7 +17,7 @@ public class NfaStateAnyToken extends NfaStateToken {
 	@Override
 	NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
 		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
-		NfaStateToken copy = new NfaStateAnyToken(nextStateCopy);
+		NfaStateToken copy = new NfaStateAnyToken(luceneField, nextStateCopy);
 		if (nextState == null)
 			dangling.add(copy);
 		return copy;

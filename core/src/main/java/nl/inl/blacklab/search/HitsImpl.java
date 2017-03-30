@@ -240,7 +240,7 @@ public class HitsImpl extends Hits {
 	 */
 	HitsImpl(Searcher searcher, List<Hit> hits) {
 		super(searcher);
-		this.hits = hits == null ? new ArrayList<>() : hits;
+		this.hits = hits == null ? new ArrayList<Hit>() : hits;
 		hitsCounted = this.hits.size();
 		currentContextSize = -1;
 		int prevDoc = -1;

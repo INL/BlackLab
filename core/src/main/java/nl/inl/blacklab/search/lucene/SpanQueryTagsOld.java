@@ -68,7 +68,7 @@ public class SpanQueryTagsOld extends BLSpanQueryAbstract {
 		// Use a BlackLabSpanTermQuery instead of default Lucene one
 		// because we need to override getField() to only return the base field name,
 		// not the complete field name with the property.
-		clauses = new ArrayList<>(Arrays.asList(
+		clauses = new ArrayList<BLSpanQuery>(Arrays.asList(
 			new BLSpanTermQuery(new Term(startTagFieldName, tagName)),
 			new BLSpanTermQuery(new Term(endTagFieldName, tagName))
 		));

@@ -25,9 +25,7 @@ import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -254,7 +252,7 @@ class TermsImplV3 extends Terms {
 //	}
 
 	@Override
-	public Set<Integer> indexOf(String term, boolean caseSensitive, boolean diacSensitive) {
+	public void indexOf(Set<Integer> results, String term, boolean caseSensitive, boolean diacSensitive) {
 		// NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
 		//  right now, diacSensitive is ignored and caseSensitive is used for both.
 //		if (!caseSensitive) {
@@ -277,30 +275,30 @@ class TermsImplV3 extends Terms {
 			int cmp = coll.compare(term, guessedTerm);
 			if (cmp == 0) {
 				// Found a match. Look both ways to see if there's more matching terms.
-				Set<Integer> terms = new HashSet<>();
-				terms.add(guessedIndex);
+				results.add(guessedIndex);
 				if (!caseSensitive) {
 					for (int testOrdinal = guessedOrdinal - 1; testOrdinal >= min; testOrdinal--) {
 						int testIndex = idLookup[testOrdinal];
 						if (coll.compare(term, get(testIndex)) != 0)
 							break;
-						terms.add(testIndex);
+						results.add(testIndex);
 					}
 					for (int testOrdinal = guessedOrdinal + 1; testOrdinal <= max; testOrdinal++) {
 						int testIndex = idLookup[testOrdinal];
 						if (coll.compare(term, get(testIndex)) != 0)
 							break;
-						terms.add(testIndex);
+						results.add(testIndex);
 					}
 				}
-				return terms; // found
+				// found
+				return;
 			}
 			if (cmp < 0)
 				max = guessedOrdinal - 1;
 			else
 				min = guessedOrdinal + 1;
 		}
-		return Collections.emptySet(); // not found
+		// not found
 	}
 
 	@Override

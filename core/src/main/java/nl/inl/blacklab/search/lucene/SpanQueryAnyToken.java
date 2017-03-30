@@ -168,7 +168,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 	@Override
 	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
-		NfaState state = NfaState.anyToken(null);
+		NfaState state = NfaState.anyToken(luceneField, null);
 		Nfa frag = new Nfa(state, Arrays.asList(state));
 		if (realMin != 1 || max != 1) {
 			frag.repeat(realMin, max);

@@ -18,7 +18,6 @@ package nl.inl.blacklab.search.lucene;
  */
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -34,11 +33,9 @@ import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.util.StringUtil;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -85,6 +82,10 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	@Override
 	public String getRealField() {
 		return query.getTerm().field();
+	}
+
+	public Term getTerm() {
+		return query.getTerm();
 	}
 
 	@Override
@@ -181,31 +182,9 @@ public class BLSpanTermQuery extends BLSpanQuery {
 	@Override
 	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		Term term = query.getTerm();
-		String[] comp = ComplexFieldUtil.getNameComponents(term.field());
-		String propertyName = comp[1];
-		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(term.field());
-		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(term.field());
-		int propertyNumber = fiAccessor.getPropertyNumber(propertyName);
 		String propertyValue = term.text();
-		Set<Integer> termNumbers = fiAccessor.getTermNumbers(propertyNumber, propertyValue, caseSensitive, diacSensitive);
-		NfaState state;
-		if (termNumbers.size() == 0) {
-			// No matching terms; just fail when matching gets to here
-			state = NfaState.noMatch();
-			return new Nfa(state, Arrays.asList(new NfaState[0]));
-		} else if (termNumbers.size() == 1) {
-			// Single matching term
-			Integer t = termNumbers.iterator().next();
-			state = NfaState.token(propertyNumber, t, null, fiAccessor.getTerm(propertyNumber, t));
-			return new Nfa(state, Arrays.asList(state));
-		} else {
-			// Multiple matching terms: case- and accent-variations.
-			// For the term string (only used for display), take first term, lowercase and remove accents
-			String firstTerm = fiAccessor.getTerm(propertyNumber, termNumbers.iterator().next());
-			String termString = StringUtil.removeAccents(firstTerm).toLowerCase();
-			state = NfaState.token(propertyNumber, termNumbers, null, termString);
-			return new Nfa(state, new ArrayList<>(Arrays.asList(state)));
-		}
+		NfaState state = NfaState.token(term.field(), propertyValue, null);
+		return new Nfa(state, Arrays.asList(state));
 	}
 
 	@Override

@@ -160,4 +160,12 @@ public class NfaStateAnd extends NfaState {
 		return "AND(" + b.toString() + ")";
 	}
 
+	@Override
+	void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+		for (NfaState s: nextStates) {
+			if (s != null)
+				s.lookupPropertyNumbers(fiAccessor, statesVisited);
+		}
+	}
+
 }

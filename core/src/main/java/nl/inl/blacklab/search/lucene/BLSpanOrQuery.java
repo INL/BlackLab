@@ -19,6 +19,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,9 +43,9 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.PriorityQueue;
 
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /** Matches the union of its clauses.
  */
@@ -567,6 +569,36 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	@Override
 	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		// See if this is really just an expanded wildcard/regex query, and if so,
+		// rewrite it to a NfaStateToken instead.
+		if (hitsAllSameLength() && hitsLengthMax() == 1) {
+			boolean canBeTokenState = true;
+			String luceneField = null;
+			Set<String> terms = new HashSet<>();
+			for (SpanQuery cl: getClauses()) {
+				if (!(cl instanceof BLSpanTermQuery)) {
+					// Not all simple term queries. Can't rewrite to token state.
+					canBeTokenState = false;
+					break;
+				}
+				BLSpanTermQuery blcl = (BLSpanTermQuery)cl;
+				if (luceneField == null) {
+					luceneField = blcl.getRealField();
+				} else if (!luceneField.equals(blcl.getRealField())) {
+					// Not all in the same property. Can't rewrite to token state.
+					canBeTokenState = false;
+					break;
+				}
+				terms.add(blcl.getTerm().text());
+			}
+			if (canBeTokenState) {
+				// Yep. Rewrite to a large NfaStateToken.
+				NfaState tokenState = NfaState.token(luceneField, terms, null);
+				return new Nfa(tokenState, Arrays.asList(tokenState));
+			}
+		}
+
+
 		List<NfaState> states = new ArrayList<>();
 		List<NfaState> dangling = new ArrayList<>();
 		for (SpanQuery cl: getClauses()) {

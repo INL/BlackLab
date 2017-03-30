@@ -85,4 +85,12 @@ public class NfaStateNot extends NfaState {
 		return "NOT(" + dump(clause, stateNrs) + "," + dump(nextState, stateNrs) + ")";
 	}
 
+	@Override
+	void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+		if (clause != null)
+			clause.lookupPropertyNumbers(fiAccessor, statesVisited);
+		if (nextState != null)
+			nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+	}
+
 }

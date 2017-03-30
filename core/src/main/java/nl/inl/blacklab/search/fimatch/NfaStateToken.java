@@ -5,19 +5,29 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+
 /**
  * Represents both a state in an NFA, and a complete NFA
  * with this as the starting state.
  */
 public class NfaStateToken extends NfaState {
 
-	static final int ANY_TOKEN = Integer.MAX_VALUE;
+	static final String ANY_TOKEN = null;
 
 	/** What property we're trying to match */
-	private int propertyNumber;
+	protected String luceneField;
 
-	/** The this state accepts. */
-	private Set<Integer> inputTokens;
+	/** Index of the property we're trying to match. Only valid after lookupPropertyNumber() called. */
+	private int propertyNumber = -1;
+
+	/** The tokens this state accepts. */
+	private HashSet<String> inputTokenStrings;
+
+	/** The tokens this state accepts. Only valid after lookupPropertNumber() called. */
+	private Set<Integer> inputTokens = null;
 
 	/** Do we accept any token? */
 	private boolean acceptAnyToken = false;
@@ -25,25 +35,20 @@ public class NfaStateToken extends NfaState {
 	/** The next state if a matching token was found. */
 	protected NfaState nextState;
 
-	/** (debug) The token string, so we can see it in debug output */
-	private String dbgTokenString;
-
-	public NfaStateToken(int propertyNumber, int inputToken, NfaState nextState, String dbgTokenString) {
-		this.propertyNumber = propertyNumber;
-		inputTokens = new HashSet<>();
-		if (inputToken == ANY_TOKEN)
+	public NfaStateToken(String luceneField, String inputToken, NfaState nextState) {
+		this.luceneField = luceneField;
+		inputTokenStrings = new HashSet<>();
+		if (inputToken == null)
 			acceptAnyToken = true;
 		else
-			inputTokens.add(inputToken);
+			inputTokenStrings.add(inputToken);
 		this.nextState = nextState;
-		this.dbgTokenString = dbgTokenString;
 	}
 
-	public NfaStateToken(int propertyNumber, Set<Integer> inputTokens, NfaState nextState, String dbgTokenString) {
-		this.propertyNumber = propertyNumber;
-		this.inputTokens = new HashSet<>(inputTokens);
+	public NfaStateToken(String luceneField, Set<String> inputTokens, NfaState nextState) {
+		this.luceneField = luceneField;
+		this.inputTokenStrings = new HashSet<>(inputTokens);
 		this.nextState = nextState;
-		this.dbgTokenString = dbgTokenString;
 	}
 
 	/**
@@ -78,7 +83,7 @@ public class NfaStateToken extends NfaState {
 
 	@Override
 	NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-		NfaStateToken copy = new NfaStateToken(propertyNumber, inputTokens, null, dbgTokenString);
+		NfaStateToken copy = new NfaStateToken(luceneField, inputTokenStrings, null);
 		copiesMade.put(this, copy);
 		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
 		copy.nextState = nextStateCopy;
@@ -116,7 +121,23 @@ public class NfaStateToken extends NfaState {
 
 	@Override
 	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
-		return "TOKEN(" + dbgTokenString + "," + dump(nextState, stateNrs) + ")";
+		String terms = acceptAnyToken ? "ANY" : StringUtils.join(inputTokenStrings, "|");
+		return "TOKEN(" + terms + "," + dump(nextState, stateNrs) + ")";
+	}
+
+	@Override
+	public void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+		String[] comp = ComplexFieldUtil.getNameComponents(luceneField);
+		String propertyName = comp[1];
+		propertyNumber = fiAccessor.getPropertyNumber(propertyName);
+		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(luceneField);
+		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(luceneField);
+		inputTokens = new HashSet<>();
+		for (String token: inputTokenStrings)  {
+			fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, caseSensitive, diacSensitive);
+		}
+		if (nextState != null)
+			nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
 	}
 
 }
