@@ -17,14 +17,14 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.SortedSet;
+import java.util.NavigableSet;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.fimatch.NfaState;
 
 /**
  * Finds hits using the forward index, by matching an NFA from anchor points.
@@ -214,9 +214,12 @@ class SpansFiSeq extends BLSpans {
 			int anchorPos = startOfAnchor ? anchorStart : anchor.endPosition();
 			if (direction < 0)
 				anchorPos--;
-			SortedSet<Integer> setMatchEndpoints = nfa.findMatches(currentFiDoc, anchorPos, direction);
+			NavigableSet<Integer> setMatchEndpoints = nfa.findMatches(currentFiDoc, anchorPos, direction);
 			if (setMatchEndpoints.size() > 0) {
-				matchEndPointIt = setMatchEndpoints.iterator();
+				if (direction == 1)
+					matchEndPointIt = setMatchEndpoints.iterator();
+				else
+					matchEndPointIt = setMatchEndpoints.descendingSet().iterator();
 				currentMatchEndPoint = matchEndPointIt.next();
 				return startPosition();
 			}

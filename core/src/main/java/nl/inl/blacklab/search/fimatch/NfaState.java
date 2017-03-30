@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -105,8 +105,8 @@ public abstract class NfaState {
 	 * @param direction matching direction
 	 * @return the matches found, if any
 	 */
-	public SortedSet<Integer> findMatches(ForwardIndexDocument fiDoc, int pos, int direction) {
-		SortedSet<Integer> results = new TreeSet<>();
+	public NavigableSet<Integer> findMatches(ForwardIndexDocument fiDoc, int pos, int direction) {
+		NavigableSet<Integer> results = new TreeSet<>();
 		findMatchesInternal(fiDoc, pos, direction, results);
 		return results;
 	}

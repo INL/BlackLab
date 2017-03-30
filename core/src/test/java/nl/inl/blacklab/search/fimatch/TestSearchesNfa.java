@@ -135,6 +135,14 @@ public class TestSearchesNfa {
 		expected = Arrays.asList("[noot mier aap] mier");
 		Assert.assertEquals(expected, testIndex.findConc(" 'noot' 'mier' 'aap' "));
 	}
+
+	@Test
+	public void testOverlappingSequences() throws ParseException {
+		expected = Arrays.asList("aap [mier mier mier noot noot] aap", "mier [mier mier noot noot] aap");
+		Assert.assertEquals(expected, testIndex.findConc(" 'mier' []{1,2} 'noot' 'noot' "));
+	}
+
+
 //
 //	@Test
 //	public void testRelativeFreqs3() throws ParseException {

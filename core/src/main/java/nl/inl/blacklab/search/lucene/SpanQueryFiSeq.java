@@ -219,26 +219,17 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
 	@Override
 	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+		// Convert our anchor to an NFA.
 		Nfa anchorNfa = clauses.get(0).getNfa(fiAccessor, direction);
-		if (direction == 1) {
-			if (this.direction == -1) {
-				// Reverse our original NFA and append to to anchor NFA.
-				anchorNfa.append(nfa.getNfaReverse());
-				return anchorNfa;
-			}
-			// Forward. Append original NFA to anchor NFA.
-			anchorNfa.append(nfa.getNfa());
+
+		// Is the direction we want the same as the current direction?
+		if (direction == this.direction) {
+			// Yes, same direction. Append original NFA to new anchor NFA.
+			anchorNfa.append(nfa.getNfa().copy());
 			return anchorNfa;
 		}
-		// Backward. Append anchor NFA to copy of original (reverse) NFA.
-		if (this.direction == 1) {
-			// Reverse our original NFA and append anchor to it.
-			Nfa reverse = nfa.getNfaReverse().copy();
-			reverse.append(anchorNfa);
-			return reverse;
-		}
-		// Forward. Append anchor NFA t ocopy of original NFA.
-		Nfa result = nfa.getNfa().copy();
+		// Reverse direction. Reverse our original NFA and append the anchor NFA.
+		Nfa result = nfa.getNfaReverse().copy();
 		result.append(anchorNfa);
 		return result;
 	}

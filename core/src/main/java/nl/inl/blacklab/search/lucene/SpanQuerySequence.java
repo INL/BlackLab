@@ -75,7 +75,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			BLSpanQuery child = clauses.get(i);
 			if (child instanceof SpanQuerySequence) {
 				clauses.remove(i);
-				clauses.addAll(i, ((SpanQuerySequence)child).getClauses());
+				clauses.addAll(i, ((SpanQuerySequence) child).getClauses());
 				anyRewritten = true;
 			}
 		}
@@ -84,11 +84,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 	/**
 	 * Try to match separate start and end tags in this sequence, and convert into a
-     * position filter (e.g. containing) query.
-     *
-     * For example:
-     *  <s> []* 'bla' []* </s> ==> <s/> containing 'bla'
-     *
+	 * position filter (e.g. containing) query.
+	 *
+	 * For example:
+	 *  <s> []* 'bla' []* </s> ==> <s/> containing 'bla'
+	 *
 	 * @param clauses clauses in which to find matching tags
 	 * @return true if any rewriting was done, false if not
 	 */
@@ -100,7 +100,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		for (int i = 0; i < clauses.size(); i++) {
 			BLSpanQuery clause = clauses.get(i);
 			if (clause instanceof SpanQueryEdge) {
-				SpanQueryEdge start = (SpanQueryEdge)clause;
+				SpanQueryEdge start = (SpanQueryEdge) clause;
 				if (!start.isRightEdge()) {
 					String tagName = start.getElementName();
 					if (tagName != null) {
@@ -108,9 +108,10 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 						for (int j = i + 1; j < clauses.size(); j++) {
 							BLSpanQuery clause2 = clauses.get(j);
 							if (clause2 instanceof SpanQueryEdge) {
-								SpanQueryEdge end = (SpanQueryEdge)clause2;
+								SpanQueryEdge end = (SpanQueryEdge) clause2;
 								if (end.isRightEdge() && end.getElementName().equals(tagName)) {
-									// Found start and end tags in sequence. Convert to containing query.
+									// Found start and end tags in sequence. Convert to containing
+									// query.
 									List<BLSpanQuery> search = new ArrayList<>();
 									clauses.remove(i); // start tag
 									for (int k = 0; k < j - i - 1; k++) {
@@ -119,7 +120,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 									clauses.remove(i); // end tag
 									boolean startAny = false;
 									if (search.get(0) instanceof SpanQueryAnyToken) {
-										SpanQueryAnyToken any1 = (SpanQueryAnyToken)search.get(0);
+										SpanQueryAnyToken any1 = (SpanQueryAnyToken) search.get(0);
 										if (any1.hitsLengthMin() == 0 && any1.hitsLengthMax() == MAX_UNLIMITED) {
 											startAny = true;
 											search.remove(0);
@@ -128,7 +129,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 									boolean endAny = false;
 									int last = search.size() - 1;
 									if (search.get(last) instanceof SpanQueryAnyToken) {
-										SpanQueryAnyToken any2 = (SpanQueryAnyToken)search.get(last);
+										SpanQueryAnyToken any2 = (SpanQueryAnyToken) search.get(last);
 										if (any2.hitsLengthMin() == 0 && any2.hitsLengthMax() == MAX_UNLIMITED) {
 											endAny = true;
 											search.remove(last);
@@ -237,7 +238,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		// This doesn't change the query because the sequence operator is associative.
 		anyRewritten |= flattenSequence(cl);
 
-		// Find matching tags and rewrite them to position filter (e.g. containing) to execute more efficiently
+		// Find matching tags and rewrite them to position filter (e.g. containing) to execute more
+		// efficiently
 		anyRewritten |= matchingTagsToPosFilter(cl);
 
 		// Rewrite each clause
@@ -348,7 +350,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		if (parts.size() == 1) {
 			// Last clause in the sequence; just return it
 			// (noEmpty() version because we will build alternatives
-			//  in the caller if the input matched the empty sequence)
+			// in the caller if the input matched the empty sequence)
 			return Arrays.asList(Arrays.asList(parts.get(0).noEmpty().rewrite(reader)));
 		}
 
@@ -368,8 +370,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		return combine(parts.get(0), altTail, restMatchesEmpty, reader);
 	}
 
-	private static List<List<BLSpanQuery>> combine(BLSpanQuery head,
-			List<List<BLSpanQuery>> tailAlts, boolean tailMatchesEmpty, IndexReader reader) throws IOException {
+	private static List<List<BLSpanQuery>> combine(BLSpanQuery head, List<List<BLSpanQuery>> tailAlts, boolean tailMatchesEmpty,
+			IndexReader reader) throws IOException {
 		List<List<BLSpanQuery>> results = new ArrayList<>();
 		BLSpanQuery headNoEmpty = head.noEmpty().rewrite(reader);
 		boolean headMatchesEmpty = head.matchesEmptySequence();
@@ -453,7 +455,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 			public CombiPart(BLSpanWeight weight, final LeafReaderContext context, Postings requiredPostings) throws IOException {
 				this.spans = weight.getSpans(context, requiredPostings);
-				BLSpanQuery q = (BLSpanQuery)weight.getQuery();
+				BLSpanQuery q = (BLSpanQuery) weight.getQuery();
 				if (q != null) {
 					this.uniqueStart = q.hitsHaveUniqueStart();
 					this.uniqueEnd = q.hitsHaveUniqueEnd();
@@ -463,8 +465,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				}
 			}
 
-			public CombiPart(BLSpans spans, boolean hitsHaveUniqueStart, boolean hitsHaveUniqueEnd,
-					boolean hitsStartPointSorted, boolean hitsEndPointSorted, boolean hitsAllSameLength) {
+			public CombiPart(BLSpans spans, boolean hitsHaveUniqueStart, boolean hitsHaveUniqueEnd, boolean hitsStartPointSorted,
+					boolean hitsEndPointSorted, boolean hitsAllSameLength) {
 				super();
 				this.spans = spans;
 				this.uniqueStart = hitsHaveUniqueStart;
@@ -494,7 +496,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			// First, combine as many clauses as possible into SpansSequenceSimple,
 			// which works for simple clauses and is the most efficient to execute.
 			// OPT: it might be even better to favour combining low-frequency terms first,
-			//      as that minimizes useless skipping through non-matching docs.
+			// as that minimizes useless skipping through non-matching docs.
 			for (int i = 1; i < parts.size(); i++) {
 				CombiPart left = parts.get(i - 1);
 				CombiPart right = parts.get(i);
@@ -507,11 +509,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 						// TODO: make unique
 					}
 				}
-				if (left.uniqueEnd && left.endSorted &&
-					right.startSorted && right.uniqueStart) {
-					// We can take a shortcut because of what we know about the Spans we're combining.
+				if (left.uniqueEnd && left.endSorted && right.startSorted && right.uniqueStart) {
+					// We can take a shortcut because of what we know about the Spans we're
+					// combining.
 					SpansSequenceSimple newSpans = new SpansSequenceSimple(left.spans, right.spans);
-					newPart = new CombiPart(newSpans, left.uniqueStart, right.uniqueEnd, left.startSorted, right.sameLength, left.sameLength && right.sameLength);
+					newPart = new CombiPart(newSpans, left.uniqueStart, right.uniqueEnd, left.startSorted, right.sameLength,
+							left.sameLength && right.sameLength);
 					parts.remove(i - 1);
 					parts.set(i - 1, newPart);
 					i--;
@@ -532,13 +535,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				if (!right.startSorted)
 					right.spans = new PerDocumentSortedSpans(right.spans, PerDocumentSortedSpans.cmpStartPoint, false);
 				BLSpans newSpans = new SpansSequenceRaw(left.spans, right.spans);
-				newPart = new CombiPart(newSpans,
-						left.uniqueStart && left.uniqueEnd && right.uniqueStart,
-						left.uniqueEnd && right.uniqueStart && right.uniqueEnd,
-						left.startSorted,
-						right.sameLength,
-						left.sameLength && right.sameLength
-						);
+				newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
+						left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
+						left.sameLength && right.sameLength);
 				parts.remove(0);
 				parts.set(0, newPart);
 			}
@@ -633,7 +632,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		Nfa frag = null;
 		int start = direction == 1 ? 0 : clauses.size() - 1;
-		int end   = direction == 1 ? clauses.size() : -1;
+		int end = direction == 1 ? clauses.size() : -1;
 		for (int i = start; i != end; i += direction) {
 			BLSpanQuery clause = clauses.get(i);
 			if (frag == null)
@@ -687,10 +686,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	 * @param addToRight if true, add new clause to the right of existing; if false, to the left
 	 * @return the expanded or newly created sequence
 	 */
-	public static SpanQuerySequence sequenceInternalize(BLSpanQuery whereToInternalize, BLSpanQuery clauseToInternalize, boolean addToRight) {
+	public static SpanQuerySequence sequenceInternalize(BLSpanQuery whereToInternalize, BLSpanQuery clauseToInternalize,
+			boolean addToRight) {
 		SpanQuerySequence seq;
 		if (whereToInternalize instanceof SpanQuerySequence) {
-			seq = (SpanQuerySequence)whereToInternalize;
+			seq = (SpanQuerySequence) whereToInternalize;
 			seq = seq.internalize(clauseToInternalize, addToRight);
 		} else {
 			if (addToRight)
