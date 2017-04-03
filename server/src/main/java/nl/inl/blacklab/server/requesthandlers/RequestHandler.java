@@ -371,7 +371,7 @@ public abstract class RequestHandler {
 		IndexStructure struct = searcher.getIndexStructure();
 		for (String metadataFieldName: struct.getMetadataFields()) {
 			String value = document.get(metadataFieldName);
-			if (value != null)
+			if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
 				ds.entry(metadataFieldName, value);
 		}
 		int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
