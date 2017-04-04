@@ -283,6 +283,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		// Create and start thread
 		// TODO: use thread pooling..?
 		startedAt = System.currentTimeMillis();
+		//logger.debug("Search " + this + " started at " + startedAt);
 		setLevelRunningAt = startedAt;
 		searchThread = new SearchThread(this);
 		searchThread.start();
@@ -811,6 +812,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 
 	public void setFinished() {
 		finishedAt = System.currentTimeMillis();
+		//logger.debug("Search " + this + " finished at " + finishedAt);
 		if (level != Level.RUNNING) {
 			// Don't confuse the system by still being in PAUSED
 			// (possible because this is cooperative multitasking,

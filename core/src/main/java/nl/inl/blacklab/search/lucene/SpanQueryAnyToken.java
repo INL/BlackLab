@@ -26,10 +26,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.search.TextPatternAnyToken;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -37,14 +36,10 @@ import nl.inl.util.LuceneUtil;
  */
 public class SpanQueryAnyToken extends BLSpanQuery {
 
-	/*
-	 * The minimum number of tokens in this stretch.
-	 */
+	/** The minimum number of tokens in this stretch. */
 	protected int min;
 
-	/*
-	 * The maximum number of tokens in this stretch.
-	 */
+	/** The maximum number of tokens in this stretch. */
 	protected int max;
 
 	boolean alwaysHasClosingToken = true;
@@ -78,7 +73,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternAnyToken) {
+		if (obj instanceof SpanQueryAnyToken) {
 			SpanQueryAnyToken tp = ((SpanQueryAnyToken) obj);
 			return min == tp.min && max == tp.max;
 		}
@@ -123,6 +118,17 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
 	public boolean getAlwaysHasClosingToken() {
 		return alwaysHasClosingToken;
+	}
+
+	@Override
+	public BLSpanQuery inverted() {
+		return new SpanQueryNoHits(luceneField); // Just return our clause, dropping the NOT operation
+	}
+
+	@Override
+	protected boolean okayToInvertForOptimization() {
+		// Yes, inverting is actually an improvement
+		return min == 1 && max == 1;
 	}
 
 	@Override

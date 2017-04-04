@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -49,6 +51,8 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
  * See SpanSequenceRaw for details on the matching process.
  */
 public class SpanQuerySequence extends BLSpanQueryAbstract {
+	protected static final Logger logger = LogManager.getLogger(SpanQuerySequence.class);
+
 	public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}
@@ -186,7 +190,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		boolean anyRewrittenThisCycle = true;
 		int pass = 0;
 		while (anyRewrittenThisCycle) {
-			System.err.println("combineAdj pass " + pass + ": " + StringUtils.join(cl, ", "));
+			logger.debug("combineAdj pass " + pass + ": " + StringUtils.join(cl, ", "));
 			pass++;
 
 			anyRewrittenThisCycle = false;

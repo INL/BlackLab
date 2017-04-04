@@ -91,7 +91,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 *
 	 * We default to no because most queries don't match the empty sequence.
 	 *
-	 * @return true if this pattern matches the empty sequence, false otherwise
+	 * @return true if this query matches the empty sequence, false otherwise
 	 */
 	public boolean matchesEmptySequence() {
 		return false;
@@ -108,16 +108,16 @@ public abstract class BLSpanQuery extends SpanQuery {
 	}
 
 	/**
-	 * Return an inverted version of this TextPattern.
+	 * Return an inverted version of this query.
 	 *
-	 * @return the inverted TextPattern
+	 * @return the inverted query
 	 */
 	public BLSpanQuery inverted() {
 		return new SpanQueryNot(this);
 	}
 
 	/**
-	 * Is it okay to invert this TextPattern for optimization?
+	 * Is it okay to invert this query for optimization?
 	 *
 	 * Heuristic used to determine when to optimize
 	 * a query by inverting one or more of its subqueries.
@@ -129,10 +129,10 @@ public abstract class BLSpanQuery extends SpanQuery {
 	}
 
 	/**
-	 * Is this (sub)pattern only a negative clause, producing all tokens that
+	 * Is this query only a negative clause, producing all tokens that
 	 * don't satisfy certain conditions?
 	 *
-	 * Used for optimization decisions, i.e. in TextPatternOr.rewrite().
+	 * Used for optimization decisions, i.e. in BLSpanOrQuery.rewrite().
 	 *
 	 * @return true if it's negative-only, false if not
 	 */

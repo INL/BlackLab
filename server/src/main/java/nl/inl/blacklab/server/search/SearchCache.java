@@ -29,6 +29,10 @@ import nl.inl.util.ThreadPriority.Level;
 
 public class SearchCache {
 
+	/** In nonblocking mode, how long should we wait to see if the job finishes really quickly,
+	 *  to avoid unnecessary polling? */
+	private static final int INITIAL_JOB_FINISH_WAIT = 500;
+
 	private static final Logger logger = LogManager.getLogger(SearchCache.class);
 
 	/**
@@ -191,7 +195,7 @@ public class SearchCache {
 
 		if (performSearch) {
 			// Start the search, waiting a short time in case it's a fast search
-			job.perform(500); // hardcoded because we are going to remove nonblocking mode soon
+			job.perform(INITIAL_JOB_FINISH_WAIT);
 		}
 
 		// If the search thread threw an exception, rethrow it now.

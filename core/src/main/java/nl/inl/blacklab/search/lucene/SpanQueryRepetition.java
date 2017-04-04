@@ -99,6 +99,13 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 				}
 				// (A{x,y}{1,1} == A{x,y} has been rewritten above already)
 				// (other cases like A{1,1}{x,y} should have been rewritten already)
+
+				if (min == max && tp.min == tp.max) {
+					// Exact number of repetitions of exact number of repetitions. Just multiply.
+					// e.g. "ha"{3}{2} -> "ha"{6}
+					int n = min * tp.min;
+					return new SpanQueryRepetition(tp.clauses.get(0), n, n);
+				}
 			}
 		}
 		if (baseRewritten == base)
