@@ -2,7 +2,9 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.Set;
+import java.text.Collator;
+
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 /**
  * Keeps a list of unique terms and their sort positions.
@@ -40,7 +42,7 @@ public abstract class Terms {
 	 * @param caseSensitive compare case-sensitively? (currently switches both case- and diacritics-sensitivity)
 	 * @param diacSensitive compare diacritics-sensitively? (currently ignored)
 	 */
-	public abstract void indexOf(Set<Integer> results, String term, boolean caseSensitive, boolean diacSensitive);
+	public abstract void indexOf(MutableIntSet results, String term, boolean caseSensitive, boolean diacSensitive);
 
 	/**
 	 * Build the index from term to term id. Depending on the terms
@@ -105,5 +107,9 @@ public abstract class Terms {
 	}
 
 	protected abstract void setBlockBasedFile(boolean useBlockBasedTermsFile);
+
+	public static Terms open(boolean indexMode, Collator collator, File termsFile, boolean useBlockBasedTermsFile) {
+		return new TermsImplV3(indexMode, collator, termsFile, useBlockBasedTermsFile);
+	}
 
 }

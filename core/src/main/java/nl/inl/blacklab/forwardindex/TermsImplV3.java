@@ -17,22 +17,20 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.text.CollationKey;
 import java.text.Collator;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.Maps;
 
 /**
@@ -61,54 +59,24 @@ class TermsImplV3 extends Terms {
 
 	protected static final Logger logger = LogManager.getLogger(TermsImplV3.class);
 
-	/** A mapped block from the terms file */
-	static class TermStringBlock {
+	/** First index in array and number of elements from array */
+	static class FirstAndNumber {
+		public int first;
 
-		/** The mapped block */
-		private ByteBuffer buffer;
+		public int number;
 
-		/** Number of term strings in this block */
-		int numberOfTerms;
-
-		/** Offsets of the term strings in this block */
-		private int[] offsets;
-
-		public TermStringBlock(ByteBuffer buffer, int numberOfTerms, int[] offsets) {
-			super();
-			this.buffer = buffer;
-			this.numberOfTerms = numberOfTerms;
-			this.offsets = offsets;
-		}
-
-		/** Get a term string from this block
-		 * @param i term string index in this block
-		 * @return corresponding term string
-		 */
-		public synchronized String get(int i) {
-			int termOffset = offsets[i];
-			int termLength = offsets[i + 1] - termOffset;
-			if (termLength == 0)
-				return "";
-			buffer.position(termOffset);
-			byte[] termBytes = new byte[termLength];
-			buffer.get(termBytes);
-			return new String(termBytes, DEFAULT_CHARSET);
-		}
-
-		/** Get the number of terms in this block.
-		 *  @return number of terms in this block.
-		 */
-		public int numberOfTerms() {
-			return numberOfTerms;
+		public FirstAndNumber(int first, int number) {
+			this.first = first;
+			this.number = number;
 		}
 
 	}
 
-	/** Mapped blocks from the terms file */
-	List<TermStringBlock> termStringBlocks;
-
 	/** How many terms total are there? (always valid) */
 	int numberOfTerms = 0;
+
+	/** Search mode only: the terms, by index number. */
+	String[] terms;
 
 	/** The index number of each sorting position. Inverse of sortPositionPerId[] array.
 	 *  Only valid when indexMode == false. */
@@ -128,9 +96,17 @@ class TermsImplV3 extends Terms {
 
 	/**
 	 * Mapping from term to its unique index number. We use a SortedMap because we wish to
-	 * store the sorted index numbers later (to speed up sorting). Only valid in indexMode.
+	 * store the sorted index numbers later (to speed up sorting).
 	 */
 	Map<String, Integer> termIndex;
+
+	/**
+	 * The first index in the sortPositionPerIdInsensitive[] array
+	 * that matches each term, and the number of matching terms that follow.
+	 * Used while building NFAs to quickly fetch all indices matching
+	 * a term case-insensitively. Only valid in search mode.
+	 */
+	Map<CollationKey, FirstAndNumber> termIndexInsensitive;
 
 	/** If true, we're indexing data and adding terms. If false, we're searching and just retrieving terms. */
 	private boolean indexMode;
@@ -175,9 +151,11 @@ class TermsImplV3 extends Terms {
 			// Index mode: create a SortedMap based on the specified Collator.
 			// (used later to get the terms in sort order)
 			this.termIndex = new TreeMap<>(this.collator);
+			this.termIndexInsensitive = null;
 		} else {
 			// We already have the sort order, so TreeMap is not necessary here.
 			this.termIndex = Maps.mutable.empty();
+			this.termIndexInsensitive = Maps.mutable.empty();
 		}
 		termIndexBuilt = true;
 		setBlockBasedFile(useBlockBasedTermsFile);
@@ -187,82 +165,78 @@ class TermsImplV3 extends Terms {
 
 	@Override
 	public int indexOf(String term) {
-		// Do we have the term index available (fastest method)?
-		if (!termIndexBuilt) {
 
-			// No. (this means we are in search mode, because in
-			//      index mode the term index is always available)
-			// Do a binary search to find term.
-			// Note that the binary search is done on the sorted terms,
-			// so we need to guess an ordinal, convert it to a term index,
-			// then check the term string, and repeat until we find a match.
-			int min = 0, max = idPerSortPosition.length - 1;
-			while (true) {
-				int guessedOrdinal = (min + max) / 2;
-				int guessedIndex = idPerSortPosition[guessedOrdinal];
-				String guessedTerm = get(guessedIndex);
-				int cmp = collator.compare(term, guessedTerm);
-				if (cmp == 0)
-					return guessedIndex; // found
-				if (cmp < 0)
-					max = guessedOrdinal - 1;
-				else
-					min = guessedOrdinal + 1;
-				if (max < min)
-					return NO_TERM; // not found
-			}
+		if (!termIndexBuilt) {
+			// We havent' filled termIndex based on terms[] yet.
+			// Do so now. (so the first call to this method might be
+			// slow in search mode, but it's only used to deserialize
+			// HitPropValueContext*, which doesn't happen a lot)
+			buildTermIndex();
 		}
 
-		// Use the available term index.
-		Integer index = termIndex.get(term);
-		if (index != null)
+		// Do we have the term index available (fastest method)?
+		if (termIndexBuilt) {
+			// Yes, use the available term index.
+			Integer index = termIndex.get(term);
+			if (index != null)
+				return index;
+			if (!indexMode)
+				return NO_TERM; // term not found
+			index = termIndex.size();
+			termIndex.put(term, index);
 			return index;
-		if (!indexMode)
-			return NO_TERM; // term not found
-		index = termIndex.size();
-		termIndex.put(term, index);
-		return index;
-	}
-
-//	private List<Integer> indexOfInsensitive(String term) {
-//		Collator coll = collatorInsensitive;
-//
-//		// No. (this means we are in search mode, because in
-//		//      index mode the term index is always available)
-//		// Do a binary search to find term.
-//		// Note that the binary search is done on the sorted terms,
-//		// so we need to guess an ordinal, convert it to a term index,
-//		// then check the term string, and repeat until we find a match.
-//		int min = 0, max = idsPerSortPositionInsensitive.size() - 1;
-//		while (max >= min) {
-//			int guessedOrdinal = (min + max) / 2;
-//			List<Integer> guessedIndices = idsPerSortPositionInsensitive.get(guessedOrdinal);
-//			int guessedIndex = guessedIndices.get(0);
-//			String guessedTerm = get(guessedIndex);
-//			int cmp = coll.compare(term, guessedTerm);
-//			if (cmp == 0) {
-//				return guessedIndices;
-//			}
-//			if (cmp < 0)
-//				max = guessedOrdinal - 1;
-//			else
-//				min = guessedOrdinal + 1;
-//		}
-//		return Collections.emptyList(); // not found
-//	}
-
-	@Override
-	public void indexOf(Set<Integer> results, String term, boolean caseSensitive, boolean diacSensitive) {
-		// NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
-		//  right now, diacSensitive is ignored and caseSensitive is used for both.
-//		if (!caseSensitive) {
-//			return indexOfInsensitive(term);
-//		}
-		int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
-		Collator coll = caseSensitive ? collator : collatorInsensitive;
+		}
 
 		// No. (this means we are in search mode, because in
 		//      index mode the term index is always available)
+		// Do a binary search to find term.
+		// Note that the binary search is done on the sorted terms,
+		// so we need to guess an ordinal, convert it to a term index,
+		// then check the term string, and repeat until we find a match.
+		int min = 0, max = idPerSortPosition.length - 1;
+		while (true) {
+			int guessedOrdinal = (min + max) / 2;
+			int guessedIndex = idPerSortPosition[guessedOrdinal];
+			String guessedTerm = get(guessedIndex);
+			int cmp = collator.compare(term, guessedTerm);
+			if (cmp == 0)
+				return guessedIndex; // found
+			if (cmp < 0)
+				max = guessedOrdinal - 1;
+			else
+				min = guessedOrdinal + 1;
+			if (max < min)
+				return NO_TERM; // not found
+		}
+	}
+
+	@Override
+	public void indexOf(MutableIntSet results, String term, boolean caseSensitive, boolean diacSensitive) {
+		// NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
+		//  right now, diacSensitive is ignored and caseSensitive is used for both.
+		int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
+		Collator coll = caseSensitive ? collator : collatorInsensitive;
+
+		// Do we have the term index available (fastest method)?
+		if (termIndexBuilt) {
+			// Yes, use the available term index.
+			// NOTE: insensitive index is only available in search mode.
+			if (caseSensitive) {
+				// Case-/accent-sensitive. Look up the term's id.
+				results.add(termIndex.get(term));
+				return;
+			} else if (termIndexInsensitive != null) {
+				// Case-/accent-insensitive. Find the relevant stretch of sort positions and look up the corresponding ids.
+				FirstAndNumber firstAndNumber = termIndexInsensitive.get(coll.getCollationKey(term));
+				for (int i = firstAndNumber.first; i < firstAndNumber.number; i++) {
+					results.add(idLookup[i]);
+				}
+				return;
+			}
+		}
+
+		// No termIndex available.
+		// (this means we are in search mode, because in index mode the term index is always available)
 		// Do a binary search to find term.
 		// Note that the binary search is done on the sorted terms,
 		// so we need to guess an ordinal, convert it to a term index,
@@ -305,9 +279,35 @@ class TermsImplV3 extends Terms {
 	public synchronized void buildTermIndex() {
 		if (termIndexBuilt)
 			return;
-		for (int i = 0; i < numberOfTerms(); i++) {
+
+		// Build the case-sensitive term index.
+		int n = numberOfTerms();
+		for (int i = 0; i < n; i++) {
 			termIndex.put(get(i), i);
 		}
+
+		if (termIndexInsensitive != null) {
+			// Now, store the first index in the sortPositionPerIdInsensitive[] array
+			// that matches each term, and the number of matching terms that follow.
+			// This can be used while building NFAs to quickly fetch all indices matching
+			// a term case-insensitively.
+			CollationKey prevTermKey = collatorInsensitive.getCollationKey("");
+			FirstAndNumber currentItem = null;
+			for (int i = 0; i < n; i++) {
+				String term = get(sortPositionPerIdInsensitive[i]);
+				CollationKey termKey = collatorInsensitive.getCollationKey(term);
+				if (!termKey.equals(prevTermKey)) {
+					if (currentItem != null)
+						currentItem.number = i - currentItem.first;
+					currentItem = new FirstAndNumber(i, 0);
+					termIndexInsensitive.put(termKey, currentItem);
+				}
+			}
+			if (currentItem != null) {
+				currentItem.number = n - currentItem.first;
+			}
+		}
+
 		termIndexBuilt = true;
 	}
 
@@ -316,25 +316,28 @@ class TermsImplV3 extends Terms {
 		if (!indexMode)
 			throw new RuntimeException("Cannot clear, not in index mode");
 		termIndex.clear();
+		if (termIndexInsensitive != null)
+			termIndexInsensitive.clear();
 		termIndexBuilt = true;
 	}
 
 	private void read(File termsFile) {
 		termIndex.clear();
+		if (termIndexInsensitive != null)
+			termIndexInsensitive.clear();
 		try {
-			try (RandomAccessFile termsFileFp = new RandomAccessFile(termsFile, "r")) {
-				try (FileChannel termsFileChannel = termsFileFp.getChannel()) {
-
+			try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
+				try (FileChannel fc = raf.getChannel()) {
 					long fileLength = termsFile.length();
 					long fileMapStart = 0;
 					long fileMapLength = Math.min(maxMapSize, fileLength);
-					MappedByteBuffer buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+					MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 					int n = buf.getInt();
-					fileMapStart += BYTES_PER_INT;
 					IntBuffer ib = buf.asIntBuffer();
 					numberOfTerms = n;
+					int[] termStringOffsets = new int[n + 1];
+					terms = new String[n];
 
-					termStringBlocks = new ArrayList<>();
 					if (useBlockBasedTermsFile) {
 						// New format, multiple blocks of term strings if necessary,
 						// so term strings may total over 2 GB.
@@ -344,22 +347,34 @@ class TermsImplV3 extends Terms {
 						while (currentTerm < n) {
 
 							int numTermsThisBlock = ib.get();
-							currentTerm += numTermsThisBlock;
-							int[] termStringOffsets = new int[numTermsThisBlock + 1];
-							ib.get(termStringOffsets, 0, numTermsThisBlock); // term string offsets
+							ib.get(termStringOffsets, currentTerm, numTermsThisBlock); // term
+																						// string
+																						// offsets
 
 							// Read term strings data
-							int termStringsByteSize = termStringOffsets[numTermsThisBlock] = ib.get();
-							fileMapStart += (numTermsThisBlock + 2) * BYTES_PER_INT;
-							ByteBuffer termStringBuf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, termStringsByteSize);
-							termStringBlocks.add(new TermStringBlock(termStringBuf, numTermsThisBlock, termStringOffsets));
+							int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
+							buf.position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
+							byte[] termStringsThisBlock = new byte[dataBlockSize];
+							buf.get(termStringsThisBlock);
+
+							// Now instantiate String objects from the offsets and byte data
+							int firstTermInBlock = currentTerm;
+							for (; currentTerm < firstTermInBlock + numTermsThisBlock; currentTerm++) {
+								int offset = termStringOffsets[currentTerm];
+								int length = termStringOffsets[currentTerm + 1] - offset;
+								String str = new String(termStringsThisBlock, offset, length, DEFAULT_CHARSET);
+
+								// We need to find term for id while searching
+								terms[currentTerm] = str;
+							}
 
 							// Re-map a new part of the file before we read the next block.
 							// (and before we read the sort buffers)
-							fileMapStart += termStringsByteSize;
+							long bytesRead = buf.position();
+							fileMapStart += bytesRead;
 							fileMapLength = Math.min(maxMapSize, fileLength - fileMapStart);
 							if (fileMapLength > 0) {
-								buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+								buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 								ib = buf.asIntBuffer();
 							}
 						}
@@ -368,25 +383,32 @@ class TermsImplV3 extends Terms {
 						// Old format, single term strings block.
 						// Causes problems when term strings total over 2 GB.
 
-						int numTermsThisBlock = n;
-						int[] termStringOffsets = new int[numTermsThisBlock + 1];
 						ib.get(termStringOffsets); // term string offsets
-
-						// Read term strings data
 						int termStringsByteSize = ib.get(); // data block size
-						fileMapStart += (numTermsThisBlock + 2) * BYTES_PER_INT;
-						ByteBuffer termStringBuf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, termStringsByteSize);
-						termStringBlocks.add(new TermStringBlock(termStringBuf, numTermsThisBlock, termStringOffsets));
 
-						fileMapStart += termStringsByteSize;
-						buf = termsFileChannel.map(MapMode.READ_ONLY, fileMapStart, fileLength - fileMapStart);
+						// termStringByteSize fits in an int, and terms
+						// fits in a single byte array. Use the old code.
+						buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
+						byte[] termStrings = new byte[termStringsByteSize];
+						buf.get(termStrings);
 						ib = buf.asIntBuffer();
+
+						// Now instantiate String objects from the offsets and byte data
+						terms = new String[n];
+						for (int id = 0; id < n; id++) {
+							int offset = termStringOffsets[id];
+							int length = termStringOffsets[id + 1] - offset;
+							String str = new String(termStrings, offset, length, DEFAULT_CHARSET);
+
+							// We need to find term for id while searching
+							terms[id] = str;
+						}
 					}
 
 					if (indexMode) {
 						termIndexBuilt = false;
 						buildTermIndex(); // We need to find id for term quickly while indexing
-						//terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
+						terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
 					} else {
 						termIndexBuilt = false; // termIndex hasn't been filled yet
 
@@ -423,20 +445,6 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
-	public String get(Integer index) {
-		assert index >= 0 && index < numberOfTerms : "Term index out of range (" + index + ", numterms = " + numberOfTerms + ")";
-
-		// See what term strings block this term is in
-		int blockStart = 0;
-		for (TermStringBlock bl: termStringBlocks) {
-			if (index < blockStart + bl.numberOfTerms)
-				return bl.get(index - blockStart);
-			blockStart += bl.numberOfTerms();
-		}
-		throw new RuntimeException("Term index out of range, not caught before!");
-	}
-
-	@Override
 	public void write(File termsFile) {
 		if (!indexMode)
 			throw new RuntimeException("Term.write(): not in index mode!");
@@ -448,7 +456,7 @@ class TermsImplV3 extends Terms {
 					int n = termIndex.size();
 
 					// Fill the terms[] array
-					final String[] terms = new String[n];
+					terms = new String[n];
 					long termStringsByteSize = 0;
 					for (Map.Entry<String, Integer> entry: termIndex.entrySet()) {
 						terms[entry.getValue()] = entry.getKey();
@@ -593,6 +601,12 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
+	public String get(Integer index) {
+		assert index >= 0 && index < numberOfTerms : "Term index out of range (" + index + ", numterms = " + numberOfTerms + ")";
+		return terms[index];
+	}
+
+	@Override
 	public int numberOfTerms() {
 		return numberOfTerms;
 	}
@@ -636,7 +650,7 @@ class TermsImplV3 extends Terms {
 
 	public void setMaxBlockSize(int maxBlockSize) {
 		if ((long)maxBlockSize > ((long)DEFAULT_MAX_MAP_SIZE))
-			throw new RuntimeException("Max. block size too large, max. " + DEFAULT_MAX_MAP_SIZE );
+			throw new RuntimeException("Max. block size too large, max. " + DEFAULT_MAX_MAP_SIZE);
 		this.maxBlockSize = maxBlockSize;
 	}
 

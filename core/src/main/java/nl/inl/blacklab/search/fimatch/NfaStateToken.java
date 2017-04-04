@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
@@ -24,10 +26,10 @@ public class NfaStateToken extends NfaState {
 	private int propertyNumber = -1;
 
 	/** The tokens this state accepts. */
-	private HashSet<String> inputTokenStrings;
+	private Set<String> inputTokenStrings;
 
 	/** The tokens this state accepts. Only valid after lookupPropertNumber() called. */
-	private Set<Integer> inputTokens = null;
+	private MutableIntSet inputTokens = null;
 
 	/** Do we accept any token? */
 	private boolean acceptAnyToken = false;
@@ -132,7 +134,7 @@ public class NfaStateToken extends NfaState {
 		propertyNumber = fiAccessor.getPropertyNumber(propertyName);
 		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(luceneField);
 		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(luceneField);
-		inputTokens = new HashSet<>();
+		inputTokens = new IntHashSet(); //new HashSet<>();
 		for (String token: inputTokenStrings)  {
 			fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, caseSensitive, diacSensitive);
 		}

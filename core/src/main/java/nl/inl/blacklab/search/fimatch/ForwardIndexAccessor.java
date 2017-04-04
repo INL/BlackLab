@@ -1,8 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.Set;
-
 import org.apache.lucene.index.LeafReader;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.search.Searcher;
 
@@ -38,7 +37,7 @@ public abstract class ForwardIndexAccessor {
 	 * @param diacSensitive match case sensitively or not? (currently ignored)
 	 *
 	 */
-	public abstract void getTermNumbers(Set<Integer> results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive);
+	public abstract void getTermNumbers(MutableIntSet results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive);
 
 	/**
 	 * Get the number of properties
@@ -112,8 +111,5 @@ public abstract class ForwardIndexAccessor {
 		}
 
 	}
-
-	public abstract String getTerm(int propIndex, int t);
-
 
 }

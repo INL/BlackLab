@@ -1,9 +1,9 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.IdentityHashMap;
-import java.util.Set;
 
 import org.apache.lucene.index.LeafReader;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,18 +16,13 @@ public class TestNfa {
 		}
 
 		@Override
-		public void getTermNumbers(Set<Integer> results, int propertyNumber, String propertyValue, boolean caseSensitive,
+		public void getTermNumbers(MutableIntSet results, int propertyNumber, String propertyValue, boolean caseSensitive,
 				boolean diacSensitive) {
 			if (propertyNumber != 0)
 				throw new RuntimeException("only 0 is valid property");
 			if (propertyValue.length() > 1)
 				throw new RuntimeException("only words of length 1 are valid");
-			results.add((int)propertyValue.charAt(0));
-		}
-
-		@Override
-		public String getTerm(int propIndex, int t) {
-			return null;
+			results.add(propertyValue.charAt(0));
 		}
 
 		@Override

@@ -1,7 +1,8 @@
 package nl.inl.blacklab;
 
 import java.io.File;
-import java.util.Set;
+
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.forwardindex.Terms;
 
@@ -23,7 +24,7 @@ public class MockTerms extends Terms {
 	}
 
 	@Override
-	public void indexOf(Set<Integer> results, String term, boolean caseSensitive, boolean diacSensitive) {
+	public void indexOf(MutableIntSet results, String term, boolean caseSensitive, boolean diacSensitive) {
 		for (int i = 0; i < numberOfTerms(); i++) {
 			if (caseSensitive) {
 				if (get(i).equals(term))

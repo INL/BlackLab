@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.LeafReader;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -65,7 +65,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 	}
 
 	@Override
-	public void getTermNumbers(Set<Integer> results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
+	public void getTermNumbers(MutableIntSet results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
 		terms.get(propertyNumber).indexOf(results, propertyValue, caseSensitive, diacSensitive);
 	}
 
@@ -81,11 +81,6 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 	@Override
 	public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
 		return new ForwardIndexAccessorLeafReaderImpl(reader);
-	}
-
-	@Override
-	public String getTerm(int propIndex, int t) {
-		return fis.get(propIndex).getTerms().get(t);
 	}
 
 	class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {

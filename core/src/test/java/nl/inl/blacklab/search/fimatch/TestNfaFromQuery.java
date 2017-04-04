@@ -7,10 +7,10 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Term;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,10 +32,7 @@ public class TestNfaFromQuery {
 
 		private final Map<String, Integer> terms = new HashMap<>();
 
-		private final String[] termsById;
-
 		public MockForwardIndexAccessor(String... document) {
-			termsById = document;
 			this.termIds = new int[document.length];
 			for (int i = 0; i < document.length; i++) {
 				Integer termId = terms.get(document[i]);
@@ -55,7 +52,7 @@ public class TestNfaFromQuery {
 		}
 
 		@Override
-		public void getTermNumbers(Set<Integer> results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
+		public void getTermNumbers(MutableIntSet results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
 			if (propertyNumber != 0)
 				throw new IllegalArgumentException("Unknown property " + propertyNumber);
 			if (caseSensitive) {
@@ -107,13 +104,6 @@ public class TestNfaFromQuery {
 				}
 
 			};
-		}
-
-		@Override
-		public String getTerm(int propIndex, int t) {
-			if (propIndex != 0)
-				throw new IllegalArgumentException("Unknown property " + propIndex);
-			return termsById[t];
 		}
 
 	}

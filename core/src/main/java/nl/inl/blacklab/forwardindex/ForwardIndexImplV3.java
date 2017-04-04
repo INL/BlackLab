@@ -168,13 +168,13 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			setLargeTermsFileSupport(largeTermsFileSupport);
 			if (tocFile.exists()) {
 				readToc();
-				terms = new TermsImplV3(indexMode, collator, termsFile, useBlockBasedTermsFile);
+				terms = Terms.open(indexMode, collator, termsFile, useBlockBasedTermsFile);
 				tocModified = false;
 			} else {
 				if (!indexMode) {
 					throw new IllegalArgumentException("No TOC found, and not in index mode!");
 				}
-				terms = new TermsImplV3(indexMode, collator, null, true);
+				terms = Terms.open(indexMode, collator, null, true);
 				tokensFile.createNewFile();
 				tokensFileChunks = null;
 				tocModified = true;
@@ -271,10 +271,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			if (writeTokensFp == null) {
 				openTokensFileForWriting();
 			}
-			
+
 			if (File.separatorChar != '\\') // causes problems on Windows
 				writeTokensFp.setLength(0);
-			
+
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
