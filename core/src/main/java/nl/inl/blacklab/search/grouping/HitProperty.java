@@ -119,7 +119,7 @@ public abstract class HitProperty implements Comparator<Object> {
 			type = type.substring(1);
 		}
 		String info = parts.length > 1 ? parts[1] : "";
-		List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright", "context");
+		List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright", "context", "hitposition");
 		int typeNum = types.indexOf(type);
 		HitProperty result;
 		switch (typeNum) {
@@ -149,6 +149,9 @@ public abstract class HitProperty implements Comparator<Object> {
 			break;
 		case 8:
 			result = HitPropertyContextWords.deserialize(hits, info);
+			break;
+		case 9:
+			result = HitPropertyHitPosition.deserialize(hits);
 			break;
 		default:
 			logger.debug("Unknown HitProperty '" + type + "'");
