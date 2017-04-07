@@ -571,10 +571,37 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
 		// See if this is really just an expanded wildcard/regex query, and if so,
 		// rewrite it to a NfaStateToken instead.
+		Set<String> terms = new HashSet<>();
+		boolean canBeTokenState = getNfaTokenStateTerms(terms);
+		if (canBeTokenState) {
+			// Yep. Rewrite to a large NfaStateToken.
+			NfaState tokenState = NfaState.token(luceneField, terms, null);
+			return new Nfa(tokenState, Arrays.asList(tokenState));
+		}
+
+		List<NfaState> states = new ArrayList<>();
+		List<NfaState> dangling = new ArrayList<>();
+		for (SpanQuery cl: getClauses()) {
+			BLSpanQuery clause = (BLSpanQuery)cl;
+			Nfa frag = clause.getNfa(fiAccessor, direction);
+			states.add(frag.getStartingState());
+			dangling.addAll(frag.getDanglingArrows());
+		}
+		return new Nfa(NfaState.or(false, states.toArray(new NfaState[0])), dangling);
+	}
+
+	/**
+	 * Checks if this OR node could be converted into a single
+	 * NFA token state with a list of terms, and collects the terms.
+	 *
+	 * @param terms terms for the NFA token state, if possible (or null if we're not interested in the terms)
+	 * @return true if this node can be converted into a single NFA token state
+	 */
+	protected boolean getNfaTokenStateTerms(Set<String> terms) {
+		boolean canBeTokenState = false;
 		if (hitsAllSameLength() && hitsLengthMax() == 1) {
-			boolean canBeTokenState = true;
+			canBeTokenState = true;
 			String luceneField = null;
-			Set<String> terms = new HashSet<>();
 			for (SpanQuery cl: getClauses()) {
 				if (!(cl instanceof BLSpanTermQuery)) {
 					// Not all simple term queries. Can't rewrite to token state.
@@ -589,25 +616,11 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 					canBeTokenState = false;
 					break;
 				}
-				terms.add(blcl.getTerm().text());
-			}
-			if (canBeTokenState) {
-				// Yep. Rewrite to a large NfaStateToken.
-				NfaState tokenState = NfaState.token(luceneField, terms, null);
-				return new Nfa(tokenState, Arrays.asList(tokenState));
+				if (terms != null)
+					terms.add(blcl.getTerm().text());
 			}
 		}
-
-
-		List<NfaState> states = new ArrayList<>();
-		List<NfaState> dangling = new ArrayList<>();
-		for (SpanQuery cl: getClauses()) {
-			BLSpanQuery clause = (BLSpanQuery)cl;
-			Nfa frag = clause.getNfa(fiAccessor, direction);
-			states.add(frag.getStartingState());
-			dangling.addAll(frag.getDanglingArrows());
-		}
-		return new Nfa(NfaState.or(states), dangling);
+		return canBeTokenState;
 	}
 
 	@Override
@@ -632,4 +645,17 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		return cost;
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		int cost = 1;
+		boolean producesSingleState = getNfaTokenStateTerms(null);
+		if (!producesSingleState) {
+			// Add the costs of our clauses.
+			for (SpanQuery cl: getClauses()) {
+				BLSpanQuery clause = (BLSpanQuery)cl;
+				cost += clause.forwardMatchingCost();
+			}
+		}
+		return cost;
+	}
 }

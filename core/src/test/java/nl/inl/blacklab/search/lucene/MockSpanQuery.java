@@ -180,4 +180,9 @@ public class MockSpanQuery extends BLSpanQuery {
 		return 0;
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		return 0;
+	}
+
 }

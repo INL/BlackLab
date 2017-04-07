@@ -217,4 +217,9 @@ public class SpanQueryTags extends BLSpanQuery {
 	public long reverseMatchingCost(IndexReader reader) {
 		return clause.reverseMatchingCost(reader);
 	}
+
+	@Override
+	public int forwardMatchingCost() {
+		return clause.forwardMatchingCost();
+	}
 }

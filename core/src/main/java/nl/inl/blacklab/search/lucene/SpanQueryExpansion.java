@@ -259,6 +259,16 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		return clauses.get(0).reverseMatchingCost(reader) * numberOfExpansionSteps;
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		int cost = clauses.get(0).forwardMatchingCost();
+		int nMax = max == MAX_UNLIMITED ? 50 : max;
+		for (int i = min; i <= nMax; i++) {
+			cost += i;
+		}
+		return cost;
+	}
+
 	public BLSpanQuery addExpand(int addMin, int addMax) {
 		int nMin = min + addMin;
 		int nMax = addMaxValues(max, addMax);

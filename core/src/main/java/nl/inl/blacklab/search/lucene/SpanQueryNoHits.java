@@ -119,4 +119,9 @@ public class SpanQueryNoHits extends BLSpanQuery {
 	public long reverseMatchingCost(IndexReader reader) {
 		return 0; // no hits, no cost
 	}
+
+	@Override
+	public int forwardMatchingCost() {
+		return 0; // no hits, no cost
+	}
 }

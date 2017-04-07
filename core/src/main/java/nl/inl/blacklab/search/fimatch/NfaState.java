@@ -53,21 +53,13 @@ public abstract class NfaState {
 	/**
 	 * Build am OR state.
 	 *
+	 * @param clausesMayLoopBack if false, no clauses loop back to earlier states,
+	 *   (a more efficient way of matching can be used in this case)
 	 * @param nextStates states to try
 	 * @return the state object
 	 */
-	public static NfaState or(NfaState... nextStates) {
-		return new NfaStateOr(nextStates);
-	}
-
-	/**
-	 * Build an OR state.
-	 *
-	 * @param nfaClauses NFAs, one of which must match
-	 * @return the state object
-	 */
-	public static NfaState or(List<NfaState> nfaClauses) {
-		return new NfaStateOr(nfaClauses);
+	public static NfaState or(boolean clausesMayLoopBack, NfaState... nextStates) {
+		return clausesMayLoopBack ? new NfaStateOr(nextStates) : new NfaStateOrAcyclic(nextStates);
 	}
 
 	/**
@@ -131,7 +123,7 @@ public abstract class NfaState {
 	/**
 	 * Return a copy of the fragment starting from this state, and collect all (copied) states with dangling outputs.
 	 *
-	 * @param dangling where to collect copied states with dangling outputs
+	 * @param dangling where to collect copied states with dangling outputs, or null if we don't care about these
 	 * @param copiesMade states copied earlier during this copy operation, so we can deal with cyclic NFAs (i.e. don't keep copying,
 	 *   re-use the previous copy)
 	 * @return the copied fragment
@@ -149,7 +141,7 @@ public abstract class NfaState {
 	 * Subclasses can override this (not copy()), so they don't have to look at copiesMade but can always just create a
 	 * copy of themselves.
 	 *
-	 * @param dangling where to collect copied states with dangling outputs
+	 * @param dangling where to collect copied states with dangling outputs, or null if we don't care about these
 	 * @param copiesMade states copied earlier during this copy operation, so we can deal with cyclic NFAs (i.e. don't keep copying,
 	 *   re-use the previous copy)
 	 * @return the copied fragment

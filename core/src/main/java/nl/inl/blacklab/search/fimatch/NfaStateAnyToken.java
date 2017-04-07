@@ -18,7 +18,7 @@ public class NfaStateAnyToken extends NfaStateToken {
 	NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
 		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
 		NfaStateToken copy = new NfaStateAnyToken(luceneField, nextStateCopy);
-		if (nextState == null)
+		if (nextState == null && dangling != null)
 			dangling.add(copy);
 		return copy;
 	}

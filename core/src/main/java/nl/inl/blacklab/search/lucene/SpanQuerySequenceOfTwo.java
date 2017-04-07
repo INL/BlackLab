@@ -374,4 +374,13 @@ class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
 		}
 		return cost;
 	}
+
+	@Override
+	public int forwardMatchingCost() {
+		int cost = 0;
+		for (BLSpanQuery clause: clauses) {
+			cost += clause.forwardMatchingCost();
+		}
+		return cost;
+	}
 }

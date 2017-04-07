@@ -107,7 +107,7 @@ public class JobHits extends JobWithHits {
 				// of 10, create an NFA.
 				SearchSettings searchSett = jobDesc.getSearchSettings();
 				if (searchSett.isDebugMode() && searchSett.getFiMatchNfaFactor() != -1)
-					ClauseCombinerNfa.setNfaFactor(searchSett.getFiMatchNfaFactor());
+					ClauseCombinerNfa.setNfaThreshold(searchSett.getFiMatchNfaFactor());
 
 				hits = searcher.find(textPattern, filter);
 

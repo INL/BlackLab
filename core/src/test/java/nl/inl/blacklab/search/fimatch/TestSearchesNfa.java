@@ -24,14 +24,14 @@ public class TestSearchesNfa {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		ClauseCombinerNfa.setNfaFactor(1);
+		ClauseCombinerNfa.setNfaThreshold(1);
 		testIndex = new TestIndex();
 	}
 
 	@AfterClass
 	public static void tearDown() {
 		testIndex.close();
-		ClauseCombinerNfa.setNfaFactor(ClauseCombinerNfa.DEFAULT_NFA_FACTOR);
+		ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
 	}
 
 	@Test

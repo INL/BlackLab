@@ -261,7 +261,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 	}
 
 	/**
-	 * Return an very rough indication of how many hits this
+	 * Return an (very rough) indication of how many hits this
 	 * clause might return.
 	 *
 	 * Used to decide what parts of the query
@@ -279,6 +279,16 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 * @return rough estimation of the number of hits
 	 */
 	public abstract long reverseMatchingCost(IndexReader reader);
+
+	/**
+	 * Return an (very rough) indication of how expensive finding a match
+	 * for this query using an NFA would be.
+	 *
+	 * Used to decide what parts of the query to match using the forward index.
+	 *
+	 * @return rough estimation of the NFA complexity
+	 */
+	public abstract int forwardMatchingCost();
 
 	@Override
 	public String getField() {

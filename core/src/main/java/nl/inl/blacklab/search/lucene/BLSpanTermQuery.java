@@ -201,4 +201,9 @@ public class BLSpanTermQuery extends BLSpanQuery {
 		}
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		return 1;
+	}
+
 }

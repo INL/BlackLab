@@ -145,4 +145,9 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 	public long reverseMatchingCost(IndexReader reader) {
 		return clauses.get(0).reverseMatchingCost(reader);
 	}
+
+	@Override
+	public int forwardMatchingCost() {
+		return clauses.get(0).forwardMatchingCost();
+	}
 }

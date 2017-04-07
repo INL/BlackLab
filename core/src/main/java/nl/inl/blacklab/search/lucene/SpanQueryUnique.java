@@ -168,4 +168,9 @@ class SpanQueryUnique extends BLSpanQuery {
 	public long reverseMatchingCost(IndexReader reader) {
 		return src.reverseMatchingCost(reader);
 	}
+
+	@Override
+	public int forwardMatchingCost() {
+		return src.forwardMatchingCost();
+	}
 }

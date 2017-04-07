@@ -251,4 +251,15 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 		return clauses.get(0).reverseMatchingCost(reader);
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		int nMax = max == MAX_UNLIMITED ? 50 : max;
+		int cost = 0;
+		int clauseCost = clauses.get(0).forwardMatchingCost();
+		for (int i = min; i <= nMax; i++) {
+			cost += i * clauseCost;
+		}
+		return cost;
+	}
+
 }

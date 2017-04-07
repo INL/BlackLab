@@ -63,7 +63,7 @@ public class TestNfa {
 		// Test simple NFA matching ab|ba
 		NfaState ab = NfaState.token("contents%word@i", "a", NfaState.token("contents%word@i", "b", null));
 		NfaState ba = NfaState.token("contents%word@i", "b", NfaState.token("contents%word@i", "a", null));
-		NfaState start = NfaState.or(ab, ba);
+		NfaState start = NfaState.or(false, ab, ba);
 		start.lookupPropertyNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
 
 		ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
@@ -77,7 +77,7 @@ public class TestNfa {
 	public void testNfaRepetition() {
 		// Test NFA matching ac*e
 		NfaState c = NfaState.token("contents%word@i", "c", null);
-		NfaState split = NfaState.or(c, NfaState.token("contents%word@i", "e", null));
+		NfaState split = NfaState.or(true, c, NfaState.token("contents%word@i", "e", null));
 		NfaState start = NfaState.token("contents%word@i", "a", split);
 		c.setNextState(0, split); // loopback
 		start.lookupPropertyNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());

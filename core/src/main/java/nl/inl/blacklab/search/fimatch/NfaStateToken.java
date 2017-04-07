@@ -89,7 +89,7 @@ public class NfaStateToken extends NfaState {
 		copiesMade.put(this, copy);
 		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
 		copy.nextState = nextStateCopy;
-		if (nextState == null)
+		if (nextState == null && dangling != null)
 			dangling.add(copy);
 		return copy;
 	}

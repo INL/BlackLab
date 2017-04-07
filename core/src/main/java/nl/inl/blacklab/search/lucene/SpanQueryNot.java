@@ -232,4 +232,9 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 		return LuceneUtil.getSumTotalTermFreq(reader, getRealField()) - freq;
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		return clauses.get(0).forwardMatchingCost() + 1;
+	}
+
 }

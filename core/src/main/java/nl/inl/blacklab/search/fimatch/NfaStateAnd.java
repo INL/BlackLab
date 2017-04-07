@@ -69,7 +69,7 @@ public class NfaStateAnd extends NfaState {
 			clauseCopies.add(nextState);
 		}
 		copy.nextStates.addAll(clauseCopies);
-		if (hasNulls)
+		if (hasNulls && dangling != null)
 			dangling.add(copy);
 		return copy;
 	}

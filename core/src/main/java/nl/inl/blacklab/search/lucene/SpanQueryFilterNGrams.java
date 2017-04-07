@@ -195,4 +195,10 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 		return clauses.get(0).reverseMatchingCost(reader) * numberOfExpansionSteps;
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		int numberOfExpansionSteps = max == MAX_UNLIMITED ? 50 : max - min + 1;
+		return clauses.get(0).forwardMatchingCost() * numberOfExpansionSteps;
+	}
+
 }

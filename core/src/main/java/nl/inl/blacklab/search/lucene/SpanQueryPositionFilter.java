@@ -270,6 +270,11 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 		return clauses.get(0).reverseMatchingCost(reader);
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		return clauses.get(0).forwardMatchingCost();
+	}
+
 	/**
 	 * Create a new position filter query with a constant-length clause added to our producer.
 	 *

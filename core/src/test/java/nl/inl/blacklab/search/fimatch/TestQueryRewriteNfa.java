@@ -41,12 +41,12 @@ public class TestQueryRewriteNfa {
 	public static void setUp() throws Exception {
 		testIndex = new TestIndex();
 		searcher = testIndex.getSearcher();
-		ClauseCombinerNfa.setNfaFactor(ClauseCombinerNfa.MAX_NFA_FACTOR);
+		ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
 	}
 
 	@AfterClass
 	public static void tearDown() {
-		ClauseCombinerNfa.setNfaFactor(ClauseCombinerNfa.DEFAULT_NFA_FACTOR);
+		ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
 		searcher.close();
 		testIndex.close();
 	}

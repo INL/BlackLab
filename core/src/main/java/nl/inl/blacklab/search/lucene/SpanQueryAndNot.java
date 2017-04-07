@@ -27,6 +27,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -410,6 +411,17 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		long cost = Integer.MAX_VALUE;
 		for (BLSpanQuery clause: include) {
 			cost = Math.min(cost, clause.reverseMatchingCost(reader));
+		}
+		return cost;
+	}
+
+	@Override
+	public int forwardMatchingCost() {
+		// Add the costs of our clauses.
+		int cost = 1;
+		for (SpanQuery cl: include) {
+			BLSpanQuery clause = (BLSpanQuery)cl;
+			cost += clause.forwardMatchingCost();
 		}
 		return cost;
 	}

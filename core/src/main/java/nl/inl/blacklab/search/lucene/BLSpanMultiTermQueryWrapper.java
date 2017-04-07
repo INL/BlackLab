@@ -114,6 +114,11 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 	}
 
 	@Override
+	public int forwardMatchingCost() {
+		return 0; // should be rewritten
+	}
+
+	@Override
 	public String getRealField() {
 		return query.getField();
 	}

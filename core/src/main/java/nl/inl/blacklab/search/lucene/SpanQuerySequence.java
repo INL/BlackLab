@@ -659,8 +659,19 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	@Override
 	public long reverseMatchingCost(IndexReader reader) {
 		long cost = Integer.MAX_VALUE;
+		double factor = 1.0;
 		for (BLSpanQuery clause: clauses) {
 			cost = Math.min(cost, clause.reverseMatchingCost(reader));
+			factor *= 1.2; // 20% overhead per clause (?)
+		}
+		return (long)(cost * factor);
+	}
+
+	@Override
+	public int forwardMatchingCost() {
+		int cost = 0;
+		for (BLSpanQuery clause: clauses) {
+			cost += clause.forwardMatchingCost();
 		}
 		return cost;
 	}

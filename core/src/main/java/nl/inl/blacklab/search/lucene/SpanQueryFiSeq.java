@@ -201,6 +201,11 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 		return clauses.get(0).reverseMatchingCost(reader);
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		return clauses.get(0).forwardMatchingCost() + nfaQuery.forwardMatchingCost();
+	}
+
 	public int getDirection() {
 		return direction;
 	}

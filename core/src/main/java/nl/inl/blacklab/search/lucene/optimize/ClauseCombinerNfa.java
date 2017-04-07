@@ -19,42 +19,59 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 	private static final int BACKWARD_PRIORITY = 20000000;
 
 	/**
-	 * The default value of nfaFactor.
+	 * The default value of nfaThreshold.
 	 */
-	public static final int DEFAULT_NFA_FACTOR = 100;
+	public static final long DEFAULT_NFA_THRESHOLD = 1000;
 
 	/**
 	 * The maximum value of nfaFactor, meaning "make as many NFAs as possible".
 	 */
-	public static final int MAX_NFA_FACTOR = 0;
+	public static final long MAX_NFA_MATCHING = Long.MAX_VALUE;
 
 	/**
 	 * The minimum value of nfaFactor, meaning "make no NFAs".
 	 */
-	public static final int NO_NFA_FACTOR = Integer.MAX_VALUE;
+	public static final long NO_NFA_MATCHING = 0;
+
+	/**
+	 * Indicates how expensive fetching a lot of term positions from Lucene is;
+	 * Used to calculate the cost of "regular" matching.
+	 */
+	private static final long TERM_FREQ_PENALTY_FACTOR = 500;
+
+	/**
+	 * What we multiply our calculated cost ratio by to get an integer in a reasonable
+	 * range.
+	 */
+	private static final long COST_RATIO_CONSTANT_FACTOR = 1000;
 
 	/**
 	 * The ratio of estimated numbers of hits that we use to decide
 	 * whether or not to try NFA-matching with two clauses / subsequences.
 	 * The lower the number, the more we use NFA-matching.
 	 */
-	private static int nfaFactor = DEFAULT_NFA_FACTOR;
+	private static long nfaThreshold = DEFAULT_NFA_THRESHOLD;
 
-	public static void setNfaFactor(int nfaFactor) {
-		ClauseCombinerNfa.nfaFactor = nfaFactor;
+	public static void setNfaThreshold(long nfaThreshold) {
+		ClauseCombinerNfa.nfaThreshold = nfaThreshold;
 	}
 
-	public static void setNfaMatchingEnabled(boolean b) {
-		nfaFactor = b ? DEFAULT_NFA_FACTOR : NO_NFA_FACTOR;
+	public static void setNfaMatchingEnabled(boolean doNfaMatching) {
+		boolean doingNfaMatching = nfaThreshold != NO_NFA_MATCHING;
+		if (doNfaMatching != doingNfaMatching)
+			nfaThreshold = doNfaMatching ? DEFAULT_NFA_THRESHOLD : NO_NFA_MATCHING;
 	}
 
-	private static int getFactor(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-		if (nfaFactor == NO_NFA_FACTOR)
+	private static long getFactor(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
+		if (nfaThreshold == NO_NFA_MATCHING)
 			return 0;
 		boolean leftEmpty = left.matchesEmptySequence();
 		boolean rightEmpty = right.matchesEmptySequence();
 		long numLeft = Math.max(1, left.reverseMatchingCost(reader));
 		long numRight = Math.max(1, right.reverseMatchingCost(reader));
+		long seqReverseCost = Math.min(numLeft, numRight) + (numLeft + numRight) / TERM_FREQ_PENALTY_FACTOR;
+		long costNfaToReverseForward = COST_RATIO_CONSTANT_FACTOR * numLeft * right.forwardMatchingCost() / seqReverseCost;
+		long costNfaToReverseBackward = COST_RATIO_CONSTANT_FACTOR * numRight * left.forwardMatchingCost() / seqReverseCost;
 		boolean leftNfa = left.canMakeNfa();
 		boolean rightNfa = right.canMakeNfa();
 		boolean backwardPossible = leftNfa && !rightEmpty;
@@ -63,38 +80,38 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 			// Possible.
 			if (forwardPossible && backwardPossible) {
 				// Both possible; choose the best
-				if (numRight >= numLeft) {
+				if (costNfaToReverseBackward >= costNfaToReverseForward) {
 					// Forward
-					return (int)(numRight / numLeft) + 1;
+					return costNfaToReverseForward + 1;
 				}
 				// Backward
-				return -(int)(numLeft / numRight) - 1;
+				return -costNfaToReverseBackward - 1;
 			}
 			// One possibility; which one?
 			if (forwardPossible)
-				return (int)(numRight / numLeft) + 1;
-			return -(int)(numLeft / numRight) - 1;
+				return costNfaToReverseForward + 1;
+			return -costNfaToReverseBackward - 1;
 		}
 		return 0; // not possible
 	}
 
 	@Override
 	public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-		if (nfaFactor == NO_NFA_FACTOR)
+		if (nfaThreshold == NO_NFA_MATCHING)
 			return CANNOT_COMBINE;
-		int factor = getFactor(left, right, reader);
+		long factor = getFactor(left, right, reader);
 		if (factor == 0)
 			return CANNOT_COMBINE;
-		int absFactor = Math.abs(factor);
-		if (absFactor < nfaFactor)
+		long absFactor = Math.abs(factor);
+		if (absFactor > nfaThreshold)
 			return CANNOT_COMBINE;
-		return factor > 0 ? FORWARD_PRIORITY + 10000 / absFactor : BACKWARD_PRIORITY + 10000 / absFactor;
+		return factor > 0 ? FORWARD_PRIORITY - (int)(10000 / absFactor) : BACKWARD_PRIORITY - (int)(10000 / absFactor);
 	}
 
 	@Override
 	public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
 		// Could we make an NFA out of this clause?
-		int factor = getFactor(left, right, reader);
+		long factor = getFactor(left, right, reader);
 		if (factor == 0)
 			throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
 		if (factor > 0) {

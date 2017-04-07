@@ -194,6 +194,16 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 		return LuceneUtil.getSumTotalTermFreq(reader, luceneField) * numberOfExpansionSteps;
 	}
 
+	@Override
+	public int forwardMatchingCost() {
+		int cost = 0;
+		int nMax = max == MAX_UNLIMITED ? 50 : max;
+		for (int i = min; i <= nMax; i++) {
+			cost += i;
+		}
+		return cost;
+	}
+
 	public BLSpanQuery addRep(int addMin, int addMax) {
 		int nMin = min + addMin;
 		int nMax = BLSpanQuery.addMaxValues(max, addMax);
