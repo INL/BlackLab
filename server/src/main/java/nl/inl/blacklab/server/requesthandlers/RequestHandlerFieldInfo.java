@@ -1,11 +1,11 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
@@ -98,6 +98,10 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 			.entry("hasLengthTokens", fieldDesc.hasLengthTokens())
 			.entry("mainProperty", fieldDesc.getMainProperty().getName());
 		ds.startEntry("properties").startMap();
+		Set<String> setShowSubprops = new HashSet<>();
+		if (showSubPropsFor != null && showSubPropsFor.length() > 0) {
+			setShowSubprops.addAll(Arrays.asList(showSubPropsFor.split(",")));
+		}
 		for (String propName: fieldDesc.getProperties()) {
 			PropertyDesc propDesc = fieldDesc.getPropertyDesc(propName);
 			ds.startAttrEntry("property", "name", propName)
@@ -105,25 +109,25 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 					.entry("hasForwardIndex", propDesc.hasForwardIndex())
 					.entry("sensitivity", propDesc.getSensitivity().toString())
 					.entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative()))
-				.endMap()
-			.endAttrEntry();
+				.endMap();
+			if (setShowSubprops.contains(propName)) {
+				String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+				Map<String, Set<String>> subprops = LuceneUtil.getSubprops(searcher.getIndexReader(), luceneField);
+				ds.startEntry("subproperties").startMap();
+				for (Map.Entry<String, Set<String>> subprop: subprops.entrySet()) {
+					String name = subprop.getKey();
+					Set<String> values = subprop.getValue();
+					ds.startAttrEntry("subproperty", "name", name).startList();
+					for (String value: values) {
+						ds.item("value", value);
+					}
+					ds.endList().endAttrEntry();
+				}
+				ds.endMap().endEntry();
+			}
+			ds.endAttrEntry();
 		}
 		ds.endMap().endEntry();
-		if (!StringUtils.isEmpty(showSubPropsFor)) {
-			String luceneField = ComplexFieldUtil.propertyField(fieldName, showSubPropsFor, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
-			Map<String, Set<String>> subprops = LuceneUtil.getSubprops(searcher.getIndexReader(), luceneField);
-			ds.startEntry("subproperties").startMap();
-			for (Map.Entry<String, Set<String>> subprop: subprops.entrySet()) {
-				String name = subprop.getKey();
-				Set<String> values = subprop.getValue();
-				ds.startAttrEntry("subproperty", "name", name).startList();
-				for (String value: values) {
-					ds.item("value", value);
-				}
-				ds.endList().endAttrEntry();
-			}
-			ds.endMap().endEntry();
-		}
 	}
 
 }
