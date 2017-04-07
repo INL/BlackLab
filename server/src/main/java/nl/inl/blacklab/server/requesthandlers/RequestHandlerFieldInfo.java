@@ -1,7 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -111,11 +111,11 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 		ds.endMap().endEntry();
 		if (!StringUtils.isEmpty(showSubPropsFor)) {
 			String luceneField = ComplexFieldUtil.propertyField(fieldName, showSubPropsFor, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
-			Map<String, List<String>> subprops = LuceneUtil.getSubprops(searcher.getIndexReader(), luceneField);
+			Map<String, Set<String>> subprops = LuceneUtil.getSubprops(searcher.getIndexReader(), luceneField);
 			ds.startEntry("subproperties").startMap();
-			for (Map.Entry<String, List<String>> subprop: subprops.entrySet()) {
+			for (Map.Entry<String, Set<String>> subprop: subprops.entrySet()) {
 				String name = subprop.getKey();
-				List<String> values = subprop.getValue();
+				Set<String> values = subprop.getValue();
 				ds.startAttrEntry("subproperty", "name", name).startList();
 				for (String value: values) {
 					ds.item("value", value);
