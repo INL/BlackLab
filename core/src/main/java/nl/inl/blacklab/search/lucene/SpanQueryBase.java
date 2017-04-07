@@ -116,6 +116,7 @@ public abstract class SpanQueryBase extends BLSpanQuery {
 		return baseFieldName;
 	}
 
+	@Override
 	public abstract Query rewrite(IndexReader reader) throws IOException;
 
 	protected SpanQuery[] rewriteClauses(IndexReader reader) throws IOException {

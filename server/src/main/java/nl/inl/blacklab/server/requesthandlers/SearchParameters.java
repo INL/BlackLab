@@ -95,6 +95,7 @@ public class SearchParameters {
 		defaultParameterValues.put("maxretrieve", "1000000");
 		defaultParameterValues.put("maxcount", "10000000");
 		defaultParameterValues.put("sensitive", "no");
+		defaultParameterValues.put("subprops", "");
 	}
 
 	private static String getDefault(String paramName) {
@@ -130,7 +131,9 @@ public class SearchParameters {
 		"first", "number",              // results window
 		"wordsaroundhit", "usecontent", // concordances
 		"hitstart", "hitend",           // doc snippets
-		  "wordstart", "wordend",
+		"wordstart", "wordend",
+		"subprops",                     // on field info page, show all subprops and values for property
+		                                // EXPERIMENTAL, mostly for part of speech
 
 		// How to process results
 		"facets",                       // include facet information?
