@@ -41,8 +41,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 		int i = urlPathInfo.indexOf('/');
 		String fieldName = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
 		if (fieldName.length() == 0) {
-			// FIXME show list of fields?
-			throw new BadRequest("NO_DOC_ID", "Specify document pid.");
+			throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Either specify a field name to show information about, or remove the 'fields' part to get general index information.");
 		}
 
 		Searcher searcher = getSearcher();
