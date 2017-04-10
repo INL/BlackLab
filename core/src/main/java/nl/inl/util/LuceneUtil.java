@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
@@ -389,4 +391,43 @@ public class LuceneUtil {
 		}
 	}
 
+	/**
+	 * Enumerate all the terms in the given Lucene field, collecting all the subproperty
+	 * names and values. Usually used for part of speech, where all the features are stored
+	 * as separate subproperties.
+	 * 
+	 * @param index our index
+	 * @param fieldName field in the Lucene index to enumerate terms from
+	 * @return subproperties and their values
+	 */
+	public static Map<String, Set<String>> getSubprops(IndexReader index, String fieldName) {
+		Map<String, Set<String>> results = new TreeMap<>();
+		try {
+			for (LeafReaderContext leafReader: index.leaves()) {
+				Terms terms = leafReader.reader().terms(fieldName);
+				TermsEnum termsEnum = terms.iterator();
+				while (true) {
+					BytesRef term = termsEnum.next();
+					if (term == null)
+						break;
+					String termText = term.utf8ToString();
+					if (termText.contains(ComplexFieldUtil.ASCII_UNIT_SEPARATOR)) {
+						termText = StringUtil.removeAccents(termText).toLowerCase();
+						String[] parts = termText.split(ComplexFieldUtil.ASCII_UNIT_SEPARATOR);
+						String subpropName = parts[0];
+						Set<String> resultList = results.get(subpropName);
+						if (resultList == null) {
+							resultList = new TreeSet<>();
+							results.put(subpropName, resultList);
+						}
+						String subpropValue = parts[1];
+						resultList.add(subpropValue);
+					}
+				}
+			}
+			return results;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

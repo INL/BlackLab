@@ -99,6 +99,7 @@ public class SearchParameters {
 		defaultParameterValues.put("fimatch", "-1");
 		defaultParameterValues.put("usecache", "yes");
 		defaultParameterValues.put("explain", "no");
+		defaultParameterValues.put("subprops", "");
 	}
 
 	private static String getDefault(String paramName) {
@@ -141,6 +142,8 @@ public class SearchParameters {
 		"hitstart", "hitend",           // doc snippets
 		"wordstart", "wordend",
 		"explain",                      // explain query rewriting?
+		"subprops",                     // on field info page, show all subprops and values for property
+		                                // EXPERIMENTAL, mostly for part of speech
 
 		// How to process results
 		"facets",                       // include facet information?
