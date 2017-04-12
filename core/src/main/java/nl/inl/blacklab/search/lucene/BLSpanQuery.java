@@ -75,9 +75,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 	public abstract boolean equals(Object obj);
 
 	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		return this;
-	}
+	public abstract BLSpanQuery rewrite(IndexReader reader) throws IOException;
 
 	@Override
 	public abstract BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException;

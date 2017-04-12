@@ -11,4 +11,12 @@ public abstract class ForwardIndexDocument {
 	 */
 	public abstract int getToken(int propIndex, int pos);
 
+	/**
+	 * Return string for term id
+	 * @param propIndex property for which we want a term string
+	 * @param termId term id
+	 * @return corresponding term string
+	 */
+	public abstract String getTermString(int propIndex, int termId);
+
 }

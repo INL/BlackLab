@@ -218,7 +218,98 @@ public class TestSearches {
 		expected = Arrays.asList("[The] quick", "over [the] lazy", "May [the] Force", "is [the] question");
 		Assert.assertEquals(expected, testIndex.findConc("[lemma='.*he']{0,10}"));
 	}
-	
-	
-	
+
+	@Test
+	public void testConstraintSimple0() throws ParseException {
+		expected = Arrays.asList("the [Force] be");
+		Assert.assertEquals(expected, testIndex.findConc("a:'Force' :: a.word = 'Force'"));
+	}
+
+	@Test
+	public void testConstraintSimple1() throws ParseException {
+		expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.word"));
+	}
+
+	@Test
+	public void testConstraintSimple2() throws ParseException {
+		expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma"));
+	}
+
+	@Test
+	public void testConstraintSimple3() throws ParseException {
+		expected = Arrays.asList("noot [mier aap mier mier] mier");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' 'mier' b:[] :: a.word = b.word"));
+	}
+
+	@Test
+	public void testConstraintSimple4() throws ParseException {
+		expected = Arrays.asList("[The quick brown fox jumps over the] lazy");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] ([]{1,5} containing 'brown') b:[] :: a.lemma = b.lemma"));
+	}
+
+	@Test
+	public void testConstraintOr1() throws ParseException {
+		expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma | a.word = b.pos"));
+	}
+
+	@Test
+	public void testConstraintOr2() throws ParseException {
+		expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma | a.lemma = b.word"));
+	}
+
+	@Test
+	public void testConstraintAnd1() throws ParseException {
+		expected = Arrays.asList();
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.word = b.pos"));
+	}
+
+	@Test
+	public void testConstraintAnd2() throws ParseException {
+		expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.word != b.pos"));
+	}
+
+	@Test
+	public void testConstraintAnd3() throws ParseException {
+		expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.pos = b.pos"));
+	}
+
+	@Test
+	public void testConstraintImplication1() throws ParseException {
+		expected = Arrays.asList(
+				"[noot mier aap mier] mier",    // left side matches, right side holds
+				"noot [mier aap mier] mier",    // left side doesn't match
+				"noot [noot aap aap] aap",      // left side doesn't match
+				"noot [noot aap aap aap] aap",  // left side matches, right side holds
+				"noot [aap aap aap] aap",       // left side doesn't match
+				"aap [aap aap aap]"             // left side doesn't match
+				);
+		// If left side of implication is true, right side must also be true
+		Assert.assertEquals(expected, testIndex.findConc("(c:'noot')? a:[] 'aap' b:[] :: c -> (a.word = b.word)"));
+	}
+
+	@Test
+	public void testConstraintImplication2() throws ParseException {
+		expected = Arrays.asList(
+				"noot [mier aap mier] mier",
+				"noot [noot aap aap] aap",
+				"noot [aap aap aap] aap",
+				"aap [aap aap aap]");
+		// If left side of implication is always false, right side is ignored
+		Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word"));
+	}
+
+	// Backreferences not implemented yet
+	@Ignore
+	@Test
+	public void testBackref() throws ParseException {
+		expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+		Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[word = a.word]"));
+	}
+
 }

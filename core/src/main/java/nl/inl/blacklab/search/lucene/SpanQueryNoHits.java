@@ -124,4 +124,9 @@ public class SpanQueryNoHits extends BLSpanQuery {
 	public int forwardMatchingCost() {
 		return 0; // no hits, no cost
 	}
+
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		return this;
+	}
 }

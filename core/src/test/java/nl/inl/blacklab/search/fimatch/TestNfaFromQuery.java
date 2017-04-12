@@ -106,6 +106,16 @@ public class TestNfaFromQuery {
 			};
 		}
 
+		@Override
+		public String getTermString(int propIndex, int termId) {
+			for (Entry<String, Integer> e: terms.entrySet()) {
+				if (e.getValue() == termId) {
+					return e.getKey();
+				}
+			}
+			return null;
+		}
+
 	}
 
 	static class ForwardIndexDocumentIntArray extends ForwardIndexDocument {
@@ -125,6 +135,11 @@ public class TestNfaFromQuery {
 
 		public boolean validPos(int pos) {
 			return pos >= 0 && pos < input.length;
+		}
+
+		@Override
+		public String getTermString(int propIndex, int termId) {
+			throw new UnsupportedOperationException();
 		}
 	}
 

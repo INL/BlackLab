@@ -110,6 +110,12 @@ public abstract class ForwardIndexAccessor {
 			return ForwardIndexAccessor.this.numberOfProperties();
 		}
 
+		public String getTermString(int propIndex, int termId) {
+			return ForwardIndexAccessor.this.getTermString(propIndex, termId);
+		}
+
 	}
+
+	public abstract String getTermString(int propIndex, int termId);
 
 }

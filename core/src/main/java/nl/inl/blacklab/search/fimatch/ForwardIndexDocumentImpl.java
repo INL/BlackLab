@@ -80,4 +80,9 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
 		return fiAccessor.getChunk(propIndex, docId, start, end);
 	}
 
+	@Override
+	public String getTermString(int propIndex, int termId) {
+		return fiAccessor.getTermString(propIndex, termId);
+	}
+
 }

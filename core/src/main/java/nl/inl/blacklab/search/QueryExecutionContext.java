@@ -323,4 +323,8 @@ public class QueryExecutionContext {
 		return caseSensitive;
 	}
 
+	public Searcher getSearcher() {
+		return searcher;
+	}
+
 }

@@ -74,6 +74,11 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 	}
 
 	@Override
+	public String getTermString(int propIndex, int termId) {
+		return fis.get(propIndex).getTerms().get(termId);
+	}
+
+	@Override
 	public int numberOfProperties() {
 		return fis.size();
 	}

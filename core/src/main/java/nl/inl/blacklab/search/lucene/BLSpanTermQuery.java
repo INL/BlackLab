@@ -206,4 +206,9 @@ public class BLSpanTermQuery extends BLSpanQuery {
 		return 1;
 	}
 
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		return this;
+	}
+
 }

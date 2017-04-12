@@ -213,4 +213,9 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 		return q;
 	}
 
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		return this;
+	}
+
 }

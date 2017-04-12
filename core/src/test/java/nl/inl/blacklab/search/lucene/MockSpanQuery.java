@@ -185,4 +185,9 @@ public class MockSpanQuery extends BLSpanQuery {
 		return 0;
 	}
 
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		return this;
+	}
+
 }

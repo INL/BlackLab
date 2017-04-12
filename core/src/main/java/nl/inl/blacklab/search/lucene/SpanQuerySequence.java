@@ -505,14 +505,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				CombiPart left = parts.get(i - 1);
 				CombiPart right = parts.get(i);
 				CombiPart newPart = null;
-				if (left.endSorted && right.startSorted) {
-					if (!left.uniqueEnd) {
-						// TODO: make unique
-					}
-					if (!right.uniqueStart) {
-						// TODO: make unique
-					}
-				}
 				if (left.uniqueEnd && left.endSorted && right.startSorted && right.uniqueStart) {
 					// We can take a shortcut because of what we know about the Spans we're
 					// combining.

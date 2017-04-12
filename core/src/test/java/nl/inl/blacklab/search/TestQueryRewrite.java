@@ -292,5 +292,10 @@ public class TestQueryRewrite {
 		assertRewriteResult("'qu[^a]ck'", "OR(TERM(contents%word@i:quick))");
 	}
 
+	@Test
+	public void testGlobalConstraint() {
+		assertRewriteResult("a:[] 'en' b:[] :: a.word = b.word", "CONSTRAINT(SEQ(CAPTURE(ANYTOKEN(1, 1), a), TERM(contents%word@i:en), CAPTURE(ANYTOKEN(1, 1), b)), a.word = b.word)");
+	}
+
 
 }

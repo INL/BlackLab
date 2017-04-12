@@ -36,6 +36,13 @@ public class TestNfa {
 		public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
 			return null;
 		}
+
+		@Override
+		public String getTermString(int propIndex, int termId) {
+			if (propIndex != 0)
+				throw new RuntimeException("only 0 is valid property");
+			return "" + ((char)termId);
+		}
 	}
 
 	class ForwardIndexDocumentString extends ForwardIndexDocument {
@@ -55,6 +62,11 @@ public class TestNfa {
 
 		public boolean validPos(int pos) {
 			return pos >= 0 && pos < input.length();
+		}
+
+		@Override
+		public String getTermString(int propIndex, int termId) {
+			return "" + ((char)termId);
 		}
 	}
 

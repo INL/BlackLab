@@ -40,6 +40,7 @@ import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.TextPatternAnd;
 import nl.inl.blacklab.search.TextPatternAnyToken;
 import nl.inl.blacklab.search.TextPatternCaptureGroup;
+import nl.inl.blacklab.search.TextPatternConstrained;
 import nl.inl.blacklab.search.TextPatternEdge;
 import nl.inl.blacklab.search.TextPatternNot;
 import nl.inl.blacklab.search.TextPatternOr;
@@ -52,6 +53,14 @@ import nl.inl.blacklab.search.TextPatternTags;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
+import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import nl.inl.blacklab.search.matchfilter.MatchFilterAnd;
+import nl.inl.blacklab.search.matchfilter.MatchFilterEquals;
+import nl.inl.blacklab.search.matchfilter.MatchFilterImplication;
+import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
+import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
+import nl.inl.blacklab.search.matchfilter.MatchFilterString;
+import nl.inl.blacklab.search.matchfilter.MatchFilterTokenProperty;
 
 @SuppressWarnings("all")
 
@@ -175,10 +184,84 @@ TextPattern query():
 	TextPattern a = null;
 } 
 {
-    a=complexQuery() <EOF>
+    a=constrainedQuery() <EOF>
     {
         return a;
     }
+}
+
+TextPattern constrainedQuery():
+{
+    TextPattern a = null;
+	MatchFilter b = null;
+} 
+{
+    a=complexQuery() [ "::" b=constraint() ]
+    {
+        if (b == null)
+            return a;
+        return new TextPatternConstrained(a, b);
+    }
+}
+
+MatchFilter constraint():
+{
+    MatchFilter a = null, c = null;
+    Token b = null;
+} 
+{
+    a=simpleConstraint() [ b=booleanOperator() c=constraint() ]
+    {
+		if (b == null)
+			return a;
+        if (b.toString().equals("->"))
+            return new MatchFilterImplication(a, c);
+		if (b.toString().equals("&"))
+			return new MatchFilterAnd(a, c);
+		return new MatchFilterOr(a, c);
+    }
+}
+
+MatchFilter simpleConstraint():
+{
+    MatchFilter v = null, w = null;
+    Token b = null;
+} 
+{
+    v=constraintValue() [ b=equalityOperator() w=constraintValue() ]
+    {
+		if (b == null)
+			return v;
+        if (b.toString().equals("="))
+            return new MatchFilterEquals(v, w);
+		if (b.toString().equals("!="))
+			return new MatchFilterNot(new MatchFilterEquals(v, w));
+    }
+}
+
+Token equalityOperator():
+{
+	Token t = null;
+}
+{
+	(t="=" | t="!=")  { return t; }
+}
+
+MatchFilter constraintValue():
+{
+	MatchFilter v = null;
+	String q = null;
+	Token s = null;
+	String l = null;
+}
+{
+	q=quotedString()                    { return new MatchFilterString(q); }
+|	"(" v=constraint() ")"              { return v; }
+|   "!" v=constraintValue()             { return new MatchFilterNot(v); }
+|   l=captureLabel() ["." s=<NAME>]
+	{
+		return new MatchFilterTokenProperty(l, s == null ? null : s.toString());
+	}
 }
 
 TextPattern complexQuery():
@@ -224,7 +307,7 @@ TextPattern simpleQuery():
 		if (b == null)
 			return query;
         if (b.toString().equals("->"))
-            throw new UnsupportedOperationException("Implication operator not yet supported");
+            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
 		if (b.toString().equals("&"))
 			return new TextPatternAnd(query, rest);
 		return new TextPatternOr(query, rest);
@@ -277,23 +360,26 @@ TextPattern tag():
     }
 }
 
-Token quotedString():
+String quotedString():
 {
     Token a;
 }
 {
-    a=<QUOTED_STRING>        { return a; }
-|   a=<SINGLE_QUOTED_STRING> { return a; }
+    (a=<QUOTED_STRING> | a=<SINGLE_QUOTED_STRING>)
+    {
+    	return getStringBetweenQuotes(a.toString());
+    }
 }
 
 void attributes(Map<String, String> attr):
 {
-    Token name, value;
+    Token name;
+    String value;
 }
 {
     name=<NAME> "=" value=quotedString()
     {
-        attr.put(name.toString(), getStringBetweenQuotes(value.toString()));
+        attr.put(name.toString(), value);
     }
 }
 
@@ -348,11 +434,10 @@ TextPattern sequencePart():
 {
 	TextPattern m = null;
 	Integer[] rep = null;
-	Token captureName = null;
-	Token captureNum = null;
+	String label = null;
 }
 {
-	( ( captureName=<NAME> | captureNum=<NUMBER> ) ":")? ( m=tag() | m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+	( label=captureLabel() ":")? ( m=tag() | m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
 	{
 		if (rep != null)
 		{
@@ -363,11 +448,21 @@ TextPattern sequencePart():
             } else
                 m = new TextPatternRepetition(m, rep[0], rep[1]);
 		}
-		if (captureName != null || captureNum != null) {
-			String name = captureName != null ? captureName.toString() : captureNum.toString();
-		    m = new TextPatternCaptureGroup(m, name);
+		if (label != null) {
+		    m = new TextPatternCaptureGroup(m, label);
 		}
 		return m;
+	}
+}
+
+String captureLabel():
+{
+	Token l = null;
+}
+{
+	( l=<NAME> | l=<NUMBER> )
+	{
+		return l.toString();
 	}
 }
 
@@ -389,10 +484,10 @@ TextPattern position():
 /* position word: no brackets, just a single token constraint for the default attribute (usually word form) */
 TextPattern positionWord():
 {
-	Token t = null;
+	String t = null;
 }
 {
-	t=quotedString()      { return simplePattern(getStringBetweenQuotes(t.toString())); }
+	t=quotedString()      { return simplePattern(t); }
 }
 
 /* expression inside square brackets: an attribute clause, or multiple 
@@ -408,7 +503,7 @@ TextPattern positionLong():
 		if (b == null)
 			return a;
         if (b.toString().equals("->"))
-            throw new UnsupportedOperationException("Implication operator not yet supported");
+            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
 		if (b.toString().equals("&"))
 			return new TextPatternAnd(a, c);
 		return new TextPatternOr(a, c);
@@ -464,7 +559,7 @@ TextPattern value():
 	LOOKAHEAD(3) a=valuePart() b=booleanOperator() c=value()
 	{
         if (b.toString().equals("->"))
-            throw new UnsupportedOperationException("Implication operator not yet supported");
+            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
 		if (b.toString().equals("&"))
 			return new TextPatternAnd(a, c);
 		return new TextPatternOr(a, c);
@@ -476,11 +571,10 @@ TextPattern value():
 TextPattern valuePart():
 {
 	TextPattern m = null;
-	Token t = null;
+	String t = null;
 }
 {
-	t=quotedString()              { return simplePattern(getStringBetweenQuotes(t.toString())); }
+	t=quotedString()              { return simplePattern(t); }
 |	"(" m=value() ")"              { return m; }
 
 }
-
