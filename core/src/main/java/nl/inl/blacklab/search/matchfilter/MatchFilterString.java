@@ -7,6 +7,12 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterString extends MatchFilter {
 	ConstraintValueString string;
+	
+	/** -1 if we don't know the property index, or the property index otherwise */
+	int propIndex = -1;
+	
+	/** Term index if we know the property index to use for this expression (i.e. propIndex >= 0), or -1 if not */
+	int termIndex = -1;
 
 	public MatchFilterString(String string) {
 		this.string = new ConstraintValueString(string);
@@ -57,7 +63,20 @@ public class MatchFilterString extends MatchFilter {
 	}
 
 	@Override
-	public void lookupPropertyNumbers(ForwardIndexAccessor fiAccessor) {
+	public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
 		// NOP
+	}
+
+	public int getPropIndex() {
+		return propIndex;
+	}
+
+	public int getTermIndex() {
+		return termIndex;
+	}
+
+	@Override
+	public MatchFilter rewrite() {
+		return this;
 	}
 }

@@ -426,7 +426,9 @@ public class StringUtil {
 	 * @param input
 	 *            the string possibly containing accented letters.
 	 * @return the unaccented version
+	 * @deprecated use Apache Commons Lang StringUtils.stripAccents(input)
 	 */
+	@Deprecated
 	public static String removeAccents(String input) {
 		// Separate characters into base character and diacritics characters
 		String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);

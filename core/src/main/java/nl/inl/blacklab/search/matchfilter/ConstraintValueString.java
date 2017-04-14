@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class ConstraintValueString extends ConstraintValue {
 
 	String s;
@@ -48,4 +50,19 @@ public class ConstraintValueString extends ConstraintValue {
 	public String toString() {
 		return s;
 	}
+	
+	public ConstraintValue stringEquals(ConstraintValueString rb, boolean caseSensitive, boolean diacSensitive) {
+		String a = getValue();
+		String b = rb.getValue();
+		if (!caseSensitive) {
+			a = a.toLowerCase();
+			b = b.toLowerCase();
+		}
+		if (!diacSensitive) {
+			a = StringUtils.stripAccents(b);
+			b = StringUtils.stripAccents(b);
+		}
+		return ConstraintValue.get(a.equals(b));
+	}
+
 }

@@ -185,9 +185,9 @@ if (b == null)
 if (b == null)
    {if ("" != null) return v;}
         if (b.toString().equals("="))
-            {if ("" != null) return new MatchFilterEquals(v, w);}
+            {if ("" != null) return new MatchFilterEquals(v, w, true, true);}
   if (b.toString().equals("!="))
-   {if ("" != null) return new MatchFilterNot(new MatchFilterEquals(v, w));}
+   {if ("" != null) return new MatchFilterNot(new MatchFilterEquals(v, w, true, true));}
     throw new Error("Missing return statement in function");
   }
 

@@ -35,5 +35,4 @@ public abstract class ConstraintValue {
 	@Override
 	public abstract String toString();
 
-
 }

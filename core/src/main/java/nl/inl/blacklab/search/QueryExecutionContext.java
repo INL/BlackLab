@@ -3,11 +3,12 @@ package nl.inl.blacklab.search;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
-import nl.inl.util.StringUtil;
 
 /**
  * Represents the current "execution context" for executing a TextPattern query.
@@ -91,7 +92,7 @@ public class QueryExecutionContext {
 		}
 		if (alt.equals(i)) {
 			// Fully desensitize;
-			return StringUtil.removeAccents(value).toLowerCase();
+			return StringUtils.stripAccents(value).toLowerCase();
 		}
 		if (alt.equals(ci)) {
 			// Only case-insensitive
@@ -99,7 +100,7 @@ public class QueryExecutionContext {
 		}
 		if (alt.equals(di)) {
 			// Only diacritics-insensitive
-			return StringUtil.removeAccents(value);
+			return StringUtils.stripAccents(value);
 		}
 
 		// Unknown alternative; don't change value

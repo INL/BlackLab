@@ -233,9 +233,9 @@ MatchFilter simpleConstraint():
 		if (b == null)
 			return v;
         if (b.toString().equals("="))
-            return new MatchFilterEquals(v, w);
+            return new MatchFilterEquals(v, w, true, true);
 		if (b.toString().equals("!="))
-			return new MatchFilterNot(new MatchFilterEquals(v, w));
+			return new MatchFilterNot(new MatchFilterEquals(v, w, true, true));
     }
 }
 

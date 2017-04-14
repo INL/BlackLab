@@ -66,9 +66,18 @@ public class MatchFilterImplication extends MatchFilter {
 	}
 
 	@Override
-	public void lookupPropertyNumbers(ForwardIndexAccessor fiAccessor) {
-		a.lookupPropertyNumbers(fiAccessor);
-		b.lookupPropertyNumbers(fiAccessor);
+	public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
+		a.lookupPropertyIndices(fiAccessor);
+		b.lookupPropertyIndices(fiAccessor);
+	}
+
+	@Override
+	public MatchFilter rewrite() {
+		MatchFilter x = a.rewrite();
+		MatchFilter y = b.rewrite();
+		if (x != a || y != b)
+			return new MatchFilterImplication(x, y);
+		return this;
 	}
 
 }

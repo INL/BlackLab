@@ -616,7 +616,7 @@ private int jjMoveNfa_0(int startState, int curPos)
    return toRet;
 }
 static final int[] jjnextStates = {
-   21, 22, 24, 16, 17, 19, 1, 2, 4, 6, 7, 10,
+   21, 22, 24, 16, 17, 19, 1, 2, 4, 6, 7, 10, 
 };
 private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, long l2)
 {
@@ -633,8 +633,8 @@ private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, lo
 
 /** Token literal values. */
 public static final String[] jjstrLiteralImages = {
-"", null, null, null, null, null, null, null, null, null, null, null, null,
-"\72\72", "\75", "\41\75", "\50", "\51", "\41", "\56", "\74", "\57", "\76", "\52",
+"", null, null, null, null, null, null, null, null, null, null, null, null, 
+"\72\72", "\75", "\41\75", "\50", "\51", "\41", "\56", "\74", "\57", "\76", "\52", 
 "\53", "\77", "\173", "\175", "\54", "\46", "\174", "\55\76", "\72", "\133", "\135", };
 protected Token jjFillToken()
 {
@@ -668,7 +668,7 @@ int jjmatchedPos;
 int jjmatchedKind;
 
 /** Get the next Token. */
-public Token getNextToken()
+public Token getNextToken() 
 {
   Token specialToken = null;
   Token matchedToken;
@@ -787,7 +787,7 @@ private void jjCheckNAddStates(int start, int end)
   /** Reinitialise parser. */
   public void ReInit(JavaCharStream stream)
   {
-
+	
     jjmatchedPos = jjnewStateCnt = 0;
     curLexState = defaultLexState;
     input_stream = stream;
@@ -805,7 +805,7 @@ private void jjCheckNAddStates(int start, int end)
   /** Reinitialise parser. */
   public void ReInit( JavaCharStream stream, int lexState)
   {
-
+  
     ReInit( stream);
     SwitchTo(lexState);
   }
@@ -824,19 +824,19 @@ public static final String[] lexStateNames = {
    "DEFAULT",
 };
 static final long[] jjtoToken = {
-   0x7ffffff81L,
+   0x7ffffff81L, 
 };
 static final long[] jjtoSkip = {
-   0x7eL,
+   0x7eL, 
 };
 static final long[] jjtoSpecial = {
-   0x60L,
+   0x60L, 
 };
     protected JavaCharStream  input_stream;
 
     private final int[] jjrounds = new int[25];
     private final int[] jjstateSet = new int[2 * 25];
 
-
+    
     protected int curChar;
 }

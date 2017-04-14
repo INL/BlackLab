@@ -34,16 +34,19 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		List<BLSpanQuery> cl = rewriteClauses(reader);
-		if (cl == null)
+		MatchFilter rewrittenConstraint = constraint.rewrite();
+		if (cl == null && rewrittenConstraint == constraint)
 			return this;
-		return new SpanQueryConstrained(cl.get(0), constraint, fiAccessor);
+		if (cl == null)
+			cl = clauses;
+		return new SpanQueryConstrained(cl.get(0), rewrittenConstraint, fiAccessor);
 	}
 
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		BLSpanWeight prodWeight = clauses.get(0).createWeight(searcher, needsScores);
 		Map<Term, TermContext> contexts = needsScores ? getTermContexts(prodWeight) : null;
-		constraint.lookupPropertyNumbers(fiAccessor);
+		constraint.lookupPropertyIndices(fiAccessor);
 		return new SpanWeightConstrained(prodWeight, constraint, searcher, contexts);
 	}
 

@@ -17,11 +17,10 @@ package nl.inl.blacklab.filter;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-
-import nl.inl.util.StringUtil;
 
 /**
  * Lowercases and/or removes any accents from the input.
@@ -56,7 +55,7 @@ public class DesensitizeFilter extends TokenFilter {
 		if (input.incrementToken()) {
 			String t = new String(termAtt.buffer(), 0, termAtt.length());
 			if (removeAccents)
-				t = StringUtil.removeAccents(t);
+				t = StringUtils.stripAccents(t);
 			if (lowerCase)
 				t = t.toLowerCase();
 			termAtt.copyBuffer(t.toCharArray(), 0, t.length());

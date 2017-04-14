@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -306,7 +307,7 @@ public class LuceneUtil {
 		}
 		try {
 			if (!sensitive)
-				prefix = StringUtil.removeAccents(prefix).toLowerCase();
+				prefix = StringUtils.stripAccents(prefix).toLowerCase();
 			List<String> results = new ArrayList<>();
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
@@ -320,7 +321,7 @@ public class LuceneUtil {
 					String termText = term.utf8ToString();
 					String optDesensitized = termText;
 					if (!sensitive)
-						optDesensitized = StringUtil.removeAccents(termText).toLowerCase();
+						optDesensitized = StringUtils.stripAccents(termText).toLowerCase();
 					if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
 						// Doesn't match prefix or different field; no more matches
 						break;
@@ -412,7 +413,7 @@ public class LuceneUtil {
 						break;
 					String termText = term.utf8ToString();
 					if (termText.contains(ComplexFieldUtil.ASCII_UNIT_SEPARATOR)) {
-						termText = StringUtil.removeAccents(termText).toLowerCase();
+						termText = StringUtils.stripAccents(termText).toLowerCase();
 						String[] parts = termText.split(ComplexFieldUtil.ASCII_UNIT_SEPARATOR);
 						String subpropName = parts[0];
 						Set<String> resultList = results.get(subpropName);
