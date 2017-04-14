@@ -40,7 +40,7 @@ public class TextPatternCaptureGroup extends TextPattern {
 
 	@Override
 	public BLSpanQuery translate(QueryExecutionContext context) {
-		return new SpanQueryCaptureGroup(input.translate(context), groupName);
+		return new SpanQueryCaptureGroup(input.translate(context), groupName, 0, 0);
 	}
 
 	@Override

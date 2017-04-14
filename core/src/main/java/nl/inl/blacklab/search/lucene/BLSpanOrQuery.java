@@ -34,7 +34,6 @@ import org.apache.lucene.search.DisiWrapper;
 import org.apache.lucene.search.DisjunctionDISIApproximation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.ScoringWrapperSpans;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -339,7 +338,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 			if (subSpans.isEmpty()) {
 				return null;
 			} else if (subSpans.size() == 1) {
-				return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
+				//BL we need everything to be a BLSpans, or capturing (and optimizations) won't work properly
+				//   that's why we bypass ScoringWrapperSpans here.
+				return subSpans.get(0) instanceof BLSpans ? (BLSpans)subSpans.get(0) : new BLSpansWrapper(subSpans.get(0));
+				//return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
 			}
 
 			final DisiPriorityQueue byDocQueue = new DisiPriorityQueue(subSpans.size());

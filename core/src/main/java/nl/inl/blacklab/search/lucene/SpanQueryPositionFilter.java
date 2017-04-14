@@ -274,20 +274,19 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 	public int forwardMatchingCost() {
 		return clauses.get(0).forwardMatchingCost();
 	}
+	
+	@Override
+	public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+		return clause.hitsAllSameLength();
+	}
 
-	/**
-	 * Create a new position filter query with a constant-length clause added to our producer.
-	 *
-	 * leftAdjust and rightAdjust are updated according to the clause's length, so it is not
-	 * actually filtered.
-	 *
-	 * @param clause clause to add
-	 * @param addToRight if true, add to the right; if false, to the left
-	 * @return new position filter query with clause internalized
-	 */
-	public BLSpanQuery internalize(BLSpanQuery clause, boolean addToRight) {
+	@Override
+	public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean addToRight) {
 		if (!clause.hitsAllSameLength())
 			throw new RuntimeException("Trying to internalize non-constant-length clause: " + clause);
+		// Create a new position filter query with a constant-length clause added to our producer.
+		// leftAdjust and rightAdjust are updated according to the clause's length, so it is not
+		// actually filtered.
 		BLSpanQuery producer = clauses.get(0);
 		SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(producer, clause, addToRight);
 		if (addToRight)

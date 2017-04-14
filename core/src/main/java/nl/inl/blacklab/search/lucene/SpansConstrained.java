@@ -45,7 +45,7 @@ public class SpansConstrained extends BLSpans {
 
 	@Override
 	protected void passHitQueryContextToClauses(HitQueryContext context) {
-		clause.passHitQueryContextToClauses(context);
+		clause.setHitQueryContext(context);
 	}
 
 	@Override

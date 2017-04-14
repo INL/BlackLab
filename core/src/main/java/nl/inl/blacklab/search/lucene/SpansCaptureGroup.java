@@ -37,14 +37,30 @@ class SpansCaptureGroup extends BLSpans {
 	/** group index (where in the Spans[] to place our start/end position in getCapturedGroups()) */
 	private int groupIndex;
 
+	/** How to adjust the left edge of the captured hits while matching.
+	 *  (necessary because we try to internalize constant-length neighbouring clauses 
+	 *   into our clause to speed up matching)
+	 */
+	int leftAdjust;
+
+	/** How to adjust the right edge of the captured hits while matching.
+	 *  (necessary because we try to internalize constant-length neighbouring clauses 
+	 *   into our clause to speed up matching)
+	 */
+	private int rightAdjust;
+
 	/**
 	 * Constructs a SpansCaptureGroup.
 	 * @param clause the clause to capture
 	 * @param name group name
+	 * @param rightAdjust 
+	 * @param leftAdjust 
 	 */
-	public SpansCaptureGroup(BLSpans clause, String name) {
+	public SpansCaptureGroup(BLSpans clause, String name, int leftAdjust, int rightAdjust) {
 		this.clause = clause;
 		this.name = name;
+		this.leftAdjust = leftAdjust;
+		this.rightAdjust = rightAdjust;
 	}
 
 	/**
@@ -101,7 +117,8 @@ class SpansCaptureGroup extends BLSpans {
 
 	@Override
 	public String toString() {
-		return "SpansCaptureGroup(" + clause + ", " + name + ")";
+		String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
+		return "CAPTURE(" + clause + ", " + name + adj + ")";
 	}
 
 	@Override
@@ -121,7 +138,7 @@ class SpansCaptureGroup extends BLSpans {
 			clause.getCapturedGroups(capturedGroups);
 
 		// Place our start and end position at the correct index in the array
-		capturedGroups[groupIndex] = this.getSpan();
+		capturedGroups[groupIndex] = new Span(startPosition() + leftAdjust, endPosition() + rightAdjust);
 	}
 
 	@Override

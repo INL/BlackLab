@@ -467,15 +467,15 @@ class SpansPositionFilter extends BLSpans {
 		String ign = (leftAdjust != 0 || rightAdjust != 0) ? ", " + leftAdjust + ", " + rightAdjust : "";
 		switch (op) {
 		case CONTAINING:
-			return "SpansContaining(" + producer + " " + not + "containing " + filter + ign + ")";
+			return "POSFILTER(" + producer + " " + not + "containing " + filter + ign + ")";
 		case WITHIN:
-			return "SpansContaining(" + producer + " " + not + "within " + filter + ign + ")";
+			return "POSFILTER(" + producer + " " + not + "within " + filter + ign + ")";
 		case STARTS_AT:
-			return "SpansContaining(" + producer + " " + not + "starts at " + filter + ign + ")";
+			return "POSFILTER(" + producer + " " + not + "starts at " + filter + ign + ")";
 		case ENDS_AT:
-			return "SpansContaining(" + producer + " " + not + "ends at " + filter + ign + ")";
+			return "POSFILTER(" + producer + " " + not + "ends at " + filter + ign + ")";
 		case MATCHES:
-			return "SpansContaining(" + producer + " " + not + "matches " + filter + ign + ")";
+			return "POSFILTER(" + producer + " " + not + "matches " + filter + ign + ")";
 		default:
 			throw new IllegalArgumentException("Unknown filter operation " + op);
 		}

@@ -667,6 +667,15 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		}
 		return cost;
 	}
+	
+	@Override
+	public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+		// NOTE: we (explicitly) return false even though sequences can always
+		// internalize neighbours, because sequences are explicitly flattened
+		// while rewriting, so this shouldn't be necessary.
+		// The internalize() method is used by other classes' internalize() methods, though.
+		return false;
+	}
 
 	/**
 	 * Create a new sequence with a clause added to it.
@@ -675,7 +684,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	 * @param addToRight if true, add to the right; if false, to the left
 	 * @return new sequence with clause added
 	 */
-	public SpanQuerySequence internalize(BLSpanQuery clause, boolean addToRight) {
+	@Override
+	public SpanQuerySequence internalizeNeighbour(BLSpanQuery clause, boolean addToRight) {
 		List<BLSpanQuery> cl = new ArrayList<>(clauses);
 		if (addToRight)
 			cl.add(clause);
@@ -698,7 +708,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		SpanQuerySequence seq;
 		if (whereToInternalize instanceof SpanQuerySequence) {
 			seq = (SpanQuerySequence) whereToInternalize;
-			seq = seq.internalize(clauseToInternalize, addToRight);
+			seq = seq.internalizeNeighbour(clauseToInternalize, addToRight);
 		} else {
 			if (addToRight)
 				seq = new SpanQuerySequence(whereToInternalize, clauseToInternalize);

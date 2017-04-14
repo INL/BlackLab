@@ -63,7 +63,9 @@ public abstract class BLSpans extends Spans {
 	 * (Right now, no classes use HitSpan internally, however)
 	 *
 	 * @return the HitSpan object for the current hit
+	 * @deprecated not used anymore
 	 */
+	@Deprecated
 	public Span getSpan() {
 		return new Span(startPosition(), endPosition());
 	}

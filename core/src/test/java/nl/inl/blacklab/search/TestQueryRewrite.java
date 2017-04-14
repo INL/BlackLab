@@ -294,7 +294,7 @@ public class TestQueryRewrite {
 
 	@Test
 	public void testGlobalConstraint() {
-		assertRewriteResult("a:[] 'en' b:[] :: a.word = b.word", "CONSTRAINT(SEQ(CAPTURE(ANYTOKEN(1, 1), a), TERM(contents%word@i:en), CAPTURE(ANYTOKEN(1, 1), b)), a.word = b.word)");
+		assertRewriteResult("a:[] 'en' b:[] :: a.word = b.word", "CONSTRAINT(CAPTURE(EXPAND(CAPTURE(EXPAND(TERM(contents%word@i:en), R, 1, 1), b, 1, 0), L, 1, 1), a, 0, -2), a.word = b.word)");
 	}
 
 

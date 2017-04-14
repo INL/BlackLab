@@ -65,6 +65,62 @@ public abstract class BLSpanQuery extends SpanQuery {
 		}
 	}
 
+	/**
+	 * Add two values for maximum number of repetitions, taking "infinite" into account.
+	 *
+	 * -1 or Integer.MAX_VALUE means infinite. Adding infinite to any other value
+	 * produces infinite again (-1 if either value is -1; otherwise, Integer.MAX_VALUE
+	 * if either value is Integer.MAX_VALUE).
+	 *
+	 * @param a first max. repetitions value
+	 * @param b first max. repetitions value
+	 * @return sum of the max. repetitions values
+	 */
+	public static int addMaxValues(int a, int b) {
+		if (a < 0 || b < 0)
+			throw new RuntimeException("max values cannot be negative (possible use of old -1 == max, now BLSpanQuery.MAX_UNLIMITED)");
+		// Is either value infinite?
+		if (a == Integer.MAX_VALUE || b == Integer.MAX_VALUE)
+			return Integer.MAX_VALUE; // Yes, result is infinite
+		// Add regular values
+		return a + b;
+	}
+
+	static <T extends SpanQuery> String clausesToString(String field, List<T> clauses) {
+		StringBuilder b = new StringBuilder();
+		for (T clause: clauses) {
+			if (b.length() > 0)
+				b.append(", ");
+			b.append(clause.toString(field));
+		}
+		return b.toString();
+	}
+
+	@SafeVarargs
+	static <T extends SpanQuery> String clausesToString(String field, T... clauses) {
+		return clausesToString(field, Arrays.asList(clauses));
+	}
+
+	public static BLSpanQuery ensureSortedUnique(BLSpanQuery spanQuery) {
+		if (spanQuery.hitsStartPointSorted()) {
+			if (spanQuery.hitsAreUnique())
+				return spanQuery;
+			return new SpanQueryUnique(spanQuery);
+		}
+		return new SpanQuerySorted(spanQuery, false, !spanQuery.hitsAreUnique());
+	}
+
+	public static BLSpanQuery ensureSorted(BLSpanQuery spanQuery) {
+		if (spanQuery.hitsStartPointSorted()) {
+			return spanQuery;
+		}
+		return new SpanQuerySorted(spanQuery, false, false);
+	}
+
+	public static String inf(int max) {
+		return max == MAX_UNLIMITED ? "INF" : "" + max;
+	}
+
 	@Override
 	public abstract String toString(String field);
 
@@ -197,57 +253,35 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 * @return true if this is guaranteed, false if not
 	 */
 	public abstract boolean hitsAreUnique();
-
+	
 	/**
-	 * Add two values for maximum number of repetitions, taking "infinite" into account.
-	 *
-	 * -1 or Integer.MAX_VALUE means infinite. Adding infinite to any other value
-	 * produces infinite again (-1 if either value is -1; otherwise, Integer.MAX_VALUE
-	 * if either value is Integer.MAX_VALUE).
-	 *
-	 * @param a first max. repetitions value
-	 * @param b first max. repetitions value
-	 * @return sum of the max. repetitions values
+	 * Can this query "internalize" the given neighbouring clause?
+	 * 
+	 * Internalizing means adding the clause to its children, which is often more efficient
+	 * because we create longer sequences that match fewer hits and may themselves be further 
+	 * optimized. An example is SpanQueryPosFilter, which can be combined with fixed-length 
+	 * neighbouring clauses (updating the SpanQueryPosFilters' left or right adjustment setting to 
+	 * match) to reduce the number of hits that have to be filter. 
+	 * 
+	 * @param clause clause we want to internalize
+	 * @param onTheRight if true, clause is a right neighbour of this query; if false, a left neighbour
+	 * @return true iff clause can be internalized
 	 */
-	public static int addMaxValues(int a, int b) {
-		if (a < 0 || b < 0)
-			throw new RuntimeException("max values cannot be negative (possible use of old -1 == max, now BLSpanQuery.MAX_UNLIMITED)");
-		// Is either value infinite?
-		if (a == Integer.MAX_VALUE || b == Integer.MAX_VALUE)
-			return Integer.MAX_VALUE; // Yes, result is infinite
-		// Add regular values
-		return a + b;
+	public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+		return false;
 	}
-
-	static <T extends SpanQuery> String clausesToString(String field, List<T> clauses) {
-		StringBuilder b = new StringBuilder();
-		for (T clause: clauses) {
-			if (b.length() > 0)
-				b.append(", ");
-			b.append(clause.toString(field));
-		}
-		return b.toString();
-	}
-
-	@SafeVarargs
-	static <T extends SpanQuery> String clausesToString(String field, T... clauses) {
-		return clausesToString(field, Arrays.asList(clauses));
-	}
-
-	public static BLSpanQuery ensureSortedUnique(BLSpanQuery spanQuery) {
-		if (spanQuery.hitsStartPointSorted()) {
-			if (spanQuery.hitsAreUnique())
-				return spanQuery;
-			return new SpanQueryUnique(spanQuery);
-		}
-		return new SpanQuerySorted(spanQuery, false, !spanQuery.hitsAreUnique());
-	}
-
-	public static BLSpanQuery ensureSorted(BLSpanQuery spanQuery) {
-		if (spanQuery.hitsStartPointSorted()) {
-			return spanQuery;
-		}
-		return new SpanQuerySorted(spanQuery, false, false);
+	
+	/**
+	 * Internalize the given clause.
+	 * 
+	 * See canInternalizeNeighbour() for more information.
+	 * 
+	 * @param clause clause we want to internalize
+	 * @param onTheRight if true, clause is a right neighbour of this query; if false, a left neighbour
+	 * @return new query with clause internalized
+	 */
+	public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+		throw new UnsupportedOperationException("Neighbouring clause " + clause + " can not be internalized by " + this);
 	}
 
 	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
@@ -256,6 +290,13 @@ public abstract class BLSpanQuery extends SpanQuery {
 
 	public boolean canMakeNfa() {
 		return false;
+	}
+
+	public NfaTwoWay getNfaTwoWay(ForwardIndexAccessor fiAccessor, int nativeDirection) {
+		Nfa nfa = getNfa(fiAccessor, nativeDirection);
+		Nfa nfaRev = getNfa(fiAccessor, -nativeDirection);
+		NfaTwoWay nfaTwoWay = new NfaTwoWay(nfa, nfaRev);
+		return nfaTwoWay;
 	}
 
 	/**
@@ -295,16 +336,5 @@ public abstract class BLSpanQuery extends SpanQuery {
 	}
 
 	public abstract String getRealField();
-
-	public NfaTwoWay getNfaTwoWay(ForwardIndexAccessor fiAccessor, int nativeDirection) {
-		Nfa nfa = getNfa(fiAccessor, nativeDirection);
-		Nfa nfaRev = getNfa(fiAccessor, -nativeDirection);
-		NfaTwoWay nfaTwoWay = new NfaTwoWay(nfa, nfaRev);
-		return nfaTwoWay;
-	}
-
-	public static String inf(int max) {
-		return max == MAX_UNLIMITED ? "INF" : "" + max;
-	}
 
 }

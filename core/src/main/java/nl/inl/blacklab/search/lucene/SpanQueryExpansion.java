@@ -276,20 +276,32 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		result.setIgnoreLastToken(isIgnoreLastToken());
 		return result;
 	}
+	
+	@Override
+	public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+		if (onTheRight == expandToLeft) {
+			// Internalization on the side of our non-expanded clause. Always possible.
+			return true;
+		}
+		// Internalization on the side of our expansion. Only possible for any token clauses.
+		return clause instanceof SpanQueryAnyToken;
+	}
 
-	/**
-	 * "Gobble up" a clause into the clause we're expanding.
-	 *
-	 * If we're expanding to the left, the clause is added to the right of what we were expanding, and vice versa.
-	 *
-	 * @param clause clause to gobble up
-	 * @return new expansion with the additional clause
-	 */
-	public BLSpanQuery internalize(BLSpanQuery clause) {
-		SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, expandToLeft);
-		SpanQueryExpansion result = new SpanQueryExpansion(seq, expandToLeft, min, max);
-		result.setIgnoreLastToken(ignoreLastToken);
-		return result;
+	@Override
+	public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+		if (onTheRight != expandToLeft && !(clause instanceof SpanQueryAnyToken)) {
+			throw new IllegalArgumentException("Cannot internalize " + clause + " into " + this + " on the " + (onTheRight ? "right" : "left") + "side");
+		}
+		if (onTheRight == expandToLeft) {
+			// "Gobble up" a clause into the clause we're expanding.
+			// If we're expanding to the left, the clause is added to the right of what we were expanding, and vice versa.
+			SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, expandToLeft);
+			SpanQueryExpansion result = new SpanQueryExpansion(seq, expandToLeft, min, max);
+			result.setIgnoreLastToken(ignoreLastToken);
+			return result;
+		}
+		// Add any token to our expansion.
+		return addExpand(clause.hitsLengthMin(), clause.hitsLengthMax());
 	}
 
 }
