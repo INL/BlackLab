@@ -8,9 +8,9 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 public class MatchFilterEquals extends MatchFilter {
 
 	MatchFilter a, b;
-	
+
 	private boolean caseSensitive;
-	
+
 	private boolean diacSensitive;
 
 	public MatchFilterEquals(MatchFilter a, MatchFilter b, boolean caseSensitive, boolean diacSensitive) {
@@ -87,16 +87,27 @@ public class MatchFilterEquals extends MatchFilter {
 
 	@Override
 	public MatchFilter rewrite() {
-		if (a instanceof MatchFilterTokenProperty && ((MatchFilterTokenProperty)a).hasProperty() && b instanceof MatchFilterString) {
+		MatchFilter x = a.rewrite();
+		MatchFilter y = b.rewrite();
+
+		if (x instanceof MatchFilterTokenProperty && ((MatchFilterTokenProperty)x).hasProperty() && y instanceof MatchFilterString) {
 			// Simple property to string comparison, e.g. a.word = "cow"
 			// This can be done more efficiently without string comparisons
-			String termString = ((MatchFilterString)b).getString();
-			return ((MatchFilterTokenProperty)a).matchTokenString(termString, caseSensitive, diacSensitive);
+			String termString = ((MatchFilterString)y).getString();
+			return ((MatchFilterTokenProperty)x).matchTokenString(termString, caseSensitive, diacSensitive);
+		}
+
+		if (x instanceof MatchFilterTokenProperty && y instanceof MatchFilterTokenProperty) {
+			MatchFilterTokenProperty xtp = ((MatchFilterTokenProperty)x);
+			MatchFilterTokenProperty ytp = ((MatchFilterTokenProperty)y);
+			if (xtp.getPropertyName().equals(ytp.getPropertyName())) {
+				// Expression of the form a.word = b.word;
+				// This can be done more efficiently without string comparisons
+				return xtp.matchOtherTokenSameProperty(ytp.getGroupName(), caseSensitive, diacSensitive);
+			}
 		}
 
 		// Some other comparison.
-		MatchFilter x = a.rewrite();
-		MatchFilter y = b.rewrite();
 		if (x != a || y != b)
 			return new MatchFilterEquals(x, y, caseSensitive, diacSensitive);
 		return this;

@@ -114,8 +114,14 @@ public abstract class ForwardIndexAccessor {
 			return ForwardIndexAccessor.this.getTermString(propIndex, termId);
 		}
 
+		public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+			return ForwardIndexAccessor.this.termsEqual(propIndex, termId, caseSensitive, diacSensitive);
+		}
+
 	}
 
 	public abstract String getTermString(int propIndex, int termId);
+
+	public abstract boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive);
 
 }

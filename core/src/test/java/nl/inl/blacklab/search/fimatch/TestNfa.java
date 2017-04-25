@@ -43,6 +43,17 @@ public class TestNfa {
 				throw new RuntimeException("only 0 is valid property");
 			return "" + ((char)termId);
 		}
+
+		@Override
+		public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+			if (propIndex != 0)
+				throw new RuntimeException("only 0 is valid property");
+			for (int i = 1; i < termId.length; i++) {
+				if (termId[i] != termId[0])
+					return false;
+			}
+			return true;
+		}
 	}
 
 	class ForwardIndexDocumentString extends ForwardIndexDocument {
@@ -55,6 +66,8 @@ public class TestNfa {
 
 		@Override
 		public int getToken(int propIndex, int pos) {
+			if (propIndex != 0)
+				throw new RuntimeException("only 0 is valid property");
 			if (!validPos(pos))
 				return -1;
 			return input.charAt(pos);
@@ -66,7 +79,20 @@ public class TestNfa {
 
 		@Override
 		public String getTermString(int propIndex, int termId) {
+			if (propIndex != 0)
+				throw new RuntimeException("only 0 is valid property");
 			return "" + ((char)termId);
+		}
+
+		@Override
+		public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+			if (propIndex != 0)
+				throw new RuntimeException("only 0 is valid property");
+			for (int i = 1; i < termId.length; i++) {
+				if (termId[i] != termId[0])
+					return false;
+			}
+			return true;
 		}
 	}
 

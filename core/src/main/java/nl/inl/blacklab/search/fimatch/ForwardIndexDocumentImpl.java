@@ -85,4 +85,9 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
 		return fiAccessor.getTermString(propIndex, termId);
 	}
 
+	@Override
+	public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+		return fiAccessor.termsEqual(propIndex, termId, caseSensitive, diacSensitive);
+	}
+
 }

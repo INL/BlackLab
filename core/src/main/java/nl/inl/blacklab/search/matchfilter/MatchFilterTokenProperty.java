@@ -88,8 +88,20 @@ public class MatchFilterTokenProperty extends MatchFilter {
 		return new MatchFilterTokenPropertyEqualsString(groupName, propertyName, str, caseSensitive, diacSensitive);
 	}
 
+	public MatchFilter matchOtherTokenSameProperty(String otherGroupName, boolean caseSensitive, boolean diacSensitive) {
+		return new MatchFilterSameTokens(groupName, otherGroupName, propertyName, caseSensitive, diacSensitive);
+	}
+
 	public boolean hasProperty() {
 		return propertyName != null;
+	}
+
+	public String getPropertyName() {
+		return propertyName;
+	}
+
+	public String getGroupName() {
+		return groupName;
 	}
 
 }

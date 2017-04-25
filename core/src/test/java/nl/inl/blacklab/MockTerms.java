@@ -70,4 +70,9 @@ public class MockTerms extends Terms {
 
 	}
 
+	@Override
+	public boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive) {
+		throw new UnsupportedOperationException();
+	}
+
 }

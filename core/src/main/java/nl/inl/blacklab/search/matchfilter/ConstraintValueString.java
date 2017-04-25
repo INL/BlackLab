@@ -50,7 +50,7 @@ public class ConstraintValueString extends ConstraintValue {
 	public String toString() {
 		return s;
 	}
-	
+
 	public ConstraintValue stringEquals(ConstraintValueString rb, boolean caseSensitive, boolean diacSensitive) {
 		String a = getValue();
 		String b = rb.getValue();
@@ -59,7 +59,7 @@ public class ConstraintValueString extends ConstraintValue {
 			b = b.toLowerCase();
 		}
 		if (!diacSensitive) {
-			a = StringUtils.stripAccents(b);
+			a = StringUtils.stripAccents(a);
 			b = StringUtils.stripAccents(b);
 		}
 		return ConstraintValue.get(a.equals(b));

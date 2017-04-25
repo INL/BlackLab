@@ -112,4 +112,6 @@ public abstract class Terms {
 		return new TermsImplV3(indexMode, collator, termsFile, useBlockBasedTermsFile);
 	}
 
+	public abstract boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive);
+
 }

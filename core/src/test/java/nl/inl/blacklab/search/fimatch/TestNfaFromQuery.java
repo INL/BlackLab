@@ -116,6 +116,11 @@ public class TestNfaFromQuery {
 			return null;
 		}
 
+		@Override
+		public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 	static class ForwardIndexDocumentIntArray extends ForwardIndexDocument {
@@ -139,6 +144,11 @@ public class TestNfaFromQuery {
 
 		@Override
 		public String getTermString(int propIndex, int termId) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
 			throw new UnsupportedOperationException();
 		}
 	}

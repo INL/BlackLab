@@ -276,6 +276,19 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
+	public boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive) {
+		// NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
+		//  right now, diacSensitive is ignored and caseSensitive is used for both.
+		int[] idLookup = caseSensitive ? sortPositionPerId : sortPositionPerIdInsensitive;
+		int id0 = idLookup[termId[0]];
+		for (int i = 1; i < termId.length; i++) {
+			if (id0 != idLookup[termId[i]])
+				return false;
+		}
+		return true;
+	}
+
+	@Override
 	public synchronized void buildTermIndex() {
 		if (termIndexBuilt)
 			return;

@@ -79,6 +79,11 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 	}
 
 	@Override
+	public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+		return fis.get(propIndex).getTerms().termsEqual(termId, caseSensitive, diacSensitive);
+	}
+
+	@Override
 	public int numberOfProperties() {
 		return fis.size();
 	}

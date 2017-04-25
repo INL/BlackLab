@@ -19,4 +19,14 @@ public abstract class ForwardIndexDocument {
 	 */
 	public abstract String getTermString(int propIndex, int termId);
 
+	/**
+	 * Are all the specified term ids equal given these sensitivity settings?
+	 *
+	 * @param propIndex property we're looking at
+	 * @param termId term ids we're comparing
+	 * @param caseSensitive whether we're comparing case-sensitively
+	 * @param diacSensitive whether we're comparing diacritics-sensitively
+	 * @return true if all are equal, false if not
+	 */
+	public abstract boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive);
 }
