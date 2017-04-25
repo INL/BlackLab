@@ -171,6 +171,7 @@ TOKEN [IGNORE_CASE]:
     <WITHIN: "within" >
 |   <CONTAINING: "containing" >
 |	<NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","0"-"9"])* >
+|	<FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |	<NUMBER: (["0"-"9"])+ >
 |	<QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 |   <SINGLE_QUOTED_STRING: "'" (~["'","\\"] | "\\" ~[] )* "'" >
@@ -233,9 +234,9 @@ MatchFilter simpleConstraint():
 		if (b == null)
 			return v;
         if (b.toString().equals("="))
-            return new MatchFilterEquals(v, w, true, true);
+            return new MatchFilterEquals(v, w, false, false);
 		if (b.toString().equals("!="))
-			return new MatchFilterNot(new MatchFilterEquals(v, w, true, true));
+			return new MatchFilterNot(new MatchFilterEquals(v, w, false, false));
     }
 }
 
@@ -470,15 +471,24 @@ String captureLabel():
 TextPattern position():
 {
 	TextPattern m = null;
+	String f = null;
 }
 {
-	m=positionWord()         { return m; }
+	m=positionWord() [f=flags()]        { return m; }
 |	"[" [ m=positionLong() ] "]"
     {
         if (m == null)
             return new TextPatternAnyToken(1, 1);
         return m;
     }
+}
+
+String flags():
+{
+	Token f;
+}
+{
+	f=<FLAGS> { return f.toString().substring(1); }
 }
 
 /* position word: no brackets, just a single token constraint for the default attribute (usually word form) */
@@ -527,12 +537,13 @@ TextPattern attValuePair():
 {
 	TextPattern v = null;
 	String prop;
+	String f = null;
 }
 {
 	LOOKAHEAD(2)
-	prop=propName() "=" v=valuePart()   { return propertyClause(prop, v); }
-|	prop=propName() "!=" v=valuePart()  { return new TextPatternNot(propertyClause(prop, v)); }
-|	v=valuePart()                       { return v; }
+	prop=propName() "=" v=valuePart() [f=flags()]  { return propertyClause(prop, v); }
+|	prop=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(propertyClause(prop, v)); }
+|	v=valuePart() [f=flags()]                      { return v; }
 }
 
 String propName():

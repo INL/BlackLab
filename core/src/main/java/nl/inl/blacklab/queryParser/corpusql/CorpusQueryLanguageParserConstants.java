@@ -21,11 +21,13 @@ public interface CorpusQueryLanguageParserConstants {
   /** RegularExpression Id. */
   int NAME = 9;
   /** RegularExpression Id. */
-  int NUMBER = 10;
+  int FLAGS = 10;
   /** RegularExpression Id. */
-  int QUOTED_STRING = 11;
+  int NUMBER = 11;
   /** RegularExpression Id. */
-  int SINGLE_QUOTED_STRING = 12;
+  int QUOTED_STRING = 12;
+  /** RegularExpression Id. */
+  int SINGLE_QUOTED_STRING = 13;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -42,6 +44,7 @@ public interface CorpusQueryLanguageParserConstants {
     "\"within\"",
     "\"containing\"",
     "<NAME>",
+    "<FLAGS>",
     "<NUMBER>",
     "<QUOTED_STRING>",
     "<SINGLE_QUOTED_STRING>",
