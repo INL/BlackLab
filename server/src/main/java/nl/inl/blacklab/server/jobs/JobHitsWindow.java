@@ -4,6 +4,7 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsWindow;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -15,8 +16,8 @@ public class JobHitsWindow extends Job {
 
 		WindowSettings windowSettings;
 
-		public JobDescHitsWindow(JobDescription inputDesc, SearchSettings searchSettings, WindowSettings windowSettings) {
-			super(JobHitsWindow.class, inputDesc, searchSettings);
+		public JobDescHitsWindow(SearchParameters param, JobDescription inputDesc, SearchSettings searchSettings, WindowSettings windowSettings) {
+			super(param, JobHitsWindow.class, inputDesc, searchSettings);
 			this.windowSettings = windowSettings;
 		}
 
@@ -34,6 +35,11 @@ public class JobHitsWindow extends Job {
 		public void dataStreamEntries(DataStream ds) {
 			super.dataStreamEntries(ds);
 			ds	.entry("windowSettings", windowSettings);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "hits";
 		}
 
 	}

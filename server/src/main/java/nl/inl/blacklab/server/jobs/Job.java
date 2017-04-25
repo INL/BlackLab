@@ -470,9 +470,9 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		ds.startMap()
 			.entry("id", id)
 			.entry("class", getClass().getSimpleName())
-			.startEntry("jobDesc");
+			.startEntry("jobDesc").startMap();
 		jobDesc.dataStreamEntries(ds);
-		ds	.endEntry()
+		ds	.endMap().endEntry()
 			.startEntry("stats")
 				.startMap()
 					.entry("type", isCount ? "count" : "search")
@@ -484,6 +484,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 					.entry("createdBy", shortUserId())
 					.entry("refsToJob", refsToJob - 1) // (- 1 because the cache always references it)
 					.entry("waitingForJobs", waitingFor.size())
+					.entry("url", jobDesc.getUrl())
 				.endMap()
 			.endEntry();
 		if (debugInfo) {

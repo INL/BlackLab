@@ -5,6 +5,7 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -16,8 +17,8 @@ public class JobSampleHits extends JobWithHits {
 
 		SampleSettings sampleSettings;
 
-		public JobDescSampleHits(JobDescription hitsToSample, SearchSettings searchSettings, SampleSettings settings) {
-			super(JobSampleHits.class, hitsToSample, searchSettings);
+		public JobDescSampleHits(SearchParameters param, JobDescription hitsToSample, SearchSettings searchSettings, SampleSettings settings) {
+			super(param, JobSampleHits.class, hitsToSample, searchSettings);
 			this.sampleSettings = settings;
 		}
 
@@ -35,6 +36,11 @@ public class JobSampleHits extends JobWithHits {
 		public void dataStreamEntries(DataStream ds) {
 			super.dataStreamEntries(ds);
 			ds	.entry("sampleSettings", sampleSettings);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "hits";
 		}
 
 	}

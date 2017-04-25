@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
+import java.util.Map;
+
 import nl.inl.blacklab.perdocument.DocGroupProperty;
 
 public class DocGroupSortSettings {
@@ -25,6 +27,10 @@ public class DocGroupSortSettings {
 	@Override
 	public String toString() {
 		return "docgroupsort=" + sortBy + ", sortreverse=" + reverse;
+	}
+
+	public void getUrlParam(Map<String, String> param) {
+		param.put("sort", (reverse ? "-" : "") + sortBy.serialize());
 	}
 
 }

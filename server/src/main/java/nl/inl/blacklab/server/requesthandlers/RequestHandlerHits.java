@@ -153,7 +153,11 @@ public class RequestHandlerHits extends RequestHandler {
 			// The summary
 			ds.startEntry("summary").startMap();
 			Hits hits = searchWindow != null ? hits = searchWindow.getWindow().getOriginalHits() : group.getHits();
-			double totalTime = total.threwException() ? -1 : total.userWaitTime();
+			double totalTime = 0;
+			if (total != null)
+				totalTime = total.threwException() ? -1 : total.userWaitTime();
+			else
+				totalTime = searchGrouped.threwException() ? -1 : searchGrouped.userWaitTime();
 			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, hits, false, (DocResults)null, (DocOrHitGroups)null, window);
 			if (includeTokenCount)
 				ds.entry("tokensInMatchingDocuments", totalTokens);

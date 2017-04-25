@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.jobs;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -14,13 +15,18 @@ public class JobDocsTotal extends Job {
 
 		JobDescription inputDesc;
 
-		public JobDescDocsTotal(JobDescription inputDesc, SearchSettings searchSettings) {
-			super(JobDocsTotal.class, inputDesc, searchSettings);
+		public JobDescDocsTotal(SearchParameters param, JobDescription inputDesc, SearchSettings searchSettings) {
+			super(param, JobDocsTotal.class, inputDesc, searchSettings);
 		}
 
 		@Override
 		public String uniqueIdentifier() {
 			return super.uniqueIdentifier() + ")";
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "docs";
 		}
 
 	}

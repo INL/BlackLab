@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.jobs;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -14,8 +15,8 @@ public class JobDocsSorted extends JobWithDocs {
 
 		DocSortSettings sortSettings;
 
-		public JobDescDocsSorted(JobDescription hitsToSort, SearchSettings searchSettings, DocSortSettings sortSettings) {
-			super(JobDocsSorted.class, hitsToSort, searchSettings);
+		public JobDescDocsSorted(SearchParameters param, JobDescription hitsToSort, SearchSettings searchSettings, DocSortSettings sortSettings) {
+			super(param, JobDocsSorted.class, hitsToSort, searchSettings);
 			this.sortSettings = sortSettings;
 		}
 
@@ -33,6 +34,11 @@ public class JobDocsSorted extends JobWithDocs {
 		public void dataStreamEntries(DataStream ds) {
 			super.dataStreamEntries(ds);
 			ds	.entry("sortSettings", sortSettings);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "docs";
 		}
 
 	}

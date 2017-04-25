@@ -17,6 +17,7 @@ package nl.inl.blacklab.perdocument;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -136,5 +137,9 @@ public abstract class DocProperty {
 		return serialize();
 	}
 
+	public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {
+		DocPropertyMultiple f = new DocPropertyMultiple(facets.toArray(new DocProperty[0]));
+		param.put("facets", f.serialize());
+	}
 
 }

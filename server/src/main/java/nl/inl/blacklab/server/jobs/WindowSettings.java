@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
+import java.util.Map;
+
 public class WindowSettings {
 
 	private int first;
@@ -23,6 +25,11 @@ public class WindowSettings {
 	@Override
 	public String toString() {
 		return "firstresult=" + first + ", numofresults=" + size;
+	}
+
+	public void getUrlParam(Map<String, String> param) {
+		param.put("first", "" + first);
+		param.put("number", "" + size);
 	}
 
 }

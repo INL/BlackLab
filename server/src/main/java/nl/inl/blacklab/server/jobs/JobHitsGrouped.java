@@ -6,6 +6,7 @@ import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -19,8 +20,8 @@ public class JobHitsGrouped extends Job {
 
 		private HitGroupSortSettings groupSortSettings;
 
-		public JobDescHitsGrouped(JobDescription hitsToGroup, SearchSettings searchSettings, HitGroupSettings groupSettings, HitGroupSortSettings groupSortSettings) {
-			super(JobHitsGrouped.class, hitsToGroup, searchSettings);
+		public JobDescHitsGrouped(SearchParameters param, JobDescription hitsToGroup, SearchSettings searchSettings, HitGroupSettings groupSettings, HitGroupSortSettings groupSortSettings) {
+			super(param, JobHitsGrouped.class, hitsToGroup, searchSettings);
 			this.groupSettings = groupSettings;
 			this.groupSortSettings = groupSortSettings;
 		}
@@ -45,6 +46,11 @@ public class JobHitsGrouped extends Job {
 			super.dataStreamEntries(ds);
 			ds	.entry("groupSettings", groupSettings)
 				.entry("groupSortSettings", groupSortSettings);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "hits";
 		}
 
 	}

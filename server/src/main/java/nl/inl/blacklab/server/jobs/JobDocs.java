@@ -7,6 +7,7 @@ import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.Forbidden;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -20,8 +21,8 @@ public class JobDocs extends JobWithDocs {
 
 		private String indexName;
 
-		public JobDescDocs(JobDescription hitsToGroup, SearchSettings searchSettings, Query filterQuery, String indexName) {
-			super(JobDocs.class, hitsToGroup, searchSettings);
+		public JobDescDocs(SearchParameters param, JobDescription hitsToGroup, SearchSettings searchSettings, Query filterQuery, String indexName) {
+			super(param, JobDocs.class, hitsToGroup, searchSettings);
 			this.filterQuery = filterQuery;
 			if (hitsToGroup == null) {
 				this.indexName = indexName;
@@ -53,6 +54,11 @@ public class JobDocs extends JobWithDocs {
 		public void dataStreamEntries(DataStream ds) {
 			super.dataStreamEntries(ds);
 			ds	.entry("filterQuery", filterQuery);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "docs";
 		}
 
 	}

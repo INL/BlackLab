@@ -11,6 +11,7 @@ import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /** Description of a job */
@@ -24,8 +25,11 @@ public abstract class JobDescription {
 
 	private SearchSettings searchSettings;
 
-	public JobDescription(Class<? extends Job> jobClass, JobDescription inputDesc, SearchSettings searchSettings) {
+	private SearchParameters searchParam;
+
+	public JobDescription(SearchParameters param, Class<? extends Job> jobClass, JobDescription inputDesc, SearchSettings searchSettings) {
 		try {
+			this.searchParam = param;
 			this.jobClass = jobClass;
 			jobClassCtor = jobClass.getConstructor(SearchManager.class, User.class, JobDescription.class);
 		} catch (NoSuchMethodException|SecurityException e) {
@@ -141,7 +145,14 @@ public abstract class JobDescription {
 
 	public void dataStreamEntries(DataStream ds) {
 		ds	.entry("jobClass", jobClass.getSimpleName())
-			.entry("inputDesc", inputDesc == null ? "(none)" : inputDesc.toString());
+			.entry("inputDesc", inputDesc == null ? "(none)" : inputDesc.toString())
+			.entry("url", getUrl());
+	}
+
+	public abstract String getUrlPath();
+
+	public String getUrl() {
+		return searchParam.getIndexName() + "/" + getUrlPath() + "?" + searchParam.getUrlParam();
 	}
 
 }

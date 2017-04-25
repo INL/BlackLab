@@ -4,6 +4,7 @@ import nl.inl.blacklab.perdocument.DocGroups;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -17,8 +18,8 @@ public class JobDocsGrouped extends Job {
 
 		private DocGroupSortSettings groupSortSettings;
 
-		public JobDescDocsGrouped(JobDescription docsToGroup, SearchSettings searchSettings, DocGroupSettings groupSettings, DocGroupSortSettings groupSortSettings) {
-			super(JobDocsGrouped.class, docsToGroup, searchSettings);
+		public JobDescDocsGrouped(SearchParameters param, JobDescription docsToGroup, SearchSettings searchSettings, DocGroupSettings groupSettings, DocGroupSortSettings groupSortSettings) {
+			super(param, JobDocsGrouped.class, docsToGroup, searchSettings);
 			this.groupSettings = groupSettings;
 			this.groupSortSettings = groupSortSettings;
 		}
@@ -43,6 +44,11 @@ public class JobDocsGrouped extends Job {
 			super.dataStreamEntries(ds);
 			ds	.entry("groupSettings", groupSettings)
 				.entry("groupSortSettings", groupSortSettings);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "docs";
 		}
 
 	}

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
+import java.util.Map;
+
 import nl.inl.blacklab.perdocument.DocProperty;
 
 public class DocGroupSettings {
@@ -18,6 +20,10 @@ public class DocGroupSettings {
 	@Override
 	public String toString() {
 		return "docgroup=" + groupBy.serialize();
+	}
+
+	public void getUrlParam(Map<String, String> param) {
+		param.put("group", groupBy.serialize());
 	}
 
 }

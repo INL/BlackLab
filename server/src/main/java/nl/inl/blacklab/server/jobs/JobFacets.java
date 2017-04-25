@@ -9,6 +9,7 @@ import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -20,8 +21,8 @@ public class JobFacets extends Job {
 
 		private List<DocProperty> facets;
 
-		public JobDescFacets(JobDescription docsToFacet, SearchSettings searchSettings, List<DocProperty> facets) {
-			super(JobFacets.class, docsToFacet, searchSettings);
+		public JobDescFacets(SearchParameters param, JobDescription docsToFacet, SearchSettings searchSettings, List<DocProperty> facets) {
+			super(param, JobFacets.class, docsToFacet, searchSettings);
 			this.facets = facets;
 		}
 
@@ -45,6 +46,11 @@ public class JobFacets extends Job {
 		public void dataStreamEntries(DataStream ds) {
 			super.dataStreamEntries(ds);
 			ds	.entry("facets", facets);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "docs";
 		}
 
 	}

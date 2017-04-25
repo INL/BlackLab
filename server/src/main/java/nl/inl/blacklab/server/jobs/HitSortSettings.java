@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
+import java.util.Map;
+
 public class HitSortSettings {
 
 	private String sortBy;
@@ -23,6 +25,10 @@ public class HitSortSettings {
 	@Override
 	public String toString() {
 		return "hitsort=" + sortBy + ", sortreverse=" + reverse;
+	}
+
+	public void getUrlParam(Map<String, String> param) {
+		param.put("sort", (reverse ? "-" : "") + sortBy);
 	}
 
 }

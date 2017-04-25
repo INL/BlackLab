@@ -5,6 +5,7 @@ import nl.inl.blacklab.perdocument.DocResultsWindow;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -16,8 +17,8 @@ public class JobDocsWindow extends Job {
 
 		WindowSettings windowSettings;
 
-		public JobDescDocsWindow(JobDescription inputDesc, SearchSettings searchSettings, WindowSettings windowSettings) {
-			super(JobDocsWindow.class, inputDesc, searchSettings);
+		public JobDescDocsWindow(SearchParameters param, JobDescription inputDesc, SearchSettings searchSettings, WindowSettings windowSettings) {
+			super(param, JobDocsWindow.class, inputDesc, searchSettings);
 			this.windowSettings = windowSettings;
 		}
 
@@ -35,6 +36,11 @@ public class JobDocsWindow extends Job {
 		public void dataStreamEntries(DataStream ds) {
 			super.dataStreamEntries(ds);
 			ds	.entry("windowSettings", windowSettings);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "docs";
 		}
 
 	}

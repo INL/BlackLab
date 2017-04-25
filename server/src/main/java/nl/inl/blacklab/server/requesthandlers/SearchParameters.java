@@ -1,10 +1,15 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.servlet.http.HttpServletRequest;
@@ -245,7 +250,7 @@ public class SearchParameters {
 		ds.endMap();
 	}
 
-	private String getIndexName() {
+	public String getIndexName() {
 		return getString("indexname");
 	}
 
@@ -482,77 +487,96 @@ public class SearchParameters {
 		WindowSettings windowSettings = getWindowSettings();
 		if (windowSettings == null)
 			return hitsSample();
-		return new JobDescHitsWindow(hitsSample(), getSearchSettings(), windowSettings);
+		return new JobDescHitsWindow(this, hitsSample(), getSearchSettings(), windowSettings);
 	}
 
 	public JobDescription hitsSample() throws BlsException {
 		SampleSettings sampleSettings = getSampleSettings();
 		if (sampleSettings == null)
 			return hitsSorted();
-		return new JobDescSampleHits(hitsSorted(), getSearchSettings(), sampleSettings);
+		return new JobDescSampleHits(this, hitsSorted(), getSearchSettings(), sampleSettings);
 	}
 
 	public JobDescription hitsSorted() throws BlsException {
 		HitSortSettings hitsSortSettings = hitsSortSettings();
 		if (hitsSortSettings == null)
 			return hitsFiltered();
-		return new JobDescHitsSorted(hitsFiltered(), getSearchSettings(), hitsSortSettings);
+		return new JobDescHitsSorted(this, hitsFiltered(), getSearchSettings(), hitsSortSettings);
 	}
 
 	public JobDescription hitsTotal() throws BlsException {
-		return new JobDescHitsTotal(hitsFiltered(), getSearchSettings());
+		return new JobDescHitsTotal(this, hitsFiltered(), getSearchSettings());
 	}
 
 	public JobDescription hitsFiltered() throws BlsException {
 		HitFilterSettings hitFilterSettings = getHitFilterSettings();
 		if (hitFilterSettings == null)
 			return hits();
-		return new JobDescHitsFiltered(hits(), getSearchSettings(), hitFilterSettings);
+		return new JobDescHitsFiltered(this, hits(), getSearchSettings(), hitFilterSettings);
 	}
 
 	public JobDescription hits() throws BlsException {
-		return new JobDescHits(getSearchSettings(), getIndexName(), getPattern(), getFilterQuery(), getMaxSettings(), getContextSettings());
+		return new JobDescHits(this, getSearchSettings(), getIndexName(), getPattern(), getFilterQuery(), getMaxSettings(), getContextSettings());
 	}
 
 	public JobDescription docsWindow() throws BlsException {
 		WindowSettings windowSettings = getWindowSettings();
 		if (windowSettings == null)
 			return docsSorted();
-		return new JobDescDocsWindow(docsSorted(), getSearchSettings(), windowSettings);
+		return new JobDescDocsWindow(this, docsSorted(), getSearchSettings(), windowSettings);
 	}
 
 	public JobDescription docsSorted() throws BlsException {
 		DocSortSettings docSortSettings = docSortSettings();
 		if (docSortSettings == null)
 			return docs();
-		return new JobDescDocsSorted(docs(), getSearchSettings(), docSortSettings);
+		return new JobDescDocsSorted(this, docs(), getSearchSettings(), docSortSettings);
 	}
 
 	public JobDescription docsTotal() throws BlsException {
-		return new JobDescDocsTotal(docs(), getSearchSettings());
+		return new JobDescDocsTotal(this, docs(), getSearchSettings());
 	}
 
 	public JobDescription docs() throws BlsException {
 		TextPattern pattern = getPattern();
 		if (pattern != null)
-			return new JobDescDocs(hitsSample(), getSearchSettings(), getFilterQuery(), getIndexName());
-		return new JobDescDocs(null, getSearchSettings(), getFilterQuery(), getIndexName());
+			return new JobDescDocs(this, hitsSample(), getSearchSettings(), getFilterQuery(), getIndexName());
+		return new JobDescDocs(this, null, getSearchSettings(), getFilterQuery(), getIndexName());
 	}
 
 	public JobDescription hitsGrouped() throws BlsException {
-		return new JobDescHitsGrouped(hitsSample(), getSearchSettings(), hitGroupSettings(), hitGroupSortSettings());
+		return new JobDescHitsGrouped(this, hitsSample(), getSearchSettings(), hitGroupSettings(), hitGroupSortSettings());
 	}
 
 	public JobDescription docsGrouped() throws BlsException {
-		return new JobDescDocsGrouped(docs(), getSearchSettings(), docGroupSettings(), docGroupSortSettings());
+		return new JobDescDocsGrouped(this, docs(), getSearchSettings(), docGroupSettings(), docGroupSortSettings());
 	}
 
 	public JobDescription facets() throws BlsException {
-		return new JobDescFacets(docs(), getSearchSettings(), getFacets());
+		return new JobDescFacets(this, docs(), getSearchSettings(), getFacets());
 	}
 
 	public boolean hasFacets() {
 		return getFacets() != null;
+	}
+
+	public String getUrlParam() {
+		try {
+			Set<String> skipEntries = new HashSet<>(Arrays.asList("indexname"));
+			StringBuilder b = new StringBuilder();
+			for (Entry<String, String> e: map.entrySet()) {
+				String name = e.getKey();
+				String value = e.getValue();
+				if (skipEntries.contains(name) || defaultParameterValues.containsKey(name) && defaultParameterValues.get(name).equals(value))
+					continue;
+				if (b.length() > 0)
+					b.append("&");
+				b.append(name).append("=").append(URLEncoder.encode(value, "utf-8"));
+			}
+			return b.toString();
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.jobs;
 
 
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
+
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.HitsSettings;
@@ -12,6 +13,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -31,8 +33,8 @@ public class JobHits extends JobWithHits {
 
 		private ContextSettings contextSettings;
 
-		public JobDescHits(SearchSettings searchSettings, String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings, ContextSettings contextSettings) {
-			super(JobHits.class, null, searchSettings);
+		public JobDescHits(SearchParameters param, SearchSettings searchSettings, String indexName, TextPattern pattern, Query filterQuery, MaxSettings maxSettings, ContextSettings contextSettings) {
+			super(param, JobHits.class, null, searchSettings);
 			this.indexName = indexName;
 			this.pattern = pattern;
 			this.filterQuery = filterQuery;
@@ -78,6 +80,11 @@ public class JobHits extends JobWithHits {
 				.entry("filterQuery", filterQuery)
 				.entry("maxSettings", maxSettings)
 				.entry("contextSettings", contextSettings);
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "hits";
 		}
 
 	}

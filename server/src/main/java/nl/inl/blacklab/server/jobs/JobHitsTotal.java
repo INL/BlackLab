@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.jobs;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -12,13 +13,18 @@ public class JobHitsTotal extends Job {
 
 	public static class JobDescHitsTotal extends JobDescription {
 
-		public JobDescHitsTotal(JobDescription inputDesc, SearchSettings searchSettings) {
-			super(JobHitsTotal.class, inputDesc, searchSettings);
+		public JobDescHitsTotal(SearchParameters param, JobDescription inputDesc, SearchSettings searchSettings) {
+			super(param, JobHitsTotal.class, inputDesc, searchSettings);
 		}
 
 		@Override
 		public String uniqueIdentifier() {
 			return super.uniqueIdentifier() + ")";
+		}
+
+		@Override
+		public String getUrlPath() {
+			return "hits";
 		}
 
 	}
