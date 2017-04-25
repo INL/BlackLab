@@ -63,7 +63,7 @@ public class ComplexFieldUtil {
 
 	/** For properties combined in a single Lucene field, this is the separator between the
 	 *  name prefix of an indexed value and the actual value of the property */
-	public static final String ASCII_UNIT_SEPARATOR = "\u001F";
+	public static final String SUBPROPERTY_SEPARATOR = "\u001F";
 
 	/**
 	 * String used to separate the base field name (say, contents) and the field property (pos,

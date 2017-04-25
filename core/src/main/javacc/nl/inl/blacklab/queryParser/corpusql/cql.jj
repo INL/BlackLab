@@ -545,7 +545,7 @@ String propName():
 		String propName = t.toString(); 
 		if (subProp == null)
 			return propName;
-		return propName + ":" + subProp.toString();
+		return propName + "/" + subProp.toString();
 	}
 }
 

@@ -114,7 +114,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         return new TextPatternProperty(prop, value);
     }
 
-// --- Grammar rules start here --- 
+// --- Grammar rules start here ---
 
 /* a query */
   final public TextPattern query() throws ParseException {TextPattern a = null;
@@ -352,7 +352,7 @@ if (result == null)
  * tag; if it's in [1] it's a self-closing tag.
  */
   final public TextPattern tag() throws ParseException {Token tagName, endTagSlash = null, selfCloseSlash = null;
-    Map<String, String> attr = new HashMap<String, String>();
+    Map<String, String> attr = new HashMap<>();
     jj_consume_token(20);
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case 21:{
@@ -647,7 +647,7 @@ if (m == null)
     throw new Error("Missing return statement in function");
   }
 
-/* expression inside square brackets: an attribute clause, or multiple 
+/* expression inside square brackets: an attribute clause, or multiple
    attribute clauses combined with boolean operators */
   final public TextPattern positionLong() throws ParseException {TextPattern a = null, c = null;
  Token b = null;
@@ -751,7 +751,7 @@ if (b == null)
 String propName = t.toString();
   if (subProp == null)
    {if ("" != null) return propName;}
-  {if ("" != null) return propName + ":" + subProp.toString();}
+  {if ("" != null) return propName + "/" + subProp.toString();}
     throw new Error("Missing return statement in function");
   }
 
@@ -1407,7 +1407,7 @@ if (b.toString().equals("->"))
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.List<int[]> jj_expentries = new java.util.ArrayList<int[]>();
+  private java.util.List<int[]> jj_expentries = new java.util.ArrayList<>();
   private int[] jj_expentry;
   private int jj_kind = -1;
   private int[] jj_lasttokens = new int[100];
@@ -1529,7 +1529,7 @@ if (b.toString().equals("->"))
       p = p.next;
     }
 
-    p.gen = jj_gen + xla - jj_la; 
+    p.gen = jj_gen + xla - jj_la;
     p.first = token;
     p.arg = xla;
   }

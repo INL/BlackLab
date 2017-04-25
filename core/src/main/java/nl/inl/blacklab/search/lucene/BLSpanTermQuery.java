@@ -33,6 +33,7 @@ import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
 import org.apache.lucene.search.spans.Spans;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -189,6 +190,10 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
 	@Override
 	public boolean canMakeNfa() {
+		// Subproperties aren't stored in forward index, so we can't match them using NFAs
+		if (query.getTerm().text().contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR))
+			return false;
+
 		return true;
 	}
 

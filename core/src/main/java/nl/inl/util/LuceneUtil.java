@@ -412,9 +412,9 @@ public class LuceneUtil {
 					if (term == null)
 						break;
 					String termText = term.utf8ToString();
-					if (termText.contains(ComplexFieldUtil.ASCII_UNIT_SEPARATOR)) {
+					if (termText.contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR)) {
 						termText = StringUtils.stripAccents(termText).toLowerCase();
-						String[] parts = termText.split(ComplexFieldUtil.ASCII_UNIT_SEPARATOR);
+						String[] parts = termText.split(ComplexFieldUtil.SUBPROPERTY_SEPARATOR);
 						String subpropName = parts[0];
 						Set<String> resultList = results.get(subpropName);
 						if (resultList == null) {
