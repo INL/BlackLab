@@ -5,7 +5,7 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
- * Some types of clauses try to "gobble" up adjacent tokens in order
+ * Some types of clauses try to "gobble up" adjacent tokens in order
  * to improve optimization.
  */
 class ClauseCombinerInternalisation extends ClauseCombiner {

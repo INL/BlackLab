@@ -388,7 +388,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 			nfaClauses.add(nfa.getStartingState());
 			dangling.addAll(nfa.getDanglingArrows());
 		}
-		NfaState and = NfaState.and(nfaClauses);
+		NfaState and = NfaState.and(false, nfaClauses);
 		return new Nfa(and, dangling);
 	}
 

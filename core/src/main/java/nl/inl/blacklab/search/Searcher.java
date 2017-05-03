@@ -792,7 +792,7 @@ public abstract class Searcher {
 	public QueryExplanation explain(TextPattern pattern) throws BooleanQuery.TooManyClauses {
 		return explain(pattern, getMainContentsFieldName());
 	}
-	
+
 	/**
 	 * Explain how a TextPattern is converted to a SpanQuery and rewritten to an
 	 * optimized version to be executed by Lucene.
@@ -806,7 +806,7 @@ public abstract class Searcher {
 	public QueryExplanation explain(TextPattern pattern, String fieldName) throws BooleanQuery.TooManyClauses {
 		return explain(createSpanQuery(pattern, fieldName, null), fieldName);
 	}
-	
+
 	/**
 	 * Explain how a SpanQuery is rewritten to an optimized version to be executed by Lucene.
 	 *
@@ -818,7 +818,8 @@ public abstract class Searcher {
 	 */
 	public QueryExplanation explain(BLSpanQuery query, String fieldName) throws BooleanQuery.TooManyClauses {
 		try {
-			return new QueryExplanation(query, query.rewrite(getIndexReader()));
+			IndexReader indexReader = getIndexReader();
+			return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

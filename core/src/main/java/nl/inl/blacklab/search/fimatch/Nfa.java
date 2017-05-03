@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -70,7 +71,7 @@ public class Nfa {
 		// Create the max part, depending on whether it's infinite or not.
 		if (max == BLSpanQuery.MAX_UNLIMITED) {
 			// Infinite. Loop back to start of last link added.
-			NfaState loopBack = NfaState.or(true, link.getStartingState(), null);
+			NfaState loopBack = NfaState.or(true, Arrays.asList(link.getStartingState(), null));
 			for (NfaState d: danglingArrows) {
 				d.fillDangling(loopBack);
 			}
@@ -90,7 +91,7 @@ public class Nfa {
 			}
 			// Make optional clause fragment (note that if min == 0, this link
 			// will already be in its correct place)
-			NfaState start = NfaState.or(true, link.getStartingState(), null);
+			NfaState start = NfaState.or(true, Arrays.asList(link.getStartingState(), null));
 			Set<NfaState> escapeArrows = new HashSet<>();
 			escapeArrows.add(start);
 			link.setStartingState(start);

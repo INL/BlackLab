@@ -1,23 +1,17 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
- * Represents both a state in an NFA, and a complete NFA
- * with this as the starting state.
+ * A regex, wildcard or prefix clause.
  */
-public class NfaStateToken extends NfaState {
-
-	static final String ANY_TOKEN = null;
+public abstract class NfaStateMultiTermPattern extends NfaState {
 
 	/** What property we're trying to match */
 	protected String luceneField;
@@ -25,31 +19,23 @@ public class NfaStateToken extends NfaState {
 	/** Index of the property we're trying to match. Only valid after lookupPropertyNumber() called. */
 	private int propertyNumber = -1;
 
-	/** The tokens this state accepts. */
-	private Set<String> inputTokenStrings;
-
-	/** The tokens this state accepts. Only valid after lookupPropertNumber() called. */
-	private MutableIntSet inputTokens = null;
-
-	/** Do we accept any token? */
-	private boolean acceptAnyToken = false;
+	/** The pattern this state accepts. */
+	protected String pattern;
 
 	/** The next state if a matching token was found. */
 	protected NfaState nextState;
 
-	public NfaStateToken(String luceneField, String inputToken, NfaState nextState) {
-		this.luceneField = luceneField;
-		inputTokenStrings = new HashSet<>();
-		if (inputToken == null)
-			acceptAnyToken = true;
-		else
-			inputTokenStrings.add(inputToken);
-		this.nextState = nextState;
-	}
+	/** Match case-sensitively? */
+	private boolean caseSensitive;
 
-	public NfaStateToken(String luceneField, Set<String> inputTokens, NfaState nextState) {
+	/** Match diacritics-sensitively? */
+	private boolean diacSensitive;
+
+	public NfaStateMultiTermPattern(String luceneField, String pattern, NfaState nextState) {
 		this.luceneField = luceneField;
-		this.inputTokenStrings = new HashSet<>(inputTokens);
+		this.caseSensitive = ComplexFieldUtil.isCaseSensitive(luceneField);
+		this.diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(luceneField);
+		this.pattern = pattern;
 		this.nextState = nextState;
 	}
 
@@ -65,17 +51,30 @@ public class NfaStateToken extends NfaState {
 	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// Token state. Check if it matches token from token source, and if so, continue.
 		int actualToken = fiDoc.getToken(propertyNumber, pos);
-		if (acceptAnyToken && actualToken >= 0 || inputTokens.contains(actualToken)) {
-			if (nextState == null) {
-				// null stands for the match state
-				if (matchEnds != null)
-					matchEnds.add(pos + direction);
-				return true;
+		if (actualToken >= 0) {
+			String tokenString = fiDoc.getTermString(propertyNumber, actualToken);
+			if (matchesPattern(desensitize(tokenString))) {
+				if (nextState == null) {
+					// null stands for the match state
+					if (matchEnds != null)
+						matchEnds.add(pos + direction);
+					return true;
+				}
+				return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
 			}
-			return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
 		}
 		return false;
 	}
+
+	private String desensitize(String tokenString) {
+		if (!caseSensitive)
+			tokenString = tokenString.toLowerCase();
+		if (!diacSensitive)
+			tokenString = StringUtils.stripAccents(tokenString);
+		return tokenString;
+	}
+
+	abstract boolean matchesPattern(String tokenString);
 
 	@Override
 	void fillDangling(NfaState state) {
@@ -84,8 +83,8 @@ public class NfaStateToken extends NfaState {
 	}
 
 	@Override
-	NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-		NfaStateToken copy = new NfaStateToken(luceneField, inputTokenStrings, null);
+	NfaStateMultiTermPattern copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+		NfaStateMultiTermPattern copy = copyNoNextState();
 		copiesMade.put(this, copy);
 		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
 		copy.nextState = nextStateCopy;
@@ -93,6 +92,10 @@ public class NfaStateToken extends NfaState {
 			dangling.add(copy);
 		return copy;
 	}
+
+	/** Copy this state without a next state. Used by copyInternal().
+	 */
+	abstract NfaStateMultiTermPattern copyNoNextState();
 
 	@Override
 	public void setNextState(int i, NfaState state) {
@@ -123,24 +126,21 @@ public class NfaStateToken extends NfaState {
 
 	@Override
 	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
-		String terms = acceptAnyToken ? "ANY" : StringUtils.join(inputTokenStrings, "|");
-		if (terms.length() > 5000) {
-			terms = terms.substring(0, 500) + "...";
-		}
-		return "TOKEN(" + terms + "," + dump(nextState, stateNrs) + ")";
+		String name = getPatternType();
+		return name + "(" + pattern + "," + dump(nextState, stateNrs) + ")";
 	}
+
+	/**
+	 * Returns the pattern type, REGEX, WILDCARD or PREFIX, for use by toString().
+	 * @return pattern type
+	 */
+	abstract String getPatternType();
 
 	@Override
 	public void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
 		String[] comp = ComplexFieldUtil.getNameComponents(luceneField);
 		String propertyName = comp[1];
 		propertyNumber = fiAccessor.getPropertyNumber(propertyName);
-		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(luceneField);
-		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(luceneField);
-		inputTokens = new IntHashSet(); //new HashSet<>();
-		for (String token: inputTokenStrings)  {
-			fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, caseSensitive, diacSensitive);
-		}
 		if (nextState != null)
 			nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
 	}

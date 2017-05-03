@@ -290,7 +290,7 @@ public class HitsImpl extends Hits {
 			IndexReader reader = searcher.getIndexReader();
 			if (!(sourceQuery instanceof BLSpanQuery))
 				throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
-			spanQuery = ((BLSpanQuery)sourceQuery).rewrite(reader);
+			spanQuery = ((BLSpanQuery)sourceQuery).optimize(reader).rewrite(reader);
 			//System.err.println(spanQuery);
 			termContexts = new HashMap<>();
 			Set<Term> terms = new HashSet<>();

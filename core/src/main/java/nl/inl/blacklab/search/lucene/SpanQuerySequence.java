@@ -169,7 +169,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 	static boolean rewriteClauses(List<BLSpanQuery> clauses, IndexReader reader) throws IOException {
 		boolean anyRewritten = false;
-		// Rewrite all clauses and flatten again if necessary.
+		// Rewrite all clauses.
 		for (int i = 0; i < clauses.size(); i++) {
 			BLSpanQuery child = clauses.get(i);
 			BLSpanQuery rewritten = child.rewrite(reader);
@@ -182,7 +182,22 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		return anyRewritten;
 	}
 
-	static boolean combineAdjacentClauses(List<BLSpanQuery> cl, IndexReader reader, String fieldName) throws IOException {
+	static boolean optimizeClauses(List<BLSpanQuery> clauses, IndexReader reader) throws IOException {
+		boolean anyRewritten = false;
+		// Rewrite all clauses.
+		for (int i = 0; i < clauses.size(); i++) {
+			BLSpanQuery child = clauses.get(i);
+			BLSpanQuery rewritten = child.optimize(reader);
+			if (child != rewritten) {
+				// Replace the child with the rewritten version
+				anyRewritten = true;
+				clauses.set(i, rewritten);
+			}
+		}
+		return anyRewritten;
+	}
+
+	static boolean combineAdjacentClauses(List<BLSpanQuery> cl, IndexReader reader, String fieldName, Set<ClauseCombiner> combiners) {
 
 		boolean anyRewritten = false;
 
@@ -203,8 +218,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				// See if any combiners apply, and if the priority is higher than found so far.
 				left = cl.get(i - 1);
 				right = cl.get(i);
-				for (ClauseCombiner combiner: ClauseCombiner.getAll()) {
+				for (ClauseCombiner combiner: combiners) {
 					int prio = combiner.priority(left, right, reader);
+					logger.debug("  i=" + i + ", combiner=" + combiner + ", prio=" + prio);
 					if (prio < highestPrio) {
 						highestPrio = prio;
 						highestPrioIndex = i;
@@ -215,10 +231,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			// Any combiners found?
 			if (highestPrio < ClauseCombiner.CANNOT_COMBINE) {
 				// Yes, execute the highest-prio combiner
+				logger.debug("  Execute combiner: " + highestPrioCombiner + ", index=" + highestPrioIndex);
 				left = cl.get(highestPrioIndex - 1);
 				right = cl.get(highestPrioIndex);
 				BLSpanQuery combined = highestPrioCombiner.combine(left, right, reader);
-				combined = combined.rewrite(reader); // just to be safe
+				// (we used to rewrite() combined here just to be safe, but that could break optimizations later)
 				cl.remove(highestPrioIndex);
 				cl.set(highestPrioIndex - 1, combined);
 				anyRewrittenThisCycle = true;
@@ -231,8 +248,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	}
 
 	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-
+	public BLSpanQuery optimize(IndexReader reader) throws IOException {
+		super.optimize(reader);
 		boolean anyRewritten = false;
 
 		// Make a copy, because our methods rewrite things in-place.
@@ -246,15 +263,63 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		// efficiently
 		anyRewritten |= matchingTagsToPosFilter(cl);
 
-		// Rewrite each clause
-		anyRewritten |= rewriteClauses(cl, reader);
+		// Try to combine adjacent clauses into more efficient ones.
+		// We do this before rewrite (as well as after) specifically to find clauses that are slow
+		// because
+		// of regular expressions matching many terms (e.g. "s.*" or ".*s") and match these using an
+		// NFA instead.
+		// By doing it before rewriting, we save the time to expand the regex to all its matching
+		// terms, as well
+		// as dealing with each of these (sometimes frequent) terms, which can be significant.
+		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all());
 
-		// Re-flatten in case a rewrite generated a new nested sequence
+		// Optimize each clause, and flatten again if necessary
+		anyRewritten |= optimizeClauses(cl, reader);
+
+		if (!anyRewritten) {
+			// Nothing rewritten. If this is a sequence of length one, just return the clause;
+			// otherwise return this object unchanged.
+			if (cl.size() == 1)
+				return cl.get(0);
+			return this;
+		}
+		return new SpanQuerySequence(cl.toArray(new BLSpanQuery[0]));
+	}
+
+	@Override
+	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		boolean anyRewritten = false;
+
+		// Make a copy, because our methods rewrite things in-place.
+		List<BLSpanQuery> cl = new ArrayList<>(clauses);
+
+		// Flatten nested sequences.
+		// This doesn't change the query because the sequence operator is associative.
+		anyRewritten |= flattenSequence(cl);
+
+		// Find matching tags and rewrite them to position filter (e.g. containing) to execute more
+		// efficiently
+		anyRewritten |= matchingTagsToPosFilter(cl);
+
+		// Try to combine adjacent clauses into more efficient ones.
+		// We do this before rewrite (as well as after) specifically to find clauses that are slow
+		// because
+		// of regular expressions matching many terms (e.g. "s.*" or ".*s") and match these using an
+		// NFA instead.
+		// By doing it before rewriting, we save the time to expand the regex to all its matching
+		// terms, as well
+		// as dealing with each of these (sometimes frequent) terms, which can be significant.
+		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all());
+
+		// Rewrite each clause, and flatten again if necessary
+		anyRewritten |= rewriteClauses(cl, reader);
 		if (anyRewritten)
 			flattenSequence(cl);
 
-		// Try to combine adjacent clauses into more efficient ones
-		anyRewritten |= combineAdjacentClauses(cl, reader, getField());
+		// Again, try to combine adjacent clauses into more efficient ones. Rewriting clauses may
+		// have
+		// generated new opportunities for combining clauses.
+		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all());
 
 		// If any part of the sequence matches the empty sequence, we must
 		// rewrite it to several alternatives combined with OR. Do so now.
@@ -656,7 +721,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			cost = Math.min(cost, clause.reverseMatchingCost(reader));
 			factor *= 1.2; // 20% overhead per clause (?)
 		}
-		return (long)(cost * factor);
+		return (long) (cost * factor);
 	}
 
 	@Override
@@ -667,7 +732,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		}
 		return cost;
 	}
-	
+
 	@Override
 	public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
 		// NOTE: we (explicitly) return false even though sequences can always

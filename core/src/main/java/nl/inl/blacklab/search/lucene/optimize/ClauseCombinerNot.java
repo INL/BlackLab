@@ -7,19 +7,18 @@ import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 
 /**
- * Recognize "anytoken" clauses and combine them with their neighbour to create an expansion.
- * 
- * Can also combine two anytoken clauses into a new anytoken clause.
+ * Recognize a (single-token) NOT clause preceded or followed by a clause of constant length.
+ * Replace with (faster) NOTCONTAINING clause.
  */
 class ClauseCombinerNot extends ClauseCombiner {
-	
+
 	private static final int PRIORITY = 4;
 
 	enum Type {
 		NOT_CONST,
 		CONST_NOT,
 	}
-	
+
 	Type getType(BLSpanQuery left, BLSpanQuery right) {
 		if (left.isSingleTokenNot() && right.hitsAllSameLength())
 			return Type.NOT_CONST;
@@ -27,7 +26,7 @@ class ClauseCombinerNot extends ClauseCombiner {
 			return Type.CONST_NOT;
 		return null;
 	}
-	
+
 	@Override
 	public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
 		return getType(left, right) == null ? CANNOT_COMBINE : PRIORITY;

@@ -88,10 +88,16 @@ public abstract class BLSpanQuery extends SpanQuery {
 
 	static <T extends SpanQuery> String clausesToString(String field, List<T> clauses) {
 		StringBuilder b = new StringBuilder();
+		int n = 0;
 		for (T clause: clauses) {
 			if (b.length() > 0)
 				b.append(", ");
 			b.append(clause.toString(field));
+			n++;
+			if (n > 100) {
+				b.append("...");
+				break;
+			}
 		}
 		return b.toString();
 	}
@@ -129,6 +135,21 @@ public abstract class BLSpanQuery extends SpanQuery {
 
 	@Override
 	public abstract boolean equals(Object obj);
+
+	/**
+	 * Called before rewrite() to optimize certain parts of the query before
+	 * they are rewritten (e.g. match regex terms using NFA instead of OR).
+	 *
+	 * For now, only SpanQuerySequence overrides this to make sure certain clause
+	 * combinations are performed before rewrite().
+	 *
+	 * @param reader index reader
+	 * @return optimized query
+	 * @throws IOException
+	 */
+	public BLSpanQuery optimize(IndexReader reader) throws IOException {
+		return this; // by default, don't do any optimization
+	}
 
 	@Override
 	public abstract BLSpanQuery rewrite(IndexReader reader) throws IOException;
@@ -253,16 +274,16 @@ public abstract class BLSpanQuery extends SpanQuery {
 	 * @return true if this is guaranteed, false if not
 	 */
 	public abstract boolean hitsAreUnique();
-	
+
 	/**
 	 * Can this query "internalize" the given neighbouring clause?
-	 * 
+	 *
 	 * Internalizing means adding the clause to its children, which is often more efficient
-	 * because we create longer sequences that match fewer hits and may themselves be further 
-	 * optimized. An example is SpanQueryPosFilter, which can be combined with fixed-length 
-	 * neighbouring clauses (updating the SpanQueryPosFilters' left or right adjustment setting to 
-	 * match) to reduce the number of hits that have to be filter. 
-	 * 
+	 * because we create longer sequences that match fewer hits and may themselves be further
+	 * optimized. An example is SpanQueryPosFilter, which can be combined with fixed-length
+	 * neighbouring clauses (updating the SpanQueryPosFilters' left or right adjustment setting to
+	 * match) to reduce the number of hits that have to be filter.
+	 *
 	 * @param clause clause we want to internalize
 	 * @param onTheRight if true, clause is a right neighbour of this query; if false, a left neighbour
 	 * @return true iff clause can be internalized
@@ -270,12 +291,12 @@ public abstract class BLSpanQuery extends SpanQuery {
 	public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
 		return false;
 	}
-	
+
 	/**
 	 * Internalize the given clause.
-	 * 
+	 *
 	 * See canInternalizeNeighbour() for more information.
-	 * 
+	 *
 	 * @param clause clause we want to internalize
 	 * @param onTheRight if true, clause is a right neighbour of this query; if false, a left neighbour
 	 * @return new query with clause internalized

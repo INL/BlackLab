@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -12,12 +11,12 @@ public class NfaStateAnd extends NfaState {
 
 	List<NfaState> nextStates;
 
-	public NfaStateAnd(NfaState... nextStates) {
-		this.nextStates = new ArrayList<>(Arrays.asList(nextStates));
-	}
-
 	public NfaStateAnd(List<NfaState> nextStates) {
 		this.nextStates = new ArrayList<>(nextStates);
+	}
+
+	public NfaStateAnd() {
+		this.nextStates = new ArrayList<>();
 	}
 
 	@Override

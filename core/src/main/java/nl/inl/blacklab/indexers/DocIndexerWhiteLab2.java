@@ -153,7 +153,8 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 					propPartOfSpeech.addValue(pos);
 					for (Entry<String, String> e: posFeatures.entrySet()) {
 						// Add the separate PoS features as extra values at this position.
-						propPartOfSpeech.addValue(e.getKey() + ComplexFieldUtil.SUBPROPERTY_SEPARATOR + e.getValue(), 0);
+						String sep = ComplexFieldUtil.SUBPROPERTY_SEPARATOR;
+						propPartOfSpeech.addValue(sep + e.getKey() + sep + e.getValue(), 0);
 					}
 					propLemma.addValue(lemma);
 

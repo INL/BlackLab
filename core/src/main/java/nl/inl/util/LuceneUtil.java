@@ -396,7 +396,7 @@ public class LuceneUtil {
 	 * Enumerate all the terms in the given Lucene field, collecting all the subproperty
 	 * names and values. Usually used for part of speech, where all the features are stored
 	 * as separate subproperties.
-	 * 
+	 *
 	 * @param index our index
 	 * @param fieldName field in the Lucene index to enumerate terms from
 	 * @return subproperties and their values
@@ -415,7 +415,7 @@ public class LuceneUtil {
 					if (termText.contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR)) {
 						termText = StringUtils.stripAccents(termText).toLowerCase();
 						String[] parts = termText.split(ComplexFieldUtil.SUBPROPERTY_SEPARATOR);
-						String subpropName = parts[0];
+						String subpropName = parts[1];
 						Set<String> resultList = results.get(subpropName);
 						if (resultList == null) {
 							resultList = new TreeSet<>();

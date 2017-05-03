@@ -21,7 +21,7 @@ public abstract class ClauseCombiner {
 		return priority(left, right, reader) != CANNOT_COMBINE;
 	}
 
-	public static Set<ClauseCombiner> getAll() {
+	public static Set<ClauseCombiner> all() {
 		if (all == null) {
 			all = new HashSet<>();
 			all.add(new ClauseCombinerRepetition());

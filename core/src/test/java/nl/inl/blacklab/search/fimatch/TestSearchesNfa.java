@@ -24,7 +24,7 @@ public class TestSearchesNfa {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		ClauseCombinerNfa.setNfaThreshold(1);
+		ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
 		testIndex = new TestIndex();
 	}
 
@@ -142,6 +142,11 @@ public class TestSearchesNfa {
 		Assert.assertEquals(expected, testIndex.findConc(" 'mier' []{1,2} 'noot' 'noot' "));
 	}
 
+	@Test
+	public void testSuffix() throws ParseException {
+		expected = Arrays.asList("[The quick] brown");
+		Assert.assertEquals(expected, testIndex.findConc("\".*E\" \"quick\""));
+	}
 
 //
 //	@Test

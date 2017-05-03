@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.lucene.optimize;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.Searcher;
@@ -14,6 +16,8 @@ import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
  */
 public class ClauseCombinerNfa extends ClauseCombiner {
 
+	protected static final Logger logger = LogManager.getLogger(ClauseCombinerNfa.class);
+
 	private static final int FORWARD_PRIORITY = 10000000;
 
 	private static final int BACKWARD_PRIORITY = 20000000;
@@ -21,7 +25,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 	/**
 	 * The default value of nfaThreshold.
 	 */
-	public static final long DEFAULT_NFA_THRESHOLD = 1000;
+	public static final long DEFAULT_NFA_THRESHOLD = 3000;
 
 	/**
 	 * The maximum value of nfaFactor, meaning "make as many NFAs as possible".
@@ -70,12 +74,24 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 		long numLeft = Math.max(1, left.reverseMatchingCost(reader));
 		long numRight = Math.max(1, right.reverseMatchingCost(reader));
 		long seqReverseCost = Math.min(numLeft, numRight) + (numLeft + numRight) / TERM_FREQ_PENALTY_FACTOR;
-		long costNfaToReverseForward = COST_RATIO_CONSTANT_FACTOR * numLeft * right.forwardMatchingCost() / seqReverseCost;
-		long costNfaToReverseBackward = COST_RATIO_CONSTANT_FACTOR * numRight * left.forwardMatchingCost() / seqReverseCost;
+		int fiCostLeft = left.forwardMatchingCost();
+		int fiCostRight = right.forwardMatchingCost();
+		long costNfaToReverseForward = COST_RATIO_CONSTANT_FACTOR * numLeft * fiCostRight / seqReverseCost;
+		long costNfaToReverseBackward = COST_RATIO_CONSTANT_FACTOR * numRight * fiCostLeft / seqReverseCost;
 		boolean leftNfa = left.canMakeNfa();
 		boolean rightNfa = right.canMakeNfa();
 		boolean backwardPossible = leftNfa && !rightEmpty;
 		boolean forwardPossible = rightNfa && !leftEmpty;
+		logger.debug(String.format("   fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d",
+			forwardPossible ? 1 : 0,
+			backwardPossible ? 1 : 0,
+			costNfaToReverseForward,
+			costNfaToReverseBackward,
+			fiCostLeft,
+			fiCostRight,
+			numLeft,
+			numRight
+		));
 		if (forwardPossible || backwardPossible) {
 			// Possible.
 			if (forwardPossible && backwardPossible) {
@@ -97,14 +113,20 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
 	@Override
 	public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-		if (nfaThreshold == NO_NFA_MATCHING)
+		if (nfaThreshold == NO_NFA_MATCHING) {
+			logger.debug("   nfa matching switched off");
 			return CANNOT_COMBINE;
+		}
 		long factor = getFactor(left, right, reader);
-		if (factor == 0)
+		if (factor == 0) {
+			logger.debug("   factor == 0");
 			return CANNOT_COMBINE;
+		}
 		long absFactor = Math.abs(factor);
-		if (absFactor > nfaThreshold)
+		if (absFactor > nfaThreshold) {
+			logger.debug("   factor == " + factor + ", abs(factor) > nfaThreshold ("+nfaThreshold+")");
 			return CANNOT_COMBINE;
+		}
 		return factor > 0 ? FORWARD_PRIORITY - (int)(10000 / absFactor) : BACKWARD_PRIORITY - (int)(10000 / absFactor);
 	}
 
@@ -115,7 +137,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 		if (factor == 0)
 			throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
 		if (factor > 0) {
-			// Forward
+			// Forward (i.e. left is anchor, right is NFA)
 			if (left instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)left).getDirection() == 1) {
 				// Existing forward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
 				return ((SpanQueryFiSeq)left).appendNfa(right);
@@ -126,7 +148,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 			return new SpanQueryFiSeq(left, false, nfaTwoWay, right, 1, fiAccessor);
 		}
 
-		// Backward
+		// Backward (i.e. right is anchor, left is NFA)
 		if (right instanceof SpanQueryFiSeq && ((SpanQueryFiSeq)right).getDirection() == -1) {
 			// Existing backward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
 			return ((SpanQueryFiSeq)right).appendNfa(left);

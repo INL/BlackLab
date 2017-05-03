@@ -46,6 +46,10 @@ public abstract class NfaState {
 		return new NfaStateToken(luceneField, inputTokens, nextState);
 	}
 
+	public static NfaState regex(String luceneField, String pattern, NfaState nextState) {
+		return new NfaStateRegex(luceneField, pattern, nextState);
+	}
+
 	public static NfaState anyToken(String luceneField, NfaState nextState) {
 		return new NfaStateAnyToken(luceneField, nextState);
 	}
@@ -58,18 +62,20 @@ public abstract class NfaState {
 	 * @param nextStates states to try
 	 * @return the state object
 	 */
-	public static NfaState or(boolean clausesMayLoopBack, NfaState... nextStates) {
+	public static NfaState or(boolean clausesMayLoopBack, List<NfaState> nextStates) {
 		return clausesMayLoopBack ? new NfaStateOr(nextStates) : new NfaStateOrAcyclic(nextStates);
 	}
 
 	/**
 	 * Build an AND state.
 	 *
-	 * @param nfaClauses NFAs that must match
+	 * @param clausesMayLoopBack if false, no clauses loop back to earlier states,
+	 *   (a more efficient way of matching can be used in this case)
+	 * @param nextStates NFAs that must match
 	 * @return the state object
 	 */
-	public static NfaState and(List<NfaState> nfaClauses) {
-		return new NfaStateAnd(nfaClauses);
+	public static NfaState and(boolean clausesMayLoopBack, List<NfaState> nextStates) {
+		return clausesMayLoopBack ? new NfaStateAnd(nextStates) : new NfaStateAndAcyclic(nextStates);
 	}
 
 	public static NfaState noMatch() {

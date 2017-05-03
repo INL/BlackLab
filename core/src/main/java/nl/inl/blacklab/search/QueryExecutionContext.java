@@ -58,7 +58,8 @@ public class QueryExecutionContext {
 		if (parts.length > 2)
 			throw new IllegalArgumentException("propName contains more than one colon!");
 		this.propName = parts[0];
-		this.subpropPrefix = parts.length == 2 ? parts[1] + ComplexFieldUtil.SUBPROPERTY_SEPARATOR : "";
+		String sep = ComplexFieldUtil.SUBPROPERTY_SEPARATOR;
+		this.subpropPrefix = parts.length == 2 ? sep + parts[1] + sep : "";
 		this.caseSensitive = caseSensitive;
 		this.diacriticsSensitive = diacriticsSensitive;
 	}

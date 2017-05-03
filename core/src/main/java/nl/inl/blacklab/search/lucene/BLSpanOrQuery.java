@@ -589,7 +589,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 			states.add(frag.getStartingState());
 			dangling.addAll(frag.getDanglingArrows());
 		}
-		return new Nfa(NfaState.or(false, states.toArray(new NfaState[0])), dangling);
+		return new Nfa(NfaState.or(false, states), dangling);
 	}
 
 	/**
