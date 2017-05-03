@@ -815,7 +815,12 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 					// Make sure the block fits in our zip buffer
 					if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
 						break;
-					length -= (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
+					// Doesn't fit; make it a little smaller until it does fit.
+					//System.err.println("Tried " + length + " characters, encoded length is " + encoded.length);
+					//int newLength = length - (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
+					float shrinkFactor = 1.0f + (1.05f * (encoded.length - MAX_BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
+					length = (int)(length / shrinkFactor);
+					//System.err.println("Will try " + length + " characters as blocksize next.");
 					doMinCheck = false;
 				}
 
