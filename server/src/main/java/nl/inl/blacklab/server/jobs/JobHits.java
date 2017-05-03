@@ -101,38 +101,36 @@ public class JobHits extends JobWithHits {
 
 	@Override
 	public void performSearch() throws BlsException {
+		textPattern = jobDesc.getPattern();
+		if (textPattern == null)
+			throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
+		//debug(logger, "Textpattern: " + textPattern);
+		filter = jobDesc.getFilterQuery();
 		try {
-			textPattern = jobDesc.getPattern();
-			if (textPattern == null)
-				throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
-			//debug(logger, "Textpattern: " + textPattern);
-			filter = jobDesc.getFilterQuery();
-			try {
 
-				// In debug mode, we can experiment with the forward index matching NFA threshold this way.
-				// Lower numbers means more NFAs. E.g. 10 means if adjacent words differ in frequency by a factor
-				// of 10, create an NFA.
-				SearchSettings searchSett = jobDesc.getSearchSettings();
-				if (searchSett.isDebugMode() && searchSett.getFiMatchNfaFactor() != -1)
-					ClauseCombinerNfa.setNfaThreshold(searchSett.getFiMatchNfaFactor());
+			// In debug mode, we can experiment with the forward index matching NFA threshold this way.
+			// Lower numbers means more NFAs. E.g. 10 means if adjacent words differ in frequency by a factor
+			// of 10, create an NFA.
+			SearchSettings searchSett = jobDesc.getSearchSettings();
+			if (searchSett.isDebugMode() && searchSett.getFiMatchNfaFactor() != -1)
+				ClauseCombinerNfa.setNfaThreshold(searchSett.getFiMatchNfaFactor());
 
-				hits = searcher.find(textPattern, filter);
+			hits = searcher.find(textPattern, filter);
 
-				// Set the max retrieve/count value
-				MaxSettings maxSettings = jobDesc.getMaxSettings();
-				HitsSettings hitsSettings = hits.settings();
-				hitsSettings.setMaxHitsToRetrieve(maxSettings.maxRetrieve());
-				hitsSettings.setMaxHitsToCount(maxSettings.maxCount());
-				ContextSettings contextSettings = jobDesc.getContextSettings();
-				hitsSettings.setConcordanceType(contextSettings.concType());
-				hitsSettings.setContextSize(contextSettings.size());
-			} catch (RegexpTooLargeException e) {
-				throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
-			} catch (RuntimeException e) {
-				throw new InternalServerError("Internal error", 15, e);
-			}
+			// Set the max retrieve/count value
+			MaxSettings maxSettings = jobDesc.getMaxSettings();
+			HitsSettings hitsSettings = hits.settings();
+			hitsSettings.setMaxHitsToRetrieve(maxSettings.maxRetrieve());
+			hitsSettings.setMaxHitsToCount(maxSettings.maxCount());
+			ContextSettings contextSettings = jobDesc.getContextSettings();
+			hitsSettings.setConcordanceType(contextSettings.concType());
+			hitsSettings.setContextSize(contextSettings.size());
+		} catch (RegexpTooLargeException e) {
+			throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
 		} catch (TooManyClauses e) {
 			throw new BadRequest("QUERY_TOO_BROAD", "Query too broad, too many matching terms. Please be more specific.");
+		} catch (RuntimeException e) {
+			throw new InternalServerError("Internal error", 15, e);
 		}
 	}
 
