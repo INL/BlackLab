@@ -28,6 +28,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.util.LuceneUtil;
 
@@ -217,7 +218,8 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 		Nfa nfa = clauses.get(0).getNfa(fiAccessor, direction);
 		//nfa.finish();
 		nfa.invert();
-		return nfa;
+		NfaState not = nfa.getStartingState();
+		return new Nfa(not, Arrays.asList(not)); // ignore the dangling arrows in the clause we've inverted
 	}
 
 	@Override

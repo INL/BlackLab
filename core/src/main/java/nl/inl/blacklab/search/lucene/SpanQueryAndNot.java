@@ -382,14 +382,14 @@ public class SpanQueryAndNot extends BLSpanQuery {
 		if (exclude.size() > 0)
 			throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
 		List<NfaState> nfaClauses = new ArrayList<>();
-		List<NfaState> dangling = new ArrayList<>();
+//		List<NfaState> dangling = new ArrayList<>();
 		for (BLSpanQuery clause: include) {
 			Nfa nfa = clause.getNfa(fiAccessor, direction);
 			nfaClauses.add(nfa.getStartingState());
-			dangling.addAll(nfa.getDanglingArrows());
+//			dangling.addAll(nfa.getDanglingArrows());
 		}
-		NfaState and = NfaState.and(false, nfaClauses);
-		return new Nfa(and, dangling);
+		NfaState andAcyclic = NfaState.and(false, nfaClauses);
+		return new Nfa(andAcyclic, Arrays.asList(andAcyclic));
 	}
 
 	@Override
@@ -423,7 +423,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 			BLSpanQuery clause = (BLSpanQuery)cl;
 			cost += clause.forwardMatchingCost();
 		}
-		return cost;
+		return cost * 2 / 3; // we expect to be able to short-circuit AND in a significant number of cases
 	}
 
 }

@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.io.StringReader;
+import java.util.Arrays;
 
 import org.junit.AfterClass;
 import org.junit.Assert;

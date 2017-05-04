@@ -17,8 +17,10 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  */
 public class Nfa {
 
+	/** Starting state for this NFA */
 	NfaState startingState;
 
+	/** Where we need to add arrows if we want to append another bit of NFA to this one. */
 	Collection<NfaState> danglingArrows;
 
 	public Nfa(NfaState startingState, Collection<NfaState> danglingArrows) {

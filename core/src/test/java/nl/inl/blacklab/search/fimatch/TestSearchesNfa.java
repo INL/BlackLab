@@ -148,6 +148,12 @@ public class TestSearchesNfa {
 		Assert.assertEquals(expected, testIndex.findConc("\".*E\" \"quick\""));
 	}
 
+	@Test
+	public void testNegation() throws ParseException {
+		expected = Arrays.asList("mier [mier noot noot aap] aap");
+		Assert.assertEquals(expected, testIndex.findConc("'mier' [word != 'aap|mier']+ 'aap'"));
+	}
+
 //
 //	@Test
 //	public void testRelativeFreqs3() throws ParseException {

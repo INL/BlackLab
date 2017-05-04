@@ -25,7 +25,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 	/**
 	 * The default value of nfaThreshold.
 	 */
-	public static final long DEFAULT_NFA_THRESHOLD = 3000;
+	public static final long DEFAULT_NFA_THRESHOLD = 900;
 
 	/**
 	 * The maximum value of nfaFactor, meaning "make as many NFAs as possible".
@@ -82,6 +82,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 		boolean rightNfa = right.canMakeNfa();
 		boolean backwardPossible = leftNfa && !rightEmpty;
 		boolean forwardPossible = rightNfa && !leftEmpty;
+		//fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
+		//factor == -2569, abs(factor) > nfaThreshold (2000)
 		logger.debug(String.format("   fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d",
 			forwardPossible ? 1 : 0,
 			backwardPossible ? 1 : 0,

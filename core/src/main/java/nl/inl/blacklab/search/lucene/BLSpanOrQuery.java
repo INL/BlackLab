@@ -582,14 +582,15 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		}
 
 		List<NfaState> states = new ArrayList<>();
-		List<NfaState> dangling = new ArrayList<>();
+//		List<NfaState> dangling = new ArrayList<>();
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
 			Nfa frag = clause.getNfa(fiAccessor, direction);
 			states.add(frag.getStartingState());
-			dangling.addAll(frag.getDanglingArrows());
+//			dangling.addAll(frag.getDanglingArrows());
 		}
-		return new Nfa(NfaState.or(false, states), dangling);
+		NfaState orAcyclic = NfaState.or(false, states);
+		return new Nfa(orAcyclic, Arrays.asList(orAcyclic));
 	}
 
 	/**

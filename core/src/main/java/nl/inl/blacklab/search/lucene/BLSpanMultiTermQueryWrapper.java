@@ -193,17 +193,18 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 		// Make a very rough estimate of the number of terms that could match
 		// this. We tend to guess on the high side, because clauses matching lots
 		// of terms benefit a lot from using NFAs, and clauses that don't match that
-		// many likely aren't slowed down a lot by using NFAs.
+		// many likely aren't slowed down a lot by using NFAs. Also, people tend to
+		// ask common pre- and suffixes more often than rare ones.
 		// All in all, it's really a wild guess, but it's all we have right now.
 		switch (numberOfChars) {
 		case 1:
 			return n / 10;
 		case 2:
-			return n / 10 / 8;
+			return n / 20;
 		case 3:
-			return n / 10 / 8 / 5;
+			return n / 40;
 		case 4:
-			return n / 10 / 8 / 5 / 3;
+			return n / 60;
 		default:
 			// 5 or more characters given.
 			// We have no idea how many hits we're likely to get from this.
@@ -227,7 +228,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
 	@Override
 	public int forwardMatchingCost() {
-		return 5; // more expensive than a single term, because we have to do FI lookup and regex matching
+		return 3; // more expensive than a single term, because we have to do FI lookup and regex matching
 	}
 
 	@Override

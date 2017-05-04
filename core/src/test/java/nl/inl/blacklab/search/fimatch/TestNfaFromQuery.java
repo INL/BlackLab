@@ -205,11 +205,11 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "a", "test");
 
-		// The query
+		// The query: "test"
 		BLSpanQuery q = term("test");
 
-		test(q, fiAccessor, 0,  1, 5, Arrays.asList(3));
-		test(q, fiAccessor, 3, -1, 5, Arrays.asList(0));
+		test(q, fiAccessor, 0,  1, 4, Arrays.asList(3));
+		test(q, fiAccessor, 3, -1, 4, Arrays.asList(0));
 	}
 
 	@Test
@@ -217,11 +217,11 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "a", "test");
 
-		// The query
+		// The query: "a" "test"
 		BLSpanQuery q = seq(term("a"), term("test"));
 
-		test(q, fiAccessor, 0,  1, 5, Arrays.asList(2));
-		test(q, fiAccessor, 3, -1, 5, Arrays.asList(0));
+		test(q, fiAccessor, 0,  1, 4, Arrays.asList(2));
+		test(q, fiAccessor, 3, -1, 4, Arrays.asList(0));
 	}
 
 	@Test
@@ -229,7 +229,7 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
-		// The query
+		// The query: "very"+
 		BLSpanQuery q = rep(term("very"), 1, BLSpanQuery.MAX_UNLIMITED);
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(2, 3, 4));
@@ -241,7 +241,7 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
-		// The query
+		// The query: "is" "very"{1,2}
 		BLSpanQuery q = seq(term("is"), rep(term("very"), 1, 2));
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(1));
@@ -253,7 +253,7 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
-		// The query
+		// The query: "is" "very" | "very" "fun"
 		BLSpanQuery q = or(seq(term("is"), term("very")), seq(term("very"), term("fun")));
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(1, 4));
@@ -265,7 +265,7 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
-		// The query
+		// The query: []{3,3}
 		BLSpanQuery q = any(3, 3);
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(0, 1, 2, 3));
@@ -277,7 +277,7 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
-		// The query
+		// The query: ("very" "very" []) & ([] "very" "very")
 		BLSpanQuery q = and(seq(term("very"), term("very"), any(1, 1)), seq(any(1,1), term("very"), term("very")));
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(2));
@@ -289,7 +289,7 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
-		// The query
+		// The query: []{1,2} very
 		BLSpanQuery q = exp(term("very"), true, 1, 2);
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(0, 1, 2, 3));
@@ -301,7 +301,7 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
-		// The query
+		// The query: "is" []{0,3}
 		BLSpanQuery q = exp(term("is"), false, 0, 3);
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(1));
@@ -313,7 +313,7 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
-		// The query
+		// The query: [word != "very"]
 		BLSpanQuery q = not(term("very"));
 
 		test(q, fiAccessor, 0,  1, 6, Arrays.asList(0, 1, 5));
@@ -325,11 +325,11 @@ public class TestNfaFromQuery {
 		// The test document
 		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
 
-		// The query: []? "is" ("lots" "and"){1,3} [word != "lots"] "of"
+		// The query: [word != "lots"] "of"
 		BLSpanQuery q = seq(not(term("lots")), term("of"));
 
-		test(q, fiAccessor, 0,  1, 8, NO_MATCHES);  // ERROR
-		test(q, fiAccessor, 8, -1, 8, Arrays.asList(8));
+		test(q, fiAccessor, 0,  1, 9, NO_MATCHES);
+		test(q, fiAccessor, 8, -1, 9, NO_MATCHES);
 	}
 
 	@Test
@@ -340,8 +340,8 @@ public class TestNfaFromQuery {
 		// The query: []? "is" ("lots" "and"){1,3} [word != "lots"] "of"
 		BLSpanQuery q = seq(exp(term("is"), true, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), not(term("lots")), term("of"));
 
-		test(q, fiAccessor, 0,  1, 8, NO_MATCHES);  // ERROR
-		test(q, fiAccessor, 8, -1, 8, NO_MATCHES);
+		test(q, fiAccessor, 0,  1, 9, NO_MATCHES);
+		test(q, fiAccessor, 8, -1, 9, NO_MATCHES);
 	}
 
 	@Test
@@ -352,7 +352,19 @@ public class TestNfaFromQuery {
 		// The query: []? "is" ("lots" "and"){1,3} "lots" "of"
 		BLSpanQuery q = seq(exp(term("is"), true, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), term("lots"), term("of"));
 
-		test(q, fiAccessor, 0,  1, 8, Arrays.asList(0, 1));
-		test(q, fiAccessor, 8, -1, 8, Arrays.asList(1));
+		test(q, fiAccessor, 0,  1, 9, Arrays.asList(0, 1));
+		test(q, fiAccessor, 8, -1, 9, Arrays.asList(1));
+	}
+
+	@Test
+	public void testNfaRepeatedNot() {
+		// The test document
+		ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "lots", "and", "lots", "and", "lots", "of", "fun");
+
+		// The query: "and" [word != "of"]{2}
+		BLSpanQuery q = seq(term("and"), rep(not(term("of")), 2, 2));
+
+		test(q, fiAccessor, 0,  1, 9, Arrays.asList(3));
+		test(q, fiAccessor, 8, -1, 9, Arrays.asList(3));
 	}
 }
