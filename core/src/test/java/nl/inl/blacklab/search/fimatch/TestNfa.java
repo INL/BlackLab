@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 
 import org.apache.lucene.index.LeafReader;
@@ -102,7 +103,8 @@ public class TestNfa {
 		// Test simple NFA matching ab|ba
 		NfaState ab = NfaState.token("contents%word@i", "a", NfaState.token("contents%word@i", "b", null));
 		NfaState ba = NfaState.token("contents%word@i", "b", NfaState.token("contents%word@i", "a", null));
-		NfaState start = NfaState.or(false, Arrays.asList(ab, ba));
+		NfaState start = NfaState.or(false, Arrays.asList(ab, ba), true);
+		start.finish(new HashSet<NfaState>());
 		start.lookupPropertyNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
 
 		ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
@@ -116,9 +118,10 @@ public class TestNfa {
 	public void testNfaRepetition() {
 		// Test NFA matching ac*e
 		NfaState c = NfaState.token("contents%word@i", "c", null);
-		NfaState split = NfaState.or(true, Arrays.asList(c, NfaState.token("contents%word@i", "e", null)));
+		NfaState split = NfaState.or(true, Arrays.asList(c, NfaState.token("contents%word@i", "e", null)), false);
 		NfaState start = NfaState.token("contents%word@i", "a", split);
 		c.setNextState(0, split); // loopback
+		start.finish(new HashSet<NfaState>());
 		start.lookupPropertyNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
 
 		// Forward matching

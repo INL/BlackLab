@@ -5,16 +5,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A transition+state that never matches anything.
- *
- * (note that the opposite, the "match state", is simply
- *  represented by null in our NFAs)
+ * The match state
  */
-public class NfaStateNoMatch extends NfaState {
+public class NfaStateMatch extends NfaState {
 
 	@Override
 	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
-		return false;
+		if (matchEnds != null)
+			matchEnds.add(pos);
+		return true;
 	}
 
 	@Override
@@ -29,12 +28,12 @@ public class NfaStateNoMatch extends NfaState {
 
 	@Override
 	public void setNextState(int i, NfaState state) {
-		throw new UnsupportedOperationException("'No match' state has no next state");
+		throw new UnsupportedOperationException("'Match' state has no next state");
 	}
 
 	@Override
 	public boolean matchesEmptySequence(Set<NfaState> statesVisited) {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -54,11 +53,16 @@ public class NfaStateNoMatch extends NfaState {
 
 	@Override
 	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
-		return "NOMATCH()";
+		return "MATCH()";
 	}
 
 	@Override
 	void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+		// NOP
+	}
+
+	@Override
+	protected void finishInternal(Set<NfaState> visited) {
 		// NOP
 	}
 

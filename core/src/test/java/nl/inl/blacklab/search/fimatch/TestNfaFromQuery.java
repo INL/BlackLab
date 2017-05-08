@@ -158,6 +158,7 @@ public class TestNfaFromQuery {
 	private static void test(BLSpanQuery q, ForwardIndexAccessor fiAccessor, int startPos, int direction, int tests, List<Integer> matches) {
 		// The NFA
 		Nfa frag = q.getNfa(fiAccessor, direction);
+		frag.finish();
 		frag.lookupPropertyNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
 		//System.err.println(frag);
 		NfaState start = frag.getStartingState(); //finish();

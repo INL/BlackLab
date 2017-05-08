@@ -38,4 +38,9 @@ public class NfaTwoWay {
 		nfaReverse.lookupPropertyNumbers(fiAccessor, statesVisited);
 	}
 
+	public void finish() {
+		nfa.finish();
+		nfaReverse.finish();
+	}
+
 }

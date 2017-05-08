@@ -10,12 +10,16 @@ public class NfaStateOr extends NfaState {
 
 	List<NfaState> nextStates;
 
-	public NfaStateOr(List<NfaState> nextStates) {
+	private boolean clausesAllSameLength;
+
+	public NfaStateOr(List<NfaState> nextStates, boolean clausesAllSameLength) {
 		this.nextStates = new ArrayList<>(nextStates);
+		this.clausesAllSameLength = clausesAllSameLength;
 	}
 
-	public NfaStateOr() {
+	public NfaStateOr(boolean clausesAllSameLength) {
 		this.nextStates = new ArrayList<>();
+		this.clausesAllSameLength = clausesAllSameLength;
 	}
 
 	@Override
@@ -24,16 +28,13 @@ public class NfaStateOr extends NfaState {
 		boolean result = false;
 		for (NfaState nextState: nextStates) {
 			boolean matchesFound = false;
-			if (nextState == null) {
-				// null stands for the matching state.
-				if (matchEnds != null)
-					matchEnds.add(pos);
-				matchesFound = true;
-			} else {
-				matchesFound = nextState.findMatchesInternal(fiDoc, pos, direction, matchEnds);
+			matchesFound = nextState.findMatchesInternal(fiDoc, pos, direction, matchEnds);
+			if (matchesFound && (matchEnds == null || clausesAllSameLength) ) {
+				// We either don't care about the match ends, just that there are matches (matchEnds == null)
+				// or we know we there's only one match end because all clauses are the same length.
+				// Short-circuit.
+				return true;
 			}
-			if (matchesFound && matchEnds == null)
-				return true; // we don't care about the match ends, just that there are matches
 			result |= matchesFound;
 		}
 		return result;
@@ -49,7 +50,7 @@ public class NfaStateOr extends NfaState {
 
 	@Override
 	NfaStateOr copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-		NfaStateOr copy = new NfaStateOr();
+		NfaStateOr copy = new NfaStateOr(clausesAllSameLength);
 		copiesMade.put(this, copy);
 		List<NfaState> clauseCopies = new ArrayList<>();
 		boolean hasNulls = false;
@@ -159,6 +160,17 @@ public class NfaStateOr extends NfaState {
 		for (NfaState s: nextStates) {
 			if (s != null)
 				s.lookupPropertyNumbers(fiAccessor, statesVisited);
+		}
+	}
+
+	@Override
+	protected void finishInternal(Set<NfaState> visited) {
+		for (int i = 0; i < nextStates.size(); i++) {
+			NfaState s = nextStates.get(i);
+			if (s == null)
+				nextStates.set(i, match());
+			else
+				s.finish(visited);
 		}
 	}
 

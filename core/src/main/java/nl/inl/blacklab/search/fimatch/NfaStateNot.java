@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ public class NfaStateNot extends NfaState {
 	private NfaState nextState;
 
 	public NfaStateNot(NfaState clause, NfaState nextState) {
+		clause.finish(new HashSet<NfaState>());
 		this.clause = clause;
 		this.nextState = nextState;
 	}
@@ -21,20 +23,10 @@ public class NfaStateNot extends NfaState {
 
 	@Override
 	boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
-		if (clause == null) {
-			// null stands for the match state, therefore this does not match
-			return false;
-		}
 		boolean clauseMatches = clause.findMatchesInternal(fiDoc, pos, direction, null);
 		if (clauseMatches)
 			return false;
 		// No matches found at this position, therefore this token does match.
-		if (nextState == null) {
-			// null stands for the match state
-			if (matchEnds != null)
-				matchEnds.add(pos + direction);
-			return true;
-		}
 		return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
 	}
 
@@ -48,10 +40,12 @@ public class NfaStateNot extends NfaState {
 	NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
 		NfaStateNot copy = new NfaStateNot();
 		copiesMade.put(this, copy);
-		NfaState clauseCopy = clause == null ? null : clause.copy(dangling, copiesMade);
+		NfaState clauseCopy = clause.copy(null, copiesMade);
 		NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
 		copy.clause = clauseCopy;
 		copy.nextState = nextStateCopy;
+		if (nextState == null)
+			dangling.add(copy);
 		return copy;
 	}
 
@@ -91,6 +85,18 @@ public class NfaStateNot extends NfaState {
 			clause.lookupPropertyNumbers(fiAccessor, statesVisited);
 		if (nextState != null)
 			nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+	}
+
+	@Override
+	protected void finishInternal(Set<NfaState> visited) {
+		if (clause == null)
+			clause = match();
+		else
+			clause.finish(visited);
+		if (nextState == null)
+			nextState = match();
+		else
+			nextState.finish(visited);
 	}
 
 }

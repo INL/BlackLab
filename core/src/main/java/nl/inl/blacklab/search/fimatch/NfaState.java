@@ -19,8 +19,8 @@ import java.util.TreeSet;
  */
 public abstract class NfaState {
 
-	/** Singleton instance of the non-match final state */
-	private static final NfaState THE_NO_MATCH_STATE = new NfaStateNoMatch();
+	/** Singleton instance of the match final state */
+	private static final NfaState THE_MATCH_STATE = new NfaStateMatch();
 
 	/**
 	 * Build a token state.
@@ -60,10 +60,11 @@ public abstract class NfaState {
 	 * @param clausesMayLoopBack if false, no clauses loop back to earlier states,
 	 *   (a more efficient way of matching can be used in this case)
 	 * @param nextStates states to try
+	 * @param clausesAllSameLength are all hits for all clauses the same length? (used to optimize matching)
 	 * @return the state object
 	 */
-	public static NfaState or(boolean clausesMayLoopBack, List<NfaState> nextStates) {
-		return clausesMayLoopBack ? new NfaStateOr(nextStates) : new NfaStateOrAcyclic(nextStates);
+	public static NfaState or(boolean clausesMayLoopBack, List<NfaState> nextStates, boolean clausesAllSameLength) {
+		return clausesMayLoopBack ? new NfaStateOr(nextStates, clausesAllSameLength) : new NfaStateOrAcyclic(nextStates, clausesAllSameLength);
 	}
 
 	/**
@@ -78,8 +79,8 @@ public abstract class NfaState {
 		return clausesMayLoopBack ? new NfaStateAnd(nextStates) : new NfaStateAndAcyclic(nextStates);
 	}
 
-	public static NfaState noMatch() {
-		return THE_NO_MATCH_STATE;
+	public static NfaState match() {
+		return THE_MATCH_STATE;
 	}
 
 	/**
@@ -169,8 +170,29 @@ public abstract class NfaState {
 	}
 
 	public static String dump(NfaState state, Map<NfaState, Integer> stateNrs) {
-		return state == null ? "MATCH()" : state.dump(stateNrs);
+		return state == null ? "DANGLING" : state.dump(stateNrs);
 	}
+
+	/**
+	 * Visit each node and replace dangling arrows (nulls) with the match state.
+	 *
+	 * @param visited nodes visited so far, so we don't visit nodes multiple times
+	 */
+	public void finish(Set<NfaState> visited) {
+		if (visited.contains(this))
+			return;
+		visited.add(this);
+		finishInternal(visited);
+	}
+
+	/**
+	 * Visit each node and replace dangling arrows (nulls) with the match state.
+	 *
+	 * @param visited nodes visited so far, this one included. finish() uses this to
+	 *   make sure we don't visit the same node twice, so always call finish() in your
+	 *   implementations, not finishInternal().
+	 */
+	protected abstract void finishInternal(Set<NfaState> visited);
 
 	public String dump(Map<NfaState, Integer> stateNrs) {
 		Integer n = stateNrs.get(this);

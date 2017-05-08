@@ -54,12 +54,6 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
 		if (actualToken >= 0) {
 			String tokenString = fiDoc.getTermString(propertyNumber, actualToken);
 			if (matchesPattern(desensitize(tokenString))) {
-				if (nextState == null) {
-					// null stands for the match state
-					if (matchEnds != null)
-						matchEnds.add(pos + direction);
-					return true;
-				}
 				return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
 			}
 		}
@@ -143,6 +137,14 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
 		propertyNumber = fiAccessor.getPropertyNumber(propertyName);
 		if (nextState != null)
 			nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+	}
+
+	@Override
+	protected void finishInternal(Set<NfaState> visited) {
+		if (nextState == null)
+			nextState = match();
+		else
+			nextState.finish(visited);
 	}
 
 }

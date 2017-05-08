@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.io.StringReader;
-import java.util.Arrays;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -85,20 +84,20 @@ public class TestQueryRewriteNfa {
 	@Test
 	public void testRewrite() {
 		assertRewriteResult("\"the\" [word=\"quick\" & lemma=\"quick\"] [lemma=\"brown\"]",
-			"FISEQ(FISEQ(AND(TERM(contents%word@i:quick), TERM(contents%lemma@i:quick)), NFA:#1:TOKEN(brown,MATCH()), 1), NFA:#1:TOKEN(the,MATCH()), -1)");
+			"FISEQ(FISEQ(AND(TERM(contents%word@i:quick), TERM(contents%lemma@i:quick)), NFA:#1:TOKEN(brown,DANGLING), 1), NFA:#1:TOKEN(the,DANGLING), -1)");
 	}
 
 	@Ignore // hard to test properly with tiny indices
 	@Test
 	public void testRewriteSuffix() {
 		assertRewriteResult("\"noot\" \".*p\"",
-			"FISEQ(TERM(contents%word@i:noot), NFA:#1:REGEX(^.*p$,MATCH()), 1)");
+			"FISEQ(TERM(contents%word@i:noot), NFA:#1:REGEX(^.*p$,DANGLING), 1)");
 	}
 
 	@Test
 	public void testRewritePrefix() {
 		assertRewriteResult("\"a.*\" \"b.*\" \"c.*\"",
-			"FISEQ(TERM(contents%word@i:aap), NFA:#1:REGEX(^b.*$,#2:REGEX(^c.*$,MATCH())), 1)");
+			"FISEQ(TERM(contents%word@i:aap), NFA:#1:REGEX(^b.*$,#2:REGEX(^c.*$,DANGLING)), 1)");
 	}
 
 }

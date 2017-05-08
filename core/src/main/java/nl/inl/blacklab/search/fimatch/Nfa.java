@@ -73,7 +73,7 @@ public class Nfa {
 		// Create the max part, depending on whether it's infinite or not.
 		if (max == BLSpanQuery.MAX_UNLIMITED) {
 			// Infinite. Loop back to start of last link added.
-			NfaState loopBack = NfaState.or(true, Arrays.asList(link.getStartingState(), null));
+			NfaState loopBack = NfaState.or(true, Arrays.asList(link.getStartingState(), null), false);
 			for (NfaState d: danglingArrows) {
 				d.fillDangling(loopBack);
 			}
@@ -85,21 +85,26 @@ public class Nfa {
 				startingState = loopBack;
 			}
 		} else {
+			// How many optional clauses do we still need to add?
+			int numberOfLinksToAdd = max - min;
+
 			// Finite. Allow (max - min) more occurrences of the clause.
-			if (min != 0) {
+			if (min != 0 && numberOfLinksToAdd > 0) {
 				// There's already required occurrences of the clause.
 				// Make a copy of link first so we don't destroy those.
 				link = link.copy();
 			}
-			// Make optional clause fragment (note that if min == 0, this link
-			// will already be in its correct place)
-			NfaState start = NfaState.or(true, Arrays.asList(link.getStartingState(), null));
 			Set<NfaState> escapeArrows = new HashSet<>();
-			escapeArrows.add(start);
-			link.setStartingState(start);
 
-			// How many optional clauses do we still need to add?
-			int numberOfLinksToAdd = max - min;
+			// Do we need to make the optional fragment?
+			if (numberOfLinksToAdd > 0) {
+				// Make optional clause fragment (note that if min == 0, this link
+				// will already be in its correct place)
+				NfaState start = NfaState.or(true, Arrays.asList(link.getStartingState(), null), false);
+				escapeArrows.add(start);
+				link.setStartingState(start);
+			}
+
 			if (min == 0) {
 				// We already have one link (see above), so add one less.
 				numberOfLinksToAdd--;
@@ -142,6 +147,10 @@ public class Nfa {
 
 	public void lookupPropertyNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
 		startingState.lookupPropertyNumbers(fiAccessor, statesVisited);
+	}
+
+	public void finish() {
+		startingState.finish(new HashSet<NfaState>());
 	}
 
 }

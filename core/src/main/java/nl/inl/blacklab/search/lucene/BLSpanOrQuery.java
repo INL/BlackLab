@@ -589,7 +589,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 			states.add(frag.getStartingState());
 //			dangling.addAll(frag.getDanglingArrows());
 		}
-		NfaState orAcyclic = NfaState.or(false, states);
+		NfaState orAcyclic = NfaState.or(false, states, hitsAllSameLength());
 		return new Nfa(orAcyclic, Arrays.asList(orAcyclic));
 	}
 

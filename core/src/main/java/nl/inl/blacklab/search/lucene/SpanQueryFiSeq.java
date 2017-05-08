@@ -81,6 +81,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 
 		// Finalize our NFA, so it looks up property numbers for its property names.
+		nfa.finish();
 		nfa.lookupPropertyNumbers(fiAccessor, new IdentityHashMap<NfaState,Boolean>());
 
 		BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, needsScores);

@@ -20,6 +20,9 @@ public class NfaStateAndAcyclic extends NfaState {
 	NfaState nextState;
 
 	public NfaStateAndAcyclic(List<NfaState> andClauses) {
+		for (NfaState clause: andClauses) {
+			clause.finish(new HashSet<NfaState>());
+		}
 		this.clauses = new ArrayList<>(andClauses);
 		this.nextState = null;
 	}
@@ -32,38 +35,25 @@ public class NfaStateAndAcyclic extends NfaState {
 	@Override
 	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// AND state. Find matches for all alternatives.
-		Set<Integer> clausesMatchEnds = new HashSet<>();
+		Set<Integer> clausesMatchEnds = null;
 		Set<Integer> matchEndsThisClause = new HashSet<>();
 		for (NfaState clause: clauses) {
-			boolean matchesFound = false;
 			matchEndsThisClause.clear();
-			if (clause == null) {
-				// null stands for the matching state.
-				matchEndsThisClause.add(pos);
-				matchesFound = true;
-			} else {
-				matchesFound = clause.findMatchesInternal(fiDoc, pos, direction, matchEndsThisClause);
-			}
-			if (!matchesFound)
-				return false; // short circuit AND
-			if (clausesMatchEnds.size() == 0) {
+			if (!clause.findMatchesInternal(fiDoc, pos, direction, matchEndsThisClause))
+				return false; // this clause had no hits; short circuit AND
+			if (clausesMatchEnds == null) {
 				// First matches found
-				clausesMatchEnds.addAll(matchEndsThisClause);
+				clausesMatchEnds = matchEndsThisClause;
+				matchEndsThisClause = new HashSet<>();
 			} else {
 				// Determine intersection with previous matches
 				clausesMatchEnds.retainAll(matchEndsThisClause);
-				if (matchEndsThisClause.size() == 0)
-					return false; // short circuit AND
+				if (clausesMatchEnds.size() == 0)
+					return false; // there are no hits left; short circuit AND
 			}
 		}
 		boolean foundMatch = false;
 		if (clausesMatchEnds.size() > 0) {
-			if (nextState == null) {
-				// null corresponds to the match state, so our AND-clause matches are our final matches
-				if (matchEnds != null)
-					matchEnds.addAll(clausesMatchEnds);
-				return true;
-			}
 			// Continue matching from the matches to our OR clauses
 			for (Integer clauseMatchEnd: clausesMatchEnds) {
 				foundMatch |= nextState.findMatchesInternal(fiDoc, clauseMatchEnd, direction, matchEnds);
@@ -84,8 +74,7 @@ public class NfaStateAndAcyclic extends NfaState {
 		copiesMade.put(this, copy);
 		List<NfaState> clauseCopies = new ArrayList<>();
 		for (NfaState clause: clauses) {
-			if (clause != null)
-				clause = clause.copy(null, copiesMade);
+			clause = clause.copy(null, copiesMade);
 			clauseCopies.add(clause);
 		}
 		copy.clauses.addAll(clauseCopies);
@@ -196,6 +185,21 @@ public class NfaStateAndAcyclic extends NfaState {
 		}
 		if (nextState != null)
 			nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+	}
+
+	@Override
+	protected void finishInternal(Set<NfaState> visited) {
+		for (int i = 0; i < clauses.size(); i++) {
+			NfaState s = clauses.get(i);
+			if (s == null)
+				clauses.set(i, match());
+			else
+				s.finish(visited);
+		}
+		if (nextState == null)
+			nextState = match();
+		else
+			nextState.finish(visited);
 	}
 
 }

@@ -145,4 +145,12 @@ public class NfaStateToken extends NfaState {
 			nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
 	}
 
+	@Override
+	protected void finishInternal(Set<NfaState> visited) {
+		if (nextState == null)
+			nextState = match();
+		else
+			nextState.finish(visited);
+	}
+
 }

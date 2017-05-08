@@ -15,48 +15,56 @@ import java.util.Set;
  */
 public class NfaStateOrAcyclic extends NfaState {
 
-	List<NfaState> orClauses;
+	List<NfaState> clauses;
 
 	NfaState nextState;
 
-	public NfaStateOrAcyclic(List<NfaState> orClauses) {
-		this.orClauses = new ArrayList<>(orClauses);
+	/** If we know all hits are same length (in finish()), we can optimize matching by shortcircuiting OR */
+	boolean clausesAllSameLength;
+
+	public NfaStateOrAcyclic(List<NfaState> clauses, boolean clausesAllSameLength) {
+		for (NfaState clause: clauses) {
+			clause.finish(new HashSet<NfaState>());
+		}
+		this.clauses = new ArrayList<>(clauses);
 		this.nextState = null;
+		this.clausesAllSameLength = clausesAllSameLength;
 	}
 
 	public NfaStateOrAcyclic() {
-		this.orClauses = new ArrayList<>();
+		this.clauses = new ArrayList<>();
 		this.nextState = null;
 	}
 
 	@Override
 	public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
 		// OR/Split state. Find matches for all alternatives.
-		boolean orClauseMatched = false;
-		Set<Integer> orMatchEnds = new HashSet<>();
-		for (NfaState orClause: orClauses) {
-			boolean matchesFound = false;
-			if (orClause == null) {
-				// null stands for the matching state.
-				orMatchEnds.add(pos);
-				matchesFound = true;
-			} else {
-				matchesFound = orClause.findMatchesInternal(fiDoc, pos, direction, orMatchEnds);
+		boolean clauseMatched = false;
+		Set<Integer> clauseMatchEnds = new HashSet<>();
+		if (clausesAllSameLength) {
+			// We can short-circuit as soon as we find a single clause hit, because there can only be one match end.
+			for (NfaState clause: clauses) {
+				boolean matchesFound = false;
+				matchesFound = clause.findMatchesInternal(fiDoc, pos, direction, clauseMatchEnds);
+				clauseMatched |= matchesFound;
+				if (clauseMatched)
+					break; // short-circuit OR
 			}
-			if (matchesFound && matchEnds == null && nextState == null)
-				return true; // we don't care about the match ends, just that there are matches
-			orClauseMatched |= matchesFound;
+		} else {
+			// We have to process all clauses because we need all match ends for the next phase.
+			for (NfaState clause: clauses) {
+				boolean matchesFound = false;
+				matchesFound = clause.findMatchesInternal(fiDoc, pos, direction, clauseMatchEnds);
+				clauseMatched |= matchesFound;
+			}
 		}
 		boolean foundMatch = false;
-		if (orClauseMatched) {
-			if (nextState == null) {
-				// null corresponds to the match state, so our or-clause matches are our final matches
-				matchEnds.addAll(orMatchEnds);
-				return true;
-			}
+		if (clauseMatched) {
 			// Continue matching from the matches to our OR clauses
-			for (Integer orMatchEnd: orMatchEnds) {
-				foundMatch |= nextState.findMatchesInternal(fiDoc, orMatchEnd, direction, matchEnds);
+			for (Integer clauseMatchEnd: clauseMatchEnds) {
+				foundMatch |= nextState.findMatchesInternal(fiDoc, clauseMatchEnd, direction, matchEnds);
+				if (foundMatch && matchEnds == null)
+					break; // we don't care about the match ends, just that there are matches
 			}
 		}
 		return foundMatch;
@@ -73,12 +81,11 @@ public class NfaStateOrAcyclic extends NfaState {
 		NfaStateOrAcyclic copy = new NfaStateOrAcyclic();
 		copiesMade.put(this, copy);
 		List<NfaState> clauseCopies = new ArrayList<>();
-		for (NfaState orClause: orClauses) {
-			if (orClause != null)
-				orClause = orClause.copy(null, copiesMade);
-			clauseCopies.add(orClause);
+		for (NfaState clause: clauses) {
+			clause = clause.copy(null, copiesMade);
+			clauseCopies.add(clause);
 		}
-		copy.orClauses.addAll(clauseCopies);
+		copy.clauses.addAll(clauseCopies);
 		copy.nextState = nextState;
 		if (nextState == null && dangling != null)
 			dangling.add(copy);
@@ -87,7 +94,7 @@ public class NfaStateOrAcyclic extends NfaState {
 
 	@Override
 	public void setNextState(int input, NfaState state) {
-		orClauses.set(input, state);
+		clauses.set(input, state);
 	}
 
 	@Override
@@ -100,8 +107,8 @@ public class NfaStateOrAcyclic extends NfaState {
 		}
 		statesVisited.add(this);
 		boolean anyMatchEmpty = false;
-		for (NfaState orClause: orClauses) {
-			if (orClause.matchesEmptySequence(statesVisited)) {
+		for (NfaState clause: clauses) {
+			if (clause.matchesEmptySequence(statesVisited)) {
 				anyMatchEmpty = true;
 				break;
 			}
@@ -114,6 +121,8 @@ public class NfaStateOrAcyclic extends NfaState {
 
 	@Override
 	public boolean hitsAllSameLength(Set<NfaState> statesVisited) {
+		return clausesAllSameLength && (nextState == null || nextState.hitsAllSameLength(statesVisited));
+		/*
 		if (statesVisited.contains(this)) {
 			// We've found a cycle. Stop processing, and just return the
 			// "safest" (least-guarantee) answer. In this case: we can't
@@ -122,14 +131,15 @@ public class NfaStateOrAcyclic extends NfaState {
 		}
 		statesVisited.add(this);
 		int hitLength = -1;
-		for (NfaState orClause: orClauses) {
-			if (!orClause.hitsAllSameLength(statesVisited))
+		for (NfaState clause: clauses) {
+			if (!clause.hitsAllSameLength(statesVisited))
 				return false;
-			if (hitLength != -1 && hitLength != orClause.hitsLengthMin(statesVisited))
+			if (hitLength != -1 && hitLength != clause.hitsLengthMin(statesVisited))
 				return false;
-			hitLength = orClause.hitsLengthMin(statesVisited);
+			hitLength = clause.hitsLengthMin(statesVisited);
 		}
 		return nextState == null || nextState.hitsAllSameLength(statesVisited);
+		*/
 	}
 
 	@Override
@@ -142,8 +152,8 @@ public class NfaStateOrAcyclic extends NfaState {
 			return 0;
 		}
 		statesVisited.add(this);
-		for (NfaState nextState: orClauses) {
-			int i = nextState.hitsLengthMin(statesVisited);
+		for (NfaState clause: clauses) {
+			int i = clause.hitsLengthMin(statesVisited);
 			if (i < hitLengthMin)
 				hitLengthMin = i;
 		}
@@ -163,8 +173,8 @@ public class NfaStateOrAcyclic extends NfaState {
 			return Integer.MAX_VALUE;
 		}
 		statesVisited.add(this);
-		for (NfaState nextState: orClauses) {
-			int i = nextState.hitsLengthMax(statesVisited);
+		for (NfaState clause: clauses) {
+			int i = clause.hitsLengthMax(statesVisited);
 			if (i > hitLengthMax)
 				hitLengthMax = i;
 		}
@@ -179,22 +189,37 @@ public class NfaStateOrAcyclic extends NfaState {
 	@Override
 	protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
 		StringBuilder b = new StringBuilder();
-		for (NfaState s: orClauses) {
+		for (NfaState clause: clauses) {
 			if (b.length() > 0)
 				b.append(",");
-			b.append(dump(s, stateNrs));
+			b.append(dump(clause, stateNrs));
 		}
 		return "OR(" + b.toString() + ", " + dump(nextState, stateNrs) + ")";
 	}
 
 	@Override
 	void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-		for (NfaState s: orClauses) {
-			if (s != null)
-				s.lookupPropertyNumbers(fiAccessor, statesVisited);
+		for (NfaState clause: clauses) {
+			if (clause != null)
+				clause.lookupPropertyNumbers(fiAccessor, statesVisited);
 		}
 		if (nextState != null)
 			nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+	}
+
+	@Override
+	protected void finishInternal(Set<NfaState> visited) {
+		for (int i = 0; i < clauses.size(); i++) {
+			NfaState clause = clauses.get(i);
+			if (clause == null)
+				clauses.set(i, match());
+			else
+				clause.finish(visited);
+		}
+		if (nextState == null)
+			nextState = match();
+		else
+			nextState.finish(visited);
 	}
 
 }

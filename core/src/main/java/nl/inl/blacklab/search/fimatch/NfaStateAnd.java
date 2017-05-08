@@ -24,26 +24,21 @@ public class NfaStateAnd extends NfaState {
 		// Split state. Find matches for all alternatives.
 		Set<Integer> newHitsFound = null;
 		for (NfaState nextState: nextStates) {
-			Set<Integer> matchesForClause;
-			if (nextState == null) {
-				// null stands for the matching state.
-				matchesForClause = new HashSet<>();
-				matchesForClause.add(pos);
-			} else {
-				matchesForClause = nextState.findMatches(fiDoc, pos, direction);
-			}
+			Set<Integer> matchesForClause = new HashSet<>();
+			if (!nextState.findMatchesInternal(fiDoc, pos, direction, matchesForClause))
+				return false; // short-circuit
 			if (newHitsFound == null) {
 				newHitsFound = matchesForClause;
 			} else {
 				// Calculate intersection
 				newHitsFound.retainAll(matchesForClause);
+				if (newHitsFound.size() == 0)
+					return false; // no hits left; short-circuit
 			}
-			if (newHitsFound.size() == 0)
-				break; // no hits
 		}
 		if (matchEnds != null)
 			matchEnds.addAll(newHitsFound);
-		return newHitsFound.size() > 0;
+		return true;
 	}
 
 	@Override
@@ -164,6 +159,17 @@ public class NfaStateAnd extends NfaState {
 		for (NfaState s: nextStates) {
 			if (s != null)
 				s.lookupPropertyNumbers(fiAccessor, statesVisited);
+		}
+	}
+
+	@Override
+	protected void finishInternal(Set<NfaState> visited) {
+		for (int i = 0; i < nextStates.size(); i++) {
+			NfaState s = nextStates.get(i);
+			if (s == null)
+				nextStates.set(i, match());
+			else
+				s.finish(visited);
 		}
 	}
 
