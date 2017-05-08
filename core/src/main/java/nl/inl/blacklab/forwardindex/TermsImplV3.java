@@ -23,6 +23,8 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.text.CollationKey;
 import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
@@ -144,8 +146,7 @@ class TermsImplV3 extends Terms {
 			collator = Collator.getInstance();
 		this.collator = (Collator)collator.clone();
 		this.collator.setStrength(Collator.TERTIARY);
-		this.collatorInsensitive = (Collator)collator.clone();
-		collatorInsensitive.setStrength(Collator.PRIMARY);
+		this.collatorInsensitive = getCollatorInsensitive((RuleBasedCollator)collator);
 
 		if (indexMode) {
 			// Index mode: create a SortedMap based on the specified Collator.
@@ -161,6 +162,27 @@ class TermsImplV3 extends Terms {
 		setBlockBasedFile(useBlockBasedTermsFile);
 		if (termsFile != null && termsFile.exists())
 			read(termsFile);
+	}
+
+	/**
+	 * Returns a case-/accent-insensitive version of the specified collator that also doesn't
+	 * ignore dash or space (as most collators do by default in PRIMARY mode). This way, the
+	 * comparison is identical to lowercasing and stripping accents before calling String.equals(),
+	 * which is what we use everywhere else for case-/accent-insensitive comparison.
+	 *
+	 * @param coll collator to make insensitive
+	 * @return insensitive collator
+	 */
+	private static Collator getCollatorInsensitive(RuleBasedCollator coll) {
+		String rules = coll.getRules().replaceAll(",'-'", ""); // don't ignore dash
+		rules = rules.replaceAll("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
+		try {
+			coll = new RuleBasedCollator(rules);
+			coll.setStrength(Collator.PRIMARY);  // ignore case and accent differences
+			return coll;
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
