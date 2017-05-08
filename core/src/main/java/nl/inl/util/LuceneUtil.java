@@ -421,7 +421,7 @@ public class LuceneUtil {
 							resultList = new TreeSet<>();
 							results.put(subpropName, resultList);
 						}
-						String subpropValue = parts[1];
+						String subpropValue = parts[2];
 						resultList.add(subpropValue);
 					}
 				}
