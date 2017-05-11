@@ -99,4 +99,9 @@ public class MockForwardIndex extends ForwardIndex {
 		return null;
 	}
 
+	@Override
+	public boolean canDoNfaMatching() {
+		return false;
+	}
+
 }

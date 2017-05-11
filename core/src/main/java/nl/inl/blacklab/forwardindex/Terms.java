@@ -2,7 +2,6 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.text.Collator;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
@@ -108,8 +107,8 @@ public abstract class Terms {
 
 	protected abstract void setBlockBasedFile(boolean useBlockBasedTermsFile);
 
-	public static Terms open(boolean indexMode, Collator collator, File termsFile, boolean useBlockBasedTermsFile) {
-		return new TermsImplV3(indexMode, collator, termsFile, useBlockBasedTermsFile);
+	public static Terms open(boolean indexMode, Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
+		return new TermsImplV3(indexMode, collators, termsFile, useBlockBasedTermsFile);
 	}
 
 	public abstract boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive);

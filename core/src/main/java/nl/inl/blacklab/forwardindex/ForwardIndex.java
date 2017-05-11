@@ -207,7 +207,13 @@ public abstract class ForwardIndex {
 	/**
 	 * Current forward index format version
 	 */
-	private static final String CURRENT_VERSION = "4";
+	private static final String CURRENT_VERSION = "5";
+
+	/** Different versions of insensitive collator */
+	public static enum CollatorVersion {
+		V1,  // ignored dash and space
+		V2   // doesn't ignore dash and space
+	}
 
 	/**
 	 * Open a forward index.
@@ -235,7 +241,9 @@ public abstract class ForwardIndex {
 		if (!indexMode || !create) {
 			// We're opening an existing forward index. Check version.
 			if (!VersionFile.isTypeVersion(dir, "fi", CURRENT_VERSION)) {
-				if (VersionFile.isTypeVersion(dir, "fi", "3")) {
+				if (VersionFile.isTypeVersion(dir, "fi", "4")) {
+					version = "4";
+				} else if (VersionFile.isTypeVersion(dir, "fi", "3")) {
 					version = "3";
 				} else if (VersionFile.isTypeVersion(dir, "fi", "2")) {
 					version = "2";
@@ -251,16 +259,22 @@ public abstract class ForwardIndex {
 
 		ForwardIndex fi;
 		boolean largeTermsFileSupport = true;
+		CollatorVersion collVersion = CollatorVersion.V2;
 		switch(version) {
 		case "2":
 			throw new UnsupportedOperationException("Forward index version (2) too old for this BlackLab version. Please re-index.");
 		case "3":
 			largeTermsFileSupport = false;
+			collVersion = CollatorVersion.V1;
 			break;
 		case "4":
+			collVersion = CollatorVersion.V1;
+			break;
+		case "5":
 			break;
 		}
-		fi = new ForwardIndexImplV3(dir, indexMode, collator, create, largeTermsFileSupport);
+		Collators collators = new Collators(collator, collVersion);
+		fi = new ForwardIndexImplV3(dir, indexMode, collators, create, largeTermsFileSupport);
 		return fi;
 	}
 
@@ -288,4 +302,6 @@ public abstract class ForwardIndex {
 		// Slow/naive implementation, subclasses should override
 		return retrievePartsInt(fiid, new int[] {pos}, new int[] {pos + 1}).get(0)[0];
 	}
+
+	public abstract boolean canDoNfaMatching();
 }

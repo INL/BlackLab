@@ -24,7 +24,6 @@ import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.text.Collator;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,6 +126,9 @@ class ForwardIndexImplV3 extends ForwardIndex {
 	/** If true, we use the new, block-based terms file, that can grow larger than 2 GB. */
 	private boolean useBlockBasedTermsFile = true;
 
+	/** If true, our Terms can be used for NFA matching (Collator is consistent with other comparisons) */
+	private boolean canDoNfaMatching;
+
 	@Override
 	public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
 		fiidLookup = new FiidLookup(reader, lucenePropFieldName);
@@ -137,7 +139,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		return (int)fiidLookup.get(docId);
 	}
 
-	ForwardIndexImplV3(File dir, boolean indexMode, Collator collator, boolean create, boolean largeTermsFileSupport) {
+	ForwardIndexImplV3(File dir, boolean indexMode, Collators collators, boolean create, boolean largeTermsFileSupport) {
+		canDoNfaMatching = collators.getVersion() != CollatorVersion.V1;
 
 		if (!indexMode && create) {
 			throw new IllegalArgumentException("Tried to create new forward index, but not in index mode");
@@ -168,13 +171,13 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			setLargeTermsFileSupport(largeTermsFileSupport);
 			if (tocFile.exists()) {
 				readToc();
-				terms = Terms.open(indexMode, collator, termsFile, useBlockBasedTermsFile);
+				terms = Terms.open(indexMode, collators, termsFile, useBlockBasedTermsFile);
 				tocModified = false;
 			} else {
 				if (!indexMode) {
 					throw new IllegalArgumentException("No TOC found, and not in index mode!");
 				}
-				terms = Terms.open(indexMode, collator, null, true);
+				terms = Terms.open(indexMode, collators, null, true);
 				tokensFile.createNewFile();
 				tokensFileChunks = null;
 				tocModified = true;
@@ -787,5 +790,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				return toc.size() - deletedTocEntries.size();
 			}
 		};
+	}
+
+	@Override
+	public boolean canDoNfaMatching() {
+		return canDoNfaMatching;
 	}
 }

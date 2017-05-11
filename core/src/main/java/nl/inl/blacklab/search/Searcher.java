@@ -1512,4 +1512,11 @@ public abstract class Searcher {
 		return forwardIndices;
 	}
 
+	public boolean canDoNfaMatching() {
+		if (forwardIndices.size() == 0)
+			return false;
+		ForwardIndex fi = forwardIndices.values().iterator().next();
+		return fi.canDoNfaMatching();
+	}
+
 }

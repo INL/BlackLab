@@ -21,14 +21,15 @@ public abstract class ClauseCombiner {
 		return priority(left, right, reader) != CANNOT_COMBINE;
 	}
 
-	public static Set<ClauseCombiner> all() {
+	public static Set<ClauseCombiner> all(boolean nfa) {
 		if (all == null) {
 			all = new HashSet<>();
 			all.add(new ClauseCombinerRepetition());
 			all.add(new ClauseCombinerInternalisation());
 			all.add(new ClauseCombinerAnyExpansion());
 			all.add(new ClauseCombinerNot());
-			all.add(new ClauseCombinerNfa());
+			if (nfa)
+				all.add(new ClauseCombinerNfa());
 		}
 		return all;
 	}

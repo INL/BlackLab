@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.inl.blacklab.forwardindex.ForwardIndex.CollatorVersion;
 import nl.inl.util.UtilsForTesting;
 
 public class TestTermsV3 {
@@ -43,7 +44,9 @@ public class TestTermsV3 {
 		dir = UtilsForTesting.createBlackLabTestDir("Terms");
 
 		// Store some terms
-		t = Terms.open(true, Collator.getInstance(new Locale("en", "GB")), null, true);
+		Collator coll = Collator.getInstance(new Locale("en", "GB"));
+		Collators colls = new Collators(coll, CollatorVersion.V2);
+		t = Terms.open(true, colls, null, true);
 		if (t instanceof TermsImplV3)
 			((TermsImplV3)t).setMaxBlockSize(10);
 		for (int i = 0; i < str.length; i++) {
@@ -53,7 +56,7 @@ public class TestTermsV3 {
 		t.write(f); // close so everything is guaranteed to be written
 
 		// Open for reading
-		t = Terms.open(false, Collator.getInstance(new Locale("en", "GB")), f, true);
+		t = Terms.open(false, colls, f, true);
 	}
 
 	@After

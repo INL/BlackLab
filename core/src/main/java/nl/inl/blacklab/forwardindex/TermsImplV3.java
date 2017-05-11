@@ -23,8 +23,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.text.CollationKey;
 import java.text.Collator;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
@@ -140,13 +138,10 @@ class TermsImplV3 extends Terms {
 	 *  because we also need to store offsets. */
 	private int maxMapSize = DEFAULT_MAX_MAP_SIZE;
 
-	TermsImplV3(boolean indexMode, Collator collator, File termsFile, boolean useBlockBasedTermsFile) {
+	TermsImplV3(boolean indexMode, Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
 		this.indexMode = indexMode;
-		if (collator == null)
-			collator = Collator.getInstance();
-		this.collator = (Collator)collator.clone();
-		this.collator.setStrength(Collator.TERTIARY);
-		this.collatorInsensitive = getCollatorInsensitive((RuleBasedCollator)collator);
+		this.collator = collators.get(true, true);
+		this.collatorInsensitive = collators.get(false, false);
 
 		if (indexMode) {
 			// Index mode: create a SortedMap based on the specified Collator.
@@ -162,27 +157,6 @@ class TermsImplV3 extends Terms {
 		setBlockBasedFile(useBlockBasedTermsFile);
 		if (termsFile != null && termsFile.exists())
 			read(termsFile);
-	}
-
-	/**
-	 * Returns a case-/accent-insensitive version of the specified collator that also doesn't
-	 * ignore dash or space (as most collators do by default in PRIMARY mode). This way, the
-	 * comparison is identical to lowercasing and stripping accents before calling String.equals(),
-	 * which is what we use everywhere else for case-/accent-insensitive comparison.
-	 *
-	 * @param coll collator to make insensitive
-	 * @return insensitive collator
-	 */
-	private static Collator getCollatorInsensitive(RuleBasedCollator coll) {
-		String rules = coll.getRules().replaceAll(",'-'", ""); // don't ignore dash
-		rules = rules.replaceAll("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
-		try {
-			coll = new RuleBasedCollator(rules);
-			coll.setStrength(Collator.PRIMARY);  // ignore case and accent differences
-			return coll;
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	@Override
@@ -329,13 +303,14 @@ class TermsImplV3 extends Terms {
 			CollationKey prevTermKey = collatorInsensitive.getCollationKey("");
 			FirstAndNumber currentItem = null;
 			for (int i = 0; i < n; i++) {
-				String term = get(sortPositionPerIdInsensitive[i]);
+				String term = get(idPerSortPositionInsensitive[i]);
 				CollationKey termKey = collatorInsensitive.getCollationKey(term);
 				if (!termKey.equals(prevTermKey)) {
 					if (currentItem != null)
 						currentItem.number = i - currentItem.first;
 					currentItem = new FirstAndNumber(i, 0);
 					termIndexInsensitive.put(termKey, currentItem);
+					prevTermKey = termKey;
 				}
 			}
 			if (currentItem != null) {

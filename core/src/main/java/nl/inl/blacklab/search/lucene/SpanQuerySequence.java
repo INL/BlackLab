@@ -33,6 +33,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
@@ -250,6 +251,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	@Override
 	public BLSpanQuery optimize(IndexReader reader) throws IOException {
 		super.optimize(reader);
+		boolean canDoNfaMatching = Searcher.fromIndexReader(reader).canDoNfaMatching();
 		boolean anyRewritten = false;
 
 		// Make a copy, because our methods rewrite things in-place.
@@ -271,7 +273,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		// By doing it before rewriting, we save the time to expand the regex to all its matching
 		// terms, as well
 		// as dealing with each of these (sometimes frequent) terms, which can be significant.
-		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all());
+		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
 
 		// Optimize each clause, and flatten again if necessary
 		anyRewritten |= optimizeClauses(cl, reader);
@@ -288,6 +290,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
 	@Override
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+		boolean canDoNfaMatching = Searcher.fromIndexReader(reader).canDoNfaMatching();
 		boolean anyRewritten = false;
 
 		// Make a copy, because our methods rewrite things in-place.
@@ -309,7 +312,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		// By doing it before rewriting, we save the time to expand the regex to all its matching
 		// terms, as well
 		// as dealing with each of these (sometimes frequent) terms, which can be significant.
-		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all());
+		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
 
 		// Rewrite each clause, and flatten again if necessary
 		anyRewritten |= rewriteClauses(cl, reader);
@@ -319,7 +322,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		// Again, try to combine adjacent clauses into more efficient ones. Rewriting clauses may
 		// have
 		// generated new opportunities for combining clauses.
-		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all());
+		anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
 
 		// If any part of the sequence matches the empty sequence, we must
 		// rewrite it to several alternatives combined with OR. Do so now.
