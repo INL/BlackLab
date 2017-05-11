@@ -9,8 +9,6 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 public abstract class ClauseCombiner {
 
-	private static Set<ClauseCombiner> all;
-
 	public static final int CANNOT_COMBINE = Integer.MAX_VALUE;
 
 	public abstract int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader);
@@ -22,15 +20,13 @@ public abstract class ClauseCombiner {
 	}
 
 	public static Set<ClauseCombiner> all(boolean nfa) {
-		if (all == null) {
-			all = new HashSet<>();
-			all.add(new ClauseCombinerRepetition());
-			all.add(new ClauseCombinerInternalisation());
-			all.add(new ClauseCombinerAnyExpansion());
-			all.add(new ClauseCombinerNot());
-			if (nfa)
-				all.add(new ClauseCombinerNfa());
-		}
+		HashSet<ClauseCombiner> all = new HashSet<>();
+		all.add(new ClauseCombinerRepetition());
+		all.add(new ClauseCombinerInternalisation());
+		all.add(new ClauseCombinerAnyExpansion());
+		all.add(new ClauseCombinerNot());
+		if (nfa)
+			all.add(new ClauseCombinerNfa());
 		return all;
 	}
 }

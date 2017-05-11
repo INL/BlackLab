@@ -17,11 +17,12 @@ public class Collators {
 
 	private Collator insensitive;
 
-	public Collators(Collator base, CollatorVersion collVersion) {
+	public Collators(Collator base, CollatorVersion version) {
 		super();
+		this.version = version;
 		sensitive = (Collator)base.clone();
 		sensitive.setStrength(Collator.TERTIARY);
-		insensitive = getCollatorInsensitive((RuleBasedCollator)base.clone(), collVersion);
+		insensitive = getCollatorInsensitive((RuleBasedCollator)base.clone(), version);
 	}
 
 	public Collator get(boolean caseSensitive, boolean diacSensitive) {
