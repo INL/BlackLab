@@ -39,7 +39,7 @@ public class BlsConfigCacheAndPerformance {
 	private int abandonedCountPauseTimeSec = 10;
 
 	/** After how many seconds should we abort counting if client isn't checking the status anymore? */
-	private int abandonedCountAbortTimeSec = 600;
+	private int abandonedCountAbortTimeSec = 60;
 
 	/**
 	 * If enabled, this makes sure the SearchCache will follow the behaviour
@@ -123,7 +123,7 @@ public class BlsConfigCacheAndPerformance {
 			maxPausedSearches = JsonUtil.getIntProp(serverLoadSettings, "maxPausedSearches", 10);
 
 			abandonedCountPauseTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountPauseTimeSec", 10);
-			abandonedCountAbortTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountAbortTimeSec", 600);
+			abandonedCountAbortTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountAbortTimeSec", 60);
 		}
 
 	}
