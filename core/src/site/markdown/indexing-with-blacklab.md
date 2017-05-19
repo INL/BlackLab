@@ -79,6 +79,8 @@ To pass parameters via a property file, use the --indexparam option:
 
     java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool create --indexparam PROPERTYFILE ...
 
+NOTE: in addition to the --indexparam parameter, IndexTool will always look for a file named indexer.properties in the current directory, the input directory, the parent of the input directory, or the index directory. If the file is found in any of these locations, it is read and the values are used as indexing parameters. 
+
 Use the DocIndexer.getParameter(name[, defaultValue]) method to retrieve parameters inside your DocIndexer. For an example of using DocIndexer parameters, see the DocIndexerTeiBase and MetadataFetcherSonarCmdi in the nl.inl.blacklab.indexers package. They use parameters to configure property names and where to fetch metadata from, respectively.
 
 Configuring an external metadata fetcher (see "Metadata from an external source" below) and case- and diacritics sensitivity (see next section) is also done using a indexing parameter for now. Note that this parameter passing mechanism predates the index structure file (see "Configuring the index structure" below) and is likely to be deprecated in favour of that in future versions.
@@ -162,6 +164,8 @@ Here's a commented example of indextemplate.json (double-slash comments in JSON 
     }
 
 <a id="disable-fi"></a>
+
+Please note: the settings pidField, titleField, authorField, dateField refer to the name of the field in the Lucene index, not an XML element name.
 
 ### When and how to disable the forward index for a property
 
@@ -286,3 +290,12 @@ The MetadataFetcher is instantiated by DocIndexerXmlHandlers.getMetadataFetcher(
 
 Also see the two MetadataFetcher examples in nl.inl.blacklab.indexers.
 
+### Add a fixed metadata field to each document
+
+It is possible to tell IndexTool to add a metadata field with a specific value to each document indexed. An example of when this is useful is if you wish to combine several corpora into a single index, and wish to distinguish documents from the different corpora using this metadata field. You would achieve this by running IndexTool twice: once to create the index and add the documents from the first corpus, "tagging" them with a field named e.g. Corpus_title (which is the fieldname [Whitelab](https://github.com/Taalmonsters/WhiteLab2.0) expects) with an appropriate value indicating the first corpus. Then you would run IndexTool again, with command "append" to append documents to the existing index, and giving Corpus_title a different value for this set of documents.
+
+There's two ways to add this fixed metadata field for an IndexTool run. One is to pass an option \"---meta-Corpus_title mycorpusname\" (note the 3 dashes!) to the IndexTool. The other is to place a property \"meta-Corpus_title=mycorpusname\" in a file called indexer.properties in the current directory. This file can be used for other per-run IndexTool configuration; see below.
+
+### Controlling how metadata is fetched and indexed
+
+By default, metadata fields are tokenized, but it can sometimes be useful to index a metadata field without tokenizing it. One example of this is a field containing the document id: if your document ids contain characters that normally would indicate a token boundary, like a period (.) , your document id would be split into several tokens, which is usually not what you want. Use the indextemplate.json file (described above) to indicate you don't want a metadata field to be tokenized.
