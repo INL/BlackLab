@@ -273,17 +273,21 @@ public class IndexTool {
 	private static File findFile(String fileName, File indexDir, File inputDir) {
 		// If the input or index directory or the parent of the index directory
 		// contains indexer.properties, read it
-		File propFile = new File(indexDir, fileName);
+		File propFile;
+		if (inputDir.isDirectory()) {
+			propFile = new File(inputDir, fileName);
+			if (propFile.canRead())
+				return propFile;
+			propFile = new File(inputDir.getParentFile(), fileName);
+			if (propFile.canRead())
+				return propFile;
+		}
+		propFile = new File(indexDir, fileName);
 		if (propFile.canRead())
 			return propFile;
 		propFile = new File(indexDir.getParentFile(), fileName);
 		if (propFile.canRead())
 			return propFile;
-		if (inputDir.isDirectory()) {
-			propFile = new File(inputDir, fileName);
-			if (propFile.canRead())
-				return propFile;
-		}
 		return null;
 	}
 
