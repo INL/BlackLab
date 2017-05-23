@@ -2,9 +2,9 @@ package nl.inl.blacklab.search;
 
 /**
  * AND operation.
- * @deprecated use TextPatternAndNot
+ * 
+ * Actually just TextPatternAndNot without the option of specifying a NOT part.
  */
-@Deprecated
 public class TextPatternAnd extends TextPatternAndNot {
 
 	public TextPatternAnd(TextPattern... clauses) {
