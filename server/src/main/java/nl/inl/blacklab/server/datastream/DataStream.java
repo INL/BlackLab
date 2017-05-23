@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.datastream;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -62,20 +63,36 @@ public abstract class DataStream {
 	 *
 	 * @param code (string) error code
 	 * @param msg the error message
+	 * @param e if specified, include stack trace
 	 */
-	public void error(String code, String msg) {
+	public void error(String code, String msg, Exception e) {
 		startMap()
 		.startEntry("error")
 			.startMap()
 				.entry("code", code)
 				.entry("message", msg);
+		if (e != null) {
+			PrintWriter pw = new PrintWriter(new StringWriter());
+			e.printStackTrace(pw);
+			entry("stackTrace", pw.toString());
+		}
 				endMap()
 			.endEntry()
 		.endMap();
 	}
 
+	/**
+	 * Construct a simple error response object.
+	 *
+	 * @param code (string) error code
+	 * @param msg the error message
+	 */
+	public void error(String code, String msg) {
+		error(code, msg, null);
+	}
+
 	public void internalError(Exception e, boolean debugMode, int code) {
-		error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(e, debugMode, code));
+		error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(e, debugMode, code), debugMode ? e : null);
 	}
 
 	public void internalError(String message, boolean debugMode, int code) {

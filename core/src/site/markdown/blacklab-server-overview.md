@@ -1,6 +1,6 @@
 # Introduction
 
-## What is BlackLab Server?
+## BlackLab Server overview
 
 BlackLab Server is a REST web service for accessing [BlackLab](../) indices. This makes it easy to use BlackLab from your favourite programming language. It can be used for anything from quick analysis scripts to full-featured corpus search applications.
 
@@ -23,7 +23,7 @@ This page explains how to set up and use BlackLab Server. See the [BlackLab home
 -   Uses a stateless protocol and persistent identifiers, making it possible to develop web applications that “feel at home” in the browser, meaning they can be bookmarked, opened in multiple tabs and properly support the back button.
 -   Makes very responsive (AJAX or 'regular') web applications possible because requests return all relevant information at once and both client and server can make use of caching.
 -   One BlackLab Server instance can be used for multiple corpora; this means you need less configuration and fewer server resources.
--   BlackLab Server can be tuned in terms of server load and client responsiveness. Possible settings are, for example: strive for X free memory on the server; allow any client at most X running jobs; let clients cache resultats for X amount of time.
+-   BlackLab Server can be tuned in terms of server load and client responsiveness. Possible settings are, for example: strive for X free memory on the server; allow any client at most X running jobs; let clients cache results for X amount of time.
 -   Provides debug information (e.g. show all searches in the cache)
 -   Has many configurable defaults: page size, context size, default response format, default query language, etc. Of course defaults may be overridden for each request.
 
@@ -104,6 +104,10 @@ Explanation of the various resources:
 	<tr>
 		<td>docs/pid/snippet </td>
 		<td>Uses the forward index to retrieve a snippet of the document.</td>
+	</tr>
+	<tr>
+		<td>fields/FIELDNAME </td>
+		<td>Shows the settings and (some) field values for a metadata field. For complex ("contents") fields, it will show the different properties (e.g. features/annotations) the field has for each token.</td>
 	</tr>
 </table>
 
@@ -391,7 +395,9 @@ Place the configuration file blacklab-server.json (see Appendix A) in /etc/black
 
 Place blacklab-server.war in Tomcat’s webapps directory ($TOMCAT/webapps/). Tomcat should automatically discover and deploy it, and you should be able to go to [http://servername:8080/blacklab-server/](http://servername:8080/blacklab-server/ "http://servername:8080/blacklab-server/") and see the BlackLab Server information page, which includes a list of available corpora.
 
-To (significantly!) improve performance of certain operations, including sorting and grouping large result sets, you might want to consider using the [vmtouch](https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache "https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache") tool to lock files in the OS's disk cache.
+To ensure the correct handling of accented characters in (search) URLs, you should make sure that your URLs are URL-encoded UTF-8 (so e.g. searching for "señor" corresponds to a request like http://myserver/blacklab-server/mycorpus/hits?patt=%22se%C3%B1or%22 . You should also tell Tomcat to interpret URLs as UTF-8 (by default, it does ISO-8859-1) by adding an attribute URIEncoding="UTF-8" to the Connector element with the attribute port="8080" in Tomcat's server.xml file. See [here](https://tomcat.apache.org/tomcat-7.0-doc/config/http.html#Common_Attributes) for details.
+
+To (significantly!) improve performance of certain operations, including sorting and grouping large result sets, you might want to consider using the [vmtouch](https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache "https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache") tool to lock the forward index files in the OS's disk cache. You could also serve these files (or the entire index) from an SSD.
 
 <a id="configuration-file"></a>
 
