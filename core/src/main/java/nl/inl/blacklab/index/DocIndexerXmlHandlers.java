@@ -237,6 +237,12 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 	/**
 	 * If any metadata fields were supplied in the indexer parameters,
 	 * add them now.
+	 * 
+	 * NOTE: we always add these untokenized (because they're usually just
+	 * indications of which data set a set of files belongs to), but that
+	 * means they don't get lowercased or de-accented. Because metadata queries
+	 * are always desensitized, you can't use uppercase or accented letters in
+	 * these values or they will never be found. This should be addressed.
 	 */
 	void addMetadataFieldsFromParameters() {
 		for (Entry<String, String> e: parameters.entrySet()) {

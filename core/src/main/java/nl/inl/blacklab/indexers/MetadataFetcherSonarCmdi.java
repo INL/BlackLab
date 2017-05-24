@@ -102,6 +102,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 		Document luceneDoc = ourDocIndexer.getCurrentLuceneDoc();
 		fromInputFile = luceneDoc.get("fromInputFile");
 
+		ourDocIndexer.addMetadataField("Corpus_title", "SoNaR");
+
 		fromInputFile = fromInputFile.replaceAll("\\\\", "/");
 		int lastSlash = fromInputFile.lastIndexOf("/");
 		int penultimateSlash = fromInputFile.lastIndexOf("/", lastSlash - 1);

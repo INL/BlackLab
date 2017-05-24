@@ -100,6 +100,8 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 		Document luceneDoc = ourDocIndexer.getCurrentLuceneDoc();
 		String fromInputFile = luceneDoc.get("fromInputFile");
 
+		ourDocIndexer.addMetadataField("Corpus_title", "CGN");
+
 		fromInputFile = fromInputFile.replaceAll("\\\\", "/");
 		int lastSlash = fromInputFile.lastIndexOf("/");
 		int penultimateSlash = fromInputFile.lastIndexOf("/", lastSlash);
