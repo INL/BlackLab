@@ -42,6 +42,7 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.PriorityQueue;
 
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -110,14 +111,15 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	/**
 	 * Explicitly set the field for this query. Required because some queries
-	 * rewrite to 0-clause or queries, and we need to be able to call getField()
+	 * rewrite to 0-clause or queries, and we need to be able to call get[Real]Field()
 	 * later.
 	 *
-	 * @param field
-	 *            the field for this query
+	 * @param luceneField
+	 *            the Lucene field for this query (what getRealField() returns)
 	 */
-	public void setField(String field) {
-		this.field = field;
+	public void setField(String luceneField) {
+		this.luceneField = luceneField;
+		this.field = ComplexFieldUtil.getBaseName(luceneField);
 	}
 
 	@Override

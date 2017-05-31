@@ -61,7 +61,10 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 		BLSpanQuery result = BLSpanQuery.wrap((SpanQuery) q);
 		if (result.getField() == null) {
 			if (result instanceof BLSpanOrQuery) {
-				((BLSpanOrQuery) result).setField(getField());
+				BLSpanOrQuery or = (BLSpanOrQuery) result;
+				or.setHitsAreFixedLength(1);
+				or.setClausesAreSimpleTermsInSameProperty(true);
+				or.setField(getRealField());
 			} else {
 				throw new RuntimeException("BLSpanMultiTermQueryWrapper rewritten to " +
 						result.getClass().getSimpleName() + ", getField() == null");
