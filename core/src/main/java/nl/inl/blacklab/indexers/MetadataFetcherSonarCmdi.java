@@ -46,9 +46,6 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 	private static final int INITIAL_CMDI_BYTEBUFFER_SIZE = 1000;
 
-	// TODO: improve structure to avoid test-specific code
-	final static String TEST_FROM_INPUT_FILE = "SoNaR500.Curated.WR-P-E-A_discussion_lists.20130312.tar.gz\\SONAR500/DATA/WR-P-E-A_discussion_lists/WR-P-E-A-0000008066.folia.xml";
-
 	static private ZipFile metadataZipFile = null;
 
 	static private File metadataDir = null;
