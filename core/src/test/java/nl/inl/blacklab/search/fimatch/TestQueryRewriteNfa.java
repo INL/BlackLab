@@ -84,7 +84,7 @@ public class TestQueryRewriteNfa {
 	@Test
 	public void testRewrite() {
 		assertRewriteResult("\"the\" [word=\"quick\" & lemma=\"quick\"] [lemma=\"brown\"]",
-			"FISEQ(FISEQ(AND(TERM(contents%word@i:quick), TERM(contents%lemma@i:quick)), NFA:#1:TOKEN(brown,DANGLING), 1), NFA:#1:TOKEN(the,DANGLING), -1)");
+			"FISEQ(FISEQ(AND(TERM(contents%word@i:quick), TERM(contents%lemma@i:quick)), NFA:#1:TOKEN(the,DANGLING), -1), NFA:#1:TOKEN(brown,DANGLING), 1)");
 	}
 
 	@Ignore // hard to test properly with tiny indices

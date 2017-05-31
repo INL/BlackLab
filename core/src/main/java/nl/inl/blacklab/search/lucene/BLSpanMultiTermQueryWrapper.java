@@ -179,11 +179,6 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 			// Don't know; just use reverse matching
 			numberOfChars = 5;
 		}
-		// We always specify 100 for NFA matching cost, so we can
-		// use values 101 and 99 here to decide which approach to use for
-		// this clause.
-		// If 4 or less 'fixed' characters in pattern, use NFA;
-		// otherwise use regular reverse matching.
 		long n;
 		try {
 			n = reader.getSumTotalTermFreq(term.field()); // total terms in field
@@ -198,13 +193,13 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 		// All in all, it's really a wild guess, but it's all we have right now.
 		switch (numberOfChars) {
 		case 1:
-			return n / 10;
+			return n / 10;   // bijv. d.*    komt ca. 55000000  keer voor in x termen
 		case 2:
-			return n / 20;
+			return n / 50;   // bijv. di.*   komt ca.  6600000  keer voor in x termen
 		case 3:
-			return n / 40;
+			return n / 75;   // bijv. die.*  komt ca.  4400000  keer voor in x termen
 		case 4:
-			return n / 60;
+			return n / 1000; // bijv. dier.* komt ca.   108000  keer voor in x termen
 		default:
 			// 5 or more characters given.
 			// We have no idea how many hits we're likely to get from this.

@@ -147,6 +147,9 @@ public class SearcherImpl extends Searcher implements Closeable {
 		}
 		this.indexLocation = indexDir;
 
+		logger.debug("TOTAL TERM FREQ contents%lemma@i: " + reader.getSumTotalTermFreq("contents%lemma@i"));
+		logger.debug("TOTAL TERM FREQ test: " + reader.getSumTotalTermFreq("test"));
+
 		// Determine the index structure
 		logger.debug("  Determining index structure...");
 		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
