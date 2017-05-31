@@ -92,13 +92,14 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 				// Use a BLSpanTermQuery instead of default Lucene one.
 				spanQueries[i] = new BLSpanTermQuery(termQuery.getTerm());
 			}
-			BLSpanQuery query = new BLSpanOrQuery(spanQueries);
+			BLSpanOrQuery query = new BLSpanOrQuery(spanQueries);
+			query.setHitsAreFixedLength(1);
+			query.setClausesAreSimpleTermsInSameProperty(true);
 			return query;
 		}
 
 		// Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
-		BLSpanQuery query = new BLSpanOrQuery(new BLSpanTermQuery(
-				((TermQuery) rewrittenFuzzyQuery).getTerm()));
+		BLSpanQuery query = new BLSpanTermQuery(((TermQuery) rewrittenFuzzyQuery).getTerm());
 		return query;
 
 	}

@@ -47,6 +47,8 @@ import nl.inl.blacklab.search.fimatch.NfaState;
  */
 public class BLSpanTermQuery extends BLSpanQuery {
 
+	public static final int FIXED_FORWARD_MATCHING_COST = 2;
+
 	public static BLSpanTermQuery from(SpanTermQuery q) {
 		return new BLSpanTermQuery(q);
 	}
@@ -208,7 +210,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
 	@Override
 	public int forwardMatchingCost() {
-		return 1;
+		return FIXED_FORWARD_MATCHING_COST;
 	}
 
 	@Override

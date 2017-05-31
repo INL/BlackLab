@@ -37,6 +37,7 @@ import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.PriorityQueue;
@@ -56,6 +57,13 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	private String luceneField;
 
+	/** If we know all our hits have the same length, this will be that length.
+	 *  If not, or if we don't know, this will be -1. */
+	private int fixedHitLength = -1;
+
+	/** Are all our clauses simple term queries? Yes if true, not sure if false. */
+	private boolean clausesAreSimpleTermsInSameProperty = false;
+
 	/** Construct a SpanOrQuery merging the provided clauses.
 	 * All clauses must have the same field.
 	 * @param clauses clauses to OR together
@@ -69,10 +77,27 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 	static BLSpanOrQuery from(SpanOrQuery in) {
 		SpanQuery[] clauses = in.getClauses();
 		BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];
+		String field = null;
+		boolean allInSameField = true;
+		boolean allSimpleTerms = true;
 		for (int i = 0; i < clauses.length; i++) {
+			if (allSimpleTerms && allInSameField) {
+				if (! (clauses[i] instanceof SpanTermQuery || clauses[i] instanceof BLSpanTermQuery) )
+					allSimpleTerms = false;
+				else {
+					if (field == null)
+						field = clauses[i].getField();
+					else {
+						if (!field.equals(clauses[i].getField()))
+							allInSameField = false;
+					}
+				}
+			}
 			blClauses[i] = BLSpanQuery.wrap(clauses[i]);
 		}
 		BLSpanOrQuery out = new BLSpanOrQuery(blClauses);
+		if (allSimpleTerms && allInSameField)
+			out.setClausesAreSimpleTermsInSameProperty(true);
 		return out;
 	}
 
@@ -162,7 +187,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 			// Some clauses were rewritten.
 			if (rewrittenCl.size() == 1)
 				return rewrittenCl.get(0);
-			return new BLSpanOrQuery(rewrittenCl.toArray(new BLSpanQuery[0]));
+			BLSpanOrQuery result = new BLSpanOrQuery(rewrittenCl.toArray(new BLSpanQuery[0]));
+			result.setHitsAreFixedLength(fixedHitLength);
+			result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
+			return result;
 		}
 
 		// Node need not be rewritten; return as-is
@@ -173,6 +201,11 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	@Override
 	public boolean matchesEmptySequence() {
+		if (fixedHitLength == 0)
+			return true;
+		if (fixedHitLength > 0)
+			return false;
+
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
 			if (clause.matchesEmptySequence())
@@ -189,24 +222,33 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		for (SpanQuery cl: inner.getClauses()) {
 			newCl.add(((BLSpanQuery)cl).noEmpty());
 		}
-		return new BLSpanOrQuery(newCl.toArray(new BLSpanQuery[0]));
+		BLSpanOrQuery result = new BLSpanOrQuery(newCl.toArray(new BLSpanQuery[0]));
+		result.setHitsAreFixedLength(fixedHitLength);
+		result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
+		return result;
 	}
 
 	@Override
 	public boolean hitsAllSameLength() {
-		if (getClauses().length == 0)
+		if (fixedHitLength >= 0)
 			return true;
+		if (getClauses().length == 0) {
+			return true;
+		}
 		int l = ((BLSpanQuery)getClauses()[0]).hitsLengthMin();
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
 			if (!clause.hitsAllSameLength() || clause.hitsLengthMin() != l)
 				return false;
 		}
+		fixedHitLength = l; // save for next time
 		return true;
 	}
 
 	@Override
 	public int hitsLengthMin() {
+		if (fixedHitLength >= 0)
+			return fixedHitLength;
 		int n = Integer.MAX_VALUE;
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
@@ -217,6 +259,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
 	@Override
 	public int hitsLengthMax() {
+		if (fixedHitLength >= 0)
+			return fixedHitLength;
 		int n = 0;
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
@@ -605,29 +649,41 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		if (hitsAllSameLength() && hitsLengthMax() == 1) {
 			canBeTokenState = true;
 			String luceneField = null;
+			if (terms == null && clausesAreSimpleTermsInSameProperty) {
+				// We know all our clauses are simple terms, and we
+				// don't care about which terms at this point. Just return true.
+				return true;
+			}
 			for (SpanQuery cl: getClauses()) {
-				if (!(cl instanceof BLSpanTermQuery)) {
+				if (!clausesAreSimpleTermsInSameProperty && !(cl instanceof BLSpanTermQuery)) {
 					// Not all simple term queries. Can't rewrite to token state.
 					canBeTokenState = false;
 					break;
 				}
 				BLSpanTermQuery blcl = (BLSpanTermQuery)cl;
-				if (luceneField == null) {
-					luceneField = blcl.getRealField();
-				} else if (!luceneField.equals(blcl.getRealField())) {
-					// Not all in the same property. Can't rewrite to token state.
-					canBeTokenState = false;
-					break;
+				if (!clausesAreSimpleTermsInSameProperty) {
+					// We don't know if all our clauses are in the same property. Check.
+					if (luceneField == null) {
+						luceneField = blcl.getRealField();
+					} else if (!luceneField.equals(blcl.getRealField())) {
+						// Not all in the same property. Can't rewrite to token state.
+						canBeTokenState = false;
+						break;
+					}
 				}
 				if (terms != null)
 					terms.add(blcl.getTerm().text());
 			}
 		}
+		if (canBeTokenState)
+			clausesAreSimpleTermsInSameProperty = true; // save this result for next time
 		return canBeTokenState;
 	}
 
 	@Override
 	public boolean canMakeNfa() {
+		if (clausesAreSimpleTermsInSameProperty)
+			return true;
 		for (SpanQuery cl: getClauses()) {
 			BLSpanQuery clause = (BLSpanQuery)cl;
 			if (!clause.canMakeNfa())
@@ -641,24 +697,59 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 		// Add the costs of our clauses, since we won't
 		// be able to skip any hits.
 		int cost = 0;
-		for (SpanQuery cl: getClauses()) {
-			BLSpanQuery clause = (BLSpanQuery)cl;
+		SpanQuery[] clauses = getClauses();
+		if (clauses.length == 0)
+			return 0;
+		int skip = getCostCalculationSkip(clauses.length);
+		int clausesCalculated = 0;
+		for (int i = 0; i < clauses.length; i++) {
+			BLSpanQuery clause = (BLSpanQuery)clauses[i];
 			cost += clause.reverseMatchingCost(reader);
+			clausesCalculated++;
+			i += skip;
 		}
-		return cost;
+		return cost * clauses.length / clausesCalculated;
+	}
+
+	/** For great numbers of clauses, approximate by only calculating cost of some terms
+	 * @param n number of clauses
+	 * @return number of clauses to skip after every calculation
+	 */
+	protected static int getCostCalculationSkip(int n) {
+		return n >= 30 ? (n - 30) / 30 : 0;
 	}
 
 	@Override
 	public int forwardMatchingCost() {
-		int cost = 1;
+		SpanQuery[] clauses = getClauses();
+		if (clausesAreSimpleTermsInSameProperty) {
+			return clauses.length * BLSpanTermQuery.FIXED_FORWARD_MATCHING_COST;
+		}
 		boolean producesSingleState = getNfaTokenStateTerms(null);
 		if (!producesSingleState) {
 			// Add the costs of our clauses.
-			for (SpanQuery cl: getClauses()) {
-				BLSpanQuery clause = (BLSpanQuery)cl;
+			int cost = 1;
+			if (clauses.length == 0)
+				return 0;
+			int skip = getCostCalculationSkip(clauses.length);
+			int clausesCalculated = 0;
+			for (int i = 0; i < clauses.length; i++) {
+				BLSpanQuery clause = (BLSpanQuery)clauses[i];
 				cost += clause.forwardMatchingCost();
+				clausesCalculated++;
+				i += skip;
 			}
+			return cost * clauses.length / clausesCalculated;
 		}
-		return cost;
+		return 1;
 	}
+
+	public void setHitsAreFixedLength(int i) {
+		fixedHitLength = i;
+	}
+
+	public void setClausesAreSimpleTermsInSameProperty(boolean b) {
+		clausesAreSimpleTermsInSameProperty = b;
+	}
+
 }
