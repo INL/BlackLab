@@ -47,6 +47,7 @@ public class RequestHandlerHits extends RequestHandler {
 
 	@Override
 	public int handle(DataStream ds) throws BlsException {
+		if (BlackLabServer.TRACE_TIMINGS) logger.debug("RequestHandlerHits.handle start");
 		Job search = null;
 		JobHitsGrouped searchGrouped = null;
 		JobHitsWindow searchWindow = null;
@@ -246,6 +247,7 @@ public class RequestHandlerHits extends RequestHandler {
 
 			ds.endMap();
 
+			if (BlackLabServer.TRACE_TIMINGS) logger.debug("RequestHandlerHits.handle end");
 			return HTTP_OK;
 		} finally {
 			if (search != null)

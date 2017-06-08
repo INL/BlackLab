@@ -14,6 +14,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -250,7 +251,7 @@ public class SearchCache {
 				throw new RuntimeException("Cache already contains different search object!");
 			}
 			// Same object already in cache, do nothing
-			logger.debug("Same object put in cache twice: " + uniqueIdentifier);
+			if (BlackLabServer.TRACE_CACHE) logger.debug("Same object put in cache twice: " + uniqueIdentifier);
 			return;
 		}
 
@@ -282,33 +283,6 @@ public class SearchCache {
 			cacheSizeBytes += search.estimateSizeBytes();
 		}
 		return cacheSizeBytes;
-	}
-
-	/**
-	 * Checks if the cache size in bytes or number of searches is too big.
-	 *
-	 * Only applies if maxSizeBytes >= 0 or maxSizeSearcher >= 0.
-	 *
-	 * @return true iff the cache is too big.
-	 */
-	private boolean cacheTooBig() {
-		boolean tooManySearches = cacheConfig.getMaxNumberOfJobs() >= 0 && cachedSearches.size() > cacheConfig.getMaxNumberOfJobs();
-		long cacheSizeMegs = cacheSizeBytes / 1000000;
-		boolean tooMuchMemory = cacheConfig.getMaxSizeMegs() >= 0 && cacheSizeMegs > cacheConfig.getMaxSizeMegs();
-		return tooManySearches || tooMuchMemory;
-	}
-
-	/**
-	 * Checks if the search is too old to remain in cache.
-	 *
-	 * Only applies if maxJobAgeSec >= 0.
-	 *
-	 * @param search the search to check
-	 * @return true iff the search is too old
-	 */
-	private boolean searchTooOld(Job search) {
-		boolean tooOld = cacheConfig.getMaxJobAgeSec() >= 0 && search.cacheAge() > cacheConfig.getMaxJobAgeSec();
-		return tooOld;
 	}
 
 	/**
@@ -361,31 +335,44 @@ public class SearchCache {
 
 			if (!search1.finished() && search1.userWaitTime() > cacheConfig.getMaxSearchTimeSec()) {
 				// Search is taking too long. Cancel it.
-				logger.debug("Search is taking too long, cancelling: " + search1);
+				if (BlackLabServer.TRACE_CACHE) {
+					logger.debug("Search is taking too long (time " + search1.userWaitTime() + "s > max time " + cacheConfig.getMaxSearchTimeSec() + "s)");
+					logger.debug("  Cancelling searchjob: " + search1);
+				}
 				abortSearch(search1);
 				removed.add(search1);
 
-			} else {
+			} else if (search1.finished() && search1.getRefCount() == 1) {
+				// Finished search that is not referred to by anything but this cache it is in
 				boolean removeBecauseOfCacheSizeOrAge = false;
 				boolean isCacheTooBig = false;
 				boolean isSearchTooOld = false;
+				long cacheSizeMegs = 0;
 				if (lookAtCacheSizeAndSearchAccessTime) {
-					isCacheTooBig = cacheTooBig();
+					boolean tooManySearches = cacheConfig.getMaxNumberOfJobs() >= 0 && cachedSearches.size() > cacheConfig.getMaxNumberOfJobs();
+					cacheSizeMegs = cacheSizeBytes / 1000000;
+					boolean tooMuchMemory = cacheConfig.getMaxSizeMegs() >= 0 && cacheSizeMegs > cacheConfig.getMaxSizeMegs();
+					isCacheTooBig = tooManySearches || tooMuchMemory;
 					isSearchTooOld = false;
-					if (!isCacheTooBig)
-						isSearchTooOld = searchTooOld(search1);
+					if (!isCacheTooBig) {
+						boolean tooOld = cacheConfig.getMaxJobAgeSec() >= 0 && search1.cacheAge() > cacheConfig.getMaxJobAgeSec();
+						isSearchTooOld = tooOld;
+					}
 					removeBecauseOfCacheSizeOrAge = isCacheTooBig || isSearchTooOld;
 				}
 				if (minSearchesToRemove > 0 || removeBecauseOfCacheSizeOrAge) {
 					// Search is too old or cache is too big. Keep removing searches until that's no
 					// longer the case
 					// logger.debug("Remove from cache: " + search);
-					if (minSearchesToRemove > 0)
-						logger.debug("Not enough free mem, removing: " + search1);
-					else if (isCacheTooBig)
-						logger.debug("Cache too large, removing: " + search1);
-					else
-						logger.debug("Searchjob too old, removing: " + search1);
+					if (BlackLabServer.TRACE_CACHE) {
+						if (minSearchesToRemove > 0)
+							logger.debug("Not enough free mem (free " + freeMegs + "M < min free " + cacheConfig.getMinFreeMemTargetMegs() + "M)");
+						else if (isCacheTooBig)
+							logger.debug("Cache too large (size " + cacheSizeMegs + "M > max size " + cacheConfig.getMaxSizeMegs() + "M)");
+						else
+							logger.debug("Searchjob too old (age " + (int)search1.cacheAge() + "s > max age " + cacheConfig.getMaxJobAgeSec() + "s)");
+						logger.debug("  Removing searchjob: " + search1);
+					}
 					removeFromCache(search1);
 					removed.add(search1);
 
@@ -462,25 +449,25 @@ public class SearchCache {
 		switch (action) {
 		case RUN_NORMALLY:
 			if (search.getPriorityLevel() != Level.RUNNING) {
-				logger.debug("LOADMGR: Resuming search: " + search + " (" + reason + ")");
+				if (BlackLabServer.TRACE_CACHE) logger.debug("LOADMGR: Resuming search: " + search + " (" + reason + ")");
 				search.setPriorityLevel(Level.RUNNING);
 			}
 			break;
 		case PAUSE:
 			if (search.getPriorityLevel() != Level.PAUSED) {
-				logger.debug("LOADMGR: Pausing search: " + search + " (was: " + search.getPriorityLevel() + ") (" + reason + ")");
+				if (BlackLabServer.TRACE_CACHE) logger.debug("LOADMGR: Pausing search: " + search + " (was: " + search.getPriorityLevel() + ") (" + reason + ")");
 				search.setPriorityLevel(Level.PAUSED);
 			}
 			break;
 		case ABORT:
 			if (!search.finished()) {
 				// TODO: Maybe we should blacklist certain searches for a time?
-				logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
+				if (BlackLabServer.TRACE_CACHE) logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
 				abortSearch(search);
 			}
 			break;
 		case REMOVE_FROM_CACHE:
-			logger.debug("LOADMGR: Discarding from cache: " + search + " (" + reason + ")");
+			if (BlackLabServer.TRACE_CACHE) logger.debug("LOADMGR: Discarding from cache: " + search + " (" + reason + ")");
 			removeFromCache(search);
 			break;
 		}

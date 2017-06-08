@@ -79,6 +79,7 @@ public abstract class RequestHandler {
 	 * @return the response data
 	 */
 	public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode) {
+
 		// See if a user is logged in
 		SearchManager searchManager = servlet.getSearchManager();
 		User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
@@ -295,8 +296,11 @@ public abstract class RequestHandler {
 		searchMan = servlet.getSearchManager();
 		indexMan = searchMan.getIndexManager();
 		String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
-		if (!pathAndQueryString.startsWith("/cache-info")) // annoying when monitoring
+
+		if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying when monitoring
 			logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " " + request.getMethod() + " " + pathAndQueryString);
+		}
+
 		boolean isDocs = isDocsOperation();
 		searchParam = servlet.getSearchParameters(isDocs, request, indexName);
 		this.indexName = indexName;

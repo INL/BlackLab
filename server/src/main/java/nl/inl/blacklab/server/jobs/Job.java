@@ -812,7 +812,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	}
 
 	public void setFinished() {
-		finishedAt = System.currentTimeMillis();
+		lastAccessed = finishedAt = System.currentTimeMillis();
 		//logger.debug("Search " + this + " finished at " + finishedAt);
 		if (level != Level.RUNNING) {
 			// Don't confuse the system by still being in PAUSED
@@ -822,6 +822,10 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 			//  "PAUSED")
 			setPriorityLevel(Level.RUNNING);
 		}
+	}
+
+	public int getRefCount() {
+		return refsToJob;
 	}
 
 }

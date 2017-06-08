@@ -254,12 +254,22 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 	@Override
 	public int forwardMatchingCost() {
 		int nMax = max == MAX_UNLIMITED ? 50 : max;
-		int cost = 0;
 		int clauseCost = clauses.get(0).forwardMatchingCost();
-		for (int i = min; i <= nMax; i++) {
-			cost += i * clauseCost;
-		}
-		return cost;
+//		int cost = 0;
+//		for (int i = min; i <= nMax; i++) {
+//			cost += i * clauseCost;
+//		}
+//		return cost;
+
+		// NOTE: you would expect a more correct cost estimation to be
+		//   clauseCost * (min + (min + 1) + ... + max)
+		// (each alternative path is taken, after all)
+		// But it turns out NFA matching repetitions is actually pretty fast,
+		// possibly because disk cache factors are more important than
+		// how many NFA state branches are followed. So we pragmatically use
+		// the somewhat lower cost of (clauseCost * max).
+
+		return clauseCost * nMax;
 	}
 
 }

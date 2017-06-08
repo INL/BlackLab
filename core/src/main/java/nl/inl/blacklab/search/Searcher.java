@@ -55,6 +55,12 @@ public abstract class Searcher {
 
 	protected static final Logger logger = LogManager.getLogger(Searcher.class);
 
+	/** Log debug messages about query execution at various stages, to analyze what makes a query slow? */
+	public static final boolean TRACE_TIMING = true;
+
+	/** Log detailed debug messages about opening an index? */
+	public static final boolean TRACE_INDEX_OPENING = false;
+
 	/** When setting how many hits to retrieve/count, this means "no limit". */
 	public final static int UNLIMITED_HITS = -1;
 

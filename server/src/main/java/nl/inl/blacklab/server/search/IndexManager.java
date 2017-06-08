@@ -354,6 +354,8 @@ public class IndexManager {
 			searcher.getIndexStructure()._setContentViewable(false);
 		}
 
+		logger.debug("  Finished opening index '" + indexName + "'.");
+
 		return searcher;
 	}
 

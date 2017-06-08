@@ -97,11 +97,11 @@ public class BlsConfigCacheAndPerformance {
 		if (settings != null && settings.has("cache"))
 			cacheSettings = settings.getJSONObject("cache");
 		if (cacheSettings != null) {
-			maxJobAgeSec = JsonUtil.getIntProp(settings, "maxJobAgeSec", 3600);
-			maxNumberOfJobs = JsonUtil.getIntProp(settings, "maxNumberOfJobs", 20);
-			maxSizeMegs = JsonUtil.getIntProp(settings, "maxSizeMegs", -1);
-			minFreeMemTargetMegs = JsonUtil.getIntProp(settings, "targetFreeMemMegs", 100);
-			numberOfJobsToPurgeWhenBelowTargetMem = JsonUtil.getIntProp(settings, "numberOfJobsToPurgeWhenBelowTargetMem", 2);
+			maxJobAgeSec = JsonUtil.getIntProp(cacheSettings, "maxJobAgeSec", 3600);
+			maxNumberOfJobs = JsonUtil.getIntProp(cacheSettings, "maxNumberOfJobs", 20);
+			maxSizeMegs = JsonUtil.getIntProp(cacheSettings, "maxSizeMegs", -1);
+			minFreeMemTargetMegs = JsonUtil.getIntProp(cacheSettings, "targetFreeMemMegs", 100);
+			numberOfJobsToPurgeWhenBelowTargetMem = JsonUtil.getIntProp(cacheSettings, "numberOfJobsToPurgeWhenBelowTargetMem", 2);
 		}
 
 		JSONObject serverLoadSettings = null;

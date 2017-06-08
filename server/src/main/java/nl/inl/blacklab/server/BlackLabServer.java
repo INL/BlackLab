@@ -36,6 +36,10 @@ import nl.inl.util.Json;
 public class BlackLabServer extends HttpServlet {
 	private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
 
+	public static final boolean TRACE_TIMINGS = true;
+
+	public static final boolean TRACE_CACHE = false;
+
 	static final Charset CONFIG_ENCODING = Charset.forName("utf-8");
 
 	static final Charset OUTPUT_ENCODING = Charset.forName("utf-8");
