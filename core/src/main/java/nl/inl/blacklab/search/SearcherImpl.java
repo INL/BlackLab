@@ -127,22 +127,22 @@ public class SearcherImpl extends Searcher implements Closeable {
 			}
 		}
 
-		if (TRACE_INDEX_OPENING) logger.debug("Constructing Searcher...");
+		if (traceIndexOpening) logger.debug("Constructing Searcher...");
 
 		if (indexMode) {
-			if (TRACE_INDEX_OPENING) logger.debug("  Opening IndexWriter...");
+			if (traceIndexOpening) logger.debug("  Opening IndexWriter...");
 			indexWriter = openIndexWriter(indexDir, createNewIndex, null);
-			if (TRACE_INDEX_OPENING) logger.debug("  Opening corresponding IndexReader...");
+			if (traceIndexOpening) logger.debug("  Opening corresponding IndexReader...");
 			reader = DirectoryReader.open(indexWriter, false);
 		} else {
 			// Open Lucene index
-			if (TRACE_INDEX_OPENING) logger.debug("  Following symlinks...");
+			if (traceIndexOpening) logger.debug("  Following symlinks...");
 			Path indexPath = indexDir.toPath();
 			while (Files.isSymbolicLink(indexPath)) {
 				// Resolve symlinks, as FSDirectory.open() can't handle them
 				indexPath = Files.readSymbolicLink(indexPath);
 			}
-			if (TRACE_INDEX_OPENING) logger.debug("  Opening IndexReader...");
+			if (traceIndexOpening) logger.debug("  Opening IndexReader...");
 			reader = DirectoryReader.open(FSDirectory.open(indexPath));
 		}
 		this.indexLocation = indexDir;
@@ -151,7 +151,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 //		logger.debug("TOTAL TERM FREQ test: " + reader.getSumTotalTermFreq("test"));
 
 		// Determine the index structure
-		if (TRACE_INDEX_OPENING) logger.debug("  Determining index structure...");
+		if (traceIndexOpening) logger.debug("  Determining index structure...");
 		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
 		isEmptyIndex = indexStructure.isNewIndex();
 
@@ -159,18 +159,18 @@ public class SearcherImpl extends Searcher implements Closeable {
 		//   we can't change the analyzer attached to the IndexWriter (and passing a different
 		//   analyzer in addDocument() went away in Lucene 5.x).
 		//   For now, if we're in index mode, we re-open the index with the analyzer we determined.
-		if (TRACE_INDEX_OPENING) logger.debug("  Creating analyzers...");
+		if (traceIndexOpening) logger.debug("  Creating analyzers...");
 		createAnalyzers();
 
 		if (indexMode) {
 			// Re-open the IndexWriter with the analyzer we've created above (see comment above)
-			if (TRACE_INDEX_OPENING) logger.debug("  Re-opening IndexWriter with newly created analyzers...");
+			if (traceIndexOpening) logger.debug("  Re-opening IndexWriter with newly created analyzers...");
 			reader.close();
 			reader = null;
 			indexWriter.close();
 			indexWriter = null;
 			indexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
-			if (TRACE_INDEX_OPENING) logger.debug("  IndexReader too...");
+			if (traceIndexOpening) logger.debug("  IndexReader too...");
 			reader = DirectoryReader.open(indexWriter, false);
 		}
 
@@ -180,7 +180,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 		// Detect and open the ContentStore for the contents field
 		if (!createNewIndex) {
-			if (TRACE_INDEX_OPENING) logger.debug("  Determining main contents field name...");
+			if (traceIndexOpening) logger.debug("  Determining main contents field name...");
 			ComplexFieldDesc mainContentsField = indexStructure.getMainContentsField();
 			if (mainContentsField == null) {
 				if (!indexMode) {
@@ -202,7 +202,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 			}
 
 			// Register content stores
-			if (TRACE_INDEX_OPENING) logger.debug("  Opening content stores...");
+			if (traceIndexOpening) logger.debug("  Opening content stores...");
 			for (String cfn: indexStructure.getComplexFields()) {
 				if (indexStructure.getComplexFieldDesc(cfn).hasContentStore()) {
 					File dir = new File(indexDir, "cs_" + cfn);
@@ -210,23 +210,23 @@ public class SearcherImpl extends Searcher implements Closeable {
 						dir = new File(indexDir, "xml"); // OLD, should eventually be removed
 					}
 					if (dir.exists()) {
-						if (TRACE_INDEX_OPENING) logger.debug("    " + dir + "...");
+						if (traceIndexOpening) logger.debug("    " + dir + "...");
 						registerContentStore(cfn, openContentStore(dir, false));
 					}
 				}
 			}
 		}
 
-		if (TRACE_INDEX_OPENING) logger.debug("  Opening IndexSearcher...");
+		if (traceIndexOpening) logger.debug("  Opening IndexSearcher...");
 		indexSearcher = new IndexSearcher(reader);
 
 		// Make sure large wildcard/regex expansions succeed
-		if (TRACE_INDEX_OPENING) logger.debug("  Setting maxClauseCount...");
+		if (traceIndexOpening) logger.debug("  Setting maxClauseCount...");
 		BooleanQuery.setMaxClauseCount(100000);
 
 		// Open the forward indices
 		if (!createNewIndex) {
-			if (TRACE_INDEX_OPENING) logger.debug("  Opening forward indices...");
+			if (traceIndexOpening) logger.debug("  Opening forward indices...");
 			openForwardIndices();
 		}
 	}
@@ -453,7 +453,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 				if (propDesc.hasForwardIndex()) {
 					// This property has a forward index. Make sure it is open.
 					String fieldProp = ComplexFieldUtil.propertyField(field, property);
-					if (TRACE_INDEX_OPENING) logger.debug("    " + fieldProp + "...");
+					if (traceIndexOpening) logger.debug("    " + fieldProp + "...");
 					getForwardIndex(fieldProp);
 				}
 			}

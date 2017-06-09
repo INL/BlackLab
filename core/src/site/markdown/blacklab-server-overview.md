@@ -606,19 +606,44 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	        "clientCacheTimeSec": 3600
 	
 	    },
+	    
+	    // Settings related to debugging and troubleshooting
+	    "debug": {
+	    
+		    // A list of IPs that will run in debug mode.
+		    // In debug mode, ...
+		    // - the /cache-info resource show the contents of the job cache
+		    //   (other debug information resources may be added in the 
+		    //   future)
+		    // - output is prettyprinted by default (can be overriden with the
+		    //   "prettyprint"
+		    //   GET parameter)
+		    "addresses": [
+		        "127.0.0.1",      // IPv4 localhost
+		        "0:0:0:0:0:0:0:1" // IPv6 localhost
+		    ],
+		    
+	        // Trace settings. Controls per-subject detail logging.
+	        "trace": {
+	        
+	            // Opening an index
+	            "indexOpening": false,
+	            
+	            // Optimizer choices
+	            "optimization": false,
+	            
+	            // Query execution phases
+	            "queryExecution": false,
+	            
+	            // Search cache management
+	            "cache": false,
+	            
+	            // Request handling phases
+	            "requestHandling": false
+	        }
+		    
+	    }
 	
-	    // A list of IPs that will run in debug mode.
-	    // In debug mode, ...
-	    // - the /cache-info resource show the contents of the job cache
-	    //   (other debug information resources may be added in the 
-	    //   future)
-	    // - output is prettyprinted by default (can be overriden with the
-	    //   "prettyprint"
-	    //   GET parameter)
-	    "debugModeIps": [
-	        "127.0.0.1",      // IPv4 localhost
-	        "0:0:0:0:0:0:0:1" // IPv6 localhost
-	    ]
 	
 	}
 

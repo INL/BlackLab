@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,6 +16,8 @@ import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
 public class BlsConfig {
+
+	protected static final Logger logger = LogManager.getLogger(Searcher.class);
 
 	/** Maximum context size allowed */
 	private int maxContextSize;
@@ -70,6 +74,12 @@ public class BlsConfig {
 
 	Map<String, Object> authParam;
 
+	/** Log detailed debug messages about search cache management? */
+	public static boolean traceCache = false;
+
+	/** Log detailed debug messages about handling requests? */
+	public static boolean traceRequestHandling = false;
+
 	public BlsConfig(JSONObject properties) {
 		getDebugProperties(properties);
 		getRequestsProperties(properties);
@@ -78,11 +88,37 @@ public class BlsConfig {
 	}
 
 	private void getDebugProperties(JSONObject properties) {
+
+		// Old location of debugModeIps: top-level
+		// DEPRECATED
 		if (properties.has("debugModeIps")) {
+			logger.warn("DEPRECATED setting debugModeIps found at top-level. Use debug.addresses instead.");
 			JSONArray jsonDebugModeIps = properties
 					.getJSONArray("debugModeIps");
 			for (int i = 0; i < jsonDebugModeIps.length(); i++) {
 				debugModeIps.add(jsonDebugModeIps.getString(i));
+			}
+		}
+
+		// Debugging settings
+		if (properties.has("debug")) {
+			JSONObject debugProp = properties.getJSONObject("debug");
+
+			// New location of debugIps: inside debug block
+			if (debugProp.has("addresses")) {
+				JSONArray jsonDebugModeIps = debugProp.getJSONArray("addresses");
+				for (int i = 0; i < jsonDebugModeIps.length(); i++) {
+					debugModeIps.add(jsonDebugModeIps.getString(i));
+				}
+			}
+
+			if (debugProp.has("trace")) {
+				JSONObject traceProp = debugProp.getJSONObject("trace");
+				Searcher.setTraceIndexOpening(JsonUtil.getBooleanProp(traceProp, "indexOpening", false));
+				Searcher.setTraceOptimization(JsonUtil.getBooleanProp(traceProp, "optimization", false));
+				Searcher.setTraceQueryExecution(JsonUtil.getBooleanProp(traceProp, "queryExecution", false));
+				traceCache = JsonUtil.getBooleanProp(traceProp, "cache", false);
+				traceRequestHandling = JsonUtil.getBooleanProp(traceProp, "requestHandling", false);
 			}
 		}
 	}

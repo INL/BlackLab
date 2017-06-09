@@ -54,8 +54,6 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 public class SpanQuerySequence extends BLSpanQueryAbstract {
 	protected static final Logger logger = LogManager.getLogger(SpanQuerySequence.class);
 
-	public static final boolean TRACE_OPTIMIZATION = false;
-
 	public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
 		super(first, second);
 	}
@@ -208,7 +206,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 		boolean anyRewrittenThisCycle = true;
 		int pass = 0;
 		while (anyRewrittenThisCycle) {
-			if (TRACE_OPTIMIZATION)
+			if (Searcher.traceOptimization)
 				logger.debug("combineAdj pass " + pass + ": " + StringUtils.join(cl, ", "));
 			pass++;
 
@@ -224,7 +222,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 				right = cl.get(i);
 				for (ClauseCombiner combiner: combiners) {
 					int prio = combiner.priority(left, right, reader);
-					if (TRACE_OPTIMIZATION)
+					if (Searcher.traceOptimization)
 						logger.debug("  i=" + i + ", combiner=" + combiner + ", prio=" + prio);
 					if (prio < highestPrio) {
 						highestPrio = prio;
@@ -236,7 +234,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 			// Any combiners found?
 			if (highestPrio < ClauseCombiner.CANNOT_COMBINE) {
 				// Yes, execute the highest-prio combiner
-				if (TRACE_OPTIMIZATION)
+				if (Searcher.traceOptimization)
 					logger.debug("  Execute combiner: " + highestPrioCombiner + ", index=" + highestPrioIndex);
 				left = cl.get(highestPrioIndex - 1);
 				right = cl.get(highestPrioIndex);

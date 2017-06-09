@@ -14,7 +14,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -251,7 +250,7 @@ public class SearchCache {
 				throw new RuntimeException("Cache already contains different search object!");
 			}
 			// Same object already in cache, do nothing
-			if (BlackLabServer.TRACE_CACHE) logger.debug("Same object put in cache twice: " + uniqueIdentifier);
+			if (BlsConfig.traceCache) logger.debug("Same object put in cache twice: " + uniqueIdentifier);
 			return;
 		}
 
@@ -335,7 +334,7 @@ public class SearchCache {
 
 			if (!search1.finished() && search1.userWaitTime() > cacheConfig.getMaxSearchTimeSec()) {
 				// Search is taking too long. Cancel it.
-				if (BlackLabServer.TRACE_CACHE) {
+				if (BlsConfig.traceCache) {
 					logger.debug("Search is taking too long (time " + search1.userWaitTime() + "s > max time " + cacheConfig.getMaxSearchTimeSec() + "s)");
 					logger.debug("  Cancelling searchjob: " + search1);
 				}
@@ -364,7 +363,7 @@ public class SearchCache {
 					// Search is too old or cache is too big. Keep removing searches until that's no
 					// longer the case
 					// logger.debug("Remove from cache: " + search);
-					if (BlackLabServer.TRACE_CACHE) {
+					if (BlsConfig.traceCache) {
 						if (minSearchesToRemove > 0)
 							logger.debug("Not enough free mem (free " + freeMegs + "M < min free " + cacheConfig.getMinFreeMemTargetMegs() + "M)");
 						else if (isCacheTooBig)
@@ -449,25 +448,25 @@ public class SearchCache {
 		switch (action) {
 		case RUN_NORMALLY:
 			if (search.getPriorityLevel() != Level.RUNNING) {
-				if (BlackLabServer.TRACE_CACHE) logger.debug("LOADMGR: Resuming search: " + search + " (" + reason + ")");
+				if (BlsConfig.traceCache) logger.debug("LOADMGR: Resuming search: " + search + " (" + reason + ")");
 				search.setPriorityLevel(Level.RUNNING);
 			}
 			break;
 		case PAUSE:
 			if (search.getPriorityLevel() != Level.PAUSED) {
-				if (BlackLabServer.TRACE_CACHE) logger.debug("LOADMGR: Pausing search: " + search + " (was: " + search.getPriorityLevel() + ") (" + reason + ")");
+				if (BlsConfig.traceCache) logger.debug("LOADMGR: Pausing search: " + search + " (was: " + search.getPriorityLevel() + ") (" + reason + ")");
 				search.setPriorityLevel(Level.PAUSED);
 			}
 			break;
 		case ABORT:
 			if (!search.finished()) {
 				// TODO: Maybe we should blacklist certain searches for a time?
-				if (BlackLabServer.TRACE_CACHE) logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
+				if (BlsConfig.traceCache) logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
 				abortSearch(search);
 			}
 			break;
 		case REMOVE_FROM_CACHE:
-			if (BlackLabServer.TRACE_CACHE) logger.debug("LOADMGR: Discarding from cache: " + search + " (" + reason + ")");
+			if (BlsConfig.traceCache) logger.debug("LOADMGR: Discarding from cache: " + search + " (" + reason + ")");
 			removeFromCache(search);
 			break;
 		}

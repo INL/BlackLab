@@ -291,21 +291,21 @@ public class HitsImpl extends Hits {
 			if (!(sourceQuery instanceof BLSpanQuery))
 				throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
 
-			if (Searcher.TRACE_TIMING) logger.debug("HitsImpl(): optimize");
+			if (Searcher.traceQueryExecution) logger.debug("HitsImpl(): optimize");
 			BLSpanQuery optimize = ((BLSpanQuery)sourceQuery).optimize(reader);
 
-			if (Searcher.TRACE_TIMING) logger.debug("HitsImpl(): rewrite");
+			if (Searcher.traceQueryExecution) logger.debug("HitsImpl(): rewrite");
 			spanQuery = optimize.rewrite(reader);
 
 			//System.err.println(spanQuery);
 			termContexts = new HashMap<>();
 			Set<Term> terms = new HashSet<>();
 			spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
-			if (Searcher.TRACE_TIMING) logger.debug("HitsImpl(): createWeight");
+			if (Searcher.traceQueryExecution) logger.debug("HitsImpl(): createWeight");
 			weight = spanQuery.createWeight(searcher.getIndexSearcher(), false);
 			weight.extractTerms(terms);
 			etiquette = new ThreadPriority();
-			if (Searcher.TRACE_TIMING) logger.debug("HitsImpl(): extract terms");
+			if (Searcher.traceQueryExecution) logger.debug("HitsImpl(): extract terms");
 			for (Term term: terms) {
 				try {
 					etiquette.behave();
@@ -327,7 +327,7 @@ public class HitsImpl extends Hits {
 		}
 
 		sourceSpansFullyRead = false;
-		if (Searcher.TRACE_TIMING) logger.debug("HitsImpl(): done");
+		if (Searcher.traceQueryExecution) logger.debug("HitsImpl(): done");
 	}
 
 	/**

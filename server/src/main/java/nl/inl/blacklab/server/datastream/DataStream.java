@@ -72,9 +72,10 @@ public abstract class DataStream {
 				.entry("code", code)
 				.entry("message", msg);
 		if (e != null) {
-			PrintWriter pw = new PrintWriter(new StringWriter());
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
-			entry("stackTrace", pw.toString());
+			entry("stackTrace", sw.toString());
 		}
 				endMap()
 			.endEntry()
