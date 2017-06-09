@@ -29,4 +29,11 @@ public abstract class ForwardIndexDocument {
 	 * @return true if all are equal, false if not
 	 */
 	public abstract boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive);
+
+	/**
+	 * Is this position valid in this document?
+	 * @param pos position
+	 * @return true if valid, false if not
+	 */
+	public abstract boolean validPos(int pos);
 }

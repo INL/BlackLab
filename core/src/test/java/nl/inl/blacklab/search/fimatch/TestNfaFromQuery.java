@@ -138,6 +138,7 @@ public class TestNfaFromQuery {
 			return input[pos];
 		}
 
+		@Override
 		public boolean validPos(int pos) {
 			return pos >= 0 && pos < input.length;
 		}

@@ -75,6 +75,7 @@ public class TestNfa {
 			return input.charAt(pos);
 		}
 
+		@Override
 		public boolean validPos(int pos) {
 			return pos >= 0 && pos < input.length();
 		}

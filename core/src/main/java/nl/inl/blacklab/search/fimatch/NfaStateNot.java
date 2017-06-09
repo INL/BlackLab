@@ -23,6 +23,10 @@ public class NfaStateNot extends NfaState {
 
 	@Override
 	boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
+		// Is this a valid position? If not, no match.
+		if (!fiDoc.validPos(pos))
+			return false;
+		// Does the clause match?
 		boolean clauseMatches = clause.findMatchesInternal(fiDoc, pos, direction, null);
 		if (clauseMatches)
 			return false;

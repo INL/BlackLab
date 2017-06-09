@@ -90,4 +90,9 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
 		return fiAccessor.termsEqual(propIndex, termId, caseSensitive, diacSensitive);
 	}
 
+	@Override
+	public boolean validPos(int pos) {
+		return pos >= 0 && pos < docLengthTokens;
+	}
+
 }
