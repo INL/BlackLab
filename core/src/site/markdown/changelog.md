@@ -1,13 +1,36 @@
 # Change Log
 
-## Improvements in HEAD
+## Improvements up to v1.6.0
+
+### Fixed
+* Fixed bug with case-insensitive Terms.indexOf().
+* Fixed buffer overrun while writing Terms file.
+* Avoid problems with truncating mapped files on Windows. 
+* Fixed bug when rewriting "n-grams containing at start/end ..." queries.
+* Fixed incorrect matching if ANDNOT has multiple negative clauses.
+* Use Arrays.hashCode instead of Object.hashCode for int arrays.
+* Fixed "createWeight" bug when filtering on range queries.
+* Made it possible to create, close, and re-open an empty index.
+* Memory leak in BLS because of bug in TextPattern.rewrite().
+* Fixed bug with regexes including character class negations.
+* Fixed some rare NullPointerExceptions.
+
+### New
+* Added Searcher.getBlackLabVersion(). Also added blacklabVersion to index.
+* Added an alternative way of matching subqueries, using the forward index
+  and a nondeterministic finite automaton (NFA; similar to many regular expression
+  engines). Added an optimizer to choose when to use NFA matching. 
+* Added Hits.filteredBy() to filter Hits on a HitProperty.
 
 ### Changed
+* Made global constraints on capture groups possible.
+* Added HitPropertyHitPosition for fast reproducible sorts.
+* Made sure SpansSequenceSimple (which is fast) is used more often.
+* Updated library versions, including migration to log4j 2.x.
 * Indexer.index(File) now indexes all files by default instead of *.xml.
   If you want to index *.xml, use Indexer.index(File, String glob).
   IndexTool still defaults to *.xml; specify different glob if you want
   to index other file types.
-* Added Hits.filteredBy() to filter Hits on a HitProperty.
 * Upgraded from Lucene 5.2.1 to 5.5.2. Also made some preparations for
   eventually upgrading to Lucene 6.x.
   Deprecated methods that use the deprecated Filter and replaced them with
@@ -22,12 +45,38 @@
   Moved all SpanQuery/Spans classes to nl.inl.blacklab.search.lucene.
   Made some internal TextPattern methods package-private.
 * Renamed SpanQueryBase to BLSpanQueryAbstract.
+* Many improvements to documentation based on feedback and new features.
+* Many optimizations, large and small.
+* Many little fixes.
 
 ### BlackLab Server
+* Cleaned up logging, made debug logging configurable by subject.
+* Improved configuration error handling, made index scanning recursive.
+* Added /explain?patt=... to explain how queries are optimized.
+* Made long-running count operations pause if client doesn't check status.
+* Added parameterized querying (filling in gaps with TSV data). 
 * Added hitfiltercrit and hitfilterval parameters to filter hits on a criterium,
   like "word left of matched text". This allows you to view the hits in a single group
   after grouping, and then still allows you to group on these hits again, unlike the
   existing "viewgroup" parameter.
+* Fixed cache bug that would cause "Cannot decrement refs, job was already 
+  cleaned up!" message
+* Made sure control characters are escaped properly in JSON and XML.
+* Made sure regular and error output aren't mixed.
+* In debug mode, include stacktrace with exception error. 
+* Added support for enumerating subproperties.
+* Made sure TooManyClauses is caught and dealth with properly.
+* Fixed bug when trying to sort hits by a metadata field.
+* Improved how context words group property expressions are interpreted.
+* Added blacklabVersion to server info page.
+* When grouping, show groups from large to small unless another sort is requested.
+* Return clean error message when user passes empty group parameter.
+* When trying to sample more hits than available, just return all hits.
+* If no pattern given, return a proper error message.
+* Return sample parameters for all search types, not just ungrouped hits.
+* Also include "numberOfHits" stat when viewing group of documents.
+* Added error message when 'viewgroup' is used without 'group'.
+* Don't add whitespace into leaf XML elements.
 
 ## Improvements up to v1.5.0
 
