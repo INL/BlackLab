@@ -3,7 +3,7 @@
 BlackLab features include:
 
 -   **Index annotated text**, so you can search for specific lemmas or parts of speech. For example, you could search for all verb forms starting with “a”.
--   **Fast and scalable**: find complex patterns in large corpora (600M words or more) in seconds.
+-   **Fast and scalable**: find complex patterns in large corpora (a billion words or more) in seconds.
 -   **Search for regular-expression-like patterns**. Like being able to search for one or more adjectives, followed by the word “cow”, followed within 3 words by a form of the verb “to walk”. [Read more](query-tool.html) about this.
 -   **Multiple input formats**: whether your texts are in TEI, Alto, FoLiA or the Sketch Engine format, it's easy to get them into a BlackLab index. And if your format isn't supported yet, [adding support is easy](add-input-format.html). If you do have trouble, we're always happy to help.
 -   **Multiple query languages**: you can use the powerful [Corpus Query Language](corpus-query-language.html), or [Lucene's own query parser](http://lucene.apache.org/core/2_9_4/queryparsersyntax.html). There's also (very basic) experimental support for [SRU CQL](http://zing.z3950.org/cql/intro.html "http://zing.z3950.org/cql/intro.html"). Adding another query language isn't hard to do.

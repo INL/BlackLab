@@ -17,12 +17,13 @@
 
 ### New
 * Added Searcher.getBlackLabVersion(). Also added blacklabVersion to index.
-* Added an alternative way of matching subqueries, using the forward index
-  and a nondeterministic finite automaton (NFA; similar to many regular expression
-  engines). Added an optimizer to choose when to use NFA matching. 
 * Added Hits.filteredBy() to filter Hits on a HitProperty.
 
 ### Changed
+* Added an alternative way of matching subqueries, using the forward index
+  and a nondeterministic finite automaton (NFA; similar to many regular expression
+  engines). Added an optimizer to choose when to use NFA matching.
+  Still tweaking, but certain types of queries should be faster with this. 
 * Made global constraints on capture groups possible.
 * Added HitPropertyHitPosition for fast reproducible sorts.
 * Made sure SpansSequenceSimple (which is fast) is used more often.

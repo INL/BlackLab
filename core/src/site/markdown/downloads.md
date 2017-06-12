@@ -32,6 +32,13 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
 		<tr>
+			<td>v1.6.0</td>
+			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.6.0/blacklab-1.6.0.jar'>Binary (jar)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.6.0.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.6.0.zip'>Source (zip)</a></td>
+			<td>Added support for matching subqueries using forward index. Many other optimizations and fixes.</td>
+		</tr>
+		<tr>
 			<td>v1.5.0</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.5.0/blacklab-1.5.0.jar'>Binary (jar)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.5.0.tar.gz'>Source (tgz)</a></td>
@@ -73,6 +80,7 @@ Also see the [Change log](changelog.html).
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.2.0.zip'>Source (zip)</a></td>
 			<td>Lucene 5, many optimizations, using Maven</td>
 		</tr>
+		<!--
 		<tr>
 			<td>v1.1.0</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.1.0/BlackLab.jar'>Binary (jar)</a></td>
@@ -87,5 +95,6 @@ Also see the [Change log](changelog.html).
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.0.zip'>Source (zip)</a></td>
 			<td>Lucene 3.6</td>
 		</tr>
+		-->
 	</tbody>
 </table>
