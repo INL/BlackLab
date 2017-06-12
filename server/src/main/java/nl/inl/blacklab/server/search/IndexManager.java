@@ -26,6 +26,7 @@ import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
+import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.JsonUtil;
@@ -42,11 +43,23 @@ public class IndexManager {
 	/** Our current set of indices (with dir and mayViewContent setting) */
 	private Map<String, IndexParam> indexParam;
 
+	public enum IndexStatus {
+		EMPTY,       // index has just been created. can be added to but not searched.
+		AVAILABLE,   // index is available for searching and adding to
+		INDEXING,    // index is busy, files are being added to it
+		OPENING;     // index is being opened
+
+		@Override
+		public String toString() {
+			return name().toLowerCase();
+		}
+	}
+
 	/**
 	 * The status of each index, i.e. "available" or "indexing". If no status is
 	 * stored here, the status is "available".
 	 */
-	Map<String, String> indexStatus;
+	Map<String, IndexStatus> indexStatus;
 
 	/** The Searcher objects, one for each of the indices we can search. */
 	private Map<String, Searcher> searchers = new HashMap<>();
@@ -269,7 +282,11 @@ public class IndexManager {
 		if (!BlsUtils.isValidIndexName(indexName))
 			throw new IllegalIndexName(indexName);
 		if (searchers.containsKey(indexName)) {
-			searchers.get(indexName).close();
+			Searcher searcher = searchers.get(indexName);
+			if (searcher instanceof SearcherIsBeingOpened) {
+				throw new ServiceUnavailable("Cannot close index, it is still being opened.");
+			}
+			searcher.close();
 			searchers.remove(indexName);
 			indexStatus.remove(indexName);
 			cache.clearCacheForIndex(indexName);
@@ -309,13 +326,17 @@ public class IndexManager {
 		Searcher searcher;
 		try {
 			logger.debug("Opening index '" + indexName + "', dir = " + indexDir);
+			searchers.put(indexName, new SearcherIsBeingOpened(indexName, indexDir));
+			indexStatus.put(indexName, IndexStatus.OPENING);
 			searcher = Searcher.open(indexDir);
 			searcher.setDefaultSearchSensitive(searchMan.config().isDefaultCaseSensitive(), searchMan.config().isDefaultDiacriticsSensitive());
 		} catch (Exception e) {
-			throw new InternalServerError("Could not open index '" + indexName
-					+ "'", 27, e);
+			searchers.remove(indexName); // remove SearcherIsBeingOpened placeholder
+			indexStatus.remove(indexName);
+			throw new InternalServerError("Could not open index '" + indexName + "'", 27, e);
 		}
 		searchers.put(indexName, searcher);
+		indexStatus.put(indexName, searcher.isEmpty() ? IndexStatus.EMPTY : IndexStatus.AVAILABLE);
 
 		// Figure out the pid from the index metadata and/or BLS config.
 		String indexPid = searcher.getIndexStructure().pidField();
@@ -567,14 +588,17 @@ public class IndexManager {
 	 * @return the current status
 	 * @throws BlsException
 	 */
-	public String getIndexStatus(String indexName) throws BlsException {
+	public IndexStatus getIndexStatus(String indexName) throws BlsException {
 		synchronized (indexStatus) {
-			String status = indexStatus.get(indexName);
+			IndexStatus status = indexStatus.get(indexName);
 			if (status == null) {
-				if (getSearcher(indexName).isEmpty()) {
-					status = "empty";
+				Searcher searcher = getSearcher(indexName);
+				if (searcher instanceof SearcherIsBeingOpened) {
+					status = IndexStatus.OPENING;
+				} else if (searcher.isEmpty()) {
+					status = IndexStatus.EMPTY;
 				} else {
-					status = "available";
+					status = IndexStatus.AVAILABLE;
 				}
 			}
 			return status;
@@ -591,18 +615,18 @@ public class IndexManager {
 	 * @param indexName
 	 *            the index to set the status for
 	 * @param checkOldStatus
-	 *            only set the new status if this pattern matches the current status;
+	 *            only set the new status if this contains the current status;
 	 *            if null, ignore it.
 	 * @param status
 	 *            the new status
 	 * @return the resulting status of the index
 	 * @throws BlsException
 	 */
-	public String setIndexStatus(String indexName, String checkOldStatus,
-			String status) throws BlsException {
+	public IndexStatus setIndexStatus(String indexName, List<IndexStatus> checkOldStatus,
+			IndexStatus status) throws BlsException {
 		synchronized (indexStatus) {
-			String oldStatus = getIndexStatus(indexName);
-			if (checkOldStatus != null && !oldStatus.matches(checkOldStatus))
+			IndexStatus oldStatus = getIndexStatus(indexName);
+			if (checkOldStatus != null && !checkOldStatus.contains(oldStatus))
 				return oldStatus;
 			indexStatus.put(indexName, status);
 			return status;

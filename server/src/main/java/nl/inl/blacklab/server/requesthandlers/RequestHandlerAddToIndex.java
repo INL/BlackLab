@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.index.IndexTask;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.search.IndexManager.IndexStatus;
 import nl.inl.blacklab.server.util.FileUploadHandler;
 import nl.inl.blacklab.server.util.FileUploadHandler.UploadedFileTask;
 
@@ -44,18 +46,18 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		if (!indexMan.indexExists(indexName))
 			throw new IndexNotFound(indexName);
 
-		String status = indexMan.getIndexStatus(indexName);
-		if (!status.equals("available") && !status.equals("empty"))
-			throw new BlsException(HttpServletResponse.SC_CONFLICT, "INDEX_UNAVAILABLE", "The index '" + indexName + "' is not available right now. Status: " + status); //return Response.unavailable(ds, indexName, status);
+		IndexStatus status = indexMan.getIndexStatus(indexName);
+		if (status != IndexStatus.AVAILABLE && status != IndexStatus.EMPTY)
+			throw new BlsException(HttpServletResponse.SC_CONFLICT, "INDEX_UNAVAILABLE", "The index '" + indexName + "' is not available right now. Status: " + status);
 
 		if (!indexMan.indexExists(indexName))
 			throw new IndexNotFound(indexName);
 		final File indexDir = indexMan.getIndexDir(indexName);
-		String newStatus = indexMan.setIndexStatus(indexName, "available|empty", "busy");
+		IndexStatus newStatus = indexMan.setIndexStatus(indexName, Arrays.asList(IndexStatus.AVAILABLE, IndexStatus.EMPTY), IndexStatus.INDEXING);
 		try {
 			indexMan.closeSearcher(indexName);
-			if (!newStatus.equals("busy")) {
-				throw new InternalServerError("Could not set index status to busy (status was " + newStatus + ")", 28);
+			if (newStatus != IndexStatus.INDEXING) {
+				throw new InternalServerError("Could not set index status to 'indexing' (status was " + newStatus + ")", 28);
 			}
 			FileUploadHandler.handleRequest(ds, request, "data", new UploadedFileTask() {
 				@Override
@@ -104,7 +106,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 				}
 			});
 		} finally {
-			indexMan.setIndexStatus(indexName, null, "available");
+			indexMan.setIndexStatus(indexName, null, IndexStatus.AVAILABLE);
 		}
 
 		if (indexError != null)

@@ -32,6 +32,7 @@ import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.JobFacets;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.IndexManager;
+import nl.inl.blacklab.server.search.IndexManager.IndexStatus;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.ParseUtil;
@@ -189,9 +190,9 @@ public abstract class RequestHandler {
 					try {
 						String handlerName = urlResource;
 
-						String status = searchManager.getIndexManager().getIndexStatus(indexName);
-						if (!status.equals("available") && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status")) {
-							return errorObj.unavailable(indexName, status);
+						IndexStatus status = searchManager.getIndexManager().getIndexStatus(indexName);
+						if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status")) {
+							return errorObj.unavailable(indexName, status.toString());
 						}
 
 						if (debugMode && handlerName.length() > 0 && !handlerName.equals("hits") && !handlerName.equals("docs") && !handlerName.equals("fields") && !handlerName.equals("termfreq") && !handlerName.equals("status")) {
@@ -487,9 +488,10 @@ public abstract class RequestHandler {
 	 * @param docResults document results, if this is a document search
 	 * @param groups information about groups, if we were grouping
 	 * @param window our viewing window
+	 * @throws BlsException
 	 */
-	protected static void addSummaryCommonFields(DataStream ds, SearchParameters searchParam, double searchTime, double countTime,
-			Hits hits, boolean isViewDocGroup, DocResults docResults, DocOrHitGroups groups, ResultsWindow window) {
+	protected void addSummaryCommonFields(DataStream ds, SearchParameters searchParam, double searchTime, double countTime,
+			Hits hits, boolean isViewDocGroup, DocResults docResults, DocOrHitGroups groups, ResultsWindow window) throws BlsException {
 
 		if (hits == null && docResults != null) {
 			hits = docResults.getOriginalHits();
@@ -499,6 +501,11 @@ public abstract class RequestHandler {
 		ds.startEntry("searchParam");
 		searchParam.dataStream(ds);
 		ds.endEntry();
+
+		IndexStatus status = indexMan.getIndexStatus(searchParam.getIndexName());
+		if (status != IndexStatus.AVAILABLE) {
+			ds.entry("indexStatus", status.toString());
+		}
 
 		// Information about search progress
 		ds.entry("searchTime", (int)(searchTime * 1000));
