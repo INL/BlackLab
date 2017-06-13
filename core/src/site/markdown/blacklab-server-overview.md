@@ -9,7 +9,7 @@ This page explains how to set up and use BlackLab Server. See the [BlackLab home
 * [Features](#features)
 * [Overview](#overview)
 * [Requests](#requests)
-* [Sorting, grouping & faceting](#sorting-grouping-filtering-faceting)
+* [Sorting, grouping, filtering & faceting](#sorting-grouping-filtering-faceting)
 * [Examples](#examples)
 * [Installation](#installation)
 * [Configuration file](#configuration-file)
@@ -264,7 +264,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 
 NOTE: using the original content may cause problems with well-formedness; these are fixed automatically, but the fix may result in inline tags in strange places (e.g. a start-sentence tag that is not at the start of the sentence anymore)
 
-<a id="sorting-grouping-faceting"></a>
+<a id="sorting-grouping-filtering-faceting"></a>
 
 ## Sorting, grouping, filtering & faceting
 
