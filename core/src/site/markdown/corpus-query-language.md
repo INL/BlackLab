@@ -28,17 +28,18 @@ For those who already know CQL, here's a quick overview of the extent of BlackLa
 
 ### Supported features ###
 BlackLab currently supports (arguably) most of the important features of Corpus Query Language:
-* `[word="bank"]` or just `"bank"`: matching on token annotations (also called properties or attributes), using regular expressions and `=`, `!=`, `!`.
-* `"(?-i)Mr\." "(?-i)Banks"`: case/accent sensitive matching. Note that, unlike in CWB, case-INsensitive matching is currently the default. To explicitly match case-/accent-insensitively, use `"(?i)..."`.
-* `[lemma="bank" & pos="V"]`: combining criteria using `&`, `|` and `!`. Parentheses can also be used for grouping.
-* `"a" [] "day"`: matchall pattern `[]` matches any token
-* `[pos="ADJ"]+`: regular expression operators `+`, `*`, `?`, `{n}`, `{n,m}` at the token level
-* `[pos="ADJ"] "cow"`: sequences of token constraints.
-* `"happy" "dog" | "sad" cat"`: `|`, `&` and parentheses can be used to build complex sequence queries.
-* `<s> "The" `: querying with tag positions using e.g. `<s>` (start of sentence), `</s>` (end of sentence), `<s/>` (whole sentence) or `<s> ... </s>` (equivalent to `<s/> containing ...`). XML attribute values may be used as well, e.g. `<ne type="PERS"/>` (named entities that are persons).
-* `"you" "are" within <s/>`: using `within` and `containing` operators to find hits inside another set of hits.
-* `"big" A:[]`: using an anchor to capture a token position to process those captured matches separately later (using the Java interface; capture information is not yet returned by BlackLab Server). Note that BlackLab can actually capture entire groups of tokens as well, similarly to regular expression engines.
-* `"big" A:[] "or" "small" B:[] :: A.word = B.word`: global constraints on captured tokens, such as requiring them to contain the same word.
+
+* Matching on token annotations (also called properties or attributes), using regular expressions and `=`, `!=`, `!`. Example: `[word="bank"]` (or just `"bank"`)
+* Case/accent sensitive matching. Note that, unlike in CWB, case-INsensitive matching is currently the default. To explicitly match case-/accent-insensitively, use `"(?i)..."`. Example: `"(?-i)Mr\." "(?-i)Banks"`
+* Combining criteria using `&`, `|` and `!`. Parentheses can also be used for grouping. Example: `[lemma="bank" & pos="V"]`
+* Matchall pattern `[]` matches any token. Example: `"a" [] "day"`
+* Regular expression operators `+`, `*`, `?`, `{n}`, `{n,m}` at the token level. Example: `[pos="ADJ"]+`
+* Sequences of token constraints. Example: `[pos="ADJ"] "cow"`
+* Operators `|`, `&` and parentheses can be used to build complex sequence queries. Example: `"happy" "dog" | "sad" cat"`
+* Querying with tag positions using e.g. `<s>` (start of sentence), `</s>` (end of sentence), `<s/>` (whole sentence) or `<s> ... </s>` (equivalent to `<s/> containing ...`). Example: `<s> "The" `. XML attribute values may be used as well, e.g. `<ne type="PERS"/>` ("named entities that are persons").
+* Using `within` and `containing` operators to find hits inside another set of hits. Example: `"you" "are" within <s/>`
+* Using an anchor to capture a token position. Example: `"big" A:[]`. Captured matches can be used in global constraints (see next item) or processed separately later (using the Java interface; capture information is not yet returned by BlackLab Server). Note that BlackLab can actually capture entire groups of tokens as well, similarly to regular expression engines.
+* Global constraints on captured tokens, such as requiring them to contain the same word. Example: `"big" A:[] "or" "small" B:[] :: A.word = B.word`
 
 See below for features not in this list that may be added soon, and let us know if you want a particular feature to be added.
 
@@ -48,6 +49,7 @@ See below for features not in this list that may be added soon, and let us know 
 BlackLab's CQL syntax and behaviour differs in a few small ways from CWBs. In future, we'll aim towards greater compliance with CWB's de-facto standard (with some extra features and conveniences).
 
 For now, here's what you should know:
+
 * Case-insensitive search is currently the default in BlackLab, although you can change this if you wish. CWB and Sketch Engine use case-sensitive search as the default. We may change our default in a future major version.  
   If you want to switch case/diacritics sensitivity, use `"(?-i).."` (case sensitive) or `"(?i).."` (case insensitive, usually the default). CWBs `%cd` flags for setting case/diacritics-sensitivity are not (yet) supported, but will be added.
 * If you want to match a string literally, not as a regular expression, use backslash escaping: `"e\.g\."`. `%l` for literal matching is not yet supported, but will be added.
@@ -64,6 +66,7 @@ For now, here's what you should know:
 
 ### (Currently) unsupported features ###
 The following features are not (yet) supported:
+
 * `intersection`, `union` and `difference` operators. These three operators will be added in the future. For now, the first two can be achieved using `&` and `|` at the sequence level, e.g. `"double" [] & [] "trouble"` to match the intersection of these queries, i.e. "double trouble" and `"happy" "dog" | "sad "cat"` to match the union of "happy dog" and "sad cat".
 * `_` meaning "the current token" in token constraints. We will add this soon.
 * `lbound`, `rbound` functions to get the edge of a region. We will probably add these.
