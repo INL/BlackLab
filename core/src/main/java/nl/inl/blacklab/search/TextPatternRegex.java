@@ -15,12 +15,13 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import java.util.regex.Pattern;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.RegexpQuery;
 
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.util.StringUtil;
 
 
 /**
@@ -53,94 +54,66 @@ public class TextPatternRegex extends TextPatternTerm {
 		}
 	}
 
+	static final Pattern onlyLettersAndDigits = Pattern.compile("[\\w\\d]+", Pattern.UNICODE_CHARACTER_CLASS);
+
 	/**
-	 * Rewrite to the "best" TextPattern class for the given regex. Tries to make a
-	 * TextPatternTerm, TextPatternPrefix or TextPatternWildcard because those tend to be faster
-	 * than TextPatternRegex in Lucene.
+	 * Rewrite to TextPatternTerm if value only contains letters and numbers.
+	 *
+	 * Also looks at (?i), (?-i), (?c) at the start of the pattern and converts
+	 * that into an appropriate TextPatternSensitive() wrapper.
+	 *
+	 * In all other cases, we keep TextPatternRegex because Lucene's regex, wildcard
+	 * and prefix queries all work in the same basic way (are converted into AutomatonQuery's),
+	 * so they are equally fast.
 	 *
 	 * @return the TextPattern
 	 */
 	public TextPattern rewrite() {
-		TextPattern result = this;
 
         // If there's a case-sensitivity toggle flag after a
         // start-of-string match, put the flag first so we can
 		// easily detect it below.
 		String newValue = value.replaceAll("^\\^(\\(\\?\\-?\\w+\\))", "$1^");
 
-		// Do we want to force a case-sensitive search?
-		boolean forceCaseSensitive = false;
-		boolean forceCaseInsensitive = false;
+		// Do we want to force an (in)sensitive search?
+		boolean forceSensitive = false;
+		boolean forceInsensitive = false;
 		if (newValue.startsWith("(?-i)")) {
-			forceCaseSensitive = true;
+			forceSensitive = true;
 			newValue = newValue.substring(5);
 		} else if (newValue.startsWith("(?c)")) {
-			forceCaseSensitive = true;
+			forceSensitive = true;
 			newValue = newValue.substring(4);
 		} else if (newValue.startsWith("(?i)")) {
-			forceCaseInsensitive = true;
+			forceInsensitive = true;
 			newValue = newValue.substring(4);
 		}
 
-		// Try to convert to a wildcard query.
-		String wildcard = newValue;
-		if (wildcard.length() > 0) {
-			// Wildcard expressions always start at beginning
-			if (wildcard.charAt(0) == '^') {
-				wildcard = wildcard.substring(1);
-			} else {
-				wildcard = ".*" + wildcard;
-			}
-
-			// Wildcard expressions always end at end
-			if (wildcard.charAt(wildcard.length() - 1) == '$') {
-				wildcard = wildcard.substring(0, wildcard.length() - 1);
-			} else {
-				wildcard += ".*";
-			}
+		// If this contains no funny characters, only (Unicode) letters and digits,
+		// surrounded by ^ and $, turn it into a TermQuery, which might be a little
+		// faster than doing it via RegexpQuery (which has to build an Automaton).
+		TextPattern result = null;
+		String term = newValue;
+		if (term.length() >= 2  && term.charAt(0) == '^' && term.charAt(term.length() - 1) == '$') {
+			term = term.substring(1, term.length() - 1);
+			if (onlyLettersAndDigits.matcher(term).matches())
+				result = new TextPatternTerm(term);
 		}
-
-		// Mark asterisk and questionmark candidates
-		// TO DO: kind of ugly to use string markers like this.. a better way is to
-		//   walk through the string, detecting stuff as we go. When we detect anything
-		//   that doesn't fit in a wildcard query, we know we have to use regex.
-		//   Otherwise, we do the required replacements and create a wildcard query.
-		wildcard = wildcard.replaceAll("\\.\\*", "##ASTERISK##"); // .* -> *
-		wildcard = wildcard.replaceAll("\\.\\+", "##QUESTIONMARK####ASTERISK##"); // .+ -> ?*
-		wildcard = wildcard.replaceAll("\\.", "##QUESTIONMARK##"); // . -> ?
-
-		// Does the regex pattern begin with (?i) (case-insensitive search)?
-		boolean searchCaseInsensitively = false;
-		if (wildcard.startsWith("(?i)")) { // not needed anymore?
-			searchCaseInsensitively = true;
-			wildcard = wildcard.substring(4);
-		}
-
-		// See if there's any regex stuff left
-		if (StringUtil.escapeRegexCharacters(wildcard).equals(wildcard)) {
-			// Nope! Safe to turn this into a wildcard query.
-
-			// Turn into wildcard query (or prefix, or term, because we call rewrite())
-			wildcard = wildcard.replaceAll("##ASTERISK##", "*");
-			wildcard = wildcard.replaceAll("##QUESTIONMARK##", "?");
-			TextPattern wildcardPattern = new TextPatternWildcard(wildcard).rewrite();
-
-			// Optionally make it case-insensitive
-			if (searchCaseInsensitively) {
-				wildcardPattern = new TextPatternSensitive(false, false, wildcardPattern);
+		if (result == null) {
+			// Not a term query. Did we strip off a sensitivity flag above?
+			if (!forceSensitive && !forceInsensitive) {
+				// Nope. Nothing to rewrite.
+				return this;
 			}
-
-			result = wildcardPattern;
-		}
-
-		if (result == this && !newValue.equals(value))
+			// Yes. Create new TP from remaining regex, and add TextPatternSensitive below.
 			result = new TextPatternRegex(newValue);
+		}
 
-		if (forceCaseSensitive) {
-			// Pattern started with (?-i) or (?c) to force it to be case sensitive
+		if (forceSensitive) {
+			// Pattern started with (?-i) or (?c) to force it to be sensitive
 			result = new TextPatternSensitive(true, true, result);
-		} else if (forceCaseInsensitive) {
-			// Pattern started with (?i) to force it to be case insensitive
+		} else if (forceInsensitive) {
+			// Pattern started with (?i) to force it to be insensitive
 			result = new TextPatternSensitive(false, false, result);
 		}
 

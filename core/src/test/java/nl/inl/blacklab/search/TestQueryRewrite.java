@@ -92,14 +92,14 @@ public class TestQueryRewrite {
 	@Test
 	public void testRewriteInsensitive2() {
 		assertRewrite("[word = '(?i)b.*']",
-				"SPANWRAP(contents%word@i:b*)",
+				"SPANWRAP(contents%word@i:/b.*/)",
 				"OR(TERM(contents%word@i:be), TERM(contents%word@i:brown))");
 	}
 
 	@Test
 	public void testRewriteInsensitive3() {
 		assertRewrite("[word = '(?i).*s']",
-				"SPANWRAP(contents%word@i:*s)",
+				"SPANWRAP(contents%word@i:/.*s/)",
 				"OR(TERM(contents%word@i:is), TERM(contents%word@i:jumps))");
 	}
 
@@ -165,7 +165,7 @@ public class TestQueryRewrite {
 				"SEQ(TERM(contents%word@i:the), TERM(contents%word@i:the))",
 				"REP(TERM(contents%word@i:the), 2, 2)");
 		assertRewrite("'the.*' 'the.*'",
-				"SEQ(SPANWRAP(contents%word@i:the*), SPANWRAP(contents%word@i:the*))",
+				"SEQ(SPANWRAP(contents%word@i:/the.*/), SPANWRAP(contents%word@i:/the.*/))",
 				"REP(TERM(contents%word@i:the), 2, 2)");
 	}
 

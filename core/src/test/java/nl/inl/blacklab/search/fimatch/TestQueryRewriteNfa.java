@@ -97,7 +97,7 @@ public class TestQueryRewriteNfa {
 	@Test
 	public void testRewritePrefix() {
 		assertRewriteResult("\"a.*\" \"b.*\" \"c.*\"",
-			"FISEQ(TERM(contents%word@i:aap), NFA:#1:REGEX(^b.*$,#2:REGEX(^c.*$,DANGLING)), 1)");
+			"FISEQ(TERM(contents%word@i:aap), NFA:#1:REGEX(b.*,#2:REGEX(c.*,DANGLING)), 1)");
 	}
 
 }
