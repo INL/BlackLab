@@ -29,7 +29,6 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
-import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;

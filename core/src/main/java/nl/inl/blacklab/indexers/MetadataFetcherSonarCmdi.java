@@ -28,7 +28,7 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
+import nl.inl.blacklab.index.MetadataFetcher;
 
 /**
  * Example of a metadata fetcher, a class used to fetch metadata

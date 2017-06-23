@@ -531,7 +531,7 @@ The blacklab-server.json file should be placed in /etc/blacklab/.
 	
 	            // Similar to the previous setting, this setting controls after how many seconds
 	            // an "abandoned" count is aborted.
-	            "abandonedCountAbortTimeSec": 600
+	            "abandonedCountAbortTimeSec": 60
 	
 	        },
     

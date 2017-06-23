@@ -29,8 +29,8 @@ import org.xml.sax.SAXException;
 
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
-import nl.inl.blacklab.index.DocIndexerXmlHandlers.MetadataFetcher;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.indexers.MetadataFetcherKbDpo.GetKbMetadata.Metadata;
 import nl.inl.util.XmlUtil;
 

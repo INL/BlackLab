@@ -188,8 +188,7 @@ public class HookableSaxHandler extends DefaultHandler {
 
 		public void startElement(String localName) {
 			// Should we start a new matcher here?
-			if ((elementNames.isEmpty() || localName.equals(elementNames.get(0)))
-					&& (isRelativePath || depth == 0)) {
+			if ((isRelativePath || depth == 0) && (elementNames.isEmpty() || localName.equals(elementNames.get(0)))) {
 				// Yes, start a new matcher
 				matchers.add(new ExprMatcher());
 			}
