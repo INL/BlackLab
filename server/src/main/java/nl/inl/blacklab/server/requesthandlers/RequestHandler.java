@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -152,7 +153,7 @@ public abstract class RequestHandler {
 						return errorObj.unauthorized("You are not authorized to do this.");
 					}
 					requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource, urlPathInfo);
-				} else if (request.getParameter("data") != null) {
+				} else if (/*request.getParameter("data") != null*/ServletFileUpload.isMultipartContent(request)) {
 					// Add document to index
 					if (!isPrivateIndex)
 						return errorObj.forbidden("Can only POST to private indices.");
