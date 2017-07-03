@@ -8,7 +8,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -197,5 +200,22 @@ public class Json {
 			return parent.getBoolean(name);
 		return defVal;
 	}
+
+    public static JSONArray arrayOfStrings(List<String> fields) {
+        JSONArray result = new JSONArray();
+        for (String str: fields) {
+            result.put(str);
+        }
+        return result;
+    }
+
+    public static List<String> getListOfStrings(JSONObject group, String name) {
+        JSONArray arr = group.getJSONArray(name);
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < arr.length(); i++) {
+            result.add(arr.getString(i));
+        }
+        return result;
+    }
 
 }

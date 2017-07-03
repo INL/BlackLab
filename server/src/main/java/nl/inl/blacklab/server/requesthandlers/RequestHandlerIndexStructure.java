@@ -1,11 +1,13 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.IndexStructure.MetadataGroup;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -101,6 +103,20 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 			ds.endMap().endAttrEntry();
 		}
 		ds.endMap().endEntry();
+
+        Map<String, MetadataGroup> metaGroups = struct.getMetaFieldGroups();
+        ds.startEntry("metadataFieldGroups").startList();
+        for (MetadataGroup metaGroup: metaGroups.values()) {
+            ds.startItem("metadataFieldGroup").startMap();
+            ds.entry("name", metaGroup.getName());
+            ds.startEntry("fields").startList();
+            for (String field: metaGroup.getFields()) {
+                ds.item("field", field);
+            }
+            ds.endList().endEntry();
+            ds.endMap().endItem();
+        }
+        ds.endList().endEntry();
 
 		// Remove any empty settings
 		//response.removeEmptyMapValues();

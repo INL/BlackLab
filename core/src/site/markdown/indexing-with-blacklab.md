@@ -144,13 +144,33 @@ Here's a commented example of indextemplate.json (double-slash comments in JSON 
           "author": {
             "displayName": "author",
             "description": "The author of the document.",
-            "group": "authorRelated",     // can be used to group fields in interface
             "type": "tokenized",          // ..or text, numeric, untokenized [tokenized]
             "analyzer": "default",        // ..(or whitespace|standard|nontokenizing) [default]
             "unknownValue": "unknown",    // overrides default unknownValue for this field
             "unknownCondition": "MISSING_OR_EMPTY" // overrides default unknownCondition for this field
           }
         },
+        
+        // This block allows you to define groups of metadata fields.
+        // BlackLab Server will include this information on the index structure page.
+        // This can be useful if you want to generate a user interface based on index metadata. 
+        "metadataFieldGroups": [
+          {
+            "name": "1st group",
+            "fields": [
+              "author",
+              "title"
+            ]
+          },
+          {
+            "name": "2nd group",
+            "fields": [
+              "date",
+              "keywords"
+            ]
+          }
+        ],
+        
         "complexFields": {
           "contents": {
             "mainProperty": "word",     // used for concordances; contains char. offsets

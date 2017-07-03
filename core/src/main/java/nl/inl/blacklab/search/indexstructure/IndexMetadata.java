@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexstructure;
 import java.io.File;
 import java.io.IOException;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -65,6 +66,14 @@ public class IndexMetadata {
 	public JSONObject getFieldInfo() {
 		return Json.getObject(jsonRoot, "fieldInfo");
 	}
+
+    /**
+     * Get the configuration for all metadata field groups.
+     * @return the configuration
+     */
+    public JSONArray getMetaFieldGroupConfigs() {
+        return getFieldInfo().getJSONArray("metadataFieldGroups");
+    }
 
 	/**
 	 * Get the configuration for all metadata fields.
@@ -206,5 +215,9 @@ public class IndexMetadata {
 			return "unknown";
 		return fieldInfo.getString("unknownValue");
 	}
+
+    public boolean hasMetaFieldGroupInfo() {
+        return hasFieldInfo() && getFieldInfo().has("metadataFieldGroups");
+    }
 
 }

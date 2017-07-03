@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -27,6 +28,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import nl.inl.blacklab.index.Indexer;
@@ -54,6 +56,31 @@ public class IndexStructure {
 	static final String LATEST_INDEX_FORMAT = "3.1";
 
 	public static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+	/** A named group of ordered metadata fields */
+	public static class MetadataGroup {
+
+	    String name;
+
+	    List<String> fields;
+
+	    public MetadataGroup(String name, List<String> fields) {
+	        this.name = name;
+	        this.fields = new ArrayList<>(fields);
+	    }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<String> getFields() {
+            return fields;
+        }
+
+	}
+
+	/** Logical groups of metadata fields, for presenting them in the user interface. */
+	private Map<String, MetadataGroup> metadataGroups;
 
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, MetadataFieldDesc> metadataFieldInfos;
@@ -242,6 +269,9 @@ public class IndexStructure {
 		setNamingScheme(indexMetadata, fis);
 		defaultUnknownCondition = indexMetadata.getDefaultUnknownCondition();
 		defaultUnknownValue = indexMetadata.getDefaultUnknownValue();
+		if (indexMetadata.hasMetaFieldGroupInfo()) {
+		    getMetaFieldGroups(indexMetadata);
+		}
 		if (indexMetadata.hasFieldInfo()) {
 			getFieldInfoFromMetadata(indexMetadata, fis);
 		}
@@ -266,7 +296,22 @@ public class IndexStructure {
 		}
 	}
 
-	/**
+	private void getMetaFieldGroups(IndexMetadata indexMetadata) {
+        metadataGroups = new LinkedHashMap<>();
+        JSONArray groups = indexMetadata.getMetaFieldGroupConfigs();
+        for (int i = 0; i < groups.length(); i++) {
+            JSONObject group = groups.getJSONObject(i);
+            String name = Json.getString(group, "name", "UNKNOWN");
+            List<String> fields = Json.getListOfStrings(group, "fields");
+            metadataGroups.put(name, new MetadataGroup(name, fields));
+        }
+    }
+
+	public Map<String, MetadataGroup> getMetaFieldGroups() {
+	    return metadataGroups;
+	}
+
+    /**
 	 * Indicate that the index was modified, so that fact
 	 * will be recorded in the metadata file.
 	 */
@@ -292,6 +337,7 @@ public class IndexStructure {
 			"alwaysAddClosingToken", true, // Indicates that we always index words+1 tokens (last token is for XML tags after the last word)
 			"tagLengthInPayload", true // Indicates that start tag property payload contains tag lengths, and there is no end tag property
 		));
+		JSONArray metadataFieldGroups = new JSONArray();
 		JSONObject metadataFields = new JSONObject();
 		JSONObject jsonComplexFields = new JSONObject();
 		root.put("fieldInfo", Json.object(
@@ -301,9 +347,19 @@ public class IndexStructure {
 			"authorField", authorField,
 			"dateField", dateField,
 			"pidField", pidField,
+			"metadataFieldGroups", metadataFieldGroups,
 			"metadataFields", metadataFields,
 			"complexFields", jsonComplexFields
 		));
+
+		// Add metadata field group info
+		for (MetadataGroup g: metadataGroups.values()) {
+		    JSONObject group = Json.object(
+		        "name", g.getName(),
+		        "fields", Json.arrayOfStrings(g.getFields())
+		    );
+		    metadataFieldGroups.put(group);
+		}
 
 		// Add metadata field info
 		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
