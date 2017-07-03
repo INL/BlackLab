@@ -168,4 +168,10 @@ public class PropertyDesc {
             return "PoS";
         return StringUtils.capitalize(propName);
     }
+
+    public boolean isInternal() {
+        return propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME) ||
+                propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME) ||
+                propName.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+    }
 }

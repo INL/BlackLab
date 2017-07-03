@@ -75,13 +75,11 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 			ds.startEntry("basicProperties").startMap();
 			//DataObjectMapAttribute doProps = new DataObjectMapAttribute("property", "name");
 			for (String propName: fieldDesc.getProperties()) {
-				if (propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME) || propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME) ||
-					propName.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME))
-					continue; // skip tag properties as we don't search on them directly; they are shown in detailed field info
 				PropertyDesc propDesc = fieldDesc.getPropertyDesc(propName);
 				ds.startAttrEntry("property", "name", propName).startMap()
 				    .entry("displayName", propDesc.getDisplayName())
 					.entry("sensitivity", propDesc.getSensitivity().toString())
+                    .entry("isInternal", propDesc.isInternal())
 				.endMap().endAttrEntry();
 			}
 			ds.endMap().endEntry();

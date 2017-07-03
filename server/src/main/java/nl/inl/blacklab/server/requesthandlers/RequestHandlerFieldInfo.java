@@ -118,6 +118,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 					.entry("hasForwardIndex", propDesc.hasForwardIndex())
 					.entry("sensitivity", propDesc.getSensitivity().toString())
 					.entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative()))
+                    .entry("isInternal", propDesc.isInternal())
 				.endMap();
             String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
 			if (setShowValues.contains(propName)) {
