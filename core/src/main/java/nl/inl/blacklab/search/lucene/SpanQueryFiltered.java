@@ -125,7 +125,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
-		Weight filterWeight = filter.createWeight(searcher, false);
+        Weight filterWeight = filter.rewrite(searcher.getIndexReader()).createWeight(searcher, false);
 		return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 
