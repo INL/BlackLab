@@ -80,6 +80,7 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 					continue; // skip tag properties as we don't search on them directly; they are shown in detailed field info
 				PropertyDesc propDesc = fieldDesc.getPropertyDesc(propName);
 				ds.startAttrEntry("property", "name", propName).startMap()
+				    .entry("displayName", propDesc.getDisplayName())
 					.entry("sensitivity", propDesc.getSensitivity().toString())
 				.endMap().endAttrEntry();
 			}

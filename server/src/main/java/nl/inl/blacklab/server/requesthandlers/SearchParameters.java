@@ -104,6 +104,7 @@ public class SearchParameters {
 		defaultParameterValues.put("fimatch", "-1");
 		defaultParameterValues.put("usecache", "yes");
 		defaultParameterValues.put("explain", "no");
+        defaultParameterValues.put("listvalues", "");
 		defaultParameterValues.put("subprops", "");
 	}
 
@@ -147,6 +148,8 @@ public class SearchParameters {
 		"hitstart", "hitend",           // doc snippets
 		"wordstart", "wordend",
 		"explain",                      // explain query rewriting?
+		"listvalues",                   // on field info page, show (non-sub) values for property?
+		                                // EXPERIMENTAL, mostly for part of speech, limited to 500 values
 		"subprops",                     // on field info page, show all subprops and values for property
 		                                // EXPERIMENTAL, mostly for part of speech
 

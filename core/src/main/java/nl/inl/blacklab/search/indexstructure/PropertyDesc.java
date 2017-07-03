@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexstructure;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
@@ -13,7 +14,10 @@ public class PropertyDesc {
 	/** The property name */
 	private String propName;
 
-	/** Any alternatives this property may have */
+	/** Name to display in user interface */
+    private String displayName;
+
+    /** Any alternatives this property may have */
 	private Map<String, AltDesc> alternatives;
 
 	private boolean forwardIndex;
@@ -29,6 +33,10 @@ public class PropertyDesc {
 		alternatives = new TreeMap<>();
 		forwardIndex = false;
 	}
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
 	@Override
 	public String toString() {
@@ -152,4 +160,12 @@ public class PropertyDesc {
 		}
 		throw new IllegalArgumentException("Unknown sensitivity alternative ' " + alt + "'! Valid: s, i, ci, di");
 	}
+
+    public String getDisplayName() {
+        if (displayName != null)
+            return displayName;
+        if (propName.equals("pos"))
+            return "PoS";
+        return StringUtils.capitalize(propName);
+    }
 }
