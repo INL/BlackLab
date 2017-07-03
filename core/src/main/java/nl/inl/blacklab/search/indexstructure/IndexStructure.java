@@ -80,7 +80,7 @@ public class IndexStructure {
 	}
 
 	/** Logical groups of metadata fields, for presenting them in the user interface. */
-	private Map<String, MetadataGroup> metadataGroups;
+	private Map<String, MetadataGroup> metadataGroups = new LinkedHashMap<>();
 
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, MetadataFieldDesc> metadataFieldInfos;
@@ -297,7 +297,7 @@ public class IndexStructure {
 	}
 
 	private void getMetaFieldGroups(IndexMetadata indexMetadata) {
-        metadataGroups = new LinkedHashMap<>();
+        metadataGroups.clear();
         JSONArray groups = indexMetadata.getMetaFieldGroupConfigs();
         for (int i = 0; i < groups.length(); i++) {
             JSONObject group = groups.getJSONObject(i);
