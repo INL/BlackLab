@@ -148,6 +148,11 @@ Here's a commented example of indextemplate.json (double-slash comments in JSON 
             "analyzer": "default",        // ..(or whitespace|standard|nontokenizing) [default]
             "unknownValue": "unknown",    // overrides default unknownValue for this field
             "unknownCondition": "MISSING_OR_EMPTY" // overrides default unknownCondition for this field
+            "uiType": "select",           // free text, can be used by GUI applications. [text]
+            "displayValues": {            // how to display the values in this field (optional, for use by GUI)
+              "tolkien": "J.R.R. Tolkien",
+              "adams":   "Douglas Adams",
+            },
           }
         },
         

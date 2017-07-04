@@ -51,6 +51,9 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	 */
 	private Map<String, Integer> values = new HashMap<>();
 
+    /** Gives the display value corresponding to a value, if any. */
+    private Map<String, String> displayValues = new HashMap<>();
+
 	/**
 	 * Whether or not all values are stored here.
 	 */
@@ -116,8 +119,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 
 	public void setValues(JSONObject values) {
 		this.values.clear();
-		for (Object oValue: values.keySet()) {
-			String value = (String)oValue;
+		for (String value: values.keySet()) {
 			int count;
 			try {
 				count = Integer.parseInt(values.get(value).toString());
@@ -129,6 +131,14 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 			this.values.put(value, count);
 		}
 	}
+
+    public void setDisplayValues(JSONObject displayValues) {
+        this.displayValues.clear();
+        for (String value: displayValues.keySet()) {
+            String displayValue = (String)displayValues.get(value);
+            this.displayValues.put(value, displayValue);
+        }
+    }
 
 	public void setValueListComplete(boolean valueListComplete) {
 		this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
@@ -166,6 +176,10 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		//  an okay choice.
 		return valueListComplete == ValueListComplete.YES;
 	}
+
+    public Map<String, String> getDisplayValues() {
+        return Collections.unmodifiableMap(displayValues);
+    }
 
 	/**
 	 * Reset the information that is dependent on input data

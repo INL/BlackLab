@@ -337,6 +337,10 @@ public class IndexStructure {
     			values = fieldConfig.getJSONObject("values");
     		}
     		boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
+            JSONObject displayValues = null;
+            if (fieldConfig.has("displayValues")) {
+                displayValues = fieldConfig.getJSONObject("displayValues");
+            }
 
     		MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
     		fieldDesc.setDisplayName(fldDisplayName);
@@ -348,6 +352,8 @@ public class IndexStructure {
     		fieldDesc.setUnknownCondition(unknownCondition);
     		if (values != null)
     			fieldDesc.setValues(values);
+    		if (displayValues != null)
+    		    fieldDesc.setDisplayValues(displayValues);
     		fieldDesc.setValueListComplete(valueListComplete);
     		metadataFieldInfos.put(fieldName, fieldDesc);
     	}
@@ -445,6 +451,13 @@ public class IndexStructure {
 					jsonValues.put(e.getKey(), e.getValue());
 				}
 				fieldInfo.put("values", jsonValues);
+			}
+			JSONObject jsonDisplayValues = new JSONObject();
+			Map<String, String> displayValues = f.getDisplayValues();
+			if (displayValues != null) {
+			    for (Map.Entry<String, String> e: displayValues.entrySet()) {
+			        jsonDisplayValues.put(e.getKey(), e.getValue());
+                }
 			}
 			metadataFields.put(f.getName(), fieldInfo);
 		}

@@ -347,6 +347,14 @@ Information about the “opensonar” corpus (structure, fields, human-readable 
 
 		http://blacklab.ivdnt.org/blacklab-server/opensonar/ (trailing slash optional)
 
+Information about the “opensonar” corpus, include all values for "pos" property:
+
+        http://blacklab.ivdnt.org/blacklab-server/opensonar/?listvalues=pos
+
+Information about the “opensonar” corpus, include subproperties and their values for "pos" property:
+
+        http://blacklab.ivdnt.org/blacklab-server/opensonar/?subprops=pos
+
 All occurrences of “test” in the “opensonar” corpus (CorpusQL query)
 
 		http://blacklab.ivdnt.org/blacklab-server/opensonar/hits?patt="test"

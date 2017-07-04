@@ -66,7 +66,6 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 
 	public static void describeMetadataField(DataStream ds, String indexName, String fieldName, MetadataFieldDesc fd, boolean listValues) {
         ds.startMap();
-		Map<String, Integer> values = fd.getValueDistribution();
 		boolean valueListComplete = fd.isValueListComplete();
 
 		// Assemble response
@@ -86,6 +85,13 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 			.entry("unknownCondition", fd.getUnknownCondition().toString())
 			.entry("unknownValue", fd.getUnknownValue());
 		if (listValues) {
+	        Map<String, String> displayValues = fd.getDisplayValues();
+		    ds.startEntry("displayValues").startMap();
+            for (Map.Entry<String, String> e: displayValues.entrySet()) {
+                ds.attrEntry("displayValue", "value", e.getKey(), e.getValue());
+            }
+		    ds.endMap().endEntry();
+            Map<String, Integer> values = fd.getValueDistribution();
     		ds.startEntry("fieldValues").startMap();
     		for (Map.Entry<String, Integer> e: values.entrySet()) {
     			ds.attrEntry("value", "text", e.getKey(), e.getValue());
