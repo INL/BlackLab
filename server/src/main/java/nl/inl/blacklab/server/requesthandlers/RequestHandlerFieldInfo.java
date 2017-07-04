@@ -75,7 +75,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 		ds	.entry("fieldName", fieldName)
 			.entry("isComplexField", "false")
 			.entry("displayName", fd.getDisplayName())
-			.entry("description", fd.getDescription());
+			.entry("description", fd.getDescription())
+		    .entry("uiType", fd.getUiType());
 		String group = fd.getGroup();
         if (group != null && group.length() > 0)
     		ds.entry("group", group);

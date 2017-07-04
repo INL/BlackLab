@@ -62,6 +62,10 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	 */
 	private String group;
 
+	/** Type of UI element to show for this field. Can be used by a generic
+	 *  search application to generate metadata search interface. */
+    private String uiType = "text";
+
 	public MetadataFieldDesc(String fieldName, FieldType type) {
 		super(fieldName);
 		this.type = type;
@@ -212,4 +216,12 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	public String getGroup() {
 		return group;
 	}
+
+    public void setUiType(String uiType) {
+        this.uiType = uiType;
+    }
+
+    public String getUiType() {
+        return uiType;
+    }
 }

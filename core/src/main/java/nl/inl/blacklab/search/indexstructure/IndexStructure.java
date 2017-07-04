@@ -312,6 +312,70 @@ public class IndexStructure {
 	}
 
     /**
+     * Get field information from the index metadata file.
+     *
+     * @param indexMetadata the metadata information
+     * @param fis the Lucene field infos
+     */
+    private void getFieldInfoFromMetadata(IndexMetadata indexMetadata, FieldInfos fis) {
+
+    	// Metadata fields
+    	Iterator<String> it = indexMetadata.getMetaFieldConfigs().keys();
+    	while (it.hasNext()) {
+    		String fieldName = it.next();
+    		JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
+    		String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
+    		String uiType = Json.getString(fieldConfig, "uiType", "text");
+    		String fldDescription = Json.getString(fieldConfig, "description", "");
+    		String group = Json.getString(fieldConfig, "group", "");
+    		String type = Json.getString(fieldConfig, "type", "tokenized");
+    		String analyzer = Json.getString(fieldConfig, "analyzer", "DEFAULT");
+    		String unknownValue = Json.getString(fieldConfig, "unknownValue", defaultUnknownValue);
+    		String unknownCondition = Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition);
+    		JSONObject values = null;
+    		if (fieldConfig.has("values")) {
+    			values = fieldConfig.getJSONObject("values");
+    		}
+    		boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
+
+    		MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
+    		fieldDesc.setDisplayName(fldDisplayName);
+    		fieldDesc.setUiType(uiType);
+    		fieldDesc.setDescription(fldDescription);
+    		fieldDesc.setGroup(group);
+    		fieldDesc.setAnalyzer(analyzer);
+    		fieldDesc.setUnknownValue(unknownValue);
+    		fieldDesc.setUnknownCondition(unknownCondition);
+    		if (values != null)
+    			fieldDesc.setValues(values);
+    		fieldDesc.setValueListComplete(valueListComplete);
+    		metadataFieldInfos.put(fieldName, fieldDesc);
+    	}
+
+    	// Complex fields
+    	it = indexMetadata.getComplexFieldConfigs().keys();
+    	while (it.hasNext()) {
+    		String fieldName = it.next();
+    		JSONObject fieldConfig = indexMetadata.getComplexFieldConfig(fieldName);
+    		String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
+    		String fldDescription = Json.getString(fieldConfig, "description", "");
+    		String mainProperty = Json.getString(fieldConfig, "mainProperty", "");
+    		// TODO: useAnnotation..?
+    		ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
+    		fieldDesc.setDisplayName(fldDisplayName);
+    		fieldDesc.setDescription(fldDescription);
+    		if (mainProperty.length() > 0)
+    			fieldDesc.setMainPropertyName(mainProperty);
+    		String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
+    		if (noForwardIndex.length() > 0) {
+    			String[] noForwardIndexProps = noForwardIndex.split("\\s+");
+    			fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
+    		}
+    		complexFields.put(fieldName, fieldDesc);
+    	}
+    }
+
+    /**
 	 * Indicate that the index was modified, so that fact
 	 * will be recorded in the metadata file.
 	 */
@@ -366,6 +430,7 @@ public class IndexStructure {
 			MetadataFieldDesc.UnknownCondition unknownCondition = f.getUnknownCondition();
 			JSONObject fieldInfo = Json.object(
 				"displayName", f.getDisplayName(),
+	            "uiType", f.getUiType(),
 				"description", f.getDescription(),
 				"type", f.getType().toString().toLowerCase(),
 				"analyzer", f.getAnalyzerName(),
@@ -407,68 +472,6 @@ public class IndexStructure {
 
 		// Write the file
 		indexMetadata.write(metadataFile);
-	}
-
-	/**
-	 * Get field information from the index metadata file.
-	 *
-	 * @param indexMetadata the metadata information
-	 * @param fis the Lucene field infos
-	 */
-	private void getFieldInfoFromMetadata(IndexMetadata indexMetadata, FieldInfos fis) {
-
-		// Metadata fields
-		Iterator<String> it = indexMetadata.getMetaFieldConfigs().keys();
-		while (it.hasNext()) {
-			String fieldName = it.next();
-			JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
-			String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
-			String fldDescription = Json.getString(fieldConfig, "description", "");
-			String group = Json.getString(fieldConfig, "group", "");
-			String type = Json.getString(fieldConfig, "type", "tokenized");
-			String analyzer = Json.getString(fieldConfig, "analyzer", "DEFAULT");
-			String unknownValue = Json.getString(fieldConfig, "unknownValue", defaultUnknownValue);
-			String unknownCondition = Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition);
-			JSONObject values = null;
-			if (fieldConfig.has("values")) {
-				values = fieldConfig.getJSONObject("values");
-			}
-			boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
-
-			MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
-			fieldDesc.setDisplayName(fldDisplayName);
-			fieldDesc.setDescription(fldDescription);
-			fieldDesc.setGroup(group);
-			fieldDesc.setAnalyzer(analyzer);
-			fieldDesc.setUnknownValue(unknownValue);
-			fieldDesc.setUnknownCondition(unknownCondition);
-			if (values != null)
-				fieldDesc.setValues(values);
-			fieldDesc.setValueListComplete(valueListComplete);
-			metadataFieldInfos.put(fieldName, fieldDesc);
-		}
-
-		// Complex fields
-		it = indexMetadata.getComplexFieldConfigs().keys();
-		while (it.hasNext()) {
-			String fieldName = it.next();
-			JSONObject fieldConfig = indexMetadata.getComplexFieldConfig(fieldName);
-			String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
-			String fldDescription = Json.getString(fieldConfig, "description", "");
-			String mainProperty = Json.getString(fieldConfig, "mainProperty", "");
-			// TODO: useAnnotation..?
-			ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
-			fieldDesc.setDisplayName(fldDisplayName);
-			fieldDesc.setDescription(fldDescription);
-			if (mainProperty.length() > 0)
-				fieldDesc.setMainPropertyName(mainProperty);
-			String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
-			if (noForwardIndex.length() > 0) {
-				String[] noForwardIndexProps = noForwardIndex.split("\\s+");
-				fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
-			}
-			complexFields.put(fieldName, fieldDesc);
-		}
 	}
 
 	/**
