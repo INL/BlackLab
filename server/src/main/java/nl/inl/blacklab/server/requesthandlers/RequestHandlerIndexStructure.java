@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -9,7 +10,6 @@ import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.IndexStructure.MetadataGroup;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
-import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -67,26 +67,14 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 		// Complex fields
 		//DataObjectMapAttribute doComplexFields = new DataObjectMapAttribute("complexField", "name");
 		for (String name: struct.getComplexFields()) {
-			ds.startAttrEntry("complexField", "name", name).startMap();
+			ds.startAttrEntry("complexField", "name", name);
+
+	        Set<String> setShowValuesFor = searchParam.listValuesFor();
+	        Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
 			ComplexFieldDesc fieldDesc = struct.getComplexFieldDesc(name);
+            RequestHandlerFieldInfo.describeComplexField(ds, null, name, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
 
-			ds	.entry("displayName", fieldDesc.getDisplayName())
-				.entry("description", fieldDesc.getDescription())
-				.entry("mainProperty", fieldDesc.getMainProperty().getName());
-
-			ds.startEntry("basicProperties").startMap();
-			//DataObjectMapAttribute doProps = new DataObjectMapAttribute("property", "name");
-			for (String propName: fieldDesc.getProperties()) {
-				PropertyDesc propDesc = fieldDesc.getPropertyDesc(propName);
-				ds.startAttrEntry("property", "name", propName).startMap()
-				    .entry("displayName", propDesc.getDisplayName())
-					.entry("sensitivity", propDesc.getSensitivity().toString())
-                    .entry("isInternal", propDesc.isInternal())
-				.endMap().endAttrEntry();
-			}
-			ds.endMap().endEntry();
-
-			ds.endMap().endAttrEntry();
+			ds.endAttrEntry();
 		}
 		ds.endMap().endEntry();
 
@@ -94,13 +82,12 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 		// Metadata fields
 		//DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
 		for (String name: struct.getMetadataFields()) {
-			MetadataFieldDesc fd = struct.getMetadataFieldDesc(name);
-			ds.startAttrEntry("metadataField", "name", name).startMap()
-				.entry("fieldName", fd.getName())
-				.entry("displayName", fd.getDisplayName())
-				.entry("type", fd.getType().toString())
-				.entry("group", fd.getGroup());
-			ds.endMap().endAttrEntry();
+			ds.startAttrEntry("metadataField", "name", name);
+
+            MetadataFieldDesc fd = struct.getMetadataFieldDesc(name);
+			RequestHandlerFieldInfo.describeMetadataField(ds, null, name, fd, true);
+
+			ds.endAttrEntry();
 		}
 		ds.endMap().endEntry();
 

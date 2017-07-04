@@ -482,6 +482,16 @@ public class SearchParameters {
 		return new HitSortSettings(sortBy, reverse);
 	}
 
+	public Set<String> listValuesFor() {
+        String par = getString("listvalues").trim();
+        return new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+	}
+
+    public Set<String> listSubpropsFor() {
+        String par = getString("subprops").trim();
+        return new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+    }
+
 	public boolean containsKey(String key) {
 		return map.containsKey(key);
 	}
