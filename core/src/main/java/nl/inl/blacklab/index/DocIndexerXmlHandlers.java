@@ -817,6 +817,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // indexer.properties overriding default type
             type = shouldBeType;
         }
+
         if (type != FieldType.NUMERIC) {
             currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexStructType(type)));
         }

@@ -1,10 +1,7 @@
 package nl.inl.blacklab.server.index;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -111,13 +108,11 @@ public class IndexTask {
 					indexer.indexGzip(name, data);
 				} else {
 					// Straight XML data. Read as UTF-8.
-					try (Reader reader = new BufferedReader(new InputStreamReader(data, Indexer.DEFAULT_INPUT_ENCODING))) {
-						logger.debug("Starting indexing");
-						indexer.index(name, reader);
-						logger.debug("Done indexing");
-						if (!anyDocsFound) {
-							indexError = "The file contained no documents in the selected format. Do the corpus and file formats match?";
-						}
+					logger.debug("Starting indexing");
+					indexer.index(name, data);
+					logger.debug("Done indexing");
+					if (!anyDocsFound) {
+						indexError = "The file contained no documents in the selected format. Do the corpus and file formats match?";
 					}
 				}
 			} catch (Exception e) {

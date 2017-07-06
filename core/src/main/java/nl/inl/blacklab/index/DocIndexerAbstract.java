@@ -16,8 +16,6 @@
 package nl.inl.blacklab.index;
 
 import java.io.Reader;
-import java.util.HashMap;
-import java.util.Map;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.search.indexstructure.FieldType;
@@ -26,15 +24,13 @@ import nl.inl.util.CountingReader;
 /**
  * Abstract base class for a DocIndexer processing XML files.
  */
-public abstract class DocIndexerAbstract implements DocIndexer {
+public abstract class DocIndexerAbstract extends DocIndexer {
 	/**
 	 * Write content chunks per 10M (i.e. don't keep all content in memory at all times)
 	 */
 	private static final long WRITE_CONTENT_CHUNK_SIZE = 10000000;
 
 	protected boolean skippingCurrentDocument = false;
-
-	public Indexer indexer;
 
 	/**
 	 * File we're currently parsing. This can be useful for storing the original filename in the
@@ -60,14 +56,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
 	/** Do we want to omit norms? (Default: yes) */
 	public boolean omitNorms = true;
-
-	/**
-	 * Returns our Indexer object
-	 * @return the Indexer object
-	 */
-	public Indexer getIndexer() {
-		return indexer;
-	}
 
 	/**
 	 * Enables or disables norms. Norms are disabled by default.
@@ -167,16 +155,30 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		return content.length();
 	}
 
-	public DocIndexerAbstract(Indexer indexer, String fileName, Reader reader) {
-		this.indexer = indexer;
-		this.fileName = fileName;
-		this.reader = new CountingReader(reader);
+    /** NOTE: newer DocIndexers should only have a default constructor, and provide methods to set
+     * the Indexer object and the document being indexed (which are called by the Indexer). This
+     * allows us more flexibility in how we supply the document to this object (e.g. as a file, a
+     * byte array, an inputstream, a reader, ...), which helps if we want to use e.g. VTD-XML and
+     * could allow us to re-use DocIndexers in the future.
+     */
+    public DocIndexerAbstract() {
+    }
 
-		// Get our parameters from the indexer
-		Map<String, String> indexerParameters = indexer.getIndexerParameters();
-		if (indexerParameters != null)
-			setParameters(indexerParameters);
+	public DocIndexerAbstract(Indexer indexer, String fileName, Reader reader) {
+		setIndexer(indexer);
+		setDocument(fileName, reader);
 	}
+
+    /**
+     * Set the document to index.
+     * @param fileName name of the document
+     * @param reader document
+     */
+    @Override
+    public void setDocument(String fileName, Reader reader) {
+        this.fileName = fileName;
+        this.reader = new CountingReader(reader);
+    }
 
 	public void reportCharsProcessed() {
 		long charsProcessed = reader.getCharsReadSinceLastCall();
@@ -187,60 +189,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 		indexer.getListener().tokensDone(n);
 	}
 
-	/**
-	 * Parameters passed to this indexer
-	 */
-	protected Map<String, String> parameters = new HashMap<>();
-
-	@Override
-	public boolean hasParameter(String name) {
-		return parameters.containsKey(name);
-	}
-
-	@Override
-	public void setParameter(String name, String value) {
-		parameters.put(name, value);
-	}
-
-	@Override
-	public void setParameters(Map<String, String> param) {
-		for (Map.Entry<String, String> e: param.entrySet()) {
-			parameters.put(e.getKey(), e.getValue());
-		}
-	}
-
-	@Override
-	public String getParameter(String name, String defaultValue) {
-		String value = parameters.get(name);
-		if (value == null)
-			return defaultValue;
-		return value;
-	}
-
-	@Override
-	public String getParameter(String name) {
-		return getParameter(name, null);
-	}
-
-	public boolean getParameter(String name, boolean defaultValue) {
-		String value = parameters.get(name);
-		if (value == null)
-			return defaultValue;
-		value = value.trim().toLowerCase();
-		return value.equals("true") || value.equals("1") || value.equals("yes");
-	}
-
-	public int getParameter(String name, int defaultValue) {
-		String value = parameters.get(name);
-		if (value == null)
-			return defaultValue;
-		try {
-			return Integer.parseInt(value);
-		} catch (NumberFormatException e) {
-			return defaultValue;
-		}
-	}
-
 	protected boolean tokenizeField(String name) {
 		String parName = name + "_tokenized";
 		if (!hasParameter(name + "_tokenized")) {
@@ -249,13 +197,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
 		return getParameter(parName, true);
 	}
-
-	/*
-	@Override
-	public FieldType getMetadataFieldType(String fieldName) {
-		return tokenizeField(fieldName) ? indexer.metadataFieldTypeTokenized: indexer.metadataFieldTypeUntokenized;
-	}
-	*/
 
 	@Override
 	public FieldType getMetadataFieldTypeFromIndexerProperties(String fieldName) {

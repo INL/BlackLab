@@ -15,12 +15,13 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
@@ -49,7 +50,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.FileUtil;
 import nl.inl.util.TarGzipReader;
 import nl.inl.util.TarGzipReader.FileHandler;
-import nl.inl.util.UnicodeReader;
+import nl.inl.util.UnicodeStream;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -335,11 +336,103 @@ public class Indexer {
 	 */
 	protected DocIndexer createDocIndexer(String documentName, Reader reader) throws Exception {
 		// Instantiate our DocIndexer class
-		Constructor<? extends DocIndexer> constructor = docIndexerClass.getConstructor(
-				Indexer.class, String.class, Reader.class);
-		DocIndexer docIndexer = constructor.newInstance(this, documentName, reader);
+	    Constructor<? extends DocIndexer> constructor;
+	    DocIndexer docIndexer;
+        try {
+            // NOTE: newer DocIndexers have a constructor that takes only an Indexer, not the document
+            // being indexed. This allows us more flexibility in how we supply the document to this object
+            // (e.g. as a file, a byte array, a reader, ...).
+            // Assume this is a newer DocIndexer, and only construct it the old way if this fails.
+            constructor = docIndexerClass.getConstructor(Indexer.class);
+            docIndexer = constructor.newInstance();
+            docIndexer.setIndexer(this);
+            docIndexer.setDocument(documentName, reader);
+        } catch (NoSuchMethodException e) {
+            // No, this is an older DocIndexer that takes document name and reader directly.
+            constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
+            docIndexer = constructor.newInstance(this, documentName, reader);
+        }
 		return docIndexer;
 	}
+
+    /**
+     * Called to create a new instance of DocIndexer.
+     *
+     * @param documentName the name of the data to index
+     * @param is what to index
+     * @param cs charset
+     * @return the DocIndexer
+     * @throws Exception if the DocIndexer could not be instantiated for some reason
+     */
+    protected DocIndexer createDocIndexer(String documentName, InputStream is, Charset cs) throws Exception {
+        // Instantiate our DocIndexer class
+        Constructor<? extends DocIndexer> constructor;
+        DocIndexer docIndexer;
+        try {
+            constructor = docIndexerClass.getConstructor(Indexer.class);
+            docIndexer = constructor.newInstance();
+            docIndexer.setIndexer(this);
+            docIndexer.setDocument(documentName, is, cs);
+        } catch (NoSuchMethodException e) {
+            // No, this is an older DocIndexer that takes document name and reader directly.
+            constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
+            docIndexer = constructor.newInstance(this, documentName, new InputStreamReader(is, cs));
+        }
+        return docIndexer;
+    }
+
+    /**
+     * Called to create a new instance of DocIndexer.
+     *
+     * @param documentName the name of the data to index
+     * @param f file to index
+     * @param cs charset
+     * @return the DocIndexer
+     * @throws Exception if the DocIndexer could not be instantiated for some reason
+     */
+    protected DocIndexer createDocIndexer(String documentName, File f, Charset cs) throws Exception {
+        // Instantiate our DocIndexer class
+        Constructor<? extends DocIndexer> constructor;
+        DocIndexer docIndexer;
+        try {
+            constructor = docIndexerClass.getConstructor(Indexer.class);
+            docIndexer = constructor.newInstance();
+            docIndexer.setIndexer(this);
+            docIndexer.setDocument(documentName, f, cs);
+        } catch (NoSuchMethodException e) {
+            // No, this is an older DocIndexer that takes document name and reader directly.
+            constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
+            UnicodeStream is = new UnicodeStream(new FileInputStream(f), DEFAULT_INPUT_ENCODING);
+            docIndexer = constructor.newInstance(this, documentName, new InputStreamReader(is, cs));
+        }
+        return docIndexer;
+    }
+
+    /**
+     * Called to create a new instance of DocIndexer.
+     *
+     * @param documentName the name of the data to index
+     * @param contents what to index
+     * @param cs charset
+     * @return the DocIndexer
+     * @throws Exception if the DocIndexer could not be instantiated for some reason
+     */
+    protected DocIndexer createDocIndexer(String documentName, byte[] contents, Charset cs) throws Exception {
+        // Instantiate our DocIndexer class
+        Constructor<? extends DocIndexer> constructor;
+        DocIndexer docIndexer;
+        try {
+            constructor = docIndexerClass.getConstructor(Indexer.class);
+            docIndexer = constructor.newInstance();
+            docIndexer.setIndexer(this);
+            docIndexer.setDocument(documentName, contents, cs);
+        } catch (NoSuchMethodException e) {
+            // No, this is an older DocIndexer that takes document name and reader directly.
+            constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
+            docIndexer = constructor.newInstance(this, documentName, new InputStreamReader(new ByteArrayInputStream(contents), cs));
+        }
+        return docIndexer;
+    }
 
 	/**
 	 * Add a Lucene document to the index
@@ -393,11 +486,14 @@ public class Indexer {
 	 * @throws Exception
 	 */
 	private void indexReader(String documentName, Reader reader) throws Exception {
-		getListener().fileStarted(documentName);
-		int docsDoneBefore = searcher.getWriter().numDocs();
-		long tokensDoneBefore = getListener().getTokensProcessed();
+	    DocIndexer docIndexer = createDocIndexer(documentName, reader);
+	    indexDocIndexer(documentName, docIndexer);
+	}
 
-		DocIndexer docIndexer = createDocIndexer(documentName, reader);
+	private void indexDocIndexer(String documentName, DocIndexer docIndexer) throws Exception {
+        getListener().fileStarted(documentName);
+        int docsDoneBefore = searcher.getWriter().numDocs();
+        long tokensDoneBefore = getListener().getTokensProcessed();
 
 		docIndexer.index();
 		getListener().fileDone(documentName);
@@ -411,8 +507,31 @@ public class Indexer {
 		}
 	}
 
-	/**
+	private void indexFile(String documentName, File fileToIndex) throws Exception {
+        DocIndexer docIndexer = createDocIndexer(documentName, fileToIndex, DEFAULT_INPUT_ENCODING);
+        indexDocIndexer(documentName, docIndexer);
+    }
+
+    /**
+     * Index a document from an InputStream.
+     *
+     * @param documentName
+     *            name for the InputStream (e.g. name of the file)
+     * @param input
+     *            the stream
+     * @throws Exception
+     */
+    public void index(String documentName, InputStream input) throws Exception {
+        UnicodeStream is = new UnicodeStream(input, DEFAULT_INPUT_ENCODING);
+        DocIndexer docIndexer = createDocIndexer(documentName, is, is.getEncoding());
+        indexDocIndexer(documentName, docIndexer);
+    }
+
+    /**
 	 * Index a document from a Reader.
+	 *
+	 * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array directly,
+	 * as this can in some cases be parsed more efficiently (e.g. using VTD-XML).
 	 *
 	 * Catches and reports any errors that occur.
 	 *
@@ -511,30 +630,23 @@ public class Indexer {
 				indexZip(fileToIndex, glob, recurseSubdirs);
 			} else {
 				if (!isSpecialOperatingSystemFile(fileToIndex.getName())) { // skip special OS files
-					try {
-						try (FileInputStream is = new FileInputStream(fileToIndex)) {
-							indexInputStream(fn, is, glob, recurseSubdirs);
-						}
-					} catch (RuntimeException | IOException e) {
-						log("*** Error indexing " + fileToIndex, e);
-						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "file", fileToIndex, null);
-					}
+				    if (fn.endsWith(".gz") || fn.endsWith(".tgz") || fn.endsWith(".zip")) {
+				        // Archive.
+    					try {
+    						try (FileInputStream is = new FileInputStream(fileToIndex)) {
+    							indexInputStream(fn, is, glob, recurseSubdirs);
+    						}
+    					} catch (RuntimeException | IOException e) {
+    						log("*** Error indexing " + fileToIndex, e);
+    						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "file", fileToIndex, null);
+    					}
+				    } else {
+				        // Regular file.
+				        indexFile(fn, fileToIndex);
+				    }
 				}
 			}
 		}
-	}
-
-	/**
-	 * Index a document from an InputStream.
-	 *
-	 * @param documentName
-	 *            name for the InputStream (e.g. name of the file)
-	 * @param input
-	 *            the stream
-	 * @throws Exception
-	 */
-	public void index(String documentName, InputStream input) throws Exception {
-		indexReader(documentName, new BufferedReader(new UnicodeReader(input, DEFAULT_INPUT_ENCODING)));
 	}
 
 	/**
@@ -558,14 +670,7 @@ public class Indexer {
 			} else if (name.endsWith(".zip")) {
 				logger.warn("Skipped " + name + ", ZIPs inside archives not supported");
 			} else {
-				Reader reader = new BufferedReader(new UnicodeReader(is, DEFAULT_INPUT_ENCODING));
-				try {
-					indexReader(name, reader);
-				} finally {
-					// NOTE: don't close the reader as the caller will close the stream when
-					// appropriate! When processing archive files, the stream may need to remain
-					// open for the next entry.
-				}
+				index(name, is);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
