@@ -265,6 +265,30 @@ public class FileUtil {
 	}
 
 	/**
+	 * Find a file, searching several directories and trying several extensions.
+	 *
+	 * Searches the first directory for the file name with each of the extensions, then the
+	 * second directory, etc.
+	 *
+	 * @param dirsToSearch directories to search for the file
+	 * @param name name of the file (without extension)
+	 * @param extensions extensions to try
+	 * @return the file if found or null if not found
+	 */
+	public static File findFile(File[] dirsToSearch, String name, String[] extensions) {
+        // Read JSON or YAML config file from any of the specified directories.
+        File configFile;
+        for (File dir: dirsToSearch) {
+            for (String ext: extensions) {
+                configFile = new File(dir, name + "." + ext);
+                if (configFile.exists())
+                    return configFile;
+            }
+        }
+        return null;
+    }
+
+    /**
 	 * Add a parenthesized number to a file name to get a file name that doesn't exist yet.
 	 *
 	 * @param file the file that exists already

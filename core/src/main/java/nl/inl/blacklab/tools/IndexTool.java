@@ -36,6 +36,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
+import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 
@@ -193,13 +194,14 @@ public class IndexTool {
 		// Init log4j
 		LogUtil.setupBasicLoggingConfig();
 
-		propFile = findFile("indexer.properties", indexDir, inputDir);
+		File[] dirs = { inputDir, inputDir.getParentFile(), indexDir, indexDir.getParentFile() };
+		propFile = FileUtil.findFile(dirs, "indexer", new String[] {"properties"});
 		if (propFile != null && propFile.canRead())
 			readParametersFromPropertiesFile(propFile);
 
 		File indexTemplateFile = null;
 		if (createNewIndex) {
-			indexTemplateFile = findFile("indextemplate.json", indexDir, inputDir);
+			indexTemplateFile = FileUtil.findFile(dirs, "indextemplate", new String[] {"json", "yaml", "yml"});
 		}
 
 		String op = createNewIndex ? "Creating new" : "Appending to";
@@ -268,27 +270,6 @@ public class IndexTool {
 			// Close the index.
 			indexer.close();
 		}
-	}
-
-	private static File findFile(String fileName, File indexDir, File inputDir) {
-		// If the input or index directory or the parent of the index directory
-		// contains indexer.properties, read it
-		File propFile;
-		if (inputDir.isDirectory()) {
-			propFile = new File(inputDir, fileName);
-			if (propFile.canRead())
-				return propFile;
-			propFile = new File(inputDir.getParentFile(), fileName);
-			if (propFile.canRead())
-				return propFile;
-		}
-		propFile = new File(indexDir, fileName);
-		if (propFile.canRead())
-			return propFile;
-		propFile = new File(indexDir.getParentFile(), fileName);
-		if (propFile.canRead())
-			return propFile;
-		return null;
 	}
 
 	private static void readParametersFromPropertiesFile(File propFile) {

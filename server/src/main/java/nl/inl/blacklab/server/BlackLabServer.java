@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -16,9 +17,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -31,6 +36,7 @@ import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 
 public class BlackLabServer extends HttpServlet {
@@ -55,58 +61,77 @@ public class BlackLabServer extends HttpServlet {
 		logger.info("BlackLab Server ready.");
 	}
 
-	private InputStream openConfigFile() throws BlsException {
-		// Read JSON config file, either from the servlet context directory's parent,
-		// from /etc/blacklab/ or from the classpath.
-		String configFileName = "blacklab-server.json";
-		String realPath = getServletContext().getRealPath(".");
-		logger.debug("Running from dir: " + realPath);
-		String webappsDir = realPath + "/../";
-		File configFile = new File(webappsDir + configFileName);
-		InputStream is;
-		if (!configFile.exists())
-			configFile = new File("/etc/blacklab", configFileName);
-		if (!configFile.exists())
-			configFile = new File("/vol1/etc/blacklab", configFileName); // UGLY, will fix later
-		String tmpDir = System.getProperty("java.io.tmpdir");
-		if (!configFile.exists()) {
-			configFile = new File(tmpDir, configFileName);
-		}
-		if (configFile.exists()) {
-			// Read from dir
-			try {
-				logger.debug("Reading configuration file " + configFile);
-				is = new BufferedInputStream(new FileInputStream(configFile));
-			} catch (FileNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			// Read from classpath
-			logger.debug(configFileName + " not found in webapps dir; searching classpath...");
-			is = getClass().getClassLoader().getResourceAsStream(configFileName);
-			if (is == null) {
-				logger.debug(configFileName + " not found on classpath either. Using internal defaults.");
-//				configFileName = "blacklab-server-defaults.json"; // internal defaults file
-//				is = getClass().getClassLoader().getResourceAsStream(configFileName);
-//				if (is == null) {
-//					throw new ServletException("Could not find " + configFileName + "!");
-//				}
+	private void readConfig() throws BlsException {
+    	try {
+            File realPath = new File(getServletContext().getRealPath("."));
+            logger.debug("Running from dir: " + realPath);
+            File webappsDir = realPath.getParentFile().getCanonicalFile();
+    	    String configFileName = "blacklab-server";
+    	    File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+            File[] searchDirs = {
+    	        webappsDir,
+    	        new File("/etc/blacklab"),
+    	        new File("/vol1/etc/blacklab"), // INT-specific...
+    	        tmpDir
+    	    };
+            String[] exts = { "json", "yaml", "yml" };
+            File configFile = FileUtil.findFile(searchDirs, configFileName, exts);
+            InputStream is = null;
+            boolean isJson = true;
+            if (configFile != null && configFile.exists()) {
+                // Read from dir
+                try {
+                    logger.debug("Reading configuration file " + configFile);
+                    is = new BufferedInputStream(new FileInputStream(configFile));
+                    isJson = configFile.getName().endsWith(".json");
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                // Read from classpath
+                logger.debug(configFileName + ".(json|yaml) not found in webapps dir; searching classpath...");
+                for (String ext: exts) {
+                    is = getClass().getClassLoader().getResourceAsStream(configFileName + "." + ext);
+                    if (is != null) {
+                        isJson = ext.equals("json");
+                        break;
+                    }
+                }
+                if (is == null) {
+                    logger.debug(configFileName + ".(json|yaml) not found on classpath either. Using internal defaults.");
+//                  configFileName = "blacklab-server-defaults.json"; // internal defaults file
+//                  is = getClass().getClassLoader().getResourceAsStream(configFileName);
+//                  if (is == null) {
+//                      throw new ServletException("Could not find " + configFileName + "!");
+//                  }
 
-				throw new ConfigurationException("Couldn't find blacklab-server.json in " + webappsDir + ", /etc/blacklab/, " + tmpDir + ", or on classpath. Please place " +
-				"blacklab-server.json in one of these locations containing at least the following:\n" +
-				"{\n" +
-				"  \"indexCollections\": [\n" +
-				"    \"/my/indices\" \n" +
-				"  ]\n" +
-				"}\n\n" +
-				"With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
-			}
-			logger.debug("Reading configuration file from classpath: " + configFileName);
-		}
-		return is;
-	}
+                    String descDirs = StringUtils.join(searchDirs, ", ");
+                    throw new ConfigurationException("Couldn't find blacklab-server.(json|yaml) in dirs " + descDirs + ", or on classpath. Please place " +
+                        "blacklab-server.json in one of these locations containing at least the following:\n" +
+                        "{\n" +
+                        "  \"indexCollections\": [\n" +
+                        "    \"/my/indices\" \n" +
+                        "  ]\n" +
+                        "}\n\n" +
+                        "With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
+                }
+                logger.debug("Reading configuration file from classpath: " + configFileName);
+            }
 
-	/**
+            try {
+                ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+            	searchManager = new SearchManager(mapper.readTree(new InputStreamReader(is, CONFIG_ENCODING)));
+            } finally {
+                is.close();
+            }
+        } catch (JsonProcessingException e) {
+            throw new ConfigurationException("Invalid JSON in configuration file", e);
+        } catch (IOException e) {
+            throw new ConfigurationException("Error reading configuration file", e);
+        }
+    }
+
+    /**
 	 * Process POST requests (add data to index)
 	 * @throws ServletException
 	 */
@@ -248,16 +273,6 @@ public class BlackLabServer extends HttpServlet {
 			// This is okay, don't raise the alarm.
 			logger.debug("(couldn't send response, client probably cancelled the request)");
 			return;
-		}
-	}
-
-	private void readConfig() throws BlsException {
-		try (InputStream is = openConfigFile()) {
-			searchManager = new SearchManager(Json.read(is, CONFIG_ENCODING));
-		} catch (JSONException e) {
-			throw new ConfigurationException("Invalid JSON in configuration file", e);
-		} catch (IOException e) {
-			throw new ConfigurationException("Error reading configuration file", e);
 		}
 	}
 

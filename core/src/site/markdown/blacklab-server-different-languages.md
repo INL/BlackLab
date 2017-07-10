@@ -27,7 +27,7 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 		 * @param url the url to fetch
 		 * @return the page fetched
 		 */
-		public static JSONObject fetch(String url) throws Exception {
+		public static JsonNode fetch(String url) throws Exception {
 			// Read from the specified URL.
 		    InputStream is = new URL(url).openStream();
 		    try {
@@ -37,7 +37,7 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 		        while ((line = br.readLine()) != null) {
 		            b.append(line);
 		        }
-			    return new JSONObject(b.toString());
+			    return new JsonNode(b.toString());
 		    } finally {
 	            is.close();
 		    }
@@ -49,8 +49,8 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 		 * @param context context structure containing word, lemma, PoS.
 		 * @return the words joined together with spaces.
 		 */
-		static String words(JSONObject context) {
-			JSONArray words = (JSONArray)context.get("word");
+		static String words(JsonNode context) {
+			JsonNode words = (JsonNode)context.get("word");
 			StringBuilder b = new StringBuilder();
 			for (int i = 0; i < words.size(); i++) {
 				if (b.length() > 0)
@@ -65,7 +65,7 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 		 * @param hits the hits structure from the JSON response
 		 * @param docs the docInfos structure from the JSON response
 		 */
-		public static void showHits(JSONArray hits, JSONObject docs) {
+		public static void showHits(JsonNode hits, JsonNode docs) {
 
 			// Iterate over the hits.
 			// We'll add elements to the html array and join it later to produce our
@@ -73,17 +73,17 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 			StringBuilder html = new StringBuilder();
 			html.append("<table><tr><th>Title</th><th>Keyword in context</th></tr>\n");
 			for (int i = 0; i < hits.length(); i++) {
-				JSONObject hit = (JSONObject)hits.get(i);
+				JsonNode hit = (JsonNode)hits.get(i);
 
 				// Add the document title and the hit information
-				JSONObject doc = (JSONObject)docs.get((String)hit.get("docPid"));
+				JsonNode doc = (JsonNode)docs.get((String)hit.get("docPid"));
 
 				// Context of the hit is passed in arrays, per property
 				// (word/lemma/PoS). Right now we only want to display the 
 				// words. This is how we join the word array to a string.
-				String left = words((JSONObject)hit.get("left"));
-				String match = words((JSONObject)hit.get("match"));
-				String right = words((JSONObject)hit.get("right"));
+				String left = words((JsonNode)hit.get("left"));
+				String match = words((JsonNode)hit.get("match"));
+				String right = words((JsonNode)hit.get("right"));
 
 				html.append("<tr><td>" + (String)doc.get("title") + "</td><td>" + left +
 					" <b>" + match + "</b> " + right + "</td></tr>\n");
@@ -100,11 +100,11 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 
 			// Carry out the request and call the showHits function
 			String url = BASE_URL + "hits?patt=" + URLEncoder.encode(patt, "utf-8") + "&outputformat=json";
-			JSONObject response = fetch(url);
+			JsonNode response = fetch(url);
 
 			// Got results. Show the hits, along with the document titles.
-			JSONArray hits = (JSONArray)response.get("hits");
-			JSONObject docs = (JSONObject)response.get("docInfos");
+			JsonNode hits = (JsonNode)response.get("hits");
+			JsonNode docs = (JsonNode)response.get("docInfos");
 			showHits(hits, docs);
 		}
 

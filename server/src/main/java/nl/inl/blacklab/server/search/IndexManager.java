@@ -11,12 +11,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -75,7 +76,7 @@ public class IndexManager {
 
 	private SearchCache cache;
 
-	public IndexManager(SearchManager searchMan, JSONObject properties) throws ConfigurationException {
+	public IndexManager(SearchManager searchMan, JsonNode properties) throws ConfigurationException {
 		this.searchMan = searchMan;
 		this.cache = searchMan.getCache();
 		indexParam = new HashMap<>();
@@ -83,11 +84,12 @@ public class IndexManager {
 
 		boolean indicesFound = false;
 		if (properties.has("indices")) {
-			JSONObject indicesMap = properties.getJSONObject("indices");
-			Iterator<?> it = indicesMap.keys();
+			JsonNode indicesMap = properties.get("indices");
+			Iterator<Entry<String, JsonNode>> it = indicesMap.fields();
 			while (it.hasNext()) {
-				String indexName = (String) it.next();
-				JSONObject indexConfig = indicesMap.getJSONObject(indexName);
+			    Entry<String, JsonNode> entry = it.next();
+				String indexName = entry.getKey();
+				JsonNode indexConfig = entry.getValue();
 
 				File dir = JsonUtil.getFileProp(indexConfig, "dir", null);
 				if (dir == null || !dir.canRead()) {
@@ -114,8 +116,7 @@ public class IndexManager {
 				boolean mayViewContentsSet = indexConfig.has("mayViewContent");
 				if (mayViewContentsSet) {
 					// Yes; store the setting.
-					boolean mayViewContent = indexConfig
-							.getBoolean("mayViewContent");
+					boolean mayViewContent = indexConfig.get("mayViewContent").booleanValue();
 					indexParam.put(indexName, new IndexParam(dir, pid,
 							mayViewContent));
 				} else {
@@ -131,10 +132,10 @@ public class IndexManager {
 		// Collections
 		collectionsDirs = new ArrayList<>();
 		if (properties.has("indexCollections")) {
-			JSONArray indexCollectionsList = properties
-					.getJSONArray("indexCollections");
-			for (int i = 0; i < indexCollectionsList.length(); i++) {
-				String strIndexCollection = indexCollectionsList.getString(i);
+			JsonNode indexCollectionsList = properties
+					.get("indexCollections");
+			for (int i = 0; i < indexCollectionsList.size(); i++) {
+				String strIndexCollection = indexCollectionsList.get(i).textValue();
 				File indexCollection = new File(strIndexCollection);
 				if (indexCollection.canRead()) {
 					indicesFound = true; // even if it contains none now, it
@@ -149,8 +150,7 @@ public class IndexManager {
 
 		// User collections dir
 		if (properties.has("userCollectionsDir")) {
-			userCollectionsDir = new File(
-					properties.getString("userCollectionsDir"));
+			userCollectionsDir = new File(properties.get("userCollectionsDir").textValue());
 			if (!userCollectionsDir.canRead()) {
 				logger.error("Configured user collections dir not found or not readable: "
 						+ userCollectionsDir);

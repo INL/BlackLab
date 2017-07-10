@@ -3,9 +3,11 @@ package nl.inl.blacklab.search.indexstructure;
 import java.io.File;
 import java.io.IOException;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.Json;
@@ -17,16 +19,18 @@ import nl.inl.util.Json;
 public class IndexMetadata {
 
 	/** Our configuration data */
-	JSONObject jsonRoot;
+	ObjectNode jsonRoot;
 
 	/**
 	 * Construct an index metadata object from a JSON file.
 	 * @param metadataFile the file to read
 	 * @throws IOException if the file was not found
-	 * @throws JSONException if there's a syntax error in the file
+	 * @throws JsonProcessingException if there's a syntax error in the file
 	 */
-	public IndexMetadata(File metadataFile) throws JSONException, IOException {
-		jsonRoot = Json.read(metadataFile);
+	public IndexMetadata(File metadataFile) throws JsonProcessingException, IOException {
+        boolean isJson = metadataFile.getName().endsWith(".json");
+	    ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+		jsonRoot = (ObjectNode)mapper.readTree(metadataFile);
 	}
 
 	/**
@@ -34,21 +38,21 @@ public class IndexMetadata {
 	 * @param indexName name of the index
 	 */
 	public IndexMetadata(String indexName) {
-		jsonRoot = Json.object(
-			"displayName", indexName,
-			"description", "",
-			"versionInfo", Json.object(
-				"blackLabBuildTime", Searcher.getBlackLabBuildTime(),
-				"blackLabVersion", Searcher.getBlackLabVersion(),
-				"timeCreated", IndexStructure.getTimestamp(),
-				"timeModified", IndexStructure.getTimestamp(),
-				"indexFormat", IndexStructure.LATEST_INDEX_FORMAT,
-				"alwaysAddClosingToken", true,
-				"tagLengthInPayload", true),
-			"fieldInfo", Json.object(
-				"metadataFields", new JSONObject(),
-				"complexFields", new JSONObject())
-		);
+        ObjectMapper mapper = Json.getJsonObjectMapper();
+	    jsonRoot = mapper.createObjectNode();
+	    jsonRoot.put("displayName", indexName);
+	    jsonRoot.put("description", "");
+	    ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
+	    versionInfo.put("blackLabBuildTime", Searcher.getBlackLabBuildTime());
+	    versionInfo.put("blackLabVersion", Searcher.getBlackLabVersion());
+	    versionInfo.put("timeCreated", IndexStructure.getTimestamp());
+	    versionInfo.put("timeModified", IndexStructure.getTimestamp());
+	    versionInfo.put("indexFormat", IndexStructure.LATEST_INDEX_FORMAT);
+	    versionInfo.put("alwaysAddClosingToken", true);
+	    versionInfo.put("tagLengthInPayload", true);
+	    ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
+	    fieldInfo.putObject("metadataFields");
+	    fieldInfo.putObject("complexFields");
 	}
 
 	/**
@@ -56,14 +60,20 @@ public class IndexMetadata {
 	 * @param metadataFile the file to write
 	 */
 	public void write(File metadataFile) {
-		Json.write(jsonRoot, metadataFile);
+		try {
+		    boolean isJson = metadataFile.getName().endsWith(".json");
+		    ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+		    mapper.writeValue(metadataFile, jsonRoot);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	/**
 	 * Get the field info (metadata and complex fields).
 	 * @return the configuration
 	 */
-	public JSONObject getFieldInfo() {
+	public ObjectNode getFieldInfo() {
 		return Json.getObject(jsonRoot, "fieldInfo");
 	}
 
@@ -71,15 +81,15 @@ public class IndexMetadata {
      * Get the configuration for all metadata field groups.
      * @return the configuration
      */
-    public JSONArray getMetaFieldGroupConfigs() {
-        return getFieldInfo().getJSONArray("metadataFieldGroups");
+    public ArrayNode getMetaFieldGroupConfigs() {
+        return (ArrayNode)getFieldInfo().get("metadataFieldGroups");
     }
 
 	/**
 	 * Get the configuration for all metadata fields.
 	 * @return the configuration
 	 */
-	public JSONObject getMetaFieldConfigs() {
+	public ObjectNode getMetaFieldConfigs() {
 		return Json.getObject(getFieldInfo(), "metadataFields");
 	}
 
@@ -88,7 +98,7 @@ public class IndexMetadata {
 	 * @param name field name
 	 * @return the configuration
 	 */
-	public JSONObject getMetaFieldConfig(String name) {
+	public ObjectNode getMetaFieldConfig(String name) {
 		return Json.getObject(getMetaFieldConfigs(), name);
 	}
 
@@ -96,7 +106,7 @@ public class IndexMetadata {
 	 * Get the configuration for all complex fields.
 	 * @return the configuration
 	 */
-	public JSONObject getComplexFieldConfigs() {
+	public ObjectNode getComplexFieldConfigs() {
 		return Json.getObject(getFieldInfo(), "complexFields");
 	}
 
@@ -105,7 +115,7 @@ public class IndexMetadata {
 	 * @param name field name
 	 * @return the configuration
 	 */
-	public JSONObject getComplexFieldConfig(String name) {
+	public ObjectNode getComplexFieldConfig(String name) {
 		return Json.getObject(getComplexFieldConfigs(), name);
 	}
 
@@ -118,45 +128,45 @@ public class IndexMetadata {
 	 *
 	 * @return the configuration
 	 */
-	public JSONObject getVersionInfo() {
+	public ObjectNode getVersionInfo() {
 		return Json.getObject(jsonRoot, "versionInfo");
 	}
 
 	public String getDisplayName() {
 		if (!jsonRoot.has("displayName"))
 			return "";
-		return jsonRoot.getString("displayName");
+		return jsonRoot.get("displayName").textValue();
 	}
 
 	public String getDescription() {
 		if (!jsonRoot.has("description"))
 			return "";
-		return jsonRoot.getString("description");
+		return jsonRoot.get("description").textValue();
 	}
 
 	public boolean getContentViewable() {
 		if (!jsonRoot.has("contentViewable"))
 			return false;
-		return jsonRoot.getBoolean("contentViewable");
+		return jsonRoot.get("contentViewable").booleanValue();
 	}
 
 	public String getDocumentFormat() {
 		if (!jsonRoot.has("documentFormat"))
 			return "";
-		return jsonRoot.getString("documentFormat");
+		return jsonRoot.get("documentFormat").textValue();
 	}
 
 	public long getTokenCount() {
 		if (!jsonRoot.has("tokenCount"))
 			return 0;
-		return jsonRoot.getLong("tokenCount");
+		return jsonRoot.get("tokenCount").longValue();
 	}
 
 	/**
 	 * Get the configuration for the indexer.
 	 * @return the configuration
 	 */
-	public JSONObject getIndexerConfig() {
+	public JsonNode getIndexerConfig() {
 		return Json.getObject(jsonRoot, "indexerConfig");
 	}
 
@@ -165,9 +175,9 @@ public class IndexMetadata {
 	 * @return the field naming scheme, or null if not specified.
 	 */
 	public String getFieldNamingScheme() {
-		JSONObject metaFieldInfo = getFieldInfo();
+		JsonNode metaFieldInfo = getFieldInfo();
 		if (metaFieldInfo.has("namingScheme")) {
-			String namingScheme = metaFieldInfo.getString("namingScheme");
+			String namingScheme = metaFieldInfo.get("namingScheme").textValue();
 			if (!namingScheme.equals("DEFAULT") && !namingScheme.equals("NO_SPECIAL_CHARS")) {
 				throw new RuntimeException("Unknown value for namingScheme: " + namingScheme);
 			}
@@ -181,9 +191,9 @@ public class IndexMetadata {
 	 * @return the analyzer name (DEFAULT if not specified)
 	 */
 	public String getDefaultAnalyzer() {
-		JSONObject metaFieldInfo = getFieldInfo();
+		JsonNode metaFieldInfo = getFieldInfo();
 		if (metaFieldInfo.has("defaultAnalyzer")) {
-			return metaFieldInfo.getString("defaultAnalyzer");
+			return metaFieldInfo.get("defaultAnalyzer").textValue();
 		}
 		return "DEFAULT";
 	}
@@ -193,27 +203,27 @@ public class IndexMetadata {
 	 * @return true if there is, false if not
 	 */
 	public boolean hasFieldInfo() {
-		boolean hasMetaFields = getMetaFieldConfigs().length() > 0;
-		boolean hasComplexFields = getComplexFieldConfigs().length() > 0;
+		boolean hasMetaFields = getMetaFieldConfigs().size() > 0;
+		boolean hasComplexFields = getComplexFieldConfigs().size() > 0;
 		return hasMetaFields || hasComplexFields;
 	}
 
-	public JSONObject getRoot() {
+	public ObjectNode getRoot() {
 		return jsonRoot;
 	}
 
 	public String getDefaultUnknownCondition() {
-		JSONObject fieldInfo = getFieldInfo();
+		JsonNode fieldInfo = getFieldInfo();
 		if (!fieldInfo.has("unknownCondition"))
 			return "NEVER";
-		return fieldInfo.getString("unknownCondition");
+		return fieldInfo.get("unknownCondition").textValue();
 	}
 
 	public String getDefaultUnknownValue() {
-		JSONObject fieldInfo = getFieldInfo();
+		JsonNode fieldInfo = getFieldInfo();
 		if (!fieldInfo.has("unknownValue"))
 			return "unknown";
-		return fieldInfo.getString("unknownValue");
+		return fieldInfo.get("unknownValue").textValue();
 	}
 
     public boolean hasMetaFieldGroupInfo() {

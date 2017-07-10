@@ -2,10 +2,11 @@ package nl.inl.blacklab.search.indexstructure;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class MetadataFieldDesc extends BaseFieldDesc {
 
@@ -117,25 +118,24 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		this.unknownCondition = unknownCondition;
 	}
 
-	public void setValues(JSONObject values) {
+	public void setValues(JsonNode values) {
 		this.values.clear();
-		for (String value: values.keySet()) {
-			int count;
-			try {
-				count = Integer.parseInt(values.get(value).toString());
-			} catch (NumberFormatException e) {
-				count = 0;
-			} catch (JSONException e) {
-				throw new RuntimeException(e);
-			}
+		Iterator<Entry<String, JsonNode>> it = values.fields();
+		while (it.hasNext()) {
+		    Entry<String, JsonNode> entry = it.next();
+		    String value = entry.getKey();
+		    int count = entry.getValue().intValue();
 			this.values.put(value, count);
 		}
 	}
 
-    public void setDisplayValues(JSONObject displayValues) {
+    public void setDisplayValues(JsonNode displayValues) {
         this.displayValues.clear();
-        for (String value: displayValues.keySet()) {
-            String displayValue = (String)displayValues.get(value);
+        Iterator<Entry<String, JsonNode>> it = displayValues.fields();
+        while (it.hasNext()) {
+            Entry<String, JsonNode> entry = it.next();
+            String value = entry.getKey();
+            String displayValue = entry.getValue().textValue();
             this.displayValues.put(value, displayValue);
         }
     }
@@ -147,15 +147,6 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	public String getAnalyzerName() {
 		return analyzer;
 	}
-
-	/*
-	public String getAnalyzerClass() {
-		if (analyzer.equalsIgnoreCase("DEFAULT")) {
-			return
-		}
-		return analyzer;
-	}
-	*/
 
 	public String getUnknownValue() {
 		return unknownValue;

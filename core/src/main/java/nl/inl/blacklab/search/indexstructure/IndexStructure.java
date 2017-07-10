@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
@@ -28,12 +29,15 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
 
@@ -45,7 +49,7 @@ public class IndexStructure {
 
 	protected static final Logger logger = LogManager.getLogger(IndexStructure.class);
 
-	private static final String METADATA_FILE_NAME = "indexmetadata.json";
+	private static final String METADATA_FILE_NAME = "indexmetadata";
 
 	/**
 	 * The latest index format. Written to the index metadata file.
@@ -160,6 +164,11 @@ public class IndexStructure {
 	private long tokenCount = 0;
 
 	/**
+	 * When we save this file, should we write it as json or yaml?
+	 */
+	private boolean saveAsJson = true;
+
+	/**
 	 * Construct an IndexStructure object, querying the index for the available
 	 * fields and their types.
 	 * @param reader the index of which we want to know the structure
@@ -202,17 +211,39 @@ public class IndexStructure {
 	}
 
 	/**
-	 * Read the indexmetadata.json, if it exists, or the template, if supplied.
+	 * Read the indexmetadata.(json|yaml), if it exists, or the template, if supplied.
 	 *
 	 * @param reader the index of which we want to know the structure
 	 * @param indexDir where the index (and the metadata file) is stored
 	 * @param createNewIndex whether we're creating a new index
-	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
+	 * @param indexTemplateFile JSON/YAML file to use as template for index structure / metadata
 	 *   (only if creating a new index)
 	 */
 	private void readMetadata(IndexReader reader, boolean createNewIndex, File indexTemplateFile) {
+	    // Find existing metadata file, if any.
+        File metadataFile = FileUtil.findFile(new File[] {indexDir}, METADATA_FILE_NAME, new String[] { "json", "yaml", "yml" });
 
-		File metadataFile = new File(indexDir, METADATA_FILE_NAME);
+        // If none found, or creating new index: metadata file should be same format as template.
+        if (createNewIndex || metadataFile == null) {
+            // No metadata file yet, or creating a new index;
+            // use same metadata format as the template
+            boolean templateIsJson = false;
+            if (indexTemplateFile != null && indexTemplateFile.getName().endsWith(".json"))
+                templateIsJson = true;
+            String templateExt = templateIsJson ? "json" : "yaml";
+            if (createNewIndex && metadataFile != null) {
+                // We're creating a new index, but also found a previous metadata file.
+                // Is it a different format than the template? If so, we would end up
+                // with two metadata files, which is confusing and might lead to errors.
+                boolean existingIsJson = metadataFile.getName().endsWith(".json");
+                if (existingIsJson != templateIsJson) {
+                    // Delete the existing, different-format file to avoid confusion.
+                    metadataFile.delete();
+                }
+            }
+            metadataFile = new File(indexDir, METADATA_FILE_NAME + "." + templateExt);
+        }
+        saveAsJson = metadataFile.getName().endsWith(".json");
 		boolean usedTemplate = false;
 		if (createNewIndex && indexTemplateFile != null) {
 			// Copy the template file to the index dir and read the metadata again.
@@ -248,7 +279,7 @@ public class IndexStructure {
 		contentViewable = indexMetadata.getContentViewable();
 		documentFormat = indexMetadata.getDocumentFormat();
 		tokenCount = indexMetadata.getTokenCount();
-		JSONObject versionInfo = indexMetadata.getVersionInfo();
+		JsonNode versionInfo = indexMetadata.getVersionInfo();
 		indexFormat = Json.getString(versionInfo, "indexFormat", "");
 		if (initTimestamps) {
 			blackLabBuildTime = Searcher.getBlackLabBuildTime();
@@ -298,9 +329,9 @@ public class IndexStructure {
 
 	private void getMetaFieldGroups(IndexMetadata indexMetadata) {
         metadataGroups.clear();
-        JSONArray groups = indexMetadata.getMetaFieldGroupConfigs();
-        for (int i = 0; i < groups.length(); i++) {
-            JSONObject group = groups.getJSONObject(i);
+        JsonNode groups = indexMetadata.getMetaFieldGroupConfigs();
+        for (int i = 0; i < groups.size(); i++) {
+            JsonNode group = groups.get(i);
             String name = Json.getString(group, "name", "UNKNOWN");
             List<String> fields = Json.getListOfStrings(group, "fields");
             metadataGroups.put(name, new MetadataGroup(name, fields));
@@ -320,10 +351,11 @@ public class IndexStructure {
     private void getFieldInfoFromMetadata(IndexMetadata indexMetadata, FieldInfos fis) {
 
     	// Metadata fields
-    	Iterator<String> it = indexMetadata.getMetaFieldConfigs().keys();
+    	Iterator<Entry<String, JsonNode>> it = indexMetadata.getMetaFieldConfigs().fields();
     	while (it.hasNext()) {
-    		String fieldName = it.next();
-    		JSONObject fieldConfig = indexMetadata.getMetaFieldConfig(fieldName);
+    	    Entry<String, JsonNode> entry = it.next();
+    		String fieldName = entry.getKey();
+    		JsonNode fieldConfig = entry.getValue();
     		String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
     		String uiType = Json.getString(fieldConfig, "uiType", "text");
     		String fldDescription = Json.getString(fieldConfig, "description", "");
@@ -332,14 +364,14 @@ public class IndexStructure {
     		String analyzer = Json.getString(fieldConfig, "analyzer", "DEFAULT");
     		String unknownValue = Json.getString(fieldConfig, "unknownValue", defaultUnknownValue);
     		String unknownCondition = Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition);
-    		JSONObject values = null;
+    		JsonNode values = null;
     		if (fieldConfig.has("values")) {
-    			values = fieldConfig.getJSONObject("values");
+    			values = fieldConfig.get("values");
     		}
     		boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
-            JSONObject displayValues = null;
+            JsonNode displayValues = null;
             if (fieldConfig.has("displayValues")) {
-                displayValues = fieldConfig.getJSONObject("displayValues");
+                displayValues = fieldConfig.get("displayValues");
             }
 
     		MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
@@ -359,10 +391,11 @@ public class IndexStructure {
     	}
 
     	// Complex fields
-    	it = indexMetadata.getComplexFieldConfigs().keys();
+    	it = indexMetadata.getComplexFieldConfigs().fields();
     	while (it.hasNext()) {
-    		String fieldName = it.next();
-    		JSONObject fieldConfig = indexMetadata.getComplexFieldConfig(fieldName);
+    	    Entry<String, JsonNode> entry = it.next();
+    		String fieldName = entry.getKey();
+    		JsonNode fieldConfig = entry.getValue();
     		String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
     		String fldDescription = Json.getString(fieldConfig, "description", "");
     		String mainProperty = Json.getString(fieldConfig, "mainProperty", "");
@@ -390,83 +423,80 @@ public class IndexStructure {
 	}
 
 	public void writeMetadata() {
-		File metadataFile = new File(indexDir, METADATA_FILE_NAME);
+	    String ext = saveAsJson ? ".json" : ".yaml";
+		File metadataFile = new File(indexDir, METADATA_FILE_NAME + ext);
 		IndexMetadata indexMetadata = new IndexMetadata(indexDir.getName());
-		JSONObject root = indexMetadata.getRoot();
+		ObjectNode root = indexMetadata.getRoot();
 		root.put("displayName", displayName);
 		root.put("description", description);
 		root.put("contentViewable", contentViewable);
 		root.put("documentFormat", documentFormat);
 		root.put("tokenCount", tokenCount);
-		root.put("versionInfo", Json.object(
-			"blackLabBuildTime", blackLabBuildTime,
-			"blackLabVersion", blackLabVersion,
-			"indexFormat", indexFormat,
-			"timeCreated", timeCreated,
-			"timeModified", timeModified,
-			"alwaysAddClosingToken", true, // Indicates that we always index words+1 tokens (last token is for XML tags after the last word)
-			"tagLengthInPayload", true // Indicates that start tag property payload contains tag lengths, and there is no end tag property
-		));
-		JSONArray metadataFieldGroups = new JSONArray();
-		JSONObject metadataFields = new JSONObject();
-		JSONObject jsonComplexFields = new JSONObject();
-		root.put("fieldInfo", Json.object(
-			"namingScheme", ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS": "DEFAULT",
-			"defaultAnalyzer", defaultAnalyzerName,
-			"titleField", titleField,
-			"authorField", authorField,
-			"dateField", dateField,
-			"pidField", pidField,
-			"metadataFieldGroups", metadataFieldGroups,
-			"metadataFields", metadataFields,
-			"complexFields", jsonComplexFields
-		));
+		ObjectNode versionInfo = root.putObject("versionInfo");
+		versionInfo.put("blackLabBuildTime", blackLabBuildTime);
+		versionInfo.put("blackLabVersion", blackLabVersion);
+		versionInfo.put("indexFormat", indexFormat);
+		versionInfo.put("timeCreated", timeCreated);
+		versionInfo.put("timeModified", timeModified);
+		versionInfo.put("alwaysAddClosingToken", true); // Indicates that we always index words+1 tokens (last token is for XML tags after the last word)
+		versionInfo.put("tagLengthInPayload", true); // Indicates that start tag property payload contains tag lengths, and there is no end tag property
+
+		ObjectNode fieldInfo = root.putObject("fieldInfo");
+		fieldInfo.put("namingScheme", ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS": "DEFAULT");
+        fieldInfo.put("defaultAnalyzer", defaultAnalyzerName);
+        if (titleField != null)
+            fieldInfo.put("titleField", titleField);
+        if (authorField != null)
+            fieldInfo.put("authorField", authorField);
+        if (dateField != null)
+            fieldInfo.put("dateField", dateField);
+        if (pidField != null)
+            fieldInfo.put("pidField", pidField);
+        ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
+        ObjectNode metadataFields = fieldInfo.putObject("metadataFields");
+        ObjectNode jsonComplexFields = fieldInfo.putObject("complexFields");
 
 		// Add metadata field group info
 		for (MetadataGroup g: metadataGroups.values()) {
-		    JSONObject group = Json.object(
-		        "name", g.getName(),
-		        "fields", Json.arrayOfStrings(g.getFields())
-		    );
-		    metadataFieldGroups.put(group);
+		    ObjectNode group = metadataFieldGroups.addObject();
+		    group.put("name", g.getName());
+		    ArrayNode arr = group.putArray("fields");
+		    Json.arrayOfStrings(arr, g.getFields());
 		}
 
 		// Add metadata field info
 		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
 			MetadataFieldDesc.UnknownCondition unknownCondition = f.getUnknownCondition();
-			JSONObject fieldInfo = Json.object(
-				"displayName", f.getDisplayName(),
-	            "uiType", f.getUiType(),
-				"description", f.getDescription(),
-				"type", f.getType().toString().toLowerCase(),
-				"analyzer", f.getAnalyzerName(),
-				"unknownValue", f.getUnknownValue(),
-				"unknownCondition", unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString(),
-				"valueListComplete", f.isValueListComplete()
-			);
-			JSONObject jsonValues = new JSONObject();
+            ObjectNode fi = metadataFields.putObject(f.getName());
+			fi.put("displayName", f.getDisplayName());
+			fi.put("uiType", f.getUiType());
+			fi.put("description", f.getDescription());
+			fi.put("type", f.getType().toString().toLowerCase());
+			fi.put("analyzer", f.getAnalyzerName());
+			fi.put("unknownValue", f.getUnknownValue());
+			fi.put("unknownCondition", unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString());
+			fi.put("valueListComplete", f.isValueListComplete());
 			Map<String, Integer> values = f.getValueDistribution();
 			if (values != null) {
+	            ObjectNode jsonValues = fi.putObject("value");
 				for (Map.Entry<String, Integer> e: values.entrySet()) {
 					jsonValues.put(e.getKey(), e.getValue());
 				}
-				fieldInfo.put("values", jsonValues);
 			}
-			JSONObject jsonDisplayValues = new JSONObject();
 			Map<String, String> displayValues = f.getDisplayValues();
 			if (displayValues != null) {
+	            ObjectNode jsonDisplayValues = fi.putObject("displayValues");
 			    for (Map.Entry<String, String> e: displayValues.entrySet()) {
 			        jsonDisplayValues.put(e.getKey(), e.getValue());
                 }
 			}
-			metadataFields.put(f.getName(), fieldInfo);
 		}
 
 		// Add complex field info
 		for (ComplexFieldDesc f: complexFields.values()) {
 
 			/*
-			JSONObject jsonProperties = new JSONObject();
+			JsonNode jsonProperties = new JsonNode();
 			for (String propName: f.getProperties()) {
 				PropertyDesc prop = f.getPropertyDesc(propName);
 				jsonProperties.put(propName, Json.object(
@@ -475,12 +505,11 @@ public class IndexStructure {
 			}
 			*/
 
-			jsonComplexFields.put(f.getName(), Json.object(
-				"displayName", f.getDisplayName(),
-				"description", f.getDescription(),
-				"mainProperty", f.getMainProperty().getName()
-				//, "properties", jsonProperties
-			));
+			ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.getName());
+			fieldInfo2.put("displayName", f.getDisplayName());
+			fieldInfo2.put("description", f.getDescription());
+			fieldInfo2.put("mainProperty", f.getMainProperty().getName());
+			//, "properties", jsonProperties
 		}
 
 		// Write the file
@@ -697,10 +726,10 @@ public class IndexStructure {
 	 */
 	private void determineDocumentFields(IndexMetadata indexMetadata) {
 		titleField = authorField = dateField = pidField = null;
-		JSONObject fi = indexMetadata.getFieldInfo();
+		JsonNode fi = indexMetadata.getFieldInfo();
 
 		if (fi.has("titleField")) {
-			titleField = fi.getString("titleField");
+			titleField = fi.get("titleField").textValue();
 		}
 		if (titleField == null) {
 			titleField = findTextField("title");
@@ -715,11 +744,11 @@ public class IndexStructure {
 			}
 		}
 		if (fi.has("authorField"))
-			authorField = fi.getString("authorField");
+			authorField = fi.get("authorField").textValue();
 		if (fi.has("dateField"))
-			dateField = fi.getString("dateField");
+			dateField = fi.get("dateField").textValue();
 		if (fi.has("pidField"))
-			pidField = fi.getString("pidField");
+			pidField = fi.get("pidField").textValue();
 	}
 
 	/**

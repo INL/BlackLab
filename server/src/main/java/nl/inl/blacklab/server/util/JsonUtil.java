@@ -3,76 +3,81 @@ package nl.inl.blacklab.server.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 public class JsonUtil {
 
-	public static String getProperty(JSONObject obj, String key, String defVal) {
+	public static String getProperty(JsonNode obj, String key, String defVal) {
 		if (!obj.has(key))
 			return defVal;
-		return obj.getString(key);
+		return obj.get(key).textValue();
 	}
 
-	public static File getFileProp(JSONObject obj, String key, File defVal) {
+	public static File getFileProp(JsonNode obj, String key, File defVal) {
 		if (!obj.has(key))
 			return defVal;
-		return new File(obj.getString(key));
+		return new File(obj.get(key).textValue());
 	}
 
-	public static boolean getBooleanProp(JSONObject obj, String key, boolean defVal) {
+	public static boolean getBooleanProp(JsonNode obj, String key, boolean defVal) {
 		if (!obj.has(key))
 			return defVal;
-		return obj.getBoolean(key);
+		return obj.get(key).booleanValue();
 	}
 
-	public static int getIntProp(JSONObject obj, String key, int defVal) {
+	public static int getIntProp(JsonNode obj, String key, int defVal) {
 		if (!obj.has(key))
 			return defVal;
-		return obj.getInt(key);
+		return obj.get(key).intValue();
 	}
 
-	public static long getLongProp(JSONObject obj, String key, long defVal) {
+	public static long getLongProp(JsonNode obj, String key, long defVal) {
 		if (!obj.has(key))
 			return defVal;
-		return obj.getLong(key);
+		return obj.get(key).longValue();
 	}
 
-	public static double getDoubleProp(JSONObject obj, String key, double defVal) {
+	public static double getDoubleProp(JsonNode obj, String key, double defVal) {
 		if (!obj.has(key))
 			return defVal;
-		return obj.getDouble(key);
+		return obj.get(key).doubleValue();
 	}
 
 	/**
-	 * Performs a deep conversion from JSONObject to
+	 * Performs a deep conversion from JsonNode to
 	 * Java Map.
 	 *
 	 * @param jsonObject the JSON array to convert
 	 * @return the Java equivalent
 	 */
-	public static Map<String, Object> mapFromJsonObject(JSONObject jsonObject) {
+	public static Map<String, Object> mapFromJsonObject(JsonNode jsonObject) {
 		Map<String, Object> result = new HashMap<>();
-		for (Object oKey: jsonObject.keySet()) {
-			String key = oKey.toString();
-			result.put(key, fromJsonStruct(jsonObject.get(key)));
+        Iterator<Entry<String, JsonNode>> it = jsonObject.fields();
+        while (it.hasNext()) {
+            Entry<String, JsonNode> entry = it.next();
+			result.put(entry.getKey(), fromJsonStruct(entry.getValue()));
 		}
 		return result;
 	}
 
 	/**
-	 * Performs a deep conversion from JSONArray to
+	 * Performs a deep conversion from JsonNode to
 	 * Java List.
 	 *
 	 * @param jsonArray the JSON array to convert
 	 * @return the Java equivalent
 	 */
-	private static List<Object> listFromJsonArray(JSONArray jsonArray) {
+	private static List<Object> listFromJsonArray(JsonNode jsonArray) {
 		List<Object> result = new ArrayList<>();
-		for (int i = 0; i < jsonArray.length(); i++) {
+		for (int i = 0; i < jsonArray.size(); i++) {
 			result.add(fromJsonStruct(jsonArray.get(i)));
 		}
 		return result;
@@ -85,13 +90,13 @@ public class JsonUtil {
 	 * @param jsonStruct the JSON structure to convert
 	 * @return the Java equivalent
 	 */
-	public static Object fromJsonStruct(Object jsonStruct) {
-		if (jsonStruct instanceof JSONObject)
-			return mapFromJsonObject((JSONObject) jsonStruct);
-		if (jsonStruct instanceof JSONArray)
-			return listFromJsonArray((JSONArray) jsonStruct);
-		if (jsonStruct instanceof String)
-			return jsonStruct;
+	public static Object fromJsonStruct(JsonNode jsonStruct) {
+		if (jsonStruct instanceof ObjectNode)
+			return mapFromJsonObject(jsonStruct);
+		if (jsonStruct instanceof ArrayNode)
+			return listFromJsonArray(jsonStruct);
+		if (jsonStruct instanceof TextNode)
+		    return jsonStruct.textValue();
 		throw new IllegalArgumentException("Cannot convert " + jsonStruct.getClass().getSimpleName() + " from JSON- to Java object");
 	}
 

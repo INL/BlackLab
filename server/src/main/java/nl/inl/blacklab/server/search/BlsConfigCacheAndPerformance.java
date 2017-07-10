@@ -2,7 +2,8 @@ package nl.inl.blacklab.server.search;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.server.util.JsonUtil;
 
@@ -79,7 +80,7 @@ public class BlsConfigCacheAndPerformance {
 	 */
 	private int clientCacheTimeSec;
 
-	public BlsConfigCacheAndPerformance(JSONObject settings) {
+	public BlsConfigCacheAndPerformance(JsonNode settings) {
 		this();
 
 		if (settings != null) {
@@ -93,9 +94,9 @@ public class BlsConfigCacheAndPerformance {
 			clientCacheTimeSec = 3600;
 		}
 
-		JSONObject cacheSettings = null;
+		JsonNode cacheSettings = null;
 		if (settings != null && settings.has("cache"))
-			cacheSettings = settings.getJSONObject("cache");
+			cacheSettings = settings.get("cache");
 		if (cacheSettings != null) {
 			maxJobAgeSec = JsonUtil.getIntProp(cacheSettings, "maxJobAgeSec", 3600);
 			maxNumberOfJobs = JsonUtil.getIntProp(cacheSettings, "maxNumberOfJobs", 20);
@@ -104,10 +105,10 @@ public class BlsConfigCacheAndPerformance {
 			numberOfJobsToPurgeWhenBelowTargetMem = JsonUtil.getIntProp(cacheSettings, "numberOfJobsToPurgeWhenBelowTargetMem", 2);
 		}
 
-		JSONObject serverLoadSettings = null;
+		JsonNode serverLoadSettings = null;
 		if (settings != null && settings.has("serverLoad")) {
 			// Load manager stuff (experimental)
-			serverLoadSettings = settings.getJSONObject("serverLoad");
+			serverLoadSettings = settings.get("serverLoad");
 
 			enableThreadPriority = true; // EXPERIMENTAL
 		}
