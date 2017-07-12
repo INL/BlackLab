@@ -37,6 +37,15 @@ public abstract class DocIndexer {
 
     protected Indexer indexer;
 
+    /** Do we want to omit norms? (Default: yes) */
+    public boolean omitNorms = true;
+
+    /**
+     * File we're currently parsing. This can be useful for storing the original filename in the
+     * index.
+     */
+    public String documentName;
+
 	/**
 	 * Thrown when the maximum number of documents has been reached
 	 */
@@ -67,27 +76,34 @@ public abstract class DocIndexer {
     }
 
     /**
+     * Set the file name of the document to index.
+     *
+     * @param documentName name of the document
+     */
+    public void setDocumentName(String documentName) {
+        this.documentName = documentName;
+    }
+
+    /**
      * Set the document to index.
      *
      * NOTE: you should generally prefer calling the File or byte[] versions
      * of this method, as those can be more efficient (e.g. when using DocIndexer that
      * parses using VTD-XML).
      *
-     * @param fileName name of the document
      * @param reader document
      */
-	public abstract void setDocument(String fileName, Reader reader);
+	public abstract void setDocument(Reader reader);
 
     /**
      * Set the document to index.
      *
-     * @param fileName name of the document
      * @param is document contents
      * @param cs charset to use if no BOM found, or null for the default (utf-8)
      */
-    public void setDocument(String fileName, InputStream is, Charset cs) {
+    public void setDocument(InputStream is, Charset cs) {
         try {
-            setDocument(fileName, new InputStreamReader(new UnicodeStream(is, cs)));
+            setDocument(new InputStreamReader(new UnicodeStream(is, cs)));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -96,24 +112,22 @@ public abstract class DocIndexer {
     /**
      * Set the document to index.
      *
-     * @param fileName name of the document
      * @param contents document contents
      * @param cs charset to use if no BOM found, or null for the default (utf-8)
      */
-    public void setDocument(String fileName, byte[] contents, Charset cs) {
-        setDocument(fileName, new ByteArrayInputStream(contents), cs);
+    public void setDocument(byte[] contents, Charset cs) {
+        setDocument(new ByteArrayInputStream(contents), cs);
     }
 
     /**
      * Set the document to index.
      *
-     * @param fileName name of the document
      * @param file file to index
      * @param charset charset to use if no BOM found, or null for the default (utf-8)
      * @throws FileNotFoundException if not found
      */
-    public void setDocument(String fileName, File file, Charset charset) throws FileNotFoundException {
-        setDocument(fileName, new FileInputStream(file), charset);
+    public void setDocument(File file, Charset charset) throws FileNotFoundException {
+        setDocument(new FileInputStream(file), charset);
     }
 
     /**
@@ -209,10 +223,57 @@ public abstract class DocIndexer {
         }
     }
 
-	/**
-	 * Return the fieldtype to use for the specified field.
-	 * @param fieldName the field name
-	 * @return the fieldtype
-	 */
-	public abstract FieldType getMetadataFieldTypeFromIndexerProperties(String fieldName);
+   protected boolean tokenizeField(String name) {
+        String parName = name + "_tokenized";
+        if (!hasParameter(name + "_tokenized")) {
+            parName = name + "_analyzed"; // Check the old (Lucene 3.x) term, "analyzed"
+        }
+
+        return getParameter(parName, true);
+    }
+
+   /**
+    * Return the fieldtype to use for the specified field.
+    * @param fieldName the field name
+    * @return the fieldtype
+    */
+    public FieldType getMetadataFieldTypeFromIndexerProperties(String fieldName) {
+        if (tokenizeField(fieldName))
+            return FieldType.TEXT;
+        return FieldType.UNTOKENIZED;
+    }
+
+    protected org.apache.lucene.document.FieldType luceneTypeFromIndexStructType(FieldType type) {
+        switch (type) {
+        case NUMERIC:
+            throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
+        case TEXT:
+            return indexer.metadataFieldTypeTokenized;
+        case UNTOKENIZED:
+            return indexer.metadataFieldTypeUntokenized;
+        default:
+            throw new IllegalArgumentException("Unknown field type: " + type);
+        }
+    }
+
+    public void reportTokensProcessed(int n) {
+        indexer.getListener().tokensDone(n);
+    }
+
+    /**
+     * Enables or disables norms. Norms are disabled by default.
+     *
+     * The method name was chosen to match Lucene's Field.setOmitNorms().
+     * Norms are only required if you want to use document-length-normalized scoring.
+     *
+     * @param b if true, doesn't store norms; if false, does store norms
+     */
+    public void setOmitNorms(boolean b) {
+        omitNorms = b;
+    }
+
+    boolean continueIndexing() {
+        return indexer.continueIndexing();
+    }
+
 }

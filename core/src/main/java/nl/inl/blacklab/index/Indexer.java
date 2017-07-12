@@ -346,7 +346,8 @@ public class Indexer {
             constructor = docIndexerClass.getConstructor(Indexer.class);
             docIndexer = constructor.newInstance();
             docIndexer.setIndexer(this);
-            docIndexer.setDocument(documentName, reader);
+            docIndexer.setDocumentName(documentName);
+            docIndexer.setDocument(reader);
         } catch (NoSuchMethodException e) {
             // No, this is an older DocIndexer that takes document name and reader directly.
             constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
@@ -372,7 +373,8 @@ public class Indexer {
             constructor = docIndexerClass.getConstructor(Indexer.class);
             docIndexer = constructor.newInstance();
             docIndexer.setIndexer(this);
-            docIndexer.setDocument(documentName, is, cs);
+            docIndexer.setDocumentName(documentName);
+            docIndexer.setDocument(is, cs);
         } catch (NoSuchMethodException e) {
             // No, this is an older DocIndexer that takes document name and reader directly.
             constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
@@ -398,7 +400,8 @@ public class Indexer {
             constructor = docIndexerClass.getConstructor(Indexer.class);
             docIndexer = constructor.newInstance();
             docIndexer.setIndexer(this);
-            docIndexer.setDocument(documentName, f, cs);
+            docIndexer.setDocumentName(documentName);
+            docIndexer.setDocument(f, cs);
         } catch (NoSuchMethodException e) {
             // No, this is an older DocIndexer that takes document name and reader directly.
             constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
@@ -425,7 +428,8 @@ public class Indexer {
             constructor = docIndexerClass.getConstructor(Indexer.class);
             docIndexer = constructor.newInstance();
             docIndexer.setIndexer(this);
-            docIndexer.setDocument(documentName, contents, cs);
+            docIndexer.setDocumentName(documentName);
+            docIndexer.setDocument(contents, cs);
         } catch (NoSuchMethodException e) {
             // No, this is an older DocIndexer that takes document name and reader directly.
             constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);

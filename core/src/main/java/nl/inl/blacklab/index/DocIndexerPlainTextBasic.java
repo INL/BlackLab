@@ -254,7 +254,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
 		// Start a new Lucene document
 		currentLuceneDoc = new Document();
-		currentDocumentName = fileName;
+		currentDocumentName = documentName;
 		if (currentDocumentName == null)
 			currentDocumentName = "?";
 		currentLuceneDoc.add(new Field("fromInputFile", currentDocumentName, indexer.metadataFieldTypeUntokenized));

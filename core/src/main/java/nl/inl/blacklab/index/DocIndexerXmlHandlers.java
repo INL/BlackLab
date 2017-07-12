@@ -93,7 +93,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             startCaptureContent(contentsField.getName());
 
             currentLuceneDoc = new Document();
-            currentDocumentName = fileName;
+            currentDocumentName = documentName;
             if (currentDocumentName == null)
                 currentDocumentName = "?";
             // Store attribute values from the tag as metadata fields

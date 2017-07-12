@@ -18,7 +18,6 @@ package nl.inl.blacklab.index;
 import java.io.Reader;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.util.CountingReader;
 
 /**
@@ -31,12 +30,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 	private static final long WRITE_CONTENT_CHUNK_SIZE = 10000000;
 
 	protected boolean skippingCurrentDocument = false;
-
-	/**
-	 * File we're currently parsing. This can be useful for storing the original filename in the
-	 * index.
-	 */
-	public String fileName;
 
 	protected CountingReader reader;
 
@@ -53,25 +46,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 	private int charsContentAlreadyStored = 0;
 
 	protected int nDocumentsSkipped = 0;
-
-	/** Do we want to omit norms? (Default: yes) */
-	public boolean omitNorms = true;
-
-	/**
-	 * Enables or disables norms. Norms are disabled by default.
-	 *
-	 * The method name was chosen to match Lucene's Field.setOmitNorms().
-	 * Norms are only required if you want to use document-length-normalized scoring.
-	 *
-	 * @param b if true, doesn't store norms; if false, does store norms
-	 */
-	public void setOmitNorms(boolean b) {
-		omitNorms = b;
-	}
-
-	boolean continueIndexing() {
-		return indexer.continueIndexing();
-	}
 
 	public void startCaptureContent(String fieldName) {
 		captureContent = true;
@@ -166,56 +140,22 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 
 	public DocIndexerAbstract(Indexer indexer, String fileName, Reader reader) {
 		setIndexer(indexer);
-		setDocument(fileName, reader);
+		setDocumentName(fileName);
+		setDocument(reader);
 	}
 
     /**
      * Set the document to index.
-     * @param fileName name of the document
      * @param reader document
      */
     @Override
-    public void setDocument(String fileName, Reader reader) {
-        this.fileName = fileName;
+    public void setDocument(Reader reader) {
         this.reader = new CountingReader(reader);
     }
 
 	public void reportCharsProcessed() {
 		long charsProcessed = reader.getCharsReadSinceLastCall();
 		indexer.getListener().charsDone(charsProcessed);
-	}
-
-	public void reportTokensProcessed(int n) {
-		indexer.getListener().tokensDone(n);
-	}
-
-	protected boolean tokenizeField(String name) {
-		String parName = name + "_tokenized";
-		if (!hasParameter(name + "_tokenized")) {
-			parName = name + "_analyzed"; // Check the old (Lucene 3.x) term, "analyzed"
-		}
-
-		return getParameter(parName, true);
-	}
-
-	@Override
-	public FieldType getMetadataFieldTypeFromIndexerProperties(String fieldName) {
-		if (tokenizeField(fieldName))
-			return FieldType.TEXT;
-		return FieldType.UNTOKENIZED;
-	}
-
-	protected org.apache.lucene.document.FieldType luceneTypeFromIndexStructType(FieldType type) {
-		switch (type) {
-		case NUMERIC:
-			throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
-		case TEXT:
-			return indexer.metadataFieldTypeTokenized;
-		case UNTOKENIZED:
-			return indexer.metadataFieldTypeUntokenized;
-		default:
-			throw new IllegalArgumentException("Unknown field type: " + type);
-		}
 	}
 
 }
