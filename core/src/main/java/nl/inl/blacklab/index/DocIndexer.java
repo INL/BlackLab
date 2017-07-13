@@ -24,10 +24,23 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
+
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.indexstructure.FieldType;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.util.UnicodeStream;
 
 /**
@@ -38,13 +51,23 @@ public abstract class DocIndexer {
     protected Indexer indexer;
 
     /** Do we want to omit norms? (Default: yes) */
-    public boolean omitNorms = true;
+    protected boolean omitNorms = true;
 
     /**
      * File we're currently parsing. This can be useful for storing the original filename in the
      * index.
      */
-    public String documentName;
+    protected String documentName;
+
+    /**
+     * The Lucene Document we're currently constructing (corresponds to the
+     * document we're indexing)
+     */
+    protected Document currentLuceneDoc;
+
+    public Document getCurrentLuceneDoc() {
+        return currentLuceneDoc;
+    }
 
 	/**
 	 * Thrown when the maximum number of documents has been reached
@@ -81,7 +104,7 @@ public abstract class DocIndexer {
      * @param documentName name of the document
      */
     public void setDocumentName(String documentName) {
-        this.documentName = documentName;
+        this.documentName = documentName == null ? "?" : documentName;
     }
 
     /**
@@ -141,6 +164,8 @@ public abstract class DocIndexer {
      * Parameters passed to this indexer
      */
     protected Map<String, String> parameters = new HashMap<>();
+
+    Set<String> numericFields = new HashSet<>();
 
     /**
      * Check if the specified parameter has a value
@@ -248,9 +273,9 @@ public abstract class DocIndexer {
         case NUMERIC:
             throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
         case TEXT:
-            return indexer.metadataFieldTypeTokenized;
+            return indexer.getMetadataFieldType(true);
         case UNTOKENIZED:
-            return indexer.metadataFieldTypeUntokenized;
+            return indexer.getMetadataFieldType(false);
         default:
             throw new IllegalArgumentException("Unknown field type: " + type);
         }
@@ -272,8 +297,105 @@ public abstract class DocIndexer {
         omitNorms = b;
     }
 
+    public void addNumericFields(Collection<String> fields) {
+        numericFields.addAll(fields);
+    }
+
     boolean continueIndexing() {
         return indexer.continueIndexing();
+    }
+
+    public void addMetadataField(String name, String value) {
+
+        IndexStructure struct = indexer.getSearcher().getIndexStructure();
+        struct.registerMetadataField(name);
+
+        MetadataFieldDesc desc = struct.getMetadataFieldDesc(name);
+        FieldType type = desc.getType();
+        desc.addValue(value);
+
+        FieldType shouldBeType = getMetadataFieldTypeFromIndexerProperties(name);
+        if (type == FieldType.TEXT
+                && shouldBeType != FieldType.TEXT) {
+            // indexer.properties overriding default type
+            type = shouldBeType;
+        }
+
+        if (type != FieldType.NUMERIC) {
+            currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexStructType(type)));
+        }
+        if (type == FieldType.NUMERIC || numericFields.contains(name)) {
+            String numFieldName = name;
+            if (type != FieldType.NUMERIC) {
+                numFieldName += "Numeric";
+            }
+            // Index these fields as numeric too, for faster range queries
+            // (we do both because fields sometimes aren't exclusively numeric)
+            int n = 0;
+            try {
+                n = Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                // This just happens sometimes, e.g. given multiple years, or
+                // descriptive text like "around 1900". OK to ignore.
+            }
+            IntField nf = new IntField(numFieldName, n, Store.YES);
+            currentLuceneDoc.add(nf);
+        }
+    }
+
+    /**
+     * If any metadata fields were supplied in the indexer parameters,
+     * add them now.
+     *
+     * NOTE: we always add these untokenized (because they're usually just
+     * indications of which data set a set of files belongs to), but that
+     * means they don't get lowercased or de-accented. Because metadata queries
+     * are always desensitized, you can't use uppercase or accented letters in
+     * these values or they will never be found. This should be addressed.
+     */
+    protected void addMetadataFieldsFromParameters() {
+        for (Entry<String, String> e: parameters.entrySet()) {
+            if (e.getKey().startsWith("meta-")) {
+                String fieldName = e.getKey().substring(5);
+                String fieldValue = e.getValue();
+                currentLuceneDoc.add(new Field(fieldName, fieldValue, indexer.getMetadataFieldType(false)));
+            }
+        }
+    }
+
+    protected SensitivitySetting getSensitivitySetting(String propName) {
+        // See if it's specified in a parameter
+        String strSensitivity = getParameter(propName + "_sensitivity");
+        if (strSensitivity != null) {
+            if (strSensitivity.equals("i"))
+                return SensitivitySetting.ONLY_INSENSITIVE;
+            if (strSensitivity.equals("s"))
+                return SensitivitySetting.ONLY_SENSITIVE;
+            if (strSensitivity.equals("si") || strSensitivity.equals("is"))
+                return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+            if (strSensitivity.equals("all"))
+                return SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
+        }
+
+        // Not in parameter (or unrecognized value), use default based on
+        // propName
+        if (propName.equals(ComplexFieldUtil.getDefaultMainPropName())
+                || propName.equals(ComplexFieldUtil.LEMMA_PROP_NAME)) {
+            // Word: default to sensitive/insensitive
+            return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+        }
+        if (propName.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
+            // Punctuation: default to only insensitive
+            return SensitivitySetting.ONLY_INSENSITIVE;
+        }
+        if (propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME)
+                || propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME)) {
+            // XML tag properties: default to only sensitive
+            return SensitivitySetting.ONLY_SENSITIVE;
+        }
+
+        // Unrecognized; default to only insensitive
+        return SensitivitySetting.ONLY_INSENSITIVE;
     }
 
 }

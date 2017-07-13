@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -92,13 +93,26 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 		ds.endMap().endEntry();
 
         Map<String, MetadataGroup> metaGroups = struct.getMetaFieldGroups();
+		Set<String> metadataFieldsNotInGroups = new HashSet<>(struct.getMetadataFields());
+        for (MetadataGroup metaGroup: metaGroups.values()) {
+            for (String field: metaGroup.getFields()) {
+                metadataFieldsNotInGroups.remove(field);
+            }
+        }
         ds.startEntry("metadataFieldGroups").startList();
+        boolean addedRemaining = false;
         for (MetadataGroup metaGroup: metaGroups.values()) {
             ds.startItem("metadataFieldGroup").startMap();
             ds.entry("name", metaGroup.getName());
             ds.startEntry("fields").startList();
             for (String field: metaGroup.getFields()) {
                 ds.item("field", field);
+            }
+            if (!addedRemaining && metaGroup.addRemainingFields()) {
+                addedRemaining = true;
+                for (String field: metadataFieldsNotInGroups) {
+                    ds.item("field", field);
+                }
             }
             ds.endList().endEntry();
             ds.endMap().endItem();

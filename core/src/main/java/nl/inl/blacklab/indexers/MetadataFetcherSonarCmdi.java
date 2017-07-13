@@ -26,7 +26,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 
@@ -52,15 +51,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 	private String metadataPathInZip;
 
-	DocIndexerXmlHandlers ourDocIndexer;
-
 	public MetadataFetcherSonarCmdi(DocIndexer docIndexer) {
 		super(docIndexer);
-
-		if (docIndexer instanceof DocIndexerXmlHandlers) {
-			// Should always be the case, except when testing
-			ourDocIndexer = (DocIndexerXmlHandlers)docIndexer;
-		}
 
 		if (metadataZipFile == null) {
 			String zipFilePath = docIndexer.getParameter("metadataZipFile");
@@ -96,10 +88,10 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 	public void addMetadata() {
 
 		String fromInputFile;
-		Document luceneDoc = ourDocIndexer.getCurrentLuceneDoc();
+		Document luceneDoc = docIndexer.getCurrentLuceneDoc();
 		fromInputFile = luceneDoc.get("fromInputFile");
 
-		ourDocIndexer.addMetadataField("Corpus_title", "SoNaR");
+		docIndexer.addMetadataField("Corpus_title", "SoNaR");
 
 		fromInputFile = fromInputFile.replaceAll("\\\\", "/");
 		int lastSlash = fromInputFile.lastIndexOf("/");
@@ -144,11 +136,11 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			if (authorName.isEmpty()) {
 				authorName = pseudonym;
 			}
-			ourDocIndexer.addMetadataField("AuthorNameOrPseudonym", authorName);
-			ourDocIndexer.addMetadataField("AuthorNameOrPseudonymSearch", authorNameAndPseudonym);
+			docIndexer.addMetadataField("AuthorNameOrPseudonym", authorName);
+			docIndexer.addMetadataField("AuthorNameOrPseudonymSearch", authorNameAndPseudonym);
 
 			// Store metadata XML in content store and corresponding id in Lucene document
-			ContentStore cs = ourDocIndexer.getIndexer().getContentStore("metadata");
+			ContentStore cs = docIndexer.getIndexer().getContentStore("metadata");
 			int id = cs.store(cmdiBuffer.toString(Indexer.DEFAULT_INPUT_ENCODING.name()));
 			luceneDoc.add(new IntField("metadataCid", id, Store.YES));
 
@@ -236,8 +228,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 						indexAs = localName;
 
 					// Leaf node with content; store as metadata field.
-					if (ourDocIndexer != null) {
-						ourDocIndexer.addMetadataField(indexAs, content);
+					if (docIndexer != null) {
+					    docIndexer.addMetadataField(indexAs, content);
 					} else {
 						// TEST; print metadata value
 						System.out.println(indexAs + ": " + content);

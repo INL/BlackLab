@@ -237,8 +237,10 @@ public class Json {
     public static List<String> getListOfStrings(JsonNode group, String name) {
         ArrayNode arr = (ArrayNode)group.get(name);
         List<String> result = new ArrayList<>();
-        for (int i = 0; i < arr.size(); i++) {
-            result.add(arr.get(i).textValue());
+        if (arr != null) {
+            for (int i = 0; i < arr.size(); i++) {
+                result.add(arr.get(i).textValue());
+            }
         }
         return result;
     }

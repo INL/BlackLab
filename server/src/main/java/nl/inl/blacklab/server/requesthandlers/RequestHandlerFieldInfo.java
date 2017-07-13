@@ -1,6 +1,11 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,16 +90,34 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 			.entry("unknownCondition", fd.getUnknownCondition().toString())
 			.entry("unknownValue", fd.getUnknownValue());
 		if (listValues) {
-	        Map<String, String> displayValues = fd.getDisplayValues();
+	        final Map<String, String> displayValues = fd.getDisplayValues();
 		    ds.startEntry("displayValues").startMap();
             for (Map.Entry<String, String> e: displayValues.entrySet()) {
                 ds.attrEntry("displayValue", "value", e.getKey(), e.getValue());
             }
 		    ds.endMap().endEntry();
-            Map<String, Integer> values = fd.getValueDistribution();
-    		ds.startEntry("fieldValues").startMap();
-    		for (Map.Entry<String, Integer> e: values.entrySet()) {
-    			ds.attrEntry("value", "text", e.getKey(), e.getValue());
+
+		    // Show values in display order (if defined)
+		    // If not all values are mentioned in display order, show the rest at the end,
+		    // sorted by their displayValue (or regular value if no displayValue specified)
+            ds.startEntry("fieldValues").startMap();
+		    Map<String, Integer> values = fd.getValueDistribution();
+            Set<String> valuesLeft = new HashSet<>(values.keySet());
+            for (String value: fd.getDisplayOrder()) {
+                ds.attrEntry("value", "text", value, values.get(value));
+                valuesLeft.remove(value);
+            }
+            List<String> sortedLeft = new ArrayList<>(valuesLeft);
+            Collections.sort(sortedLeft, new Comparator<String>() {
+                @Override
+                public int compare(String o1, String o2) {
+                    String d1 = displayValues.containsKey(o1) ? displayValues.get(o1) : o1;
+                    String d2 = displayValues.containsKey(o2) ? displayValues.get(o2) : o2;
+                    return d1.compareTo(d2);
+                }
+            });
+    		for (String value: sortedLeft) {
+    			ds.attrEntry("value", "text", value, values.get(value));
     		}
     		ds.endMap().endEntry()
     			.entry("valueListComplete", valueListComplete);
@@ -115,7 +138,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 			.entry("hasLengthTokens", fieldDesc.hasLengthTokens())
 			.entry("mainProperty", fieldDesc.getMainProperty().getName());
 		ds.startEntry("properties").startMap();
-		for (String propName: fieldDesc.getProperties()) {
+		List<String> properties = new ArrayList<>(fieldDesc.getProperties());
+        for (String propName: properties) {
 			PropertyDesc propDesc = fieldDesc.getPropertyDesc(propName);
 			ds.startAttrEntry("property", "name", propName)
 				.startMap()

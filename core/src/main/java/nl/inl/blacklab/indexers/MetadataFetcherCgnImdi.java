@@ -26,7 +26,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 
@@ -52,16 +51,8 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 
 	private String metadataPathInZip;
 
-	DocIndexerXmlHandlers ourDocIndexer;
-
 	public MetadataFetcherCgnImdi(DocIndexer docIndexer) {
 		super(docIndexer);
-
-		if (docIndexer instanceof DocIndexerXmlHandlers) {
-			// Should always be the case, except when testing
-			ourDocIndexer = (DocIndexerXmlHandlers) docIndexer;
-		}
-
 		if (metadataZipFile == null) {
 			String zipFilePath = docIndexer.getParameter("metadataZipFile");
 			if (zipFilePath == null) {
@@ -97,10 +88,10 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 	@Override
 	public void addMetadata() {
 
-		Document luceneDoc = ourDocIndexer.getCurrentLuceneDoc();
+		Document luceneDoc = docIndexer.getCurrentLuceneDoc();
 		String fromInputFile = luceneDoc.get("fromInputFile");
 
-		ourDocIndexer.addMetadataField("Corpus_title", "CGN");
+		docIndexer.addMetadataField("Corpus_title", "CGN");
 
 		fromInputFile = fromInputFile.replaceAll("\\\\", "/");
 		int lastSlash = fromInputFile.lastIndexOf("/");
@@ -108,10 +99,10 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 		String metadataFile = fromInputFile.substring(penultimateSlash + 1);
 		metadataFile = metadataFile.replaceAll("\\.folia\\.xml", ".imdi");
 		String[] parts = fromInputFile.split("/");
-		ourDocIndexer.addMetadataField("Collection_title", parts[parts.length - 2]);
+		docIndexer.addMetadataField("Collection_title", parts[parts.length - 2]);
 
-		ourDocIndexer.addMetadataField("AudioExportFormat", "wav");
-		ourDocIndexer.addMetadataField("AudioWebPlayFormat", "mp3");
+		docIndexer.addMetadataField("AudioExportFormat", "wav");
+		docIndexer.addMetadataField("AudioWebPlayFormat", "mp3");
 
 		try {
 			InputStream is;
@@ -142,7 +133,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 
 			// Store metadata XML in content store and corresponding id in
 			// Lucene document
-			ContentStore cs = ourDocIndexer.getIndexer().getContentStore("metadata");
+			ContentStore cs = docIndexer.getIndexer().getContentStore("metadata");
 			int id = cs.store(cmdiBuffer.toString(Indexer.DEFAULT_INPUT_ENCODING.name()));
 			luceneDoc.add(new IntField("metadataCid", id, Store.YES));
 
@@ -168,7 +159,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 
 		/**
 		 * Push the current element name onto the element stack
-		 * 
+		 *
 		 * @param localName
 		 *            the current element name
 		 */
@@ -216,8 +207,8 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 						indexAs = localName;
 
 					// Leaf node with content; store as metadata field.
-					if (ourDocIndexer != null) {
-						ourDocIndexer.addMetadataField(indexAs, content);
+					if (docIndexer != null) {
+						docIndexer.addMetadataField(indexAs, content);
 					} else {
 						// TEST; print metadata value
 						System.out.println(indexAs + ": " + content);

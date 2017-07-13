@@ -1,8 +1,12 @@
 package nl.inl.blacklab.search.indexstructure;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -40,6 +44,8 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 	/** These properties should not get a forward index. */
 	private Set<String> noForwardIndexProps = Collections.emptySet();
 
+    private List<String> displayOrder = new ArrayList<>();
+
 	public ComplexFieldDesc(String name) {
 		super(name);
 		props = new TreeMap<>();
@@ -54,12 +60,44 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 		return fieldName + " [" + StringUtil.join(props.values(), ", ") + "]";
 	}
 
-	/** Get the set of property names for this complex field
+	/** Get the set of property names for this complex field.
+	 *
+	 * Properties are returned sorted according to the displayOrder defined in the
+	 * index metadata, if any.
+	 *
 	 * @return the set of properties
 	 */
 	public Collection<String> getProperties() {
-		return props.keySet();
+	    List<String> sorted = new ArrayList<>(props.keySet());
+	    List<String> order = displayOrder;
+	    if (order == null || order.size() == 0)
+	        order = Arrays.asList("word", "lemma", "pos"); // default ordering
+	    sortProperties(sorted, displayOrder);
+		return sorted;
 	}
+
+    private static void sortProperties(List<String> properties, final List<String> displayOrder) {
+        Collections.sort(properties, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int s1 = -1, s2 = -1;
+                if (displayOrder != null) {
+                    s1 = displayOrder.indexOf(o1.toLowerCase());
+                    s2 = displayOrder.indexOf(o2.toLowerCase());
+                }
+                if (s1 == -1 && s2 == -1) {
+                    // Not defined in displayOrder; just sort alphabetically
+                    return o1.compareTo(o2);
+                }
+                // One or both were defined in the displayOrder
+                if (s1 == -1)
+                    return 1;
+                if (s2 == -1)
+                    return -1;
+                return s1 - s2;
+            }
+        });
+    }
 
 	/**
 	 * Get a property description.
@@ -241,5 +279,14 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 	public Set<String> getNoForwardIndexProps() {
 		return noForwardIndexProps;
 	}
+
+    public void setDisplayOrder(List<String> displayOrder) {
+        this.displayOrder.clear();
+        this.displayOrder.addAll(displayOrder);
+    }
+
+    public List<String> getDisplayOrder() {
+        return displayOrder;
+    }
 
 }

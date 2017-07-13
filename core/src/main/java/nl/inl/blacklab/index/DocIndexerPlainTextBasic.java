@@ -19,9 +19,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -34,7 +31,6 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
@@ -45,53 +41,6 @@ import nl.inl.util.ExUtil;
  * words to index and keeps track of word positions.
  */
 public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
-
-	/**
-	 * If any metadata fields were supplied in the indexer parameters,
-	 * add them now.
-	 */
-	void addMetadataFieldsFromParameters() {
-		for (Entry<String, String> e: parameters.entrySet()) {
-			if (e.getKey().startsWith("meta-")) {
-				String fieldName = e.getKey().substring(5);
-				String fieldValue = e.getValue();
-				currentLuceneDoc.add(new Field(fieldName, fieldValue, indexer.metadataFieldTypeUntokenized));
-			}
-		}
-	}
-
-	SensitivitySetting getSensitivitySetting(String propName) {
-		// See if it's specified in a parameter
-		String strSensitivity = getParameter(propName + "_sensitivity");
-		if (strSensitivity != null) {
-			if (strSensitivity.equals("i"))
-				return SensitivitySetting.ONLY_INSENSITIVE;
-			if (strSensitivity.equals("s"))
-				return SensitivitySetting.ONLY_SENSITIVE;
-			if (strSensitivity.equals("si") || strSensitivity.equals("is"))
-				return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
-			if (strSensitivity.equals("all"))
-				return SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
-		}
-
-		// Not in parameter (or unrecognized value), use default based on
-		// propName
-		if (propName.equals(ComplexFieldUtil.getDefaultMainPropName()) || propName.equals(ComplexFieldUtil.LEMMA_PROP_NAME)) {
-			// Word: default to sensitive/insensitive
-			return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
-		}
-		if (propName.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
-			// Punctuation: default to only insensitive
-			return SensitivitySetting.ONLY_INSENSITIVE;
-		}
-		if (propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME) || propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME)) {
-			// XML tag properties: default to only sensitive
-			return SensitivitySetting.ONLY_SENSITIVE;
-		}
-
-		// Unrecognized; default to only insensitive
-		return SensitivitySetting.ONLY_INSENSITIVE;
-	}
 
 	protected ComplexFieldProperty addProperty(String propName) {
 		return addProperty(propName, false);
@@ -118,25 +67,6 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 		Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME).getNoForwardIndexProps();
 		contentsField.setNoForwardIndexProps(noForwardIndexProps);
 	}
-
-	public void addNumericFields(Collection<String> fields) {
-		numericFields.addAll(fields);
-	}
-
-	/**
-	 * The Lucene Document we're currently constructing (corresponds to the
-	 * document we're indexing)
-	 */
-	Document currentLuceneDoc;
-
-	public Document getCurrentLuceneDoc() {
-		return currentLuceneDoc;
-	}
-
-	/** Name of the document currently being indexed */
-	String currentDocumentName;
-
-	Set<String> numericFields = new HashSet<>();
 
 	/**
 	 * Complex field where different aspects (word form, named entity status,
@@ -211,42 +141,6 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 		return contentsField.addProperty(propName, sensitivity);
 	}
 
-	public void addMetadataField(String name, String value) {
-
-		IndexStructure struct = indexer.getSearcher().getIndexStructure();
-		struct.registerMetadataField(name);
-
-		MetadataFieldDesc desc = struct.getMetadataFieldDesc(name);
-		FieldType type = desc.getType();
-		desc.addValue(value);
-
-		FieldType shouldBeType = getMetadataFieldTypeFromIndexerProperties(name);
-		if (type == FieldType.TEXT && shouldBeType != FieldType.TEXT) {
-			// indexer.properties overriding default type
-			type = shouldBeType;
-		}
-		if (type != FieldType.NUMERIC) {
-			currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexStructType(type)));
-		}
-		if (type == FieldType.NUMERIC || numericFields.contains(name)) {
-			String numFieldName = name;
-			if (type != FieldType.NUMERIC) {
-				numFieldName += "Numeric";
-			}
-			// Index these fields as numeric too, for faster range queries
-			// (we do both because fields sometimes aren't exclusively numeric)
-			int n = 0;
-			try {
-				n = Integer.parseInt(value);
-			} catch (NumberFormatException e) {
-				// This just happens sometimes, e.g. given multiple years, or
-				// descriptive text like "around 1900". OK to ignore.
-			}
-			IntField nf = new IntField(numFieldName, n, Store.YES);
-			currentLuceneDoc.add(nf);
-		}
-	}
-
 	@Override
 	public void index() throws IOException, InputFormatException {
 		BufferedReader r = new BufferedReader(reader);
@@ -254,12 +148,9 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
 		// Start a new Lucene document
 		currentLuceneDoc = new Document();
-		currentDocumentName = documentName;
-		if (currentDocumentName == null)
-			currentDocumentName = "?";
-		currentLuceneDoc.add(new Field("fromInputFile", currentDocumentName, indexer.metadataFieldTypeUntokenized));
+		currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.getMetadataFieldType(false)));
 		addMetadataFieldsFromParameters();
-		indexer.getListener().documentStarted(currentDocumentName);
+		indexer.getListener().documentStarted(documentName);
 
 		while (true) {
 			// For each line, split on whitespace and index each word.
@@ -402,7 +293,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 			reportCharsProcessed();
 			reportTokensProcessed(wordsDone);
 			wordsDone = 0;
-			indexer.getListener().documentDone(currentDocumentName);
+			indexer.getListener().documentDone(documentName);
 
 			// Reset contents field for next document
 			contentsField.clear();

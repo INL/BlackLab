@@ -20,12 +20,9 @@ import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.parsers.SAXParser;
@@ -38,7 +35,6 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
@@ -93,17 +89,14 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             startCaptureContent(contentsField.getName());
 
             currentLuceneDoc = new Document();
-            currentDocumentName = documentName;
-            if (currentDocumentName == null)
-                currentDocumentName = "?";
             // Store attribute values from the tag as metadata fields
             for (int i = 0; i < attributes.getLength(); i++) {
                 addMetadataField(attributes.getLocalName(i),
                         attributes.getValue(i));
             }
-            currentLuceneDoc.add(new Field("fromInputFile", currentDocumentName, indexer.metadataFieldTypeUntokenized));
+            currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.getMetadataFieldType(false)));
             addMetadataFieldsFromParameters();
-            indexer.getListener().documentStarted(currentDocumentName);
+            indexer.getListener().documentStarted(documentName);
         }
 
         /** Open tag: end indexing the document */
@@ -220,7 +213,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             reportCharsProcessed();
             reportTokensProcessed(wordsDone);
             wordsDone = 0;
-            indexer.getListener().documentDone(currentDocumentName);
+            indexer.getListener().documentDone(documentName);
 
             // Reset contents field for next document
             contentsField.clear();
@@ -229,26 +222,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // Stop if required
             if (!indexer.continueIndexing())
                 throw new MaxDocsReachedException();
-        }
-    }
-
-    /**
-     * If any metadata fields were supplied in the indexer parameters,
-     * add them now.
-     *
-     * NOTE: we always add these untokenized (because they're usually just
-     * indications of which data set a set of files belongs to), but that
-     * means they don't get lowercased or de-accented. Because metadata queries
-     * are always desensitized, you can't use uppercase or accented letters in
-     * these values or they will never be found. This should be addressed.
-     */
-    void addMetadataFieldsFromParameters() {
-        for (Entry<String, String> e: parameters.entrySet()) {
-            if (e.getKey().startsWith("meta-")) {
-                String fieldName = e.getKey().substring(5);
-                String fieldValue = e.getValue();
-                currentLuceneDoc.add(new Field(fieldName, fieldValue, indexer.metadataFieldTypeUntokenized));
-            }
         }
     }
 
@@ -480,41 +453,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         // System.out.println("END PREFIX MAPPING: " + prefix);
     }
 
-    SensitivitySetting getSensitivitySetting(String propName) {
-        // See if it's specified in a parameter
-        String strSensitivity = getParameter(propName + "_sensitivity");
-        if (strSensitivity != null) {
-            if (strSensitivity.equals("i"))
-                return SensitivitySetting.ONLY_INSENSITIVE;
-            if (strSensitivity.equals("s"))
-                return SensitivitySetting.ONLY_SENSITIVE;
-            if (strSensitivity.equals("si") || strSensitivity.equals("is"))
-                return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
-            if (strSensitivity.equals("all"))
-                return SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
-        }
-
-        // Not in parameter (or unrecognized value), use default based on
-        // propName
-        if (propName.equals(ComplexFieldUtil.getDefaultMainPropName())
-                || propName.equals(ComplexFieldUtil.LEMMA_PROP_NAME)) {
-            // Word: default to sensitive/insensitive
-            return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
-        }
-        if (propName.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
-            // Punctuation: default to only insensitive
-            return SensitivitySetting.ONLY_INSENSITIVE;
-        }
-        if (propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME)
-                || propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME)) {
-            // XML tag properties: default to only sensitive
-            return SensitivitySetting.ONLY_SENSITIVE;
-        }
-
-        // Unrecognized; default to only insensitive
-        return SensitivitySetting.ONLY_INSENSITIVE;
-    }
-
     protected ComplexFieldProperty addProperty(String propName) {
         return addProperty(propName, false);
     }
@@ -522,6 +460,10 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     protected ComplexFieldProperty addProperty(String propName, boolean includePayloads) {
         return contentsField.addProperty(propName,
                 getSensitivitySetting(propName), includePayloads);
+    }
+
+    public ComplexFieldProperty addProperty(String propName, SensitivitySetting sensitivity) {
+        return contentsField.addProperty(propName, sensitivity);
     }
 
     public DocIndexerXmlHandlers(Indexer indexer, String fileName, Reader reader) {
@@ -544,10 +486,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         // make the new complex field aware of this.
         Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME).getNoForwardIndexProps();
         contentsField.setNoForwardIndexProps(noForwardIndexProps);
-    }
-
-    public void addNumericFields(Collection<String> fields) {
-        numericFields.addAll(fields);
     }
 
     /**
@@ -707,21 +645,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     /**
-     * The Lucene Document we're currently constructing (corresponds to the
-     * document we're indexing)
-     */
-    Document currentLuceneDoc;
-
-    public Document getCurrentLuceneDoc() {
-        return currentLuceneDoc;
-    }
-
-    /** Name of the document currently being indexed */
-    String currentDocumentName;
-
-    Set<String> numericFields = new HashSet<>();
-
-    /**
      * Complex field where different aspects (word form, named entity status,
      * etc.) of the main content of the document are captured for indexing.
      */
@@ -795,49 +718,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      */
     public int getWordPosition() {
         return propMain.lastValuePosition() + 1;
-    }
-
-    public ComplexFieldProperty addProperty(String propName,
-            SensitivitySetting sensitivity) {
-        return contentsField.addProperty(propName, sensitivity);
-    }
-
-    public void addMetadataField(String name, String value) {
-
-        IndexStructure struct = indexer.getSearcher().getIndexStructure();
-        struct.registerMetadataField(name);
-
-        MetadataFieldDesc desc = struct.getMetadataFieldDesc(name);
-        FieldType type = desc.getType();
-        desc.addValue(value);
-
-        FieldType shouldBeType = getMetadataFieldTypeFromIndexerProperties(name);
-        if (type == FieldType.TEXT
-                && shouldBeType != FieldType.TEXT) {
-            // indexer.properties overriding default type
-            type = shouldBeType;
-        }
-
-        if (type != FieldType.NUMERIC) {
-            currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexStructType(type)));
-        }
-        if (type == FieldType.NUMERIC || numericFields.contains(name)) {
-            String numFieldName = name;
-            if (type != FieldType.NUMERIC) {
-                numFieldName += "Numeric";
-            }
-            // Index these fields as numeric too, for faster range queries
-            // (we do both because fields sometimes aren't exclusively numeric)
-            int n = 0;
-            try {
-                n = Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                // This just happens sometimes, e.g. given multiple years, or
-                // descriptive text like "around 1900". OK to ignore.
-            }
-            IntField nf = new IntField(numFieldName, n, Store.YES);
-            currentLuceneDoc.add(nf);
-        }
     }
 
     public void endElement(String uri, String localName, String qName) {

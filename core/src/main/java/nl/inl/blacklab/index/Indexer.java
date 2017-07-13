@@ -62,10 +62,10 @@ public class Indexer {
 	public static final Charset DEFAULT_INPUT_ENCODING = Charset.forName("utf-8");
 
 	/** Our index */
-	Searcher searcher;
+	private Searcher searcher;
 
 	/** Stop after indexing this number of docs. -1 if we shouldn't stop. */
-	int maxNumberOfDocsToIndex = -1;
+	private int maxNumberOfDocsToIndex = -1;
 
 	/** Should we terminate indexing? (e.g. because of an error) */
 	boolean terminateIndexing = false;
@@ -73,12 +73,12 @@ public class Indexer {
 	/**
 	 * Where to report indexing progress.
 	 */
-	IndexListener listener = null;
+	private IndexListener listener = null;
 
 	/**
 	 * Have we reported our creation and the start of indexing to the listener yet?
 	 */
-	boolean createAndIndexStartReported = false;
+	private boolean createAndIndexStartReported = false;
 
 	/**
 	 * When we encounter a zip or tgz file, do we descend into it like it was a directory?
@@ -88,33 +88,37 @@ public class Indexer {
 	/**
 	 * Recursively index files inside a directory? (or archive file, if processArchivesAsDirectories == true)
 	 */
-	boolean defaultRecurseSubdirs = true;
+	private boolean defaultRecurseSubdirs = true;
 
 	/**
 	 * The class to instantiate for indexing documents. This class must be able to
 	 * deal with the file format of the input files.
 	 */
-	Class<? extends DocIndexer> docIndexerClass;
+	private Class<? extends DocIndexer> docIndexerClass;
 
 	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort? */
-	boolean continueAfterInputError = true;
+	private boolean continueAfterInputError = true;
 
 	/** If an error occurs (e.g. an XML parse error), and we don't
 	 * continue indexing, should we re-throw it, or assume the client
 	 * picked it up in the listener and return normally? */
-	boolean rethrowInputError = true;
+	private boolean rethrowInputError = true;
 
 	/**
 	 * Parameters we should pass to our DocIndexers upon instantiation.
 	 */
-	Map<String, String> indexerParam;
+	private Map<String, String> indexerParam;
 
 	/** How to index metadata fields (tokenized) */
-	FieldType metadataFieldTypeTokenized;
+	private FieldType metadataFieldTypeTokenized;
 
 	/** How to index metadata fields (untokenized) */
-	FieldType metadataFieldTypeUntokenized;
+	private FieldType metadataFieldTypeUntokenized;
+
+	public FieldType getMetadataFieldType(boolean tokenized) {
+	    return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
+	}
 
 	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort?

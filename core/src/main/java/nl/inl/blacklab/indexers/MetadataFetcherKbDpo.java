@@ -28,7 +28,6 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.indexers.MetadataFetcherKbDpo.GetKbMetadata.Metadata;
@@ -321,22 +320,15 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 	/** Pattern for getting DPO number from image file name */
 	private final static Pattern PATT_DPO = Pattern.compile("^dpo_(\\d+)_");
 
-	private DocIndexerXmlHandlers ourDocIndexer;
-
 	public MetadataFetcherKbDpo(DocIndexer docIndexer) {
 		super(docIndexer);
-
-		if (docIndexer instanceof DocIndexerXmlHandlers) {
-			// Should always be the case, except when testing
-			ourDocIndexer = (DocIndexerXmlHandlers) docIndexer;
-		}
 	}
 
 	@Override
 	public void addMetadata() {
 		String fileName;
-		if (ourDocIndexer != null)
-			fileName = ourDocIndexer.getCurrentLuceneDoc().get("imageFileName");
+		if (docIndexer != null)
+			fileName = docIndexer.getCurrentLuceneDoc().get("imageFileName");
 		else {
 			// TEST
 			fileName = TEST_FROM_INPUT_FILE;
@@ -347,10 +339,10 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 			String dpo;
 			dpo = m.group(1);
 			Metadata metadata = GetKbMetadata.getMetadataFieldsFromDpo(dpo);
-			ourDocIndexer.addMetadataField("title", metadata.title);
-			ourDocIndexer.addMetadataField("author", metadata.author);
-			ourDocIndexer.addMetadataField("date", metadata.date);
-			ourDocIndexer.addMetadataField("ppn", metadata.ppn);
+			docIndexer.addMetadataField("title", metadata.title);
+			docIndexer.addMetadataField("author", metadata.author);
+			docIndexer.addMetadataField("date", metadata.date);
+			docIndexer.addMetadataField("ppn", metadata.ppn);
 		} else {
 			System.err.println("DPO number not found for imageFileName " + fileName);
 			return;

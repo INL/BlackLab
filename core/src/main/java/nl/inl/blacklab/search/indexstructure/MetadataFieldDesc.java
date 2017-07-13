@@ -1,8 +1,10 @@
 package nl.inl.blacklab.search.indexstructure;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -54,6 +56,9 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 
     /** Gives the display value corresponding to a value, if any. */
     private Map<String, String> displayValues = new HashMap<>();
+
+    /** Order in which to display values in select dropdown (if defined) */
+    private List<String> displayOrder = new ArrayList<>();
 
 	/**
 	 * Whether or not all values are stored here.
@@ -140,7 +145,16 @@ public class MetadataFieldDesc extends BaseFieldDesc {
         }
     }
 
-	public void setValueListComplete(boolean valueListComplete) {
+	public void setDisplayOrder(List<String> displayOrder) {
+	    this.displayOrder.clear();
+	    this.displayOrder.addAll(displayOrder);
+    }
+
+	public List<String> getDisplayOrder() {
+	    return Collections.unmodifiableList(displayOrder);
+	}
+
+    public void setValueListComplete(boolean valueListComplete) {
 		this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
 	}
 

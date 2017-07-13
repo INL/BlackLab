@@ -68,7 +68,17 @@ public class IndexStructure {
 
 	    List<String> fields;
 
-	    public MetadataGroup(String name, List<String> fields) {
+	    boolean addRemainingFields = false;
+
+	    public void setName(String name) {
+            this.name = name;
+        }
+
+        public void setFields(List<String> fields) {
+            this.fields = fields;
+        }
+
+        public MetadataGroup(String name, List<String> fields) {
 	        this.name = name;
 	        this.fields = new ArrayList<>(fields);
 	    }
@@ -79,6 +89,14 @@ public class IndexStructure {
 
         public List<String> getFields() {
             return fields;
+        }
+
+        public boolean addRemainingFields() {
+            return addRemainingFields;
+        }
+
+        public void setAddRemainingFields(boolean addRemainingFields) {
+            this.addRemainingFields = addRemainingFields;
         }
 
 	}
@@ -334,7 +352,10 @@ public class IndexStructure {
             JsonNode group = groups.get(i);
             String name = Json.getString(group, "name", "UNKNOWN");
             List<String> fields = Json.getListOfStrings(group, "fields");
-            metadataGroups.put(name, new MetadataGroup(name, fields));
+            MetadataGroup metadataGroup = new MetadataGroup(name, fields);
+            if (Json.getBoolean(group, "addRemainingFields", false))
+                metadataGroup.setAddRemainingFields(true);
+            metadataGroups.put(name, metadataGroup);
         }
     }
 
@@ -354,39 +375,23 @@ public class IndexStructure {
     	Iterator<Entry<String, JsonNode>> it = indexMetadata.getMetaFieldConfigs().fields();
     	while (it.hasNext()) {
     	    Entry<String, JsonNode> entry = it.next();
-    		String fieldName = entry.getKey();
+            String fieldName = entry.getKey();
     		JsonNode fieldConfig = entry.getValue();
-    		String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
-    		String uiType = Json.getString(fieldConfig, "uiType", "");
-    		String fldDescription = Json.getString(fieldConfig, "description", "");
-    		String group = Json.getString(fieldConfig, "group", "");
-    		String type = Json.getString(fieldConfig, "type", "tokenized");
-    		String analyzer = Json.getString(fieldConfig, "analyzer", "DEFAULT");
-    		String unknownValue = Json.getString(fieldConfig, "unknownValue", defaultUnknownValue);
-    		String unknownCondition = Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition);
-    		JsonNode values = null;
-    		if (fieldConfig.has("values")) {
-    			values = fieldConfig.get("values");
-    		}
-    		boolean valueListComplete = Json.getBoolean(fieldConfig, "valueListComplete", false);
-            JsonNode displayValues = null;
-            if (fieldConfig.has("displayValues")) {
-                displayValues = fieldConfig.get("displayValues");
-            }
-
-    		MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, type);
-    		fieldDesc.setDisplayName(fldDisplayName);
-    		fieldDesc.setUiType(uiType);
-    		fieldDesc.setDescription(fldDescription);
-    		fieldDesc.setGroup(group);
-    		fieldDesc.setAnalyzer(analyzer);
-    		fieldDesc.setUnknownValue(unknownValue);
-    		fieldDesc.setUnknownCondition(unknownCondition);
-    		if (values != null)
-    			fieldDesc.setValues(values);
-    		if (displayValues != null)
-    		    fieldDesc.setDisplayValues(displayValues);
-    		fieldDesc.setValueListComplete(valueListComplete);
+    		MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, Json.getString(fieldConfig, "type", "tokenized"));
+    		fieldDesc.setDisplayName     (Json.getString(fieldConfig, "displayName", fieldName));
+    		fieldDesc.setUiType          (Json.getString(fieldConfig, "uiType", ""));
+    		fieldDesc.setDescription     (Json.getString(fieldConfig, "description", ""));
+    		fieldDesc.setGroup           (Json.getString(fieldConfig, "group", ""));
+    		fieldDesc.setAnalyzer        (Json.getString(fieldConfig, "analyzer", "DEFAULT"));
+    		fieldDesc.setUnknownValue    (Json.getString(fieldConfig, "unknownValue", defaultUnknownValue));
+    		fieldDesc.setUnknownCondition(Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition));
+            if (fieldConfig.has("values"))
+    			fieldDesc.setValues(fieldConfig.get("values"));
+            if (fieldConfig.has("displayValues"))
+    		    fieldDesc.setDisplayValues(fieldConfig.get("displayValues"));
+            if (fieldConfig.has("displayOrder"))
+                fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
+    		fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
     		metadataFieldInfos.put(fieldName, fieldDesc);
     	}
 
@@ -396,20 +401,18 @@ public class IndexStructure {
     	    Entry<String, JsonNode> entry = it.next();
     		String fieldName = entry.getKey();
     		JsonNode fieldConfig = entry.getValue();
-    		String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
-    		String fldDescription = Json.getString(fieldConfig, "description", "");
-    		String mainProperty = Json.getString(fieldConfig, "mainProperty", "");
-    		// TODO: useAnnotation..?
     		ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
-    		fieldDesc.setDisplayName(fldDisplayName);
-    		fieldDesc.setDescription(fldDescription);
-    		if (mainProperty.length() > 0)
-    			fieldDesc.setMainPropertyName(mainProperty);
+    		fieldDesc.setDisplayName (Json.getString(fieldConfig, "displayName", fieldName));
+    		fieldDesc.setDescription (Json.getString(fieldConfig, "description", ""));
+    		String mainPropertyName = Json.getString(fieldConfig, "mainProperty", "");
+    		if (mainPropertyName.length() > 0)
+    			fieldDesc.setMainPropertyName(mainPropertyName);
     		String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
     		if (noForwardIndex.length() > 0) {
     			String[] noForwardIndexProps = noForwardIndex.split("\\s+");
     			fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
     		}
+    		fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
     		complexFields.put(fieldName, fieldDesc);
     	}
     }
@@ -459,7 +462,9 @@ public class IndexStructure {
 		// Add metadata field group info
 		for (MetadataGroup g: metadataGroups.values()) {
 		    ObjectNode group = metadataFieldGroups.addObject();
-		    group.put("name", g.getName());
+            group.put("name", g.getName());
+            if (g.addRemainingFields())
+                group.put("addRemainingFields", true);
 		    ArrayNode arr = group.putArray("fields");
 		    Json.arrayOfStrings(arr, g.getFields());
 		}
@@ -490,6 +495,13 @@ public class IndexStructure {
 			        jsonDisplayValues.put(e.getKey(), e.getValue());
                 }
 			}
+			List<String> displayOrder = f.getDisplayOrder();
+			if (displayOrder != null) {
+			    ArrayNode jsonDisplayValues = fi.putArray("displayOrder");
+                for (String value: displayOrder) {
+                    jsonDisplayValues.add(value);
+                }
+			}
 		}
 
 		// Add complex field info
@@ -509,6 +521,8 @@ public class IndexStructure {
 			fieldInfo2.put("displayName", f.getDisplayName());
 			fieldInfo2.put("description", f.getDescription());
 			fieldInfo2.put("mainProperty", f.getMainProperty().getName());
+			ArrayNode arr = fieldInfo2.putArray("displayOrder");
+			Json.arrayOfStrings(arr, f.getDisplayOrder());
 			//, "properties", jsonProperties
 		}
 
