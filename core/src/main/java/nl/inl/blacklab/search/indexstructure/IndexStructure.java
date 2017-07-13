@@ -357,7 +357,7 @@ public class IndexStructure {
     		String fieldName = entry.getKey();
     		JsonNode fieldConfig = entry.getValue();
     		String fldDisplayName = Json.getString(fieldConfig, "displayName", fieldName);
-    		String uiType = Json.getString(fieldConfig, "uiType", "text");
+    		String uiType = Json.getString(fieldConfig, "uiType", "");
     		String fldDescription = Json.getString(fieldConfig, "description", "");
     		String group = Json.getString(fieldConfig, "group", "");
     		String type = Json.getString(fieldConfig, "type", "tokenized");

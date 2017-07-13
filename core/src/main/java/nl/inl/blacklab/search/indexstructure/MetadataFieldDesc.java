@@ -68,7 +68,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 
 	/** Type of UI element to show for this field. Can be used by a generic
 	 *  search application to generate metadata search interface. */
-    private String uiType = "text";
+    private String uiType = "";
 
 	public MetadataFieldDesc(String fieldName, FieldType type) {
 		super(fieldName);
