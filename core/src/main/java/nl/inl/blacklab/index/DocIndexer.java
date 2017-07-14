@@ -65,6 +65,9 @@ public abstract class DocIndexer {
      */
     protected Document currentLuceneDoc;
 
+    /** Number of words processed (for reporting progress) */
+    protected int wordsDone;
+
     public Document getCurrentLuceneDoc() {
         return currentLuceneDoc;
     }
@@ -398,4 +401,8 @@ public abstract class DocIndexer {
         return SensitivitySetting.ONLY_INSENSITIVE;
     }
 
+	public abstract void reportCharsProcessed();
+	
+	public abstract int getCharacterPosition();
+	
 }

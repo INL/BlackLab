@@ -36,10 +36,10 @@ public class ConfigInputFormat {
     private Map<String, String> namespaces = new HashMap<>();
 
     /** How to find our documents */
-    private String xpDocuments;
+    private String xpDocuments = "/";
 
     /** Where our metadata (if any) is located (relative to the document element) */
-    private String xpMetadata;
+    private String xpMetadataContainer = ".";
 
     /** Annotated fields (usually just "contents") */
     private List<ConfigAnnotatedField> annotatedFields = new ArrayList<>();
@@ -59,8 +59,8 @@ public class ConfigInputFormat {
         this.xpDocuments = xpDocuments;
     }
 
-    public void setXPathMetadata(String xpMetadata) {
-        this.xpMetadata = ConfigInputFormat.relXPath(xpMetadata);
+    public void setXPathMetadataContainer(String xpMetadata) {
+        this.xpMetadataContainer = ConfigInputFormat.relXPath(xpMetadata);
     }
 
     public void addAnnotatedField(ConfigAnnotatedField f) {
@@ -83,8 +83,8 @@ public class ConfigInputFormat {
         return xpDocuments;
     }
 
-    public String getXPathMetadata() {
-        return xpMetadata;
+    public String getXPathMetadataContainer() {
+        return xpMetadataContainer;
     }
 
     public List<ConfigAnnotatedField> getAnnotatedFields() {

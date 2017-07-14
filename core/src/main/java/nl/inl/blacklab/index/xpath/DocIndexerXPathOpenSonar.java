@@ -19,6 +19,7 @@ public class DocIndexerXPathOpenSonar extends DocIndexerXPath {
         annotatedField.setFieldName("contents");
         annotatedField.setXPathBody("text");
         annotatedField.setXPathWords("//w");
+        annotatedField.setXPathPunct("//text()[not(ancestor::w)]");
         annotatedField.addXPathInlineTag("//s");
         annotatedField.addXPathInlineTag("//p");
         annotatedField.addAnnotation(new ConfigAnnotation("word", "t[not(@class)]/text()"));
@@ -28,10 +29,11 @@ public class DocIndexerXPathOpenSonar extends DocIndexerXPath {
         config.addAnnotatedField(annotatedField);
 
         // Metadata fields config
-        config.setXPathMetadata("metadata/annotations");
+        config.setXPathMetadataContainer("metadata/annotations");
         config.addMetadataField(new ConfigMetadataField("Test", "test"));
         config.addMetadataField(new ConfigMetadataField("TokenAnnotation", "concat(token-annotation/@annotator, '-', token-annotation/@annotatortype, '-', token-annotation/@set)"));
         config.addMetadataField(new ConfigMetadataField("name()", "@annotator", "*")); // forEach
+        
     }
 
     public static void main(String[] args) throws Exception {
@@ -39,7 +41,8 @@ public class DocIndexerXPathOpenSonar extends DocIndexerXPath {
             System.err.println("Specify input file.");
             System.exit(1);
         }
-        String filePath = args.length == 1 ? args[0] : "/home/jan/blacklab/data/VanKampenHeel_Clean_Folia.xml";
+        String defaultFile = File.separatorChar == '/' ? "/home/jan/blacklab/data" : "D:/werk/projects";
+        String filePath = args.length == 1 ? args[0] : defaultFile + "/VanKampenHeel_Clean_Folia.xml";
         File inputFile = new File(filePath);
 
         DocIndexer ind = new DocIndexerXPathOpenSonar();

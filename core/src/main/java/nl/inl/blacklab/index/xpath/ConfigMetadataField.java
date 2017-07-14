@@ -1,11 +1,12 @@
 package nl.inl.blacklab.index.xpath;
 
-/** Configuration for metadata fields. */
+/** Configuration for metadata field(s). */
 class ConfigMetadataField {
 
+    /** Metadata field name (or name XPath, if forEach) */
     private String fieldName;
 
-    /** Where to find body text */
+    /** Where to find metadata value */
     private String xpValue;
 
     /** If null: regular metadata field. Otherwise, find all nodes matching this XPath,

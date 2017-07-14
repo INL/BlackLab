@@ -5,8 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,12 +14,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.util.BytesRef;
 
 import com.ximpleware.AutoPilot;
 import com.ximpleware.NavException;
@@ -28,6 +31,14 @@ import com.ximpleware.VTDNav;
 
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.complex.ComplexField;
+import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.xpath.InlineObject.InlineObjectType;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
+import nl.inl.util.ExUtil;
+import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerXPath extends DocIndexer {
 
@@ -45,9 +56,56 @@ public abstract class DocIndexerXPath extends DocIndexer {
 
     private Map<String, ComplexField> complexFields = new HashMap<>();
 
+    /** The config for the annotated (complex) field we're currently processing. */
+	private ConfigAnnotatedField currentAnnotatedField;
+
+	/** The indexing object for the complex field we're currently processing. */
+	private ComplexField currentComplexField;
+
+	/** The tag property for the complex field we're currently processing. */
+	private ComplexFieldProperty propStartTag;
+
+	/** The main property for the complex field we're currently processing. */
+	private ComplexFieldProperty propMain;
+
+	/** The main property for the complex field we're currently processing. */
+	private ComplexFieldProperty propPunct;
+
     public DocIndexerXPath() {
         config = new ConfigInputFormat();
         configure(config);
+        
+        for (ConfigAnnotatedField af: config.getAnnotatedFields()) {
+        	
+	        // Define the properties that make up our complex field
+        	List<ConfigAnnotation> annotations = af.getAnnotations();
+        	if (annotations.size() == 0)
+        		throw new RuntimeException("No annotations defined for field " + af.getFieldName());
+        	ConfigAnnotation mainAnnotation = annotations.get(0);
+	        ComplexField complexField = new ComplexField(af.getFieldName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation.getName()), false);
+	        complexFields.put(af.getFieldName(), complexField);
+	        complexField.addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.PUNCTUATION_PROP_NAME), false);	        
+	        ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);	        
+	        propStartTag.setForwardIndex(false);
+	        
+	        IndexStructure indexStructure;
+	        if (!DEBUG) {
+		        indexStructure = indexer.getSearcher().getIndexStructure();
+		        indexStructure.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
+	        }
+	        for (int i = 1; i < annotations.size(); i++) {
+	        	ConfigAnnotation annot = annotations.get(i);
+	        	complexField.addProperty(annot.getName(), getSensitivitySetting(annot.getName()), false);
+	        }
+		
+	        if (!DEBUG) {
+		        // If the indexmetadata file specified a list of properties that shouldn't get a forward
+		        // index, make the new complex field aware of this.
+		        Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(complexField.getName()).getNoForwardIndexProps();
+		        complexField.setNoForwardIndexProps(noForwardIndexProps);
+	        }
+        }
+        
     }
 
     protected abstract void configure(ConfigInputFormat config);
@@ -122,11 +180,19 @@ public abstract class DocIndexerXPath extends DocIndexer {
 
             // For each configured annotated field...
             for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields()) {
+            	
+            	// Store some useful stuff about the field we're processing
+            	currentAnnotatedField = annotatedField;
+        		currentComplexField = complexFields.get(currentAnnotatedField.getFieldName());
+        		propStartTag = currentComplexField.getTagProperty();
+        		propMain = currentComplexField.getMainProperty();
+        		propPunct = currentComplexField.getPunctProperty();
 
                 AutoPilot words = createAutoPilot();
                 words.selectXPath(annotatedField.getXPathWords());
 
                 // For each body element...
+                // (there's usually only one, but there's no reason to limit it)
                 nav.push();
                 AutoPilot bodies = createAutoPilot();
                 bodies.selectXPath(annotatedField.getXPathBody());
@@ -138,48 +204,28 @@ public abstract class DocIndexerXPath extends DocIndexer {
                     // For end tags, we will update the payload of the start tag when we encounter it,
                     // just like we do in our SAX parsers.
                     AutoPilot apTags = createAutoPilot();
-                    List<InlineTag> inlineTags = new ArrayList<>();
+                    List<InlineObject> tagsAndPunct = new ArrayList<>();
                     for (String xpInlineTag: annotatedField.getXPathsInlineTag()) {
                         nav.push();
                         apTags.selectXPath(xpInlineTag);
                         while (apTags.evalXPath() != -1) {
-                            // Get the element and content fragments
-                            // (element fragment = from start of start tag to end of end tag;
-                            //  content fragment = from end of start tag to start of end tag)
-                            long contentFragment = nav.getContentFragment();
-                            int contentOffset = (int)contentFragment;
-                            int contentLength = (int)(contentFragment >> 32);
-                            int contentEnd = contentOffset + contentLength;
-                            long elementFragment = nav.getElementFragment();
-                            int elementOffset = (int)elementFragment;
-                            int elementLength = (int)(elementFragment >> 32);
-                            int elementEnd = elementOffset + elementLength;
-
-                            // Calculate start/end tag offset and length
-                            int startTagOffset = elementOffset;
-                            int startTagLength = contentOffset - elementOffset;
-                            int endTagOffset = contentEnd;
-                            int endTagLength = elementEnd - contentEnd;
-
-                            // Find element name
-                            int currentIndex = nav.getCurrentIndex();
-                            String elementName = nav.toString(currentIndex);
-
-                            // Add the inline tags to the list
-                            InlineTag openTag = new InlineTag(elementName, startTagOffset, startTagLength, true);
-                            InlineTag closeTag = new InlineTag(elementName, endTagOffset, endTagLength, false);
-                            openTag.setMatchingTag(closeTag);
-                            closeTag.setMatchingTag(openTag);
-                            inlineTags.add(openTag);
-                            inlineTags.add(closeTag);
+                            collectInlineTag(tagsAndPunct);
                         }
                         nav.pop();
                     }
-                    Collections.sort(inlineTags);
-                    Iterator<InlineTag> inlineTagsIt = inlineTags.iterator();
-                    InlineTag nextInlineTag = inlineTagsIt.hasNext() ? inlineTagsIt.next() : null;
+                    if (annotatedField.getXPathPunct() != null) {
+                    	nav.push();
+                        apTags.selectXPath(annotatedField.getXPathPunct());
+                        while (apTags.evalXPath() != -1) {
+                            collectPunct(tagsAndPunct);
+                        }
+                        nav.pop();
+                    }
+                    Collections.sort(tagsAndPunct);
+                    Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
+                    InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
 
-                    // Now, find all words, keeping track of what inline tags occur in between.
+                    // Now, find all words, keeping track of what inline objects occur in between.
                     nav.push();
                     words.resetXPath();
                     while (words.evalXPath() != -1) {
@@ -187,22 +233,25 @@ public abstract class DocIndexerXPath extends DocIndexer {
                         long wordFragment = nav.getContentFragment();
                         int wordOffset = (int)wordFragment;
 
-                        // Does an inline tag occur before this word?
-                        while (wordOffset >= nextInlineTag.getOffset()) {
+                        // Does an inline object occur before this word?
+                        while (wordOffset >= nextInlineObject.getOffset()) {
                             // Yes. Handle it.
-                            inlineTag(nextInlineTag);
-                            nextInlineTag = inlineTagsIt.next();
+                        	if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
+                        		punctuation(nextInlineObject);
+                        	else
+                        		inlineTag(nextInlineObject);
+                            nextInlineObject = inlineObjectsIt.next();
                         }
 
                         beginWord();
-
-                        // Evaluate annotations for this word
+                        
+                        // For each configured annotation...
                         AutoPilot apAnnot = createAutoPilot();
                         for (ConfigAnnotation annotation: annotatedField.getAnnotations()) {
                             nav.push();
-                            apAnnot.selectXPath(annotation.getXPathValue());
-                            String annotationValue = apAnnot.evalXPathToString();
-                            annotation(annotation.getName(), annotationValue);
+                        	apAnnot.selectXPath(annotation.getXPathValue());
+                            String annotValue = apAnnot.evalXPathToString();
+                            annotation(annotation.getName(), annotValue);
                             nav.pop();
                         }
 
@@ -210,10 +259,13 @@ public abstract class DocIndexerXPath extends DocIndexer {
                     }
                     nav.pop();
 
-                    // Handle any inline tags after the last word
-                    while (nextInlineTag != null) {
-                        inlineTag(nextInlineTag);
-                        nextInlineTag = inlineTagsIt.hasNext() ? inlineTagsIt.next() : null;
+                    // Handle any inline objects after the last word
+                    while (nextInlineObject != null) {
+                    	if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
+                    		punctuation(nextInlineObject);
+                    	else
+                    		inlineTag(nextInlineObject);
+                        nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
                     }
 
                 }
@@ -223,7 +275,7 @@ public abstract class DocIndexerXPath extends DocIndexer {
             // For each metadata block..
             nav.push();
             AutoPilot apMetadataBlock = createAutoPilot();
-            apMetadataBlock.selectXPath(config.getXPathMetadata());
+            apMetadataBlock.selectXPath(config.getXPathMetadataContainer());
             while (apMetadataBlock.evalXPath() != -1) {
 
                 // For each configured metadata field...
@@ -265,186 +317,397 @@ public abstract class DocIndexerXPath extends DocIndexer {
 
     }
 
-    /** Return the exact original code for an inline start or end tag. */
-    String getInlineTagCode(InlineTag tag) {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        try {
-            nav.dumpFragment(tag.fragment(), os);
-            return new String(os.toByteArray(), StandardCharsets.UTF_8);
-        } catch (NavException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+	/**
+     * Add open and close InlineObject objects for the current element to the list.
+     * 
+     * @param inlineObject list to add the new open/close tag objects to
+     * @throws NavException
+     */
+	private void collectInlineTag(List<InlineObject> inlineObject) throws NavException {
+		// Get the element and content fragments
+		// (element fragment = from start of start tag to end of end tag;
+		//  content fragment = from end of start tag to start of end tag)
+		long contentFragment = nav.getContentFragment();
+		int contentOffset = (int)contentFragment;
+		int contentLength = (int)(contentFragment >> 32);
+		int contentEnd = contentOffset + contentLength;
+		long elementFragment = nav.getElementFragment();
+		int elementOffset = (int)elementFragment;
+		int elementLength = (int)(elementFragment >> 32);
+		int elementEnd = elementOffset + elementLength;
+
+		// Calculate start/end tag offset and length
+		int startTagOffset = elementOffset;
+		int startTagLength = contentOffset - elementOffset;
+		int endTagOffset = contentEnd;
+		int endTagLength = elementEnd - contentEnd;
+
+		// Find element name
+		int currentIndex = nav.getCurrentIndex();
+		String elementName = nav.toString(currentIndex);
+
+		// Add the inline tags to the list
+		InlineObject openTag = new InlineObject(elementName, startTagOffset, startTagLength, InlineObjectType.OPEN_TAG, getAttributes());
+		InlineObject closeTag = new InlineObject(elementName, endTagOffset, endTagLength, InlineObjectType.CLOSE_TAG, null);
+		openTag.setMatchingTag(closeTag);
+		closeTag.setMatchingTag(openTag);
+		inlineObject.add(openTag);
+		inlineObject.add(closeTag);
+	}
+
+    /**
+     * Add InlineObject for a punctuation text node.
+     * 
+     * @param inlineObjects list to add the punct object to
+     * @throws NavException
+     */
+	private void collectPunct(List<InlineObject> inlineObjects) throws NavException {
+		int i = nav.getCurrentIndex();
+		int offset = nav.getTokenOffset(i);
+		int length = nav.getTokenLength(i);
+		
+//		long contentFragment = nav.getContentFragment();
+//		int contentOffset = (int)contentFragment;
+//		int contentLength = (int)(contentFragment >> 32);
+//		int contentEnd = contentOffset + contentLength;
+
+		// Find text
+		//int currentIndex = nav.getCurrentIndex();
+		String text = nav.toString(i);
+		text = StringUtil.normalizeWhitespace(text);
+
+		// Add the punct to the list
+		inlineObjects.add(new InlineObject(text, offset, offset + length, InlineObjectType.PUNCTUATION, null));
+	}
+
+    /**
+     * Gets attribute map for current element
+     * @return
+     */
+    private Map<String, String> getAttributes() {
+		nav.push();
+		AutoPilot apAttr = new AutoPilot(nav);
+		apAttr.selectAttr("*");
+		int i = -1;
+		Map<String, String> attr = new HashMap<>();
+		try {
+			while ((i = apAttr.iterateAttr()) != -1) {
+				String name = nav.toString(i);
+				String value = nav.toString(i + 1);
+				attr.put(name, value);
+			}
+		} catch (NavException e) {
+			throw new RuntimeException(e);
+		}
+		nav.pop();
+		return attr;
+	}
+
+//	/** Return the exact original code for an inline start or end tag. */
+//    private String getInlineTagCode(InlineObject tag) {
+//        ByteArrayOutputStream os = new ByteArrayOutputStream();
+//        try {
+//            nav.dumpFragment(tag.fragment(), os);
+//            return new String(os.toByteArray(), StandardCharsets.UTF_8);
+//        } catch (NavException | IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     // HANDLERS
-
-    protected void startDocument(int offset, int length) {
-        currentLuceneDoc = new Document();
-
-        /* TODO: gather attributes, store as metadata fields
-
-        // Store attribute values from the tag as metadata fields
-        for (int i = 0; i < attributes.getLength(); i++) {
-            addMetadataField(attributes.getLocalName(i),
-                    attributes.getValue(i));
-        }
-        */
-
-        currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.getMetadataFieldType(false)));
-        addMetadataFieldsFromParameters();
-        indexer.getListener().documentStarted(documentName);
+    
+    private static final boolean DEBUG = true;
+    
+    void trace(String msg) {
+    	if (DEBUG)
+    		System.out.print(msg);
     }
 
-    protected void endDocument(int offset, int length) {
+    void traceln(String msg) {
+    	if (DEBUG)
+    		System.out.println(msg);
+    }
 
-//        for (ComplexField contentsField: complexFields.values()) {
-//            propMain = contentsField.getMainProperty();
-//
-//            // Make sure all the properties have an equal number of values.
-//            // See what property has the highest position
-//            // (in practice, only starttags and endtags should be able to have
-//            // a position one higher than the rest)
-//            int lastValuePos = 0;
-//            for (ComplexFieldProperty prop: contentsField.getProperties()) {
-//                if (prop.lastValuePosition() > lastValuePos)
-//                    lastValuePos = prop.lastValuePosition();
-//            }
-//
-//            // Make sure we always have one more token than the number of
-//            // words, so there's room for any tags after the last word, and we
-//            // know we should always skip the last token when matching.
-//            if (propMain.lastValuePosition() == lastValuePos)
-//                lastValuePos++;
-//
-//            // Add empty values to all lagging properties
-//            for (ComplexFieldProperty prop: contentsField.getProperties()) {
-//                while (prop.lastValuePosition() < lastValuePos) {
-//                    prop.addValue("");
-//                    if (prop.hasPayload())
-//                        prop.addPayload(null);
-//                    if (prop == propMain) {
-//                        contentsField.addStartChar(getCharacterPosition());
-//                        contentsField.addEndChar(getCharacterPosition());
-//                    }
-//                }
-//            }
-//            // Store the different properties of the complex contents field that
-//            // were gathered in
-//            // lists while parsing.
-//            contentsField.addToLuceneDoc(currentLuceneDoc);
-//
-//            // Add all properties to forward index
-//            for (ComplexFieldProperty prop: contentsField.getProperties()) {
-//                if (!prop.hasForwardIndex())
-//                    continue;
-//
-//                // Add property (case-sensitive tokens) to forward index and add
-//                // id to Lucene doc
-//                String propName = prop.getName();
-//                String fieldName = ComplexFieldUtil.propertyField(
-//                        contentsField.getName(), propName);
-//                int fiid = indexer.addToForwardIndex(fieldName, prop);
-//                currentLuceneDoc.add(new IntField(ComplexFieldUtil
-//                        .forwardIndexIdField(fieldName), fiid, Store.YES));
-//            }
-//
-//        }
-//
-////        // Finish storing the document in the document store (parts of it
-////        // may already have been written because we write in chunks to save memory),
-////        // retrieve the content id, and store that in Lucene.
-////        // (Note that we do this after adding the dummy token, so the character
-////        // positions for the dummy token still make (some) sense)
-////        int contentId = storeCapturedContent();
-////        currentLuceneDoc.add(new IntField(ComplexFieldUtil
-////                .contentIdField(contentsField.getName()), contentId,
-////                Store.YES));
-//
+    protected void startDocument(int offset, int length) {
+    	traceln("START DOCUMENT");
+    	
+        startCaptureContent();
+        
+        currentLuceneDoc = new Document();
+        if (!DEBUG)
+        	currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.getMetadataFieldType(false)));
+        
+        // DEPRECATED for these types of indexer, but still supported for now
+        addMetadataFieldsFromParameters();
+
+        if (!DEBUG)
+        	indexer.getListener().documentStarted(documentName);
+    }
+
+	protected void endDocument(int offset, int length) {
+		traceln("END DOCUMENT");
+
+    	// The "main complex field" is the field that stores the document content id for now.
+    	// (We will change this eventually so the document content id is not stored with a complex field
+    	// but as a metadata field instead.)
+    	// The main complex field is a field named "contents" or, if that does not exist, the first
+    	// complex field 
+    	String mainComplexField = null;
+    	
+        for (ComplexField complexField: complexFields.values()) {
+        	if (mainComplexField == null)
+        		mainComplexField = complexField.getName();
+        	else if (complexField.getName().equals("contents"))
+        		mainComplexField = complexField.getName();
+        	
+            ComplexFieldProperty propMain = complexField.getMainProperty();
+
+            // Make sure all the properties have an equal number of values.
+            // See what property has the highest position
+            // (in practice, only starttags and endtags should be able to have
+            // a position one higher than the rest)
+            int lastValuePos = 0;
+            for (ComplexFieldProperty prop: complexField.getProperties()) {
+                if (prop.lastValuePosition() > lastValuePos)
+                    lastValuePos = prop.lastValuePosition();
+            }
+
+            // Make sure we always have one more token than the number of
+            // words, so there's room for any tags after the last word, and we
+            // know we should always skip the last token when matching.
+            if (propMain.lastValuePosition() == lastValuePos)
+                lastValuePos++;
+
+            // Add empty values to all lagging properties
+            for (ComplexFieldProperty prop: complexField.getProperties()) {
+                while (prop.lastValuePosition() < lastValuePos) {
+                    prop.addValue("");
+                    if (prop.hasPayload())
+                        prop.addPayload(null);
+                    if (prop == propMain) {
+                        complexField.addStartChar(getCharacterPosition());
+                        complexField.addEndChar(getCharacterPosition());
+                    }
+                }
+            }
+            // Store the different properties of the complex field that
+            // were gathered in lists while parsing.
+            complexField.addToLuceneDoc(currentLuceneDoc);
+
+            // Add all properties to forward index
+            for (ComplexFieldProperty prop: complexField.getProperties()) {
+                if (!prop.hasForwardIndex())
+                    continue;
+
+                // Add property (case-sensitive tokens) to forward index and add
+                // id to Lucene doc
+                String propName = prop.getName();
+                String fieldName = ComplexFieldUtil.propertyField(
+                        complexField.getName(), propName);
+                if (!DEBUG) {
+	                int fiid = indexer.addToForwardIndex(fieldName, prop);
+	                currentLuceneDoc.add(new IntField(ComplexFieldUtil
+	                        .forwardIndexIdField(fieldName), fiid, Store.YES));
+                }
+            }
+            
+            // Reset complex field for next document
+            complexField.clear();
+
+        }
+        
+        // Finish storing the document in the document store (parts of it
+        // may already have been written because we write in chunks to save memory),
+        // retrieve the content id, and store that in Lucene.
+        // (Note that we do this after adding the dummy token, so the character
+        // positions for the dummy token still make (some) sense)
+        int contentId = storeCapturedContent();
+        if (mainComplexField == null) {
+        	// If we don't have complex fields, we're probably parsing metadata.
+        	mainComplexField = "metadata";
+        }
+        currentLuceneDoc.add(new IntField(ComplexFieldUtil
+                .contentIdField(mainComplexField), contentId,
+                Store.YES));
+
 //        // If there's an external metadata fetcher, call it now so it can
 //        // add the metadata for this document and (optionally) store the
-//        // metadata
-//        // document in the content store (and the corresponding id in the
+//        // metadata document in the content store (and the corresponding id in the
 //        // Lucene doc)
 //        MetadataFetcher m = getMetadataFetcher();
 //        if (m != null) {
 //            m.addMetadata();
 //        }
-//
-//        // See what metadatafields are missing or empty and add unknown value
-//        // if desired.
-//        IndexStructure struct = indexer.getSearcher().getIndexStructure();
-//        for (String fieldName: struct.getMetadataFields()) {
-//            MetadataFieldDesc fd = struct.getMetadataFieldDesc(fieldName);
-//            boolean missing = false, empty = false;
-//            String currentValue = currentLuceneDoc.get(fieldName);
-//            if (currentValue == null)
-//                missing = true;
-//            else if (currentValue.length() == 0)
-//                empty = true;
-//            UnknownCondition cond = fd.getUnknownCondition();
-//            boolean useUnknownValue = false;
-//            switch (cond) {
-//            case EMPTY:
-//                useUnknownValue = empty;
-//                break;
-//            case MISSING:
-//                useUnknownValue = missing;
-//                break;
-//            case MISSING_OR_EMPTY:
-//                useUnknownValue = missing | empty;
-//                break;
-//            case NEVER:
-//                useUnknownValue = false;
-//                break;
-//            }
-//            if (useUnknownValue)
-//                addMetadataField(fieldName, fd.getUnknownValue());
-//        }
-//
-//        try {
-//            // Add Lucene doc to indexer
-//            indexer.add(currentLuceneDoc);
-//        } catch (Exception e) {
-//            throw ExUtil.wrapRuntimeException(e);
-//        }
-//
-//        // Report progress
-//        reportCharsProcessed();
-//        reportTokensProcessed(wordsDone);
-//        wordsDone = 0;
-//        indexer.getListener().documentDone(documentName);
-//
-//        // Reset contents field for next document
-//        contentsField.clear();
-//        currentLuceneDoc = null;
-//
-//        // Stop if required
-//        if (!indexer.continueIndexing())
-//            throw new MaxDocsReachedException();
+
+        if (!DEBUG) {
+	        // See what metadatafields are missing or empty and add unknown value
+	        // if desired.
+	        IndexStructure struct = indexer.getSearcher().getIndexStructure();
+	        for (String fieldName: struct.getMetadataFields()) {
+	            MetadataFieldDesc fd = struct.getMetadataFieldDesc(fieldName);
+	            boolean missing = false, empty = false;
+	            String currentValue = currentLuceneDoc.get(fieldName);
+	            if (currentValue == null)
+	                missing = true;
+	            else if (currentValue.length() == 0)
+	                empty = true;
+	            UnknownCondition cond = fd.getUnknownCondition();
+	            boolean useUnknownValue = false;
+	            switch (cond) {
+	            case EMPTY:
+	                useUnknownValue = empty;
+	                break;
+	            case MISSING:
+	                useUnknownValue = missing;
+	                break;
+	            case MISSING_OR_EMPTY:
+	                useUnknownValue = missing | empty;
+	                break;
+	            case NEVER:
+	                useUnknownValue = false;
+	                break;
+	            }
+	            if (useUnknownValue)
+	                addMetadataField(fieldName, fd.getUnknownValue());
+	        }
+        }
+
+        try {
+            // Add Lucene doc to indexer
+        	if (!DEBUG)
+            	indexer.add(currentLuceneDoc);
+        } catch (Exception e) {
+            throw ExUtil.wrapRuntimeException(e);
+        }
+
+        // Report progress
+        reportCharsProcessed();
+        if (!DEBUG)
+        	reportTokensProcessed(wordsDone);
+        wordsDone = 0;
+        if (!DEBUG)
+        	indexer.getListener().documentDone(documentName);
+
+        currentLuceneDoc = null;
+
+        // Stop if required
+        if (!DEBUG) {
+        	if (!indexer.continueIndexing())
+        		throw new MaxDocsReachedException();
+        }
     }
 
-    protected void inlineTag(InlineTag tag) {
-        System.out.print(getInlineTagCode(tag) + " ");
-        if (!tag.isStartTag())
-            System.out.print("\n");
+    /* Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
+    class OpenTagInfo {
+        public int position;
+        public int index;
+
+        public OpenTagInfo(int position, int index) {
+            this.position = position;
+            this.index = index;
+        }
     }
+
+    List<OpenTagInfo> openTags = new ArrayList<>();
+
+	protected void inlineTag(InlineObject tag) {
+        if (tag.type() == InlineObjectType.OPEN_TAG) {
+    		trace("<" + tag.getText() + ">");
+        	
+            int lastStartTagPos = propStartTag.lastValuePosition();
+            int currentPos = propMain.lastValuePosition() + 1;
+            int posIncrement = currentPos - lastStartTagPos;
+            propStartTag.addValue(tag.getText(), posIncrement);
+            propStartTag.addPayload(null);
+            int startTagIndex = propStartTag.getLastValueIndex();
+            openTags.add(new OpenTagInfo(currentPos, startTagIndex));
+            
+            Map<String, String> attributes = tag.getAttributes();
+            for (Entry<String, String> e: attributes.entrySet()) {
+                // Index element attribute values
+                String name = e.getKey();
+                String value = e.getValue();
+                propStartTag.addValue("@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
+                propStartTag.addPayload(null);
+            }
+            
+        } else {
+    		traceln("</" + tag.getText() + ">");
+    		
+            int currentPos = propMain.lastValuePosition() + 1;
+
+            // Add payload to start tag property indicating end position
+            OpenTagInfo openTag = openTags.remove(openTags.size() - 1);
+            byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
+            propStartTag.setPayloadAtIndex(openTag.index, new BytesRef(payload));
+        }
+    }
+
+    private void punctuation(InlineObject punct) {
+    	trace(punct.getText());
+    	
+    	propPunct.addValue(punct.getText());
+	}
 
     protected void beginWord() {
-//        System.out.println("[");
+        currentComplexField.addStartChar(getCharacterPosition());
+    }
+
+    protected void endWord() {
+    	currentComplexField.addEndChar(getCharacterPosition());
+
+        // Report progress regularly but not too often
+        wordsDone++;
+        if (wordsDone >= 5000) {
+            reportCharsProcessed();
+            reportTokensProcessed(wordsDone);
+            wordsDone = 0;
+        }
     }
 
     protected void annotation(String name, String value) {
-    //        System.out.println(name + "=" + value + " ");
-            if (name.equals("word"))
-                System.out.print(value + " ");
-        }
-
-    protected void endWord() {
-    //        System.out.println("] ");
-        }
+    	if (name.equals("word"))
+    		trace(value + " ");
+    	
+    	currentComplexField.getProperty(name).addValue(value);
+    }
 
     protected void metadata(String fieldName, String value) {
-        System.out.println("METADATA " + fieldName + "=" + value);
+    	traceln("METADATA " + fieldName + "=" + value);
+    	
+    	if (fieldName != null && value != null) {
+    		if (!DEBUG)
+    			addMetadataField(fieldName, value);
+    	} else {
+    		if (!DEBUG)
+    			indexer.getListener().warning("Incomplete metadata field: " + fieldName + "=" + value);
+    		else
+    			System.err.println("Incomplete metadata field: " + fieldName + "=" + value);
+    	}
     }
+
+	@Override
+	public void reportCharsProcessed() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public int getCharacterPosition() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+    
+	protected void startCaptureContent() {
+		// TODO Auto-generated method stub
+		
+	}
+
+    protected int storeCapturedContent() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+    
 
 }

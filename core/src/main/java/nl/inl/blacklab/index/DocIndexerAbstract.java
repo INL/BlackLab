@@ -108,6 +108,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 	 * Returns the current position in the original XML content in chars.
 	 * @return the current char position
 	 */
+	@Override
 	public int getCharacterPosition() {
 		return charsContentAlreadyStored + content.length();
 	}
@@ -153,6 +154,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         this.reader = new CountingReader(reader);
     }
 
+	@Override
 	public void reportCharsProcessed() {
 		long charsProcessed = reader.getCharsReadSinceLastCall();
 		indexer.getListener().charsDone(charsProcessed);

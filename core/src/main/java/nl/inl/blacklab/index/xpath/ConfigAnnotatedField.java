@@ -10,12 +10,16 @@ class ConfigAnnotatedField {
     private String fieldName;
 
     /** Where to find body text */
-    private String xpBody;
+    private String xpBody = ".";
 
     /** Words within body text */
     private String xpWords;
+    
+    /** Punctuation between words (or null if we don't need/want to capture this) */
+    private String xpPunct = null;
 
-    /** Inline tags within body text */
+
+	/** Inline tags within body text */
     private List<String> xpsInlineTags = new ArrayList<>();
 
     /** Annotations on our words */
@@ -33,6 +37,10 @@ class ConfigAnnotatedField {
         this.xpWords = ConfigInputFormat.relXPath(xpWords);
     }
 
+    public void setXPathPunct(String xpPunct) {
+		this.xpPunct = ConfigInputFormat.relXPath(xpPunct);
+	}
+    
     public void addXPathInlineTag(String xpInlineTag) {
         this.xpsInlineTags.add(ConfigInputFormat.relXPath(xpInlineTag));
     }
@@ -52,6 +60,10 @@ class ConfigAnnotatedField {
     public String getXPathWords() {
         return xpWords;
     }
+
+	public String getXPathPunct() {
+		return xpPunct;
+	}
 
     public List<String> getXPathsInlineTag() {
         return xpsInlineTags;

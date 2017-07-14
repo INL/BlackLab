@@ -141,6 +141,14 @@ public class ComplexField {
 		return mainProperty;
 	}
 
+	public ComplexFieldProperty getTagProperty() {
+		return getProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
+	}
+
+	public ComplexFieldProperty getPunctProperty() {
+		return getProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+	}
+
 	public String getName() {
 		return fieldName;
 	}

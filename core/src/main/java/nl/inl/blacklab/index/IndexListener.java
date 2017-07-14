@@ -239,4 +239,8 @@ public class IndexListener {
 		// (subclass may override this)
 	}
 
+	public void warning(String string) {
+		// (subclass may override this)
+	}
+
 }

@@ -117,4 +117,9 @@ public class IndexListenerReportConsole extends IndexListener {
 		return super.errorOccurred(error, unitType, unit, subunit);
 	}
 
+	@Override
+	public void warning(String msg) {
+		System.out.println("WARNING: " + msg);
+	}
+
 }

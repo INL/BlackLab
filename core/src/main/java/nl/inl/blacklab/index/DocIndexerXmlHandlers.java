@@ -471,8 +471,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
         // Define the properties that make up our complex field
         String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
-        contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME,
-                mainPropName, getSensitivitySetting(mainPropName), false);
+        contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName, getSensitivitySetting(mainPropName), false);
         propMain = contentsField.getMainProperty();
         propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
         propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, true); // start tag
@@ -649,9 +648,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * etc.) of the main content of the document are captured for indexing.
      */
     ComplexField contentsField;
-
-    /** Number of words processed (for reporting progress) */
-    int wordsDone;
 
     /** The main property (usually "word") */
     ComplexFieldProperty propMain;
