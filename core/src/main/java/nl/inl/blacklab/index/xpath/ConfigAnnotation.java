@@ -5,32 +5,32 @@ package nl.inl.blacklab.index.xpath;
  * annotated field ("complex field").
  */
 class ConfigAnnotation {
-	
-	/** Annotation name (or name XPath if it's a forEach) */
+
+	/** Annotation name (or namePath if it's a forEach) */
     private String name;
 
     /** Where to find body text */
-    private String xpValue;
+    private String valuePath;
 
-	public ConfigAnnotation(String name, String xpValue) {
+	public ConfigAnnotation(String name, String valuePath) {
         setName(name);
-        setXPathValue(xpValue);
+        setValuePath(valuePath);
     }
 
 	public String getName() {
         return name;
     }
 
-    public String getXPathValue() {
-        return xpValue;
+    public String getValuePath() {
+        return valuePath;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setXPathValue(String xpValue) {
-        this.xpValue = ConfigInputFormat.relXPath(xpValue);
+    public void setValuePath(String valuePath) {
+        this.valuePath = ConfigInputFormat.relXPath(valuePath);
     }
 
 

@@ -3,11 +3,14 @@ package nl.inl.blacklab.index.xpath;
 import java.util.Collections;
 import java.util.Map;
 
-/** Information about an inline tag
- *  (tags of elements such as p, s, b, ne, etc. that occur within the text of annotated fields)
+/** Information about an inline object while parsing.
+ *
+ *  Inline objects are either elements like p, s, b, ne, etc. that
+ *  occur within the text of annotated fields, or punctuation occurring
+ *  between the words.
  */
 class InlineObject implements Comparable<InlineObject> {
-	
+
 	public static enum InlineObjectType {
 		OPEN_TAG,
 		CLOSE_TAG,
@@ -24,7 +27,7 @@ class InlineObject implements Comparable<InlineObject> {
 
     /** The close tag to this open tag, or vice versa */
     private InlineObject matchingTag;
-    
+
     private Map<String, String> attributes;
 
     public InlineObject(String text, int offset, int length, InlineObjectType type, Map<String, String> attributes) {
@@ -65,7 +68,7 @@ class InlineObject implements Comparable<InlineObject> {
     public long fragment() {
         return offset | ((long)length << 32);
     }
-    
+
     public Map<String, String> getAttributes() {
     	return attributes;
     }
@@ -78,7 +81,7 @@ class InlineObject implements Comparable<InlineObject> {
             return type.compareTo(o.type);
         return text.compareTo(o.text);
     }
-    
+
     @Override
     public String toString() {
     	return type.toString() + " " + text;

@@ -9,40 +9,39 @@ class ConfigAnnotatedField {
 
     private String fieldName;
 
-    /** Where to find body text */
-    private String xpBody = ".";
+    /** Where to find this field's annotated text */
+    private String containerPath = ".";
 
     /** Words within body text */
-    private String xpWords;
-    
+    private String wordsPath;
+
     /** Punctuation between words (or null if we don't need/want to capture this) */
-    private String xpPunct = null;
-
-
-	/** Inline tags within body text */
-    private List<String> xpsInlineTags = new ArrayList<>();
+    private String punctPath = null;
 
     /** Annotations on our words */
     private List<ConfigAnnotation> annotations = new ArrayList<>();
+
+    /** Inline tags within body text */
+    private List<ConfigInlineTag> inlineTags = new ArrayList<>();
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
     }
 
-    public void setXPathBody(String xpBody) {
-        this.xpBody = ConfigInputFormat.relXPath(xpBody);
+    public void setContainerPath(String containerPath) {
+        this.containerPath = ConfigInputFormat.relXPath(containerPath);
     }
 
-    public void setXPathWords(String xpWords) {
-        this.xpWords = ConfigInputFormat.relXPath(xpWords);
+    public void setWordsPath(String wordsPath) {
+        this.wordsPath = ConfigInputFormat.relXPath(wordsPath);
     }
 
-    public void setXPathPunct(String xpPunct) {
-		this.xpPunct = ConfigInputFormat.relXPath(xpPunct);
+    public void setPunctPath(String punctPath) {
+		this.punctPath = ConfigInputFormat.relXPath(punctPath);
 	}
-    
-    public void addXPathInlineTag(String xpInlineTag) {
-        this.xpsInlineTags.add(ConfigInputFormat.relXPath(xpInlineTag));
+
+    public void addInlineTag(ConfigInlineTag inlineTag) {
+        this.inlineTags.add(inlineTag);
     }
 
     public void addAnnotation(ConfigAnnotation annotation) {
@@ -53,20 +52,20 @@ class ConfigAnnotatedField {
         return fieldName;
     }
 
-    public String getXPathBody() {
-        return xpBody;
+    public String getContainerPath() {
+        return containerPath;
     }
 
-    public String getXPathWords() {
-        return xpWords;
+    public String getWordsPath() {
+        return wordsPath;
     }
 
-	public String getXPathPunct() {
-		return xpPunct;
+	public String getPunctPath() {
+		return punctPath;
 	}
 
-    public List<String> getXPathsInlineTag() {
-        return xpsInlineTags;
+    public List<ConfigInlineTag> getInlineTags() {
+        return inlineTags;
     }
 
     public List<ConfigAnnotation> getAnnotations() {

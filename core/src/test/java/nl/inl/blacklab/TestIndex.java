@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.index.DocIndexerFactoryClass;
 import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -87,7 +88,7 @@ public class TestIndex {
 		}
 
 		// Instantiate the BlackLab indexer, supplying our DocIndexer class
-		Indexer indexer = new Indexer(indexDir, true, DocIndexerExample.class);
+		Indexer indexer = new Indexer(indexDir, true, new DocIndexerFactoryClass(DocIndexerExample.class), (File)null);
 		indexer.setListener(new IndexListenerDevNull()); // no output
 		try {
 			// Index each of our test "documents".

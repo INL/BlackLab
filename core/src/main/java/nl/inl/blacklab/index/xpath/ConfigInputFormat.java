@@ -6,12 +6,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Configuration for an input format (either contents, or metadata, or a mix of both).
+ */
 public class ConfigInputFormat {
 
     // TODO: add configurable indexing support for:
     // - additional operations (using plugin classes)
     // - extra element processing (e.g. timesegment)
-    // - subannotations(FUTURE)
+    // - subannotations
 
     /**
      * Prepends the given XPath expression with a dot if it starts with a slash.
@@ -29,6 +32,12 @@ public class ConfigInputFormat {
         return xp;
     }
 
+    /** This format's name */
+    private String name;
+
+    /** This format's display name (optional) */
+    private String displayName;
+
     /** Pay attention to namespaces while parsing? */
     private boolean isNamespaceAware = true;
 
@@ -36,16 +45,35 @@ public class ConfigInputFormat {
     private Map<String, String> namespaces = new HashMap<>();
 
     /** How to find our documents */
-    private String xpDocuments = "/";
+    private String documentPath = "/";
 
     /** Where our metadata (if any) is located (relative to the document element) */
-    private String xpMetadataContainer = ".";
+    private String metadataContainerPath = ".";
 
     /** Annotated fields (usually just "contents") */
     private List<ConfigAnnotatedField> annotatedFields = new ArrayList<>();
 
     /** Metadata fields */
     private List<ConfigMetadataField> metadataFields = new ArrayList<>();
+
+    /** Linked document(s), e.g. containing our metadata */
+    private List<ConfigLinkedDocument> linkedDocuments = new ArrayList<>();
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
     public void setNamespaceAware(boolean isNamespaceAware) {
         this.isNamespaceAware = isNamespaceAware;
@@ -55,12 +83,12 @@ public class ConfigInputFormat {
         namespaces.put(name, uri);
     }
 
-    public void setXPathDocument(String xpDocuments) {
-        this.xpDocuments = xpDocuments;
+    public void setDocumentPath(String documentPath) {
+        this.documentPath = documentPath;
     }
 
-    public void setXPathMetadataContainer(String xpMetadata) {
-        this.xpMetadataContainer = ConfigInputFormat.relXPath(xpMetadata);
+    public void setMetadataContainerPath(String metadataContainerPath) {
+        this.metadataContainerPath = ConfigInputFormat.relXPath(metadataContainerPath);
     }
 
     public void addAnnotatedField(ConfigAnnotatedField f) {
@@ -71,6 +99,10 @@ public class ConfigInputFormat {
         this.metadataFields.add(f);
     }
 
+    public void addLinkedDocument(ConfigLinkedDocument d) {
+        linkedDocuments.add(d);
+    }
+
     public boolean isNamespaceAware() {
         return isNamespaceAware;
     }
@@ -79,12 +111,12 @@ public class ConfigInputFormat {
         return namespaces;
     }
 
-    public String getXPathDocuments() {
-        return xpDocuments;
+    public String getDocumentPath() {
+        return documentPath;
     }
 
-    public String getXPathMetadataContainer() {
-        return xpMetadataContainer;
+    public String getMetadataContainerPath() {
+        return metadataContainerPath;
     }
 
     public List<ConfigAnnotatedField> getAnnotatedFields() {
@@ -95,5 +127,8 @@ public class ConfigInputFormat {
         return Collections.unmodifiableList(metadataFields);
     }
 
+    public List<ConfigLinkedDocument> getLinkedDocuments() {
+        return linkedDocuments;
+    }
 
 }

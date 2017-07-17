@@ -7,49 +7,49 @@ class ConfigMetadataField {
     private String fieldName;
 
     /** Where to find metadata value */
-    private String xpValue;
+    private String valuePath;
 
     /** If null: regular metadata field. Otherwise, find all nodes matching this XPath,
-     *  then evaluate fieldName and xpValue as XPaths for each matching node.
+     *  then evaluate fieldName and valuePath as XPaths for each matching node.
      */
-    private String xpForEach;
+    private String forEachPath;
 
-    public ConfigMetadataField(String fieldName, String xpValue, String xpForEach) {
+    public ConfigMetadataField(String fieldName, String valuePath, String forEachPath) {
         setFieldName(fieldName);
-        setXPathValue(xpValue);
-        setXPathForEach(xpForEach);
+        setValuePath(valuePath);
+        setForEachPath(forEachPath);
     }
 
-    private void setXPathForEach(String xpForEach) {
-        this.xpForEach = xpForEach;
+    private void setForEachPath(String forEachPath) {
+        this.forEachPath = forEachPath;
     }
 
-    public ConfigMetadataField(String fieldName, String xpValue) {
-        this(fieldName, xpValue, null);
+    public ConfigMetadataField(String fieldName, String valuePath) {
+        this(fieldName, valuePath, null);
     }
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
     }
 
-    public void setXPathValue(String xpValue) {
-        this.xpValue = ConfigInputFormat.relXPath(xpValue);
+    public void setValuePath(String valuePath) {
+        this.valuePath = ConfigInputFormat.relXPath(valuePath);
     }
 
     public String getFieldName() {
         return fieldName;
     }
 
-    public String getXPathValue() {
-        return xpValue;
+    public String getValuePath() {
+        return valuePath;
     }
 
-    public String getXPathForEach() {
-        return xpForEach;
+    public String getForEachPath() {
+        return forEachPath;
     }
 
     public boolean isForEach() {
-        return xpForEach != null;
+        return forEachPath != null;
     }
 
 }

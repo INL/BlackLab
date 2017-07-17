@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 
+import nl.inl.blacklab.index.DocIndexerFactoryClass;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
@@ -79,7 +80,7 @@ public class Example {
 		// Instantiate the BlackLab indexer, supplying our DocIndexer class
 		Indexer indexer = null;
 		try {
-			indexer = new Indexer(indexDir, true, DocIndexerExample.class);
+			indexer = new Indexer(indexDir, true, new DocIndexerFactoryClass(DocIndexerExample.class), (File)null);
 			// Index each of our test "documents".
 			for (int i = 0; i < testData.length; i++) {
 				indexer.index("test" + (i + 1), new StringReader(testData[i]));

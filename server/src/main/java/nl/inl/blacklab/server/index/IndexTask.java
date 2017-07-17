@@ -6,8 +6,7 @@ import java.io.InputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerDecorator;
 import nl.inl.blacklab.index.Indexer;
@@ -78,19 +77,13 @@ public class IndexTask {
 	public void run() throws Exception {
 		Indexer indexer = null;
 		try {
-			indexer = new Indexer(indexDir, false, null);
+		    // Open the index, automatically detecting the document format it was created with.
+			indexer = new Indexer(indexDir, false, (DocIndexerFactory)null, (File)null);
 
-			// We created the Indexer with a null DocIndexer class.
-			// Now we figure out what the indices' own document format is,
-			// resolve it to a DocIndexer class and update the Indexer with it.
 			IndexStructure indexStructure = indexer.getSearcher().getIndexStructure();
 			if (indexStructure.getTokenCount() > MAX_TOKEN_COUNT) {
 				throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + MAX_TOKEN_COUNT + ". Cannot add any more data to it.");
 			}
-			String docFormat = indexStructure.getDocumentFormat();
-			Class<? extends DocIndexer> docIndexerClass;
-			docIndexerClass = DocumentFormats.getIndexerClass(docFormat);
-			indexer.setDocIndexer(docIndexerClass);
 
 			indexer.setListener(decoratedListener);
 			anyDocsFound = false;

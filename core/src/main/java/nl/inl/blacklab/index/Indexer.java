@@ -15,16 +15,13 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
 import java.nio.charset.Charset;
 import java.util.Enumeration;
 import java.util.Map;
@@ -91,10 +88,9 @@ public class Indexer {
 	private boolean defaultRecurseSubdirs = true;
 
 	/**
-	 * The class to instantiate for indexing documents. This class must be able to
-	 * deal with the file format of the input files.
+	 * How to instantiate DocIndexers for the file format we're indexing.
 	 */
-	private Class<? extends DocIndexer> docIndexerClass;
+    private DocIndexerFactory docIndexerFactory;
 
 	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort? */
@@ -168,7 +164,9 @@ public class Indexer {
 	 * @param docIndexerClass how to index the files, or null to autodetect
 	 * @throws IOException
 	 * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
+     * @Deprecated use DocIndexerFactory version
 	 */
+	@Deprecated
 	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
 			throws IOException, DocumentFormatException {
 		this(directory, create, docIndexerClass, (File)null);
@@ -183,10 +181,12 @@ public class Indexer {
 	 *            if true, creates a new index; otherwise, appends to existing index
 	 * @throws IOException
 	 * @throws DocumentFormatException if autodetection of the document format failed
+     * @Deprecated use DocIndexerFactory version
 	 */
+	@Deprecated
 	public Indexer(File directory, boolean create)
 			throws IOException, DocumentFormatException {
-		this(directory, create, null, (File)null);
+		this(directory, create, (Class<? extends DocIndexer>)null, (File)null);
 	}
 
 	/**
@@ -201,21 +201,46 @@ public class Indexer {
 	 *   (if creating new index)
 	 * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
 	 * @throws IOException
+	 * @Deprecated use DocIndexerFactory version
 	 */
+	@Deprecated
 	public Indexer(File directory, boolean create,
 			Class<? extends DocIndexer> docIndexerClass, File indexTemplateFile) throws DocumentFormatException, IOException {
-		this.docIndexerClass = docIndexerClass;
+		this.docIndexerFactory = new DocIndexerFactoryClass(docIndexerClass);
 
-		searcher = Searcher.openForWriting(directory, create, indexTemplateFile);
+		init(directory, create, indexTemplateFile);
+	}
+
+    /**
+     * Construct Indexer
+     *
+     * @param directory
+     *            the main BlackLab index directory
+     * @param create
+     *            if true, creates a new index; otherwise, appends to existing index
+     * @param docIndexerFactory how to index the files, or null to autodetect
+     * @param indexTemplateFile JSON file to use as template for index structure / metadata
+     *   (if creating new index)
+     * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
+     * @throws IOException
+     */
+    public Indexer(File directory, boolean create, DocIndexerFactory docIndexerFactory, File indexTemplateFile)
+            throws DocumentFormatException, IOException {
+        this.docIndexerFactory = docIndexerFactory;
+        init(directory, create, indexTemplateFile);
+    }
+
+    protected void init(File directory, boolean create, File indexTemplateFile) throws IOException, DocumentFormatException {
+        searcher = Searcher.openForWriting(directory, create, indexTemplateFile);
 		if (!create)
 			searcher.getIndexStructure().setModified();
 
-		if (this.docIndexerClass == null) {
+		if (this.docIndexerFactory == null) {
 			// No DocIndexer supplied; try to detect it from the index
 			// metadata.
 			String formatId = searcher.getIndexStructure().getDocumentFormat();
 			if (formatId != null && formatId.length() > 0)
-				setDocIndexer(DocumentFormats.getIndexerClass(formatId));
+				docIndexerFactory = DocumentFormats.getIndexerFactory(formatId);
 			else {
 				throw new DocumentFormatException("Cannot detect document format for index!");
 			}
@@ -239,9 +264,17 @@ public class Indexer {
 		metadataFieldTypeUntokenized.setStoreTermVectorPositions(false);
 		metadataFieldTypeUntokenized.setStoreTermVectorOffsets(false);
 		metadataFieldTypeUntokenized.freeze();
-	}
+    }
 
-	/**
+	public DocIndexerFactory getDocIndexerFactory() {
+        return docIndexerFactory;
+    }
+
+    public void setDocIndexerFactory(DocIndexerFactory docIndexerFactory) {
+        this.docIndexerFactory = docIndexerFactory;
+    }
+
+    /**
 	 * Set the listener object that receives messages about indexing progress.
 	 * @param listener the listener object to report to
 	 */
@@ -325,122 +358,12 @@ public class Indexer {
 	/**
 	 * Set the DocIndexer class we should use to index documents.
 	 * @param docIndexerClass the class
+	 * @deprecated use setDocIndexerFactory
 	 */
+	@Deprecated
 	public void setDocIndexer(Class<? extends DocIndexer> docIndexerClass) {
-		this.docIndexerClass = docIndexerClass;
+		this.docIndexerFactory = new DocIndexerFactoryClass(docIndexerClass);
 	}
-
-	/**
-	 * Called to create a new instance of DocIndexer.
-	 *
-	 * @param documentName the name of the data to index
-	 * @param reader what to index
-	 * @return the DocIndexer
-	 * @throws Exception if the DocIndexer could not be instantiated for some reason
-	 */
-	protected DocIndexer createDocIndexer(String documentName, Reader reader) throws Exception {
-		// Instantiate our DocIndexer class
-	    Constructor<? extends DocIndexer> constructor;
-	    DocIndexer docIndexer;
-        try {
-            // NOTE: newer DocIndexers have a constructor that takes only an Indexer, not the document
-            // being indexed. This allows us more flexibility in how we supply the document to this object
-            // (e.g. as a file, a byte array, a reader, ...).
-            // Assume this is a newer DocIndexer, and only construct it the old way if this fails.
-            constructor = docIndexerClass.getConstructor(Indexer.class);
-            docIndexer = constructor.newInstance();
-            docIndexer.setIndexer(this);
-            docIndexer.setDocumentName(documentName);
-            docIndexer.setDocument(reader);
-        } catch (NoSuchMethodException e) {
-            // No, this is an older DocIndexer that takes document name and reader directly.
-            constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
-            docIndexer = constructor.newInstance(this, documentName, reader);
-        }
-		return docIndexer;
-	}
-
-    /**
-     * Called to create a new instance of DocIndexer.
-     *
-     * @param documentName the name of the data to index
-     * @param is what to index
-     * @param cs charset
-     * @return the DocIndexer
-     * @throws Exception if the DocIndexer could not be instantiated for some reason
-     */
-    protected DocIndexer createDocIndexer(String documentName, InputStream is, Charset cs) throws Exception {
-        // Instantiate our DocIndexer class
-        Constructor<? extends DocIndexer> constructor;
-        DocIndexer docIndexer;
-        try {
-            constructor = docIndexerClass.getConstructor(Indexer.class);
-            docIndexer = constructor.newInstance();
-            docIndexer.setIndexer(this);
-            docIndexer.setDocumentName(documentName);
-            docIndexer.setDocument(is, cs);
-        } catch (NoSuchMethodException e) {
-            // No, this is an older DocIndexer that takes document name and reader directly.
-            constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
-            docIndexer = constructor.newInstance(this, documentName, new InputStreamReader(is, cs));
-        }
-        return docIndexer;
-    }
-
-    /**
-     * Called to create a new instance of DocIndexer.
-     *
-     * @param documentName the name of the data to index
-     * @param f file to index
-     * @param cs charset
-     * @return the DocIndexer
-     * @throws Exception if the DocIndexer could not be instantiated for some reason
-     */
-    protected DocIndexer createDocIndexer(String documentName, File f, Charset cs) throws Exception {
-        // Instantiate our DocIndexer class
-        Constructor<? extends DocIndexer> constructor;
-        DocIndexer docIndexer;
-        try {
-            constructor = docIndexerClass.getConstructor(Indexer.class);
-            docIndexer = constructor.newInstance();
-            docIndexer.setIndexer(this);
-            docIndexer.setDocumentName(documentName);
-            docIndexer.setDocument(f, cs);
-        } catch (NoSuchMethodException e) {
-            // No, this is an older DocIndexer that takes document name and reader directly.
-            constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
-            UnicodeStream is = new UnicodeStream(new FileInputStream(f), DEFAULT_INPUT_ENCODING);
-            docIndexer = constructor.newInstance(this, documentName, new InputStreamReader(is, cs));
-        }
-        return docIndexer;
-    }
-
-    /**
-     * Called to create a new instance of DocIndexer.
-     *
-     * @param documentName the name of the data to index
-     * @param contents what to index
-     * @param cs charset
-     * @return the DocIndexer
-     * @throws Exception if the DocIndexer could not be instantiated for some reason
-     */
-    protected DocIndexer createDocIndexer(String documentName, byte[] contents, Charset cs) throws Exception {
-        // Instantiate our DocIndexer class
-        Constructor<? extends DocIndexer> constructor;
-        DocIndexer docIndexer;
-        try {
-            constructor = docIndexerClass.getConstructor(Indexer.class);
-            docIndexer = constructor.newInstance();
-            docIndexer.setIndexer(this);
-            docIndexer.setDocumentName(documentName);
-            docIndexer.setDocument(contents, cs);
-        } catch (NoSuchMethodException e) {
-            // No, this is an older DocIndexer that takes document name and reader directly.
-            constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
-            docIndexer = constructor.newInstance(this, documentName, new InputStreamReader(new ByteArrayInputStream(contents), cs));
-        }
-        return docIndexer;
-    }
 
 	/**
 	 * Add a Lucene document to the index
@@ -494,7 +417,7 @@ public class Indexer {
 	 * @throws Exception
 	 */
 	private void indexReader(String documentName, Reader reader) throws Exception {
-	    DocIndexer docIndexer = createDocIndexer(documentName, reader);
+	    DocIndexer docIndexer = docIndexerFactory.get(this, documentName, reader);
 	    indexDocIndexer(documentName, docIndexer);
 	}
 
@@ -516,7 +439,7 @@ public class Indexer {
 	}
 
 	private void indexFile(String documentName, File fileToIndex) throws Exception {
-        DocIndexer docIndexer = createDocIndexer(documentName, fileToIndex, DEFAULT_INPUT_ENCODING);
+        DocIndexer docIndexer = docIndexerFactory.get(this, documentName, fileToIndex, DEFAULT_INPUT_ENCODING);
         indexDocIndexer(documentName, docIndexer);
     }
 
@@ -531,7 +454,7 @@ public class Indexer {
      */
     public void index(String documentName, InputStream input) throws Exception {
         UnicodeStream is = new UnicodeStream(input, DEFAULT_INPUT_ENCODING);
-        DocIndexer docIndexer = createDocIndexer(documentName, is, is.getEncoding());
+        DocIndexer docIndexer = docIndexerFactory.get(this, documentName, is, is.getEncoding());
         indexDocIndexer(documentName, docIndexer);
     }
 
