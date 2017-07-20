@@ -1,10 +1,12 @@
 package nl.inl.blacklab.index.xpath;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -26,10 +28,14 @@ import org.apache.lucene.util.BytesRef;
 
 import com.ximpleware.AutoPilot;
 import com.ximpleware.NavException;
+import com.ximpleware.VTDException;
 import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
 
+import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
@@ -39,6 +45,8 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.ExUtil;
+import nl.inl.util.FileProcessor;
+import nl.inl.util.FileProcessor.FileHandler;
 import nl.inl.util.StringUtil;
 
 /**
@@ -46,10 +54,22 @@ import nl.inl.util.StringUtil;
  */
 public class DocIndexerXPath extends DocIndexer {
 
-    private static final boolean DEBUG = true;
+    private static final boolean TRACE = true;
 
     /** Our input document */
     private byte[] inputDocument;
+
+    /** What was the byte offset of the last char position we determined? */
+    private int lastCharPositionByteOffset;
+
+    /** What was the last character position we determined? */
+    private int lastCharPosition;
+
+    /** Byte position at which the document started */
+    private int documentByteOffset;
+
+    /** Length of the document in bytes */
+    private int documentLengthBytes;
 
     /** VTD parser (generator?) */
     private VTDGen vg;
@@ -83,6 +103,25 @@ public class DocIndexerXPath extends DocIndexer {
 
     boolean inited = false;
 
+    /** If true, we're indexing into an existing Lucene document. Don't overwrite it with a new one. */
+    private boolean indexingIntoExistingLuceneDoc = false;
+
+    /** If no punctuation expression is defined, add a space between each word by default. */
+    private boolean addDefaultPunctuation = true;
+
+    /** Store documents? Can be set to false in ConfigInputFormat to if no content store is desired,
+     *  or via indexSpecificDocument to prevent storing linked documents.
+     */
+    private boolean storeDocuments = true;
+
+    /** The content store we should store this document in. Also stored the content store id
+     *  in the field with this name with "Cid" appended, e.g. "metadataCid" if useContentStore
+     *  equals "metadata". This is used for storing linked document, if desired.
+     *  Normally null, meaning document should be stored in the default field and content
+     *  store (usually "contents", with the id in field "contents#cid").
+     */
+    private String contentStoreName = null;
+
     public DocIndexerXPath() {
     }
 
@@ -90,6 +129,7 @@ public class DocIndexerXPath extends DocIndexer {
         if (inited)
             return;
         inited = true;
+        storeDocuments = config.isStore();
         for (ConfigAnnotatedField af: config.getAnnotatedFields()) {
 
 	        // Define the properties that make up our complex field
@@ -103,17 +143,22 @@ public class DocIndexerXPath extends DocIndexer {
 	        ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);
 	        propStartTag.setForwardIndex(false);
 
-	        IndexStructure indexStructure;
-	        if (!DEBUG) {
-		        indexStructure = indexer.getSearcher().getIndexStructure();
-		        indexStructure.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
-	        }
+	        // Create properties for the other annotations
 	        for (int i = 1; i < annotations.size(); i++) {
 	        	ConfigAnnotation annot = annotations.get(i);
 	        	complexField.addProperty(annot.getName(), getSensitivitySetting(annot.getName()), false);
 	        }
+	        for (ConfigStandoffAnnotations standoff: af.getStandoffAnnotations()) {
+	            for (ConfigAnnotation annot: standoff.getAnnotations()) {
+	                complexField.addProperty(annot.getName(), getSensitivitySetting(annot.getName()), false);
+	            }
+	        }
 
-	        if (!DEBUG) {
+            IndexStructure indexStructure;
+            if (indexer != null) {
+                indexStructure = indexer.getSearcher().getIndexStructure();
+                indexStructure.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
+
 		        // If the indexmetadata file specified a list of properties that shouldn't get a forward
 		        // index, make the new complex field aware of this.
 		        Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(complexField.getName()).getNoForwardIndexProps();
@@ -188,126 +233,179 @@ public class DocIndexerXPath extends DocIndexer {
         AutoPilot documents = createAutoPilot();
         documents.selectXPath(config.getDocumentPath());
         while(documents.evalXPath() != -1) {
+            indexDocument();
+        }
 
-            long documentFragment = nav.getContentFragment();
-            int documentOffset = (int)documentFragment;
-            int documentLength = (int)(documentFragment >> 32);
+    }
 
-            startDocument(documentOffset, documentLength);
+    /**
+     * Index document from the current node.
+     *
+     * @throws VTDException on XPath parse (or other) error
+     */
+    protected void indexDocument() throws VTDException {
 
-            // For each configured annotated field...
-            for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields()) {
+        Map<String, Integer> tokenPositionsMap = new HashMap<>();
 
-            	// Store some useful stuff about the field we're processing
-            	currentAnnotatedField = annotatedField;
-        		currentComplexField = complexFields.get(currentAnnotatedField.getFieldName());
-        		propStartTag = currentComplexField.getTagProperty();
-        		propMain = currentComplexField.getMainProperty();
-        		propPunct = currentComplexField.getPunctProperty();
+        startDocument();
 
-                AutoPilot words = createAutoPilot();
-                words.selectXPath(annotatedField.getWordsPath());
+        // For each configured annotated field...
+        for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields()) {
 
-                // For each body element...
-                // (there's usually only one, but there's no reason to limit it)
-                nav.push();
-                AutoPilot bodies = createAutoPilot();
-                bodies.selectXPath(annotatedField.getContainerPath());
-                while (bodies.evalXPath() != -1) {
+        	// Determine some useful stuff about the field we're processing
+            // and store in instance variables so our methods can access them
+        	currentAnnotatedField = annotatedField;
+        	currentComplexField = complexFields.get(currentAnnotatedField.getFieldName());
+        	propStartTag = currentComplexField.getTagProperty();
+        	propMain = currentComplexField.getMainProperty();
+        	propPunct = currentComplexField.getPunctProperty();
 
-                    // First we find all inline elements (stuff like s, p, b, etc.) and store
-                    // the locations of their start and end tags in a sorted list.
-                    // This way, we can keep track of between which words these tags occur.
-                    // For end tags, we will update the payload of the start tag when we encounter it,
-                    // just like we do in our SAX parsers.
-                    AutoPilot apTags = createAutoPilot();
-                    List<InlineObject> tagsAndPunct = new ArrayList<>();
-                    for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
-                        nav.push();
-                        apTags.selectXPath(inlineTag.getTagPath());
-                        while (apTags.evalXPath() != -1) {
-                            collectInlineTag(tagsAndPunct);
-                        }
-                        nav.pop();
-                    }
-                    if (annotatedField.getPunctPath() != null) {
-                        // We have punctuation occurring between word tags (as opposed to
-                        // punctuation that is tagged as a word itself). Collect this punctuation.
-                    	nav.push();
-                        apTags.selectXPath(annotatedField.getPunctPath());
-                        while (apTags.evalXPath() != -1) {
-                            collectPunct(tagsAndPunct);
-                        }
-                        nav.pop();
-                    }
-                    Collections.sort(tagsAndPunct);
-                    Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
-                    InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
+            AutoPilot words = createAutoPilot();
+            words.selectXPath(annotatedField.getWordsPath());
+            String tokenPositionIdPath = annotatedField.getTokenPositionIdPath();
 
-                    // Now, find all words, keeping track of what inline objects occur in between.
+            // For each body element...
+            // (there's usually only one, but there's no reason to limit it)
+            nav.push();
+            AutoPilot bodies = createAutoPilot();
+            bodies.selectXPath(annotatedField.getContainerPath());
+            while (bodies.evalXPath() != -1) {
+
+                // First we find all inline elements (stuff like s, p, b, etc.) and store
+                // the locations of their start and end tags in a sorted list.
+                // This way, we can keep track of between which words these tags occur.
+                // For end tags, we will update the payload of the start tag when we encounter it,
+                // just like we do in our SAX parsers.
+                AutoPilot apTags = createAutoPilot();
+                List<InlineObject> tagsAndPunct = new ArrayList<>();
+                for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
                     nav.push();
-                    words.resetXPath();
-                    while (words.evalXPath() != -1) {
-
-                        long wordFragment = nav.getContentFragment();
-                        int wordOffset = (int)wordFragment;
-
-                        // Does an inline object occur before this word?
-                        while (wordOffset >= nextInlineObject.getOffset()) {
-                            // Yes. Handle it.
-                        	if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
-                        		punctuation(nextInlineObject);
-                        	else
-                        		inlineTag(nextInlineObject);
-                            nextInlineObject = inlineObjectsIt.next();
-                        }
-
-                        beginWord();
-
-                        // For each configured annotation...
-                        AutoPilot apAnnot = createAutoPilot();
-                        for (ConfigAnnotation annotation: annotatedField.getAnnotations()) {
-                            nav.push();
-                        	apAnnot.selectXPath(annotation.getValuePath());
-                            String annotValue = apAnnot.evalXPathToString();
-                            annotation(annotation.getName(), annotValue);
-                            nav.pop();
-                        }
-
-                        endWord();
+                    apTags.selectXPath(inlineTag.getTagPath());
+                    while (apTags.evalXPath() != -1) {
+                        collectInlineTag(tagsAndPunct);
                     }
                     nav.pop();
+                }
+                addDefaultPunctuation = true;
+                if (annotatedField.getPunctPath() != null) {
+                    // We have punctuation occurring between word tags (as opposed to
+                    // punctuation that is tagged as a word itself). Collect this punctuation.
+                    addDefaultPunctuation = false;
+                	nav.push();
+                    apTags.selectXPath(annotatedField.getPunctPath());
+                    while (apTags.evalXPath() != -1) {
+                        collectPunct(tagsAndPunct);
+                    }
+                    nav.pop();
+                }
+                Collections.sort(tagsAndPunct);
+                Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
+                InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
 
-                    // Handle any inline objects after the last word
-                    while (nextInlineObject != null) {
+                // Now, find all words, keeping track of what inline objects occur in between.
+                nav.push();
+                words.resetXPath();
+                while (words.evalXPath() != -1) {
+
+                    // Capture tokenPositionId for this token position?
+                    AutoPilot apAnnot = createAutoPilot();
+                    if (tokenPositionIdPath != null) {
+                        apAnnot.selectXPath(tokenPositionIdPath);
+                        String tokenPositionId = apAnnot.evalXPathToString();
+                        tokenPositionsMap.put(tokenPositionId, propMain.lastValuePosition() + 1);
+                    }
+
+                    // Does an inline object occur before this word?
+                    long wordFragment = nav.getContentFragment();
+                    int wordOffset = (int)wordFragment;
+                    while (wordOffset >= nextInlineObject.getOffset()) {
+                        // Yes. Handle it.
                     	if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
                     		punctuation(nextInlineObject);
                     	else
                     		inlineTag(nextInlineObject);
-                        nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
+                        nextInlineObject = inlineObjectsIt.next();
                     }
 
+                    beginWord();
+
+                    // For each configured annotation...
+                    for (ConfigAnnotation annotation: annotatedField.getAnnotations()) {
+                        processAnnotation(annotation, apAnnot, null);
+                    }
+
+                    endWord();
+                }
+                nav.pop();
+
+                // Handle any inline objects after the last word
+                while (nextInlineObject != null) {
+                	if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
+                		punctuation(nextInlineObject);
+                	else
+                		inlineTag(nextInlineObject);
+                    nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
+                }
+
+            }
+            nav.pop();
+
+            // For each configured standoff annotation...
+            for (ConfigStandoffAnnotations standoff: annotatedField.getStandoffAnnotations()) {
+                // For each instance of this standoff annotation..
+                nav.push();
+                AutoPilot apStandoff = createAutoPilot();
+                apStandoff.selectXPath(standoff.getPath());
+                AutoPilot apTokenPos = createAutoPilot();
+                apTokenPos.selectXPath(standoff.getRefTokenPositionIdPath());
+                AutoPilot apEvalToString = createAutoPilot();
+                apEvalToString.selectXPath(".");
+                AutoPilot apAnnot = createAutoPilot();
+                while (apStandoff.evalXPath() != -1) {
+
+                    // Determine what token positions to index these values at
+                    nav.push();
+                    List<Integer> tokenPositions = new ArrayList<>();
+                    apTokenPos.resetXPath();
+                    while (apTokenPos.evalXPath() != -1) {
+                        apEvalToString.resetXPath();
+                        String tokenPositionId = apEvalToString.evalXPathToString();
+                        Integer integer = tokenPositionsMap.get(tokenPositionId);
+                        if (integer == null)
+                            warn("Unresolved reference to token position: '" + tokenPositionId + "'");
+                        else
+                            tokenPositions.add(integer);
+                    }
+                    nav.pop();
+
+                    for (ConfigAnnotation annotation: standoff.getAnnotations()) {
+                        processAnnotation(annotation, apAnnot, tokenPositions);
+                    }
                 }
                 nav.pop();
             }
+        }
 
-            // For each metadata block..
+        // For each configured metadata block..
+        for (ConfigMetadataBlock b: config.getMetadataBlocks()) {
+
+            // For each instance of this metadata block...
             nav.push();
             AutoPilot apMetadataBlock = createAutoPilot();
-            apMetadataBlock.selectXPath(config.getMetadataContainerPath());
+            apMetadataBlock.selectXPath(b.getContainerPath());
             while (apMetadataBlock.evalXPath() != -1) {
 
                 // For each configured metadata field...
                 AutoPilot apMetadata = createAutoPilot();
                 AutoPilot apFieldName = createAutoPilot();
                 AutoPilot apMetaForEach = createAutoPilot();
-                for (ConfigMetadataField f: config.getMetadataFields()) {
+                for (ConfigMetadataField f: b.getMetadataFields()) {
 
                     // Capture whatever this configured metadata field points to
-                    nav.push();
                     if (f.isForEach()) {
                         // "forEach" metadata specification
                         // (allows us to capture many metadata fields with 3 XPath expressions)
+                        nav.push();
                         apMetaForEach.selectXPath(f.getForEachPath());
                         apFieldName.selectXPath(f.getFieldName());
                         apMetadata.selectXPath(f.getValuePath());
@@ -319,52 +417,179 @@ public class DocIndexerXPath extends DocIndexer {
                             String metadataValue = apMetadata.evalXPathToString();
                             metadata(fieldName, metadataValue);
                         }
+                        nav.pop();
                     } else {
                         // Regular metadata field; just the fieldName and an XPath expression for the value
                         apMetadata.selectXPath(f.getValuePath());
                         String metadataValue = apMetadata.evalXPathToString();
                         metadata(f.getFieldName(), metadataValue);
                     }
-                    nav.pop();
                 }
 
             }
             nav.pop();
-
-            // For each linked document...
-            for (ConfigLinkedDocument ld: config.getLinkedDocuments()) {
-                // Resolve linkPaths to get the information needed to fetch the document
-                List<String> results = new ArrayList<>();
-                AutoPilot apLinkPath = createAutoPilot();
-                for (String linkPath: ld.getLinkPaths()) {
-                    apLinkPath.selectXPath(linkPath);
-                    String result = apLinkPath.evalXPathToString();
-                    if (result == null || result.isEmpty()) {
-                        switch(ld.getIfLinkPathMissing()) {
-                        case IGNORE:
-                            break;
-                        case WARN:
-                            indexer.getListener().warning("Link path " + linkPath + " not found in document " + documentName);
-                            break;
-                        case FAIL:
-                            throw new RuntimeException("Link path " + linkPath + " not found in document " + documentName);
-                        }
-                    }
-                    results.add(result);
-                }
-
-                // Substitute link path results in inputFile, pathInsideArchive and documentPath
-                String inputFile = replaceDollarRefs(ld.getInputFile(), results);
-                String pathInsideArchive = replaceDollarRefs(ld.getPathInsideArchive(), results);
-                String documentPath = replaceDollarRefs(ld.getDocumentPath(), results);
-
-                // Fetch and index the linked document
-                indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormat());
-            }
-
-            endDocument(documentOffset, documentLength);
         }
 
+        // For each linked document...
+        for (ConfigLinkedDocument ld: config.getLinkedDocuments()) {
+            // Resolve linkPaths to get the information needed to fetch the document
+            List<String> results = new ArrayList<>();
+            AutoPilot apLinkPath = createAutoPilot();
+            for (String linkPath: ld.getLinkPaths()) {
+                apLinkPath.selectXPath(linkPath);
+                String result = apLinkPath.evalXPathToString();
+                if (result == null || result.isEmpty()) {
+                    switch(ld.getIfLinkPathMissing()) {
+                    case IGNORE:
+                        break;
+                    case WARN:
+                        indexer.getListener().warning("Link path " + linkPath + " not found in document " + documentName);
+                        break;
+                    case FAIL:
+                        throw new RuntimeException("Link path " + linkPath + " not found in document " + documentName);
+                    }
+                }
+                results.add(result);
+            }
+
+            // Substitute link path results in inputFile, pathInsideArchive and documentPath
+            String inputFile = replaceDollarRefs(ld.getInputFile(), results);
+            String pathInsideArchive = replaceDollarRefs(ld.getPathInsideArchive(), results);
+            String documentPath = replaceDollarRefs(ld.getDocumentPath(), results);
+
+            try {
+                // Fetch and index the linked document
+                indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld);
+            } catch (Exception e) {
+                switch(ld.getIfLinkPathMissing()) {
+                case IGNORE:
+                case WARN:
+                    indexer.getListener().warning("Could not find linked document for " + documentName + ": " + e.getMessage());
+                    break;
+                case FAIL:
+                    throw new RuntimeException("Could not find linked document for " + documentName, e);
+                }
+            }
+        }
+
+        endDocument();
+    }
+
+    /**
+     * Process an annotation at the current position.
+     *
+     * @param annotation annotation to process
+     * @param apAnnot autopilot object to use (so we don't keep creating new ones)
+     * @param indexAtPositions if null: index at the current position; otherwise, index at all these positions
+     * @throws VTDException on XPath error
+     */
+    protected void processAnnotation(ConfigAnnotation annotation, AutoPilot apAnnot, List<Integer> indexAtPositions) throws VTDException {
+        String basePath = annotation.getBasePath();
+        if (basePath != null) {
+            // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
+            nav.push();
+            apAnnot.selectXPath(basePath);
+            apAnnot.evalXPath();
+        }
+
+        String valuePath = annotation.getValuePath();
+
+        // See if we want to capture any values and substitute them into the XPath
+        int i = 1;
+        for (String captureValuePath: annotation.getCaptureValuePaths()) {
+            apAnnot.selectXPath(captureValuePath);
+            String value = apAnnot.evalXPathToString();
+            valuePath = valuePath.replace("$" + i, value);
+            i++;
+        }
+
+        apAnnot.selectXPath(valuePath);
+        String annotValue = apAnnot.evalXPathToString();
+        annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+
+        // For each configured subannotation...
+        AutoPilot apValue = createAutoPilot();
+        AutoPilot apName = createAutoPilot();
+        AutoPilot apForEach = createAutoPilot();
+        for (ConfigAnnotation subAnnot: annotation.getSubAnnotations()) {
+            // Capture this subannotation value
+            if (subAnnot.isForEach()) {
+                // "forEach" subannotation specification
+                // (allows us to capture multiple subannotations with 3 XPath expressions)
+                nav.push();
+                apForEach.selectXPath(subAnnot.getForEachPath());
+                apName.selectXPath(subAnnot.getName());
+                apValue.selectXPath(subAnnot.getValuePath());
+                while (apForEach.evalXPath() != -1) {
+                    // Find the name and value for this forEach match
+                    apName.resetXPath();
+                    String name = apName.evalXPathToString();
+                    apValue.resetXPath();
+                    String value = apValue.evalXPathToString();
+                    subAnnotation(annotation.getName(), name, value, indexAtPositions);
+                }
+                nav.pop();
+            } else {
+                // Regular metadata field; just the fieldName and an XPath expression for the value
+                apValue.selectXPath(subAnnot.getValuePath());
+                String value = apValue.evalXPathToString();
+                subAnnotation(annotation.getName(), subAnnot.getName(), value, indexAtPositions);
+            }
+        }
+
+        if (basePath != null) {
+            // We pushed when we navigated to the base element; pop now.
+            nav.pop();
+        }
+    }
+
+    /**
+     * Index a specific document into an existing Lucene document.
+     *
+     * Only supported by DocIndexerXPath.
+     *
+     * @param documentXPath XPath to find the document to index
+     * @param indexToLuceneDoc Lucene document to index to
+     * @param contentStoreName content store to store the document in, or null if it should not be stored
+     */
+    public void indexSpecificDocument(String documentXPath, Document indexToLuceneDoc, String contentStoreName) {
+        currentLuceneDoc = indexToLuceneDoc;
+        indexingIntoExistingLuceneDoc = true;
+        if (contentStoreName != null)
+            this.contentStoreName = contentStoreName;
+        else
+            storeDocuments = false;
+
+        // Resolve document XPath
+        init();
+
+        try {
+            // Parse use VTD-XML
+            vg = new VTDGen();
+            vg.setDoc(inputDocument);
+            vg.parse(config.isNamespaceAware());
+
+            nav = vg.getNav();
+
+            // Find our specific document
+            AutoPilot documents = createAutoPilot();
+            documents.selectXPath(documentXPath);
+            boolean docDone = false;
+            while(documents.evalXPath() != -1) {
+                if (docDone)
+                    throw new RuntimeException("Document link " + documentXPath + " matched multiple documents in " + documentName);
+                indexDocument();
+                docDone = true;
+            }
+        } catch (Exception e1) {
+            throw ExUtil.wrapRuntimeException(e1);
+        }
+
+        // Reset to some reasonable defaults
+        currentLuceneDoc = null;
+        indexingIntoExistingLuceneDoc = false;
+        this.contentStoreName = null;
+        storeDocuments = true;
     }
 
     /**
@@ -374,35 +599,79 @@ public class DocIndexerXPath extends DocIndexer {
      * @param pathInsideArchive if input file is an archive: the path to the file we need inside the archive
      * @param documentPath XPath to the specific linked document we need
      * @param inputFormat input format of the linked document
+     * @param b
+     * @throws IOException on error
      */
-	private void indexLinkedDocument(String inputFile, String pathInsideArchive, String documentPath, String inputFormat) {
-//	    // Get the DocIndexer
-//
-//
-//	    // Fetch the input file (either by downloading it to a temporary location, or opening it from disk)
-//	    File f = fetchFile(inputFile);
-//
-//	    // Get the data
-//	    String n = f.getName().toLowerCase();
-//	    byte [] data;
-//	    if (n.endsWith(".zip") || n.endsWith(".tar") || n.endsWith(".tar.gz") || n.endsWith(".tgz")) {
-//	        // It's an archive. Unpack the right file from it.
-//	        data = fetchFileFromArchive(f, pathInsideArchive);
-//	    } else {
-//	        // Regular file.
-//	        data = Files.readAllBytes(Paths.get(f.getPath()));
-//	    }
-//
-//	    //
+	private void indexLinkedDocument(String inputFile, String pathInsideArchive, String documentPath, ConfigLinkedDocument ld) throws IOException {
+	    String inputFormat = ld.getInputFormat();
+	    boolean store = ld.isStore();
+
+	    // Get the DocIndexerFactory
+	    DocIndexerFactory docIndexerFactory = DocumentFormats.getIndexerFactory(inputFormat);
+
+        // Fetch the input file (either by downloading it to a temporary location, or opening it from disk)
+        try (InputStream is = resolveFileReference(inputFile)) {
+
+    	    // Get the data
+    	    byte [] data;
+    	    String completePath = inputFile;
+    	    if (inputFile.endsWith(".zip") || inputFile.endsWith(".tar") || inputFile.endsWith(".tar.gz") || inputFile.endsWith(".tgz")) {
+    	        // It's an archive. Unpack the right file from it.
+                completePath += "/" + pathInsideArchive;
+    	        data = fetchFileFromArchive(inputFile, is, pathInsideArchive);
+    	    } else {
+    	        // Regular file.
+    	        try {
+                    data = IOUtils.toByteArray(is);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+    	    }
+    	    if (data == null) {
+    	        throw new RuntimeException("Error reading linked document");
+    	    }
+
+            // Index the data
+    	    DocIndexer docIndexer = docIndexerFactory.get(indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING);
+    	    if (docIndexer instanceof DocIndexerXPath) {
+    	        ((DocIndexerXPath)docIndexer).indexSpecificDocument(documentPath, currentLuceneDoc, store ? ld.getName() : null);
+    	    } else {
+    	        throw new RuntimeException("Linked document indexer must be DocIndexerXPath-based, but is " + docIndexer.getClass().getName());
+    	    }
+        }
+
+    }
+
+    private static byte[] fetchFileFromArchive(String inputFile, InputStream is, final String pathInsideArchive) {
+        FileProcessor proc = new FileProcessor(false, true);
+        FetchFileHandler fileHandler = new FetchFileHandler(pathInsideArchive);
+        proc.setFileHandler(fileHandler);
+        proc.processInputStream(inputFile, is);
+        return fileHandler.bytes;
+    }
+
+    private InputStream resolveFileReference(String inputFile) {
+        try {
+            if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
+                return new URL(inputFile).openStream();
+            }
+            if (indexer == null)
+                return new FileInputStream(new File(inputFile));
+            File f = indexer.getLinkedFile(inputFile);
+            return new FileInputStream(f);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static String replaceDollarRefs(String pattern, List<String> replacements) {
-	    if (pattern == null)
-	        return null;
-        for (int i = 0; i < replacements.size() && i < 9; i++) {
-            String replacement = replacements.get(i);
-            pattern = pattern.replaceAll("\\$" + (i + 1), replacement);
-        }
+	    if (pattern != null) {
+    	    int i = 1;
+            for (String replacement: replacements) {
+                pattern = pattern.replace("$" + i, replacement);
+                i++;
+            }
+	    }
         return pattern;
     }
 
@@ -455,13 +724,7 @@ public class DocIndexerXPath extends DocIndexer {
 		int offset = nav.getTokenOffset(i);
 		int length = nav.getTokenLength(i);
 
-//		long contentFragment = nav.getContentFragment();
-//		int contentOffset = (int)contentFragment;
-//		int contentLength = (int)(contentFragment >> 32);
-//		int contentEnd = contentOffset + contentLength;
-
 		// Find text
-		//int currentIndex = nav.getCurrentIndex();
 		String text = nav.toString(i);
 		text = dedupe(StringUtil.normalizeWhitespace(text));
 
@@ -504,46 +767,45 @@ public class DocIndexerXPath extends DocIndexer {
 		return attr;
 	}
 
-//	/** Return the exact original code for an inline start or end tag. */
-//    private String getInlineTagCode(InlineObject tag) {
-//        ByteArrayOutputStream os = new ByteArrayOutputStream();
-//        try {
-//            nav.dumpFragment(tag.fragment(), os);
-//            return new String(os.toByteArray(), StandardCharsets.UTF_8);
-//        } catch (NavException | IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
-
-    // HANDLERS
-
     void trace(String msg) {
-    	if (DEBUG)
-    		System.out.print(msg);
+        if (TRACE)
+            System.out.print(msg);
     }
 
     void traceln(String msg) {
-    	if (DEBUG)
-    		System.out.println(msg);
+        if (TRACE)
+            System.out.println(msg);
     }
 
-    protected void startDocument(int offset, int length) {
+    // HANDLERS
+
+    protected void startDocument() {
     	traceln("START DOCUMENT");
 
-        startCaptureContent();
+        try {
+            long fragment = nav.getElementFragment();
+            documentByteOffset = (int)fragment;
+            documentLengthBytes = (int)(fragment >> 32);
+        } catch (NavException e) {
+            throw new RuntimeException(e);
+        }
 
-        currentLuceneDoc = new Document();
-        if (!DEBUG)
-        	currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.getMetadataFieldType(false)));
+        lastCharPosition = 0;
+        lastCharPositionByteOffset = documentByteOffset;
 
-        // DEPRECATED for these types of indexer, but still supported for now
-        addMetadataFieldsFromParameters();
+        if (!indexingIntoExistingLuceneDoc) {
+            currentLuceneDoc = new Document();
+            if (indexer != null)
+            	currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.getMetadataFieldType(false)));
 
-        if (!DEBUG)
-        	indexer.getListener().documentStarted(documentName);
+            // DEPRECATED for these types of indexer, but still supported for now
+            addMetadataFieldsFromParameters();
+        }
+        if (indexer != null)
+            indexer.getListener().documentStarted(documentName);
     }
 
-	protected void endDocument(int offset, int length) {
+	protected void endDocument() {
 		traceln("END DOCUMENT");
 
     	// The "main complex field" is the field that stores the document content id for now.
@@ -591,6 +853,8 @@ public class DocIndexerXPath extends DocIndexer {
             }
             // Store the different properties of the complex field that
             // were gathered in lists while parsing.
+//            System.out.println("Adding to lucene doc: " + complexField.getName());
+//            System.out.println("Values: " + complexField.getMainProperty().getValues());
             complexField.addToLuceneDoc(currentLuceneDoc);
 
             // Add all properties to forward index
@@ -603,42 +867,43 @@ public class DocIndexerXPath extends DocIndexer {
                 String propName = prop.getName();
                 String fieldName = ComplexFieldUtil.propertyField(
                         complexField.getName(), propName);
-                if (!DEBUG) {
+                if (indexer != null) {
 	                int fiid = indexer.addToForwardIndex(fieldName, prop);
 	                currentLuceneDoc.add(new IntField(ComplexFieldUtil
 	                        .forwardIndexIdField(fieldName), fiid, Store.YES));
                 }
             }
 
-            // Reset complex field for next document
-            complexField.clear();
-
         }
 
-        // Finish storing the document in the document store (parts of it
-        // may already have been written because we write in chunks to save memory),
-        // retrieve the content id, and store that in Lucene.
-        // (Note that we do this after adding the dummy token, so the character
-        // positions for the dummy token still make (some) sense)
-        int contentId = storeCapturedContent();
-        if (mainComplexField == null) {
-        	// If we don't have complex fields, we're probably parsing metadata.
-        	mainComplexField = "metadata";
+        if (storeDocuments) {
+            // Finish storing the document in the document store,
+            // retrieve the content id, and store that in Lucene.
+            // (Note that we do this after adding the dummy token, so the character
+            // positions for the dummy token still make (some) sense)
+            String document = new String(inputDocument, documentByteOffset, documentLengthBytes);
+            String contentStoreName, contentIdFieldName;
+            if (this.contentStoreName == null) {
+                if (mainComplexField == null) {
+                    contentStoreName = "metadata";
+                    contentIdFieldName = "metadataCid";
+                } else {
+                    contentStoreName = mainComplexField;
+                    contentIdFieldName = ComplexFieldUtil.contentIdField(mainComplexField);
+                }
+            } else {
+                contentStoreName = this.contentStoreName;
+                contentIdFieldName = contentStoreName + "Cid";
+            }
+            int contentId = -1;
+            if (indexer != null) {
+                ContentStore contentStore = indexer.getContentStore(contentStoreName);
+                contentId = contentStore.store(document);
+            }
+            currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
         }
-        currentLuceneDoc.add(new IntField(ComplexFieldUtil
-                .contentIdField(mainComplexField), contentId,
-                Store.YES));
 
-//        // If there's an external metadata fetcher, call it now so it can
-//        // add the metadata for this document and (optionally) store the
-//        // metadata document in the content store (and the corresponding id in the
-//        // Lucene doc)
-//        MetadataFetcher m = getMetadataFetcher();
-//        if (m != null) {
-//            m.addMetadata();
-//        }
-
-        if (!DEBUG) {
+        if (indexer != null) {
 	        // See what metadatafields are missing or empty and add unknown value
 	        // if desired.
 	        IndexStructure struct = indexer.getSearcher().getIndexStructure();
@@ -667,35 +932,74 @@ public class DocIndexerXPath extends DocIndexer {
 	                break;
 	            }
 	            if (useUnknownValue)
-	                addMetadataField(fieldName, fd.getUnknownValue());
+	                addMetadataField(optTranslateFieldName(fieldName), fd.getUnknownValue());
 	        }
         }
 
         try {
             // Add Lucene doc to indexer
-        	if (!DEBUG)
+        	if (indexer != null)
             	indexer.add(currentLuceneDoc);
         } catch (Exception e) {
             throw ExUtil.wrapRuntimeException(e);
         }
 
+        for (ComplexField complexField: complexFields.values()) {
+            // Reset complex field for next document
+            complexField.clear();
+        }
+
         // Report progress
-        reportCharsProcessed();
-        if (!DEBUG)
+        if (indexer != null) {
+            indexer.getListener().charsDone(documentByteOffset + documentLengthBytes); // bytes, not chars; oh well
         	reportTokensProcessed(wordsDone);
+        }
         wordsDone = 0;
-        if (!DEBUG)
+        if (indexer != null)
         	indexer.getListener().documentDone(documentName);
 
         currentLuceneDoc = null;
 
         // Stop if required
-        if (!DEBUG) {
+        if (indexer != null) {
         	if (!indexer.continueIndexing())
         		throw new MaxDocsReachedException();
         }
 
         uniqueStrings.clear();
+    }
+
+	private String optTranslateFieldName(String from) {
+        String to = config.getIndexFieldAs().get(from);
+        return to == null ? from : to;
+    }
+
+    /** File handler that reads a single file into a byte array. */
+    private static final class FetchFileHandler implements FileHandler {
+
+        private final String pathToFile;
+
+        byte[] bytes;
+
+        FetchFileHandler(String pathInsideArchive) {
+            this.pathToFile = pathInsideArchive;
+        }
+
+        @Override
+        public void stream(String path, InputStream f) {
+            if (path.equals(pathToFile)) {
+                try {
+                    bytes = IOUtils.toByteArray(f);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        @Override
+        public void file(String path, File f) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /* Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
@@ -744,71 +1048,122 @@ public class DocIndexerXPath extends DocIndexer {
         }
     }
 
+	StringBuilder punctuation = new StringBuilder();
+
     private void punctuation(InlineObject punct) {
     	trace(punct.getText());
 
-    	propPunct.addValue(punct.getText());
+    	punctuation.append(punct.getText());
 	}
 
     protected void beginWord() {
-        currentComplexField.addStartChar(getCharacterPosition());
+        int pos = getCharacterPosition();
+        currentComplexField.addStartChar(pos);
+        trace("@" + pos);
     }
 
     protected void endWord() {
+        String punct = punctuation.length() == 0 && addDefaultPunctuation ? " " : punctuation.toString();
+        propPunct.addValue(punct);
     	currentComplexField.addEndChar(getCharacterPosition());
 
-        // Report progress regularly but not too often
         wordsDone++;
-        if (wordsDone >= 5000) {
-            reportCharsProcessed();
-            reportTokensProcessed(wordsDone);
-            wordsDone = 0;
-        }
+        if (punctuation.length() > 10000)
+            punctuation = new StringBuilder(); // let's not hold on to this much memory
+        else
+            punctuation.delete(0, punctuation.length());
     }
 
-    protected void annotation(String name, String value) {
-    	if (name.equals("word"))
-    		trace(value + " ");
-
-    	currentComplexField.getProperty(name).addValue(value);
-    }
-
-    protected void metadata(String fieldName, String value) {
-    	traceln("METADATA " + fieldName + "=" + value);
-
-    	if (fieldName != null && value != null) {
-    		if (!DEBUG)
-    			addMetadataField(fieldName, value);
+    /**
+     * Index an annotation.
+     *
+     * Can be used to add annotation(s) at the current position (indexAtPositions == null),
+     * or to add annotations at specific positions (indexAtPositions contains positions). The latter
+     * is used for standoff annotations.
+     *
+     * @param name annotation name
+     * @param value annotation value
+     * @param increment if indexAtPosition == 1: the token increment to use
+     * @param indexAtPositions if null: index at the current position; otherwise: index at these positions
+     */
+    protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions) {
+    	ComplexFieldProperty property = currentComplexField.getProperty(name);
+    	if (indexAtPositions == null) {
+            if (name.equals("word"))
+                trace(value + " ");
+            if (name.equals("rating"))
+                trace("{" + value + "}");
+    	    property.addValue(value, increment);
+    	    //System.out.println("Field " + currentComplexField.getName() + ", property " + property.getName() + ": added " + value + ", lastValuePos = " + property.lastValuePosition());
     	} else {
-    		if (!DEBUG)
-    			indexer.getListener().warning("Incomplete metadata field: " + fieldName + "=" + value);
-    		else
-    			System.err.println("Incomplete metadata field: " + fieldName + "=" + value);
+            //System.out.println("Field " + currentComplexField.getName() + ", property " + property.getName() + ", value " + value + " (STANDOFF)");
+    	    for (Integer position: indexAtPositions) {
+    	        property.addValueAtPosition(value, position);
+                //System.out.println("  added at position " + position);
+    	    }
     	}
     }
 
-	@Override
-	public void reportCharsProcessed() {
-		// TODO Auto-generated method stub
+    /**
+     * Index a subannotation.
+     *
+     * Can be used to add subannotation(s) at the current position (indexAtPositions == null),
+     * or to add annotations at specific positions (indexAtPositions contains positions). The latter
+     * is used for standoff annotations.
+     *
+     * @param mainName annotation name
+     * @param subName subannotation name
+     * @param value annotation value
+     * @param indexAtPositions if null: index at the current position; otherwise: index at these positions
+     */
+    private void subAnnotation(String mainName, String subName, String value, List<Integer> indexAtPositions) {
+        String sep = ComplexFieldUtil.SUBPROPERTY_SEPARATOR;
+        String newVal = sep + subName + sep + value;
+        annotation(mainName, newVal, 0, indexAtPositions); // increment 0 because we don't want to advance to the next token yet
+    }
 
-	}
+    protected void metadata(String fieldName, String value) {
+        fieldName = optTranslateFieldName(fieldName);
+    	traceln("METADATA " + fieldName + "=" + value);
+
+    	if (fieldName != null && value != null) {
+    		if (indexer != null)
+    			addMetadataField(fieldName, value);
+    	} else {
+    		warn("Incomplete metadata field: " + fieldName + "=" + value);
+    	}
+    }
+
+    protected void warn(String msg) {
+        if (indexer != null)
+        	indexer.getListener().warning(msg);
+        else
+        	System.err.println(msg);
+    }
 
 	@Override
 	public int getCharacterPosition() {
-		// TODO Auto-generated method stub
-		return 0;
+	    // VTD-XML provides no way of getting the current character position,
+	    // only the byte position.
+	    // In order to keep track of character position (which we need for Lucene's term vector),
+	    // we fetch the bytes processed since this method was last called, convert them to a String,
+	    // and use the string length to adjust the character position.
+	    // Note that this only works if this method is called for increasing byte positions,
+	    // which is true because we only use it for word tags.
+		try {
+            long fragment = nav.getElementFragment();
+            int currentByteOffset = (int)fragment;
+            if (currentByteOffset > lastCharPositionByteOffset) {
+                int length = currentByteOffset - lastCharPositionByteOffset;
+                String str = new String(inputDocument, lastCharPositionByteOffset, length);
+                lastCharPosition += str.length();
+                lastCharPositionByteOffset = currentByteOffset;
+            }
+            return lastCharPosition;
+        } catch (NavException e) {
+            throw new RuntimeException(e);
+        }
 	}
-
-	protected void startCaptureContent() {
-		// TODO Auto-generated method stub
-
-	}
-
-    protected int storeCapturedContent() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
 
 
 }

@@ -14,6 +14,27 @@ public class DocIndexerXPathOpenSonarCmdi extends DocIndexerXPath {
         setConfigInputFormat(getConfig());
     }
 
+    public static ConfigInputFormat getConfig() {
+        ConfigInputFormat config = new ConfigInputFormat();
+        config.setName("OpenSonarCmdi");
+        config.setDisplayName("OpenSoNaR CMDI metadata");
+
+        // Basic config: namespaces, document element
+        config.setNamespaceAware(true);
+        config.addNamespace("", "http://www.clarin.eu/cmd/");
+        config.setDocumentPath("/CMD/Components/SoNaRcorpus/Text");
+
+        // Metadata fields config
+        ConfigMetadataBlock b = new ConfigMetadataBlock();
+        b.setContainerPath(".");
+        b.addMetadataField(new ConfigMetadataField("name()", ".", "//*[not(*) and text()]")); // "all leaf elements containing text"
+        config.addMetadataBlock(b);
+
+        config.addIndexFieldAs("AnnotationType-SoNaR", "SonarAnnotationType");
+
+        return config;
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length > 1) {
             System.err.println("Specify input file.");
@@ -27,22 +48,6 @@ public class DocIndexerXPathOpenSonarCmdi extends DocIndexerXPath {
         ind.setDocumentName(inputFile.getName());
         ind.setDocument(inputFile, Indexer.DEFAULT_INPUT_ENCODING);
         ind.index();
-    }
-
-    public static ConfigInputFormat getConfig() {
-        ConfigInputFormat config = new ConfigInputFormat();
-        config.setName("OpenSonarCmdi");
-        config.setDisplayName("OpenSoNaR CMDI metadata");
-
-        // Basic config: namespaces, document element
-        config.setNamespaceAware(true);
-        config.addNamespace("", "http://www.clarin.eu/cmd/");
-        config.setDocumentPath("/CMD/Components/SoNaRcorpus/Text");
-
-        // Metadata fields config
-        config.setMetadataContainerPath(".");
-        config.addMetadataField(new ConfigMetadataField("name()", ".", "//*[not(*) and text()]")); // "all leaf elements containing text"
-        return config;
     }
 
 }

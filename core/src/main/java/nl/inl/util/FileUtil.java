@@ -271,18 +271,24 @@ public class FileUtil {
 	 * second directory, etc.
 	 *
 	 * @param dirsToSearch directories to search for the file
-	 * @param name name of the file (without extension)
-	 * @param extensions extensions to try
+	 * @param pathToFile file name or path to the file (without extension if extensions != null)
+	 * @param extensions extensions to try, or null if the extension is already in pathToFile
 	 * @return the file if found or null if not found
 	 */
-	public static File findFile(File[] dirsToSearch, String name, String[] extensions) {
+	public static File findFile(List<File> dirsToSearch, String pathToFile, List<String> extensions) {
         // Read JSON or YAML config file from any of the specified directories.
         File configFile;
         for (File dir: dirsToSearch) {
-            for (String ext: extensions) {
-                configFile = new File(dir, name + "." + ext);
+            if (extensions == null) {
+                configFile = new File(dir, pathToFile);
                 if (configFile.exists())
                     return configFile;
+            } else {
+                for (String ext: extensions) {
+                    configFile = new File(dir, pathToFile + "." + ext);
+                    if (configFile.exists())
+                        return configFile;
+                }
             }
         }
         return null;

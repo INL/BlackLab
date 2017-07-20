@@ -68,6 +68,13 @@ public abstract class DocIndexer {
     /** Number of words processed (for reporting progress) */
     protected int wordsDone;
 
+    /**
+     * Parameters passed to this indexer
+     */
+    protected Map<String, String> parameters = new HashMap<>();
+
+    Set<String> numericFields = new HashSet<>();
+
     public Document getCurrentLuceneDoc() {
         return currentLuceneDoc;
     }
@@ -95,10 +102,12 @@ public abstract class DocIndexer {
     public void setIndexer(Indexer indexer) {
         this.indexer = indexer;
 
-        // Get our parameters from the indexer
-        Map<String, String> indexerParameters = indexer.getIndexerParameters();
-        if (indexerParameters != null)
-            setParameters(indexerParameters);
+        if (indexer != null) {
+            // Get our parameters from the indexer
+            Map<String, String> indexerParameters = indexer.getIndexerParameters();
+            if (indexerParameters != null)
+                setParameters(indexerParameters);
+        }
     }
 
     /**
@@ -162,13 +171,6 @@ public abstract class DocIndexer {
 	 * @throws Exception
 	 */
 	public abstract void index() throws Exception;
-
-    /**
-     * Parameters passed to this indexer
-     */
-    protected Map<String, String> parameters = new HashMap<>();
-
-    Set<String> numericFields = new HashSet<>();
 
     /**
      * Check if the specified parameter has a value
@@ -401,8 +403,6 @@ public abstract class DocIndexer {
         return SensitivitySetting.ONLY_INSENSITIVE;
     }
 
-	public abstract void reportCharsProcessed();
-	
 	public abstract int getCharacterPosition();
-	
+
 }

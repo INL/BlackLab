@@ -12,6 +12,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -68,13 +70,13 @@ public class BlackLabServer extends HttpServlet {
             File webappsDir = realPath.getParentFile().getCanonicalFile();
     	    String configFileName = "blacklab-server";
     	    File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-            File[] searchDirs = {
+            List<File> searchDirs = Arrays.asList(
     	        webappsDir,
     	        new File("/etc/blacklab"),
     	        new File("/vol1/etc/blacklab"), // INT-specific...
     	        tmpDir
-    	    };
-            String[] exts = { "json", "yaml", "yml" };
+    	    );
+            List<String> exts = Arrays.asList("json", "yaml", "yml");
             File configFile = FileUtil.findFile(searchDirs, configFileName, exts);
             InputStream is = null;
             boolean isJson = true;

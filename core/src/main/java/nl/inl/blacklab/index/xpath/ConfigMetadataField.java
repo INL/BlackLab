@@ -9,10 +9,17 @@ class ConfigMetadataField {
     /** Where to find metadata value */
     private String valuePath;
 
-    /** If null: regular metadata field. Otherwise, find all nodes matching this XPath,
+    /** If null: regular metadata field definition. Otherwise, find all nodes matching this XPath,
      *  then evaluate fieldName and valuePath as XPaths for each matching node.
      */
     private String forEachPath;
+
+    public ConfigMetadataField() {
+    }
+
+    public ConfigMetadataField(String name, String valuePath) {
+        this(name, valuePath, null);
+    }
 
     public ConfigMetadataField(String fieldName, String valuePath, String forEachPath) {
         setFieldName(fieldName);
@@ -24,16 +31,12 @@ class ConfigMetadataField {
         this.forEachPath = forEachPath;
     }
 
-    public ConfigMetadataField(String fieldName, String valuePath) {
-        this(fieldName, valuePath, null);
-    }
-
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
     }
 
     public void setValuePath(String valuePath) {
-        this.valuePath = ConfigInputFormat.relXPath(valuePath);
+        this.valuePath = valuePath;
     }
 
     public String getFieldName() {

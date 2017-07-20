@@ -16,13 +16,14 @@ class ConfigLinkedDocument {
     /** Linked document type name, and field name if we're going to store it */
     private String name;
 
-    private boolean store;
+    /** Should we store the linked document in the content store? (default: false) */
+    private boolean store = false;
 
     /** Where in the document to find the information we need to locate the linked document. */
-    private List<String> linkPaths;
+    private List<String> linkPaths = new ArrayList<>();
 
-    /** What to do if we can't find the link information: ignore, warn or fail */
-    private MissingLinkPathAction ifLinkPathMissing;
+    /** What to do if we can't find the link information: ignore, warn or fail (default: fail) */
+    private MissingLinkPathAction ifLinkPathMissing = MissingLinkPathAction.FAIL;
 
     /** Format of the linked input file */
     private String inputFormat;
@@ -38,9 +39,6 @@ class ConfigLinkedDocument {
 
     public ConfigLinkedDocument(String name) {
         this.name = name;
-        store = false;
-        ifLinkPathMissing = MissingLinkPathAction.FAIL;
-        linkPaths = new ArrayList<>();
     }
 
     public String getName() {
@@ -64,7 +62,7 @@ class ConfigLinkedDocument {
     }
 
     public void addLinkPath(String linkPath) {
-        this.linkPaths.add(ConfigInputFormat.relXPath(linkPath));
+        this.linkPaths.add(linkPath);
     }
 
     public MissingLinkPathAction getIfLinkPathMissing() {

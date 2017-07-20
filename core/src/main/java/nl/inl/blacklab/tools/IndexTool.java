@@ -21,8 +21,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -64,6 +66,7 @@ public class IndexTool {
 		Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete"));
 		boolean addingFiles = true;
 		String deleteQuery = null;
+		List<File> linkedFileDirs = new ArrayList<>();
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i].trim();
 			if (arg.startsWith("---")) {
@@ -78,9 +81,19 @@ public class IndexTool {
 				indexerParam.put(name, value);
 			} else if (arg.startsWith("--")) {
 				String name = arg.substring(2);
-				if (name.equals("maxdocs")) {
+				switch(name) {
+				case "linked-file-dir":
+                    if (i + 1 == args.length) {
+                        System.err.println("--linked-file-dir option needs argument");
+                        usage();
+                        return;
+                    }
+				    linkedFileDirs.add(new File(args[i + 1]));
+				    i++;
+				    break;
+				case "maxdocs":
 					if (i + 1 == args.length) {
-						System.err.println("-maxdocs option needs argument");
+						System.err.println("--maxdocs option needs argument");
 						usage();
 						return;
 					}
@@ -92,10 +105,12 @@ public class IndexTool {
 						usage();
 						return;
 					}
-				} else if (name.equals("create")) {
+					break;
+				case "create":
 					System.err.println("Option --create is deprecated; use create command (--help for details)");
 					createNewIndex = true;
-				} else if (name.equals("indexparam")) {
+					break;
+				case "indexparam":
 					if (i + 1 == args.length) {
 						System.err.println("--indexparam option needs argument");
 						usage();
@@ -109,13 +124,15 @@ public class IndexTool {
 					}
 					readParametersFromPropertiesFile(propFile);
 					i++;
-				} else if (name.equals("help")) {
+					break;
+				case "help":
 					usage();
 					return;
-				} else {
+				default: {
 					System.err.println("Unknown option --" + name);
 					usage();
 					return;
+				}
 				}
 			} else {
 				if (command.length() == 0 && commands.contains(arg)) {
@@ -194,14 +211,14 @@ public class IndexTool {
 		// Init log4j
 		LogUtil.setupBasicLoggingConfig();
 
-		File[] dirs = { inputDir, inputDir.getParentFile(), indexDir, indexDir.getParentFile() };
-		propFile = FileUtil.findFile(dirs, "indexer", new String[] {"properties"});
+		List<File> dirs = Arrays.asList(inputDir, inputDir.getParentFile(), indexDir, indexDir.getParentFile());
+		propFile = FileUtil.findFile(dirs, "indexer", Arrays.asList("properties"));
 		if (propFile != null && propFile.canRead())
 			readParametersFromPropertiesFile(propFile);
 
 		File indexTemplateFile = null;
 		if (createNewIndex) {
-			indexTemplateFile = FileUtil.findFile(dirs, "indextemplate", new String[] {"json", "yaml", "yml"});
+			indexTemplateFile = FileUtil.findFile(dirs, "indextemplate", Arrays.asList("json", "yaml", "yml"));
 		}
 
 		String op = createNewIndex ? "Creating new" : "Appending to";
@@ -253,6 +270,7 @@ public class IndexTool {
 		indexer.setIndexerParam(indexerParam);
 		if (maxDocsToIndex > 0)
 			indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
+        indexer.setLinkedFileDirs(linkedFileDirs);
 		try {
 			if (glob.contains("*") || glob.contains("?")) {
 				// Real wildcard glob
@@ -303,6 +321,8 @@ public class IndexTool {
 						+ "\n"
 						+ "Options:\n"
 						+ "  --maxdocs <n>          Stop after indexing <n> documents\n"
+                        + "  --linked-file-dir <d>  Look in directory <d> for linked files\n"
+                        + "                         (only used with DocIndexerXPath)\n"
 						+ "  --indexparam <file>    Read properties file with parameters for DocIndexer\n"
 						+ "                         (NOTE: even without this option, if the current\n"
 						+ "                         directory, the input or index directory (or its parent)\n"

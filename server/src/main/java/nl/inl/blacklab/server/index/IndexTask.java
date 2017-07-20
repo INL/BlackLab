@@ -95,10 +95,10 @@ public class IndexTask {
 					indexer.index(dataFile, "*.xml");
 				} else if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
 					// Tar gzipped data; read directly from stream.
-					indexer.indexTarGzip(name, data, "*.xml", true);
+					indexer.indexInputStream(name, data, "*.xml", true);
 				} else if (name.endsWith(".gz")) {
 					// Tar gzipped data; read directly from stream.
-					indexer.indexGzip(name, data);
+					indexer.indexInputStream(name, data, "*.xml", true);
 				} else {
 					// Straight XML data. Read as UTF-8.
 					logger.debug("Starting indexing");

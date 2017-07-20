@@ -21,7 +21,7 @@ class ConfigInlineTag {
     }
 
     public void setTagPath(String tagPath) {
-        this.tagPath = ConfigInputFormat.relXPath(tagPath);
+        this.tagPath = tagPath;
     }
 
 }

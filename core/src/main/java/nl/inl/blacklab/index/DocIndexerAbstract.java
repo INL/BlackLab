@@ -154,8 +154,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         this.reader = new CountingReader(reader);
     }
 
-	@Override
-	public void reportCharsProcessed() {
+    public void reportCharsProcessed() {
 		long charsProcessed = reader.getCharsReadSinceLastCall();
 		indexer.getListener().charsDone(charsProcessed);
 	}

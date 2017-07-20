@@ -16,20 +16,15 @@
 package nl.inl.blacklab.index;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.Enumeration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,9 +39,10 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.util.ExUtil;
+import nl.inl.util.FileProcessor;
+import nl.inl.util.FileProcessor.ErrorHandler;
 import nl.inl.util.FileUtil;
-import nl.inl.util.TarGzipReader;
-import nl.inl.util.TarGzipReader.FileHandler;
 import nl.inl.util.UnicodeStream;
 
 /**
@@ -112,7 +108,10 @@ public class Indexer {
 	/** How to index metadata fields (untokenized) */
 	private FieldType metadataFieldTypeUntokenized;
 
-	public FieldType getMetadataFieldType(boolean tokenized) {
+	/** Where to look for files linked from the input files */
+    private List<File> linkedFileDirs = new ArrayList<>();
+
+    public FieldType getMetadataFieldType(boolean tokenized) {
 	    return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
 	}
 
@@ -406,22 +405,7 @@ public class Indexer {
 		return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
 	}
 
-	/**
-	 * Index a document from a Reader, using the specified type of DocIndexer
-	 *
-	 * @param documentName
-	 *            some (preferably unique) name for this document (for example, the file
-	 *            name or path)
-	 * @param reader
-	 *            where to index from
-	 * @throws Exception
-	 */
-	private void indexReader(String documentName, Reader reader) throws Exception {
-	    DocIndexer docIndexer = docIndexerFactory.get(this, documentName, reader);
-	    indexDocIndexer(documentName, docIndexer);
-	}
-
-	private void indexDocIndexer(String documentName, DocIndexer docIndexer) throws Exception {
+	void indexDocIndexer(String documentName, DocIndexer docIndexer) throws Exception {
         getListener().fileStarted(documentName);
         int docsDoneBefore = searcher.getWriter().numDocs();
         long tokensDoneBefore = getListener().getTokensProcessed();
@@ -438,12 +422,7 @@ public class Indexer {
 		}
 	}
 
-	private void indexFile(String documentName, File fileToIndex) throws Exception {
-        DocIndexer docIndexer = docIndexerFactory.get(this, documentName, fileToIndex, DEFAULT_INPUT_ENCODING);
-        indexDocIndexer(documentName, docIndexer);
-    }
-
-    /**
+	/**
      * Index a document from an InputStream.
      *
      * @param documentName
@@ -475,7 +454,8 @@ public class Indexer {
 	 */
 	public void index(String documentName, Reader reader) throws Exception {
 		try {
-			indexReader(documentName, reader);
+			DocIndexer docIndexer = docIndexerFactory.get(this, documentName, reader);
+            indexDocIndexer(documentName, docIndexer);
 		} catch (InputFormatException e) {
 			listener.errorOccurred(e.getMessage(), "reader", new File(documentName), null);
 			if (continueAfterInputError) {
@@ -553,189 +533,77 @@ public class Indexer {
 	 */
 	private void indexInternal(File fileToIndex, String glob, boolean recurseSubdirs)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-		String fn = fileToIndex.getCanonicalPath(); //Name();
-		if (fileToIndex.isDirectory()) {
-			indexDir(fileToIndex, glob, recurseSubdirs);
-		} else {
-			if (fn.endsWith(".zip")) {
-				indexZip(fileToIndex, glob, recurseSubdirs);
-			} else {
-				if (!isSpecialOperatingSystemFile(fileToIndex.getName())) { // skip special OS files
-				    if (fn.endsWith(".gz") || fn.endsWith(".tgz") || fn.endsWith(".zip")) {
-				        // Archive.
-    					try {
-    						try (FileInputStream is = new FileInputStream(fileToIndex)) {
-    							indexInputStream(fn, is, glob, recurseSubdirs);
-    						}
-    					} catch (RuntimeException | IOException e) {
-    						log("*** Error indexing " + fileToIndex, e);
-    						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "file", fileToIndex, null);
-    					}
-				    } else {
-				        // Regular file.
-				        indexFile(fn, fileToIndex);
-				    }
-				}
-			}
-		}
+
+	    FileProcessor proc = new FileProcessor(recurseSubdirs, recurseSubdirs && processArchivesAsDirectories);
+	    proc.setFileNameGlob(glob);
+        proc.setFileHandler(new FileProcessor.FileHandler() {
+            @Override
+            public void stream(String path, InputStream is) {
+                try {
+                    index(path, is);
+                } catch (Exception e) {
+                    throw ExUtil.wrapRuntimeException(e);
+                }
+            }
+
+            @Override
+            public void file(String path, File f) {
+                try {
+                    // Regular file.
+                    DocIndexer docIndexer = getDocIndexerFactory().get(Indexer.this, path, f, DEFAULT_INPUT_ENCODING);
+                    indexDocIndexer(path, docIndexer);
+                } catch (Exception e) {
+                    throw ExUtil.wrapRuntimeException(e);
+                }
+            }
+        });
+	    proc.setErrorHandler(new ErrorHandler() {
+            @Override
+            public boolean errorOccurred(String file, String msg, Exception e) {
+                log("*** Error indexing " + file, e);
+                return getListener().errorOccurred(e.getMessage(), "file", new File(file), null);
+            }
+        });
+	    proc.processFile(fileToIndex);
 	}
 
-	/**
-	 * Index from an InputStream, which may be an archive.
-	 *
-	 * @param name
-	 *            name for the InputStream (e.g. name of the file)
-	 * @param is
-	 *            the stream
-	 * @param glob what files to index inside an archive
-	 * @param recurseArchives whether or not to index archives inside archives
-	 * @throws IOException
-	 * @throws Exception
-	 */
-	void indexInputStream(String name, InputStream is, String glob, boolean recurseArchives) {
-		try {
-			if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
-				indexTarGzip(name, is, glob, recurseArchives);
-			} else if (name.endsWith(".gz")) {
-				indexGzip(name, is);
-			} else if (name.endsWith(".zip")) {
-				logger.warn("Skipped " + name + ", ZIPs inside archives not supported");
-			} else {
-				index(name, is);
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    public void indexInputStream(final String filePath, InputStream inputStream, String glob, boolean processArchives) {
+        FileProcessor proc = new FileProcessor(true, processArchivesAsDirectories);
+        proc.setFileNameGlob(glob);
+        proc.setProcessArchives(processArchives);
+        proc.setFileHandler(new FileProcessor.FileHandler() {
+            @Override
+            public void stream(String path, InputStream is) {
+                try {
+                    index(path, is);
+                } catch (Exception e) {
+                    throw ExUtil.wrapRuntimeException(e);
+                }
+            }
 
-	/**
-	 * Index a directory
-	 *
-	 * @param dir
-	 *            directory to index
-	 * @param glob what files in the dir to index
-	 * @param recurseSubdirs
-	 *            recursively process subdirectories?
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws Exception
-	 * @throws IOException
-	 */
-	private void indexDir(File dir, String glob, boolean recurseSubdirs) throws UnsupportedEncodingException,
-			FileNotFoundException, IOException, Exception {
-		if (!dir.exists())
-			throw new FileNotFoundException("Input dir not found: " + dir);
-		if (!dir.isDirectory())
-			throw new IOException("Specified input dir is not a directory: " + dir);
-		for (File fileToIndex : FileUtil.listFilesSorted(dir)) {
-			indexInternal(fileToIndex, glob, recurseSubdirs);
-			if (!continueIndexing())
-				break;
-		}
-	}
+            @Override
+            public void file(String path, File f) {
+                throw new UnsupportedOperationException();
+            }
+        });
+        proc.setErrorHandler(new ErrorHandler() {
+            @Override
+            public boolean errorOccurred(String file, String msg, Exception e) {
+                log("*** Error indexing " + file, e);
+                return getListener().errorOccurred(e.getMessage(), "file", new File(file), null);
+            }
+        });
+        proc.processInputStream(filePath, inputStream);
+    }
 
-	/**
-	 * Index files inside a zip file.
-	 *
-	 * Note that directory structure inside the zip file is ignored; files are indexed as if they
-	 * are one large directory.
-	 *
-	 * Also note that for accessing large ZIP files, you need Java 7 which supports the
-	 * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)" error.
-	 *
-	 * @param zipFile
-	 *            the zip file
-	 * @param glob
-	 *            what files in the zip to process
-	 * @param recurseArchives whether to process archives inside archives
-	 * @throws Exception
-	 */
-	private void indexZip(File zipFile, String glob, boolean recurseArchives) throws Exception {
-		if (!zipFile.exists())
-			throw new FileNotFoundException("ZIP file not found: " + zipFile);
-		Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
-		try (ZipFile z = new ZipFile(zipFile)) {
-			Enumeration<? extends ZipEntry> es = z.entries();
-			while (es.hasMoreElements()) {
-				ZipEntry e = es.nextElement();
-				if (e.isDirectory())
-					continue;
-				String fileName = e.getName();
-				boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".gz") || fileName.endsWith(".tgz");
-				boolean skipFile = isSpecialOperatingSystemFile(fileName);
-				Matcher m = pattGlob.matcher(fileName);
-				if (!skipFile && (m.matches() || isArchive)) {
-					try {
-						try (InputStream is = z.getInputStream(e)) {
-							if (isArchive) {
-								if (recurseArchives && processArchivesAsDirectories)
-									indexInputStream(fileName, is, glob, recurseArchives);
-							} else {
-								indexInputStream(fileName, is, glob, recurseArchives);
-							}
-						}
-					} catch (RuntimeException | ZipException ex) {
-						log("*** Error indexing file " + fileName + " inside zip archive " + zipFile, ex);
-						terminateIndexing = !getListener().errorOccurred(ex.getMessage(), "zip", zipFile, new File(fileName));
-					}
-				}
-				if (!continueIndexing())
-					break;
-			}
-		} catch (ZipException e) {
-			log("*** Error opening zip file: " + zipFile, e);
-			// continue trying other files!
-		}
-	}
-
+	@Deprecated
 	public void indexGzip(final String gzFileName, InputStream gzipStream) {
-		TarGzipReader.processGzip(gzFileName, gzipStream, new FileHandler() {
-			@Override
-			public boolean handle(String filePath, InputStream contents) {
-				int i = filePath.lastIndexOf("/");
-				String fileName = i < 0 ? filePath : filePath.substring(i + 1);
-				if (!isSpecialOperatingSystemFile(fileName)) {
-					try {
-						indexInputStream(filePath, contents, "*", false);
-					} catch (Exception e) {
-						log("*** Error indexing .gz file: " + filePath, e);
-						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "gz", new File(filePath), new File(filePath));
-					}
-				}
-				return continueIndexing();
-			}
-		});
+        indexInputStream(gzFileName, gzipStream, "*", true);
 	}
 
+    @Deprecated
 	public void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
-		final Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
-		TarGzipReader.processTarGzip(tarGzipStream, new FileHandler() {
-			@Override
-			public boolean handle(String filePath, InputStream contents) {
-				int i = filePath.lastIndexOf("/");
-				String fileName = i < 0 ? filePath : filePath.substring(i + 1);
-				if (!isSpecialOperatingSystemFile(fileName)) {
-					try {
-						File f = new File(filePath);
-						String fn = f.getName();
-						Matcher m = pattGlob.matcher(fn);
-						if (m.matches()) {
-							String entryName = tgzFileName + File.separator + filePath;
-							indexInputStream(entryName, contents, glob, recurseArchives);
-						} else {
-							boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".gz") || fn.endsWith(".tgz");
-							if (isArchive && recurseArchives && processArchivesAsDirectories) {
-								indexInputStream(tgzFileName + File.pathSeparator + filePath, contents, glob, recurseArchives);
-							}
-						}
-					} catch (Exception e) {
-						log("*** Error indexing file " + filePath + " inside tarred/gzipped archive: " + tgzFileName, e);
-						terminateIndexing = !getListener().errorOccurred(e.getMessage(), "tgz", new File(tgzFileName), new File(filePath));
-					}
-				}
-				return continueIndexing();
-			}
-		});
+        indexInputStream(tgzFileName, tarGzipStream, glob, recurseArchives);
 	}
 
 	/**
@@ -851,4 +719,40 @@ public class Indexer {
 	public Searcher getSearcher() {
 		return searcher;
 	}
+
+    /**
+     * Set the directories to search for linked files.
+     *
+     * DocIndexerXPath allows us to index a second file into the
+     * same Lucene document, which is useful for external metadata, etc.
+     * This determines how linked files are located.
+     *
+     * @param linkedFileDirs directories to search
+     */
+    public void setLinkedFileDirs(List<File> linkedFileDirs) {
+        this.linkedFileDirs.clear();
+        this.linkedFileDirs.addAll(linkedFileDirs);
+    }
+
+    /**
+     * Add a directory to search for linked files.
+     *
+     * DocIndexerXPath allows us to index a second file into the
+     * same Lucene document, which is useful for external metadata, etc.
+     * This determines how linked files are located.
+     *
+     * @param linkedFileDir directory to search
+     */
+    public void addLinkedFileDir(File linkedFileDir) {
+        this.linkedFileDirs.add(linkedFileDir);
+    }
+
+    public File getLinkedFile(String inputFile) {
+        File f = new File(inputFile);
+        if (f.exists())
+            return f;
+        if (f.isAbsolute())
+            return null;
+        return FileUtil.findFile(linkedFileDirs, inputFile, null);
+    }
 }

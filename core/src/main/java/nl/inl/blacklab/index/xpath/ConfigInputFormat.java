@@ -11,32 +11,11 @@ import java.util.Map;
  */
 public class ConfigInputFormat {
 
-    // TODO: add configurable indexing support for:
-    // - additional operations (using plugin classes)
-    // - extra element processing (e.g. timesegment)
-    // - subannotations
-
-    /**
-     * Prepends the given XPath expression with a dot if it starts with a slash.
-     *
-     * This means "/bla" will become "./bla", "//bla" will become ".//bla",
-     * but "bla" will remain "bla". This ensures the given XPath is always interpreted
-     * relatively to the current node by VTD-XML.
-     *
-     * @param xp input XPath, possibly starting with one or two slashes
-     * @return relativized XPath expression
-     */
-    public static String relXPath(String xp) {
-        if (xp.startsWith("/"))
-            return "." + xp;
-        return xp;
-    }
-
     /** This format's name */
     private String name;
 
     /** This format's display name (optional) */
-    private String displayName;
+    private String displayName = "";
 
     /** Pay attention to namespaces while parsing? */
     private boolean isNamespaceAware = true;
@@ -47,14 +26,17 @@ public class ConfigInputFormat {
     /** How to find our documents */
     private String documentPath = "/";
 
-    /** Where our metadata (if any) is located (relative to the document element) */
-    private String metadataContainerPath = ".";
+    /** Should we store the document in the content store? (default: yes) */
+    private boolean store = true;
+
+    /** Before adding metadata fields to the document, this name mapping is applied. */
+    private Map<String, String> indexFieldAs = new HashMap<>();
+
+    /** Blocks of embedded metadata */
+    private List<ConfigMetadataBlock> metadataBlocks = new ArrayList<>();
 
     /** Annotated fields (usually just "contents") */
     private List<ConfigAnnotatedField> annotatedFields = new ArrayList<>();
-
-    /** Metadata fields */
-    private List<ConfigMetadataField> metadataFields = new ArrayList<>();
 
     /** Linked document(s), e.g. containing our metadata */
     private List<ConfigLinkedDocument> linkedDocuments = new ArrayList<>();
@@ -87,16 +69,16 @@ public class ConfigInputFormat {
         this.documentPath = documentPath;
     }
 
-    public void setMetadataContainerPath(String metadataContainerPath) {
-        this.metadataContainerPath = ConfigInputFormat.relXPath(metadataContainerPath);
+    public void addMetadataBlock(ConfigMetadataBlock b) {
+        metadataBlocks.add(b);
+    }
+
+    public List<ConfigMetadataBlock> getMetadataBlocks() {
+        return Collections.unmodifiableList(metadataBlocks);
     }
 
     public void addAnnotatedField(ConfigAnnotatedField f) {
         this.annotatedFields.add(f);
-    }
-
-    public void addMetadataField(ConfigMetadataField f) {
-        this.metadataFields.add(f);
     }
 
     public void addLinkedDocument(ConfigLinkedDocument d) {
@@ -115,20 +97,28 @@ public class ConfigInputFormat {
         return documentPath;
     }
 
-    public String getMetadataContainerPath() {
-        return metadataContainerPath;
-    }
-
     public List<ConfigAnnotatedField> getAnnotatedFields() {
         return Collections.unmodifiableList(annotatedFields);
     }
 
-    public List<ConfigMetadataField> getMetadataFields() {
-        return Collections.unmodifiableList(metadataFields);
-    }
-
     public List<ConfigLinkedDocument> getLinkedDocuments() {
         return linkedDocuments;
+    }
+
+    public Map<String, String> getIndexFieldAs() {
+        return indexFieldAs;
+    }
+
+    public void addIndexFieldAs(String from, String to) {
+        indexFieldAs.put(from, to);
+    }
+
+    public boolean isStore() {
+        return store;
+    }
+
+    public void setStore(boolean store) {
+        this.store = store;
     }
 
 }

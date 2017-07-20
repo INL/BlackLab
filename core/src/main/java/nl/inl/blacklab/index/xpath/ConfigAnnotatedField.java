@@ -15,11 +15,17 @@ class ConfigAnnotatedField {
     /** Words within body text */
     private String wordsPath;
 
+    /** Unique id that will map to this token position */
+    private String tokenPositionIdPath;
+
     /** Punctuation between words (or null if we don't need/want to capture this) */
     private String punctPath = null;
 
     /** Annotations on our words */
     private List<ConfigAnnotation> annotations = new ArrayList<>();
+
+    /** Annotations on our words, defined elsewhere in the document */
+    private List<ConfigStandoffAnnotations> standoffAnnotations = new ArrayList<>();
 
     /** Inline tags within body text */
     private List<ConfigInlineTag> inlineTags = new ArrayList<>();
@@ -29,15 +35,19 @@ class ConfigAnnotatedField {
     }
 
     public void setContainerPath(String containerPath) {
-        this.containerPath = ConfigInputFormat.relXPath(containerPath);
+        this.containerPath = containerPath;
     }
 
     public void setWordsPath(String wordsPath) {
-        this.wordsPath = ConfigInputFormat.relXPath(wordsPath);
+        this.wordsPath = wordsPath;
+    }
+
+    public void setTokenPositionIdPath(String tokenPositionIdPath) {
+        this.tokenPositionIdPath = tokenPositionIdPath;
     }
 
     public void setPunctPath(String punctPath) {
-		this.punctPath = ConfigInputFormat.relXPath(punctPath);
+		this.punctPath = punctPath;
 	}
 
     public void addInlineTag(ConfigInlineTag inlineTag) {
@@ -46,6 +56,10 @@ class ConfigAnnotatedField {
 
     public void addAnnotation(ConfigAnnotation annotation) {
         this.annotations.add(annotation);
+    }
+
+    public void addStandoffAnnotation(ConfigStandoffAnnotations standoff) {
+        standoffAnnotations.add(standoff);
     }
 
     public String getFieldName() {
@@ -60,6 +74,10 @@ class ConfigAnnotatedField {
         return wordsPath;
     }
 
+    public String getTokenPositionIdPath() {
+        return tokenPositionIdPath;
+    }
+
 	public String getPunctPath() {
 		return punctPath;
 	}
@@ -70,6 +88,10 @@ class ConfigAnnotatedField {
 
     public List<ConfigAnnotation> getAnnotations() {
         return Collections.unmodifiableList(annotations);
+    }
+
+    public List<ConfigStandoffAnnotations> getStandoffAnnotations() {
+        return Collections.unmodifiableList(standoffAnnotations);
     }
 
 }
