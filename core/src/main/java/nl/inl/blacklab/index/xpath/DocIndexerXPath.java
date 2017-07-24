@@ -40,6 +40,7 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.xpath.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
@@ -125,33 +126,37 @@ public class DocIndexerXPath extends DocIndexer {
     public DocIndexerXPath() {
     }
 
+    @SuppressWarnings("deprecation")
     protected void init() {
         if (inited)
             return;
         inited = true;
         storeDocuments = config.isStore();
-        for (ConfigAnnotatedField af: config.getAnnotatedFields()) {
+        for (ConfigAnnotatedField af: config.getAnnotatedFields().values()) {
 
 	        // Define the properties that make up our complex field
         	List<ConfigAnnotation> annotations = af.getAnnotations();
         	if (annotations.size() == 0)
         		throw new RuntimeException("No annotations defined for field " + af.getFieldName());
         	ConfigAnnotation mainAnnotation = annotations.get(0);
-	        ComplexField complexField = new ComplexField(af.getFieldName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation.getName()), false);
+	        ComplexField complexField = new ComplexField(af.getFieldName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation), false);
 	        complexFields.put(af.getFieldName(), complexField);
-	        complexField.addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.PUNCTUATION_PROP_NAME), false);
-	        ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);
+            ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);
 	        propStartTag.setForwardIndex(false);
 
 	        // Create properties for the other annotations
 	        for (int i = 1; i < annotations.size(); i++) {
 	        	ConfigAnnotation annot = annotations.get(i);
-	        	complexField.addProperty(annot.getName(), getSensitivitySetting(annot.getName()), false);
+	        	complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
 	        }
 	        for (ConfigStandoffAnnotations standoff: af.getStandoffAnnotations()) {
 	            for (ConfigAnnotation annot: standoff.getAnnotations()) {
-	                complexField.addProperty(annot.getName(), getSensitivitySetting(annot.getName()), false);
+	                complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
 	            }
+	        }
+	        if (!complexField.hasProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
+	            // Hasn't been created yet. Create it now.
+	            complexField.addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.PUNCTUATION_PROP_NAME), false);
 	        }
 
             IndexStructure indexStructure;
@@ -165,6 +170,14 @@ public class DocIndexerXPath extends DocIndexer {
 		        complexField.setNoForwardIndexProps(noForwardIndexProps);
 	        }
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private SensitivitySetting getSensitivitySetting(ConfigAnnotation mainAnnotation) {
+        if (mainAnnotation.getSensitivity() == SensitivitySetting.DEFAULT) {
+            return getSensitivitySetting(mainAnnotation.getName());
+        }
+        return mainAnnotation.getSensitivity();
     }
 
     public void setConfigInputFormat(ConfigInputFormat config) {
@@ -250,7 +263,7 @@ public class DocIndexerXPath extends DocIndexer {
         startDocument();
 
         // For each configured annotated field...
-        for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields()) {
+        for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields().values()) {
 
         	// Determine some useful stuff about the field we're processing
             // and store in instance variables so our methods can access them
@@ -277,6 +290,8 @@ public class DocIndexerXPath extends DocIndexer {
                 // For end tags, we will update the payload of the start tag when we encounter it,
                 // just like we do in our SAX parsers.
                 AutoPilot apTags = createAutoPilot();
+                AutoPilot apEvalToString = createAutoPilot();
+                apEvalToString.selectXPath(".");
                 List<InlineObject> tagsAndPunct = new ArrayList<>();
                 for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
                     nav.push();
@@ -294,7 +309,9 @@ public class DocIndexerXPath extends DocIndexer {
                 	nav.push();
                     apTags.selectXPath(annotatedField.getPunctPath());
                     while (apTags.evalXPath() != -1) {
-                        collectPunct(tagsAndPunct);
+                        apEvalToString.resetXPath();
+                        String punct = apEvalToString.evalXPathToString();
+                        collectPunct(tagsAndPunct, punct);
                     }
                     nav.pop();
                 }
@@ -399,7 +416,13 @@ public class DocIndexerXPath extends DocIndexer {
                 AutoPilot apMetadata = createAutoPilot();
                 AutoPilot apFieldName = createAutoPilot();
                 AutoPilot apMetaForEach = createAutoPilot();
-                for (ConfigMetadataField f: b.getMetadataFields()) {
+                for (ConfigMetadataField f: b.getFields()) {
+
+                    // Metadata field configs without a valuePath are just for
+                    // adding information to indexmetadata about fields captured
+                    // in forEach's
+                    if (f.getValuePath() == null || f.getValuePath().isEmpty())
+                        continue;
 
                     // Capture whatever this configured metadata field points to
                     if (f.isForEach()) {
@@ -431,7 +454,7 @@ public class DocIndexerXPath extends DocIndexer {
         }
 
         // For each linked document...
-        for (ConfigLinkedDocument ld: config.getLinkedDocuments()) {
+        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
             // Resolve linkPaths to get the information needed to fetch the document
             List<String> results = new ArrayList<>();
             AutoPilot apLinkPath = createAutoPilot();
@@ -571,15 +594,26 @@ public class DocIndexerXPath extends DocIndexer {
 
             nav = vg.getNav();
 
-            // Find our specific document
             AutoPilot documents = createAutoPilot();
-            documents.selectXPath(documentXPath);
             boolean docDone = false;
-            while(documents.evalXPath() != -1) {
-                if (docDone)
-                    throw new RuntimeException("Document link " + documentXPath + " matched multiple documents in " + documentName);
-                indexDocument();
-                docDone = true;
+            if (documentXPath != null) {
+                // Find our specific document
+                documents.selectXPath(documentXPath);
+                while(documents.evalXPath() != -1) {
+                    if (docDone)
+                        throw new RuntimeException("Document link " + documentXPath + " matched multiple documents in " + documentName);
+                    indexDocument();
+                    docDone = true;
+                }
+            } else {
+                // Process whole file; must be 1 document
+                documents.selectXPath(config.getDocumentPath());
+                while(documents.evalXPath() != -1) {
+                    if (docDone)
+                        throw new RuntimeException("Linked file contains multiple documents (and no document path given) in " + documentName);
+                    indexDocument();
+                    docDone = true;
+                }
             }
         } catch (Exception e1) {
             throw ExUtil.wrapRuntimeException(e1);
@@ -719,13 +753,12 @@ public class DocIndexerXPath extends DocIndexer {
      * @param inlineObjects list to add the punct object to
      * @throws NavException
      */
-	private void collectPunct(List<InlineObject> inlineObjects) throws NavException {
+	private void collectPunct(List<InlineObject> inlineObjects, String text) throws NavException {
 		int i = nav.getCurrentIndex();
 		int offset = nav.getTokenOffset(i);
 		int length = nav.getTokenLength(i);
 
-		// Find text
-		String text = nav.toString(i);
+		// Make sure we only keep 1 copy of identical punct texts in memory
 		text = dedupe(StringUtil.normalizeWhitespace(text));
 
 		// Add the punct to the list

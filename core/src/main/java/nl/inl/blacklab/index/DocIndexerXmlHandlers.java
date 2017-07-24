@@ -457,15 +457,16 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return addProperty(propName, false);
     }
 
+    @SuppressWarnings("deprecation")
     protected ComplexFieldProperty addProperty(String propName, boolean includePayloads) {
-        return contentsField.addProperty(propName,
-                getSensitivitySetting(propName), includePayloads);
+        return contentsField.addProperty(propName, getSensitivitySetting(propName), includePayloads);
     }
 
     public ComplexFieldProperty addProperty(String propName, SensitivitySetting sensitivity) {
         return contentsField.addProperty(propName, sensitivity);
     }
 
+    @SuppressWarnings("deprecation")
     public DocIndexerXmlHandlers(Indexer indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
@@ -674,6 +675,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      */
     MetadataFetcher getMetadataFetcher() {
         if (metadataFetcher == null) {
+            @SuppressWarnings("deprecation")
             String metadataFetcherClassName = getParameter("metadataFetcherClass");
             if (metadataFetcherClassName != null) {
                 try {

@@ -4,13 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Configuration for a block of metadata fields. */
-class ConfigMetadataBlock {
+public class ConfigMetadataBlock {
 
     /** Where the block can be found */
-    private String containerPath;
+    private String containerPath = ".";
+
+    /** What default analyzer to use for these fields */
+    private String analyzer = "";
 
     /** Metadata fields */
-    private List<ConfigMetadataField> metadataFields = new ArrayList<>();
+    private List<ConfigMetadataField> fields = new ArrayList<>();
+
+    public ConfigMetadataBlock copy() {
+        ConfigMetadataBlock result = new ConfigMetadataBlock();
+        result.setContainerPath(containerPath);
+        for (ConfigMetadataField f: fields) {
+            result.addMetadataField(f.copy());
+        }
+        return result;
+    }
 
     public String getContainerPath() {
         return containerPath;
@@ -20,12 +32,23 @@ class ConfigMetadataBlock {
         this.containerPath = containerPath;
     }
 
-    public List<ConfigMetadataField> getMetadataFields() {
-        return metadataFields;
+    public List<ConfigMetadataField> getFields() {
+        return fields;
     }
 
     public void addMetadataField(ConfigMetadataField f) {
-        metadataFields.add(f);
+        // If no custom analyzer specified, inherit from block
+        if (f.getAnalyzer().equals(""))
+            f.setAnalyzer(analyzer);
+        fields.add(f);
+    }
+
+    public String getAnalyzer() {
+        return analyzer;
+    }
+
+    public void setAnalyzer(String analyzer) {
+        this.analyzer = analyzer;
     }
 
 }

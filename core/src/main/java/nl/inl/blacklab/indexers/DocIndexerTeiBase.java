@@ -18,7 +18,6 @@ package nl.inl.blacklab.indexers;
 import java.io.Reader;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
@@ -54,7 +53,8 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
 
 	String contentElement;
 
-	public DocIndexerTeiBase(Indexer indexer, String fileName, Reader reader, String contentElement, boolean defaultToPosInTypeAttribute) {
+	@SuppressWarnings("deprecation")
+    public DocIndexerTeiBase(Indexer indexer, String fileName, Reader reader, String contentElement, boolean defaultToPosInTypeAttribute) {
 		super(indexer, fileName, reader);
 
 		this.contentElement = contentElement;
@@ -142,7 +142,8 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
 					Attributes attributes) {
 				consumeCharacterContent(); // clear it to capture punctuation and words
 				String listBiblId = attributes.getValue("id");
-				String listBiblIdToCapture = getParameter("listBiblIdToCapture", "inlMetadata"); // TODO: remove INL-specific stuff
+				@SuppressWarnings("deprecation")
+                String listBiblIdToCapture = getParameter("listBiblIdToCapture", "inlMetadata"); // TODO: remove INL-specific stuff
 				captureMetadata = listBiblId != null && listBiblId.equals(listBiblIdToCapture);
 			}
 
@@ -269,8 +270,8 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
 				authorLevel2 = "";
 			}
 			String authorCombined = author + " " + authorLevel2;
-			myLuceneDoc.add(new Field("author", author, luceneTypeFromIndexStructType(getMetadataFieldTypeFromIndexerProperties("author"))));
-			myLuceneDoc.add(new Field("authorCombined", authorCombined, luceneTypeFromIndexStructType(getMetadataFieldTypeFromIndexerProperties("authorCombined"))));
+			addMetadataField("author", author);
+            addMetadataField("authorCombined", authorCombined);
 		}
 
 		String title = myLuceneDoc.get("titleLevel1");

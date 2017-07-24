@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.indexstructure;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map.Entry;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -9,6 +10,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.xpath.ConfigAnnotatedField;
+import nl.inl.blacklab.index.xpath.ConfigAnnotation;
+import nl.inl.blacklab.index.xpath.ConfigInputFormat;
+import nl.inl.blacklab.index.xpath.ConfigLinkedDocument;
+import nl.inl.blacklab.index.xpath.ConfigMetadataBlock;
+import nl.inl.blacklab.index.xpath.ConfigMetadataField;
+import nl.inl.blacklab.index.xpath.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.Json;
 
@@ -42,7 +51,94 @@ public class IndexMetadata {
 	    jsonRoot = mapper.createObjectNode();
 	    jsonRoot.put("displayName", indexName);
 	    jsonRoot.put("description", "");
-	    ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
+	    addVersionInfo();
+	    ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
+	    fieldInfo.putObject("metadataFields");
+	    fieldInfo.putObject("complexFields");
+	}
+
+    public IndexMetadata(String indexName, ConfigInputFormat config) {
+        ObjectMapper mapper = Json.getJsonObjectMapper();
+        jsonRoot = mapper.createObjectNode();
+        jsonRoot.put("displayName", indexName);
+        jsonRoot.put("description", config.getDescription());
+        jsonRoot.put("documentFormat", config.getName());
+        addVersionInfo();
+        ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
+        fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
+        for (Entry<String, String> e: config.getSpecialFields().entrySet()) {
+            fieldInfo.put(e.getKey(), e.getValue());
+        }
+        ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
+        ObjectNode metadata = fieldInfo.putObject("metadataFields");
+        ObjectNode complex = fieldInfo.putObject("complexFields");
+
+        addFieldInfoFromConfig(metadata, complex, metaGroups, config);
+    }
+
+    protected void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode complex, ArrayNode metaGroups, ConfigInputFormat config) {
+
+        // Add metadata field groups info
+        for (ConfigMetadataFieldGroup g: config.getMetadataFieldGroups().values()) {
+            ObjectNode h = metaGroups.addObject();
+            h.put("name", g.getName());
+            if (g.getFields().size() > 0) {
+                ArrayNode i = h.putArray("fields");
+                for (String f: g.getFields()) {
+                    i.add(f);
+                }
+            }
+            if (g.isAddRemainingFields())
+                h.put("addRemainingFields", true);
+        }
+
+        // Add metadata info
+        String defaultAnalyzer = config.getMetadataDefaultAnalyzer();
+        for (ConfigMetadataBlock b: config.getMetadataBlocks()) {
+            for (ConfigMetadataField f: b.getFields()) {
+                if (f.isForEach())
+                    continue;
+                ObjectNode g = metadata.putObject(f.getFieldName());
+                g.put("displayName", f.getDisplayName());
+                g.put("description", f.getDescription());
+                g.put("type", f.getType().stringValue());
+                if (!f.getAnalyzer().equals(defaultAnalyzer))
+                    g.put("analyzer", f.getAnalyzer());
+                g.put("uiType", f.getUiType());
+                g.put("unknownCondition", f.getUnknownCondition().stringValue());
+                g.put("unknownValue", f.getUnknownValue());
+                ObjectNode h = g.putObject("displayValues");
+                for (Entry<String, String> e: f.getDisplayValues().entrySet()) {
+                    h.put(e.getKey(), e.getValue());
+                }
+                ArrayNode i = g.putArray("displayOrder");
+                for (String v: f.getDisplayOrder()) {
+                    i.add(v);
+                }
+            }
+        }
+
+        // Add complex field info
+        for (ConfigAnnotatedField f: config.getAnnotatedFields().values()) {
+            ObjectNode g = complex.putObject(f.getFieldName());
+            g.put("displayName", f.getDisplayName());
+            g.put("description", f.getDescription());
+            g.put("mainProperty", f.getAnnotations().get(0).getName());
+            ArrayNode h = g.putArray("displayOrder");
+            for (ConfigAnnotation a: f.getAnnotations()) {
+                h.add(a.getName());
+            }
+        }
+
+        // Also (recursively) add metadata and complex field config from any linked documents
+        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
+            ConfigInputFormat linkedConfig = DocumentFormats.getConfig(ld.getInputFormat());
+            addFieldInfoFromConfig(metadata, complex, metaGroups, linkedConfig);
+        }
+    }
+
+    protected void addVersionInfo() {
+        ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
 	    versionInfo.put("blackLabBuildTime", Searcher.getBlackLabBuildTime());
 	    versionInfo.put("blackLabVersion", Searcher.getBlackLabVersion());
 	    versionInfo.put("timeCreated", IndexStructure.getTimestamp());
@@ -50,12 +146,9 @@ public class IndexMetadata {
 	    versionInfo.put("indexFormat", IndexStructure.LATEST_INDEX_FORMAT);
 	    versionInfo.put("alwaysAddClosingToken", true);
 	    versionInfo.put("tagLengthInPayload", true);
-	    ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-	    fieldInfo.putObject("metadataFields");
-	    fieldInfo.putObject("complexFields");
-	}
+    }
 
-	/**
+    /**
 	 * Write the index metadata to a JSON file.
 	 * @param metadataFile the file to write
 	 */

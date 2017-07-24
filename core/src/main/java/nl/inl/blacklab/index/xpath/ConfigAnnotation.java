@@ -4,14 +4,29 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+
 /**
  * Configuration for a single annotation ("property") of an
  * annotated field ("complex field").
  */
-class ConfigAnnotation {
+public class ConfigAnnotation {
 
 	/** Annotation name, or forEach (or name XPath, if forEach) */
     private String name;
+
+    /** How to display the field in the interface (optional) */
+    private String displayName = "";
+
+    /** How to describe the field in the interface (optional) */
+    private String description = "";
+
+    /** What sensitivity setting to use to index this annotation
+     *  (optional, default depends on field name) */
+    private SensitivitySetting sensitivity = SensitivitySetting.DEFAULT;
+
+    /** What UI element to show in the interface (optional) */
+    private String uiType = "";
 
     /** If specified, all other XPath expression are relative to this */
     private String basePath;
@@ -47,7 +62,17 @@ class ConfigAnnotation {
         setForEachPath(forEachPath);
     }
 
-	public String getName() {
+	public ConfigAnnotation copy() {
+        ConfigAnnotation result = new ConfigAnnotation(name, valuePath, forEachPath);
+        result.setBasePath(basePath);
+        result.captureValuePaths.addAll(captureValuePaths);
+        for (ConfigAnnotation a: subAnnotations) {
+            result.addSubAnnotation(a.copy());
+        }
+        return result;
+    }
+
+    public String getName() {
         return name;
     }
 
@@ -97,6 +122,38 @@ class ConfigAnnotation {
 
     public void setBasePath(String basePath) {
         this.basePath = basePath;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getUiType() {
+        return uiType;
+    }
+
+    public void setUiType(String uiType) {
+        this.uiType = uiType;
+    }
+
+    public SensitivitySetting getSensitivity() {
+        return sensitivity;
+    }
+
+    public void setSensitivity(SensitivitySetting sensitivity) {
+        this.sensitivity = sensitivity;
     }
 
 }

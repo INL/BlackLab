@@ -230,7 +230,12 @@ public class Indexer {
     }
 
     protected void init(File directory, boolean create, File indexTemplateFile) throws IOException, DocumentFormatException {
-        searcher = Searcher.openForWriting(directory, create, indexTemplateFile);
+        if (docIndexerFactory.getConfig() != null && indexTemplateFile == null) {
+            // Use the input format definition as the index template
+            searcher = Searcher.openForWriting(directory, create, docIndexerFactory.getConfig());
+        } else {
+            searcher = Searcher.openForWriting(directory, create, indexTemplateFile);
+        }
 		if (!create)
 			searcher.getIndexStructure().setModified();
 

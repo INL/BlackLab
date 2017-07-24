@@ -64,10 +64,33 @@ public class ComplexFieldProperty {
 
 	/** How a property is to be indexed with respect to case and diacritics sensitivity. */
 	public enum SensitivitySetting {
+	    DEFAULT,                        // "choose default based on field name"
 		ONLY_SENSITIVE,                 // only index case- and diacritics-sensitively
 		ONLY_INSENSITIVE,               // only index case- and diacritics-insensitively
 		SENSITIVE_AND_INSENSITIVE,      // case+diac sensitive as well as case+diac insensitive
-		CASE_AND_DIACRITICS_SEPARATE	// all four combinations (sens, insens, case-insens, diac-insens)
+		CASE_AND_DIACRITICS_SEPARATE;	// all four combinations (sens, insens, case-insens, diac-insens)
+
+	    public static SensitivitySetting fromStringValue(String v) {
+	        switch (v.toLowerCase()) {
+	        case "default":
+	        case "":
+	            return DEFAULT;
+	        case "sensitive":
+	        case "s":
+	            return ONLY_SENSITIVE;
+	        case "insensitive":
+	        case "i":
+	            return ONLY_INSENSITIVE;
+	        case "sensitive_insensitive":
+	        case "si":
+	            return SENSITIVE_AND_INSENSITIVE;
+	        case "case_diacritics_separate":
+	        case "all":
+                return CASE_AND_DIACRITICS_SEPARATE;
+            default:
+                throw new IllegalArgumentException("Unknown string value for SensitivitySetting: " + v + " (should be default|sensitive|insensitive|sensitive_insensitive|case_diacritics_separate or s|i|si|all)");
+	        }
+	    }
 	}
 
 	protected boolean includeOffsets;

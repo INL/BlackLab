@@ -51,7 +51,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 	private String metadataPathInZip;
 
-	public MetadataFetcherSonarCmdi(DocIndexer docIndexer) {
+	@SuppressWarnings("deprecation")
+    public MetadataFetcherSonarCmdi(DocIndexer docIndexer) {
 		super(docIndexer);
 
 		if (metadataZipFile == null) {

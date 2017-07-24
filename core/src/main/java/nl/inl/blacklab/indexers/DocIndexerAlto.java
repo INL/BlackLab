@@ -42,7 +42,8 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
 	 *  (NOTE: do we still use this now that we index the whole XML file?) */
 	String imageFileName = "?";
 
-	public DocIndexerAlto(Indexer indexer, final String fileName, Reader reader) {
+	@SuppressWarnings("deprecation")
+    public DocIndexerAlto(Indexer indexer, final String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 
 		// Document element

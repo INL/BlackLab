@@ -46,11 +46,13 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 		return addProperty(propName, false);
 	}
 
-	protected ComplexFieldProperty addProperty(String propName, boolean includePayloads) {
+	@SuppressWarnings("deprecation")
+    protected ComplexFieldProperty addProperty(String propName, boolean includePayloads) {
 		return contentsField.addProperty(propName, getSensitivitySetting(propName), includePayloads);
 	}
 
-	public DocIndexerPlainTextBasic(Indexer indexer, String fileName, Reader reader) {
+	@SuppressWarnings("deprecation")
+    public DocIndexerPlainTextBasic(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 
 		// Define the properties that make up our complex field
@@ -99,7 +101,8 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 	 */
 	MetadataFetcher getMetadataFetcher() {
 		if (metadataFetcher == null) {
-			String metadataFetcherClassName = getParameter("metadataFetcherClass");
+			@SuppressWarnings("deprecation")
+            String metadataFetcherClassName = getParameter("metadataFetcherClass");
 			if (metadataFetcherClassName != null) {
 				try {
 					Class<? extends MetadataFetcher> metadataFetcherClass = Class.forName(metadataFetcherClassName)

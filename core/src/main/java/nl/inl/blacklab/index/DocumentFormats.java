@@ -7,8 +7,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import nl.inl.blacklab.index.xpath.ConfigInputFormat;
-import nl.inl.blacklab.index.xpath.DocIndexerXPathOpenSonarCmdi;
-import nl.inl.blacklab.index.xpath.DocIndexerXPathOpenSonarFoLiA;
+import nl.inl.blacklab.index.xpath.ConfigInputFormatOpenSonarCmdi;
+import nl.inl.blacklab.index.xpath.ConfigInputFormatOpenSonarFoLiA;
+import nl.inl.blacklab.index.xpath.ConfigInputFormatOpenSonarFoliaCmdi;
 import nl.inl.blacklab.indexers.DocIndexerAlto;
 import nl.inl.blacklab.indexers.DocIndexerFolia;
 import nl.inl.blacklab.indexers.DocIndexerPageXml;
@@ -27,6 +28,9 @@ public class DocumentFormats {
 	/** Document formats */
     @Deprecated
 	static Map<String, Class<? extends DocIndexer>> formats = new TreeMap<>();
+
+    /** Configs for different document formats */
+    static Map<String, ConfigInputFormat> configs = new TreeMap<>();
 
 	/** Factories for different document formats */
     static Map<String, DocIndexerFactory> factories = new TreeMap<>();
@@ -51,8 +55,9 @@ public class DocumentFormats {
 		register("tei-pos-type", DocIndexerTei.class);
 		register("tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
 
-        register(DocIndexerXPathOpenSonarFoLiA.getConfig());
-        register(DocIndexerXPathOpenSonarCmdi.getConfig());
+        register(new ConfigInputFormatOpenSonarCmdi());
+        register(new ConfigInputFormatOpenSonarFoLiA());
+        register(new ConfigInputFormatOpenSonarFoliaCmdi());
 	}
 
 	/**
@@ -62,7 +67,6 @@ public class DocumentFormats {
 	 *   (NOTE: format abbreviations are case-insensitive, and are lowercased internally)
 	 * @param docIndexerClass the DocIndexer class for this format
 	 */
-    @Deprecated
 	public static void register(String formatAbbreviation, final Class<? extends DocIndexer> docIndexerClass) {
 		formats.put(formatAbbreviation.toLowerCase(), docIndexerClass);
 		factories.put(formatAbbreviation.toLowerCase(), new DocIndexerFactoryClass(docIndexerClass));
@@ -74,7 +78,9 @@ public class DocumentFormats {
 	 * @param config input format configuration to register
 	 */
 	public static void register(final ConfigInputFormat config) {
-	    factories.put(config.getName().toLowerCase(), new DocIndexerFactoryConfig(config));
+	    String name = config.getName().toLowerCase();
+        configs.put(name, config);
+        factories.put(name, new DocIndexerFactoryConfig(config));
 	}
 
 	/**
@@ -144,9 +150,13 @@ public class DocumentFormats {
 	 * @return the list of registered abbreviations
 	 */
 	public static List<String> list() {
-		List<String> l = new ArrayList<>(formats.keySet());
+		List<String> l = new ArrayList<>(factories.keySet());
 		Collections.sort(l);
 		return Collections.unmodifiableList(l);
 	}
+
+    public static ConfigInputFormat getConfig(String formatName) {
+        return configs.get(formatName.toLowerCase());
+    }
 
 }

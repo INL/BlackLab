@@ -11,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 
+import nl.inl.blacklab.index.xpath.ConfigInputFormat;
 import nl.inl.util.UnicodeStream;
 
 public class DocIndexerFactoryClass implements DocIndexerFactory {
@@ -120,5 +121,10 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             // TODO Auto-generated catch block
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public ConfigInputFormat getConfig() {
+        return null;
     }
 }

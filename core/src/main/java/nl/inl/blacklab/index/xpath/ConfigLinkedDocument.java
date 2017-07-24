@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 /** Configuration for a linked document. */
-class ConfigLinkedDocument {
+public class ConfigLinkedDocument {
 
     public static enum MissingLinkPathAction {
         IGNORE,

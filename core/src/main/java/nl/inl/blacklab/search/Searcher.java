@@ -45,6 +45,7 @@ import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
 import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.xpath.ConfigInputFormat;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -117,8 +118,7 @@ public abstract class Searcher {
 	 * @return the searcher in index mode
 	 * @throws IOException
 	 */
-	public static Searcher openForWriting(File indexDir, boolean createNewIndex)
-			throws IOException {
+	public static Searcher openForWriting(File indexDir, boolean createNewIndex) throws IOException {
 		return new SearcherImpl(indexDir, true, createNewIndex, (File)null);
 	}
 
@@ -135,10 +135,27 @@ public abstract class Searcher {
 	 * @return the searcher in index mode
 	 * @throws IOException
 	 */
-	public static Searcher openForWriting(File indexDir, boolean createNewIndex,
-			File indexTemplateFile) throws IOException {
+	public static Searcher openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile) throws IOException {
 		return new SearcherImpl(indexDir, true, createNewIndex, indexTemplateFile);
 	}
+
+    /**
+     * Open an index for writing ("index mode": adding/deleting documents).
+     *
+     * Note that in index mode, searching operations may not take the latest
+     * changes into account. It is wisest to only use index mode for indexing,
+     * then close the Searcher and create a regular one for searching.
+     *
+     * @param indexDir the index directory
+     * @param createNewIndex if true, create a new index even if one existed there
+     * @param config input format config to use as template for index structure / metadata
+     *    (if creating new index)
+     * @return the searcher in index mode
+     * @throws IOException
+     */
+    public static Searcher openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IOException {
+        return new SearcherImpl(indexDir, true, createNewIndex, config);
+    }
 
 	/**
 	 * Create an empty index.

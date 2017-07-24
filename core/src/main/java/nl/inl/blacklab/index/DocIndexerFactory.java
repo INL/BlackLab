@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 
+import nl.inl.blacklab.index.xpath.ConfigInputFormat;
+
 public interface DocIndexerFactory {
 
     /**
@@ -51,5 +53,11 @@ public interface DocIndexerFactory {
      * @return DocIndexer instance
      */
     DocIndexer get(Indexer indexer, String documentName, byte[] b, Charset cs);
+
+    /**
+     * Return this DocIndexerFactory's input format configuration, if it has one.
+     * @return the input format configuration, or null if it has none
+     */
+    ConfigInputFormat getConfig();
 
 }

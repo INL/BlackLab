@@ -55,4 +55,9 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         d.setDocument(b, cs);
         return d;
     }
+
+    @Override
+    public ConfigInputFormat getConfig() {
+        return config;
+    }
 }

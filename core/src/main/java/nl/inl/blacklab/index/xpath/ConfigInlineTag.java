@@ -1,8 +1,7 @@
 package nl.inl.blacklab.index.xpath;
 
 /**
- * Configuration for a single annotation ("property") of an
- * annotated field ("complex field").
+ * Configuration for an XML element occurring in an annotated field.
  */
 class ConfigInlineTag {
 
@@ -14,6 +13,10 @@ class ConfigInlineTag {
 
 	public ConfigInlineTag(String path) {
         setTagPath(path);
+    }
+
+    public ConfigInlineTag copy() {
+        return new ConfigInlineTag(tagPath);
     }
 
     public String getTagPath() {

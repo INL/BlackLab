@@ -57,6 +57,7 @@ import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.xpath.ConfigInputFormat;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
@@ -101,13 +102,36 @@ public class SearcherImpl extends Searcher implements Closeable {
 	/** The index writer. Only valid in indexMode. */
 	private IndexWriter indexWriter = null;
 
+    /**
+     * Open an index.
+     *
+     * @param indexDir the index directory
+     * @param indexMode if true, open in index mode; if false, open in search mode.
+     * @param createNewIndex if true, delete existing index in this location if it exists.
+     * @param config input format config to use as template for index structure / metadata
+     *   (if creating new index)
+     * @throws IOException
+     */
+    SearcherImpl(File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config)
+            throws IOException {
+        this.indexMode = indexMode;
+
+        openIndex(indexDir, indexMode, createNewIndex);
+
+        // Determine the index structure
+        if (traceIndexOpening) logger.debug("  Determining index structure...");
+        indexStructure = new IndexStructure(reader, indexDir, createNewIndex, config);
+
+        finishOpeningIndex(indexDir, indexMode, createNewIndex);
+    }
+
 	/**
 	 * Open an index.
 	 *
 	 * @param indexDir the index directory
 	 * @param indexMode if true, open in index mode; if false, open in search mode.
 	 * @param createNewIndex if true, delete existing index in this location if it exists.
-	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
+     * @param config input format config to use as template for index structure / metadata
 	 *   (if creating new index)
 	 * @throws IOException
 	 */
@@ -115,7 +139,18 @@ public class SearcherImpl extends Searcher implements Closeable {
 			throws IOException {
 		this.indexMode = indexMode;
 
-		if (!indexMode && createNewIndex)
+		openIndex(indexDir, indexMode, createNewIndex);
+
+		// Determine the index structure
+		if (traceIndexOpening) logger.debug("  Determining index structure...");
+		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
+
+		finishOpeningIndex(indexDir, indexMode, createNewIndex);
+	}
+
+    protected void openIndex(File indexDir, boolean indexMode, boolean createNewIndex)
+            throws IOException, CorruptIndexException, LockObtainFailedException {
+        if (!indexMode && createNewIndex)
 			throw new RuntimeException("Cannot create new index, not in index mode");
 
 		if (!createNewIndex) {
@@ -147,91 +182,92 @@ public class SearcherImpl extends Searcher implements Closeable {
 		}
 		this.indexLocation = indexDir;
 
-//		logger.debug("TOTAL TERM FREQ contents%lemma@i: " + reader.getSumTotalTermFreq("contents%lemma@i"));
-//		logger.debug("TOTAL TERM FREQ test: " + reader.getSumTotalTermFreq("test"));
+//      logger.debug("TOTAL TERM FREQ contents%lemma@i: " + reader.getSumTotalTermFreq("contents%lemma@i"));
+//      logger.debug("TOTAL TERM FREQ test: " + reader.getSumTotalTermFreq("test"));
 
-		// Determine the index structure
-		if (traceIndexOpening) logger.debug("  Determining index structure...");
-		indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
-		isEmptyIndex = indexStructure.isNewIndex();
+    }
 
-		// TODO: we need to create the analyzer before opening the index, because
-		//   we can't change the analyzer attached to the IndexWriter (and passing a different
-		//   analyzer in addDocument() went away in Lucene 5.x).
-		//   For now, if we're in index mode, we re-open the index with the analyzer we determined.
-		if (traceIndexOpening) logger.debug("  Creating analyzers...");
-		createAnalyzers();
+	protected void finishOpeningIndex(File indexDir, boolean indexMode, boolean createNewIndex)
+            throws IOException, CorruptIndexException, LockObtainFailedException {
+        isEmptyIndex = indexStructure.isNewIndex();
 
-		if (indexMode) {
-			// Re-open the IndexWriter with the analyzer we've created above (see comment above)
-			if (traceIndexOpening) logger.debug("  Re-opening IndexWriter with newly created analyzers...");
-			reader.close();
-			reader = null;
-			indexWriter.close();
-			indexWriter = null;
-			indexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
-			if (traceIndexOpening) logger.debug("  IndexReader too...");
-			reader = DirectoryReader.open(indexWriter, false);
-		}
+    	// TODO: we need to create the analyzer before opening the index, because
+    	//   we can't change the analyzer attached to the IndexWriter (and passing a different
+    	//   analyzer in addDocument() went away in Lucene 5.x).
+    	//   For now, if we're in index mode, we re-open the index with the analyzer we determined.
+    	if (traceIndexOpening) logger.debug("  Creating analyzers...");
+    	createAnalyzers();
 
-		// Register ourselves in the mapping from IndexReader to Searcher,
-		// so we can find the corresponding Searcher object from within Lucene code
-		searcherFromIndexReader.put(reader, this);
+    	if (indexMode) {
+    		// Re-open the IndexWriter with the analyzer we've created above (see comment above)
+    		if (traceIndexOpening) logger.debug("  Re-opening IndexWriter with newly created analyzers...");
+    		reader.close();
+    		reader = null;
+    		indexWriter.close();
+    		indexWriter = null;
+    		indexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
+    		if (traceIndexOpening) logger.debug("  IndexReader too...");
+    		reader = DirectoryReader.open(indexWriter, false);
+    	}
 
-		// Detect and open the ContentStore for the contents field
-		if (!createNewIndex) {
-			if (traceIndexOpening) logger.debug("  Determining main contents field name...");
-			ComplexFieldDesc mainContentsField = indexStructure.getMainContentsField();
-			if (mainContentsField == null) {
-				if (!indexMode) {
-					if (!isEmptyIndex)
-						throw new RuntimeException("Could not detect main contents field");
+    	// Register ourselves in the mapping from IndexReader to Searcher,
+    	// so we can find the corresponding Searcher object from within Lucene code
+    	searcherFromIndexReader.put(reader, this);
 
-					// Empty index. Set a default name for the contents field.
-					// Searching an empty index will fail and should not be attempted.
-					this.mainContentsFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
-				}
-			} else {
-				this.mainContentsFieldName = mainContentsField.getName();
+    	// Detect and open the ContentStore for the contents field
+    	if (!createNewIndex) {
+    		if (traceIndexOpening) logger.debug("  Determining main contents field name...");
+    		ComplexFieldDesc mainContentsField = indexStructure.getMainContentsField();
+    		if (mainContentsField == null) {
+    			if (!indexMode) {
+    				if (!isEmptyIndex)
+    					throw new RuntimeException("Could not detect main contents field");
 
-				// See if we have a punctuation forward index. If we do,
-				// default to creating concordances using that.
-				if (mainContentsField.hasPunctuation()) {
-					hitsSettings.setConcordanceType(ConcordanceType.FORWARD_INDEX);
-				}
-			}
+    				// Empty index. Set a default name for the contents field.
+    				// Searching an empty index will fail and should not be attempted.
+    				this.mainContentsFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
+    			}
+    		} else {
+    			this.mainContentsFieldName = mainContentsField.getName();
 
-			// Register content stores
-			if (traceIndexOpening) logger.debug("  Opening content stores...");
-			for (String cfn: indexStructure.getComplexFields()) {
-				if (indexStructure.getComplexFieldDesc(cfn).hasContentStore()) {
-					File dir = new File(indexDir, "cs_" + cfn);
-					if (!dir.exists()) {
-						dir = new File(indexDir, "xml"); // OLD, should eventually be removed
-					}
-					if (dir.exists()) {
-						if (traceIndexOpening) logger.debug("    " + dir + "...");
-						registerContentStore(cfn, openContentStore(dir, false));
-					}
-				}
-			}
-		}
+    			// See if we have a punctuation forward index. If we do,
+    			// default to creating concordances using that.
+    			if (mainContentsField.hasPunctuation()) {
+    				hitsSettings.setConcordanceType(ConcordanceType.FORWARD_INDEX);
+    			}
+    		}
 
-		if (traceIndexOpening) logger.debug("  Opening IndexSearcher...");
-		indexSearcher = new IndexSearcher(reader);
+    		// Register content stores
+    		if (traceIndexOpening) logger.debug("  Opening content stores...");
+    		for (String cfn: indexStructure.getComplexFields()) {
+    			if (indexStructure.getComplexFieldDesc(cfn).hasContentStore()) {
+    				File dir = new File(indexDir, "cs_" + cfn);
+    				if (!dir.exists()) {
+    					dir = new File(indexDir, "xml"); // OLD, should eventually be removed
+    				}
+    				if (dir.exists()) {
+    					if (traceIndexOpening) logger.debug("    " + dir + "...");
+    					registerContentStore(cfn, openContentStore(dir, false));
+    				}
+    			}
+    		}
+    	}
 
-		// Make sure large wildcard/regex expansions succeed
-		if (traceIndexOpening) logger.debug("  Setting maxClauseCount...");
-		BooleanQuery.setMaxClauseCount(100000);
+    	if (traceIndexOpening) logger.debug("  Opening IndexSearcher...");
+    	indexSearcher = new IndexSearcher(reader);
 
-		// Open the forward indices
-		if (!createNewIndex) {
-			if (traceIndexOpening) logger.debug("  Opening forward indices...");
-			openForwardIndices();
-		}
-	}
+    	// Make sure large wildcard/regex expansions succeed
+    	if (traceIndexOpening) logger.debug("  Setting maxClauseCount...");
+    	BooleanQuery.setMaxClauseCount(100000);
 
-	@Override
+    	// Open the forward indices
+    	if (!createNewIndex) {
+    		if (traceIndexOpening) logger.debug("  Opening forward indices...");
+    		openForwardIndices();
+    	}
+    }
+
+    @Override
 	public boolean isEmpty() {
 		return isEmptyIndex;
 	}
@@ -243,7 +279,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 		for (String fieldName: indexStructure.getMetadataFields()) {
 			MetadataFieldDesc fd = indexStructure.getMetadataFieldDesc(fieldName);
 			String analyzerName = fd.getAnalyzerName();
-			if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("DEFAULT")) {
+			if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("default")) {
 				Analyzer fieldAnalyzer = getAnalyzerInstance(analyzerName);
 				if (fieldAnalyzer == null) {
 					logger.error("Unknown analyzer name " + analyzerName + " for field " + fieldName);

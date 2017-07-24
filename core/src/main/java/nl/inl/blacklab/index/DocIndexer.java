@@ -176,7 +176,9 @@ public abstract class DocIndexer {
      * Check if the specified parameter has a value
      * @param name parameter name
      * @return true iff the parameter has a value
+     * @deprecated use ConfigInputFormat, IndexStructure
      */
+    @Deprecated
     public boolean hasParameter(String name) {
         return parameters.containsKey(name);
     }
@@ -185,7 +187,9 @@ public abstract class DocIndexer {
      * Set a parameter for this indexer (such as which type of metadata block to process)
      * @param name parameter name
      * @param value parameter value
+     * @deprecated use ConfigInputFormat, IndexStructure
      */
+    @Deprecated
     public void setParameter(String name, String value) {
         parameters.put(name, value);
     }
@@ -193,7 +197,9 @@ public abstract class DocIndexer {
     /**
      * Set a number of parameters for this indexer
      * @param param the parameter names and values
+     * @deprecated use ConfigInputFormat, IndexStructure
      */
+    @Deprecated
     public void setParameters(Map<String, String> param) {
         for (Map.Entry<String, String> e: param.entrySet()) {
             parameters.put(e.getKey(), e.getValue());
@@ -205,7 +211,9 @@ public abstract class DocIndexer {
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
+     * @deprecated use ConfigInputFormat, IndexStructure
      */
+    @Deprecated
     public String getParameter(String name, String defaultValue) {
         String value = parameters.get(name);
         if (value == null)
@@ -217,7 +225,9 @@ public abstract class DocIndexer {
      * Get a parameter that was set for this indexer
      * @param name parameter name
      * @return the parameter value (or null if it was not specified)
+     * @deprecated use ConfigInputFormat, IndexStructure
      */
+    @Deprecated
     public String getParameter(String name) {
         return getParameter(name, null);
     }
@@ -227,7 +237,9 @@ public abstract class DocIndexer {
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
+     * @deprecated use ConfigInputFormat, IndexStructure
      */
+    @Deprecated
     public boolean getParameter(String name, boolean defaultValue) {
         String value = parameters.get(name);
         if (value == null)
@@ -241,7 +253,9 @@ public abstract class DocIndexer {
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
+     * @deprecated use ConfigInputFormat, IndexStructure
      */
+    @Deprecated
     public int getParameter(String name, int defaultValue) {
         String value = parameters.get(name);
         if (value == null)
@@ -253,23 +267,24 @@ public abstract class DocIndexer {
         }
     }
 
-   protected boolean tokenizeField(String name) {
-        String parName = name + "_tokenized";
-        if (!hasParameter(name + "_tokenized")) {
-            parName = name + "_analyzed"; // Check the old (Lucene 3.x) term, "analyzed"
-        }
-
+    protected boolean tokenizeField(String name) {
+        // (Also check the old (Lucene 3.x) term, "analyzed")
+        String parName = hasParameter(name + "_tokenized") ? name + "_tokenized" : name + "_analyzed";
         return getParameter(parName, true);
     }
 
-   /**
-    * Return the fieldtype to use for the specified field.
-    * @param fieldName the field name
-    * @return the fieldtype
-    */
+    /**
+     * Return the fieldtype to use for the specified field.
+     * @param fieldName the field name
+     * @return the fieldtype
+     * @deprecated use ConfigInputFormat, IndexStructure
+     */
+    @Deprecated
     public FieldType getMetadataFieldTypeFromIndexerProperties(String fieldName) {
-        if (tokenizeField(fieldName))
-            return FieldType.TEXT;
+        // (Also check the old (Lucene 3.x) term, "analyzed")
+        String parName = hasParameter(fieldName + "_tokenized") ? fieldName + "_tokenized" : fieldName + "_analyzed";
+        if (getParameter(parName, true))
+            return FieldType.TOKENIZED;
         return FieldType.UNTOKENIZED;
     }
 
@@ -277,7 +292,7 @@ public abstract class DocIndexer {
         switch (type) {
         case NUMERIC:
             throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
-        case TEXT:
+        case TOKENIZED:
             return indexer.getMetadataFieldType(true);
         case UNTOKENIZED:
             return indexer.getMetadataFieldType(false);
@@ -319,9 +334,11 @@ public abstract class DocIndexer {
         FieldType type = desc.getType();
         desc.addValue(value);
 
+        // There used to be another way of specifying metadata field type,
+        // via indexer.properties. This is still supported, but deprecated.
         FieldType shouldBeType = getMetadataFieldTypeFromIndexerProperties(name);
-        if (type == FieldType.TEXT
-                && shouldBeType != FieldType.TEXT) {
+        if (type == FieldType.TOKENIZED
+                && shouldBeType != FieldType.TOKENIZED) {
             // indexer.properties overriding default type
             type = shouldBeType;
         }
@@ -368,6 +385,7 @@ public abstract class DocIndexer {
         }
     }
 
+    @Deprecated
     protected SensitivitySetting getSensitivitySetting(String propName) {
         // See if it's specified in a parameter
         String strSensitivity = getParameter(propName + "_sensitivity");

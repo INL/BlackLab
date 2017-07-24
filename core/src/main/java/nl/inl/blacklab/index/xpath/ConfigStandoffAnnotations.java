@@ -30,6 +30,14 @@ class ConfigStandoffAnnotations {
         this.refTokenPositionIdPath = refTokenPositionIdPath;
     }
 
+    public ConfigStandoffAnnotations copy() {
+        ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, refTokenPositionIdPath);
+        for (ConfigAnnotation a: annotations) {
+            result.addAnnotation(a.copy());
+        }
+        return result;
+    }
+
     public String getPath() {
         return path;
     }

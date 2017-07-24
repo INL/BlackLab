@@ -5,9 +5,15 @@ import java.util.Collections;
 import java.util.List;
 
 /** Configuration for annotated ("complex") fields in our XML */
-class ConfigAnnotatedField {
+public class ConfigAnnotatedField {
 
     private String fieldName;
+
+    /** How to display the field in the interface (optional) */
+    private String displayName = "";
+
+    /** How to describe the field in the interface (optional) */
+    private String description = "";
 
     /** Where to find this field's annotated text */
     private String containerPath = ".";
@@ -30,6 +36,27 @@ class ConfigAnnotatedField {
     /** Inline tags within body text */
     private List<ConfigInlineTag> inlineTags = new ArrayList<>();
 
+    ConfigAnnotatedField(String fieldName) {
+        setFieldName(fieldName);
+    }
+
+    public ConfigAnnotatedField copy() {
+        ConfigAnnotatedField result = new ConfigAnnotatedField(fieldName);
+        result.setDisplayName(displayName);
+        result.setDescription(description);
+        result.setContainerPath(containerPath);
+        result.setWordsPath(wordsPath);
+        result.setTokenPositionIdPath(tokenPositionIdPath);
+        result.setPunctPath(punctPath);
+        for (ConfigAnnotation a: annotations)
+            result.addAnnotation(a.copy());
+        for (ConfigStandoffAnnotations a: standoffAnnotations)
+            result.addStandoffAnnotation(a.copy());
+        for (ConfigInlineTag t: inlineTags)
+            result.addInlineTag(t.copy());
+        return result;
+    }
+
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
     }
@@ -50,8 +77,12 @@ class ConfigAnnotatedField {
 		this.punctPath = punctPath;
 	}
 
-    public void addInlineTag(ConfigInlineTag inlineTag) {
+    private void addInlineTag(ConfigInlineTag inlineTag) {
         this.inlineTags.add(inlineTag);
+    }
+
+    public void addInlineTag(String path) {
+        inlineTags.add(new ConfigInlineTag(path));
     }
 
     public void addAnnotation(ConfigAnnotation annotation) {
@@ -92,6 +123,22 @@ class ConfigAnnotatedField {
 
     public List<ConfigStandoffAnnotations> getStandoffAnnotations() {
         return Collections.unmodifiableList(standoffAnnotations);
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
 }

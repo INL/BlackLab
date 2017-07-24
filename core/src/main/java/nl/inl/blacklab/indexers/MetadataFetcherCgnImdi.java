@@ -51,7 +51,8 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 
 	private String metadataPathInZip;
 
-	public MetadataFetcherCgnImdi(DocIndexer docIndexer) {
+	@SuppressWarnings("deprecation")
+    public MetadataFetcherCgnImdi(DocIndexer docIndexer) {
 		super(docIndexer);
 		if (metadataZipFile == null) {
 			String zipFilePath = docIndexer.getParameter("metadataZipFile");

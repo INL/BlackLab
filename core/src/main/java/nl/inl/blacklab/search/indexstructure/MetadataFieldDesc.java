@@ -17,7 +17,15 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		NEVER,            // never use unknown value
 		MISSING,          // use unknown value when field is missing (not when empty)
 		EMPTY,            // use unknown value when field is empty (not when missing)
-		MISSING_OR_EMPTY  // use unknown value when field is empty or missing
+		MISSING_OR_EMPTY; // use unknown value when field is empty or missing
+
+        public static UnknownCondition fromStringValue(String string) {
+            return valueOf(string.toUpperCase());
+        }
+
+        public String stringValue() {
+            return toString().toLowerCase();
+        }
 	}
 
 	/** Possible value for valueListComplete */
@@ -30,7 +38,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	/**
 	 * The field type: text, untokenized or numeric.
 	 */
-	protected FieldType type = FieldType.TEXT;
+	protected FieldType type = FieldType.TOKENIZED;
 
 	/**
 	 * The analyzer to use for indexing and querying this field.
@@ -80,18 +88,18 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		this.type = type;
 	}
 
-	public MetadataFieldDesc(String fieldName, String typeName) {
-		super(fieldName);
-		if (typeName.equals("untokenized")) {
-			this.type = FieldType.UNTOKENIZED;
-		} else if (typeName.equals("tokenized") || typeName.equals("text")) {
-			this.type = FieldType.TEXT;
-		} else if (typeName.equals("numeric")) {
-			this.type = FieldType.NUMERIC;
-		} else {
-			throw new IllegalArgumentException("Unknown field type name: " + typeName);
-		}
-	}
+//	public MetadataFieldDesc(String fieldName, String typeName) {
+//		super(fieldName);
+//		if (typeName.equals("untokenized")) {
+//			this.type = FieldType.UNTOKENIZED;
+//		} else if (typeName.equals("tokenized") || typeName.equals("text")) {
+//			this.type = FieldType.TOKENIZED;
+//		} else if (typeName.equals("numeric")) {
+//			this.type = FieldType.NUMERIC;
+//		} else {
+//			throw new IllegalArgumentException("Unknown field type name: " + typeName);
+//		}
+//	}
 
 	public FieldType getType() {
 		return type;
@@ -103,20 +111,6 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 
 	public void setUnknownValue(String unknownValue) {
 		this.unknownValue = unknownValue;
-	}
-
-	public void setUnknownCondition(String unknownCondition) {
-		if (unknownCondition.equals("NEVER")) {
-			this.unknownCondition = UnknownCondition.NEVER;
-		} else if (unknownCondition.equals("MISSING")) {
-			this.unknownCondition = UnknownCondition.MISSING;
-		} else if (unknownCondition.equals("EMPTY")) {
-			this.unknownCondition = UnknownCondition.EMPTY;
-		} else if (unknownCondition.equals("MISSING_OR_EMPTY")) {
-			this.unknownCondition = UnknownCondition.MISSING_OR_EMPTY;
-		} else {
-			throw new IllegalArgumentException("Unknown unknown condition: " + unknownCondition);
-		}
 	}
 
 	public void setUnknownCondition(UnknownCondition unknownCondition) {

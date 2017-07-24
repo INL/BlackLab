@@ -36,7 +36,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.xpath.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
@@ -107,7 +109,7 @@ public class IndexStructure {
 	/** All non-complex fields in our index (metadata fields) and their types. */
 	private Map<String, MetadataFieldDesc> metadataFieldInfos;
 
-	/** When a metadata field value is considered "unknown" (NEVER, MISSING, EMPTY, MISSING_OR_EMPTY) [NEVER] */
+	/** When a metadata field value is considered "unknown" (never|missing|empty|missing_or_empty) [never] */
 	private String defaultUnknownCondition;
 
 	/** What value to index when a metadata field value is unknown [unknown] */
@@ -197,6 +199,25 @@ public class IndexStructure {
 		this(reader, indexDir, createNewIndex, (File)null);
 	}
 
+    /**
+     * Construct an IndexStructure object, querying the index for the available
+     * fields and their types.
+     * @param reader the index of which we want to know the structure
+     * @param indexDir where the index (and the metadata file) is stored
+     * @param createNewIndex whether we're creating a new index
+     * @param config input format config to use as template for index structure / metadata
+     *   (if creating new index)
+     */
+    public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) {
+        this.indexDir = indexDir;
+
+        metadataFieldInfos = new TreeMap<>();
+        complexFields = new TreeMap<>();
+
+        readMetadata(reader, createNewIndex, config);
+        detectMainproperties(reader, createNewIndex);
+    }
+
 	/**
 	 * Construct an IndexStructure object, querying the index for the available
 	 * fields and their types.
@@ -206,27 +227,58 @@ public class IndexStructure {
 	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
 	 *   (if creating new index)
 	 */
-	public IndexStructure(IndexReader reader, File indexDir,
-			boolean createNewIndex, File indexTemplateFile) {
-		//this.reader = reader;
+	public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
 		this.indexDir = indexDir;
 
 		metadataFieldInfos = new TreeMap<>();
 		complexFields = new TreeMap<>();
 
 		readMetadata(reader, createNewIndex, indexTemplateFile);
-
-		if (!createNewIndex) { // new index doesn't have this information yet
-			// Detect the main properties for all complex fields
-			// (looks for fields with char offset information stored)
-			mainContentsField = null;
-			for (ComplexFieldDesc d: complexFields.values()) {
-				if (mainContentsField == null || d.getName().equals("contents"))
-					mainContentsField = d;
-				d.detectMainProperty(reader);
-			}
-		}
+		detectMainproperties(reader, createNewIndex);
 	}
+
+    protected void detectMainproperties(IndexReader reader, boolean createNewIndex) {
+        if (!createNewIndex) { // new index doesn't have this information yet
+            // Detect the main properties for all complex fields
+            // (looks for fields with char offset information stored)
+            mainContentsField = null;
+            for (ComplexFieldDesc d: complexFields.values()) {
+                if (mainContentsField == null || d.getName().equals("contents"))
+                    mainContentsField = d;
+                d.detectMainProperty(reader);
+            }
+        }
+    }
+
+    /**
+     * Read the indexmetadata.(json|yaml), if it exists, or create it from the config, if supplied.
+     *
+     * @param reader the index of which we want to know the structure
+     * @param indexDir where the index (and the metadata file) is stored
+     * @param createNewIndex whether we're creating a new index
+     * @param config input format config to use as template for index structure / metadata
+     *   (only if creating a new index)
+     */
+    private void readMetadata(IndexReader reader, boolean createNewIndex, ConfigInputFormat config) {
+        // Find existing metadata file, if any.
+        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME, Arrays.asList("json", "yaml", "yml"));
+
+        // If none found, or creating new index: metadata file should be same format as template.
+        if (createNewIndex || metadataFile == null) {
+            metadataFile = new File(indexDir, METADATA_FILE_NAME + ".yaml");
+        }
+        saveAsJson = false;
+        boolean usedTemplate = false;
+        if (createNewIndex && config != null) {
+            // Create an index metadata file from this config.
+            String name = determineIndexName();
+            IndexMetadata indexMetadata = new IndexMetadata(name, config);
+            indexMetadata.write(metadataFile);
+            usedTemplate = true;
+        }
+
+        actuallyReadMetadata(reader, createNewIndex, metadataFile, usedTemplate);
+    }
 
 	/**
 	 * Read the indexmetadata.(json|yaml), if it exists, or the template, if supplied.
@@ -274,14 +326,16 @@ public class IndexStructure {
 			usedTemplate = true;
 		}
 
-		// Read and interpret index metadata file
+		actuallyReadMetadata(reader, createNewIndex, metadataFile, usedTemplate);
+	}
+
+    protected void actuallyReadMetadata(IndexReader reader, boolean createNewIndex, File metadataFile, boolean usedTemplate) {
+        // Read and interpret index metadata file
 		IndexMetadata indexMetadata;
 		boolean initTimestamps = false;
 		if ((createNewIndex && !usedTemplate) || !metadataFile.exists()) {
 			// No metadata file yet; start with a blank one
-			String name = indexDir.getName();
-			if (name.equals("index"))
-				name = indexDir.getAbsoluteFile().getParentFile().getName();
+			String name = determineIndexName();
 			indexMetadata = new IndexMetadata(name);
 			initTimestamps = true;
 		} else {
@@ -343,7 +397,14 @@ public class IndexStructure {
 				f.resetForIndexing();
 			}
 		}
-	}
+    }
+
+    protected String determineIndexName() {
+        String name = indexDir.getName();
+        if (name.equals("index"))
+        	name = indexDir.getAbsoluteFile().getParentFile().getName();
+        return name;
+    }
 
 	private void getMetaFieldGroups(IndexMetadata indexMetadata) {
         metadataGroups.clear();
@@ -377,14 +438,16 @@ public class IndexStructure {
     	    Entry<String, JsonNode> entry = it.next();
             String fieldName = entry.getKey();
     		JsonNode fieldConfig = entry.getValue();
-    		MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, Json.getString(fieldConfig, "type", "tokenized"));
+    		FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
+            MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, fieldType);
     		fieldDesc.setDisplayName     (Json.getString(fieldConfig, "displayName", fieldName));
     		fieldDesc.setUiType          (Json.getString(fieldConfig, "uiType", ""));
     		fieldDesc.setDescription     (Json.getString(fieldConfig, "description", ""));
     		fieldDesc.setGroup           (Json.getString(fieldConfig, "group", ""));
     		fieldDesc.setAnalyzer        (Json.getString(fieldConfig, "analyzer", "DEFAULT"));
     		fieldDesc.setUnknownValue    (Json.getString(fieldConfig, "unknownValue", defaultUnknownValue));
-    		fieldDesc.setUnknownCondition(Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition));
+    		UnknownCondition unk = UnknownCondition.fromStringValue(Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition));
+    		fieldDesc.setUnknownCondition(unk);
             if (fieldConfig.has("values"))
     			fieldDesc.setValues(fieldConfig.get("values"));
             if (fieldConfig.has("displayValues"))
@@ -471,12 +534,12 @@ public class IndexStructure {
 
 		// Add metadata field info
 		for (MetadataFieldDesc f: metadataFieldInfos.values()) {
-			MetadataFieldDesc.UnknownCondition unknownCondition = f.getUnknownCondition();
+			UnknownCondition unknownCondition = f.getUnknownCondition();
             ObjectNode fi = metadataFields.putObject(f.getName());
 			fi.put("displayName", f.getDisplayName());
 			fi.put("uiType", f.getUiType());
 			fi.put("description", f.getDescription());
-			fi.put("type", f.getType().toString().toLowerCase());
+			fi.put("type", f.getType().stringValue());
 			fi.put("analyzer", f.getAnalyzerName());
 			fi.put("unknownValue", f.getUnknownValue());
 			fi.put("unknownCondition", unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString());
@@ -556,7 +619,7 @@ public class IndexStructure {
 					// Metadata field, not found in metadata JSON file
 					FieldType type = getFieldType(name);
 					MetadataFieldDesc metadataFieldDesc = new MetadataFieldDesc(name, type);
-					metadataFieldDesc.setUnknownCondition(defaultUnknownCondition);
+					metadataFieldDesc.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
 					metadataFieldDesc.setUnknownValue(defaultUnknownValue);
 					metadataFieldInfos.put(name, metadataFieldDesc);
 				}
@@ -653,7 +716,7 @@ public class IndexStructure {
 		 * indexing.
 		 */
 
-		FieldType type = FieldType.TEXT;
+		FieldType type = FieldType.TOKENIZED;
 		if (fieldName.endsWith("Numeric") || fieldName.endsWith("Num"))
 			type = FieldType.NUMERIC;
 		return type;
@@ -750,7 +813,7 @@ public class IndexStructure {
 			if (titleField == null) {
 				// Use the first text field we can find.
 				for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
-					if (e.getValue().getType() == FieldType.TEXT) {
+					if (e.getValue().getType() == FieldType.TOKENIZED) {
 						titleField = e.getKey();
 						return;
 					}
@@ -843,7 +906,7 @@ public class IndexStructure {
 		// Find documents with title in the name
 		List<String> fieldsFound = new ArrayList<>();
 		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
-			if (e.getValue().getType() == FieldType.TEXT && e.getKey().toLowerCase().contains(search)) {
+			if (e.getValue().getType() == FieldType.TOKENIZED && e.getKey().toLowerCase().contains(search)) {
 				if (partialMatchOkay || e.getKey().toLowerCase().equals(search))
 					fieldsFound.add(e.getKey());
 			}
@@ -883,7 +946,7 @@ public class IndexStructure {
 				special = "PIDFIELD";
 			if (special.length() > 0)
 				special = " (" + special + ")";
-			out.println("- " + e.getKey() + (type == FieldType.TEXT ? "" : " (" + type + ")")
+			out.println("- " + e.getKey() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
 					+ special);
 		}
 	}
@@ -999,8 +1062,8 @@ public class IndexStructure {
 		if (metadataFieldInfos.containsKey(fieldName))
 			return;
 		// Not registered yet; do so now.
-		MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TEXT);
-		mf.setUnknownCondition(defaultUnknownCondition);
+		MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TOKENIZED);
+		mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
 		mf.setUnknownValue(defaultUnknownValue);
 		metadataFieldInfos.put(fieldName, mf);
 	}

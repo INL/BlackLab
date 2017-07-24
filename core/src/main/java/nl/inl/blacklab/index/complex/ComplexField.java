@@ -140,6 +140,10 @@ public class ComplexField {
 		return p;
 	}
 
+    public boolean hasProperty(String name) {
+        return properties.containsKey(name);
+    }
+
 	public ComplexFieldProperty getMainProperty() {
 		return mainProperty;
 	}
