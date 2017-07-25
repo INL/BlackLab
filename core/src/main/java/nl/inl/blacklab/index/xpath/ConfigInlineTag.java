@@ -6,25 +6,25 @@ package nl.inl.blacklab.index.xpath;
 class ConfigInlineTag {
 
 	/** XPath to the inline tag, relative to the container element */
-    private String tagPath;
+    private String path;
 
     public ConfigInlineTag() {
     }
 
 	public ConfigInlineTag(String path) {
-        setTagPath(path);
+        setPath(path);
     }
 
     public ConfigInlineTag copy() {
-        return new ConfigInlineTag(tagPath);
+        return new ConfigInlineTag(path);
     }
 
-    public String getTagPath() {
-        return tagPath;
+    public String getPath() {
+        return path;
     }
 
-    public void setTagPath(String tagPath) {
-        this.tagPath = tagPath;
+    public void setPath(String path) {
+        this.path = path;
     }
 
 }

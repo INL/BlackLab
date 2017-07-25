@@ -1,5 +1,8 @@
 package nl.inl.blacklab.index.xpath;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -22,11 +25,11 @@ public class ConfigInputFormat {
     /** This format's description (optional) */
     private String description = "";
 
-    /** Pay attention to namespaces while parsing? */
-    private boolean isNamespaceAware = true;
+    /** This format's type indicator (optional, not used by BlackLab) */
+    private String type = "";
 
     /** XML namespace declarations */
-    private Map<String, String> namespaces = new LinkedHashMap<>();
+    Map<String, String> namespaces = new LinkedHashMap<>();
 
     /** How to find our documents */
     private String documentPath = "/";
@@ -35,10 +38,10 @@ public class ConfigInputFormat {
     private boolean store = true;
 
     /** Before adding metadata fields to the document, this name mapping is applied. */
-    private Map<String, String> indexFieldAs = new LinkedHashMap<>();
+    Map<String, String> indexFieldAs = new LinkedHashMap<>();
 
     /** Special field roles, such as pidField, titleField, etc. */
-    private Map<String, String> specialFields = new LinkedHashMap<>();
+    Map<String, String> specialFields = new LinkedHashMap<>();
 
     /** How to group metadata fields */
     private Map<String, ConfigMetadataFieldGroup> metadataFieldGroups = new LinkedHashMap<>();
@@ -55,13 +58,24 @@ public class ConfigInputFormat {
     /** Linked document(s), e.g. containing our metadata */
     private Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
 
+    public ConfigInputFormat() {
+        // NOP
+    }
+
+    public ConfigInputFormat(File file) throws IOException {
+        InputFormatReader.read(file, this);
+    }
+
+    public ConfigInputFormat(Reader reader, boolean isJson) throws IOException {
+        InputFormatReader.read(reader, isJson, this);
+    }
+
     /**
      * Copy everything except name, displayName and description from the specified format.
      * @param formatName format to copy from
      */
     public void setBaseFormat(String formatName) {
         ConfigInputFormat baseFormat = DocumentFormats.getConfig(formatName);
-        isNamespaceAware = baseFormat.isNamespaceAware();
         namespaces.putAll(baseFormat.getNamespaces());
         documentPath = baseFormat.getDocumentPath();
         store = baseFormat.isStore();
@@ -104,10 +118,6 @@ public class ConfigInputFormat {
         this.displayName = displayName;
     }
 
-    public void setNamespaceAware(boolean isNamespaceAware) {
-        this.isNamespaceAware = isNamespaceAware;
-    }
-
     public void addNamespace(String name, String uri) {
         namespaces.put(name, uri);
     }
@@ -118,13 +128,13 @@ public class ConfigInputFormat {
 
     void addMetadataBlock(ConfigMetadataBlock b) {
         if (b.getAnalyzer().isEmpty())
-            b.setAnalyzer(metadataDefaultAnalyzer);
+            b.setDefaultAnalyzer(metadataDefaultAnalyzer);
         metadataBlocks.add(b);
     }
 
     public ConfigMetadataBlock createMetadataBlock() {
         ConfigMetadataBlock b = new ConfigMetadataBlock();
-        b.setAnalyzer(metadataDefaultAnalyzer);
+        b.setDefaultAnalyzer(metadataDefaultAnalyzer);
         metadataBlocks.add(b);
         return b;
     }
@@ -134,7 +144,7 @@ public class ConfigInputFormat {
     }
 
     public void addAnnotatedField(ConfigAnnotatedField f) {
-        this.annotatedFields.put(f.getFieldName(), f);
+        this.annotatedFields.put(f.getName(), f);
     }
 
     public void addLinkedDocument(ConfigLinkedDocument d) {
@@ -142,7 +152,7 @@ public class ConfigInputFormat {
     }
 
     public boolean isNamespaceAware() {
-        return isNamespaceAware;
+        return namespaces.size() > 0;
     }
 
     public Map<String, String> getNamespaces() {
@@ -182,7 +192,7 @@ public class ConfigInputFormat {
         return getLinkedDocument(name, false);
     }
 
-    public ConfigLinkedDocument getOrCreateLinkedDocument(String string) {
+    public ConfigLinkedDocument getOrCreateLinkedDocument(String name) {
         return getLinkedDocument(name, true);
     }
 
@@ -223,7 +233,7 @@ public class ConfigInputFormat {
         return metadataDefaultAnalyzer;
     }
 
-    public void setMetadataAnalyzer(String metadataDefaultAnalyzer) {
+    public void setMetadataDefaultAnalyzer(String metadataDefaultAnalyzer) {
         this.metadataDefaultAnalyzer = metadataDefaultAnalyzer;
     }
 
@@ -242,6 +252,14 @@ public class ConfigInputFormat {
             metadataFieldGroups.put(name, g);
         }
         return g;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
 }

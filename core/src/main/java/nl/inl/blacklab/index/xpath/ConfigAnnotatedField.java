@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 /** Configuration for annotated ("complex") fields in our XML */
-public class ConfigAnnotatedField {
+public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
-    private String fieldName;
+    private String name;
 
     /** How to display the field in the interface (optional) */
     private String displayName = "";
@@ -39,11 +39,11 @@ public class ConfigAnnotatedField {
     private List<ConfigInlineTag> inlineTags = new ArrayList<>();
 
     ConfigAnnotatedField(String fieldName) {
-        setFieldName(fieldName);
+        setName(fieldName);
     }
 
     public ConfigAnnotatedField copy() {
-        ConfigAnnotatedField result = new ConfigAnnotatedField(fieldName);
+        ConfigAnnotatedField result = new ConfigAnnotatedField(name);
         result.setDisplayName(displayName);
         result.setDescription(description);
         result.setContainerPath(containerPath);
@@ -59,8 +59,8 @@ public class ConfigAnnotatedField {
         return result;
     }
 
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setContainerPath(String containerPath) {
@@ -79,7 +79,7 @@ public class ConfigAnnotatedField {
 		this.punctPath = punctPath;
 	}
 
-    private void addInlineTag(ConfigInlineTag inlineTag) {
+    public void addInlineTag(ConfigInlineTag inlineTag) {
         this.inlineTags.add(inlineTag);
     }
 
@@ -87,6 +87,7 @@ public class ConfigAnnotatedField {
         inlineTags.add(new ConfigInlineTag(path));
     }
 
+    @Override
     public void addAnnotation(ConfigAnnotation annotation) {
         this.annotations.put(annotation.getName(), annotation);
     }
@@ -95,8 +96,8 @@ public class ConfigAnnotatedField {
         standoffAnnotations.add(standoff);
     }
 
-    public String getFieldName() {
-        return fieldName;
+    public String getName() {
+        return name;
     }
 
     public String getContainerPath() {
@@ -119,6 +120,7 @@ public class ConfigAnnotatedField {
         return inlineTags;
     }
 
+    @Override
     public Map<String, ConfigAnnotation> getAnnotations() {
         return Collections.unmodifiableMap(annotations);
     }

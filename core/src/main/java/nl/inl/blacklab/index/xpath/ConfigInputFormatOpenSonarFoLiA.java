@@ -8,7 +8,6 @@ public class ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
         setDescription("The file format used by OpenSonar.");
 
         // Basic config: namespaces, document element
-        setNamespaceAware(true);
         addNamespace("", "http://ilk.uvt.nl/folia");
         setDocumentPath("//FoLiA");
         setStore(true); // (this is the default)
@@ -21,7 +20,7 @@ public class ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
         //annotatedField.setPunctPath("//text()[not(ancestor::w)]");
         annotatedField.addInlineTag(".//s");
         annotatedField.addInlineTag(".//p");
-        annotatedField.addAnnotation(new ConfigAnnotation("word", "t[not(@class)]/text()"));
+        annotatedField.addAnnotation(new ConfigAnnotation("word", "t[not(@class)]"));
         annotatedField.addAnnotation(new ConfigAnnotation("lemma", "lemma/@class"));
         ConfigAnnotation pos = new ConfigAnnotation("pos", "@class");
         pos.setBasePath("pos");

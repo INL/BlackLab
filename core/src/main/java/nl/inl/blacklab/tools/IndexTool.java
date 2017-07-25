@@ -36,6 +36,7 @@ import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.xpath.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
@@ -241,6 +242,14 @@ public class IndexTool {
 			if (docFormat.equals("teip4")) {
 				System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
 				docFormat = "tei";
+			}
+			if (!DocumentFormats.exists(docFormat)) {
+			    // See if we can find and load a format file by this name.
+			    File formatFile = FileUtil.findFile(dirs, docFormat, Arrays.asList("yaml", "yml", "json"));
+			    if (formatFile != null) {
+			        // Load the format file and register the format
+			        DocumentFormats.register(new ConfigInputFormat(formatFile));
+			    }
 			}
 			docIndexerFactory = DocumentFormats.getIndexerFactory(docFormat);
 			if (docIndexerFactory == null) {

@@ -1,13 +1,13 @@
 package nl.inl.blacklab.index.xpath;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Configuration for a block of standoff annotations (annotations that
  * don't reside under the word tag but elsewhere in the document).
  */
-class ConfigStandoffAnnotations {
+class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
 	/** Path to the elements containing the values to index
 	 *  (values may apply to multiple token positions)
@@ -20,7 +20,7 @@ class ConfigStandoffAnnotations {
     private String refTokenPositionIdPath;
 
     /** The annotations to index at the referenced token positions. */
-    private List<ConfigAnnotation> annotations = new ArrayList<>();
+    private Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
 
     public ConfigStandoffAnnotations() {
     }
@@ -32,7 +32,7 @@ class ConfigStandoffAnnotations {
 
     public ConfigStandoffAnnotations copy() {
         ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, refTokenPositionIdPath);
-        for (ConfigAnnotation a: annotations) {
+        for (ConfigAnnotation a: annotations.values()) {
             result.addAnnotation(a.copy());
         }
         return result;
@@ -54,12 +54,14 @@ class ConfigStandoffAnnotations {
         this.refTokenPositionIdPath = refTokenPositionIdPath;
     }
 
-    public List<ConfigAnnotation> getAnnotations() {
+    @Override
+    public Map<String, ConfigAnnotation> getAnnotations() {
         return annotations;
     }
 
+    @Override
     public void addAnnotation(ConfigAnnotation annotation) {
-        this.annotations.add(annotation);
+        this.annotations.put(annotation.getName(), annotation);
     }
 
 }

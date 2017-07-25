@@ -98,7 +98,7 @@ public class IndexMetadata {
             for (ConfigMetadataField f: b.getFields()) {
                 if (f.isForEach())
                     continue;
-                ObjectNode g = metadata.putObject(f.getFieldName());
+                ObjectNode g = metadata.putObject(f.getName());
                 g.put("displayName", f.getDisplayName());
                 g.put("description", f.getDescription());
                 g.put("type", f.getType().stringValue());
@@ -120,10 +120,10 @@ public class IndexMetadata {
 
         // Add complex field info
         for (ConfigAnnotatedField f: config.getAnnotatedFields().values()) {
-            ObjectNode g = complex.putObject(f.getFieldName());
+            ObjectNode g = complex.putObject(f.getName());
             g.put("displayName", f.getDisplayName());
             g.put("description", f.getDescription());
-            g.put("mainProperty", f.getAnnotations().get(0).getName());
+            g.put("mainProperty", f.getAnnotations().values().iterator().next().getName());
             ArrayNode h = g.putArray("displayOrder");
             for (ConfigAnnotation a: f.getAnnotations().values()) {
                 h.add(a.getName());

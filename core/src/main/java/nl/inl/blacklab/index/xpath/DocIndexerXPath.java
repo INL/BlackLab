@@ -137,10 +137,10 @@ public class DocIndexerXPath extends DocIndexer {
 	        // Define the properties that make up our complex field
         	List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
         	if (annotations.size() == 0)
-        		throw new RuntimeException("No annotations defined for field " + af.getFieldName());
+        		throw new RuntimeException("No annotations defined for field " + af.getName());
         	ConfigAnnotation mainAnnotation = annotations.get(0);
-	        ComplexField complexField = new ComplexField(af.getFieldName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation), false);
-	        complexFields.put(af.getFieldName(), complexField);
+	        ComplexField complexField = new ComplexField(af.getName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation), false);
+	        complexFields.put(af.getName(), complexField);
             ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);
 	        propStartTag.setForwardIndex(false);
 
@@ -150,7 +150,7 @@ public class DocIndexerXPath extends DocIndexer {
 	        	complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
 	        }
 	        for (ConfigStandoffAnnotations standoff: af.getStandoffAnnotations()) {
-	            for (ConfigAnnotation annot: standoff.getAnnotations()) {
+	            for (ConfigAnnotation annot: standoff.getAnnotations().values()) {
 	                complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
 	            }
 	        }
@@ -268,7 +268,7 @@ public class DocIndexerXPath extends DocIndexer {
         	// Determine some useful stuff about the field we're processing
             // and store in instance variables so our methods can access them
         	currentAnnotatedField = annotatedField;
-        	currentComplexField = complexFields.get(currentAnnotatedField.getFieldName());
+        	currentComplexField = complexFields.get(currentAnnotatedField.getName());
         	propStartTag = currentComplexField.getTagProperty();
         	propMain = currentComplexField.getMainProperty();
         	propPunct = currentComplexField.getPunctProperty();
@@ -295,7 +295,7 @@ public class DocIndexerXPath extends DocIndexer {
                 List<InlineObject> tagsAndPunct = new ArrayList<>();
                 for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
                     nav.push();
-                    apTags.selectXPath(inlineTag.getTagPath());
+                    apTags.selectXPath(inlineTag.getPath());
                     while (apTags.evalXPath() != -1) {
                         collectInlineTag(tagsAndPunct);
                     }
@@ -395,7 +395,7 @@ public class DocIndexerXPath extends DocIndexer {
                     }
                     nav.pop();
 
-                    for (ConfigAnnotation annotation: standoff.getAnnotations()) {
+                    for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
                         processAnnotation(annotation, apAnnot, tokenPositions);
                     }
                 }
@@ -430,7 +430,7 @@ public class DocIndexerXPath extends DocIndexer {
                         // (allows us to capture many metadata fields with 3 XPath expressions)
                         nav.push();
                         apMetaForEach.selectXPath(f.getForEachPath());
-                        apFieldName.selectXPath(f.getFieldName());
+                        apFieldName.selectXPath(f.getName());
                         apMetadata.selectXPath(f.getValuePath());
                         while (apMetaForEach.evalXPath() != -1) {
                             // Find the fieldName and value for this forEach match
@@ -445,7 +445,7 @@ public class DocIndexerXPath extends DocIndexer {
                         // Regular metadata field; just the fieldName and an XPath expression for the value
                         apMetadata.selectXPath(f.getValuePath());
                         String metadataValue = apMetadata.evalXPathToString();
-                        metadata(f.getFieldName(), metadataValue);
+                        metadata(f.getName(), metadataValue);
                     }
                 }
 

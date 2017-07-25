@@ -10,7 +10,15 @@ public class ConfigLinkedDocument {
     public static enum MissingLinkPathAction {
         IGNORE,
         WARN,
-        FAIL
+        FAIL;
+
+        public static MissingLinkPathAction fromStringValue(String v) {
+            return valueOf(v.toUpperCase());
+        }
+
+        public String stringValue() {
+            return toString().toLowerCase();
+        }
     }
 
     /** Linked document type name, and field name if we're going to store it */
@@ -20,7 +28,7 @@ public class ConfigLinkedDocument {
     private boolean store = false;
 
     /** Where in the document to find the information we need to locate the linked document. */
-    private List<String> linkPaths = new ArrayList<>();
+    List<String> linkPaths = new ArrayList<>();
 
     /** What to do if we can't find the link information: ignore, warn or fail (default: fail) */
     private MissingLinkPathAction ifLinkPathMissing = MissingLinkPathAction.FAIL;

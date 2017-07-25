@@ -13,7 +13,6 @@ public class ConfigInputFormatOpenSonarCmdi extends ConfigInputFormat {
         setDisplayName("OpenSoNaR CMDI metadata");
 
         // Basic config: namespaces, document element
-        setNamespaceAware(true);
         addNamespace("", "http://www.clarin.eu/cmd/");
         setDocumentPath("/CMD/Components/SoNaRcorpus/Text");
 

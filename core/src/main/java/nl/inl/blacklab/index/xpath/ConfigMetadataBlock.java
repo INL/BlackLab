@@ -10,7 +10,7 @@ public class ConfigMetadataBlock {
     private String containerPath = ".";
 
     /** What default analyzer to use for these fields */
-    private String analyzer = "";
+    private String defaultAnalyzer = "";
 
     /** Metadata fields */
     private List<ConfigMetadataField> fields = new ArrayList<>();
@@ -39,16 +39,16 @@ public class ConfigMetadataBlock {
     public void addMetadataField(ConfigMetadataField f) {
         // If no custom analyzer specified, inherit from block
         if (f.getAnalyzer().equals(""))
-            f.setAnalyzer(analyzer);
+            f.setAnalyzer(defaultAnalyzer);
         fields.add(f);
     }
 
     public String getAnalyzer() {
-        return analyzer;
+        return defaultAnalyzer;
     }
 
-    public void setAnalyzer(String analyzer) {
-        this.analyzer = analyzer;
+    public void setDefaultAnalyzer(String defaultAnalyzer) {
+        this.defaultAnalyzer = defaultAnalyzer;
     }
 
 }

@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 public class ConfigMetadataField {
 
     /** Metadata field name (or name XPath, if forEach) */
-    private String fieldName;
+    private String name;
 
     /** How to display the field in the interface (optional) */
     private String displayName = "";
@@ -58,29 +58,29 @@ public class ConfigMetadataField {
     }
 
     public ConfigMetadataField(String fieldName, String valuePath, String forEachPath) {
-        setFieldName(fieldName);
+        setName(fieldName);
         setValuePath(valuePath);
         setForEachPath(forEachPath);
     }
 
     public ConfigMetadataField copy() {
-        return new ConfigMetadataField(fieldName, valuePath, forEachPath);
+        return new ConfigMetadataField(name, valuePath, forEachPath);
     }
 
     public void setForEachPath(String forEachPath) {
         this.forEachPath = forEachPath;
     }
 
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
     }
 
-    public String getFieldName() {
-        return fieldName;
+    public String getName() {
+        return name;
     }
 
     public String getValuePath() {

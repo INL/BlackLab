@@ -42,6 +42,10 @@ public class ConfigMetadataFieldGroup {
         this.fields.add(field);
     }
 
+    public void addFields(List<String> fields) {
+        this.fields.addAll(fields);
+    }
+
     public boolean isAddRemainingFields() {
         return addRemainingFields;
     }
@@ -49,6 +53,5 @@ public class ConfigMetadataFieldGroup {
     public void setAddRemainingFields(boolean addRemainingFields) {
         this.addRemainingFields = addRemainingFields;
     }
-
 
 }
