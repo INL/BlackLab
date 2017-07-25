@@ -96,17 +96,17 @@ public class FileProcessor {
 
     public FileProcessor() {
         this(true, true);
+    }
+
+    public FileProcessor(boolean recurseSubdirs, boolean processArchives) {
+        this.recurseSubdirs = recurseSubdirs;
+        this.processArchives = processArchives;
         setFileNameGlob("*");
         reset();
     }
 
     public void reset() {
         keepProcessing = true;
-    }
-
-    public FileProcessor(boolean recurseSubdirs, boolean processArchives) {
-        this.recurseSubdirs = recurseSubdirs;
-        this.processArchives = processArchives;
     }
 
     public void setFileNameGlob(String glob) {
@@ -373,21 +373,20 @@ public class FileProcessor {
                 int i = filePath.lastIndexOf("/");
                 String fileName = i < 0 ? filePath : filePath.substring(i + 1);
                 if (!skipFile(fileName)) {
-                    String completePath = tgzFileName + "/" + filePath;
                     try {
                         File f = new File(filePath);
                         String fn = f.getName();
                         Matcher m = getFileNamePattern().matcher(fn);
                         if (m.matches()) {
-                            processInputStream(completePath, contents);
+                            processInputStream(filePath, contents);
                         } else {
                             boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".gz") || fn.endsWith(".tgz");
                             if (isArchive && isProcessArchives()) {
-                                processInputStream(completePath, contents);
+                                processInputStream(filePath, contents);
                             }
                         }
                     } catch (Exception e) {
-                        keepProcessing = getErrorHandler().errorOccurred(completePath, null, e);
+                        keepProcessing = getErrorHandler().errorOccurred(tgzFileName + "/" + filePath, null, e);
                     }
                 }
                 return keepProcessing;

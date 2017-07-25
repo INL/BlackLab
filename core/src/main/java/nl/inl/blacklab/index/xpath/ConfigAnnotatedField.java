@@ -2,7 +2,9 @@ package nl.inl.blacklab.index.xpath;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Configuration for annotated ("complex") fields in our XML */
 public class ConfigAnnotatedField {
@@ -28,7 +30,7 @@ public class ConfigAnnotatedField {
     private String punctPath = null;
 
     /** Annotations on our words */
-    private List<ConfigAnnotation> annotations = new ArrayList<>();
+    private Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
 
     /** Annotations on our words, defined elsewhere in the document */
     private List<ConfigStandoffAnnotations> standoffAnnotations = new ArrayList<>();
@@ -48,7 +50,7 @@ public class ConfigAnnotatedField {
         result.setWordsPath(wordsPath);
         result.setTokenPositionIdPath(tokenPositionIdPath);
         result.setPunctPath(punctPath);
-        for (ConfigAnnotation a: annotations)
+        for (ConfigAnnotation a: annotations.values())
             result.addAnnotation(a.copy());
         for (ConfigStandoffAnnotations a: standoffAnnotations)
             result.addStandoffAnnotation(a.copy());
@@ -86,7 +88,7 @@ public class ConfigAnnotatedField {
     }
 
     public void addAnnotation(ConfigAnnotation annotation) {
-        this.annotations.add(annotation);
+        this.annotations.put(annotation.getName(), annotation);
     }
 
     public void addStandoffAnnotation(ConfigStandoffAnnotations standoff) {
@@ -117,8 +119,8 @@ public class ConfigAnnotatedField {
         return inlineTags;
     }
 
-    public List<ConfigAnnotation> getAnnotations() {
-        return Collections.unmodifiableList(annotations);
+    public Map<String, ConfigAnnotation> getAnnotations() {
+        return Collections.unmodifiableMap(annotations);
     }
 
     public List<ConfigStandoffAnnotations> getStandoffAnnotations() {

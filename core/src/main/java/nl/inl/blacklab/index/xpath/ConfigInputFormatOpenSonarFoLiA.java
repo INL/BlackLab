@@ -1,8 +1,5 @@
 package nl.inl.blacklab.index.xpath;
 
-import nl.inl.blacklab.search.indexstructure.FieldType;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
-
 public class ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
 
     public ConfigInputFormatOpenSonarFoLiA() {

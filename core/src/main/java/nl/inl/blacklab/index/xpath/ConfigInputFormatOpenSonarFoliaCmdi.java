@@ -17,7 +17,29 @@ public class ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat {
         linkedMetadata.addLinkPath("metadata[@type='test']/@src");
         linkedMetadata.addLinkPath("metadata[@type='test']/@id");
         linkedMetadata.setIfLinkPathMissing(MissingLinkPathAction.FAIL);
+
+        // File
         linkedMetadata.setInputFile("$1");
+
+        // HTTP
+        //linkedMetadata.setInputFile("http://localhost/$1");
+
+        // Zip
+        //linkedMetadata.setInputFile("test.cmdi.zip");
+        //linkedMetadata.setPathInsideArchive("$1");
+
+        // HTTP+ZIP
+        //linkedMetadata.setInputFile("http://localhost/test.cmdi.zip");
+        //linkedMetadata.setPathInsideArchive("$1");
+
+        // TGZ
+        //linkedMetadata.setInputFile("test.cmdi.tgz");
+        //linkedMetadata.setPathInsideArchive("$1");
+
+        // HTTP+TGZ
+        //linkedMetadata.setInputFile("http://localhost/test.cmdi.tgz");
+        //linkedMetadata.setPathInsideArchive("$1");
+
         linkedMetadata.setDocumentPath("/CMD/Components/SoNaRcorpus/Text[@ComponentId = $2]");
         linkedMetadata.setInputFormat("OpenSonarCmdi");
         addLinkedDocument(linkedMetadata);

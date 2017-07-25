@@ -39,8 +39,8 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.xpath.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
@@ -135,7 +135,7 @@ public class DocIndexerXPath extends DocIndexer {
         for (ConfigAnnotatedField af: config.getAnnotatedFields().values()) {
 
 	        // Define the properties that make up our complex field
-        	List<ConfigAnnotation> annotations = af.getAnnotations();
+        	List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
         	if (annotations.size() == 0)
         		throw new RuntimeException("No annotations defined for field " + af.getFieldName());
         	ConfigAnnotation mainAnnotation = annotations.get(0);
@@ -347,7 +347,7 @@ public class DocIndexerXPath extends DocIndexer {
                     beginWord();
 
                     // For each configured annotation...
-                    for (ConfigAnnotation annotation: annotatedField.getAnnotations()) {
+                    for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
                         processAnnotation(annotation, apAnnot, null);
                     }
 
@@ -684,18 +684,18 @@ public class DocIndexerXPath extends DocIndexer {
         return fileHandler.bytes;
     }
 
-    private InputStream resolveFileReference(String inputFile) {
-        try {
-            if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
-                return new URL(inputFile).openStream();
-            }
-            if (indexer == null)
-                return new FileInputStream(new File(inputFile));
-            File f = indexer.getLinkedFile(inputFile);
-            return new FileInputStream(f);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private InputStream resolveFileReference(String inputFile) throws IOException {
+        if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
+            return new URL(inputFile).openStream();
         }
+        if (indexer == null)
+            return new FileInputStream(new File(inputFile));
+        File f = indexer.getLinkedFile(inputFile);
+        if (f == null)
+            throw new FileNotFoundException("References file not found: " + f);
+        if (!f.canRead())
+            throw new IOException("Cannot read referenced file " + f);
+        return new FileInputStream(f);
     }
 
     private static String replaceDollarRefs(String pattern, List<String> replacements) {

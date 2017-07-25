@@ -125,7 +125,7 @@ public class IndexMetadata {
             g.put("description", f.getDescription());
             g.put("mainProperty", f.getAnnotations().get(0).getName());
             ArrayNode h = g.putArray("displayOrder");
-            for (ConfigAnnotation a: f.getAnnotations()) {
+            for (ConfigAnnotation a: f.getAnnotations().values()) {
                 h.add(a.getName());
             }
         }
