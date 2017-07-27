@@ -15,6 +15,10 @@ class ConfigInlineTag {
         setPath(path);
     }
 
+    public void validate() {
+        ConfigInputFormat.req(path, "inline tag", "path");
+    }
+
     public ConfigInlineTag copy() {
         return new ConfigInlineTag(path);
     }

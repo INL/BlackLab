@@ -263,7 +263,7 @@ public class Indexer {
 
 		metadataFieldTypeUntokenized = new FieldType(metadataFieldTypeTokenized);
 		metadataFieldTypeUntokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
-		metadataFieldTypeUntokenized.setTokenized(false);
+		//metadataFieldTypeUntokenized.setTokenized(false);  // <-- this should be done with KeywordAnalyzer, otherwise untokenized fields aren't lowercased
 		metadataFieldTypeUntokenized.setStoreTermVectors(false);
 		metadataFieldTypeUntokenized.setStoreTermVectorPositions(false);
 		metadataFieldTypeUntokenized.setStoreTermVectorOffsets(false);

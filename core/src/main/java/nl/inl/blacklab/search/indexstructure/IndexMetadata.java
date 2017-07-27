@@ -62,6 +62,7 @@ public class IndexMetadata {
         jsonRoot = mapper.createObjectNode();
         jsonRoot.put("displayName", indexName);
         jsonRoot.put("description", config.getDescription());
+        jsonRoot.put("contentViewable", config.isContentViewable());
         jsonRoot.put("documentFormat", config.getName());
         addVersionInfo();
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");

@@ -2,7 +2,9 @@ package nl.inl.blacklab.index.xpath;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 
@@ -15,21 +17,8 @@ public class ConfigAnnotation {
 	/** Annotation name, or forEach (or name XPath, if forEach) */
     private String name;
 
-    /** How to display the field in the interface (optional) */
-    private String displayName = "";
-
-    /** How to describe the field in the interface (optional) */
-    private String description = "";
-
-    /** What sensitivity setting to use to index this annotation
-     *  (optional, default depends on field name) */
-    private SensitivitySetting sensitivity = SensitivitySetting.DEFAULT;
-
-    /** What UI element to show in the interface (optional) */
-    private String uiType = "";
-
     /** If specified, all other XPath expression are relative to this */
-    private String basePath;
+    private String basePath = null;
 
     /** Where to find body text */
     private String valuePath;
@@ -42,12 +31,31 @@ public class ConfigAnnotation {
      */
     private String forEachPath;
 
+    /** How to process annotation values (if at all) */
+    private List<ConfigProcessStep> process = new ArrayList<>();
+
+    /** What sensitivity setting to use to index this annotation
+     *  (optional, default depends on field name) */
+    private SensitivitySetting sensitivity = SensitivitySetting.DEFAULT;
+
     /** XPaths to capture the value of, to substitute for $1-$9 in valuePath */
     private List<String> captureValuePaths = new ArrayList<>();
 
-    /** Our subannotations. Note that only 1 level of subannotations is processed for now
+    /** Our subannotations. Note that only 1 level of subannotations is processed
      *  (i.e. there's no subsubannotations), although we could process more levels if desired. */
     private List<ConfigAnnotation> subAnnotations = new ArrayList<>();
+
+    /** Our subannotations (except forEach's) by name. */
+    private Map<String, ConfigAnnotation> subAnnotationsByName = new LinkedHashMap<>();
+
+    /** How to display the field in the interface (optional) */
+    private String displayName = "";
+
+    /** How to describe the field in the interface (optional) */
+    private String description = "";
+
+    /** What UI element to show in the interface (optional) */
+    private String uiType = "";
 
     public ConfigAnnotation() {
     }
@@ -62,8 +70,23 @@ public class ConfigAnnotation {
         setForEachPath(forEachPath);
     }
 
-	public ConfigAnnotation copy() {
+	public void validate() {
+	    String t = "annotation";
+        ConfigInputFormat.req(name, t, isForEach() ? "namePath" : "name");
+        ConfigInputFormat.req(valuePath, t, "valuePath");
+        for (ConfigAnnotation s: subAnnotations)
+            s.validate();
+        for (ConfigProcessStep step: process)
+            step.validate();
+    }
+
+    public ConfigAnnotation copy() {
         ConfigAnnotation result = new ConfigAnnotation(name, valuePath, forEachPath);
+        result.setProcess(process);
+        result.setDisplayName(displayName);
+        result.setDescription(description);
+        result.setSensitivity(sensitivity);
+        result.setUiType(uiType);
         result.setBasePath(basePath);
         result.captureValuePaths.addAll(captureValuePaths);
         for (ConfigAnnotation a: subAnnotations) {
@@ -100,8 +123,14 @@ public class ConfigAnnotation {
         return Collections.unmodifiableList(subAnnotations);
     }
 
+    public ConfigAnnotation getSubAnnotation(String name) {
+        return subAnnotationsByName.get(name);
+    }
+
     public void addSubAnnotation(ConfigAnnotation subAnnotation) {
         subAnnotations.add(subAnnotation);
+        if (!subAnnotation.isForEach())
+            subAnnotationsByName.put(subAnnotation.getName(), subAnnotation);
     }
 
     public String getForEachPath() {
@@ -154,6 +183,15 @@ public class ConfigAnnotation {
 
     public void setSensitivity(SensitivitySetting sensitivity) {
         this.sensitivity = sensitivity;
+    }
+
+    public List<ConfigProcessStep> getProcess() {
+        return process;
+    }
+
+    public void setProcess(List<ConfigProcessStep> process) {
+        this.process.clear();
+        this.process.addAll(process);
     }
 
 }

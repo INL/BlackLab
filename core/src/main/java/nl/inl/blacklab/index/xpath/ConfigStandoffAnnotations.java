@@ -30,6 +30,14 @@ class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.refTokenPositionIdPath = refTokenPositionIdPath;
     }
 
+    public void validate() {
+        String t = "standoff annotations";
+        ConfigInputFormat.req(path, t, "path");
+        ConfigInputFormat.req(refTokenPositionIdPath, t, "refTokenPositionIdPath");
+        for (ConfigAnnotation a: annotations.values())
+            a.validate();
+    }
+
     public ConfigStandoffAnnotations copy() {
         ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, refTokenPositionIdPath);
         for (ConfigAnnotation a: annotations.values()) {

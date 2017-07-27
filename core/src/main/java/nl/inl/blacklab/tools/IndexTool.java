@@ -35,8 +35,10 @@ import org.apache.lucene.index.CorruptIndexException;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.DocumentFormats.FormatFinder;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.xpath.ConfigInputFormat;
+import nl.inl.blacklab.index.xpath.InputFormatConfigException;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
@@ -212,7 +214,7 @@ public class IndexTool {
 		// Init log4j
 		LogUtil.setupBasicLoggingConfig();
 
-		List<File> dirs = Arrays.asList(inputDir, inputDir.getParentFile(), indexDir, indexDir.getParentFile());
+		List<File> dirs = Arrays.asList(new File("."), inputDir, inputDir.getParentFile(), indexDir, indexDir.getParentFile());
 		propFile = FileUtil.findFile(dirs, "indexer", Arrays.asList("properties"));
 		if (propFile != null && propFile.canRead())
 			readParametersFromPropertiesFile(propFile);
@@ -227,7 +229,7 @@ public class IndexTool {
 		if (glob != null && glob.length() > 0 && !glob.equals("*")) {
 			strGlob += glob;
 		}
-		System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob + " ("
+		System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob + " (format "
 				+ docFormat + ")");
 		if (!indexerParam.isEmpty()) {
 			System.out.println("Indexer parameters:");
@@ -236,20 +238,15 @@ public class IndexTool {
 			}
 		}
 
+		// Make sure BlackLab can find our format configuration files
+		DocumentFormats.addFormatFinder(new FormatFinderDirs(dirs));
+
 		// Determine DocIndexer to use
 		DocIndexerFactory docIndexerFactory = null;
 		if (!autoDetectFormat) {
 			if (docFormat.equals("teip4")) {
 				System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
 				docFormat = "tei";
-			}
-			if (!DocumentFormats.exists(docFormat)) {
-			    // See if we can find and load a format file by this name.
-			    File formatFile = FileUtil.findFile(dirs, docFormat, Arrays.asList("yaml", "yml", "json"));
-			    if (formatFile != null) {
-			        // Load the format file and register the format
-			        DocumentFormats.register(new ConfigInputFormat(formatFile));
-			    }
 			}
 			docIndexerFactory = DocumentFormats.getIndexerFactory(docFormat);
 			if (docIndexerFactory == null) {
@@ -297,6 +294,33 @@ public class IndexTool {
 			// Close the index.
 			indexer.close();
 		}
+	}
+
+	/** How to find input formats (base format, linked documents) */
+	static class FormatFinderDirs extends FormatFinder {
+
+	    private List<File> dirs;
+
+        public FormatFinderDirs(List<File> dirs) {
+	        this.dirs = dirs;
+	    }
+
+        @Override
+        public boolean findAndRegister(String formatIdentifier) {
+            // See if we can find and load a format file by this name.
+            File formatFile = FileUtil.findFile(dirs, formatIdentifier, Arrays.asList("yaml", "yml", "json"));
+            if (formatFile == null)
+                return false;
+            try {
+                // Load the format file and register the format
+                DocumentFormats.register(new ConfigInputFormat(formatFile));
+            } catch (InputFormatConfigException e) {
+                throw new InputFormatConfigException("Error in input format config " + formatFile + ": " + e.getMessage());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return true;
+        }
 	}
 
 	private static void readParametersFromPropertiesFile(File propFile) {

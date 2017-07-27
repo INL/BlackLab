@@ -1098,6 +1098,7 @@ public class QueryTool {
 			errprintln("(Type 'help' for examples or see accompanying documents)");
 		} catch (UnsupportedOperationException e) {
 			// Unimplemented part of query language used
+            e.printStackTrace(); // DEBUG createWeight bug
 			errprintln("Cannot execute query; " + e.getMessage());
 			errprintln("(Type 'help' for examples or see accompanying documents)");
 		}

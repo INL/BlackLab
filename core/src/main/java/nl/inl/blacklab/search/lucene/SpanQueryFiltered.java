@@ -26,8 +26,10 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
 
 /**
@@ -125,7 +127,10 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 	@Override
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
-        Weight filterWeight = filter.rewrite(searcher.getIndexReader()).createWeight(searcher, false);
+        Query rewrite = filter.rewrite(searcher.getIndexReader());
+        if (rewrite instanceof MatchNoDocsQuery)
+            rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the 'Query does not implement createWeight issue'
+        Weight filterWeight = rewrite.createWeight(searcher, false);
 		return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
 	}
 

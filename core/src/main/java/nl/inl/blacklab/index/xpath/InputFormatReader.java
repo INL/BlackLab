@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ValueNode;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.xpath.ConfigLinkedDocument.MissingLinkPathAction;
@@ -27,9 +28,49 @@ import nl.inl.util.StringUtil;
  */
 public class InputFormatReader {
 
+    private static ObjectNode obj(JsonNode node, String name) {
+        if (!(node instanceof ObjectNode))
+            throw new InputFormatConfigException(name + " must be an object");
+        return (ObjectNode) node;
+    }
+
+    private static ObjectNode obj(Entry<String, JsonNode> e) {
+        return obj(e.getValue(), e.getKey());
+    }
+
+    private static ArrayNode array(JsonNode node, String name) {
+        if (!(node instanceof ArrayNode))
+            throw new InputFormatConfigException(name + " must be an array");
+        return (ArrayNode) node;
+    }
+
+    private static ArrayNode array(Entry<String, JsonNode> e) {
+        return array(e.getValue(), e.getKey());
+    }
+
+    private static String str(JsonNode node, String name) {
+        if (!(node instanceof ValueNode))
+            throw new InputFormatConfigException(name + " must be a value");
+        return node.asText();
+    }
+
+    private static String str(Entry<String, JsonNode> e) {
+        return str(e.getValue(), e.getKey());
+    }
+
+    private static boolean bool(JsonNode node, String name) {
+        if (!(node instanceof ValueNode))
+            throw new InputFormatConfigException(name + " must be a value");
+        return node.asBoolean();
+    }
+
+    private static boolean bool(Entry<String, JsonNode> e) {
+        return bool(e.getValue(), e.getKey());
+    }
+
     public static void read(Reader r, boolean isJson, ConfigInputFormat cfg) throws IOException {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-        ObjectNode root = (ObjectNode)mapper.readTree(r);
+        JsonNode root = mapper.readTree(r);
         read(root, cfg);
     }
 
@@ -37,188 +78,195 @@ public class InputFormatReader {
         read(FileUtil.openForReading(file), file.getName().endsWith(".json"), cfg);
     }
 
-    protected static void read(ObjectNode root, ConfigInputFormat cfg) {
+    protected static void read(JsonNode root, ConfigInputFormat cfg) {
+        obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             JsonNode v = e.getValue();
             switch (e.getKey()) {
-            case "name": cfg.setName(v.asText()); break;
-            case "displayName": cfg.setDisplayName(v.asText()); break;
-            case "description": cfg.setDescription(v.asText()); break;
-            case "baseFormat": cfg.setBaseFormat(v.asText()); break;
-            case "type": cfg.setType(v.asText()); break;
-            case "namespaces": readStringMap(v, cfg.namespaces); break;
-            case "documentPath": cfg.setDocumentPath(v.asText()); break;
-            case "store": cfg.setStore(v.asBoolean()); break;
-            case "indexFieldAs": readStringMap(v, cfg.indexFieldAs); break;
-            case "specialFields": readStringMap(v, cfg.specialFields); break;
-            case "annotatedFields": readAnnotatedFields(v, cfg); break;
-            case "metadataFieldGroups": readMetadataFieldGroups(v, cfg); break;
-            case "metadataDefaultAnalyzer": cfg.setMetadataDefaultAnalyzer(v.asText()); break;
+            case "name": cfg.setName(str(e)); break;
+            case "displayName": cfg.setDisplayName(str(e)); break;
+            case "description": cfg.setDescription(str(e)); break;
+            case "baseFormat": cfg.setBaseFormat(str(e)); break;
+            case "type": cfg.setType(str(e)); break;
+            case "contentViewable": cfg.setContentViewable(bool(e)); break;
+            case "namespaces": readStringMap(e, cfg.namespaces); break;
+            case "documentPath": cfg.setDocumentPath(str(e)); break;
+            case "store": cfg.setStore(bool(e)); break;
+            case "indexFieldAs": readStringMap(e, cfg.indexFieldAs); break;
+            case "specialFields": readStringMap(e, cfg.specialFields); break;
+            case "annotatedFields": readAnnotatedFields(e, cfg); break;
+            case "metadataFieldGroups": readMetadataFieldGroups(e, cfg); break;
+            case "metadataDefaultAnalyzer": cfg.setMetadataDefaultAnalyzer(str(e)); break;
             case "metadata": readMetadata(v, cfg); break;
-            case "linkedDocuments": readLinkedDocuments(v, cfg); break;
+            case "linkedDocuments": readLinkedDocuments(e, cfg); break;
             default:
                 String n = cfg.getName() == null ? "UNKNOWN" : cfg.getName();
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in format config " + n);
+                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in format config " + n);
             }
         }
     }
 
-    private static void readStringMap(JsonNode node, Map<String, String> addToMap) {
+    private static void readStringMap(Entry<String, JsonNode> strMapEntry, Map<String, String> addToMap) {
+        ObjectNode node = obj(strMapEntry.getValue(), null);
         Iterator<Entry<String, JsonNode>> it = node.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
-            String k = e.getKey();
-            String v = e.getValue().asText();
-            addToMap.put(k, v);
+            addToMap.put(e.getKey(), str(e));
         }
     }
 
-    private static void readStringList(JsonNode node, List<String> addToList) {
-        Iterator<JsonNode> it = node.elements();
+    private static void readStringList(Entry<String, JsonNode> strListEntry, List<String> addToList) {
+        Iterator<JsonNode> it = array(strListEntry).elements();
         while (it.hasNext())
-            addToList.add(it.next().asText());
+            addToList.add(str(it.next(), strListEntry.getKey() + " element"));
     }
 
-    private static void readMetadataFieldGroups(JsonNode node, ConfigInputFormat cfg) {
-        Iterator<Entry<String, JsonNode>> itGroups = node.fields();
+    private static void readMetadataFieldGroups(Entry<String, JsonNode> mfgEntry, ConfigInputFormat cfg) {
+        Iterator<JsonNode> itGroups = array(mfgEntry).elements();
         while (itGroups.hasNext()) {
-            Entry<String, JsonNode> group = itGroups.next();
-            String groupName = group.getKey();
-            Iterator<Entry<String, JsonNode>> itGroup = group.getValue().fields();
-            ConfigMetadataFieldGroup g = cfg.getOrCreateMetadataFieldGroup(groupName);
+            JsonNode group = itGroups.next();
+            Iterator<Entry<String, JsonNode>> itGroup = obj(group, "metadata field group").fields();
+            ConfigMetadataFieldGroup g = new ConfigMetadataFieldGroup();
             List<String> fields = new ArrayList<>();
             while (itGroup.hasNext()) {
-                Entry<String, JsonNode> prop = itGroup.next();
-                switch (prop.getKey()) {
+                Entry<String, JsonNode> e = itGroup.next();
+                switch (e.getKey()) {
+                case "name": g.setName(str(e)); break;
                 case "fields":
-                    readStringList(prop.getValue(), fields);
+                    readStringList(e, fields);
                     g.addFields(fields);
                     break;
                 case "addRemainingFields":
-                    g.setAddRemainingFields(prop.getValue().asBoolean());
+                    g.setAddRemainingFields(bool(e));
                     break;
                 default:
-                    throw new IllegalArgumentException("Unknown key " + prop.getKey() + " in metadata field group " + groupName);
+                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in metadata field group " + g.getName());
                 }
             }
             cfg.addMetadataFieldGroup(g);
         }
     }
 
-    private static void readAnnotatedFields(JsonNode node, ConfigInputFormat cfg) {
-        Iterator<Entry<String, JsonNode>> itFields = node.fields();
+    private static void readAnnotatedFields(Entry<String, JsonNode> afsEntry, ConfigInputFormat cfg) {
+        Iterator<Entry<String, JsonNode>> itFields = obj(afsEntry).fields();
         while (itFields.hasNext()) {
             Entry<String, JsonNode> field = itFields.next();
             String fieldName = field.getKey();
-            Iterator<Entry<String, JsonNode>> itField = field.getValue().fields();
+            Iterator<Entry<String, JsonNode>> itField = obj(field).fields();
             ConfigAnnotatedField af = cfg.getOrCreateAnnotatedField(fieldName);
             while (itField.hasNext()) {
-                Entry<String, JsonNode> prop = itField.next();
-                JsonNode v = prop.getValue();
-                switch (prop.getKey()) {
-                case "displayName": af.setDisplayName(v.asText()); break;
-                case "description": af.setDescription(v.asText()); break;
-                case "containerPath": af.setContainerPath(v.asText()); break;
-                case "wordsPath": af.setWordsPath(v.asText()); break;
-                case "tokenPositionIdPath": af.setTokenPositionIdPath(v.asText()); break;
-                case "punctPath": af.setPunctPath(v.asText()); break;
-                case "annotations": readAnnotations(v, af); break;
-                case "standoffAnnotations": readStandoffAnnotations(v, af); break;
-                case "inlineTags": readInlineTags(v, af); break;
+                Entry<String, JsonNode> e = itField.next();
+                switch (e.getKey()) {
+                case "displayName": af.setDisplayName(str(e)); break;
+                case "description": af.setDescription(str(e)); break;
+                case "containerPath": af.setContainerPath(str(e)); break;
+                case "wordPath": af.setWordPath(str(e)); break;
+                case "tokenPositionIdPath": af.setTokenPositionIdPath(str(e)); break;
+                case "punctPath": af.setPunctPath(str(e)); break;
+                case "annotations": readAnnotations(e, af); break;
+                case "standoffAnnotations": readStandoffAnnotations(e, af); break;
+                case "inlineTags": readInlineTags(e, af); break;
                 default:
-                    throw new IllegalArgumentException("Unknown key " + prop.getKey() + " in annotated field " + fieldName);
+                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in annotated field " + fieldName);
                 }
             }
-            cfg.addAnnotatedField(af);
         }
     }
 
-    private static void readAnnotations(JsonNode node, ConfigWithAnnotations af) {
-        Iterator<JsonNode> itAnnotations = node.elements();
+    private static void readAnnotations(Entry<String, JsonNode> annotsEntry, ConfigWithAnnotations af) {
+        Iterator<JsonNode> itAnnotations = array(annotsEntry).elements();
         while (itAnnotations.hasNext()) {
             af.addAnnotation(readAnnotation(false, itAnnotations.next()));
         }
     }
 
-    private static void readSubAnnotations(JsonNode node, ConfigAnnotation annot) {
-        Iterator<JsonNode> itAnnotations = node.elements();
+    private static void readSubAnnotations(Entry<String, JsonNode> saEntry, ConfigAnnotation annot) {
+        Iterator<JsonNode> itAnnotations = array(saEntry).elements();
         while (itAnnotations.hasNext()) {
             annot.addSubAnnotation(readAnnotation(true, itAnnotations.next()));
         }
     }
 
     protected static ConfigAnnotation readAnnotation(boolean isSubAnnotation, JsonNode a) {
-        Iterator<Entry<String, JsonNode>> itAnnotation = a.fields();
+        Iterator<Entry<String, JsonNode>> itAnnotation = obj(a, "annotation").fields();
         ConfigAnnotation annot = new ConfigAnnotation();
         while (itAnnotation.hasNext()) {
-            Entry<String, JsonNode> prop = itAnnotation.next();
-            JsonNode v = prop.getValue();
-            switch (prop.getKey()) {
-            case "name": annot.setName(v.asText()); break;
-            case "valuePath": annot.setValuePath(v.asText()); break;
+            Entry<String, JsonNode> e = itAnnotation.next();
+            switch (e.getKey()) {
+            case "name": annot.setName(str(e)); break;
+            case "value": annot.setValuePath(fixedStringToXpath(str(e))); break;
+            case "valuePath": annot.setValuePath(str(e)); break;
             case "forEachPath":
                 if (!isSubAnnotation)
-                    throw new IllegalArgumentException("Only subannotations may have forEachPath/namePath");
-                annot.setForEachPath(v.asText()); break;
+                    throw new InputFormatConfigException("Only subannotations may have forEachPath/namePath");
+                annot.setForEachPath(str(e)); break;
             case "namePath":
                 if (!isSubAnnotation)
-                    throw new IllegalArgumentException("Only subannotations may have forEachPath/namePath");
-                annot.setName(v.asText()); break;
-            case "displayName": annot.setDisplayName(v.asText()); break;
-            case "description": annot.setDescription(v.asText()); break;
-            case "basePath": annot.setBasePath(v.asText()); break;
+                    throw new InputFormatConfigException("Only subannotations may have forEachPath/namePath");
+                annot.setName(str(e)); break;
+            case "process": annot.setProcess(readProcess(e)); break;
+            case "displayName": annot.setDisplayName(str(e)); break;
+            case "description": annot.setDescription(str(e)); break;
+            case "basePath": annot.setBasePath(str(e)); break;
             case "sensitivity":
                 if (isSubAnnotation)
-                    throw new IllegalArgumentException("Subannotations may not have their own sensitivity settings");
-                annot.setSensitivity(SensitivitySetting.fromStringValue(v.asText())); break;
-            case "uiType": annot.setUiType(v.asText()); break;
+                    throw new InputFormatConfigException("Subannotations may not have their own sensitivity settings");
+                annot.setSensitivity(SensitivitySetting.fromStringValue(str(e))); break;
+            case "uiType": annot.setUiType(str(e)); break;
             case "subAnnotations":
                 if (isSubAnnotation)
-                    throw new IllegalArgumentException("Subannotations may not have their own subannotations");
-                readSubAnnotations(v, annot); break;
+                    throw new InputFormatConfigException("Subannotations may not have their own subannotations");
+                readSubAnnotations(e, annot); break;
             default:
-                throw new IllegalArgumentException("Unknown key " + prop.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
+                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
             }
         }
         return annot;
     }
 
-    private static void readStandoffAnnotations(JsonNode node, ConfigAnnotatedField af) {
-        Iterator<JsonNode> itAnnotations = node.elements();
+    /**
+     * Convert a fixed string value to an XPath expression yielding that value.
+     * @param s fixed string the XPath should evaluate to
+     * @return XPath expression
+     */
+    public static String fixedStringToXpath(String s) {
+        return "\"" + s.replaceAll("\\\\", "\\\\").replaceAll("\"", "\\\"") + "\"";
+    }
+
+    private static void readStandoffAnnotations(Entry<String, JsonNode> sasEntry, ConfigAnnotatedField af) {
+        Iterator<JsonNode> itAnnotations = array(sasEntry).elements();
         while (itAnnotations.hasNext()) {
             JsonNode as = itAnnotations.next();
             ConfigStandoffAnnotations s = new ConfigStandoffAnnotations();
-            Iterator<Entry<String, JsonNode>> it = as.fields();
+            Iterator<Entry<String, JsonNode>> it = obj(as, "standoffAnnotation").fields();
             while (it.hasNext()) {
                 Entry<String, JsonNode> e = it.next();
-                JsonNode v = e.getValue();
                 switch(e.getKey()) {
-                case "path": s.setPath(v.asText()); break;
-                case "refTokenPositionIdPath": s.setRefTokenPositionIdPath(v.asText()); break;
-                case "annotations": readAnnotations(v, s); break;
+                case "path": s.setPath(str(e)); break;
+                case "refTokenPositionIdPath": s.setRefTokenPositionIdPath(str(e)); break;
+                case "annotations": readAnnotations(e, s); break;
                 default:
-                    throw new IllegalArgumentException("Unknown key " + e.getKey() + " in standoff annotations block");
+                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in standoff annotations block");
                 }
             }
             af.addStandoffAnnotation(s);
         }
     }
 
-    private static void readInlineTags(JsonNode node, ConfigAnnotatedField af) {
-        Iterator<JsonNode> itTags = node.elements();
+    private static void readInlineTags(Entry<String, JsonNode> itsEntry, ConfigAnnotatedField af) {
+        Iterator<JsonNode> itTags = array(itsEntry).elements();
         while (itTags.hasNext()) {
             JsonNode as = itTags.next();
             ConfigInlineTag t = new ConfigInlineTag();
-            Iterator<Entry<String, JsonNode>> itTag = as.fields();
+            Iterator<Entry<String, JsonNode>> itTag = obj(as, "inlineTag").fields();
             while (itTag.hasNext()) {
                 Entry<String, JsonNode> e = itTag.next();
-                JsonNode v = e.getValue();
                 switch(e.getKey()) {
-                case "path": t.setPath(v.asText()); break;
+                case "path": t.setPath(str(e)); break;
                 default:
-                    throw new IllegalArgumentException("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
+                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
                 }
             }
             af.addInlineTag(t);
@@ -237,75 +285,119 @@ public class InputFormatReader {
                 readMetadataBlock(as, cfg);
             }
         } else {
-            throw new IllegalArgumentException("Wrong node type for metadata");
+            throw new InputFormatConfigException("Wrong node type for metadata (must be object or array)");
         }
     }
 
     private static void readMetadataBlock(JsonNode as, ConfigInputFormat cfg) {
         ConfigMetadataBlock b = cfg.createMetadataBlock();
-        Iterator<Entry<String, JsonNode>> it = as.fields();
+        Iterator<Entry<String, JsonNode>> it = obj(as, "metadata block").fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
-            JsonNode v = e.getValue();
             switch(e.getKey()) {
-            case "containerPath": b.setContainerPath(v.asText()); break;
-            case "defaultAnalyzer": b.setDefaultAnalyzer(v.asText()); break;
-            case "fields": readMetadataFields(v, b); break;
+            case "containerPath": b.setContainerPath(str(e)); break;
+            case "defaultAnalyzer": b.setDefaultAnalyzer(str(e)); break;
+            case "fields": readMetadataFields(e, b); break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in metadata block");
+                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in metadata block");
             }
         }
     }
 
-    private static void readMetadataFields(JsonNode node, ConfigMetadataBlock b) {
-        Iterator<JsonNode> itFields = node.elements();
+    private static void readMetadataFields(Entry<String, JsonNode> mfsEntry, ConfigMetadataBlock b) {
+        Iterator<JsonNode> itFields = array(mfsEntry).elements();
         while (itFields.hasNext()) {
             JsonNode fld = itFields.next();
-            Iterator<Entry<String, JsonNode>> itField = fld.fields();
+            Iterator<Entry<String, JsonNode>> itField = obj(fld, "metadata field").fields();
+            ConfigMetadataField f = new ConfigMetadataField();
             while (itField.hasNext()) {
                 Entry<String, JsonNode> e = itField.next();
-                ConfigMetadataField f = new ConfigMetadataField();
-                JsonNode v = e.getValue();
                 switch (e.getKey()) {
-                case "name": case "namePath": f.setName(v.asText()); break;
-                case "valuePath": f.setValuePath(v.asText()); break;
-                case "forEachPath": f.setForEachPath(v.asText()); break;
-                case "displayName": f.setDisplayName(v.asText()); break;
-                case "description": f.setDescription(v.asText()); break;
-                case "type": f.setType(FieldType.fromStringValue(v.asText())); break;
-                case "uiType": f.setUiType(v.asText()); break;
-                case "unknownCondition": f.setUnknownCondition(UnknownCondition.fromStringValue(v.asText())); break;
-                case "unknownValue": f.setUiType(v.asText()); break;
-                case "analyzer": f.setAnalyzer(v.asText()); break;
+                case "name": case "namePath": f.setName(str(e)); break;
+                case "value": f.setValuePath(fixedStringToXpath(str(e))); break;
+                case "valuePath": f.setValuePath(str(e)); break;
+                case "forEachPath": f.setForEachPath(str(e)); break;
+                case "process": f.setProcess(readProcess(e)); break;
+                case "displayName": f.setDisplayName(str(e)); break;
+                case "description": f.setDescription(str(e)); break;
+                case "type": f.setType(FieldType.fromStringValue(str(e))); break;
+                case "uiType": f.setUiType(str(e)); break;
+                case "unknownCondition": f.setUnknownCondition(UnknownCondition.fromStringValue(str(e))); break;
+                case "unknownValue": f.setUiType(str(e)); break;
+                case "analyzer": f.setAnalyzer(str(e)); break;
                 default:
-                    throw new IllegalArgumentException("Unknown key " + e.getKey() + " in metadata field " + f.getName());
+                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in metadata field " + f.getName());
+                }
+            }
+            b.addMetadataField(f);
+        }
+    }
+
+    private static void readLinkedDocuments(Entry<String, JsonNode> ldsEntry, ConfigInputFormat cfg) {
+        Iterator<Entry<String, JsonNode>> itLinkedDocs = obj(ldsEntry).fields();
+        while (itLinkedDocs.hasNext()) {
+            Entry<String, JsonNode> linkedDoc = itLinkedDocs.next();
+            ConfigLinkedDocument ld = cfg.getOrCreateLinkedDocument(linkedDoc.getKey());
+            Iterator<Entry<String, JsonNode>> itLinkedDoc = obj(linkedDoc).fields();
+            while (itLinkedDoc.hasNext()) {
+                Entry<String, JsonNode> e = itLinkedDoc.next();
+                switch (e.getKey()) {
+                case "store": ld.setStore(bool(e)); break;
+                case "linkValues": readLinkValues(e, ld); break;
+                case "ifLinkPathMissing": ld.setIfLinkPathMissing(MissingLinkPathAction.fromStringValue(str(e))); break;
+                case "inputFile": ld.setInputFile(str(e)); break;
+                case "pathInsideArchive": ld.setPathInsideArchive(str(e)); break;
+                case "documentPath": ld.setDocumentPath(str(e)); break;
+                case "inputFormat": ld.setInputFormat(str(e)); break;
+                default:
+                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in linked document " + ld.getName());
                 }
             }
         }
     }
 
-    private static void readLinkedDocuments(JsonNode node, ConfigInputFormat cfg) {
-        Iterator<Entry<String, JsonNode>> itLinkedDocs = node.fields();
-        while (itLinkedDocs.hasNext()) {
-            Entry<String, JsonNode> e = itLinkedDocs.next();
-            ConfigLinkedDocument ld = cfg.getOrCreateLinkedDocument(e.getKey());
-            Iterator<Entry<String, JsonNode>> itLinkedDoc = e.getValue().fields();
-            while (itLinkedDoc.hasNext()) {
-                Entry<String, JsonNode> prop = itLinkedDoc.next();
-                JsonNode v = prop.getValue();
-                switch (prop.getKey()) {
-                case "store": ld.setStore(v.asBoolean()); break;
-                case "linkPaths": readStringList(v, ld.linkPaths); break;
-                case "ifLinkPathMissing": ld.setIfLinkPathMissing(MissingLinkPathAction.fromStringValue(v.asText())); break;
-                case "inputFile": ld.setInputFile(v.asText()); break;
-                case "pathInsideArchive": ld.setPathInsideArchive(v.asText()); break;
-                case "documentPath": ld.setDocumentPath(v.asText()); break;
-                case "inputFormat": ld.setInputFormat(v.asText()); break;
+    private static void readLinkValues(Entry<String, JsonNode> lvsEntry, ConfigLinkedDocument ld) {
+        Iterator<JsonNode> itLinkValues = array(lvsEntry).elements();
+        while (itLinkValues.hasNext()) {
+            JsonNode linkValue = itLinkValues.next();
+            ConfigLinkValue lv = new ConfigLinkValue();
+            Iterator<Entry<String, JsonNode>> itLinkValue = obj(linkValue, "link value").fields();
+            while (itLinkValue.hasNext()) {
+                Entry<String, JsonNode> e = itLinkValue.next();
+                switch (e.getKey()) {
+                case "value": lv.setValuePath(fixedStringToXpath(str(e))); break;
+                case "valuePath": lv.setValuePath(str(e)); break;
+                case "valueField": lv.setValueField(str(e)); break;
+                case "process": lv.setProcess(readProcess(e)); break;
                 default:
-                    throw new IllegalArgumentException("Unknown key " + e.getKey() + " in linked document " + ld.getName());
+                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in linked document " + ld.getName());
                 }
             }
+            ld.addLinkValue(lv);
         }
+    }
+
+    private static List<ConfigProcessStep> readProcess(Entry<String, JsonNode> prEntry) {
+        Iterator<JsonNode> itSteps = array(prEntry).elements();
+        List<ConfigProcessStep> p = new ArrayList<>();
+        while (itSteps.hasNext()) {
+            JsonNode step = itSteps.next();
+            ConfigProcessStep s = new ConfigProcessStep();
+            Iterator<Entry<String, JsonNode>> itStep = obj(step, "processing step").fields();
+            while (itStep.hasNext()) {
+                Entry<String, JsonNode> e = itStep.next();
+                if (s.getMethod() != null)
+                    throw new InputFormatConfigException("Can only provide one method per processing step");
+                s.setMethod(e.getKey());
+                Iterator<Entry<String, JsonNode>> itParams = obj(e.getValue(), "processing step parameters").fields();
+                while (itParams.hasNext()) {
+                    Entry<String, JsonNode> par = itParams.next();
+                    s.addParam(par.getKey(), par.getValue().asText());
+                }
+            }
+            p.add(s);
+        }
+        return p;
     }
 
 

@@ -1,6 +1,20 @@
 # Change Log
 
+## Improvements in HEAD
+
+## New
+* Much user-friendlier indexing using .json/.yaml config files,
+  at the cost of a bit of speed. See documentation.
+
+## Fixed
+* Untokenized fields weren't lowercased while indexing, but were lowercased
+  when searching, causing problems. Now they are treated the same.
+
 ## Improvements up to v1.6.0
+
+### New
+* Added Searcher.getBlackLabVersion(). Also added blacklabVersion to index.
+* Added Hits.filteredBy() to filter Hits on a HitProperty.
 
 ### Fixed
 * Fixed bug with case-insensitive Terms.indexOf().
@@ -14,10 +28,6 @@
 * Memory leak in BLS because of bug in TextPattern.rewrite().
 * Fixed bug with regexes including character class negations.
 * Fixed some rare NullPointerExceptions.
-
-### New
-* Added Searcher.getBlackLabVersion(). Also added blacklabVersion to index.
-* Added Hits.filteredBy() to filter Hits on a HitProperty.
 
 ### Changed
 * Added an alternative way of matching subqueries, using the forward index
@@ -176,12 +186,12 @@
 
 ## Improvements up to v1.3.5
 
+### New
+* Added default unknown condition and value to indextemplate.json, so you can specify what to do if a metadata field value is missing without specifying it for each field separately.
+
 ### Fixed
 * BLSpanOrQuery would occasionally miss valid hits due to a
   bug in the advanceStartPoint() method.
-
-### New
-* Added default unknown condition and value to indextemplate.json, so you can specify what to do if a metadata field value is missing without specifying it for each field separately.
 
 ### Changed
 * Switched to JavaCC 6.x.
@@ -211,11 +221,11 @@
 
 ## Improvements up to v1.3.1
 
-### Fixed
-* Bug in SpanQueryAnd which caused incorrect hits to be reported.
-
 ### New
 * Added new default content store format "fixedblock", that improves space re-use when updating documents. 
+
+### Fixed
+* Bug in SpanQueryAnd which caused incorrect hits to be reported.
 
 ## Changed
 * Special OSX and Windows files are skipped, even if they occur inside archives.

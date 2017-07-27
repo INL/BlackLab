@@ -521,13 +521,14 @@ public class StringUtil {
 	 *
 	 * @param camelCaseString a string in camel case, i.e. multiple capitalized
 	 *   words glued together.
-	 * @param dashesToSpaces if true, also converts dashes to spaces
+	 * @param dashesToSpaces if true, also converts dashes and underscores to spaces
 	 * @return a human-readable version of the input string
 	 */
 	public static String camelCaseToDisplayable(String camelCaseString, boolean dashesToSpaces) {
-		String spaceified = lcaseUcase.matcher(camelCaseString).replaceAll("$1 $2");
-		if (dashesToSpaces)
-			spaceified = spaceified.replace('-', ' ');
+	    String spaceified = camelCaseString;
+		spaceified = lcaseUcase.matcher(spaceified).replaceAll("$1 $2");
+        if (dashesToSpaces)
+            spaceified = spaceified.replaceAll("[\\-_]", " ");
 		return StringUtils.capitalize(spaceified.toLowerCase());
 		//		if (str.length() == 0)
 		//			return str;
@@ -552,9 +553,9 @@ public class StringUtil {
 
 	/**
 	 * Convert wildcard string to regex string.
-	 * 
+	 *
 	 * Adapted from: http://stackoverflow.com/a/28758377
-	 * 
+	 *
 	 * @param wildcard wildcard pattern
 	 * @return equivalent regex pattern
 	 */

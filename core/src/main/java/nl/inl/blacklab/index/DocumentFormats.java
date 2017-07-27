@@ -78,7 +78,12 @@ public class DocumentFormats {
 	 * @param config input format configuration to register
 	 */
 	public static void register(final ConfigInputFormat config) {
-	    String name = config.getName().toLowerCase();
+        String name = config.getName().toLowerCase();
+	    try {
+	        config.validate();
+	    } catch(IllegalArgumentException e) {
+	        throw new IllegalArgumentException("Format " + name + ": " + e.getMessage());
+	    }
         configs.put(name, config);
         factories.put(name, new DocIndexerFactoryConfig(config));
 	}
@@ -91,6 +96,8 @@ public class DocumentFormats {
 	 */
     @Deprecated
 	public static Class<? extends DocIndexer> getIndexerClass(String formatIdentifier) {
+        if (!formats.containsKey(formatIdentifier.toLowerCase()))
+            find(formatIdentifier);
 		// Check if it's a known abbreviation.
 		Class<?> docIndexerClass = formats.get(formatIdentifier.toLowerCase());
 		if (docIndexerClass == null) {
@@ -110,31 +117,22 @@ public class DocumentFormats {
 		return docIndexerClass.asSubclass(DocIndexer.class);
 	}
 
-    @SuppressWarnings("unchecked")
     public static DocIndexerFactory getIndexerFactory(String formatIdentifier) {
+        if (!factories.containsKey(formatIdentifier.toLowerCase()))
+            find(formatIdentifier);
 	    DocIndexerFactory factory = factories.get(formatIdentifier.toLowerCase());
 	    if (factory != null)
 	        return factory;
-        // No; is it a fully qualified class name?
-        Class<? extends DocIndexer> docIndexerClass = null;
-        try {
-            docIndexerClass = (Class<? extends DocIndexer>) Class.forName(formatIdentifier);
-        } catch (Exception e1) {
-            try {
-                // No. Is it a class in the BlackLab indexers package?
-                docIndexerClass = (Class<? extends DocIndexer>) Class.forName("nl.inl.blacklab.indexers." + formatIdentifier);
-            } catch (Exception e) {
-                // Couldn't be resolved. That's okay, we'll just return null and let
-                // the application deal with it.
-            }
-        }
-        if (docIndexerClass != null) {
-            return new DocIndexerFactoryClass(docIndexerClass);
-        }
         return null;
 	}
 
-	/**
+	public static ConfigInputFormat getConfig(String formatName) {
+        if (!configs.containsKey(formatName.toLowerCase()))
+            find(formatName);
+        return configs.get(formatName.toLowerCase());
+    }
+
+    /**
 	 * Check if a particular string denotes a valid document format.
 	 *
 	 * @param formatIdentifier format identifier, e.g. "tei" or "com.example.MyIndexer"
@@ -142,6 +140,61 @@ public class DocumentFormats {
 	 */
 	public static boolean exists(String formatIdentifier) {
 		return getIndexerFactory(formatIdentifier) != null;
+	}
+
+	public static abstract class FormatFinder {
+	    public abstract boolean findAndRegister(String formatIdentifier);
+	}
+
+	static class FormatFinderDocIndexerClass extends FormatFinder {
+        @SuppressWarnings("unchecked")
+        @Override
+        public boolean findAndRegister(String formatIdentifier) {
+            // Is it a fully qualified class name?
+            Class<? extends DocIndexer> docIndexerClass = null;
+            try {
+                docIndexerClass = (Class<? extends DocIndexer>) Class.forName(formatIdentifier);
+            } catch (Exception e1) {
+                try {
+                    // No. Is it a class in the BlackLab indexers package?
+                    docIndexerClass = (Class<? extends DocIndexer>) Class.forName("nl.inl.blacklab.indexers." + formatIdentifier);
+                } catch (Exception e) {
+                    // Couldn't be resolved. That's okay, we'll just return null and let
+                    // the application deal with it.
+                }
+            }
+            if (docIndexerClass != null) {
+                register(formatIdentifier, docIndexerClass);
+                return true;
+            }
+            return false;
+        }
+
+	}
+
+	static List<FormatFinder> formatFinders = new ArrayList<>();
+
+	static {
+	    formatFinders.add(new FormatFinderDocIndexerClass()); // last resort is to look for class directly
+	}
+
+	/**
+	 * Add a way to look for formats that aren't registered yet.
+	 *
+	 * @param ff format finder to use
+	 */
+	public static void addFormatFinder(FormatFinder ff) {
+	    formatFinders.add(ff);
+	}
+
+	private static boolean find(String formatIdentifier) {
+	    for (int i = formatFinders.size() - 1; i >= 0; i--) {
+	        FormatFinder ff = formatFinders.get(i);
+	        if (ff.findAndRegister(formatIdentifier)) {
+	            return true;
+	        }
+	    }
+	    return false;
 	}
 
 	/**
@@ -154,9 +207,5 @@ public class DocumentFormats {
 		Collections.sort(l);
 		return Collections.unmodifiableList(l);
 	}
-
-    public static ConfigInputFormat getConfig(String formatName) {
-        return configs.get(formatName.toLowerCase());
-    }
 
 }

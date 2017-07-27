@@ -21,10 +21,10 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     private String containerPath = ".";
 
     /** Words within body text */
-    private String wordsPath;
+    private String wordPath;
 
     /** Unique id that will map to this token position */
-    private String tokenPositionIdPath;
+    private String tokenPositionIdPath = null;
 
     /** Punctuation between words (or null if we don't need/want to capture this) */
     private String punctPath = null;
@@ -42,12 +42,25 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         setName(fieldName);
     }
 
+    public void validate() {
+        String t = "annotated field";
+        ConfigInputFormat.req(name, t, "name");
+        ConfigInputFormat.req(containerPath, t, "containerPath");
+        ConfigInputFormat.req(wordPath, t, "wordPath");
+        for (ConfigAnnotation a: annotations.values())
+            a.validate();
+        for (ConfigStandoffAnnotations s: standoffAnnotations)
+            s.validate();
+        for (ConfigInlineTag tag: inlineTags)
+            tag.validate();
+    }
+
     public ConfigAnnotatedField copy() {
         ConfigAnnotatedField result = new ConfigAnnotatedField(name);
         result.setDisplayName(displayName);
         result.setDescription(description);
         result.setContainerPath(containerPath);
-        result.setWordsPath(wordsPath);
+        result.setWordPath(wordPath);
         result.setTokenPositionIdPath(tokenPositionIdPath);
         result.setPunctPath(punctPath);
         for (ConfigAnnotation a: annotations.values())
@@ -67,8 +80,8 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         this.containerPath = containerPath;
     }
 
-    public void setWordsPath(String wordsPath) {
-        this.wordsPath = wordsPath;
+    public void setWordPath(String wordPath) {
+        this.wordPath = wordPath;
     }
 
     public void setTokenPositionIdPath(String tokenPositionIdPath) {
@@ -105,7 +118,7 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     }
 
     public String getWordsPath() {
-        return wordsPath;
+        return wordPath;
     }
 
     public String getTokenPositionIdPath() {

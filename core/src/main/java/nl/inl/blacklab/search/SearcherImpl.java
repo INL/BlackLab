@@ -59,6 +59,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.xpath.ConfigInputFormat;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
@@ -279,6 +280,8 @@ public class SearcherImpl extends Searcher implements Closeable {
 		for (String fieldName: indexStructure.getMetadataFields()) {
 			MetadataFieldDesc fd = indexStructure.getMetadataFieldDesc(fieldName);
 			String analyzerName = fd.getAnalyzerName();
+			if (fd.getType() == FieldType.UNTOKENIZED)
+			    analyzerName = "nontokenizing";
 			if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("default")) {
 				Analyzer fieldAnalyzer = getAnalyzerInstance(analyzerName);
 				if (fieldAnalyzer == null) {

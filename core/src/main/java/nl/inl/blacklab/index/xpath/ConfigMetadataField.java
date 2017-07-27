@@ -15,12 +15,6 @@ public class ConfigMetadataField {
     /** Metadata field name (or name XPath, if forEach) */
     private String name;
 
-    /** How to display the field in the interface (optional) */
-    private String displayName = "";
-
-    /** How to describe the field in the interface (optional) */
-    private String description = "";
-
     /** Where to find metadata value */
     private String valuePath;
 
@@ -29,11 +23,11 @@ public class ConfigMetadataField {
      */
     private String forEachPath;
 
+    /** How to process annotation values (if at all) */
+    private List<ConfigProcessStep> process = new ArrayList<>();
+
     /** How to index the field (tokenized|untokenized|numeric) */
     private FieldType type = FieldType.TOKENIZED;
-
-    /** What UI element to show in the interface (optional) */
-    private String uiType = "";
 
     /** When to index the unknownValue: NEVER|MISSING|EMPTY|MISSING_OR_EMPTY (default: NEVER) */
     private UnknownCondition unknownCondition = UnknownCondition.NEVER;
@@ -43,6 +37,15 @@ public class ConfigMetadataField {
 
     /** Analyzer to use for this field */
     private String analyzer = "";
+
+    /** How to display the field in the interface (optional) */
+    private String displayName = "";
+
+    /** How to describe the field in the interface (optional) */
+    private String description = "";
+
+    /** What UI element to show in the interface (optional) */
+    private String uiType = "";
 
     /** Mapping from value to displayValue (optional) */
     private Map<String, String> displayValues = new HashMap<>();
@@ -64,7 +67,26 @@ public class ConfigMetadataField {
     }
 
     public ConfigMetadataField copy() {
-        return new ConfigMetadataField(name, valuePath, forEachPath);
+        ConfigMetadataField cp = new ConfigMetadataField(name, valuePath, forEachPath);
+        cp.setProcess(process);
+        cp.setDisplayName(displayName);
+        cp.setDescription(description);
+        cp.setType(type);
+        cp.setUiType(uiType);
+        cp.setUnknownCondition(unknownCondition);
+        cp.setUnknownValue(unknownValue);
+        cp.setAnalyzer(analyzer);
+        cp.displayValues.putAll(displayValues);
+        cp.displayOrder.addAll(displayOrder);
+        return cp;
+    }
+
+    public void validate() {
+        String t = "metadata field";
+        ConfigInputFormat.req(name, t, isForEach() ? "namePath" : "name");
+        for (ConfigProcessStep step: process) {
+            step.validate();
+        }
     }
 
     public void setForEachPath(String forEachPath) {
@@ -165,6 +187,15 @@ public class ConfigMetadataField {
 
     public void addDisplayOrder(String field) {
         displayOrder.add(field);
+    }
+
+    public List<ConfigProcessStep> getProcess() {
+        return process;
+    }
+
+    public void setProcess(List<ConfigProcessStep> process) {
+        this.process.clear();
+        this.process.addAll(process);
     }
 
 }

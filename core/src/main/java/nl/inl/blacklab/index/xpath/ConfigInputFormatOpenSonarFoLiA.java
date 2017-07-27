@@ -3,7 +3,7 @@ package nl.inl.blacklab.index.xpath;
 public class ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
 
     public ConfigInputFormatOpenSonarFoLiA() {
-        setName("OpenSonarFolia");
+        setName("BuiltinOpenSonarFolia");
         setDisplayName("OpenSoNaR FoLiA file format");
         setDescription("The file format used by OpenSonar.");
 
@@ -15,7 +15,7 @@ public class ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
         // Annotated field config
         ConfigAnnotatedField annotatedField = getOrCreateAnnotatedField("contents");
         annotatedField.setContainerPath("text");
-        annotatedField.setWordsPath(".//w");
+        annotatedField.setWordPath(".//w");
         annotatedField.setTokenPositionIdPath("@xml:id");
         //annotatedField.setPunctPath("//text()[not(ancestor::w)]");
         annotatedField.addInlineTag(".//s");

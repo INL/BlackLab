@@ -28,7 +28,7 @@ public class ConfigLinkedDocument {
     private boolean store = false;
 
     /** Where in the document to find the information we need to locate the linked document. */
-    List<String> linkPaths = new ArrayList<>();
+    List<ConfigLinkValue> linkValues = new ArrayList<>();
 
     /** What to do if we can't find the link information: ignore, warn or fail (default: fail) */
     private MissingLinkPathAction ifLinkPathMissing = MissingLinkPathAction.FAIL;
@@ -49,6 +49,14 @@ public class ConfigLinkedDocument {
         this.name = name;
     }
 
+    public void validate() {
+        String t = "linked document";
+        ConfigInputFormat.req(name, t, "name");
+        ConfigInputFormat.req(!linkValues.isEmpty(), t, "have at least one linkPath");
+        ConfigInputFormat.req(inputFormat, t, "inputFormat");
+        ConfigInputFormat.req(inputFile, t, "inputFile");
+    }
+
     public String getName() {
         return name;
     }
@@ -65,12 +73,12 @@ public class ConfigLinkedDocument {
         this.store = store;
     }
 
-    public List<String> getLinkPaths() {
-        return Collections.unmodifiableList(linkPaths);
+    public List<ConfigLinkValue> getLinkValues() {
+        return Collections.unmodifiableList(linkValues);
     }
 
-    public void addLinkPath(String linkPath) {
-        this.linkPaths.add(linkPath);
+    public void addLinkValue(ConfigLinkValue linkValue) {
+        this.linkValues.add(linkValue);
     }
 
     public MissingLinkPathAction getIfLinkPathMissing() {

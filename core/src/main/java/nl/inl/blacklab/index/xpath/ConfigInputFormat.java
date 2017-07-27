@@ -9,6 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.index.DocumentFormats;
 
 /**
@@ -27,6 +29,9 @@ public class ConfigInputFormat {
 
     /** This format's type indicator (optional, not used by BlackLab) */
     private String type = "";
+
+    /** May end user fetch contents of whole documents? [false] */
+    private boolean contentViewable = false;
 
     /** XML namespace declarations */
     Map<String, String> namespaces = new LinkedHashMap<>();
@@ -76,6 +81,10 @@ public class ConfigInputFormat {
      */
     public void setBaseFormat(String formatName) {
         ConfigInputFormat baseFormat = DocumentFormats.getConfig(formatName);
+        if (baseFormat == null)
+            throw new InputFormatConfigException("Base format " + formatName + " not found for format " + name);
+        type = baseFormat.getType();
+        contentViewable = baseFormat.isContentViewable();
         namespaces.putAll(baseFormat.getNamespaces());
         documentPath = baseFormat.getDocumentPath();
         store = baseFormat.isStore();
@@ -92,6 +101,31 @@ public class ConfigInputFormat {
             addAnnotatedField(f.copy());
         }
         linkedDocuments.putAll(baseFormat.getLinkedDocuments());
+    }
+
+    /**
+     * Validate this configuration.
+     */
+    public void validate() {
+        String t = "input format";
+        req(name, t, "name");
+        req(documentPath, t, "documentPath");
+        for (ConfigMetadataBlock b: metadataBlocks)
+            b.validate();
+        for (ConfigAnnotatedField af: annotatedFields.values())
+            af.validate();
+        for (ConfigLinkedDocument ld: linkedDocuments.values())
+            ld.validate();
+    }
+
+    static void req(String value, String type, String name) {
+        if (value == null || value.isEmpty())
+            throw new InputFormatConfigException(StringUtils.capitalize(type) + " must have a " + name);
+    }
+
+    static void req(boolean test, String type, String mustMsg) {
+        if (!test)
+            throw new InputFormatConfigException(StringUtils.capitalize(type) + " must " + mustMsg);
     }
 
     public String getName() {
@@ -245,21 +279,20 @@ public class ConfigInputFormat {
         metadataFieldGroups.put(g.getName(), g);
     }
 
-    public ConfigMetadataFieldGroup getOrCreateMetadataFieldGroup(String name) {
-        ConfigMetadataFieldGroup g = metadataFieldGroups.get(name);
-        if (g == null) {
-            g = new ConfigMetadataFieldGroup(name);
-            metadataFieldGroups.put(name, g);
-        }
-        return g;
-    }
-
     public String getType() {
         return type;
     }
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public boolean isContentViewable() {
+        return contentViewable;
+    }
+
+    public void setContentViewable(boolean contentViewable) {
+        this.contentViewable = contentViewable;
     }
 
 }

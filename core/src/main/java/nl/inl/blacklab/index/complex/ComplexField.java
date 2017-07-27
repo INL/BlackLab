@@ -75,9 +75,6 @@ public class ComplexField {
 	 * @param mainPropHasPayloads does the main property have payloads?
 	 */
 	public ComplexField(String name, String mainPropertyName, SensitivitySetting sensitivity, boolean mainPropHasPayloads) {
-
-	    System.err.println("COMPLEX FIELD: " + name); //@@@ DEBUG
-
 		boolean includeOffsets = true;
 		fieldName = name;
 		if (mainPropertyName == null)

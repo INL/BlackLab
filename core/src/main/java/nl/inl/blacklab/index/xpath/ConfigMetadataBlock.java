@@ -1,7 +1,9 @@
 package nl.inl.blacklab.index.xpath;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Configuration for a block of metadata fields. */
 public class ConfigMetadataBlock {
@@ -15,9 +17,19 @@ public class ConfigMetadataBlock {
     /** Metadata fields */
     private List<ConfigMetadataField> fields = new ArrayList<>();
 
+    /** Metadata fields (except forEach's) by name */
+    private Map<String, ConfigMetadataField> fieldsByName = new LinkedHashMap<>();
+
+    public void validate() {
+        for (ConfigMetadataField f: fields) {
+            f.validate();
+        }
+    }
+
     public ConfigMetadataBlock copy() {
         ConfigMetadataBlock result = new ConfigMetadataBlock();
         result.setContainerPath(containerPath);
+        result.setDefaultAnalyzer(defaultAnalyzer);
         for (ConfigMetadataField f: fields) {
             result.addMetadataField(f.copy());
         }
@@ -36,11 +48,17 @@ public class ConfigMetadataBlock {
         return fields;
     }
 
+    public ConfigMetadataField getField(String name) {
+        return fieldsByName.get(name);
+    }
+
     public void addMetadataField(ConfigMetadataField f) {
         // If no custom analyzer specified, inherit from block
         if (f.getAnalyzer().equals(""))
             f.setAnalyzer(defaultAnalyzer);
         fields.add(f);
+        if (!f.isForEach())
+            fieldsByName.put(f.getName(), f);
     }
 
     public String getAnalyzer() {

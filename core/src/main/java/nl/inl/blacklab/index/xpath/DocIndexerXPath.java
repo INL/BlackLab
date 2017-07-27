@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -17,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.PatternSyntaxException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -55,7 +59,7 @@ import nl.inl.util.StringUtil;
  */
 public class DocIndexerXPath extends DocIndexer {
 
-    private static final boolean TRACE = true;
+    private static final boolean TRACE = false;
 
     /** Our input document */
     private byte[] inputDocument;
@@ -137,7 +141,7 @@ public class DocIndexerXPath extends DocIndexer {
 	        // Define the properties that make up our complex field
         	List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
         	if (annotations.size() == 0)
-        		throw new RuntimeException("No annotations defined for field " + af.getName());
+        		throw new InputFormatConfigException("No annotations defined for field " + af.getName());
         	ConfigAnnotation mainAnnotation = annotations.get(0);
 	        ComplexField complexField = new ComplexField(af.getName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation), false);
 	        complexFields.put(af.getName(), complexField);
@@ -335,13 +339,13 @@ public class DocIndexerXPath extends DocIndexer {
                     // Does an inline object occur before this word?
                     long wordFragment = nav.getContentFragment();
                     int wordOffset = (int)wordFragment;
-                    while (wordOffset >= nextInlineObject.getOffset()) {
+                    while (nextInlineObject != null && wordOffset >= nextInlineObject.getOffset()) {
                         // Yes. Handle it.
                     	if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
                     		punctuation(nextInlineObject);
                     	else
                     		inlineTag(nextInlineObject);
-                        nextInlineObject = inlineObjectsIt.next();
+                        nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
                     }
 
                     beginWord();
@@ -419,8 +423,8 @@ public class DocIndexerXPath extends DocIndexer {
                 for (ConfigMetadataField f: b.getFields()) {
 
                     // Metadata field configs without a valuePath are just for
-                    // adding information to indexmetadata about fields captured
-                    // in forEach's
+                    // adding information about fields captured in forEach's,
+                    // such as extra processing steps
                     if (f.getValuePath() == null || f.getValuePath().isEmpty())
                         continue;
 
@@ -438,6 +442,12 @@ public class DocIndexerXPath extends DocIndexer {
                             String fieldName = apFieldName.evalXPathToString();
                             apMetadata.resetXPath();
                             String metadataValue = apMetadata.evalXPathToString();
+                            metadataValue = processString(metadataValue, f.getProcess());
+                            ConfigMetadataField metadataField = b.getField(fieldName);
+                            if (metadataField != null) {
+                                // Also execute process defined for named metadata field, if any
+                                metadataValue = processString(metadataValue, metadataField.getProcess());
+                            }
                             metadata(fieldName, metadataValue);
                         }
                         nav.pop();
@@ -445,6 +455,7 @@ public class DocIndexerXPath extends DocIndexer {
                         // Regular metadata field; just the fieldName and an XPath expression for the value
                         apMetadata.selectXPath(f.getValuePath());
                         String metadataValue = apMetadata.evalXPathToString();
+                        metadataValue = processString(metadataValue, f.getProcess());
                         metadata(f.getName(), metadataValue);
                     }
                 }
@@ -458,20 +469,30 @@ public class DocIndexerXPath extends DocIndexer {
             // Resolve linkPaths to get the information needed to fetch the document
             List<String> results = new ArrayList<>();
             AutoPilot apLinkPath = createAutoPilot();
-            for (String linkPath: ld.getLinkPaths()) {
-                apLinkPath.selectXPath(linkPath);
-                String result = apLinkPath.evalXPathToString();
-                if (result == null || result.isEmpty()) {
-                    switch(ld.getIfLinkPathMissing()) {
-                    case IGNORE:
-                        break;
-                    case WARN:
-                        indexer.getListener().warning("Link path " + linkPath + " not found in document " + documentName);
-                        break;
-                    case FAIL:
-                        throw new RuntimeException("Link path " + linkPath + " not found in document " + documentName);
+            for (ConfigLinkValue linkValue: ld.getLinkValues()) {
+                String result = "";
+                String valuePath = linkValue.getValuePath();
+                String valueField = linkValue.getValueField();
+                if (valuePath != null) {
+                    // Resolve value using XPath
+                    apLinkPath.selectXPath(valuePath);
+                    result = apLinkPath.evalXPathToString();
+                    if (result == null || result.isEmpty()) {
+                        switch(ld.getIfLinkPathMissing()) {
+                        case IGNORE:
+                            break;
+                        case WARN:
+                            indexer.getListener().warning("Link path " + valuePath + " not found in document " + documentName);
+                            break;
+                        case FAIL:
+                            throw new RuntimeException("Link path " + valuePath + " not found in document " + documentName);
+                        }
                     }
+                } else if (valueField != null) {
+                    // Fetch value from Lucene doc
+                    result = currentLuceneDoc.get(valueField);
                 }
+                result = processString(result, linkValue.getProcess());
                 results.add(result);
             }
 
@@ -496,6 +517,48 @@ public class DocIndexerXPath extends DocIndexer {
         }
 
         endDocument();
+    }
+
+    private String processString(String result, List<ConfigProcessStep> process) {
+        for (ConfigProcessStep step: process) {
+            String method = step.getMethod();
+            Map<String, String> param = step.getParam();
+            switch (method) {
+            case "replace":
+                String find = param.get("find");
+                String replace = param.get("replace");
+                if (find == null || replace == null)
+                    throw new InputFormatConfigException("replace needs parameters find and replace");
+                try {
+                    result = result.replaceAll(find, replace);
+                } catch (PatternSyntaxException e) {
+                    throw new InputFormatConfigException("Syntax error in replace regex: " + find);
+                }
+                break;
+            case "default":
+                if (result.length() == 0) {
+                    String field = param.get("field");
+                    String fieldValue = currentLuceneDoc.get(field);
+                    if (fieldValue != null)
+                        result = fieldValue;
+                }
+                break;
+            case "append":
+                String separator = param.containsKey("separator") ? param.get("separator") : " ";
+                String field = param.get("field");
+                String fieldValue = currentLuceneDoc.get(field);
+                if (fieldValue != null && fieldValue.length() > 0) {
+                    if (result.length() > 0)
+                        result += separator;
+                    result += fieldValue;
+                }
+                break;
+            default:
+                // In the future, we'll support user plugins here
+                throw new UnsupportedOperationException("Unknown processing step method " + method);
+            }
+        }
+        return result;
     }
 
     /**
@@ -528,6 +591,7 @@ public class DocIndexerXPath extends DocIndexer {
 
         apAnnot.selectXPath(valuePath);
         String annotValue = apAnnot.evalXPathToString();
+        annotValue = processString(annotValue, annotation.getProcess());
         annotation(annotation.getName(), annotValue, 1, indexAtPositions);
 
         // For each configured subannotation...
@@ -535,6 +599,12 @@ public class DocIndexerXPath extends DocIndexer {
         AutoPilot apName = createAutoPilot();
         AutoPilot apForEach = createAutoPilot();
         for (ConfigAnnotation subAnnot: annotation.getSubAnnotations()) {
+            // Subannotation configs without a valuePath are just for
+            // adding information about subannotations captured in forEach's,
+            // such as extra processing steps
+            if (subAnnot.getValuePath() == null || subAnnot.getValuePath().isEmpty())
+                continue;
+
             // Capture this subannotation value
             if (subAnnot.isForEach()) {
                 // "forEach" subannotation specification
@@ -549,6 +619,12 @@ public class DocIndexerXPath extends DocIndexer {
                     String name = apName.evalXPathToString();
                     apValue.resetXPath();
                     String value = apValue.evalXPathToString();
+                    value = processString(value, subAnnot.getProcess());
+                    ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(name);
+                    if (actualSubAnnot != null) {
+                        // Also apply process defined in named subannotation, if any
+                        value = processString(value, actualSubAnnot.getProcess());
+                    }
                     subAnnotation(annotation.getName(), name, value, indexAtPositions);
                 }
                 nav.pop();
@@ -556,6 +632,7 @@ public class DocIndexerXPath extends DocIndexer {
                 // Regular metadata field; just the fieldName and an XPath expression for the value
                 apValue.selectXPath(subAnnot.getValuePath());
                 String value = apValue.evalXPathToString();
+                value = processString(value, subAnnot.getProcess());
                 subAnnotation(annotation.getName(), subAnnot.getName(), value, indexAtPositions);
             }
         }
@@ -644,58 +721,140 @@ public class DocIndexerXPath extends DocIndexer {
 	    DocIndexerFactory docIndexerFactory = DocumentFormats.getIndexerFactory(inputFormat);
 
         // Fetch the input file (either by downloading it to a temporary location, or opening it from disk)
-        try (InputStream is = resolveFileReference(inputFile)) {
+        File f = resolveFileReference(inputFile);
 
-    	    // Get the data
-    	    byte [] data;
-    	    String completePath = inputFile;
-    	    if (inputFile.endsWith(".zip") || inputFile.endsWith(".tar") || inputFile.endsWith(".tar.gz") || inputFile.endsWith(".tgz")) {
-    	        // It's an archive. Unpack the right file from it.
-                completePath += "/" + pathInsideArchive;
-    	        data = fetchFileFromArchive(inputFile, is, pathInsideArchive);
-    	    } else {
-    	        // Regular file.
-    	        try {
-                    data = IOUtils.toByteArray(is);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-    	    }
-    	    if (data == null) {
-    	        throw new RuntimeException("Error reading linked document");
-    	    }
+	    // Get the data
+	    byte [] data;
+	    String completePath = inputFile;
+	    if (inputFile.endsWith(".zip") || inputFile.endsWith(".tar") || inputFile.endsWith(".tar.gz") || inputFile.endsWith(".tgz")) {
+	        // It's an archive. Unpack the right file from it.
+            completePath += "/" + pathInsideArchive;
+	        data = fetchFileFromArchive(f, pathInsideArchive);
+	    } else {
+	        // Regular file.
+	        try(InputStream is = new FileInputStream(f)) {
+                data = IOUtils.toByteArray(is);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+	    }
+	    if (data == null) {
+	        throw new RuntimeException("Error reading linked document");
+	    }
 
-            // Index the data
-    	    DocIndexer docIndexer = docIndexerFactory.get(indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING);
-    	    if (docIndexer instanceof DocIndexerXPath) {
-    	        ((DocIndexerXPath)docIndexer).indexSpecificDocument(documentPath, currentLuceneDoc, store ? ld.getName() : null);
-    	    } else {
-    	        throw new RuntimeException("Linked document indexer must be DocIndexerXPath-based, but is " + docIndexer.getClass().getName());
-    	    }
+        // Index the data
+	    DocIndexer docIndexer = docIndexerFactory.get(indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING);
+	    if (docIndexer instanceof DocIndexerXPath) {
+	        ((DocIndexerXPath)docIndexer).indexSpecificDocument(documentPath, currentLuceneDoc, store ? ld.getName() : null);
+	    } else {
+	        throw new RuntimeException("Linked document indexer must be DocIndexerXPath-based, but is " + docIndexer.getClass().getName());
+	    }
+
+    }
+
+    static Map<File, ZipFile> openZips = new HashMap<>();
+
+    // NOTE: right now, this is never called...
+    public static void closeAllZips() {
+        // We don't close linked document zips immediately; closing them when you're likely to
+        // reuse them soon is inefficient.
+        // (we should probably keep track of last access and close them eventually, though)
+        for (Entry<File, ZipFile> entry: openZips.entrySet()) {
+            try {
+                entry.getValue().close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            openZips.remove(entry.getKey());
         }
-
     }
 
-    private static byte[] fetchFileFromArchive(String inputFile, InputStream is, final String pathInsideArchive) {
-        FileProcessor proc = new FileProcessor(false, true);
-        FetchFileHandler fileHandler = new FetchFileHandler(pathInsideArchive);
-        proc.setFileHandler(fileHandler);
-        proc.processInputStream(inputFile, is);
-        return fileHandler.bytes;
+    public static ZipFile openZip(File zipFile) throws IOException {
+        synchronized (openZips) {
+            ZipFile z = openZips.get(zipFile);
+            if (z == null) {
+                z = new ZipFile(zipFile);
+                openZips.put(zipFile, z);
+            }
+            return z;
+        }
     }
 
-    private InputStream resolveFileReference(String inputFile) throws IOException {
+    private static byte[] fetchFileFromArchive(File f, final String pathInsideArchive) {
+        if (f.getName().endsWith(".gz") || f.getName().endsWith(".tgz")) {
+            // We have to process the whole file, we can't do random access.
+            FileProcessor proc = new FileProcessor(false, true);
+            FetchFileHandler fileHandler = new FetchFileHandler(pathInsideArchive);
+            proc.setFileHandler(fileHandler);
+            try {
+                proc.processFile(f);
+                return fileHandler.bytes;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else if (f.getName().endsWith(".zip")) {
+            // We can do random access. Fetch the file we want.
+            try {
+                ZipFile z = openZip(f);
+                ZipEntry e = z.getEntry(pathInsideArchive);
+                InputStream is = z.getInputStream(e);
+                return IOUtils.toByteArray(is);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());
+        }
+    }
+
+    /**
+     * Given a URL or file reference, either download to a temp file or find file and return it.
+     *
+     * @param inputFile URL or (relative) file reference
+     * @return the file
+     * @throws IOException
+     */
+    private File resolveFileReference(String inputFile) throws IOException {
         if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
-            return new URL(inputFile).openStream();
+            return downloadFile(inputFile);
         }
-        if (indexer == null)
-            return new FileInputStream(new File(inputFile));
+        if (inputFile.startsWith("file://"))
+            inputFile = inputFile.substring(7);
+        if (indexer == null) // TEST
+            return new File(inputFile);
         File f = indexer.getLinkedFile(inputFile);
         if (f == null)
             throw new FileNotFoundException("References file not found: " + f);
         if (!f.canRead())
             throw new IOException("Cannot read referenced file " + f);
-        return new FileInputStream(f);
+        return f;
+    }
+
+    /** Files we've downloaded to a temp dir. Will be deleted on exit. */
+    static Map<String, File> downloadedFiles = new HashMap<>();
+
+    /**
+     * Download file to temp file if it hasn't been downloaded already.
+     *
+     * @param inputFile URL of the file
+     * @return temp file
+     * @throws IOException
+     * @throws MalformedURLException
+     */
+    protected File downloadFile(String inputFile) throws IOException, MalformedURLException {
+        synchronized (downloadedFiles) {
+            File tempFile = downloadedFiles.get(inputFile);
+            if (tempFile == null) {
+                String ext = inputFile.replaceAll("^.+(\\.[^\\.]+)$", "$1");
+                if (ext == null || ext.isEmpty())
+                    ext = ".xml";
+                tempFile = File.createTempFile("BlackLab_download_", ext);
+                tempFile.deleteOnExit();
+                FileUtils.copyURLToFile(new URL(inputFile), tempFile);
+                downloadedFiles.put(inputFile, tempFile);
+            }
+            return tempFile;
+        }
     }
 
     private static String replaceDollarRefs(String pattern, List<String> replacements) {
@@ -1092,7 +1251,7 @@ public class DocIndexerXPath extends DocIndexer {
     protected void beginWord() {
         int pos = getCharacterPosition();
         currentComplexField.addStartChar(pos);
-        trace("@" + pos);
+        //trace("@" + pos);
     }
 
     protected void endWord() {
@@ -1114,6 +1273,8 @@ public class DocIndexerXPath extends DocIndexer {
      * or to add annotations at specific positions (indexAtPositions contains positions). The latter
      * is used for standoff annotations.
      *
+     * Also called for subannotations (with the value already prepared)
+     *
      * @param name annotation name
      * @param value annotation value
      * @param increment if indexAtPosition == 1: the token increment to use
@@ -1124,11 +1285,13 @@ public class DocIndexerXPath extends DocIndexer {
     	if (indexAtPositions == null) {
             if (name.equals("word"))
                 trace(value + " ");
-            if (name.equals("rating"))
-                trace("{" + value + "}");
+//    	    if (name.equals("xmlid"))
+//    	        trace(value + " ");
     	    property.addValue(value, increment);
     	    //System.out.println("Field " + currentComplexField.getName() + ", property " + property.getName() + ": added " + value + ", lastValuePos = " + property.lastValuePosition());
     	} else {
+//            if (name.equals("rating"))
+//                traceln("{" + value + "}: " + indexAtPositions);
             //System.out.println("Field " + currentComplexField.getName() + ", property " + property.getName() + ", value " + value + " (STANDOFF)");
     	    for (Integer position: indexAtPositions) {
     	        property.addValueAtPosition(value, position);
@@ -1197,6 +1360,5 @@ public class DocIndexerXPath extends DocIndexer {
             throw new RuntimeException(e);
         }
 	}
-
 
 }

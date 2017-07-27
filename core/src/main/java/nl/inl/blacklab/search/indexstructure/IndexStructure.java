@@ -262,8 +262,12 @@ public class IndexStructure {
     private void readMetadata(IndexReader reader, boolean createNewIndex, ConfigInputFormat config) {
         // Find existing metadata file, if any.
         File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME, Arrays.asList("json", "yaml", "yml"));
+        if (metadataFile != null && createNewIndex) {
+            // Don't leave the old metadata file if we're creating a new index
+            metadataFile.delete();
+        }
 
-        // If none found, or creating new index: metadata file should be same format as template.
+        // If none found, or creating new index: write a .yaml file.
         if (createNewIndex || metadataFile == null) {
             metadataFile = new File(indexDir, METADATA_FILE_NAME + ".yaml");
         }
@@ -292,6 +296,10 @@ public class IndexStructure {
 	private void readMetadata(IndexReader reader, boolean createNewIndex, File indexTemplateFile) {
 	    // Find existing metadata file, if any.
         File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME, Arrays.asList("json", "yaml", "yml"));
+        if (metadataFile != null && createNewIndex) {
+            // Don't leave the old metadata file if we're creating a new index
+            metadataFile.delete();
+        }
 
         // If none found, or creating new index: metadata file should be same format as template.
         if (createNewIndex || metadataFile == null) {

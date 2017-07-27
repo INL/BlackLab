@@ -38,6 +38,7 @@ import org.apache.lucene.document.IntField;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.BLRuntimeException;
 import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
@@ -82,7 +83,7 @@ public abstract class DocIndexer {
 	/**
 	 * Thrown when the maximum number of documents has been reached
 	 */
-	public static class MaxDocsReachedException extends RuntimeException {
+	public static class MaxDocsReachedException extends BLRuntimeException {
 		//
 	}
 

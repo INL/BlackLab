@@ -5,17 +5,17 @@ import nl.inl.blacklab.index.xpath.ConfigLinkedDocument.MissingLinkPathAction;
 public class ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat {
 
     public ConfigInputFormatOpenSonarFoliaCmdi() {
-        setName("OpenSonarFoliaCmdi");
+        setName("BuiltinOpenSonarFoliaCmdi");
         setDisplayName("OpenSoNaR FoLiA file format with CMDI metadata link");
 
         // Copy everything from this format
-        setBaseFormat("OpenSonarFolia");
+        setBaseFormat("BuiltinOpenSonarFolia");
 
         // Linked document config
         ConfigLinkedDocument linkedMetadata = getOrCreateLinkedDocument("metadata");
         linkedMetadata.setStore(true);
-        linkedMetadata.addLinkPath("metadata[@type='test']/@src");
-        linkedMetadata.addLinkPath("metadata[@type='test']/@id");
+        linkedMetadata.addLinkValue(new ConfigLinkValue("metadata[@type='test']/@src"));
+        linkedMetadata.addLinkValue(new ConfigLinkValue("metadata[@type='test']/@id"));
         linkedMetadata.setIfLinkPathMissing(MissingLinkPathAction.FAIL);
 
         // File

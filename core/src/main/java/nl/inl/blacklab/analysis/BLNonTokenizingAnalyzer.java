@@ -24,12 +24,9 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 
 import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**
  * Analyzer that doesn't tokenize but returns a single token.
- *
- * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
  */
 public final class BLNonTokenizingAnalyzer extends Analyzer {
 
@@ -37,16 +34,8 @@ public final class BLNonTokenizingAnalyzer extends Analyzer {
 	protected TokenStreamComponents createComponents(String fieldName) {
 		Tokenizer source = new BLNonTokenizer();
 		TokenStream filter = source;
-		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
-		if (!caseSensitive)
-		{
-			filter = new LowerCaseFilter(filter);// lowercase all
-		}
-		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
-		if (!diacSensitive)
-		{
-			filter = new RemoveAllAccentsFilter(filter); // remove accents
-		}
+		filter = new LowerCaseFilter(filter);// lowercase all
+		filter = new RemoveAllAccentsFilter(filter); // remove accents
 		return new TokenStreamComponents(source, filter);
 	}
 
