@@ -470,6 +470,13 @@
 			<version>2.5</version>
 		</dependency>
 
+        <!-- For indexing from tabular files: csv, tsv -->
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-csv</artifactId>
+		    <version>1.4</version>
+		</dependency>
+
 <!-- 
 		<dependency>
 		    <groupId>org.json</groupId>

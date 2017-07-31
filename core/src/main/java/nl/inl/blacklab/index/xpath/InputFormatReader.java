@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.index.xpath.ConfigInputFormat.FileType;
 import nl.inl.blacklab.index.xpath.ConfigLinkedDocument.MissingLinkPathAction;
 import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
@@ -90,6 +91,8 @@ public class InputFormatReader {
             case "description": cfg.setDescription(str(e)); break;
             case "baseFormat": cfg.setBaseFormat(str(e)); break;
             case "type": cfg.setType(str(e)); break;
+            case "fileType": cfg.setFileType(FileType.fromStringValue(str(e))); break;
+            case "tabularOptions": cfg.setTabularOptions(readTabularOptions(e)); break;
             case "contentViewable": cfg.setContentViewable(bool(e)); break;
             case "namespaces": readStringMap(e, cfg.namespaces); break;
             case "documentPath": cfg.setDocumentPath(str(e)); break;
@@ -102,10 +105,25 @@ public class InputFormatReader {
             case "metadata": readMetadata(v, cfg); break;
             case "linkedDocuments": readLinkedDocuments(e, cfg); break;
             default:
-                String n = cfg.getName() == null ? "UNKNOWN" : cfg.getName();
-                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in format config " + n);
+                throw new InputFormatConfigException("Unknown top-level key " + e.getKey());
             }
         }
+    }
+
+    private static ConfigTabularOptions readTabularOptions(Entry<String, JsonNode> tabOptEntry) {
+        ObjectNode node = obj(tabOptEntry.getValue(), null);
+        Iterator<Entry<String, JsonNode>> it = node.fields();
+        ConfigTabularOptions to = new ConfigTabularOptions();
+        while (it.hasNext()) {
+            Entry<String, JsonNode> e = it.next();
+            switch(e.getKey()) {
+            case "type": to.setType(ConfigTabularOptions.Type.fromStringValue(str(e))); break;
+            case "columnNames": to.setColumnNames(bool(e)); break;
+            default:
+                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in tabular options");
+            }
+        }
+        return to;
     }
 
     private static void readStringMap(Entry<String, JsonNode> strMapEntry, Map<String, String> addToMap) {

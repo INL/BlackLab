@@ -42,34 +42,6 @@ import nl.inl.util.ExUtil;
  */
 public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
-	protected ComplexFieldProperty addProperty(String propName) {
-		return addProperty(propName, false);
-	}
-
-	@SuppressWarnings("deprecation")
-    protected ComplexFieldProperty addProperty(String propName, boolean includePayloads) {
-		return contentsField.addProperty(propName, getSensitivitySetting(propName), includePayloads);
-	}
-
-	@SuppressWarnings("deprecation")
-    public DocIndexerPlainTextBasic(Indexer indexer, String fileName, Reader reader) {
-		super(indexer, fileName, reader);
-
-		// Define the properties that make up our complex field
-		String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
-		contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName, getSensitivitySetting(mainPropName), false);
-		propMain = contentsField.getMainProperty();
-		propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
-		IndexStructure indexStructure = indexer.getSearcher().getIndexStructure();
-		indexStructure.registerComplexField(contentsField.getName(), propMain.getName());
-
-		// If the indexmetadata file specified a list of properties that shouldn't get a forward
-		// index,
-		// make the new complex field aware of this.
-		Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME).getNoForwardIndexProps();
-		contentsField.setNoForwardIndexProps(noForwardIndexProps);
-	}
-
 	/**
 	 * Complex field where different aspects (word form, named entity status,
 	 * etc.) of the main content of the document are captured for indexing.
@@ -91,7 +63,27 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 	 */
 	MetadataFetcher metadataFetcher;
 
-	/**
+	@SuppressWarnings("deprecation")
+    public DocIndexerPlainTextBasic(Indexer indexer, String fileName, Reader reader) {
+    	super(indexer, fileName, reader);
+    
+    	// Define the properties that make up our complex field
+    	String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
+    	contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName, getSensitivitySetting(mainPropName), false);
+    	propMain = contentsField.getMainProperty();
+        String propName = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
+    	propPunct = contentsField.addProperty(propName, getSensitivitySetting(propName), false);
+    	IndexStructure indexStructure = indexer.getSearcher().getIndexStructure();
+    	indexStructure.registerComplexField(contentsField.getName(), propMain.getName());
+    
+    	// If the indexmetadata file specified a list of properties that shouldn't get a forward
+    	// index,
+    	// make the new complex field aware of this.
+    	Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME).getNoForwardIndexProps();
+    	contentsField.setNoForwardIndexProps(noForwardIndexProps);
+    }
+
+    /**
 	 * Get the external metadata fetcher for this indexer, if any.
 	 *
 	 * The metadata fetcher can be configured through the "metadataFetcherClass"

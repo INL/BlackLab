@@ -49,7 +49,7 @@ import nl.inl.util.UnicodeStream;
  */
 public abstract class DocIndexer {
 
-    protected Indexer indexer;
+    public Indexer indexer;
 
     /** Do we want to omit norms? (Default: yes) */
     protected boolean omitNorms = true;
@@ -326,7 +326,14 @@ public abstract class DocIndexer {
         return indexer.continueIndexing();
     }
 
+    protected void warn(String msg) {
+        indexer.getListener().warning(msg);
+    }
+
     public void addMetadataField(String name, String value) {
+
+        if (name == null || value == null)
+            warn("Incomplete metadata field: " + name + "=" + value);
 
         IndexStructure struct = indexer.getSearcher().getIndexStructure();
         struct.registerMetadataField(name);
@@ -387,7 +394,7 @@ public abstract class DocIndexer {
     }
 
     @Deprecated
-    protected SensitivitySetting getSensitivitySetting(String propName) {
+    public SensitivitySetting getSensitivitySetting(String propName) {
         // See if it's specified in a parameter
         String strSensitivity = getParameter(propName + "_sensitivity");
         if (strSensitivity != null) {

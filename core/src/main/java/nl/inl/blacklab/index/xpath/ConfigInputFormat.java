@@ -18,6 +18,20 @@ import nl.inl.blacklab.index.DocumentFormats;
  */
 public class ConfigInputFormat {
 
+    /** Basic file types we support */
+    static enum FileType {
+        XML,
+        TABULAR;
+
+        public static FileType fromStringValue(String str) {
+            return valueOf(str.toUpperCase());
+        }
+
+        public String stringValue() {
+            return toString().toLowerCase();
+        }
+    }
+
     /** This format's name */
     private String name;
 
@@ -27,8 +41,13 @@ public class ConfigInputFormat {
     /** This format's description (optional) */
     private String description = "";
 
-    /** This format's type indicator (optional, not used by BlackLab) */
+    /** This format's type indicator (optional, not used by BlackLab. usually 'contents' or 'metadata') */
     private String type = "";
+
+    /** What type of file is this (e.g. xml, tabular, plaintext)? Determines subclass of DocIndexerConfig to instantiate */
+    private FileType fileType;
+
+    private ConfigTabularOptions tabularOptions;
 
     /** May end user fetch contents of whole documents? [false] */
     private boolean contentViewable = false;
@@ -112,8 +131,11 @@ public class ConfigInputFormat {
         req(documentPath, t, "documentPath");
         for (ConfigMetadataBlock b: metadataBlocks)
             b.validate();
-        for (ConfigAnnotatedField af: annotatedFields.values())
+        for (ConfigAnnotatedField af: annotatedFields.values()) {
+            if (fileType == FileType.TABULAR)
+                af.setWordPath("N/A"); // prevent validation error
             af.validate();
+        }
         for (ConfigLinkedDocument ld: linkedDocuments.values())
             ld.validate();
     }
@@ -150,6 +172,22 @@ public class ConfigInputFormat {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public FileType getFileType() {
+        return fileType;
+    }
+
+    public void setFileType(FileType fileType) {
+        this.fileType = fileType;
+    }
+
+    public ConfigTabularOptions getTabularOptions() {
+        return tabularOptions;
+    }
+
+    public void setTabularOptions(ConfigTabularOptions tabularOptions) {
+        this.tabularOptions = tabularOptions;
     }
 
     public void addNamespace(String name, String uri) {

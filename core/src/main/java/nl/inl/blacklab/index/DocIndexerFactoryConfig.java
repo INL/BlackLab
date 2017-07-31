@@ -7,7 +7,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 
 import nl.inl.blacklab.index.xpath.ConfigInputFormat;
-import nl.inl.blacklab.index.xpath.DocIndexerXPath;
+import nl.inl.blacklab.index.xpath.DocIndexerConfig;
 
 public class DocIndexerFactoryConfig implements DocIndexerFactory {
     private final ConfigInputFormat config;
@@ -17,9 +17,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexer get(Indexer indexer, String documentName, Reader reader) {
-        DocIndexerXPath d = new DocIndexerXPath();
-        d.setConfigInputFormat(config);
+    public DocIndexerConfig get(Indexer indexer, String documentName, Reader reader) {
+        DocIndexerConfig d = DocIndexerConfig.fromConfig(config);
         d.setIndexer(indexer);
         d.setDocumentName(documentName);
         d.setDocument(reader);
@@ -27,9 +26,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexer get(Indexer indexer, String documentName, InputStream is, Charset cs) {
-        DocIndexerXPath d = new DocIndexerXPath();
-        d.setConfigInputFormat(config);
+    public DocIndexerConfig get(Indexer indexer, String documentName, InputStream is, Charset cs) {
+        DocIndexerConfig d = DocIndexerConfig.fromConfig(config);
         d.setIndexer(indexer);
         d.setDocumentName(documentName);
         d.setDocument(is, cs);
@@ -37,9 +35,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexer get(Indexer indexer, String documentName, File f, Charset cs) throws FileNotFoundException {
-        DocIndexerXPath d = new DocIndexerXPath();
-        d.setConfigInputFormat(config);
+    public DocIndexerConfig get(Indexer indexer, String documentName, File f, Charset cs) throws FileNotFoundException {
+        DocIndexerConfig d = DocIndexerConfig.fromConfig(config);
         d.setIndexer(indexer);
         d.setDocumentName(documentName);
         d.setDocument(f, cs);
@@ -47,9 +44,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexer get(Indexer indexer, String documentName, byte[] b, Charset cs) {
-        DocIndexerXPath d = new DocIndexerXPath();
-        d.setConfigInputFormat(config);
+    public DocIndexerConfig get(Indexer indexer, String documentName, byte[] b, Charset cs) {
+        DocIndexerConfig d = DocIndexerConfig.fromConfig(config);
         d.setIndexer(indexer);
         d.setDocumentName(documentName);
         d.setDocument(b, cs);
