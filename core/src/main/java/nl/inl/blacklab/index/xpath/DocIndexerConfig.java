@@ -33,6 +33,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         switch (config.getFileType()) {
         case XML: docIndexer = new DocIndexerXPath(); break;
         case TABULAR: docIndexer = new DocIndexerTabular(); break;
+        case TEXT: docIndexer = new DocIndexerPlainText(); break;
         default: throw new InputFormatConfigException("Unknown file type: " + config.getFileType() + " (use xml or tabular)");
         }
         docIndexer.setConfigInputFormat(config);
@@ -72,7 +73,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         if (inited)
             return;
         inited = true;
-        setStoreDocuments(config.isStore());
+        setStoreDocuments(config.shouldStore());
         for (ConfigAnnotatedField af: config.getAnnotatedFields().values()) {
 
             // Define the properties that make up our complex field
@@ -82,6 +83,18 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         	ConfigAnnotation mainAnnotation = annotations.get(0);
             ComplexField complexField = new ComplexField(af.getName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation), false);
             addComplexField(complexField);
+
+            IndexStructure indexStructure;
+            if (indexer != null) {
+                indexStructure = indexer.getSearcher().getIndexStructure();
+                indexStructure.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
+
+                // If the indexmetadata file specified a list of properties that shouldn't get a forward
+                // index, make the new complex field aware of this.
+                Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(complexField.getName()).getNoForwardIndexProps();
+                complexField.setNoForwardIndexProps(noForwardIndexProps);
+            }
+
             ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);
             propStartTag.setForwardIndex(false);
 
@@ -98,17 +111,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             if (!complexField.hasProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
                 // Hasn't been created yet. Create it now.
                 complexField.addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.PUNCTUATION_PROP_NAME), false);
-            }
-
-            IndexStructure indexStructure;
-            if (indexer != null) {
-                indexStructure = indexer.getSearcher().getIndexStructure();
-                indexStructure.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
-
-    	        // If the indexmetadata file specified a list of properties that shouldn't get a forward
-    	        // index, make the new complex field aware of this.
-    	        Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(complexField.getName()).getNoForwardIndexProps();
-    	        complexField.setNoForwardIndexProps(noForwardIndexProps);
             }
         }
     }
@@ -128,38 +130,57 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             String method = step.getMethod();
             Map<String, String> param = step.getParam();
             switch (method) {
-            case "replace":
-                String find = param.get("find");
-                String replace = param.get("replace");
-                if (find == null || replace == null)
-                    throw new InputFormatConfigException("replace needs parameters find and replace");
-                try {
-                    result = result.replaceAll(find, replace);
-                } catch (PatternSyntaxException e) {
-                    throw new InputFormatConfigException("Syntax error in replace regex: " + find);
+                case "replace": {
+                    String find = param.get("find");
+                    String replace = param.get("replace");
+                    if (find == null || replace == null)
+                        throw new InputFormatConfigException("replace needs parameters find and replace");
+                    try {
+                        result = result.replaceAll(find, replace);
+                    } catch (PatternSyntaxException e) {
+                        throw new InputFormatConfigException("Syntax error in replace regex: " + find);
+                    }
+                    break;
                 }
-                break;
-            case "default":
-                if (result.length() == 0) {
+                case "default": {
+                    if (result.length() == 0) {
+                        String field = param.get("field");
+                        String fieldValue = currentLuceneDoc.get(field);
+                        if (fieldValue != null)
+                            result = fieldValue;
+                    }
+                    break;
+                }
+                case "append": {
+                    String separator = param.containsKey("separator") ? param.get("separator") : " ";
                     String field = param.get("field");
                     String fieldValue = currentLuceneDoc.get(field);
-                    if (fieldValue != null)
-                        result = fieldValue;
+                    if (fieldValue != null && fieldValue.length() > 0) {
+                        if (result.length() > 0)
+                            result += separator;
+                        result += fieldValue;
+                    }
+                    break;
                 }
-                break;
-            case "append":
-                String separator = param.containsKey("separator") ? param.get("separator") : " ";
-                String field = param.get("field");
-                String fieldValue = currentLuceneDoc.get(field);
-                if (fieldValue != null && fieldValue.length() > 0) {
-                    if (result.length() > 0)
-                        result += separator;
-                    result += fieldValue;
+                case "split": {
+                    // Split on a separator regex and keep one part (first part by default)
+                    String separator = param.containsKey("separator") ? param.get("separator") : ";";
+                    int keep = param.containsKey("keep") ? Integer.parseInt(param.get("keep")) - 1 : 0;
+                    if (keep < 0) {
+                        warn("action 'split', parameter 'keep': must be at least 1");
+                        keep = 0;
+                    }
+                    String[] parts = result.split(separator, -1);
+                    if (keep >= parts.length)
+                        result = "";
+                    else
+                        result = parts[keep];
+                    break;
                 }
-                break;
-            default:
-                // In the future, we'll support user plugins here
-                throw new UnsupportedOperationException("Unknown processing step method " + method);
+                default: {
+                    // In the future, we'll support user plugins here
+                    throw new UnsupportedOperationException("Unknown processing step method " + method);
+                }
             }
         }
         return result;

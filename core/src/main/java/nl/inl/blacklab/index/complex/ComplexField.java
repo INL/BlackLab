@@ -16,8 +16,8 @@
 package nl.inl.blacklab.index.complex;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,10 +60,11 @@ public class ComplexField {
 
 	private ComplexFieldProperty mainProperty;
 
-	private Set<String> noForwardIndexProps = Collections.emptySet();
+	private Set<String> noForwardIndexProps = new HashSet<>();
 
 	public void setNoForwardIndexProps(Set<String> noForwardIndexProps) {
-		this.noForwardIndexProps = noForwardIndexProps;
+	    this.noForwardIndexProps.clear();
+		this.noForwardIndexProps.addAll(noForwardIndexProps);
 	}
 
 	/**

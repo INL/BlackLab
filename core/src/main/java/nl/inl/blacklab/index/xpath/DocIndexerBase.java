@@ -31,6 +31,7 @@ import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.InputFormatException;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
@@ -47,10 +48,15 @@ public abstract class DocIndexerBase extends DocIndexer {
 
     /** Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
     static final class OpenTagInfo {
+
+        public String name;
+
         public int position;
+
         public int index;
 
-        public OpenTagInfo(int position, int index) {
+        public OpenTagInfo(String name, int position, int index) {
+            this.name = name;
             this.position = position;
             this.index = index;
         }
@@ -189,6 +195,10 @@ public abstract class DocIndexerBase extends DocIndexer {
     /** If no punctuation expression is defined, add a space between each word by default. */
     private boolean addDefaultPunctuation = true;
 
+    /** If true, the next word gets no default punctuation even if addDefaultPunctuation is true.
+     *  Useful for implementing glue tag behaviour (Sketch Engine WPL format) */
+    private boolean preventNextDefaultPunctuation = false;
+
     /** For capturing punctuation between words. */
     private StringBuilder punctuation = new StringBuilder();
 
@@ -278,6 +288,10 @@ public abstract class DocIndexerBase extends DocIndexer {
 
     protected ComplexFieldProperty propPunct() {
         return propPunct;
+    }
+
+    protected void setPreventNextDefaultPunctuation() {
+        preventNextDefaultPunctuation = true;
     }
 
     /**
@@ -613,7 +627,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             propTags().addValue(tagName, posIncrement);
             propTags().addPayload(null);
             int startTagIndex = propTags().getLastValueIndex();
-            openInlineTags.add(new OpenTagInfo(currentPos, startTagIndex));
+            openInlineTags.add(new OpenTagInfo(tagName, currentPos, startTagIndex));
 
             for (Entry<String, String> e: attributes.entrySet()) {
                 // Index element attribute values
@@ -629,7 +643,11 @@ public abstract class DocIndexerBase extends DocIndexer {
             int currentPos = getCurrentTokenPosition();
 
             // Add payload to start tag property indicating end position
+            if (openInlineTags.size() == 0)
+                throw new InputFormatException("Close tag " + tagName + " found, but that tag is not open");
             OpenTagInfo openTag = openInlineTags.remove(openInlineTags.size() - 1);
+            if (!openTag.name.equals(tagName))
+                throw new InputFormatException("Close tag " + tagName + " found, but " + openTag.name + " expected");
             byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
             propTags().setPayloadAtIndex(openTag.index, new BytesRef(payload));
         }
@@ -645,20 +663,29 @@ public abstract class DocIndexerBase extends DocIndexer {
         this.addDefaultPunctuation = addDefaultPunctuation;
     }
 
+    public boolean shouldAddDefaultPunctuation() {
+        return addDefaultPunctuation;
+    }
+
     protected void beginWord() {
         int pos = getCharacterPosition();
         addStartChar(pos);
     }
 
     protected void endWord() {
-        String punct = punctuation.length() == 0 && addDefaultPunctuation ? " " : punctuation.toString();
+        String punct;
+        if (punctuation.length() == 0)
+            punct = addDefaultPunctuation && !preventNextDefaultPunctuation ? " " : "";
+        else
+            punct = punctuation.toString();
+        preventNextDefaultPunctuation = false;
         propPunct().addValue(punct);
         addEndChar(getCharacterPosition());
         wordsDone++;
         if (punctuation.length() > 10000)
             punctuation = new StringBuilder(); // let's not hold on to this much memory
         else
-            punctuation.delete(0, punctuation.length());
+            punctuation.setLength(0);
     }
 
     /**

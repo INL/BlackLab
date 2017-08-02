@@ -387,7 +387,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         try {
             // Fetch and index the linked document
-            indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormat(), ld.isStore() ? ld.getName() : null);
+            indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormat(), ld.shouldStore() ? ld.getName() : null);
         } catch (Exception e) {
             switch(ld.getIfLinkPathMissing()) {
             case IGNORE:

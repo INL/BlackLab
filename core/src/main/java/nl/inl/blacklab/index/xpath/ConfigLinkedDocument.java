@@ -65,7 +65,7 @@ public class ConfigLinkedDocument {
         this.name = name;
     }
 
-    public boolean isStore() {
+    public boolean shouldStore() {
         return store;
     }
 

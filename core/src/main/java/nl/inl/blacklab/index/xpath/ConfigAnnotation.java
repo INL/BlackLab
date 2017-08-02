@@ -23,6 +23,9 @@ public class ConfigAnnotation {
     /** Where to find body text */
     private String valuePath;
 
+    /** If valuePath consists only of digits, this is the integer value. Otherwise, it is Integer.MAX_VALUE */
+    private int valuePathInt = Integer.MAX_VALUE;
+
     /** If null: regular annotation definition. Otherwise, find all nodes matching this XPath,
      *  then evaluate name and valuePath as XPaths for each matching node, adding a subannotation
      *  value for each.
@@ -47,6 +50,9 @@ public class ConfigAnnotation {
 
     /** Our subannotations (except forEach's) by name. */
     private Map<String, ConfigAnnotation> subAnnotationsByName = new LinkedHashMap<>();
+
+    /** Should we create a forward index for this annotation? */
+    private boolean forwardIndex = true;
 
     /** How to display the field in the interface (optional) */
     private String displayName = "";
@@ -92,6 +98,7 @@ public class ConfigAnnotation {
         for (ConfigAnnotation a: subAnnotations) {
             result.addSubAnnotation(a.copy());
         }
+        result.setForwardIndex(forwardIndex);
         return result;
     }
 
@@ -109,6 +116,16 @@ public class ConfigAnnotation {
 
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
+        if (valuePath.matches("\\d+"))
+            valuePathInt = Integer.parseInt(valuePath);
+    }
+
+    public boolean isValuePathInteger() {
+        return valuePathInt != Integer.MAX_VALUE;
+    }
+
+    public int getValuePathInt() {
+        return valuePathInt;
     }
 
     public List<String> getCaptureValuePaths() {
@@ -192,6 +209,14 @@ public class ConfigAnnotation {
     public void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
+    }
+
+    public boolean createForwardIndex() {
+        return forwardIndex;
+    }
+
+    public void setForwardIndex(boolean forwardIndex) {
+        this.forwardIndex = forwardIndex;
     }
 
 }

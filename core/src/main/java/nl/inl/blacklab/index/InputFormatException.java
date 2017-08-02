@@ -1,6 +1,6 @@
 package nl.inl.blacklab.index;
 
-public class InputFormatException extends Exception {
+public class InputFormatException extends RuntimeException {
 
 	public InputFormatException() {
 		super();

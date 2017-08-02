@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -478,10 +479,20 @@ public class IndexStructure {
     		String mainPropertyName = Json.getString(fieldConfig, "mainProperty", "");
     		if (mainPropertyName.length() > 0)
     			fieldDesc.setMainPropertyName(mainPropertyName);
-    		String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
-    		if (noForwardIndex.length() > 0) {
-    			String[] noForwardIndexProps = noForwardIndex.split("\\s+");
-    			fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
+    		JsonNode nodeNoForwardIndexProps = fieldConfig.get("noForwardIndexProps");
+    		if (nodeNoForwardIndexProps instanceof ArrayNode) {
+    		    Iterator<JsonNode> itNFIP = nodeNoForwardIndexProps.elements();
+    		    Set<String> noForwardIndex = new HashSet<>();
+    		    while (itNFIP.hasNext()) {
+    		        noForwardIndex.add(itNFIP.next().asText());
+    		    }
+    		    fieldDesc.setNoForwardIndexProps(noForwardIndex);
+    		} else {
+        		String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
+        		if (noForwardIndex.length() > 0) {
+        			String[] noForwardIndexProps = noForwardIndex.split("\\s+");
+        			fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
+        		}
     		}
     		fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
     		complexFields.put(fieldName, fieldDesc);

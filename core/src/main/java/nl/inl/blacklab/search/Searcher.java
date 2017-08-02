@@ -50,6 +50,7 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.util.FileUtil;
 import nl.inl.util.VersionFile;
 
 public abstract class Searcher {
@@ -360,6 +361,44 @@ public abstract class Searcher {
 	public static void setTraceQueryExecution(boolean traceQueryExecution) {
 		Searcher.traceQueryExecution = traceQueryExecution;
 	}
+
+	/**
+	 * Return a list of directories that should be searched for BlackLab-related configuration files.
+	 *
+	 * May be used by applications to locate BlackLab-related configuration, such as
+	 * input format definition files or other configuration files. IndexTool and BlackLab Server use
+	 * this.
+	 *
+	 * The directories returned are (in decreasing priority):
+	 * - $BLACKLAB_CONFIG_DIR (if env. var. is defined)
+	 * - $HOME/.blacklab
+	 * - /etc/blacklab
+	 * - /vol1/etc/blacklab (legacy, will be removed)
+	 * - /tmp (occasionally useful for testing, but should probably be removed)
+	 *
+	 * A convenient method to use with this is {@link FileUtil#findFile(List, String, List)}.
+	 *
+	 * @return list of directories to search in order
+	 */
+    public static List<File> getConfigSearchDirs() {
+        List<File> searchDirs = new ArrayList<>();
+        String strConfigDir = System.getenv("BLACKLAB_CONFIG_DIR");
+        if (strConfigDir != null && strConfigDir.length() > 0) {
+            File configDir = new File(strConfigDir);
+            if (configDir.exists()) {
+                if (!configDir.canRead())
+                    logger.warn("BLACKLAB_CONFIG_DIR points to a unreadable directory: " + strConfigDir);
+                searchDirs.add(configDir);
+            } else {
+                logger.warn("BLACKLAB_CONFIG_DIR points to a non-existent directory: " + strConfigDir);
+            }
+        }
+        searchDirs.add(new File(System.getProperty("user.home"), ".blacklab"));
+        searchDirs.add(new File("/etc/blacklab"));
+        searchDirs.add(new File("/vol1/etc/blacklab")); // TODO: remove, INT-specific
+        searchDirs.add(new File(System.getProperty("java.io.tmpdir")));
+        return searchDirs;
+    }
 
 	//-------------------------------------------------------------------------
 

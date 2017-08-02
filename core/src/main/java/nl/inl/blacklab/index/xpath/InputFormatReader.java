@@ -51,7 +51,7 @@ public class InputFormatReader {
 
     private static String str(JsonNode node, String name) {
         if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a value");
+            throw new InputFormatConfigException(name + " must be a string value");
         return node.asText();
     }
 
@@ -61,12 +61,25 @@ public class InputFormatReader {
 
     private static boolean bool(JsonNode node, String name) {
         if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a value");
+            throw new InputFormatConfigException(name + " must be a boolean value");
         return node.asBoolean();
     }
 
     private static boolean bool(Entry<String, JsonNode> e) {
         return bool(e.getValue(), e.getKey());
+    }
+
+    private static char character(JsonNode node, String name) {
+        if (!(node instanceof ValueNode))
+            throw new InputFormatConfigException(name + " must be a single character");
+        String txt = node.asText();
+        if (txt.length() != 1)
+            throw new InputFormatConfigException(name + " must be a single character");
+        return txt.charAt(0);
+    }
+
+    private static char character(Entry<String, JsonNode> e) {
+        return character(e.getValue(), e.getKey());
     }
 
     public static void read(Reader r, boolean isJson, ConfigInputFormat cfg) throws IOException {
@@ -119,6 +132,10 @@ public class InputFormatReader {
             switch(e.getKey()) {
             case "type": to.setType(ConfigTabularOptions.Type.fromStringValue(str(e))); break;
             case "columnNames": to.setColumnNames(bool(e)); break;
+            case "delimiter": to.setDelimiter(character(e)); break;
+            case "quote": to.setQuote(character(e)); break;
+            case "inlineTags": to.setInlineTags(bool(e)); break;
+            case "glueTags": to.setGlueTags(bool(e)); break;
             default:
                 throw new InputFormatConfigException("Unknown key " + e.getKey() + " in tabular options");
             }
@@ -237,6 +254,7 @@ public class InputFormatReader {
                 if (isSubAnnotation)
                     throw new InputFormatConfigException("Subannotations may not have their own subannotations");
                 readSubAnnotations(e, annot); break;
+            case "forwardIndex": annot.setForwardIndex(bool(e)); break;
             default:
                 throw new InputFormatConfigException("Unknown key " + e.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
             }
@@ -404,13 +422,9 @@ public class InputFormatReader {
             Iterator<Entry<String, JsonNode>> itStep = obj(step, "processing step").fields();
             while (itStep.hasNext()) {
                 Entry<String, JsonNode> e = itStep.next();
-                if (s.getMethod() != null)
-                    throw new InputFormatConfigException("Can only provide one method per processing step");
-                s.setMethod(e.getKey());
-                Iterator<Entry<String, JsonNode>> itParams = obj(e.getValue(), "processing step parameters").fields();
-                while (itParams.hasNext()) {
-                    Entry<String, JsonNode> par = itParams.next();
-                    s.addParam(par.getKey(), par.getValue().asText());
+                switch(e.getKey()) {
+                case "action": s.setMethod(str(e)); break;
+                default: s.addParam(e.getKey(), str(e)); break;
                 }
             }
             p.add(s);

@@ -21,7 +21,8 @@ public class ConfigInputFormat {
     /** Basic file types we support */
     static enum FileType {
         XML,
-        TABULAR;
+        TABULAR,  // csv, tsv
+        TEXT;     // plain text
 
         public static FileType fromStringValue(String str) {
             return valueOf(str.toUpperCase());
@@ -45,8 +46,9 @@ public class ConfigInputFormat {
     private String type = "";
 
     /** What type of file is this (e.g. xml, tabular, plaintext)? Determines subclass of DocIndexerConfig to instantiate */
-    private FileType fileType;
+    private FileType fileType = FileType.XML;
 
+    /** If fileType is TABULAR: the options to use for the tabular format */
     private ConfigTabularOptions tabularOptions;
 
     /** May end user fetch contents of whole documents? [false] */
@@ -103,14 +105,17 @@ public class ConfigInputFormat {
         if (baseFormat == null)
             throw new InputFormatConfigException("Base format " + formatName + " not found for format " + name);
         type = baseFormat.getType();
+        fileType = baseFormat.getFileType();
+        if (baseFormat.getTabularOptions() != null)
+            tabularOptions = baseFormat.getTabularOptions().copy();
         contentViewable = baseFormat.isContentViewable();
         namespaces.putAll(baseFormat.getNamespaces());
         documentPath = baseFormat.getDocumentPath();
-        store = baseFormat.isStore();
+        store = baseFormat.shouldStore();
         indexFieldAs.putAll(baseFormat.getIndexFieldAs());
         specialFields.putAll(baseFormat.getSpecialFields());
         for (ConfigMetadataFieldGroup g: baseFormat.getMetadataFieldGroups().values()) {
-            addMetadataFieldGroup(g);
+            addMetadataFieldGroup(g.copy());
         }
         metadataDefaultAnalyzer = baseFormat.getMetadataDefaultAnalyzer();
         for (ConfigMetadataBlock b: baseFormat.getMetadataBlocks()) {
@@ -129,10 +134,12 @@ public class ConfigInputFormat {
         String t = "input format";
         req(name, t, "name");
         req(documentPath, t, "documentPath");
+        if (tabularOptions != null)
+            tabularOptions.validate();
         for (ConfigMetadataBlock b: metadataBlocks)
             b.validate();
         for (ConfigAnnotatedField af: annotatedFields.values()) {
-            if (fileType == FileType.TABULAR)
+            if (fileType != FileType.XML)
                 af.setWordPath("N/A"); // prevent validation error
             af.validate();
         }
@@ -293,7 +300,7 @@ public class ConfigInputFormat {
         specialFields.put(type, fieldName);
     }
 
-    public boolean isStore() {
+    public boolean shouldStore() {
         return store;
     }
 

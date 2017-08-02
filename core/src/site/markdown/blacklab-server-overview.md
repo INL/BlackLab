@@ -415,7 +415,7 @@ Below is a complete example of the configuration file (blacklab-server.json) inc
 
 You should at least have an “indexCollections” or “indices” setting, so you have at least one index to search. All other parameters are optional and may, for example, be used to improve performance.
 
-The blacklab-server.json file should be placed in /etc/blacklab/.
+The blacklab-server.json file should be placed in /etc/blacklab/, or you should make sure an environment variable named BLACKLAB_CONFIG_DIR is defined that points to the directory containing the configuration file(s). 
 
 	{
 	    // BlackLab Server config file

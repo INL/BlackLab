@@ -7,7 +7,7 @@ import java.util.Map;
  * Configuration for a block of standoff annotations (annotations that
  * don't reside under the word tag but elsewhere in the document).
  */
-class ConfigStandoffAnnotations implements ConfigWithAnnotations {
+public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
 	/** Path to the elements containing the values to index
 	 *  (values may apply to multiple token positions)

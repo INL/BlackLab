@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.search.RegexpTooLargeException;
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -63,19 +65,15 @@ public class BlackLabServer extends HttpServlet {
 		logger.info("BlackLab Server ready.");
 	}
 
-	private void readConfig() throws BlsException {
+    private void readConfig() throws BlsException {
     	try {
-            File realPath = new File(getServletContext().getRealPath("."));
-            logger.debug("Running from dir: " + realPath);
-            File webappsDir = realPath.getParentFile().getCanonicalFile();
-    	    String configFileName = "blacklab-server";
-    	    File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-            List<File> searchDirs = Arrays.asList(
-    	        webappsDir,
-    	        new File("/etc/blacklab"),
-    	        new File("/vol1/etc/blacklab"), // INT-specific...
-    	        tmpDir
-    	    );
+            File servletPath = new File(getServletContext().getRealPath("."));
+            logger.debug("Running from dir: " + servletPath);
+            String configFileName = "blacklab-server";
+            List<File> searchDirs = new ArrayList<>();
+            searchDirs.add(servletPath.getParentFile().getCanonicalFile());
+            searchDirs.addAll(Searcher.getConfigSearchDirs());
+
             List<String> exts = Arrays.asList("json", "yaml", "yml");
             File configFile = FileUtil.findFile(searchDirs, configFileName, exts);
             InputStream is = null;

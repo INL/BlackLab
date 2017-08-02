@@ -26,6 +26,13 @@ public class ConfigMetadataFieldGroup {
         setName(name);
     }
 
+    public ConfigMetadataFieldGroup copy() {
+        ConfigMetadataFieldGroup cp = new ConfigMetadataFieldGroup(name);
+        cp.fields.addAll(fields);
+        cp.addRemainingFields = addRemainingFields;
+        return cp;
+    }
+
     public String getName() {
         return name;
     }

@@ -18,6 +18,7 @@ import nl.inl.blacklab.index.xpath.ConfigLinkedDocument;
 import nl.inl.blacklab.index.xpath.ConfigMetadataBlock;
 import nl.inl.blacklab.index.xpath.ConfigMetadataField;
 import nl.inl.blacklab.index.xpath.ConfigMetadataFieldGroup;
+import nl.inl.blacklab.index.xpath.ConfigStandoffAnnotations;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.Json;
 
@@ -126,8 +127,18 @@ public class IndexMetadata {
             g.put("description", f.getDescription());
             g.put("mainProperty", f.getAnnotations().values().iterator().next().getName());
             ArrayNode h = g.putArray("displayOrder");
+            ArrayNode noForwardIndexProps = g.putArray("noForwardIndexProps");
             for (ConfigAnnotation a: f.getAnnotations().values()) {
                 h.add(a.getName());
+                if (!a.createForwardIndex())
+                    noForwardIndexProps.add(a.getName());
+            }
+            for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
+                for (ConfigAnnotation a: standoff.getAnnotations().values()) {
+                    h.add(a.getName());
+                    if (!a.createForwardIndex())
+                        noForwardIndexProps.add(a.getName());
+                }
             }
         }
 
