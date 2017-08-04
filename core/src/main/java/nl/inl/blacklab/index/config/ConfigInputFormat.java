@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +22,8 @@ public class ConfigInputFormat {
     static enum FileType {
         XML,
         TABULAR,  // csv, tsv
-        TEXT;     // plain text
+        TEXT,     // plain text
+    	CHAT;     // CHILDES CHAT format
 
         public static FileType fromStringValue(String str) {
             return valueOf(str.toUpperCase());

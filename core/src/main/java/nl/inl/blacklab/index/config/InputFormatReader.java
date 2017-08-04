@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +16,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-import nl.inl.blacklab.index.xpath.ConfigInputFormat.FileType;
-import nl.inl.blacklab.index.xpath.ConfigLinkedDocument.MissingLinkPathAction;
+import nl.inl.blacklab.index.config.ConfigInputFormat.FileType;
+import nl.inl.blacklab.index.config.ConfigLinkedDocument.MissingLinkPathAction;
 import nl.inl.blacklab.search.indexstructure.FieldType;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.FileUtil;

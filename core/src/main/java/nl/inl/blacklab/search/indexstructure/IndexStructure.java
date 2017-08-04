@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.index.xpath.ConfigInputFormat;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.FileUtil;

@@ -1,6 +1,6 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
-import nl.inl.blacklab.index.xpath.ConfigLinkedDocument.MissingLinkPathAction;
+import nl.inl.blacklab.index.config.ConfigLinkedDocument.MissingLinkPathAction;
 
 public class ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat {
 

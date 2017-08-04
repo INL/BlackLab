@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import nl.inl.blacklab.index.xpath.ConfigInputFormat;
-import nl.inl.blacklab.index.xpath.ConfigInputFormatOpenSonarCmdi;
-import nl.inl.blacklab.index.xpath.ConfigInputFormatOpenSonarFoLiA;
-import nl.inl.blacklab.index.xpath.ConfigInputFormatOpenSonarFoliaCmdi;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.index.config.ConfigInputFormatOpenSonarCmdi;
+import nl.inl.blacklab.index.config.ConfigInputFormatOpenSonarFoLiA;
+import nl.inl.blacklab.index.config.ConfigInputFormatOpenSonarFoliaCmdi;
 import nl.inl.blacklab.indexers.DocIndexerAlto;
 import nl.inl.blacklab.indexers.DocIndexerFolia;
 import nl.inl.blacklab.indexers.DocIndexerPageXml;

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
 public class ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
 

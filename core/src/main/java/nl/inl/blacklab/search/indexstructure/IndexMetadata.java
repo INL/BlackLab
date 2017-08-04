@@ -11,14 +11,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.xpath.ConfigAnnotatedField;
-import nl.inl.blacklab.index.xpath.ConfigAnnotation;
-import nl.inl.blacklab.index.xpath.ConfigInputFormat;
-import nl.inl.blacklab.index.xpath.ConfigLinkedDocument;
-import nl.inl.blacklab.index.xpath.ConfigMetadataBlock;
-import nl.inl.blacklab.index.xpath.ConfigMetadataField;
-import nl.inl.blacklab.index.xpath.ConfigMetadataFieldGroup;
-import nl.inl.blacklab.index.xpath.ConfigStandoffAnnotations;
+import nl.inl.blacklab.index.config.ConfigAnnotatedField;
+import nl.inl.blacklab.index.config.ConfigAnnotation;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.index.config.ConfigLinkedDocument;
+import nl.inl.blacklab.index.config.ConfigMetadataBlock;
+import nl.inl.blacklab.index.config.ConfigMetadataField;
+import nl.inl.blacklab.index.config.ConfigMetadataFieldGroup;
+import nl.inl.blacklab.index.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.Json;
 

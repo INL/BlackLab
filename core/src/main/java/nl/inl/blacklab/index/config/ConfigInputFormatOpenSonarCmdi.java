@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
 /**
  * An indexer for the OpenSonarCmdi format

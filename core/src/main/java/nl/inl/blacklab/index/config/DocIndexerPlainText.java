@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -68,6 +68,8 @@ public class DocIndexerPlainText extends DocIndexerConfig {
         fullText = new StringBuilder();
 
         // For the configured annotated field...
+        if (config.getAnnotatedFields().size() > 1)
+        	throw new InputFormatConfigException("Plain text files can only have 1 annotated field");
         for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields().values()) {
             setCurrentComplexField(annotatedField.getName());
 

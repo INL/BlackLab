@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +31,19 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     public static DocIndexerConfig fromConfig(ConfigInputFormat config) {
         DocIndexerConfig docIndexer;
         switch (config.getFileType()) {
-        case XML: docIndexer = new DocIndexerXPath(); break;
-        case TABULAR: docIndexer = new DocIndexerTabular(); break;
-        case TEXT: docIndexer = new DocIndexerPlainText(); break;
-        default: throw new InputFormatConfigException("Unknown file type: " + config.getFileType() + " (use xml or tabular)");
+        case XML:
+        	docIndexer = new DocIndexerXPath();
+        	break;
+        case TABULAR:
+        	docIndexer = new DocIndexerTabular();
+        	break;
+        case TEXT:
+        	docIndexer = new DocIndexerPlainText();
+        	break;
+        case CHAT:
+        	docIndexer = new DocIndexerChat();
+        	break;
+        default: throw new InputFormatConfigException("Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
         }
         docIndexer.setConfigInputFormat(config);
         return docIndexer;
@@ -64,6 +73,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     @Override
     protected String optTranslateFieldName(String from) {
+    	if (config == null) // test
+    		return from;
         String to = config.getIndexFieldAs().get(from);
         return to == null ? from : to;
     }

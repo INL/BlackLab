@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
 /**
  * Configuration for an XML element occurring in an annotated field.

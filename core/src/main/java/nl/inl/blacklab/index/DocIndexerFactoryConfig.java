@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 
-import nl.inl.blacklab.index.xpath.ConfigInputFormat;
-import nl.inl.blacklab.index.xpath.DocIndexerConfig;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.index.config.DocIndexerConfig;
 
 public class DocIndexerFactoryConfig implements DocIndexerFactory {
     private final ConfigInputFormat config;

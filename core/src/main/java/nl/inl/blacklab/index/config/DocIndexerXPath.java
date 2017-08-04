@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.xpath;
+package nl.inl.blacklab.index.config;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -26,7 +26,7 @@ import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.xpath.InlineObject.InlineObjectType;
+import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 
