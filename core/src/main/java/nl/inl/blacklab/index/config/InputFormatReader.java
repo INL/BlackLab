@@ -69,18 +69,18 @@ public class InputFormatReader {
         return bool(e.getValue(), e.getKey());
     }
 
-    private static char character(JsonNode node, String name) {
-        if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a single character");
-        String txt = node.asText();
-        if (txt.length() != 1)
-            throw new InputFormatConfigException(name + " must be a single character");
-        return txt.charAt(0);
-    }
-
-    private static char character(Entry<String, JsonNode> e) {
-        return character(e.getValue(), e.getKey());
-    }
+//    private static char character(JsonNode node, String name) {
+//        if (!(node instanceof ValueNode))
+//            throw new InputFormatConfigException(name + " must be a single character");
+//        String txt = node.asText();
+//        if (txt.length() != 1)
+//            throw new InputFormatConfigException(name + " must be a single character");
+//        return txt.charAt(0);
+//    }
+//
+//    private static char character(Entry<String, JsonNode> e) {
+//        return character(e.getValue(), e.getKey());
+//    }
 
     public static void read(Reader r, boolean isJson, ConfigInputFormat cfg) throws IOException {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
@@ -105,7 +105,8 @@ public class InputFormatReader {
             case "baseFormat": cfg.setBaseFormat(str(e)); break;
             case "type": cfg.setType(str(e)); break;
             case "fileType": cfg.setFileType(FileType.fromStringValue(str(e))); break;
-            case "tabularOptions": cfg.setTabularOptions(readTabularOptions(e)); break;
+            case "fileTypeOptions": readFileTypeOptions(e, cfg); break;
+//            case "tabularOptions": cfg.setTabularOptions(readTabularOptions(e)); break;
             case "contentViewable": cfg.setContentViewable(bool(e)); break;
             case "namespaces": readStringMap(e, cfg.namespaces); break;
             case "documentPath": cfg.setDocumentPath(str(e)); break;
@@ -123,25 +124,34 @@ public class InputFormatReader {
         }
     }
 
-    private static ConfigTabularOptions readTabularOptions(Entry<String, JsonNode> tabOptEntry) {
-        ObjectNode node = obj(tabOptEntry.getValue(), null);
+    private static void readFileTypeOptions(Entry<String, JsonNode> ftOptEntry, ConfigInputFormat cfg) {
+        ObjectNode node = obj(ftOptEntry.getValue(), null);
         Iterator<Entry<String, JsonNode>> it = node.fields();
-        ConfigTabularOptions to = new ConfigTabularOptions();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
-            switch(e.getKey()) {
-            case "type": to.setType(ConfigTabularOptions.Type.fromStringValue(str(e))); break;
-            case "columnNames": to.setColumnNames(bool(e)); break;
-            case "delimiter": to.setDelimiter(character(e)); break;
-            case "quote": to.setQuote(character(e)); break;
-            case "inlineTags": to.setInlineTags(bool(e)); break;
-            case "glueTags": to.setGlueTags(bool(e)); break;
-            default:
-                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in tabular options");
-            }
+            cfg.addFileTypeOption(e.getKey(), str(e));
         }
-        return to;
     }
+
+//    private static ConfigTabularOptions readTabularOptions(Entry<String, JsonNode> tabOptEntry) {
+//        ObjectNode node = obj(tabOptEntry.getValue(), null);
+//        Iterator<Entry<String, JsonNode>> it = node.fields();
+//        ConfigTabularOptions to = new ConfigTabularOptions();
+//        while (it.hasNext()) {
+//            Entry<String, JsonNode> e = it.next();
+//            switch(e.getKey()) {
+//            case "type": to.setType(DocIndexerTabular.Type.fromStringValue(str(e))); break;
+//            case "columnNames": to.setColumnNames(bool(e)); break;
+//            case "delimiter": to.setDelimiter(character(e)); break;
+//            case "quote": to.setQuote(character(e)); break;
+//            case "inlineTags": to.setInlineTags(bool(e)); break;
+//            case "glueTags": to.setGlueTags(bool(e)); break;
+//            default:
+//                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in tabular options");
+//            }
+//        }
+//        return to;
+//    }
 
     private static void readStringMap(Entry<String, JsonNode> strMapEntry, Map<String, String> addToMap) {
         ObjectNode node = obj(strMapEntry.getValue(), null);

@@ -1,0 +1,11 @@
+name: txt
+displayName: plain text
+description: A plain old text file.
+
+fileType: text
+
+annotatedFields:
+  contents:
+    annotations:
+    - name: word
+      valuePath: .

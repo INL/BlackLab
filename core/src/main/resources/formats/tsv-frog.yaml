@@ -1,0 +1,55 @@
+# Short name (must be an identifier, i.e. no spaces, punctuation, etc.)
+name: tsv-frog
+
+# For displaying in user interface (optional)
+displayName: Frog tagger tab-delimited (TSV)
+
+# For describing input format in user interface (optional)
+description: Tab-delimited (TSV) output produced by the Frog program
+
+# File type defaults to XML; could also be tabular, txt, ...?
+# If XML, paths are XPaths. If tabular, paths are (1-based) column numbers.
+# (Tabular files can only contain a single annotated field and no metadata or linked documents)
+fileType: tabular
+
+# Options for tabular format
+fileTypeOptions:
+
+  # TSV (commons-csv TDF setting) or CSV (commons-csv EXCEL setting)
+  type: tsv
+
+  # Does the file have column names in the first line?
+  columnNames: false
+
+# Annotated, CQL-searchable fields (also called "complex fields").
+# We usually have just one, named "contents".
+annotatedFields:
+  contents:
+    annotations:
+
+    - name: word
+      valuePath: 2
+
+    - name: lemma
+      valuePath: 3
+
+    - name: pos
+      valuePath: 5
+      process:
+      - action: split
+        separator: ;   # (default)
+        keep: 1        # (default)
+
+
+# Frog TSV consists of these columns:
+    #  1 Token number (resets every sentence)
+    #  2 Token
+    #  3 Lemma (according to MBLEM)
+    #  4 Morphological segmentation (according to MBMA)
+    #  5 PoS tag (CGN tagset; according to MBT)
+    #  6 Confidence in the POS tag, a number between 0 and 1, representing the probability mass assigned to the best guess tag in the tag distribution
+    #  7 Named entity type, identifying person (PER), organization (ORG), location (LOC), product (PRO), event (EVE), and miscellaneous (MISC), using a BIO (or IOB2) encoding
+    #  8 Base (non-embedded) phrase chunk in BIO encoding
+    #  9 Token number of head word in dependency graph (according to CSI-DP)
+    # 10 Type of dependency relation with head word
+

@@ -2,9 +2,9 @@ package nl.inl.blacklab.index.config;
 
 import nl.inl.blacklab.index.config.ConfigLinkedDocument.MissingLinkPathAction;
 
-public class ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat {
+public class TEST_ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat {
 
-    public ConfigInputFormatOpenSonarFoliaCmdi() {
+    public TEST_ConfigInputFormatOpenSonarFoliaCmdi() {
         setName("BuiltinOpenSonarFoliaCmdi");
         setDisplayName("OpenSoNaR FoLiA file format with CMDI metadata link");
 

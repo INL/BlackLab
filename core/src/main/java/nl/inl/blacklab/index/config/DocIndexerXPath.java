@@ -389,13 +389,19 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // Fetch and index the linked document
             indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormat(), ld.shouldStore() ? ld.getName() : null);
         } catch (Exception e) {
+            String moreInfo = "(inputFile = " + inputFile;
+            if (pathInsideArchive != null)
+                moreInfo += ", pathInsideArchive = " + pathInsideArchive;
+            if (documentPath != null)
+                moreInfo += ", documentPath = " + documentPath;
+            moreInfo += ")";
             switch(ld.getIfLinkPathMissing()) {
             case IGNORE:
             case WARN:
-                indexer.getListener().warning("Could not find linked document for " + documentName + ": " + e.getMessage());
+                indexer.getListener().warning("Could not find linked document for " + documentName + moreInfo + ": " + e.getMessage());
                 break;
             case FAIL:
-                throw new RuntimeException("Could not find linked document for " + documentName, e);
+                throw new RuntimeException("Could not find linked document for " + documentName + moreInfo, e);
             }
         }
     }

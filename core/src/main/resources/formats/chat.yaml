@@ -1,0 +1,35 @@
+name: chat
+displayName: CHAT (Codes for the Human Analysis of Transcripts) 
+description: Format for transcribed conversations, created for the CHILDES project.
+
+fileType: chat
+
+annotatedFields:
+  contents:
+    annotations:
+    - name: word
+      valuePath: .
+
+# You may change the names of metadata fields if you wish
+indexFieldAs:
+  oldName: newName
+
+metadata:
+  fields:
+    # You can apply processing on a specific metadata field...
+    # (NOT YET IMPLEMENTED)
+  - name: thefield
+    namePath: .
+    process:
+    - action: find
+      find: bla
+      replace: zwets
+
+    # ...or on every metadata field, if you wish.
+    # (NOT YET IMPLEMENTED)
+  - forEachPath: .
+    namePath: .
+    process:
+    - action: find
+      find: bla
+      replace: zwets

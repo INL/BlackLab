@@ -1,8 +1,8 @@
 package nl.inl.blacklab.index.config;
 
-public class ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
+public class TEST_ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
 
-    public ConfigInputFormatOpenSonarFoLiA() {
+    public TEST_ConfigInputFormatOpenSonarFoLiA() {
         setName("BuiltinOpenSonarFolia");
         setDisplayName("OpenSoNaR FoLiA file format");
         setDescription("The file format used by OpenSonar.");

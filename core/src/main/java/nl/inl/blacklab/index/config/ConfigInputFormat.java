@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,8 +50,11 @@ public class ConfigInputFormat {
     /** What type of file is this (e.g. xml, tabular, plaintext)? Determines subclass of DocIndexerConfig to instantiate */
     private FileType fileType = FileType.XML;
 
-    /** If fileType is TABULAR: the options to use for the tabular format */
-    private ConfigTabularOptions tabularOptions;
+    /** Options for the file type (i.e. separator in case of tabular, etc.) */
+    private Map<String, String> fileTypeOptions = new HashMap<>();
+
+//    /** If fileType is TABULAR: the options to use for the tabular format */
+//    private ConfigTabularOptions tabularOptions;
 
     /** May end user fetch contents of whole documents? [false] */
     private boolean contentViewable = false;
@@ -107,8 +111,10 @@ public class ConfigInputFormat {
             throw new InputFormatConfigException("Base format " + formatName + " not found for format " + name);
         type = baseFormat.getType();
         fileType = baseFormat.getFileType();
-        if (baseFormat.getTabularOptions() != null)
-            tabularOptions = baseFormat.getTabularOptions().copy();
+        if (baseFormat.getFileTypeOptions() != null)
+            fileTypeOptions.putAll(baseFormat.getFileTypeOptions());
+//        if (baseFormat.getTabularOptions() != null)
+//            tabularOptions = baseFormat.getTabularOptions().copy();
         contentViewable = baseFormat.isContentViewable();
         namespaces.putAll(baseFormat.getNamespaces());
         documentPath = baseFormat.getDocumentPath();
@@ -135,8 +141,8 @@ public class ConfigInputFormat {
         String t = "input format";
         req(name, t, "name");
         req(documentPath, t, "documentPath");
-        if (tabularOptions != null)
-            tabularOptions.validate();
+//        if (tabularOptions != null)
+//            tabularOptions.validate();
         for (ConfigMetadataBlock b: metadataBlocks)
             b.validate();
         for (ConfigAnnotatedField af: annotatedFields.values()) {
@@ -190,13 +196,13 @@ public class ConfigInputFormat {
         this.fileType = fileType;
     }
 
-    public ConfigTabularOptions getTabularOptions() {
-        return tabularOptions;
-    }
-
-    public void setTabularOptions(ConfigTabularOptions tabularOptions) {
-        this.tabularOptions = tabularOptions;
-    }
+//    public ConfigTabularOptions getTabularOptions() {
+//        return tabularOptions;
+//    }
+//
+//    public void setTabularOptions(ConfigTabularOptions tabularOptions) {
+//        this.tabularOptions = tabularOptions;
+//    }
 
     public void addNamespace(String name, String uri) {
         namespaces.put(name, uri);
@@ -339,6 +345,14 @@ public class ConfigInputFormat {
 
     public void setContentViewable(boolean contentViewable) {
         this.contentViewable = contentViewable;
+    }
+
+    public Map<String, String> getFileTypeOptions() {
+        return fileTypeOptions;
+    }
+
+    public void addFileTypeOption(String key, String value) {
+        this.fileTypeOptions.put(key, value);
     }
 
 }

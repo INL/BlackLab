@@ -3,9 +3,9 @@ package nl.inl.blacklab.index.config;
 /**
  * An indexer for the OpenSonarCmdi format
  */
-public class ConfigInputFormatOpenSonarCmdi extends ConfigInputFormat {
+public class TEST_ConfigInputFormatOpenSonarCmdi extends ConfigInputFormat {
 
-    public ConfigInputFormatOpenSonarCmdi() {
+    public TEST_ConfigInputFormatOpenSonarCmdi() {
         setName("BuiltinOpenSonarCmdi");
         setDisplayName("OpenSoNaR CMDI metadata");
 

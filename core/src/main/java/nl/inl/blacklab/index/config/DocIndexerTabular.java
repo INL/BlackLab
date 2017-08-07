@@ -31,6 +31,26 @@ import nl.inl.util.FileUtil;
  */
 public class DocIndexerTabular extends DocIndexerConfig {
 
+    /** Tabular types we support */
+    static enum Type {
+        CSV,
+        TSV;
+
+        public static Type fromStringValue(String str) {
+            switch(str.toUpperCase()) {
+            case "TDF":
+                return TSV;
+            case "EXCEL":
+                return CSV;
+            }
+            return valueOf(str.toUpperCase());
+        }
+
+        public String stringValue() {
+            return toString().toLowerCase();
+        }
+    }
+
     /** Regex for recognizing open or close tag and capturing tag name and attributes part */
     final static Pattern REGEX_TAG = Pattern.compile("^\\s*<\\s*(/\\s*)?(\\w+)((\\b[^>]+)?)>\\s*$");
 
@@ -60,6 +80,10 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     StringBuilder csvData;
 
+    private boolean hasInlineTags;
+
+    private boolean hasGlueTags;
+
     public DocIndexerTabular() {
     }
 
@@ -68,8 +92,10 @@ public class DocIndexerTabular extends DocIndexerConfig {
         if (config.getAnnotatedFields().size() > 1)
             throw new InputFormatConfigException("Tabular type can only have 1 annotated field");
         super.setConfigInputFormat(config);
-        ConfigTabularOptions tab = config.getTabularOptions();
-        switch (tab.getType()) {
+        Map<String, String> opt = config.getFileTypeOptions();
+        Type type = opt.containsKey("type") ? Type.fromStringValue(opt.get("type")) : Type.CSV;
+        //ConfigTabularOptions tab = config.getTabularOptions();
+        switch (type) {
         case TSV:
             tabularFormat = CSVFormat.TDF;
             break;
@@ -77,14 +103,16 @@ public class DocIndexerTabular extends DocIndexerConfig {
             tabularFormat = CSVFormat.EXCEL;
             break;
         default:
-            throw new InputFormatConfigException("Unknown tabular type " + tab.getType() + " (use csv or tsv)");
+            throw new InputFormatConfigException("Unknown tabular type " + opt.get("type") + " (use csv or tsv)");
         }
-        if (tab.hasColumnNames())
+        if (opt.containsKey("columnNames") && opt.get("columnNames").equalsIgnoreCase("true"))
             tabularFormat = tabularFormat.withFirstRecordAsHeader();
-        if (tab.getDelimiter() != null)
-            tabularFormat = tabularFormat.withDelimiter(tab.getDelimiter());
-        if (tab.getQuote() != null)
-            tabularFormat = tabularFormat.withQuote(tab.getQuote());
+        if (opt.containsKey("delimiter") && opt.get("delimiter").length() > 0)
+            tabularFormat = tabularFormat.withDelimiter(opt.get("delimiter").charAt(0));
+        if (opt.containsKey("quote") && opt.get("quote").length() > 0)
+            tabularFormat = tabularFormat.withQuote(opt.get("quote").charAt(0));
+        hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
+        hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
     }
 
     @Override
@@ -124,7 +152,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
             startDocument();
 
         // Do we need to look for tags at all?
-        boolean lookForTags = !lookForDocumentTags || config.getTabularOptions().hasInlineTags() || config.getTabularOptions().hasGlueTags();
+        boolean lookForTags = !lookForDocumentTags || hasInlineTags || hasGlueTags;
 
         // Are we inside a document now?
         boolean inDocument = !lookForDocumentTags;
@@ -174,7 +202,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                     endDocument();
                                     inDocument = false;
                                 }
-                            } else if (config.getTabularOptions().hasGlueTags() && tagName.equals(GLUE_TAG_NAME)) {
+                            } else if (hasGlueTags && tagName.equals(GLUE_TAG_NAME)) {
                                 // Glue tag. Don't add default punctuation when adding next word.
                                 if (attributes.size() > 0)
                                     warn("Glue tag has attributes: " + attributes.toString());

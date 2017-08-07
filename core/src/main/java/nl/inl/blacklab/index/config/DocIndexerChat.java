@@ -42,9 +42,9 @@ public class DocIndexerChat extends DocIndexerConfig {
     private StringBuilder fullText;
 
 	/** Where to write log messages, or null for no logging */
-	private PrintWriter log = new PrintWriter(System.err);
+	private PrintWriter log = null;
 
-	/** The locale to use (by default, use system locale) */
+	/** The locale to use for date parsing (by default, use system locale) */
     private Locale locale = null;
 
 	@Override

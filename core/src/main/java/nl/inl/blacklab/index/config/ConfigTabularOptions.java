@@ -5,28 +5,8 @@ package nl.inl.blacklab.index.config;
  */
 class ConfigTabularOptions {
 
-    /** Tabular types we support */
-    static enum Type {
-        CSV,
-        TSV;
-
-        public static Type fromStringValue(String str) {
-            switch(str.toUpperCase()) {
-            case "TDF":
-                return TSV;
-            case "EXCEL":
-                return CSV;
-            }
-            return valueOf(str.toUpperCase());
-        }
-
-        public String stringValue() {
-            return toString().toLowerCase();
-        }
-    }
-
     /** If tabular, what flavour? (e.g. csv, tsv). */
-    private Type type = Type.CSV;
+    private DocIndexerTabular.Type type = DocIndexerTabular.Type.CSV;
 
     /** Does the data start with a column names record? */
     private boolean columnNames = false;
@@ -60,11 +40,11 @@ class ConfigTabularOptions {
         return cp;
     }
 
-    public Type getType() {
+    public DocIndexerTabular.Type getType() {
         return type;
     }
 
-    public void setType(Type type) {
+    public void setType(DocIndexerTabular.Type type) {
         this.type = type;
     }
 

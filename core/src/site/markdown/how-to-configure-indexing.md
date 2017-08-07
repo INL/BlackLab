@@ -14,9 +14,10 @@ NOTE: this describes the new way of indexing, using index format configuration f
 * <a href="#payloads">Storing extra information with property values, using payloads</a>
 * <a href="#tabular">Indexing tabular (CSV/TSV/SketchEngine) files</a>
 * <a href="#plaintext">Indexing plain text files</a>
+* <a href="#processing-values">Processing values</a>
 * <a href="#metadata">Metadata</a>
-    * <a href="#metadata-in-document">In-document metadata</a>
-    * <a href="#metadata-external">Metadata from an external source</a>
+    * <a href="#metadata-in-document">Embedded (in-document) metadata</a>
+    * <a href="#metadata-external">Linking to external (metadata) files</a>
 * <a href="#edit-index-metadata">Editing the index metadata</a>
 
 
@@ -46,7 +47,7 @@ For example, if you have TEI data in /tmp/my-tei/ and want to create an index as
 
 Your data is indexed and placed in a new BlackLab index in the "test-index" directory.
 
-NOTE: if you don't specify a glob, IndexTool will index \*.xml by default. You can specify a glob (like "\*.txt" or "\*" for all files) to change this.
+NOTE: if you don't specify a glob, IndexTool will index all files by default. You can specify a glob (like "\*.xml" or "data-\*") to change this.
 
 To delete documents from an index:
 
@@ -58,25 +59,28 @@ Here, FILTER_QUERY is a metadata filter query in Lucene query language that matc
 
 ## Supported formats
 
-Here's a list of supported input formats:
+Here's a list of built-in input formats:
 
-* folia (a corpus XML format popular in the Netherlands; see https://proycon.github.io/folia/)
-* tei (a popular XML format for linguistic resources, including corpora. indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type'; see http://www.tei-c.org/)
-* tei-element-text (a variant of TEI where content inside the 'text' element is indexed)
-* tei-pos-function (a variant of TEI where part of speech is in an attribute called 'function')
-* sketchxml (a simple XML format based on the word-per-line files that the Sketch Engine and CWB use)
-* pagexml (OCR XML format)
 * alto (OCR XML format; see http://www.loc.gov/standards/alto/)
+* folia (a corpus XML format popular in the Netherlands; see https://proycon.github.io/folia/)
+* tei (a popular XML format for linguistic resources, including corpora. this variant indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type'. creating your own variant is easy (see below); see http://www.tei-c.org/)
+* chat (Codes for the Human Analysis of Transcripts, format created for the CHILDES project)
+* csv (comma-separated values, as exported by MS Excel)
+* pagexml (OCR XML format)
+* tsv (tab-separated values)
+* tsv-frog (output of the Frog linguistic tagger; see https://languagemachines.github.io/frog/)
+* tsv-sketch (Sketch Engine word-per-line input format, including metadata and inline tags)
+* txt (plain text files)
 
-Adding support for your own format is not hard, and can be done either by writing a configuration file (described on this page) or by [writing Java code](add-input-format.html).
+Adding support for your own format is quite straightforward now, and can be done by writing a configuration file (described on this page) or, if you really want, by [writing Java code](add-input-format.html).
 
-If you choose the first option, specify the format name (which must match the name of the .yaml or .json file) as the FORMAT parameter. IndexTool will search a number of directories, including the current directory and the (parent of the) input directory for format files with that name, which must match the "name" setting in the file itself.
-
-If you choose the second option, specify the fully-qualified class name of your DocIndexer class as the FORMAT parameter.
+If you've written a configuration file (more on that below), you can use it with IndexTool by specifying the format name (which must match the name of the .yaml or .json file) as the FORMAT parameter on the commandline. IndexTool will search a number of directories, including the current directory and the parent of the input directory for format files with that name.
 
 <a id="passing-indexing-parameters"></a>
 
 ## Basic overview of a configuration file
+
+Let's see how to write a configuration file for a simple custom corpus format.
 
 Suppose our XML files look like this:
 
@@ -84,9 +88,9 @@ Suppose our XML files look like this:
     <root>
         <document>
             <metadata id='1234'>
-                <meta name='title'>Document title</meta>
+                <meta name='title'>How to configure indexing</meta>
                 <meta name='author'>Jan Niestadt</meta>
-                <meta name='description'>A simple test document.</meta>
+                <meta name='description'>Shedding some light on this indexing business!</meta>
             </metadata>
             <text>
                 <s>
@@ -102,7 +106,7 @@ Suppose our XML files look like this:
 
 Below is the configuration file you would need to index files of this type. This uses [YAML](http://yaml.org/) (good introduction [here](http://docs.ansible.com/ansible/latest/YAMLSyntax.html)), but you can also use [JSON](http://json.org/) if you prefer.
 
-Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on alternative formats later).
+Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).
 
     # Identifier by which this format is found
     # (the format should be saved in a file with the same name, plus of course the
@@ -166,7 +170,7 @@ Note that the settings with names ending in "Path" are XPath 1.0 expressions (at
         namePath: "@name"   # name attribute contains field name
         valuePath: .        # element text is the field value
 
-This page will address how to accomplish specific things with the input format configuration. For more systematic documentation, see the [input format configuration file reference](input-format-config-reference.html). 
+This page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](annotated-input-config.html). 
 
 <a id="sensitivity"></a>
 
@@ -266,11 +270,44 @@ To index these types of annotations, use a configuration like this one:
           refTokenPositionIdPath: "@ref" # What token position(s) to index these values at
                                          # (may have multiple matches per path element; values will 
                                          # be indexed at all those positions)
-          annotations:         # The actual annotations (structure identical to regular annotations)
+          annotations:           # The actual annotations (structure identical to regular annotations)
           - name: lemma
             valuePath: "@lemma"
           - name: pos
             valuePath: "@pos"
+
+### Standoff annotations without a unique token id
+
+There is an alternate way of doing standoff annotations that does not rely on a unique token id like the method described
+above (although you will need some way to connect the standoff annotation to the word, obviously). It is not recommended as it is likely to be significantly slower, but in some cases, it may be useful.
+
+Let's say you want to index a color with every word, and your document looks like this:
+
+    <?xml version="1.0" ?>
+    <root>
+        <colors>
+            <color id='1'>blue</color>
+            <color id='2'>green</color>
+            <color id='3'>red</color>
+        </colors>
+        <document>
+            <text>
+                <w colorId='1'>This</w>
+                <w colorId='1'>is</w>
+                <w colorId='3'>a</w>
+                <w colorId='2'>test</w>.
+            </text>
+        </document>
+    </root>
+
+A standoff annotation of this type is defined in the same section as regular non-standoff annotations. It relies on capturing one or more values to help us locate the color we want to index at each position. These captured values are then substituted in the valuePath that fetches the color value:
+
+    - name: color
+      captureValuePaths:                  # value(s) we need from the current word to find the color
+      - "@colorId"
+      valuePath: /root/colors[@id='$1']   # how to get the value for this annotation from the document,
+                                          # using the value(s) captured.
+
 
 <a id="subproperties"></a>
 
@@ -434,42 +471,44 @@ Plain text files don't allow you to use a lot of BlackLab's features and hence d
 
 Note that a plain text format may only have a single annotated field. You cannot specify containerPath or wordPath. For each annotation you define, valuePath must be "." ("the current word"), but you can specify different processing steps for different annotations if you want.
 
-There is one way to index metadata information along with plain text files, which is to look up the metadata based on the input file. Add a section similar to this one at the top-level of your configuration:
+There is one way to index metadata information along with plain text files, which is to look up the metadata based on the input file. The example below uses processing steps; see the relevant section below, and see the section on linking to external files for more information on that subject.
+
+To index metadata information based on the input file path, use a section such as this one:
 
     linkedDocuments:
       metadata:
         store: true   # Should we store the linked document?
     
-        # Values we need to locate the linked document
+        # Values we need for locating the linked document
         # (matching values will be substituted for $1-$9 below)
         linkValues:
         - valueField: fromInputFile       # fetch the "fromInputFile" field from the Lucene doc
                                           # (this is the original path to the file that was indexed)
           process:
             # Normalize slashes
-          - replace:
-              find: "\\\\"
-              replace: "/"
+          - action: replace
+            find: "\\\\"
+            replace: "/"
             # Keep only the last two path parts (which indicate location inside metadata zip file)
-          - replace:
-              find: "^.*/([^/]+/[^/]+)/?$"
-              replace: "$1"
-          - replace:
-              find: "\\.txt$"
-              replace: ".cmdi"
+          - action: replace
+            find: "^.*/([^/]+/[^/]+)/?$"
+            replace: "$1"
+          - action: replace
+            find: "\\.txt$"
+            replace: ".cmdi"
         #- valueField: id                 # plain text has no other fields, but TSV with document elements
                                           # could, and those fields could also be used (see documentPath 
                                           # below)
     
         # How to fetch the linked input file containing the linked document.
         # File or http(s) reference. May contain $x (x = 1-9), which will be replaced 
-        # with (processed) linkPath
+        # with (processed) linkValue
         inputFile: http://server.example.com/metadata.zip
     
         # (Optional)
         # If the linked input file is an archive (zip is recommended), this is the path 
         # inside the archive where the file can be found. May contain $x (x = 1-9), which 
-        # will be replaced with (processed) linkPath
+        # will be replaced with (processed) linkValue
         pathInsideArchive: some/dir/$1
     
         # Format of the linked input file
@@ -478,8 +517,47 @@ There is one way to index metadata information along with plain text files, whic
         # (Optional)
         # XPath to the (single) linked document to process.
         # If omitted, the entire file is processed, and must contain only one document.
-        # May contain $x (x = 1-9), which will be replaced with (processed) linkPath
+        # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
         #documentPath: /root/metadata[@docId = $2]
+
+
+<a id="processing-values"></a>
+
+## Processing values 
+
+It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc.
+
+It is possible to perform string processing on [standoff] (sub)annotations, metadata values, and linkValues (in the linked document section, see "Linking to external (metadata) files").
+
+For example, to process a metadata field value, simply add a "process" key with a list of actions to perform, like so:
+
+    metadata:
+      containerPath: metadata
+      fields:
+      - name: author
+        valuePath: author
+        
+        # Do some processing on the contents of the author element before indexing
+        process:
+        
+          # If empty, set a default value
+          # (note that this could also be achieved using unknownCondition/unknownValue)
+        - action: default
+          value: "(unknown)"
+                              
+          # Normalize spaces
+        - action: replace
+          find: "\\s\\s+"
+          replace: " "
+
+These are all the available processing steps:
+
+- `replace(find, replace)`: do a regex search for 'find' and replace each match with 'replace'. Group references may be used.
+- `default(value)` or `default(field)`: if the field is empty, set its value to either the specified value or the value of the specified field. If you refer to a field, make sure it is defined before this field (fields are processed in order).
+- `append(value)` or `append(field)`: append the specified value or the value of the specified field, using a space as the separator character. You may also specify a different `separator` is you wish, including the empty string (`""`).
+- `split(separator, keep)`: split the field's value on the given separator and keep only the part indicated by keep (a 1-based integer). If `keep` is omitted, keep the first part. If `separator` is omitted, use `;`.
+
+If you would like a new processing step to be added, please let us know.
 
 <a id="metadata"></a>
 
@@ -487,36 +565,149 @@ There is one way to index metadata information along with plain text files, whic
 
 <a id="metadata-in-document"></a>
 
-### In-document metadata
+### Embedded (in-document) metadata
 
-Some documents contain metadata within the document. You usually want to index these as fields with your document, so you can filter on them later. You do this by adding a handler for the appropriate XML element.
+The basic overview (see above) included a way to index embedded metadata. Let's say this is our input file:
 
-There's a few helper classes for in-document metadata handling. MetadataElementHandler assumes the matched element name is the name of your metadata field and the character content is the value. MetadataAttributesHandler stores all the attributes from the matched element as metadata fields. MetadataNameValueAttributeHandler assumes the matched element has a name attribute and a value attribute (the attribute names can be specified in the constructor) and stores those as metadata fields. You can of course easily add your own handler classes to this if they don't suit your particular style of metadata (have a look at nl.inl.blacklab.index.DocIndexerXmlHandlers.java to see how the predefined ones are implemented).
+    <?xml version="1.0" ?>
+    <root>
+        <document>
+            <text>
+                <!-- ... document contents... -->
+            </text>
+            <metadata id='1234'>
+                <meta name='title'>How to configure indexing</meta>
+                <meta name='author'>Jan Niestadt</meta>
+                <meta name='description'>Shedding some light on this indexing business!</meta>
+            </metadata>
+        </document>
+    </root>
+
+To configure how metadata should be indexed, you can either name each metadata field you want to index separately, or you can use "forEachPath" to index a number of similar elements as metadata:
+
+    # Embedded metadata in document
+    metadata:
+    
+      # What element contains the metadata (relative to documentPath)
+      containerPath: metadata
+    
+      # What metadata fields do we have?
+      fields:
+    
+        # <metadata/> tag has an id attribute we want to index as docId
+      - name: docId
+        valuePath: "@id"
+    
+        # Each <meta/> tag corresponds with a metadata field
+      - forEachPath: meta
+        namePath: "@name"   # name attribute contains field name
+        valuePath: .        # element text is the field value
+
+It's also possible to process metadata values before they are indexed (see Processing values above)
+
 
 <a id="metadata-external"></a>
 
-### Metadata from an external source
+### Linking to external (metadata) files
 
-Sometimes, documents link to external metadata sources, usually using an ID.
+Sometimes, documents link to external metadata sources, usually using an ID. You can configure linking to external files using a top-level element `linkedDocuments`. If our data looks like this:
 
-The MetadataFetcher is instantiated by DocIndexerXmlHandlers.getMetadataFetcher(), based on the metadataFetcherClass indexer parameter (see "Passing indexing parameters" above). This class is instantiated with the DocIndexer as a parameter, and the addMetadata() method is called just before adding a document to the index. Your particular MetadataFetcher can inspect the document to find the appropriate ID, fetch the metadata (e.g. from a file, database or webservice) and add it to the document using the DocIndexerXmlHandlers.addMetadataField() method.
+    <?xml version="1.0" ?>
+    <root>
+        <document>
+            <text>
+                <!-- ... document contents... -->
+            </text>
+            <externalMetadata id="54321" />
+        </document>
+    </root>
+    
+And the metadata for this document can be found at http://example.com/metadata?id=54321, this is how to configure the document linking:
 
-Also see the two MetadataFetcher examples in nl.inl.blacklab.indexers.
+    # Any document(s) we also want to index while indexing this one
+    # Usually just our external metadata.
+    linkedDocuments:
+    
+      # Name for what this linked document represents; used to choose a field name
+      # when storing the document. "metadata" is usually a good choice.
+      metadata:
+      
+        # Should we store the linked document in our index?
+        # (in this case, a field metadataCid will be created that contains a content
+        #  store id, allowing you to fetch the original content of the document later)
+        store: true
+    
+        # Values we need for locating the linked document
+        # (matching values will be substituted for $1-$9 below)
+        linkValues:
+        
+          # The value we need to determine the URL to our metadata
+          # (relative to documentPath)
+        - valuePath: externalMetadata/@id
+    
+        # How to fetch the linked input file containing the linked document.
+        # File or http(s) reference. May contain $x (x = 1-9), which will be replaced 
+        # with linkValue
+        inputFile: http://example.com/metadata?id=$1
+    
+        # (Optional)
+        # If the linked input file is an archive (zip is recommended because it allows 
+        # random access), this is the path inside the archive where the file can be found. 
+        # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
+        #pathInsideArchive: some/dir/$1
+    
+        # Format identifier for indexing the linked file
+        inputFormat: my-metadata-format
+
+        # (Optional)
+        # XPath to the (single) linked document to process.
+        # If omitted, the entire file is processed, and must contain only one document.
+        # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
+        #documentPath: /root/metadata[@docId = $2]
+
+As you can see, it's possible to use local files or files via http; you can use archives and specify how to find the relevant metadata inside the archive; and if the linked file contains the metadata for multiple documents, you can specify a path to the specific metadata for this document.
+
+Linking to external files is mostly done to fetch metadata to accompany a "contents" file, but there's no reason why you couldn't turn the tables if you wanted, and index a set of metadata files that link to the corresponding "contents" file. The mechanism is universal; it would even be possible to link to a document that links to another document, although that may not be very useful.
 
 ### Add a fixed metadata field to each document
 
-It is possible to tell IndexTool to add a metadata field with a specific value to each document indexed. An example of when this is useful is if you wish to combine several corpora into a single index, and wish to distinguish documents from the different corpora using this metadata field. You would achieve this by running IndexTool twice: once to create the index and add the documents from the first corpus, "tagging" them with a field named e.g. Corpus_title (which is the fieldname [Whitelab](https://github.com/Taalmonsters/WhiteLab2.0) expects) with an appropriate value indicating the first corpus. Then you would run IndexTool again, with command "append" to append documents to the existing index, and giving Corpus_title a different value for this set of documents.
+You can add a field with a fixed value to every document indexed. This could be useful if you plan to add several data sets to one index and want to make sure each document is tagged with the data set name.
 
-There's two ways to add this fixed metadata field for an IndexTool run. One is to pass an option \"---meta-Corpus_title mycorpusname\" (note the 3 dashes!) to the IndexTool. The other is to place a property \"meta-Corpus_title=mycorpusname\" in a file called indexer.properties in the current directory. This file can be used for other per-run IndexTool configuration; see below.
+    metadata:
+    
+      containerPath: metadata
+    
+      fields:
+
+        # Regular metadata field    
+      - name: author
+        valuePath: author
+    
+        # Metadata field with fixed value
+      - name: collection
+        value: blacklab-docs
 
 ### Controlling how metadata is fetched and indexed
 
-By default, metadata fields are tokenized, but it can sometimes be useful to index a metadata field without tokenizing it. One example of this is a field containing the document id: if your document ids contain characters that normally would indicate a token boundary, like a period (.) , your document id would be split into several tokens, which is usually not what you want. Use the indextemplate.json file (described above) to indicate you don't want a metadata field to be tokenized.
+By default, metadata fields are tokenized, but it can sometimes be useful to index a metadata field without tokenizing it. One example of this is a field containing the document id: if your document ids contain characters that normally would indicate a token boundary, like a period (.) , your document id would be split into several tokens, which is usually not what you want.
+
+To prevent a metadata field from being tokenized:
+
+    metadata:
+    
+      containerPath: metadata
+    
+      fields:
+
+        # This field should not be split into words
+      - name: docId
+        valuePath: @docId
+        type: untokenized
 
 
 <a id="edit-index-metadata"></a>
 
-## Editing the index metadata
+## Editing the index metadata directly
 
 Each BlackLab index gets a file containing "index metadata". This file is in YAML format (used to be JSON). This contains information such as the time the index was generated and the BlackLab version used, plus information about annotations and metadata fields. Some of the information is generated as part of the indexing process, and some of the information is copied directly from the input format configuration file if specified. This information is mostly used by applications to learn about the structure of the index, get human-friendly names for the various parts, and decide what UI widget to show for a metadata field.
 

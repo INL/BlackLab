@@ -1,0 +1,19 @@
+
+name: csv
+displayName: Comma-separated values (CSV)
+description: A simple tabular format used by e.g. MS Excel. Column names (word, lemma, pos) are assumed, comma is separator, double quote is (optional) quote character, backslash the escape character.
+
+fileType: tabular
+fileTypeOptions:
+  type: csv
+  columnNames: true
+
+annotatedFields:
+  contents:
+    annotations:
+    - name: word
+      valuePath: word
+    - name: lemma
+      valuePath: lemma
+    - name: pos
+      valuePath: pos

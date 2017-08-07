@@ -1,0 +1,21 @@
+name: tsv-sketch
+displayName: Sketch Engine word-per-line (WPL) input format
+description: A format including word, lemma and PoS codes as well as punctuation, inline tags and document metadata.
+
+fileType: tabular
+fileTypeOptions:
+  type: tsv
+  inlineTags: true  # allows inline tags such as in Sketch WPL format
+                    # all inline tags encountered will be indexed
+  glueTags: true    # interprets <g/> to be a glue tag such as in Sketch WPL format
+documentPath: doc   # looks for document elements such as in Sketch WPL format
+                    # (attributes are automatically indexed as metadata)
+annotatedFields:
+  contents:
+    annotations:
+    - name: word
+      valuePath: 1
+    - name: lemma
+      valuePath: 3
+    - name: pos
+      valuePath: 2

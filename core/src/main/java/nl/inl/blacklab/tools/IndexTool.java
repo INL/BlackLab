@@ -35,15 +35,15 @@ import org.apache.lucene.index.CorruptIndexException;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DocumentFormats.FormatFinder;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
-import nl.inl.blacklab.index.config.InputFormatConfigException;
+import nl.inl.blacklab.index.DocumentFormats.FormatFinderDirs;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * The indexer class and main program for the ANW corpus.
@@ -239,7 +239,13 @@ public class IndexTool {
 		}
 
 		// Make sure BlackLab can find our format configuration files
-		DocumentFormats.addFormatFinder(new FormatFinderDirs(dirs));
+		// (by default, it will already look in $BLACKLAB_CONFIG_DIR/formats, $HOME/.blacklab/formats
+		//  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
+		//  and the parent(s) of the input and index dirs)
+		List<File> formatDirs = new ArrayList<>(Arrays.asList(new File("."), inputDir.getParentFile(), inputDir));
+		if (!formatDirs.contains(indexDir.getParentFile()))
+		    formatDirs.add(indexDir.getParentFile());
+		DocumentFormats.addFormatFinder(new FormatFinderDirs(formatDirs));
 
 		// Determine DocIndexer to use
 		DocIndexerFactory docIndexerFactory = null;
@@ -282,9 +288,8 @@ public class IndexTool {
 				// Real wildcard glob
 				indexer.index(inputDir, glob);
 			} else {
-				// Single file. Use "*.xml" as the glob by default.
-				// (so if it's an archive, we'll just process all .xml files within)
-				indexer.index(new File(inputDir, glob), "*.xml");
+				// Single file.
+				indexer.index(new File(inputDir, glob), "*");
 			}
 		} catch (Exception e) {
 			System.err.println("An error occurred, aborting indexing (changes will be rolled back). Error details follow.");
@@ -294,33 +299,6 @@ public class IndexTool {
 			// Close the index.
 			indexer.close();
 		}
-	}
-
-	/** How to find input formats (base format, linked documents) */
-	static class FormatFinderDirs extends FormatFinder {
-
-	    private List<File> dirs;
-
-        public FormatFinderDirs(List<File> dirs) {
-	        this.dirs = dirs;
-	    }
-
-        @Override
-        public boolean findAndRegister(String formatIdentifier) {
-            // See if we can find and load a format file by this name.
-            File formatFile = FileUtil.findFile(dirs, formatIdentifier, Arrays.asList("yaml", "yml", "json"));
-            if (formatFile == null)
-                return false;
-            try {
-                // Load the format file and register the format
-                DocumentFormats.register(new ConfigInputFormat(formatFile));
-            } catch (InputFormatConfigException e) {
-                throw new InputFormatConfigException("Error in input format config " + formatFile + ": " + e.getMessage());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return true;
-        }
 	}
 
 	private static void readParametersFromPropertiesFile(File propFile) {
@@ -354,8 +332,9 @@ public class IndexTool {
 						+ "\n"
 						+ "Options:\n"
 						+ "  --maxdocs <n>          Stop after indexing <n> documents\n"
-                        + "  --linked-file-dir <d>  Look in directory <d> for linked files\n"
-                        + "                         (only used with DocIndexerXPath)\n"
+                        + "  --linked-file-dir <d>  Look in directory <d> for linked (e.g. metadata) files\n"
+                        + "\n"
+                        + "Deprecated options (not needed anymore with .yaml format configs):\n"
 						+ "  --indexparam <file>    Read properties file with parameters for DocIndexer\n"
 						+ "                         (NOTE: even without this option, if the current\n"
 						+ "                         directory, the input or index directory (or its parent)\n"
@@ -366,11 +345,25 @@ public class IndexTool {
 						+ "                         You can also add a property named meta-<name> to your\n"
 						+ "                         indexer.properties file. This field is stored untokenized.\n"
 						+ "\n"
-						+ "Valid formats:");
-		for (String format: DocumentFormats.list()) {
-			System.out.println("  " + format);
+						+ "Built-in input formats:");
+		for (String format: DocumentFormats.list(false)) {
+		    String displayName = "", desc = "";
+		    ConfigInputFormat config = DocumentFormats.getConfig(format);
+		    if (config != null) {
+    		    displayName = config.getDisplayName();
+    		    if (displayName.length() > 0)
+    		        displayName = " (" + displayName + ")";
+    		    desc = config.getDescription();
+    		    if (desc.length() > 0) {
+    		        desc = "\n      " + StringUtil.join(StringUtil.wrap(desc, 75), "\n      ");
+    		    }
+		    }
+			System.out.println("  " + format + displayName + desc);
 		}
-		System.out.println("  (or specify your own DocIndexer class)");
+		System.out.println("\nFormats supported through the older DocIndexer model:");
+        for (String format: DocumentFormats.listLegacyFormats()) {
+            System.out.println("  " + format);
+        }
 	}
 
 	/**

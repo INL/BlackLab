@@ -156,20 +156,28 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 case "default": {
                     if (result.length() == 0) {
                         String field = param.get("field");
-                        String fieldValue = currentLuceneDoc.get(field);
-                        if (fieldValue != null)
-                            result = fieldValue;
+                        String value;
+                        if (field != null)
+                            value = currentLuceneDoc.get(field);
+                        else
+                            value = param.get("value");
+                        if (value != null)
+                            result = value;
                     }
                     break;
                 }
                 case "append": {
                     String separator = param.containsKey("separator") ? param.get("separator") : " ";
                     String field = param.get("field");
-                    String fieldValue = currentLuceneDoc.get(field);
-                    if (fieldValue != null && fieldValue.length() > 0) {
+                    String value;
+                    if (field != null)
+                        value = currentLuceneDoc.get(field);
+                    else
+                        value = param.get("value");
+                    if (value != null && value.length() > 0) {
                         if (result.length() > 0)
                             result += separator;
-                        result += fieldValue;
+                        result += value;
                     }
                     break;
                 }

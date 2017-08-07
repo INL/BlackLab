@@ -89,6 +89,9 @@ public abstract class Searcher {
 	/** The collator to use for sorting. Defaults to English collator. */
 	protected static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
 
+	/** Configuration directories in decreasing order of importance. */
+    private static List<File> configDirs;
+
 	/** Analyzer based on WhitespaceTokenizer */
 	final protected static Analyzer whitespaceAnalyzer = new BLWhitespaceAnalyzer();
 
@@ -374,30 +377,32 @@ public abstract class Searcher {
 	 * - $HOME/.blacklab
 	 * - /etc/blacklab
 	 * - /vol1/etc/blacklab (legacy, will be removed)
-	 * - /tmp (occasionally useful for testing, but should probably be removed)
+	 * - /tmp (legacy, will be removed)
 	 *
 	 * A convenient method to use with this is {@link FileUtil#findFile(List, String, List)}.
 	 *
 	 * @return list of directories to search in order
 	 */
-    public static List<File> getConfigSearchDirs() {
-        List<File> searchDirs = new ArrayList<>();
-        String strConfigDir = System.getenv("BLACKLAB_CONFIG_DIR");
-        if (strConfigDir != null && strConfigDir.length() > 0) {
-            File configDir = new File(strConfigDir);
-            if (configDir.exists()) {
-                if (!configDir.canRead())
-                    logger.warn("BLACKLAB_CONFIG_DIR points to a unreadable directory: " + strConfigDir);
-                searchDirs.add(configDir);
-            } else {
-                logger.warn("BLACKLAB_CONFIG_DIR points to a non-existent directory: " + strConfigDir);
+    public static List<File> getConfigDirs() {
+        if (configDirs == null) {
+            configDirs = new ArrayList<>();
+            String strConfigDir = System.getenv("BLACKLAB_CONFIG_DIR");
+            if (strConfigDir != null && strConfigDir.length() > 0) {
+                File configDir = new File(strConfigDir);
+                if (configDir.exists()) {
+                    if (!configDir.canRead())
+                        logger.warn("BLACKLAB_CONFIG_DIR points to a unreadable directory: " + strConfigDir);
+                    configDirs.add(configDir);
+                } else {
+                    logger.warn("BLACKLAB_CONFIG_DIR points to a non-existent directory: " + strConfigDir);
+                }
             }
+            configDirs.add(new File(System.getProperty("user.home"), ".blacklab"));
+            configDirs.add(new File("/etc/blacklab"));
+            configDirs.add(new File("/vol1/etc/blacklab")); // TODO: remove, INT-specific
+            configDirs.add(new File(System.getProperty("java.io.tmpdir")));
         }
-        searchDirs.add(new File(System.getProperty("user.home"), ".blacklab"));
-        searchDirs.add(new File("/etc/blacklab"));
-        searchDirs.add(new File("/vol1/etc/blacklab")); // TODO: remove, INT-specific
-        searchDirs.add(new File(System.getProperty("java.io.tmpdir")));
-        return searchDirs;
+        return configDirs;
     }
 
 	//-------------------------------------------------------------------------

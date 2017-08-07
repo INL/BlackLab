@@ -370,6 +370,7 @@ public class FileProcessor {
         TarGzipReader.processTarGzip(tarGzipStream, new TarGzipReader.FileHandler() {
             @Override
             public boolean handle(String filePath, InputStream contents) {
+                String completePath = tgzFileName + "/" + filePath;
                 int i = filePath.lastIndexOf("/");
                 String fileName = i < 0 ? filePath : filePath.substring(i + 1);
                 if (!skipFile(fileName)) {
@@ -378,15 +379,15 @@ public class FileProcessor {
                         String fn = f.getName();
                         Matcher m = getFileNamePattern().matcher(fn);
                         if (m.matches()) {
-                            processInputStream(filePath, contents);
+                            processInputStream(completePath, contents);
                         } else {
                             boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".gz") || fn.endsWith(".tgz");
                             if (isArchive && isProcessArchives()) {
-                                processInputStream(filePath, contents);
+                                processInputStream(completePath, contents);
                             }
                         }
                     } catch (Exception e) {
-                        keepProcessing = getErrorHandler().errorOccurred(tgzFileName + "/" + filePath, null, e);
+                        keepProcessing = getErrorHandler().errorOccurred(completePath, null, e);
                     }
                 }
                 return keepProcessing;

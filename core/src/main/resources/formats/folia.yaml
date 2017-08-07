@@ -1,0 +1,121 @@
+# DocIndexerWhiteLab2 data-driven
+
+# Short name (must be an identifier, i.e. no spaces, punctuation, etc.)
+name: folia
+
+# For displaying in user interface (optional)
+displayName: FoLiA (Format for Linguistic Annotation)
+
+# For describing input format in user interface (optional)
+description: A file format for linguistically annotated text. See https://proycon.github.io/folia/
+
+# (Optional, informational)
+# content, metadata or mixed?
+# (not used by BlackLab, purely informational for the frontend application)
+type: content
+
+# What namespaces do we use in our XPaths?
+# (if none are declared, ignore namespaces)
+namespaces:
+  '': http://ilk.uvt.nl/folia    # ('' -> default namespace)
+
+# What element starts a new document?
+# (the only absolute XPath; the rest is relative)
+documentPath: //FoLiA
+
+# Annotated, CQL-searchable fields (also called "complex fields").
+# We usually have just one, named "contents".
+annotatedFields:
+
+  contents:
+
+    # How to display the field in the interface (optional)
+    displayName: Contents
+
+    # How to describe the field in the interface (optional)
+    description: Contents of the documents.
+
+    # What element (relative to document) contains this field's contents?
+    # (if omitted, entire document is used)
+    containerPath: text
+
+    # What are our word tags? (relative to container)
+    wordPath: .//w
+
+    # If specified, a mapping from this id to token position will be saved, so we 
+    # can refer back to it for standoff annotations later.
+    tokenPositionIdPath: "@xml:id"
+
+    # What annotation can each word have? How do we index them?
+    # (annotations are also called "(word) properties" in BlackLab)
+    # (valuePaths relative to word path)
+    # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,
+    #       and with forEachPath you could run in to an unknown new annotation mid-way through.
+    annotations:
+
+    - name: word
+      valuePath: t
+
+    - name: lemma
+      valuePath: lemma/@class
+
+    - name: pos
+      basePath: pos  # subsequent XPaths are relative to this
+      valuePath: "@class"
+      subAnnotations:
+      - name: head
+        valuePath: "@head"
+      - forEachPath: "feat"
+        namePath: "@subset"
+        valuePath: "@class"
+
+    # Some optional annotations follow. In the future, maybe we could have these
+    # defined but disabled by default, and allow derived formats to activate them as needed.
+    # Same for linked metadata types.
+
+    #- name: phonetic
+    #  valuePath: .//ph
+
+    #- name: xmlid
+    #  valuePath: "@xml:id"          # NOTE: xml:id of w tag
+    #  process:
+    #  - action: replace
+    #    find: "^[^\\.]*\\.(.*)$"    # find first .
+    #    replace: "$1"               # keep everything after that
+
+    #- name: speaker
+    #  valuePath: .//speaker
+
+    # Standoff annotations:
+    # refTokenPositionIdPath needs to refer back to the tokenPositionId for words defined above.
+    # (In the future, we could add the ability to refer to e.g. start/end of sentence
+    # positions using tokenPositionIds as well.)
+    # standoffAnnotations:
+    # -
+    #   # Element containing the values to index
+    #   path: //timesegment
+    #   # What token position(s) to index these values at
+    #   # (may have multiple matches per path element; values will be indexed at all those positions)
+    #   refTokenPositionIdPath: wref/@id
+    #   # The actual annotations
+    #   # (structure identical to regular annotations, so e.g. processValue and subAnnotations would work as well)
+    #   annotations:
+    #   - name: begintime
+    #     valuePath: ../@begintime
+    #   - name: endtime
+    #     valuePath: ../@endtime
+
+    # XML tags within the content we'd like to index
+    # (relative to container)
+    inlineTags:
+    - path: .//s
+      #call: openSonarSentence  # to call a plugin method for this tag
+    - path: .//p
+
+# FoLiA's native metadata
+metadata:
+  containerPath: metadata[@type='native']
+  fields:
+  - forEachPath: meta
+    namePath: "@id"
+    valuePath: .
