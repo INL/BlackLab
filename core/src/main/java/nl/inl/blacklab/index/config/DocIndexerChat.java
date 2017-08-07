@@ -32,21 +32,21 @@ import org.apache.commons.lang3.tuple.Pair;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 
-/** 
+/**
  * Class to read files in (CHILDES) CHAT format.
- *  
+ *
  * Ported from Python code by Jan Odijk, see https://github.com/JanOdijk/chamd
  */
 public class DocIndexerChat extends DocIndexerConfig {
-	
+
     private StringBuilder fullText;
 
 	/** Where to write log messages, or null for no logging */
-	private PrintWriter log = null;
+	private PrintWriter log = new PrintWriter(System.err);
 
 	/** The locale to use (by default, use system locale) */
     private Locale locale = null;
-    
+
 	@Override
 	public void indexSpecificDocument(String documentExpr) {
         // documentExpr is ignored because CHAT files always contain 1 document
@@ -66,6 +66,13 @@ public class DocIndexerChat extends DocIndexerConfig {
 	public int getCharacterPosition() {
         return fullText.length();
 	}
+
+    @Override
+    public void setConfigInputFormat(ConfigInputFormat config) {
+        if (config.getAnnotatedFields().size() > 1)
+            throw new InputFormatConfigException("CHAT input type can only have 1 annotated field");
+        super.setConfigInputFormat(config);
+    }
 
     @Override
     public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
@@ -101,22 +108,21 @@ public class DocIndexerChat extends DocIndexerConfig {
 
 	@Override
 	public void index() throws Exception {
-		
+        super.index();
+
         startDocument();
 
         fullText = new StringBuilder();
 
         // For the configured annotated field...
-        if (config.getAnnotatedFields().size() > 1)
-        	throw new InputFormatConfigException("CHAT files can only have 1 annotated field");
         for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields().values()) {
             setCurrentComplexField(annotatedField.getName());
 
             log("processing " + documentName + "...");
-	
+
 			metadata = new HashMap<>();
 			currentFileBaseName = new File(documentName).getName().replaceAll("\\.[^\\.]+$", "");
-			
+
 			int lineNumber = 0;
 			int uttId = 0;
 			counter = new HashMap<>();
@@ -154,14 +160,14 @@ public class DocIndexerChat extends DocIndexerConfig {
 			uttId = result2.getLeft();
 			headerModified = result2.getRight();
         }
-		
+
         endDocument();
-		
+
 	}
 
-	
+
 	// JN Added some helper variables and methods
-    
+
 //	private static void output(String msg) {
 //        System.out.println(msg);
 //    }
@@ -182,13 +188,13 @@ public class DocIndexerChat extends DocIndexerConfig {
         df.setTimeZone(tz);
         return df.format(new Date());
     }
-    
+
 	/**
 	 * Slice a string like Python.
-	 * 
+	 *
 	 * Negative indices are counted from the end of the string.
 	 * Indices out of range result in an empty string, not an exception.
-	 * 
+	 *
 	 * @param str string to slice
 	 * @param start starting point
 	 * @param end end point
@@ -214,10 +220,10 @@ public class DocIndexerChat extends DocIndexerConfig {
 
 	/**
 	 * Slice a string like Python.
-	 * 
+	 *
 	 * Negative indices are counted from the end of the string.
 	 * Indices out of range result in an empty string, not an exception.
-	 * 
+	 *
 	 * @param str string to slice
 	 * @param start starting point
 	 * @return slice
@@ -241,10 +247,10 @@ public class DocIndexerChat extends DocIndexerConfig {
     public void setLog(PrintWriter log) {
 		this.log = log;
 	}
-    
+
     //-----------------
 
-    // Combine continued input lines into one longer line. 
+    // Combine continued input lines into one longer line.
 	private static String combineLines(String str1, String str2) {
         if (str1.isEmpty())
             return str2;
@@ -366,7 +372,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 //        String uel = despaceMetadataName(el);
 //        return StringUtils.join(Arrays.asList(META_KW, "text", uel, "=", metadata.get(el).toString()), SPACE);
 //    }
-    
+
 	private void addMetaDate(String el, Map<String, Object> metadata) {
         Date d = (Date)metadata.get(el);
         String normalizeddate = toIsoFormat(d);
@@ -386,7 +392,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     	// TODO: execute processing step(s) for metadata fields
         addMetadataField(uel, metadata.get(el).toString());
     }
-    
+
 	private Date normalizeDate(String str) {
         Date date;
         try {
@@ -479,13 +485,13 @@ public class DocIndexerChat extends DocIndexerConfig {
 //            }
 //        }
 //    }
-    
+
     /** Are we inside a "block"? Blocks have their own set of metadata,
      *  and are indexed just like inline XML tags. */
     boolean inBlock = false;
-    
+
     String blockTagName = "block";
-    
+
     @SuppressWarnings("unchecked")
 	private void startBlock() {
     	Map<String, String> blockMetadata = new HashMap<>();
@@ -505,15 +511,20 @@ public class DocIndexerChat extends DocIndexerConfig {
                     log("unknown metadata element encountered: "  + el);
             }
         }
-        blockMetadata.put("uttid", metadata.get("uttid").toString());
-        blockMetadata.put("speaker", metadata.get("speaker").toString());
-        blockMetadata.put("origutt", metadata.get("origutt").toString());
-        String curcode = metadata.get("speaker").toString();
-        Map<String, Object> participants = (Map<String, Object>)metadata.get("participants");
-        if (participants.containsKey(curcode)) {
-            Map<String, Object> codeMap = (Map<String, Object>)participants.get(curcode);
-            for (String el: codeMap.keySet()) {
-            	blockMetadata.put(despaceMetadataName(el), codeMap.get(el).toString());
+        if (metadata.containsKey("uttid"))
+            blockMetadata.put("uttid", metadata.get("uttid").toString());
+        if (metadata.containsKey("origutt"))
+            blockMetadata.put("origutt", metadata.get("origutt").toString());
+        String curcode = "";
+        if (metadata.containsKey("speaker")) {
+            curcode = metadata.get("speaker").toString();
+            blockMetadata.put("speaker", curcode);
+            Map<String, Object> participants = (Map<String, Object>)metadata.get("participants");
+            if (participants.containsKey(curcode)) {
+                Map<String, Object> codeMap = (Map<String, Object>)participants.get(curcode);
+                for (String el: codeMap.keySet()) {
+                    blockMetadata.put(despaceMetadataName(el), codeMap.get(el).toString());
+                }
             }
         }
         if (metadata.containsKey("id")) {
@@ -541,11 +552,13 @@ public class DocIndexerChat extends DocIndexerConfig {
     private void endBlock() {
     	inlineTag(blockTagName, false, null);
     }
-    
+
     private void addWords(String line) {
     	String[] words = line.trim().split("\\s+");
     	for (String word: words) {
+    	    beginWord();
     		annotation(propMain().getName(), word, 1, null);
+            endWord();
     	}
     }
 
@@ -559,17 +572,17 @@ public class DocIndexerChat extends DocIndexerConfig {
             if (headerModified) {
             	if (inBlock)
             		endBlock();
-                
+
 //                printHeaderMetadata(metadata);
 //                output("\n\n");
                 headerModified = false;
-                
+
                 startBlock();
             }
             if (startChar == UTT_CHAR) {
                 metadata.put("uttid", uttId);
                 treatUtt(line, metadata);
-                
+
 //                String corpus = getCorpus(metadata);
 //                String parseFileName = getParseFile(corpus, currentFileBaseName, uttId);
 //                metadata.put("parsefile", parseFileName);
@@ -850,7 +863,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             if (!DO_NOT_PRINT_IN_HEADERS.contains(headeratt))
                 PRINT_IN_HEADERS.add(headeratt);
         }
-        
+
         START_CHARS_TO_CHECK.add(MD_CHAR);
         START_CHARS_TO_CHECK.add(UTT_CHAR);
         START_CHARS_TO_CHECK.add(ANNO_CHAR);
@@ -862,7 +875,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     private Map<String, Integer> counter;
 
 //    private PrintStream logfile;
-    
+
 	private String currentFileBaseName;
 
 //    public static void main(String[] argv) throws Exception {
@@ -873,7 +886,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 //    	di.setDocument(f, StandardCharsets.UTF_8);
 //    	di.setLog(new PrintWriter(System.out));
 //    	di.index();
-//    	
+//
 ////
 ////        /*
 ////        String hexformat = "{0:#06X}";

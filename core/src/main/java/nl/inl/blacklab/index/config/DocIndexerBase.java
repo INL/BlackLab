@@ -257,6 +257,8 @@ public abstract class DocIndexerBase extends DocIndexer {
 
     protected void setCurrentComplexField(String name) {
         currentComplexField = getComplexField(name);
+        if (currentComplexField == null)
+            throw new InputFormatConfigException("Tried to index complex field " + name + ", but field wasn't created. Likely cause: init() wasn't called. Did you call the base class method in index()?");
         propStartTag = currentComplexField.getTagProperty();
         propMain = currentComplexField.getMainProperty();
         propPunct = currentComplexField.getPunctProperty();
