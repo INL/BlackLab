@@ -76,7 +76,12 @@ public class DocumentFormats {
 
         // Register builtin formats and formats in config dirs so they can be listed
         registerFormatsFromJar(Arrays.asList("chat", "csv", "folia", "tei", "tsv-frog", "sketch-wpl", "tsv", "txt"));
-        registerFormatsInDirs(Searcher.getConfigDirs());
+        List<File> configDirs = Searcher.getConfigDirs();
+        List<File> formatsDirs = new ArrayList<>();
+        for (File dir: configDirs) {
+            formatsDirs.add(new File(dir, "formats"));
+        }
+        registerFormatsInDirs(formatsDirs);
     }
 
     private static void registerFormatsFromJar(List<String> formatIdentifiers) {
@@ -102,12 +107,11 @@ public class DocumentFormats {
      */
 	public static void registerFormatsInDirs(List<File> dirs) {
         for (File dir: dirs) {
-            File formatsSubDir = new File(dir, "formats");
-            if (formatsSubDir.exists() && formatsSubDir.canRead()) {
-                FileUtil.processTree(formatsSubDir, new FileTask() {
+            if (dir.exists() && dir.canRead()) {
+                FileUtil.processTree(dir, new FileTask() {
                     @Override
                     public void process(File f) {
-                        if (f.getName().matches("^[\\-\\w]+\\.bls\\.(ya?ml|json)$")) {
+                        if (f.getName().matches("^[\\-\\w]+\\.blf\\.(ya?ml|json)$")) {
                             // Format file found. Register it.
                             try {
                                 register(new ConfigInputFormat(f));
