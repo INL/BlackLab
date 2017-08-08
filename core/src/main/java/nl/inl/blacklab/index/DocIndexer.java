@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
@@ -430,5 +431,35 @@ public abstract class DocIndexer {
     }
 
 	public abstract int getCharacterPosition();
+
+	/**
+	 * If the supplied class has a static getDisplayName() method, call it.
+	 *
+	 * @param docIndexerClass class to get the display name for
+	 * @return display name, or empty string if method not found
+	 */
+    public static String getDisplayName(Class<? extends DocIndexer> docIndexerClass) {
+        try {
+            Method m = docIndexerClass.getMethod("getDisplayName");
+            return (String)m.invoke(null);
+        } catch (ReflectiveOperationException e) {
+            return "";
+        }
+    }
+
+    /**
+     * If the supplied class has a static getDescription() method, call it.
+     *
+     * @param docIndexerClass class to get the description for
+     * @return description, or empty string if method not found
+     */
+    public static String getDescription(Class<? extends DocIndexer> docIndexerClass) {
+        try {
+            Method m = docIndexerClass.getMethod("getDescription");
+            return (String)m.invoke(null);
+        } catch (ReflectiveOperationException e) {
+            return "";
+        }
+    }
 
 }

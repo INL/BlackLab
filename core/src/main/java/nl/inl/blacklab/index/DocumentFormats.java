@@ -25,6 +25,7 @@ import nl.inl.blacklab.indexers.DocIndexerWhiteLab2;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.FileUtil;
+import nl.inl.util.FileUtil.FileTask;
 
 /**
  * Document format registry, for resolving a DocIndexer class given a
@@ -52,15 +53,15 @@ public class DocumentFormats {
         // Add some default format finders.
         // NOTE: Format finder that was added last is searched first
         formatFinders.add(new FormatFinderDocIndexerClass());   // last resort is to look for class directly
-        formatFinders.add(new FormatFinderConfigFileFromJar()); // load .yaml config file from BlackLab JAR
-        formatFinders.add(new FormatFinderConfigDirs()); // load .yaml/.json config file from config dir
+        //formatFinders.add(new FormatFinderConfigFileFromJar()); // load .blf.yaml config file from BlackLab JAR
+        //formatFinders.add(new FormatFinderConfigDirs()); // load .blf.yaml/.blf.json config file from config dir
 
         // Some abbreviations for commonly used builtin DocIndexers.
         // You can also specify the classname for builtin DocIndexers,
         // or a fully-qualified name for your custom DocIndexer (must
         // be on the classpath)
         register("alto", DocIndexerAlto.class);
-        register("old-folia", DocIndexerFolia.class);
+        register("di-folia", DocIndexerFolia.class);
         register("whitelab2", DocIndexerWhiteLab2.class);
         register("pagexml", DocIndexerPageXml.class);
         register("sketchxml", DocIndexerXmlSketch.class);
@@ -68,24 +69,61 @@ public class DocumentFormats {
         // TEI has a number of variants
         // By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
         // By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
-        register("old-tei", DocIndexerTei.class);
-        register("tei-element-body", DocIndexerTei.class);
-        register("tei-element-text", DocIndexerTeiText.class);
-        register("tei-pos-type", DocIndexerTei.class);
-        register("tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
+        register("di-tei", DocIndexerTei.class);
+        register("di-tei-element-body", DocIndexerTei.class);
+        register("di-tei-element-text", DocIndexerTeiText.class);
+        register("di-tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
 
-        // Register builtin formats so they can be listed
-        find("chat");
-        find("csv");
-        find("folia");
-        find("tei");
-        find("tsv-frog");
-        find("tsv-sketch");
-        find("tsv");
-        find("txt");
+        // Register builtin formats and formats in config dirs so they can be listed
+        registerFormatsFromJar(Arrays.asList("chat", "csv", "folia", "tei", "tsv-frog", "sketch-wpl", "tsv", "txt"));
+        registerFormatsInDirs(Searcher.getConfigDirs());
     }
 
-	/**
+    private static void registerFormatsFromJar(List<String> formatIdentifiers) {
+        for (String formatIdentifier: formatIdentifiers) {
+            if (!formatIdentifier.matches("[\\-\\w]+"))
+                throw new IllegalArgumentException("Invalid file format identifier: " + formatIdentifier + " (word characters only please)");
+            try (InputStream is = DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
+                if (is == null)
+                    continue; // not found
+                try (Reader reader = new BufferedReader(new InputStreamReader(is))) {
+                    ConfigInputFormat format = new ConfigInputFormat(formatIdentifier, reader, false);
+                    register(format);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * Scan the supplied directories for format files and register them.
+     * @param dirs directories to scan
+     */
+	public static void registerFormatsInDirs(List<File> dirs) {
+        for (File dir: dirs) {
+            File formatsSubDir = new File(dir, "formats");
+            if (formatsSubDir.exists() && formatsSubDir.canRead()) {
+                FileUtil.processTree(formatsSubDir, new FileTask() {
+                    @Override
+                    public void process(File f) {
+                        if (f.getName().matches("^[\\-\\w]+\\.bls\\.(ya?ml|json)$")) {
+                            // Format file found. Register it.
+                            try {
+                                register(new ConfigInputFormat(f));
+                            } catch (InputFormatConfigException e) {
+                                throw new InputFormatConfigException("Error in input format config " + f + ": " + e.getMessage());
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    /**
 	 * Register a DocIndexer class under an abbreviated document format identifier.
 	 *
 	 * @param formatAbbreviation the format abbreviation, e.g. "tei"
@@ -170,88 +208,6 @@ public class DocumentFormats {
 	    public abstract boolean findAndRegister(String formatIdentifier);
 	}
 
-    /** How to find input formats (base format, linked documents) */
-    public static class FormatFinderDirs extends FormatFinder {
-
-        private List<File> dirs;
-
-        public FormatFinderDirs(List<File> dirs) {
-            this.dirs = dirs;
-        }
-
-        @Override
-        public boolean findAndRegister(String formatIdentifier) {
-            if (!formatIdentifier.matches("[\\-\\w]+"))
-                throw new IllegalArgumentException("Invalid file format identifier: " + formatIdentifier + " (word characters only please)");
-            // See if we can find and load a format file by this name.
-            File formatFile = FileUtil.findFile(dirs, formatIdentifier, Arrays.asList("yaml", "yml", "json"));
-            if (formatFile == null || !formatFile.canRead())
-                return false;
-            try {
-                // Load the format file and register the format
-                register(new ConfigInputFormat(formatFile));
-            } catch (InputFormatConfigException e) {
-                throw new InputFormatConfigException("Error in input format config " + formatFile + ": " + e.getMessage());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return true;
-        }
-    }
-
-    /**
-     * Load a format configuration file from a configuration directory.
-     *
-     * Format files are actually loaded from a 'formats' subdirectory of a configuration
-     * directory.
-     *
-     * Config dirs are, in order of decreasing priority: $BLACKLAB_CONFIG_DIR (if env. var. defined),
-     * $HOME/.blacklab, /etc/blacklab.
-     */
-    static class FormatFinderConfigDirs extends FormatFinder {
-
-        @Override
-        public boolean findAndRegister(String formatIdentifier) {
-            if (!formatIdentifier.matches("[\\-\\w]+"))
-                throw new IllegalArgumentException("Invalid file format identifier: " + formatIdentifier + " (word characters only please)");
-            List<File> dirs = Searcher.getConfigDirs();
-            File formatFile = FileUtil.findFile(dirs, "formats/" + formatIdentifier, Arrays.asList("yaml", "yml", "json"));
-            if (formatFile == null || !formatFile.canRead())
-                return false;
-            try {
-                // Load the format file and register the format
-                register(new ConfigInputFormat(formatFile));
-            } catch (InputFormatConfigException e) {
-                throw new InputFormatConfigException("Error in input format config " + formatFile + ": " + e.getMessage());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return true;
-        }
-    }
-
-	/**
-	 * Load a format configuration file from the BlackLab JAR.
-	 */
-    static class FormatFinderConfigFileFromJar extends FormatFinder {
-        @Override
-        public boolean findAndRegister(String formatIdentifier) {
-            if (!formatIdentifier.matches("[\\-\\w]+"))
-                throw new IllegalArgumentException("Invalid file format identifier: " + formatIdentifier + " (word characters only please)");
-            try (InputStream is = getClass().getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".yaml")) {
-                if (is == null)
-                    return false;
-                try (Reader reader = new BufferedReader(new InputStreamReader(is))) {
-                    ConfigInputFormat format = new ConfigInputFormat(reader, false);
-                    register(format);
-                    return true;
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
     /**
      * If the formatIdentifier matches a [fully qualified] class name that's a subclass of DocIndexer, use that.
      */
@@ -326,13 +282,20 @@ public class DocumentFormats {
      *
      * @return the list of registered abbreviations
      */
-    public static List<String> listLegacyFormats() {
+    public static List<String> listDocIndexerFormats() {
         List<String> l = new ArrayList<>();
         for (String format: formats.keySet()) {
             l.add(format);
         }
         Collections.sort(l);
         return Collections.unmodifiableList(l);
+    }
+
+    public static String stripExtensions(String fileName) {
+        String name = fileName.replaceAll("\\.(ya?ml|json)$", "");
+        if (name.endsWith(".blf"))
+            return name.substring(0, name.length() - 4);
+        return name;
     }
 
 }

@@ -5,6 +5,7 @@ NOTE: this describes the new way of indexing, using index format configuration f
 * <a href="#index-supported-format">Indexing documents in a supported format</a>
 * <a href="#supported-formats">Supported formats</a>
 * <a href="#input-format-config-overview">Basic overview of a configuration file</a>
+* <a href="#working-with-yaml">Working with YAML</a>
 * <a href="#sensitivity">Configuring case- and diacritics sensitivity per property</a>
 * <a href="#disable-fi">Why and how to disable the forward index for a property</a>
 * <a href="#word-annotated">Indexing word-annotated XML</a>
@@ -59,7 +60,7 @@ Here, FILTER_QUERY is a metadata filter query in Lucene query language that matc
 
 ## Supported formats
 
-Here's a list of built-in input formats:
+Here's a list of built-in input formats (run IndexTool without any parameters to see the up to date list):
 
 * alto (OCR XML format; see http://www.loc.gov/standards/alto/)
 * folia (a corpus XML format popular in the Netherlands; see https://proycon.github.io/folia/)
@@ -69,7 +70,7 @@ Here's a list of built-in input formats:
 * pagexml (OCR XML format)
 * tsv (tab-separated values)
 * tsv-frog (output of the Frog linguistic tagger; see https://languagemachines.github.io/frog/)
-* tsv-sketch (Sketch Engine word-per-line input format, including metadata and inline tags)
+* sketch-wpl (Sketch Engine word-per-line input format, including metadata and inline tags)
 * txt (plain text files)
 
 Adding support for your own format is quite straightforward now, and can be done by writing a configuration file (described on this page) or, if you really want, by [writing Java code](add-input-format.html).
@@ -170,9 +171,11 @@ Note that the settings with names ending in "Path" are XPath 1.0 expressions (at
         namePath: "@name"   # name attribute contains field name
         valuePath: .        # element text is the field value
 
+To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of $BLACKLAB\_CONFIG\_DIR/formats/ (if this environment variable is set), $HOME/.blacklab/formats/ or /etc/blacklab/formats/.
+
 This page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](annotated-input-config.html). 
 
-<a id="sensitivity"></a>
+<a id="working-with-yaml"></a>
 
 ## Working with YAML
 
@@ -303,7 +306,6 @@ For example:
 
 To index these types of annotations, use a configuration like this one:
 
-    name: simple-input-format
     documentPath: //document
     annotatedFields:
       contents:
@@ -363,7 +365,7 @@ A standoff annotation of this type is defined in the same section as regular non
 
 <a id="subproperties"></a>
 
-## Subannotations, for e.g. making part of speech features separately searchable (EXPERIMENTAL)
+## Subannotations, for e.g. making part of speech features separately searchable
 
 Note that this feature is still (somewhat) experimental and details may change in future versions.
 
@@ -397,7 +399,6 @@ Suppose your XML looks like this:
 
 Here's how to define subproperties:
 
-    name: simple-input-format
     documentPath: //document
     annotatedFields:
       contents:
@@ -438,9 +439,8 @@ For CSV/TSV files, indexing them directly can be done by defining a tabular inpu
 
 (Technical note: BlackLab uses [Apache commons-csv](https://commons.apache.org/proper/commons-csv/) to parse tabular files. Not all settings are exposed at the moment. If you find yourself needing access to a setting that isn't exposed via de configuration file yet, please contact us)
 
-Here's a simple example configuration that will parse tab-delimited files produces by the [Frog](https://languagemachines.github.io/frog/) tool:
+Here's a simple example configuration, `my-tsv.blf.yaml`, that will parse tab-delimited files produces by the [Frog](https://languagemachines.github.io/frog/) tool:
 
-    name: simple-tsv
     fileType: tabular
 
     # Options for tabular format
@@ -469,7 +469,9 @@ Here's a simple example configuration that will parse tab-delimited files produc
           valuePath: 3
         - name: pos
           valuePath: 5
-          
+
+(Note that the BlackLab JAR includes a default `tsv.blf.yaml` that is a bit different: it assumes a file containing column names. The column names are word, lemma and pos)
+
 The Sketch Engine takes a tab-delimited WPL input format that document tags, inline tags and "glue tags" (which indicate that there should be no space between two tokens). Here's a short example:
 
     <doc id="1" title="Test document" author="Jan Niestadt"> 
@@ -483,9 +485,8 @@ The Sketch Engine takes a tab-delimited WPL input format that document tags, inl
     </s>
     </doc>  
 
-Here's a configuration to index this format:
+Here's a configuration to index this format (`sketch-wpl.blf.yaml`, already included in the BlackLab JAR):
 
-    name: sketch-wpl
     fileType: tabular
     tabularOptions:
       type: tsv
@@ -510,9 +511,8 @@ If you want to index metadata from another file along with each document, you ha
 
 ## Indexing plain text files
 
-Plain text files don't allow you to use a lot of BlackLab's features and hence don't require a lot of configuration either. If you need specific indexing features for non-tabular, non-XML file formats, please let us know and we will consider adding them. For now, here's how to configure a plain text input format:
+Plain text files don't allow you to use a lot of BlackLab's features and hence don't require a lot of configuration either. If you need specific indexing features for non-tabular, non-XML file formats, please let us know and we will consider adding them. For now, here's how to configure a plain text input format (`txt.blf.yaml`, included in the BlackLab JAR):
 
-    name: plain-text
     fileType: text
 
     annotatedFields:

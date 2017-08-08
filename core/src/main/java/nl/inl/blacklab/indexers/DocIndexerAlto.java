@@ -38,6 +38,9 @@ import nl.inl.util.StringUtil;
  */
 public class DocIndexerAlto extends DocIndexerXmlHandlers {
 
+    public static String getDisplayName() { return "ALTO (Analyzed Layout and Text Object)"; }
+    public static String getDescription() { return "An XML format for the description of text OCR and layout information of pages for digitized material."; }
+
 	/** Contains the image file name found in Description so we can add it to Page
 	 *  (NOTE: do we still use this now that we index the whole XML file?) */
 	String imageFileName = "?";

@@ -32,10 +32,11 @@ import java.util.TreeMap;
 
 import org.apache.lucene.index.CorruptIndexException;
 
+import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DocumentFormats.FormatFinderDirs;
+import nl.inl.blacklab.index.FileDownloader;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
@@ -53,7 +54,6 @@ public class IndexTool {
 	static Map<String, String> indexerParam = new TreeMap<>();
 
 	public static void main(String[] args) throws Exception {
-
 		// If the current directory contains indexer.properties, read it
 		File propFile = new File(".", "indexer.properties");
 		if (propFile.canRead())
@@ -245,7 +245,7 @@ public class IndexTool {
 		List<File> formatDirs = new ArrayList<>(Arrays.asList(new File("."), inputDir.getParentFile(), inputDir));
 		if (!formatDirs.contains(indexDir.getParentFile()))
 		    formatDirs.add(indexDir.getParentFile());
-		DocumentFormats.addFormatFinder(new FormatFinderDirs(formatDirs));
+		DocumentFormats.registerFormatsInDirs(formatDirs);
 
 		// Determine DocIndexer to use
 		DocIndexerFactory docIndexerFactory = null;
@@ -263,6 +263,7 @@ public class IndexTool {
 		}
 
 		// Create the indexer and index the files
+        FileDownloader.setFileDownloadAllowed(true); // allow downloading linked (metadata) documents
 		if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
 			indexTemplateFile = null;
 		}
@@ -345,7 +346,7 @@ public class IndexTool {
 						+ "                         You can also add a property named meta-<name> to your\n"
 						+ "                         indexer.properties file. This field is stored untokenized.\n"
 						+ "\n"
-						+ "Built-in input formats:");
+						+ "Input format configurations:");
 		for (String format: DocumentFormats.list(false)) {
 		    String displayName = "", desc = "";
 		    ConfigInputFormat config = DocumentFormats.getConfig(format);
@@ -360,9 +361,16 @@ public class IndexTool {
 		    }
 			System.out.println("  " + format + displayName + desc);
 		}
-		System.out.println("\nFormats supported through the older DocIndexer model:");
-        for (String format: DocumentFormats.listLegacyFormats()) {
-            System.out.println("  " + format);
+        for (String format: DocumentFormats.listDocIndexerFormats()) {
+            Class<? extends DocIndexer> docIndexerClass = DocumentFormats.getIndexerClass(format);
+            String displayName = DocIndexer.getDisplayName(docIndexerClass);
+            if (displayName.length() > 0)
+                displayName = " (" + displayName + ")";
+            String desc = DocIndexer.getDescription(docIndexerClass);
+            if (desc.length() > 0) {
+                desc = "\n      " + StringUtil.join(StringUtil.wrap(desc, 75), "\n      ");
+            }
+            System.out.println("  " + format + displayName + desc);
         }
 	}
 

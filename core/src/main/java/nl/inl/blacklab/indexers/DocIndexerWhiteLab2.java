@@ -38,6 +38,10 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  */
 public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 
+    public static String getDisplayName() { return "Indexer for FoLiA files for WhiteLab2 application"; }
+    public static String getDescription() { return
+            "Includes tags present in OpenSoNaR and CGN corpora."; }
+
 	String xmlid;
 
 	String wordform;

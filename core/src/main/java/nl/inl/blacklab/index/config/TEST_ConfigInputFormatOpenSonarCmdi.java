@@ -6,7 +6,7 @@ package nl.inl.blacklab.index.config;
 public class TEST_ConfigInputFormatOpenSonarCmdi extends ConfigInputFormat {
 
     public TEST_ConfigInputFormatOpenSonarCmdi() {
-        setName("BuiltinOpenSonarCmdi");
+        super("BuiltinOpenSonarCmdi");
         setDisplayName("OpenSoNaR CMDI metadata");
 
         // Basic config: namespaces, document element

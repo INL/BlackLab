@@ -30,6 +30,11 @@ import nl.inl.blacklab.index.Indexer;
  */
 public class DocIndexerTei extends DocIndexerTeiBase {
 
+    public static String getDisplayName() { return "Alternate TEI indexer"; }
+    public static String getDescription() { return
+            "DocIndexerTei, less flexible than config-based one but a bit faster. Main contents should be in body element, " +
+            "should be tokenized and PoS tags should be in the type attribute."; }
+
 	public DocIndexerTei(Indexer indexer, String fileName, Reader reader, String contentElement) {
 		super(indexer, fileName, reader, contentElement, true);
 	}

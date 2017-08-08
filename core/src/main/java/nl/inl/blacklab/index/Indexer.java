@@ -25,7 +25,10 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -42,6 +45,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileProcessor.ErrorHandler;
+import nl.inl.util.FileProcessor.FileHandler;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeStream;
 
@@ -53,6 +57,61 @@ public class Indexer {
 	static final Logger logger = LogManager.getLogger(Indexer.class);
 
 	public static final Charset DEFAULT_INPUT_ENCODING = Charset.forName("utf-8");
+
+    /** File handler that reads a single file into a byte array. */
+    static final class FetchFileHandler implements FileHandler {
+
+        private final String pathToFile;
+
+        byte[] bytes;
+
+        FetchFileHandler(String pathInsideArchive) {
+            this.pathToFile = pathInsideArchive;
+        }
+
+        @Override
+        public void stream(String path, InputStream f) {
+            if (path.equals(pathToFile)) {
+                try {
+                    bytes = IOUtils.toByteArray(f);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        @Override
+        public void file(String path, File f) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static byte[] fetchFileFromArchive(File f, final String pathInsideArchive) {
+        if (f.getName().endsWith(".gz") || f.getName().endsWith(".tgz")) {
+            // We have to process the whole file, we can't do random access.
+            FileProcessor proc = new FileProcessor(false, true);
+            FetchFileHandler fileHandler = new FetchFileHandler(pathInsideArchive);
+            proc.setFileHandler(fileHandler);
+            try {
+                proc.processFile(f);
+                return fileHandler.bytes;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else if (f.getName().endsWith(".zip")) {
+            // We can do random access. Fetch the file we want.
+            try {
+                ZipFile z = ZipHandleManager.openZip(f);
+                ZipEntry e = z.getEntry(pathInsideArchive);
+                InputStream is = z.getInputStream(e);
+                return IOUtils.toByteArray(is);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());
+        }
+    }
 
 	/** Our index */
 	private Searcher searcher;
@@ -760,4 +819,5 @@ public class Indexer {
             return null;
         return FileUtil.findFile(linkedFileDirs, inputFile, null);
     }
+
 }

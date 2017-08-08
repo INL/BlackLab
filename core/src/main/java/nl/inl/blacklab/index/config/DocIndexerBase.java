@@ -5,8 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,10 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -30,6 +25,7 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.FileDownloader;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatException;
 import nl.inl.blacklab.index.complex.ComplexField;
@@ -39,8 +35,6 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.ExUtil;
-import nl.inl.util.FileProcessor;
-import nl.inl.util.FileProcessor.FileHandler;
 
 public abstract class DocIndexerBase extends DocIndexer {
 
@@ -61,118 +55,6 @@ public abstract class DocIndexerBase extends DocIndexer {
             this.index = index;
         }
     }
-
-    /** File handler that reads a single file into a byte array. */
-    static final class FetchFileHandler implements FileHandler {
-
-        private final String pathToFile;
-
-        byte[] bytes;
-
-        FetchFileHandler(String pathInsideArchive) {
-            this.pathToFile = pathInsideArchive;
-        }
-
-        @Override
-        public void stream(String path, InputStream f) {
-            if (path.equals(pathToFile)) {
-                try {
-                    bytes = IOUtils.toByteArray(f);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        @Override
-        public void file(String path, File f) {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    public static void closeAllZips() {
-        synchronized (openZips) {
-            // We don't close linked document zips immediately; closing them when you're likely to
-            // reuse them soon is inefficient.
-            // (we should probably keep track of last access and close them eventually, though)
-            for (Entry<File, ZipFile> entry: openZips.entrySet()) {
-                try {
-                    entry.getValue().close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                openZips.remove(entry.getKey());
-            }
-        }
-    }
-
-    public static ZipFile openZip(File zipFile) throws IOException {
-        synchronized (openZips) {
-            ZipFile z = openZips.get(zipFile);
-            if (z == null) {
-                z = new ZipFile(zipFile);
-                openZips.put(zipFile, z);
-            }
-            return z;
-        }
-    }
-
-    private static byte[] fetchFileFromArchive(File f, final String pathInsideArchive) {
-        if (f.getName().endsWith(".gz") || f.getName().endsWith(".tgz")) {
-            // We have to process the whole file, we can't do random access.
-            FileProcessor proc = new FileProcessor(false, true);
-            FetchFileHandler fileHandler = new FetchFileHandler(pathInsideArchive);
-            proc.setFileHandler(fileHandler);
-            try {
-                proc.processFile(f);
-                return fileHandler.bytes;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else if (f.getName().endsWith(".zip")) {
-            // We can do random access. Fetch the file we want.
-            try {
-                ZipFile z = openZip(f);
-                ZipEntry e = z.getEntry(pathInsideArchive);
-                InputStream is = z.getInputStream(e);
-                return IOUtils.toByteArray(is);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());
-        }
-    }
-
-    /**
-     * Download file to temp file if it hasn't been downloaded already.
-     *
-     * @param inputFile URL of the file
-     * @return temp file
-     * @throws IOException
-     * @throws MalformedURLException
-     */
-    private static File downloadFile(String inputFile) throws IOException, MalformedURLException {
-        synchronized (downloadedFiles) {
-            File tempFile = downloadedFiles.get(inputFile);
-            if (tempFile == null) {
-                String ext = inputFile.replaceAll("^.+(\\.[^\\.]+)$", "$1");
-                if (ext == null || ext.isEmpty())
-                    ext = ".xml";
-                tempFile = File.createTempFile("BlackLab_download_", ext);
-                tempFile.deleteOnExit();
-                FileUtils.copyURLToFile(new URL(inputFile), tempFile);
-                downloadedFiles.put(inputFile, tempFile);
-            }
-            return tempFile;
-        }
-    }
-
-    /** Zip files opened by DocIndexerBase indexers. Should be closed eventually. */
-    private static Map<File, ZipFile> openZips = new LinkedHashMap<>();
-
-    /** Files we've downloaded to a temp dir. Will be deleted on exit. */
-    static Map<String, File> downloadedFiles = new HashMap<>();
 
     /** Complex fields we're indexing. */
     private Map<String, ComplexField> complexFields = new LinkedHashMap<>();
@@ -319,7 +201,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         if (inputFile.endsWith(".zip") || inputFile.endsWith(".tar") || inputFile.endsWith(".tar.gz") || inputFile.endsWith(".tgz")) {
             // It's an archive. Unpack the right file from it.
             completePath += "/" + pathInsideArchive;
-            data = fetchFileFromArchive(f, pathInsideArchive);
+            data = Indexer.fetchFileFromArchive(f, pathInsideArchive);
         } else {
             // Regular file.
             try(InputStream is = new FileInputStream(f)) {
@@ -376,7 +258,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     protected File resolveFileReference(String inputFile) throws IOException {
         if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
-            return downloadFile(inputFile);
+            return FileDownloader.downloadFile(inputFile);
         }
         if (inputFile.startsWith("file://"))
             inputFile = inputFile.substring(7);

@@ -1,12 +1,11 @@
 # Annotated input format configuration file
 
-NOTE: this is about the new way of indexing, using index format configuration files, available starting from BlackLab 1.7.0. The older, more direct way of indexing is still supported (although parts may be removed or changed in future versions); see [here](indexing-with-blacklab.html). 
+NOTE: this is about the new way of indexing, using index format configuration files, available starting from BlackLab 1.7.0. The older, more direct way of indexing is still supported (although parts may be removed or changed in future versions); see [here](indexing-with-blacklab.html).
 
 For more task-oriented documentation, see [How to configure indexing](how-to-configure-indexing.html). 
 
-    # Format identifier (short name; must be an identifier, i.e. no spaces, punctuation, etc.)
-    name: OpenSonarFolia
-    
+Input format configuration files should be named `<formatIdentifier>.blf.yaml` or `.blf.json` (depending on the format chosen). By default, BlackLab looks in $BLACKLAB_CONFIG_DIR/formats/ (if the environment variable is defined), $HOME/.blacklab/formats/ and /etc/blacklab/formats/. IndexTool searches a few more directories, including the current directory and the parent of the input and index directories.
+
     # For displaying in user interface (optional, recommended)
     displayName: OpenSonar FoLiA content format
     
@@ -20,11 +19,6 @@ For more task-oriented documentation, see [How to configure indexing](how-to-con
     # What type of input files does this handle? (content, metadata?)
     # (optional; not used by BlackLab; could be used in user interface)
     type: content
-    
-    # Is the user allowed to view whole documents in the search interface?
-    # (this defaults to false to avoid potential copyright issues)
-    # (optional; used by BLS to either allow or disallow fetching full document content)
-    contentViewable: true
     
     # The type of input file we're dealing with (xml, tabular or text)
     fileType: xml
@@ -169,24 +163,6 @@ For more task-oriented documentation, see [How to configure indexing](how-to-con
         
     
     # (optional)
-    # You can divide your metadata fields into groups, which can
-    # be useful if you want to display them in a tabbed interface.
-    # Our default corpus interface supports this.
-    metadataFieldGroups:
-    - name: Tab1
-      fields:
-      - Field1
-      - Field2
-    - name: Tab2
-      fields:
-      - Field3
-      - Field4
-    - name: OtherFields
-      addRemainingFields: true  # BLS will add any field not yet in 
-                                # any group to this group   
-    
-    
-    # (optional)
     # It is possible to specify a mapping to change the name of
     # metadata fields. This can be useful if you capture a lot of
     # metadata fields using forEachPath and want control over how they
@@ -194,18 +170,6 @@ For more task-oriented documentation, see [How to configure indexing](how-to-con
     indexFieldAs:
       lessThanIdealName: muchBetterName
       alsoNotAGreatName: butThisIsExcellent
-    
-    
-    # (optional, pidField highly recommended)
-    # You can specify metadata fields that have special significance here.
-    # pidField is important for use with BLS because it guarantees that URLs
-    # won't change even if you re-index. The other fields can be nice for
-    # displaying document information but are not essential.
-    specialFields:
-      pidField: id         # unique document identifier. Used by BLS for persistent URLs
-      titleField: title    # may be used by user interface to display document info
-      authorField: author  # may be used by user interface to display document info
-      dateField: pubDate   # may be used by user interface to display document info
     
     
     # Linked metadata (or other linked document)
@@ -260,3 +224,49 @@ For more task-oriented documentation, see [How to configure indexing](how-to-con
     
         # Format identifier of the linked input file
         inputFormat: OpenSonarCmdi
+    
+    # Configuration to be copied into indexmetadata.yaml when a new index is created
+    # from this format. These settings do not influence indexing but are for 
+    # BlackLab Server and search user interfaces. All settings are optional.
+    corpusConfig:
+    
+        # Display name for the corpus
+        displayName: My Amazing Corpus
+        
+        # Short description for the corpus 
+        description: Quite an amazing corpus, if I do say so myself.
+    
+        # Is the user allowed to view whole documents in the search interface?
+        # (used by BLS to either allow or disallow fetching full document content)
+        # (defaults to false because this is not allowed for some datasets)
+        contentViewable: true
+    
+        # You can divide your metadata fields into groups, which can
+        # be useful if you want to display them in a tabbed interface.
+        # Our default corpus interface supports this.
+        metadataFieldGroups:
+        - name: Tab1
+          fields:
+          - Field1
+          - Field2
+        - name: Tab2
+          fields:
+          - Field3
+          - Field4
+        - name: OtherFields
+          addRemainingFields: true  # BLS will add any field not yet in 
+                                    # any group to this group   
+        
+        # (optional, but pidField is highly recommended)
+        # You can specify metadata fields that have special significance here.
+        # pidField is important for use with BLS because it guarantees that URLs
+        # won't change even if you re-index. The other fields can be nice for
+        # displaying document information but are not essential.
+        specialFields:
+          pidField: id         # unique document identifier. Used by BLS for persistent URLs
+          titleField: title    # may be used by user interface to display document info
+          authorField: author  # may be used by user interface to display document info
+          dateField: pubDate   # may be used by user interface to display document info
+          
+    
+        

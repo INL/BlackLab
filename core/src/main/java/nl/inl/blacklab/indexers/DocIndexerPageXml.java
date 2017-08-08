@@ -28,6 +28,9 @@ import nl.inl.util.StringUtil;
  */
 public class DocIndexerPageXml extends DocIndexerXmlHandlers {
 
+    public static String getDisplayName() { return "PageXML, an OCR file format"; }
+    public static String getDescription() { return ""; }
+
 	public DocIndexerPageXml(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader);
 

@@ -92,7 +92,7 @@ public abstract class Searcher {
 	/** Configuration directories in decreasing order of importance. */
     private static List<File> configDirs;
 
-	/** Analyzer based on WhitespaceTokenizer */
+    /** Analyzer based on WhitespaceTokenizer */
 	final protected static Analyzer whitespaceAnalyzer = new BLWhitespaceAnalyzer();
 
 	/** Analyzer for Dutch and other Latin script languages */

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.config.ConfigAnnotatedField;
 import nl.inl.blacklab.index.config.ConfigAnnotation;
+import nl.inl.blacklab.index.config.ConfigCorpus;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.ConfigLinkedDocument;
 import nl.inl.blacklab.index.config.ConfigMetadataBlock;
@@ -59,16 +60,20 @@ public class IndexMetadata {
 	}
 
     public IndexMetadata(String indexName, ConfigInputFormat config) {
+        ConfigCorpus corpusConfig = config.getCorpusConfig();
         ObjectMapper mapper = Json.getJsonObjectMapper();
         jsonRoot = mapper.createObjectNode();
-        jsonRoot.put("displayName", indexName);
-        jsonRoot.put("description", config.getDescription());
-        jsonRoot.put("contentViewable", config.isContentViewable());
+        String displayName = corpusConfig.getDisplayName();
+        if (displayName.isEmpty())
+            displayName = indexName;
+        jsonRoot.put("displayName", displayName);
+        jsonRoot.put("description", corpusConfig.getDescription());
+        jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
         jsonRoot.put("documentFormat", config.getName());
         addVersionInfo();
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
-        for (Entry<String, String> e: config.getSpecialFields().entrySet()) {
+        for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
             fieldInfo.put(e.getKey(), e.getValue());
         }
         ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
@@ -81,7 +86,8 @@ public class IndexMetadata {
     protected void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode complex, ArrayNode metaGroups, ConfigInputFormat config) {
 
         // Add metadata field groups info
-        for (ConfigMetadataFieldGroup g: config.getMetadataFieldGroups().values()) {
+        ConfigCorpus corpusConfig = config.getCorpusConfig();
+        for (ConfigMetadataFieldGroup g: corpusConfig.getMetadataFieldGroups().values()) {
             ObjectNode h = metaGroups.addObject();
             h.put("name", g.getName());
             if (g.getFields().size() > 0) {

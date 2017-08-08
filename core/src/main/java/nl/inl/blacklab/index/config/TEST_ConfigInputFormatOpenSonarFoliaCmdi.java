@@ -5,7 +5,7 @@ import nl.inl.blacklab.index.config.ConfigLinkedDocument.MissingLinkPathAction;
 public class TEST_ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat {
 
     public TEST_ConfigInputFormatOpenSonarFoliaCmdi() {
-        setName("BuiltinOpenSonarFoliaCmdi");
+        super("BuiltinOpenSonarFoliaCmdi");
         setDisplayName("OpenSoNaR FoLiA file format with CMDI metadata link");
 
         // Copy everything from this format

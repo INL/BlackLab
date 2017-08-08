@@ -3,7 +3,7 @@ package nl.inl.blacklab.index.config;
 public class TEST_ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
 
     public TEST_ConfigInputFormatOpenSonarFoLiA() {
-        setName("BuiltinOpenSonarFolia");
+        super("BuiltinOpenSonarFolia");
         setDisplayName("OpenSoNaR FoLiA file format");
         setDescription("The file format used by OpenSonar.");
 
@@ -37,14 +37,14 @@ public class TEST_ConfigInputFormatOpenSonarFoLiA extends ConfigInputFormat {
         ConfigMetadataFieldGroup g = new ConfigMetadataFieldGroup("Tab1");
         g.addField("test1");
         g.addField("test2");
-        addMetadataFieldGroup(g);
+        getCorpusConfig().addMetadataFieldGroup(g);
         g = new ConfigMetadataFieldGroup("Tab2");
         g.addField("test3");
         g.addField("test4");
-        addMetadataFieldGroup(g);
+        getCorpusConfig().addMetadataFieldGroup(g);
         g = new ConfigMetadataFieldGroup("Rest");
         g.setAddRemainingFields(true);
-        addMetadataFieldGroup(g);
+        getCorpusConfig().addMetadataFieldGroup(g);
 
 //        // Metadata fields config
 //        ConfigMetadataBlock b = new ConfigMetadataBlock();

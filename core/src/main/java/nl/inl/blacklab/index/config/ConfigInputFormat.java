@@ -53,11 +53,8 @@ public class ConfigInputFormat {
     /** Options for the file type (i.e. separator in case of tabular, etc.) */
     private Map<String, String> fileTypeOptions = new HashMap<>();
 
-//    /** If fileType is TABULAR: the options to use for the tabular format */
-//    private ConfigTabularOptions tabularOptions;
-
-    /** May end user fetch contents of whole documents? [false] */
-    private boolean contentViewable = false;
+    /** Configuration that will be added to indexmetadata when creating a corpus */
+    private ConfigCorpus corpusConfig = new ConfigCorpus();
 
     /** XML namespace declarations */
     Map<String, String> namespaces = new LinkedHashMap<>();
@@ -71,12 +68,6 @@ public class ConfigInputFormat {
     /** Before adding metadata fields to the document, this name mapping is applied. */
     Map<String, String> indexFieldAs = new LinkedHashMap<>();
 
-    /** Special field roles, such as pidField, titleField, etc. */
-    Map<String, String> specialFields = new LinkedHashMap<>();
-
-    /** How to group metadata fields */
-    private Map<String, ConfigMetadataFieldGroup> metadataFieldGroups = new LinkedHashMap<>();
-
     /** What default analyzer to use if not overridden */
     private String metadataDefaultAnalyzer = "default";
 
@@ -89,15 +80,17 @@ public class ConfigInputFormat {
     /** Linked document(s), e.g. containing our metadata */
     private Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
 
-    public ConfigInputFormat() {
-        // NOP
+    public ConfigInputFormat(String name) {
+        setName(name);
     }
 
     public ConfigInputFormat(File file) throws IOException {
+        setName(DocumentFormats.stripExtensions(file.getName()));
         InputFormatReader.read(file, this);
     }
 
-    public ConfigInputFormat(Reader reader, boolean isJson) throws IOException {
+    public ConfigInputFormat(String name, Reader reader, boolean isJson) throws IOException {
+        setName(name);
         InputFormatReader.read(reader, isJson, this);
     }
 
@@ -115,15 +108,11 @@ public class ConfigInputFormat {
             fileTypeOptions.putAll(baseFormat.getFileTypeOptions());
 //        if (baseFormat.getTabularOptions() != null)
 //            tabularOptions = baseFormat.getTabularOptions().copy();
-        contentViewable = baseFormat.isContentViewable();
+        corpusConfig = baseFormat.corpusConfig.copy();
         namespaces.putAll(baseFormat.getNamespaces());
         documentPath = baseFormat.getDocumentPath();
         store = baseFormat.shouldStore();
         indexFieldAs.putAll(baseFormat.getIndexFieldAs());
-        specialFields.putAll(baseFormat.getSpecialFields());
-        for (ConfigMetadataFieldGroup g: baseFormat.getMetadataFieldGroups().values()) {
-            addMetadataFieldGroup(g.copy());
-        }
         metadataDefaultAnalyzer = baseFormat.getMetadataDefaultAnalyzer();
         for (ConfigMetadataBlock b: baseFormat.getMetadataBlocks()) {
             addMetadataBlock(b.copy());
@@ -299,14 +288,6 @@ public class ConfigInputFormat {
         indexFieldAs.put(from, to);
     }
 
-    public Map<String, String> getSpecialFields() {
-        return Collections.unmodifiableMap(specialFields);
-    }
-
-    public void addSpecialField(String type, String fieldName) {
-        specialFields.put(type, fieldName);
-    }
-
     public boolean shouldStore() {
         return store;
     }
@@ -323,14 +304,6 @@ public class ConfigInputFormat {
         this.metadataDefaultAnalyzer = metadataDefaultAnalyzer;
     }
 
-    public Map<String, ConfigMetadataFieldGroup> getMetadataFieldGroups() {
-        return metadataFieldGroups;
-    }
-
-    void addMetadataFieldGroup(ConfigMetadataFieldGroup g) {
-        metadataFieldGroups.put(g.getName(), g);
-    }
-
     public String getType() {
         return type;
     }
@@ -339,20 +312,16 @@ public class ConfigInputFormat {
         this.type = type;
     }
 
-    public boolean isContentViewable() {
-        return contentViewable;
-    }
-
-    public void setContentViewable(boolean contentViewable) {
-        this.contentViewable = contentViewable;
-    }
-
     public Map<String, String> getFileTypeOptions() {
         return fileTypeOptions;
     }
 
     public void addFileTypeOption(String key, String value) {
         this.fileTypeOptions.put(key, value);
+    }
+
+    public ConfigCorpus getCorpusConfig() {
+        return corpusConfig;
     }
 
 }

@@ -1,5 +1,3 @@
-
-name: csv
 displayName: Comma-separated values (CSV)
 description: A simple tabular format used by e.g. MS Excel. Column names (word, lemma, pos) are assumed, comma is separator, double quote is (optional) quote character, backslash the escape character.
 

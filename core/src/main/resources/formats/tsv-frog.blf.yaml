@@ -1,6 +1,3 @@
-# Short name (must be an identifier, i.e. no spaces, punctuation, etc.)
-name: tsv-frog
-
 # For displaying in user interface (optional)
 displayName: Frog tagger tab-delimited (TSV)
 

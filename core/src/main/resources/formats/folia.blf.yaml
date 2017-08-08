@@ -1,8 +1,3 @@
-# DocIndexerWhiteLab2 data-driven
-
-# Short name (must be an identifier, i.e. no spaces, punctuation, etc.)
-name: folia
-
 # For displaying in user interface (optional)
 displayName: FoLiA (Format for Linguistic Annotation)
 

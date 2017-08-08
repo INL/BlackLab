@@ -31,6 +31,9 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
  */
 public class DocIndexerFolia extends DocIndexerXmlHandlers {
 
+    public static String getDisplayName() { return "Alternate FoLiA indexer"; }
+    public static String getDescription() { return "DocIndexerFolia, less flexible than config-based one but a bit faster"; }
+
 	String wordform;
 
 	String pos;

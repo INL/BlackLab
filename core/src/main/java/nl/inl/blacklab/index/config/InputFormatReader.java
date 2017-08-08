@@ -97,9 +97,7 @@ public class InputFormatReader {
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
-            JsonNode v = e.getValue();
             switch (e.getKey()) {
-            case "name": cfg.setName(str(e)); break;
             case "displayName": cfg.setDisplayName(str(e)); break;
             case "description": cfg.setDescription(str(e)); break;
             case "baseFormat": cfg.setBaseFormat(str(e)); break;
@@ -107,16 +105,14 @@ public class InputFormatReader {
             case "fileType": cfg.setFileType(FileType.fromStringValue(str(e))); break;
             case "fileTypeOptions": readFileTypeOptions(e, cfg); break;
 //            case "tabularOptions": cfg.setTabularOptions(readTabularOptions(e)); break;
-            case "contentViewable": cfg.setContentViewable(bool(e)); break;
+            case "corpusConfig": readCorpusConfig(e, cfg.getCorpusConfig()); break;
             case "namespaces": readStringMap(e, cfg.namespaces); break;
             case "documentPath": cfg.setDocumentPath(str(e)); break;
             case "store": cfg.setStore(bool(e)); break;
             case "indexFieldAs": readStringMap(e, cfg.indexFieldAs); break;
-            case "specialFields": readStringMap(e, cfg.specialFields); break;
             case "annotatedFields": readAnnotatedFields(e, cfg); break;
-            case "metadataFieldGroups": readMetadataFieldGroups(e, cfg); break;
             case "metadataDefaultAnalyzer": cfg.setMetadataDefaultAnalyzer(str(e)); break;
-            case "metadata": readMetadata(v, cfg); break;
+            case "metadata": readMetadata(e, cfg); break;
             case "linkedDocuments": readLinkedDocuments(e, cfg); break;
             default:
                 throw new InputFormatConfigException("Unknown top-level key " + e.getKey());
@@ -124,34 +120,32 @@ public class InputFormatReader {
         }
     }
 
+    private static void readCorpusConfig(Entry<String, JsonNode> ccEntry, ConfigCorpus corpusConfig) {
+        ObjectNode node = obj(ccEntry.getValue(), "");
+        Iterator<Entry<String, JsonNode>> it = node.fields();
+        while (it.hasNext()) {
+            Entry<String, JsonNode> e = it.next();
+            switch(e.getKey()) {
+            case "displayName": corpusConfig.setDisplayName(str(e)); break;
+            case "description": corpusConfig.setDescription(str(e)); break;
+            case "contentViewable": corpusConfig.setContentViewable(bool(e)); break;
+            case "specialFields": readStringMap(e, corpusConfig.specialFields); break;
+            case "metadataFieldGroups": readMetadataFieldGroups(e, corpusConfig); break;
+            default:
+                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in corpusConfig");
+            }
+        }
+
+    }
+
     private static void readFileTypeOptions(Entry<String, JsonNode> ftOptEntry, ConfigInputFormat cfg) {
-        ObjectNode node = obj(ftOptEntry.getValue(), null);
+        ObjectNode node = obj(ftOptEntry);
         Iterator<Entry<String, JsonNode>> it = node.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             cfg.addFileTypeOption(e.getKey(), str(e));
         }
     }
-
-//    private static ConfigTabularOptions readTabularOptions(Entry<String, JsonNode> tabOptEntry) {
-//        ObjectNode node = obj(tabOptEntry.getValue(), null);
-//        Iterator<Entry<String, JsonNode>> it = node.fields();
-//        ConfigTabularOptions to = new ConfigTabularOptions();
-//        while (it.hasNext()) {
-//            Entry<String, JsonNode> e = it.next();
-//            switch(e.getKey()) {
-//            case "type": to.setType(DocIndexerTabular.Type.fromStringValue(str(e))); break;
-//            case "columnNames": to.setColumnNames(bool(e)); break;
-//            case "delimiter": to.setDelimiter(character(e)); break;
-//            case "quote": to.setQuote(character(e)); break;
-//            case "inlineTags": to.setInlineTags(bool(e)); break;
-//            case "glueTags": to.setGlueTags(bool(e)); break;
-//            default:
-//                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in tabular options");
-//            }
-//        }
-//        return to;
-//    }
 
     private static void readStringMap(Entry<String, JsonNode> strMapEntry, Map<String, String> addToMap) {
         ObjectNode node = obj(strMapEntry.getValue(), null);
@@ -168,7 +162,7 @@ public class InputFormatReader {
             addToList.add(str(it.next(), strListEntry.getKey() + " element"));
     }
 
-    private static void readMetadataFieldGroups(Entry<String, JsonNode> mfgEntry, ConfigInputFormat cfg) {
+    private static void readMetadataFieldGroups(Entry<String, JsonNode> mfgEntry, ConfigCorpus cfg) {
         Iterator<JsonNode> itGroups = array(mfgEntry).elements();
         while (itGroups.hasNext()) {
             JsonNode group = itGroups.next();
@@ -319,7 +313,8 @@ public class InputFormatReader {
         }
     }
 
-    private static void readMetadata(JsonNode node, ConfigInputFormat cfg) {
+    private static void readMetadata(Entry<String, JsonNode> mdEntry, ConfigInputFormat cfg) {
+        JsonNode node = mdEntry.getValue();
         if (node instanceof ObjectNode) {
             // Single metadata block
             readMetadataBlock(node, cfg);

@@ -38,6 +38,11 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
  */
 public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
 
+    public static String getDisplayName() { return "Sketch Engine XML-from-WPL (deprecated)"; }
+    public static String getDescription() { return
+            "Older way of indexing Sketch Engine files, after converting them to XML. " +
+            "This is not necessary anymore, use sketch-wpl to index Sketch Engine WPL files directly."; }
+
 	/** Captures the punctuation so we can add it to the next word. */
 	StringBuilder punctuation = new StringBuilder();
 
