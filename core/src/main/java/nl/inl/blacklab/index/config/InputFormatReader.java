@@ -259,6 +259,7 @@ public class InputFormatReader {
                     throw new InputFormatConfigException("Subannotations may not have their own subannotations");
                 readSubAnnotations(e, annot); break;
             case "forwardIndex": annot.setForwardIndex(bool(e)); break;
+            case "multipleValues": annot.setMultipleValues(bool(e)); break;
             default:
                 throw new InputFormatConfigException("Unknown key " + e.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
             }

@@ -379,6 +379,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
 
         }
+        releaseAutoPilot(apMetadataBlock);
         nav.pop();
     }
 
@@ -469,11 +470,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
             i++;
         }
 
-        AutoPilot apValuePath = acquireAutoPilot(valuePath);
-        String annotValue = apValuePath.evalXPathToString();
-        releaseAutoPilot(apValuePath);
-        annotValue = processString(annotValue, annotation.getProcess());
-        annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+        // Find matches for this annotation.
+        findAnnotationMatches(annotation, null, valuePath, indexAtPositions);
 
         // For each configured subannotation...
         for (ConfigAnnotation subAnnot: annotation.getSubAnnotations()) {
@@ -510,9 +508,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 nav.pop();
             } else {
                 // Regular metadata field; just the fieldName and an XPath expression for the value
-                String value = apValue.evalXPathToString();
-                value = processString(value, subAnnot.getProcess());
-                subAnnotation(annotation.getName(), subAnnot.getName(), value, indexAtPositions);
+                findAnnotationMatches(annotation, subAnnot, valuePath, indexAtPositions);
             }
             releaseAutoPilot(apValue);
         }
@@ -521,6 +517,36 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // We pushed when we navigated to the base element; pop now.
             nav.pop();
         }
+    }
+
+    protected void findAnnotationMatches(ConfigAnnotation annotation, ConfigAnnotation subAnnot, String valuePath, List<Integer> indexAtPositions)
+            throws XPathParseException, XPathEvalException, NavException {
+        AutoPilot apValuePath = acquireAutoPilot(valuePath);
+        if (annotation.isMultipleValues()) {
+            // Multiple matches will be indexed at the same position.
+            AutoPilot apEvalToString = acquireAutoPilot(".");
+            boolean firstValue = true;
+            while (apValuePath.evalXPath() != -1) {
+                apEvalToString.resetXPath();
+                String annotValue = apEvalToString.evalXPathToString();
+                annotValue = processString(annotValue, annotation.getProcess());
+                if (subAnnot == null)
+                    annotation(annotation.getName(), annotValue, firstValue ? 1 : 0, indexAtPositions);
+                else
+                    subAnnotation(annotation.getName(), subAnnot.getName(), annotValue, indexAtPositions);
+                firstValue = false;
+            }
+            releaseAutoPilot(apEvalToString);
+        } else {
+            // Single value expected
+            String annotValue = apValuePath.evalXPathToString();
+            annotValue = processString(annotValue, annotation.getProcess());
+            if (subAnnot == null)
+                annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+            else
+                subAnnotation(annotation.getName(), subAnnot.getName(), annotValue, indexAtPositions);
+        }
+        releaseAutoPilot(apValuePath);
     }
 
     @Override

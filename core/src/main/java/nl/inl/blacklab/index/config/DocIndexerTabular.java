@@ -84,6 +84,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     private boolean hasGlueTags;
 
+    private String multipleValuesSeparator = ";";
+
     public DocIndexerTabular() {
     }
 
@@ -113,6 +115,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
             tabularFormat = tabularFormat.withQuote(opt.get("quote").charAt(0));
         hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
         hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
+        if (opt.containsKey("multipleValuesSeparator"))
+            multipleValuesSeparator = opt.get("multipleValuesSeparator");
     }
 
     @Override
@@ -239,7 +243,17 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                 value = "";
                         }
                         value = processString(value, annotation.getProcess());
-                        annotation(annotation.getName(), value, 1, null);
+                        if (annotation.isMultipleValues()) {
+                            // Multiple values possible. Split on multipleValuesSeparator.
+                            boolean first = true;
+                            for (String v: value.split(multipleValuesSeparator, -1)) {
+                                annotation(annotation.getName(), v, first ? 1 : 0, null);
+                                first = false;
+                            }
+                        } else {
+                            // Single value.
+                            annotation(annotation.getName(), value, 1, null);
+                        }
                     }
                     endWord();
                 }

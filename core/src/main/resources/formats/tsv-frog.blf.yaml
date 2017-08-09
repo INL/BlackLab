@@ -32,10 +32,6 @@ annotatedFields:
 
     - name: pos
       valuePath: 5
-      process:
-      - action: split
-        separator: ;   # (default)
-        keep: 1        # (default)
 
 
 # Frog TSV consists of these columns:

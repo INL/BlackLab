@@ -9,7 +9,7 @@ NOTE: this describes the new way of indexing, using index format configuration f
 * <a href="#sensitivity">Configuring case- and diacritics sensitivity per property</a>
 * <a href="#disable-fi">Why and how to disable the forward index for a property</a>
 * <a href="#word-annotated">Indexing word-annotated XML</a>
-* <a href="#multiple-values">Multiple values at one position, position gaps</a>
+* <a href="#multiple-values">Multiple values at one position</a>
 * <a href="#standoff-annotations">Standoff annotations</a>
 * <a href="#subproperties">Subannotations, for e.g. part of speech features</a>
 * <a href="#payloads">Storing extra information with property values, using payloads</a>
@@ -273,11 +273,51 @@ Note that if you want KWICs or snippets that include annotations without a forwa
 
 <a id="multiple-values"></a>
 
-## Multiple values at one position, position gaps, payloads
+## Multiple values at one position
 
-Other than subannotations and standoff annotations (see below) the input format configuration file doesn't currently support indexing multiple values at a single position or position gaps. If you really need one of these and it cannot be achieved with either standoff annotations or subannotations, please contact us and we may add support for your use case. Otherwise, see [indexing with BlackLab](indexing-with-blacklab.html) for the Java-based way to accomplish this.
+Subannotations and standoff annotations (see below) both provide a way to index additional values at the same token position. But it is also possible to just index several values for any regular annotation, such as multiple lemmatizations or multiple possible part of speech tags.
 
-Payloads (a Lucene feature for storing extra data at each token position) are used to index inline tags, but are not otherwise used. If you write a Java-based indexer it is possible to add your own payloads.
+If your data looks like this:
+
+    <?xml version="1.0" ?>
+    <root>
+        <document>
+            <text>
+                <w>
+                    <t>Helo</t>
+                    <lemma class='hello' />
+                    <lemma class='halo' />
+                </w>
+                <w>
+                    <t>wold</t>
+                    <lemma class="world"/>
+                    <lemma class="would"/>
+                </w>
+            </text>
+        </document>
+    </root>
+    
+You can index all the values for lemma at the same token position like this:
+
+    annotatedFields:
+      contents:
+        containerPath: text
+        wordPath: .//w
+        annotations:
+        - name: word
+          valuePath: t
+        - name: lemma
+          valuePath: lemma
+          multipleValues: true
+          
+If you don't specify multipleValues, only the first value will be used. The reason you explicitly have to specify it is that this is relatively rare and could slow down the indexing process if automatically applied to all annotations.
+
+This also works for tabular formats like csv, tsv or sketch-wpl. You can specify a regular expression to use for splitting a column value into multiple values. The default is simply a semicolon (;). You can change it as follows:
+
+    fileType: tabular
+    fileTypeOptions:
+      type: tsv
+      multipleValuesSeparator: "/"
 
 <a id="standoff-annotations"></a>
 
@@ -444,7 +484,7 @@ Here's a simple example configuration, `my-tsv.blf.yaml`, that will parse tab-de
     fileType: tabular
 
     # Options for tabular format
-    tabularOptions:
+    fileTypeOptions:
 
       # TSV (tab-separated values) or CSV (comma-separated values, like Excel)
       type: tsv
@@ -488,7 +528,7 @@ The Sketch Engine takes a tab-delimited WPL input format that document tags, inl
 Here's a configuration to index this format (`sketch-wpl.blf.yaml`, already included in the BlackLab JAR):
 
     fileType: tabular
-    tabularOptions:
+    fileTypeOptions:
       type: tsv
       inlineTags: true  # allows inline tags such as in Sketch WPL format
                         # all inline tags encountered will be indexed

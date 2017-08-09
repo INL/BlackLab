@@ -63,6 +63,9 @@ public class ConfigAnnotation {
     /** What UI element to show in the interface (optional) */
     private String uiType = "";
 
+    /** Can this annotation have multiple values at one token position? [false] */
+    private boolean multipleValues = false;
+
     public ConfigAnnotation() {
     }
 
@@ -99,6 +102,7 @@ public class ConfigAnnotation {
             result.addSubAnnotation(a.copy());
         }
         result.setForwardIndex(forwardIndex);
+        result.setMultipleValues(multipleValues);
         return result;
     }
 
@@ -217,6 +221,14 @@ public class ConfigAnnotation {
 
     public void setForwardIndex(boolean forwardIndex) {
         this.forwardIndex = forwardIndex;
+    }
+
+    public boolean isMultipleValues() {
+        return multipleValues;
+    }
+
+    public void setMultipleValues(boolean multipleValues) {
+        this.multipleValues = multipleValues;
     }
 
 }
