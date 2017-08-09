@@ -109,11 +109,6 @@ Below is the configuration file you would need to index files of this type. This
 
 Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).
 
-    # Identifier by which this format is found
-    # (the format should be saved in a file with the same name, plus of course the
-    #  .yaml extension (or .json if you prefer that format)
-    name: simple-input-format
-    
     # What element starts a new document?
     documentPath: //document
     
