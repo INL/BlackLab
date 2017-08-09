@@ -70,7 +70,7 @@ public class DocumentFormats {
         // By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
         // By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
         register("di-tei", DocIndexerTei.class);
-        register("di-tei-element-body", DocIndexerTei.class);
+        //register("di-tei-element-body", DocIndexerTei.class);
         register("di-tei-element-text", DocIndexerTeiText.class);
         register("di-tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
 
@@ -263,37 +263,18 @@ public class DocumentFormats {
 	/**
 	 * Returns a sorted list of registered document format abbreviations.
 	 *
-	 * @param includeLegacy include straight DocIndexer classes (not via config file)?
-	 *           (this is the old way of specifying input formats)
 	 * @return the list of registered abbreviations
 	 */
-	public static List<String> list(boolean includeLegacy) {
+	public static List<String> list() {
 		List<String> l = new ArrayList<>();
 		for (ConfigInputFormat config: configs.values()) {
 		    l.add(config.getName());
 		}
-		if (includeLegacy) {
-            for (String format: formats.keySet()) {
-                l.add(format);
-            }
-		}
-		Collections.sort(l);
-		return Collections.unmodifiableList(l);
-	}
-
-    /**
-     * Returns a sorted list of directly DocIndexer-based (not config-based) formats.
-     *
-     * @return the list of registered abbreviations
-     */
-    public static List<String> listDocIndexerFormats() {
-        List<String> l = new ArrayList<>();
         for (String format: formats.keySet()) {
             l.add(format);
         }
-        Collections.sort(l);
-        return Collections.unmodifiableList(l);
-    }
+		return Collections.unmodifiableList(l);
+	}
 
     public static String stripExtensions(String fileName) {
         String name = fileName.replaceAll("\\.(ya?ml|json)$", "");

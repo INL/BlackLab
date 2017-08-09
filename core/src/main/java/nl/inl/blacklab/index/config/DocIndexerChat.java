@@ -47,6 +47,8 @@ public class DocIndexerChat extends DocIndexerConfig {
 	/** The locale to use for date parsing (by default, use system locale) */
     private Locale locale = null;
 
+    private ConfigAnnotatedField currentAnnotatedField;
+
 	@Override
 	public void indexSpecificDocument(String documentExpr) {
         // documentExpr is ignored because CHAT files always contain 1 document
@@ -116,6 +118,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
         // For the configured annotated field...
         for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields().values()) {
+            currentAnnotatedField = annotatedField;
             setCurrentComplexField(annotatedField.getName());
 
             log("processing " + documentName + "...");
@@ -377,20 +380,20 @@ public class DocIndexerChat extends DocIndexerConfig {
         Date d = (Date)metadata.get(el);
         String normalizeddate = toIsoFormat(d);
         String uel = despaceMetadataName(el);
-    	// TODO: execute processing step(s) for metadata fields
+    	normalizeddate = processMetadataValue(uel, normalizeddate);
         addMetadataField(uel, normalizeddate);
     }
 
 	private void addMetaInt(String el, Map<String, Object> metadata) {
         String uel = despaceMetadataName(el);
-    	// TODO: execute processing step(s) for metadata fields
-        addMetadataField(uel, metadata.get(el).toString());
+        String value = processMetadataValue(uel, metadata.get(el).toString());
+        addMetadataField(uel, value);
     }
 
 	private void addMetaTxt(String el, Map<String, Object> metadata) {
         String uel = despaceMetadataName(el);
-    	// TODO: execute processing step(s) for metadata fields
-        addMetadataField(uel, metadata.get(el).toString());
+        String value = processMetadataValue(uel, metadata.get(el).toString());
+        addMetadataField(uel, value);
     }
 
 	private Date normalizeDate(String str) {
@@ -554,12 +557,15 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     private void addWords(String line) {
-    	String[] words = line.trim().split("\\s+");
-    	for (String word: words) {
-    	    beginWord();
-    		annotation(propMain().getName(), word, 1, null);
+        String[] words = line.trim().split("\\s+");
+        for (String word: words) {
+            beginWord();
+            for (ConfigAnnotation annot: currentAnnotatedField.getAnnotations().values()) {
+                String processed = processString(word, annot.getProcess());
+            	annotation(annot.getName(), processed, 1, null);
+            }
             endWord();
-    	}
+        }
     }
 
     private Pair<Integer, Boolean> processLine(int lineNumber, String line, Object md, int uttId, boolean headerModified) {

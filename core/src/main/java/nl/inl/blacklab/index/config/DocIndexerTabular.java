@@ -195,8 +195,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                     inDocument = true;
                                     startDocument();
                                     for (Entry<String, String> e: attributes.entrySet()) {
-                                    	// TODO: execute processing step(s) for metadata fields
-                                        addMetadataField(e.getKey(), e.getValue());
+                                    	String value = processMetadataValue(e.getKey(), e.getValue());
+                                        addMetadataField(e.getKey(), value);
                                     }
                                 } else {
                                     endDocument();

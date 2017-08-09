@@ -346,32 +346,25 @@ public class IndexTool {
 						+ "                         You can also add a property named meta-<name> to your\n"
 						+ "                         indexer.properties file. This field is stored untokenized.\n"
 						+ "\n"
-						+ "Input format configurations:");
-		for (String format: DocumentFormats.list(false)) {
+						+ "Available input format configurations:");
+		for (String format: DocumentFormats.list()) {
 		    String displayName = "", desc = "";
 		    ConfigInputFormat config = DocumentFormats.getConfig(format);
 		    if (config != null) {
     		    displayName = config.getDisplayName();
-    		    if (displayName.length() > 0)
-    		        displayName = " (" + displayName + ")";
     		    desc = config.getDescription();
-    		    if (desc.length() > 0) {
-    		        desc = "\n      " + StringUtil.join(StringUtil.wrap(desc, 75), "\n      ");
-    		    }
+		    } else {
+	            Class<? extends DocIndexer> docIndexerClass = DocumentFormats.getIndexerClass(format);
+	            displayName = DocIndexer.getDisplayName(docIndexerClass);
+	            desc = DocIndexer.getDescription(docIndexerClass);
 		    }
-			System.out.println("  " + format + displayName + desc);
-		}
-        for (String format: DocumentFormats.listDocIndexerFormats()) {
-            Class<? extends DocIndexer> docIndexerClass = DocumentFormats.getIndexerClass(format);
-            String displayName = DocIndexer.getDisplayName(docIndexerClass);
             if (displayName.length() > 0)
                 displayName = " (" + displayName + ")";
-            String desc = DocIndexer.getDescription(docIndexerClass);
             if (desc.length() > 0) {
                 desc = "\n      " + StringUtil.join(StringUtil.wrap(desc, 75), "\n      ");
             }
-            System.out.println("  " + format + displayName + desc);
-        }
+			System.out.println("  " + format + displayName + desc);
+		}
 	}
 
 	/**

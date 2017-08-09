@@ -28,8 +28,7 @@ public class DocIndexerTeiPosInFunctionAttr extends DocIndexerTeiBase {
 
     public static String getDisplayName() { return "Alternate TEI indexer"; }
     public static String getDescription() { return
-            "DocIndexerTeiPosInFunctionAttr, less flexible than config-based one but a bit faster. Main contents should be in body element, " +
-            "should be tokenized and PoS tags should be in the function attribute."; }
+            "Like di-tei, but part of speech should be in function attribute."; }
 
 	public DocIndexerTeiPosInFunctionAttr(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader, "body", false);

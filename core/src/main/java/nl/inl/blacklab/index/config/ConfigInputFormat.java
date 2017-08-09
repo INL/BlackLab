@@ -324,4 +324,13 @@ public class ConfigInputFormat {
         return corpusConfig;
     }
 
+    public ConfigMetadataField getMetadataField(String fieldname) {
+        for (ConfigMetadataBlock bl: metadataBlocks) {
+            ConfigMetadataField f = bl.getMetadataField(fieldname);
+            if (f != null)
+                return f;
+        }
+        return null;
+    }
+
 }

@@ -29,8 +29,7 @@ public class DocIndexerTeiText extends DocIndexerTeiBase {
 
     public static String getDisplayName() { return "Alternate TEI indexer"; }
     public static String getDescription() { return
-            "DocIndexerTeiText, less flexible than config-based one but a bit faster. Main contents should be in text element, " +
-            "should be tokenized and PoS tags should be in the type attribute."; }
+            "Like di-tei, but contents should be in text element."; }
 
 	public DocIndexerTeiText(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader, "text", true);

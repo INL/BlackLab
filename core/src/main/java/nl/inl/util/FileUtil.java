@@ -270,6 +270,9 @@ public class FileUtil {
 	 * Searches the first directory for the file name with each of the extensions, then the
 	 * second directory, etc.
 	 *
+	 * Will only find a file if it is really inside the directory, so e.g. passing
+	 * <code>../../etc/passwd</code> won't work.
+	 *
 	 * @param dirsToSearch directories to search for the file
 	 * @param pathToFile file name or path to the file (without extension if extensions != null)
 	 * @param extensions extensions to try, or null if the extension is already in pathToFile
@@ -281,12 +284,14 @@ public class FileUtil {
         for (File dir: dirsToSearch) {
             if (extensions == null) {
                 configFile = new File(dir, pathToFile);
-                if (configFile.exists())
+                boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());
+                if (configFile.exists() && reallyInsideDir)
                     return configFile;
             } else {
                 for (String ext: extensions) {
                     configFile = new File(dir, pathToFile + "." + ext);
-                    if (configFile.exists())
+                    boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());
+                    if (configFile.exists() && reallyInsideDir)
                         return configFile;
                 }
             }

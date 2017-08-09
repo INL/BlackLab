@@ -205,4 +205,22 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return result;
     }
 
+    /**
+     * If any processing steps were defined for this metadata field, apply them now.
+     *
+     * This is used for non-XML formats, where we don't actively seek out the metadata
+     * but encounter it as we go.
+     *
+     * @param name metadata field name
+     * @param value metadata field value
+     * @return processed value (or orifinal value if not found / no processing steps defined)
+     */
+    protected String processMetadataValue(String name, String value) {
+        ConfigMetadataField f = config.getMetadataField(name);
+        if (f != null) {
+            value = processString(value, f.getProcess());
+        }
+        return value;
+    }
+
 }

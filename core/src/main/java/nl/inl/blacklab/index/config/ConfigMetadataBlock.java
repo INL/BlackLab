@@ -69,4 +69,8 @@ public class ConfigMetadataBlock {
         this.defaultAnalyzer = defaultAnalyzer;
     }
 
+    public ConfigMetadataField getMetadataField(String fieldName) {
+        return fieldsByName.get(fieldName);
+    }
+
 }

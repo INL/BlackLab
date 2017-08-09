@@ -814,9 +814,10 @@ public class Indexer {
     public File getLinkedFile(String inputFile) {
         File f = new File(inputFile);
         if (f.exists())
-            return f;
+            return f; // either absolute or relative to current dir
         if (f.isAbsolute())
-            return null;
+            return null; // we tried absolute, but didn't find it
+        // Look in the configured directories for the relative path
         return FileUtil.findFile(linkedFileDirs, inputFile, null);
     }
 
