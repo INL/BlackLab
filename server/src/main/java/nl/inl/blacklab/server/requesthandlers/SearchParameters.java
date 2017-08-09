@@ -326,7 +326,7 @@ public class SearchParameters {
 	private SampleSettings getSampleSettings() {
 		if (! (containsKey("sample") || containsKey("samplenum")) )
 			return null;
-		float samplePercentage = containsKey("sample") ? getFloat("sample") : -1f;
+		float samplePercentage = containsKey("sample") ? Math.max(Math.min(getFloat("sample"), 100), 0) : -1f;
 		int sampleNum = containsKey("samplenum") ? getInteger("samplenum") : -1;
 		long sampleSeed = containsKey("sampleseed") ? getLong("sampleseed") : HitsSample.RANDOM_SEED;
 		return new SampleSettings(samplePercentage, sampleNum, sampleSeed);
