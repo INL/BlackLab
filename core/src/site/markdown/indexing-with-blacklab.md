@@ -1,6 +1,6 @@
 # Indexing with BlackLab
 
-NOTE: this describes the older way of indexing by implementing a DocIndexer subclass in Java. Starting from BlackLab 1.7.0, you can add support for new input formats using a configuration file. See [here](how-to-configure-indexing.html). The old way described is still supported but parts of it may be removed or changed in the future. 
+NOTE: there's two approaches to adding support for a new input format in BlackLab. This page describes the most advanced and best-performing way: by implementing a DocIndexer subclass in Java. Starting from BlackLab 1.7.0, a much more user-friendly way (but also somewhat worse-performing, around 75% of the old approach) is to add support for new input formats using a configuration file. See [here](how-to-configure-indexing.html). We hope to speed up the configuration-file approach in the future, obviating the need for the advanced approach, but for now, if you're indexing huge corpora, this approach offers the best performance. 
 
 * <a href="#index-supported-format">Indexing documents in a supported format</a>
 * <a href="#supported-formats">Supported formats</a>

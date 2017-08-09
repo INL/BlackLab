@@ -37,6 +37,9 @@ annotatedFields:
     # What are our word tags? (relative to container)
     wordPath: .//w     # (body geldt niet voor OpenSonar, maar ter illustratie)
 
+    # Punctuation between word tags (relative to container)
+    punctPath: .//text()[not(ancestor::w)]   # = "all text nodes (under containerPath) not inside a <w/> element"
+
     # What annotation can each word have? How do we index them?
     # (annotations are also called "(word) properties" in BlackLab)
     # (valuePaths relative to word path)

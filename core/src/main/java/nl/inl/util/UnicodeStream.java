@@ -67,7 +67,6 @@ public class UnicodeStream extends InputStream {
 	 */
 	public UnicodeStream(InputStream in, Charset defaultEncoding) throws IOException {
 		byte bom[] = new byte[BOM_SIZE];
-		Charset encoding = null;
 		int unread;
 		PushbackInputStream pushbackStream = new PushbackInputStream(in, BOM_SIZE);
 		int n = pushbackStream.read(bom, 0, bom.length);

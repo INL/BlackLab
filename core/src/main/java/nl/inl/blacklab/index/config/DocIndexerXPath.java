@@ -94,19 +94,38 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
+    /** Map from XPath expression to compiled XPath. */
+    Map<String, AutoPilot> compiledXPaths = new HashMap<>();
+
+    /** Map from XPath expression to compiled XPath. */
+    Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
+
     /**
      * Create AutoPilot and declare namespaces on it.
      * @return the AutoPilot
+     * @throws XPathParseException
      */
-    AutoPilot createAutoPilot() {
-        AutoPilot ap = new AutoPilot(nav);
-        if (config.isNamespaceAware()) {
-            ap.declareXPathNameSpace("xml", "http://www.w3.org/XML/1998/namespace"); // builtin
-            for (Entry<String, String> e: config.getNamespaces().entrySet()) {
-                ap.declareXPathNameSpace(e.getKey(), e.getValue());
+    AutoPilot acquireAutoPilot(String xpathExpr) throws XPathParseException {
+        AutoPilot ap = compiledXPaths.remove(xpathExpr);
+        if (ap == null) {
+            ap = new AutoPilot(nav);
+            if (config.isNamespaceAware()) {
+                ap.declareXPathNameSpace("xml", "http://www.w3.org/XML/1998/namespace"); // builtin
+                for (Entry<String, String> e: config.getNamespaces().entrySet()) {
+                    ap.declareXPathNameSpace(e.getKey(), e.getValue());
+                }
             }
+            ap.selectXPath(xpathExpr);
+        } else {
+            ap.resetXPath();
         }
+        autoPilotsInUse.put(ap, xpathExpr);
         return ap;
+    }
+
+    void releaseAutoPilot(AutoPilot ap) {
+        String xpathExpr = autoPilotsInUse.remove(ap);
+        compiledXPaths.put(xpathExpr, ap);
     }
 
     @Override
@@ -121,11 +140,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
         nav = vg.getNav();
 
         // Find all documents
-        AutoPilot documents = createAutoPilot();
-        documents.selectXPath(config.getDocumentPath());
+        AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
         while(documents.evalXPath() != -1) {
             indexDocument();
         }
+        releaseAutoPilot(documents);
 
     }
 
@@ -164,15 +183,27 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // and store in instance variables so our methods can access them
         setCurrentAnnotatedField(annotatedField);
 
-        AutoPilot words = createAutoPilot();
-        words.selectXPath(annotatedField.getWordsPath());
+        // Precompile XPaths for words, evalToString, inline tags, punct and (sub)annotations
+        AutoPilot words = acquireAutoPilot(annotatedField.getWordsPath());
+        AutoPilot apEvalToString = acquireAutoPilot(".");
+        List<AutoPilot> apsInlineTag = new ArrayList<>();
+        for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
+            AutoPilot apInlineTag = acquireAutoPilot(inlineTag.getPath());
+            apsInlineTag.add(apInlineTag);
+        }
+        AutoPilot apPunct = null;
+        if (annotatedField.getPunctPath() != null)
+            apPunct = acquireAutoPilot(annotatedField.getPunctPath());
         String tokenPositionIdPath = annotatedField.getTokenPositionIdPath();
+        AutoPilot apTokenPositionId = null;
+        if (tokenPositionIdPath != null) {
+            apTokenPositionId = acquireAutoPilot(tokenPositionIdPath);
+        }
 
         // For each body element...
         // (there's usually only one, but there's no reason to limit it)
         nav.push();
-        AutoPilot bodies = createAutoPilot();
-        bodies.selectXPath(annotatedField.getContainerPath());
+        AutoPilot bodies = acquireAutoPilot(annotatedField.getContainerPath());
         while (bodies.evalXPath() != -1) {
 
             // First we find all inline elements (stuff like s, p, b, etc.) and store
@@ -180,26 +211,23 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // This way, we can keep track of between which words these tags occur.
             // For end tags, we will update the payload of the start tag when we encounter it,
             // just like we do in our SAX parsers.
-            AutoPilot apTags = createAutoPilot();
-            AutoPilot apEvalToString = createAutoPilot();
-            apEvalToString.selectXPath(".");
             List<InlineObject> tagsAndPunct = new ArrayList<>();
-            for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
+            for (AutoPilot apInlineTag: apsInlineTag) {
                 nav.push();
-                apTags.selectXPath(inlineTag.getPath());
-                while (apTags.evalXPath() != -1) {
+                apInlineTag.resetXPath();
+                while (apInlineTag.evalXPath() != -1) {
                     collectInlineTag(tagsAndPunct);
                 }
                 nav.pop();
             }
             setAddDefaultPunctuation(true);
-            if (annotatedField.getPunctPath() != null) {
+            if (apPunct != null) {
                 // We have punctuation occurring between word tags (as opposed to
                 // punctuation that is tagged as a word itself). Collect this punctuation.
                 setAddDefaultPunctuation(false);
             	nav.push();
-                apTags.selectXPath(annotatedField.getPunctPath());
-                while (apTags.evalXPath() != -1) {
+            	apPunct.resetXPath();
+                while (apPunct.evalXPath() != -1) {
                     apEvalToString.resetXPath();
                     String punct = apEvalToString.evalXPathToString();
                     collectPunct(tagsAndPunct, punct);
@@ -216,10 +244,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
             while (words.evalXPath() != -1) {
 
                 // Capture tokenPositionId for this token position?
-                AutoPilot apAnnot = createAutoPilot();
-                if (tokenPositionIdPath != null) {
-                    apAnnot.selectXPath(tokenPositionIdPath);
-                    String tokenPositionId = apAnnot.evalXPathToString();
+                if (apTokenPositionId != null) {
+                    apTokenPositionId.resetXPath();
+                    String tokenPositionId = apTokenPositionId.evalXPathToString();
                     tokenPositionsMap.put(tokenPositionId, getCurrentTokenPosition());
                 }
 
@@ -239,7 +266,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 // For each configured annotation...
                 for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
-                    processAnnotation(annotation, apAnnot, null);
+                    processAnnotation(annotation, null);
                 }
 
                 endWord();
@@ -262,13 +289,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
         for (ConfigStandoffAnnotations standoff: annotatedField.getStandoffAnnotations()) {
             // For each instance of this standoff annotation..
             nav.push();
-            AutoPilot apStandoff = createAutoPilot();
-            apStandoff.selectXPath(standoff.getPath());
-            AutoPilot apTokenPos = createAutoPilot();
-            apTokenPos.selectXPath(standoff.getRefTokenPositionIdPath());
-            AutoPilot apEvalToString = createAutoPilot();
-            apEvalToString.selectXPath(".");
-            AutoPilot apAnnot = createAutoPilot();
+            AutoPilot apStandoff = acquireAutoPilot(standoff.getPath());
+            AutoPilot apTokenPos = acquireAutoPilot(standoff.getRefTokenPositionIdPath());
             while (apStandoff.evalXPath() != -1) {
 
                 // Determine what token positions to index these values at
@@ -287,24 +309,33 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 nav.pop();
 
                 for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
-                    processAnnotation(annotation, apAnnot, tokenPositions);
+                    processAnnotation(annotation, tokenPositions);
                 }
             }
+            releaseAutoPilot(apStandoff);
+            releaseAutoPilot(apTokenPos);
             nav.pop();
         }
+
+        releaseAutoPilot(words);
+        releaseAutoPilot(apEvalToString);
+        for (AutoPilot ap: apsInlineTag) {
+            releaseAutoPilot(ap);
+        }
+        if (apPunct != null)
+            releaseAutoPilot(apPunct);
+        if (apTokenPositionId != null)
+            releaseAutoPilot(apTokenPositionId);
+        releaseAutoPilot(bodies);
     }
 
     protected void processMetadataBlock(ConfigMetadataBlock b) throws XPathParseException, XPathEvalException, NavException {
         // For each instance of this metadata block...
         nav.push();
-        AutoPilot apMetadataBlock = createAutoPilot();
-        apMetadataBlock.selectXPath(b.getContainerPath());
+        AutoPilot apMetadataBlock = acquireAutoPilot(b.getContainerPath());
         while (apMetadataBlock.evalXPath() != -1) {
 
             // For each configured metadata field...
-            AutoPilot apMetadata = createAutoPilot();
-            AutoPilot apFieldName = createAutoPilot();
-            AutoPilot apMetaForEach = createAutoPilot();
             for (ConfigMetadataField f: b.getFields()) {
 
                 // Metadata field configs without a valuePath are just for
@@ -314,13 +345,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     continue;
 
                 // Capture whatever this configured metadata field points to
+                AutoPilot apMetadata = acquireAutoPilot(f.getValuePath());
                 if (f.isForEach()) {
                     // "forEach" metadata specification
                     // (allows us to capture many metadata fields with 3 XPath expressions)
                     nav.push();
-                    apMetaForEach.selectXPath(f.getForEachPath());
-                    apFieldName.selectXPath(f.getName());
-                    apMetadata.selectXPath(f.getValuePath());
+                    AutoPilot apMetaForEach = acquireAutoPilot(f.getForEachPath());
+                    AutoPilot apFieldName = acquireAutoPilot(f.getName());
                     while (apMetaForEach.evalXPath() != -1) {
                         // Find the fieldName and value for this forEach match
                         apFieldName.resetXPath();
@@ -335,14 +366,16 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         }
                         addMetadataField(fieldName, metadataValue);
                     }
+                    releaseAutoPilot(apMetaForEach);
+                    releaseAutoPilot(apFieldName);
                     nav.pop();
                 } else {
                     // Regular metadata field; just the fieldName and an XPath expression for the value
-                    apMetadata.selectXPath(f.getValuePath());
                     String metadataValue = apMetadata.evalXPathToString();
                     metadataValue = processString(metadataValue, f.getProcess());
                     addMetadataField(f.getName(), metadataValue);
                 }
+                releaseAutoPilot(apMetadata);
             }
 
         }
@@ -352,14 +385,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
     protected void processLinkedDocument(ConfigLinkedDocument ld) throws XPathParseException {
         // Resolve linkPaths to get the information needed to fetch the document
         List<String> results = new ArrayList<>();
-        AutoPilot apLinkPath = createAutoPilot();
         for (ConfigLinkValue linkValue: ld.getLinkValues()) {
             String result = "";
             String valuePath = linkValue.getValuePath();
             String valueField = linkValue.getValueField();
             if (valuePath != null) {
                 // Resolve value using XPath
-                apLinkPath.selectXPath(valuePath);
+                AutoPilot apLinkPath = acquireAutoPilot(valuePath);
                 result = apLinkPath.evalXPathToString();
                 if (result == null || result.isEmpty()) {
                     switch(ld.getIfLinkPathMissing()) {
@@ -372,6 +404,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         throw new RuntimeException("Link path " + valuePath + " not found in document " + documentName);
                     }
                 }
+                releaseAutoPilot(apLinkPath);
             } else if (valueField != null) {
                 // Fetch value from Lucene doc
                 result = currentLuceneDoc.get(valueField);
@@ -414,13 +447,14 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * @param indexAtPositions if null: index at the current position; otherwise, index at all these positions
      * @throws VTDException on XPath error
      */
-    protected void processAnnotation(ConfigAnnotation annotation, AutoPilot apAnnot, List<Integer> indexAtPositions) throws VTDException {
+    protected void processAnnotation(ConfigAnnotation annotation, List<Integer> indexAtPositions) throws VTDException {
         String basePath = annotation.getBasePath();
         if (basePath != null) {
             // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
             nav.push();
-            apAnnot.selectXPath(basePath);
-            apAnnot.evalXPath();
+            AutoPilot apBase = acquireAutoPilot(basePath);
+            apBase.evalXPath();
+            releaseAutoPilot(apBase);
         }
 
         String valuePath = annotation.getValuePath();
@@ -428,21 +462,20 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // See if we want to capture any values and substitute them into the XPath
         int i = 1;
         for (String captureValuePath: annotation.getCaptureValuePaths()) {
-            apAnnot.selectXPath(captureValuePath);
-            String value = apAnnot.evalXPathToString();
+            AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
+            String value = apCaptureValuePath.evalXPathToString();
+            releaseAutoPilot(apCaptureValuePath);
             valuePath = valuePath.replace("$" + i, value);
             i++;
         }
 
-        apAnnot.selectXPath(valuePath);
-        String annotValue = apAnnot.evalXPathToString();
+        AutoPilot apValuePath = acquireAutoPilot(valuePath);
+        String annotValue = apValuePath.evalXPathToString();
+        releaseAutoPilot(apValuePath);
         annotValue = processString(annotValue, annotation.getProcess());
         annotation(annotation.getName(), annotValue, 1, indexAtPositions);
 
         // For each configured subannotation...
-        AutoPilot apValue = createAutoPilot();
-        AutoPilot apName = createAutoPilot();
-        AutoPilot apForEach = createAutoPilot();
         for (ConfigAnnotation subAnnot: annotation.getSubAnnotations()) {
             // Subannotation configs without a valuePath are just for
             // adding information about subannotations captured in forEach's,
@@ -451,13 +484,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 continue;
 
             // Capture this subannotation value
+            AutoPilot apValue = acquireAutoPilot(subAnnot.getValuePath());
             if (subAnnot.isForEach()) {
                 // "forEach" subannotation specification
                 // (allows us to capture multiple subannotations with 3 XPath expressions)
                 nav.push();
-                apForEach.selectXPath(subAnnot.getForEachPath());
-                apName.selectXPath(subAnnot.getName());
-                apValue.selectXPath(subAnnot.getValuePath());
+                AutoPilot apForEach = acquireAutoPilot(subAnnot.getForEachPath());
+                AutoPilot apName = acquireAutoPilot(subAnnot.getName());
                 while (apForEach.evalXPath() != -1) {
                     // Find the name and value for this forEach match
                     apName.resetXPath();
@@ -472,14 +505,16 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     }
                     subAnnotation(annotation.getName(), name, value, indexAtPositions);
                 }
+                releaseAutoPilot(apForEach);
+                releaseAutoPilot(apName);
                 nav.pop();
             } else {
                 // Regular metadata field; just the fieldName and an XPath expression for the value
-                apValue.selectXPath(subAnnot.getValuePath());
                 String value = apValue.evalXPathToString();
                 value = processString(value, subAnnot.getProcess());
                 subAnnotation(annotation.getName(), subAnnot.getName(), value, indexAtPositions);
             }
+            releaseAutoPilot(apValue);
         }
 
         if (basePath != null) {
@@ -500,26 +535,27 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
             nav = vg.getNav();
 
-            AutoPilot documents = createAutoPilot();
             boolean docDone = false;
             if (documentXPath != null) {
                 // Find our specific document
-                documents.selectXPath(documentXPath);
+                AutoPilot documents = acquireAutoPilot(documentXPath);
                 while(documents.evalXPath() != -1) {
                     if (docDone)
                         throw new RuntimeException("Document link " + documentXPath + " matched multiple documents in " + documentName);
                     indexDocument();
                     docDone = true;
                 }
+                releaseAutoPilot(documents);
             } else {
                 // Process whole file; must be 1 document
-                documents.selectXPath(config.getDocumentPath());
+                AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
                 while(documents.evalXPath() != -1) {
                     if (docDone)
                         throw new RuntimeException("Linked file contains multiple documents (and no document path given) in " + documentName);
                     indexDocument();
                     docDone = true;
                 }
+                releaseAutoPilot(documents);
             }
         } catch (Exception e1) {
             throw ExUtil.wrapRuntimeException(e1);

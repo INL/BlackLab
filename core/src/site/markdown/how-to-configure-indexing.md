@@ -1,6 +1,6 @@
 # How to configure indexing in BlackLab
 
-NOTE: this describes the new way of indexing, using index format configuration files, available starting from BlackLab 1.7.0. The older, more direct way of indexing is still supported (although parts may be removed or changed in future versions); see [here](indexing-with-blacklab.html). 
+NOTE: this describes the new way of indexing, using index format configuration files, available starting from BlackLab 1.7.0. There's also an advanced way of adding an input format that offers around 30% better performance, by implementing a Java class. See [here](indexing-with-blacklab.html). In the future, we hope to speed up the configuration approach to indexing, obviating the need for implementing your own Java class.
 
 * <a href="#index-supported-format">Indexing documents in a supported format</a>
 * <a href="#supported-formats">Supported formats</a>
