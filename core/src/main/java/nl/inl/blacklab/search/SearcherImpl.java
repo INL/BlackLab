@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -64,6 +65,7 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.util.ExUtil;
+import nl.inl.util.FileUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
 
@@ -116,6 +118,12 @@ public class SearcherImpl extends Searcher implements Closeable {
     SearcherImpl(File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config)
             throws IOException {
         this.indexMode = indexMode;
+
+        // Read settings from general blacklab config file, if found
+        File blConfigFile = FileUtil.findFile(getConfigDirs(), "blacklab", Arrays.asList("yaml", "yml", "json"));
+        if (blConfigFile != null) {
+            ConfigReader.read(blConfigFile, this);
+        }
 
         openIndex(indexDir, indexMode, createNewIndex);
 

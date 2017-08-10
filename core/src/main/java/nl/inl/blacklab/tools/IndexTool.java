@@ -32,13 +32,12 @@ import java.util.TreeMap;
 
 import org.apache.lucene.index.CorruptIndexException;
 
-import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.DocumentFormats.FormatDesc;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
@@ -263,7 +262,7 @@ public class IndexTool {
 		}
 
 		// Create the indexer and index the files
-        DownloadCache.setEnabled(true); // allow downloading linked (metadata) documents
+        DownloadCache.setDownloadAllowed(true); // allow downloading linked (metadata) documents
 		if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
 			indexTemplateFile = null;
 		}
@@ -347,23 +346,16 @@ public class IndexTool {
 						+ "                         indexer.properties file. This field is stored untokenized.\n"
 						+ "\n"
 						+ "Available input format configurations:");
-		for (String format: DocumentFormats.list()) {
-		    String displayName = "", desc = "";
-		    ConfigInputFormat config = DocumentFormats.getConfig(format);
-		    if (config != null) {
-    		    displayName = config.getDisplayName();
-    		    desc = config.getDescription();
-		    } else {
-	            Class<? extends DocIndexer> docIndexerClass = DocumentFormats.getIndexerClass(format);
-	            displayName = DocIndexer.getDisplayName(docIndexerClass);
-	            desc = DocIndexer.getDescription(docIndexerClass);
-		    }
+		for (FormatDesc format: DocumentFormats.getSupportedFormats()) {
+            String name = format.getName();
+		    String displayName = format.getDisplayName();
+		    String desc = format.getDescription();
             if (displayName.length() > 0)
                 displayName = " (" + displayName + ")";
             if (desc.length() > 0) {
                 desc = "\n      " + StringUtil.join(StringUtil.wrap(desc, 75), "\n      ");
             }
-			System.out.println("  " + format + displayName + desc);
+			System.out.println("  " + name + displayName + desc);
 		}
 	}
 

@@ -106,6 +106,7 @@ public abstract class RequestHandler {
 		String urlResource = parts.length >= 2 ? parts[1] : "";
 		String urlPathInfo = parts.length >= 3 ? parts[2] : "";
 		boolean resourceOrPathGiven = urlResource.length() > 0 || urlPathInfo.length() > 0;
+        boolean pathGiven = urlPathInfo.length() > 0;
 
 		// If we're doing something with a private index, it must be our own.
 		boolean isPrivateIndex = false;
@@ -130,12 +131,18 @@ public abstract class RequestHandler {
 		String method = request.getMethod();
 		if (method.equals("DELETE")) {
 			// Index given and nothing else?
-			if (indexName.length() == 0 || resourceOrPathGiven) {
-				return errorObj.methodNotAllowed("DELETE", null);
-			}
-			if (!isPrivateIndex)
-				return errorObj.forbidden("You can only delete your own private indices.");
-			requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
+            if (indexName.equals("input-formats")) {
+                if (pathGiven)
+                    return errorObj.methodNotAllowed("DELETE", null);
+                requestHandler = new RequestHandlerDeleteFormat(servlet, request, user, indexName, urlResource, urlPathInfo);
+            } else {
+    			if (indexName.length() == 0 || resourceOrPathGiven) {
+    				return errorObj.methodNotAllowed("DELETE", null);
+    			}
+    			if (!isPrivateIndex)
+    				return errorObj.forbidden("You can only delete your own private indices.");
+                requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
+            }
 		} else if (method.equals("PUT")) {
 			return errorObj.methodNotAllowed("PUT", "Create new index with POST to /blacklab-server");
 		} else {
@@ -153,6 +160,10 @@ public abstract class RequestHandler {
 						return errorObj.unauthorized("You are not authorized to do this.");
 					}
 					requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource, urlPathInfo);
+                } else if (indexName.equals("input-formats")) {
+                    if (!user.isLoggedIn())
+                        return errorObj.unauthorized("You must be logged in to add a format.");
+                    requestHandler = new RequestHandlerAddFormat(servlet, request, user, indexName, urlResource, urlPathInfo);
 				} else if (/*request.getParameter("data") != null*/ServletFileUpload.isMultipartContent(request)) {
 					// Add document to index
 					if (!isPrivateIndex)
@@ -164,7 +175,7 @@ public abstract class RequestHandler {
 						// POST to /blacklab-server/indexName/docs/ : add data to index
 						requestHandler = new RequestHandlerAddToIndex(servlet, request, user, indexName, urlResource, urlPathInfo);
 					} else {
-						return errorObj.methodNotAllowed("POST", "Note that retrieval can only be done using GET.");
+						return errorObj.methodNotAllowed("POST", "You can only add new files at .../indexName/docs/");
 					}
 				} else {
 					// Some other POST request; handle it as a GET.
@@ -183,6 +194,8 @@ public abstract class RequestHandler {
 					requestHandler = new RequestHandlerCacheInfo(servlet, request, user, indexName, urlResource, urlPathInfo);
 				} else if (indexName.equals("help")) {
 					requestHandler = new RequestHandlerBlsHelp(servlet, request, user, indexName, urlResource, urlPathInfo);
+                } else if (indexName.equals("input-formats")) {
+                    requestHandler = new RequestHandlerListInputFormats(servlet, request, user, indexName, urlResource, urlPathInfo);
 				} else if (indexName.length() == 0) {
 					// No index or operation given; server info
 					requestHandler = new RequestHandlerServerInfo(servlet, request, user, indexName, urlResource, urlPathInfo);

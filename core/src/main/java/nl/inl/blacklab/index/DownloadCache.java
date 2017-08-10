@@ -30,7 +30,7 @@ public class DownloadCache {
     private static boolean fileDownloadAllowed = false;
 
     /** Maximum size of (linked, e.g. metadata) files downloaded */
-    private static int maxDownloadedFileSize = 10000000;
+    private static long maxDownloadedFileSize = 10000000;
 
     /** Maximum age of downloaded file in sec */
     private static int maxDownloadAgeSec = 24 * 3600;
@@ -159,7 +159,6 @@ public class DownloadCache {
             it = downloadedFiles.values().iterator();
             while (downloadFolderSize > maxDownloadFolderSize && it.hasNext()) {
                 Download download = it.next();
-                downloadedFiles.remove(download.key);
                 downloadFolderSize -= download.size();
                 download.delete(); // delete the file
                 it.remove();
@@ -181,8 +180,9 @@ public class DownloadCache {
         Download download = downloadedFiles.get(inputFile);
         if (download == null) {
             URL url = new URL(inputFile);
-            if (getUrlSize(url) > DownloadCache.getMaxDownloadedFileSize())
-                throw new UnsupportedOperationException("File too large (max size = " + getMaxDownloadedFileSize() + ")");
+            int urlSize = getUrlSize(url);
+            if (urlSize > maxDownloadedFileSize)
+                throw new UnsupportedOperationException("File too large (" + urlSize + " > " + maxDownloadedFileSize + ")");
             String ext = inputFile.replaceAll("^.+(\\.[^\\.]+)$", "$1");
             if (ext == null || ext.isEmpty())
                 ext = ".xml";
@@ -202,19 +202,24 @@ public class DownloadCache {
         return fileDownloadAllowed;
     }
 
-    public static void setEnabled(boolean fileDownloadAllowed) {
+    public static void setDownloadAllowed(boolean fileDownloadAllowed) {
         DownloadCache.fileDownloadAllowed = fileDownloadAllowed;
     }
 
-    public static int getMaxDownloadedFileSize() {
-        return maxDownloadedFileSize;
-    }
-
-    public static void setMaxFileSize(int maxDownloadedFileSize) {
-        DownloadCache.maxDownloadedFileSize = maxDownloadedFileSize;
+    public static void setMaxFileSizeMegs(int maxDownloadedFileSizeMegs) {
+        maxDownloadedFileSize = maxDownloadedFileSizeMegs * 1000000;
+        if (maxDownloadFolderSize < maxDownloadedFileSize)
+            maxDownloadedFileSize = maxDownloadFolderSize;
     }
 
     public static File getDownloadTempDir() {
+        if (downloadTempDir == null) {
+            downloadTempDir = new File(System.getProperty("java.io.tmpdir"), "bls-download-cache");
+        }
+        if (!downloadTempDir.exists()) {
+            downloadTempDir.mkdir();
+            downloadTempDir.deleteOnExit();
+        }
         return downloadTempDir;
     }
 
@@ -222,8 +227,10 @@ public class DownloadCache {
         DownloadCache.downloadTempDir = downloadTempDir;
     }
 
-    public static void setSizeMegs(long downloadFolderSizeMegs) {
-        DownloadCache.downloadFolderSize = downloadFolderSizeMegs * 1000000;
+    public static void setSizeMegs(int maxDownloadFolderSizeMegs) {
+        maxDownloadFolderSize = maxDownloadFolderSizeMegs * 1000000;
+        if (maxDownloadFolderSize < maxDownloadedFileSize)
+            maxDownloadedFileSize = maxDownloadFolderSize;
     }
 
 }

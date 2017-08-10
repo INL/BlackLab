@@ -462,4 +462,13 @@ public abstract class DocIndexer {
         }
     }
 
+    public static boolean listFormat(Class<? extends DocIndexer> docIndexerClass) {
+        try {
+            Method m = docIndexerClass.getMethod("listFormat");
+            return (boolean)m.invoke(null);
+        } catch (ReflectiveOperationException e) {
+            return true;
+        }
+    }
+
 }

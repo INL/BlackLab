@@ -10,7 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.DocIndexerFactoryConfig;
 import nl.inl.blacklab.index.config.ConfigAnnotatedField;
 import nl.inl.blacklab.index.config.ConfigAnnotation;
 import nl.inl.blacklab.index.config.ConfigCorpus;
@@ -150,8 +151,9 @@ public class IndexMetadata {
 
         // Also (recursively) add metadata and complex field config from any linked documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            ConfigInputFormat linkedConfig = DocumentFormats.getConfig(ld.getInputFormat());
-            addFieldInfoFromConfig(metadata, complex, metaGroups, linkedConfig);
+            DocIndexerFactory factory = ld.getInputFormat();
+            if (factory instanceof DocIndexerFactoryConfig)
+                addFieldInfoFromConfig(metadata, complex, metaGroups, factory.getConfig());
         }
     }
 

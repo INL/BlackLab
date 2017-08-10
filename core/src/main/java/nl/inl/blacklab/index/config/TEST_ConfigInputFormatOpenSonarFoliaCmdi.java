@@ -1,5 +1,6 @@
 package nl.inl.blacklab.index.config;
 
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.config.ConfigLinkedDocument.MissingLinkPathAction;
 
 public class TEST_ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat {
@@ -9,7 +10,7 @@ public class TEST_ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat 
         setDisplayName("OpenSoNaR FoLiA file format with CMDI metadata link");
 
         // Copy everything from this format
-        setBaseFormat("BuiltinOpenSonarFolia");
+        setBaseFormat(DocumentFormats.getConfig("BuiltinOpenSonarFolia"));
 
         // Linked document config
         ConfigLinkedDocument linkedMetadata = getOrCreateLinkedDocument("metadata");
@@ -41,7 +42,7 @@ public class TEST_ConfigInputFormatOpenSonarFoliaCmdi extends ConfigInputFormat 
         //linkedMetadata.setPathInsideArchive("$1");
 
         linkedMetadata.setDocumentPath("/CMD/Components/SoNaRcorpus/Text[@ComponentId = $2]");
-        linkedMetadata.setInputFormat("OpenSonarCmdi");
+        linkedMetadata.setInputFormat(DocumentFormats.getIndexerFactory("OpenSonarCmdi"));
         addLinkedDocument(linkedMetadata);
     }
 

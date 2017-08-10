@@ -196,6 +196,21 @@ public class IndexManager {
 	}
 
 	/**
+	 * Return the specified user's input format configuration dir.
+	 *
+	 * Creates the directory if it doesn't exist.
+	 *
+	 * @param userId the user
+	 * @return user's input format config dir
+	 */
+	public File getUserFormatDir(String userId) {
+	    File formatDir = new File(getUserCollectionDir(userId), "_input_formats");
+	    if (!formatDir.exists())
+	        formatDir.mkdir();
+        return formatDir;
+	}
+
+	/**
 	 * Find an index given its name.
 	 *
 	 * Looks at explicitly configured indices as well as collections.
@@ -529,7 +544,8 @@ public class IndexManager {
 		Set<String> indices = new HashSet<>();
 		if (userDir != null) {
 			for (File f : userDir.listFiles(BlsUtils.readableDirFilter)) {
-				indices.add(userId + ":" + f.getName());
+			    if (Searcher.isIndex(f))
+			        indices.add(userId + ":" + f.getName());
 			}
 		}
 		return indices;
@@ -653,6 +669,16 @@ public class IndexManager {
 	    });
 		return indices;
 	}
+
+    public static boolean mayUserUseFormat(String userId, String name) {
+        return !name.contains(":") || name.startsWith(userId + ":");
+    }
+
+    public static String userFormatName(String userId, String name) {
+        if (name.contains(":") || userId.contains(":"))
+            throw new IllegalArgumentException("userId or format name contains colon: userid=" + userId + ", name=" + name);
+        return userId + ":" + name;
+    }
 
 
 }

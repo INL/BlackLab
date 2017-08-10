@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.index.config.ConfigLinkedDocument.MissingLinkPathAction;
@@ -46,7 +47,14 @@ public class InputFormatReader extends YamlJsonReader {
             switch (e.getKey()) {
             case "displayName": cfg.setDisplayName(str(e)); break;
             case "description": cfg.setDescription(str(e)); break;
-            case "baseFormat": cfg.setBaseFormat(str(e)); break;
+            case "baseFormat": {
+                String formatName = str(e);
+                ConfigInputFormat baseFormat = DocumentFormats.getConfig(formatName);
+                if (baseFormat == null)
+                    throw new InputFormatConfigException("Base format " + formatName + " not found for format " + cfg.getName());
+                cfg.setBaseFormat(baseFormat);
+                break;
+            }
             case "type": cfg.setType(str(e)); break;
             case "fileType": cfg.setFileType(FileType.fromStringValue(str(e))); break;
             case "fileTypeOptions": readFileTypeOptions(e, cfg); break;
@@ -336,7 +344,7 @@ public class InputFormatReader extends YamlJsonReader {
                 case "inputFile": ld.setInputFile(str(e)); break;
                 case "pathInsideArchive": ld.setPathInsideArchive(str(e)); break;
                 case "documentPath": ld.setDocumentPath(str(e)); break;
-                case "inputFormat": ld.setInputFormat(str(e)); break;
+                case "inputFormat": ld.setInputFormat(DocumentFormats.getIndexerFactory(str(e))); break;
                 default:
                     throw new InputFormatConfigException("Unknown key " + e.getKey() + " in linked document " + ld.getName());
                 }

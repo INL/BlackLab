@@ -34,13 +34,10 @@ import nl.inl.util.FileUtil.FileTask;
 public class DocumentFormats {
 
 	/** Document formats */
-	static Map<String, Class<? extends DocIndexer>> formats = new TreeMap<>();
+	static Map<String, Class<? extends DocIndexer>> docIndexerClasses = new TreeMap<>();
 
     /** Configs for different document formats */
-    static Map<String, ConfigInputFormat> configs = new TreeMap<>();
-
-	/** Factories for different document formats */
-    static Map<String, DocIndexerFactory> factories = new TreeMap<>();
+    static Map<String, ConfigInputFormat> formats = new TreeMap<>();
 
     /** How to find additional formats */
     static List<FormatFinder> formatFinders = new ArrayList<>();
@@ -86,19 +83,28 @@ public class DocumentFormats {
 
     private static void registerFormatsFromJar(List<String> formatIdentifiers) {
         for (String formatIdentifier: formatIdentifiers) {
-            if (!formatIdentifier.matches("[\\-\\w]+"))
-                throw new IllegalArgumentException("Invalid file format identifier: " + formatIdentifier + " (word characters only please)");
             try (InputStream is = DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
                 if (is == null)
                     continue; // not found
                 try (Reader reader = new BufferedReader(new InputStreamReader(is))) {
                     ConfigInputFormat format = new ConfigInputFormat(formatIdentifier, reader, false);
+                    format.setReadFromFile(new File("$BLACKLAB_JAR/formats/" + formatIdentifier + ".blf.yaml"));
                     register(format);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    public static BufferedReader getFormatFile(String formatIdentifier) {
+        ConfigInputFormat config = DocumentFormats.getConfig(formatIdentifier);
+        if (config == null)
+            return null;
+        File f = config.getReadFromFile();
+        if (f.getPath().startsWith("$BLACKLAB_JAR/"))
+            return new BufferedReader(new InputStreamReader(DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")));
+        return FileUtil.openForReading(f);
     }
 
     /**
@@ -135,8 +141,7 @@ public class DocumentFormats {
 	 * @param docIndexerClass the DocIndexer class for this format
 	 */
 	public static void register(String formatAbbreviation, final Class<? extends DocIndexer> docIndexerClass) {
-		formats.put(formatAbbreviation.toLowerCase(), docIndexerClass);
-		factories.put(formatAbbreviation.toLowerCase(), new DocIndexerFactoryClass(docIndexerClass));
+		docIndexerClasses.put(formatAbbreviation.toLowerCase(), docIndexerClass);
 	}
 
 	/**
@@ -151,8 +156,7 @@ public class DocumentFormats {
 	    } catch(IllegalArgumentException e) {
 	        throw new IllegalArgumentException("Format " + name + ": " + e.getMessage());
 	    }
-        configs.put(name, config);
-        factories.put(name, new DocIndexerFactoryConfig(config));
+        formats.put(name, config);
 	}
 
 	/**
@@ -162,10 +166,10 @@ public class DocumentFormats {
 	 * @return the DocIndexer class, or null if not found
 	 */
 	public static Class<? extends DocIndexer> getIndexerClass(String formatIdentifier) {
-        if (!formats.containsKey(formatIdentifier.toLowerCase()))
+        if (!docIndexerClasses.containsKey(formatIdentifier.toLowerCase()))
             find(formatIdentifier);
 		// Check if it's a known abbreviation.
-		Class<?> docIndexerClass = formats.get(formatIdentifier.toLowerCase());
+		Class<?> docIndexerClass = docIndexerClasses.get(formatIdentifier.toLowerCase());
 		if (docIndexerClass == null) {
 			// No; is it a fully qualified class name?
 			try {
@@ -184,18 +188,20 @@ public class DocumentFormats {
 	}
 
     public static DocIndexerFactory getIndexerFactory(String formatIdentifier) {
-        if (!factories.containsKey(formatIdentifier.toLowerCase()))
+        formatIdentifier = formatIdentifier.toLowerCase();
+        if (!exists(formatIdentifier))
             find(formatIdentifier);
-	    DocIndexerFactory factory = factories.get(formatIdentifier.toLowerCase());
-	    if (factory != null)
-	        return factory;
+        if (formats.containsKey(formatIdentifier))
+            return new DocIndexerFactoryConfig(formats.get(formatIdentifier));
+        if (docIndexerClasses.containsKey(formatIdentifier))
+            return new DocIndexerFactoryClass(docIndexerClasses.get(formatIdentifier));
         return null;
 	}
 
 	public static ConfigInputFormat getConfig(String formatName) {
-        if (!configs.containsKey(formatName.toLowerCase()))
+        if (!formats.containsKey(formatName.toLowerCase()))
             find(formatName);
-        return configs.get(formatName.toLowerCase());
+        return formats.get(formatName.toLowerCase());
     }
 
     /**
@@ -205,7 +211,8 @@ public class DocumentFormats {
 	 * @return true iff it corresponds to a format
 	 */
 	public static boolean exists(String formatIdentifier) {
-		return getIndexerFactory(formatIdentifier) != null;
+	    formatIdentifier = formatIdentifier.toLowerCase();
+		return formats.containsKey(formatIdentifier) || docIndexerClasses.containsKey(formatIdentifier);
 	}
 
 	public static abstract class FormatFinder {
@@ -261,26 +268,92 @@ public class DocumentFormats {
 	}
 
 	/**
+	 * Description of a supported input format
+	 */
+	public static class FormatDesc {
+
+	    private String formatIdentifier;
+
+	    private String displayName;
+
+	    private String description;
+
+        private boolean unlisted;
+
+        public boolean isUnlisted() {
+            return unlisted;
+        }
+
+        public String getName() {
+            return formatIdentifier;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public FormatDesc(String formatIdentifier, String displayName, String description) {
+            super();
+            this.formatIdentifier = formatIdentifier;
+            this.displayName = displayName;
+            this.description = description;
+        }
+
+        public void setUnlisted(boolean b) {
+            this.unlisted = b;
+        }
+
+	}
+
+    /**
+     * Returns a sorted list of registered document format abbreviations.
+     *
+     * @return the list of registered abbreviations
+     */
+    public static List<FormatDesc> getSupportedFormats() {
+        List<FormatDesc> l = new ArrayList<>();
+        for (ConfigInputFormat config: formats.values()) {
+            l.add(new FormatDesc(config.getName(), config.getDisplayName(), config.getDescription()));
+        }
+        for (String format: docIndexerClasses.keySet()) {
+            Class<? extends DocIndexer> docIndexerClass = getIndexerClass(format);
+            FormatDesc formatDesc = new FormatDesc(format, DocIndexer.getDisplayName(docIndexerClass), DocIndexer.getDescription(docIndexerClass));
+            if (!DocIndexer.listFormat(docIndexerClass))
+                formatDesc.setUnlisted(true);
+            l.add(formatDesc);
+        }
+        return Collections.unmodifiableList(l);
+    }
+
+	/**
 	 * Returns a sorted list of registered document format abbreviations.
 	 *
 	 * @return the list of registered abbreviations
+	 * @deprecated use getSupportedFormats()
 	 */
+    @Deprecated
 	public static List<String> list() {
 		List<String> l = new ArrayList<>();
-		for (ConfigInputFormat config: configs.values()) {
+		for (ConfigInputFormat config: formats.values()) {
 		    l.add(config.getName());
 		}
-        for (String format: formats.keySet()) {
+        for (String format: docIndexerClasses.keySet()) {
             l.add(format);
         }
 		return Collections.unmodifiableList(l);
 	}
 
-    public static String stripExtensions(String fileName) {
-        String name = fileName.replaceAll("\\.(ya?ml|json)$", "");
-        if (name.endsWith(".blf"))
-            return name.substring(0, name.length() - 4);
-        return name;
+    public static void unregister(String formatIdentifier) {
+        if (formats.containsKey(formatIdentifier)) {
+            formats.remove(formatIdentifier);
+        }
+        if (docIndexerClasses.containsKey(formatIdentifier)) {
+            docIndexerClasses.remove(formatIdentifier);
+        }
     }
 
 }

@@ -24,7 +24,6 @@ import org.apache.lucene.util.BytesRef;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
-import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatException;
@@ -188,10 +187,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      * @param storeWithName if set, store the linked document and store the id to it in a field with this name with "Cid" (content id) appended to it
      * @throws IOException on error
      */
-    protected void indexLinkedDocument(String inputFile, String pathInsideArchive, String documentPath, String inputFormat, String storeWithName) throws IOException {
-        // Get the DocIndexerFactory
-        DocIndexerFactory docIndexerFactory = DocumentFormats.getIndexerFactory(inputFormat);
-
+    protected void indexLinkedDocument(String inputFile, String pathInsideArchive, String documentPath, DocIndexerFactory inputFormat, String storeWithName) throws IOException {
         // Fetch the input file (either by downloading it to a temporary location, or opening it from disk)
         File f = resolveFileReference(inputFile);
 
@@ -215,7 +211,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
 
         // Index the data
-        DocIndexer docIndexer = docIndexerFactory.get(indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING);
+        DocIndexer docIndexer = inputFormat.get(indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING);
         if (docIndexer instanceof DocIndexerBase) {
             DocIndexerBase ldi = (DocIndexerBase)docIndexer;
             ldi.indexingIntoExistingLuceneDoc = true;

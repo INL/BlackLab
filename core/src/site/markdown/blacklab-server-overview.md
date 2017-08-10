@@ -385,7 +385,33 @@ The entire document, with occurrences of “test” highlighted (with <hl/\> tag
 
 ### Output
 
-(Description of output format coming soon. Please try in the browser for now; use outputformat=json or outputformat=xml)
+(Description of output format to be added. Please try in the browser for now; use outputformat=json or outputformat=xml)
+
+<a id="indexing"></a>
+
+### Indexing via BlackLab Server (EXPERIMENTAL)
+
+BlackLab Server includes experimental support for creating indices and adding documents to them. We are using these features to build an interface where users can quickly index data and search it, without having to set up a BlackLab installation themselves. These features are still pretty volatile, so don't rely too heavily on them yet, but here's a very quick overview.
+
+Currently, only private indices can be created and appended to. This means there must be a logged-in user. The setting authSystem in blacklab-server.yaml will let you specify what authentication system you'd like to use. If you specify class "AuthDebugFixed" and a userId, you will always be logged in as this user. Have a look at the other Auth* classes (mostly AuthRequestAttribute) to see how real authentication would work.
+
+Another required setting is `userCollectionsDir` (in addition to `indexCollections` which points to the "globally available" indices). In this directly, user-private indices will be created.
+
+When a user is logged in and you have a userCollectionsDir set up, you will see a `user` section on the BlackLab Server info page (`/blacklab-server/`) with both `loggedIn` and `canCreateIndex` set to `true`. To see what input formats are supported, look at the `/blacklab-server/input-formats/` URL.
+
+To create a private index, POST to `/blacklab-server/` with parameters `name` (index identifier), `display` (a human-friendly index name) and `format` (the input format to use for this index, e.g. `tei`). The userId will be prepended to the index name, so if your userId is `myUserId` and you create an index name `myIndex`, the full name will be `myUserId:myIndex`.
+
+To add a file to a private index, upload it to `/blacklab-server/INDEX_NAME/docs` with parameter name `data`.
+
+To remove a private index, send a DELETE request to `/blacklab-server/INDEX_NAME/`.
+
+#### Adding/removing user formats
+
+To add an input format, upload a .yaml or .json configuration file to the `/blacklab-server/input-formats/` URL with parameter name "data". The file name will become the format name. User formats will be prefixed with the userId, so if your userId is `myUserId` and you upload a file `myFormatName.blf.yaml`, a new format `myUserId:myFormatName` will be created. Only you will see it in the formats list, but in theory, everyone can use it (this is different from indices, which are private).
+
+To view an input format configuration, use `/blacklab-server/input-formats/FORMAT_NAME`.
+
+To remove an input format, send a DELETE request to the format page, e.g. `/blacklab-server/input-formats/FORMAT_NAME`.
 
 <a id="installation"></a>
 

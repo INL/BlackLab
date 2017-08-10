@@ -135,7 +135,6 @@ public class ZipHandleManager {
             it = openZips.values().iterator();
             while (openZips.size() > maxOpenZipFiles && it.hasNext()) {
                 ZipHandle zh = it.next();
-                openZips.remove(zh.key);
                 zh.close(); // delete the file
                 it.remove();
             }

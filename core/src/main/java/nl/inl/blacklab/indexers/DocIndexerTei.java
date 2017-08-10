@@ -42,4 +42,5 @@ public class DocIndexerTei extends DocIndexerTeiBase {
 	public DocIndexerTei(Indexer indexer, String fileName, Reader reader) {
 		this(indexer, fileName, reader, "body");
 	}
+
 }

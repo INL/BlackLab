@@ -12,8 +12,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.index.DocumentFormats;
-
 /**
  * Configuration for an input format (either contents, or metadata, or a mix of both).
  */
@@ -80,12 +78,16 @@ public class ConfigInputFormat {
     /** Linked document(s), e.g. containing our metadata */
     private Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
 
+    /** What file was this format read from? Useful if we want to display it in BLS. */
+    private File readFromFile;
+
     public ConfigInputFormat(String name) {
         setName(name);
     }
 
     public ConfigInputFormat(File file) throws IOException {
-        setName(DocumentFormats.stripExtensions(file.getName()));
+        this.readFromFile = file;
+        setName(ConfigInputFormat.stripExtensions(file.getName()));
         InputFormatReader.read(file, this);
     }
 
@@ -96,12 +98,9 @@ public class ConfigInputFormat {
 
     /**
      * Copy everything except name, displayName and description from the specified format.
-     * @param formatName format to copy from
+     * @param baseFormat format to copy from
      */
-    public void setBaseFormat(String formatName) {
-        ConfigInputFormat baseFormat = DocumentFormats.getConfig(formatName);
-        if (baseFormat == null)
-            throw new InputFormatConfigException("Base format " + formatName + " not found for format " + name);
+    public void setBaseFormat(ConfigInputFormat baseFormat) {
         type = baseFormat.getType();
         fileType = baseFormat.getFileType();
         if (baseFormat.getFileTypeOptions() != null)
@@ -331,6 +330,21 @@ public class ConfigInputFormat {
                 return f;
         }
         return null;
+    }
+
+    public static String stripExtensions(String fileName) {
+        String name = fileName.replaceAll("\\.(ya?ml|json)$", "");
+        if (name.endsWith(".blf"))
+            return name.substring(0, name.length() - 4);
+        return name;
+    }
+
+    public File getReadFromFile() {
+        return readFromFile;
+    }
+
+    public void setReadFromFile(File readFromFile) {
+        this.readFromFile = readFromFile;
     }
 
 }

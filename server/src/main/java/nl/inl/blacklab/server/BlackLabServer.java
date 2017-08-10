@@ -28,7 +28,6 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -67,9 +66,6 @@ public class BlackLabServer extends HttpServlet {
 	}
 
     private void readConfig() throws BlsException {
-
-        DownloadCache.setEnabled(true); // TODO: make configurable
-
     	try {
             File servletPath = new File(getServletContext().getRealPath("."));
             logger.debug("Running from dir: " + servletPath);
