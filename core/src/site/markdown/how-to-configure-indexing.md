@@ -8,7 +8,6 @@ NOTE: this describes the new way of indexing, using index format configuration f
 * <a href="#working-with-yaml">Working with YAML</a>
 * <a href="#sensitivity">Configuring case- and diacritics sensitivity per property</a>
 * <a href="#disable-fi">Why and how to disable the forward index for a property</a>
-* <a href="#word-annotated">Indexing word-annotated XML</a>
 * <a href="#multiple-values">Multiple values at one position</a>
 * <a href="#standoff-annotations">Standoff annotations</a>
 * <a href="#subproperties">Subannotations, for e.g. part of speech features</a>

@@ -157,5 +157,17 @@ public class ZipHandleManager {
         }
     }
 
+    public static void setKeepZipsOpen(boolean keepZipsOpen) {
+        ZipHandleManager.keepZipsOpen = keepZipsOpen;
+    }
+
+    public static void setMaxOpenZipAgeSec(int maxOpenZipAgeSec) {
+        ZipHandleManager.maxOpenZipAgeSec = maxOpenZipAgeSec;
+    }
+
+    public static void setMaxOpen(int maxOpenZipFiles) {
+        ZipHandleManager.maxOpenZipFiles = maxOpenZipFiles;
+    }
+
 
 }

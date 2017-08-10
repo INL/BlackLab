@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.ValueNode;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.config.ConfigInputFormat.FileType;
@@ -27,60 +26,7 @@ import nl.inl.util.StringUtil;
 /**
  * Reads ConfigInputFormat from a YAML or JSON source.
  */
-public class InputFormatReader {
-
-    private static ObjectNode obj(JsonNode node, String name) {
-        if (!(node instanceof ObjectNode))
-            throw new InputFormatConfigException(name + " must be an object");
-        return (ObjectNode) node;
-    }
-
-    private static ObjectNode obj(Entry<String, JsonNode> e) {
-        return obj(e.getValue(), e.getKey());
-    }
-
-    private static ArrayNode array(JsonNode node, String name) {
-        if (!(node instanceof ArrayNode))
-            throw new InputFormatConfigException(name + " must be an array");
-        return (ArrayNode) node;
-    }
-
-    private static ArrayNode array(Entry<String, JsonNode> e) {
-        return array(e.getValue(), e.getKey());
-    }
-
-    private static String str(JsonNode node, String name) {
-        if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a string value");
-        return node.asText();
-    }
-
-    private static String str(Entry<String, JsonNode> e) {
-        return str(e.getValue(), e.getKey());
-    }
-
-    private static boolean bool(JsonNode node, String name) {
-        if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a boolean value");
-        return node.asBoolean();
-    }
-
-    private static boolean bool(Entry<String, JsonNode> e) {
-        return bool(e.getValue(), e.getKey());
-    }
-
-//    private static char character(JsonNode node, String name) {
-//        if (!(node instanceof ValueNode))
-//            throw new InputFormatConfigException(name + " must be a single character");
-//        String txt = node.asText();
-//        if (txt.length() != 1)
-//            throw new InputFormatConfigException(name + " must be a single character");
-//        return txt.charAt(0);
-//    }
-//
-//    private static char character(Entry<String, JsonNode> e) {
-//        return character(e.getValue(), e.getKey());
-//    }
+public class InputFormatReader extends YamlJsonReader {
 
     public static void read(Reader r, boolean isJson, ConfigInputFormat cfg) throws IOException {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();

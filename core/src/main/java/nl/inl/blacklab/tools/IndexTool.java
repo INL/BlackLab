@@ -36,7 +36,7 @@ import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.FileDownloader;
+import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
@@ -263,7 +263,7 @@ public class IndexTool {
 		}
 
 		// Create the indexer and index the files
-        FileDownloader.setFileDownloadAllowed(true); // allow downloading linked (metadata) documents
+        DownloadCache.setEnabled(true); // allow downloading linked (metadata) documents
 		if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
 			indexTemplateFile = null;
 		}

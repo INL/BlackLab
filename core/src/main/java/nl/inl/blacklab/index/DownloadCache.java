@@ -22,7 +22,7 @@ import org.apache.commons.io.FileUtils;
  * for a while in case we'll access the same file again. Of course, we should
  * eventually delete them to free up resources as well.
  */
-public class FileDownloader {
+public class DownloadCache {
 
     /** Is DocIndexerBase allowed to download files?
      *  (defaults to false for security; explicitly set it to true if you want this)
@@ -181,7 +181,7 @@ public class FileDownloader {
         Download download = downloadedFiles.get(inputFile);
         if (download == null) {
             URL url = new URL(inputFile);
-            if (getUrlSize(url) > FileDownloader.getMaxDownloadedFileSize())
+            if (getUrlSize(url) > DownloadCache.getMaxDownloadedFileSize())
                 throw new UnsupportedOperationException("File too large (max size = " + getMaxDownloadedFileSize() + ")");
             String ext = inputFile.replaceAll("^.+(\\.[^\\.]+)$", "$1");
             if (ext == null || ext.isEmpty())
@@ -202,24 +202,28 @@ public class FileDownloader {
         return fileDownloadAllowed;
     }
 
-    public static void setFileDownloadAllowed(boolean fileDownloadAllowed) {
-        FileDownloader.fileDownloadAllowed = fileDownloadAllowed;
+    public static void setEnabled(boolean fileDownloadAllowed) {
+        DownloadCache.fileDownloadAllowed = fileDownloadAllowed;
     }
 
     public static int getMaxDownloadedFileSize() {
         return maxDownloadedFileSize;
     }
 
-    public static void setMaxDownloadedFileSize(int maxDownloadedFileSize) {
-        FileDownloader.maxDownloadedFileSize = maxDownloadedFileSize;
+    public static void setMaxFileSize(int maxDownloadedFileSize) {
+        DownloadCache.maxDownloadedFileSize = maxDownloadedFileSize;
     }
 
     public static File getDownloadTempDir() {
         return downloadTempDir;
     }
 
-    public static void setDownloadTempDir(File downloadTempDir) {
-        FileDownloader.downloadTempDir = downloadTempDir;
+    public static void setDir(File downloadTempDir) {
+        DownloadCache.downloadTempDir = downloadTempDir;
+    }
+
+    public static void setSizeMegs(long downloadFolderSizeMegs) {
+        DownloadCache.downloadFolderSize = downloadFolderSizeMegs * 1000000;
     }
 
 }

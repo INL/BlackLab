@@ -1,21 +1,29 @@
 package nl.inl.blacklab.server.search;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.index.DownloadCache;
+import nl.inl.blacklab.index.ZipHandleManager;
+import nl.inl.blacklab.index.config.InputFormatConfigException;
+import nl.inl.blacklab.index.config.YamlJsonReader;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
-public class BlsConfig {
+public class BlsConfig extends YamlJsonReader {
 
 	protected static final Logger logger = LogManager.getLogger(Searcher.class);
 
@@ -84,10 +92,28 @@ public class BlsConfig {
 		getDebugProperties(properties);
 		getRequestsProperties(properties);
 		getPerformanceProperties(properties);
-		getAuthProperties(properties);
+        getAuthProperties(properties);
+        getIndexerProperties(properties);
 	}
 
-	private void getDebugProperties(JsonNode properties) {
+	private static void getIndexerProperties(JsonNode properties) {
+        ObjectNode indexing = obj(properties.get("indexing"), "indexing");
+        Iterator<Entry<String, JsonNode>> it = indexing.fields();
+        while (it.hasNext()) {
+            Entry<String, JsonNode> e = it.next();
+            switch (e.getKey()) {
+            case "downloadCacheMaxFileSize": DownloadCache.setMaxFileSize(integer(e)); break;
+            case "downloadCacheEnabled": DownloadCache.setEnabled(bool(e)); break;
+            case "downloadCacheDir": DownloadCache.setDir(new File(str(e))); break;
+            case "downloadCacheSizeMegs": DownloadCache.setSizeMegs(integer(e)); break;
+            case "zipFilesMaxOpen": ZipHandleManager.setMaxOpen(integer(e)); break;
+            default:
+                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in indexing");
+            }
+        }
+    }
+
+    private void getDebugProperties(JsonNode properties) {
 
 		// Old location of debugModeIps: top-level
 		// DEPRECATED

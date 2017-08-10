@@ -25,7 +25,7 @@ import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.FileDownloader;
+import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatException;
 import nl.inl.blacklab.index.complex.ComplexField;
@@ -258,7 +258,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     protected File resolveFileReference(String inputFile) throws IOException {
         if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
-            return FileDownloader.downloadFile(inputFile);
+            return DownloadCache.downloadFile(inputFile);
         }
         if (inputFile.startsWith("file://"))
             inputFile = inputFile.substring(7);
