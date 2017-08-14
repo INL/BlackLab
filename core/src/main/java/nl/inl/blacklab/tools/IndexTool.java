@@ -32,7 +32,6 @@ import java.util.TreeMap;
 
 import org.apache.lucene.index.CorruptIndexException;
 
-import nl.inl.blacklab.index.ConcurrentIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -273,10 +272,9 @@ public class IndexTool {
 		}
 		Indexer indexer;
 		try {
+			indexer = new Indexer(indexDir, createNewIndex, docIndexerFactory, indexTemplateFile);
 			if (useThreads)
-				indexer = new ConcurrentIndexer(indexDir, createNewIndex, docIndexerFactory, indexTemplateFile);
-			else
-				indexer = new Indexer(indexDir, createNewIndex, docIndexerFactory, indexTemplateFile);
+				indexer.setUseThreads(true);
 		} catch (DocumentFormatException e1) {
 			if (e1.getMessage().contains("document format")) { // ARGH, UGLY..
 				System.err.println("Failed to detect document format. Please specify it on the command line.");

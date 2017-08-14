@@ -89,14 +89,15 @@ public class Indexer {
     public static byte[] fetchFileFromArchive(File f, final String pathInsideArchive) {
         if (f.getName().endsWith(".gz") || f.getName().endsWith(".tgz")) {
             // We have to process the whole file, we can't do random access.
-            FileProcessor proc = new FileProcessor(false, true);
-            FetchFileHandler fileHandler = new FetchFileHandler(pathInsideArchive);
-            proc.setFileHandler(fileHandler);
-            try {
-                proc.processFile(f);
-                return fileHandler.bytes;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            try (FileProcessor proc = new FileProcessor(false, false, true)) {
+	            FetchFileHandler fileHandler = new FetchFileHandler(pathInsideArchive);
+	            proc.setFileHandler(fileHandler);
+	            try {
+	                proc.processFile(f);
+	                return fileHandler.bytes;
+	            } catch (Exception e) {
+	                throw new RuntimeException(e);
+	            }
             }
         } else if (f.getName().endsWith(".zip")) {
             // We can do random access. Fetch the file we want.
@@ -169,6 +170,9 @@ public class Indexer {
 
 	/** Where to look for files linked from the input files */
     protected List<File> linkedFileDirs = new ArrayList<>();
+    
+    /** Index using multiple threads? */
+    protected boolean useThreads = false;
 
     public FieldType getMetadataFieldType(boolean tokenized) {
 	    return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
@@ -597,66 +601,68 @@ public class Indexer {
 	 */
 	protected void indexInternal(File fileToIndex, String glob, boolean recurseSubdirs)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-	    FileProcessor proc = new FileProcessor(recurseSubdirs, recurseSubdirs && processArchivesAsDirectories);
-	    proc.setFileNameGlob(glob);
-        proc.setFileHandler(new FileProcessor.FileHandler() {
-            @Override
-            public void stream(String path, InputStream is) {
-                try {
-                    index(path, is);
-                } catch (Exception e) {
-                    throw ExUtil.wrapRuntimeException(e);
-                }
-            }
-
-            @Override
-            public void file(String path, File f) {
-                try {
-                    // Regular file.
-                    DocIndexer docIndexer = getDocIndexerFactory().get(Indexer.this, path, f, DEFAULT_INPUT_ENCODING);
-                    indexDocIndexer(path, docIndexer);
-                } catch (Exception e) {
-                    throw ExUtil.wrapRuntimeException(e);
-                }
-            }
-        });
-	    proc.setErrorHandler(new ErrorHandler() {
-            @Override
-            public boolean errorOccurred(String file, String msg, Exception e) {
-                log("*** Error indexing " + file, e);
-                return getListener().errorOccurred(e.getMessage(), "file", new File(file), null);
-            }
-        });
-	    proc.processFile(fileToIndex);
+	    try (FileProcessor proc = new FileProcessor(useThreads, recurseSubdirs, recurseSubdirs && processArchivesAsDirectories)) {
+		    proc.setFileNameGlob(glob);
+	        proc.setFileHandler(new FileProcessor.FileHandler() {
+	            @Override
+	            public void stream(String path, InputStream is) {
+	                try {
+	                    index(path, is);
+	                } catch (Exception e) {
+	                    throw ExUtil.wrapRuntimeException(e);
+	                }
+	            }
+	
+	            @Override
+	            public void file(String path, File f) {
+	                try {
+	                    // Regular file.
+	                    DocIndexer docIndexer = getDocIndexerFactory().get(Indexer.this, path, f, DEFAULT_INPUT_ENCODING);
+	                    indexDocIndexer(path, docIndexer);
+	                } catch (Exception e) {
+	                    throw ExUtil.wrapRuntimeException(e);
+	                }
+	            }
+	        });
+		    proc.setErrorHandler(new ErrorHandler() {
+	            @Override
+	            public boolean errorOccurred(String file, String msg, Exception e) {
+	                log("*** Error indexing " + file, e);
+	                return getListener().errorOccurred(e.getMessage(), "file", new File(file), null);
+	            }
+	        });
+		    proc.processFile(fileToIndex);
+	    }
 	}
 
     public void indexInputStream(final String filePath, InputStream inputStream, String glob, boolean processArchives) {
-        FileProcessor proc = new FileProcessor(true, processArchivesAsDirectories);
-        proc.setFileNameGlob(glob);
-        proc.setProcessArchives(processArchives);
-        proc.setFileHandler(new FileProcessor.FileHandler() {
-            @Override
-            public void stream(String path, InputStream is) {
-                try {
-                    index(path, is);
-                } catch (Exception e) {
-                    throw ExUtil.wrapRuntimeException(e);
-                }
-            }
-
-            @Override
-            public void file(String path, File f) {
-                throw new UnsupportedOperationException();
-            }
-        });
-        proc.setErrorHandler(new ErrorHandler() {
-            @Override
-            public boolean errorOccurred(String file, String msg, Exception e) {
-                log("*** Error indexing " + file, e);
-                return getListener().errorOccurred(e.getMessage(), "file", new File(file), null);
-            }
-        });
-        proc.processInputStream(filePath, inputStream);
+        try (FileProcessor proc = new FileProcessor(useThreads, true, processArchivesAsDirectories)) {
+	        proc.setFileNameGlob(glob);
+	        proc.setProcessArchives(processArchives);
+	        proc.setFileHandler(new FileProcessor.FileHandler() {
+	            @Override
+	            public void stream(String path, InputStream is) {
+	                try {
+	                    index(path, is);
+	                } catch (Exception e) {
+	                    throw ExUtil.wrapRuntimeException(e);
+	                }
+	            }
+	
+	            @Override
+	            public void file(String path, File f) {
+	                throw new UnsupportedOperationException();
+	            }
+	        });
+	        proc.setErrorHandler(new ErrorHandler() {
+	            @Override
+	            public boolean errorOccurred(String file, String msg, Exception e) {
+	                log("*** Error indexing " + file, e);
+	                return getListener().errorOccurred(e.getMessage(), "file", new File(file), null);
+	            }
+	        });
+	        proc.processInputStream(filePath, inputStream);
+        }
     }
 
 	@Deprecated
@@ -819,5 +825,9 @@ public class Indexer {
         // Look in the configured directories for the relative path
         return FileUtil.findFile(linkedFileDirs, inputFile, null);
     }
+
+	public void setUseThreads(boolean useThreads) {
+		this.useThreads = useThreads;
+	}
 
 }

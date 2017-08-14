@@ -1201,12 +1201,14 @@ public abstract class Searcher {
 	 * @return the content store, or null if there is no content store for this field
 	 */
 	public ContentStore getContentStore(String fieldName) {
-		ContentStore cs = contentStores.get(fieldName);
-		if (indexMode && cs == null) {
-			// Index mode. Create new content store or open existing one.
-			return openContentStore(fieldName);
+		synchronized (contentStores) {
+			ContentStore cs = contentStores.get(fieldName);
+			if (indexMode && cs == null) {
+				// Index mode. Create new content store or open existing one.
+				return openContentStore(fieldName);
+			}
+			return cs;
 		}
-		return cs;
 	}
 
 	/**
@@ -1242,13 +1244,15 @@ public abstract class Searcher {
 	 * @return the ForwardIndex if found/created, or null otherwise
 	 */
 	public ForwardIndex getForwardIndex(String fieldPropName) {
-		ForwardIndex forwardIndex = forwardIndices.get(fieldPropName);
-		if (forwardIndex == null) {
-			forwardIndex = openForwardIndex(fieldPropName);
-			if (forwardIndex != null)
-				addForwardIndex(fieldPropName, forwardIndex);
+		synchronized (forwardIndices) {
+			ForwardIndex forwardIndex = forwardIndices.get(fieldPropName);
+			if (forwardIndex == null) {
+				forwardIndex = openForwardIndex(fieldPropName);
+				if (forwardIndex != null)
+					addForwardIndex(fieldPropName, forwardIndex);
+			}
+			return forwardIndex;
 		}
-		return forwardIndex;
 	}
 
 	protected void addForwardIndex(String fieldPropName, ForwardIndex forwardIndex) {

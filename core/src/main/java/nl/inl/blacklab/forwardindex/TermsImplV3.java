@@ -172,15 +172,17 @@ class TermsImplV3 extends Terms {
 
 		// Do we have the term index available (fastest method)?
 		if (termIndexBuilt) {
-			// Yes, use the available term index.
-			Integer index = termIndex.get(term);
-			if (index != null)
+			synchronized (this) {
+				// Yes, use the available term index.
+				Integer index = termIndex.get(term);
+				if (index != null)
+					return index;
+				if (!indexMode)
+					return NO_TERM; // term not found
+				index = termIndex.size();
+				termIndex.put(term, index);
 				return index;
-			if (!indexMode)
-				return NO_TERM; // term not found
-			index = termIndex.size();
-			termIndex.put(term, index);
-			return index;
+			}
 		}
 
 		// No. (this means we are in search mode, because in
@@ -322,7 +324,7 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
-	public void clear() {
+	public synchronized void clear() {
 		if (!indexMode)
 			throw new RuntimeException("Cannot clear, not in index mode");
 		termIndex.clear();
@@ -331,7 +333,7 @@ class TermsImplV3 extends Terms {
 		termIndexBuilt = true;
 	}
 
-	private void read(File termsFile) {
+	private synchronized void read(File termsFile) {
 		termIndex.clear();
 		if (termIndexInsensitive != null)
 			termIndexInsensitive.clear();
@@ -455,7 +457,7 @@ class TermsImplV3 extends Terms {
 	}
 
 	@Override
-	public void write(File termsFile) {
+	public synchronized void write(File termsFile) {
 		if (!indexMode)
 			throw new RuntimeException("Term.write(): not in index mode!");
 

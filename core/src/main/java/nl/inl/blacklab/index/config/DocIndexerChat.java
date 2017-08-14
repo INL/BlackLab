@@ -47,6 +47,9 @@ public class DocIndexerChat extends DocIndexerConfig {
 	/** The locale to use for date parsing (by default, use system locale) */
     private Locale locale = null;
 
+	/** Fallback locale in case we can't parse the date */
+    private Locale usLocale = new Locale("en", "US");
+
     private ConfigAnnotatedField currentAnnotatedField;
 
 	@Override
@@ -399,10 +402,14 @@ public class DocIndexerChat extends DocIndexerConfig {
 	private Date normalizeDate(String str) {
         Date date;
         try {
-        	date = DateUtils.parseDate(str, locale, new String[] {"d-M-Y"});
+        	date = DateUtils.parseDate(str, locale, new String[] {"d-M-Y", "dd-MMM-yyyy"});
         } catch (ParseException e) {
-        	log("Date " + str + " cannot be interpreted");
-        	throw new RuntimeException(e);
+            try {
+            	date = DateUtils.parseDate(str, usLocale, new String[] {"d-M-Y", "dd-MMM-yyyy"});
+            } catch (ParseException e1) {
+            	log("Date " + str + " cannot be interpreted");
+            	throw new RuntimeException(e1);
+            }
         }
         return date;
     }
@@ -523,7 +530,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             curcode = metadata.get("speaker").toString();
             blockMetadata.put("speaker", curcode);
             Map<String, Object> participants = (Map<String, Object>)metadata.get("participants");
-            if (participants.containsKey(curcode)) {
+            if (participants != null && participants.containsKey(curcode)) {
                 Map<String, Object> codeMap = (Map<String, Object>)participants.get(curcode);
                 for (String el: codeMap.keySet()) {
                     blockMetadata.put(despaceMetadataName(el), codeMap.get(el).toString());

@@ -6,7 +6,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Enumeration;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -17,7 +22,7 @@ import java.util.zip.ZipInputStream;
  * Process (trees of) files, which may include archives
  * that we want to recursively process as well.
  */
-public class FileProcessor {
+public class FileProcessor implements AutoCloseable {
 
     /**
      * A way to handle files, including files inside archives.
@@ -69,7 +74,78 @@ public class FileProcessor {
             return continueOnError;
         }
     }
+    
+    /**
+     * A task to process a file.
+     * 
+     * Used for multi-threaded file processing.
+     */
+	private final class ProcessFileTask implements Runnable {
+		private final File fileToIndex;
+	
+		private ProcessFileTask(File fileToIndex) {
+			this.fileToIndex = fileToIndex;
+		}
+	
+		@Override
+		public void run() {
+			System.out.println("Start processing " + fileToIndex);
+			System.out.flush();
+			
+	        try {
+				String fn = fileToIndex.getCanonicalPath(); //Name();
+				if (processArchives && fn.endsWith(".zip")) {
+				    indexZip(fileToIndex);
+				} else {
+				    if (!skipFile(fileToIndex.getName())) {
+				        if (processArchives && fn.endsWith(".gz") || fn.endsWith(".tgz") || fn.endsWith(".zip")) {
+				            // Archive.
+				            try {
+				                try (FileInputStream is = new FileInputStream(fileToIndex)) {
+				                    processInputStream(fn, is);
+				                }
+				            } catch (Exception e) {
+				                keepProcessing = errorHandler.errorOccurred(fileToIndex.getPath(), null, e);
+				            }
+				        } else {
+				            // Regular file.
+				            fileHandler.file(fn, fileToIndex);
+				        }
+				    }
+				}
+			} catch (Exception e) {
+				System.err.println("Error while processing file: " + fileToIndex);
+				e.printStackTrace();
+				System.err.flush();
+			}
+			
+			System.out.println("Done processing " + fileToIndex);
+			System.out.flush();
+		}
+	}
 
+	/** Catches any exceptions the Runnable throws so we can handle them. */
+	private static class ExceptionCatchingThreadFactory implements ThreadFactory {
+	    private final ThreadFactory delegate;
+	
+	    private ExceptionCatchingThreadFactory(ThreadFactory delegate) {
+	        this.delegate = delegate;
+	    }
+	
+	    @Override
+		public Thread newThread(final Runnable r) {
+	        Thread t = delegate.newThread(r);
+	        t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+	            @Override
+	            public void uncaughtException(Thread t, Throwable e) {
+	                System.err.println("Uncaught exception during indexing:");
+	            	e.printStackTrace();
+	            }
+	        });
+	        return t;
+	    }
+	}
+	
     /** Restrict the files we handle to a file glob? */
     private Pattern pattGlob;
 
@@ -93,12 +169,19 @@ public class FileProcessor {
 
     /** If false, we shouldn't process any more files */
     boolean keepProcessing;
+    
+    /** Process files in separate threads? */
+    boolean useThreads = false;
 
-    public FileProcessor() {
-        this(true, true);
+    /** Executor used for processing files */
+	private ThreadPoolExecutor executor;
+    
+    public FileProcessor(boolean useThreads) {
+        this(useThreads, true, true);
     }
 
-    public FileProcessor(boolean recurseSubdirs, boolean processArchives) {
+    public FileProcessor(boolean useThreads, boolean recurseSubdirs, boolean processArchives) {
+    	this.useThreads = useThreads;
         this.recurseSubdirs = recurseSubdirs;
         this.processArchives = processArchives;
         setFileNameGlob("*");
@@ -107,6 +190,8 @@ public class FileProcessor {
 
     public void reset() {
         keepProcessing = true;
+       	executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(useThreads ? 8 : 1);
+		executor.setThreadFactory(new ExceptionCatchingThreadFactory(executor.getThreadFactory()));
     }
 
     public void setFileNameGlob(String glob) {
@@ -180,30 +265,26 @@ public class FileProcessor {
      */
     public void processFile(File fileToIndex)
             throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-        String fn = fileToIndex.getCanonicalPath(); //Name();
         if (fileToIndex.isDirectory()) {
-            indexDir(fileToIndex);
+            processDir(fileToIndex);
         } else {
-            if (processArchives && fn.endsWith(".zip")) {
-                indexZip(fileToIndex);
-            } else {
-                if (!skipFile(fileToIndex.getName())) {
-                    if (processArchives && fn.endsWith(".gz") || fn.endsWith(".tgz") || fn.endsWith(".zip")) {
-                        // Archive.
-                        try {
-                            try (FileInputStream is = new FileInputStream(fileToIndex)) {
-                                processInputStream(fn, is);
-                            }
-                        } catch (Exception e) {
-                            keepProcessing = errorHandler.errorOccurred(fileToIndex.getPath(), null, e);
-                        }
-                    } else {
-                        // Regular file.
-                        fileHandler.file(fn, fileToIndex);
-                    }
-                }
-            }
+    		Runnable runnable = new ProcessFileTask(fileToIndex);
+    		executor.execute(runnable);
         }
+    }
+    
+    /**
+     * After adding the last processing task, call this to wait for all threads to finish processing.
+     */
+    @Override
+	public void close() {
+		try {
+			executor.shutdown();
+			// Wait for all threads to finish (Long.MAX_VALUE == "forever")
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			throw new RuntimeException("Error while waiting for processing threads to finish", e);
+		}
     }
 
     /**
@@ -218,7 +299,7 @@ public class FileProcessor {
      * @throws Exception
      * @throws IOException
      */
-    private void indexDir(File dir) throws UnsupportedEncodingException,
+    private void processDir(File dir) throws UnsupportedEncodingException,
             FileNotFoundException, IOException, Exception {
         if (!dir.exists())
             throw new FileNotFoundException("Input dir not found: " + dir);
