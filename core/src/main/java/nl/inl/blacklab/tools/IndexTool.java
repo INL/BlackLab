@@ -88,6 +88,9 @@ public class IndexTool {
 				case "threads":
 					useThreads = true;
 					break;
+				case "nothreads":
+					useThreads = false;
+					break;
 				case "linked-file-dir":
                     if (i + 1 == args.length) {
                         System.err.println("--linked-file-dir option needs argument");
@@ -345,6 +348,9 @@ public class IndexTool {
 						+ "Options:\n"
 						+ "  --maxdocs <n>          Stop after indexing <n> documents\n"
                         + "  --linked-file-dir <d>  Look in directory <d> for linked (e.g. metadata) files\n"
+                        + "  --[no]threads          Enable/disable multithreaded indexing (experimental)\n"
+                        + "                         Currently disabled by default. Once properly tested,\n"
+                        + "                         we will change the default to enabled.\n"
                         + "\n"
                         + "Deprecated options (not needed anymore with .yaml format configs):\n"
 						+ "  --indexparam <file>    Read properties file with parameters for DocIndexer\n"
