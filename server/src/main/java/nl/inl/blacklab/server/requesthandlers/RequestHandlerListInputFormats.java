@@ -7,7 +7,6 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.NotFileFilter;
 
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DocumentFormats.FormatDesc;

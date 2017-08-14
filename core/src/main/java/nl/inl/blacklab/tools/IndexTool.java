@@ -32,6 +32,7 @@ import java.util.TreeMap;
 
 import org.apache.lucene.index.CorruptIndexException;
 
+import nl.inl.blacklab.index.ConcurrentIndexer;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -68,6 +69,7 @@ public class IndexTool {
 		Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete"));
 		boolean addingFiles = true;
 		String deleteQuery = null;
+		boolean useThreads = false;
 		List<File> linkedFileDirs = new ArrayList<>();
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i].trim();
@@ -84,6 +86,9 @@ public class IndexTool {
 			} else if (arg.startsWith("--")) {
 				String name = arg.substring(2);
 				switch(name) {
+				case "threads":
+					useThreads = true;
+					break;
 				case "linked-file-dir":
                     if (i + 1 == args.length) {
                         System.err.println("--linked-file-dir option needs argument");
@@ -268,7 +273,10 @@ public class IndexTool {
 		}
 		Indexer indexer;
 		try {
-			indexer = new Indexer(indexDir, createNewIndex, docIndexerFactory, indexTemplateFile);
+			if (useThreads)
+				indexer = new ConcurrentIndexer(indexDir, createNewIndex, docIndexerFactory, indexTemplateFile);
+			else
+				indexer = new Indexer(indexDir, createNewIndex, docIndexerFactory, indexTemplateFile);
 		} catch (DocumentFormatException e1) {
 			if (e1.getMessage().contains("document format")) { // ARGH, UGLY..
 				System.err.println("Failed to detect document format. Please specify it on the command line.");

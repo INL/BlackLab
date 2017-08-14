@@ -61,7 +61,7 @@ public class Indexer {
     /** File handler that reads a single file into a byte array. */
     static final class FetchFileHandler implements FileHandler {
 
-        private final String pathToFile;
+        protected final String pathToFile;
 
         byte[] bytes;
 
@@ -114,10 +114,10 @@ public class Indexer {
     }
 
 	/** Our index */
-	private Searcher searcher;
+	protected Searcher searcher;
 
 	/** Stop after indexing this number of docs. -1 if we shouldn't stop. */
-	private int maxNumberOfDocsToIndex = -1;
+	protected int maxNumberOfDocsToIndex = -1;
 
 	/** Should we terminate indexing? (e.g. because of an error) */
 	boolean terminateIndexing = false;
@@ -125,12 +125,12 @@ public class Indexer {
 	/**
 	 * Where to report indexing progress.
 	 */
-	private IndexListener listener = null;
+	protected IndexListener listener = null;
 
 	/**
 	 * Have we reported our creation and the start of indexing to the listener yet?
 	 */
-	private boolean createAndIndexStartReported = false;
+	protected boolean createAndIndexStartReported = false;
 
 	/**
 	 * When we encounter a zip or tgz file, do we descend into it like it was a directory?
@@ -140,35 +140,35 @@ public class Indexer {
 	/**
 	 * Recursively index files inside a directory? (or archive file, if processArchivesAsDirectories == true)
 	 */
-	private boolean defaultRecurseSubdirs = true;
+	protected boolean defaultRecurseSubdirs = true;
 
 	/**
 	 * How to instantiate DocIndexers for the file format we're indexing.
 	 */
-    private DocIndexerFactory docIndexerFactory;
+    protected DocIndexerFactory docIndexerFactory;
 
 	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort? */
-	private boolean continueAfterInputError = true;
+	protected boolean continueAfterInputError = true;
 
 	/** If an error occurs (e.g. an XML parse error), and we don't
 	 * continue indexing, should we re-throw it, or assume the client
 	 * picked it up in the listener and return normally? */
-	private boolean rethrowInputError = true;
+	protected boolean rethrowInputError = true;
 
 	/**
 	 * Parameters we should pass to our DocIndexers upon instantiation.
 	 */
-	private Map<String, String> indexerParam;
+	protected Map<String, String> indexerParam;
 
 	/** How to index metadata fields (tokenized) */
-	private FieldType metadataFieldTypeTokenized;
+	protected FieldType metadataFieldTypeTokenized;
 
 	/** How to index metadata fields (untokenized) */
-	private FieldType metadataFieldTypeUntokenized;
+	protected FieldType metadataFieldTypeUntokenized;
 
 	/** Where to look for files linked from the input files */
-    private List<File> linkedFileDirs = new ArrayList<>();
+    protected List<File> linkedFileDirs = new ArrayList<>();
 
     public FieldType getMetadataFieldType(boolean tokenized) {
 	    return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
@@ -595,9 +595,8 @@ public class Indexer {
 	 * @throws Exception
 	 * @throws IOException
 	 */
-	private void indexInternal(File fileToIndex, String glob, boolean recurseSubdirs)
+	protected void indexInternal(File fileToIndex, String glob, boolean recurseSubdirs)
 			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-
 	    FileProcessor proc = new FileProcessor(recurseSubdirs, recurseSubdirs && processArchivesAsDirectories);
 	    proc.setFileNameGlob(glob);
         proc.setFileHandler(new FileProcessor.FileHandler() {
