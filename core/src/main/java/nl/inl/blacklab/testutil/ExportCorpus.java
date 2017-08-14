@@ -82,7 +82,7 @@ public class ExportCorpus {
 						file = FileUtil.addNumberToExistingFileName(file);
 					}
 					System.out.println(file);
-					File dir = file.getParentFile();
+					File dir = file.getAbsoluteFile().getParentFile();
 					if (!dir.exists())
 						dir.mkdirs(); // create any subdirectories required
 					try (PrintWriter pw = FileUtil.openForWriting(file)) {

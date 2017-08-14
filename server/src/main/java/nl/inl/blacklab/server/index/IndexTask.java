@@ -60,7 +60,7 @@ public class IndexTask {
 		this.decoratedListener = new IndexListenerDecorator(listener) {
 
 			@Override
-			public boolean errorOccurred(String error, String unitType,
+			public synchronized boolean errorOccurred(String error, String unitType,
 					File unit, File subunit) {
 				indexError = error;
 				return super.errorOccurred(error, unitType, unit, subunit);

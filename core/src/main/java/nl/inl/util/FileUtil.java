@@ -306,7 +306,7 @@ public class FileUtil {
 	 * @return a file with a number added that doesn't exist yet
 	 */
 	public static File addNumberToExistingFileName(File file) {
-		File parentFile = file.getParentFile();
+		File parentFile = file.getAbsoluteFile().getParentFile();
 		String name = file.getName();
 		int number = 2;
 		File newFile;

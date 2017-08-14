@@ -984,7 +984,7 @@ public class IndexStructure {
 		if (dispName.equalsIgnoreCase("index"))
 			dispName = StringUtils.capitalize(indexDir.getName());
 		if (dispName.equalsIgnoreCase("index"))
-			dispName = StringUtils.capitalize(indexDir.getParentFile().getName());
+			dispName = StringUtils.capitalize(indexDir.getAbsoluteFile().getParentFile().getName());
 		return dispName;
 	}
 

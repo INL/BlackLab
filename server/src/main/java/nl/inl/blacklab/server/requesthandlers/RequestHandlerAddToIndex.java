@@ -69,7 +69,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 					IndexTask task;
 					IndexListener listener = new IndexListenerReportConsole() {
 						@Override
-						public boolean errorOccurred(String error,
+						public synchronized boolean errorOccurred(String error,
 								String unitType, File unit, File subunit) {
 							indexError = error + " in " + unit +
 									(subunit == null ? "" : " (" + subunit + ")");

@@ -217,7 +217,11 @@ public class IndexTool {
 		// Init log4j
 		LogUtil.setupBasicLoggingConfig();
 
-		List<File> dirs = Arrays.asList(new File("."), inputDir, inputDir.getParentFile(), indexDir, indexDir.getParentFile());
+		File indexDirParent = indexDir.getAbsoluteFile().getParentFile();
+		File inputDirParent = inputDir.getAbsoluteFile().getParentFile();
+		List<File> dirs = new ArrayList<>(Arrays.asList(new File("."), inputDir, inputDirParent, indexDir));
+		if (!dirs.contains(indexDirParent))
+			dirs.add(indexDirParent);
 		propFile = FileUtil.findFile(dirs, "indexer", Arrays.asList("properties"));
 		if (propFile != null && propFile.canRead())
 			readParametersFromPropertiesFile(propFile);
@@ -245,9 +249,9 @@ public class IndexTool {
 		// (by default, it will already look in $BLACKLAB_CONFIG_DIR/formats, $HOME/.blacklab/formats
 		//  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
 		//  and the parent(s) of the input and index dirs)
-		List<File> formatDirs = new ArrayList<>(Arrays.asList(new File("."), inputDir.getParentFile(), inputDir));
-		if (!formatDirs.contains(indexDir.getParentFile()))
-		    formatDirs.add(indexDir.getParentFile());
+		List<File> formatDirs = new ArrayList<>(Arrays.asList(new File("."), inputDirParent, inputDir));
+		if (!formatDirs.contains(indexDirParent))
+		    formatDirs.add(indexDirParent);
 		DocumentFormats.registerFormatsInDirs(formatDirs);
 
 		// Determine DocIndexer to use
@@ -331,6 +335,8 @@ public class IndexTool {
 	}
 
 	private static void usage() {
+		System.err.flush();
+		System.out.flush();
 		System.out
 				.println("Usage:\n"
 						+ "  IndexTool {add|create} [options] <indexdir> <inputdir> <format>\n"

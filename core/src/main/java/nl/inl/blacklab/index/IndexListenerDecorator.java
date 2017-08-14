@@ -114,12 +114,12 @@ public abstract class IndexListenerDecorator extends IndexListener {
 	}
 
 	@Override
-	public void tokensDone(int n) {
+	public synchronized void tokensDone(int n) {
 		subject.tokensDone(n);
 	}
 
 	@Override
-	public boolean errorOccurred(String error, String unitType, File unit,
+	public synchronized boolean errorOccurred(String error, String unitType, File unit,
 			File subunit) {
 		return subject.errorOccurred(error, unitType, unit, subunit);
 	}

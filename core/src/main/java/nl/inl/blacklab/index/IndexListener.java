@@ -200,7 +200,7 @@ public class IndexListener {
 		//
 	}
 
-	public void tokensDone(int n) {
+	public synchronized void tokensDone(int n) {
 		tokensProcessed += n;
 	}
 
@@ -216,7 +216,7 @@ public class IndexListener {
 	 * @param subunit optional subunit (i.e. which file inside zip, or null for regular files)
 	 * @return true if indexing should continue
 	 */
-	public boolean errorOccurred(String error, String unitType, File unit, File subunit) {
+	public synchronized boolean errorOccurred(String error, String unitType, File unit, File subunit) {
 		errors++;
 		return true;
 	}

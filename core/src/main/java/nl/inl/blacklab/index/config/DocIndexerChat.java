@@ -343,7 +343,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     public String[] getoutpaths(String fullname, String inpath, String outpath) {
         String absinpath = new File(inpath).getAbsolutePath();    //absinpath = os.path.abspath(inpath)
         String absoutpath = new File(outpath).getAbsolutePath();  //absoutpath = os.path.abspath(outpath)
-        String fullinpath = new File(fullname).getParentFile().getAbsolutePath();  //os.path.dirname(fullname);
+        String fullinpath = new File(fullname).getAbsoluteFile().getParentFile().getAbsolutePath();  //os.path.dirname(fullname);
         reloutpath = os.path.relpath(fullinpath, start = absinpath);
         fulloutpath = os.path.join(absoutpath, reloutpath);
         return reloutpath, fulloutpath;

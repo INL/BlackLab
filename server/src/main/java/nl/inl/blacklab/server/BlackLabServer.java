@@ -71,7 +71,7 @@ public class BlackLabServer extends HttpServlet {
             logger.debug("Running from dir: " + servletPath);
             String configFileName = "blacklab-server";
             List<File> searchDirs = new ArrayList<>();
-            searchDirs.add(servletPath.getParentFile().getCanonicalFile());
+            searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
             searchDirs.addAll(Searcher.getConfigDirs());
 
             List<String> exts = Arrays.asList("json", "yaml", "yml");

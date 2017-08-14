@@ -110,7 +110,7 @@ public class IndexListenerReportConsole extends IndexListener {
 	 * @return true if indexing should continue
 	 */
 	@Override
-	public boolean errorOccurred(String error, String unitType, File unit, File subunit) {
+	public synchronized boolean errorOccurred(String error, String unitType, File unit, File subunit) {
 		System.out.println("An error occurred during indexing!");
 		System.out.println("error: " + error + ", unitType: " + unitType +
 				", unit: " + unit + ", subunit: " + subunit);

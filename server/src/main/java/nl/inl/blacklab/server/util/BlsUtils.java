@@ -178,7 +178,7 @@ public class BlsUtils {
 		if (file.getParent() == null) {
 			canon = file;
 		} else {
-			File canonDir = file.getParentFile().getCanonicalFile();
+			File canonDir = file.getAbsoluteFile().getParentFile().getCanonicalFile();
 			canon = new File(canonDir, file.getName());
 		}
 		return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());

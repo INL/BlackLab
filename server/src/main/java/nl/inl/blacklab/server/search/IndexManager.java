@@ -490,7 +490,7 @@ public class IndexManager {
 			throw new InternalServerError("Could not delete index. Not an index.", 17);
 		if (!userDir.canWrite() || !indexDir.canWrite())
 			throw new InternalServerError("Could not delete index. Check file permissions.", 18);
-		if (!indexDir.getParentFile().equals(userDir)) { // Yes, we're paranoid..
+		if (!indexDir.getAbsoluteFile().getParentFile().equals(userDir)) { // Yes, we're paranoid..
 			throw new InternalServerError("Could not delete index. Not found in user dir.", 19);
 		}
 		if (!Searcher.isIndex(indexDir)) { // ..but are we paranoid enough?
@@ -586,7 +586,7 @@ public class IndexManager {
 		for (File f : dir.listFiles(BlsUtils.readableDirFilter)) {
 			String name = f.getName();
 			if (name.equals("index"))
-				name = f.getParentFile().getName();
+				name = f.getAbsoluteFile().getParentFile().getName();
 			if (!indexParam.containsKey(name) && Searcher.isIndex(f)) {
 				// New one; add it
 				indexParam.put(name, new IndexParam(f));

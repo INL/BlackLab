@@ -100,7 +100,7 @@ public class IndexListenerReportConsoleVerbose extends IndexListener {
 	}
 
 	@Override
-	public void tokensDone(int n) {
+	public synchronized void tokensDone(int n) {
 		super.tokensDone(n);
 		System.out.println("Tokens done total: " + getTokensProcessed());
 	}
