@@ -43,14 +43,17 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 	        if (reader == null)
 	            throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
 	        try {
-                ds.entry("formatName", urlResource);
-                ds.entry("configFile", IOUtils.toString(reader));
+	        	ds	.startMap()
+                	.entry("formatName", urlResource)
+                	.entry("configFile", IOUtils.toString(reader))
+                	.endMap();
                 return HTTP_OK;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 	    }
 
+		ds.startMap();
 		ds.startEntry("user").startMap();
 		ds.entry("loggedIn", user.isLoggedIn());
 		if (user.isLoggedIn())
@@ -87,6 +90,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 	        }
 		    ds.endMap().endEntry();
 		}
+		ds.endMap();
 
 		return HTTP_OK;
 	}
