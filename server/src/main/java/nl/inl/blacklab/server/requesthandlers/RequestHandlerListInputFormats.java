@@ -85,6 +85,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                     ds.startAttrEntry("format", "name", name).startMap()
                         .entry("displayName", format.getDisplayName())
                         .entry("description", format.getDescription())
+                        .entry("configurationBased", DocumentFormats.getFormatFile(format.getName()) != null)
     	            .endMap().endAttrEntry();
 	            }
 	        }
