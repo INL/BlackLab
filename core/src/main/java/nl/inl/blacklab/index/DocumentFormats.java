@@ -102,7 +102,7 @@ public class DocumentFormats {
         if (config == null)
             return null;
         File f = config.getReadFromFile();
-        if (f.getPath().startsWith("$BLACKLAB_JAR/"))
+        if (f.getPath().startsWith("$BLACKLAB_JAR"))
             return new BufferedReader(new InputStreamReader(DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")));
         return FileUtil.openForReading(f);
     }
