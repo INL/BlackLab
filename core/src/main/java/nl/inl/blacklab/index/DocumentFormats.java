@@ -213,8 +213,10 @@ public class DocumentFormats {
 	 * @return true iff it corresponds to a format
 	 */
 	public static boolean exists(String formatIdentifier) {
-	    formatIdentifier = formatIdentifier.toLowerCase();
-		return formats.containsKey(formatIdentifier) || docIndexerClasses.containsKey(formatIdentifier);
+	    String lcase = formatIdentifier.toLowerCase();
+		if (formats.containsKey(lcase) || docIndexerClasses.containsKey(lcase))
+			return true;
+		return find(formatIdentifier);
 	}
 
 	public static abstract class FormatFinder {

@@ -29,6 +29,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.JobFacets;
 import nl.inl.blacklab.server.jobs.User;
@@ -107,6 +108,15 @@ public abstract class RequestHandler {
 		String urlPathInfo = parts.length >= 3 ? parts[2] : "";
 		boolean resourceOrPathGiven = urlResource.length() > 0 || urlPathInfo.length() > 0;
         boolean pathGiven = urlPathInfo.length() > 0;
+
+        // If new user, read user formats
+		if (user.isLoggedIn()) {
+			try {
+				searchManager.getIndexManager().ensureUserFormatsRegistered(user);
+			} catch (InternalServerError e) {
+				return errorObj.internalError(e.getMessage(), debugMode, e.getInternalErrorCode());
+			}
+		}
 
 		// If we're doing something with a private index, it must be our own.
 		boolean isPrivateIndex = false;

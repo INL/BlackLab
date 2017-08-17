@@ -129,6 +129,7 @@ public class BlackLabServer extends HttpServlet {
         } catch (IOException e) {
             throw new ConfigurationException("Error reading configuration file", e);
         }
+
     }
 
     /**
@@ -172,29 +173,31 @@ public class BlackLabServer extends HttpServlet {
 
 	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
 
-		if (!configRead) {
-			try {
-				readConfig();
-				configRead = true;
-			} catch (BlsException e) {
-				// Write HTTP headers (status code, encoding, content type and cache)
-				responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-				responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
-				responseObject.setContentType("text/xml");
-				ServletUtil.writeCacheHeaders(responseObject, 0);
-
-				// === Write the response that was captured in buf
+		synchronized (this) {
+			if (!configRead) {
 				try {
-					Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
-					realOut.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
-							"<blacklabResponse><error><code>INTERNAL_ERROR</code><message><![CDATA[ " + e.getMessage() + " ]]></message></error></blacklabResponse>");
-					realOut.flush();
-				} catch (IOException e2) {
-					// Client cancelled the request midway through.
-					// This is okay, don't raise the alarm.
-					logger.debug("(couldn't send response, client probably cancelled the request)");
+					readConfig();
+					configRead = true;
+				} catch (BlsException e) {
+					// Write HTTP headers (status code, encoding, content type and cache)
+					responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+					responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
+					responseObject.setContentType("text/xml");
+					ServletUtil.writeCacheHeaders(responseObject, 0);
+
+					// === Write the response that was captured in buf
+					try {
+						Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
+						realOut.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
+								"<blacklabResponse><error><code>INTERNAL_ERROR</code><message><![CDATA[ " + e.getMessage() + " ]]></message></error></blacklabResponse>");
+						realOut.flush();
+					} catch (IOException e2) {
+						// Client cancelled the request midway through.
+						// This is okay, don't raise the alarm.
+						logger.debug("(couldn't send response, client probably cancelled the request)");
+					}
+					return;
 				}
-				return;
 			}
 		}
 

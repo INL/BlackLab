@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -10,11 +9,9 @@ import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DocumentFormats.FormatDesc;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.IndexManager;
@@ -63,35 +60,19 @@ public class RequestHandlerListInputFormats extends RequestHandler {
         ds.entry("canCreateIndex", canCreateIndex);
 		ds.endMap().endEntry();
 
-		if (canCreateIndex) {
-		    // List supported input formats
-		    ds.startEntry("supportedInputFormats").startMap();
-            File userFormatDir = indexMan.getUserFormatDir(user.getUserId());
-		    for (File formatFile: userFormatDir.listFiles()) {
-		        String formatIdentifier = ConfigInputFormat.stripExtensions(formatFile.getName());
-		        formatIdentifier = IndexManager.userFormatName(user.getUserId(), formatIdentifier);
-		        if (!DocumentFormats.exists(formatIdentifier)) {
-                    try {
-                        ConfigInputFormat f = new ConfigInputFormat(formatFile);
-                        f.setName(formatIdentifier); // prefix with user id to avoid collisions
-                        DocumentFormats.register(f);
-                    } catch (IOException e) {
-                        throw new InternalServerError("Cannot read format file", 33);
-                    }
-		        }
-		    }
-	        for (FormatDesc format: DocumentFormats.getSupportedFormats()) {
-	            String name = format.getName();
-	            if (IndexManager.mayUserUseFormat(user.getUserId(), name)) {
-                    ds.startAttrEntry("format", "name", name).startMap()
-                        .entry("displayName", format.getDisplayName())
-                        .entry("description", format.getDescription())
-                        .entry("configurationBased", format.isConfigurationBased())
-    	            .endMap().endAttrEntry();
-	            }
-	        }
-		    ds.endMap().endEntry();
-		}
+		// List supported input formats
+	    ds.startEntry("supportedInputFormats").startMap();
+        for (FormatDesc format: DocumentFormats.getSupportedFormats()) {
+            String name = format.getName();
+            if (IndexManager.userOwnsFormat(user.getUserId(), name)) {
+                ds.startAttrEntry("format", "name", name).startMap()
+                    .entry("displayName", format.getDisplayName())
+                    .entry("description", format.getDescription())
+                    .entry("configurationBased", format.isConfigurationBased())
+	            .endMap().endAttrEntry();
+            }
+        }
+	    ds.endMap().endEntry();
 		ds.endMap();
 
 		return HTTP_OK;

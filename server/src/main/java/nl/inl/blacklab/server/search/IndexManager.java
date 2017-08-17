@@ -19,6 +19,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -35,6 +37,8 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
 public class IndexManager {
+	private static final String FORMATS_SUBDIR_NAME = "_input_formats";
+
 	private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
 	private static final int MAX_USER_INDICES = 10;
@@ -73,6 +77,9 @@ public class IndexManager {
 	 * parent of that dir.
 	 */
 	private File userCollectionsDir;
+
+	/** User ids for which we've scanned and registered the private format config files. */
+    Set<String> formatsScannedForUsers = new HashSet<>();
 
 	private SearchCache cache;
 
@@ -159,6 +166,7 @@ public class IndexManager {
 				indicesFound = true; // even if it contains none now, it
 				                     // could in the future
 			}
+
 		}
 
 		if (!indicesFound) {
@@ -204,7 +212,7 @@ public class IndexManager {
 	 * @return user's input format config dir
 	 */
 	public File getUserFormatDir(String userId) {
-	    File formatDir = new File(getUserCollectionDir(userId), "_input_formats");
+	    File formatDir = new File(getUserCollectionDir(userId), FORMATS_SUBDIR_NAME);
 	    if (!formatDir.exists())
 	        formatDir.mkdir();
         return formatDir;
@@ -431,6 +439,8 @@ public class IndexManager {
 	 */
 	public void createIndex(String indexName, String displayName, String documentFormat) throws BlsException,
 			IOException {
+		if (!DocumentFormats.exists(documentFormat))
+			throw new BadRequest("FORMAT_NOT_FOUND", "Unknown format: " + documentFormat);
 		if (!indexName.contains(":"))
 			throw new NotAuthorized("Can only create private indices.");
 		if (!BlsUtils.isValidIndexName(indexName))
@@ -670,7 +680,7 @@ public class IndexManager {
 		return indices;
 	}
 
-    public static boolean mayUserUseFormat(String userId, String name) {
+    public static boolean userOwnsFormat(String userId, String name) {
         return !name.contains(":") || name.startsWith(userId + ":");
     }
 
@@ -679,6 +689,26 @@ public class IndexManager {
             throw new IllegalArgumentException("userId or format name contains colon: userid=" + userId + ", name=" + name);
         return userId + ":" + name;
     }
+
+	public void ensureUserFormatsRegistered(User user) throws InternalServerError {
+		if (formatsScannedForUsers.contains(user.getUserId()))
+			return;
+		formatsScannedForUsers.add(user.getUserId());
+		File userFormatDir = searchMan.getIndexManager().getUserFormatDir(user.getUserId());
+		for (File formatFile: userFormatDir.listFiles()) {
+			String formatIdentifier = ConfigInputFormat.stripExtensions(formatFile.getName());
+			formatIdentifier = IndexManager.userFormatName(user.getUserId(), formatIdentifier);
+			if (!DocumentFormats.exists(formatIdentifier)) {
+				try {
+					ConfigInputFormat f = new ConfigInputFormat(formatFile);
+					f.setName(formatIdentifier); // prefix with user id to avoid collisions
+					DocumentFormats.register(f);
+				} catch (IOException e) {
+					throw new InternalServerError("Error reading user format: " + formatFile, 36, e);
+				}
+			}
+		}
+	}
 
 
 }
