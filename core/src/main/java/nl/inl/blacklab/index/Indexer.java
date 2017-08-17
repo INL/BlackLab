@@ -104,8 +104,9 @@ public class Indexer {
             try {
                 ZipFile z = ZipHandleManager.openZip(f);
                 ZipEntry e = z.getEntry(pathInsideArchive);
-                InputStream is = z.getInputStream(e);
-                return IOUtils.toByteArray(is);
+                try (InputStream is = z.getInputStream(e)) {
+                    return IOUtils.toByteArray(is);
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -170,7 +171,7 @@ public class Indexer {
 
 	/** Where to look for files linked from the input files */
     protected List<File> linkedFileDirs = new ArrayList<>();
-    
+
     /** Index using multiple threads? */
     protected boolean useThreads = false;
 
@@ -501,8 +502,9 @@ public class Indexer {
      */
     public void index(String documentName, InputStream input) throws Exception {
         UnicodeStream is = new UnicodeStream(input, DEFAULT_INPUT_ENCODING);
-        DocIndexer docIndexer = docIndexerFactory.get(this, documentName, is, is.getEncoding());
-        indexDocIndexer(documentName, docIndexer);
+        try (DocIndexer docIndexer = docIndexerFactory.get(this, documentName, is, is.getEncoding())) {
+            indexDocIndexer(documentName, docIndexer);
+        }
     }
 
     /**
@@ -521,8 +523,7 @@ public class Indexer {
 	 * @throws Exception
 	 */
 	public void index(String documentName, Reader reader) throws Exception {
-		try {
-			DocIndexer docIndexer = docIndexerFactory.get(this, documentName, reader);
+		try (DocIndexer docIndexer = docIndexerFactory.get(this, documentName, reader)) {
             indexDocIndexer(documentName, docIndexer);
 		} catch (InputFormatException e) {
 			listener.errorOccurred(e.getMessage(), "reader", new File(documentName), null);
@@ -612,12 +613,11 @@ public class Indexer {
 	                    throw ExUtil.wrapRuntimeException(e);
 	                }
 	            }
-	
+
 	            @Override
 	            public void file(String path, File f) {
-	                try {
+	                try (DocIndexer docIndexer = getDocIndexerFactory().get(Indexer.this, path, f, DEFAULT_INPUT_ENCODING)) {
 	                    // Regular file.
-	                    DocIndexer docIndexer = getDocIndexerFactory().get(Indexer.this, path, f, DEFAULT_INPUT_ENCODING);
 	                    indexDocIndexer(path, docIndexer);
 	                } catch (Exception e) {
 	                    throw ExUtil.wrapRuntimeException(e);
@@ -648,7 +648,7 @@ public class Indexer {
 	                    throw ExUtil.wrapRuntimeException(e);
 	                }
 	            }
-	
+
 	            @Override
 	            public void file(String path, File f) {
 	                throw new UnsupportedOperationException();

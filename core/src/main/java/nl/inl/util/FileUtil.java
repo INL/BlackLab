@@ -247,7 +247,7 @@ public class FileUtil {
 	 * @param task
 	 *            the task to execute for every file
 	 */
-	public void processTree(File dir, String glob, boolean recurseSubdirs, FileTask task) {
+	public static void processTree(File dir, String glob, boolean recurseSubdirs, FileTask task) {
 		Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
 		for (File file : listFilesSorted(dir)) {
 			if (file.isDirectory()) {

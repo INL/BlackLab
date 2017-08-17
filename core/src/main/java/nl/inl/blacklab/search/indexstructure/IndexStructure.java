@@ -430,7 +430,7 @@ public class IndexStructure {
     }
 
 	public Map<String, MetadataGroup> getMetaFieldGroups() {
-	    return metadataGroups;
+	    return Collections.unmodifiableMap(metadataGroups);
 	}
 
     /**
@@ -803,13 +803,23 @@ public class IndexStructure {
 	/** Get the names of all the metadata fields in our index
 	 * @return the names */
 	public Collection<String> getMetadataFields() {
-		return metadataFieldInfos.keySet();
+	    // Synchronized because we sometimes register new metadata fields during indexing
+	    synchronized (metadataFieldInfos) {
+    	    // Return a copy because we might create a new metadata field while
+    	    // iterating over this one (because of indexFieldAs)
+    		return new ArrayList<>(metadataFieldInfos.keySet());
+	    }
 	}
 
 	public MetadataFieldDesc getMetadataFieldDesc(String fieldName) {
-		if (!metadataFieldInfos.containsKey(fieldName))
-			throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
-		return metadataFieldInfos.get(fieldName);
+	    MetadataFieldDesc d = null;
+        // Synchronized because we sometimes register new metadata fields during indexing
+	    synchronized (metadataFieldInfos) {
+	        d = metadataFieldInfos.get(fieldName);
+	    }
+        if (d == null)
+            throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
+        return d;
 	}
 
 	/**
@@ -1078,13 +1088,16 @@ public class IndexStructure {
 	public void registerMetadataField(String fieldName) {
 		if (fieldName == null)
 			throw new IllegalArgumentException("Tried to register a metadata field with null as name");
-		if (metadataFieldInfos.containsKey(fieldName))
-			return;
-		// Not registered yet; do so now.
-		MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TOKENIZED);
-		mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-		mf.setUnknownValue(defaultUnknownValue);
-		metadataFieldInfos.put(fieldName, mf);
+        // Synchronized because we might be using the map in another indexing thread
+        synchronized (metadataFieldInfos) {
+    		if (metadataFieldInfos.containsKey(fieldName))
+    			return;
+    		// Not registered yet; do so now.
+    		MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TOKENIZED);
+    		mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
+    		mf.setUnknownValue(defaultUnknownValue);
+    		metadataFieldInfos.put(fieldName, mf);
+        }
 	}
 
 	/**

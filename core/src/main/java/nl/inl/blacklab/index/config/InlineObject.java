@@ -1,6 +1,8 @@
 package nl.inl.blacklab.index.config;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /** Information about an inline object while parsing.
@@ -21,8 +23,6 @@ class InlineObject implements Comparable<InlineObject> {
 
     private int offset;
 
-    private int length;
-
     private InlineObjectType type;
 
     /** The close tag to this open tag, or vice versa */
@@ -30,11 +30,12 @@ class InlineObject implements Comparable<InlineObject> {
 
     private Map<String, String> attributes;
 
-    public InlineObject(String text, int offset, int length, InlineObjectType type, Map<String, String> attributes) {
+    public InlineObject(String text, int offset, InlineObjectType type, Map<String, String> attributes) {
         super();
         this.text = text;
         this.offset = offset;
-        this.length = length;
+        if (offset < 0)
+            throw new RuntimeException();
         this.type = type;
         this.attributes = Collections.emptyMap();
         if (attributes != null)
@@ -49,10 +50,6 @@ class InlineObject implements Comparable<InlineObject> {
         return offset;
     }
 
-    public int getLength() {
-        return length;
-    }
-
     public InlineObjectType type() {
         return type;
     }
@@ -65,26 +62,32 @@ class InlineObject implements Comparable<InlineObject> {
         return matchingTag;
     }
 
-    public long fragment() {
-        return offset | ((long)length << 32);
-    }
-
     public Map<String, String> getAttributes() {
     	return attributes;
     }
 
     @Override
     public int compareTo(InlineObject o) {
-        if (o.offset != offset)
-            return Long.compare(offset, o.offset);
-        if (o.type != type)
-            return type.compareTo(o.type);
-        return text.compareTo(o.text);
+        if (offset == o.offset) {
+            // Self-closing tag. Make sure open tag sorts before close tag
+            return type == InlineObjectType.OPEN_TAG ? -1 : 1;
+        }
+        return offset - o.offset;
     }
 
     @Override
     public String toString() {
     	return type.toString() + " " + text;
+    }
+
+    public static void main(String[] args) {
+        List<InlineObject> l = new ArrayList<>();
+        l.add(new InlineObject("bla", 0, InlineObjectType.OPEN_TAG, null));
+        l.add(new InlineObject("zwets", 1, InlineObjectType.OPEN_TAG, null));
+        l.add(new InlineObject("zwets", 2, InlineObjectType.CLOSE_TAG, null));
+        l.add(new InlineObject("bla", 3, InlineObjectType.CLOSE_TAG, null));
+        Collections.sort(l);
+        System.out.println(l);
     }
 
 }

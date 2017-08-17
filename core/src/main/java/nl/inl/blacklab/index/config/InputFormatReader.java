@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.config.ConfigInputFormat.FileType;
@@ -344,12 +345,19 @@ public class InputFormatReader extends YamlJsonReader {
                 case "inputFile": ld.setInputFile(str(e)); break;
                 case "pathInsideArchive": ld.setPathInsideArchive(str(e)); break;
                 case "documentPath": ld.setDocumentPath(str(e)); break;
-                case "inputFormat": ld.setInputFormat(DocumentFormats.getIndexerFactory(str(e))); break;
+                case "inputFormat": readInputFormat(ld, e); break;
                 default:
                     throw new InputFormatConfigException("Unknown key " + e.getKey() + " in linked document " + ld.getName());
                 }
             }
         }
+    }
+
+    protected static void readInputFormat(ConfigLinkedDocument ld, Entry<String, JsonNode> e) {
+        DocIndexerFactory inputFormat = DocumentFormats.getIndexerFactory(str(e));
+        if (inputFormat == null)
+            throw new InputFormatConfigException("Unknown input format " + str(e) + " in linked document " + ld.getName());
+        ld.setInputFormat(inputFormat);
     }
 
     private static void readLinkValues(Entry<String, JsonNode> lvsEntry, ConfigLinkedDocument ld) {

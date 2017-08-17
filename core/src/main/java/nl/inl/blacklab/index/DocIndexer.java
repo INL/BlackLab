@@ -48,7 +48,7 @@ import nl.inl.util.UnicodeStream;
 /**
  * Indexes a file.
  */
-public abstract class DocIndexer {
+public abstract class DocIndexer implements AutoCloseable {
 
     public Indexer indexer;
 

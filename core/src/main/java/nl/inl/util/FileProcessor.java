@@ -74,24 +74,24 @@ public class FileProcessor implements AutoCloseable {
             return continueOnError;
         }
     }
-    
+
     /**
      * A task to process a file.
-     * 
+     *
      * Used for multi-threaded file processing.
      */
 	private final class ProcessFileTask implements Runnable {
 		private final File fileToIndex;
-	
-		private ProcessFileTask(File fileToIndex) {
+
+		ProcessFileTask(File fileToIndex) {
 			this.fileToIndex = fileToIndex;
 		}
-	
+
 		@Override
 		public void run() {
-			System.out.println("Start processing " + fileToIndex);
-			System.out.flush();
-			
+//			System.out.println("Start processing " + fileToIndex);
+//			System.out.flush();
+
 	        try {
 				String fn = fileToIndex.getCanonicalPath(); //Name();
 				if (processArchives && fn.endsWith(".zip")) {
@@ -118,20 +118,20 @@ public class FileProcessor implements AutoCloseable {
 				e.printStackTrace();
 				System.err.flush();
 			}
-			
-			System.out.println("Done processing " + fileToIndex);
-			System.out.flush();
+
+//			System.out.println("Done processing " + fileToIndex);
+//			System.out.flush();
 		}
 	}
 
 	/** Catches any exceptions the Runnable throws so we can handle them. */
 	private static class ExceptionCatchingThreadFactory implements ThreadFactory {
 	    private final ThreadFactory delegate;
-	
-	    private ExceptionCatchingThreadFactory(ThreadFactory delegate) {
+
+	    ExceptionCatchingThreadFactory(ThreadFactory delegate) {
 	        this.delegate = delegate;
 	    }
-	
+
 	    @Override
 		public Thread newThread(final Runnable r) {
 	        Thread t = delegate.newThread(r);
@@ -145,7 +145,7 @@ public class FileProcessor implements AutoCloseable {
 	        return t;
 	    }
 	}
-	
+
     /** Restrict the files we handle to a file glob? */
     private Pattern pattGlob;
 
@@ -156,26 +156,26 @@ public class FileProcessor implements AutoCloseable {
      *  Note that this setting is independent of recurseSubdirs; if this is true,
      *  files inside archives will be processed, even if recurseSubdirs is false.
      */
-    private boolean processArchives;
+    boolean processArchives;
 
     /** Skip files like Thumbs.db (Windows) and .DS_Store (OSX)? */
     private boolean skipOsSpecialFiles = true;
 
     /** What to do with each file */
-    private FileHandler fileHandler;
+    FileHandler fileHandler;
 
     /** Decides whether or not to continue when an error occurs */
-    private ErrorHandler errorHandler = new SimpleErrorHandler(false);
+    ErrorHandler errorHandler = new SimpleErrorHandler(false);
 
     /** If false, we shouldn't process any more files */
     boolean keepProcessing;
-    
+
     /** Process files in separate threads? */
     boolean useThreads = false;
 
     /** Executor used for processing files */
 	private ThreadPoolExecutor executor;
-    
+
     public FileProcessor(boolean useThreads) {
         this(useThreads, true, true);
     }
@@ -272,7 +272,7 @@ public class FileProcessor implements AutoCloseable {
     		executor.execute(runnable);
         }
     }
-    
+
     /**
      * After adding the last processing task, call this to wait for all threads to finish processing.
      */
@@ -392,7 +392,7 @@ public class FileProcessor implements AutoCloseable {
      * @param recurseArchives whether to process archives inside archives
      * @throws Exception
      */
-    private void indexZip(File zipFile) throws Exception {
+    void indexZip(File zipFile) throws Exception {
         if (!zipFile.exists())
             throw new FileNotFoundException("ZIP file not found: " + zipFile);
         try (ZipFile z = new ZipFile(zipFile)) {

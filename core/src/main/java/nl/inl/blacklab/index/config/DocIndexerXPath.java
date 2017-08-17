@@ -1,9 +1,12 @@
 package nl.inl.blacklab.index.config;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -29,6 +32,7 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
+import nl.inl.util.XmlUtil;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
@@ -73,6 +77,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     @Override
     public void setDocument(byte[] contents, Charset defaultCharset) {
+        if (config.shouldResolveNamedEntityReferences()) {
+            // Document contains old DTD-style named entity declarations. Resolve them because VTD-XML can't deal with these.
+            String doc = XmlUtil.readXmlAndResolveReferences(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(contents), defaultCharset)));
+            contents = doc.getBytes(defaultCharset);
+        }
         this.inputDocument = contents;
     }
 
@@ -80,15 +89,22 @@ public class DocIndexerXPath extends DocIndexerConfig {
     public void setDocument(InputStream is, Charset defaultCharset) {
         try {
             setDocument(IOUtils.toByteArray(is), defaultCharset);
+            is.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
+    public void close() throws Exception {
+        // NOP, we already closed our input after we read it
+    }
+
+    @Override
     public void setDocument(Reader reader) {
         try {
             setDocument(IOUtils.toString(reader).getBytes(Indexer.DEFAULT_INPUT_ENCODING), Indexer.DEFAULT_INPUT_ENCODING);
+            reader.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -115,7 +131,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     ap.declareXPathNameSpace(e.getKey(), e.getValue());
                 }
             }
-            ap.selectXPath(xpathExpr);
+            try {
+                ap.selectXPath(xpathExpr);
+            } catch (XPathParseException e) {
+                throw new RuntimeException("Error in XPath expression " + xpathExpr + " : " + e.getMessage(), e);
+            }
         } else {
             ap.resetXPath();
         }
@@ -432,10 +452,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
             switch(ld.getIfLinkPathMissing()) {
             case IGNORE:
             case WARN:
-                indexer.getListener().warning("Could not find linked document for " + documentName + moreInfo + ": " + e.getMessage());
+                indexer.getListener().warning("Could not find or parse linked document for " + documentName + moreInfo + ": " + e.getMessage());
                 break;
             case FAIL:
-                throw new RuntimeException("Could not find linked document for " + documentName + moreInfo, e);
+                throw new RuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
             }
         }
     }
@@ -598,28 +618,28 @@ public class DocIndexerXPath extends DocIndexerConfig {
 		// Get the element and content fragments
 		// (element fragment = from start of start tag to end of end tag;
 		//  content fragment = from end of start tag to start of end tag)
+        long elementFragment = nav.getElementFragment();
+        int startTagOffset = (int)elementFragment;
+        int endTagOffset;
 		long contentFragment = nav.getContentFragment();
-		int contentOffset = (int)contentFragment;
-		int contentLength = (int)(contentFragment >> 32);
-		int contentEnd = contentOffset + contentLength;
-		long elementFragment = nav.getElementFragment();
-		int elementOffset = (int)elementFragment;
-		int elementLength = (int)(elementFragment >> 32);
-		int elementEnd = elementOffset + elementLength;
-
-		// Calculate start/end tag offset and length
-		int startTagOffset = elementOffset;
-		int startTagLength = contentOffset - elementOffset;
-		int endTagOffset = contentEnd;
-		int endTagLength = elementEnd - contentEnd;
+		if (contentFragment == -1) {
+		    // Empty (self-closing) element.
+		    endTagOffset = startTagOffset;
+		} else {
+		    // Regular element with separate open and close tags.
+    		int contentOffset = (int)contentFragment;
+    		int contentLength = (int)(contentFragment >> 32);
+    		int contentEnd = contentOffset + contentLength;
+    		endTagOffset = contentEnd;
+		}
 
 		// Find element name
 		int currentIndex = nav.getCurrentIndex();
 		String elementName = dedupe(nav.toString(currentIndex));
 
 		// Add the inline tags to the list
-		InlineObject openTag = new InlineObject(elementName, startTagOffset, startTagLength, InlineObjectType.OPEN_TAG, getAttributes());
-		InlineObject closeTag = new InlineObject(elementName, endTagOffset, endTagLength, InlineObjectType.CLOSE_TAG, null);
+		InlineObject openTag = new InlineObject(elementName, startTagOffset, InlineObjectType.OPEN_TAG, getAttributes());
+		InlineObject closeTag = new InlineObject(elementName, endTagOffset, InlineObjectType.CLOSE_TAG, null);
 		openTag.setMatchingTag(closeTag);
 		closeTag.setMatchingTag(openTag);
 		inlineObject.add(openTag);
@@ -635,13 +655,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
 	private void collectPunct(List<InlineObject> inlineObjects, String text) throws NavException {
 		int i = nav.getCurrentIndex();
 		int offset = nav.getTokenOffset(i);
-		int length = nav.getTokenLength(i);
+//		int length = nav.getTokenLength(i);
 
 		// Make sure we only keep 1 copy of identical punct texts in memory
 		text = dedupe(StringUtil.normalizeWhitespace(text));
 
 		// Add the punct to the list
-		inlineObjects.add(new InlineObject(text, offset, offset + length, InlineObjectType.PUNCTUATION, null));
+		inlineObjects.add(new InlineObject(text, offset, InlineObjectType.PUNCTUATION, null));
 	}
 
 	/**

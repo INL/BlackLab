@@ -211,27 +211,22 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
 
         // Index the data
-        DocIndexer docIndexer = inputFormat.get(indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING);
-        if (docIndexer instanceof DocIndexerBase) {
-            DocIndexerBase ldi = (DocIndexerBase)docIndexer;
-            ldi.indexingIntoExistingLuceneDoc = true;
-            ldi.currentLuceneDoc = currentLuceneDoc;
-            if (storeWithName != null)
-                ldi.contentStoreName = storeWithName;
-            else
-                ldi.storeDocuments = false;
-            try {
-                ldi.indexSpecificDocument(documentPath);
-            } catch (Exception e) {
-                throw ExUtil.wrapRuntimeException(e);
-            } finally {
-                ldi.indexingIntoExistingLuceneDoc = false;
-                ldi.currentLuceneDoc = null;
-                ldi.contentStoreName = null;
-                ldi.storeDocuments = true;
+        try (DocIndexer docIndexer = inputFormat.get(indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING)) {
+            if (docIndexer instanceof DocIndexerBase) {
+                @SuppressWarnings("resource")
+                DocIndexerBase ldi = (DocIndexerBase)docIndexer;
+                ldi.indexingIntoExistingLuceneDoc = true;
+                ldi.currentLuceneDoc = currentLuceneDoc;
+                if (storeWithName != null)
+                    ldi.contentStoreName = storeWithName;
+                else
+                    ldi.storeDocuments = false;
+                    ldi.indexSpecificDocument(documentPath);
+            } else {
+                throw new RuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is " + docIndexer.getClass().getName());
             }
-        } else {
-            throw new RuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is " + docIndexer.getClass().getName());
+        } catch (Exception e1) {
+            throw new RuntimeException(e1);
         }
 
     }
@@ -562,6 +557,10 @@ public abstract class DocIndexerBase extends DocIndexer {
         propPunct().addValue(punct);
         addEndChar(getCharacterPosition());
         wordsDone++;
+        if (wordsDone > 0 && wordsDone % 5000 == 0) {
+            indexer.getListener().charsDone(getCharacterPosition());
+            reportTokensProcessed(wordsDone);
+        }
         if (punctuation.length() > 10000)
             punctuation = new StringBuilder(); // let's not hold on to this much memory
         else

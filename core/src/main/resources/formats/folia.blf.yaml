@@ -32,7 +32,7 @@ annotatedFields:
 
     # What element (relative to document) contains this field's contents?
     # (if omitted, entire document is used)
-    containerPath: text
+    #containerPath: text
 
     # What are our word tags? (relative to container)
     wordPath: .//w
@@ -108,8 +108,16 @@ annotatedFields:
     - path: .//p
 
 # FoLiA's native metadata
+# Embedded metadata: all attributes of the document element
 metadata:
-  containerPath: metadata[@type='native']
+
+- containerPath: .         # document element
+  fields:
+  - forEachPath: "@*"      # all attributes
+    namePath: local-name()
+    valuePath: .
+
+- containerPath: metadata[@type='native']
   fields:
   - forEachPath: meta
     namePath: "@id"

@@ -347,4 +347,8 @@ public class ConfigInputFormat {
         this.readFromFile = readFromFile;
     }
 
+    public boolean shouldResolveNamedEntityReferences() {
+        return fileType == FileType.XML && fileTypeOptions.containsKey("resolveNamedEntityReferences") && fileTypeOptions.get("resolveNamedEntityReferences").equalsIgnoreCase("true");
+    }
+
 }

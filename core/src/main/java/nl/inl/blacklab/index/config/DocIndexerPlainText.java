@@ -30,6 +30,11 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     }
 
     @Override
+    public void close() throws Exception {
+        reader.close();
+    }
+
+    @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
         if (config.getAnnotatedFields().size() > 1)
             throw new InputFormatConfigException("Plain text type can only have 1 annotated field");
@@ -38,8 +43,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
 
     @Override
     public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
-        Reader r = FileUtil.openForReading(file, defaultCharset);
-        setDocument(r);
+        setDocument(FileUtil.openForReading(file, defaultCharset));
     }
 
     @Override

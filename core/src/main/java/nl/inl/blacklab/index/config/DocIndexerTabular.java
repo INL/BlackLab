@@ -121,8 +121,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     @Override
     public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
-        Reader r = FileUtil.openForReading(file, defaultCharset);
-        setDocument(r);
+        setDocument(FileUtil.openForReading(file, defaultCharset));
     }
 
     @Override
@@ -140,9 +139,15 @@ public class DocIndexerTabular extends DocIndexerConfig {
         try {
             BufferedReader br = reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader(reader);
             records = tabularFormat.parse(br);
+            br.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void close() throws Exception {
+        // NOP, we closed our input when we read it
     }
 
     @Override

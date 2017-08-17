@@ -465,25 +465,17 @@ public class QueryTool {
 			err = new PrintWriter(new OutputStreamWriter(System.err, Charset.defaultCharset()), true);
 		}
 
-		BufferedReader in;
-		if (inputFile == null) {
-			// No input file specified; use stdin
-			in = new BufferedReader(new InputStreamReader(System.in, encoding));
-		} else {
-			// Open input file
-			in = FileUtil.openForReading(inputFile, INPUT_FILE_ENCODING);
-			batchMode = true;
-		}
-		try {
+		if (inputFile != null)
+		    batchMode = true;
+		try (BufferedReader in = inputFile == null ?
+		        new BufferedReader(new InputStreamReader(System.in, encoding)) :
+		        FileUtil.openForReading(inputFile, INPUT_FILE_ENCODING)) {
 			QueryTool c = new QueryTool(indexDir, in, out, err);
 			c.commandProcessor();
-		} finally {
-			try {
-				in.close();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
+		} catch (IOException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
 	}
 
 	private static void usage() {

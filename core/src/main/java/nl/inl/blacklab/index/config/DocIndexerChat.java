@@ -39,6 +39,8 @@ import nl.inl.util.FileUtil;
  */
 public class DocIndexerChat extends DocIndexerConfig {
 
+    private BufferedReader reader;
+
     private StringBuilder fullText;
 
 	/** Where to write log messages, or null for no logging */
@@ -109,6 +111,11 @@ public class DocIndexerChat extends DocIndexerConfig {
     @Override
     public void setDocument(Reader reader) {
         this.reader = reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader(reader);
+    }
+
+    @Override
+    public void close() throws IOException {
+        reader.close();
     }
 
 	@Override
@@ -1059,8 +1066,6 @@ public class DocIndexerChat extends DocIndexerConfig {
     // NOTE JN: used https://r12a.github.io/apps/conversion/ to convert unicode characters to escape sequences
 	private final Pattern CHAT_CA_SYMS = Pattern.compile("[\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB\u222E\u00A7\u223E\u21BB\u1F29\u201E\u2021\u0323\u0323\u02B0\u0304\u02940]");
 	private final Pattern TIME_ALIGN = Pattern.compile("\u0015[0123456789_ ]+\u0015");
-
-	private BufferedReader reader;
 
 	private String cleanText(String str) {
         String result = str;

@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
+import java.io.IOException;
 import java.io.Reader;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
@@ -152,6 +153,11 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     @Override
     public void setDocument(Reader reader) {
         this.reader = new CountingReader(reader);
+    }
+
+    @Override
+    public void close() throws IOException {
+        reader.close();
     }
 
     public void reportCharsProcessed() {

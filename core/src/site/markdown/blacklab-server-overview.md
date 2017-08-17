@@ -1,6 +1,4 @@
-# Introduction
-
-## BlackLab Server overview
+# BlackLab Server overview
 
 BlackLab Server is a REST web service for accessing [BlackLab](../) indices. This makes it easy to use BlackLab from your favourite programming language. It can be used for anything from quick analysis scripts to full-featured corpus search applications.
 

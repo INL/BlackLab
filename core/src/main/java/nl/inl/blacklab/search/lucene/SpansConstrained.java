@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
@@ -65,7 +66,7 @@ public class SpansConstrained extends BLSpans {
 		alreadyAtFirstMatch = false;
 
 		int currentDocId = clause.nextDoc();
-		if (currentDocId == Spans.NO_MORE_DOCS) {
+		if (currentDocId == DocIdSetIterator.NO_MORE_DOCS) {
 			currentFiDoc = null;
 			return NO_MORE_DOCS;
 		}
@@ -77,7 +78,7 @@ public class SpansConstrained extends BLSpans {
 		alreadyAtFirstMatch = false;
 
 		int currentDocId = clause.advance(target);
-		if (currentDocId == Spans.NO_MORE_DOCS) {
+		if (currentDocId == DocIdSetIterator.NO_MORE_DOCS) {
 			currentFiDoc = null;
 			return NO_MORE_DOCS;
 		}

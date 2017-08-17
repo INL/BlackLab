@@ -15,14 +15,19 @@
  *******************************************************************************/
 package nl.inl.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringWriter;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSOutput;
+import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -56,22 +61,7 @@ public class XmlUtil {
 			domFactory.setNamespaceAware(namespaceAware);
 			DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
 			// Avoid errors written to stderr
-			domBuilder.setErrorHandler(new ErrorHandler() {
-			    @Override
-			    public void warning(SAXParseException e) {
-			        //
-			    }
-
-			    @Override
-			    public void fatalError(SAXParseException e) throws SAXException {
-			        throw e;
-			    }
-
-			    @Override
-			    public void error(SAXParseException e) throws SAXException {
-			        throw e;
-			    }
-			});
+			domBuilder.setErrorHandler(new SimpleErrorHandler());
 			Document document = domBuilder.parse(new InputSource(reader));
 			return document;
 		} catch (ParserConfigurationException e) {
@@ -93,7 +83,28 @@ public class XmlUtil {
 		return xmlToPlainText(conc, false);
 	}
 
-	/**
+	private static final class SimpleErrorHandler implements ErrorHandler {
+        public SimpleErrorHandler() {
+            // NOP
+        }
+
+        @Override
+        public void warning(SAXParseException e) {
+            //
+        }
+
+        @Override
+        public void fatalError(SAXParseException e) throws SAXException {
+            throw e;
+        }
+
+        @Override
+        public void error(SAXParseException e) throws SAXException {
+            throw e;
+        }
+    }
+
+    /**
 	 * States of the xmlToPlainText() state machine
 	 */
 	private enum XmlToPlainTextState {
@@ -226,5 +237,30 @@ public class XmlUtil {
 
 		return new String(src, 0, dstIndex);
 	}
+
+    public static String readXmlAndResolveReferences(BufferedReader reader) {
+        Document document;
+        try {
+            DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
+            domFactory.setNamespaceAware(true);
+            DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
+            domBuilder.setErrorHandler(new SimpleErrorHandler());
+            document = domBuilder.parse(new InputSource(reader));
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        }
+        DOMImplementationLS domImplementation = (DOMImplementationLS) document.getImplementation();
+        LSSerializer lsSerializer = domImplementation.createLSSerializer();
+        LSOutput out = domImplementation.createLSOutput();
+        StringWriter sw = new StringWriter();
+        out.setCharacterStream(sw);
+        out.setEncoding("UTF-8");
+        lsSerializer.write(document, out);
+        return sw.toString();
+    }
 
 }

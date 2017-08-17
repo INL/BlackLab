@@ -114,9 +114,14 @@ public class DocumentFormats {
      * @param dirs directories to scan
      */
 	public static void registerFormatsInDirs(List<File> dirs) {
+	    // Make sure we can find linked formats no matter the order we
+	    // read files in the dirs.
+	    FormatFinderDirs ff = new FormatFinderDirs(dirs);
+        addFormatFinder(ff);
+
         for (File dir: dirs) {
             if (dir.exists() && dir.canRead()) {
-                FileUtil.processTree(dir, new FileTask() {
+                FileUtil.processTree(dir, "*", false, new FileTask() {
                     @Override
                     public void process(File f) {
                         if (f.getName().matches("^[\\-\\w]+\\.blf\\.(ya?ml|json)$")) {
@@ -133,6 +138,13 @@ public class DocumentFormats {
                 });
             }
         }
+
+        // Remove the format finder for these dirs now as it's no longer necessary
+        removeFormatFinder(ff);
+    }
+
+    public static void removeFormatFinder(FormatFinder ff) {
+        formatFinders.remove(ff);
     }
 
     /**
@@ -190,13 +202,13 @@ public class DocumentFormats {
 	}
 
     public static DocIndexerFactory getIndexerFactory(String formatIdentifier) {
-        formatIdentifier = formatIdentifier.toLowerCase();
         if (!exists(formatIdentifier))
-            find(formatIdentifier);
-        if (formats.containsKey(formatIdentifier))
-            return new DocIndexerFactoryConfig(formats.get(formatIdentifier));
-        if (docIndexerClasses.containsKey(formatIdentifier))
-            return new DocIndexerFactoryClass(docIndexerClasses.get(formatIdentifier));
+            return null;
+        String lcase = formatIdentifier.toLowerCase();
+        if (formats.containsKey(lcase))
+            return new DocIndexerFactoryConfig(formats.get(lcase));
+        if (docIndexerClasses.containsKey(lcase))
+            return new DocIndexerFactoryClass(docIndexerClasses.get(lcase));
         return null;
 	}
 
@@ -215,7 +227,7 @@ public class DocumentFormats {
 	public static boolean exists(String formatIdentifier) {
 	    String lcase = formatIdentifier.toLowerCase();
 		if (formats.containsKey(lcase) || docIndexerClasses.containsKey(lcase))
-			return true;
+		    return true;
 		return find(formatIdentifier);
 	}
 
@@ -251,6 +263,36 @@ public class DocumentFormats {
         }
 
 	}
+
+    /** How to find input formats (base format, linked documents) */
+    public static class FormatFinderDirs extends FormatFinder {
+
+        private List<File> dirs;
+
+        public FormatFinderDirs(List<File> dirs) {
+            this.dirs = dirs;
+        }
+
+        @Override
+        public boolean findAndRegister(String formatIdentifier) {
+            if (!formatIdentifier.matches("[\\-\\w]+"))
+                throw new IllegalArgumentException(
+                        "Invalid file format identifier: " + formatIdentifier + " (word characters only please)");
+            // See if we can find and load a format file by this name.
+            File formatFile = FileUtil.findFile(dirs, formatIdentifier, Arrays.asList("blf.yaml", "blf.yml", "blf.json"));
+            if (formatFile == null || !formatFile.canRead())
+                return false;
+            try {
+                // Load the format file and register the format
+                register(new ConfigInputFormat(formatFile));
+            } catch (InputFormatConfigException e) {
+                throw new InputFormatConfigException("Error in input format config " + formatFile + ": " + e.getMessage());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return true;
+        }
+    }
 
 	/**
 	 * Add a way to look for formats that aren't registered yet.

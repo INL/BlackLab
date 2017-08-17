@@ -252,7 +252,8 @@ public class IndexTool {
 		// (by default, it will already look in $BLACKLAB_CONFIG_DIR/formats, $HOME/.blacklab/formats
 		//  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
 		//  and the parent(s) of the input and index dirs)
-		List<File> formatDirs = new ArrayList<>(Arrays.asList(new File("."), inputDirParent, inputDir));
+		File currentWorkingDir = new File(System.getProperty("user.dir"));
+        List<File> formatDirs = new ArrayList<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
 		if (!formatDirs.contains(indexDirParent))
 		    formatDirs.add(indexDirParent);
 		DocumentFormats.registerFormatsInDirs(formatDirs);

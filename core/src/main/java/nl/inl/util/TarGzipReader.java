@@ -34,7 +34,8 @@ public class TarGzipReader {
 	 */
 	public static void processTarGzip(InputStream tarGzipStream, FileHandler fileHandler) {
 		try {
-			InputStream unzipped = new GzipCompressorInputStream(tarGzipStream);
+		    // NOTE: InputStream is not closed, caller is responsible for closing its stream
+            InputStream unzipped = new GzipCompressorInputStream(tarGzipStream);
 			processTar(unzipped, fileHandler);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -49,7 +50,8 @@ public class TarGzipReader {
 	 */
 	public static void processGzip(String filePath, InputStream gzipStream, FileHandler fileHandler) {
 		try {
-			InputStream unzipped = new GzipCompressorInputStream(gzipStream);
+            // NOTE: InputStream is not closed, caller is responsible for closing its stream
+            InputStream unzipped = new GzipCompressorInputStream(gzipStream);
 			fileHandler.handle(filePath.replaceAll("\\.gz$", ""), unzipped);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -64,25 +66,26 @@ public class TarGzipReader {
 	public static void processTar(InputStream tarStream, FileHandler fileHandler) {
 		try {
 			try (TarArchiveInputStream untarred = new TarArchiveInputStream(tarStream)) {
-				InputStream uncloseableInputStream = new FilterInputStream(untarred) {
+				try (InputStream uncloseableInputStream = new FilterInputStream(untarred) {
 					@Override
 					public void close() {
 						// Don't close!
 						// (when Reader is GC'ed, closes stream prematurely..?)
 					}
-				};
-				boolean continueReading = true;
-				while(continueReading) {
-					// Go to the next file in the .tar
-					TarArchiveEntry tarEntry = untarred.getNextTarEntry();
-					if (tarEntry == null)
-						break;
-					if (!tarEntry.isFile()) {
-						continue;
-					}
+				}) {
+    				boolean continueReading = true;
+    				while(continueReading) {
+    					// Go to the next file in the .tar
+    					TarArchiveEntry tarEntry = untarred.getNextTarEntry();
+    					if (tarEntry == null)
+    						break;
+    					if (!tarEntry.isFile()) {
+    						continue;
+    					}
 
-					String filePath = tarEntry.getName();
-					continueReading = fileHandler.handle(filePath, uncloseableInputStream);
+    					String filePath = tarEntry.getName();
+    					continueReading = fileHandler.handle(filePath, uncloseableInputStream);
+    				}
 				}
 			}
 		} catch (Exception e) {
