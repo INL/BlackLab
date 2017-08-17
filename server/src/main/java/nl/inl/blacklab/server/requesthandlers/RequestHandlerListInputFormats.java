@@ -1,10 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.index.DocumentFormats;
@@ -37,12 +39,14 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 	        if (!DocumentFormats.exists(urlResource))
                 throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' does not exist.");
 
+	        File formatFile = DocumentFormats.getConfig(urlResource).getReadFromFile();
 	        try (BufferedReader reader = DocumentFormats.getFormatFile(urlResource)) {
 	        	if (reader == null)
 	        		throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
 
 	        	ds	.startMap()
         		.entry("formatName", urlResource)
+        		.entry("configFileType", FilenameUtils.getExtension(formatFile.getName()))
         		.entry("configFile", IOUtils.toString(reader))
         		.endMap();
         		return HTTP_OK;

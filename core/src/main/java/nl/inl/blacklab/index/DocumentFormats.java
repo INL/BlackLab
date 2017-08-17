@@ -98,7 +98,7 @@ public class DocumentFormats {
     }
 
     public static BufferedReader getFormatFile(String formatIdentifier) {
-        ConfigInputFormat config = DocumentFormats.getConfig(formatIdentifier);
+        ConfigInputFormat config = getConfig(formatIdentifier);
         if (config == null)
             return null;
         File f = config.getReadFromFile();
@@ -210,10 +210,10 @@ public class DocumentFormats {
         return null;
 	}
 
-	public static ConfigInputFormat getConfig(String formatName) {
-        if (!formats.containsKey(formatName))
-            find(formatName);
-        return formats.get(formatName);
+	public static ConfigInputFormat getConfig(String formatIdentifier) {
+        if (!formats.containsKey(formatIdentifier))
+            find(formatIdentifier);
+        return formats.get(formatIdentifier);
     }
 
     /**
