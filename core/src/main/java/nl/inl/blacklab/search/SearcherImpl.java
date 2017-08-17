@@ -572,7 +572,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 			VersionFile.write(indexDir, "blacklab", "2");
 		else {
 			if (!isIndex(indexDir)) {
-				throw new IllegalArgumentException("BlackLab index has wrong type or version! "
+				throw new IllegalArgumentException("Not a BlackLab index, or wrong type or version! "
 						+ VersionFile.report(indexDir));
 			}
 		}

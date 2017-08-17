@@ -510,11 +510,11 @@
 		
 		<!-- VTD-XML XML parsing -->
         <dependency>
-            <groupId>com.ximpleware</groupId>
-            <artifactId>vtd-xml</artifactId>
-            <version>2.13</version>
-        </dependency>
-				
+		    <groupId>com.ximpleware</groupId>
+		    <artifactId>vtd-xml</artifactId>
+		    <version>2.13.4</version>
+		</dependency>
+
 	</dependencies>
 
 	<reporting>
