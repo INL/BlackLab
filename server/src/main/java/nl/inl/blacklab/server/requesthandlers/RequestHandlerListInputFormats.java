@@ -39,18 +39,19 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 	    if (urlResource != null && urlResource.length() > 0) {
 	        if (!DocumentFormats.exists(urlResource))
                 throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' does not exist.");
-	        BufferedReader reader = DocumentFormats.getFormatFile(urlResource);
-	        if (reader == null)
-	            throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
-	        try {
+
+	        try (BufferedReader reader = DocumentFormats.getFormatFile(urlResource)) {
+	        	if (reader == null)
+	        		throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
+
 	        	ds	.startMap()
-                	.entry("formatName", urlResource)
-                	.entry("configFile", IOUtils.toString(reader))
-                	.endMap();
-                return HTTP_OK;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        		.entry("formatName", urlResource)
+        		.entry("configFile", IOUtils.toString(reader))
+        		.endMap();
+        		return HTTP_OK;
+	        } catch (IOException e1) {
+				throw new RuntimeException(e1);
+			}
 	    }
 
 		ds.startMap();
@@ -85,7 +86,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                     ds.startAttrEntry("format", "name", name).startMap()
                         .entry("displayName", format.getDisplayName())
                         .entry("description", format.getDescription())
-                        .entry("configurationBased", DocumentFormats.getFormatFile(format.getName()) != null)
+                        .entry("configurationBased", format.isConfigurationBased())
     	            .endMap().endAttrEntry();
 	            }
 	        }

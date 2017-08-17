@@ -9,6 +9,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.jobs.User;
@@ -44,11 +45,16 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
         File userFormatDir = indexMan.getUserFormatDir(user.getUserId());
         File yamlFile = new File(userFormatDir, documentFormat + ".blf.yaml");
         File jsonFile = new File(userFormatDir, documentFormat + ".blf.json");
+        boolean success = false;
         if (yamlFile.exists())
-            yamlFile.delete();
+        	success |= yamlFile.delete();
         if (jsonFile.exists())
-            jsonFile.delete();
-        DocumentFormats.unregister(IndexManager.userFormatName(user.getUserId(), documentFormat));
+        	success |= jsonFile.delete();
+
+    	if (!success) // If both files are missing, DocumentFormats.exists should have returned false?
+    		throw new InternalServerError("Could not delete format. Unknown reason.", 35);
+
+		DocumentFormats.unregister(IndexManager.userFormatName(user.getUserId(), documentFormat));
 		return Response.success(ds, "Format deleted.");
 	}
 

@@ -107,6 +107,8 @@ public class DocumentFormats {
         return FileUtil.openForReading(f);
     }
 
+
+
     /**
      * Scan the supplied directories for format files and register them.
      * @param dirs directories to scan
@@ -280,6 +282,8 @@ public class DocumentFormats {
 
         private boolean unlisted;
 
+		private boolean isConfigBased;
+
         public boolean isUnlisted() {
             return unlisted;
         }
@@ -296,16 +300,21 @@ public class DocumentFormats {
             return description;
         }
 
-        public FormatDesc(String formatIdentifier, String displayName, String description) {
+        public FormatDesc(String formatIdentifier, String displayName, String description, boolean isConfigBased) {
             super();
             this.formatIdentifier = formatIdentifier;
             this.displayName = displayName;
             this.description = description;
+            this.isConfigBased = isConfigBased;
         }
 
         public void setUnlisted(boolean b) {
             this.unlisted = b;
         }
+
+		public boolean isConfigurationBased() {
+			return isConfigBased;
+		}
 
 	}
 
@@ -317,11 +326,11 @@ public class DocumentFormats {
     public static List<FormatDesc> getSupportedFormats() {
         List<FormatDesc> l = new ArrayList<>();
         for (ConfigInputFormat config: formats.values()) {
-            l.add(new FormatDesc(config.getName(), config.getDisplayName(), config.getDescription()));
+            l.add(new FormatDesc(config.getName(), config.getDisplayName(), config.getDescription(), true));
         }
         for (String format: docIndexerClasses.keySet()) {
             Class<? extends DocIndexer> docIndexerClass = getIndexerClass(format);
-            FormatDesc formatDesc = new FormatDesc(format, DocIndexer.getDisplayName(docIndexerClass), DocIndexer.getDescription(docIndexerClass));
+            FormatDesc formatDesc = new FormatDesc(format, DocIndexer.getDisplayName(docIndexerClass), DocIndexer.getDescription(docIndexerClass), false);
             if (!DocIndexer.listFormat(docIndexerClass))
                 formatDesc.setUnlisted(true);
             l.add(formatDesc);
