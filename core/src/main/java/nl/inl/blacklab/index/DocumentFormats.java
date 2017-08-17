@@ -155,7 +155,7 @@ public class DocumentFormats {
 	 * @param docIndexerClass the DocIndexer class for this format
 	 */
 	public static void register(String formatAbbreviation, final Class<? extends DocIndexer> docIndexerClass) {
-		docIndexerClasses.put(formatAbbreviation.toLowerCase(), docIndexerClass);
+		docIndexerClasses.put(formatAbbreviation, docIndexerClass);
 	}
 
 	/**
@@ -164,13 +164,12 @@ public class DocumentFormats {
 	 * @param config input format configuration to register
 	 */
 	public static void register(final ConfigInputFormat config) {
-        String name = config.getName().toLowerCase();
-	    try {
+        try {
 	        config.validate();
 	    } catch(IllegalArgumentException e) {
-	        throw new IllegalArgumentException("Format " + name + ": " + e.getMessage());
+	        throw new IllegalArgumentException("Format " + config.getName() + ": " + e.getMessage());
 	    }
-        formats.put(name, config);
+        formats.put(config.getName(), config);
 	}
 
 	/**
@@ -180,10 +179,10 @@ public class DocumentFormats {
 	 * @return the DocIndexer class, or null if not found
 	 */
 	public static Class<? extends DocIndexer> getIndexerClass(String formatIdentifier) {
-        if (!docIndexerClasses.containsKey(formatIdentifier.toLowerCase()))
+        if (!docIndexerClasses.containsKey(formatIdentifier))
             find(formatIdentifier);
 		// Check if it's a known abbreviation.
-		Class<?> docIndexerClass = docIndexerClasses.get(formatIdentifier.toLowerCase());
+		Class<?> docIndexerClass = docIndexerClasses.get(formatIdentifier);
 		if (docIndexerClass == null) {
 			// No; is it a fully qualified class name?
 			try {
@@ -204,18 +203,17 @@ public class DocumentFormats {
     public static DocIndexerFactory getIndexerFactory(String formatIdentifier) {
         if (!exists(formatIdentifier))
             return null;
-        String lcase = formatIdentifier.toLowerCase();
-        if (formats.containsKey(lcase))
-            return new DocIndexerFactoryConfig(formats.get(lcase));
-        if (docIndexerClasses.containsKey(lcase))
-            return new DocIndexerFactoryClass(docIndexerClasses.get(lcase));
+        if (formats.containsKey(formatIdentifier))
+            return new DocIndexerFactoryConfig(formats.get(formatIdentifier));
+        if (docIndexerClasses.containsKey(formatIdentifier))
+            return new DocIndexerFactoryClass(docIndexerClasses.get(formatIdentifier));
         return null;
 	}
 
 	public static ConfigInputFormat getConfig(String formatName) {
-        if (!formats.containsKey(formatName.toLowerCase()))
+        if (!formats.containsKey(formatName))
             find(formatName);
-        return formats.get(formatName.toLowerCase());
+        return formats.get(formatName);
     }
 
     /**
@@ -225,8 +223,7 @@ public class DocumentFormats {
 	 * @return true iff it corresponds to a format
 	 */
 	public static boolean exists(String formatIdentifier) {
-	    String lcase = formatIdentifier.toLowerCase();
-		if (formats.containsKey(lcase) || docIndexerClasses.containsKey(lcase))
+		if (formats.containsKey(formatIdentifier) || docIndexerClasses.containsKey(formatIdentifier))
 		    return true;
 		return find(formatIdentifier);
 	}

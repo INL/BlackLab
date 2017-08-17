@@ -178,7 +178,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * Check if the specified parameter has a value
      * @param name parameter name
      * @return true iff the parameter has a value
-     * @deprecated use ConfigInputFormat, IndexStructure
+     * @deprecated use a DocIndexerConfig-based indexer
      */
     @Deprecated
     public boolean hasParameter(String name) {
@@ -189,7 +189,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * Set a parameter for this indexer (such as which type of metadata block to process)
      * @param name parameter name
      * @param value parameter value
-     * @deprecated use ConfigInputFormat, IndexStructure
+     * @deprecated use a DocIndexerConfig-based indexer
      */
     @Deprecated
     public void setParameter(String name, String value) {
@@ -199,7 +199,7 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * Set a number of parameters for this indexer
      * @param param the parameter names and values
-     * @deprecated use ConfigInputFormat, IndexStructure
+     * @deprecated use a DocIndexerConfig-based indexer
      */
     @Deprecated
     public void setParameters(Map<String, String> param) {
@@ -227,7 +227,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * Get a parameter that was set for this indexer
      * @param name parameter name
      * @return the parameter value (or null if it was not specified)
-     * @deprecated use ConfigInputFormat, IndexStructure
+     * @deprecated use a DocIndexerConfig-based indexer
      */
     @Deprecated
     public String getParameter(String name) {
@@ -239,7 +239,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
-     * @deprecated use ConfigInputFormat, IndexStructure
+     * @deprecated use a DocIndexerConfig-based indexer
      */
     @Deprecated
     public boolean getParameter(String name, boolean defaultValue) {
@@ -255,7 +255,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
-     * @deprecated use ConfigInputFormat, IndexStructure
+     * @deprecated use a DocIndexerConfig-based indexer
      */
     @Deprecated
     public int getParameter(String name, int defaultValue) {
@@ -279,7 +279,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * Return the fieldtype to use for the specified field.
      * @param fieldName the field name
      * @return the fieldtype
-     * @deprecated use ConfigInputFormat, IndexStructure
+     * @deprecated use a DocIndexerConfig-based indexer
      */
     @Deprecated
     public FieldType getMetadataFieldTypeFromIndexerProperties(String fieldName) {
