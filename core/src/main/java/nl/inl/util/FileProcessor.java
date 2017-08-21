@@ -80,51 +80,45 @@ public class FileProcessor implements AutoCloseable {
      *
      * Used for multi-threaded file processing.
      */
-	private final class ProcessFileTask implements Runnable {
-		private final File fileToIndex;
+    private final class ProcessFileTask implements Runnable {
+    	private final File fileToIndex;
+    
+    	ProcessFileTask(File fileToIndex) {
+    		this.fileToIndex = fileToIndex;
+    	}
+    
+    	@Override
+    	public void run() {
+            try {
+    			String fn = fileToIndex.getCanonicalPath(); //Name();
+    			if (processArchives && fn.endsWith(".zip")) {
+    			    indexZip(fileToIndex);
+    			} else {
+    			    if (!skipFile(fileToIndex.getName())) {
+    			        if (processArchives && fn.endsWith(".gz") || fn.endsWith(".tgz") || fn.endsWith(".zip")) {
+    			            // Archive.
+    			            try {
+    			                try (FileInputStream is = new FileInputStream(fileToIndex)) {
+    			                    processInputStream(fn, is);
+    			                }
+    			            } catch (Exception e) {
+    			                keepProcessing = errorHandler.errorOccurred(fileToIndex.getPath(), null, e);
+    			            }
+    			        } else {
+    			            // Regular file.
+    			            fileHandler.file(fn, fileToIndex);
+    			        }
+    			    }
+    			}
+    		} catch (Exception e) {
+    			System.err.println("Error while processing file: " + fileToIndex);
+    			e.printStackTrace();
+    			System.err.flush();
+    		}
+    	}
+    }
 
-		ProcessFileTask(File fileToIndex) {
-			this.fileToIndex = fileToIndex;
-		}
-
-		@Override
-		public void run() {
-//			System.out.println("Start processing " + fileToIndex);
-//			System.out.flush();
-
-	        try {
-				String fn = fileToIndex.getCanonicalPath(); //Name();
-				if (processArchives && fn.endsWith(".zip")) {
-				    indexZip(fileToIndex);
-				} else {
-				    if (!skipFile(fileToIndex.getName())) {
-				        if (processArchives && fn.endsWith(".gz") || fn.endsWith(".tgz") || fn.endsWith(".zip")) {
-				            // Archive.
-				            try {
-				                try (FileInputStream is = new FileInputStream(fileToIndex)) {
-				                    processInputStream(fn, is);
-				                }
-				            } catch (Exception e) {
-				                keepProcessing = errorHandler.errorOccurred(fileToIndex.getPath(), null, e);
-				            }
-				        } else {
-				            // Regular file.
-				            fileHandler.file(fn, fileToIndex);
-				        }
-				    }
-				}
-			} catch (Exception e) {
-				System.err.println("Error while processing file: " + fileToIndex);
-				e.printStackTrace();
-				System.err.flush();
-			}
-
-//			System.out.println("Done processing " + fileToIndex);
-//			System.out.flush();
-		}
-	}
-
-	/** Catches any exceptions the Runnable throws so we can handle them. */
+    /** Catches any exceptions the Runnable throws so we can handle them. */
 	private static class ExceptionCatchingThreadFactory implements ThreadFactory {
 	    private final ThreadFactory delegate;
 
@@ -409,10 +403,7 @@ public class FileProcessor implements AutoCloseable {
                     String completePath = zipFile.getAbsolutePath() + "/" + fileName;
                     try {
                         try (InputStream is = z.getInputStream(e)) {
-                            if (isArchive) {
-                                if (processArchives)
-                                    processInputStream(completePath, is);
-                            } else {
+                            if (!isArchive || processArchives) {
                                 processInputStream(completePath, is);
                             }
                         }
