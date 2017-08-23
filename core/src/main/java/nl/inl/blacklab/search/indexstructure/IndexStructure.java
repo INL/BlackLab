@@ -565,7 +565,7 @@ public class IndexStructure {
 			fi.put("valueListComplete", f.isValueListComplete());
 			Map<String, Integer> values = f.getValueDistribution();
 			if (values != null) {
-	            ObjectNode jsonValues = fi.putObject("value");
+	            ObjectNode jsonValues = fi.putObject("values");
 				for (Map.Entry<String, Integer> e: values.entrySet()) {
 					jsonValues.put(e.getKey(), e.getValue());
 				}
