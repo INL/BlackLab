@@ -139,6 +139,8 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	/** Is this job running in low priority? */
 	protected ThreadPriority.Level level = ThreadPriority.Level.RUNNING;
 
+    private double worthiness = -1;
+
 	public Job(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super();
 		this.searchMan = searchMan;
@@ -159,8 +161,47 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		return searcher;
 	}
 
+	public void calculateWorthiness() {
+	    if (finished()) {
+	        // 0 ... 9999 : search is finished
+	        // (the more recently used, the worthier)
+	        worthiness = Math.min(0, 9999 - notAccessedFor());
+	    } else if (totalExecTime() > YOUTH_THRESHOLD_SEC) {
+	        // 10000 ... 19999: search has been running for a long time and is counting hits
+            // 20000 ... 29999: search has been running for a long time and is retrieving hits
+	        // (younger searches are considered worthier)
+	        boolean isCount = this instanceof JobHitsTotal || this instanceof JobDocsTotal;
+	        worthiness = Math.min(10000, 19999 - totalExecTime()) + (isCount ? 0 : 10000);
+	    } else {
+	        double runtime = currentRunPhaseLength();
+	        boolean justStartedRunning = runtime > ALMOST_ZERO && runtime < RUN_PAUSE_PHASE_JUST_STARTED;
+	        double pause = currentPauseLength();
+	        boolean justPaused = pause > ALMOST_ZERO && pause < RUN_PAUSE_PHASE_JUST_STARTED;
+	        if (!justPaused && !justStartedRunning) {
+	            // 30000 ... 39999: search has been running for a short time
+                // (older searches are considered worthier, to give searches just started a fair chance of completing)
+                worthiness = Math.max(39999, 30000 + totalExecTime());
+	        } else if (justPaused) {
+	            // 40000 ... 49999: search was just paused
+	            // (the longer ago, the worthier)
+                worthiness = Math.max(49999, 40000 + pause);
+	        } else {
+                // 50000 ... 59999: search was just resumed
+                // (the more recent, the worthier)
+                worthiness = Math.min(50000, 59999 - runtime);
+	        }
+	    }
+	}
+
 	/**
 	 * Compare based on 'worthiness' (descending).
+	 *
+	 * NOTE: you must call calculateWorthiness() on the objects
+	 * you're going to compare before using compareTo() (e.g.
+	 * sorting an ArrayList of Jobs). This makes sure no changes
+	 * in worthiness can occur during the process. This is required
+	 * by the Comparable interface and TimSort complains if the
+	 * contract is violated by an object changing while sorting.
 	 *
 	 * 'Worthiness' is a measure indicating how important a
 	 * job is, and determines what jobs get the CPU and what jobs
@@ -174,86 +215,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	 */
 	@Override
 	public int compareTo(Job o) {
-
-		// Our return values with more logical names.
-		// (1 refers to this object, 2 to the one supplied as a parameter)
-		final int WORTHY1 = -1;
-		final int WORTHY2 = -WORTHY1;
-
-		// Determine 'finished' status for these searches
-		boolean finished1 = finished();
-		boolean finished2 = o.finished();
-		if (finished1 != finished2) {
-			// One is finished, one is not: the unfinished one is worthiest.
-			// (because the top searches get the CPU, and the bottom
-			//  finished searches might be discarded from the cache)
-			return finished2 ? WORTHY1 : WORTHY2;
-		}
-		if (finished1) {
-			// Neither are running: most recently used search is the worthiest.
-			// (because we want a LRU cache)
-			return notAccessedFor() < o.notAccessedFor() ? WORTHY1 : WORTHY2;
-		}
-		// Both searches are unfinished.
-
-		// Rules to make sure jobs aren't oscillating between
-		// running and not running too much.
-		// First, check if job just started running, and if so,
-		// try not to pause them again right away.
-		double runtime1 = currentRunPhaseLength();
-		double runtime2 = o.currentRunPhaseLength();
-		boolean justStartedRunning1 = runtime1 > ALMOST_ZERO && runtime1 < RUN_PAUSE_PHASE_JUST_STARTED;
-		boolean justStartedRunning2 = runtime2 > ALMOST_ZERO && runtime2 < RUN_PAUSE_PHASE_JUST_STARTED;
-		if (justStartedRunning1 || justStartedRunning2) {
-			// At least one of the jobs just started running.
-			// The shortest-running one is worthiest.
-			return runtime1 < runtime2 ? WORTHY1 : WORTHY2;
-		}
-		// Now, check if job was just paused, and if so,
-		// try not to resume it right away.
-		double pause1 = currentPauseLength();
-		double pause2 = o.currentPauseLength();
-		boolean justPaused1 = pause1 > ALMOST_ZERO && pause1 < RUN_PAUSE_PHASE_JUST_STARTED;
-		boolean justPaused2 = pause2 > ALMOST_ZERO && pause2 < RUN_PAUSE_PHASE_JUST_STARTED;
-		if (justPaused1 || justPaused2) {
-			// At least one of the jobs was just paused.
-			// The longest-paused one is worthiest.
-			return pause1 > pause2 ? WORTHY1 : WORTHY2;
-		}
-		// Neither job just started running or were just paused.
-
-		// Are these jobs relatively young or relatively old?
-		// Young jobs get the CPU in the hope that they will complete
-		// quickly; older jobs are paused sooner because they eat up
-		// a lot of resources.
-		double exec1 = totalExecTime();
-		double exec2 = o.totalExecTime();
-		boolean young1 = exec1 < YOUTH_THRESHOLD_SEC;
-		boolean young2 = exec2 < YOUTH_THRESHOLD_SEC;
-		if (young1 != young2) {
-			// One is old, one is young: young job is worthiest.
-			// (so heavy jobs don't crowd out the light ones)
-			return young1 ? WORTHY1 : WORTHY2;
-		}
-		// Both young or both old. Look at execution time.
-		if (young1) {
-			// Both young: the oldest is the worthiest.
-			// (so light jobs get a fair chance to complete)
-			return exec1 > exec2 ? WORTHY1 : WORTHY2;
-		}
-
-		// Both jobs are old.
-		// Are they searching or counting?
-		boolean count1 = this instanceof JobHitsTotal || this instanceof JobDocsTotal;
-		boolean count2 = o instanceof JobHitsTotal || o instanceof JobDocsTotal;
-		if (count1 != count2) {
-			// One is counting, the other is searching: search is worthiest.
-			return count2 ? WORTHY1 : WORTHY2;
-		}
-
-		// Both searching or both counting; the youngest is worthiest.
-		// (so heavy jobs don't crowd out the lighter ones)
-		return exec1 < exec2 ? WORTHY1 : WORTHY2;
+	    return -Double.compare(worthiness, o.worthiness);
 	}
 
 	public long getLastAccessed() {

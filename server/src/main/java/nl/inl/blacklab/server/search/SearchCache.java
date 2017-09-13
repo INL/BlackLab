@@ -309,6 +309,8 @@ public class SearchCache {
 		List<Job> searches = new ArrayList<>(cachedSearches.values());
 
 		// Sort the searches based on descending "worthiness"
+		for (Job s: searches)
+		    s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues because of threading
 		Collections.sort(searches);
 
 		//------------------
