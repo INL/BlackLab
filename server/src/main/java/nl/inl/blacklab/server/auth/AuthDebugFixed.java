@@ -12,15 +12,16 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * Authentication system used for debugging.
  *
- * Requests from debug IPs (specified in config file) may fake logged-in
- * user by passing "userid" parameter.
+ * Requests from debug IPs (specified in config file) are automatically
+ * logged in as the specified userId.
  */
 public class AuthDebugFixed {
 
 	private String userId;
 
 	public AuthDebugFixed(Map<String, Object> parameters) {
-		this.userId = parameters.get("userId").toString();
+		Object u = parameters.get("userId");
+        this.userId = u != null ? u.toString() : "jan.niestadt@inl.nl";
 	}
 
 	public User determineCurrentUser(HttpServlet servlet,
