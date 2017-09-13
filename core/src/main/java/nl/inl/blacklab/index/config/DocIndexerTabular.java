@@ -86,6 +86,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     private String multipleValuesSeparator = ";";
 
+    private BufferedReader inputReader;
+
     public DocIndexerTabular() {
     }
 
@@ -137,9 +139,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
     @Override
     public void setDocument(Reader reader) {
         try {
-            BufferedReader br = reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader(reader);
-            records = tabularFormat.parse(br);
-            br.close();
+            inputReader = reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader(reader);
+            records = tabularFormat.parse(inputReader);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -147,7 +148,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     @Override
     public void close() throws Exception {
-        // NOP, we closed our input when we read it
+        if (inputReader != null)
+            inputReader.close();
     }
 
     @Override
