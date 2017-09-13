@@ -85,7 +85,7 @@ public class FileUploadHandler {
 		} catch (BlsException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			throw new InternalServerError(ex.getMessage(), 26);
+			throw new InternalServerError("Exception while adding file to index: " + ex.getClass().getName(), 26, ex);
 		}
 	}
 }
