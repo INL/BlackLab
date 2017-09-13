@@ -39,6 +39,13 @@ import nl.inl.util.XmlUtil;
  */
 public class DocIndexerXPath extends DocIndexerConfig {
 
+    private static enum FragmentPosition {
+        BEFORE_OPEN_TAG,
+        AFTER_OPEN_TAG,
+        BEFORE_CLOSE_TAG,
+        AFTER_CLOSE_TAG
+    }
+
     /** Our input document */
     private byte[] inputDocument;
 
@@ -59,6 +66,12 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     /** VTD navigator */
     private VTDNav nav;
+
+    /** Where the current position is relative to the current fragment */
+    private FragmentPosition fragPos = FragmentPosition.BEFORE_OPEN_TAG;
+
+    /** Fragment positions in ancestors */
+    private List<FragmentPosition> fragPosStack = new ArrayList<>();
 
     /** The config for the annotated (complex) field we're currently processing. */
     private ConfigAnnotatedField currentAnnotatedField;
@@ -222,7 +235,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // For each body element...
         // (there's usually only one, but there's no reason to limit it)
-        nav.push();
+        navpush();
         AutoPilot bodies = acquireAutoPilot(annotatedField.getContainerPath());
         while (bodies.evalXPath() != -1) {
 
@@ -233,33 +246,33 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // just like we do in our SAX parsers.
             List<InlineObject> tagsAndPunct = new ArrayList<>();
             for (AutoPilot apInlineTag: apsInlineTag) {
-                nav.push();
+                navpush();
                 apInlineTag.resetXPath();
                 while (apInlineTag.evalXPath() != -1) {
                     collectInlineTag(tagsAndPunct);
                 }
-                nav.pop();
+                navpop();
             }
             setAddDefaultPunctuation(true);
             if (apPunct != null) {
                 // We have punctuation occurring between word tags (as opposed to
                 // punctuation that is tagged as a word itself). Collect this punctuation.
                 setAddDefaultPunctuation(false);
-            	nav.push();
+            	navpush();
             	apPunct.resetXPath();
                 while (apPunct.evalXPath() != -1) {
                     apEvalToString.resetXPath();
                     String punct = apEvalToString.evalXPathToString();
                     collectPunct(tagsAndPunct, punct);
                 }
-                nav.pop();
+                navpop();
             }
             Collections.sort(tagsAndPunct);
             Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
             InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
 
             // Now, find all words, keeping track of what inline objects occur in between.
-            nav.push();
+            navpush();
             words.resetXPath();
             while (words.evalXPath() != -1) {
 
@@ -282,6 +295,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
                 }
 
+                fragPos = FragmentPosition.BEFORE_OPEN_TAG;
                 beginWord();
 
                 // For each configured annotation...
@@ -289,9 +303,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     processAnnotation(annotation, null);
                 }
 
+                fragPos = FragmentPosition.AFTER_CLOSE_TAG;
                 endWord();
             }
-            nav.pop();
+            navpop();
 
             // Handle any inline objects after the last word
             while (nextInlineObject != null) {
@@ -303,18 +318,18 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
 
         }
-        nav.pop();
+        navpop();
 
         // For each configured standoff annotation...
         for (ConfigStandoffAnnotations standoff: annotatedField.getStandoffAnnotations()) {
             // For each instance of this standoff annotation..
-            nav.push();
+            navpush();
             AutoPilot apStandoff = acquireAutoPilot(standoff.getPath());
             AutoPilot apTokenPos = acquireAutoPilot(standoff.getRefTokenPositionIdPath());
             while (apStandoff.evalXPath() != -1) {
 
                 // Determine what token positions to index these values at
-                nav.push();
+                navpush();
                 List<Integer> tokenPositions = new ArrayList<>();
                 apTokenPos.resetXPath();
                 while (apTokenPos.evalXPath() != -1) {
@@ -326,7 +341,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     else
                         tokenPositions.add(integer);
                 }
-                nav.pop();
+                navpop();
 
                 for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
                     processAnnotation(annotation, tokenPositions);
@@ -334,7 +349,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
             releaseAutoPilot(apStandoff);
             releaseAutoPilot(apTokenPos);
-            nav.pop();
+            navpop();
         }
 
         releaseAutoPilot(words);
@@ -349,9 +364,20 @@ public class DocIndexerXPath extends DocIndexerConfig {
         releaseAutoPilot(bodies);
     }
 
+    protected void navpush() {
+        nav.push();
+        fragPosStack.add(fragPos);
+        fragPos = FragmentPosition.BEFORE_OPEN_TAG;
+    }
+
+    protected void navpop() {
+        nav.pop();
+        fragPos = fragPosStack.remove(fragPosStack.size() - 1);
+    }
+
     protected void processMetadataBlock(ConfigMetadataBlock b) throws XPathParseException, XPathEvalException, NavException {
         // For each instance of this metadata block...
-        nav.push();
+        navpush();
         AutoPilot apMetadataBlock = acquireAutoPilot(b.getContainerPath());
         while (apMetadataBlock.evalXPath() != -1) {
 
@@ -369,7 +395,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 if (f.isForEach()) {
                     // "forEach" metadata specification
                     // (allows us to capture many metadata fields with 3 XPath expressions)
-                    nav.push();
+                    navpush();
                     AutoPilot apMetaForEach = acquireAutoPilot(f.getForEachPath());
                     AutoPilot apFieldName = acquireAutoPilot(f.getName());
                     while (apMetaForEach.evalXPath() != -1) {
@@ -388,7 +414,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     }
                     releaseAutoPilot(apMetaForEach);
                     releaseAutoPilot(apFieldName);
-                    nav.pop();
+                    navpop();
                 } else {
                     // Regular metadata field; just the fieldName and an XPath expression for the value
                     String metadataValue = apMetadata.evalXPathToString();
@@ -400,7 +426,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         }
         releaseAutoPilot(apMetadataBlock);
-        nav.pop();
+        navpop();
     }
 
     protected void processLinkedDocument(ConfigLinkedDocument ld) throws XPathParseException {
@@ -472,7 +498,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         String basePath = annotation.getBasePath();
         if (basePath != null) {
             // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
-            nav.push();
+            navpush();
             AutoPilot apBase = acquireAutoPilot(basePath);
             apBase.evalXPath();
             releaseAutoPilot(apBase);
@@ -506,7 +532,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             if (subAnnot.isForEach()) {
                 // "forEach" subannotation specification
                 // (allows us to capture multiple subannotations with 3 XPath expressions)
-                nav.push();
+                navpush();
                 AutoPilot apForEach = acquireAutoPilot(subAnnot.getForEachPath());
                 AutoPilot apName = acquireAutoPilot(subAnnot.getName());
                 while (apForEach.evalXPath() != -1) {
@@ -525,7 +551,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
                 releaseAutoPilot(apForEach);
                 releaseAutoPilot(apName);
-                nav.pop();
+                navpop();
             } else {
                 // Regular metadata field; just the fieldName and an XPath expression for the value
                 findAnnotationMatches(annotation, subAnnot, valuePath, indexAtPositions);
@@ -535,7 +561,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         if (basePath != null) {
             // We pushed when we navigated to the base element; pop now.
-            nav.pop();
+            navpop();
         }
     }
 
@@ -669,7 +695,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * @return
      */
     private Map<String, String> getAttributes() {
-		nav.push();
+		navpush();
 		AutoPilot apAttr = new AutoPilot(nav);
 		apAttr.selectAttr("*");
 		int i = -1;
@@ -683,7 +709,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 		} catch (NavException e) {
 			throw new RuntimeException(e);
 		}
-		nav.pop();
+		navpop();
 		return attr;
 	}
 
@@ -718,8 +744,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 	    // Note that this only works if this method is called for increasing byte positions,
 	    // which is true because we only use it for word tags.
 		try {
-            long fragment = nav.getElementFragment();
-            int currentByteOffset = (int)fragment;
+            int currentByteOffset = getCurrentByteOffset();
             if (currentByteOffset > lastCharPositionByteOffset) {
                 int length = currentByteOffset - lastCharPositionByteOffset;
                 String str = new String(inputDocument, lastCharPositionByteOffset, length);
@@ -731,6 +756,25 @@ public class DocIndexerXPath extends DocIndexerConfig {
             throw new RuntimeException(e);
         }
 	}
+
+    protected int getCurrentByteOffset() throws NavException {
+        if (fragPos == FragmentPosition.BEFORE_OPEN_TAG || fragPos == FragmentPosition.AFTER_CLOSE_TAG) {
+            long elFrag = nav.getElementFragment();
+            int  elOffset = (int)elFrag;
+            if (fragPos == FragmentPosition.AFTER_CLOSE_TAG) {
+                int  elLength = (int)(elFrag >> 32);
+                return elOffset + elLength;
+            }
+            return elOffset;
+        }
+        long contFrag = nav.getContentFragment();
+        int  contOffset = (int)contFrag;
+        if (fragPos == FragmentPosition.BEFORE_CLOSE_TAG) {
+            int  contLength = (int)(contFrag >> 32);
+            return contOffset + contLength;
+        }
+        return contOffset;
+    }
 
     protected void setCurrentAnnotatedField(ConfigAnnotatedField annotatedField) {
         currentAnnotatedField = annotatedField;
