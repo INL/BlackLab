@@ -88,6 +88,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
 	}
 
 	/** Copy this state without a next state. Used by copyInternal().
+	 * @return the copy
 	 */
 	abstract NfaStateMultiTermPattern copyNoNextState();
 

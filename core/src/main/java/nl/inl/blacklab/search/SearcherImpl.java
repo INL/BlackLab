@@ -140,6 +140,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 	 * @param indexDir the index directory
 	 * @param indexMode if true, open in index mode; if false, open in search mode.
 	 * @param createNewIndex if true, delete existing index in this location if it exists.
+	 * @param indexTemplateFile index template file to use to create index
      * @param config input format config to use as template for index structure / metadata
 	 *   (if creating new index)
 	 * @throws IOException

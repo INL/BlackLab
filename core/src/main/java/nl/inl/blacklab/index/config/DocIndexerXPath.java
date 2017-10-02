@@ -131,6 +131,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     /**
      * Create AutoPilot and declare namespaces on it.
+     * @param xpathExpr xpath expression for the AutoPilot
      * @return the AutoPilot
      * @throws XPathParseException
      */
