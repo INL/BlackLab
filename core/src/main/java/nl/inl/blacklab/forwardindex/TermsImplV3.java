@@ -98,7 +98,7 @@ class TermsImplV3 extends Terms {
 	 * Mapping from term to its unique index number. We use a SortedMap because we wish to
 	 * store the sorted index numbers later (to speed up sorting).
 	 */
-	Map<String, Integer> termIndex;
+	Map<CollationKey, Integer> termIndex;
 
 	/**
 	 * The first index in the sortPositionPerIdInsensitive[] array
@@ -146,7 +146,7 @@ class TermsImplV3 extends Terms {
 		if (indexMode) {
 			// Index mode: create a SortedMap based on the specified Collator.
 			// (used later to get the terms in sort order)
-			this.termIndex = new TreeMap<>(this.collator);
+			this.termIndex = new TreeMap<>();
 			this.termIndexInsensitive = null;
 		} else {
 			// We already have the sort order, so TreeMap is not necessary here.
@@ -174,13 +174,14 @@ class TermsImplV3 extends Terms {
 		if (termIndexBuilt) {
 			synchronized (this) {
 				// Yes, use the available term index.
-				Integer index = termIndex.get(term);
+			    CollationKey key = this.collator.getCollationKey(term);
+				Integer index = termIndex.get(key);
 				if (index != null)
 					return index;
 				if (!indexMode)
 					return NO_TERM; // term not found
 				index = termIndex.size();
-				termIndex.put(term, index);
+				termIndex.put(key, index);
 				return index;
 			}
 		}
@@ -216,16 +217,17 @@ class TermsImplV3 extends Terms {
 		Collator coll = caseSensitive ? collator : collatorInsensitive;
 
 		// Do we have the term index available (fastest method)?
+		CollationKey key = coll.getCollationKey(term);
 		if (termIndexBuilt) {
 			// Yes, use the available term index.
 			// NOTE: insensitive index is only available in search mode.
 			if (caseSensitive) {
 				// Case-/accent-sensitive. Look up the term's id.
-				results.add(termIndex.get(term));
+				results.add(termIndex.get(key));
 				return;
 			} else if (termIndexInsensitive != null) {
 				// Case-/accent-insensitive. Find the relevant stretch of sort positions and look up the corresponding ids.
-				FirstAndNumber firstAndNumber = termIndexInsensitive.get(coll.getCollationKey(term));
+				FirstAndNumber firstAndNumber = termIndexInsensitive.get(key);
 				for (int i = firstAndNumber.first; i < firstAndNumber.number; i++) {
 					results.add(idLookup[i]);
 				}
@@ -244,20 +246,26 @@ class TermsImplV3 extends Terms {
 			int guessedOrdinal = (min + max) / 2;
 			int guessedIndex = idLookup[guessedOrdinal];
 			String guessedTerm = get(guessedIndex);
-			int cmp = coll.compare(term, guessedTerm);
+			CollationKey termKey = coll.getCollationKey(term);
+			CollationKey guessedKey = coll.getCollationKey(guessedTerm);
+			int cmp = termKey.compareTo(guessedKey); //coll.compare(term, guessedTerm);
 			if (cmp == 0) {
 				// Found a match. Look both ways to see if there's more matching terms.
 				results.add(guessedIndex);
 				if (!caseSensitive) {
 					for (int testOrdinal = guessedOrdinal - 1; testOrdinal >= min; testOrdinal--) {
 						int testIndex = idLookup[testOrdinal];
-						if (coll.compare(term, get(testIndex)) != 0)
+						CollationKey testKey = coll.getCollationKey(get(testIndex));
+                        //if (coll.compare(term, get(testIndex)) != 0)
+                        if (termKey.compareTo(testKey) != 0)
 							break;
 						results.add(testIndex);
 					}
 					for (int testOrdinal = guessedOrdinal + 1; testOrdinal <= max; testOrdinal++) {
 						int testIndex = idLookup[testOrdinal];
-						if (coll.compare(term, get(testIndex)) != 0)
+                        CollationKey testKey = coll.getCollationKey(get(testIndex));
+						//if (coll.compare(term, get(testIndex)) != 0)
+	                    if (termKey.compareTo(testKey) != 0)
 							break;
 						results.add(testIndex);
 					}
@@ -294,7 +302,7 @@ class TermsImplV3 extends Terms {
 		// Build the case-sensitive term index.
 		int n = numberOfTerms();
 		for (int i = 0; i < n; i++) {
-			termIndex.put(get(i), i);
+			termIndex.put(collator.getCollationKey(get(i)), i);
 		}
 
 		if (termIndexInsensitive != null) {
@@ -470,9 +478,10 @@ class TermsImplV3 extends Terms {
 					// Fill the terms[] array
 					terms = new String[n];
 					long termStringsByteSize = 0;
-					for (Map.Entry<String, Integer> entry: termIndex.entrySet()) {
-						terms[entry.getValue()] = entry.getKey();
-						termStringsByteSize += entry.getKey().getBytes(DEFAULT_CHARSET).length;
+					for (Map.Entry<CollationKey, Integer> entry: termIndex.entrySet()) {
+					    String term = entry.getKey().getSourceString();
+						terms[entry.getValue()] = term;
+						termStringsByteSize += term.getBytes(DEFAULT_CHARSET).length;
 					}
 
 					// Calculate the file length and map the file

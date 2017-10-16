@@ -19,6 +19,8 @@ import java.io.File;
 import java.text.Collator;
 import java.util.Locale;
 
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -106,4 +108,34 @@ public class TestTermsV3 {
 			Assert.assertEquals(expected[i], t.idToSortPosition(i, true));
 		}
 	}
+
+    /**
+     * Test if the "reverse sort positions" are determined correctly.
+     */
+    @Test
+    public void testIndexOf() {
+        String [] input = {
+            "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog"
+        };
+        int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7 };
+        for (int i = 0; i < expected.length; i++) {
+            Assert.assertEquals(expected[i], t.indexOf(input[i]));
+        }
+    }
+
+    /**
+     * Test if the "reverse sort positions" are determined correctly.
+     */
+    @Test
+    public void testIndexOfInsensitive() {
+        String [] input = {
+            "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog"
+        };
+        int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7 };
+        for (int i = 0; i < expected.length; i++) {
+            MutableIntSet results = new IntHashSet();
+            t.indexOf(results, input[i], false, false);
+            Assert.assertEquals(expected[i], results.intIterator().next());
+        }
+    }
 }
