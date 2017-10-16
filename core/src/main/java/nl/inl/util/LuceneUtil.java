@@ -307,7 +307,7 @@ public class LuceneUtil {
 		}
 		try {
 			if (!sensitive)
-				prefix = StringUtils.stripAccents(prefix).toLowerCase();
+				prefix = StringUtil.stripAccents(prefix).toLowerCase();
 			List<String> results = new ArrayList<>();
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
@@ -321,7 +321,7 @@ public class LuceneUtil {
 					String termText = term.utf8ToString();
 					String optDesensitized = termText;
 					if (!sensitive)
-						optDesensitized = StringUtils.stripAccents(termText).toLowerCase();
+						optDesensitized = StringUtil.stripAccents(termText).toLowerCase();
 					if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
 						// Doesn't match prefix or different field; no more matches
 						break;
@@ -413,7 +413,7 @@ public class LuceneUtil {
 						break;
 					String termText = term.utf8ToString();
 					if (termText.contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR)) {
-						termText = StringUtils.stripAccents(termText).toLowerCase();
+						termText = StringUtil.stripAccents(termText).toLowerCase();
 						String[] parts = termText.split(ComplexFieldUtil.SUBPROPERTY_SEPARATOR);
 						String subpropName = parts[1];
 						Set<String> resultList = results.get(subpropName);

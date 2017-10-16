@@ -107,6 +107,9 @@ public class QueryTool {
 	/** The groups, or null if we haven't grouped our results. */
 	private HitGroups groups = null;
 
+	/** If all hits or the current group of hits have been sorted, this contains the sorted hits. */
+	private Hits sortedHits = null;
+
 	/** The collocations, or null if we're not looking at collocations. */
 	private TermFrequencyList collocations = null;
 
@@ -594,6 +597,7 @@ public class QueryTool {
 		// Reset results
 		hits = null;
 		groups = null;
+		sortedHits = null;
 		collocations = null;
 	}
 
@@ -706,6 +710,7 @@ public class QueryTool {
 				hits = null;
 				docs = null;
 				groups = null;
+				sortedHits = null;
 				collocations = null;
 				filterQuery = null;
 				showSetting = ShowSetting.HITS;
@@ -729,7 +734,7 @@ public class QueryTool {
 				showResultsPage();
 			} else if (lcased.startsWith("snippet ")) {
 				int hitId = parseInt(lcased.substring(8), 1) - 1;
-				Hits currentHitSet = getCurrentHitSet();
+				Hits currentHitSet = getCurrentSortedHitSet();
 				if (hitId >= currentHitSet.size()) {
 					errprintln("Hit number out of range.");
 				} else {
@@ -744,7 +749,7 @@ public class QueryTool {
 				}
 			} else if (lcased.startsWith("highlight ")) {
 				int hitId = parseInt(lcased.substring(8), 1) - 1;
-				Hits currentHitSet = getCurrentHitSet();
+				Hits currentHitSet = getCurrentSortedHitSet();
 				if (currentHitSet == null || hitId >= currentHitSet.size()) {
 					errprintln("Hit number out of range.");
 				} else {
@@ -1073,6 +1078,7 @@ public class QueryTool {
 			hits = searcher.find(spanQuery);
 			docs = null;
 			groups = null;
+			sortedHits = null;
 			collocations = null;
 			showWhichGroup = -1;
 			showSetting = ShowSetting.HITS;
@@ -1216,7 +1222,7 @@ public class QueryTool {
 			errprintln("Invalid hit sort criterium: " + sortBy
 					+ " (valid are: match, left, right, doc, <metadatafield>)");
 		} else {
-			hitsToSort = hitsToSort.sortedBy(crit);
+			sortedHits = hitsToSort.sortedBy(crit);
 			firstResult = 0;
 			showResultsPage();
 			if (property == null)
@@ -1305,6 +1311,7 @@ public class QueryTool {
 	 * @param showWhat what type of results to show
 	 */
 	private void changeShowSettings(String showWhat) {
+        sortedHits = null;
 		if (showWhat.equals("hits")) {
 			showSetting = ShowSetting.HITS;
 			showWhichGroup = -1;
@@ -1470,12 +1477,13 @@ public class QueryTool {
 	 */
 	private void showHitsPage() {
 
+	    Hits hitsToShow = getCurrentSortedHitSet();
 		if (!showConc) {
 			if (determineTotalNumberOfHits) {
 				// Just show total number of hits, no concordances
-				outprintln(getCurrentHitSet().size() + " hits");
+				outprintln(hitsToShow.size() + " hits");
 			} else {
-				Iterator<Hit> it = getCurrentHitSet().iterator();
+				Iterator<Hit> it = hitsToShow.iterator();
 				int i;
 				for (i = 0; it.hasNext() && i < resultsPerPage; i++) {
 					it.next();
@@ -1508,7 +1516,6 @@ public class QueryTool {
 			}
 		}
 
-		Hits hitsToShow = getCurrentHitSet();
 		if (hitsToShow == null)
 			return; // nothing to show
 
@@ -1582,6 +1589,21 @@ public class QueryTool {
 		}
 		outprintln(msg);
 	}
+
+    /**
+     * Returns the hit set we're currently looking at.
+     *
+     * This is either all hits or the hits in one group.
+     *
+     * If a sort has been applied, returns the sorted hits.
+     *
+     * @return the hit set
+     */
+    private Hits getCurrentSortedHitSet() {
+        if (sortedHits != null)
+            return sortedHits;
+        return getCurrentHitSet();
+    }
 
 	/**
 	 * Returns the hit set we're currently looking at.

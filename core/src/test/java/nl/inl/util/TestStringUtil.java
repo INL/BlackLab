@@ -33,7 +33,7 @@ public class TestStringUtil {
 
 	@Test
 	public void testRemoveAccents() {
-		Assert.assertEquals("He, jij!", StringUtils.stripAccents("Hé, jij!"));
+		Assert.assertEquals("He, jij!", StringUtil.stripAccents("Hé, jij!"));
 	}
 
 	@Test

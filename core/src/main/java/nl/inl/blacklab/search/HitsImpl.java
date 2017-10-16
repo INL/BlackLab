@@ -28,7 +28,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
@@ -54,6 +53,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
 
 /**
@@ -1291,7 +1291,7 @@ public class HitsImpl extends Hits {
 			int value = e.getTwo();
 			String word = terms.get(key);
 			if (!diacSensitive) {
-				word = StringUtils.stripAccents(word);
+				word = StringUtil.stripAccents(word);
 			}
 			if (!caseSensitive) {
 				word = word.toLowerCase();

@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import org.apache.commons.lang3.StringUtils;
+import nl.inl.util.StringUtil;
 
 public class ConstraintValueString extends ConstraintValue {
 
@@ -59,8 +59,8 @@ public class ConstraintValueString extends ConstraintValue {
 			b = b.toLowerCase();
 		}
 		if (!diacSensitive) {
-			a = StringUtils.stripAccents(a);
-			b = StringUtils.stripAccents(b);
+			a = StringUtil.stripAccents(a);
+			b = StringUtil.stripAccents(b);
 		}
 		return ConstraintValue.get(a.equals(b));
 	}

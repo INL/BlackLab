@@ -9,6 +9,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
+import nl.inl.util.StringUtil;
 
 /**
  * Represents the current "execution context" for executing a TextPattern query.
@@ -93,7 +94,7 @@ public class QueryExecutionContext {
 		}
 		if (alt.equals(i)) {
 			// Fully desensitize;
-			return StringUtils.stripAccents(value).toLowerCase();
+			return StringUtil.stripAccents(value).toLowerCase();
 		}
 		if (alt.equals(ci)) {
 			// Only case-insensitive
@@ -101,7 +102,7 @@ public class QueryExecutionContext {
 		}
 		if (alt.equals(di)) {
 			// Only diacritics-insensitive
-			return StringUtils.stripAccents(value);
+			return StringUtil.stripAccents(value);
 		}
 
 		// Unknown alternative; don't change value

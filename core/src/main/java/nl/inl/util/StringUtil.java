@@ -426,7 +426,7 @@ public class StringUtil {
 	 * @param input
 	 *            the string possibly containing accented letters.
 	 * @return the unaccented version
-	 * @deprecated use Apache Commons Lang StringUtils.stripAccents(input)
+	 * @deprecated use stripAccents(input)
 	 */
 	@Deprecated
 	public static String removeAccents(String input) {
@@ -436,6 +436,51 @@ public class StringUtil {
 		// Remove diacritics
 		return PATT_DIACRITICS.matcher(normalized).replaceAll("");
 	}
+
+    final static Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+
+    /**
+     * <p>Removes diacritics (~= accents) from a string. The case will not be altered.</p>
+     * <p>For instance, '&agrave;' will be replaced by 'a'.</p>
+     * <p>Note that ligatures will be left as is.</p>
+     *
+     * <pre>
+     * StringUtils.stripAccents(null)                = null
+     * StringUtils.stripAccents("")                  = ""
+     * StringUtils.stripAccents("control")           = "control"
+     * StringUtils.stripAccents("&eacute;clair")     = "eclair"
+     * </pre>
+     *
+     * NOTE: this method was copied from Apache StringUtils. The only change is precompiling
+     * the regular expression for efficiency.
+     *
+     * @param input String to be stripped
+     * @return input text with diacritics removed
+     *
+     * @since 3.0
+     */
+    // See also Lucene's ASCIIFoldingFilter (Lucene 2.9) that replaces accented characters by their unaccented equivalent (and uncommitted bug fix: https://issues.apache.org/jira/browse/LUCENE-1343?focusedCommentId=12858907&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_12858907).
+    public static String stripAccents(final String input) {
+        if(input == null) {
+            return null;
+        }
+        final StringBuilder decomposed = new StringBuilder(Normalizer.normalize(input, Normalizer.Form.NFD));
+        convertRemainingAccentCharacters(decomposed);
+        // Note that this doesn't correctly remove ligatures...
+        return pattern.matcher(decomposed).replaceAll(StringUtils.EMPTY);
+    }
+
+    private static void convertRemainingAccentCharacters(StringBuilder decomposed) {
+        for (int i = 0; i < decomposed.length(); i++) {
+            if (decomposed.charAt(i) == '\u0141') {
+                decomposed.deleteCharAt(i);
+                decomposed.insert(i, 'L');
+            } else if (decomposed.charAt(i) == '\u0142') {
+                decomposed.deleteCharAt(i);
+                decomposed.insert(i, 'l');
+            }
+        }
+    }
 
 	/**
 	 * Remove any punctuation and whitespace at the start and end of input.

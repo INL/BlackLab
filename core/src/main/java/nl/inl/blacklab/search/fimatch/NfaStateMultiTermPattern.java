@@ -4,9 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
-
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * A regex, wildcard or prefix clause.
@@ -64,7 +63,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
 		if (!caseSensitive)
 			tokenString = tokenString.toLowerCase();
 		if (!diacSensitive)
-			tokenString = StringUtils.stripAccents(tokenString);
+			tokenString = StringUtil.stripAccents(tokenString);
 		return tokenString;
 	}
 
