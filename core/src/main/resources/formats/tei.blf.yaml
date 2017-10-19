@@ -32,7 +32,7 @@ annotatedFields:
 
     # What element (relative to document) contains this field's contents?
     # (if omitted, entire document is used)
-    containerPath: //body
+    containerPath: .//body
 
     # What are our word tags? (relative to container)
     wordPath: .//w     # (body geldt niet voor OpenSonar, maar ter illustratie)
