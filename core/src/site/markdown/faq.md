@@ -62,6 +62,21 @@ Solr/ElasticSearch integration is high on our [wishlist](roadmap.html), but Blac
 
 If you’re using Solr/ElasticSearch and are interested in taking advantage of the features that BlackLab provides, drop us a line (see below). We'd love to collaborate on this.
 
+
+Other corpus engines exist; why did you develop BlackLab?
+---------------------------------------------------------
+At the Dutch Language Institute, we use all kinds of corpora in all kinds of projects, and we needed a flexible solution for these corpora and projects and their specific requirements.
+
+We designed BlackLab to offer the flexibility that we missed in other corpus engines at the time:
+
+- doesn't prescribe a fixed input format, but can work with any data you want to throw at it
+- provides solid support for Corpus Query Language, but you can easily add query languages. We've added basic support for SRU/CQL (Contextual Query Language), for example, and may add other query languages (e.g. treebanks-search related) in the future.
+- has a modular design, making it easier to extend and maintain
+- includes the ability to customize and fundamental indexing features, such as future support for searching tree-like structures, such as syntactic and semantic relations.
+- continually benefits from developments to Lucene, Solr and ElasticSearch, making it more future-proof and lowering development cost
+- is trivial to use from other programming languages when desired, but also perfectly integrates with the Java ecosystem many of our products are built on
+
+
 What do I do if BlackLab (Server) is slow and uses 100% CPU?
 ------------------------------------------------------------
 Usually this is memory-related. Make sure the JVM has enough heap space. If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl. See [http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/ here].
