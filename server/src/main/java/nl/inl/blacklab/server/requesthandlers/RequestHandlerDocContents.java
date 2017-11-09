@@ -55,7 +55,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
 		Searcher searcher = getSearcher();
 		int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
-		if (luceneDocId < 0)
+		if (luceneDocId < 0 || luceneDocId >= searcher.maxDoc())
 			throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
 		Document document = searcher.document(luceneDocId); //searchMan.getDocumentFromPid(indexName, docId);
 		if (document == null)

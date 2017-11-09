@@ -104,9 +104,10 @@ public class IndexTask {
 					logger.debug("Starting indexing");
 					indexer.index(name, data);
 					logger.debug("Done indexing");
-					if (!anyDocsFound) {
-						indexError = "The file contained no documents in the selected format. Do the corpus and file formats match?";
-					}
+				}
+
+				if (!anyDocsFound) {
+					indexError = "The file contained no documents in the selected format. Do the corpus and file formats match?";
 				}
 			} catch (Exception e) {
 				logger.warn("An error occurred while indexing, rolling back changes: " + e.getMessage());

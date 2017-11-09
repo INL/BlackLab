@@ -216,7 +216,7 @@ public class IndexStructure {
         complexFields = new TreeMap<>();
 
         readMetadata(reader, createNewIndex, config);
-        detectMainproperties(reader, createNewIndex);
+        detectMainProperties(reader, createNewIndex);
     }
 
 	/**
@@ -235,10 +235,10 @@ public class IndexStructure {
 		complexFields = new TreeMap<>();
 
 		readMetadata(reader, createNewIndex, indexTemplateFile);
-		detectMainproperties(reader, createNewIndex);
+		detectMainProperties(reader, createNewIndex);
 	}
 
-    protected void detectMainproperties(IndexReader reader, boolean createNewIndex) {
+    protected void detectMainProperties(IndexReader reader, boolean createNewIndex) {
         if (!createNewIndex) { // new index doesn't have this information yet
             // Detect the main properties for all complex fields
             // (looks for fields with char offset information stored)
