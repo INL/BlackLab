@@ -47,7 +47,7 @@ public class JobDocs extends JobWithDocs {
 
 		@Override
 		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + filterQuery + ")";
+			return super.uniqueIdentifier() + indexName + filterQuery + ")";
 		}
 
 		@Override
