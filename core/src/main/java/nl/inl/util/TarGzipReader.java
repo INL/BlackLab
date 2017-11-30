@@ -1,11 +1,15 @@
 package nl.inl.util;
 
-import java.io.FilterInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FilenameUtils;
 
 
 /**
@@ -19,9 +23,10 @@ public class TarGzipReader {
 	 */
 	public interface FileHandler {
 		/**
-		 * Handles a file inside the .tar.gz archive.
-		 * @param filePath path inside the archive
-		 * @param contents file contents
+		 * Handle a file inside the .zip or .tar.gz archive.
+		 *
+		 * @param filePath path to the archive, concatenated with any path to this file inside the archive
+		 * @param contents file contents, this stream is separate from the stream being processed, and will always remaing open until it is closed by the handler.
 		 * @return true if we should continue with the next file, false if not
 		 */
 		boolean handle(String filePath, InputStream contents);
@@ -29,68 +34,91 @@ public class TarGzipReader {
 
 	/**
 	 * Process a .tar.gz file and call the handler for each normal file in the archive.
-	 * @param tarGzipStream the .tar.gz input stream to decompress
+	 *
+	 * @param fileName name/path to this file
+	 * @param tarGzipStream the .tar.gz input stream to decompress. The stream will be closed after processing.
 	 * @param fileHandler the handler to call for each regular file
 	 */
-	public static void processTarGzip(InputStream tarGzipStream, FileHandler fileHandler) {
-		try {
-		    // NOTE: InputStream is not closed, caller is responsible for closing its stream
-            InputStream unzipped = new GzipCompressorInputStream(tarGzipStream);
-			processTar(unzipped, fileHandler);
+	public static void processTarGzip(String fileName, InputStream tarGzipStream, FileHandler fileHandler) {
+		try (InputStream unzipped = new GzipCompressorInputStream(tarGzipStream)) {
+			processTar(fileName, unzipped, fileHandler);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw ExUtil.wrapRuntimeException(e);
 		}
 	}
 
 	/**
 	 * Process a .gz file and call the file handler for its contents.
-	 * @param filePath
-	 * @param gzipStream the .gz input stream to decompress
+	 *
+	 * @param fileName name/path to this file
+	 * @param gzipStream the .gz input stream to decompress. The stream will be closed after processing.
 	 * @param fileHandler the handler to call
 	 */
-	public static void processGzip(String filePath, InputStream gzipStream, FileHandler fileHandler) {
-		try {
-            // NOTE: InputStream is not closed, caller is responsible for closing its stream
-            InputStream unzipped = new GzipCompressorInputStream(gzipStream);
-			fileHandler.handle(filePath.replaceAll("\\.gz$", ""), unzipped);
+	public static void processGzip(String fileName, InputStream gzipStream, FileHandler fileHandler) {
+		try (InputStream unzipped = new GzipCompressorInputStream(gzipStream)) {
+			// Make a copy of the data, since the stream we pass into fileHandler.handle may be used within another thread
+			// so it (or any of its underlying streams) should not be closed by us inadvertantly
+			InputStream callbackStream = new ByteArrayInputStream(org.apache.commons.io.IOUtils.toByteArray(unzipped));
+			fileHandler.handle(fileName.replaceAll("\\.gz$", ""), callbackStream); // TODO make filename handling uniform across all archives types?
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw ExUtil.wrapRuntimeException(e);
 		}
 	}
 
 	/**
 	 * Process a .tar file and call the handler for each normal file in the archive.
-	 * @param tarStream the .tar input stream to decompress
+	 *
+	 * @param filePath path to this file
+	 * @param tarStream the .tar input stream to decompress. The stream will be closed after processing.
 	 * @param fileHandler the handler to call for each regular file
 	 */
-	public static void processTar(InputStream tarStream, FileHandler fileHandler) {
-		try {
-			try (TarArchiveInputStream untarred = new TarArchiveInputStream(tarStream)) {
-				try (InputStream uncloseableInputStream = new FilterInputStream(untarred) {
-					@Override
-					public void close() {
-						// Don't close!
-						// (when Reader is GC'ed, closes stream prematurely..?)
-					}
-				}) {
-    				boolean continueReading = true;
-    				while(continueReading) {
-    					// Go to the next file in the .tar
-    					TarArchiveEntry tarEntry = untarred.getNextTarEntry();
-    					if (tarEntry == null)
-    						break;
-    					if (!tarEntry.isFile()) {
-    						continue;
-    					}
+	public static void processTar(String filePath, InputStream tarStream, FileHandler fileHandler) {
+		try (TarArchiveInputStream s = new TarArchiveInputStream(tarStream)) {
+			for (TarArchiveEntry e = s.getNextTarEntry(); e != null; e = s.getNextTarEntry()) {
+				if (e.isDirectory())
+					continue;
 
-    					String filePath = tarEntry.getName();
-    					continueReading = fileHandler.handle(filePath, uncloseableInputStream);
-    				}
-				}
+                // Make a copy of this file's data, since there is a real chance the returned stream will be processed by another thread.
+				// It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
+				// and if we jump to the next entry in between reads in another thread things would go badly.
+	            // NOTE: InputStream is not closed, handler is responsible for closing its stream
+				ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(tarStream));
+				boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(filePath, e.getName()), decoded);
+				if (!keepProcessing)
+					return;
 			}
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw ExUtil.wrapRuntimeException(e);
 		}
 	}
 
+	/**
+	 * Process a .zip file and call the handler for each normal file in the archive.
+	 *
+	 * Note that directory structure inside the zip file is ignored; files are processed as if they
+	 * are one large directory.
+	 *
+	 * @param fileName name/path to this file
+	 * @param zipStream the .zip input stream to decompress. The stream will be closed after processing.
+	 * @param fileHandler the handler to call for each regular file
+	 */
+	public static void ProcessZip(String filePath, InputStream zipStream, FileHandler fileHandler) {
+	    try (ZipInputStream s = new ZipInputStream(zipStream)) {
+            for (ZipEntry e = s.getNextEntry(); e != null; e = s.getNextEntry()) {
+                if (e.isDirectory())
+                    continue;
+
+                // Make a copy of this file's data, since there is a real chance the returned stream will be processed by another thread.
+				// It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
+				// and if we jump to the next entry in between reads in another thread things would go badly.
+	            // NOTE: InputStream is not closed, handler is responsible for closing its stream
+                ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(zipStream));
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(filePath, e.getName()), decoded);
+                if (!keepProcessing)
+                	return;
+            }
+	    } catch (Exception e) {
+	    	throw ExUtil.wrapRuntimeException(e);
+        }
+	}
 }
