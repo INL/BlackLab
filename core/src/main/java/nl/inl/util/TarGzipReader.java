@@ -68,11 +68,11 @@ public class TarGzipReader {
 	/**
 	 * Process a .tar file and call the handler for each normal file in the archive.
 	 *
-	 * @param filePath path to this file
+	 * @param fileName name/path to this file
 	 * @param tarStream the .tar input stream to decompress. The stream will be closed after processing.
 	 * @param fileHandler the handler to call for each regular file
 	 */
-	public static void processTar(String filePath, InputStream tarStream, FileHandler fileHandler) {
+	public static void processTar(String fileName, InputStream tarStream, FileHandler fileHandler) {
 		try (TarArchiveInputStream s = new TarArchiveInputStream(tarStream)) {
 			for (TarArchiveEntry e = s.getNextTarEntry(); e != null; e = s.getNextTarEntry()) {
 				if (e.isDirectory())
@@ -82,8 +82,8 @@ public class TarGzipReader {
 				// It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
 				// and if we jump to the next entry in between reads in another thread things would go badly.
 	            // NOTE: InputStream is not closed, handler is responsible for closing its stream
-				ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(tarStream));
-				boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(filePath, e.getName()), decoded);
+				ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
+				boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
 				if (!keepProcessing)
 					return;
 			}
@@ -102,7 +102,7 @@ public class TarGzipReader {
 	 * @param zipStream the .zip input stream to decompress. The stream will be closed after processing.
 	 * @param fileHandler the handler to call for each regular file
 	 */
-	public static void ProcessZip(String filePath, InputStream zipStream, FileHandler fileHandler) {
+	public static void ProcessZip(String fileName, InputStream zipStream, FileHandler fileHandler) {
 	    try (ZipInputStream s = new ZipInputStream(zipStream)) {
             for (ZipEntry e = s.getNextEntry(); e != null; e = s.getNextEntry()) {
                 if (e.isDirectory())
@@ -112,8 +112,8 @@ public class TarGzipReader {
 				// It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
 				// and if we jump to the next entry in between reads in another thread things would go badly.
 	            // NOTE: InputStream is not closed, handler is responsible for closing its stream
-                ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(zipStream));
-                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(filePath, e.getName()), decoded);
+                ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
                 if (!keepProcessing)
                 	return;
             }
