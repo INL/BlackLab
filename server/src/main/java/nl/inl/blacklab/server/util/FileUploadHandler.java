@@ -72,7 +72,7 @@ public class FileUploadHandler {
 					if (!fi.getFieldName().equals(fieldName)) {
 						throw new BadRequest("CANNOT_UPLOAD_FILE", "Cannot upload file. File should be uploaded using the '" + fieldName + "' field.");
 					}
-
+					// TODO uploaded file returns -1 here? Needs some more investigation
 					if (fi.getSize() > MAX_UPLOAD_SIZE) {
 						throw new BadRequest("CANNOT_UPLOAD_FILE", "Cannot upload file. It is larger than the maximum of " + (MAX_UPLOAD_SIZE / 1024 / 1024) + " MB.");
 					}

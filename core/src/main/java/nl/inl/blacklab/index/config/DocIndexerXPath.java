@@ -677,6 +677,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Add InlineObject for a punctuation text node.
      *
      * @param inlineObjects list to add the punct object to
+     * @param text
      * @throws NavException
      */
 	private void collectPunct(List<InlineObject> inlineObjects, String text) throws NavException {

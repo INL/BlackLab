@@ -80,6 +80,7 @@ public class IndexTask {
 			anyDocsFound = false;
 			indexer.setContinueAfterInputError(false);
 			indexer.setRethrowInputError(false);
+			indexer.setUseThreads(false);
 			try {
 				indexer.index(fileName, data);
 

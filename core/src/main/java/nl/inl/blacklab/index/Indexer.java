@@ -100,18 +100,15 @@ public class Indexer {
 
 		@Override
 		public void stream(String path, InputStream f) {
-			try {
-				String documentName = FilenameUtils.getName(path);
-				UnicodeStream unicodeStream = new UnicodeStream(f, DEFAULT_INPUT_ENCODING);
+			String documentName = FilenameUtils.getName(path);
 
-				// The DocIndexer will close the stream for us
-				try (DocIndexer docIndexer = docIndexerFactory.get(Indexer.this, documentName, unicodeStream, unicodeStream.getEncoding())) {
-					indexDocIndexer(documentName, docIndexer);
-				}
+			// The DocIndexer will close the stream for us
+			try (DocIndexer docIndexer = docIndexerFactory.get(Indexer.this, documentName, new UnicodeStream(f, DEFAULT_INPUT_ENCODING), DEFAULT_INPUT_ENCODING)) {
+				indexDocIndexer(documentName, docIndexer);
 			}
 			catch (Exception e) {
-                throw ExUtil.wrapRuntimeException(e);
-            }
+				throw ExUtil.wrapRuntimeException(e);
+			}
 		}
 	}
 
