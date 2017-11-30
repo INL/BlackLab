@@ -302,9 +302,6 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
      */
     public void processInputStream(String name, InputStream is) {
         try {
-        	//targz must not be processed using threads
-        	// we need to persist this data somehow
-
         	if (isProcessArchives() && name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
         		TarGzipReader.processTarGzip(name, is, this);
         	} else if (isProcessArchives() && name.endsWith(".zip")) {

@@ -23,11 +23,9 @@ public class IndexTask {
 	 *  we're done with it. */
 	private InputStream data;
 
-	private String name;
+	private String fileName;
 
 	private File indexDir;
-
-	private File dataFile;
 
 	private IndexListener decoratedListener;
 
@@ -43,14 +41,7 @@ public class IndexTask {
 	public IndexTask(File indexDir, InputStream data, String name, IndexListener listener) {
 		this.indexDir = indexDir;
 		this.data = data;
-		this.name = name;
-		setListener(listener);
-	}
-
-	public IndexTask(File indexDir, File dataFile, String name, IndexListener listener) {
-		this.indexDir = indexDir;
-		this.dataFile = dataFile;
-		this.name = name;
+		this.fileName = name;
 		setListener(listener);
 	}
 
@@ -90,21 +81,7 @@ public class IndexTask {
 			indexer.setContinueAfterInputError(false);
 			indexer.setRethrowInputError(false);
 			try {
-				if (data == null && dataFile != null) {
-					// Used for zip files, possibly other types in the future.
-					indexer.index(dataFile, "*.xml");
-				} else if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
-					// Tar gzipped data; read directly from stream.
-					indexer.indexInputStream(name, data, "*.xml", true);
-				} else if (name.endsWith(".gz")) {
-					// Tar gzipped data; read directly from stream.
-					indexer.indexInputStream(name, data, "*.xml", true);
-				} else {
-					// Straight XML data. Read as UTF-8.
-					logger.debug("Starting indexing");
-					indexer.index(name, data);
-					logger.debug("Done indexing");
-				}
+				indexer.index(fileName, data);
 
 				if (!anyDocsFound) {
 					indexError = "The file contained no documents in the selected format. Do the corpus and file formats match?";

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
@@ -65,8 +64,6 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 					// Get the uploaded file parameters
 					String fileName = fi.getName();
 
-					File tmpFile = null;
-					IndexTask task;
 					IndexListener listener = new IndexListenerReportConsole() {
 						@Override
 						public synchronized boolean errorOccurred(String error,
@@ -77,30 +74,19 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 							return false; // Don't continue indexing
 						}
 					};
-					try {
-						if (fileName.endsWith(".zip")) {
-							// We can only index zip from a file, not from a stream.
-							tmpFile = File.createTempFile("blsupload", ".tmp.zip");
-							fi.write(tmpFile);
-							task = new IndexTask(indexDir, tmpFile, fileName, listener);
-						} else {
-							InputStream data = fi.getInputStream();
 
-							// TODO: do this in the background
-							// TODO: lock the index while indexing
-							// TODO: re-open Searcher after indexing
-							// TODO: keep track of progress
-							// TODO: error handling
-							task = new IndexTask(indexDir, data, fileName, listener);
-						}
-						task.run();
-						if (task.getIndexError() != null) {
-							throw new InternalServerError(task.getIndexError(), 30);
-						}
-					} finally {
-						if (tmpFile != null)
-							tmpFile.delete();
+					// TODO: do this in the background
+					// TODO: lock the index while indexing
+					// TODO: re-open Searcher after indexing
+					// TODO: keep track of progress
+					// TODO: error handling
+					IndexTask task = new IndexTask(indexDir, fi.getInputStream(), fileName, listener);
+
+					task.run();
+					if (task.getIndexError() != null) {
+						throw new InternalServerError(task.getIndexError(), 30);
 					}
+
 
 					//searchMan.addIndexTask(indexName, new IndexTask(is, fileName));
 				}

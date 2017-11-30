@@ -1,7 +1,7 @@
 package nl.inl.blacklab;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +93,7 @@ public class TestIndex {
 		try {
 			// Index each of our test "documents".
 			for (int i = 0; i < testData.length; i++) {
-				indexer.index("test" + (i + 1), new StringReader(testData[i]));
+				indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes()));
 			}
 		} finally {
 			// Finalize and close the index.
