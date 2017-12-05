@@ -462,6 +462,14 @@ public abstract class DocIndexer implements AutoCloseable {
         }
     }
 
+    /**
+     * Should this docIndexer implementation be listed?
+     *
+     * A DocIndexer can be hidden by implementing a a static function named listFormat, returning false.
+     *
+     * @param docIndexerClass
+     * @return true if the format should be listed, false if it should be omitted. Defaults to true when the DocIndexer does not implement the method.
+     */
     public static boolean listFormat(Class<? extends DocIndexer> docIndexerClass) {
         try {
             Method m = docIndexerClass.getMethod("listFormat");

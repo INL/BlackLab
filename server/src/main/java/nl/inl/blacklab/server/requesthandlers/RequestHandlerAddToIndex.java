@@ -21,7 +21,7 @@ import nl.inl.blacklab.server.index.IndexTask;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.IndexManager.IndexStatus;
 import nl.inl.blacklab.server.util.FileUploadHandler;
-import nl.inl.blacklab.server.util.FileUploadHandler.UploadedFileTask;
+
 
 /**
  * Display the contents of the cache.
@@ -58,39 +58,32 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 			if (newStatus != IndexStatus.INDEXING) {
 				throw new InternalServerError("Could not set index status to 'indexing' (status was " + newStatus + ")", 28);
 			}
-			FileUploadHandler.handleRequest(ds, request, "data", new UploadedFileTask() {
+			FileItem fi = FileUploadHandler.getFile(request, "data");
+
+			IndexListener listener = new IndexListenerReportConsole() {
 				@Override
-				public void handle(FileItem fi) throws Exception {
-					// Get the uploaded file parameters
-					String fileName = fi.getName();
-
-					IndexListener listener = new IndexListenerReportConsole() {
-						@Override
-						public synchronized boolean errorOccurred(String error,
-								String unitType, File unit, File subunit) {
-							indexError = error + " in " + unit +
-									(subunit == null ? "" : " (" + subunit + ")");
-							super.errorOccurred(error, unitType, unit, subunit);
-							return false; // Don't continue indexing
-						}
-					};
-
-					// TODO: do this in the background
-					// TODO: lock the index while indexing
-					// TODO: re-open Searcher after indexing
-					// TODO: keep track of progress
-					// TODO: error handling
-					IndexTask task = new IndexTask(indexDir, fi.getInputStream(), fileName, listener);
-
-					task.run();
-					if (task.getIndexError() != null) {
-						throw new InternalServerError(task.getIndexError(), 30);
-					}
-
-
-					//searchMan.addIndexTask(indexName, new IndexTask(is, fileName));
+				public synchronized boolean errorOccurred(String error,
+						String unitType, File unit, File subunit) {
+					indexError = error + " in " + unit +
+							(subunit == null ? "" : " (" + subunit + ")");
+					super.errorOccurred(error, unitType, unit, subunit);
+					return false; // Don't continue indexing
 				}
-			});
+			};
+
+			// TODO: do this in the background
+			// TODO: lock the index while indexing
+			// TODO: re-open Searcher after indexing
+			// TODO: keep track of progress
+			// TODO: error handling
+			IndexTask task = new IndexTask(indexDir, fi.getInputStream(), fi.getName(), listener);
+
+			task.run();
+			if (task.getIndexError() != null) {
+				throw new InternalServerError(task.getIndexError(), 30);
+			}
+		} catch (Exception e) {
+			throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
 		} finally {
 			indexMan.setIndexStatus(indexName, null, IndexStatus.AVAILABLE);
 		}
