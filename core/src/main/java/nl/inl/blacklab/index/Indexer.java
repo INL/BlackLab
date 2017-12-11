@@ -52,6 +52,7 @@ import nl.inl.util.UnicodeStream;
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
  */
+// TODO there are likely some edge cases when close() is called while a file is processing, and events might be fired after the indexEnd event was fired.
 public class Indexer {
 
 	static final Logger logger = LogManager.getLogger(Indexer.class);
@@ -70,7 +71,7 @@ public class Indexer {
         }
 
         @Override
-        public synchronized void stream(String path, InputStream f) {
+        public synchronized void file(String path, InputStream f) {
             if (path.equals(pathToFile)) {
                 try {
                     bytes = IOUtils.toByteArray(f);
@@ -82,8 +83,8 @@ public class Indexer {
         }
 
         @Override
-        public void file(String path, File f) {
-            throw new UnsupportedOperationException();
+        public void directory(File dir) {
+            //ignore
         }
     }
 
@@ -94,12 +95,12 @@ public class Indexer {
 		public IndexDocIndexerPassthrough() {}
 
 		@Override
-		public void file(String path, File f) {
-			throw new UnsupportedOperationException();
+		public void directory(File dir) {
+			//ignore
 		}
 
 		@Override
-		public void stream(String path, InputStream f) {
+		public void file(String path, InputStream f) {
 			String documentName = FilenameUtils.getName(path);
 
 			// The DocIndexer will close the stream for us
@@ -198,6 +199,11 @@ public class Indexer {
 
     /** Index using multiple threads? */
     protected boolean useThreads = false;
+
+    // TODO this is a workaround for a bug where indexStructure is always written, even when an indexing task was rollbacked on an empty index
+ 	// result of this is that the index can never be opened again (the forwardindex is missing files that the indexMetadata.yaml says must exist?)
+ 	// so record rollbacks (as a result of exceptions during indexing?) and then don't write the updated indexStructure
+ 	boolean hasRollback = false;
 
     public FieldType getMetadataFieldType(boolean tokenized) {
 	    return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
@@ -422,24 +428,23 @@ public class Indexer {
 		getListener().rollbackStart();
 		searcher.rollback();
 		getListener().rollbackEnd();
+		hasRollback = true;
 	}
 
 	/**
 	 * Close the index
-	 *
-	 * @throws IOException
-	 * @throws CorruptIndexException
 	 */
-	public void close() throws CorruptIndexException, IOException {
+	public void close() {
 
 		// Signal to the listener that we're done indexing and closing the index (which might take a
 		// while)
 		getListener().indexEnd();
 		getListener().closeStart();
 
-		searcher.getIndexStructure().addToTokenCount(getListener().getTokensProcessed());
-		searcher.getIndexStructure().writeMetadata();
-
+		if (!hasRollback){
+			searcher.getIndexStructure().addToTokenCount(getListener().getTokensProcessed());
+			searcher.getIndexStructure().writeMetadata();
+		}
 		searcher.close();
 
 		// Signal that we're completely done now
@@ -585,7 +590,7 @@ public class Indexer {
      * @param fileNameGlob
      */
     public void index(String fileName, InputStream input, String fileNameGlob) {
-    	try (FileProcessor proc = new FileProcessor(useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
+    	try (FileProcessor proc = new FileProcessor(this.useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
     		proc.setFileNameGlob(fileNameGlob);
 	        proc.setFileHandler(new IndexDocIndexerPassthrough());
 		    proc.setErrorHandler(new ErrorHandler() {

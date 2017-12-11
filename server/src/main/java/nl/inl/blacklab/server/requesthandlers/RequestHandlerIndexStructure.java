@@ -41,7 +41,7 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 			.entry("indexName", indexName)
 			.entry("displayName", struct.getDisplayName())
 			.entry("description", struct.getDescription())
-			.entry("status", indexMan.getIndexStatus(indexName))
+			.entry("status", indexMan.getIndex(indexName).getStatus())
 			.entry("contentViewable", struct.contentViewable());
 		String documentFormat = struct.getDocumentFormat();
 		if (documentFormat != null && documentFormat.length() > 0)

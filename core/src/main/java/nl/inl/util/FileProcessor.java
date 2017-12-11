@@ -23,24 +23,32 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
     public static interface FileHandler {
 
     	/**
-    	 * @deprecated {@link #stream(String, InputStream)} will always be called in stead
+    	 * Handle a directory.
     	 *
-    	 * @param path
-    	 * @param f
+    	 * Called for all processed directories of the input file, including any input directory.
+    	 * NOTE: This is only called for regular directories, and not for archives or processed directories within archives.
+    	 * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the directory names may not match the provided pattern.
+    	 *
+    	 * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
+    	 *
+    	 * @param dir the directory
     	 */
-    	@Deprecated
-        void file(String path, File f);
+        void directory(File dir);
 
     	/**
     	 * Handle a file stream.
-    	 * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
     	 *
-    	 * NOTE: the InputStream should be closed by the handler.
+    	 * Called for all processed files that match the {@link FileProcessor#pattGlob}, including the input file.
+    	 * Not called for archives if {@link FileProcessor#isProcessArchives()} is true (though it will then be called for files within those archives).
+    	 *
+    	 * NOTE: the InputStream should be closed by the implementation.
+    	 *
+    	 * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
     	 *
     	 * @param path
     	 * @param f
     	 */
-        void stream(String path, InputStream f);
+        void file(String path, InputStream f);
     }
 
     /**
@@ -89,28 +97,41 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
      *
      * Used for multi-threaded file processing.
      * Is a simple wrapper to call our filehandler from a different thread for a single file.
-     * Should only be used with files that can be processed directly, not with archives/compressed files etc.
+     * InputStreams passed in to this handler should be fully decoded/decompressed etc and be able to be used as-is.
      */
     private final class CallFileHandlerTask implements Runnable {
     	private final String fileName;
     	private final InputStream is;
 
+    	private final File directory;
+
     	CallFileHandlerTask(String fileName, InputStream is) {
     		this.fileName = fileName;
     		this.is = is;
+
+    		directory = null;
     	}
+
+    	@SuppressWarnings("unused")
+		public CallFileHandlerTask(File directory) {
+    		this.directory = directory;
+
+    		this.fileName = null;
+    		this.is = null;
+		}
 
     	@Override
     	public void run() {
             try {
-            	// TODO this is probably an issue, the stream might be within an archive
-            	// this will then be called WHILE that same archive is being processed in another thread.
-            	// how do we handle this? only handle actual File objects with threads maybe (like it seems it used to be?)
-    			fileHandler.stream(fileName, is);
+            	if (directory == null)
+            		fileHandler.file(fileName, is);
+            	else
+            		fileHandler.directory(directory);
     		} catch (Exception e) {
     			System.err.println("Error while processing file: " + fileName);
     			e.printStackTrace();
     			System.err.flush();
+    			keepProcessing = errorHandler.errorOccurred(fileName, null, e);
     		}
     	}
     }
@@ -137,7 +158,11 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
 	    }
 	}
 
-    /** Restrict the files we handle to a file glob? */
+    /**
+     * Restrict the files we handle to a file glob?
+     * Note that this pattern is not applied to directories, and directories within archives.
+     * It is also not applied to the input file directly.
+     */
     private Pattern pattGlob;
 
     /** Process subdirectories? */
@@ -167,10 +192,6 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
     /** Executor used for processing files */
 	private ThreadPoolExecutor executor;
 
-    public FileProcessor(boolean useThreads) {
-        this(useThreads, true, true);
-    }
-
     public FileProcessor(boolean useThreads, boolean recurseSubdirs, boolean processArchives) {
     	this.useThreads = useThreads;
         this.recurseSubdirs = recurseSubdirs;
@@ -186,14 +207,32 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
 		executor.setThreadFactory(new ExceptionCatchingThreadFactory(executor.getThreadFactory()));
     }
 
+    /**
+     * Only process files matching the glob.
+     * NOTE: this pattern is NOT applied to directories.
+     *
+     * @param glob
+     */
     public void setFileNameGlob(String glob) {
         pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
     }
 
+    /**
+     * Only process files matching the pattern.
+     * NOTE: this pattern is NOT applied to directories.
+     *
+     * @param pattGlob
+     */
     public void setFileNamePattern(Pattern pattGlob) {
         this.pattGlob = pattGlob;
     }
 
+    /**
+     * The pattern to filter files before they are processed.
+     * NOTE: this pattern is NOT applied to directories.
+     *
+     * @return the pattern
+     */
     public Pattern getFileNamePattern() {
         return pattGlob;
     }
@@ -277,7 +316,8 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
     		throw new FileNotFoundException("Input file or dir not found: " + fileOrDirToProcess);
 
     	if (fileOrDirToProcess.isDirectory()) {
-    		 for (File childFile : FileUtil.listFilesSorted(fileOrDirToProcess)) {
+    		fileHandler.directory(fileOrDirToProcess);
+    		for (File childFile : FileUtil.listFilesSorted(fileOrDirToProcess)) {
     			if (!childFile.isDirectory() || recurseSubdirs) // Even if recurseSubdirs is false, we should process the parent dir's file contents
     				processFile(childFile);
 
@@ -312,7 +352,7 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
             	if (useThreads) {
             		executor.execute(new CallFileHandlerTask(name, is));
             	} else {
-            		fileHandler.stream(name,  is);
+            		fileHandler.file(name,  is);
             	}
         	}
         } catch (Exception e) {

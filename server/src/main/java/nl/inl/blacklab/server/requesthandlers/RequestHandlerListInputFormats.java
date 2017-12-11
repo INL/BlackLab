@@ -23,8 +23,8 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
+import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.IndexManager;
 
 /**
  * Get information about supported input formats.
@@ -149,6 +149,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 			return result;
 		}
 
+		@SuppressWarnings("unused")
 		private static String joinIgnoreNull(String[] values, char separator) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < values.length; i++) {

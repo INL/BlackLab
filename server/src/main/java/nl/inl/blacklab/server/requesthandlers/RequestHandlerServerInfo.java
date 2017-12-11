@@ -4,11 +4,14 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.index.Index;
+import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -27,22 +30,36 @@ public class RequestHandlerServerInfo extends RequestHandler {
 
 	@Override
 	public int handle(DataStream ds) throws BlsException {
-		Collection<String> indices = indexMan.getAllAvailableIndices(user.getUserId());
+		Collection<Index> indices = indexMan.getAllAvailableIndices(user.getUserId());
 
 		ds.startMap()
 			.entry("blacklabBuildTime", Searcher.getBlackLabBuildTime())
 			.entry("blacklabVersion", Searcher.getBlackLabVersion());
 
 		ds.startEntry("indices").startMap();
-		//DataObjectMapAttribute doIndices = new DataObjectMapAttribute("index", "name");
-		for (String indexName: indices) {
-			ds.startAttrEntry("index", "name", indexName);
 
-			Searcher searcher = indexMan.getSearcher(indexName);
+		for (Index index: indices) {
+			ds.startAttrEntry("index", "name", index.getId());
+
+			Searcher searcher = index.getSearcher(); // TODO don't let single exception break all of blacklab-server
 			IndexStructure struct = searcher.getIndexStructure();
+			IndexStatus status = index.getStatus();
+
 			ds.startMap();
 			ds.entry("displayName", struct.getDisplayName());
-			ds.entry("status", indexMan.getIndexStatus(indexName));
+			ds.entry("status", status);
+
+			if (status.equals(IndexStatus.INDEXING)) {
+				IndexListener indexProgress = index.getIndexer().getListener();
+				synchronized (indexProgress) {
+					ds.startEntry("indexProgress").startMap()
+					.entry("filesProcessed", indexProgress.getFilesProcessed())
+					.entry("docsDone", indexProgress.getDocsDone())
+					.entry("tokensProcessed", indexProgress.getTokensProcessed())
+					.endMap().endEntry();
+				}
+			}
+
 			String documentFormat = struct.getDocumentFormat();
 			if (documentFormat != null && documentFormat.length() > 0)
 				ds.entry("documentFormat", documentFormat);
