@@ -15,9 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.tools.indexexample;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 
 import nl.inl.blacklab.index.DocIndexerFactoryClass;
 import nl.inl.blacklab.index.Indexer;
@@ -83,7 +84,7 @@ public class Example {
 			indexer = new Indexer(indexDir, true, new DocIndexerFactoryClass(DocIndexerExample.class), (File)null);
 			// Index each of our test "documents".
 			for (int i = 0; i < testData.length; i++) {
-				indexer.index("test" + (i + 1), new StringReader(testData[i]));
+				indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes(StandardCharsets.UTF_8)));
 			}
 
 		} catch (Exception e) {
