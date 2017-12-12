@@ -99,7 +99,9 @@ public class BlsConfig extends YamlJsonReader {
 			logger.warn("DEPRECATED setting debugModeIps found at top-level. Use debug.addresses instead.");
 			JsonNode jsonDebugModeIps = properties.get("debugModeIps");
 			for (int i = 0; i < jsonDebugModeIps.size(); i++) {
-				debugModeIps.add(jsonDebugModeIps.get(i).textValue());
+				String addr = jsonDebugModeIps.get(i).textValue();
+                debugModeIps.add(addr);
+                logger.debug("[OLD-STYLE] Debug address found: " + addr);
 			}
 		}
 
@@ -111,7 +113,9 @@ public class BlsConfig extends YamlJsonReader {
 			if (debugProp.has("addresses")) {
 				JsonNode jsonDebugModeIps = debugProp.get("addresses");
 				for (int i = 0; i < jsonDebugModeIps.size(); i++) {
-					debugModeIps.add(jsonDebugModeIps.get(i).textValue());
+					String addr = jsonDebugModeIps.get(i).textValue();
+                    debugModeIps.add(addr);
+					logger.debug("Debug address found: " + addr);
 				}
 			}
 

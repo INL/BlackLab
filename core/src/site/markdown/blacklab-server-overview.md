@@ -391,9 +391,9 @@ The entire document, with occurrences of “test” highlighted (with <hl/\> tag
 
 BlackLab Server includes experimental support for creating indices and adding documents to them. We are using these features to build an interface where users can quickly index data and search it, without having to set up a BlackLab installation themselves. These features are still pretty volatile, so don't rely too heavily on them yet, but here's a very quick overview.
 
-Currently, only private indices can be created and appended to. This means there must be a logged-in user. The setting authSystem in blacklab-server.yaml will let you specify what authentication system you'd like to use. If you specify class "AuthDebugFixed" and a userId, you will always be logged in as this user. Have a look at the other Auth* classes (mostly AuthRequestAttribute) to see how real authentication would work.
+Currently, only private indices can be created and appended to. This means there must be a logged-in user. The setting authSystem in blacklab-server.yaml will let you specify what authentication system you'd like to use. If you specify class "AuthDebugFixed" and a userId, you will always be logged in as this user. Note that this debug authentication method only works if you are a debug client (i.e. your IP address is listed in the debug.addresses setting, see the [config file](#configuration-file)). Have a look at the other Auth* classes (mostly AuthRequestAttribute) to see how real authentication would work.
 
-Another required setting is `userCollectionsDir` (in addition to `indexCollections` which points to the "globally available" indices). In this directly, user-private indices will be created.
+Another required setting is `userCollectionsDir` (in addition to `indexCollections` which points to the "globally available" indices). In this directory, user-private indices will be created. Obviously, the application needs write permissions on this directory.
 
 When a user is logged in and you have a userCollectionsDir set up, you will see a `user` section on the BlackLab Server info page (`/blacklab-server/`) with both `loggedIn` and `canCreateIndex` set to `true`. To see what input formats are supported, look at the `/blacklab-server/input-formats/` URL.
 

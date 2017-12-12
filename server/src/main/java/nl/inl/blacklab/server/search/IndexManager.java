@@ -206,15 +206,18 @@ public class IndexManager {
 	/**
 	 * Return the specified user's input format configuration dir.
 	 *
-	 * Creates the directory if it doesn't exist.
+	 * Creates the directory if it doesn't exist and it has the permissions to do so.
 	 *
 	 * @param userId the user
-	 * @return user's input format config dir
+	 * @return user's input format config dir, or null if it doesn't exist and couldn't be created.
 	 */
 	public File getUserFormatDir(String userId) {
 	    File formatDir = new File(getUserCollectionDir(userId), FORMATS_SUBDIR_NAME);
 	    if (!formatDir.exists())
-	        formatDir.mkdir();
+	        if (!formatDir.mkdir()) {
+	            logger.error("Error creating user format dir: " + formatDir);
+	            return null;
+	        }
         return formatDir;
 	}
 
@@ -695,18 +698,20 @@ public class IndexManager {
 			return;
 		formatsScannedForUsers.add(user.getUserId());
 		File userFormatDir = searchMan.getIndexManager().getUserFormatDir(user.getUserId());
-		for (File formatFile: userFormatDir.listFiles()) {
-			String formatIdentifier = ConfigInputFormat.stripExtensions(formatFile.getName());
-			formatIdentifier = IndexManager.userFormatName(user.getUserId(), formatIdentifier);
-			if (!DocumentFormats.exists(formatIdentifier)) {
-				try {
-					ConfigInputFormat f = new ConfigInputFormat(formatFile);
-					f.setName(formatIdentifier); // prefix with user id to avoid collisions
-					DocumentFormats.register(f);
-				} catch (IOException e) {
-					throw new InternalServerError("Error reading user format: " + formatFile, 36, e);
-				}
-			}
+		if (userFormatDir != null && userFormatDir.exists()) {
+    		for (File formatFile: userFormatDir.listFiles()) {
+    			String formatIdentifier = ConfigInputFormat.stripExtensions(formatFile.getName());
+    			formatIdentifier = IndexManager.userFormatName(user.getUserId(), formatIdentifier);
+    			if (!DocumentFormats.exists(formatIdentifier)) {
+    				try {
+    					ConfigInputFormat f = new ConfigInputFormat(formatFile);
+    					f.setName(formatIdentifier); // prefix with user id to avoid collisions
+    					DocumentFormats.register(f);
+    				} catch (IOException e) {
+    					throw new InternalServerError("Error reading user format: " + formatFile, 36, e);
+    				}
+    			}
+    		}
 		}
 	}
 

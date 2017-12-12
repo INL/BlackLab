@@ -31,10 +31,16 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Utilities for working with files
  */
 public class FileUtil {
+
+    protected static final Logger logger = LogManager.getLogger(FileUtil.class);
+
 	/**
 	 * The default encoding for opening files.
 	 */
@@ -284,14 +290,24 @@ public class FileUtil {
         for (File dir: dirsToSearch) {
             if (extensions == null) {
                 configFile = new File(dir, pathToFile);
+                boolean fileExists = configFile.exists();
                 boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());
-                if (configFile.exists() && reallyInsideDir)
+                if (!fileExists)
+                    logger.debug("Configfile not found: " + configFile);
+                else if (!reallyInsideDir)
+                    logger.debug("Configfile found but not inside dir: " + configFile);
+                if (fileExists && reallyInsideDir)
                     return configFile;
             } else {
                 for (String ext: extensions) {
                     configFile = new File(dir, pathToFile + "." + ext);
+                    boolean fileExists = configFile.exists();
                     boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());
-                    if (configFile.exists() && reallyInsideDir)
+                    if (!fileExists)
+                        logger.debug("Configfile not found: " + configFile);
+                    else if (!reallyInsideDir)
+                        logger.debug("Configfile found but not inside dir: " + configFile);
+                    if (fileExists && reallyInsideDir)
                         return configFile;
                 }
             }
