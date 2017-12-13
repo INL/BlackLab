@@ -146,9 +146,8 @@ public class Index {
 		throw new RuntimeException("Index in invalid state, openForSearching didn't throw unrecoverable error yet there is no Searcher and no Indexer");
 	}
 
-
 	public synchronized IndexStatus getStatus() {
-		if (this.indexer != null && this.indexer.getListener().getIndexTime() == 0)
+		if (this.indexer != null && this.indexer.getListener().getTotalTime() == 0)
 			return IndexStatus.INDEXING;
 		else if (this.searcher != null && this.searcher.isEmpty())
 			return IndexStatus.EMPTY;
@@ -187,7 +186,7 @@ public class Index {
 	 * It is up to the user to close the returned Indexer.
 	 *
 	 * Note that this will lock this index for searching until the Indexer has been closed again.
-	 * @param getCurrentIndexer get the current indexer instead of trying to allocate a new indexer, note that this might return a closed indexer
+	 * @param getCurrentIndexer get the current indexer instead of trying to allocate a new indexer, note that this might return null if the Indexer has already finished
 	 *
 	 * @return the indexer
 	 * @throws InternalServerError when the index cannot be opened for some reason
@@ -229,7 +228,7 @@ public class Index {
 		}
 
 		// if we're currently indexing, force close the indexer
-		if (this.indexer != null && this.indexer.getListener().getIndexTime() == 0) {
+		if (this.indexer != null && this.indexer.getListener().getTotalTime() == 0) {
 			this.indexer.close();
 		}
 
@@ -248,7 +247,7 @@ public class Index {
 		if (this.indexer == null)
 			return;
 
-		if (this.indexer.getListener().getIndexTime() == 0) // close() has not yet been called on the Indexer
+		if (this.indexer.getListener().getTotalTime() == 0) // close() has not yet been called on the Indexer
 			throw new ServiceUnavailable("Index '"+id+"' is currently indexing a file, please try again later.");
 
 		// close() was already called on the indexer externally
