@@ -2,12 +2,15 @@ package nl.inl.blacklab.server.index;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Comparator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.DocumentFormatException;
+import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
@@ -30,7 +33,7 @@ public class Index {
 		AVAILABLE,   // index is available for searching and adding to
 		INDEXING,    // index is busy, files are being added to it
 		@Deprecated
-		OPENING;     // index is being opened, will never be returned as getStatus blocks while the index is being opened
+		OPENING;     // index is being opened, this status will never be returned, as getStatus will block until the index has finished opening
 
 		@Override
 		public String toString() {
@@ -55,6 +58,30 @@ public class Index {
 		}
 	};
 
+	/**
+	 * This class is an implementation detail.
+	 * We need to know when an Indexer we return is closed in order to know if we are available for searching again,
+	 * however the default Indexer does not record this information.
+	 * We could also check through the IndexListener attached to the Indexer, but that feels like a worse solution.
+	 */
+	private static class IndexerWithCloseRegistration extends Indexer {
+		private boolean closed = false;
+
+		IndexerWithCloseRegistration(File directory) throws IOException, DocumentFormatException {
+			super(directory, false, (DocIndexerFactory)null, (File) null);
+		}
+
+		@Override
+		public synchronized void close() {
+			super.close();
+			this.closed = true;
+		}
+
+		boolean isClosed() {
+			return closed;
+		}
+	}
+
 	private static final Logger logger = LogManager.getLogger(Index.class);
 
 	private final String id;
@@ -68,7 +95,7 @@ public class Index {
 	 * In addition, while an index is still running, no new Indexers can be created.
 	 */
 	private Searcher searcher;
-	private Indexer indexer;
+	private IndexerWithCloseRegistration indexer;
 
 	/**
 	 *
@@ -113,15 +140,20 @@ public class Index {
 	 * @throws ServiceUnavailable when the index is in use.
 	 */
 	// TODO searcher should not have references to it held for longer times outside of this class
+	// (references should ideally never leave a synchronized(Index) block...
 	// (this is a large job)
 	public synchronized Searcher getSearcher() throws InternalServerError, ServiceUnavailable {
 		openForSearching();
 		return searcher;
 	}
 
-	/*
-	 * TODO this whole function is a little iffy...
-	 * What's to stop someone from doing Index.getSearcher().getIndexStructure(), which is wrong when the Index is currently busy indexing
+	/**
+	 * Get the indexStructure for this Index.
+	 * This could also be gotten from the internal Searcher or Indexer inside this Index,
+	 * but this always gets the most up-to-date version.
+	 *
+	 * @return the IndexStructure
+	 * @throws InternalServerError when no searcher could not be opened
 	 */
 	public synchronized IndexStructure getIndexStructure() throws InternalServerError {
 		try {
@@ -129,13 +161,12 @@ public class Index {
 		}
 		catch (ServiceUnavailable e) {
 			// swallow, we're apparently still busy indexing something,
-			// this isn't a problem, we'll just use the indexer's searcher to get the structure
+			// this isn't a problem, we'll just use the Indexer's searcher to get the structure instead
 		} catch (InternalServerError e) {
-			// Rethrow here is on purpose
-			// this means there is something wrong
+			// Rethrow here on purpose
+			// this means there is something wrong in such a way that we can't even open a Searcher anymore
 			throw e;
 		}
-
 
 		if (this.searcher != null)
 			return this.searcher.getIndexStructure();
@@ -147,15 +178,13 @@ public class Index {
 	}
 
 	public synchronized IndexStatus getStatus() {
-		if (this.indexer != null && this.indexer.getListener().getTotalTime() == 0)
+		if (this.indexer != null && !this.indexer.isClosed())
 			return IndexStatus.INDEXING;
 		else if (this.searcher != null && this.searcher.isEmpty())
 			return IndexStatus.EMPTY;
 		else
 			return IndexStatus.AVAILABLE; // we're available even when searcher == null since we open on-demand.
 	}
-
-	//----------------------
 
 	/**
 	 * Attempt to open this index in search mode.
@@ -165,7 +194,7 @@ public class Index {
 	 * @throws ServiceUnavailable
 	 */
 	private synchronized void openForSearching() throws InternalServerError, ServiceUnavailable {
-		tryCleanupCurrentIndexer();
+		cleanupClosedIndexerOrThrow();
 
 		if (this.searcher != null)
 			return;
@@ -186,35 +215,36 @@ public class Index {
 	 * It is up to the user to close the returned Indexer.
 	 *
 	 * Note that this will lock this index for searching until the Indexer has been closed again.
-	 * @param getCurrentIndexer get the current indexer instead of trying to allocate a new indexer, note that this might return null if the Indexer has already finished
 	 *
 	 * @return the indexer
 	 * @throws InternalServerError when the index cannot be opened for some reason
 	 * @throws ServiceUnavailable when there is already an Indexer on this Index that's still processing
 	 */
-	// TODO getCurrentIndexer is a bit meh, but required for when you need to know the current state of the indexer
-	public synchronized Indexer getIndexer(boolean getCurrentIndexer) throws InternalServerError, ServiceUnavailable {
-		if (getCurrentIndexer) {
-			try {
-				// Clear our current indexer if it's finished the indexing job
-				tryCleanupCurrentIndexer();
-			} catch (ServiceUnavailable e) {
-				// swallow, the current indexer has not finished yet
-			}
-
-			return indexer;
-		}
-
-		tryCleanupCurrentIndexer();
+	public synchronized Indexer getIndexer() throws InternalServerError, ServiceUnavailable {
+		cleanupClosedIndexerOrThrow();
 		close(); // Close any Searcher that is still in search mode
 		try {
-			this.indexer = new Indexer(this.dir, false, (DocIndexerFactory)null, (File)null);
+			this.indexer = new IndexerWithCloseRegistration(this.dir);
 			indexer.setUseThreads(true);
 		} catch (Exception e) {
 			throw new InternalServerError("Could not open index '" + id + "'", 27, e);
 		}
 
 		return indexer;
+	}
+
+	/**
+	 * Gets the indexListener for the current Indexer.
+	 * Returns null when this Index is not currently Indexing.
+	 *
+	 * @return the listener, or null when there is no ongoing indexing.
+	 */
+	public synchronized IndexListener getIndexerListener() {
+		// Don't return inderListener for an Indexer that has been closed
+		if (this.getStatus() != IndexStatus.INDEXING)
+			return null;
+
+		return this.indexer.getListener();
 	}
 
 	/**
@@ -228,7 +258,7 @@ public class Index {
 		}
 
 		// if we're currently indexing, force close the indexer
-		if (this.indexer != null && this.indexer.getListener().getTotalTime() == 0) {
+		if (this.indexer != null && !this.indexer.isClosed()) {
 			this.indexer.close();
 		}
 
@@ -239,15 +269,15 @@ public class Index {
 
 	/**
 	 * Clean up the current Indexer (if any), provided close() has been called on the Indexer.
-	 * NOTE: we do not close the indexer ourselves on purpose (except when this.close() is called), instead we using an IndexListener to know when an external user of the Indexer closes it.
+	 * NOTE: we do not close the indexer ourselves on purpose (except when Index.close() is called), instead we just check if it's been closed when a Searcher or Indexer is requested.
 	 *
 	 * @throws ServiceUnavailable when the current indexer is still indexing
 	 */
-	private synchronized void tryCleanupCurrentIndexer() throws ServiceUnavailable {
+	private synchronized void cleanupClosedIndexerOrThrow() throws ServiceUnavailable {
 		if (this.indexer == null)
 			return;
 
-		if (this.indexer.getListener().getTotalTime() == 0) // close() has not yet been called on the Indexer
+		if (!this.indexer.isClosed())
 			throw new ServiceUnavailable("Index '"+id+"' is currently indexing a file, please try again later.");
 
 		// close() was already called on the indexer externally

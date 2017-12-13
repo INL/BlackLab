@@ -46,7 +46,7 @@ public class RequestHandlerIndexStatus extends RequestHandler {
 				ds.entry("tokenCount", struct.getTokenCount());
 
 			if (status.equals(IndexStatus.INDEXING)) {
-				IndexListener indexProgress = index.getIndexer(true).getListener();
+				IndexListener indexProgress = index.getIndexerListener();
 				synchronized (indexProgress) {
 					ds.startEntry("indexProgress").startMap()
 					.entry("filesProcessed", indexProgress.getFilesProcessed())
