@@ -43,7 +43,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
 		FileItem file = FileUploadHandler.getFile(request, "data");
 		Index index = indexMan.getIndex(indexName);
-		Indexer indexer = index.getIndexer();
+		Indexer indexer = index.getIndexer(false);
 		indexer.setListener(new IndexListenerReportConsole() {
 			@Override
 			public synchronized boolean errorOccurred(String error, String unitType, File unit, File subunit) {

@@ -41,8 +41,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
 		for (Index index: indices) {
 			ds.startAttrEntry("index", "name", index.getId());
 
-			Searcher searcher = index.getSearcher(); // TODO don't let single exception break all of blacklab-server
-			IndexStructure struct = searcher.getIndexStructure();
+			IndexStructure struct = index.getIndexStructure();
 			IndexStatus status = index.getStatus();
 
 			ds.startMap();
@@ -50,7 +49,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
 			ds.entry("status", status);
 
 			if (status.equals(IndexStatus.INDEXING)) {
-				IndexListener indexProgress = index.getIndexer().getListener();
+				IndexListener indexProgress = index.getIndexer(true).getListener();
 				synchronized (indexProgress) {
 					ds.startEntry("indexProgress").startMap()
 					.entry("filesProcessed", indexProgress.getFilesProcessed())

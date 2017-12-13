@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -40,7 +41,7 @@ public class Index {
 	/**
 	 * Sort all public indices first, then sort alphabetically within all public and private indices.
 	 */
-	public static class LexicalSortPublicIndicesFirst implements Comparator<Index> {
+	public static final Comparator<Index> COMPARATOR = new Comparator<Index>() {
 		@Override
 		public int compare(Index o1, Index o2) {
 			// Sort public before private
@@ -50,10 +51,9 @@ public class Index {
 				return o1priv ? 1 : -1;
 
 			// Sort rest case-insensitively
-            return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
+			return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
 		}
-	}
-	public static final LexicalSortPublicIndicesFirst COMPARATOR = new LexicalSortPublicIndicesFirst();
+	};
 
 	private static final Logger logger = LogManager.getLogger(Index.class);
 
@@ -106,7 +106,7 @@ public class Index {
 
 	/**
 	 * Get the current Searcher backing this Index.
-	 * Note that this Searcher may be closed at any time when this Index switches from/to index mode.
+	 * This is not available while this index is indexing new data.
 	 *
 	 * @return the currently opened Searcher
 	 * @throws InternalServerError when there was an error opening this index
@@ -115,12 +115,37 @@ public class Index {
 	// TODO searcher should not have references to it held for longer times outside of this class
 	// (this is a large job)
 	public synchronized Searcher getSearcher() throws InternalServerError, ServiceUnavailable {
-		if (this.indexer != null)
-			return this.indexer.getSearcher();
-
 		openForSearching();
 		return searcher;
 	}
+
+	/*
+	 * TODO this whole function is a little iffy...
+	 * What's to stop someone from doing Index.getSearcher().getIndexStructure(), which is wrong when the Index is currently busy indexing
+	 */
+	public synchronized IndexStructure getIndexStructure() throws InternalServerError {
+		try {
+			openForSearching();
+		}
+		catch (ServiceUnavailable e) {
+			// swallow, we're apparently still busy indexing something,
+			// this isn't a problem, we'll just use the indexer's searcher to get the structure
+		} catch (InternalServerError e) {
+			// Rethrow here is on purpose
+			// this means there is something wrong
+			throw e;
+		}
+
+
+		if (this.searcher != null)
+			return this.searcher.getIndexStructure();
+		else if (this.indexer != null)
+			return this.indexer.getSearcher().getIndexStructure();
+
+		// This should literally never happen, after openForSearching either searcher or indexer must be set
+		throw new RuntimeException("Index in invalid state, openForSearching didn't throw unrecoverable error yet there is no Searcher and no Indexer");
+	}
+
 
 	public synchronized IndexStatus getStatus() {
 		if (this.indexer != null && this.indexer.getListener().getIndexTime() == 0)
@@ -162,17 +187,30 @@ public class Index {
 	 * It is up to the user to close the returned Indexer.
 	 *
 	 * Note that this will lock this index for searching until the Indexer has been closed again.
+	 * @param getCurrentIndexer get the current indexer instead of trying to allocate a new indexer, note that this might return a closed indexer
 	 *
 	 * @return the indexer
 	 * @throws InternalServerError when the index cannot be opened for some reason
 	 * @throws ServiceUnavailable when there is already an Indexer on this Index that's still processing
 	 */
-	public synchronized Indexer getIndexer() throws InternalServerError, ServiceUnavailable {
+	// TODO getCurrentIndexer is a bit meh, but required for when you need to know the current state of the indexer
+	public synchronized Indexer getIndexer(boolean getCurrentIndexer) throws InternalServerError, ServiceUnavailable {
+		if (getCurrentIndexer) {
+			try {
+				// Clear our current indexer if it's finished the indexing job
+				tryCleanupCurrentIndexer();
+			} catch (ServiceUnavailable e) {
+				// swallow, the current indexer has not finished yet
+			}
+
+			return indexer;
+		}
+
 		tryCleanupCurrentIndexer();
 		close(); // Close any Searcher that is still in search mode
 		try {
 			this.indexer = new Indexer(this.dir, false, (DocIndexerFactory)null, (File)null);
-			indexer.setUseThreads(false); // TODO enable
+			indexer.setUseThreads(true);
 		} catch (Exception e) {
 			throw new InternalServerError("Could not open index '" + id + "'", 27, e);
 		}
