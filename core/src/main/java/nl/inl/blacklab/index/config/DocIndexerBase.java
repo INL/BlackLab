@@ -34,6 +34,7 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.ExUtil;
+import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerBase extends DocIndexer {
 
@@ -553,8 +554,10 @@ public abstract class DocIndexerBase extends DocIndexer {
             punct = addDefaultPunctuation && !preventNextDefaultPunctuation ? " " : "";
         else
             punct = punctuation.toString();
+
         preventNextDefaultPunctuation = false;
-        propPunct().addValue(punct);
+        // Normalize once more in case we hit more than one adjacent punctuation
+        propPunct().addValue(StringUtil.normalizeWhitespace(punct));
         addEndChar(getCharacterPosition());
         wordsDone++;
         if (wordsDone > 0 && wordsDone % 5000 == 0) {

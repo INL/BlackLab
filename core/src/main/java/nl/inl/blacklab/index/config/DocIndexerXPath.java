@@ -169,6 +169,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // Parse use VTD-XML
         vg = new VTDGen();
         vg.setDoc(inputDocument);
+        // Whitespace in between elements is normally ignored,
+        // but we explicitly allow whitespace in between elements to be collected here.
+        // This allows punctuation xpath to match this whitespace, in case punctuation/whitespace in the document isn't contained in a dedicated element or attribute.
+        // This doesn't mean that this whitespace is always used, it just enables the punctuation xpath to find this whitespace if it explicitly matches it.
+        vg.enableIgnoredWhiteSpace(true);
         vg.parse(config.isNamespaceAware());
 
         nav = vg.getNav();
