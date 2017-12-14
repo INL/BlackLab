@@ -373,7 +373,7 @@ public class Index {
 	 * Get the name of the user that owns this index (if any).
 	 * This function is a convenience that will not throw any exceptions, as the id of this index has already been validated.
 	 *
-	 * @return the username
+	 * @return the username or null if this is not a user index.
 	 */
 	public String getUserId() {
 		int pos = id.indexOf(":");
