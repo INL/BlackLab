@@ -21,6 +21,7 @@ public class RequestHandlerDeleteIndex extends RequestHandler {
 			// Delete index
 			try {
 				debug(logger, "REQ delete index: " + indexName);
+				indexMan.getIndex(indexName).getSearcher(); // Make sure we're not deleting an index while it's in use.
 				indexMan.deleteUserIndex(indexName);
 				return Response.status(ds, "SUCCESS", "Index deleted succesfully.", HTTP_OK);
 			} catch (BlsException e) {
