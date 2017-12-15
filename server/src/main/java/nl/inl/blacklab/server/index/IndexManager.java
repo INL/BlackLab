@@ -75,21 +75,28 @@ public class IndexManager {
 			    String indexName = entry.getKey();
 				JsonNode indexConfig = entry.getValue();
 
-				if (indexConfig.has("pid")) {
-					// Should be specified in index metadata now, not in
-					// blacklab-server.json.
-					logger.error("blacklab-server.json specifies 'pid' property for index '" + indexName +
-					             "'; this setting should not be in blacklab-server.json but in the blacklab index metadata! (as 'pidField')");
-				}
-
-				if (indexConfig.has("mayViewContent")) {
-					logger.error("blacklab-server.json specifies 'mayViewContent' property for index'" + indexName +
-					             "'; this setting should not be in blacklab-server.json but in the blacklab index metadata! (as 'contentViewable')");
-				}
-
 				try {
 					File dir = JsonUtil.getFileProp(indexConfig, "dir", null);
-					indices.put(indexName, new Index(indexName, dir, searchMan.getCache()));
+					Index index = new Index(indexName, dir, searchMan.getCache());
+
+					if (indexConfig.has("pid")) {
+						// Should be specified in index metadata now, not in
+						// blacklab-server.json.
+						logger.warn("blacklab-server.json specifies 'pid' property for index '" + indexName +
+								"'; this setting should not be in blacklab-server.json but in the blacklab index metadata! (as 'pidField')");
+						logger.warn("For now this index will still use the field from blacklab-server.json if it isn't defined in the index metadata, but this will change in the future.");
+
+						index.setDeprecatedPidFieldProperty(indexConfig.get("pid").textValue());
+					}
+
+					if (indexConfig.has("mayViewContent")) {
+						logger.warn("blacklab-server.json specifies 'mayViewContent' property for index'" + indexName +
+								"'; this setting should not be in blacklab-server.json but in the blacklab index metadata! (as 'contentViewable')");
+						logger.warn("For now this value can still be used to explicitly disable content viewing, but not to enable it if the index itself does not allow viewing.");
+						index.setDeprecatedMayViewContentsProperty(indexConfig.get("mayViewContent").booleanValue());
+					}
+
+					indices.put(indexName, index);
 				} catch (FileNotFoundException | IllegalIndexName e) {
 					logger.error("Error opening index '"+indexName+"'; " + e.getMessage());
 				}

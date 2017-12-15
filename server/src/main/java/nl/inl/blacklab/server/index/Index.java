@@ -88,6 +88,10 @@ public class Index {
 	private final File dir;
 	private SearchCache cache;
 
+	/** see {@link Index#setDeprecatedPidFieldProperty(String)} */
+	private String deprecatedPidField = null;
+	private Boolean deprecatedMayViewContent = null; // Boolean so we know if it's been set
+
 	/**
 	 * Only one of these can be set at a time.
 	 * The searcher is closed and cleared when an indexer is requested. Running searches are cancelled when this happens.
@@ -129,6 +133,29 @@ public class Index {
 
 	public File getDir() {
 		return dir;
+	}
+
+	/**
+	 * This function purely exists to support a depecated property in blacklab-server.json.
+	 * The pid field is the persistant identifier for a document within an Index. Usually the name of a metadata property in the document.
+	 * Nowadays the definition of this field has moved into the Blacklab internal IndexMetadata, but this wasn't always the case.
+	 *
+	 * This value will be passed on to all Searchers and Indexers for this Index, IF their IndexMetadata doesn't already define it.
+	 * @param pidField
+	 */
+	public void setDeprecatedPidFieldProperty(String pidField) {
+		if (pidField == null || pidField.isEmpty())
+			this.deprecatedPidField = null;
+		else
+			this.deprecatedPidField = pidField;
+	}
+
+	/**
+	 * As {@link Index#setDeprecatedPidFieldProperty(String)}, but for mayViewContent
+	 * @param mayViewContent
+	 */
+	public void setDeprecatedMayViewContentsProperty(boolean mayViewContent) {
+		this.deprecatedMayViewContent = mayViewContent;
 	}
 
 	/**
@@ -193,6 +220,7 @@ public class Index {
 	 * @throws InternalServerError if the index could not be opened due to currently ongoing indexing
 	 * @throws ServiceUnavailable
 	 */
+	@SuppressWarnings("deprecation") // _setContentViewable and _setPidField
 	private synchronized void openForSearching() throws InternalServerError, ServiceUnavailable {
 		cleanupClosedIndexerOrThrow();
 
@@ -202,6 +230,13 @@ public class Index {
 		try {
 			logger.debug("Opening index '" + id + "', dir = " + dir);
 			searcher = Searcher.open(this.dir);
+
+			IndexStructure struct = searcher.getIndexStructure();
+			if (this.deprecatedPidField != null && (struct.pidField() == null || struct.pidField().isEmpty())) // Never set if already defined
+				struct._setPidField(this.deprecatedPidField);
+			if (this.deprecatedMayViewContent != null && struct.contentViewable()) // Never enable viewing when the index itself disallows it
+				struct._setContentViewable(this.deprecatedMayViewContent);
+
 		} catch (Exception e) {
 			this.searcher = null;
 
@@ -220,12 +255,19 @@ public class Index {
 	 * @throws InternalServerError when the index cannot be opened for some reason
 	 * @throws ServiceUnavailable when there is already an Indexer on this Index that's still processing
 	 */
+	@SuppressWarnings("deprecation") //_setPidField and _setContentViewable
 	public synchronized Indexer getIndexer() throws InternalServerError, ServiceUnavailable {
 		cleanupClosedIndexerOrThrow();
 		close(); // Close any Searcher that is still in search mode
 		try {
 			this.indexer = new IndexerWithCloseRegistration(this.dir);
 			indexer.setUseThreads(true);
+
+			IndexStructure struct = indexer.getSearcher().getIndexStructure();
+			if (this.deprecatedPidField != null && (struct.pidField() == null || struct.pidField().isEmpty())) // Never set if already defined
+				struct._setPidField(this.deprecatedPidField);
+			if (this.deprecatedMayViewContent != null && struct.contentViewable()) // Never enable viewing when the index itself disallows it
+				struct._setContentViewable(this.deprecatedMayViewContent);
 		} catch (Exception e) {
 			throw new InternalServerError("Could not open index '" + id + "'", 27, e);
 		}
@@ -283,33 +325,6 @@ public class Index {
 		// close() was already called on the indexer externally
 		this.indexer = null;
 	}
-
-	// TODO pidfield is now gotten from blacklab itself, check how it's determined
-
-	// If indexPid is null it should use the lucene docId, where is this configured again
-	// seems setting the indexPid using Searcher._setPid was deprecated, so it should come from the import format?
-	// Figure out the pid from the index metadata and/or BLS config.
-//		String indexPid = searcher.getIndexStructure().pidField();
-//		if (indexPid == null || indexPid.isEmpty())
-//			indexPid = "";
-//		String configPid = par.getPidField();
-//		if (indexPid.length() > 0 && !configPid.equals(indexPid)) {
-//
-//
-//		} else {
-//			// No pid configured in index, only in blacklab-server.json. We want
-//			// to get rid
-//			// of this (prints an error on startup), but it should still work
-//			// for now. Inject
-//			// the setting into the searcher.
-//			if (configPid.length() > 0)
-//				searcher.getIndexStructure()._setPidField(configPid);
-//		}
-//		if (indexPid.length() == 0 && configPid.length() == 0) {
-//			logger.warn("No pid given for index '" + indexName
-//					+ "'; using Lucene doc ids.");
-//		}
-
 
 	//---------------------
 
