@@ -337,8 +337,12 @@ public class Indexer {
 			// No DocIndexer supplied; try to detect it from the index
 			// metadata.
 			String formatId = searcher.getIndexStructure().getDocumentFormat();
-			if (formatId != null && formatId.length() > 0)
+			if (formatId != null && formatId.length() > 0) {
 				docIndexerFactory = DocumentFormats.getIndexerFactory(formatId);
+				if (docIndexerFactory == null) {
+					throw new DocumentFormatException("Unknown document format '" + formatId + "'; cannot index new data.'");
+				}
+			}
 			else {
 				throw new DocumentFormatException("Cannot detect document format for index!");
 			}
