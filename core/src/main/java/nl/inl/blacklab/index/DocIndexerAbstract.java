@@ -34,6 +34,10 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 
 	protected CountingReader reader;
 
+	/** Total words processed by this indexer. Used for reporting progress, do not reset except when finished with file. */
+	protected int wordsDone = 0;
+	private int wordsDoneAtLastReport = 0;
+
 	//protected ContentStore contentStore;
 
 	private StringBuilder content = new StringBuilder();
@@ -160,9 +164,26 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         reader.close();
     }
 
-    public void reportCharsProcessed() {
+    @Override
+    public final void reportCharsProcessed() {
 		long charsProcessed = reader.getCharsReadSinceLastCall();
 		indexer.getListener().charsDone(charsProcessed);
 	}
+
+    /**
+     * Report the change in wordsDone since the last report
+     */
+    @Override
+    public final void reportTokensProcessed() {
+    	int wordsDoneSinceLastReport = 0;
+
+    	if (wordsDoneAtLastReport > wordsDone) // reset by child class?
+    		wordsDoneSinceLastReport = wordsDone;
+    	else
+    		wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
+
+    	indexer.getListener().tokensDone(wordsDoneSinceLastReport);
+    	wordsDoneAtLastReport = wordsDone;
+    }
 
 }

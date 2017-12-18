@@ -67,9 +67,6 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     protected Document currentLuceneDoc;
 
-    /** Number of words processed (for reporting progress) */
-    protected int wordsDone;
-
     /**
      * Parameters passed to this indexer
      */
@@ -303,10 +300,6 @@ public abstract class DocIndexer implements AutoCloseable {
         }
     }
 
-    public void reportTokensProcessed(int n) {
-        indexer.getListener().tokensDone(n);
-    }
-
     /**
      * Enables or disables norms. Norms are disabled by default.
      *
@@ -478,5 +471,15 @@ public abstract class DocIndexer implements AutoCloseable {
             return true;
         }
     }
+
+    /**
+     * Report the amount of new characters processed since the last call
+     */
+    public abstract void reportCharsProcessed();
+
+    /**
+     * Report the amounf of new tokens processed since the last call
+     */
+    public abstract void reportTokensProcessed();
 
 }

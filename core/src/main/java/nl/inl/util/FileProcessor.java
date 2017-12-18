@@ -139,6 +139,7 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
     /** Catches any exceptions the Runnable throws so we can handle them. */
 	private static class ExceptionCatchingThreadFactory implements ThreadFactory {
 	    private final ThreadFactory delegate;
+	    private volatile int threadCount = 0;
 
 	    ExceptionCatchingThreadFactory(ThreadFactory delegate) {
 	        this.delegate = delegate;
@@ -147,6 +148,7 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
 	    @Override
 		public Thread newThread(final Runnable r) {
 	        Thread t = delegate.newThread(r);
+	        t.setName("FileProcessorThread-" + threadCount++);
 	        t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 	            @Override
 	            public void uncaughtException(Thread t, Throwable e) {
