@@ -43,6 +43,14 @@ import nl.inl.util.FileUtil.FileTask;
 public class IndexManager {
 	private static final String FORMATS_SUBDIR_NAME = "_input_formats";
 
+	/**
+	 * A file by this name is placed in user directories that could not be fully deleted,
+	 * This can happen under windows when some of the files are still open in some memory-maps (despite .close() having been called)
+	 * The files cannot be deleted until the streams and files are garbage-collected.
+	 * Since there is no deterministic way to trigger a gc run, we detect this situation and mark the directory for future deletion.
+	 */
+	private static final String PENDING_DELETION_FILE_MARKER = ".markedfordeletion";
+
 	private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
 	private static final int MAX_USER_INDICES = 10;
@@ -301,7 +309,17 @@ public class IndexManager {
 		logger.debug("Deleting user index " + index.getId());
 		indices.remove(indexId);
 		index.close();
+
+		// Cant guarantee this will work, but may as well try
+		System.gc();
+		System.runFinalization();
+
 		BlsUtils.delTree(indexDir);
+		// didn't fully delete, this can happen under windows when some memmapped buffers haven't been gc'd yet
+		// This is a system bug, not something we can do anything about, the gc first needs to clean up all references to those maps
+		// Mark the directory and attempt to delete it next time we come across it
+		if (indexDir.canRead())
+			markForDeletion(indexDir);
 	}
 
 	/**
@@ -447,6 +465,13 @@ public class IndexManager {
 		 * so the index can be recognised as a private index.
 		 */
 		for (File f : userDir.listFiles(BlsUtils.readableDirFilter)) {
+			if (isPendingDeletion(f)) {
+				BlsUtils.delTree(f);
+				if (f.canRead())
+					markForDeletion(f); // Deleting didn't work (yet)
+				continue;
+			}
+
 			if (!f.canRead() || !Searcher.isIndex(f))
 				continue;
 
@@ -477,6 +502,20 @@ public class IndexManager {
 		for (String id : removedIds) {
 			indices.remove(id).close();
 		}
+	}
+
+	private static void markForDeletion(File directory) {
+		try {
+			File deletionMarker = new File(directory, PENDING_DELETION_FILE_MARKER);
+			deletionMarker.createNewFile();
+		} catch (IOException e) {
+             logger.error("Cannot mark directory for future deletion: " + e.getMessage());
+		}
+	}
+
+	private static boolean isPendingDeletion(File directory) {
+		File deletionMarker = new File(directory, PENDING_DELETION_FILE_MARKER);
+		return (deletionMarker.exists() && deletionMarker.canRead());
 	}
 
 	/**
