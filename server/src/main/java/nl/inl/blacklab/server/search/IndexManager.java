@@ -596,7 +596,14 @@ public class IndexManager {
 	}
 
 	private void scanTreeForIndices(File dir) {
-		for (File f : dir.listFiles(BlsUtils.readableDirFilter)) {
+	    for (File f : dir.listFiles()) {
+	        if (!f.isDirectory())
+	            continue;
+            if (!f.canRead()) {
+                logger.debug("  cannot read index dir; check permissions (including SELinux!): " + f);
+                continue;
+            }
+
 			String name = f.getName();
 			if (name.equals("index"))
 				name = f.getAbsoluteFile().getParentFile().getName();
