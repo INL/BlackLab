@@ -46,6 +46,9 @@ public class BlsConfig extends YamlJsonReader {
 	/** Default number of words around hit. [5] */
 	private int defaultContextSize;
 
+	/** Value of Access-Control-Allow-Origin header to send (or no header if empty or null) */
+	private String allowOrigin = "*";
+
 	/** IP addresses for which debug mode will be turned on. */
 	private Set<String> debugModeIps = new HashSet<>();
 
@@ -141,6 +144,7 @@ public class BlsConfig extends YamlJsonReader {
 		if (properties.has("requests")) {
 			JsonNode reqProp = properties.get("requests");
 			 // XML if nothing specified (because of browser's default Accept header)
+            allowOrigin = JsonUtil.getProperty(reqProp, "accessControlAllowOrigin", "*");
 			defaultOutputType = DataFormat.XML;
 			if (reqProp.has("defaultOutputType"))
 				defaultOutputType = ServletUtil.getOutputTypeFromString(
@@ -165,8 +169,7 @@ public class BlsConfig extends YamlJsonReader {
 				defaultCaseSensitive = defaultDiacriticsSensitive = false;
 				break;
 			}
-			defaultContextSize = JsonUtil.getIntProp(reqProp,
-					"defaultContextSize", 5);
+			defaultContextSize = JsonUtil.getIntProp(reqProp, "defaultContextSize", 5);
 			maxContextSize = JsonUtil.getIntProp(reqProp, "maxContextSize", 20);
 			maxSnippetSize = JsonUtil
 					.getIntProp(reqProp, "maxSnippetSize", 100);
@@ -296,5 +299,9 @@ public class BlsConfig extends YamlJsonReader {
 	public Map<String, Object> getAuthParam() {
 		return authParam;
 	}
+
+    public String getAccessControlAllowOrigin() {
+        return allowOrigin.length() == 0 ? null : allowOrigin;
+    }
 
 }

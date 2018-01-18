@@ -183,6 +183,9 @@ public class BlackLabServer extends HttpServlet {
 					responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 					responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
 					responseObject.setContentType("text/xml");
+			        String allowOrigin = searchManager.config().getAccessControlAllowOrigin();
+			        if (allowOrigin != null)
+			            responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
 					ServletUtil.writeCacheHeaders(responseObject, 0);
 
 					// === Write the response that was captured in buf
@@ -262,6 +265,9 @@ public class BlackLabServer extends HttpServlet {
 			responseObject.setStatus(httpCode);
 		responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
 		responseObject.setContentType(ServletUtil.getContentType(outputType));
+        String allowOrigin = searchManager.config().getAccessControlAllowOrigin();
+        if (allowOrigin != null)
+            responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
 		ServletUtil.writeCacheHeaders(responseObject, cacheTime);
 
 		// === Write the response that was captured in buf
