@@ -48,9 +48,6 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 	 */
 	ComplexField contentsField;
 
-	/** Number of words processed (for reporting progress) */
-	int wordsDone;
-
 	/** The main property (usually "word") */
 	ComplexFieldProperty propMain;
 
@@ -66,7 +63,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 	@SuppressWarnings("deprecation")
     public DocIndexerPlainTextBasic(Indexer indexer, String fileName, Reader reader) {
     	super(indexer, fileName, reader);
-    
+
     	// Define the properties that make up our complex field
     	String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
     	contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName, getSensitivitySetting(mainPropName), false);
@@ -75,7 +72,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
     	propPunct = contentsField.addProperty(propName, getSensitivitySetting(propName), false);
     	IndexStructure indexStructure = indexer.getSearcher().getIndexStructure();
     	indexStructure.registerComplexField(contentsField.getName(), propMain.getName());
-    
+
     	// If the indexmetadata file specified a list of properties that shouldn't get a forward
     	// index,
     	// make the new complex field aware of this.
@@ -176,10 +173,9 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
 				// Report progress regularly but not too often
 				wordsDone++;
-				if (wordsDone >= 5000) {
+				if (wordsDone != 0 && wordsDone % 5000 == 0) {
 					reportCharsProcessed();
-					reportTokensProcessed(wordsDone);
-					wordsDone = 0;
+					reportTokensProcessed();
 				}
 			}
 
@@ -286,8 +282,8 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
 			// Report progress
 			reportCharsProcessed();
-			reportTokensProcessed(wordsDone);
-			wordsDone = 0;
+			reportTokensProcessed();
+
 			indexer.getListener().documentDone(documentName);
 
 			// Reset contents field for next document

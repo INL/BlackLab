@@ -259,7 +259,7 @@ public class SearchParameters {
 
 	private Searcher getSearcher() {
 		try {
-			return searchManager.getIndexManager().getSearcher(getIndexName());
+			return searchManager.getIndexManager().getIndex(getIndexName()).getSearcher();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

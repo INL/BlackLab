@@ -1,33 +1,32 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 
-import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
+import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
-import nl.inl.blacklab.server.index.IndexTask;
+import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.IndexManager.IndexStatus;
 import nl.inl.blacklab.server.util.FileUploadHandler;
-import nl.inl.blacklab.server.util.FileUploadHandler.UploadedFileTask;
 
 /**
  * Display the contents of the cache.
  */
 public class RequestHandlerAddToIndex extends RequestHandler {
+	// TODO make configurable?
+	public static final int MAX_TOKEN_COUNT = 1_000_000;
 
 	String indexError = null;
 
@@ -41,72 +40,40 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 	public int handle(DataStream ds) throws BlsException {
 		debug(logger, "REQ add data: " + indexName);
 
-		if (!indexName.contains(":"))
-			throw new NotAuthorized("Can only add to private indices.");
-		if (!indexMan.indexExists(indexName))
-			throw new IndexNotFound(indexName);
+		FileItem file = FileUploadHandler.getFile(request, "data");
+		Index index = indexMan.getIndex(indexName);
+		IndexStructure indexStructure = index.getIndexStructure();
 
-		IndexStatus status = indexMan.getIndexStatus(indexName);
-		if (status != IndexStatus.AVAILABLE && status != IndexStatus.EMPTY)
-			throw new BlsException(HttpServletResponse.SC_CONFLICT, "INDEX_UNAVAILABLE", "The index '" + indexName + "' is not available right now. Status: " + status);
+		if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
+			throw new NotAuthorized("You can only add new data to your own private indices.");
 
-		if (!indexMan.indexExists(indexName))
-			throw new IndexNotFound(indexName);
-		final File indexDir = indexMan.getIndexDir(indexName);
-		IndexStatus newStatus = indexMan.setIndexStatus(indexName, Arrays.asList(IndexStatus.AVAILABLE, IndexStatus.EMPTY), IndexStatus.INDEXING);
-		try {
-			indexMan.closeSearcher(indexName);
-			if (newStatus != IndexStatus.INDEXING) {
-				throw new InternalServerError("Could not set index status to 'indexing' (status was " + newStatus + ")", 28);
+		if (indexStructure.getTokenCount() > MAX_TOKEN_COUNT) {
+			throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + MAX_TOKEN_COUNT + " tokens. Cannot add any more data to it.");
+		}
+
+		Indexer indexer = index.getIndexer();
+		indexer.setListener(new IndexListenerReportConsole() {
+			@Override
+			public synchronized boolean errorOccurred(String error, String unitType, File unit, File subunit) {
+				indexError = error + " in " + unit + (subunit == null ? "" : " (" + subunit + ")");
+				super.errorOccurred(error, unitType, unit, subunit);
+				return false; // Don't continue indexing
 			}
-			FileUploadHandler.handleRequest(ds, request, "data", new UploadedFileTask() {
-				@Override
-				public void handle(FileItem fi) throws Exception {
-					// Get the uploaded file parameters
-					String fileName = fi.getName();
+		});
 
-					File tmpFile = null;
-					IndexTask task;
-					IndexListener listener = new IndexListenerReportConsole() {
-						@Override
-						public synchronized boolean errorOccurred(String error,
-								String unitType, File unit, File subunit) {
-							indexError = error + " in " + unit +
-									(subunit == null ? "" : " (" + subunit + ")");
-							super.errorOccurred(error, unitType, unit, subunit);
-							return false; // Don't continue indexing
-						}
-					};
-					try {
-						if (fileName.endsWith(".zip")) {
-							// We can only index zip from a file, not from a stream.
-							tmpFile = File.createTempFile("blsupload", ".tmp.zip");
-							fi.write(tmpFile);
-							task = new IndexTask(indexDir, tmpFile, fileName, listener);
-						} else {
-							InputStream data = fi.getInputStream();
-
-							// TODO: do this in the background
-							// TODO: lock the index while indexing
-							// TODO: re-open Searcher after indexing
-							// TODO: keep track of progress
-							// TODO: error handling
-							task = new IndexTask(indexDir, data, fileName, listener);
-						}
-						task.run();
-						if (task.getIndexError() != null) {
-							throw new InternalServerError(task.getIndexError(), 30);
-						}
-					} finally {
-						if (tmpFile != null)
-							tmpFile.delete();
-					}
-
-					//searchMan.addIndexTask(indexName, new IndexTask(is, fileName));
-				}
-			});
+		try (InputStream is = file.getInputStream()) {
+			indexer.index(file.getName(), is, "*.xml");
+			if (indexer.getListener().getTokensProcessed() == 0)
+				indexError = "No tokens were found when indexing, are the files in the correct format?";
+		} catch(IOException e) {
+			throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
 		} finally {
-			indexMan.setIndexStatus(indexName, null, IndexStatus.AVAILABLE);
+			// It's important we roll back on erorrs, or an incorrect indexstructure might be written.
+			// See Indexer#hasRollback
+			if (indexError != null)
+				indexer.rollback();
+
+			indexer.close();
 		}
 
 		if (indexError != null)

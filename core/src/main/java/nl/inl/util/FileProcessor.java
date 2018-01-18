@@ -3,35 +3,52 @@ package nl.inl.util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.Enumeration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 /**
  * Process (trees of) files, which may include archives
  * that we want to recursively process as well.
  */
-public class FileProcessor implements AutoCloseable {
+public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
 
     /**
      * A way to handle files, including files inside archives.
      */
     public static interface FileHandler {
 
-        void file(String path, File f);
+    	/**
+    	 * Handle a directory.
+    	 *
+    	 * Called for all processed directories of the input file, including any input directory.
+    	 * NOTE: This is only called for regular directories, and not for archives or processed directories within archives.
+    	 * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the directory names may not match the provided pattern.
+    	 *
+    	 * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
+    	 *
+    	 * @param dir the directory
+    	 */
+        void directory(File dir);
 
-        void stream(String path, InputStream f);
+    	/**
+    	 * Handle a file stream.
+    	 *
+    	 * Called for all processed files that match the {@link FileProcessor#pattGlob}, including the input file.
+    	 * Not called for archives if {@link FileProcessor#isProcessArchives()} is true (though it will then be called for files within those archives).
+    	 *
+    	 * NOTE: the InputStream should be closed by the implementation.
+    	 *
+    	 * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
+    	 *
+    	 * @param path
+    	 * @param f
+    	 */
+        void file(String path, InputStream f);
     }
 
     /**
@@ -79,41 +96,42 @@ public class FileProcessor implements AutoCloseable {
      * A task to process a file.
      *
      * Used for multi-threaded file processing.
+     * Is a simple wrapper to call our filehandler from a different thread for a single file.
+     * InputStreams passed in to this handler should be fully decoded/decompressed etc and be able to be used as-is.
      */
-    private final class ProcessFileTask implements Runnable {
-    	private final File fileToIndex;
-    
-    	ProcessFileTask(File fileToIndex) {
-    		this.fileToIndex = fileToIndex;
+    private final class CallFileHandlerTask implements Runnable {
+    	private final String fileName;
+    	private final InputStream is;
+
+    	private final File directory;
+
+    	CallFileHandlerTask(String fileName, InputStream is) {
+    		this.fileName = fileName;
+    		this.is = is;
+
+    		directory = null;
     	}
-    
+
+    	@SuppressWarnings("unused")
+		public CallFileHandlerTask(File directory) {
+    		this.directory = directory;
+
+    		this.fileName = null;
+    		this.is = null;
+		}
+
     	@Override
     	public void run() {
             try {
-    			String fn = fileToIndex.getCanonicalPath(); //Name();
-    			if (processArchives && fn.endsWith(".zip")) {
-    			    indexZip(fileToIndex);
-    			} else {
-    			    if (!skipFile(fileToIndex.getName())) {
-    			        if (processArchives && fn.endsWith(".gz") || fn.endsWith(".tgz") || fn.endsWith(".zip")) {
-    			            // Archive.
-    			            try {
-    			                try (FileInputStream is = new FileInputStream(fileToIndex)) {
-    			                    processInputStream(fn, is);
-    			                }
-    			            } catch (Exception e) {
-    			                keepProcessing = errorHandler.errorOccurred(fileToIndex.getPath(), null, e);
-    			            }
-    			        } else {
-    			            // Regular file.
-    			            fileHandler.file(fn, fileToIndex);
-    			        }
-    			    }
-    			}
+            	if (directory == null)
+            		fileHandler.file(fileName, is);
+            	else
+            		fileHandler.directory(directory);
     		} catch (Exception e) {
-    			System.err.println("Error while processing file: " + fileToIndex);
+    			System.err.println("Error while processing file: " + fileName);
     			e.printStackTrace();
     			System.err.flush();
+    			keepProcessing = errorHandler.errorOccurred(fileName, null, e);
     		}
     	}
     }
@@ -121,6 +139,7 @@ public class FileProcessor implements AutoCloseable {
     /** Catches any exceptions the Runnable throws so we can handle them. */
 	private static class ExceptionCatchingThreadFactory implements ThreadFactory {
 	    private final ThreadFactory delegate;
+	    private volatile int threadCount = 0;
 
 	    ExceptionCatchingThreadFactory(ThreadFactory delegate) {
 	        this.delegate = delegate;
@@ -129,10 +148,12 @@ public class FileProcessor implements AutoCloseable {
 	    @Override
 		public Thread newThread(final Runnable r) {
 	        Thread t = delegate.newThread(r);
+	        t.setName("FileProcessorThread-" + threadCount);
+            threadCount++;
 	        t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 	            @Override
 	            public void uncaughtException(Thread t, Throwable e) {
-	                System.err.println("Uncaught exception during indexing:");
+	                System.err.println("Uncaught exception during file processing:");
 	            	e.printStackTrace();
 	            }
 	        });
@@ -140,7 +161,11 @@ public class FileProcessor implements AutoCloseable {
 	    }
 	}
 
-    /** Restrict the files we handle to a file glob? */
+    /**
+     * Restrict the files we handle to a file glob?
+     * Note that this pattern is not applied to directories, and directories within archives.
+     * It is also not applied to the input file directly.
+     */
     private Pattern pattGlob;
 
     /** Process subdirectories? */
@@ -170,10 +195,6 @@ public class FileProcessor implements AutoCloseable {
     /** Executor used for processing files */
 	private ThreadPoolExecutor executor;
 
-    public FileProcessor(boolean useThreads) {
-        this(useThreads, true, true);
-    }
-
     public FileProcessor(boolean useThreads, boolean recurseSubdirs, boolean processArchives) {
     	this.useThreads = useThreads;
         this.recurseSubdirs = recurseSubdirs;
@@ -184,18 +205,39 @@ public class FileProcessor implements AutoCloseable {
 
     public void reset() {
         keepProcessing = true;
+        if (executor != null) {
+            executor.shutdown();
+        }
        	executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(useThreads ? 8 : 1);
 		executor.setThreadFactory(new ExceptionCatchingThreadFactory(executor.getThreadFactory()));
     }
 
+    /**
+     * Only process files matching the glob.
+     * NOTE: this pattern is NOT applied to directories.
+     *
+     * @param glob
+     */
     public void setFileNameGlob(String glob) {
         pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
     }
 
+    /**
+     * Only process files matching the pattern.
+     * NOTE: this pattern is NOT applied to directories.
+     *
+     * @param pattGlob
+     */
     public void setFileNamePattern(Pattern pattGlob) {
         this.pattGlob = pattGlob;
     }
 
+    /**
+     * The pattern to filter files before they are processed.
+     * NOTE: this pattern is NOT applied to directories.
+     *
+     * @return the pattern
+     */
     public Pattern getFileNamePattern() {
         return pattGlob;
     }
@@ -248,24 +290,6 @@ public class FileProcessor implements AutoCloseable {
         this.fileHandler = fileHandler;
     }
 
-    /**
-     * Index a file, directory or archive.
-     *
-     * @param fileToIndex file, directory or archive to index
-     * @throws UnsupportedEncodingException
-     * @throws FileNotFoundException
-     * @throws Exception
-     * @throws IOException
-     */
-    public void processFile(File fileToIndex)
-            throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-        if (fileToIndex.isDirectory()) {
-            processDir(fileToIndex);
-        } else {
-    		Runnable runnable = new ProcessFileTask(fileToIndex);
-    		executor.execute(runnable);
-        }
-    }
 
     /**
      * After adding the last processing task, call this to wait for all threads to finish processing.
@@ -281,33 +305,40 @@ public class FileProcessor implements AutoCloseable {
 		}
     }
 
+
     /**
-     * Index a directory
+     * Process a file or directory.
      *
-     * @param dir
-     *            directory to index
-     * @param recurseSubdirs
-     *            recursively process subdirectories?
-     * @throws UnsupportedEncodingException
+     * If this file is a directory, all child files will be processed, files within subdirectories will only be processed if {@link #isRecurseSubdirs()} is true.
+     * For rules on how files are processed, regarding archives etc, see {@link #processInputStream(String, InputStream)}.
+     *
+     * @param fileOrDirToProcess file, directory or archive to process
+     *
      * @throws FileNotFoundException
-     * @throws Exception
-     * @throws IOException
      */
-    private void processDir(File dir) throws UnsupportedEncodingException,
-            FileNotFoundException, IOException, Exception {
-        if (!dir.exists())
-            throw new FileNotFoundException("Input dir not found: " + dir);
-        if (!dir.isDirectory())
-            throw new IOException("Specified input dir is not a directory: " + dir);
-        for (File fileToIndex : FileUtil.listFilesSorted(dir)) {
-            processFile(fileToIndex);
-            if (!keepProcessing)
-                break;
+    public void processFile(File fileOrDirToProcess) throws FileNotFoundException {
+    	if (!fileOrDirToProcess.exists())
+    		throw new FileNotFoundException("Input file or dir not found: " + fileOrDirToProcess);
+
+    	if (fileOrDirToProcess.isDirectory()) {
+    		fileHandler.directory(fileOrDirToProcess);
+    		for (File childFile : FileUtil.listFilesSorted(fileOrDirToProcess)) {
+    			if (!childFile.isDirectory() || recurseSubdirs) // Even if recurseSubdirs is false, we should process the parent dir's file contents
+    				processFile(childFile);
+
+	            if (!keepProcessing)
+	                break;
+	        }
+        } else {
+    		processInputStream(fileOrDirToProcess.getName(), new FileInputStream(fileOrDirToProcess));
         }
     }
 
     /**
-     * Index from an InputStream, which may be an archive.
+     * Process from an InputStream, which may be an archive or a regular file.
+     *
+     * Archives (.zip and .tar.gz) will only be processed if {@link #isProcessArchives()} is true. GZipped files (.gz) will be unpacked regardless.
+     * Note that in the case of archives, it will be treated as a flat file, meaning that all files are processed recursively, even within subdirectories.
      *
      * @param name
      *            name for the InputStream (e.g. name of the file)
@@ -316,155 +347,28 @@ public class FileProcessor implements AutoCloseable {
      */
     public void processInputStream(String name, InputStream is) {
         try {
-            if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
-                indexTarGzip(name, is);
+        	if (isProcessArchives() && name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
+        		TarGzipReader.processTarGzip(name, is, this);
+        	} else if (isProcessArchives() && name.endsWith(".zip")) {
+        		TarGzipReader.ProcessZip(name, is, this);
             } else if (name.endsWith(".gz")) {
-                indexGzip(name, is);
-            } else if (name.endsWith(".zip")) {
-                indexZipInputStream(name, is);
-            } else {
-                fileHandler.stream(name, is);
-            }
+                TarGzipReader.processGzip(name, is, this);
+            } else if (!skipFile(name) && getFileNamePattern().matcher(name).matches()) {
+            	if (useThreads) {
+            		executor.execute(new CallFileHandlerTask(name, is));
+            	} else {
+            		fileHandler.file(name,  is);
+            	}
+        	}
         } catch (Exception e) {
             keepProcessing = errorHandler.errorOccurred(name, null, e);
         }
     }
 
-    /**
-     * Index files inside a zip file.
-     *
-     * Note that directory structure inside the zip file is ignored; files are indexed as if they
-     * are one large directory.
-     *
-     * Also note that for accessing large ZIP files, you need Java 7 which supports the
-     * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)" error.
-     *
-     * @param zipFile
-     *            the zip file
-     * @param recurseArchives whether to process archives inside archives
-     * @throws Exception
-     */
-    private void indexZipInputStream(String path, InputStream zipInputStream) throws Exception {
-        try (ZipInputStream z = new ZipInputStream(zipInputStream)) {
-            while (true) {
-                ZipEntry e = z.getNextEntry();
-                if (e == null)
-                    break;
-                if (e.isDirectory())
-                    continue;
-
-                String fileName = e.getName();
-                boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".gz") || fileName.endsWith(".tgz");
-                boolean skipFile = skipFile(fileName);
-                Matcher m = getFileNamePattern().matcher(fileName);
-                if (!skipFile && (m.matches() || isArchive)) {
-                    try {
-                        if (!isArchive || processArchives)
-                            processInputStream(fileName, z);
-                    } catch (Exception ex) {
-                        keepProcessing = errorHandler.errorOccurred(path, null, ex);
-                    }
-                }
-                if (!keepProcessing)
-                    break;
-            }
-        } catch (Exception e) {
-            keepProcessing = errorHandler.errorOccurred(path, "Error opening zip file", e);
-        }
+    // Callback from TarGzipReader to handle files inside archives
+    @Override
+    public boolean handle(String filePath, InputStream contents) {
+    	processInputStream(filePath, contents);
+    	return keepProcessing;
     }
-
-    /**
-     * Index files inside a zip file.
-     *
-     * Note that directory structure inside the zip file is ignored; files are indexed as if they
-     * are one large directory.
-     *
-     * Also note that for accessing large ZIP files, you need Java 7 which supports the
-     * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)" error.
-     *
-     * @param zipFile the zip file
-     * @param recurseArchives whether to process archives inside archives
-     * @throws Exception
-     */
-    void indexZip(File zipFile) throws Exception {
-        if (!zipFile.exists())
-            throw new FileNotFoundException("ZIP file not found: " + zipFile);
-        try (ZipFile z = new ZipFile(zipFile)) {
-            Enumeration<? extends ZipEntry> es = z.entries();
-            while (es.hasMoreElements()) {
-                ZipEntry e = es.nextElement();
-                if (e.isDirectory())
-                    continue;
-                String fileName = e.getName();
-                boolean isArchive = fileName.endsWith(".zip") || fileName.endsWith(".gz") || fileName.endsWith(".tgz");
-                boolean skipFile = skipFile(fileName);
-                Matcher m = getFileNamePattern().matcher(fileName);
-                if (!skipFile && (m.matches() || isArchive)) {
-                    String completePath = zipFile.getAbsolutePath() + "/" + fileName;
-                    try {
-                        try (InputStream is = z.getInputStream(e)) {
-                            if (!isArchive || processArchives) {
-                                processInputStream(completePath, is);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        keepProcessing = errorHandler.errorOccurred(completePath, null, ex);
-                    }
-                }
-                if (!keepProcessing)
-                    break;
-            }
-        } catch (Exception e) {
-            keepProcessing = errorHandler.errorOccurred(zipFile.getPath(), "Error opening zip file", e);
-        }
-    }
-
-    private void indexGzip(final String gzFileName, InputStream gzipStream) {
-        TarGzipReader.processGzip(gzFileName, gzipStream, new TarGzipReader.FileHandler() {
-            @Override
-            public boolean handle(String filePath, InputStream contents) {
-                int i = filePath.lastIndexOf("/");
-                String fileName = i < 0 ? filePath : filePath.substring(i + 1);
-                if (!skipFile(fileName)) {
-                    String completePath = gzFileName + "/" + filePath;
-                    try {
-                        processInputStream(completePath, contents);
-                    } catch (Exception e) {
-                        keepProcessing = getErrorHandler().errorOccurred(completePath, null, e);
-                    }
-                }
-                return keepProcessing;
-            }
-        });
-    }
-
-    private void indexTarGzip(final String tgzFileName, InputStream tarGzipStream) {
-        TarGzipReader.processTarGzip(tarGzipStream, new TarGzipReader.FileHandler() {
-            @Override
-            public boolean handle(String filePath, InputStream contents) {
-                String completePath = tgzFileName + "/" + filePath;
-                int i = filePath.lastIndexOf("/");
-                String fileName = i < 0 ? filePath : filePath.substring(i + 1);
-                if (!skipFile(fileName)) {
-                    try {
-                        File f = new File(filePath);
-                        String fn = f.getName();
-                        Matcher m = getFileNamePattern().matcher(fn);
-                        if (m.matches()) {
-                            processInputStream(completePath, contents);
-                        } else {
-                            boolean isArchive = fn.endsWith(".zip") || fn.endsWith(".gz") || fn.endsWith(".tgz");
-                            if (isArchive && isProcessArchives()) {
-                                processInputStream(completePath, contents);
-                            }
-                        }
-                    } catch (Exception e) {
-                        keepProcessing = getErrorHandler().errorOccurred(completePath, null, e);
-                    }
-                }
-                return keepProcessing;
-            }
-        });
-    }
-
 }

@@ -20,7 +20,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +27,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,6 +52,7 @@ import nl.inl.util.UnicodeStream;
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
  */
+// TODO there are likely some edge cases when close() is called while a file is processing, and events might be fired after the indexEnd event was fired.
 public class Indexer {
 
 	static final Logger logger = LogManager.getLogger(Indexer.class);
@@ -59,7 +60,7 @@ public class Indexer {
 	public static final Charset DEFAULT_INPUT_ENCODING = Charset.forName("utf-8");
 
     /** File handler that reads a single file into a byte array. */
-    static final class FetchFileHandler implements FileHandler {
+    private static final class FetchFileHandler implements FileHandler {
 
         protected final String pathToFile;
 
@@ -70,10 +71,11 @@ public class Indexer {
         }
 
         @Override
-        public void stream(String path, InputStream f) {
+        public synchronized void file(String path, InputStream f) {
             if (path.equals(pathToFile)) {
                 try {
                     bytes = IOUtils.toByteArray(f);
+                    f.close();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -81,23 +83,46 @@ public class Indexer {
         }
 
         @Override
-        public void file(String path, File f) {
-            throw new UnsupportedOperationException();
+        public void directory(File dir) {
+            //ignore
         }
     }
+
+    /**
+	 * FileProcessor FileHandler that creates a DocIndexer for every file and then calls {@link Indexer#indexDocIndexer(String, DocIndexer)}
+	 */
+	private class IndexDocIndexerPassthrough implements FileProcessor.FileHandler {
+		public IndexDocIndexerPassthrough() {}
+
+		@Override
+		public void directory(File dir) {
+			//ignore
+		}
+
+		@Override
+		public void file(String path, InputStream f) {
+			String documentName = FilenameUtils.getName(path);
+
+			// The DocIndexer will close the stream for us
+			try (DocIndexer docIndexer = docIndexerFactory.get(Indexer.this, documentName, new UnicodeStream(f, DEFAULT_INPUT_ENCODING), DEFAULT_INPUT_ENCODING)) {
+				indexDocIndexer(documentName, docIndexer);
+			}
+			catch (Exception e) {
+				throw ExUtil.wrapRuntimeException(e);
+			}
+		}
+	}
 
     public static byte[] fetchFileFromArchive(File f, final String pathInsideArchive) {
         if (f.getName().endsWith(".gz") || f.getName().endsWith(".tgz")) {
             // We have to process the whole file, we can't do random access.
-            try (FileProcessor proc = new FileProcessor(false, false, true)) {
+        	try (FileProcessor proc = new FileProcessor(true, false, true)) {
 	            FetchFileHandler fileHandler = new FetchFileHandler(pathInsideArchive);
 	            proc.setFileHandler(fileHandler);
-	            try {
-	                proc.processFile(f);
-	                return fileHandler.bytes;
-	            } catch (Exception e) {
-	                throw new RuntimeException(e);
-	            }
+	            proc.processFile(f);
+	            return fileHandler.bytes;
+            } catch (FileNotFoundException e) {
+            	throw new RuntimeException(e);
             }
         } else if (f.getName().endsWith(".zip")) {
             // We can do random access. Fetch the file we want.
@@ -174,6 +199,11 @@ public class Indexer {
 
     /** Index using multiple threads? */
     protected boolean useThreads = false;
+
+    // TODO this is a workaround for a bug where indexStructure is always written, even when an indexing task was rollbacked on an empty index
+ 	// result of this is that the index can never be opened again (the forwardindex is missing files that the indexMetadata.yaml says must exist?)
+ 	// so record rollbacks (as a result of exceptions during indexing?) and then don't write the updated indexStructure
+ 	boolean hasRollback = false;
 
     public FieldType getMetadataFieldType(boolean tokenized) {
 	    return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
@@ -307,8 +337,12 @@ public class Indexer {
 			// No DocIndexer supplied; try to detect it from the index
 			// metadata.
 			String formatId = searcher.getIndexStructure().getDocumentFormat();
-			if (formatId != null && formatId.length() > 0)
+			if (formatId != null && formatId.length() > 0) {
 				docIndexerFactory = DocumentFormats.getIndexerFactory(formatId);
+				if (docIndexerFactory == null) {
+					throw new DocumentFormatException("Unknown document format '" + formatId + "'; cannot index new data.'");
+				}
+			}
 			else {
 				throw new DocumentFormatException("Cannot detect document format for index!");
 			}
@@ -398,24 +432,23 @@ public class Indexer {
 		getListener().rollbackStart();
 		searcher.rollback();
 		getListener().rollbackEnd();
+		hasRollback = true;
 	}
 
 	/**
 	 * Close the index
-	 *
-	 * @throws IOException
-	 * @throws CorruptIndexException
 	 */
-	public void close() throws CorruptIndexException, IOException {
+	public void close() {
 
 		// Signal to the listener that we're done indexing and closing the index (which might take a
 		// while)
 		getListener().indexEnd();
 		getListener().closeStart();
 
-		searcher.getIndexStructure().addToTokenCount(getListener().getTokensProcessed());
-		searcher.getIndexStructure().writeMetadata();
-
+		if (!hasRollback){
+			searcher.getIndexStructure().addToTokenCount(getListener().getTokensProcessed());
+			searcher.getIndexStructure().writeMetadata();
+		}
 		searcher.close();
 
 		// Signal that we're completely done now
@@ -474,6 +507,7 @@ public class Indexer {
 		return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
 	}
 
+	// Package private on purpose for IndexDocIndexerPassThrough
 	void indexDocIndexer(String documentName, DocIndexer docIndexer) throws Exception {
         getListener().fileStarted(documentName);
         int docsDoneBefore = searcher.getWriter().numDocs();
@@ -492,22 +526,20 @@ public class Indexer {
 	}
 
 	/**
-     * Index a document from an InputStream.
+     * Index a document or archive from an InputStream.
      *
      * @param documentName
      *            name for the InputStream (e.g. name of the file)
      * @param input
      *            the stream
-     * @throws Exception
      */
-    public void index(String documentName, InputStream input) throws Exception {
-        UnicodeStream is = new UnicodeStream(input, DEFAULT_INPUT_ENCODING);
-        try (DocIndexer docIndexer = docIndexerFactory.get(this, documentName, is, is.getEncoding())) {
-            indexDocIndexer(documentName, docIndexer);
-        }
+	public void index(String documentName, InputStream input) {
+		index(documentName, input, "*");
     }
 
     /**
+     * @Deprecated use {@link #index(String, InputStream)}
+     *
 	 * Index a document from a Reader.
 	 *
 	 * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array directly,
@@ -522,6 +554,7 @@ public class Indexer {
 	 *            where to index from
 	 * @throws Exception
 	 */
+	@Deprecated
 	public void index(String documentName, Reader reader) throws Exception {
 		try (DocIndexer docIndexer = docIndexerFactory.get(this, documentName, reader)) {
             indexDocIndexer(documentName, docIndexer);
@@ -553,77 +586,17 @@ public class Indexer {
 		}
 	}
 
-	/**
-	 * Index the file or directory specified.
-
-	 * Indexes all files in a directory or archive (previously
-	 * only indexed *.xml; specify a glob if you want this
-	 * behaviour back, see index(File, String)).
-	 *
-	 * Recurses into subdirs only if that setting is enabled.
-	 *
-	 * @param file
-	 *            the input file or directory
-	 * @throws Exception
-	 */
-	public void index(File file) throws Exception {
-		indexInternal(file, "*", defaultRecurseSubdirs);
-	}
-
-	/**
-	 * Index a group of files in a directory or archive.
-	 *
-	 * Recurses into subdirs only if that setting is enabled.
-	 *
-	 * @param fileToIndex
-	 *            directory or archive to index
-	 * @param glob what files to index
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws Exception
-	 * @throws IOException
-	 */
-	public void index(File fileToIndex, String glob)
-			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-		indexInternal(fileToIndex, glob, defaultRecurseSubdirs);
-	}
-
-	/**
-	 * Index a group of files in a directory or archive.
-	 *
-	 * @param fileToIndex
-	 *            directory or archive to index
-	 * @param glob what files to index
-	 * @param recurseSubdirs whether or not to index subdirectories (overrides the setting)
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws Exception
-	 * @throws IOException
-	 */
-	protected void indexInternal(File fileToIndex, String glob, boolean recurseSubdirs)
-			throws UnsupportedEncodingException, FileNotFoundException, IOException, Exception {
-	    try (FileProcessor proc = new FileProcessor(useThreads, recurseSubdirs, recurseSubdirs && processArchivesAsDirectories)) {
-		    proc.setFileNameGlob(glob);
-	        proc.setFileHandler(new FileProcessor.FileHandler() {
-	            @Override
-	            public void stream(String path, InputStream is) {
-	                try {
-	                    index(path, is);
-	                } catch (Exception e) {
-	                    throw ExUtil.wrapRuntimeException(e);
-	                }
-	            }
-
-	            @Override
-	            public void file(String path, File f) {
-	                try (DocIndexer docIndexer = getDocIndexerFactory().get(Indexer.this, path, f, DEFAULT_INPUT_ENCODING)) {
-	                    // Regular file.
-	                    indexDocIndexer(path, docIndexer);
-	                } catch (Exception e) {
-	                    throw ExUtil.wrapRuntimeException(e);
-	                }
-	            }
-	        });
+    /**
+     * Index a document or archive (if enabled by {@link #setProcessArchivesAsDirectories(boolean)}
+     *
+     * @param fileName
+     * @param input
+     * @param fileNameGlob
+     */
+    public void index(String fileName, InputStream input, String fileNameGlob) {
+    	try (FileProcessor proc = new FileProcessor(this.useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
+    		proc.setFileNameGlob(fileNameGlob);
+	        proc.setFileHandler(new IndexDocIndexerPassthrough());
 		    proc.setErrorHandler(new ErrorHandler() {
 	            @Override
 	            public boolean errorOccurred(String file, String msg, Exception e) {
@@ -631,60 +604,66 @@ public class Indexer {
 	                return getListener().errorOccurred(e.getMessage(), "file", new File(file), null);
 	            }
 	        });
-		    proc.processFile(fileToIndex);
-	    }
+		    proc.processInputStream(fileName, input);
+    	}
+    }
+
+	/**
+	 * Index the file or directory specified.
+
+	 * Indexes all files in a directory or archive (previously
+	 * only indexed *.xml; specify a glob if you want this
+	 * behaviour back, see {@link #index(File, String)}.
+	 *
+	 * Recurses into subdirs only if that setting is enabled.
+	 *
+	 * @param file
+	 * 				the input file or directory
+	 */
+	public void index(File file) {
+		index(file, "*");
 	}
 
-    public void indexInputStream(final String filePath, InputStream inputStream, String glob, boolean processArchives) {
-        try (FileProcessor proc = new FileProcessor(useThreads, true, processArchivesAsDirectories)) {
-	        proc.setFileNameGlob(glob);
-	        proc.setProcessArchives(processArchives);
-	        proc.setFileHandler(new FileProcessor.FileHandler() {
-	            @Override
-	            public void stream(String path, InputStream is) {
-	                try {
-	                    index(path, is);
-	                } catch (Exception e) {
-	                    throw ExUtil.wrapRuntimeException(e);
-	                }
-	            }
-
-	            @Override
-	            public void file(String path, File f) {
-	                throw new UnsupportedOperationException();
-	            }
-	        });
-	        proc.setErrorHandler(new ErrorHandler() {
+	/**
+	 * Index a document, archive (if enabled by {@link #setProcessArchivesAsDirectories(boolean)}, or directory, optionally recursively if set by {@link #setRecurseSubdirs(boolean)}
+	 *
+	 * @param file
+	 * @param fileNameGlob only files
+	 */
+	// TODO this is nearly a literal copy of index for a stream, unify them somehow
+	public void index(File file, String fileNameGlob) {
+		try (FileProcessor proc = new FileProcessor(useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
+			proc.setFileNameGlob(fileNameGlob);
+			proc.setFileHandler(new IndexDocIndexerPassthrough());
+			proc.setErrorHandler(new ErrorHandler() {
 	            @Override
 	            public boolean errorOccurred(String file, String msg, Exception e) {
 	                log("*** Error indexing " + file, e);
 	                return getListener().errorOccurred(e.getMessage(), "file", new File(file), null);
 	            }
 	        });
-	        proc.processInputStream(filePath, inputStream);
-        }
-    }
-
-	@Deprecated
-	public void indexGzip(final String gzFileName, InputStream gzipStream) {
-        indexInputStream(gzFileName, gzipStream, "*", true);
+			proc.processFile(file);
+		}
+		catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-    @Deprecated
-	public void indexTarGzip(final String tgzFileName, InputStream tarGzipStream, final String glob, final boolean recurseArchives) {
-        indexInputStream(tgzFileName, tarGzipStream, glob, recurseArchives);
-	}
-
+	// Purely for compat with 1.6
 	/**
-	 * Should we skip the specified file because it is a special OS file?
+	 * @deprecated use {@link #index(String, InputStream)}
 	 *
-	 * Skips Windows Thumbs.db file and Mac OSX .DS_Store file.
-	 *
-	 * @param fileName name of the file
-	 * @return true if we should skip it, false otherwise
+	 * @param filePath
+	 * @param inputStream
+	 * @param glob
+	 * @param processArchives
 	 */
-	protected boolean isSpecialOperatingSystemFile(String fileName) {
-		return fileName.equals("Thumbs.db") || fileName.equals(".DS_Store");
+	@Deprecated
+    public void indexInputStream(final String filePath, InputStream inputStream, String glob, boolean processArchives) {
+		boolean originalProcessArchives = this.processArchivesAsDirectories;
+		setProcessArchivesAsDirectories(processArchives);
+		index(filePath, inputStream, glob);
+		setProcessArchivesAsDirectories(originalProcessArchives);
 	}
 
 	/**

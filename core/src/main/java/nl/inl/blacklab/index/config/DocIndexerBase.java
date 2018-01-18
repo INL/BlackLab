@@ -34,6 +34,7 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.ExUtil;
+import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerBase extends DocIndexer {
 
@@ -102,6 +103,11 @@ public abstract class DocIndexerBase extends DocIndexer {
      *  Normally null, meaning document should be stored in the default field and content
      *  store (usually "contents", with the id in field "contents#cid"). */
     private String contentStoreName = null;
+
+    /** Total words processed by this indexer. Used for reporting progress, do not reset except when finished with file. */
+    protected int wordsDone = 0;
+    private int wordsDoneAtLastReport = 0;
+    private int charsDoneAtLastReport = 0;
 
     protected String getContentStoreName() {
         return contentStoreName;
@@ -421,10 +427,9 @@ public abstract class DocIndexerBase extends DocIndexer {
 
         // Report progress
         if (indexer != null) {
-            indexer.getListener().charsDone(getCharacterPosition());
-            reportTokensProcessed(wordsDone);
+        	reportCharsProcessed();
+            reportTokensProcessed();
         }
-        wordsDone = 0;
         if (indexer != null)
             indexer.getListener().documentDone(documentName);
 
@@ -553,13 +558,15 @@ public abstract class DocIndexerBase extends DocIndexer {
             punct = addDefaultPunctuation && !preventNextDefaultPunctuation ? " " : "";
         else
             punct = punctuation.toString();
+
         preventNextDefaultPunctuation = false;
-        propPunct().addValue(punct);
+        // Normalize once more in case we hit more than one adjacent punctuation
+        propPunct().addValue(StringUtil.normalizeWhitespace(punct));
         addEndChar(getCharacterPosition());
         wordsDone++;
         if (wordsDone > 0 && wordsDone % 5000 == 0) {
-            indexer.getListener().charsDone(getCharacterPosition());
-            reportTokensProcessed(wordsDone);
+        	reportCharsProcessed();
+            reportTokensProcessed();
         }
         if (punctuation.length() > 10000)
             punctuation = new StringBuilder(); // let's not hold on to this much memory
@@ -626,4 +633,31 @@ public abstract class DocIndexerBase extends DocIndexer {
         super.addMetadataField(fieldName, value);
     }
 
+    @Override
+    public final void reportCharsProcessed() {
+    	final int charsDone = getCharacterPosition();
+    	final int charsDoneSinceLastReport;
+    	if (charsDoneAtLastReport > charsDone)
+    		charsDoneSinceLastReport = charsDone;
+    	else
+    		charsDoneSinceLastReport = charsDone - charsDoneAtLastReport;
+
+    	indexer.getListener().charsDone(charsDoneSinceLastReport);
+    	charsDoneAtLastReport = charsDone;
+    }
+
+    /**
+     * Report the change in wordsDone since the last report
+     */
+    @Override
+    public final void reportTokensProcessed() {
+    	final int wordsDoneSinceLastReport;
+    	if (wordsDoneAtLastReport > wordsDone) // wordsDone reset by child class? report everything then
+    		wordsDoneSinceLastReport = wordsDone;
+    	else
+    		wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
+
+    	indexer.getListener().tokensDone(wordsDoneSinceLastReport);
+    	wordsDoneAtLastReport = wordsDone;
+    }
 }

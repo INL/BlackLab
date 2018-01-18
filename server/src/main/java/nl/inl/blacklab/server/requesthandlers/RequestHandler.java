@@ -30,13 +30,13 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.index.Index;
+import nl.inl.blacklab.server.index.Index.IndexStatus;
+import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.JobFacets;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.IndexManager;
-import nl.inl.blacklab.server.search.IndexManager.IndexStatus;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.ParseUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
@@ -179,7 +179,7 @@ public abstract class RequestHandler {
 					if (!isPrivateIndex)
 						return errorObj.forbidden("Can only POST to private indices.");
 					if (urlResource.equals("docs") && urlPathInfo.length() == 0) {
-						if (!BlsUtils.isValidIndexName(indexName))
+						if (!Index.isValidIndexName(indexName))
 							return errorObj.illegalIndexName(shortName);
 
 						// POST to /blacklab-server/indexName/docs/ : add data to index
@@ -214,7 +214,7 @@ public abstract class RequestHandler {
 					try {
 						String handlerName = urlResource;
 
-						IndexStatus status = searchManager.getIndexManager().getIndexStatus(indexName);
+						IndexStatus status = searchManager.getIndexManager().getIndex(indexName).getStatus();
 						if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status")) {
 							return errorObj.unavailable(indexName, status.toString());
 						}
@@ -222,6 +222,7 @@ public abstract class RequestHandler {
 						if (debugMode && handlerName.length() > 0 && !handlerName.equals("hits") && !handlerName.equals("docs") && !handlerName.equals("fields") && !handlerName.equals("termfreq") && !handlerName.equals("status")) {
 							handlerName = "debug";
 						}
+
 						// HACK to avoid having a different url resource for
 						// the lists of (hit|doc) groups: instantiate a different
 						// request handler class in this case.
@@ -247,6 +248,7 @@ public abstract class RequestHandler {
 									handlerName += "-grouped"; // list of groups instead of contents
 							} else if (request.getParameter("viewgroup") != null) {
 								// "viewgroup" parameter without "group" parameter; error.
+
 								return errorObj.badRequest("ERROR_IN_GROUP_VALUE", "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
 							}
 						}
@@ -468,7 +470,7 @@ public abstract class RequestHandler {
 	}
 
 	protected Searcher getSearcher() throws BlsException {
-		return indexMan.getSearcher(indexName);
+		return indexMan.getIndex(indexName).getSearcher();
 	}
 
 	protected boolean isBlockingOperation() {
@@ -526,7 +528,7 @@ public abstract class RequestHandler {
 		searchParam.dataStream(ds);
 		ds.endEntry();
 
-		IndexStatus status = indexMan.getIndexStatus(searchParam.getIndexName());
+		IndexStatus status = indexMan.getIndex(searchParam.getIndexName()).getStatus();
 		if (status != IndexStatus.AVAILABLE) {
 			ds.entry("indexStatus", status.toString());
 		}

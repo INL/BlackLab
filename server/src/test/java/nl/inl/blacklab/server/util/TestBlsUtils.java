@@ -14,6 +14,7 @@ import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternWildcard;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.index.Index;
 
 public class TestBlsUtils {
 
@@ -21,15 +22,18 @@ public class TestBlsUtils {
 
 	@Test
 	public void testIsValidIndexName() {
-		Assert.assertTrue(BlsUtils.isValidIndexName("user@example.com:my_index_name"));
-		Assert.assertTrue(BlsUtils.isValidIndexName("user@example.com:my-index-name1"));
-		Assert.assertTrue(BlsUtils.isValidIndexName("user@example.com:a1"));
-		Assert.assertFalse(BlsUtils.isValidIndexName("user@example.com:"));
-		Assert.assertFalse(BlsUtils.isValidIndexName("user@example.com:bla:bla"));
-		Assert.assertFalse(BlsUtils.isValidIndexName(""));
-		Assert.assertFalse(BlsUtils.isValidIndexName("0abd"));
-		Assert.assertFalse(BlsUtils.isValidIndexName("a*b"));
-		Assert.assertFalse(BlsUtils.isValidIndexName("a/b"));
+		Assert.assertTrue(Index.isValidIndexName("user@example.com:my_index_name"));
+		Assert.assertTrue(Index.isValidIndexName("user@example.com:my-index-name1"));
+		Assert.assertTrue(Index.isValidIndexName("user@example.com:a1"));
+		Assert.assertFalse(Index.isValidIndexName("user@example.com:"));
+		Assert.assertFalse(Index.isValidIndexName("user@example.com:bla:bla"));
+		Assert.assertFalse(Index.isValidIndexName("user@example.com:bla:"));
+		Assert.assertFalse(Index.isValidIndexName(":user@example.com:bla"));
+		Assert.assertFalse(Index.isValidIndexName(":user@example.com:bla:"));
+		Assert.assertFalse(Index.isValidIndexName(""));
+		Assert.assertFalse(Index.isValidIndexName("0abd"));
+		Assert.assertFalse(Index.isValidIndexName("a*b"));
+		Assert.assertFalse(Index.isValidIndexName("a/b"));
 	}
 
 	@Test

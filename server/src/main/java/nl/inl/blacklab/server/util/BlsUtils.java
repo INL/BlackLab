@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.util;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +24,7 @@ import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
+import nl.inl.blacklab.server.index.Index;
 
 public class BlsUtils {
 	private static final Logger logger = LogManager.getLogger(BlsUtils.class);
@@ -199,7 +201,11 @@ public class BlsUtils {
 			if (f.isDirectory())
 				delTree(f);
 			else
-				f.delete();
+				try {
+					Files.delete(f.toPath());
+				} catch (IOException e) {
+					logger.error(e.getMessage());
+				}
 		}
 		root.delete();
 	}
@@ -228,15 +234,12 @@ public class BlsUtils {
 	 * Check the index name part (not the user id part, if any)
 	 * of the specified index name.
 	 *
-	 * @param indexName the index name, possibly including user id prefix
+	 * @param indexId the index name, possibly including user id prefix
 	 * @return whether or not the index name part is valid
+	 * @deprecated use {@link Index#isValidIndexName(String)}
 	 */
-	public static boolean isValidIndexName(String indexName) {
-		if (indexName.contains(":")) {
-			String[] parts = indexName.split(":", 2);
-			indexName = parts[1];
-		}
-		return indexName.matches("[a-zA-Z][a-zA-Z0-9_\\-]*");
+	@Deprecated
+	public static boolean isValidIndexName(String indexId) {
+		return Index.isValidIndexName(indexId);
 	}
-
 }

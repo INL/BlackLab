@@ -169,6 +169,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // Parse use VTD-XML
         vg = new VTDGen();
         vg.setDoc(inputDocument);
+        // Whitespace in between elements is normally ignored,
+        // but we explicitly allow whitespace in between elements to be collected here.
+        // This allows punctuation xpath to match this whitespace, in case punctuation/whitespace in the document isn't contained in a dedicated element or attribute.
+        // This doesn't mean that this whitespace is always used, it just enables the punctuation xpath to find this whitespace if it explicitly matches it.
+        vg.enableIgnoredWhiteSpace(true);
         vg.parse(config.isNamespaceAware());
 
         nav = vg.getNav();
@@ -677,6 +682,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Add InlineObject for a punctuation text node.
      *
      * @param inlineObjects list to add the punct object to
+     * @param text
      * @throws NavException
      */
 	private void collectPunct(List<InlineObject> inlineObjects, String text) throws NavException {

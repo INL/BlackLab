@@ -326,6 +326,8 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 			super.close();
 
+			searcherFromIndexReader.remove(reader);
+
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}

@@ -67,9 +67,6 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     protected Document currentLuceneDoc;
 
-    /** Number of words processed (for reporting progress) */
-    protected int wordsDone;
-
     /**
      * Parameters passed to this indexer
      */
@@ -303,10 +300,6 @@ public abstract class DocIndexer implements AutoCloseable {
         }
     }
 
-    public void reportTokensProcessed(int n) {
-        indexer.getListener().tokensDone(n);
-    }
-
     /**
      * Enables or disables norms. Norms are disabled by default.
      *
@@ -462,6 +455,14 @@ public abstract class DocIndexer implements AutoCloseable {
         }
     }
 
+    /**
+     * Should this docIndexer implementation be listed?
+     *
+     * A DocIndexer can be hidden by implementing a a static function named listFormat, returning false.
+     *
+     * @param docIndexerClass
+     * @return true if the format should be listed, false if it should be omitted. Defaults to true when the DocIndexer does not implement the method.
+     */
     public static boolean listFormat(Class<? extends DocIndexer> docIndexerClass) {
         try {
             Method m = docIndexerClass.getMethod("listFormat");
@@ -470,5 +471,15 @@ public abstract class DocIndexer implements AutoCloseable {
             return true;
         }
     }
+
+    /**
+     * Report the amount of new characters processed since the last call
+     */
+    public abstract void reportCharsProcessed();
+
+    /**
+     * Report the amounf of new tokens processed since the last call
+     */
+    public abstract void reportTokensProcessed();
 
 }
