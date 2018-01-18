@@ -148,7 +148,8 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
 	    @Override
 		public Thread newThread(final Runnable r) {
 	        Thread t = delegate.newThread(r);
-	        t.setName("FileProcessorThread-" + threadCount++);
+	        t.setName("FileProcessorThread-" + threadCount);
+            threadCount++;
 	        t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 	            @Override
 	            public void uncaughtException(Thread t, Throwable e) {
@@ -204,7 +205,9 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
 
     public void reset() {
         keepProcessing = true;
-        // TODO: is the old executor ever shut down if this is called after construction?
+        if (executor != null) {
+            executor.shutdown();
+        }
        	executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(useThreads ? 8 : 1);
 		executor.setThreadFactory(new ExceptionCatchingThreadFactory(executor.getThreadFactory()));
     }
