@@ -149,7 +149,8 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 			return result;
 		}
 
-		private static String joinIgnoreNull(String[] values, char separator) {
+		@SuppressWarnings("unused")
+        private static String joinIgnoreNull(String[] values, char separator) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < values.length; i++) {
 				if (values[i] == null || values[i].isEmpty())
