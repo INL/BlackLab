@@ -62,7 +62,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		});
 
 		try (InputStream is = file.getInputStream()) {
-			indexer.index(file.getName(), is);
+			indexer.index(file.getName(), is, "*.xml");
 			if (indexer.getListener().getTokensProcessed() == 0)
 				indexError = "No tokens were found when indexing, are the files in the correct format?";
 		} catch(IOException e) {
