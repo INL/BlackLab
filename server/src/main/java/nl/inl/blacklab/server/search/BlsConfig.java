@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.index.config.YamlJsonReader;
-import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.util.JsonUtil;
@@ -90,8 +89,6 @@ public class BlsConfig extends YamlJsonReader {
 		getRequestsProperties(properties);
 		getPerformanceProperties(properties);
         getAuthProperties(properties);
-        if (properties.has("indexing"))
-            ConfigReader.readIndexing(obj(properties.get("indexing"), "indexing"));
 	}
 
     private void getDebugProperties(JsonNode properties) {

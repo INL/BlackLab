@@ -23,7 +23,7 @@ import nl.inl.blacklab.indexers.DocIndexerTeiPosInFunctionAttr;
 import nl.inl.blacklab.indexers.DocIndexerTeiText;
 import nl.inl.blacklab.indexers.DocIndexerWhiteLab2;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
@@ -73,7 +73,7 @@ public class DocumentFormats {
 
         // Register builtin formats and formats in config dirs so they can be listed
         registerFormatsFromJar(Arrays.asList("chat", "csv", "folia", "tei", "tsv-frog", "sketch-wpl", "tsv", "txt"));
-        List<File> configDirs = Searcher.getConfigDirs();
+        List<File> configDirs = ConfigReader.getDefaultConfigDirs();
         List<File> formatsDirs = new ArrayList<>();
         for (File dir: configDirs) {
             formatsDirs.add(new File(dir, "formats"));
