@@ -114,13 +114,17 @@ public class IndexManager {
 		// Collections, these are lazily loaded, and additions/removals within them should be detected.
 		collectionsDirs = new ArrayList<>();
 		if (properties.has("indexCollections")) {
+            logger.debug("Scanning indexCollections...");
 			for (JsonNode collectionNode : properties.get("indexCollections")) {
 				File collectionDir = new File(collectionNode.textValue());
-				if (collectionDir.canRead())
+				if (collectionDir.canRead()) {
+		            logger.debug("Found index collection dir: " + collectionDir);
 					collectionsDirs.add(collectionDir);
-				else
+				} else
 					logger.warn("Configured collection not found or not readable: " + collectionDir);
 			}
+		} else {
+		    logger.debug("No indexCollections setting found.");
 		}
 
 		// User collections dir, these are like collections, but within a user's directory
@@ -189,15 +193,18 @@ public class IndexManager {
 	 * @throws BlsException
 	 */
 	public synchronized boolean indexExists(String indexId) throws BlsException {
-		if (!Index.isValidIndexName(indexId))
-			throw new IllegalIndexName(indexId);
-
-		if (Index.isUserIndex(indexId))
-			loadUserIndices(Index.getUserId(indexId));
-		else
-			loadPublicIndices();
-
-		return indices.containsKey(indexId);
+        try {
+            cleanupRemovedIndices();
+            if (!indices.containsKey(indexId)) {
+                if (Index.isUserIndex(indexId))
+                    loadUserIndices(Index.getUserId(indexId));
+                else
+                    loadPublicIndices();
+            }
+            return indices.containsKey(indexId);
+        } catch (IllegalIndexName e) {
+            throw new IndexNotFound(e.getMessage());
+        }
 	}
 
 	/**
@@ -420,23 +427,29 @@ public class IndexManager {
 			return;
 
 		synchronized (indices) {
+		    logger.debug("Looking for indices in collectionsDirs...");
 			for (File collection : collectionsDirs) {
+	            logger.debug("  Scanning collectionsDir: " + collection);
 				for (File subDir : FileUtils.listFilesAndDirs(collection, FalseFileFilter.FALSE, TrueFileFilter.INSTANCE /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
-					if (!subDir.getName().equals("index") || !subDir.canRead() || !Searcher.isIndex(subDir))
+					if (/*!subDir.getName().equals("index") ||*/ !subDir.canRead() || !Searcher.isIndex(subDir)) {
+		                if (subDir.getParentFile().equals(collection)) {
+		                    logger.debug("  Direct subdir of collection dir is not an index or cannot read: " + subDir);
+		                }
 						continue;
+					}
 
-					// a public index has a folder structure of:
-					// 	indexDir
-					//		index
-					//		input
-					//		indexstructure.json
-					// where indexDir is the name of the index, and the index folder is a folder named index, containing the actual index
-					// the input directory is unused
-					String indexName = subDir.getAbsoluteFile().getParentFile().getName();
+					String indexName = subDir.getName();
+					if (indexName.equals("index")) {
+					    // Not a very useful name; the parent directory usually contains the index name in this case
+					    indexName = subDir.getAbsoluteFile().getParentFile().getName();
+                        logger.warn("Found index directory named 'index': " + subDir);
+                        logger.warn("Replacing this with the parent directory name (" + indexName + "), but note that this behaviour is deprecated.");
+					}
 					if (indices.containsKey(indexName))
 						continue;
 
 					try {
+					    logger.debug("Index found: " + indexName + " (" + subDir + ")");
 						indices.put(indexName, new Index(indexName, subDir, searchMan.getCache()));
 					} catch (Exception e) {
 						logger.info("Error while loading index " + indexName + " at location " + subDir + "; " + e.getMessage());

@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.RegexpTooLargeException;
@@ -38,6 +39,7 @@ import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.util.FileUtil;
+import nl.inl.util.Json;
 
 public class BlackLabServer extends HttpServlet {
 	private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
@@ -101,8 +103,8 @@ public class BlackLabServer extends HttpServlet {
 
         	if (configFileReader != null) {
         		try {
-        			ConfigReader.setConfigFile(configFileReader, configFileIsJson);
-        			searchManager = new SearchManager(ConfigReader.getConfigFile());
+                    ObjectMapper mapper = configFileIsJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+                    searchManager = new SearchManager(mapper.readTree(configFileReader));
         		} finally {
         			configFileReader.close();
         			configFileReader = null;

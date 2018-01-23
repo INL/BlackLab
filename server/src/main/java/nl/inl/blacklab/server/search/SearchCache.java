@@ -510,7 +510,7 @@ public class SearchCache {
 			logger.warn(
 					"Can't start new search, not enough memory (" + freeMegs + "M < " + cacheConfig.getMinFreeMemForSearchMegs() + "M)");
 			logger.warn("(NOTE: make sure Tomcat's max heap mem is set to an appropriate value!)");
-			throw new ServiceUnavailable("The server seems to be under heavy load right now. Please try again later.");
+			throw new ServiceUnavailable("The server seems to be under heavy load right now. Please try again later. (not enough JVM heap memory for new search; try increasing -Xmx value when starting JVM)");
 		}
 		// logger.debug("Enough free memory: " + freeMegs + "M");
 	}

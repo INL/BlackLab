@@ -143,6 +143,8 @@ public class SearcherImpl extends Searcher implements Closeable {
 			throws IOException {
 		this.indexMode = indexMode;
 
+        ConfigReader.applyConfig(this);
+
 		openIndex(indexDir, indexMode, createNewIndex);
 
 		// Determine the index structure

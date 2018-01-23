@@ -94,6 +94,7 @@ public class ConfigReader extends YamlJsonReader {
 
     	ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
 
+    	logger.debug("Reading global BlackLab config");
     	JsonNode parsedConfig = mapper.readTree(reader);
 
 	    readGlobalSettings(parsedConfig);
@@ -244,7 +245,7 @@ public class ConfigReader extends YamlJsonReader {
         }
     }
 
-    private static void readIndexing(ObjectNode indexing) {
+    public static void readIndexing(ObjectNode indexing) {
         Iterator<Entry<String, JsonNode>> it = indexing.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();

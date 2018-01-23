@@ -348,7 +348,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 			try {
 				Thread.sleep(w);
 			} catch (InterruptedException e) {
-				throw new ServiceUnavailable("The server seems to be under heavy load right now. Please try again later.");
+				throw new ServiceUnavailable("The server seems to be under heavy load right now. Please try again later. (job killed by scheduler)");
 			}
 		}
 		// If an Exception occurred, re-throw it now.

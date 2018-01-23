@@ -350,14 +350,17 @@ public abstract class Searcher {
 	}
 
 	public static void setTraceIndexOpening(boolean traceIndexOpening) {
+	    logger.debug("Trace index opening: " + traceIndexOpening);
 		Searcher.traceIndexOpening = traceIndexOpening;
 	}
 
 	public static void setTraceOptimization(boolean traceOptimization) {
+        logger.debug("Trace optimization: " + traceOptimization);
 		Searcher.traceOptimization = traceOptimization;
 	}
 
 	public static void setTraceQueryExecution(boolean traceQueryExecution) {
+        logger.debug("Trace query execution: " + traceQueryExecution);
 		Searcher.traceQueryExecution = traceQueryExecution;
 	}
 
