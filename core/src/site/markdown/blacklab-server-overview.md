@@ -97,7 +97,7 @@ Explanation of the various resources:
 	</tr>
 	<tr>
 		<td>docs/pid/contents </td>
-		<td>Contents of a document. This returns the original input XML.</td>
+		<td>Contents of a document. This returns the original input XML. (see note below about the contentViewable setting)</td>
 	</tr>
 	<tr>
 		<td>docs/pid/snippet </td>
@@ -108,6 +108,8 @@ Explanation of the various resources:
 		<td>Shows the settings and (some) field values for a metadata field. For complex ("contents") fields, it will show the different properties (e.g. features/annotations) the field has for each token.</td>
 	</tr>
 </table>
+
+NOTE: by default, users are not allowed to retrieve full document contents. In order to allow this, change the 'contentViewable' setting in the indexmetadata file in the index directory. You can also specify this setting in the corpusConfig part of an input format descripion file, see [here](how-to-configure-indexing.html).
 
 Below is an overview of parameters that can be passed to the various resources. Default values for most parameters can be configured on the server; below are a few suggestions for defaults.
 

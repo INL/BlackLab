@@ -793,9 +793,36 @@ To prevent a metadata field from being tokenized:
 
 <a id="edit-index-metadata"></a>
 
-## Editing the index metadata directly
+## Editing the index metadata
 
 Each BlackLab index gets a file containing "index metadata". This file is in YAML format (used to be JSON). This contains information such as the time the index was generated and the BlackLab version used, plus information about annotations and metadata fields. Some of the information is generated as part of the indexing process, and some of the information is copied directly from the input format configuration file if specified. This information is mostly used by applications to learn about the structure of the index, get human-friendly names for the various parts, and decide what UI widget to show for a metadata field.
+
+In the input format configuration file, you can specify a section corpusConfig that contains some settings to be copied directly into the indexmetadata file:
+
+    # The settings in this block will be copied into indexmetadata.yaml
+    corpusConfig:
+  
+      displayName: OpenSonar
+      description: The OpenSonar corpus.
+      contentViewable: true
+    
+      specialFields:
+        pidField: id
+        titleField: title
+        authorField: author
+        dateField: date
+      
+      metadataFieldGroups:
+      - name: First group
+        fields:
+        - author
+        - title
+      - name: Second group
+        fields:
+        - date
+        - keywords
+      
+See below for the exact meaning of each of these settings. 
 
 In addition to specifying this information in your input format configuration file, it is also possible to edit the index metadata file manually. If you do this, be careful, because it might break something. It is best to use a text editor with support for YAML, and to validate the resulting file with a YAML validator such as [YAML Lint](http://www.yamllint.com/). Also remember that if you edit the index metadata file, and you later decide to generate a new index from scratch, your changes to the metadata file will be lost. If possible, it is therefore preferable to put this information in the input format configuration file directly.  
 
@@ -902,3 +929,4 @@ Here's a commented example of indexmetadata.yaml:
           
 Please note: the settings pidField, titleField, authorField, dateField refer to the name of the field in the Lucene index, not an XML element name.
 
+## indexmetadata
