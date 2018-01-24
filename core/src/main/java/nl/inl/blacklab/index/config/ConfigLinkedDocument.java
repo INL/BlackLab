@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.index.DocIndexerFactory;
-
 /** Configuration for a linked document. */
 public class ConfigLinkedDocument {
 
@@ -36,7 +34,7 @@ public class ConfigLinkedDocument {
     private MissingLinkPathAction ifLinkPathMissing = MissingLinkPathAction.FAIL;
 
     /** Format of the linked input file */
-    private DocIndexerFactory inputFormat;
+    private String inputFormatIdentifier;
 
     /** File or URL reference to our linked document (or archive containing it) */
     private String inputFile;
@@ -55,7 +53,7 @@ public class ConfigLinkedDocument {
         String t = "linked document";
         ConfigInputFormat.req(name, t, "name");
         ConfigInputFormat.req(!linkValues.isEmpty(), t, "have at least one linkPath");
-        if (inputFormat == null)
+        if (inputFormatIdentifier == null)
             throw new InputFormatConfigException("linked document must have inputFormat");
         ConfigInputFormat.req(inputFile, t, "inputFile");
     }
@@ -92,12 +90,12 @@ public class ConfigLinkedDocument {
         this.ifLinkPathMissing = ifLinkPathMissing;
     }
 
-    public DocIndexerFactory getInputFormat() {
-        return inputFormat;
+    public String getInputFormatIdentifier() {
+        return inputFormatIdentifier;
     }
 
-    public void setInputFormat(DocIndexerFactory inputFormat) {
-        this.inputFormat = inputFormat;
+    public void setInputFormatIdentifier(String formatIdentifier) {
+        this.inputFormatIdentifier = formatIdentifier;
     }
 
     public String getInputFile() {
@@ -123,7 +121,4 @@ public class ConfigLinkedDocument {
     public void setDocumentPath(String documentPath) {
         this.documentPath = documentPath;
     }
-
-
-
 }

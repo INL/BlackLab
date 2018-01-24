@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.index.config.InputFormatConfigException;
 import nl.inl.blacklab.perdocument.DocCount;
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocGroupProperty;
@@ -29,7 +30,6 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -112,9 +112,9 @@ public abstract class RequestHandler {
         // If new user, read user formats
 		if (user.isLoggedIn()) {
 			try {
-				searchManager.getIndexManager().ensureUserFormatsRegistered(user);
-			} catch (InternalServerError e) {
-				return errorObj.internalError(e.getMessage(), debugMode, e.getInternalErrorCode());
+				searchManager.getIndexManager().getUserFormatManager().ensureUserFormatsRegistered(user, searchManager.getIndexManager().getUserFormatDir(user.getUserId()));
+			} catch (InputFormatConfigException e) {
+				return errorObj.internalError("Error reading user formats: " + e.getMessage(), debugMode, 36);
 			}
 		}
 

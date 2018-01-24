@@ -23,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -41,6 +40,7 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
 public class IndexManager {
+
 	private static final String FORMATS_SUBDIR_NAME = "_input_formats";
 
 	/**
@@ -62,12 +62,14 @@ public class IndexManager {
 
 	/**
 	 * Logged-in users will have their own private collections dir. This is the
-	 * parent of that dir.
+	 * parent of those dirs.
 	 */
 	private File userCollectionsDir;
 
-	/** User ids for which we've scanned and registered the private format config files. */
-    private Set<String> formatsScannedForUsers = new HashSet<>();
+	/**
+	 * Manages the loaded user document formats and exposes them to BlackLab-core for use.
+	 */
+	private DocIndexerFactoryUserFormats userFormatManager = new DocIndexerFactoryUserFormats();
 
     private Map<String, Index> indices = new HashMap<>();
 
@@ -144,6 +146,8 @@ public class IndexManager {
 				"  ]\n" +
 				"}");
 		}
+
+		DocumentFormats.registerFactory(userFormatManager);
 	}
 
 	/**
@@ -224,7 +228,7 @@ public class IndexManager {
 	 */
 	public synchronized void createIndex(String indexId, String displayName, String documentFormatId) throws BlsException,
 			IOException {
-		if (!DocumentFormats.exists(documentFormatId))
+		if (!DocumentFormats.isSupported(documentFormatId))
 			throw new BadRequest("FORMAT_NOT_FOUND", "Unknown format: " + documentFormatId);
 		if (!Index.isUserIndex(indexId))
 			throw new NotAuthorized("Can only create private indices.");
@@ -550,6 +554,12 @@ public class IndexManager {
         return !configFormatId.contains(":") || configFormatId.startsWith(userId + ":");
     }
 
+
+
+    public DocIndexerFactoryUserFormats getUserFormatManager() {
+    	return userFormatManager;
+    }
+
     /**
      * Get the id for a format with name name, owned by user userId
      * @param userId
@@ -562,29 +572,7 @@ public class IndexManager {
         return userId + ":" + name;
     }
 
-    public void ensureUserFormatsRegistered(User user) throws InternalServerError {
-        if (formatsScannedForUsers.contains(user.getUserId()))
-            return;
-        formatsScannedForUsers.add(user.getUserId());
-        File userFormatDir = searchMan.getIndexManager().getUserFormatDir(user.getUserId());
-        if (userFormatDir != null && userFormatDir.exists()) {
-            for (File formatFile: userFormatDir.listFiles()) {
-                String formatIdentifier = ConfigInputFormat.stripExtensions(formatFile.getName());
-                formatIdentifier = IndexManager.userFormatName(user.getUserId(), formatIdentifier);
-                if (!DocumentFormats.exists(formatIdentifier)) {
-                    try {
-                        ConfigInputFormat f = new ConfigInputFormat(formatFile);
-                        f.setName(formatIdentifier); // prefix with user id to avoid collisions
-                        DocumentFormats.register(f);
-                    } catch (IOException e) {
-                        throw new InternalServerError("Error reading user format: " + formatFile, 36, e);
-                    }
-                }
-            }
-        }
-    }
-
-	/**
+    /**
 	 * @deprecated use {@link Index#getSearcher()}
 	 */
 	@SuppressWarnings("javadoc")

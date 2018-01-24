@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.config.ConfigInputFormat.FileType;
@@ -30,17 +30,26 @@ import nl.inl.util.StringUtil;
  */
 public class InputFormatReader extends YamlJsonReader {
 
-    public static void read(Reader r, boolean isJson, ConfigInputFormat cfg) throws IOException {
+	/**
+	 * This is responsible for getting (optionally locating/loading) other configs that this config depends on.
+	 * Dependencies on other configs exists for the "baseFormat" value (this config extends a base config), or "inputFormat" for linkedDocuments.
+	 */
+	public static interface BaseFormatFinder {
+		ConfigInputFormat getConfig(String formatIdentifier);
+	}
+
+    public static void read(Reader r, boolean isJson, ConfigInputFormat cfg, BaseFormatFinder finder) throws IOException {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
         JsonNode root = mapper.readTree(r);
-        read(root, cfg);
+        read(root, cfg, finder);
     }
 
-    public static void read(File file, ConfigInputFormat cfg) throws IOException {
-        read(FileUtil.openForReading(file), file.getName().endsWith(".json"), cfg);
+    public static void read(File file, ConfigInputFormat cfg, BaseFormatFinder finder) throws IOException {
+        read(FileUtil.openForReading(file), file.getName().endsWith(".json"), cfg, finder);
+        cfg.setReadFromFile(file);
     }
 
-    protected static void read(JsonNode root, ConfigInputFormat cfg) {
+    protected static void read(JsonNode root, ConfigInputFormat cfg, BaseFormatFinder finder) {
         obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
@@ -49,8 +58,11 @@ public class InputFormatReader extends YamlJsonReader {
             case "displayName": cfg.setDisplayName(str(e)); break;
             case "description": cfg.setDescription(str(e)); break;
             case "baseFormat": {
-                String formatName = str(e);
-                ConfigInputFormat baseFormat = DocumentFormats.getConfig(formatName);
+            	String formatName = str(e);
+            	if (finder == null)
+            		throw new InputFormatConfigException("Format depends on base format " + formatName + " but no BaseFormatFinder provided.");
+
+                ConfigInputFormat baseFormat = finder.getConfig(formatName);
                 if (baseFormat == null)
                     throw new InputFormatConfigException("Base format " + formatName + " not found for format " + cfg.getName());
                 cfg.setBaseFormat(baseFormat);
@@ -354,10 +366,13 @@ public class InputFormatReader extends YamlJsonReader {
     }
 
     protected static void readInputFormat(ConfigLinkedDocument ld, Entry<String, JsonNode> e) {
-        DocIndexerFactory inputFormat = DocumentFormats.getIndexerFactory(str(e));
-        if (inputFormat == null)
-            throw new InputFormatConfigException("Unknown input format " + str(e) + " in linked document " + ld.getName());
-        ld.setInputFormat(inputFormat);
+        // Resolve the inputFormat right now, instead of potentially failing later when the format is actually needed at some point during indexing
+    	String formatIdentifier = str(e);
+    	Format format = DocumentFormats.getFormat(formatIdentifier);
+    	if (format == null)
+    		throw new InputFormatConfigException("Unknown input format " + str(e) + " in linked document " + ld.getName());
+
+        ld.setInputFormatIdentifier(formatIdentifier);
     }
 
     private static void readLinkValues(Entry<String, JsonNode> lvsEntry, ConfigLinkedDocument ld) {

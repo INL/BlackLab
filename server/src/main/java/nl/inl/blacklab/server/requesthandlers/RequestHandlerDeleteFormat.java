@@ -37,7 +37,7 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
             throw new BadRequest("ILLEGAL_INDEX_NAME", "User format configuration name must contain one colon");
         if (!user.getUserId().equals(parts[0]))
             throw new NotAuthorized("Can only delete your own formats.");
-        if (!DocumentFormats.exists(documentFormat))
+        if (!DocumentFormats.isSupported(documentFormat))
             throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found.");
         documentFormat = parts[1];
 		if (!documentFormat.matches("[\\w_\\-]+"))
@@ -54,7 +54,8 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
     	if (!success) // If both files are missing, DocumentFormats.exists should have returned false?
     		throw new InternalServerError("Could not delete format. Unknown reason.", 35);
 
-		DocumentFormats.unregister(IndexManager.userFormatName(user.getUserId(), documentFormat));
+    	String formatIdentifier = IndexManager.userFormatName(user.getUserId(), documentFormat);
+    	searchMan.getIndexManager().getUserFormatManager().unregisterFormat(formatIdentifier);
 		return Response.success(ds, "Format deleted.");
 	}
 

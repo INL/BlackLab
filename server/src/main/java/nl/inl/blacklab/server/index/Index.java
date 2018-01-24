@@ -8,7 +8,6 @@ import java.util.Comparator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
@@ -25,7 +24,9 @@ import nl.inl.blacklab.server.search.SearchCache;
  * This is the main class used to interface with a corpus/index in Blacklab-Server.
  * Note the difference between an Index, which is a searchable collection of documents, and the _act_ of Indexing, adding new data to an Index.
  * Blacklab-Server manages indices centrally using the {@link IndexManager}. These handles are managed through this Index class.
- * An instance of Index should not be kept for long periods of time.
+ *
+ * References to an Index should not be held for extended amounts of time (minutes) (other than by the IndexManager that is),
+ * as an Index might suddenly be closed, or begin indexing new data, or even be deleted.
  */
 public class Index {
 	public enum IndexStatus {
@@ -68,7 +69,7 @@ public class Index {
 		private boolean closed = false;
 
 		IndexerWithCloseRegistration(File directory) throws IOException, DocumentFormatException {
-			super(directory, false, (DocIndexerFactory)null, (File) null);
+			super(directory, false, (String)null, (File) null);
 		}
 
 		@Override
@@ -102,6 +103,7 @@ public class Index {
 	private IndexerWithCloseRegistration indexer;
 
 	/**
+	 * NOTE: Index does not support creating a new index from scratch for now, instead use {@link IndexManager#createIndex(String, String, String)}
 	 *
 	 * @param indexId name of this index, including any username if this is a user index
 	 * @param dir directory of this index

@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 
-import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -43,10 +42,8 @@ public class RequestHandlerAddFormat extends RequestHandler {
             File userFormatDir = indexMan.getUserFormatDir(user.getUserId());
 			File formatFile = new File(userFormatDir, formatIdentifier + ".blf." + (isJson ? "json" : "yaml"));
 			fi.write(formatFile);
-            ConfigInputFormat f = new ConfigInputFormat(formatFile);
-            f.setName(user.getUserId() + ":" + f.getName()); // prefix with user id to avoid collisions
-            DocumentFormats.register(f);
 
+			searchMan.getIndexManager().getUserFormatManager().registerFormat(user, formatFile);
         } catch (IllegalArgumentException e) {
             return Response.error(ds, "CONFIG_ERROR", "Error in format configuration: " + e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {

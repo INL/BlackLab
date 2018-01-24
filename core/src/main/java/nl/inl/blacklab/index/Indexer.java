@@ -40,7 +40,9 @@ import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileProcessor;
@@ -104,7 +106,7 @@ public class Indexer {
 			String documentName = FilenameUtils.getName(path);
 
 			// The DocIndexer will close the stream for us
-			try (DocIndexer docIndexer = docIndexerFactory.get(Indexer.this, documentName, new UnicodeStream(f, DEFAULT_INPUT_ENCODING), DEFAULT_INPUT_ENCODING)) {
+			try (DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, documentName, new UnicodeStream(f, DEFAULT_INPUT_ENCODING), DEFAULT_INPUT_ENCODING)) {
 				indexDocIndexer(documentName, docIndexer);
 			}
 			catch (Exception e) {
@@ -169,10 +171,10 @@ public class Indexer {
 	 */
 	protected boolean defaultRecurseSubdirs = true;
 
-	/**
-	 * How to instantiate DocIndexers for the file format we're indexing.
-	 */
-    protected DocIndexerFactory docIndexerFactory;
+    /**
+     * Format of the documents we're going to be indexing, used to create the correct type of DocIndexer.
+     */
+    protected String formatIdentifier;
 
 	/** If an error occurs (e.g. an XML parse error), should we
 	 *  try to continue indexing, or abort? */
@@ -262,7 +264,11 @@ public class Indexer {
 	@Deprecated
 	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
 			throws IOException, DocumentFormatException {
-		this(directory, create, docIndexerClass, (File)null);
+
+		// docIndexerClass is no longer directly used to instantiate DocIndexers
+		// instead is abstracted behind a DocIndexerFactory that exposes the DocIndexer in question using a string identifier
+		// DocIndexerFactoryClasss however also accepts qualified class names, so we can still target the requested class by passing its full name to the factory
+		init(directory, create, docIndexerClass != null ? docIndexerClass.getCanonicalName() : null, null);
 	}
 
 	/**
@@ -274,12 +280,10 @@ public class Indexer {
 	 *            if true, creates a new index; otherwise, appends to existing index
 	 * @throws IOException
 	 * @throws DocumentFormatException if autodetection of the document format failed
-     * @Deprecated use DocIndexerFactory version
 	 */
-	@Deprecated
 	public Indexer(File directory, boolean create)
 			throws IOException, DocumentFormatException {
-		this(directory, create, (Class<? extends DocIndexer>)null, (File)null);
+		this(directory, create, (String) null, null);
 	}
 
 	/**
@@ -294,59 +298,102 @@ public class Indexer {
 	 *   (if creating new index)
 	 * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
 	 * @throws IOException
-	 * @Deprecated use DocIndexerFactory version
 	 */
 	@Deprecated
-	public Indexer(File directory, boolean create,
-			Class<? extends DocIndexer> docIndexerClass, File indexTemplateFile) throws DocumentFormatException, IOException {
-		this.docIndexerFactory = new DocIndexerFactoryClass(docIndexerClass);
+	public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass, File indexTemplateFile)
+			throws DocumentFormatException, IOException {
 
-		init(directory, create, indexTemplateFile);
+		// docIndexerClass is no longer directly used to instantiate DocIndexers
+		// instead is abstracted behind a DocIndexerFactory that exposes the DocIndexer in question using a string identifier
+		// DocIndexerFactoryClasss however also accepts qualified class names, so we can still target the requested class by passing its full name to the factory
+		this(directory, create, docIndexerClass != null ? docIndexerClass.getCanonicalName() : null, indexTemplateFile);
 	}
 
     /**
      * Construct Indexer
      *
-     * @param directory
-     *            the main BlackLab index directory
+     * @param directory the main BlackLab index directory
      * @param create
-     *            if true, creates a new index; otherwise, appends to existing index
-     * @param docIndexerFactory how to index the files, or null to autodetect
+     *            if true, creates a new index; otherwise, appends to existing index.
+     *            When creating a new index, a formatIdentifier or an indexTemplateFile containing a valid "documentFormat" value should also be supplied.
+     *            Otherwise adding new data to the index isn't possible, as we can't construct a DocIndexer to do the actual indexing without a valid formatIdentifier.
+     * @param formatIdentifier (optional) determines how this Indexer will index any new data added to it.
+     *            If omitted, when opening an existing index, the formatIdentifier in its metadata (as "documentFormat") is used instead.
+     *            When creating a new index, this format will be stored as the default for that index, unless another default is already set by the indexTemplateFile (as "documentFormat"), it will still be used by this Indexer however.
      * @param indexTemplateFile JSON file to use as template for index structure / metadata
      *   (if creating new index)
-     * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
+     * @throws DocumentFormatException if no formatIdentifier was specified and autodetection failed
      * @throws IOException
      */
-    public Indexer(File directory, boolean create, DocIndexerFactory docIndexerFactory, File indexTemplateFile)
+    public Indexer(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
             throws DocumentFormatException, IOException {
-        this.docIndexerFactory = docIndexerFactory;
-        init(directory, create, indexTemplateFile);
+    	init(directory, create, formatIdentifier, indexTemplateFile);
     }
 
-    protected void init(File directory, boolean create, File indexTemplateFile) throws IOException, DocumentFormatException {
-        if (docIndexerFactory != null && docIndexerFactory.getConfig() != null && indexTemplateFile == null) {
-            // Use the input format definition as the index template
-            searcher = Searcher.openForWriting(directory, create, docIndexerFactory.getConfig());
-        } else {
-            searcher = Searcher.openForWriting(directory, create, indexTemplateFile);
-        }
-		if (!create)
-			searcher.getIndexStructure().setModified();
+    protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile) throws IOException, DocumentFormatException {
 
-		if (this.docIndexerFactory == null) {
-			// No DocIndexer supplied; try to detect it from the index
-			// metadata.
-			String formatId = searcher.getIndexStructure().getDocumentFormat();
-			if (formatId != null && formatId.length() > 0) {
-				docIndexerFactory = DocumentFormats.getIndexerFactory(formatId);
-				if (docIndexerFactory == null) {
-					throw new DocumentFormatException("Unknown document format '" + formatId + "'; cannot index new data.'");
-				}
+    	if (create) {
+    		if (indexTemplateFile != null) {
+    			searcher = Searcher.openForWriting(directory, true, indexTemplateFile);
+    			final String defaultFormatIdentifier = searcher.getIndexStructure().getDocumentFormat();
+
+    			if (DocumentFormats.isSupported(formatIdentifier)) {
+    				this.formatIdentifier = formatIdentifier;
+    				if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
+    					// indexTemplateFile didn't provide a default formatIdentifier,
+    					// overwrite it with our provided formatIdentifier
+    					searcher.getIndexStructure().setDocumentFormat(formatIdentifier);
+    					searcher.getIndexStructure().writeMetadata();
+    				}
+    			} else if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
+    				this.formatIdentifier = defaultFormatIdentifier;
+    			} else {
+    				// TODO we should delete the newly created index here as it failed, how do we clean up files properly?
+    				searcher.close();
+    				throw new DocumentFormatException("Invalid default formatIdentifier (as formatIdenfitier or 'documentFormat' key in indexTemplateFile) specified when creating new index in "+directory);
+    			}
+    		} else if (DocumentFormats.isSupported(formatIdentifier)) {
+    			this.formatIdentifier = formatIdentifier;
+
+    			// No indexTemplateFile, but maybe the formatIdentifier is backed by a ConfigInputFormat (instead of some other DocIndexer implementation)
+    			// this ConfigInputFormat could then still be used as a minimal template to setup the index
+    			// (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
+    			ConfigInputFormat format = null;
+    			for (Format desc : DocumentFormats.getFormats()) {
+					if (desc.getId().equals(formatIdentifier) && desc.getConfig() != null) {
+						format = desc.getConfig();
+						break;
+					}
+    			}
+
+    			// template might still be null, in that case a default will be created
+    			searcher = Searcher.openForWriting(directory, true, format);
+
+    			String defaultFormatIdentifier = searcher.getIndexStructure().getDocumentFormat();
+    			if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
+					// ConfigInputFormat didn't provide a default formatIdentifier,
+					// overwrite it with our provided formatIdentifier
+					searcher.getIndexStructure().setDocumentFormat(formatIdentifier);
+					searcher.getIndexStructure().writeMetadata();
+    			}
+    		} else {
+    			throw new DocumentFormatException("Invalid default formatIdentifier (as formatIdenfitier or 'documentFormat' key in indexTemplateFile) specified when creating new index in "+directory);
 			}
-			else {
-				throw new DocumentFormatException("Cannot detect document format for index!");
-			}
-		}
+    	} else { // opening an existing index
+
+    		this.searcher = Searcher.openForWriting(directory, false);
+    		String defaultFormatIdentifier = this.searcher.getIndexStructure().getDocumentFormat();
+
+    		if (DocumentFormats.isSupported(formatIdentifier))
+    			this.formatIdentifier = formatIdentifier;
+    		else if (DocumentFormats.isSupported(defaultFormatIdentifier))
+    			this.formatIdentifier = defaultFormatIdentifier;
+    		else {
+    			searcher.close();
+    			String message = formatIdentifier == null ? "No formatIdentifier" : "Unknown formatIdentifier '" + formatIdentifier + "'";
+    			throw new DocumentFormatException(message + ", and could not determine the default documentFormat for index " + directory);
+    		}
+    	}
 
 		metadataFieldTypeTokenized = new FieldType();
 		metadataFieldTypeTokenized.setStored(true);
@@ -368,12 +415,11 @@ public class Indexer {
 		metadataFieldTypeUntokenized.freeze();
     }
 
-	public DocIndexerFactory getDocIndexerFactory() {
-        return docIndexerFactory;
-    }
+    public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatException {
+        if (!DocumentFormats.isSupported(formatIdentifier))
+    		throw new DocumentFormatException("Cannot set formatIdentifier '"+formatIdentifier+"' for index " + this.searcher.getIndexName() + "; unknown identifier");
 
-    public void setDocIndexerFactory(DocIndexerFactory docIndexerFactory) {
-        this.docIndexerFactory = docIndexerFactory;
+        this.formatIdentifier = formatIdentifier;
     }
 
     /**
@@ -463,7 +509,10 @@ public class Indexer {
 	 */
 	@Deprecated
 	public void setDocIndexer(Class<? extends DocIndexer> docIndexerClass) {
-		this.docIndexerFactory = new DocIndexerFactoryClass(docIndexerClass);
+		// docIndexerClass is no longer directly used to instantiate DocIndexers
+		// instead is abstracted behind a DocIndexerFactory that exposes the DocIndexer in question using a friendly name
+		// the factory however also accepts qualified class names, so we can still target the requested class by passing its full name to the factory
+		this.formatIdentifier = docIndexerClass.getCanonicalName();
 	}
 
 	/**
@@ -556,7 +605,7 @@ public class Indexer {
 	 */
 	@Deprecated
 	public void index(String documentName, Reader reader) throws Exception {
-		try (DocIndexer docIndexer = docIndexerFactory.get(this, documentName, reader)) {
+		try (DocIndexer docIndexer = DocumentFormats.get(this.formatIdentifier, this, documentName, reader)) {
             indexDocIndexer(documentName, docIndexer);
 		} catch (InputFormatException e) {
 			listener.errorOccurred(e.getMessage(), "reader", new File(documentName), null);

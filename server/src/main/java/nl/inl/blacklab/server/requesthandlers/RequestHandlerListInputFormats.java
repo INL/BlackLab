@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +12,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DocumentFormats.FormatDesc;
 import nl.inl.blacklab.index.config.ConfigAnnotatedField;
 import nl.inl.blacklab.index.config.ConfigAnnotation;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
@@ -170,27 +169,28 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
 	    if (urlResource != null && urlResource.length() > 0) {
 
-	        if (!DocumentFormats.exists(urlResource))
+	        if (!DocumentFormats.isSupported(urlResource))
                 throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' does not exist.");
 
+	        Format format = DocumentFormats.getFormat(urlResource);
+
+	        if (!format.isConfigurationBased())
+        		throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
+
+	        ConfigInputFormat config = format.getConfig();
 	    	if (isXsltRequest)
-	    		return handleXsltRequest(ds);
+	    		return handleXsltRequest(ds, config);
 
-			File formatFile = DocumentFormats.getConfig(urlResource).getReadFromFile();
-	        try (BufferedReader reader = DocumentFormats.getFormatFile(urlResource)) {
-	        	if (reader == null)
-	        		throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
-
+	    	try (BufferedReader reader = config.getFormatFile()) {
 	        	ds	.startMap()
         		.entry("formatName", urlResource)
-        		.entry("configFileType", FilenameUtils.getExtension(formatFile.getName()))
+        		.entry("configFileType", FilenameUtils.getExtension(config.getReadFromFile().getName()))
         		.entry("configFile", IOUtils.toString(reader))
         		.endMap();
         		return HTTP_OK;
 	        } catch (IOException e1) {
 				throw new RuntimeException(e1);
 			}
-
 	    }
 
 		ds.startMap();
@@ -204,8 +204,8 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
 		// List supported input formats
 	    ds.startEntry("supportedInputFormats").startMap();
-        for (FormatDesc format: DocumentFormats.getSupportedFormats()) {
-            String name = format.getName();
+        for (Format format: DocumentFormats.getSupportedFormats()) {
+            String name = format.getId();
             if (IndexManager.userOwnsFormat(user.getUserId(), name)) {
                 ds.startAttrEntry("format", "name", name).startMap()
                     .entry("displayName", format.getDisplayName())
@@ -220,9 +220,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 		return HTTP_OK;
 	}
 
-	private int handleXsltRequest(DataStream ds) {
-		ConfigInputFormat config = DocumentFormats.getConfig(urlResource);
-
+	private static int handleXsltRequest(DataStream ds, ConfigInputFormat config) {
 		// We want an XSLT from this config.
 		StringBuilder xslt = new StringBuilder();
 		StringBuilder nameSpaces = new StringBuilder();
