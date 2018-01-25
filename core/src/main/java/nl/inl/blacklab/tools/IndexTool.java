@@ -33,7 +33,6 @@ import java.util.TreeMap;
 import org.apache.lucene.index.CorruptIndexException;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
-import nl.inl.blacklab.index.DocIndexerFactoryConfig;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
@@ -252,7 +251,7 @@ public class IndexTool {
 		if (!formatDirs.contains(indexDirParent))
 		    formatDirs.add(indexDirParent);
 
-		DocumentFormats.registerFactory(new DocIndexerFactoryConfig().addFormatsInDirectories(formatDirs));
+		DocumentFormats.registerFormatsInDirectories(formatDirs);
 
 		if (docFormat == null) {
 			System.err.println("No document format given; trying to detect it from the index...");

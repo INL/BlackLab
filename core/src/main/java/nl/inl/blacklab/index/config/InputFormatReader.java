@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -38,12 +39,35 @@ public class InputFormatReader extends YamlJsonReader {
 		ConfigInputFormat getConfig(String formatIdentifier);
 	}
 
+	/**
+	 *
+	 * @param r
+	 * @param isJson
+	 * @param cfg
+	 * @param finder
+	 * @throws IOException
+	 * @throws InputFormatConfigException if the file is not a valid config
+	 */
     public static void read(Reader r, boolean isJson, ConfigInputFormat cfg, BaseFormatFinder finder) throws IOException {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-        JsonNode root = mapper.readTree(r);
+
+        JsonNode root;
+        try {
+        	root = mapper.readTree(r);
+        } catch (JsonParseException e) {
+        	throw new InputFormatConfigException("Could not parse config file: " + e.getMessage());
+        }
         read(root, cfg, finder);
     }
 
+    /**
+     *
+     * @param file
+     * @param cfg
+     * @param finder
+     * @throws IOException
+     * @throws InputFormatConfigException if the file is not a valid config
+     */
     public static void read(File file, ConfigInputFormat cfg, BaseFormatFinder finder) throws IOException {
         read(FileUtil.openForReading(file), file.getName().endsWith(".json"), cfg, finder);
         cfg.setReadFromFile(file);

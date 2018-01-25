@@ -41,8 +41,6 @@ import nl.inl.util.FileUtil.FileTask;
 
 public class IndexManager {
 
-	private static final String FORMATS_SUBDIR_NAME = "_input_formats";
-
 	/**
 	 * A file by this name is placed in user directories that could not be fully deleted,
 	 * This can happen under windows when some of the files are still open in some memory-maps (despite .close() having been called)
@@ -69,7 +67,7 @@ public class IndexManager {
 	/**
 	 * Manages the loaded user document formats and exposes them to BlackLab-core for use.
 	 */
-	private DocIndexerFactoryUserFormats userFormatManager = new DocIndexerFactoryUserFormats();
+	private DocIndexerFactoryUserFormats userFormatManager;
 
     private Map<String, Index> indices = new HashMap<>();
 
@@ -134,6 +132,9 @@ public class IndexManager {
 		if (userCollectionsDir != null && !userCollectionsDir.canRead()) {
 			logger.warn("Configured user collections not found or not readable: " + userCollectionsDir);
 			userCollectionsDir = null;
+		} else {
+			userFormatManager = new DocIndexerFactoryUserFormats(userCollectionsDir);
+			DocumentFormats.registerFactory(userFormatManager);
 		}
 
 		if (indices.isEmpty() && collectionsDirs.isEmpty() && userCollectionsDir == null) {
@@ -146,8 +147,6 @@ public class IndexManager {
 				"  ]\n" +
 				"}");
 		}
-
-		DocumentFormats.registerFactory(userFormatManager);
 	}
 
 	/**
@@ -169,24 +168,6 @@ public class IndexManager {
 		}
 		return dir;
 	}
-
-    /**
-     * Return the specified user's input format configuration dir.
-     *
-     * Creates the directory if it doesn't exist and it has the permissions to do so.
-     *
-     * @param userId the user
-     * @return user's input format config dir, or null if it doesn't exist and couldn't be created.
-     */
-    public File getUserFormatDir(String userId) {
-        File formatDir = new File(getUserCollectionDir(userId), FORMATS_SUBDIR_NAME);
-        if (!formatDir.exists())
-            if (!formatDir.mkdir()) {
-                logger.error("Error creating user format dir: " + formatDir);
-                return null;
-            }
-        return formatDir;
-    }
 
 	/**
 	 * Does the specified index exist?
@@ -451,7 +432,10 @@ public class IndexManager {
 					if (indexName.equals("index")) {
 					    // Not a very useful name; the parent directory usually contains the index name in this case
 					    indexName = subDir.getAbsoluteFile().getParentFile().getName();
-                        logger.warn("Found index directory named 'index': " + subDir);
+                        if (indices.containsKey(indexName))
+                        	continue;
+
+					    logger.warn("Found index directory named 'index': " + subDir);
                         logger.warn("Replacing this with the parent directory name (" + indexName + "), but note that this behaviour is deprecated.");
 					}
 					if (indices.containsKey(indexName))
@@ -543,33 +527,8 @@ public class IndexManager {
 		return (deletionMarker.exists() && deletionMarker.canRead());
 	}
 
-	/**
-	 * Is this config format owned by this user?
-	 *
-	 * @param userId
-	 * @param configFormatId the full unprocessed id of the config format
-	 * @return true if this format is owned by this user
-	 */
-    public static boolean userOwnsFormat(String userId, String configFormatId) {
-        return !configFormatId.contains(":") || configFormatId.startsWith(userId + ":");
-    }
-
-
-
     public DocIndexerFactoryUserFormats getUserFormatManager() {
     	return userFormatManager;
-    }
-
-    /**
-     * Get the id for a format with name name, owned by user userId
-     * @param userId
-     * @param name
-     * @return the id created by joining the two values
-     */
-    public static String userFormatName(String userId, String name) {
-        if (name.contains(":") || userId.contains(":"))
-            throw new IllegalArgumentException("userId or format name contains colon: userid=" + userId + ", name=" + name);
-        return userId + ":" + name;
     }
 
     /**

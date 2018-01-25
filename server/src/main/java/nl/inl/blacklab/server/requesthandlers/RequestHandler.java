@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.index.config.InputFormatConfigException;
 import nl.inl.blacklab.perdocument.DocCount;
 import nl.inl.blacklab.perdocument.DocCounts;
 import nl.inl.blacklab.perdocument.DocGroupProperty;
@@ -109,16 +108,7 @@ public abstract class RequestHandler {
 		boolean resourceOrPathGiven = urlResource.length() > 0 || urlPathInfo.length() > 0;
         boolean pathGiven = urlPathInfo.length() > 0;
 
-        // If new user, read user formats
-		if (user.isLoggedIn()) {
-			try {
-				searchManager.getIndexManager().getUserFormatManager().ensureUserFormatsRegistered(user, searchManager.getIndexManager().getUserFormatDir(user.getUserId()));
-			} catch (InputFormatConfigException e) {
-				return errorObj.internalError("Error reading user formats: " + e.getMessage(), debugMode, 36);
-			}
-		}
-
-		// If we're doing something with a private index, it must be our own.
+        // If we're doing something with a private index, it must be our own.
 		boolean isPrivateIndex = false;
 		//logger.debug("Got indexName = \"" + indexName + "\" (len=" + indexName.length() + ")");
 		String shortName = indexName;

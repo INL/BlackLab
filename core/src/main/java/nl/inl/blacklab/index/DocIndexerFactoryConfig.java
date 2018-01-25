@@ -53,6 +53,9 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 	protected BaseFormatFinder finder = new BaseFormatFinder() {
 		@Override
 		public ConfigInputFormat getConfig(String formatIdentifier) throws InputFormatConfigException {
+			if(!isSupported(formatIdentifier)) // Give derived classes a chance to load a new format.
+				return null;
+
 			if (unloaded.containsKey(formatIdentifier)) {
 				File f = unloaded.get(formatIdentifier);
 				unloaded.remove(formatIdentifier); // remove before load to avoid infinite recursion on circular dependencies
@@ -153,11 +156,10 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 	 * If any of the config files depend on other config files, the locations of those dependencies must also be provided in this list of directories.
 	 * If config A refers to config B, then the directory where config B is located must also be present in the dirs list.
 	 * @param dirs
-	 * @return this
 	 * @throws InputFormatConfigException when one of the formats could not be loaded
 	 * @throws InputFormatException when a format could not be loaded
 	 */
-	public DocIndexerFactoryConfig addFormatsInDirectories(List<File> dirs) throws InputFormatConfigException {
+	public void addFormatsInDirectories(List<File> dirs) throws InputFormatConfigException {
 		// Finds all new configs and add them to the "unloaded" list
 		FileTask configLocator = new FileTask() {
 			@Override
@@ -190,11 +192,9 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 		// or the configs won't be able to depend on one of the default configs (which are not loaded until after initialization)
 		if (isInitialized)
 			loadUnloaded();
-
-		return this;
 	}
 
-	protected ConfigInputFormat load(String formatIdentifier, File f) throws InputFormatConfigException {
+	protected ConfigInputFormat load(String formatIdentifier, File f) throws InputFormatException {
 		try {
 			ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
 			InputFormatReader.read(f, format, finder);
@@ -213,7 +213,12 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 			Entry<String, File> e = unloaded.entrySet().iterator().next();
 			unloaded.remove(e.getKey());
 
-			load(e.getKey(), e.getValue());
+			try {
+				load(e.getKey(), e.getValue());
+			} catch (InputFormatException ex) {
+				logger.warn("Cannot load user format " + e.getValue() + ": " + ex.getMessage());
+				// an invalid format somehow got saved, or something else went wrong, just ignore this file then
+			}
 		}
 	}
 

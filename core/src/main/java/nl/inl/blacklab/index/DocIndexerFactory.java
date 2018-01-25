@@ -92,7 +92,7 @@ public interface DocIndexerFactory {
 
 	/**
 	 * Can this factory instantiate a docIndexer for this type of format.
-	 * It is assumed that a format that is supported will remain supported for as long as the application runs.
+	 * This function will always be called prior to get().
 	 *
 	 * @param formatIdentifier lowercased and never null or empty string
 	 * @return true if this factory is able to create a docIndexer for the requested formatIdentifier

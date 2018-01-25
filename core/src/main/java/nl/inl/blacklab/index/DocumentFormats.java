@@ -69,6 +69,11 @@ public class DocumentFormats {
     	builtinConfigFactory.addFormat(config);
     }
 
+    // Convenience method to avoid applications always having to create a DocIndexerFactory instance
+    public static void registerFormatsInDirectories(List<File> dirs) throws InputFormatException {
+    	builtinConfigFactory.addFormatsInDirectories(dirs);
+    }
+
     /**
      * Returns the factory which will be used to create the DocIndexer registered under this formatIdentifier.
      * This method isn't used in BlackLab itself, but it could be useful for client applications.

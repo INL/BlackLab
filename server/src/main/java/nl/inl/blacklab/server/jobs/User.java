@@ -40,10 +40,7 @@ public class User {
 			// Replace any non-URL-safe characters from userid with _.
 			// Also leave out colon because we use colon as a separator
 			// between userid and index name.
-			userId = userId.replaceAll("[^a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;=@]", "_");
-			if (userId.length() == 0)
-				userId = null;
-			this.userId = userId;
+			this.userId = sanitize(userId);
 		}
 		this.sessionId = sessionId;
 	}
@@ -102,5 +99,14 @@ public class User {
 		//return FileUtil.sanitizeFilename(userId);
 	}
 
+	public static boolean isValidUserId(String userId) {
+		return userId.matches("^[a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;=@]+$");
+	}
 
+	public static String sanitize(String originalUserId) {
+		if (originalUserId == null || originalUserId.isEmpty())
+			return null;
+
+		return originalUserId.replaceAll("[^a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;=@]", "_");
+	}
 }

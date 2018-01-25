@@ -335,6 +335,7 @@ public class Indexer {
     	if (create) {
     		if (indexTemplateFile != null) {
     			searcher = Searcher.openForWriting(directory, true, indexTemplateFile);
+    			// from indexTemplateFile (if it was provided)
     			final String defaultFormatIdentifier = searcher.getIndexStructure().getDocumentFormat();
 
     			if (DocumentFormats.isSupported(formatIdentifier)) {
@@ -856,6 +857,12 @@ public class Indexer {
 
 	public void setUseThreads(boolean useThreads) {
 		this.useThreads = useThreads;
+
+		// TODO some of the class-based docIndexers don't support theaded indexing
+		if (!DocumentFormats.getFormat(formatIdentifier).isConfigurationBased()) {
+			logger.info("Threaded indexing is disabled for format " + formatIdentifier);
+			this.useThreads = false;
+		}
 	}
 
 }

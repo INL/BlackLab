@@ -1,18 +1,15 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.io.File;
+import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 
-import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.FileUploadHandler;
 
@@ -31,25 +28,13 @@ public class RequestHandlerAddFormat extends RequestHandler {
 	public int handle(final DataStream ds) throws BlsException {
 		debug(logger, "REQ add format: " + indexName);
 
-        try {
-			FileItem fi = FileUploadHandler.getFile(request, "data");
-			// Get the uploaded file parameters
-			String fileName = fi.getName();
-			if (!fileName.matches("[\\w_\\-]+(\\.blf)?\\.(ya?ml|json)"))
-			    throw new BadRequest("ILLEGAL_INDEX_NAME", "Format configuration name may only contain letters, digits, underscore and dash, and must end with .yaml or .json (or .blf.yaml/.blf.json)");
-			String formatIdentifier = ConfigInputFormat.stripExtensions(fileName);
-			boolean isJson = fileName.endsWith(".json");
-            File userFormatDir = indexMan.getUserFormatDir(user.getUserId());
-			File formatFile = new File(userFormatDir, formatIdentifier + ".blf." + (isJson ? "json" : "yaml"));
-			fi.write(formatFile);
-
-			searchMan.getIndexManager().getUserFormatManager().registerFormat(user, formatFile);
-        } catch (IllegalArgumentException e) {
-            return Response.error(ds, "CONFIG_ERROR", "Error in format configuration: " + e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
-        } catch (Exception e) {
-			throw new InternalServerError(e.getMessage(), 40);
+		FileItem fi = FileUploadHandler.getFile(request, "data");
+		String fileName = fi.getName();
+		try {
+			searchMan.getIndexManager().getUserFormatManager().createUserFormat(user, fileName, fi.getInputStream());
+			return Response.success(ds, "Format added.");
+		} catch (IOException e) {
+			throw new BadRequest("", e.getMessage());
 		}
-		return Response.success(ds, "Format added.");
 	}
-
 }

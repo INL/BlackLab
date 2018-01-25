@@ -1,108 +1,211 @@
 package nl.inl.blacklab.server.index;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.DocIndexerFactoryConfig;
+import nl.inl.blacklab.index.InputFormatException;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.InputFormatConfigException;
+import nl.inl.blacklab.index.config.InputFormatReader;
+import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.exceptions.NotAuthorized;
+import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Implementation of DocIndexerFactoryConfig that is able to load user's config directories and have formats added/overwritten and removed after initialization.
+ * Implementation of DocIndexerFactoryConfig that is able to load user's config directories and generally manages creating/deleting custom format configs.
+ *<p>
+ * Configs owned by users can be identified by their naming scheme of userName:formatName
+ * Therefor, usernames and formatnames on their own may not contain colons.
+ * <p>
+ * Formats are stored in the following file structure
+ *<pre>
+ * formatDirectory
+ *     userDirectory1
+ *         _input_formats
+ *             format1.yaml
+ *             format2.yaml
+ *             ...
+ *     userDirectory2
+ *         _input_formats
+ *             ...
+ *     ...
+ *</pre>
+ * The names of user directories is determined using {@link User#getUserDirName()}
+ * This allows user's formats to be stored next to their indices in the user's own dedicated directory.
+ *<p>
+ * This class performs dynamic locating and loading of user's format configs when
+ * {@link DocIndexerFactoryUserFormats#isSupported(String)} is called with a formatIdentifier resembling a user-defined format.
  */
-// TODO implement dynamic loading of user formats by detecting requests for user formats (the colon in a format's id) and loading the user's directory
-// still allow the loading of the entire directory later when the user wants to see their configurations
 public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
+
+	private static Logger logger = LogManager.getLogger(DocIndexerFactoryUserFormats.class);
+
+	private static final String FORMATS_SUBDIR_NAME = "_input_formats";
+    private static final Pattern formatNamePattern = Pattern.compile("[\\w_\\-]+");
+    private static final Pattern fileNamePattern = Pattern.compile(formatNamePattern.pattern() + "(\\.blf)?\\.(ya?ml|json)");
+    /**
+     * Only matches user formatIdentifiers, not the builtin formatIdentifiers, captures the userId as group 1 and formatName as group 2.
+     * Does not validate the userId or formatName however.
+     */
+    private static final Pattern formatIdentifierPattern = Pattern.compile("^([^:]+):([^:]+)$");
+
+	private File formatDir = null;
 
 	private Set<String> loadedUsers = new HashSet<>();
 
-	// format is <username>:<formatname>
-	/* These will be useful when we add dynamic loading of user formats (i.e. when they're needed, instead of when the user first performs an action)
-	private static boolean isUserFormat(String formatId) {
-		if (formatId == null)
-			return false;
-
-		int index = formatId.indexOf(':');
-
-		if (index != -1 && index != formatId.lastIndexOf(':') || index == 0 || index == formatId.length() -1)
-			return false;
-
-		return index != -1;
+	/**
+	 * @param formatDir directory under which to place user's files (see {@link DocIndexerFactoryUserFormats} for details).
+	 */
+	public DocIndexerFactoryUserFormats(File formatDir) {
+		this.formatDir = formatDir;
 	}
 
-	private static String getUserName(String formatId) {
-		return isUserFormat(formatId) ? formatId.substring(0, formatId.indexOf(':')) : null;
-	}
-	*/
+	@Override
+	public boolean isSupported(String formatIdentifier) {
+		if (super.isSupported(formatIdentifier))
+			return true;
 
-	public synchronized DocIndexerFactoryUserFormats ensureUserFormatsRegistered(User user, File dir) {
-		if (loadedUsers.contains(user.getUserId()))
-			return this;
-		loadedUsers.add(user.getUserId());
+		// Not supported yet, is this even a user format?
+		if (!formatIdentifierPattern.matcher(formatIdentifier).matches())
+			return false;
 
-        for (File formatFile: dir.listFiles()) {
-        	// IMPORTANT: substitute the name of this config by the properly formatted format name in the form of <userId>:<formatId>
-            String formatName = ConfigInputFormat.stripExtensions(formatFile.getName());
-            formatName = IndexManager.userFormatName(user.getUserId(), formatName);
-            unloaded.put(formatName, formatFile);
-        }
-
-        // Loading of user formats must be performed after initialization, or we won't have the base formats loaded yet
-        if (!isInitialized)
-        	return this;
-
-        // Load new configs,
-		// use !isEmpty so we can remove entries during iteration (using the finder above) without messing up iterators
-		while (!unloaded.isEmpty()) {
-			Entry<String, File> e = unloaded.entrySet().iterator().next();
-			unloaded.remove(e.getKey());
-
-			load(e.getKey(), e.getValue());
+		// It might be, try to load it
+		try {
+			String userId = getUserIdOrFormatName(formatIdentifier, false);
+			loadUserFormats(userId);
+			return super.isSupported(formatIdentifier);
+		} catch (InputFormatException e) {
+			// the formatIdentifier wasn't valid after all
+			return false;
 		}
-
-		return this;
 	}
 
 	/**
-	 * Register a single new format for this user, loading it from a file.
-	 * This function does not place any restrictions on the actual location of the file.
+	 * Load all user formats already present in this user's directory,
+	 * if this user's formats haven't been loaded already.
 	 *
-	 * This function is in charge of loading the user's format, because the format might refer a "baseFormat",
-	 * which should be provided at load-time by this factory.
-	 *
-	 * Registering an already registered format will reload that format, allowing modifications to the format.
-	 *
-	 * @param user user's id is prefixed to the format file's name to create a unique id
-	 * @param formatFile the file containing the format, the file's name, minus the .blf.* extension is used as the format's name.
-	 * @return this
+	 * @param userId
 	 */
-	public DocIndexerFactoryUserFormats registerFormat(User user, File formatFile) {
-		String formatName = ConfigInputFormat.stripExtensions(formatFile.getName());
-		String formatIdentifier = IndexManager.userFormatName(user.getUserId(), formatName);
+	public synchronized void loadUserFormats(String userId) {
+		if (loadedUsers.contains(userId))
+			return;
 
-		if (isSupported(formatIdentifier))
-			throw new InputFormatConfigException("Duplicate user format " + formatName + " for user " + user.getUserId());
+		if (!User.isValidUserId(userId)) {
+			return;
+		}
 
+		loadedUsers.add(userId);
+		File[] formats;
 		try {
-			load(formatIdentifier, formatFile);
-			return this;
+			formats = getUserFormatDir(formatDir, userId).listFiles();
+		} catch (IOException e) {
+			logger.warn("Could not load formats for user " + userId + ": " + e.getMessage());
+			return;
+		}
+
+		for (File formatFile: formats) {
+			if (!fileNamePattern.matcher(formatFile.getName()).matches()) {
+				logger.warn("Skipping user format " + formatFile +
+				            ": Name may only contain letters, digits, underscore and dash, and must end with .yaml or .json (or .blf.yaml/.blf.json)");
+				continue;
+			}
+
+			String formatIdentifier = getFormatIdentifier(userId, formatFile.getName());
+			unloaded.put(formatIdentifier, formatFile);
+		}
+
+        // Loading of user formats must be performed after initialization, or we won't have the base formats loaded yet
+        if (isInitialized)
+        	loadUnloaded();
+	}
+
+	/**
+	 * Store a new format in the user's format directory.
+	 *
+	 * The name and content of the new format are validated before it is saved.
+	 * If a format with this name already exists for this user, the format is overwritten.
+	 *
+	 * The new format will immediately be available after it has been saved.
+	 *
+	 * @param user user for which to store the format
+	 * @param fileName name of the format, including the .json/.yaml extension
+	 *                 Note that this is different from the formatIdentifier under which this format will be made available,
+	 *                 which is formed from a combination of the userId and formatName.
+	 * @param is content of the file, assumed to be a text file with UTF_8 encoding. This stream is not closed by this function
+	 * @throws BadRequest
+	 * @throws InputFormatException when the format has an illegal name or the file is not a valid config
+	 * @throws InternalServerError if the file couldn't be written for some reason
+	 */
+	public void createUserFormat(User user, String fileName, InputStream is) throws BadRequest, InternalServerError {
+		try {
+			String formatIdentifier = getFormatIdentifier(user.getUserId(), fileName);
+
+			// This is a little stupid, but we need to read the stream twice:
+			// once to validate the file's contents, then again to store the file once the validation passes
+			byte[] content = IOUtils.toByteArray(is);
+
+			ConfigInputFormat config = new ConfigInputFormat(formatIdentifier);
+			InputFormatReader.read(new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8), fileName.endsWith(".json"), config, this.finder);
+			config.validate();
+
+			File userFormatDir = getUserFormatDir(this.formatDir, user.getUserId());
+			File formatFile = new File(userFormatDir, fileName);
+
+			FileUtils.writeByteArrayToFile(formatFile, content, false);
+			config.setReadFromFile(formatFile);
+			addFormat(config);
+		} catch (InputFormatException e) {
+			throw new BadRequest("ILLEGAL_INDEX_NAME", e.getMessage());
 		} catch (InputFormatConfigException e) {
-			throw new InputFormatConfigException("Error while reading config file " + formatFile, e);
+            throw new BadRequest("CONFIG_ERROR", e.getMessage());
+		} catch (IOException e) {
+			throw new InternalServerError("Could not create user format: " + e.getMessage(), 40);
 		}
 	}
 
-	// TODO what happens when this is called while an index is currently using the removed format?
-	// perhaps we do need to memoize the factory...hum
-	public DocIndexerFactoryUserFormats unregisterFormat(String formatIdentifier) {
-		this.supported.remove(formatIdentifier);
-		return this;
+	/**
+	 * Delete a user format, both on disk and from this factory.
+	 * Will attempt to locate unknown formats before deleting, allowing you to delete formats that have not been loaded yet.
+	 * @param user
+	 * @param formatIdentifier a valid identifier encoding the user and format
+	 * @throws NotAuthorized if the format is a builtin format, or is not owned by the user
+	 * @throws NotFound if the format doesn't exist
+	 * @throws InternalServerError if the format can't be deleted properly for some reason
+	 */
+	public void deleteUserFormat(User user, String formatIdentifier) throws NotAuthorized, NotFound, InternalServerError {
+		// Load the format if it's unknown
+		if (!isSupported(formatIdentifier))
+			throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found");
+
+		// getUserIdOrFormatName thould never throw here, seeing as we already support the format and it isn't builtin, so it must contain a userId
+		if (isBuiltinFormat(formatIdentifier) || !getUserIdOrFormatName(formatIdentifier, false).equals(user.getUserId()))
+			throw new NotAuthorized("Can only delete your own formats");
+
+		ConfigInputFormat config = supported.get(formatIdentifier);
+		File file = config.getReadFromFile();
+		if (!file.delete())
+			throw new InternalServerError("Could not delete format " + formatIdentifier, 35);
+		supported.remove(formatIdentifier);
 	}
 
 	// Overridden to remove duplicate check, we just overwrite the format with the new one
-	// Reason is that RequestHandlerAddFormat should exhibit overwrite behavior when posting to the same format
 	@Override
 	protected void addFormat(ConfigInputFormat format) throws InputFormatConfigException {
 		format.validate();
@@ -110,7 +213,76 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
 		unloaded.remove(format.getName());
 	}
 
-	// TODO isSupported(<someUnloadedUser>:<someValidFormat>) will return false, as user formats are not loaded until their respective user has been loaded
-	// so referring to another user's format won't currently work (this was already the case before the DocIndexerFactory refactor)
-	// we'll need to intercept isSupported calls to check if they're a valid user, and if so, load that user's formats.
+
+    /**
+     * Create or get the user's input format configuration dir, verifying that it's readable and an actual directory.
+     *
+     * @param formatDir the top-level directory in which the user directories are located
+     * @param userId the user
+     * @return user's input format config dir
+     * @throws IOException when the dir couldn't be created or is unreadable for whatever reason
+     */
+    private static File getUserFormatDir(File formatDir, String userId) throws IOException {
+    	// step down 2 levels, global dir > user dir > userformat dir
+        File userDir = new File(new File(formatDir, User.getUserDirNameFromId(userId)), FORMATS_SUBDIR_NAME);
+
+        if (!userDir.exists())
+        	Files.createDirectories(userDir.toPath());
+        if (!Files.isReadable(userDir.toPath()))
+        	throw new IOException("Could not read user format directory " + userDir);
+
+        return userDir;
+    }
+
+    /**
+     * Concat the user's id, and the name of a format to generate a unique formatIdentifier.
+     * This function validates the username and format name to ensure the resulting identifier can be properly separated again.
+     *
+     * @param userId the user
+     * @param fileName name of the format, including .json/.yaml extension
+     * @return the id created by joining the two values
+     * @throws InputFormatException on userId or formatName not allowed for formats
+     */
+    private static String getFormatIdentifier(String userId, String fileName) {
+		if (!fileNamePattern.matcher(fileName).matches())
+			throw new InputFormatException("Format file name may only contain letters, digits, underscore and dash, and must end with .yaml or .json (or .blf.yaml/.blf.json)");
+
+		if (!User.isValidUserId(userId) || userId.contains(":"))
+			throw new RuntimeException("Illegal username " + userId);
+
+        return userId + ":" + ConfigInputFormat.stripExtensions(fileName);
+    }
+
+    /**
+     * Extract the userId portion of a formatIdentifier as created by {@link DocIndexerFactoryUserFormats#getFormatIdentifier(User, String)}
+     *
+     * @param formatIdentifier
+     * @param getFormatName return the formatName instead of the userId
+     * @return the userId or formatName
+     * @throws InputFormatException when the formatIdentifier does not contain a userId or formatName, or contains an illegal userId or formatName
+     */
+    private static String getUserIdOrFormatName(String formatIdentifier, boolean getFormatName) throws InputFormatException {
+    	Matcher m = formatIdentifierPattern.matcher(formatIdentifier);
+    	if (!m.matches())
+    		throw new InputFormatException(formatIdentifier + " is not a valid user format id");
+
+    	String userId = User.sanitize(m.group(1));
+    	String formatName = m.group(2);
+    	if (!User.isValidUserId(userId))
+    		throw new InputFormatException(userId + " is not a valid username");
+    	if (!formatNamePattern.matcher(formatName).matches())
+    		throw new InputFormatException("Format configuration name may only contain letters, digits, underscore and dash");
+
+    	return getFormatName ? formatName : userId;
+    }
+
+    private boolean isBuiltinFormat(String formatIdentifier) {
+    	try {
+    		getUserIdOrFormatName(formatIdentifier, false);
+    		return false;
+    	} catch (InputFormatException e) {
+    		// it's not a valid userFormat evidently, so if we support it, then it must be builtin
+    		return isSupported(formatIdentifier);
+    	}
+    }
 }

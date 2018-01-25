@@ -22,7 +22,6 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -168,11 +167,9 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 	public int handle(DataStream ds) throws BlsException {
 
 	    if (urlResource != null && urlResource.length() > 0) {
-
-	        if (!DocumentFormats.isSupported(urlResource))
-                throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' does not exist.");
-
 	        Format format = DocumentFormats.getFormat(urlResource);
+	        if (format == null)
+	        	throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' does not exist.");
 
 	        if (!format.isConfigurationBased())
         		throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
@@ -193,6 +190,9 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 			}
 	    }
 
+	    if (user.isLoggedIn())
+	    	indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
+
 		ds.startMap();
 		ds.startEntry("user").startMap();
 		ds.entry("loggedIn", user.isLoggedIn());
@@ -206,7 +206,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 	    ds.startEntry("supportedInputFormats").startMap();
         for (Format format: DocumentFormats.getSupportedFormats()) {
             String name = format.getId();
-            if (IndexManager.userOwnsFormat(user.getUserId(), name)) {
+            if (!name.contains(":") || name.startsWith(user.getUserId() + ':')) { // TODO
                 ds.startAttrEntry("format", "name", name).startMap()
                     .entry("displayName", format.getDisplayName())
                     .entry("description", format.getDescription())

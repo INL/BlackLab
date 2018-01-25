@@ -94,9 +94,8 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
 		return desc;
 	}
 
-	public DocIndexerFactoryClass addFormat(String formatIdentifier, Class<? extends DocIndexer> docIndexerClass) {
+	public void addFormat(String formatIdentifier, Class<? extends DocIndexer> docIndexerClass) {
 		this.supported.put(formatIdentifier, docIndexerClass);
-		return this;
 	}
 
 	@SuppressWarnings("unchecked")
