@@ -32,7 +32,6 @@ import nl.inl.util.FileUtil.FileTask;
  * and scans the default config directories for subdirectories called "config", then loads any configurations within those directories.
  * Instances of this class can be used to add additional configs within customized directories.
  */
-// TODO lock down api, make sure getFormat/addFormat prerequisites are documented properly
 public class DocIndexerFactoryConfig implements DocIndexerFactory {
 	static final Logger logger = LogManager.getLogger(DocIndexerConfig.class);
 

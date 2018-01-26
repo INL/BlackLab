@@ -233,7 +233,6 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            // TODO Auto-generated catch block
             throw new RuntimeException(e);
         }
     }
