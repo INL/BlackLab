@@ -79,6 +79,9 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
 	 * @param formatDir directory under which to place user's files (see {@link DocIndexerFactoryUserFormats} for details).
 	 */
 	public DocIndexerFactoryUserFormats(File formatDir) {
+		if (formatDir == null || !Files.isDirectory(formatDir.toPath()) || !formatDir.isDirectory())
+			throw new IllegalArgumentException("User format directory does not exist or unreadable.");
+
 		this.formatDir = formatDir;
 	}
 

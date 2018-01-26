@@ -190,7 +190,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 			}
 	    }
 
-	    if (user.isLoggedIn())
+	    if (user.isLoggedIn() && indexMan.getUserFormatManager() != null)
 	    	indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
 
 		ds.startMap();

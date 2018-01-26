@@ -4,7 +4,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -24,8 +26,12 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
 
 		// Get the uploaded file parameters
         String formatIdentifier = urlResource; //request.getParameter("format");
-        searchMan.getIndexManager().getUserFormatManager().deleteUserFormat(user, formatIdentifier);
 
+        DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
+        if (formatMan == null)
+			throw new BadRequest("CANNOT_DELETE_INDEX ", "Could not delete format. The server is not configured with support for user content.");
+
+        formatMan.deleteUserFormat(user, formatIdentifier);
 		return Response.success(ds, "Format deleted.");
 	}
 }

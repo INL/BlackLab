@@ -129,7 +129,7 @@ public class IndexManager {
 
 		// User collections dir, these are like collections, but within a user's directory
 		this.userCollectionsDir = JsonUtil.getFileProp(properties, "userCollectionsDir", null);
-		if (userCollectionsDir != null && !userCollectionsDir.canRead()) {
+		if (userCollectionsDir == null || !userCollectionsDir.canRead()) {
 			logger.warn("Configured user collections not found or not readable: " + userCollectionsDir);
 			userCollectionsDir = null;
 		} else {
@@ -228,6 +228,9 @@ public class IndexManager {
 					"Could not create index. You already have the maximum of "
 							+ IndexManager.MAX_USER_INDICES + " indices.");
 
+		if (userCollectionsDir == null)
+			throw new BadRequest("CANNOT_CREATE_INDEX ", "Could not create index. The server is not configured with support for user content.");
+
 		File userDir = getUserCollectionDir(userId);
 		if (userDir == null || !userDir.canWrite())
 			throw new InternalServerError("Could not create index. Cannot write in user dir: " + userDir, 16);
@@ -247,7 +250,7 @@ public class IndexManager {
 	}
 
 	public boolean canCreateIndex(String userId) {
-		return getAvailablePrivateIndices(userId).size() < IndexManager.MAX_USER_INDICES;
+		return userCollectionsDir != null && getAvailablePrivateIndices(userId).size() < IndexManager.MAX_USER_INDICES;
 	}
 
 	/**
@@ -527,6 +530,11 @@ public class IndexManager {
 		return (deletionMarker.exists() && deletionMarker.canRead());
 	}
 
+	/**
+	 * Note that this will return null if no userCollectionsDir has been set configured, as there is no place to store/read the formats.
+	 *
+	 * @return The user format manager/DocIndexerFactory.
+	 */
     public DocIndexerFactoryUserFormats getUserFormatManager() {
     	return userFormatManager;
     }
