@@ -375,6 +375,10 @@ Metadata of document with specific PID
 
 		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802
 
+Larger snippet around a hit:
+
+        http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/snippet?hitstart=120&hitend=121&wordsaroundhit=50
+
 The entire original document
 
 		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents
@@ -382,6 +386,10 @@ The entire original document
 The entire document, with occurrences of “test” highlighted (with <hl/\> tags)
 
 		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents?patt="test"
+
+Part of the document (embedded in a <blacklabResponse/> root element; BlackLab makes sure the resulting XML is well-formed)
+
+       http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents?wordstart=1000&wordend=2000
 
 ### Output
 
