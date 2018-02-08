@@ -12,19 +12,19 @@ import nl.inl.blacklab.index.config.ConfigInputFormat;
 /**
  * Factory responsible for creating {@link DocIndexer} instances.
  * Through this factory it is possible to register new "formats" with BlackLab.
- * A format essentially is some implementation of a DocIndexer that supports indexing a specific type of file/format (such as for example plaintext, or TEI).
- *
+ * A format essentially is some implementation of a DocIndexer that supports indexing a specific type of file/format (such as for example plaintext or TEI).
+ *<p>
  * If you have created a custom implementation of DocIndexer to index a specific dialect of the TEI format for example, you can make BlackLab aware of that class
  * by registering a new DocIndexerFactory capable of creating the DocIndexer with the {@link DocumentFormats} class.
  * The factory must then expose the new format through {@link DocIndexerFactory#isSupported(String)} and {@link DocIndexerFactory#getFormats()},
  * and construct and configure an appropriate DocIndexer when get() is called for the format's id.
  * BlackLab will then use the factory to create fitting DocIndexers whenever it's asked to index files of that format (as specified by the user).
- * <br><br>
- * How a formatIdentifiers map to actual DocIndexer implementations is up to the factory, it's possible to map multiple formatIdentifiers to the same DocIndexer,
+ * <p>
+ * How formatIdentifiers map to actual DocIndexer implementations is up to the factory, it's possible to map multiple formatIdentifiers to the same DocIndexer,
  * or vice versa, this is up to the implementation of the factory and associated docIndexer(s).
- *
+ *<p>
  * This is used in {@link DocIndexerFactoryConfig} for example, where only a few actual DocIndexer classes are used, but each of them
- * can handle many different external configuration files, and the factory exposes each of those configuration files with its own unique formatIdentifier.
+ * can handle an arbitrary number of external configuration files, and the factory exposes each of those configuration files with its own unique formatIdentifier.
  */
 public interface DocIndexerFactory {
 
@@ -103,7 +103,7 @@ public interface DocIndexerFactory {
 	 * Return all formats supported by this factory.
 	 * @return the list
 	 */
-	List<Format> getFormats();
+	List<? extends Format> getFormats();
 
 	/**
 	 * Get the full format from its identifier.

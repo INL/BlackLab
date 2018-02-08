@@ -264,8 +264,9 @@ public class IndexManager {
 	 * @throws NotAuthorized if this is not a user index
 	 * @throws IndexNotFound if no such index exists
 	 * @throws InternalServerError if the index is in an invalid state
+	 * @throws IllegalIndexName
 	 */
-	public synchronized void deleteUserIndex(String indexId) throws NotAuthorized, IndexNotFound, InternalServerError  {
+	public synchronized void deleteUserIndex(String indexId) throws NotAuthorized, IndexNotFound, InternalServerError, IllegalIndexName  {
 		if (!Index.isUserIndex(indexId))
 			throw new NotAuthorized("Can only delete private indices.");
 
@@ -500,7 +501,7 @@ public class IndexManager {
 	}
 
 	/**
-	 * Checks all indices to see if they directories are still readable, and removes them if this is not the case.
+	 * Checks all indices to see if their directories are still readable, and removes them if this is not the case.
 	 * This can happen when the index is deleted on-disk while we're running.
 	 * This feature is explicitly supported.
 	 */

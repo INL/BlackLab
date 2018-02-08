@@ -19,22 +19,24 @@ import nl.inl.blacklab.index.config.ConfigInputFormat;
  */
 public class DocumentFormats {
 
-	private static List<DocIndexerFactory> factories = new ArrayList<>();
+	private static final List<DocIndexerFactory> factories = new ArrayList<>();
 
 	// We keep a handle to these factories to allow programs on top of blacklab to easily add
 	// new configs and DocIndexer classes through the DocumentFormats class instead of
 	// requiring them to always register a new factory for the format
-	private static DocIndexerFactoryClass builtinClassFactory;
-	private static DocIndexerFactoryConfig builtinConfigFactory;
+	private static final DocIndexerFactoryClass builtinClassFactory;
+	private static final DocIndexerFactoryConfig builtinConfigFactory;
 
     static {
-    	builtinClassFactory = new DocIndexerFactoryClass();
-    	builtinConfigFactory = new DocIndexerFactoryConfig();
+		builtinClassFactory = new DocIndexerFactoryClass();
+		builtinConfigFactory = new DocIndexerFactoryConfig();
 
-    	// Last registered factory has priority (to allow users to override types)
-        // So register config-based factory after class-based factory
-        registerFactory(builtinClassFactory);
-        registerFactory(builtinConfigFactory);
+		// Last registered factory has priority (to allow users to override types)
+		// So register config-based factory after class-based factory
+		registerFactory(builtinClassFactory);
+		registerFactory(builtinConfigFactory);
+
+		registerFactory(new DocIndexerFactoryConvertAndTag());
     }
 
     /**
@@ -102,26 +104,9 @@ public class DocumentFormats {
 		return getFactory(formatIdentifier) != null;
 	}
 
-    /**
-     * Returns a list of all registered document format abbreviations for all factories,
-     * sorted by descending priority.
-     * Note that this list might contain duplicates if multiple factories support the same formatIdentifier,
-     * such as when registering extra instances of the builtin factories.
-     * In this case, the first of those entries is the one that is actually used.
-     *
-     * @return the list of registered abbreviations
-     */
-    public static List<Format> getSupportedFormats() {
-        List<Format> ret = new ArrayList<>();
-    	for (DocIndexerFactory fac : factories)
-    		ret.addAll(fac.getFormats());
-    	Collections.reverse(ret);
-    	return ret;
-    }
-
 	/**
-	 * Returns an alphabetically sorted list of registered document format abbreviations.
-	 * Note that this list will not contain duplicates, though internally ids may be duplicated (though only the most recent once is used)
+	 * Returns an alphabetically sorted list of registered document formats.
+	 * Note that though this list will not contain duplicates, duplicates might exist internally (see {@link DocumentFormats#getFormats()}).
 	 *
 	 * @return the list of registered formatIdentifiers
 	 * @deprecated use getFormats()
@@ -129,7 +114,7 @@ public class DocumentFormats {
     @Deprecated
 	public static List<String> list() {
 		HashSet<String> s = new HashSet<>();
-		for (Format d : getSupportedFormats())
+		for (Format d : getFormats())
 			s.add(d.getId());
 
 		List<String> l = new ArrayList<>(s);
@@ -137,19 +122,22 @@ public class DocumentFormats {
 		return l;
 	}
 
-	/**
-	 * Returns a list of registered document format abbreviations,
-	 * sorted by priority (in case of duplicate names, the earlier entry will be used).
-	 *
-	 * @return the list of registered abbreviations
-	 */
+    /**
+     * Returns a list of all registered document formats for all factories,
+     * ordered by descending priority.
+     * Note that this list might contain duplicates if multiple factories support the same formatIdentifier,
+     * such as when registering extra instances of the builtin factories.
+     * In this case, the first of those entries is the one that is actually used.
+     *
+     * @return the list of registered abbreviations
+     */
 	public static List<Format> getFormats() {
-        List<Format> ret = new ArrayList<>();
-    	for (DocIndexerFactory fac : factories)
-    		ret.addAll(fac.getFormats());
-    	Collections.reverse(ret);
-    	return ret;
-	}
+	        List<Format> ret = new ArrayList<>();
+	    	for (DocIndexerFactory fac : factories)
+	    		ret.addAll(fac.getFormats());
+	    	Collections.reverse(ret);
+	    	return ret;
+    	}
 
 	/**
 	 * Returns a format descriptor for a specific format

@@ -129,8 +129,10 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
 	@Override
 	public Format getFormat(String formatIdentifier) {
-		ConfigInputFormat inputFormat = this.supported.get(formatIdentifier);
+		if (!isSupported(formatIdentifier))
+			return null;
 
+		ConfigInputFormat inputFormat = this.supported.get(formatIdentifier);
 		Format desc = new Format(inputFormat.getName(), inputFormat.getDisplayName(), inputFormat.getDescription());
 		desc.setConfig(inputFormat);
 		desc.setUnlisted(false);

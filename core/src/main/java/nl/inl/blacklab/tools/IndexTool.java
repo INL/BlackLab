@@ -350,7 +350,7 @@ public class IndexTool {
 						+ "                         indexer.properties file. This field is stored untokenized.\n"
 						+ "\n"
 						+ "Available input format configurations:");
-		for (Format format: DocumentFormats.getSupportedFormats()) {
+		for (Format format: DocumentFormats.getFormats()) {
             String name = format.getId();
 		    String displayName = format.getDisplayName();
 		    String desc = format.getDescription();

@@ -204,7 +204,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
 		// List supported input formats
 	    ds.startEntry("supportedInputFormats").startMap();
-        for (Format format: DocumentFormats.getSupportedFormats()) {
+        for (Format format: DocumentFormats.getFormats()) {
             String name = format.getId();
             if (!name.contains(":") || name.startsWith(user.getUserId() + ':')) { // TODO
                 ds.startAttrEntry("format", "name", name).startMap()
