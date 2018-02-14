@@ -60,11 +60,10 @@ public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGr
 		return getGroupMap().get(identity);
 	}
 
-	Iterator<HitGroup> currentIt;
-
 	@Override
 	public Iterator<HitGroup> iterator() {
-		currentIt = getGroups().iterator();
+		final Iterator<HitGroup> currentIt = getGroups().iterator();
+
 		return new Iterator<HitGroup>() {
 
 			@Override
