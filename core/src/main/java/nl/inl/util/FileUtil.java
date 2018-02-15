@@ -287,7 +287,11 @@ public class FileUtil {
 	public static File findFile(List<File> dirsToSearch, String pathToFile, List<String> extensions) {
         // Read JSON or YAML config file from any of the specified directories.
         File configFile;
+        int i = 0;
         for (File dir: dirsToSearch) {
+            if (dir == null)
+                throw new IllegalArgumentException("dirsToSearch[" + i + "] == null!");
+            i++;
             if (extensions == null) {
                 configFile = new File(dir, pathToFile);
                 boolean fileExists = configFile.exists();
@@ -299,7 +303,11 @@ public class FileUtil {
                 if (fileExists && reallyInsideDir)
                     return configFile;
             } else {
+                int j = 0;
                 for (String ext: extensions) {
+                    if (ext == null)
+                        throw new IllegalArgumentException("extensions[" + j + "] == null!");
+                    j++;
                     configFile = new File(dir, pathToFile + "." + ext);
                     boolean fileExists = configFile.exists();
                     boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());

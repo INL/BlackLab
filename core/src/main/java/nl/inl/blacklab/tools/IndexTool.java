@@ -222,8 +222,10 @@ public class IndexTool {
 
 		File indexDirParent = indexDir.getAbsoluteFile().getParentFile();
 		File inputDirParent = inputDir.getAbsoluteFile().getParentFile();
-		List<File> dirs = new ArrayList<>(Arrays.asList(new File("."), inputDir, inputDirParent, indexDir));
-		if (!dirs.contains(indexDirParent))
+		List<File> dirs = new ArrayList<>(Arrays.asList(new File("."), inputDir, indexDir));
+		if (inputDirParent != null)
+		    dirs.add(2, inputDirParent);
+		if (indexDirParent != null && !dirs.contains(indexDirParent))
 			dirs.add(indexDirParent);
 		propFile = FileUtil.findFile(dirs, "indexer", Arrays.asList("properties"));
 		if (propFile != null && propFile.canRead())
