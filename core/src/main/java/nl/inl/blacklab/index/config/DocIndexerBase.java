@@ -40,7 +40,7 @@ import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerBase extends DocIndexer {
 
-    private static final boolean TRACE = true;
+    private static final boolean TRACE = false;
 
     /** Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
     static final class OpenTagInfo {
