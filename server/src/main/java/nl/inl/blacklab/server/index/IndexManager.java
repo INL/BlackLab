@@ -247,8 +247,13 @@ public class IndexManager {
 		if (userDir == null || !userDir.canWrite())
 			throw new InternalServerError("Could not create index. Cannot write in user dir: " + userDir, 16);
 
-		// TODO this should be handled by Index
 		File indexDir = new File(userDir, indexName);
+
+		// TODO this should be handled by Index
+		if (isPendingDeletion(indexDir)) { 
+			// Don't let any deletion markers linger around (when index used to exist and couldn't be fully deleted)
+			BlsUtils.delTree(indexDir);
+		}
 		boolean contentViewable = true; // user may view his own private corpus documents
 		Searcher searcher = Searcher.createIndex(indexDir, displayName, documentFormatId, contentViewable);
 		searcher.close();
