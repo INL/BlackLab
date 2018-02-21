@@ -32,8 +32,9 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
     	 * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
     	 *
     	 * @param dir the directory
+    	 * @throws Exception
     	 */
-        void directory(File dir);
+        void directory(File dir) throws Exception;
 
     	/**
     	 * Handle a file stream.
@@ -47,8 +48,9 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
     	 *
     	 * @param path
     	 * @param f
+    	 * @throws Exception
     	 */
-        void file(String path, InputStream f);
+        void file(String path, InputStream f) throws Exception;
     }
 
     /**
@@ -320,10 +322,17 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
     	if (!fileOrDirToProcess.exists())
     		throw new FileNotFoundException("Input file or dir not found: " + fileOrDirToProcess);
 
-    	if (fileOrDirToProcess.isDirectory()) {
-    		fileHandler.directory(fileOrDirToProcess);
+    	if (fileOrDirToProcess.isDirectory()) { // Even if recurseSubdirs is false, we should process the parent dir's file contents
+    		try {
+    			fileHandler.directory(fileOrDirToProcess);
+    		} catch (Exception e) {
+    			keepProcessing = errorHandler.errorOccurred(fileOrDirToProcess.getName(), null, e);
+    			if (!keepProcessing)
+    				return;
+    		}
+
     		for (File childFile : FileUtil.listFilesSorted(fileOrDirToProcess)) {
-    			if (!childFile.isDirectory() || recurseSubdirs) // Even if recurseSubdirs is false, we should process the parent dir's file contents
+    			if (!childFile.isDirectory() || recurseSubdirs)
     				processFile(childFile);
 
 	            if (!keepProcessing)

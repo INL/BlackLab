@@ -44,7 +44,6 @@ import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.util.ExUtil;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileProcessor.ErrorHandler;
 import nl.inl.util.FileProcessor.FileHandler;
@@ -97,20 +96,30 @@ public class Indexer {
 		public IndexDocIndexerPassthrough() {}
 
 		@Override
-		public void directory(File dir) {
+		public void directory(File dir) throws Exception {
 			//ignore
 		}
 
 		@Override
-		public void file(String path, InputStream f) {
+		public void file(String path, InputStream f) throws Exception {
 			String documentName = FilenameUtils.getName(path);
 
+			// TODO streamline (hah) stream handling
+			// there's quite a bit of wrapping streams in streams in streams and going back and forth between text and bytes
+			// so much so that it's unclear what we're doing encoding-wise a few stack frames later in the docIndexers
 			// The DocIndexer will close the stream for us
-			try (DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, documentName, new UnicodeStream(f, DEFAULT_INPUT_ENCODING), DEFAULT_INPUT_ENCODING)) {
+			try (
+				// Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream doesn't contain a a BOM
+				// This doesn't do any character parsing/decoding itself, it just detects and skips the BOM (if present) and exposes the correct character set for this stream (if present)
+				// This way we can later use the charset to decode the input
+				// There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the default encoding to our DocIndexer
+				// This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
+				// In the case of binary data docIndexers, they should always ignore the encoding anyway
+				// and for text docIndexers, passing a binary file is an error in itself already.
+				UnicodeStream inputStream = new UnicodeStream(f, DEFAULT_INPUT_ENCODING);
+				DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, documentName, inputStream, inputStream.getEncoding());
+			) {
 				indexDocIndexer(documentName, docIndexer);
-			}
-			catch (Exception e) {
-				throw ExUtil.wrapRuntimeException(e);
 			}
 		}
 	}
@@ -335,7 +344,9 @@ public class Indexer {
     	if (create) {
     		if (indexTemplateFile != null) {
     			searcher = Searcher.openForWriting(directory, true, indexTemplateFile);
-    			// from indexTemplateFile (if it was provided)
+
+    			// Read back the formatIdentifier that was provided through the indexTemplateFile now that the index has written it
+    			// might be null
     			final String defaultFormatIdentifier = searcher.getIndexStructure().getDocumentFormat();
 
     			if (DocumentFormats.isSupported(formatIdentifier)) {
@@ -637,7 +648,7 @@ public class Indexer {
 	}
 
     /**
-     * Index a document or archive (if enabled by {@link #setProcessArchivesAsDirectories(boolean)}
+     * Index a document (or archive if enabled by {@link #setProcessArchivesAsDirectories(boolean)}
      *
      * @param fileName
      * @param input
@@ -680,7 +691,7 @@ public class Indexer {
 	 * @param file
 	 * @param fileNameGlob only files
 	 */
-	// TODO this is nearly a literal copy of index for a stream, unify them somehow
+	// TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
 	public void index(File file, String fileNameGlob) {
 		try (FileProcessor proc = new FileProcessor(useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
 			proc.setFileNameGlob(fileNameGlob);
