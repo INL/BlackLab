@@ -2,20 +2,25 @@ package nl.inl.blacklab.indexers.preprocess;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PushbackInputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.input.ReaderInputStream;
 
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 
 public class DocIndexerConvertAndTag extends DocIndexer {
 
-	Reader converterInput;
+	PushbackInputStream converterInput;
+	/** Charset of the data for our converter and tagger input/output, might be null if our converter/tagger do not use charsets (because they process binary data for example). */
+	Charset charset;
 
 	private ConvertPlugin converter;
 	private TagPlugin tagger;
@@ -30,29 +35,49 @@ public class DocIndexerConvertAndTag extends DocIndexer {
 		//
 	}
 
+	/**
+	 * Use {@link DocIndexerConvertAndTag#setDocument(InputStream, Charset) if at all possible. }
+	 */
 	@Override
 	public void setDocument(Reader reader) {
-		converterInput = reader;
+		// Reader outputs chars, so we can determine our own charset when we put them back into a stream
+		// We just need to make sure to pass it on to whatever consumes the stream
+		converterInput = new PushbackInputStream(new ReaderInputStream(reader, StandardCharsets.UTF_8));
+		charset = StandardCharsets.UTF_8;
 	}
 
-	// TODO manage streams
+	@Override
+	public void setDocument(InputStream is, Charset cs) {
+		converterInput = new PushbackInputStream(is);
+		charset = cs;
+	}
+
 	@Override
 	public void index() throws Exception {
 		if (this.converterInput == null)
 			throw new IllegalStateException("A document must be set before calling index()");
 
-		final Charset intermediateCharset = StandardCharsets.UTF_8;
+		Reader indexerInput = null;
 
-		// Use ByteArrayOutputStream on purpose, as we can reuse it and it allows us to read the data without hitting the filesystem
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		converter.perform(converterInput, FilenameUtils.getExtension(this.documentName).toLowerCase(), new OutputStreamWriter(output, intermediateCharset));
+		/*
+		 * If the converter can't handle the file,
+		 * we assume that the file is already in the output format, and we attempt to index it directly.
+		 * This isn't entirely correct when the file is in a format neither the converter nor the indexer can handle, but that is technically user error.
+		 */
+		if (converter.canConvert(converterInput, charset, FilenameUtils.getExtension(this.documentName).toLowerCase())) {
+			// ByteArrayOutputStream close() can conveniently be read and reused even after close()
+			ByteArrayOutputStream output = new ByteArrayOutputStream();
+			final Charset intermediateCharset = StandardCharsets.UTF_8;
+			converter.perform(converterInput, charset, FilenameUtils.getExtension(this.documentName).toLowerCase(), output);
 
-		Reader taggerInput = new InputStreamReader(new ByteArrayInputStream(output.toByteArray()), intermediateCharset);
-		System.out.println("test");
-		output.reset(); // reuse output memory, safe since the data was already copied by .toByteArray()
-		tagger.perform(taggerInput, new OutputStreamWriter(output, intermediateCharset));
+			Reader taggerInput = new InputStreamReader(new ByteArrayInputStream(output.toByteArray()), intermediateCharset);
+			output.reset();
+			tagger.perform(taggerInput, new OutputStreamWriter(output, intermediateCharset));
+			indexerInput = new InputStreamReader(new ByteArrayInputStream(output.toByteArray()), intermediateCharset);
+		} else {
+			indexerInput = new InputStreamReader(converterInput, charset);
+		}
 
-		Reader indexerInput = new InputStreamReader(new ByteArrayInputStream(output.toByteArray()), intermediateCharset);
 		DocIndexer outputIndexer = DocumentFormats.get(tagger.getOutputFormatIdentifier(), this.indexer, tagger.getOutputFileName(this.documentName), indexerInput);
 		outputIndexer.index();
 	}

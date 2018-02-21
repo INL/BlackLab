@@ -1,14 +1,16 @@
 package nl.inl.blacklab.indexers.preprocess;
 
-import java.io.Reader;
-import java.io.Writer;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PushbackInputStream;
+import java.nio.charset.Charset;
 import java.util.Set;
 
 public interface ConvertPlugin extends Plugin {
 
 	/**
 	 * Get a list of file extensions or formats (not strictly formatIdentifiers, though there might be overlap) that this converter can convert from.
-	 * Is purely for descriptive purposes, and has no exact relation to the strings passed into {@link ConvertPlugin#perform(Reader, String, Writer)},
+	 * Is purely for descriptive purposes, and has no exact relation to the strings passed into {@link ConvertPlugin#perform(InputStream, Charset, String, OutputStream)},
 	 * so exact spelling, punctuation or capitalization is not of technical importance.
 	 *
 	 * This overlaps somewhat with the purpose of getDescription() but it's important we have a consistent way of describing converter capabilties.
@@ -28,12 +30,23 @@ public interface ConvertPlugin extends Plugin {
 	public String getOutputFormat();
 
 	/**
+	 * Can this converter convert this file
+	 *
+	 * @param is
+	 * @param cs
+	 * @param inputFormat
+	 * @return true if this file can be converted into this plugin's outputFormat
+	 */
+	public boolean canConvert(PushbackInputStream is, Charset cs, String inputFormat);
+
+	/**
 	 * Perform on a text file.
 	 *
-	 * @param reader input. Should not be closed by the implementation.
-	 * @param inputFormat format of the input data, may also be a file extension
-	 * @param writer output. Should not be closed by the implementation.
+	 * @param is input. Should not be closed by the implementation.
+	 * @param cs as inputFormat, but for the charset of the inputStream, not always meaningful, but required for some implementations that transform textual data.
+	 * @param inputFormat arbitrary string describing input data, can be file extension, or more semantic. Usage may vary, so acceptable values must be coordinated between callers and implementations.
+	 * @param os output. Should not be closed by the implementation.
 	 * @throws PluginException
 	 */
-	public void perform(Reader reader, String inputFormat, Writer writer) throws PluginException;
+	public void perform(InputStream is, Charset cs, String inputFormat, OutputStream os) throws PluginException;
 }
