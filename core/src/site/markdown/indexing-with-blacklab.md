@@ -55,17 +55,30 @@ Here, FILTER_QUERY is a metadata filter query in Lucene query language that matc
 
 ## Supported formats
 
-Here's a list of supported input formats:
+BlackLab supports a number of input formats that are common in corpus linguistics:
 
-* folia (a corpus XML format popular in the Netherlands; see https://proycon.github.io/folia/)
-* tei (a popular XML format for linguistic resources, including corpora. indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type'; see http://www.tei-c.org/)
-* tei-element-text (a variant of TEI where content inside the 'text' element is indexed)
-* tei-pos-function (a variant of TEI where part of speech is in an attribute called 'function')
-* sketchxml (a simple XML format based on the word-per-line files that the Sketch Engine and CWB use)
+* tei ([Text Encoding Initiative](http://www.tei-c.org/), a popular XML format for linguistic resources, including corpora. indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type')
+* sketch-wpl (the TSV/XML hybrid input [format the Sketch Engine/CWB use](https://www.sketchengine.co.uk/documentation/preparing-corpus-text/))
+* chat ([Codes for the Human Analysis of Transcripts](https://en.wikipedia.org/wiki/CHILDES#Database_Format), the format used by the CHILDES project)
+* folia (a [corpus XML format](https://proycon.github.io/folia/) popular in the Netherlands)
+* tsv-frog (tab-separated file as produced by the [Frog annotation tool](https://languagemachines.github.io/frog/))
+
+BlackLab also supports these generic file formats:
+
+* csv (Comma-Separated Values file that should have column names "word", "lemma" and "pos")
+* tsv (Tab-Separated Values file that should have column names "word", "lemma" and "pos")
+* txt (A plain text file; will tokenize on whitespace and index word forms)
+
+A number of less common formats are also supported:
+
 * pagexml (OCR XML format)
-* alto (OCR XML format; see http://www.loc.gov/standards/alto/)
+* alto ([an OCR XML format](http://www.loc.gov/standards/alto/))
+* whitelab2 (FoLiA format, but specifically tailored for the [WhiteLab2](https://github.com/Taalmonsters/WhiteLab2.0) search frontend)
+* sketchxml (a variant of the Sketch Engine format that's "true XML", i.e. tab-separated values replaced with elements)
+* di-tei-element-text (a variant of TEI where content inside the 'text' element is indexed)
+* di-tei-pos-function (a variant of TEI where part of speech is in an attribute called 'function')
 
-Adding support for your own format is not hard, and can be done either by [writing a configuration file](how-to-configure-indexing.html) or by [writing Java code](add-input-format.html).
+Adding support for your own format is not difficult, and can be done either by [writing a configuration file](how-to-configure-indexing.html) or by [writing Java code](add-input-format.html). Please [contact us](mailto:jan.niestadt@ivdnt.org) if you have any questions.
 
 If you choose the first option, specify the format name (which must match the name of the .yaml or .json file) as the FORMAT parameter. IndexTool will search a number of directories, including the current directory and the (parent of the) input directory for format files.
 
