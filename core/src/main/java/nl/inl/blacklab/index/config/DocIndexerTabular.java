@@ -115,6 +115,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
             tabularFormat = tabularFormat.withDelimiter(opt.get("delimiter").charAt(0));
         if (opt.containsKey("quote") && opt.get("quote").length() > 0)
             tabularFormat = tabularFormat.withQuote(opt.get("quote").charAt(0));
+        else
+            tabularFormat = tabularFormat.withQuote('\u0000'); // disable quotes altogether
         hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
         hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
         if (opt.containsKey("multipleValuesSeparator"))
@@ -175,7 +177,9 @@ public class DocIndexerTabular extends DocIndexerConfig {
                 setCurrentComplexField(annotatedField.getName());
 
                 // For each token position
+                int recordNumber = 0;
                 for (CSVRecord record: records) {
+                    recordNumber++;
                     if (record.size() == 0)
                         continue; // skip empty lines
 
@@ -187,6 +191,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             // It's a document tag, an inline tag or a glue tag
                             boolean isOpenTag = m.group(1) == null;
                             String tagName = m.group(2);
+
                             String rest = m.group(3).trim();
                             boolean selfClosing = rest.endsWith("/");
                             if (!isOpenTag && selfClosing)
