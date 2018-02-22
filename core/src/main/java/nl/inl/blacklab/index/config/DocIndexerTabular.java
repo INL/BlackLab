@@ -84,6 +84,13 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     private boolean hasGlueTags;
 
+    /**
+     * After an inline tag such as <s>, may there be separator character(s) like on the
+     * non-tag lines? By default, this is not allowed, but this option can be turned on
+     * in the configuration file.
+     */
+    private boolean allowSeparatorsAfterInlineTags;
+
     private String multipleValuesSeparator = ";";
 
     private BufferedReader inputReader;
@@ -117,6 +124,9 @@ public class DocIndexerTabular extends DocIndexerConfig {
             tabularFormat = tabularFormat.withQuote(opt.get("quote").charAt(0));
         else
             tabularFormat = tabularFormat.withQuote('\u0000'); // disable quotes altogether
+        allowSeparatorsAfterInlineTags = true;
+        if (opt.containsKey("allowSeparatorsAfterInlineTags") && opt.get("allowSeparatorsAfterInlineTags").equalsIgnoreCase("true"))
+            allowSeparatorsAfterInlineTags = false;
         hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
         hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
         if (opt.containsKey("multipleValuesSeparator"))
@@ -177,21 +187,19 @@ public class DocIndexerTabular extends DocIndexerConfig {
                 setCurrentComplexField(annotatedField.getName());
 
                 // For each token position
-                int recordNumber = 0;
                 for (CSVRecord record: records) {
-                    recordNumber++;
                     if (record.size() == 0)
                         continue; // skip empty lines
 
                     // If this format contains tags...
-                    if (lookForTags && record.size() == 1) {
+                    if (lookForTags && (record.size() == 1 || allowSeparatorsAfterInlineTags)) {
                         // Is this a tag line instead of a token line?
-                        Matcher m = REGEX_TAG.matcher(record.get(0));
+                        String possibleTag = record.get(0);
+                        Matcher m = REGEX_TAG.matcher(possibleTag);
                         if (m.find()) {
                             // It's a document tag, an inline tag or a glue tag
                             boolean isOpenTag = m.group(1) == null;
                             String tagName = m.group(2);
-
                             String rest = m.group(3).trim();
                             boolean selfClosing = rest.endsWith("/");
                             if (!isOpenTag && selfClosing)
