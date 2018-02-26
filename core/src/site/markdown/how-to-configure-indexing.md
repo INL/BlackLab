@@ -6,6 +6,7 @@ NOTE: this describes the new way of indexing, using index format configuration f
 * <a href="#supported-formats">Supported formats</a>
 * <a href="#input-format-config-overview">Basic overview of a configuration file</a>
 * <a href="#working-with-yaml">Working with YAML</a>
+* <a href="#extend-format">How to extend existing formats</a>
 * <a href="#sensitivity">Configuring case- and diacritics sensitivity per property</a>
 * <a href="#disable-fi">Why and how to disable the forward index for a property</a>
 * <a href="#multiple-values">Multiple values at one position</a>
@@ -220,6 +221,29 @@ Many text editors can also help you edit YAML files by highlighting characters w
 
 ### More information
 To learn more about YAML, see the [official site](http://yaml.org/) or this [introduction](http://docs.ansible.com/ansible/latest/YAMLSyntax.html).
+
+<a id="extend-format"></a>
+
+## How to extend existing formats
+
+It is possible to extend an existing format. This is done by specifying the "baseFormat" setting at the top-level. You should set it to the name of the format you wish to extend.
+
+It matters where baseFormat is placed, as it effectively copies values from the specified format when it is encountered. It's usually best to specify baseFormat somewhere at the top of the file. You can put it after 'name' and 'description' if you wish, as those settings are not copied.
+
+To be precise, setting baseFormat does the following:
+
+- copy type, fileType, documentPath, store, metadataDefaultAnalyzer, 
+- copy the corpusConfig settings
+- add all fileTypeOptions
+- add all namespace declarations
+- add all indexFieldAs entries
+- add all annotatedFields entries
+- add all metadata entries
+- add all linkedDocument entries
+
+In other words: setting a base format allows you to add or change file type options, namespace declarations, indexFieldAs entries, annotated fields or linked documents. You can also add (embedded) metadata sections.
+
+Note that most blocks are not "merged": if you want to change annotated field settings, you will have to redefine the entire annoted field in the "derived" configuration file; you can't just specify the setting you wish to override for that field. It is also not possible to make changes to existing metadata sections.
 
 <a id="sensitivity"></a>
 
