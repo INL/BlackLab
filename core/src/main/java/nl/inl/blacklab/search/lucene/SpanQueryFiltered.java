@@ -27,6 +27,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchNoDocsQuery;
+import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.lucene.search.TermQuery;
@@ -71,6 +72,11 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 		List<BLSpanQuery> rewritten = rewriteClauses(reader);
 		Query rewrittenFilter = filter.rewrite(reader);
+		if (rewrittenFilter instanceof MultiTermQuery) {
+            // Wrap it so it is rewritten to a BooleanQuery and we avoid the
+            // "doesn't implement createWeight" problem.
+		    rewrittenFilter = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery)rewrittenFilter).rewrite(reader);
+		}
 		return rewritten == null ? this : new SpanQueryFiltered(rewritten.get(0), rewrittenFilter);
 	}
 
@@ -128,6 +134,11 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
         Query rewrite = filter.rewrite(searcher.getIndexReader());
+        if (rewrite instanceof MultiTermQuery) {
+            // Wrap it so it is rewritten to a BooleanQuery and we avoid the
+            // "doesn't implement createWeight" problem.
+            rewrite = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery)rewrite).rewrite(searcher.getIndexReader());
+        }
         if (rewrite instanceof MatchNoDocsQuery)
             rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the 'Query does not implement createWeight issue'
         Weight filterWeight = rewrite.createWeight(searcher, false);
