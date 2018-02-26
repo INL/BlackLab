@@ -30,21 +30,25 @@ NOTE: this describes the new way of indexing, using index format configuration f
 
 Start the IndexTool without parameters for help information:
 
-    java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool
+    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool
  
+(this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory)
+
+(if you're on Windows, replace the classpath separator colon (:) with a semicolon (;))
+
 To create a new index:
 
-    java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
+    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
 
 To add documents to an existing index:
 
-    java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool add INDEX_DIR INPUT_FILES FORMAT
+    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool add INDEX_DIR INPUT_FILES FORMAT
 
 If you specify a directory as the INPUT_FILES, it will be scanned recursively. You can also specify a file glob (such as \*.xml; single-quote it if you're on Linux so it doesn't get expanded by the shell) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index the contents.
 
 For example, if you have TEI data in /tmp/my-tei/ and want to create an index as a subdirectory of the current directory called "test-index", run the following command:
 
-    java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei
+    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei
 
 Your data is indexed and placed in a new BlackLab index in the "test-index" directory.
 
@@ -52,7 +56,7 @@ NOTE: if you don't specify a glob, IndexTool will index all files by default. Yo
 
 To delete documents from an index:
 
-    java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool delete INDEX_DIR FILTER_QUERY
+    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool delete INDEX_DIR FILTER_QUERY
     
 Here, FILTER_QUERY is a metadata filter query in Lucene query language that matches the documents to delete. Deleting documents and re-adding them can be used to update documents.
 

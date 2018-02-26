@@ -77,19 +77,21 @@ The [Brown corpus](http://en.wikipedia.org/wiki/Brown_Corpus "http://en.wikipedi
 
 Start the IndexTool without parameters for help information:
 
-	java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool
+	java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool
  
-(replace BLACKLAB_JAR with the path to your BlackLab JAR, e.g. "target/blacklab*.jar")
+(this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory)
+
+(if you're on Windows, replace the classpath separator colon (:) with a semicolon (;))
 
 We want to create a new index, so we need to supply an index directory, input file(s) and an input format:
 
-	java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
+	java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
 
-If you specify a directory as the INPUT_FILES, it will be scanned recursively. You can also specify a file glob (such as \*.xml) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index the contents.
+If you specify a directory as the INPUT_FILES, it will be scanned recursively. You can also specify a file glob (such as \*.xml) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index its contents.
 
 For example, if you have TEI data in /tmp/my-tei/ and want to create an index as a subdirectory of the current directory called "test-index", run the following command:
 
-	java -cp BLACKLAB_JAR nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei
+	java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei
 
 Your data is indexed and placed in a new BlackLab index in the "test-index" directory.
 
@@ -102,7 +104,7 @@ See also:
 
 BlackLab Core includes a very basic command-based query tool useful for testing and debugging. To query the index you just created using this tool, type:
 
-	java -cp BLACKLAB_JAR nl.inl.blacklab.tools.QueryTool test-index
+	java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.QueryTool test-index
 
 The query tool supports several query languages, but it will start in CorpusQL mode. A few hints:
 

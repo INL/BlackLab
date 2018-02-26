@@ -425,11 +425,11 @@ To remove an input format, send a DELETE request to the format page, e.g. `/blac
 
 ## Installation
 
-First, you need the BlackLab Server WAR file. You can either download the latest release [https://github.com/INL/BlackLab/releases here], or you can build it by cloning the [https://github.com/INL/BlackLab GitHub repository] and building it using Maven.
+First, you need the BlackLab Server WAR file. You can either download the latest release [here](https://github.com/INL/BlackLab/releases), or you can build it by cloning the [repository](https://github.com/INL/BlackLab GitHub) and building it using Maven.
 
 BlackLab Server needs to run in a Java application server that support servlets. We’ll assume Apache Tomcat here, but others should work almost the same.
 
-For larger indices, it is important to give Tomcat's JVM enough heap memory. See [http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/ here]. (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.)
+For larger indices, it is important to give Tomcat's JVM enough heap memory. See [here](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.)
 
 Place the configuration file blacklab-server.json (see Appendix A) in /etc/blacklab/ or, if you prefer, on the application server’s classpath. Make sure at least the “indexCollections” setting is correctly specified (should point to a directory containing one or more BlackLab indices as subdirectories). Apart from that, the file could actually be empty: default values are used for missing settings. So if you have an index in directory /home/jan/blacklab/test, the minimal blacklab-server.json looks like this:
 
