@@ -238,8 +238,12 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	 * @throws BlsException on parse error or other query-related error (e.g. too broad)
 	 */
 	final public void perform(int waitTimeMs) throws BlsException {
-		if (performCalled)
-			throw new RuntimeException("Already performing search!");
+
+	    synchronized(this) {
+    		if (performCalled)
+    			throw new RuntimeException("Already performing search!");
+            performCalled = true;
+	    }
 
 		// Create and start thread
 		// TODO: use thread pooling..?
@@ -248,7 +252,6 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		setLevelRunningAt = startedAt;
 		searchThread = new SearchThread(this);
 		searchThread.start();
-		performCalled = true;
 
 		waitUntilFinished(waitTimeMs);
 	}
