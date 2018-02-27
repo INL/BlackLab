@@ -240,6 +240,10 @@ Input format configuration files should be named `<formatIdentifier>.blf.yaml` o
         # (used by BLS to either allow or disallow fetching full document content)
         # (defaults to false because this is not allowed for some datasets)
         contentViewable: true
+        
+        # Text direction of this corpus (e.g. "LTR", "left-to-right", "RTL", etc.).
+        # (default: LTR)
+        textDirection: LTR
     
         # You can divide your metadata fields into groups, which can
         # be useful if you want to display them in a tabbed interface.

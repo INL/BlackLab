@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.FileUtil;
@@ -173,6 +174,9 @@ public class IndexStructure {
 
 	/** May all users freely retrieve the full content of documents, or is that restricted? */
 	private boolean contentViewable = false;
+
+    /** Text direction for this corpus */
+    private TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
 
 	/** Indication of the document format(s) in this index.
 	 *
@@ -358,6 +362,7 @@ public class IndexStructure {
 		displayName = indexMetadata.getDisplayName();
 		description = indexMetadata.getDescription();
 		contentViewable = indexMetadata.getContentViewable();
+		textDirection = indexMetadata.getTextDirection();
 		documentFormat = indexMetadata.getDocumentFormat();
 		tokenCount = indexMetadata.getTokenCount();
 		JsonNode versionInfo = indexMetadata.getVersionInfo();
@@ -514,7 +519,8 @@ public class IndexStructure {
 		ObjectNode root = indexMetadata.getRoot();
 		root.put("displayName", displayName);
 		root.put("description", description);
-		root.put("contentViewable", contentViewable);
+        root.put("contentViewable", contentViewable);
+        root.put("textDirection", textDirection.getCode());
 		root.put("documentFormat", documentFormat);
 		root.put("tokenCount", tokenCount);
 		ObjectNode versionInfo = root.putObject("versionInfo");
@@ -1014,6 +1020,14 @@ public class IndexStructure {
 		return contentViewable;
 	}
 
+    /**
+     * What's the text direction of this corpus?
+     * @return text direction
+     */
+	public TextDirection getTextDirection() {
+	    return textDirection;
+	}
+
 	/**
 	 * What format(s) is/are the documents in?
 	 *
@@ -1138,22 +1152,6 @@ public class IndexStructure {
 	}
 
 	/**
-	 * Don't use this.
-	 *
-	 * Change the content viewable setting. Do not use this method.
-	 *
-	 * This exists only to support a deprecated configuration setting in BlackLab Server
-	 * and will eventually be removed.
-	 *
-	 * @param b whether content may be freely viewed
-	 * @deprecated method only exists to support deprecated setting, will be removed soon
-	 */
-	@Deprecated
-	public void _setContentViewable(boolean b) {
-		this.contentViewable = b;
-	}
-
-	/**
 	 * Is this a new, empty index?
 	 *
 	 * An empty index is one that doesn't have a main contents field yet.
@@ -1201,9 +1199,26 @@ public class IndexStructure {
 		return tokenCount;
 	}
 
+    /**
+     * Used when creating an index to initialize contentViewable setting. Do not use otherwise.
+     *
+     * It is also used to support a deprecated configuration setting in BlackLab Server, but
+     * this use will eventually be removed.
+     *
+     * @param contentViewable whether content may be freely viewed
+     */
 	public void setContentViewable(boolean contentViewable) {
 		this.contentViewable = contentViewable;
 	}
+
+    /**
+     * Used when creating an index to initialize textDirection setting. Do not use otherwise.
+     *
+     * @param textDirection text direction
+     */
+    public void setTextDirection(TextDirection textDirection) {
+        this.textDirection = textDirection;
+    }
 
 	/**
 	 * Format the current date and time according to the SQL datetime convention.

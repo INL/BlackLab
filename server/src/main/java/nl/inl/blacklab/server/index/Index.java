@@ -235,7 +235,7 @@ public class Index {
 			if (this.deprecatedPidField != null && (struct.pidField() == null || struct.pidField().isEmpty())) // Never set if already defined
 				struct._setPidField(this.deprecatedPidField);
 			if (this.deprecatedMayViewContent != null && struct.contentViewable()) // Never enable viewing when the index itself disallows it
-				struct._setContentViewable(this.deprecatedMayViewContent);
+				struct.setContentViewable(this.deprecatedMayViewContent);
 
 		} catch (Exception e) {
 			this.searcher = null;
@@ -267,7 +267,7 @@ public class Index {
 			if (this.deprecatedPidField != null && (struct.pidField() == null || struct.pidField().isEmpty())) // Never set if already defined
 				struct._setPidField(this.deprecatedPidField);
 			if (this.deprecatedMayViewContent != null && struct.contentViewable()) // Never enable viewing when the index itself disallows it
-				struct._setContentViewable(this.deprecatedMayViewContent);
+				struct.setContentViewable(this.deprecatedMayViewContent);
 		} catch (Exception e) {
 			throw new InternalServerError("Could not open index '" + id + "'", 27, e);
 		}

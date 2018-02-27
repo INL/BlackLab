@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
 import nl.inl.blacklab.index.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.index.config.ConfigLinkedDocument.MissingLinkPathAction;
 import nl.inl.blacklab.search.indexstructure.FieldType;
@@ -84,6 +85,7 @@ public class InputFormatReader extends YamlJsonReader {
             case "displayName": corpusConfig.setDisplayName(str(e)); break;
             case "description": corpusConfig.setDescription(str(e)); break;
             case "contentViewable": corpusConfig.setContentViewable(bool(e)); break;
+            case "textDirection": corpusConfig.setTextDirection(TextDirection.fromCode(str(e))); break;
             case "specialFields": readStringMap(e, corpusConfig.specialFields); break;
             case "metadataFieldGroups": readMetadataFieldGroups(e, corpusConfig); break;
             default:

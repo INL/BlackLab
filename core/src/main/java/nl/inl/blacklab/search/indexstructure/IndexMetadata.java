@@ -15,6 +15,7 @@ import nl.inl.blacklab.index.DocIndexerFactoryConfig;
 import nl.inl.blacklab.index.config.ConfigAnnotatedField;
 import nl.inl.blacklab.index.config.ConfigAnnotation;
 import nl.inl.blacklab.index.config.ConfigCorpus;
+import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.ConfigLinkedDocument;
 import nl.inl.blacklab.index.config.ConfigMetadataBlock;
@@ -70,6 +71,7 @@ public class IndexMetadata {
         jsonRoot.put("displayName", displayName);
         jsonRoot.put("description", corpusConfig.getDescription());
         jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
+        jsonRoot.put("textDirection", corpusConfig.getTextDirection().getCode());
         jsonRoot.put("documentFormat", config.getName());
         addVersionInfo();
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
@@ -262,6 +264,12 @@ public class IndexMetadata {
 			return false;
 		return jsonRoot.get("contentViewable").booleanValue();
 	}
+
+    public TextDirection getTextDirection() {
+        if (!jsonRoot.has("textDirection"))
+            return TextDirection.LEFT_TO_RIGHT; // default
+        return TextDirection.fromCode(jsonRoot.get("textDirection").textValue());
+    }
 
 	public String getDocumentFormat() {
 		if (!jsonRoot.has("documentFormat"))

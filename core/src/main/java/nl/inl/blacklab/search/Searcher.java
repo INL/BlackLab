@@ -46,6 +46,7 @@ import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
 import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -190,19 +191,22 @@ public abstract class Searcher {
 	 * @param documentFormat a format identifier to store as the document format,
 	 *   or null for none. See the DocumentFormats class.
 	 * @param contentViewable is viewing of the document contents allowed?
+	 * @param textDirection text direction for this corpus
 	 * @return a Searcher for the new index, in index mode
 	 * @throws IOException
 	 */
-	public static Searcher createIndex(File indexDir, String displayName, String documentFormat, boolean contentViewable) throws IOException {
+	public static Searcher createIndex(File indexDir, String displayName, String documentFormat, boolean contentViewable, TextDirection textDirection) throws IOException {
 		Searcher rv = openForWriting(indexDir, true);
-		if (displayName != null && displayName.length() > 0) {
-			rv.getIndexStructure().setDisplayName(displayName);
+		IndexStructure struct = rv.getIndexStructure();
+        if (displayName != null && displayName.length() > 0) {
+			struct.setDisplayName(displayName);
 		}
 		if (documentFormat != null) {
-			rv.getIndexStructure().setDocumentFormat(documentFormat);
+			struct.setDocumentFormat(documentFormat);
 		}
-		rv.getIndexStructure().setContentViewable(contentViewable);
-		rv.getIndexStructure().writeMetadata();
+		struct.setContentViewable(contentViewable);
+		struct.setTextDirection(textDirection);
+		struct.writeMetadata();
 		return rv;
 	}
 

@@ -832,7 +832,8 @@ In the input format configuration file, you can specify a section corpusConfig t
   
       displayName: OpenSonar
       description: The OpenSonar corpus.
-      contentViewable: true
+      contentViewable: false
+      textDirection: LTR
     
       specialFields:
         pidField: id
@@ -897,6 +898,7 @@ Here's a commented example of indexmetadata.yaml:
       defaultAnalyzerName: DEFAULT # The type of analyzer to use for metadata fields
                                    # by default (DEFAULT|whitespace|standard|nontokenizing)
       contentViewable: false       # is the user allowed to retrieve whole documents? 
+      textDirection: LTR           # text direction of the corpus (e.g. LTR/RTL) (not used by BlackLab) 
       documentFormat: ''           # (not used by BlackLab. may be used by application to 
                                    #  e.g. select which XSLT to use)
       unknownValue: unknown        # what value to index if field value is unknown [unknown]

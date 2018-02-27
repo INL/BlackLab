@@ -48,7 +48,8 @@ public class RequestHandlerIndexStructure extends RequestHandler {
     			.entry("displayName", struct.getDisplayName())
     			.entry("description", struct.getDescription())
     			.entry("status", status)
-    			.entry("contentViewable", struct.contentViewable());
+    			.entry("contentViewable", struct.contentViewable())
+    			.entry("textDirection", struct.getTextDirection().getCode());
 
             if (status.equals(IndexStatus.INDEXING)) {
                 IndexListener indexProgress = index.getIndexerListener();
