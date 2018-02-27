@@ -288,7 +288,7 @@ class TermsImplV3 extends Terms {
 		int[] idLookup = caseSensitive ? sortPositionPerId : sortPositionPerIdInsensitive;
 		int id0 = idLookup[termId[0]];
 		for (int i = 1; i < termId.length; i++) {
-			if (id0 != idLookup[termId[i]])
+			if (termId[i] == -1 || id0 != idLookup[termId[i]])
 				return false;
 		}
 		return true;
