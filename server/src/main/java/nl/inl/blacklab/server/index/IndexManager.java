@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -250,12 +251,12 @@ public class IndexManager {
 		File indexDir = new File(userDir, indexName);
 
 		// TODO this should be handled by Index
-		if (isPendingDeletion(indexDir)) { 
+		if (isPendingDeletion(indexDir)) {
 			// Don't let any deletion markers linger around (when index used to exist and couldn't be fully deleted)
 			BlsUtils.delTree(indexDir);
 		}
 		boolean contentViewable = true; // user may view his own private corpus documents
-		Searcher searcher = Searcher.createIndex(indexDir, displayName, documentFormatId, contentViewable);
+		Searcher searcher = Searcher.createIndex(indexDir, displayName, documentFormatId, contentViewable, TextDirection.LEFT_TO_RIGHT);
 		searcher.close();
 
 		indices.put(indexId, new Index(indexId, indexDir, this.searchMan.getCache()));

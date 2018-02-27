@@ -166,7 +166,7 @@ public abstract class Searcher {
 	 * @throws IOException
 	 */
 	public static Searcher createIndex(File indexDir) throws IOException {
-		return createIndex(indexDir, null, null, false);
+		return createIndex(indexDir, null, null, false, TextDirection.LEFT_TO_RIGHT);
 	}
 
 	/**
@@ -179,7 +179,7 @@ public abstract class Searcher {
 	 * @throws IOException
 	 */
 	public static Searcher createIndex(File indexDir, String displayName) throws IOException {
-		return createIndex(indexDir, displayName, null, false);
+		return createIndex(indexDir, displayName, null, false, TextDirection.LEFT_TO_RIGHT);
 	}
 
 	/**
