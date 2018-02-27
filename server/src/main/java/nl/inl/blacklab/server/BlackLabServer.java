@@ -63,7 +63,6 @@ public class BlackLabServer extends HttpServlet {
 		logger.info("BlackLab Server ready.");
 	}
 
-    @SuppressWarnings("resource")
 	private void readConfig() throws BlsException {
     	try {
             File servletPath = new File(getServletContext().getRealPath("."));

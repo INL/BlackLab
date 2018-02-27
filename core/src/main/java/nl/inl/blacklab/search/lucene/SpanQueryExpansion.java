@@ -276,7 +276,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 		result.setIgnoreLastToken(isIgnoreLastToken());
 		return result;
 	}
-	
+
 	@Override
 	public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
 		if (onTheRight == expandToLeft) {

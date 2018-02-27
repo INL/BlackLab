@@ -167,7 +167,7 @@ public abstract class RequestHandler {
 						return errorObj.unknownOperation(indexName);
 					}
 					if (!debugMode) {
-						return errorObj.unauthorized("You are not authorized to do this.");
+						return errorObj.unauthorized("You (" + request.getRemoteAddr() + ") are not authorized to do this.");
 					}
 					requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource, urlPathInfo);
                 } else if (indexName.equals("input-formats")) {
@@ -199,7 +199,7 @@ public abstract class RequestHandler {
 						return errorObj.unknownOperation(indexName);
 					}
 					if (!debugMode) {
-						return errorObj.unauthorized("You are not authorized to see this information.");
+						return errorObj.unauthorized("You (" + request.getRemoteAddr() + ") are not authorized to see this information.");
 					}
 					requestHandler = new RequestHandlerCacheInfo(servlet, request, user, indexName, urlResource, urlPathInfo);
 				} else if (indexName.equals("help")) {

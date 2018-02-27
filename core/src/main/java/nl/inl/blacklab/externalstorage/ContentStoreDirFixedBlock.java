@@ -33,8 +33,6 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.iterator.MutableIntIterator;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
@@ -56,7 +54,7 @@ import nl.inl.util.SimpleResourcePool;
  * Free blocks will be re-used to save space.
  */
 public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
-	private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
+	//private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
 
 	/** The type of content store. Written to version file and detected when opening. */
 	private static final String CONTENT_STORE_TYPE_NAME = "fixedblock";
@@ -837,14 +835,14 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				}
 
 				// Check the size
-				float waste = (float)(BLOCK_SIZE_BYTES - compressedDataLength) / BLOCK_SIZE_BYTES;
-				float ratio = (float)length / compressedDataLength;
+//				float waste = (float)(BLOCK_SIZE_BYTES - compressedDataLength) / BLOCK_SIZE_BYTES;
+//				float ratio = (float)length / compressedDataLength;
 
 				if (compressedDataLength > BLOCK_SIZE_BYTES) {
 					// Compressed block too large.
 					// Shrink the uncompressed data length by 5% more than what we expect to be required.
 					float shrinkFactor = 1.0f + (1.05f * (compressedDataLength - BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
-					logger.debug("Block size too large, retrying. Char length: " + length + ", encoded length: " + compressedDataLength + " > " + BLOCK_SIZE_BYTES + ", shrinkFactor: " + shrinkFactor);
+					//logger.debug("Block size too large, retrying. Char length: " + length + ", encoded length: " + compressedDataLength + " > " + BLOCK_SIZE_BYTES + ", shrinkFactor: " + shrinkFactor);
 					length = (int)(length / shrinkFactor);
 					if (length <= 0)
 						length = 1;
@@ -853,12 +851,12 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 					// Compressed block too small.
 					// Grow the uncompressed data length by 5% less than what we expect is possible.
 					float growFactor = 1.0f + (0.95f * (BLOCK_SIZE_BYTES - compressedDataLength)) / compressedDataLength;
-					logger.debug("Block size too small, retrying. Char length: " + length + ", encoded length: " + compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", growFactor: " + growFactor);
+					//logger.debug("Block size too small, retrying. Char length: " + length + ", encoded length: " + compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", growFactor: " + growFactor);
 					length = (int)(length * growFactor);
 					if (length > available)
 						length = available;
 				} else {
-					logger.debug("Block ok. Char length: " + length + ", encoded length: " + compressedDataLength + ", waste%: " + waste + ", ratio: " + ratio);
+					//logger.debug("Block ok. Char length: " + length + ", encoded length: " + compressedDataLength + ", waste%: " + waste + ", ratio: " + ratio);
 					unwrittenContents.delete(0, length);
 					return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
 				}

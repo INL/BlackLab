@@ -34,13 +34,13 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 	String name;
 
 	/** How to adjust the left edge of the captured hits while matching.
-	 *  (necessary because we try to internalize constant-length neighbouring clauses 
+	 *  (necessary because we try to internalize constant-length neighbouring clauses
 	 *   into our clause to speed up matching)
 	 */
 	int leftAdjust;
 
 	/** How to adjust the right edge of the captured hits while matching.
-	 *  (necessary because we try to internalize constant-length neighbouring clauses 
+	 *  (necessary because we try to internalize constant-length neighbouring clauses
 	 *   into our clause to speed up matching)
 	 */
 	int rightAdjust;
@@ -157,12 +157,12 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 	public boolean hitsAreUnique() {
 		return clauses.get(0).hitsAreUnique();
 	}
-	
+
 	@Override
 	public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
 		return clause.hitsAllSameLength();
 	}
-	
+
 	@Override
 	public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
 		if (!clause.hitsAllSameLength())
