@@ -178,7 +178,7 @@ public class BlackLabServer extends HttpServlet {
 					responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 					responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
 					responseObject.setContentType("text/xml");
-			        String allowOrigin = searchManager.config().getAccessControlAllowOrigin();
+			        String allowOrigin = searchManager == null ? "*" : searchManager.config().getAccessControlAllowOrigin();
 			        if (allowOrigin != null)
 			            responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
 					ServletUtil.writeCacheHeaders(responseObject, 0);
@@ -284,7 +284,8 @@ public class BlackLabServer extends HttpServlet {
 	public void destroy() {
 
 		// Stops the load management thread
-		searchManager.cleanup();
+	    if (searchManager != null)
+	        searchManager.cleanup();
 
 		super.destroy();
 	}
