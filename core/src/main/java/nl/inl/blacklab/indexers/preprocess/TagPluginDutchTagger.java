@@ -28,6 +28,8 @@ public class TagPluginDutchTagger implements TagPlugin {
 	public void init(ObjectNode config) throws PluginException {
 		if (config == null)
 			throw new PluginException("This plugin requires configuration");
+
+
 	}
 
 	@Override

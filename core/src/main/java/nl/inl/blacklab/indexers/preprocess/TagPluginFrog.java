@@ -5,6 +5,7 @@ import java.io.Reader;
 import java.io.Writer;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,7 +39,9 @@ public class TagPluginFrog implements TagPlugin {
 	public void perform(Reader reader, Writer writer)
 			throws PluginException {
 		try {
-			org.apache.commons.io.IOUtils.copy(reader, writer);
+			// TODO
+			IOUtils.copy(reader, writer);
+			writer.flush();
 		} catch (IOException e) {
 			throw new PluginException(e);
 		}

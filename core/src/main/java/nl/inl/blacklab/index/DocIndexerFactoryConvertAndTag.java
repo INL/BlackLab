@@ -57,7 +57,7 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 			      displayName(converter, tagger, outputFormat),
 			      description(converter, tagger, outputFormat));
 
-			// don't set config
+			// don't copy the outputFormat's config
 			this.converter = converter;
 			this.tagger = tagger;
 			this.outputFormat = outputFormat;
@@ -127,7 +127,7 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 	 */
 	public static void initPlugins(ObjectNode pluginConfig) {
 		if (isInitialized)
-			throw new RuntimeException("PluginManager already initialized");
+			throw new IllegalStateException("PluginManager already initialized"); 
 
 		logger.debug("Initializing plugin system");
 
@@ -203,16 +203,13 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 
 	@Override
 	public void init() {
-		// nothing to do; initialization happens when config is loaded.
-		// Config is loaded at the latest when the first Searcher is opened, so plugin formats should always be visible
-		// (except when trying to query available formats before opening a searcher or loading a config...this is an edge case)
+		/* nothing to do; initialization happens when the blacklab config is loaded.
+		 The blacklab Config is automatically loaded when the first Searcher is opened, or earlier by a user library. So plugin formats should always be visible by the time they're needed.
+		 (except when trying to query available formats before opening a searcher or loading a config...this is an edge case) */
 	}
 
 	@Override
 	public boolean isSupported(String formatIdentifier) {
-//		Matcher m = FORMATIDENTIFIER_PATTERN.matcher(formatIdentifier);
-//		return m.matches() && convertPlugins.containsKey(m.group(1)) && tagPlugins.containsKey(m.group(2));
-
 		return supported.containsKey(formatIdentifier);
 	}
 

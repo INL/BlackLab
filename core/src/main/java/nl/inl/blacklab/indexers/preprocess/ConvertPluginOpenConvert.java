@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class ConvertPluginOpenConvert implements ConvertPlugin {
 	private static final Logger logger = LogManager.getLogger(ConvertPluginOpenConvert.class);
 
-	private static ClassLoader openConvertJarClassLoader;
+	private ClassLoader openConvertJarClassLoader;
 
 	@Override
 	public String getId() {
@@ -77,22 +77,16 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 		if (config == null)
 			throw new PluginException("This plugin requires a configuration.");
 
-		URL jarUrl;
 		try {
-			jarUrl = Paths.get(configStr(config, "jarPath")).toUri().toURL();
-		} catch (MalformedURLException e1) {
-			throw new PluginException(e1);
-		}
+			URL jarUrl = Paths.get(configStr(config, "jarPath")).toUri().toURL();
+			openConvertJarClassLoader = new URLClassLoader(new URL[]{jarUrl});
 
-
-		openConvertJarClassLoader = new URLClassLoader(new URL[]{jarUrl});
-		try {
 			OpenConvert = openConvertJarClassLoader.loadClass("org.ivdnt.openconvert.converters.OpenConvert");
 			OpenConvert_GetConverter = OpenConvert.getMethod("getConverter", String.class, String.class, boolean.class);
 
 			SimpleInputOutputProcess = openConvertJarClassLoader.loadClass("org.ivdnt.openconvert.filehandling.SimpleInputOutputProcess");
 			SimpleInputOutputProcess_handleStream = SimpleInputOutputProcess.getMethod("handleStream", InputStream.class, Charset.class, OutputStream.class);
-		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException e) {
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | MalformedURLException e) {
 			throw new PluginException("Error loading the OpenConvert jar", e);
 		}
 	}
@@ -119,7 +113,7 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 		inputFormat = inputFormat.toLowerCase();
 
 		// TODO handle this on a higher level outside of concrete implementations
-		if (inputFormat.toLowerCase().equals("folia")) {
+		if (inputFormat.equalsIgnoreCase(outputFormat)) {
 			try {
 				IOUtils.copy(in, out);
 				return;
