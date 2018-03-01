@@ -12,6 +12,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -298,8 +299,8 @@ public class BlackLabServer extends HttpServlet {
 	public String getServletInfo() {
 		return "Provides corpus search services on one or more BlackLab indices.\n"
 				+ "Source available at http://github.com/INL/BlackLab\n"
-				+ "(C) 2013,2014-... Instituut voor Nederlandse Lexicologie.\n"
-				+ "Licensed under the Apache License.\n";
+				+ "(C) 2013-" + Calendar.getInstance().get(Calendar.YEAR) + " Dutch Language Institute (http://ivdnt.org/)\n"
+				+ "Licensed under the Apache License v2.\n";
 	}
 
 	/**
