@@ -148,9 +148,15 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 		return hits;
 	}
 
+    /** Id the next Hits instance will get */
+    protected static volatile int nextHitsObjId = 0;
+
 	//----------------------------------------------------------
 
-	protected Searcher searcher;
+    /** Unique id of this Hits instance */
+    protected final int hitsObjId = nextHitsObjId++;
+
+    protected Searcher searcher;
 
 	/** Settings for retrieving hits, sorting/grouping on context and making concordances. */
 	protected HitsSettings settings;
@@ -1013,5 +1019,14 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	protected void setHitQueryContext(HitQueryContext hitQueryContext) {
 		this.hitQueryContext = hitQueryContext;
 	}
+
+    public int getHitsObjId() {
+        return hitsObjId;
+    }
+
+    @Override
+    public String toString() {
+        return "Hits#" + hitsObjId;
+    }
 
 }

@@ -193,4 +193,9 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
 		return windowSize;
 	}
 
+	@Override
+	public String toString() {
+	    return "HitsWindow#" + hitsObjId + " (first=" + first + ", number=" + windowSize + ", source=" + source + ")";
+	}
+
 }

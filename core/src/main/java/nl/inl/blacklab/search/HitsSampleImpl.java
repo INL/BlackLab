@@ -8,10 +8,13 @@ import java.util.TreeSet;
  */
 public class HitsSampleImpl extends HitsSample {
 
+    Hits source;
+
 	HitsSampleImpl(Hits hits, float ratio, long seed) {
 		super(hits.getSearcher(), ratio, seed);
 		if (ratio < 0 || ratio > 1)
 			throw new IllegalArgumentException("ratio must be in the range 0-1");
+		this.source = hits;
 
 		// Determine how many hits there are, and how many to choose
 		int totalNumberOfHits = hits.size();
@@ -32,6 +35,7 @@ public class HitsSampleImpl extends HitsSample {
 			throw new IllegalArgumentException("Negative sample number specified");
 		if (number > hits.size())
 			numberOfHitsToSelect = number = hits.size(); // default to all hits in this case
+        this.source = hits;
 
 		// Determine how many hits there are, and how many to choose
 		ratioOfHitsToSelect = (float)number / hits.size();
@@ -72,5 +76,10 @@ public class HitsSampleImpl extends HitsSample {
 	public Hits copy() {
 		return new HitsSampleImpl(this);
 	}
+
+    @Override
+    public String toString() {
+        return "HitsSampleImpl#" + hitsObjId + " (source=" + source + ")";
+    }
 
 }

@@ -1722,4 +1722,9 @@ public class HitsImpl extends Hits {
 		this.maxHitsRetrieved = maxHitsRetrieved;
 	}
 
+	@Override
+	public String toString() {
+	    return "HitsImpl#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hits.size()=" + hits.size() + ")";
+	}
+
 }

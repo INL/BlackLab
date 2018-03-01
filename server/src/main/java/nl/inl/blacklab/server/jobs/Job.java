@@ -8,6 +8,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -457,6 +458,25 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 			ds.endEntry();
 		}
 		dataStreamSubclassEntries(ds);
+		if (inputJob != null) {
+            ds.startEntry("inputJob").startMap();
+            Hits hits = null;
+            ds.entry("type", inputJob.getClass().getName());
+		    if (inputJob instanceof JobWithHits) {
+                hits = ((JobWithHits)inputJob).getHits();
+		    } else if (inputJob instanceof JobHitsWindow) {
+		        hits = ((JobHitsWindow)inputJob).getWindow();
+		    } else if (inputJob instanceof JobHitsTotal) {
+                hits = ((JobHitsTotal)inputJob).getHits();
+		    }
+            ds.entry("hasHitsObject", hits != null);
+            if (hits != null) {
+                ds  .entry("hitsObjId", hits.getHitsObjId())
+                    .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
+                    .entry("doneFetchingHits", hits.doneFetchingHits());
+            }
+            ds.endMap().endEntry();
+		}
 		ds.endMap();
 	}
 

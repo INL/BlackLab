@@ -70,6 +70,11 @@ public class JobHitsTotal extends Job {
 	@Override
 	protected void dataStreamSubclassEntries(DataStream ds) {
 		ds	.entry("hitsCounted", hits != null ? hits.countSoFarHitsCounted() : -1);
+        if (hits != null) {
+            ds  .entry("hitsObjId", hits.getHitsObjId())
+                .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
+                .entry("doneFetchingHits", hits.doneFetchingHits());
+        }
 	}
 
 	@Override

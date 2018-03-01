@@ -127,4 +127,9 @@ public abstract class HitsSample extends HitsImpl {
 		return exactNumberGiven;
 	}
 
+    @Override
+    public String toString() {
+        return "HitsSample#" + hitsObjId;
+    }
+
 }

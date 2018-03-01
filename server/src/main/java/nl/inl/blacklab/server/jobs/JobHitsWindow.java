@@ -76,6 +76,12 @@ public class JobHitsWindow extends Job {
 	protected void dataStreamSubclassEntries(DataStream ds) {
 		ds	.entry("requestedWindowSize", requestedWindowSize)
 			.entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.size());
+        if (hitsWindow != null) {
+            Hits hits = hitsWindow.getOriginalHits();
+            ds  .entry("hitsObjId", hits.getHitsObjId())
+                .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
+                .entry("doneFetchingHits", hits.doneFetchingHits());
+        }
 	}
 
 	@Override

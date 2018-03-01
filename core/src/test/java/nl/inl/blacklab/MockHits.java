@@ -215,4 +215,9 @@ public class MockHits extends Hits {
 		// NOP
 	}
 
+	@Override
+	public String toString() {
+        return "MockHits#" + hitsObjId;
+	}
+
 }
