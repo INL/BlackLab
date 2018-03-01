@@ -154,7 +154,7 @@ public class RequestHandlerHits extends RequestHandler {
 
 			// The summary
 			ds.startEntry("summary").startMap();
-			Hits hits = searchWindow != null ? hits = searchWindow.getWindow().getOriginalHits() : group.getHits();
+			Hits hits = searchWindow != null ? searchWindow.getWindow().getOriginalHits() : group.getHits();
 			double totalTime = 0;
 			if (total != null)
 				totalTime = total.threwException() ? -1 : total.userWaitTime();
