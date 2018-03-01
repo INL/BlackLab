@@ -194,6 +194,7 @@ public class SearchCache {
 		}
 
 		if (performSearch) {
+
 			// Start the search, waiting a short time in case it's a fast search
 			job.perform(INITIAL_JOB_FINISH_WAIT);
 		}
@@ -220,7 +221,7 @@ public class SearchCache {
 	 * @param jobDesc the search parameters
 	 * @return the Search if found, or null if not
 	 */
-	private Job get(JobDescription jobDesc) {
+	private synchronized Job get(JobDescription jobDesc) {
 		Job search = cachedSearches.get(jobDesc.uniqueIdentifier());
 		if (search == null) {
 			// logger.debug("Cache miss: " + jobDesc);
@@ -237,7 +238,7 @@ public class SearchCache {
 	 *
 	 * @param search the search object
 	 */
-	private void put(Job search) {
+	private synchronized void put(Job search) {
 		if (cacheConfig.getMaxNumberOfJobs() <= 0)
 			return;
 
