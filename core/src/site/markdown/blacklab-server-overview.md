@@ -502,7 +502,7 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
 	        // view the whole document even if they may not be allowed to.
 	        // (this applies to the "wordsaroundhit" GET parameter of the 
 	        // /docs/ID/snippet resource)
-	        "maxSnippetSize": 100,
+	        "maxSnippetSize": 120,
 	
 	        // Default maximum number of hits to retrieve. This affects 
 	        // not only regular hits searches, but also 

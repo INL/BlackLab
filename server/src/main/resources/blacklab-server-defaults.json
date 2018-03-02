@@ -83,7 +83,7 @@
         // Maximum snippet size allowed. If this is too big, users can view the whole document even
         // if they may not be allowed to.
         // (this applies to the "wordsaroundhit" GET parameter of the /docs/ID/snippet resource)
-        "maxSnippetSize": 100,
+        "maxSnippetSize": 120,
         
         // The default maximum number of hits to retrieve
         // (retrieved hits are used for sorting, grouping, etc.)

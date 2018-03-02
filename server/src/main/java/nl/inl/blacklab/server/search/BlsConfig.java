@@ -172,7 +172,7 @@ public class BlsConfig extends YamlJsonReader {
 			defaultContextSize = JsonUtil.getIntProp(reqProp, "defaultContextSize", 5);
 			maxContextSize = JsonUtil.getIntProp(reqProp, "maxContextSize", 20);
 			maxSnippetSize = JsonUtil
-					.getIntProp(reqProp, "maxSnippetSize", 100);
+					.getIntProp(reqProp, "maxSnippetSize", 120);
 			defaultMaxHitsToRetrieve = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToRetrieve", Searcher.DEFAULT_MAX_RETRIEVE);
 			defaultMaxHitsToCount = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToCount", Searcher.DEFAULT_MAX_COUNT);
 			maxHitsToRetrieveAllowed = JsonUtil.getIntProp(reqProp,
@@ -192,7 +192,7 @@ public class BlsConfig extends YamlJsonReader {
 			defaultCaseSensitive = defaultDiacriticsSensitive = false;
 			defaultContextSize = 5;
 			maxContextSize = 20;
-			maxSnippetSize = 100;
+			maxSnippetSize = 120;
 			defaultMaxHitsToRetrieve = Searcher.DEFAULT_MAX_RETRIEVE;
 			defaultMaxHitsToCount = Searcher.DEFAULT_MAX_COUNT;
 			maxHitsToRetrieveAllowed = 10000000;
