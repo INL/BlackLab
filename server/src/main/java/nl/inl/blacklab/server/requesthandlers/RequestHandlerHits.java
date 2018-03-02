@@ -171,20 +171,21 @@ public class RequestHandlerHits extends RequestHandler {
 			    // Total job has just been started, it might be a little while before it has hits object
 			    // available (needs to start JobHits first if it wasn't in the cache already)
 			    // one more reason why we need to cache Hits instances instead of (or in addition to?) Jobs
+                totalHits = total.getHits();
 			    while (totalHits == null) {
-			        totalHits = total.getHits();
 			        int wait = 10;
 			        try {
+                        logger.warn("Total hits instance not available yet, waiting for it...");
                         Thread.sleep(wait);
                         wait = wait * 2;
                         if (wait > 5000) {
-                            // This shouldn't ever happen. If it does, this is wrong,
+                            // This shouldn't ever happen. If it does, the following is wrong,
                             // but probably better than throwing an exception.
                             logger.error("### Gave up waiting for total hits instance.");
                             totalHits = hits;
                             break;
                         }
-                        logger.warn("Total hits instance not available yet, waiting for it...");
+                        totalHits = total.getHits();
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
