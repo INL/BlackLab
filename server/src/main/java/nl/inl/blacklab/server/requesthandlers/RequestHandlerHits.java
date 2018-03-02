@@ -160,7 +160,38 @@ public class RequestHandlerHits extends RequestHandler {
 				totalTime = total.threwException() ? -1 : total.userWaitTime();
 			else
 				totalTime = searchGrouped.threwException() ? -1 : searchGrouped.userWaitTime();
-			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, hits, false, (DocResults)null, (DocOrHitGroups)null, window);
+
+            // Total.hits could be a different instance
+            // From window.hits (unfortunately) because of how cache works.
+			// This should be improved (we should essentially cache Hits/DocResults objects, not Jobs)
+			Hits totalHits= null;
+			if (total == null)
+			    totalHits =  searchGrouped.getHits();
+			else {
+			    // Total job has just been started, it might be a little while before it has hits object
+			    // available (needs to start JobHits first if it wasn't in the cache already)
+			    // one more reason why we need to cache Hits instances instead of (or in addition to?) Jobs
+			    while (totalHits == null) {
+			        totalHits = total.getHits();
+			        int wait = 10;
+			        try {
+                        Thread.sleep(wait);
+                        wait = wait * 2;
+                        if (wait > 5000) {
+                            // This shouldn't ever happen. If it does, this is wrong,
+                            // but probably better than throwing an exception.
+                            logger.error("### Gave up waiting for total hits instance.");
+                            totalHits = hits;
+                            break;
+                        }
+                        logger.warn("Total hits instance not available yet, waiting for it...");
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+			    }
+			}
+
+			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, hits, totalHits, false, (DocResults)null, (DocOrHitGroups)null, window);
 			if (includeTokenCount)
 				ds.entry("tokensInMatchingDocuments", totalTokens);
 			ds.startEntry("docFields");

@@ -510,6 +510,9 @@ public abstract class RequestHandler {
 	 * @param searchTime time the search took
 	 * @param countTime time the count took
 	 * @param hits hits found (may be null for certain searches)
+	 * @param totalHits hits instance used for calculating total
+	 *    (unfortunately, may be different instance than hits because
+	 *     of how cache works now - should be improved)
 	 * @param isViewDocGroup are we viewing single document group?
 	 * @param docResults document results, if this is a document search
 	 * @param groups information about groups, if we were grouping
@@ -517,10 +520,11 @@ public abstract class RequestHandler {
 	 * @throws BlsException
 	 */
 	protected void addSummaryCommonFields(DataStream ds, SearchParameters searchParam, double searchTime, double countTime,
-			Hits hits, boolean isViewDocGroup, DocResults docResults, DocOrHitGroups groups, ResultsWindow window) throws BlsException {
+			Hits hits, Hits totalHits, boolean isViewDocGroup, DocResults docResults, DocOrHitGroups groups, ResultsWindow window) throws BlsException {
 
 		if (hits == null && docResults != null) {
 			hits = docResults.getOriginalHits();
+			totalHits = hits;
 		}
 
 		// Our search parameters
@@ -538,17 +542,17 @@ public abstract class RequestHandler {
 		boolean countFailed = countTime < 0;
 		if (countTime != 0)
 			ds.entry("countTime", (int)(countTime * 1000));
-		ds.entry("stillCounting", hits == null ? false : !hits.doneFetchingHits());
+		ds.entry("stillCounting", totalHits == null ? false : !totalHits.doneFetchingHits());
 
 		// Information about the number of hits/docs, and whether there were too many to retrieve/count
-		if (hits != null) {
+		if (totalHits != null) {
 			// We have a hits object we can query for this information
-			ds	.entry("numberOfHits", countFailed ? -1 : hits.countSoFarHitsCounted())
-				.entry("numberOfHitsRetrieved", hits.countSoFarHitsRetrieved())
-				.entry("stoppedCountingHits", hits.maxHitsCounted())
-				.entry("stoppedRetrievingHits", hits.maxHitsRetrieved());
-			ds	.entry("numberOfDocs", countFailed ? -1 : hits.countSoFarDocsCounted())
-				.entry("numberOfDocsRetrieved", hits.countSoFarDocsRetrieved());
+			ds	.entry("numberOfHits", countFailed ? -1 : totalHits.countSoFarHitsCounted())
+				.entry("numberOfHitsRetrieved", totalHits.countSoFarHitsRetrieved())
+				.entry("stoppedCountingHits", totalHits.maxHitsCounted())
+				.entry("stoppedRetrievingHits", totalHits.maxHitsRetrieved());
+			ds	.entry("numberOfDocs", countFailed ? -1 : totalHits.countSoFarDocsCounted())
+				.entry("numberOfDocsRetrieved", totalHits.countSoFarDocsRetrieved());
 		} else if (isViewDocGroup) {
 			// Viewing single group of documents, possibly based on a hits search.
 			// group.getResults().getOriginalHits() returns null in this case,

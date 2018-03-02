@@ -54,7 +54,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 			// The summary
 			ds.startEntry("summary").startMap();
 			ResultsWindow ourWindow = new ResultsWindowImpl(groups.numberOfGroups(), first, number, numberOfGroupsInWindow);
-			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, (Hits)null, false, docResults, groups, ourWindow);
+			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, (Hits)null, (Hits)null, false, docResults, groups, ourWindow);
 			ds.endMap().endEntry();
 
 			// The list of groups found

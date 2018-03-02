@@ -42,7 +42,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	final static boolean ENABLE_JOB_CLEANUP = false;
 
 	/** id for the next job started */
-	static long nextJobId = 0;
+	static volatile long nextJobId = 0;
 
 	/** Unique job id */
 	long id = nextJobId++;
@@ -385,7 +385,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		if (waitingFor != null) {
 			synchronized(waitingFor) {
 				for (Job j: waitingFor) {
-					j.decrRef(); //decrementClientsWaiting();
+					j.decrRef();
 				}
 				waitingFor.clear();
 			}

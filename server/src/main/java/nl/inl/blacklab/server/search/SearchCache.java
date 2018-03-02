@@ -475,13 +475,16 @@ public class SearchCache {
 		}
 	}
 
-	private void removeFromCache(Job search) {
+	private synchronized void removeFromCache(Job search) {
 		String identifier = search.getDescription().uniqueIdentifier();
 		Job removed = cachedSearches.remove(identifier);
 		if (removed == null) {
 			logger.error("Tried to remove search, but not found: " + identifier);
 		}
-		search.decrRef();
+		removed.decrRef();
+		if (search != removed) {
+            logger.error("##### Tried to remove " + search + " but instead removed " + removed + ", with same identifier?");
+		}
 		cacheSizeBytes -= search.estimateSizeBytes();
 	}
 

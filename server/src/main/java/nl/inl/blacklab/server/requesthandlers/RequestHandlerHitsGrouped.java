@@ -45,7 +45,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 			int totalResults = groups.numberOfGroups();
 			final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first : requestedWindowSize;
 			ResultsWindow ourWindow = new ResultsWindowImpl(totalResults, first, requestedWindowSize, actualWindowSize);
-			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, hits, false, (DocResults)null, groups, ourWindow);
+			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, hits, hits, false, (DocResults)null, groups, ourWindow);
 			ds.endMap().endEntry();
 
 			// The list of groups found
