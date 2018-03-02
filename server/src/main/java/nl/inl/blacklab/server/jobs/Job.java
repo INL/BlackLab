@@ -165,13 +165,13 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	    if (finished()) {
 	        // 0 ... 9999 : search is finished
 	        // (the more recently used, the worthier)
-	        worthiness = Math.min(0, 9999 - notAccessedFor());
+	        worthiness = Math.max(0, 9999 - notAccessedFor());
 	    } else if (totalExecTime() > YOUTH_THRESHOLD_SEC) {
 	        // 10000 ... 19999: search has been running for a long time and is counting hits
             // 20000 ... 29999: search has been running for a long time and is retrieving hits
 	        // (younger searches are considered worthier)
 	        boolean isCount = this instanceof JobHitsTotal || this instanceof JobDocsTotal;
-	        worthiness = Math.min(10000, 19999 - totalExecTime()) + (isCount ? 0 : 10000);
+	        worthiness = Math.max(10000, 19999 - totalExecTime()) + (isCount ? 0 : 10000);
 	    } else {
 	        double runtime = currentRunPhaseLength();
 	        boolean justStartedRunning = runtime > ALMOST_ZERO && runtime < RUN_PAUSE_PHASE_JUST_STARTED;
@@ -180,15 +180,15 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	        if (!justPaused && !justStartedRunning) {
 	            // 30000 ... 39999: search has been running for a short time
                 // (older searches are considered worthier, to give searches just started a fair chance of completing)
-                worthiness = Math.max(39999, 30000 + totalExecTime());
+                worthiness = Math.min(39999, 30000 + totalExecTime());
 	        } else if (justPaused) {
 	            // 40000 ... 49999: search was just paused
 	            // (the longer ago, the worthier)
-                worthiness = Math.max(49999, 40000 + pause);
+                worthiness = Math.min(49999, 40000 + pause);
 	        } else {
                 // 50000 ... 59999: search was just resumed
                 // (the more recent, the worthier)
-                worthiness = Math.min(50000, 59999 - runtime);
+                worthiness = Math.max(50000, 59999 - runtime);
 	        }
 	    }
 	}
