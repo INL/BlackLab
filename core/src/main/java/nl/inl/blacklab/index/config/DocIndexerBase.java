@@ -227,7 +227,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                     ldi.contentStoreName = storeWithName;
                 else
                     ldi.storeDocuments = false;
-                    ldi.indexSpecificDocument(documentPath);
+                ldi.indexSpecificDocument(documentPath);
             } else {
                 throw new RuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is " + docIndexer.getClass().getName());
             }

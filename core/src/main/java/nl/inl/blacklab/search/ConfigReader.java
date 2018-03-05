@@ -70,7 +70,7 @@ public class ConfigReader extends YamlJsonReader {
     		throw new IllegalArgumentException("Configuration file " + file + " is of an unsupported type.");
 
     	if (blacklabConfig != null)
-    		throw new UnsupportedOperationException("Cannot load configuration file "+file+" - another configuration file has already been loaded.");
+    		throw new UnsupportedOperationException("Cannot load configuration file " + file + " - another configuration file has already been loaded.");
 
 		boolean isJson = file.getName().endsWith(".json");
 		try (BufferedReader reader = FileUtil.openForReading(file)) {
@@ -137,8 +137,9 @@ public class ConfigReader extends YamlJsonReader {
     	if (blacklabConfig == null)
     		loadDefaultConfig();
 
-    	if (blacklabConfig != null)
-    		readSearcherSettings(blacklabConfig, searcher);
+    	if (blacklabConfig != null) {
+	        readSearcherSettings(blacklabConfig, searcher);
+    	}
     }
 
     private static void readSearcherSettings(JsonNode root, Searcher searcher) {

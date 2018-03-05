@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.jobs.User;
 
 public class AuthManager {
@@ -22,7 +23,7 @@ public class AuthManager {
 	/** The method to invoke for determining the current user. */
 	private Method authMethodDetermineCurrentUser = null;
 
-	public AuthManager(String authClass, Map<String, Object> authParam) {
+	public AuthManager(String authClass, Map<String, Object> authParam) throws ConfigurationException {
 		if (authClass.length() > 0) {
 			try {
 				if (!authClass.contains(".")) {
@@ -33,7 +34,7 @@ public class AuthManager {
 				authObj = cl.getConstructor(Map.class).newInstance(authParam);
 				authMethodDetermineCurrentUser = cl.getMethod("determineCurrentUser", HttpServlet.class, HttpServletRequest.class);
 			} catch (Exception e) {
-				throw new RuntimeException("Error instantiating auth system: " + authClass, e);
+				throw new ConfigurationException("Error instantiating auth system: " + authClass, e);
 			}
 			logger.info("Auth system initialized: " + authClass);
 		} else {

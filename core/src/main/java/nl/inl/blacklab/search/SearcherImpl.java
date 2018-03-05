@@ -117,7 +117,11 @@ public class SearcherImpl extends Searcher implements Closeable {
             throws IOException {
         this.indexMode = indexMode;
 
-        ConfigReader.applyConfig(this);
+        try {
+            ConfigReader.applyConfig(this);
+        } catch(IllegalArgumentException e) {
+            throw new IllegalArgumentException(e.getMessage() + " (BlackLab configuration file)", e.getCause());
+        }
 
         openIndex(indexDir, indexMode, createNewIndex);
 
