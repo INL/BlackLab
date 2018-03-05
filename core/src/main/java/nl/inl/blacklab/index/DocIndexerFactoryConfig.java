@@ -133,6 +133,10 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 			return null;
 
 		ConfigInputFormat inputFormat = this.supported.get(formatIdentifier);
+		if (inputFormat == null) {
+		    loadUnloaded();
+		    inputFormat = this.supported.get(formatIdentifier);
+		}
 		Format desc = new Format(inputFormat.getName(), inputFormat.getDisplayName(), inputFormat.getDescription());
 		desc.setConfig(inputFormat);
 		desc.setUnlisted(false);

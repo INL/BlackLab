@@ -44,8 +44,10 @@ public class TestQueryRewrite {
 	@AfterClass
 	public static void tearDown() {
 		ClauseCombinerNfa.setNfaMatchingEnabled(true);
-		searcher.close();
-		testIndex.close();
+		if (searcher != null)
+		    searcher.close();
+		if (testIndex != null)
+		    testIndex.close();
 	}
 
 	static TextPattern getPatternFromCql(String cqlQuery) {

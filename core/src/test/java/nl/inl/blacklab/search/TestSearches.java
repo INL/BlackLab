@@ -32,7 +32,8 @@ public class TestSearches {
 
 	@AfterClass
 	public static void tearDown() {
-		testIndex.close();
+	    if (testIndex != null)
+	        testIndex.close();
 	}
 
 	@Test

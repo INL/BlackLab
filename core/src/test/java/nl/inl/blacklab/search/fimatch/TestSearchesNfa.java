@@ -30,7 +30,8 @@ public class TestSearchesNfa {
 
 	@AfterClass
 	public static void tearDown() {
-		testIndex.close();
+	    if (testIndex != null)
+	        testIndex.close();
 		ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
 	}
 
