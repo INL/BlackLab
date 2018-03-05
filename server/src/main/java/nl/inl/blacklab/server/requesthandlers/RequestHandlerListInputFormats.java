@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +12,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DocumentFormats.FormatDesc;
 import nl.inl.blacklab.index.config.ConfigAnnotatedField;
 import nl.inl.blacklab.index.config.ConfigAnnotation;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
@@ -23,7 +22,6 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -169,29 +167,31 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 	public int handle(DataStream ds) throws BlsException {
 
 	    if (urlResource != null && urlResource.length() > 0) {
+	        Format format = DocumentFormats.getFormat(urlResource);
+	        if (format == null)
+	        	throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' does not exist.");
 
-	        if (!DocumentFormats.exists(urlResource))
-                throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' does not exist.");
+	        if (!format.isConfigurationBased())
+        		throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
 
+	        ConfigInputFormat config = format.getConfig();
 	    	if (isXsltRequest)
-	    		return handleXsltRequest(ds);
+	    		return handleXsltRequest(ds, config);
 
-			File formatFile = DocumentFormats.getConfig(urlResource).getReadFromFile();
-	        try (BufferedReader reader = DocumentFormats.getFormatFile(urlResource)) {
-	        	if (reader == null)
-	        		throw new NotFound("NOT_FOUND", "The format '" + urlResource + "' is not configuration-based, and therefore cannot be displayed.");
-
+	    	try (BufferedReader reader = config.getFormatFile()) {
 	        	ds	.startMap()
         		.entry("formatName", urlResource)
-        		.entry("configFileType", FilenameUtils.getExtension(formatFile.getName()))
+        		.entry("configFileType", FilenameUtils.getExtension(config.getReadFromFile().getName()))
         		.entry("configFile", IOUtils.toString(reader))
         		.endMap();
         		return HTTP_OK;
 	        } catch (IOException e1) {
 				throw new RuntimeException(e1);
 			}
-
 	    }
+
+	    if (user.isLoggedIn() && indexMan.getUserFormatManager() != null)
+	    	indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
 
 		ds.startMap();
 		ds.startEntry("user").startMap();
@@ -204,9 +204,9 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
 		// List supported input formats
 	    ds.startEntry("supportedInputFormats").startMap();
-        for (FormatDesc format: DocumentFormats.getSupportedFormats()) {
-            String name = format.getName();
-            if (IndexManager.userOwnsFormat(user.getUserId(), name)) {
+        for (Format format: DocumentFormats.getFormats()) {
+            String name = format.getId();
+            if (!name.contains(":") || name.startsWith(user.getUserId() + ':')) { // TODO
                 ds.startAttrEntry("format", "name", name).startMap()
                     .entry("displayName", format.getDisplayName())
                     .entry("description", format.getDescription())
@@ -220,9 +220,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 		return HTTP_OK;
 	}
 
-	private int handleXsltRequest(DataStream ds) {
-		ConfigInputFormat config = DocumentFormats.getConfig(urlResource);
-
+	private static int handleXsltRequest(DataStream ds, ConfigInputFormat config) {
 		// We want an XSLT from this config.
 		StringBuilder xslt = new StringBuilder();
 		StringBuilder nameSpaces = new StringBuilder();

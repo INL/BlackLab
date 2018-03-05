@@ -62,19 +62,22 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		});
 
 		try (InputStream is = file.getInputStream()) {
-			indexer.index(file.getName(), is, "*.xml");
-			if (indexer.getListener().getTokensProcessed() == 0)
-				indexError = "No tokens were found when indexing, are the files in the correct format?";
+			indexer.index(file.getName(), is);
+			if (indexError == null && indexer.getListener().getTokensProcessed() == 0)
+				indexError = "No tokens were found during indexing, are the files in the correct format?";
 		} catch(IOException e) {
 			throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
 		} finally {
-			// It's important we roll back on erorrs, or an incorrect indexstructure might be written.
+			// It's important we roll back on errors, or an incorrect indexstructure might be written.
 			// See Indexer#hasRollback
 			if (indexError != null)
 				indexer.rollback();
 
 			indexer.close();
 		}
+
+		logger.info("RequestHandlerAddToindex::handle finished");
+
 
 		if (indexError != null)
 			throw new BadRequest("INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");

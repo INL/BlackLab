@@ -32,10 +32,9 @@ import java.util.TreeMap;
 
 import org.apache.lucene.index.CorruptIndexException;
 
-import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DocumentFormats.FormatDesc;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.Searcher;
@@ -208,14 +207,7 @@ public class IndexTool {
 			usage();
 			return;
 		}
-		boolean autoDetectFormat = false;
-		if (docFormat == null) {
-			System.err.println("No DocIndexer class name given; trying to detect it from the index...");
-			docFormat = "autodetect format";
-			autoDetectFormat = true;
-			//usage();
-			//return;
-		}
+
 
 		// Init log4j
 		LogUtil.setupBasicLoggingConfig();
@@ -241,8 +233,8 @@ public class IndexTool {
 		if (glob != null && glob.length() > 0 && !glob.equals("*")) {
 			strGlob += glob;
 		}
-		System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob + " (format "
-				+ docFormat + ")");
+		System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob +
+		                   (docFormat != null ? " (using format " + docFormat + ")" : "(using autodetected format)"));
 		if (!indexerParam.isEmpty()) {
 			System.out.println("Indexer parameters:");
 			for (Map.Entry<String,String> e: indexerParam.entrySet()) {
@@ -258,21 +250,14 @@ public class IndexTool {
         List<File> formatDirs = new ArrayList<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
 		if (!formatDirs.contains(indexDirParent))
 		    formatDirs.add(indexDirParent);
-		DocumentFormats.registerFormatsInDirs(formatDirs);
 
-		// Determine DocIndexer to use
-		DocIndexerFactory docIndexerFactory = null;
-		if (!autoDetectFormat) {
-			if (docFormat.equals("teip4")) {
-				System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
-				docFormat = "tei";
-			}
-			docIndexerFactory = DocumentFormats.getIndexerFactory(docFormat);
-			if (docIndexerFactory == null) {
-				System.err.println("Input format " + docFormat + " not found.");
-				usage();
-				return;
-			}
+		DocumentFormats.registerFormatsInDirectories(formatDirs);
+
+		if (docFormat == null) {
+			System.err.println("No document format given; trying to detect it from the index...");
+		} else if (docFormat.equals("teip4")) {
+			System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
+			docFormat = "tei";
 		}
 
 		// Create the indexer and index the files
@@ -282,16 +267,14 @@ public class IndexTool {
 		}
 		Indexer indexer;
 		try {
-			indexer = new Indexer(indexDir, createNewIndex, docIndexerFactory, indexTemplateFile);
+			indexer = new Indexer(indexDir, createNewIndex, docFormat, indexTemplateFile);
 			if (useThreads)
 				indexer.setUseThreads(true);
 		} catch (DocumentFormatException e1) {
-			if (e1.getMessage().contains("document format")) { // ARGH, UGLY..
-				System.err.println("Failed to detect document format. Please specify it on the command line.");
-				usage();
-				return;
-			}
-			throw e1;
+			System.err.println(e1.getMessage());
+			System.err.println("Please specify a correct format on the command line.");
+			usage();
+			return;
 		}
 		if (createNewIndex)
 			indexer.getSearcher().getIndexStructure().setDocumentFormat(docFormat);
@@ -367,8 +350,8 @@ public class IndexTool {
 						+ "                         indexer.properties file. This field is stored untokenized.\n"
 						+ "\n"
 						+ "Available input format configurations:");
-		for (FormatDesc format: DocumentFormats.getSupportedFormats()) {
-            String name = format.getName();
+		for (Format format: DocumentFormats.getFormats()) {
+            String name = format.getId();
 		    String displayName = format.getDisplayName();
 		    String desc = format.getDescription();
             if (displayName.length() > 0)

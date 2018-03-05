@@ -25,13 +25,13 @@ public class TestBlsUtils {
 		Assert.assertTrue(Index.isValidIndexName("user@example.com:my_index_name"));
 		Assert.assertTrue(Index.isValidIndexName("user@example.com:my-index-name1"));
 		Assert.assertTrue(Index.isValidIndexName("user@example.com:a1"));
+		Assert.assertTrue(Index.isValidIndexName("0abd"));
 		Assert.assertFalse(Index.isValidIndexName("user@example.com:"));
 		Assert.assertFalse(Index.isValidIndexName("user@example.com:bla:bla"));
 		Assert.assertFalse(Index.isValidIndexName("user@example.com:bla:"));
 		Assert.assertFalse(Index.isValidIndexName(":user@example.com:bla"));
 		Assert.assertFalse(Index.isValidIndexName(":user@example.com:bla:"));
 		Assert.assertFalse(Index.isValidIndexName(""));
-		Assert.assertFalse(Index.isValidIndexName("0abd"));
 		Assert.assertFalse(Index.isValidIndexName("a*b"));
 		Assert.assertFalse(Index.isValidIndexName("a/b"));
 	}

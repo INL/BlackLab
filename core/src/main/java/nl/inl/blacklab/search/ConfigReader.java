@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.index.DocIndexerFactoryConvertAndTag;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.index.config.YamlJsonReader;
@@ -50,19 +51,18 @@ public class ConfigReader extends YamlJsonReader {
 
     /**
      * Load the global blacklab configuration.
-     * This file configures several global settings, as well as providing default default settings for any new {@link Searcher} constructed hereafter.
+     * This file configures several global settings, as well as providing default settings for any new {@link Searcher} constructed hereafter.
      *
      * If no explicit config file has been set by the time when the first Searcher is opened, BlackLab automatically attempts to find and load a
      * configuration file in a number of preset locations (see {@link ConfigReader#getDefaultConfigDirs()}).
      *
-     * Setting a new configuration when another has already been loaded is unsupported.
+     * Attempting to set another configuration when one is already loaded will throw an UnsupportedOperationException.
      *
      * @param file
      * @throws FileNotFoundException
      * @throws IOException
      */
     public static void setConfigFile(File file) throws FileNotFoundException, IOException {
-
     	if (file == null || !file.canRead())
     		throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
@@ -103,7 +103,7 @@ public class ConfigReader extends YamlJsonReader {
     }
 
 
-    private static void loadDefaultConfig() {
+    public static void loadDefaultConfig() {
     	if (blacklabConfig != null)
     		return;
 
@@ -112,7 +112,7 @@ public class ConfigReader extends YamlJsonReader {
 			if (file != null)
 				setConfigFile(file);
 		} catch (IOException e) {
-			logger.warn("Could not load default configuration file: " + e.getMessage());
+			logger.warn("Could not load default blacklab configuration file: " + e.getMessage());
 		}
     }
 
@@ -150,6 +150,7 @@ public class ConfigReader extends YamlJsonReader {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
             case "search": readSearch(obj(e), searcher); break;
+            case "plugins":
             case "indexing":
             case "debug":
             	break;
@@ -211,6 +212,7 @@ public class ConfigReader extends YamlJsonReader {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
             case "indexing": readIndexing(obj(e)); break;
+            case "plugins": DocIndexerFactoryConvertAndTag.initPlugins(obj(e)); break;
             case "debug": readDebug(obj(e)); break;
             case "search":
             	break;

@@ -423,7 +423,7 @@ public abstract class DocIndexer implements AutoCloseable {
         return SensitivitySetting.ONLY_INSENSITIVE;
     }
 
-	public abstract int getCharacterPosition();
+	protected abstract int getCharacterPosition();
 
 	/**
 	 * If the supplied class has a static getDisplayName() method, call it.

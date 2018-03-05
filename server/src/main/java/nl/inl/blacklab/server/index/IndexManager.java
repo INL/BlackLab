@@ -23,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -42,7 +41,6 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
 public class IndexManager {
-	private static final String FORMATS_SUBDIR_NAME = "_input_formats";
 
 	/**
 	 * A file by this name is placed in user directories that could not be fully deleted,
@@ -63,12 +61,14 @@ public class IndexManager {
 
 	/**
 	 * Logged-in users will have their own private collections dir. This is the
-	 * parent of that dir.
+	 * parent of those dirs.
 	 */
 	private File userCollectionsDir;
 
-	/** User ids for which we've scanned and registered the private format config files. */
-    private Set<String> formatsScannedForUsers = new HashSet<>();
+	/**
+	 * Manages the loaded user document formats and exposes them to BlackLab-core for use.
+	 */
+	private DocIndexerFactoryUserFormats userFormatManager;
 
     private Map<String, Index> indices = new HashMap<>();
 
@@ -130,9 +130,12 @@ public class IndexManager {
 
 		// User collections dir, these are like collections, but within a user's directory
 		this.userCollectionsDir = JsonUtil.getFileProp(properties, "userCollectionsDir", null);
-		if (userCollectionsDir != null && !userCollectionsDir.canRead()) {
+		if (userCollectionsDir == null || !userCollectionsDir.canRead()) {
 			logger.warn("Configured user collections not found or not readable: " + userCollectionsDir);
 			userCollectionsDir = null;
+		} else {
+			userFormatManager = new DocIndexerFactoryUserFormats(userCollectionsDir);
+			DocumentFormats.registerFactory(userFormatManager);
 		}
 
 		if (indices.isEmpty() && collectionsDirs.isEmpty() && userCollectionsDir == null) {
@@ -166,24 +169,6 @@ public class IndexManager {
 		}
 		return dir;
 	}
-
-    /**
-     * Return the specified user's input format configuration dir.
-     *
-     * Creates the directory if it doesn't exist and it has the permissions to do so.
-     *
-     * @param userId the user
-     * @return user's input format config dir, or null if it doesn't exist and couldn't be created.
-     */
-    public File getUserFormatDir(String userId) {
-        File formatDir = new File(getUserCollectionDir(userId), FORMATS_SUBDIR_NAME);
-        if (!formatDir.exists())
-            if (!formatDir.mkdir()) {
-                logger.error("Error creating user format dir: " + formatDir);
-                return null;
-            }
-        return formatDir;
-    }
 
 	/**
 	 * Does the specified index exist?
@@ -225,7 +210,7 @@ public class IndexManager {
 	 */
 	public synchronized void createIndex(String indexId, String displayName, String documentFormatId) throws BlsException,
 			IOException {
-		if (!DocumentFormats.exists(documentFormatId))
+		if (!DocumentFormats.isSupported(documentFormatId))
 			throw new BadRequest("FORMAT_NOT_FOUND", "Unknown format: " + documentFormatId);
 		if (!Index.isUserIndex(indexId))
 			throw new NotAuthorized("Can only create private indices.");
@@ -243,6 +228,9 @@ public class IndexManager {
 			throw new BadRequest("CANNOT_CREATE_INDEX ",
 					"Could not create index. You already have the maximum of "
 							+ IndexManager.MAX_USER_INDICES + " indices.");
+
+		if (userCollectionsDir == null)
+			throw new BadRequest("CANNOT_CREATE_INDEX ", "Could not create index. The server is not configured with support for user content.");
 
 		File userDir = getUserCollectionDir(userId);
 		if (userDir == null || !userDir.canWrite())
@@ -263,7 +251,7 @@ public class IndexManager {
 	}
 
 	public boolean canCreateIndex(String userId) {
-		return getAvailablePrivateIndices(userId).size() < IndexManager.MAX_USER_INDICES;
+		return userCollectionsDir != null && getAvailablePrivateIndices(userId).size() < IndexManager.MAX_USER_INDICES;
 	}
 
 	/**
@@ -277,8 +265,9 @@ public class IndexManager {
 	 * @throws NotAuthorized if this is not a user index
 	 * @throws IndexNotFound if no such index exists
 	 * @throws InternalServerError if the index is in an invalid state
+	 * @throws IllegalIndexName
 	 */
-	public synchronized void deleteUserIndex(String indexId) throws NotAuthorized, IndexNotFound, InternalServerError  {
+	public synchronized void deleteUserIndex(String indexId) throws NotAuthorized, IndexNotFound, InternalServerError, IllegalIndexName  {
 		if (!Index.isUserIndex(indexId))
 			throw new NotAuthorized("Can only delete private indices.");
 
@@ -448,7 +437,10 @@ public class IndexManager {
 					if (indexName.equals("index")) {
 					    // Not a very useful name; the parent directory usually contains the index name in this case
 					    indexName = subDir.getAbsoluteFile().getParentFile().getName();
-                        logger.warn("Found index directory named 'index': " + subDir);
+                        if (indices.containsKey(indexName))
+                        	continue;
+
+					    logger.warn("Found index directory named 'index': " + subDir);
                         logger.warn("Replacing this with the parent directory name (" + indexName + "), but note that this behaviour is deprecated.");
 					}
 					if (indices.containsKey(indexName))
@@ -510,7 +502,7 @@ public class IndexManager {
 	}
 
 	/**
-	 * Checks all indices to see if they directories are still readable, and removes them if this is not the case.
+	 * Checks all indices to see if their directories are still readable, and removes them if this is not the case.
 	 * This can happen when the index is deleted on-disk while we're running.
 	 * This feature is explicitly supported.
 	 */
@@ -541,51 +533,15 @@ public class IndexManager {
 	}
 
 	/**
-	 * Is this config format owned by this user?
+	 * Note that this will return null if no userCollectionsDir has been set configured, as there is no place to store/read the formats.
 	 *
-	 * @param userId
-	 * @param configFormatId the full unprocessed id of the config format
-	 * @return true if this format is owned by this user
+	 * @return The user format manager/DocIndexerFactory.
 	 */
-    public static boolean userOwnsFormat(String userId, String configFormatId) {
-        return !configFormatId.contains(":") || configFormatId.startsWith(userId + ":");
+    public DocIndexerFactoryUserFormats getUserFormatManager() {
+    	return userFormatManager;
     }
 
     /**
-     * Get the id for a format with name name, owned by user userId
-     * @param userId
-     * @param name
-     * @return the id created by joining the two values
-     */
-    public static String userFormatName(String userId, String name) {
-        if (name.contains(":") || userId.contains(":"))
-            throw new IllegalArgumentException("userId or format name contains colon: userid=" + userId + ", name=" + name);
-        return userId + ":" + name;
-    }
-
-    public void ensureUserFormatsRegistered(User user) throws InternalServerError {
-        if (formatsScannedForUsers.contains(user.getUserId()))
-            return;
-        formatsScannedForUsers.add(user.getUserId());
-        File userFormatDir = searchMan.getIndexManager().getUserFormatDir(user.getUserId());
-        if (userFormatDir != null && userFormatDir.exists()) {
-            for (File formatFile: userFormatDir.listFiles()) {
-                String formatIdentifier = ConfigInputFormat.stripExtensions(formatFile.getName());
-                formatIdentifier = IndexManager.userFormatName(user.getUserId(), formatIdentifier);
-                if (!DocumentFormats.exists(formatIdentifier)) {
-                    try {
-                        ConfigInputFormat f = new ConfigInputFormat(formatFile);
-                        f.setName(formatIdentifier); // prefix with user id to avoid collisions
-                        DocumentFormats.register(f);
-                    } catch (IOException e) {
-                        throw new InternalServerError("Error reading user format: " + formatFile, 36, e);
-                    }
-                }
-            }
-        }
-    }
-
-	/**
 	 * @deprecated use {@link Index#getSearcher()}
 	 */
 	@SuppressWarnings("javadoc")

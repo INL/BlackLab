@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import nl.inl.blacklab.index.DocIndexerFactoryClass;
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
@@ -78,10 +78,11 @@ public class Example {
 			});
 		}
 
-		// Instantiate the BlackLab indexer, supplying our DocIndexer class
+		// Register our custom DocIndexer, then create a BlackLab indexer using it
+		DocumentFormats.registerFormat("exampleformat", DocIndexerExample.class);
 		Indexer indexer = null;
 		try {
-			indexer = new Indexer(indexDir, true, new DocIndexerFactoryClass(DocIndexerExample.class), (File)null);
+			indexer = new Indexer(indexDir, true, "exampleformat", (File)null);
 			// Index each of our test "documents".
 			for (int i = 0; i < testData.length; i++) {
 				indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes(StandardCharsets.UTF_8)));

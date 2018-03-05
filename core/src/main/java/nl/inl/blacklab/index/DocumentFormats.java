@@ -1,31 +1,17 @@
 package nl.inl.blacklab.index;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
-import nl.inl.blacklab.index.config.InputFormatConfigException;
-import nl.inl.blacklab.indexers.DocIndexerAlto;
-import nl.inl.blacklab.indexers.DocIndexerFolia;
-import nl.inl.blacklab.indexers.DocIndexerPageXml;
-import nl.inl.blacklab.indexers.DocIndexerTei;
-import nl.inl.blacklab.indexers.DocIndexerTeiPosInFunctionAttr;
-import nl.inl.blacklab.indexers.DocIndexerTeiText;
-import nl.inl.blacklab.indexers.DocIndexerWhiteLab2;
-import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
-import nl.inl.blacklab.search.ConfigReader;
-import nl.inl.util.FileUtil;
-import nl.inl.util.FileUtil.FileTask;
 
 /**
  * Document format registry, for resolving a DocIndexer class given a
@@ -33,377 +19,161 @@ import nl.inl.util.FileUtil.FileTask;
  */
 public class DocumentFormats {
 
-	/** Document formats */
-	static Map<String, Class<? extends DocIndexer>> docIndexerClasses = new TreeMap<>();
+	private static final List<DocIndexerFactory> factories = new ArrayList<>();
 
-    /** Configs for different document formats */
-    static Map<String, ConfigInputFormat> formats = new TreeMap<>();
-
-    /** How to find additional formats */
-    static List<FormatFinder> formatFinders = new ArrayList<>();
+	// We keep a handle to these factories to allow programs on top of blacklab to easily add
+	// new configs and DocIndexer classes through the DocumentFormats class instead of
+	// requiring them to always register a new factory for the format
+	private static final DocIndexerFactoryClass builtinClassFactory;
+	private static final DocIndexerFactoryConfig builtinConfigFactory;
 
     static {
-        init();
+		builtinClassFactory = new DocIndexerFactoryClass();
+		builtinConfigFactory = new DocIndexerFactoryConfig();
+
+		// Last registered factory has priority (to allow users to override types)
+		// So register config-based factory after class-based factory
+		registerFactory(builtinClassFactory);
+		registerFactory(builtinConfigFactory);
+
+		registerFactory(new DocIndexerFactoryConvertAndTag());
     }
-
-    protected static void init() {
-        // Add some default format finders.
-        // NOTE: Format finder that was added last is searched first
-        formatFinders.add(new FormatFinderDocIndexerClass());   // last resort is to look for class directly
-        //formatFinders.add(new FormatFinderConfigFileFromJar()); // load .blf.yaml config file from BlackLab JAR
-        //formatFinders.add(new FormatFinderConfigDirs()); // load .blf.yaml/.blf.json config file from config dir
-
-        // Some abbreviations for commonly used builtin DocIndexers.
-        // You can also specify the classname for builtin DocIndexers,
-        // or a fully-qualified name for your custom DocIndexer (must
-        // be on the classpath)
-        register("alto", DocIndexerAlto.class);
-        register("di-folia", DocIndexerFolia.class);
-        register("whitelab2", DocIndexerWhiteLab2.class);
-        register("pagexml", DocIndexerPageXml.class);
-        register("sketchxml", DocIndexerXmlSketch.class);
-
-        // TEI has a number of variants
-        // By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
-        // By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
-        register("di-tei", DocIndexerTei.class);
-        //register("di-tei-element-body", DocIndexerTei.class);
-        register("di-tei-element-text", DocIndexerTeiText.class);
-        register("di-tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
-
-        // Register builtin formats and formats in config dirs so they can be listed
-        registerFormatsFromJar(Arrays.asList("chat", "csv", "folia", "tei", "tsv-frog", "sketch-wpl", "tsv", "txt"));
-        List<File> configDirs = ConfigReader.getDefaultConfigDirs();
-        List<File> formatsDirs = new ArrayList<>();
-        for (File dir: configDirs) {
-            formatsDirs.add(new File(dir, "formats"));
-        }
-        registerFormatsInDirs(formatsDirs);
-    }
-
-    private static void registerFormatsFromJar(List<String> formatIdentifiers) {
-        for (String formatIdentifier: formatIdentifiers) {
-            try (InputStream is = DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
-                if (is == null)
-                    continue; // not found
-                try (Reader reader = new BufferedReader(new InputStreamReader(is))) {
-                    ConfigInputFormat format = new ConfigInputFormat(formatIdentifier, reader, false);
-                    format.setReadFromFile(new File("$BLACKLAB_JAR/formats/" + formatIdentifier + ".blf.yaml"));
-                    register(format);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public static BufferedReader getFormatFile(String formatIdentifier) {
-        ConfigInputFormat config = getConfig(formatIdentifier);
-        if (config == null)
-            return null;
-        File f = config.getReadFromFile();
-        if (f.getPath().startsWith("$BLACKLAB_JAR"))
-            return new BufferedReader(new InputStreamReader(DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")));
-        return FileUtil.openForReading(f);
-    }
-
-
 
     /**
-     * Scan the supplied directories for format files and register them.
-     * @param dirs directories to scan
+     * Register a new factory.
+     * Factories are responsible for creating the docIndexer instances that will perform the indexing of documents.
+     * newer factories have priority over older factories in case of name conflicts.
+     *
+     * If an exception occurs during initialization of the factory, the factory will not be added, and the exception is rethrown.
+     * @param fac
+     * @throws RuntimeException rethrows exceptions occuring during factory initialization
      */
-	public static void registerFormatsInDirs(List<File> dirs) {
-	    // Make sure we can find linked formats no matter the order we
-	    // read files in the dirs.
-	    FormatFinderDirs ff = new FormatFinderDirs(dirs);
-        addFormatFinder(ff);
+    public static void registerFactory(DocIndexerFactory fac) {
+    	if (factories.contains(fac))
+    		return;
 
-        for (File dir: dirs) {
-            if (dir.exists() && dir.canRead()) {
-                FileUtil.processTree(dir, "*", false, new FileTask() {
-                    @Override
-                    public void process(File f) {
-                        if (f.getName().matches("^[\\-\\w]+\\.blf\\.(ya?ml|json)$")) {
-                            // Format file found. Register it.
-                            try {
-                                register(new ConfigInputFormat(f));
-                            } catch (InputFormatConfigException e) {
-                                throw new InputFormatConfigException("Error in input format config " + f + ": " + e.getMessage());
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        // Remove the format finder for these dirs now as it's no longer necessary
-        removeFormatFinder(ff);
+    	try {
+    		factories.add(fac);
+    		fac.init();
+    	} catch (Exception e) {
+    		factories.remove(fac);
+    		throw e;
+    	}
     }
 
-    public static void removeFormatFinder(FormatFinder ff) {
-        formatFinders.remove(ff);
+    // Convenience method to avoid applications always having to create a DocIndexerFactory instance
+    public static void registerFormat(String formatIdentifier, Class<? extends DocIndexer> docIndexerClass) {
+    	builtinClassFactory.addFormat(formatIdentifier, docIndexerClass);
+    }
+
+    // Convenience method to avoid applications always having to create a DocIndexerFactory instance
+    public static void registerFormat(ConfigInputFormat config) {
+    	builtinConfigFactory.addFormat(config);
+    }
+
+    // Convenience method to avoid applications always having to create a DocIndexerFactory instance
+    public static void registerFormatsInDirectories(List<File> dirs) throws InputFormatException {
+    	builtinConfigFactory.addFormatsInDirectories(dirs);
     }
 
     /**
-	 * Register a DocIndexer class under an abbreviated document format identifier.
-	 *
-	 * @param formatAbbreviation the format abbreviation, e.g. "tei"
-	 *   (NOTE: format abbreviations are case-insensitive, and are lowercased internally)
-	 * @param docIndexerClass the DocIndexer class for this format
-	 */
-	public static void register(String formatAbbreviation, final Class<? extends DocIndexer> docIndexerClass) {
-		docIndexerClasses.put(formatAbbreviation, docIndexerClass);
-	}
+     * Returns the factory which will be used to create the DocIndexer registered under this formatIdentifier.
+     * This method isn't used in BlackLab itself, but it could be useful for client applications.
+     *
+     * @param formatIdentifier
+     * @return the factory if a valid formatIdentifier is provided, null otherwise
+     */
+    public static DocIndexerFactory getFactory(String formatIdentifier) {
+        if (formatIdentifier == null || formatIdentifier.isEmpty())
+        	return null;
 
-	/**
-	 * Register an input format configuration under its name.
-	 *
-	 * @param config input format configuration to register
-	 */
-	public static void register(final ConfigInputFormat config) {
-        try {
-	        config.validate();
-	    } catch(IllegalArgumentException e) {
-	        throw new IllegalArgumentException("Format " + config.getName() + ": " + e.getMessage());
-	    }
-        formats.put(config.getName(), config);
+    	for (int i = factories.size()-1; i >= 0; i--) {
+    		if (factories.get(i).isSupported(formatIdentifier))
+    			return factories.get(i);
+    	}
+    	return null;
 	}
-
-	/**
-	 * Get the DocIndexer class associated with the format identifier.
-	 *
-	 * @param formatIdentifier format identifier, e.g. "tei" or "com.example.MyIndexer"
-	 * @return the DocIndexer class, or null if not found
-	 */
-	public static Class<? extends DocIndexer> getIndexerClass(String formatIdentifier) {
-        if (!docIndexerClasses.containsKey(formatIdentifier))
-            find(formatIdentifier);
-		// Check if it's a known abbreviation.
-		Class<?> docIndexerClass = docIndexerClasses.get(formatIdentifier);
-		if (docIndexerClass == null) {
-			// No; is it a fully qualified class name?
-			try {
-				docIndexerClass = Class.forName(formatIdentifier);
-			} catch (Exception e1) {
-				try {
-					// No. Is it a class in the BlackLab indexers package?
-					docIndexerClass = Class.forName("nl.inl.blacklab.indexers." + formatIdentifier);
-				} catch (Exception e) {
-					// Couldn't be resolved. That's okay, we'll just return null and let
-					// the application deal with it.
-				}
-			}
-		}
-		return docIndexerClass.asSubclass(DocIndexer.class);
-	}
-
-    public static DocIndexerFactory getIndexerFactory(String formatIdentifier) {
-        if (!exists(formatIdentifier))
-            return null;
-        if (formats.containsKey(formatIdentifier))
-            return new DocIndexerFactoryConfig(formats.get(formatIdentifier));
-        if (docIndexerClasses.containsKey(formatIdentifier))
-            return new DocIndexerFactoryClass(docIndexerClasses.get(formatIdentifier));
-        return null;
-	}
-
-	public static ConfigInputFormat getConfig(String formatIdentifier) {
-        if (!formats.containsKey(formatIdentifier))
-            find(formatIdentifier);
-        return formats.get(formatIdentifier);
-    }
 
     /**
 	 * Check if a particular string denotes a valid document format.
 	 *
 	 * @param formatIdentifier format identifier, e.g. "tei" or "com.example.MyIndexer"
-	 * @return true iff it corresponds to a format
+	 * @return true iff a registered factory supports this format
 	 */
-	public static boolean exists(String formatIdentifier) {
-		if (formats.containsKey(formatIdentifier) || docIndexerClasses.containsKey(formatIdentifier))
-		    return true;
-		return find(formatIdentifier);
+	public static boolean isSupported(String formatIdentifier) {
+		return getFactory(formatIdentifier) != null;
 	}
-
-	public static abstract class FormatFinder {
-	    public abstract boolean findAndRegister(String formatIdentifier);
-	}
-
-    /**
-     * If the formatIdentifier matches a [fully qualified] class name that's a subclass of DocIndexer, use that.
-     */
-	static class FormatFinderDocIndexerClass extends FormatFinder {
-        @SuppressWarnings("unchecked")
-        @Override
-        public boolean findAndRegister(String formatIdentifier) {
-            // Is it a fully qualified class name?
-            Class<? extends DocIndexer> docIndexerClass = null;
-            try {
-                docIndexerClass = (Class<? extends DocIndexer>) Class.forName(formatIdentifier);
-            } catch (Exception e1) {
-                try {
-                    // No. Is it a class in the BlackLab indexers package?
-                    docIndexerClass = (Class<? extends DocIndexer>) Class.forName("nl.inl.blacklab.indexers." + formatIdentifier);
-                } catch (Exception e) {
-                    // Couldn't be resolved. That's okay, we'll just return null and let
-                    // the application deal with it.
-                }
-            }
-            if (docIndexerClass != null) {
-                register(formatIdentifier, docIndexerClass);
-                return true;
-            }
-            return false;
-        }
-
-	}
-
-    /** How to find input formats (base format, linked documents) */
-    public static class FormatFinderDirs extends FormatFinder {
-
-        private List<File> dirs;
-
-        public FormatFinderDirs(List<File> dirs) {
-            this.dirs = dirs;
-        }
-
-        @Override
-        public boolean findAndRegister(String formatIdentifier) {
-            if (!formatIdentifier.matches("[\\-\\w]+"))
-                throw new IllegalArgumentException(
-                        "Invalid file format identifier: " + formatIdentifier + " (word characters only please)");
-            // See if we can find and load a format file by this name.
-            File formatFile = FileUtil.findFile(dirs, formatIdentifier, Arrays.asList("blf.yaml", "blf.yml", "blf.json"));
-            if (formatFile == null || !formatFile.canRead())
-                return false;
-            try {
-                // Load the format file and register the format
-                register(new ConfigInputFormat(formatFile));
-            } catch (InputFormatConfigException e) {
-                throw new InputFormatConfigException("Error in input format config " + formatFile + ": " + e.getMessage());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return true;
-        }
-    }
 
 	/**
-	 * Add a way to look for formats that aren't registered yet.
+	 * Returns an alphabetically sorted list of registered document formats.
+	 * Note that though this list will not contain duplicates, duplicates might exist internally (see {@link DocumentFormats#getFormats()}).
 	 *
-	 * @param ff format finder to use
-	 */
-	public static void addFormatFinder(FormatFinder ff) {
-	    formatFinders.add(ff);
-	}
-
-	private static boolean find(String formatIdentifier) {
-	    for (int i = formatFinders.size() - 1; i >= 0; i--) {
-	        FormatFinder ff = formatFinders.get(i);
-	        if (ff.findAndRegister(formatIdentifier)) {
-	            return true;
-	        }
-	    }
-	    return false;
-	}
-
-	/**
-	 * Description of a supported input format
-	 */
-	public static class FormatDesc {
-
-	    private String formatIdentifier;
-
-	    private String displayName;
-
-	    private String description;
-
-        private boolean unlisted;
-
-		private boolean isConfigBased;
-
-        public boolean isUnlisted() {
-            return unlisted;
-        }
-
-        public String getName() {
-            return formatIdentifier;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public FormatDesc(String formatIdentifier, String displayName, String description, boolean isConfigBased) {
-            super();
-            this.formatIdentifier = formatIdentifier;
-            this.displayName = displayName;
-            this.description = description;
-            this.isConfigBased = isConfigBased;
-        }
-
-        public void setUnlisted(boolean b) {
-            this.unlisted = b;
-        }
-
-		public boolean isConfigurationBased() {
-			return isConfigBased;
-		}
-
-	}
-
-    /**
-     * Returns a sorted list of registered document format abbreviations.
-     *
-     * @return the list of registered abbreviations
-     */
-    public static List<FormatDesc> getSupportedFormats() {
-        List<FormatDesc> l = new ArrayList<>();
-        for (ConfigInputFormat config: formats.values()) {
-            l.add(new FormatDesc(config.getName(), config.getDisplayName(), config.getDescription(), true));
-        }
-        for (String format: docIndexerClasses.keySet()) {
-            Class<? extends DocIndexer> docIndexerClass = getIndexerClass(format);
-            FormatDesc formatDesc = new FormatDesc(format, DocIndexer.getDisplayName(docIndexerClass), DocIndexer.getDescription(docIndexerClass), false);
-            if (!DocIndexer.listFormat(docIndexerClass))
-                formatDesc.setUnlisted(true);
-            l.add(formatDesc);
-        }
-        return Collections.unmodifiableList(l);
-    }
-
-	/**
-	 * Returns a sorted list of registered document format abbreviations.
-	 *
-	 * @return the list of registered abbreviations
-	 * @deprecated use getSupportedFormats()
+	 * @return the list of registered formatIdentifiers
+	 * @deprecated use getFormats()
 	 */
     @Deprecated
 	public static List<String> list() {
-		List<String> l = new ArrayList<>();
-		for (ConfigInputFormat config: formats.values()) {
-		    l.add(config.getName());
-		}
-        for (String format: docIndexerClasses.keySet()) {
-            l.add(format);
-        }
-		return Collections.unmodifiableList(l);
+		HashSet<String> s = new HashSet<>();
+		for (Format d : getFormats())
+			s.add(d.getId());
+
+		List<String> l = new ArrayList<>(s);
+		Collections.sort(l);
+		return l;
 	}
 
-    public static void unregister(String formatIdentifier) {
-        if (formats.containsKey(formatIdentifier)) {
-            formats.remove(formatIdentifier);
-        }
-        if (docIndexerClasses.containsKey(formatIdentifier)) {
-            docIndexerClasses.remove(formatIdentifier);
-        }
-    }
+    /**
+     * Returns a list of all registered document formats for all factories,
+     * ordered by descending priority.
+     * Note that this list might contain duplicates if multiple factories support the same formatIdentifier,
+     * such as when registering extra instances of the builtin factories.
+     * In this case, the first of those entries is the one that is actually used.
+     *
+     * @return the list of registered abbreviations
+     */
+	public static List<Format> getFormats() {
+	        List<Format> ret = new ArrayList<>();
+	    	for (DocIndexerFactory fac : factories)
+	    		ret.addAll(fac.getFormats());
+	    	Collections.reverse(ret);
+	    	return ret;
+    	}
 
+	/**
+	 * Returns a format descriptor for a specific format
+	 * @param formatIdentifier
+	 * @return the descriptor, or null if not supported by any factory
+	 */
+	public static Format getFormat(String formatIdentifier) {
+		DocIndexerFactory factory = getFactory(formatIdentifier);
+		return factory != null ? factory.getFormat(formatIdentifier) : null;
+	}
+
+	// Convenience
+	public static DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, Reader reader)
+			throws UnsupportedOperationException {
+		DocIndexerFactory fac = getFactory(formatIdentifier);
+		return fac != null ? fac.get(formatIdentifier, indexer, documentName, reader) : null;
+	}
+
+	// Convenience
+	public static DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, InputStream is, Charset cs)
+			throws UnsupportedOperationException {
+		DocIndexerFactory fac = getFactory(formatIdentifier);
+		return fac != null ? fac.get(formatIdentifier, indexer, documentName, is, cs) : null;
+	}
+
+	// Convenience
+	public static DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, File f, Charset cs)
+			throws UnsupportedOperationException, FileNotFoundException {
+		DocIndexerFactory fac = getFactory(formatIdentifier);
+		return fac != null ? fac.get(formatIdentifier, indexer, documentName, f, cs) : null;
+	}
+
+	// Convenience
+	public static DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, byte[] b, Charset cs)
+			throws UnsupportedOperationException {
+		DocIndexerFactory fac = getFactory(formatIdentifier);
+		return fac != null ? fac.get(formatIdentifier, indexer, documentName, b, cs) : null;
+	}
 }

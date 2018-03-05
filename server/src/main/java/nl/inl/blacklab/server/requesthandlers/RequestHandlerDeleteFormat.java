@@ -1,18 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.io.File;
-
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.exceptions.NotAuthorized;
-import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -31,31 +25,13 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
 		debug(logger, "REQ add format: " + indexName);
 
 		// Get the uploaded file parameters
-        String documentFormat = urlResource; //request.getParameter("format");
-        String[] parts = documentFormat.split(":", -1);
-        if (parts.length != 2)
-            throw new BadRequest("ILLEGAL_INDEX_NAME", "User format configuration name must contain one colon");
-        if (!user.getUserId().equals(parts[0]))
-            throw new NotAuthorized("Can only delete your own formats.");
-        if (!DocumentFormats.exists(documentFormat))
-            throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found.");
-        documentFormat = parts[1];
-		if (!documentFormat.matches("[\\w_\\-]+"))
-		    throw new BadRequest("ILLEGAL_INDEX_NAME", "Format configuration name may only contain letters, digits, underscore and dash");
-        File userFormatDir = indexMan.getUserFormatDir(user.getUserId());
-        File yamlFile = new File(userFormatDir, documentFormat + ".blf.yaml");
-        File jsonFile = new File(userFormatDir, documentFormat + ".blf.json");
-        boolean success = false;
-        if (yamlFile.exists())
-        	success |= yamlFile.delete();
-        if (jsonFile.exists())
-        	success |= jsonFile.delete();
+        String formatIdentifier = urlResource; //request.getParameter("format");
 
-    	if (!success) // If both files are missing, DocumentFormats.exists should have returned false?
-    		throw new InternalServerError("Could not delete format. Unknown reason.", 35);
+        DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
+        if (formatMan == null)
+			throw new BadRequest("CANNOT_DELETE_INDEX ", "Could not delete format. The server is not configured with support for user content.");
 
-		DocumentFormats.unregister(IndexManager.userFormatName(user.getUserId(), documentFormat));
+        formatMan.deleteUserFormat(user, formatIdentifier);
 		return Response.success(ds, "Format deleted.");
 	}
-
 }

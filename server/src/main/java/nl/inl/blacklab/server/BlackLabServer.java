@@ -66,6 +66,11 @@ public class BlackLabServer extends HttpServlet {
 
 	private void readConfig() throws BlsException {
     	try {
+    		// load blacklab's internal config before doing anything
+    		// we will later overwrite some settings from our own config
+    		// It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
+    		ConfigReader.loadDefaultConfig();
+
             File servletPath = new File(getServletContext().getRealPath("."));
             logger.debug("Running from dir: " + servletPath);
 

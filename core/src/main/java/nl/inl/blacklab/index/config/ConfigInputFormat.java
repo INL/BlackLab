@@ -1,7 +1,9 @@
 package nl.inl.blacklab.index.config;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+
+import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.util.FileUtil;
 
 /**
  * Configuration for an input format (either contents, or metadata, or a mix of both).
@@ -33,8 +38,8 @@ public class ConfigInputFormat {
         }
     }
 
-    /** This format's name */
-    private String name;
+    /** This format's name, final to ensure consistency within DocIndexerFactories */
+    private final String name;
 
     /** This format's display name (optional) */
     private String displayName = "";
@@ -82,18 +87,32 @@ public class ConfigInputFormat {
     private File readFromFile;
 
     public ConfigInputFormat(String name) {
-        setName(name);
+        this.name = name;
     }
 
-    public ConfigInputFormat(File file) throws IOException {
+    /**
+     *
+     * @param file the file to read, the name of this file (minus the .blf.* extension) will be used as this format's name.
+     * @param finder finder to locate the baseFormat of this config, if set, may be null if no baseFormat is required
+     * @throws IOException
+     */
+    public ConfigInputFormat(File file, InputFormatReader.BaseFormatFinder finder) throws IOException {
         this.readFromFile = file;
-        setName(ConfigInputFormat.stripExtensions(file.getName()));
-        InputFormatReader.read(file, this);
+        this.name = ConfigInputFormat.stripExtensions(file.getName());
+        InputFormatReader.read(file, this, finder);
     }
 
-    public ConfigInputFormat(String name, Reader reader, boolean isJson) throws IOException {
-        setName(name);
-        InputFormatReader.read(reader, isJson, this);
+    /**
+     *
+     * @param name
+     * @param reader
+     * @param isJson
+     * @param finder finder to locate the baseFormat of this config, if set, may be null if no baseFormat is required
+     * @throws IOException
+     */
+    public ConfigInputFormat(String name, Reader reader, boolean isJson, InputFormatReader.BaseFormatFinder finder) throws IOException {
+        this.name = name;
+        InputFormatReader.read(reader, isJson, this, finder);
     }
 
     /**
@@ -154,10 +173,6 @@ public class ConfigInputFormat {
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getDisplayName() {
@@ -342,6 +357,16 @@ public class ConfigInputFormat {
     public File getReadFromFile() {
         return readFromFile;
     }
+
+	public BufferedReader getFormatFile() {
+		if (readFromFile == null)
+			return null;
+
+		if (readFromFile.getPath().startsWith("$BLACKLAB_JAR"))
+			return new BufferedReader(new InputStreamReader(DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + getName() + ".blf.yaml")));
+		return FileUtil.openForReading(readFromFile);
+	}
+
 
     public void setReadFromFile(File readFromFile) {
         this.readFromFile = readFromFile;

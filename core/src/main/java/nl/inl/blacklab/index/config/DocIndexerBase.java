@@ -23,7 +23,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatException;
@@ -189,11 +189,11 @@ public abstract class DocIndexerBase extends DocIndexer {
      * @param inputFile where the linked document can be found (file or http(s) reference)
      * @param pathInsideArchive if input file is an archive: the path to the file we need inside the archive
      * @param documentPath XPath to the specific linked document we need
-     * @param inputFormat input format of the linked document
+     * @param inputFormatIdentifier input format of the linked document
      * @param storeWithName if set, store the linked document and store the id to it in a field with this name with "Cid" (content id) appended to it
      * @throws IOException on error
      */
-    protected void indexLinkedDocument(String inputFile, String pathInsideArchive, String documentPath, DocIndexerFactory inputFormat, String storeWithName) throws IOException {
+    protected void indexLinkedDocument(String inputFile, String pathInsideArchive, String documentPath, String inputFormatIdentifier, String storeWithName) throws IOException {
         // Fetch the input file (either by downloading it to a temporary location, or opening it from disk)
         File f = resolveFileReference(inputFile);
 
@@ -217,7 +217,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
 
         // Index the data
-        try (DocIndexer docIndexer = inputFormat.get(indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING)) {
+        try (DocIndexer docIndexer = DocumentFormats.get(inputFormatIdentifier, indexer, completePath, data, Indexer.DEFAULT_INPUT_ENCODING)) {
             if (docIndexer instanceof DocIndexerBase) {
                 @SuppressWarnings("resource")
                 DocIndexerBase ldi = (DocIndexerBase)docIndexer;

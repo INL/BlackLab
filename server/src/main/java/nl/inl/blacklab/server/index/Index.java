@@ -4,11 +4,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
@@ -25,7 +26,9 @@ import nl.inl.blacklab.server.search.SearchCache;
  * This is the main class used to interface with a corpus/index in Blacklab-Server.
  * Note the difference between an Index, which is a searchable collection of documents, and the _act_ of Indexing, adding new data to an Index.
  * Blacklab-Server manages indices centrally using the {@link IndexManager}. These handles are managed through this Index class.
- * An instance of Index should not be kept for long periods of time.
+ *
+ * References to an Index should not be held for extended amounts of time (minutes) (other than by the IndexManager that is),
+ * as an Index might suddenly be closed, or begin indexing new data, or even be deleted.
  */
 public class Index {
 	public enum IndexStatus {
@@ -68,7 +71,7 @@ public class Index {
 		private boolean closed = false;
 
 		IndexerWithCloseRegistration(File directory) throws IOException, DocumentFormatException {
-			super(directory, false, (DocIndexerFactory)null, (File) null);
+			super(directory, false, (String)null, (File) null);
 		}
 
 		@Override
@@ -102,6 +105,7 @@ public class Index {
 	private IndexerWithCloseRegistration indexer;
 
 	/**
+	 * NOTE: Index does not support creating a new index from scratch for now, instead use {@link IndexManager#createIndex(String, String, String)}
 	 *
 	 * @param indexId name of this index, including any username if this is a user index
 	 * @param dir directory of this index
@@ -140,7 +144,7 @@ public class Index {
 	 * The pid field is the persistant identifier for a document within an Index. Usually the name of a metadata property in the document.
 	 * Nowadays the definition of this field has moved into the Blacklab internal IndexMetadata, but this wasn't always the case.
 	 *
-	 * This value will be passed on to all Searchers and Indexers for this Index, IF their IndexMetadata doesn't already define it.
+	 * This value will be passed on to all Searchers and Indexers for this Index, iff their IndexMetadata doesn't already define it.
 	 * @param pidField
 	 */
 	public void setDeprecatedPidFieldProperty(String pidField) {
@@ -167,7 +171,7 @@ public class Index {
 	 * @throws ServiceUnavailable when the index is in use.
 	 */
 	// TODO searcher should not have references to it held for longer times outside of this class
-	// (references should ideally never leave a synchronized(Index) block...
+	// (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
 	// (this is a large job)
 	public synchronized Searcher getSearcher() throws InternalServerError, ServiceUnavailable {
 		openForSearching();
@@ -217,8 +221,8 @@ public class Index {
 	 * Attempt to open this index in search mode.
 	 * If this Index currently has an open Indexer, checks whether the Indexer has finished (i.e. Indexer.close() has been called), and cleans it up if so.
 	 *
-	 * @throws InternalServerError if the index could not be opened due to currently ongoing indexing
-	 * @throws ServiceUnavailable
+	 * @throws InternalServerError
+	 * @throws ServiceUnavailable if the index could not be opened due to currently ongoing indexing
 	 */
 	@SuppressWarnings("deprecation") // _setContentViewable and _setPidField
 	private synchronized void openForSearching() throws InternalServerError, ServiceUnavailable {
@@ -329,6 +333,15 @@ public class Index {
 	//---------------------
 
 	/**
+	 * three groups:
+	 * username plus a ':' separator following it, this group is non-capturing and optional -- (:?non capturing optional group ending with ':')?
+	 * inside that: the actual capturing of the username -- (:?(capturing):)?
+	 * beyond that, the indexname group, this is not optional
+	 * so group 1 is always the username, and group 2 is always the indexname
+	 */
+	private static final Pattern PATT_INDEXID = Pattern.compile("^(?:([\\w\\Q-.!$&'()*+,;=@\\E]+):)?([\\w\\-]+)$");
+
+	/**
 	 * Check the index name part (not the user id part, if any) of the specified index name.
 	 * Both indexName and indexIds may be used with this function.
 	 *
@@ -336,11 +349,7 @@ public class Index {
 	 * @return whether or not the index name part is valid
 	 */
 	public static boolean isValidIndexName(String indexId) {
-		try {
-			return getIndexName(indexId) != null;
-		} catch (IllegalIndexName e) {
-			return false;
-		}
+		return PATT_INDEXID.matcher(indexId).matches();
 	}
 
 	/**
@@ -348,100 +357,88 @@ public class Index {
 	 *
 	 * @param indexId
 	 * @return true if this index is owned by a user
+	 * @throws IllegalIndexName
 	 */
-	public static boolean isUserIndex(String indexId) {
-		try {
-		 	return getUserId(indexId) != null;
-		} catch (IllegalIndexName e) {
-			return false;
-		}
+	public static boolean isUserIndex(String indexId) throws IllegalIndexName {
+		return getUserId(indexId) != null;
 	}
 
 	/**
-	 * Get the full id of this index, if this is a user index this will also contain the username.
-	 * This function is a convenience that will not throw any exceptions, as the id of this index has already been validated.
+	 * Check if this indexId is owned by a user.
+	 * Convenience version that doesn't throw, as the indexId has already been verified as valid on construction.
 	 *
-	 * @return the full id of this index.
+	 * @return true if this index is owned by a user
 	 */
+
 	public boolean isUserIndex() {
-		return id.indexOf(":") != -1;
+		return getUserId() != null;
 	}
 
 	/**
 	 * Get the user that owns this index. Returns null if this is not a user index.
 	 *
 	 * @param indexId
-	 * @return the username or null if this is not a user index.
+	 * @return the username, or null if this is not a user index
 	 * @throws IllegalIndexName
 	 */
 	public static String getUserId(String indexId) throws IllegalIndexName {
-		if (indexId == null)
-			return null;
-
-		getIndexName(indexId); // throws if our indexId is invalid
-
-		int pos = indexId.indexOf(":");
-		return pos != -1 ? indexId.substring(0, pos) : null;
+		Matcher m = PATT_INDEXID.matcher(indexId);
+		if (!m.matches())
+			throw new IllegalIndexName("Index name " + indexId + " contains illegal characters.");
+		return m.group(1);
 	}
 
 	/**
-	 * Get the name of the user that owns this index (if any).
-	 * This function is a convenience that will not throw any exceptions, as the id of this index has already been validated.
+	 * A version of {@link Index#getUserId(String)} that doesn't throw, as the id cannot be invalid.
 	 *
 	 * @return the username or null if this is not a user index.
 	 */
 	public String getUserId() {
-		int pos = id.indexOf(":");
-		return pos != -1 ? id.substring(0, pos) : null;
+		Matcher m = PATT_INDEXID.matcher(this.getId());
+		if (!m.matches())
+			throw new RuntimeException();
+		return m.group(1);
 	}
 
 	/**
 	 * Get the name portion of the indexId.
 	 *
 	 * @param indexId
-	 * @return the name of this index, or null when indexId is null
-	 * @throws IllegalIndexName if indexId is not null, but no valid name could be extracted
+	 * @return the indexname, never null
+	 * @throws IllegalIndexName
 	 */
 	public static String getIndexName(String indexId) throws IllegalIndexName {
-		if (indexId == null)
-			return null;
-
-		int pos = indexId.indexOf(":");
-		String userName = (pos >= 1) ? indexId.substring(0, pos) : null; // only when there is at least 1 character in the username
-		String indexName = userName == null ? indexId : indexId.substring(pos + 1); // when there is no username, use the whole id, avoid edge case with ":indexname" stripping the ":"
-
-		// The reason we check this here is because otherwise isValidIndexName() with values containing multiple separators would return true
-		// isValidIndexName("a:simple:example") --> getIndexName(...) --> isValidIndexName(simple:example) --> getIndexName(...) --> isValidIndexName(example) --> true
-		if (!indexName.matches("[a-zA-Z][a-zA-Z0-9_\\-]*"))
-			throw new IllegalIndexName("'" + indexName + "' is not allowed as index name.");
-
-		return indexName;
+		Matcher m = PATT_INDEXID.matcher(indexId);
+		if (!m.matches())
+			throw new IllegalIndexName("Index name " + indexId + " contains illegal characters.");
+		return m.group(2);
 	}
 
 	/**
-	 * Get the name portion of the indexId.
-	 * This function is a convenience that will not throw any exceptions, as the id of this index has already been validated.
+	 * A version of {@link Index#getIndexName(String)} that doesn't throw, as the id cannot be invalid.
 	 *
 	 * @return the name of this index, never null.
 	 */
 	public String getIndexName() {
-		return isUserIndex() ? id.substring(id.indexOf(":" + 1)) : null;
+		Matcher m = PATT_INDEXID.matcher(this.getId());
+		if (!m.matches())
+			throw new RuntimeException();
+		return m.group(2);
 	}
 
 
 	/**
 	 * Given the base name for an index and a userId, get the corresponding unique indexId for the index with that name for that user.
 	 *
-	 * @param indexName base name of the index
-	 * @param userId may not contain ":"
+	 * @param indexName base name of the index, will be validated
+	 * @param userId optional user for which this index is being created, wil be validated if not null
 	 * @return the id that unique identifies the index with indexName owned by the given user
-	 * @throws IllegalIndexName whent he result would be an illegal name
+	 * @throws IllegalIndexName when the result would be an illegal indexId
 	 */
 	public static String getIndexId(String indexName, String userId) throws IllegalIndexName {
-		String indexId = userId + ":" + indexName;
-
+		String indexId = (userId == null) ? indexName : userId + ":" + indexName;
 		if (!isValidIndexName(indexId))
-			throw new IllegalIndexName(indexId + " is not allowed as index name.");
+			throw new IllegalIndexName("Index name " + indexId + " contains illegal characters.");
 
 		return indexId;
 	}
