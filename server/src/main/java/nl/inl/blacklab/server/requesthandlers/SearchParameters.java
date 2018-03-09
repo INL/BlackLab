@@ -518,7 +518,7 @@ public class SearchParameters {
 	}
 
 	public JobDescription hitsTotal() throws BlsException {
-		return new JobDescHitsTotal(this, hitsFiltered(), getSearchSettings());
+		return new JobDescHitsTotal(this, hitsSample(), getSearchSettings());
 	}
 
 	public JobDescription hitsFiltered() throws BlsException {
