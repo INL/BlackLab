@@ -24,7 +24,6 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.search.grouping.DocOrHitGroups;
 import nl.inl.blacklab.search.grouping.HitGroup;
-import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
@@ -34,7 +33,6 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped;
 import nl.inl.blacklab.server.jobs.JobHitsTotal;
-import nl.inl.blacklab.server.jobs.JobHitsWindow;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.BlsConfig;
 
@@ -49,83 +47,79 @@ public class RequestHandlerHits extends RequestHandler {
 	@Override
 	public int handle(DataStream ds) throws BlsException {
 		if (BlsConfig.traceRequestHandling) logger.debug("RequestHandlerHits.handle start");
-		Job search = null;
-		JobHitsGrouped searchGrouped = null;
-		JobHitsWindow searchWindow = null;
-		JobHitsTotal total = null;
+
+		Hits total = null;
+		HitsWindow window = null;
+		Job job = null;
 
 		// Do we want to view a single group after grouping?
-		String groupBy = searchParam.getString("group");
-		if (groupBy == null)
-			groupBy = "";
-		String viewGroup = searchParam.getString("viewgroup");
-		if (viewGroup == null)
-			viewGroup = "";
+		String groupBy = searchParam.getString("group"); if (groupBy == null) groupBy = "";
+		String viewGroup = searchParam.getString("viewgroup"); if (viewGroup == null) viewGroup = "";
+
 		try {
-			HitsWindow window;
 			HitGroup group = null;
 			boolean block = isBlockingOperation();
 			if (groupBy.length() > 0 && viewGroup.length() > 0) {
-
-				// TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
-
 				// Yes. Group, then show hits from the specified group
-				searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), block);
-				search = searchGrouped;
-				search.incrRef();
+				job = searchMan.search(user, searchParam.hitsGrouped(), block);
+				job.incrRef();
+				JobHitsGrouped jobGrouped = (JobHitsGrouped) job;
 
 				// If search is not done yet, indicate this to the user
-				if (!search.finished()) {
+				if (!jobGrouped.finished()) {
 					return Response.busy(ds, servlet);
 				}
 
-				// Search is done; construct the results object
-				HitGroups groups = searchGrouped.getGroups();
-
 				HitPropValue viewGroupVal = null;
-				viewGroupVal = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
+				viewGroupVal = HitPropValue.deserialize(jobGrouped.getHits(), viewGroup);
 				if (viewGroupVal == null)
 					return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
 
-				group = groups.getGroup(viewGroupVal);
+				group = jobGrouped.getGroups().getGroup(viewGroupVal);
 				if (group == null)
 					return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
+				// TODO sorting the collection of Groups is implicitl in the JobDesc, but sorting within a ViewGroup is not, fix this in SearchParameters class
+				// instead, the sorting will (erroneously) be applied to the collection of groups.
+				// Retrieve and optionally sort the hits within this group.
 				String sortBy = searchParam.getString("sort");
-				HitProperty sortProp = sortBy != null && sortBy.length() > 0 ? HitProperty.deserialize(group.getHits(), sortBy) : null;
-				Hits hitsSorted;
-				if (sortProp != null)
-					hitsSorted = group.getHits().sortedBy(sortProp);
-				else
-					hitsSorted = group.getHits();
+				HitProperty sortProp = sortBy != null && sortBy.isEmpty() ? HitProperty.deserialize(group.getHits(), sortBy) : null;
+				Hits hitsInGroup = sortProp != null ? group.getHits().sortedBy(sortProp) : group.getHits();
 
-				int first = searchParam.getInteger("first");
-				if (first < 0)
-					first = 0;
-				int number = searchParam.getInteger("number");
-				if (number < 0 || number > searchMan.config().maxPageSize())
-					number = searchMan.config().defaultPageSize();
-				if (!hitsSorted.sizeAtLeast(first))
+				// Important, only count hits within this group for the total
+				// We should have retrieved all the hits already, as JobGroups always counts all hits.
+				total = hitsInGroup;
+
+				int first = Math.max(0, searchParam.getInteger("first"));
+				int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
+				if (!hitsInGroup.sizeAtLeast(first))
 					return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
-				window = hitsSorted.window(first, number);
-
+				window = hitsInGroup.window(first, size);
 			} else {
-				// Regular set of hits (no grouping first)
+				// Since we're going to always launch a totals count anyway, just do it right away
+				// then construct a window on top of the total
+				job = searchMan.search(user, searchParam.hitsTotal(), block);
+				job.incrRef();
+				JobHitsTotal jobTotal = (JobHitsTotal) job;
 
-				searchWindow = (JobHitsWindow) searchMan.search(user, searchParam.hitsWindow(), block);
-				search = searchWindow;
-				search.incrRef();
+				total = jobTotal.getHits();
 
-				// Also determine the total number of hits
-				// (usually nonblocking, unless "waitfortotal=yes" was passed)
-				total = (JobHitsTotal) searchMan.search(user, searchParam.hitsTotal(), searchParam.getBoolean("waitfortotal"));
+				// check if we have the requested window available
+				// NOTE: don't create the HitsWindow object yet, as it will attempt to resolve the hits immediately and block the thread until they've been found.
+				// Instead, check with the Hits object directly, instead of blindly getting (and thus loading) the hits by creating a window
+				int first = Math.max(0, searchParam.getInteger("first"));
+				int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
 
-				// If search is not done yet, indicate this to the user
-				if (!search.finished()) {
-					return Response.busy(ds, servlet);
+				if (total.countSoFarHitsRetrieved() < (first + size)) {
+					if (!jobTotal.finished()) // If we're not finished counting, we might have them later
+						return Response.busy(ds, servlet);
+
+					// Finished counting, but haven't retrieved enough hits, out of range window requested!
+					// Correct.
+					first = 0;
 				}
 
-				window = searchWindow.getWindow();
+				window = total.window(first, size);
 			}
 
 			if (searchParam.getString("calc").equals("colloc")) {
@@ -135,7 +129,7 @@ public class RequestHandlerHits extends RequestHandler {
 
 			DocResults perDocResults = null;
 
-			Searcher searcher = search.getSearcher();
+			Searcher searcher = total.getSearcher();
 
 			boolean includeTokenCount = searchParam.getBoolean("includetokencount");
 			int totalTokens = -1;
@@ -154,45 +148,12 @@ public class RequestHandlerHits extends RequestHandler {
 
 			// The summary
 			ds.startEntry("summary").startMap();
-			Hits hits = searchWindow != null ? searchWindow.getWindow().getOriginalHits() : group.getHits();
-			double totalTime = 0;
-			if (total != null)
-				totalTime = total.threwException() ? -1 : total.userWaitTime();
-			else
-				totalTime = searchGrouped.threwException() ? -1 : searchGrouped.userWaitTime();
 
-            // Total.hits could be a different instance
-            // From window.hits (unfortunately) because of how cache works.
-			// This should be improved (we should essentially cache Hits/DocResults objects, not Jobs)
-			Hits totalHits= null;
-			if (total == null)
-			    totalHits =  searchGrouped.getHits();
-			else {
-			    // Total job has just been started, it might be a little while before it has hits object
-			    // available (needs to start JobHits first if it wasn't in the cache already)
-			    // one more reason why we need to cache Hits instances instead of (or in addition to?) Jobs
-                totalHits = total.getHits();
-			    while (totalHits == null) {
-			        int wait = 10;
-			        try {
-                        logger.warn("Total hits instance not available yet, waiting for it...");
-                        Thread.sleep(wait);
-                        wait = wait * 2;
-                        if (wait > 5000) {
-                            // This shouldn't ever happen. If it does, the following is wrong,
-                            // but probably better than throwing an exception.
-                            logger.error("### Gave up waiting for total hits instance.");
-                            totalHits = hits;
-                            break;
-                        }
-                        totalHits = total.getHits();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-			    }
-			}
+			double totalTime = job.threwException() ? -1 : job.userWaitTime();
 
-			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, hits, totalHits, false, (DocResults)null, (DocOrHitGroups)null, window);
+			// TODO timing is now broken because we always retrieve total and use a window on top of it,
+			// so we can no longer differentiate the total time from the time to retrieve the requested window
+			addSummaryCommonFields(ds, searchParam, job.userWaitTime(), totalTime, window, total, false, (DocResults)null, (DocOrHitGroups)null, window);
 			if (includeTokenCount)
 				ds.entry("tokensInMatchingDocuments", totalTokens);
 			ds.startEntry("docFields");
@@ -283,14 +244,8 @@ public class RequestHandlerHits extends RequestHandler {
 			if (BlsConfig.traceRequestHandling) logger.debug("RequestHandlerHits.handle end");
 			return HTTP_OK;
 		} finally {
-			if (search != null)
-				search.decrRef();
-			if (searchWindow != null)
-				searchWindow.decrRef();
-			if (searchGrouped != null)
-				searchGrouped.decrRef();
-			if (total != null)
-				total.decrRef();
+			if (job != null)
+				job.decrRef();
 		}
 	}
 

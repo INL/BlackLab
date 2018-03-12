@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -10,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -59,6 +61,8 @@ public abstract class RequestHandler {
 		availableHandlers.put("debug", RequestHandlerDebug.class);
 		availableHandlers.put("docs", RequestHandlerDocs.class);
 		availableHandlers.put("docs-grouped", RequestHandlerDocsGrouped.class);
+		availableHandlers.put("docs-csv", RequestHandlerDocsCsv.class);
+		availableHandlers.put("docs-grouped-csv", RequestHandlerDocsCsv.class);
 		availableHandlers.put("doc-contents", RequestHandlerDocContents.class);
 		availableHandlers.put("doc-snippet", RequestHandlerDocSnippet.class);
 		availableHandlers.put("doc-info", RequestHandlerDocInfo.class);
@@ -66,6 +70,8 @@ public abstract class RequestHandler {
 		//availableHandlers.put("help", RequestHandlerBlsHelp.class);
 		availableHandlers.put("hits", RequestHandlerHits.class);
 		availableHandlers.put("hits-grouped", RequestHandlerHitsGrouped.class);
+		availableHandlers.put("hits-csv", RequestHandlerHitsCsv.class);
+		availableHandlers.put("hits-grouped-csv", RequestHandlerHitsCsv.class);
 		availableHandlers.put("status", RequestHandlerIndexStatus.class);
 		availableHandlers.put("termfreq", RequestHandlerTermFreq.class);
 		availableHandlers.put("", RequestHandlerIndexStructure.class);
@@ -80,20 +86,14 @@ public abstract class RequestHandler {
 	 * @param debugMode debug mode request? Allows extra parameters to be used
 	 * @return the response data
 	 */
-	public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode) {
+	public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode, DataFormat outputType) {
 
 		// See if a user is logged in
 		SearchManager searchManager = servlet.getSearchManager();
 		User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
 
 		// Parse the URL
-		String servletPath = request.getServletPath();
-		if (servletPath == null)
-			servletPath = "";
-		if (servletPath.startsWith("/"))
-			servletPath = servletPath.substring(1);
-		if (servletPath.endsWith("/"))
-			servletPath = servletPath.substring(0, servletPath.length() - 1);
+		String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getServletPath()), "/");
 		String[] parts = servletPath.split("/", 3);
 		String indexName = parts.length >= 1 ? parts[0] : "";
 		RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName, null, null);
@@ -209,7 +209,7 @@ public abstract class RequestHandler {
 							return errorObj.unavailable(indexName, status.toString());
 						}
 
-						if (debugMode && handlerName.length() > 0 && !handlerName.equals("hits") && !handlerName.equals("docs") && !handlerName.equals("fields") && !handlerName.equals("termfreq") && !handlerName.equals("status")) {
+						if (debugMode && !handlerName.isEmpty() && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs", "docs-csv", "docs-grouped-csv", "fields", "termfreq", "status").contains(handlerName)) {
 							handlerName = "debug";
 						}
 
@@ -241,6 +241,8 @@ public abstract class RequestHandler {
 
 								return errorObj.badRequest("ERROR_IN_GROUP_VALUE", "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
 							}
+							if (outputType == DataFormat.CSV)
+								handlerName += "-csv";
 						}
 
 						if (!availableHandlers.containsKey(handlerName))

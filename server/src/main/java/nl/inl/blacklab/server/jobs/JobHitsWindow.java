@@ -10,7 +10,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * Represents searching for a window in a larger set of hits.
  */
-public class JobHitsWindow extends Job {
+public class JobHitsWindow extends JobWithHits {
 
 	public static class JobDescHitsWindow extends JobDescription {
 

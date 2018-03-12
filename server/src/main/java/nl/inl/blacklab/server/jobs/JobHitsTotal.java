@@ -9,7 +9,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * Represents finding the total number of hits.
  */
-public class JobHitsTotal extends Job {
+public class JobHitsTotal extends JobWithHits {
 
 	public static class JobDescHitsTotal extends JobDescription {
 
@@ -28,8 +28,6 @@ public class JobHitsTotal extends Job {
 		}
 
 	}
-
-	private Hits hits = null;
 
 	public JobHitsTotal(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
@@ -63,6 +61,7 @@ public class JobHitsTotal extends Job {
 	 *
 	 * @return the Hits object, or null if not available yet.
 	 */
+	@Override
 	public Hits getHits() {
 		return hits;
 	}
