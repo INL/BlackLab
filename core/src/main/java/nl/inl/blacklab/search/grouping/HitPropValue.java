@@ -78,4 +78,6 @@ public abstract class HitPropValue implements Comparable<Object> {
 
 	@Override
 	public abstract String toString();
+
+	public abstract List<String> getPropValues();
 }

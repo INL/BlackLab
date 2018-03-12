@@ -1,5 +1,8 @@
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class HitPropValueString extends HitPropValue {
 	String value;
 
@@ -36,4 +39,8 @@ public class HitPropValueString extends HitPropValue {
 		return PropValSerializeUtil.combineParts("str", value);
 	}
 
+	@Override
+	public List<String> getPropValues() {
+		return Arrays.asList(value);
+	}
 }

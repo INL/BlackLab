@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 
@@ -38,6 +41,11 @@ public class HitPropertyHitPosition extends HitProperty {
 	@Override
 	public String getName() {
 		return "hit position";
+	}
+
+	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList("hit: position");
 	}
 
 	@Override

@@ -149,6 +149,13 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 		return b.toString();
 	}
 
+	@Override
+	public List<String> getPropNames() {
+		List<String> names = new ArrayList<>();
+		for (HitProperty prop : criteria)
+			names.addAll(prop.getPropNames());
+		return names;
+	}
 
 	@Override
 	public String serialize() {

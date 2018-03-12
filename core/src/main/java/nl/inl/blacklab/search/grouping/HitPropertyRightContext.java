@@ -133,6 +133,11 @@ public class HitPropertyRightContext extends HitProperty {
 	}
 
 	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList("right context: " + propName);
+	}
+
+	@Override
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
 		String thePropName = parts.length > 1 ? parts[1] : "";

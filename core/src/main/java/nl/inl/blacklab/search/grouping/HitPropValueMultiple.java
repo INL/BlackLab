@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search.grouping;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import nl.inl.blacklab.search.Hits;
 
@@ -50,6 +52,14 @@ public class HitPropValueMultiple extends HitPropValue {
 			valuesSerialized[i] = value[i].serialize();
 		}
 		return PropValSerializeUtil.combineMultiple(valuesSerialized);
+	}
+
+	@Override
+	public List<String> getPropValues() {
+		List<String> l = new ArrayList<>();
+		for (HitPropValue v : value)
+			l.addAll(v.getPropValues());
+		return l;
 	}
 
 	/**

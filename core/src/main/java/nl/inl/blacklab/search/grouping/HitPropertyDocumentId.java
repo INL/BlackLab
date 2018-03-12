@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 
@@ -36,6 +39,11 @@ public class HitPropertyDocumentId extends HitProperty {
 	@Override
 	public String getName() {
 		return "document id";
+	}
+
+	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList("document: id");
 	}
 
 	@Override

@@ -212,4 +212,10 @@ public abstract class HitProperty implements Comparator<Object> {
 	public String toString() {
 		return serialize();
 	}
+
+	/**
+	 * Get the names of all (sub-)properties separately.
+	 * @return the list
+	 */
+	public abstract List<String> getPropNames();
 }
