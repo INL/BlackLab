@@ -79,7 +79,7 @@ public class RequestHandlerHits extends RequestHandler {
 				if (group == null)
 					return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-				// TODO sorting the collection of Groups is implicitl in the JobDesc, but sorting within a ViewGroup is not, fix this in SearchParameters class
+				// TODO sorting the collection of Groups is implicitly in the JobDesc, but sorting within a ViewGroup is not, fix this in SearchParameters class
 				// instead, the sorting will (erroneously) be applied to the collection of groups.
 				// Retrieve and optionally sort the hits within this group.
 				String sortBy = searchParam.getString("sort");

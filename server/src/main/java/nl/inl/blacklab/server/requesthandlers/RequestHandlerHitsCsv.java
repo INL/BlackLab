@@ -28,6 +28,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamPlain;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped;
@@ -63,20 +64,25 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 		if (groupBy != null) {
 			JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), true);
 			groups = searchGrouped.getGroups();
-			// don't assign yet or we can't know whether to show hits or groups
+			// don't set hits yet - only return hits if we're looking within a specific group
 
 			if (viewGroup != null) {
-				// TODO handle group not present in result & cannot deserialize group parameter error
-				HitGroup group = groups.getGroup(HitPropValue.deserialize(searchGrouped.getHits(), viewGroup));
+				HitPropValue groupId = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
+				if (groupId == null)
+					throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+				HitGroup group = groups.getGroup(groupId);
+				if (group == null)
+					throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+
 				hits = group.getHits();
 
 				// TODO sortBy is automatically applied to regular hits and groups
-				// TODO test regular group view ordering though
 				// but is applied to Group ordering instead of hit ordering within group with we have both group and viewGroup
 				// need to fix this in SearchParameters somewhere
 				if (sortBy != null) {
-					// TODO handle cannot deserialize, invalid prop etc
 					HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
+					if (sortProp == null)
+						throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
 					hits = hits.sortedBy(sortProp, sortProp.isReverse());
 				}
 			}
@@ -88,11 +94,11 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
 		// apply window settings
 		// Different from the regular hits, if no parameters are provided, all hits are returned.
-		if (hits != null && (searchParam.containsKey("first") || searchParam.containsKey("number"))) { 
+		if (hits != null && (searchParam.containsKey("first") || searchParam.containsKey("number"))) {
 			int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
 			int number = searchParam.containsKey("number") ? Math.max(1, searchParam.getInteger("number")) : Integer.MAX_VALUE;
-			
-			if (!hits.sizeAtLeast(first)) 
+
+			if (!hits.sizeAtLeast(first))
 				first = 0;
 			hits = hits.window(first, number);
 		}
@@ -161,11 +167,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 			for (String complexFieldName : getSearcher().getIndexStructure().getComplexFields()) {
 				ComplexFieldDesc complexField = getSearcher().getIndexStructure().getComplexFieldDesc(complexFieldName);
 				for (String tokenProperty : complexField.getProperties()) {
-					if (tokenProperty.equals(mainTokenProperty))
-						continue;
-
 					PropertyDesc desc = complexField.getPropertyDesc(tokenProperty);
-					if (desc.isInternal())
+					if (tokenProperty.equals(mainTokenProperty) || desc.isInternal())
 						continue;
 
 					columns.add(complexField.getPropertyDesc(tokenProperty).getDisplayName());
