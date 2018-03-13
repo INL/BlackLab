@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.jobs;
 
 
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
-
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.HitsSettings;
@@ -100,7 +99,7 @@ public class JobHits extends JobWithHits {
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		textPattern = jobDesc.getPattern();
 		if (textPattern == null)
 			throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");

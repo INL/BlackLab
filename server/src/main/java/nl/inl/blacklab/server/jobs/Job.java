@@ -127,7 +127,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	protected JobDescription jobDesc;
 
 	/** The job we're operating on (i.e. the hits to sort, or the docs to group) */
-	Job inputJob = null;
+	protected Job inputJob = null;
 
 	/** The servlet */
 	protected SearchManager searchMan;
@@ -282,9 +282,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 	/**
 	 * @throws BlsException on error
 	 */
-	protected void performSearch() throws BlsException {
-		// (to override)
-	}
+	protected abstract void performSearch() throws BlsException;
 
 	/**
 	 * Is this search operation finished?
@@ -460,15 +458,11 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 		dataStreamSubclassEntries(ds);
 		if (inputJob != null) {
             ds.startEntry("inputJob").startMap();
-            Hits hits = null;
             ds.entry("type", inputJob.getClass().getName());
-		    if (inputJob instanceof JobWithHits) {
-                hits = ((JobWithHits)inputJob).getHits();
-		    } else if (inputJob instanceof JobHitsWindow) {
-		        hits = ((JobHitsWindow)inputJob).getWindow();
-		    } else if (inputJob instanceof JobHitsTotal) {
-                hits = ((JobHitsTotal)inputJob).getHits();
-		    }
+            Hits hits = null;
+            if (inputJob instanceof JobWithHits) {
+            	hits = ((JobWithHits)inputJob).getHits();
+            }
             ds.entry("hasHitsObject", hits != null);
             if (hits != null) {
                 ds  .entry("hitsObjId", hits.getHitsObjId())

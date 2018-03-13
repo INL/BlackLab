@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.perdocument.DocGroups;
-import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -10,7 +9,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * Represents a hits search and sort operation.
  */
-public class JobDocsGrouped extends Job {
+public class JobDocsGrouped extends JobWithDocs {
 
 	public static class JobDescDocsGrouped extends JobDescription {
 
@@ -55,19 +54,16 @@ public class JobDocsGrouped extends Job {
 
 	private DocGroups groups;
 
-	private DocResults docResults;
-
 	public JobDocsGrouped(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		docResults = ((JobWithDocs)inputJob).getDocResults();
 		setPriorityInternal();
 		DocGroupSettings groupSett = jobDesc.getDocGroupSettings();
 		DocGroups theGroups = docResults.groupedBy(groupSett.groupBy());
-
 		DocGroupSortSettings sortSett = jobDesc.getDocGroupSortSettings();
 		if (sortSett != null)
 			theGroups.sort(sortSett.sortBy(), sortSett.reverse());
@@ -75,12 +71,12 @@ public class JobDocsGrouped extends Job {
 		groups = theGroups; // we're done, caller can use the groups now
 	}
 
+	/**
+	 * Get the grouped documents, or null if not available yet, or if no sortSettings were provided by the JobDesc.
+	 * @return the grouped document results.
+	 */
 	public DocGroups getGroups() {
 		return groups;
-	}
-
-	public DocResults getDocResults() {
-		return docResults;
 	}
 
 	@Override
@@ -92,13 +88,6 @@ public class JobDocsGrouped extends Job {
 	@Override
 	protected void cleanup() {
 		groups = null;
-		docResults = null;
 		super.cleanup();
 	}
-
-	@Override
-	protected DocResults getObjectToPrioritize() {
-		return docResults;
-	}
-
 }

@@ -11,14 +11,14 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * Sample hits from a Hits object
  */
-public class JobSampleHits extends JobWithHits {
+public class JobHitsSample extends JobWithHits {
 
 	public static class JobDescSampleHits extends JobDescription {
 
 		SampleSettings sampleSettings;
 
 		public JobDescSampleHits(SearchParameters param, JobDescription hitsToSample, SearchSettings searchSettings, SampleSettings settings) {
-			super(param, JobSampleHits.class, hitsToSample, searchSettings);
+			super(param, JobHitsSample.class, hitsToSample, searchSettings);
 			this.sampleSettings = settings;
 		}
 
@@ -45,12 +45,12 @@ public class JobSampleHits extends JobWithHits {
 
 	}
 
-	public JobSampleHits(SearchManager searchMan, User user, JobDescription par) throws BlsException {
+	public JobHitsSample(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		Hits inputHits = ((JobWithHits)inputJob).getHits();
 		SampleSettings sample = jobDesc.getSampleSettings();
 		if (sample.percentage() >= 0) {

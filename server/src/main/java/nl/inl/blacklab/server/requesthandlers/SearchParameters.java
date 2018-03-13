@@ -56,7 +56,7 @@ import nl.inl.blacklab.server.jobs.JobHitsGrouped.JobDescHitsGrouped;
 import nl.inl.blacklab.server.jobs.JobHitsSorted.JobDescHitsSorted;
 import nl.inl.blacklab.server.jobs.JobHitsTotal.JobDescHitsTotal;
 import nl.inl.blacklab.server.jobs.JobHitsWindow.JobDescHitsWindow;
-import nl.inl.blacklab.server.jobs.JobSampleHits.JobDescSampleHits;
+import nl.inl.blacklab.server.jobs.JobHitsSample.JobDescSampleHits;
 import nl.inl.blacklab.server.jobs.MaxSettings;
 import nl.inl.blacklab.server.jobs.SampleSettings;
 import nl.inl.blacklab.server.jobs.SearchSettings;

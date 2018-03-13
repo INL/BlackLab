@@ -111,7 +111,7 @@ public class RequestHandlerDocs extends RequestHandler {
 					return Response.busy(ds, servlet);
 				}
 
-				window = searchWindow.getWindow();
+				window = searchWindow.getDocResults();
 			}
 
 			Searcher searcher = search.getSearcher();

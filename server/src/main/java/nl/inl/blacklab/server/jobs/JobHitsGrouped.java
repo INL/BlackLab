@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.jobs;
 
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -12,7 +11,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * Represents a hits search and sort operation.
  */
-public class JobHitsGrouped extends Job {
+public class JobHitsGrouped extends JobWithHits {
 
 	public static class JobDescHitsGrouped extends JobDescription {
 
@@ -57,14 +56,12 @@ public class JobHitsGrouped extends Job {
 
 	private HitGroups groups;
 
-	private Hits hits;
-
 	public JobHitsGrouped(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		// Now, group the hits.
 		hits = ((JobWithHits)inputJob).getHits();
 		setPriorityInternal();
@@ -88,10 +85,6 @@ public class JobHitsGrouped extends Job {
 		return groups;
 	}
 
-	public Hits getHits() {
-		return hits;
-	}
-
 	@Override
 	protected void dataStreamSubclassEntries(DataStream ds) {
 		ds	.entry("hitsRetrieved", hits == null ? -1 : hits.countSoFarHitsRetrieved())
@@ -101,13 +94,6 @@ public class JobHitsGrouped extends Job {
 	@Override
 	protected void cleanup() {
 		groups = null;
-		hits = null;
 		super.cleanup();
 	}
-
-	@Override
-	protected Hits getObjectToPrioritize() {
-		return hits;
-	}
-
 }

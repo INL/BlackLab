@@ -49,7 +49,7 @@ public class JobHitsSorted extends JobWithHits {
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		// Now, sort the hits.
 		Hits hitsUnsorted = ((JobWithHits)inputJob).getHits();
 		HitSortSettings sortSett = jobDesc.getHitSortSettings();

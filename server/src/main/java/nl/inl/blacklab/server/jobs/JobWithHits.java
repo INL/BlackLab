@@ -8,7 +8,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * A search job that produces a Hits object
  */
-public class JobWithHits extends Job {
+public abstract class JobWithHits extends Job {
 
 	/** The hits found */
 	protected Hits hits;
