@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatException;
+import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
@@ -108,6 +110,9 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected int wordsDone = 0;
     private int wordsDoneAtLastReport = 0;
     private int charsDoneAtLastReport = 0;
+
+    /** External metadata fetcher (if any), responsible for looking up the metadata and adding it to the Lucene document. */
+    private MetadataFetcher metadataFetcher;
 
     protected String getContentStoreName() {
         return contentStoreName;
@@ -380,6 +385,16 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
 
         if (indexer != null) {
+            // If there's an external metadata fetcher, call it now so it can
+            // add the metadata for this document and (optionally) store the
+            // metadata
+            // document in the content store (and the corresponding id in the
+            // Lucene doc)
+            MetadataFetcher m = getMetadataFetcher();
+            if (m != null) {
+                m.addMetadata();
+            }
+
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
             IndexStructure struct = indexer.getSearcher().getIndexStructure();
@@ -659,5 +674,31 @@ public abstract class DocIndexerBase extends DocIndexer {
 
     	indexer.getListener().tokensDone(wordsDoneSinceLastReport);
     	wordsDoneAtLastReport = wordsDone;
+    }
+
+    /**
+     * Get the external metadata fetcher for this indexer, if any.
+     *
+     * The metadata fetcher can be configured through the "metadataFetcherClass"
+     * parameter.
+     *
+     * @return the metadata fetcher if any, or null if there is none.
+     */
+    protected MetadataFetcher getMetadataFetcher() {
+        if (metadataFetcher == null) {
+            @SuppressWarnings("deprecation")
+            String metadataFetcherClassName = getParameter("metadataFetcherClass");
+            if (metadataFetcherClassName != null) {
+                try {
+                    Class<? extends MetadataFetcher> metadataFetcherClass = Class.forName(metadataFetcherClassName)
+                            .asSubclass(MetadataFetcher.class);
+                    Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
+                    metadataFetcher = ctor.newInstance(this);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return metadataFetcher;
     }
 }
