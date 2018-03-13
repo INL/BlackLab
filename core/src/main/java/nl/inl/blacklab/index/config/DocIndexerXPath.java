@@ -589,6 +589,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 firstValue = false;
             }
             releaseAutoPilot(apEvalToString);
+
+            // No annotations have been added, the result of the xPath query must have been empty.
+            if (firstValue == true) {
+                // Add default value
+                String annotValue = processString("", annotation.getProcess());
+                annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+            }
         } else {
             // Single value expected
             String annotValue = apValuePath.evalXPathToString();
