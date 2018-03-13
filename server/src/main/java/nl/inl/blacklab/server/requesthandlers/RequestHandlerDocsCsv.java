@@ -145,9 +145,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 			metadataFieldIds.remove("lengthInTokens");
 			metadataFieldIds.remove("mayView");
 
-			for (String fieldId : metadataFieldIds) {
-				row.add(struct.getMetadataFieldDesc(fieldId).getDisplayName());
-			}
+			row.addAll(metadataFieldIds); // NOTE: don't add display names, CSVPrinter can't handle duplicate names
 
 			// Explicitly declare the separator, excel normally uses a locale-dependent CSV-separator...
 			CSVPrinter printer = CSVFormat.EXCEL.withHeader(row.toArray(new String[0])).print(new StringBuilder("sep=,\r\n"));

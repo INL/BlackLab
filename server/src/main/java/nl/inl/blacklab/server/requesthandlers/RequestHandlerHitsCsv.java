@@ -171,7 +171,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 					if (tokenProperty.equals(mainTokenProperty) || desc.isInternal())
 						continue;
 
-					columns.add(complexField.getPropertyDesc(tokenProperty).getDisplayName());
+					columns.add(tokenProperty); // NOTE: do not use property displayNames, the columns may not have duplicate names
 					otherTokenProperties.add(tokenProperty);
 				}
 			}
