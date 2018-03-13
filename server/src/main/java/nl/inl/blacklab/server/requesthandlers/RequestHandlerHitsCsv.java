@@ -58,39 +58,48 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 		String viewGroup = searchParam.getString("viewgroup"); if (viewGroup.isEmpty()) viewGroup = null;
 		String sortBy = searchParam.getString("sort"); if (sortBy.isEmpty()) sortBy = null;
 
+		JobWithHits job = null;
 		Hits hits = null;
 		HitGroups groups = null;
 
-		if (groupBy != null) {
-			JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), true);
-			groups = searchGrouped.getGroups();
-			// don't set hits yet - only return hits if we're looking within a specific group
+		try {
+			if (groupBy != null) {
+				JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), true);
+				job = searchGrouped;
+				groups = searchGrouped.getGroups();
+				// don't set hits yet - only return hits if we're looking within a specific group
 
-			if (viewGroup != null) {
-				HitPropValue groupId = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
-				if (groupId == null)
-					throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-				HitGroup group = groups.getGroup(groupId);
-				if (group == null)
-					throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+				if (viewGroup != null) {
+					HitPropValue groupId = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
+					if (groupId == null)
+						throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+					HitGroup group = groups.getGroup(groupId);
+					if (group == null)
+						throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-				hits = group.getHits();
+					hits = group.getHits();
 
-				// TODO sortBy is automatically applied to regular hits and groups
-				// but is applied to Group ordering instead of hit ordering within group with we have both group and viewGroup
-				// need to fix this in SearchParameters somewhere
-				if (sortBy != null) {
-					HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
-					if (sortProp == null)
-						throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-					hits = hits.sortedBy(sortProp, sortProp.isReverse());
+					// TODO sortBy is automatically applied to regular hits and groups
+					// but is applied to Group ordering instead of hit ordering within group with we have both group and viewGroup
+					// need to fix this in SearchParameters somewhere
+					if (sortBy != null) {
+						HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
+						if (sortProp == null)
+							throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
+						hits = hits.sortedBy(sortProp, sortProp.isReverse());
+					}
 				}
+			} else  {
+				// Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
+				job = (JobWithHits) searchMan.search(user, searchParam.hitsSample(), true);
+				hits = job.getHits();
 			}
-		} else  {
-			// Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-			JobWithHits job = (JobWithHits) searchMan.search(user, searchParam.hitsSample(), true);
-			hits = job.getHits();
+		} finally {
+			// Jobs automatically have a ref to start out with
+			if (job != null)
+				job.decrRef();
 		}
+
 
 		// apply window settings
 		// Different from the regular hits, if no parameters are provided, all hits are returned.
@@ -171,7 +180,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 					if (tokenProperty.equals(mainTokenProperty) || desc.isInternal())
 						continue;
 
-					columns.add(tokenProperty); // NOTE: do not use property displayNames, the columns may not have duplicate names
+					columns.add(tokenProperty);
 					otherTokenProperties.add(tokenProperty);
 				}
 			}

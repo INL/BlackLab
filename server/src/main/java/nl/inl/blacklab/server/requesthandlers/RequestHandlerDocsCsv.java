@@ -53,39 +53,46 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 		String viewGroup = searchParam.getString("viewgroup"); if (viewGroup.isEmpty()) viewGroup = null;
 		String sortBy = searchParam.getString("sort"); if (sortBy.isEmpty()) sortBy = null;
 
+		JobWithDocs job= null;
 		DocResults docs = null;
 		DocGroups groups = null;
 
-		if (groupBy != null) {
-			JobDocsGrouped searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
-			groups = searchGrouped.getGroups();
-			// don't set docs yet - only return docs if we're looking within a specific group
+		try {
+			if (groupBy != null) {
+				JobDocsGrouped searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
+				job = searchGrouped;
+				groups = searchGrouped.getGroups();
+				// don't set docs yet - only return docs if we're looking within a specific group
 
-			if (viewGroup != null) {
-				HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(), viewGroup);
-				if (groupId == null)
-					throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-				DocGroup group = groups.getGroup(groupId);
-				if (group == null)
-					throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+				if (viewGroup != null) {
+					HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(), viewGroup);
+					if (groupId == null)
+						throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+					DocGroup group = groups.getGroup(groupId);
+					if (group == null)
+						throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-				docs = group.getResults();
+					docs = group.getResults();
 
-				// TODO sortBy is automatically applied to regular hits and groups
-				// TODO test regular group view ordering though
-				// but is applied to Group ordering instead of hit ordering within group with we have both group and viewGroup
-				// need to fix this in SearchParameters somewhere
-				if (sortBy != null) {
-					DocProperty sortProp = DocProperty.deserialize(sortBy);
-					if (sortProp == null)
-						throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-					docs.sort(sortProp, sortProp.isReverse());
+					// TODO sortBy is automatically applied to regular hits and groups
+					// TODO test regular group view ordering though
+					// but is applied to Group ordering instead of hit ordering within group with we have both group and viewGroup
+					// need to fix this in SearchParameters somewhere
+					if (sortBy != null) {
+						DocProperty sortProp = DocProperty.deserialize(sortBy);
+						if (sortProp == null)
+							throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
+						docs.sort(sortProp, sortProp.isReverse());
+					}
 				}
+			} else  {
+				// Don't use JobDocsAll, as we only might not need them all.
+				job = (JobWithDocs) searchMan.search(user, searchParam.docsSorted(), true);
+				docs = job.getDocResults();
 			}
-		} else  {
-			// Don't use JobDocsAll, as we only might not need them all.
-			JobWithDocs job = (JobWithDocs) searchMan.search(user, searchParam.docsSorted(), true);
-			docs = job.getDocResults();
+		} finally {
+			if (job != null)
+				job.decrRef();
 		}
 
 		// apply window settings
