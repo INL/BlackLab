@@ -10,7 +10,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * Represents searching for a window in a larger set of hits.
  */
-public class JobHitsWindow extends Job {
+public class JobHitsWindow extends JobWithHits {
 
 	public static class JobDescHitsWindow extends JobDescription {
 
@@ -44,8 +44,6 @@ public class JobHitsWindow extends Job {
 
 	}
 
-	private HitsWindow hitsWindow;
-
 	private int requestedWindowSize;
 
 	public JobHitsWindow(SearchManager searchMan, User user, JobDescription par) throws BlsException {
@@ -53,27 +51,31 @@ public class JobHitsWindow extends Job {
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		// Now, create a HitsWindow on these hits.
-		Hits hits = ((JobWithHits)inputJob).getHits();
+		Hits inputHits = ((JobWithHits)inputJob).getHits();
 		setPriorityInternal(); // make sure hits has the right priority
 		WindowSettings windowSett = jobDesc.getWindowSettings();
 		int first = windowSett.first();
 		requestedWindowSize = windowSett.size();
-		if (!hits.sizeAtLeast(first + 1)) {
+		if (!inputHits.sizeAtLeast(first + 1)) {
 			debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
 			first = 0;
 		}
-		hitsWindow = hits.window(first, requestedWindowSize);
+		// NOTE: this.hits must be instanceof HitsWindow inside this class
+		this.hits = inputHits.window(first, requestedWindowSize);
 		setPriorityInternal(); // make sure hits has the right priority
 	}
 
-	public HitsWindow getWindow() {
-		return hitsWindow;
+	@Override
+	public HitsWindow getHits() {
+		return (HitsWindow) hits;
 	}
 
 	@Override
 	protected void dataStreamSubclassEntries(DataStream ds) {
+		HitsWindow hitsWindow = getHits();
+
 		ds	.entry("requestedWindowSize", requestedWindowSize)
 			.entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.size());
         if (hitsWindow != null) {
@@ -83,16 +85,4 @@ public class JobHitsWindow extends Job {
                 .entry("doneFetchingHits", hits.doneFetchingHits());
         }
 	}
-
-	@Override
-	protected void cleanup() {
-		hitsWindow = null;
-		super.cleanup();
-	}
-
-	@Override
-	protected HitsWindow getObjectToPrioritize() {
-		return hitsWindow;
-	}
-
 }

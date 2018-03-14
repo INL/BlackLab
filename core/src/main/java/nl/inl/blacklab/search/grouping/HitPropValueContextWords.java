@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.grouping;
 
 import java.util.Arrays;
+import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
@@ -78,5 +79,10 @@ public class HitPropValueContextWords extends HitPropValueContext {
 				parts[i + 3] = terms.get(v);
 		}
 		return PropValSerializeUtil.combineParts(parts);
+	}
+	
+	@Override
+	public List<String> getPropValues() {
+		return Arrays.asList(this.toString());
 	}
 }

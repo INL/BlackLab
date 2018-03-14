@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
@@ -78,6 +81,11 @@ public class DocPropertyComplexFieldLength extends DocProperty {
 	@Override
 	public String serialize() {
 		return serializeReverse() + PropValSerializeUtil.combineParts("fieldlen", fieldName);
+	}
+	
+	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList(serializeReverse() + getName());
 	}
 
 }

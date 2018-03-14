@@ -63,7 +63,7 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
 		this.groupBy = groupBy;
 		//Thread currentThread = Thread.currentThread();
 		Map<HitPropValue, List<DocResult>> groupLists = new HashMap<>();
-		for (DocResult r : docResults) {
+		for (DocResult r : docResults) { // TODO inconsistency compared to hits within groups, hitgroups ignore sorting of the source data, docgroups don't
 			HitPropValue groupId = groupBy.get(r);
 			List<DocResult> group = groupLists.get(groupId);
 			if (group == null) {

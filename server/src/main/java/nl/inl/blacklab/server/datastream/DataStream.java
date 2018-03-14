@@ -17,6 +17,8 @@ public abstract class DataStream {
 	public static DataStream create(DataFormat format, PrintWriter out, boolean prettyPrint, String jsonpCallback) {
 		if (format == DataFormat.JSON)
 			return new DataStreamJson(out, prettyPrint, jsonpCallback);
+		if (format == DataFormat.CSV)
+			return new DataStreamPlain(out, prettyPrint);
 		return new DataStreamXml(out, prettyPrint);
 	}
 

@@ -98,14 +98,12 @@ public class ServletUtil {
 	/**
 	 * Returns the type of content the user would like as output (HTML, CSV, ...)
 	 * This is based on the "outputformat" parameter.
-	 *
-	 * TODO: Also support HTTP Accept header!
+	 * If "outputparameter" has an unknown value or is missing, null is returned.
 	 *
 	 * @param request the request object
-	 * @param defaultFormat what to return if not specified
 	 * @return the type of content the user would like
 	 */
-	public static DataFormat getOutputType(HttpServletRequest request, DataFormat defaultFormat) {
+	public static DataFormat getOutputType(HttpServletRequest request) {
 		// See if jsonp callback parameter specified. If so, we want JSON (the "P" part is handled elsewhere)
 		String jsonpCallback = getParameter(request, "jsonp", "").toLowerCase();
 		if (jsonpCallback.length() > 0) {
@@ -115,7 +113,7 @@ public class ServletUtil {
 		// See if there was an explicit outputformat parameter. If so, use that.
 		String outputTypeString = getParameter(request, "outputformat", "").toLowerCase();
 		if (outputTypeString.length() > 0) {
-			return getOutputTypeFromString(outputTypeString, defaultFormat);
+			return getOutputTypeFromString(outputTypeString, null);
 		}
 
 		// No explicit parameter. Check if the Accept header contains either json or xml
@@ -128,10 +126,11 @@ public class ServletUtil {
 				return DataFormat.XML;
 			if (accept.contains("javascript"))
 				return DataFormat.JSON;
+			if (accept.contains("csv"))
+				return DataFormat.CSV;
 		}
 
-		// Unspecified. Use the configured default format.
-		return defaultFormat;
+		return null;
 	}
 
 	/**
@@ -143,6 +142,9 @@ public class ServletUtil {
 	public static String getContentType(DataFormat outputType) {
 		if (outputType == DataFormat.XML)
 			return "application/xml";
+		if (outputType == DataFormat.CSV)
+			return "text/csv";
+
 		return "application/json";
 	}
 
@@ -159,6 +161,8 @@ public class ServletUtil {
 			return DataFormat.XML;
 		if (typeString.equalsIgnoreCase("json"))
 			return DataFormat.JSON;
+		if (typeString.equalsIgnoreCase("csv"))
+			return DataFormat.CSV;
 		logger.warn("Onbekend outputtype gevraagd: " + typeString);
 		return defaultValue;
 	}

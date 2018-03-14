@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -184,6 +185,12 @@ public class BlackLabServer extends HttpServlet {
                 logger.warn(ex.getMessage(),ex);
             }
 
+	    try {
+            request.setCharacterEncoding("utf-8");
+        } catch (UnsupportedEncodingException ex) {
+            logger.error(ex);
+        }
+
 		synchronized (this) {
 			if (!configRead) {
 				try {
@@ -215,16 +222,23 @@ public class BlackLabServer extends HttpServlet {
 			}
 		}
 
+
 		// === Create RequestHandler object
 		boolean debugMode = searchManager.config().isDebugMode(request.getRemoteAddr());
-		RequestHandler requestHandler = RequestHandler.create(this, request, debugMode);
 
-		// === Figure stuff out about the request
-		DataFormat outputType = requestHandler.getOverrideType();
-		//DataFormat outputType = response.getOverrideType(); // some responses override the user's request (i.e. article XML)
-		if (outputType == null) {
-			outputType = ServletUtil.getOutputType(request, searchManager.config().defaultOutputType());
-		}
+		// The outputType handling is a bit iffy:
+		// For some urls the dataType is required to determined the correct RequestHandler to instance (the /docs/ and /hits/)
+		// For some other urls, the RequestHandler can only output a single type of data
+		// and for the rest of the urls, it doesn't matter, so we should just use the default if no explicit type was requested.
+		// As long as we're careful not to have urls in multiple of these categories there is never any ambiguity about which handler to use
+		// TODO "outputtype"="csv" is broken on the majority of requests, the outputstream will swallow the majority of the printed data
+		DataFormat outputType = ServletUtil.getOutputType(request);
+		RequestHandler requestHandler = RequestHandler.create(this, request, debugMode, outputType);
+		if (outputType == null)
+			outputType = requestHandler.getOverrideType();
+		if (outputType == null)
+			outputType = searchManager.config().defaultOutputType();
+
 
 		// Is this a JSONP request?
 		String callbackFunction = ServletUtil.getParameter(request, "jsonp", "");

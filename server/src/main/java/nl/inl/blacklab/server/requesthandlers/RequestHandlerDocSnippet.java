@@ -58,13 +58,19 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 			end = searchParam.getInteger("wordend");
 			wordsAroundHit = 0;
 		}
+		
+		if (start < 0 || end < 0 || wordsAroundHit * 2 + end - start <= 0 || end < start || wordsAroundHit < 0) {
+			throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
+		}
+		
+		// Clamp snippet to max size
 		int snippetStart = Math.max(0, start - wordsAroundHit);
 		int snippetEnd = end + wordsAroundHit;
 		if (snippetEnd - snippetStart > searchMan.config().maxSnippetSize()) {
-			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
-		}
-		if (start < 0 || end < 0 || wordsAroundHit * 2 + end - start <= 0 || end < start || wordsAroundHit < 0) {
-			throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
+			int clampedWindow = Math.max(0, (searchMan.config().maxSnippetSize() - (end - start)) / 2);
+			snippetStart = Math.max(0, start - clampedWindow);
+			snippetEnd = end + clampedWindow;
+//			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
 		}
 		hit = new Hit(luceneDocId, start, end);
 		Hits hits = Hits.fromList(searcher, Arrays.asList(hit));

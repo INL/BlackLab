@@ -8,7 +8,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * A search job that produces a Hits object
  */
-public class JobWithDocs extends Job {
+public abstract class JobWithDocs extends Job {
 
 	DocResults docResults;
 
@@ -37,5 +37,4 @@ public class JobWithDocs extends Job {
 	protected DocResults getObjectToPrioritize() {
 		return docResults;
 	}
-
 }

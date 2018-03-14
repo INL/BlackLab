@@ -136,6 +136,12 @@ public abstract class DocProperty {
 	public String toString() {
 		return serialize();
 	}
+	
+	/**
+	 * Get the names of all (sub-)properties separately.
+	 * @return the list
+	 */
+	public abstract List<String> getPropNames();
 
 	public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {
 		DocPropertyMultiple f = new DocPropertyMultiple(facets.toArray(new DocProperty[0]));

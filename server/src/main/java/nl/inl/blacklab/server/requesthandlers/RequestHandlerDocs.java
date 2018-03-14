@@ -78,6 +78,10 @@ public class RequestHandlerDocs extends RequestHandler {
 				if (group == null)
 					return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
+				// NOTE: sortBy is automatically applied to regular results, but not to results within groups
+				// See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+				// Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+				// There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
 				String sortBy = searchParam.getString("sort");
 				DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
 				DocResults docsSorted;
@@ -111,7 +115,7 @@ public class RequestHandlerDocs extends RequestHandler {
 					return Response.busy(ds, servlet);
 				}
 
-				window = searchWindow.getWindow();
+				window = searchWindow.getDocResults();
 			}
 
 			Searcher searcher = search.getSearcher();

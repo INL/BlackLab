@@ -253,6 +253,11 @@ public class HitPropertyContextWords extends HitProperty {
 	}
 
 	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList("left context: " + propName);
+	}
+
+	@Override
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
 		String thePropName = parts.length > 1 ? parts[1] : "";

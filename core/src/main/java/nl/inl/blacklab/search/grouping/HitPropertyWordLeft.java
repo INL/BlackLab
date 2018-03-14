@@ -122,6 +122,11 @@ public class HitPropertyWordLeft extends HitProperty {
 	}
 
 	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList("word left: " + propName);
+	}
+
+	@Override
 	public String serialize() {
 		String[] parts = ComplexFieldUtil.getNameComponents(luceneFieldName);
 		String thePropName = parts.length > 1 ? parts[1] : "";

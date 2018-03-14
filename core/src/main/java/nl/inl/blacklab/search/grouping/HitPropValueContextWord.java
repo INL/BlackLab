@@ -1,5 +1,8 @@
 package nl.inl.blacklab.search.grouping;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Hits;
@@ -59,5 +62,10 @@ public class HitPropValueContextWord extends HitPropValueContext {
 			"cwo", propName,
 			(sensitive ? "s" : "i"),
 			token);
+	}
+
+	@Override
+	public List<String> getPropValues() {
+		return Arrays.asList(this.toString());
 	}
 }

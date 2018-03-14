@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 
 /**
@@ -57,6 +60,11 @@ public class DocPropertyNumberOfHits extends DocProperty {
 	@Override
 	public String serialize() {
 		return serializeReverse() + "numhits";
+	}
+	
+	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList(serializeReverse() + getName());
 	}
 
 }

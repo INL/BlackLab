@@ -140,6 +140,11 @@ public class HitPropertyHitText extends HitProperty {
 	}
 
 	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList("hit: " + propName);
+	}
+
+	@Override
 	public String serialize() {
 		return serializeReverse() + PropValSerializeUtil.combineParts("hit", propName, sensitive ? "s" : "i");
 	}

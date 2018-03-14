@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.perdocument.DocResultsWindow;
-import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -11,7 +10,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 /**
  * Represents searching for a window in a larger set of hits.
  */
-public class JobDocsWindow extends Job {
+public class JobDocsWindow extends JobWithDocs {
 
 	public static class JobDescDocsWindow extends JobDescription {
 
@@ -45,10 +44,6 @@ public class JobDocsWindow extends Job {
 
 	}
 
-	private DocResults sourceResults;
-
-	private DocResultsWindow window;
-
 	private int requestedWindowSize;
 
 	public JobDocsWindow(SearchManager searchMan, User user, JobDescription par) throws BlsException {
@@ -56,9 +51,9 @@ public class JobDocsWindow extends Job {
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		// Now, create a HitsWindow on these hits.
-		sourceResults = ((JobWithDocs)inputJob).getDocResults();
+		DocResults sourceResults = ((JobWithDocs)inputJob).getDocResults();
 		setPriorityInternal(); // make sure sourceResults has the right priority
 		WindowSettings windowSett = jobDesc.getWindowSettings();
 		int first = windowSett.first();
@@ -67,28 +62,19 @@ public class JobDocsWindow extends Job {
 			debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
 			first = 0;
 		}
-		window = sourceResults.window(first, requestedWindowSize);
+		// NOTE: this.docResults must be instanceof DocResultsWindow inside this class
+		this.docResults = sourceResults.window(first, requestedWindowSize);
 	}
 
-	public DocResultsWindow getWindow() {
-		return window;
+	@Override
+	public DocResultsWindow getDocResults() {
+		return (DocResultsWindow) docResults;
 	}
 
 	@Override
 	protected void dataStreamSubclassEntries(DataStream ds) {
+		DocResultsWindow window = getDocResults();
 		ds	.entry("requestedWindowSize", requestedWindowSize)
 			.entry("actualWindowSize", window == null ? -1 : window.size());
 	}
-
-	@Override
-	protected void cleanup() {
-		window = null;
-		super.cleanup();
-	}
-
-	@Override
-	protected Prioritizable getObjectToPrioritize() {
-		return sourceResults;
-	}
-
 }

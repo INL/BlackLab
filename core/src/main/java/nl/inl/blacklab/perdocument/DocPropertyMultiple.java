@@ -124,6 +124,15 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 		}
 		return (reverse ? "-(" : "") + PropValSerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
 	}
+	
+	@Override
+	public List<String> getPropNames() {
+		List<String> ret = new ArrayList<>();
+		for (DocProperty prop : criteria) {
+			ret.addAll(prop.getPropNames());
+		}
+		return ret;
+	}
 
 	public static DocPropertyMultiple deserialize(String info) {
 		String[] strValues = PropValSerializeUtil.splitMultiple(info);

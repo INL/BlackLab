@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.search.grouping.HitPropValueDecade;
 import nl.inl.blacklab.search.grouping.HitPropertyDocumentDecade;
 import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
@@ -92,6 +95,11 @@ public class DocPropertyDecade extends DocProperty {
 	@Override
 	public String serialize() {
 		return serializeReverse() + PropValSerializeUtil.combineParts("decade", fieldName);
+	}
+	
+	@Override
+	public List<String> getPropNames() {
+		return Arrays.asList(serializeReverse() + getName());
 	}
 
 }

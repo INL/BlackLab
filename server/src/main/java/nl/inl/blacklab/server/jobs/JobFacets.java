@@ -64,7 +64,7 @@ public class JobFacets extends Job {
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		// Now, group the docs according to the requested facets.
 		docResults = ((JobWithDocs)inputJob).getDocResults();
 		List<DocProperty> props = jobDesc.getFacets();

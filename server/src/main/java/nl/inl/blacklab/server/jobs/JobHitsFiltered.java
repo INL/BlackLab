@@ -51,7 +51,7 @@ public class JobHitsFiltered extends JobWithHits {
 	}
 
 	@Override
-	public void performSearch() throws BlsException {
+	protected void performSearch() throws BlsException {
 		// Now, filter the hits.
 		Hits hitsUnfiltered = ((JobWithHits)inputJob).getHits();
 		HitFilterSettings filterSett = jobDesc.getHitFilterSettings();
@@ -70,5 +70,4 @@ public class JobHitsFiltered extends JobWithHits {
 		super.dataStreamSubclassEntries(ds);
 		ds	.entry("numberOfHits", hits == null ? -1 : hits.size());
 	}
-
 }

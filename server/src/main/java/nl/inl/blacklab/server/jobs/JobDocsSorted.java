@@ -43,23 +43,21 @@ public class JobDocsSorted extends JobWithDocs {
 
 	}
 
-	private DocResults sourceResults;
-
 	public JobDocsSorted(SearchManager searchMan, User user, JobDescription par) throws BlsException {
 		super(searchMan, user, par);
 	}
 
 	@Override
 	public void performSearch() throws BlsException {
-		sourceResults = ((JobWithDocs)inputJob).getDocResults();
-		setPriorityInternal();
+		DocResults unsorted = ((JobWithDocs)inputJob).getDocResults();
+		setPriority(unsorted); // set prio manually, so we don't expose the unsorted results by assigning to this.docResults
 		// Now, sort the docs.
 		DocSortSettings docSortSett = jobDesc.getDocSortSettings();
 		if (docSortSett.sortBy() != null) {
 			// Be lenient of clients passing wrong sortBy values; ignore bad sort requests
-			sourceResults.sort(docSortSett.sortBy(), docSortSett.reverse()); // TODO: add .sortedBy() same as in Hits
+			unsorted.sort(docSortSett.sortBy(), docSortSett.reverse()); // TODO: add .sortedBy() same as in Hits
 		}
-		docResults = sourceResults; // client can use results
+		docResults = unsorted; // now that we sorted them we can make them available
 	}
 
 	@Override
@@ -68,9 +66,5 @@ public class JobDocsSorted extends JobWithDocs {
 		ds	.entry("numberOfDocResults", docResults == null ? -1 : docResults.size());
 	}
 
-	@Override
-	protected DocResults getObjectToPrioritize() {
-		return sourceResults;
-	}
 
 }
