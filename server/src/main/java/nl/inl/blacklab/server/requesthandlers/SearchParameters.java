@@ -119,7 +119,7 @@ public class SearchParameters {
 		SearchParameters param = new SearchParameters(searchMan, isDocs);
 		param.put("indexname", indexName);
 		for (String name: SearchParameters.NAMES) {
-			String value = ServletUtil.getParameter(request, name, "").trim();
+			String value = ServletUtil.getParameter(request, name, "");
 			if (value.length() == 0)
 				continue;
 			param.put(name, value);
