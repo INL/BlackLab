@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -177,6 +178,12 @@ public class BlackLabServer extends HttpServlet {
 	}
 
 	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
+
+	    try {
+            request.setCharacterEncoding("utf-8");
+        } catch (UnsupportedEncodingException ex) {
+            logger.error(ex);
+        }
 
 		synchronized (this) {
 			if (!configRead) {
