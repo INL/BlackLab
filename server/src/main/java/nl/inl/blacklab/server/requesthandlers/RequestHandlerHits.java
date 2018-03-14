@@ -62,7 +62,6 @@ public class RequestHandlerHits extends RequestHandler {
 			if (groupBy.length() > 0 && viewGroup.length() > 0) {
 				// Yes. Group, then show hits from the specified group
 				job = searchMan.search(user, searchParam.hitsGrouped(), block);
-				job.incrRef();
 				JobHitsGrouped jobGrouped = (JobHitsGrouped) job;
 
 				// If search is not done yet, indicate this to the user
@@ -79,11 +78,12 @@ public class RequestHandlerHits extends RequestHandler {
 				if (group == null)
 					return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-				// TODO sorting the collection of Groups is implicitly in the JobDesc, but sorting within a ViewGroup is not, fix this in SearchParameters class
-				// instead, the sorting will (erroneously) be applied to the collection of groups.
-				// Retrieve and optionally sort the hits within this group.
+				// NOTE: sortBy is automatically applied to regular results, but not to results within groups
+				// See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+				// Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+				// There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
 				String sortBy = searchParam.getString("sort");
-				HitProperty sortProp = sortBy != null && sortBy.isEmpty() ? HitProperty.deserialize(group.getHits(), sortBy) : null;
+				HitProperty sortProp = (sortBy != null && !sortBy.isEmpty()) ? HitProperty.deserialize(group.getHits(), sortBy) : null;
 				Hits hitsInGroup = sortProp != null ? group.getHits().sortedBy(sortProp) : group.getHits();
 
 				// Important, only count hits within this group for the total
@@ -99,7 +99,6 @@ public class RequestHandlerHits extends RequestHandler {
 				// Since we're going to always launch a totals count anyway, just do it right away
 				// then construct a window on top of the total
 				job = searchMan.search(user, searchParam.hitsTotal(), block);
-				job.incrRef();
 				JobHitsTotal jobTotal = (JobHitsTotal) job;
 
 				total = jobTotal.getHits();

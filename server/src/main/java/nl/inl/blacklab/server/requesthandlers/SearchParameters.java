@@ -53,10 +53,10 @@ import nl.inl.blacklab.server.jobs.JobFacets.JobDescFacets;
 import nl.inl.blacklab.server.jobs.JobHits.JobDescHits;
 import nl.inl.blacklab.server.jobs.JobHitsFiltered.JobDescHitsFiltered;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped.JobDescHitsGrouped;
+import nl.inl.blacklab.server.jobs.JobHitsSample.JobDescSampleHits;
 import nl.inl.blacklab.server.jobs.JobHitsSorted.JobDescHitsSorted;
 import nl.inl.blacklab.server.jobs.JobHitsTotal.JobDescHitsTotal;
 import nl.inl.blacklab.server.jobs.JobHitsWindow.JobDescHitsWindow;
-import nl.inl.blacklab.server.jobs.JobHitsSample.JobDescSampleHits;
 import nl.inl.blacklab.server.jobs.MaxSettings;
 import nl.inl.blacklab.server.jobs.SampleSettings;
 import nl.inl.blacklab.server.jobs.SearchSettings;
@@ -75,7 +75,6 @@ import nl.inl.blacklab.server.util.ServletUtil;
 public class SearchParameters {
 	private static final Logger logger = LogManager.getLogger(SearchParameters.class);
 
-	// TODO: move to SearchParameters?
 	/** Default values for request parameters */
 	final static private Map<String, String> defaultParameterValues;
 
@@ -403,7 +402,7 @@ public class SearchParameters {
 		if (isDocsOperation) {
 			if (containsKey("group")) {
 				String sortBy = getString("sort");
-				if (sortBy != null && sortBy.length() > 0) {
+				if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results within the group when viewing contents of a group
 					if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
 						reverse = true;
 						sortBy = sortBy.substring(1);
@@ -422,6 +421,11 @@ public class SearchParameters {
 	private DocSortSettings docSortSettings() {
 		if (!isDocsOperation)
 			return null; // we're doing per-hits stuff, so sort doesn't apply to docs
+
+		String groupBy = getString("groupby");
+		if (groupBy != null && !groupBy.isEmpty())
+			return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
+
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;
@@ -443,7 +447,7 @@ public class SearchParameters {
 			// not grouping, so no group sort
 			if (containsKey("group")) {
 				String sortBy = getString("sort");
-				if (sortBy != null && sortBy.length() > 0) {
+				if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results within the group when viewing contents of a group
 					if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
 						reverse = true;
 						sortBy = sortBy.substring(1);
@@ -471,6 +475,11 @@ public class SearchParameters {
 	private HitSortSettings hitsSortSettings() {
 		if (isDocsOperation)
 			return null; // we're doing per-docs stuff, so sort doesn't apply to hits
+
+		String groupBy = getString("groupby");
+		if (groupBy != null && !groupBy.isEmpty())
+			return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
+
 		String sortBy = getString("sort");
 		if (sortBy == null || sortBy.length() == 0)
 			return null;

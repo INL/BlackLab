@@ -79,9 +79,10 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
 					hits = group.getHits();
 
-					// TODO sortBy is automatically applied to regular hits and groups
-					// but is applied to Group ordering instead of hit ordering within group with we have both group and viewGroup
-					// need to fix this in SearchParameters somewhere
+					// NOTE: sortBy is automatically applied to regular results, but not to results within groups
+					// See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+					// Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+					// There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
 					if (sortBy != null) {
 						HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
 						if (sortProp == null)
