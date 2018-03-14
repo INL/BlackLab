@@ -1,33 +1,22 @@
 package nl.inl.blacklab.server;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import nl.inl.blacklab.search.ConfigReader;
+import java.io.UnsupportedEncodingException;
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -39,8 +28,6 @@ import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
-import nl.inl.util.FileUtil;
-import nl.inl.util.Json;
 
 public class BlackLabServer extends HttpServlet {
 	private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
@@ -52,8 +39,6 @@ public class BlackLabServer extends HttpServlet {
 	/** Manages all our searches */
 	private SearchManager searchManager;
 
-	private boolean configRead = false;
-
 	@Override
 	public void init() throws ServletException {
 		// Default init if no log4j.properties found
@@ -61,81 +46,14 @@ public class BlackLabServer extends HttpServlet {
 
 		logger.info("Starting BlackLab Server...");
 		super.init();
+            try {
+                searchManager = new SearchManager(Configurator.getSearchConfig());
+            } catch (ConfigurationException ex) {
+                throw new ServletException(ex);
+            }
 		logger.info("BlackLab Server ready.");
 	}
 
-	private void readConfig() throws BlsException {
-    	try {
-    		// load blacklab's internal config before doing anything
-    		// we will later overwrite some settings from our own config
-    		// It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
-    		try {
-                ConfigReader.loadDefaultConfig();
-            } catch (Exception e) {
-                throw new BlsException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Error reading BlackLab configuration file", e);
-            }
-
-            File servletPath = new File(getServletContext().getRealPath("."));
-            logger.debug("Running from dir: " + servletPath);
-
-            String configFileName = "blacklab-server";
-            List<String> exts = Arrays.asList("json", "yaml", "yml");
-
-            List<File> searchDirs = new ArrayList<>();
-            searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
-            searchDirs.addAll(ConfigReader.getDefaultConfigDirs());
-
-            Reader configFileReader = null;
-            boolean configFileIsJson = false;
-
-        	File configFile = FileUtil.findFile(searchDirs, configFileName, exts);
-        	if (configFile != null && configFile.canRead()) {
-                logger.debug("Reading configuration file " + configFile);
-        		configFileReader = FileUtil.openForReading(configFile, CONFIG_ENCODING);
-        		configFileIsJson = configFile.getName().endsWith(".json");
-        	}
-
-        	if (configFileReader == null) {
-                logger.debug(configFileName + ".(json|yaml) not found in webapps dir; searching classpath...");
-
-        		for (String ext: exts) {
-                    InputStream is = getClass().getClassLoader().getResourceAsStream(configFileName + "." + ext);
-                    if (is == null)
-                    	continue;
-
-                    logger.debug("Reading configuration file from classpath: " + configFileName);
-                	configFileReader = new InputStreamReader(is, CONFIG_ENCODING);
-                	configFileIsJson = ext.equals("json");
-                    break;
-                }
-        	}
-
-        	if (configFileReader != null) {
-        		try {
-                    ObjectMapper mapper = configFileIsJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-                    searchManager = new SearchManager(mapper.readTree(configFileReader));
-        		} finally {
-        			configFileReader.close();
-        			configFileReader = null;
-        		}
-        	}
-        	else {
-        		String descDirs = StringUtils.join(searchDirs, ", ");
-        		throw new ConfigurationException("Couldn't find blacklab-server.(json|yaml) in dirs " + descDirs + ", or on classpath. Please place " +
-        				"blacklab-server.json in one of these locations containing at least the following:\n" +
-        				"{\n" +
-        				"  \"indexCollections\": [\n" +
-        				"    \"/my/indices\" \n" +
-        				"  ]\n" +
-        				"}\n\n" +
-        				"With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
-        	}
-        } catch (JsonProcessingException e) {
-            throw new ConfigurationException("Invalid JSON in configuration file", e);
-        } catch (IOException e) {
-            throw new ConfigurationException("Error reading configuration file", e);
-        }
-    }
 
     /**
 	 * Process POST requests (add data to index)
@@ -177,37 +95,11 @@ public class BlackLabServer extends HttpServlet {
 	}
 
 	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
-
-		synchronized (this) {
-			if (!configRead) {
-				try {
-					readConfig();
-					configRead = true;
-				} catch (BlsException e) {
-					// Write HTTP headers (status code, encoding, content type and cache)
-					responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-					responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
-					responseObject.setContentType("text/xml");
-			        String allowOrigin = searchManager == null ? "*" : searchManager.config().getAccessControlAllowOrigin();
-			        if (allowOrigin != null)
-			            responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
-					ServletUtil.writeCacheHeaders(responseObject, 0);
-
-					// === Write the response that was captured in buf
-					try {
-						Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
-						realOut.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
-								"<blacklabResponse><error><code>INTERNAL_ERROR</code><message><![CDATA[ " + e.getMessage() + " ]]></message></error></blacklabResponse>");
-						realOut.flush();
-					} catch (IOException e2) {
-						// Client cancelled the request midway through.
-						// This is okay, don't raise the alarm.
-						logger.debug("(couldn't send response, client probably cancelled the request)");
-					}
-					return;
-				}
-			}
-		}
+            try {
+                request.setCharacterEncoding("utf-8");
+            } catch (UnsupportedEncodingException ex) {
+                logger.warn(ex.getMessage(),ex);
+            }
 
 		// === Create RequestHandler object
 		boolean debugMode = searchManager.config().isDebugMode(request.getRemoteAddr());
