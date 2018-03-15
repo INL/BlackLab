@@ -8,7 +8,7 @@ This page explains how to set up and use BlackLab Server. See the [BlackLab home
 * [Overview](#overview)
 * [Requests](#requests)
 * [Sorting, grouping, filtering & faceting](#sorting-grouping-filtering-faceting)
-* [Examples](#examples)
+* [Examples](#examples): searches, retrieving documents, information about indices
 * [Installation](#installation)
 * [Configuration file](#configuration-file)
 * [Error and status responses](#error-and-status-responses) 
@@ -331,29 +331,11 @@ A few more examples:
 
 ## Examples
 
-### Scripts
-
 For examples of using BlackLab Server from (many) different programming languages, see [here](from-different-languages.html).
 
-### Requests
+Below are examples of individual requests to BlackLab Server. NOTE: for clarity, double quotes have not been URL-encoded.
 
-(NOTE: for clarity, double quotes have not been URL-encoded)
-
-Information about the webservice; list of available indices
-
-		http://blacklab.ivdnt.org/blacklab-server/ (trailing slash optional)
-
-Information about the “opensonar” corpus (structure, fields, human-readable names)
-
-		http://blacklab.ivdnt.org/blacklab-server/opensonar/ (trailing slash optional)
-
-Information about the “opensonar” corpus, include all values for "pos" property:
-
-        http://blacklab.ivdnt.org/blacklab-server/opensonar/?listvalues=pos
-
-Information about the “opensonar” corpus, include subproperties and their values for "pos" property:
-
-        http://blacklab.ivdnt.org/blacklab-server/opensonar/?subprops=pos
+#### Searches
 
 All occurrences of “test” in the “opensonar” corpus (CorpusQL query)
 
@@ -371,13 +353,15 @@ Documents containing “test”, grouped by author
 
 		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs?patt="test"&group=field:author
 
-Metadata of document with specific PID
-
-		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802
-
 Larger snippet around a hit:
 
         http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/snippet?hitstart=120&hitend=121&wordsaroundhit=50
+
+#### Information about a document
+
+Metadata of document with specific PID
+
+		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802
 
 The entire original document
 
@@ -391,9 +375,24 @@ Part of the document (embedded in a <blacklabResponse/> root element; BlackLab m
 
        http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents?wordstart=1000&wordend=2000
 
-### Output
 
-(Description of output format to be added. Please try in the browser for now; use outputformat=json or outputformat=xml)
+#### Information about indices
+
+Information about the webservice; list of available indices
+
+        http://blacklab.ivdnt.org/blacklab-server/ (trailing slash optional)
+
+Information about the “opensonar” corpus (structure, fields, human-readable names)
+
+        http://blacklab.ivdnt.org/blacklab-server/opensonar/ (trailing slash optional)
+
+Information about the “opensonar” corpus, include all values for "pos" property (listvalues is a comma-separated list of property names):
+
+        http://blacklab.ivdnt.org/blacklab-server/opensonar/?listvalues=pos
+
+Information about the “opensonar” corpus, include subproperties and their values for "pos" property:
+
+        http://blacklab.ivdnt.org/blacklab-server/opensonar/?subprops=pos
 
 <a id="indexing"></a>
 

@@ -141,14 +141,13 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 		List<String> properties = new ArrayList<>(fieldDesc.getProperties());
         for (String propName: properties) {
 			PropertyDesc propDesc = fieldDesc.getPropertyDesc(propName);
-			ds.startAttrEntry("property", "name", propName)
-				.startMap()
+			ds.startAttrEntry("property", "name", propName).startMap();
+            ds
                     .entry("displayName", propDesc.getDisplayName())
 					.entry("hasForwardIndex", propDesc.hasForwardIndex())
 					.entry("sensitivity", propDesc.getSensitivity().toString())
 					.entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative()))
-                    .entry("isInternal", propDesc.isInternal())
-				.endMap();
+                    .entry("isInternal", propDesc.isInternal());
             String luceneField = ComplexFieldUtil.propertyField(fieldName, propName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
 			if (showValuesFor.contains(propName)) {
                 Collection<String> values = LuceneUtil.getFieldTerms(searcher.getIndexReader(), luceneField, MAX_FIELD_VALUES + 1);
@@ -178,7 +177,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 				}
 				ds.endMap().endEntry();
 			}
-			ds.endAttrEntry();
+            ds.endMap().endAttrEntry();
 		}
 		ds.endMap().endEntry();
         ds.endMap();
