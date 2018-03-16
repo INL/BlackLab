@@ -14,7 +14,7 @@ import nl.inl.util.LuceneUtil;
 import org.apache.lucene.index.IndexReader;
 
 /**
- * Get information about the structure of an index.
+ * Autocompletion for metadata fields.
  */
 public class RequestHandlerAutocomplete extends RequestHandler {
 
