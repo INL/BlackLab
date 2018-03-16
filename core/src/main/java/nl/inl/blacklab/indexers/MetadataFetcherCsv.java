@@ -18,11 +18,11 @@ import nl.inl.blacklab.index.MetadataFetcher;
 
 /**
  * Metadata fetcher for csv files.
- * The path to the csv file is read from parameter 'metadataFile'. 
+ * The path to the csv file is read from parameter 'metadataFile'.
  * The csv file should be utf-8 encoded.
  * This metadata fetcher assumes a csv file with a header. It also assumes the csv file
  * contains a column 'id'. The id should be equal to the file name of the indexed document.
- * 
+ *
  * Example indexer.properties:
  * metadataFetcherClass=nl.inl.blacklab.indexers.MetadataFetcherCsv
  * metadataFile=metadata.csv
@@ -33,9 +33,9 @@ public class MetadataFetcherCsv extends MetadataFetcher {
 	@SuppressWarnings("deprecation")
     public MetadataFetcherCsv(DocIndexer docIndexer) {
 		super(docIndexer);
-		
+
 		String metadataFileName = docIndexer.getParameter("metadataFile");
-		
+
 		try (
 			Reader reader = new InputStreamReader(new BOMInputStream(new FileInputStream(metadataFileName)), "UTF-8");
 
@@ -44,7 +44,7 @@ public class MetadataFetcherCsv extends MetadataFetcher {
                     .withIgnoreHeaderCase()
                     .withTrim());
 			){
-			
+
             metadata = csvParser.getRecords();
             reader.close();
 		} catch (FileNotFoundException ex) {
@@ -55,17 +55,13 @@ public class MetadataFetcherCsv extends MetadataFetcher {
 	}
 
 	@Override
-	public void close() {
-	}
-
-	@Override
 	public void addMetadata() {
 
 		String fromInputFile;
 		Map<String,String> map;
 		Document luceneDoc = docIndexer.getCurrentLuceneDoc();
 		fromInputFile = luceneDoc.get("fromInputFile");
-		
+
 	    for (CSVRecord row : metadata) {
 	    	// TODO: use document id instead of document file name (it is unclear to me how to get the
 	    	// document id from the lucene doc)
@@ -78,7 +74,7 @@ public class MetadataFetcherCsv extends MetadataFetcher {
 	    			if (!entry.getKey().equals("id")) {
 		    			docIndexer.addMetadataField(entry.getKey(), entry.getValue());
 	    			}
-	    		}	    	
+	    		}
 	    	}
 	     }
 	}

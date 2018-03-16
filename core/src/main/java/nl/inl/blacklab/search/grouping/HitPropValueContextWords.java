@@ -41,12 +41,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		int[] ids = new int[parts.length - 2];
 		Terms termsObj = hits.getSearcher().getForwardIndex(ComplexFieldUtil.propertyField(fieldName, propName)).getTerms();
 		for (int i = 2; i < parts.length; i++) {
-			int tokenId;
-			if (parts[i].length() == 0)
-				tokenId = Terms.NO_TERM; // no token
-			else
-				tokenId = termsObj.indexOf(parts[i]);
-			ids[i - 2] = tokenId;
+			ids[i - 2] = termsObj.deserializeToken(parts[i]);
 		}
 		return new HitPropValueContextWords(hits, propName, ids, sensitive);
 	}
@@ -72,15 +67,11 @@ public class HitPropValueContextWords extends HitPropValueContext {
 		parts[1] = propName;
 		parts[2] = (sensitive ? "s" : "i");
 		for (int i = 0; i < valueTokenId.length; i++) {
-			int v = valueTokenId[i];
-			if (v < 0)
-				parts[i + 3] = ""; // no token
-			else
-				parts[i + 3] = terms.get(v);
+			parts[i + 3] = terms.serializeTerm(valueTokenId[i]);
 		}
 		return PropValSerializeUtil.combineParts(parts);
 	}
-	
+
 	@Override
 	public List<String> getPropValues() {
 		return Arrays.asList(this.toString());

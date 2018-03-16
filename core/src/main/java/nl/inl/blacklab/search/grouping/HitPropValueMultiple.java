@@ -37,9 +37,11 @@ public class HitPropValueMultiple extends HitPropValue {
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder();
+		int i = 0;
 		for (HitPropValue v: value) {
-			if (b.length() > 0)
+			if (i > 0)
 				b.append(" / ");
+			i++;
 			b.append(v.toString());
 		}
 		return b.toString();

@@ -85,6 +85,7 @@ public abstract class RequestHandler {
 	 * @param servlet the servlet object
 	 * @param request the request object
 	 * @param debugMode debug mode request? Allows extra parameters to be used
+	 * @param outputType output type requested (XML, JSON or CSV)
 	 * @return the response data
 	 */
 	public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode, DataFormat outputType) {

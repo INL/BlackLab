@@ -37,13 +37,10 @@ public class HitPropValueContextWord extends HitPropValueContext {
 		String fieldName = hits.settings().concordanceField();
 		String propName = parts[0];
 		boolean sensitive = parts[1].equalsIgnoreCase("s");
+        String term = parts[2];
 		Terms termsObj = hits.getSearcher().getForwardIndex(ComplexFieldUtil.propertyField(fieldName, propName)).getTerms();
-		int id;
-		if (parts[2].length() == 0)
-			id = Terms.NO_TERM; // no token
-		else
-			id = termsObj.indexOf(parts[2]);
-		return new HitPropValueContextWord(hits, propName, id, sensitive);
+		int termId = termsObj.deserializeToken(term);
+		return new HitPropValueContextWord(hits, propName, termId, sensitive);
 	}
 
 	@Override
@@ -53,11 +50,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 
 	@Override
 	public String serialize() {
-		String token;
-		if (valueTokenId < 0)
-			token = ""; // no token
-		else
-			token = terms.get(valueTokenId);
+		String token = terms.serializeTerm(valueTokenId);
 		return PropValSerializeUtil.combineParts(
 			"cwo", propName,
 			(sensitive ? "s" : "i"),
