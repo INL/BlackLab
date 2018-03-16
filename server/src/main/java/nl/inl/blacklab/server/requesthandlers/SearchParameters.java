@@ -163,7 +163,8 @@ public class SearchParameters {
 		"property", "sensitive",        // for term frequency
 
 		// How to execute request
-		"waitfortotal"                  // wait until total number of results known?
+		"waitfortotal",                  // wait until total number of results known?
+		"prefix"                  // prefix for autocomplete
 	);
 
 	/** The search manager, for querying default value for missing parameters */

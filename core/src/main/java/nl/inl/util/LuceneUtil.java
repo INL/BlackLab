@@ -276,7 +276,7 @@ public class LuceneUtil {
 	}
 
 	/**
-	 * Find terms in the index based on a prefix. Useful for autocomplete.
+	 * Find terms in the index based on a prefix. Useful for autocomplete. NOTE: no limit on the number of results!
 	 * @param index the index
 	 * @param fieldName the field
 	 * @param prefix the prefix we're looking for
