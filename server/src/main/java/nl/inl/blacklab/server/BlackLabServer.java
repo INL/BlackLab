@@ -27,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.UnsupportedEncodingException;
 
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.RegexpTooLargeException;
