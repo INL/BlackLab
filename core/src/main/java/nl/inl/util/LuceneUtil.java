@@ -38,10 +38,13 @@ import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class LuceneUtil {
 
 	static final Charset LUCENE_DEFAULT_CHARSET = Charset.forName("utf-8");
+        private static final Logger logger = LogManager.getLogger(LuceneUtil.class);
 
 	private LuceneUtil() {
 	}
@@ -310,6 +313,10 @@ public class LuceneUtil {
 			List<String> results = new ArrayList<>();
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
+                                if (terms == null) {
+                                    logger.warn("no terms for field " + fieldName + " in leafReader, skipping");
+                                    continue;
+                                }
 				TermsEnum termsEnum = terms.iterator();
 				BytesRef brPrefix = new BytesRef(prefix.getBytes(LUCENE_DEFAULT_CHARSET));
 				termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
