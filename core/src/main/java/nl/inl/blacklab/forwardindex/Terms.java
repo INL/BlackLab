@@ -113,4 +113,34 @@ public abstract class Terms {
 
 	public abstract boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive);
 
+    public int deserializeToken(String term) {
+        int termId;
+        if (term.equals("~"))
+            termId = Terms.NO_TERM; // no token, effectively a "null" value
+        else {
+            if (term.startsWith("~~")) {
+                // tilde in first position has to be escaped
+                // because of how null value is encoded
+                term = term.substring(1);
+            }
+            termId = indexOf(term);
+        }
+        return termId;
+    }
+
+    public String serializeTerm(int valueTokenId) {
+        String token;
+        if (valueTokenId < 0)
+            token = "~"; // no token, effectively a "null" value
+        else {
+            token = get(valueTokenId);
+            if (token.charAt(0) == '~') {
+                // tilde in first position has to be escaped
+                // because of how null value is encoded
+                token = "~" + token;
+            }
+        }
+        return token;
+    }
+
 }

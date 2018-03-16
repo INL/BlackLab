@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import nl.inl.blacklab.MockTerms;
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
@@ -71,6 +72,19 @@ public class TestHitProperties {
 		HitGroup group;
 		group = g.getGroup(new HitPropValueContextWords(hits, "word", new int[] {term("over"), term("lazy"), term("the"), term("dog")}, true));
 		Assert.assertEquals(1, group.size());
+	}
+
+	@Test
+	public void testTermSerialization() {
+        String[] words = {"aap", "~", "~~"};
+        String[] expected = {"aap", "~~", "~~~"};
+        MockTerms mockTerms = new MockTerms(words);
+        for (int i = 0; i < mockTerms.numberOfTerms(); i++) {
+            Assert.assertEquals(expected[i], mockTerms.serializeTerm(i));
+            Assert.assertEquals(expected[i], mockTerms.serializeTerm(mockTerms.deserializeToken(expected[i])));
+        }
+        Assert.assertEquals("~", mockTerms.serializeTerm(Terms.NO_TERM));
+        Assert.assertEquals("~", mockTerms.serializeTerm(mockTerms.deserializeToken("~")));
 	}
 
 }
