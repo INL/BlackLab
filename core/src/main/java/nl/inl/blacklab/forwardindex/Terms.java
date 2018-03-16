@@ -134,7 +134,7 @@ public abstract class Terms {
             token = "~"; // no token, effectively a "null" value
         else {
             token = get(valueTokenId);
-            if (token.charAt(0) == '~') {
+            if (token.length() > 0 && token.charAt(0) == '~') {
                 // tilde in first position has to be escaped
                 // because of how null value is encoded
                 token = "~" + token;

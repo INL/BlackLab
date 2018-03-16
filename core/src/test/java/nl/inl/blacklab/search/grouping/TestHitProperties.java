@@ -76,8 +76,8 @@ public class TestHitProperties {
 
 	@Test
 	public void testTermSerialization() {
-        String[] words = {"aap", "~", "~~"};
-        String[] expected = {"aap", "~~", "~~~"};
+        String[] words = {"aap", "~", "~~", ""};
+        String[] expected = {"aap", "~~", "~~~", ""};
         MockTerms mockTerms = new MockTerms(words);
         for (int i = 0; i < mockTerms.numberOfTerms(); i++) {
             Assert.assertEquals(expected[i], mockTerms.serializeTerm(i));
