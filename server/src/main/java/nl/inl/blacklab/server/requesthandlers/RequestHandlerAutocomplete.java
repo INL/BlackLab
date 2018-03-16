@@ -55,11 +55,9 @@ public class RequestHandlerAutocomplete extends RequestHandler {
     }
 
     public static void autoComplete(DataStream ds, String fieldName, String prefix, IndexReader reader) {
-        ds.startItem("values");
         LuceneUtil.findTermsByPrefix(reader, fieldName, prefix, false, MAX_VALUES).forEach((v) -> {
             ds.entry("value", v);
         });
-        ds.endItem();
     }
 
 }
