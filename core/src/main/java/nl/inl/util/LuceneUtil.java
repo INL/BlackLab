@@ -310,6 +310,10 @@ public class LuceneUtil {
 			List<String> results = new ArrayList<>();
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
+				if (terms == null) {
+				    // if this LeafReader doesn't include this field, just skip it
+				    continue;
+				}
 				TermsEnum termsEnum = terms.iterator();
 				BytesRef brPrefix = new BytesRef(prefix.getBytes(LUCENE_DEFAULT_CHARSET));
 				termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
@@ -381,8 +385,12 @@ public class LuceneUtil {
 		try {
 			for (LeafReaderContext ctx: reader.leaves()) {
 				Terms terms = ctx.reader().terms(luceneField);
-				if (terms == null)
-					throw new RuntimeException("Field " + luceneField + " does not exist!");
+                if (terms == null) {
+                    // if this LeafReader doesn't include this field, just skip it
+                    continue;
+                }
+//				if (terms == null)
+//					throw new RuntimeException("Field " + luceneField + " does not exist!");
 				totalTerms += terms.getSumTotalTermFreq();
 			}
 			return totalTerms;
@@ -405,6 +413,10 @@ public class LuceneUtil {
 		try {
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
+                if (terms == null) {
+                    // if this LeafReader doesn't include this field, just skip it
+                    continue;
+                }
 				TermsEnum termsEnum = terms.iterator();
 				while (true) {
 					BytesRef term = termsEnum.next();
