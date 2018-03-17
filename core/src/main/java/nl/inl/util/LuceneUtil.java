@@ -313,10 +313,10 @@ public class LuceneUtil {
 			List<String> results = new ArrayList<>();
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
-        if (terms == null) {
-            logger.warn("no terms for field " + fieldName + " in leafReader, skipping");
-            continue;
-        }
+                                if (terms == null) {
+                                    if (logger.isDebugEnabled()) logger.debug("no terms for field " + fieldName + " in leafReader, skipping");
+                                    continue;
+                                }
 				TermsEnum termsEnum = terms.iterator();
 				BytesRef brPrefix = new BytesRef(prefix.getBytes(LUCENE_DEFAULT_CHARSET));
 				termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
