@@ -164,7 +164,7 @@ public class SearchParameters {
 
 		// How to execute request
 		"waitfortotal",                  // wait until total number of results known?
-		"prefix"                  // prefix for autocomplete
+		"term"                  // term for autocomplete
 	);
 
 	/** The search manager, for querying default value for missing parameters */

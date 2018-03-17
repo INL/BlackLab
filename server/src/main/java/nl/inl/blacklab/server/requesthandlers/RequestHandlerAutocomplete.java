@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 
+import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.Searcher;
@@ -37,9 +38,9 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         if (fieldName.length() == 0) {
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a field name to autocomplete.");
         }
-        String prefix = searchParam.getString("prefix");
-        if (prefix == null || prefix.isEmpty()) {
-            throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a prefix for "+fieldName+" to autocomplete.");
+        String term = searchParam.getString("term");
+        if (term == null || term.isEmpty()) {
+            throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a term for "+fieldName+" to autocomplete.");
         }
 
         Searcher searcher = getSearcher();
@@ -48,16 +49,18 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         if (struct.getComplexFields().contains(fieldName)) {
             throw new BadRequest("COMPLEX_FIELD_NOT_ALLOWED", "autocomplete not supported for complexfield: " + fieldName);
         } else {
-            autoComplete(ds, fieldName, prefix, searcher.getIndexReader());
+            autoComplete(ds, fieldName, term, searcher.getIndexReader());
         }
 
         return HTTP_OK;
     }
 
-    public static void autoComplete(DataStream ds, String fieldName, String prefix, IndexReader reader) {
-        LuceneUtil.findTermsByPrefix(reader, fieldName, prefix, false, MAX_VALUES).forEach((v) -> {
-            ds.entry("value", v);
+    public static void autoComplete(DataStream ds, String fieldName, String term, IndexReader reader) {
+        ds.startList();
+        LuceneUtil.findTermsByPrefix(reader, fieldName, term, false, MAX_VALUES).forEach((v) -> {
+            ds.item(v, v);
         });
+        ds.endList();
     }
 
 }
