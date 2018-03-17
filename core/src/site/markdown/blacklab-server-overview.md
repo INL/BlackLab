@@ -109,7 +109,7 @@ Explanation of the various resources:
 	</tr>
 	<tr>
 		<td>autocomplete/FIELDNAME </td>
-		<td>Shows field values for a metadata field. Requires a parameter "prefix".</td>
+		<td>Shows field values for a metadata field. Requires a parameter "term".</td>
 	</tr>
 </table>
 
@@ -141,8 +141,8 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>Content field to search. (default: the main contents field, corpus-specific. Usually “contents”.)</td>
 	</tr>
 	<tr>
-		<td>prefix</td>
-		<td>prefix used with autocomplete, terms starting with it are returned.</td>
+		<td>term</td>
+		<td>term used with autocomplete, terms starting with it are returned.</td>
 	</tr>
 	<tr>
 		<td>filter </td>
