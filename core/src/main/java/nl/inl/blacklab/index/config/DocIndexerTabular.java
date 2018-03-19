@@ -123,7 +123,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
         if (opt.containsKey("quote") && opt.get("quote").length() > 0)
             tabularFormat = tabularFormat.withQuote(opt.get("quote").charAt(0));
         else
-            tabularFormat = tabularFormat.withQuote('\u0000'); // disable quotes altogether
+            tabularFormat = tabularFormat.withQuote(null); // disable quotes altogether
         allowSeparatorsAfterInlineTags = false;
         if (opt.containsKey("allowSeparatorsAfterInlineTags") && opt.get("allowSeparatorsAfterInlineTags").equalsIgnoreCase("true"))
             allowSeparatorsAfterInlineTags = true;
