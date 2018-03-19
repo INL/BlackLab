@@ -38,10 +38,13 @@ import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class LuceneUtil {
 
 	static final Charset LUCENE_DEFAULT_CHARSET = Charset.forName("utf-8");
+        private static final Logger logger = LogManager.getLogger(LuceneUtil.class);
 
 	private LuceneUtil() {
 	}
@@ -276,7 +279,7 @@ public class LuceneUtil {
 	}
 
 	/**
-	 * Find terms in the index based on a prefix. Useful for autocomplete.
+	 * Find terms in the index based on a prefix. Useful for autocomplete. NOTE: no limit on the number of results!
 	 * @param index the index
 	 * @param fieldName the field
 	 * @param prefix the prefix we're looking for
@@ -310,28 +313,31 @@ public class LuceneUtil {
 			List<String> results = new ArrayList<>();
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
-				if (terms == null) {
-				    // if this LeafReader doesn't include this field, just skip it
-				    continue;
-				}
+                                if (terms == null) {
+                                    if (logger.isDebugEnabled()) logger.debug("no terms for field " + fieldName + " in leafReader, skipping");
+                                    continue;
+                                }
 				TermsEnum termsEnum = terms.iterator();
 				BytesRef brPrefix = new BytesRef(prefix.getBytes(LUCENE_DEFAULT_CHARSET));
-				termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
-				while (maxResults < 0 || results.size() < maxResults) {
-					BytesRef term = termsEnum.next();
-					if (term == null)
-						break;
-					String termText = term.utf8ToString();
-					String optDesensitized = termText;
-					if (!sensitive)
-						optDesensitized = StringUtil.stripAccents(termText).toLowerCase();
-					if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
-						// Doesn't match prefix or different field; no more matches
-						break;
-					}
-					// Match, add term
-					results.add(termText);
-				}
+                                TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
+                                
+                                if (seekStatus==TermsEnum.SeekStatus.END) {
+                                    continue;
+                                }
+                                for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
+                                    if (maxResults < 0 || results.size() < maxResults) {
+                                            String termText = term.utf8ToString();
+                                            String optDesensitized = termText;
+                                            if (!sensitive)
+                                                    optDesensitized = StringUtil.stripAccents(termText).toLowerCase();
+                                            if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
+                                                    // Doesn't match prefix or different field; no more matches
+                                                    break;
+                                            }
+                                            // Match, add term
+                                            results.add(termText);
+                                    }
+                                }
 			}
 			return results;
 		} catch (IOException e) {

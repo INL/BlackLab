@@ -107,6 +107,10 @@ Explanation of the various resources:
 		<td>fields/FIELDNAME </td>
 		<td>Shows the settings and (some) field values for a metadata field. For complex ("contents") fields, it will show the different properties (e.g. features/annotations) the field has for each token.</td>
 	</tr>
+	<tr>
+		<td>autocomplete/FIELDNAME </td>
+		<td>Shows field values for a metadata field. Requires a parameter "term".</td>
+	</tr>
 </table>
 
 NOTE: by default, users are not allowed to retrieve full document contents. In order to allow this, change the 'contentViewable' setting in the indexmetadata file in the index directory. You can also specify this setting in the corpusConfig part of an input format descripion file, see [here](how-to-configure-indexing.html).
@@ -135,6 +139,10 @@ Below is an overview of parameters that can be passed to the various resources. 
 	<tr>
 		<td>pattfield </td>
 		<td>Content field to search. (default: the main contents field, corpus-specific. Usually “contents”.)</td>
+	</tr>
+	<tr>
+		<td>term</td>
+		<td>term used with autocomplete, terms starting with it are returned.</td>
 	</tr>
 	<tr>
 		<td>filter </td>
