@@ -79,7 +79,7 @@ We designed BlackLab to offer the flexibility that we missed in other corpus eng
 
 What do I do if BlackLab (Server) is slow and uses 100% CPU?
 ------------------------------------------------------------
-Usually this is memory-related. Make sure the JVM has enough heap space. If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl. See [http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/ here].
+Usually this is memory-related. Make sure the JVM has enough heap space. If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl. See [here](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/).
 
 Future plans
 ------------

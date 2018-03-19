@@ -95,6 +95,8 @@ For example, if you have TEI data in /tmp/my-tei/ and want to create an index as
 
 Your data is indexed and placed in a new BlackLab index in the "test-index" directory.
 
+Please note that if you're indexing large files, you should give java more than the default heap memory, using the `-Xmx` option. See [here](https://docs.oracle.com/cd/E15523_01/web.1111/e13814/jvm_tuning.htm#PERFM161). For really large files, and if you have the memory, you could use `-Xmx 6G`, for example.
+
 See also:
 
 - [Adding a new input format](add-input-format.html) (if your format isn't supported yet and you don't want to convert)
