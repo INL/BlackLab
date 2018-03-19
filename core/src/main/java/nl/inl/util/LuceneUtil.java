@@ -319,22 +319,25 @@ public class LuceneUtil {
                                 }
 				TermsEnum termsEnum = terms.iterator();
 				BytesRef brPrefix = new BytesRef(prefix.getBytes(LUCENE_DEFAULT_CHARSET));
-				termsEnum.seekCeil(brPrefix); // find the prefix in the terms list
-				while (maxResults < 0 || results.size() < maxResults) {
-					BytesRef term = termsEnum.next();
-					if (term == null)
-						break;
-					String termText = term.utf8ToString();
-					String optDesensitized = termText;
-					if (!sensitive)
-						optDesensitized = StringUtil.stripAccents(termText).toLowerCase();
-					if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
-						// Doesn't match prefix or different field; no more matches
-						break;
-					}
-					// Match, add term
-					results.add(termText);
-				}
+                                TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
+                                
+                                if (seekStatus==TermsEnum.SeekStatus.END) {
+                                    continue;
+                                }
+                                for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
+                                    if (maxResults < 0 || results.size() < maxResults) {
+                                            String termText = term.utf8ToString();
+                                            String optDesensitized = termText;
+                                            if (!sensitive)
+                                                    optDesensitized = StringUtil.stripAccents(termText).toLowerCase();
+                                            if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
+                                                    // Doesn't match prefix or different field; no more matches
+                                                    break;
+                                            }
+                                            // Match, add term
+                                            results.add(termText);
+                                    }
+                                }
 			}
 			return results;
 		} catch (IOException e) {
