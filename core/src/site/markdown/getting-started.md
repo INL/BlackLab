@@ -37,21 +37,27 @@ Prebuilt binary JARs for BlackLab are available from the [Downloads](downloads.h
 
 ### Building from source
 
-If you want the very latest version of BlackLab, you can easily build it from source code.
+If you want the very latest version (the "dev" branch) of BlackLab, you can easily build it from source code.
 
-First, you need to download the source code from GitHub. You can download it from there in a .zip file, but a better way to get it is by cloning it using Git. [Install a Git client](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) (we'll give command line examples here, but it should translate easily to GUI clients like TortoiseGit), change to a directory where you keep your projects, and clone BlackLab:
+First, you need to download the source code from GitHub. You can download it from there in a .zip file (be sure to select the dev branch before doing so), but a better way to get it is by cloning it using Git. [Install a Git client](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) (we'll give command line examples here, but it should translate easily to GUI clients like TortoiseGit), change to a directory where you keep your projects, and clone BlackLab:
 
 	git clone git://github.com/INL/BlackLab.git
 
-Git will download the project and place it in a subdirectory "BlackLab".
+Git will download the project and place it in a subdirectory "BlackLab". Now switch to the dev branch:
 
-BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build tool. [Install Maven](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html), change into the BlackLab directory, and build the library:
+    git checkout dev
+    
+Install a recent JDK (Java Development Kit). If you're on Linux, you can use your package manager to do this (OpenJDK is fine too).
+
+BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build tool. [Install Maven](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html) (use your package manager if on Linux), change into the BlackLab directory, and build the library:
 
 	mvn install
 
 ("install" refers to the fact that the library is "installed" to your private Maven repository after it is built)
 
-After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab library should be under target/BlackLab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.4-SNAPSHOT")
+After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab JAR library should be under core/target/blacklab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.7-SNAPSHOT"; SNAPSHOT means it's not an official release, by the way). The BlackLab Server WAR will be in server/target/blacklab-server-VERSION.war.
+
+NOTE: If you want to use BlackLab Server and corpus-frontend, you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the "webapps" directory (e.g. /var/lib/tomcat/webapps/, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For the configuration file, see [BlackLab Server overview](blacklab-server-overview.html).
 
 <a id="preparing-your-data"></a>
 
