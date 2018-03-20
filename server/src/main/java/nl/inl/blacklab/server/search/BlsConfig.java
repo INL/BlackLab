@@ -34,8 +34,11 @@ public class BlsConfig extends YamlJsonReader {
 	/** Default number of hits/results per page [20] */
 	private int defaultPageSize;
 
-	/** Maximum value allowed for number parameter */
+	/** Maximum value allowed for number parameter*/
 	private int maxPageSize;
+
+	/** Maximum value allowed for number parameters in CSV exports [default 100_000] */
+	private int maxExportPageSize;
 
 	/** Default case-sensitivity to use. [insensitive] */
 	private boolean defaultCaseSensitive;
@@ -151,6 +154,7 @@ public class BlsConfig extends YamlJsonReader {
 						reqProp.get("defaultOutputType").textValue(), DataFormat.XML);
 			defaultPageSize = JsonUtil.getIntProp(reqProp, "defaultPageSize", 20);
 			maxPageSize = JsonUtil.getIntProp(reqProp, "maxPageSize", 1000);
+			maxExportPageSize = JsonUtil.getIntProp(reqProp, "maxExportPageSize", 100_000);
 			String defaultSearchSensitivity = JsonUtil.getProperty(reqProp,
 					"defaultSearchSensitivity", "insensitive");
 			switch(defaultSearchSensitivity) {
@@ -176,7 +180,7 @@ public class BlsConfig extends YamlJsonReader {
 			defaultMaxHitsToRetrieve = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToRetrieve", Searcher.DEFAULT_MAX_RETRIEVE);
 			defaultMaxHitsToCount = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToCount", Searcher.DEFAULT_MAX_COUNT);
 			maxHitsToRetrieveAllowed = JsonUtil.getIntProp(reqProp,
-					"maxHitsToRetrieveAllowed", 10000000);
+					"maxHitsToRetrieveAllowed", 10_000_000);
 			maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp,
 					"maxHitsToCountAllowed", -1);
 			JsonNode jsonOverrideUserIdIps = reqProp
@@ -189,13 +193,14 @@ public class BlsConfig extends YamlJsonReader {
 			defaultOutputType = DataFormat.XML;
 			defaultPageSize = 20;
 			maxPageSize = 1000;
+			maxExportPageSize = 100_000;
 			defaultCaseSensitive = defaultDiacriticsSensitive = false;
 			defaultContextSize = 5;
 			maxContextSize = 20;
 			maxSnippetSize = 120;
 			defaultMaxHitsToRetrieve = Searcher.DEFAULT_MAX_RETRIEVE;
 			defaultMaxHitsToCount = Searcher.DEFAULT_MAX_COUNT;
-			maxHitsToRetrieveAllowed = 10000000;
+			maxHitsToRetrieveAllowed = 10_000_000;
 			maxHitsToCountAllowed = -1;
 			overrideUserIdIps = new HashSet<>();
 		}
@@ -242,6 +247,10 @@ public class BlsConfig extends YamlJsonReader {
 
 	public int maxPageSize() {
 		return maxPageSize;
+	}
+
+	public int maxExportPageSize() {
+		return maxExportPageSize;
 	}
 
 	public boolean isDefaultCaseSensitive() {

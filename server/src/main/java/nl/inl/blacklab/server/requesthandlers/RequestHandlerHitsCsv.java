@@ -101,18 +101,20 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 				job.decrRef();
 		}
 
-
 		// apply window settings
-		// Different from the regular hits, if no parameters are provided, all hits are returned.
-		if (hits != null && (searchParam.containsKey("first") || searchParam.containsKey("number"))) {
+		// Different from the regular results, if no window settings are provided, we export the maximum amount automatically
+		// The max for CSV exports is also different from the default pagesize maximum.
+		if (hits != null) {
 			int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
-			int number = searchParam.containsKey("number") ? Math.max(1, searchParam.getInteger("number")) : Integer.MAX_VALUE;
-
 			if (!hits.sizeAtLeast(first))
 				first = 0;
+
+			int number = searchMan.config().maxExportPageSize();
+			if (searchParam.containsKey("number"))
+				number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
+
 			hits = hits.window(first, number);
 		}
-
 		return Pair.of(hits, groups);
 	}
 
@@ -241,7 +243,6 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 		return DataFormat.CSV;
 	}
 
-
 	private static List<String> interleave(List<String> a, List<String> b) {
 		List<String> out = new ArrayList<>();
 
@@ -258,46 +259,3 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 		return out;
 	}
 }
-
-
-
-//private void formatDocuments(Map<Integer, Document> docsByLuceneId) {
-//
-////	ds.entry("hits", printer.getOut().toString());
-//
-//	// Explicitly declare the separator, excel normally uses a locale-dependent CSV-separator...
-//	CSVPrinter printer = CSVFormat.EXCEL.withHeader("docPid", "key", "value").print(new StringBuilder("sep=,\r\n"));
-//	List<String> row = new ArrayList<>();
-//	for (Entry<Integer, Document> e : docs.entrySet()) {
-//		Integer docId = e.getKey();
-//		Document doc = e.getValue();
-//
-//		for (String metadataFieldName: struct.getMetadataFields()) {
-//			String value = doc.get(metadataFieldName);
-//			if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView")) {
-//				row.add(docPids.get(docId));
-//				row.add(metadataFieldName);
-//				row.add(value);
-//				printer.printRecord(row);
-//				row.clear();
-//			}
-//		}
-//
-//		int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
-//		String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
-//		if (tokenLengthField != null) {
-//			row.add(docPids.get(docId));
-//			row.add("lengthInTokens");
-//			row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - subtractFromLength));
-//			printer.printRecord(row);
-//			row.clear();
-//		}
-//
-//		row.add(docPids.get(docId));
-//		row.add("mayView");
-//		row.add(Boolean.toString(struct.contentViewable()));
-//		printer.printRecord(row);
-//		row.clear();
-//	}
-//	printer.flush();
-//}
