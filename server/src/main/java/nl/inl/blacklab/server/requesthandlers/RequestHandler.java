@@ -399,16 +399,21 @@ public abstract class RequestHandler {
 	public void dataStreamDocumentInfo(DataStream ds, Searcher searcher, Document document) {
 		ds.startMap();
 		IndexStructure struct = searcher.getIndexStructure();
+                boolean mayView = false;
 		for (String metadataFieldName: struct.getMetadataFields()) {
 			String value = document.get(metadataFieldName);
+                        if ("contentViewable".equals(metadataFieldName)) {
+                            mayView = Boolean.parseBoolean(value);
+                        }
 			if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
 				ds.entry(metadataFieldName, value);
 		}
 		int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
 		String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
+                
 		if (tokenLengthField != null)
 			ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
-		ds	.entry("mayView", struct.contentViewable())
+		ds	.entry("mayView", mayView||struct.contentViewable())
 		.endMap();
 	}
 
