@@ -49,6 +49,8 @@ Your data is indexed and placed in a new BlackLab index in the "test-index" dire
 
 NOTE: if you don't specify a glob, IndexTool will index \*.xml by default. You can specify a glob (like "\*.txt" or "\*" for all files) to change this.
 
+Also, please note that if you're indexing large files, you should give java more than the default heap memory, using the `-Xmx` option. See [here](https://docs.oracle.com/cd/E15523_01/web.1111/e13814/jvm_tuning.htm#PERFM161). For really large files, and if you have the memory, you could use `-Xmx 6G`, for example.
+
 To delete documents from an index:
 
     java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool delete INDEX_DIR FILTER_QUERY

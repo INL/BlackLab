@@ -96,13 +96,17 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 		}
 
 		// apply window settings
-		// Different from the regular results, if no parameters are provided, all results are returned.
-		if (docs != null && (searchParam.containsKey("first") || searchParam.containsKey("number"))) {
+		// Different from the regular results, if no window settings are provided, we export the maximum amount automatically
+		// The max for CSV exports is also different from the default pagesize maximum.
+		if (docs != null) {
 			int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
-			int number = searchParam.containsKey("number") ? Math.max(1, searchParam.getInteger("number")) : Integer.MAX_VALUE;
-
 			if (!docs.sizeAtLeast(first))
 				first = 0;
+
+			int number = searchMan.config().maxExportPageSize();
+			if (searchParam.containsKey("number"))
+				number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
+
 			docs = docs.window(first, number);
 		}
 
