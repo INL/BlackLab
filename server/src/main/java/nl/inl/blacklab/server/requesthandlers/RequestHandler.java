@@ -399,12 +399,8 @@ public abstract class RequestHandler {
 	public void dataStreamDocumentInfo(DataStream ds, Searcher searcher, Document document) {
 		ds.startMap();
 		IndexStructure struct = searcher.getIndexStructure();
-                boolean mayView = false;
 		for (String metadataFieldName: struct.getMetadataFields()) {
 			String value = document.get(metadataFieldName);
-                        if ("contentViewable".equals(metadataFieldName)) {
-                            mayView = Boolean.parseBoolean(value);
-                        }
 			if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
 				ds.entry(metadataFieldName, value);
 		}
@@ -413,10 +409,19 @@ public abstract class RequestHandler {
                 
 		if (tokenLengthField != null)
 			ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
-		ds	.entry("mayView", mayView||struct.contentViewable())
+		ds	.entry("mayView", mayView(struct, document)||struct.contentViewable())
 		.endMap();
 	}
 
+        protected boolean mayView(IndexStructure struct, Document document) {
+		for (String metadataFieldName: struct.getMetadataFields()) {
+			String value = document.get(metadataFieldName);
+                        if ("contentViewable".equals(metadataFieldName)) {
+                            return Boolean.parseBoolean(value);
+                        }
+		}
+                return false;
+        }
 	protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc) throws BlsException {
 
 		JobFacets facets = (JobFacets)searchMan.search(user, facetDesc, true);
