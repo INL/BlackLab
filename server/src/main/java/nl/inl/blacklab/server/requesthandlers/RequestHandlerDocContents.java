@@ -60,7 +60,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 		Document document = searcher.document(luceneDocId); //searchMan.getDocumentFromPid(indexName, docId);
 		if (document == null)
 			throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 9);
-		if (!mayView(searcher.getIndexStructure(), document)||!searcher.getIndexStructure().contentViewable()) {
+		if (!mayView(searcher.getIndexStructure(), document)) {
 			return Response.unauthorized(ds, "Viewing the full contents of this document is not allowed.");
 		}
 
