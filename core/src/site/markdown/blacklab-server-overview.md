@@ -115,7 +115,7 @@ Explanation of the various resources:
 
 NOTE: by default, users are not allowed to retrieve full document contents. In order to allow this, change the 'contentViewable' setting in the indexmetadata file in the index directory.
 You can also specify this setting in the corpusConfig part of an input format descripion file, see [here](how-to-configure-indexing.html). contentViewable setting in indexmetadata may be
-overridden for a document by a boolean metadata contentViewable field with an xPath like for example: string(//tei:availability[1]/@status='restricted').
+overridden for a document by a boolean metadata field contentViewable with an xPath like for example: string(//tei:availability[1]/@status='free').
 
 Below is an overview of parameters that can be passed to the various resources. Default values for most parameters can be configured on the server; below are a few suggestions for defaults.
 
