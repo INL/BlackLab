@@ -1,21 +1,25 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 
-import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.IndexReader;
+
+import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.LuceneUtil;
-import org.apache.lucene.index.IndexReader;
 
 /**
- * Autocompletion for metadata fields.
+ * Autocompletion for metadata and property fields.
+ * Property fields must be prefixed by the complexField in which they exist.
  */
 public class RequestHandlerAutocomplete extends RequestHandler {
 
@@ -33,31 +37,59 @@ public class RequestHandlerAutocomplete extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
 
-        int i = urlPathInfo.indexOf('/');
-        String fieldName = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        if (fieldName.length() == 0) {
+        String[] pathParts = StringUtils.split(urlPathInfo, '/');
+        if (pathParts.length == 0)
+        	throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a field name to autocomplete.");
+
+        String complexFieldName = pathParts.length > 1 ? pathParts[0] : null;
+        String fieldName        = pathParts.length > 1 ? pathParts[1] : pathParts[0];
+        String term = searchParam.getString("term");
+
+        if (fieldName.isEmpty()) {
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a field name to autocomplete.");
         }
-        String term = searchParam.getString("term");
-        if (term == null || term.isEmpty()) {
+        if (term == null || term.isEmpty())
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a term for "+fieldName+" to autocomplete.");
-        }
 
         Searcher searcher = getSearcher();
         IndexStructure struct = searcher.getIndexStructure();
 
-        if (struct.getComplexFields().contains(fieldName)) {
+        if (struct.getComplexFields().contains(fieldName))
             throw new BadRequest("COMPLEX_FIELD_NOT_ALLOWED", "autocomplete not supported for complexfield: " + fieldName);
-        } else {
-            autoComplete(ds, fieldName, term, searcher.getIndexReader());
+
+        /*
+         * Rather specific code:
+         * We require the exact name of the property in the lucene index in order to find autocompletion results
+         *
+         * For metadata fields this is just the value as specified in the IndexStructure,
+         * but word properties have multiple internal names.
+         * the property is part of a "complexField", and (usually) has multiple variants for case/accent-sensitive/insensitive versions.
+         * The name needs to account for all of these things.
+         *
+         * By default, get the insensitive variant of the field (if present), otherwise, get whatever is the default.
+         *
+         * Take care to pass the sensitivity we're using
+         * or we might match insensitively on a field that only contains sensitive data, or vice versa
+         */
+        boolean sensitiveMatching = true;
+        if (complexFieldName != null && !complexFieldName.isEmpty()) {
+        	PropertyDesc prop = struct.getComplexFieldDesc(complexFieldName).getPropertyDesc(fieldName);
+        	if (prop.hasAlternative(ComplexFieldUtil.INSENSITIVE_ALT_NAME)) {
+        		sensitiveMatching = false;
+        		fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+        	} else {
+        		sensitiveMatching = true;
+        		fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, prop.offsetsAlternative());
+        	}
         }
 
+    	autoComplete(ds, fieldName, term, searcher.getIndexReader(), sensitiveMatching);
         return HTTP_OK;
     }
 
-    public static void autoComplete(DataStream ds, String fieldName, String term, IndexReader reader) {
+    public static void autoComplete(DataStream ds, String fieldName, String term, IndexReader reader, boolean sensitive) {
         ds.startList();
-        LuceneUtil.findTermsByPrefix(reader, fieldName, term, false, MAX_VALUES).forEach((v) -> {
+        LuceneUtil.findTermsByPrefix(reader, fieldName, term, sensitive, MAX_VALUES).forEach((v) -> {
             ds.item(v, v);
         });
         ds.endList();
