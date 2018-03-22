@@ -335,7 +335,7 @@ public class LuceneUtil {
                                                     break;
                                             }
                                             // Match, add term
-                                            results.add(termText);
+                                            if (!results.contains(termText)) results.add(termText);
                                     }
                                 }
 			}
