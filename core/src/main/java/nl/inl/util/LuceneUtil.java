@@ -330,7 +330,7 @@ public class LuceneUtil {
                                             String optDesensitized = termText;
                                             if (!sensitive)
                                                     optDesensitized = StringUtil.stripAccents(termText).toLowerCase();
-                                            if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
+                                            if (!allTerms && !optDesensitized.startsWith(prefix)) {
                                                     // Doesn't match prefix or different field; no more matches
                                                     break;
                                             }
