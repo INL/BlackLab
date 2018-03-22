@@ -27,6 +27,7 @@ import nl.inl.blacklab.search.ResultsWindow;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.DocOrHitGroups;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -47,6 +48,8 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * appropriate subclass.
  */
 public abstract class RequestHandler {
+	private static final String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
+
 	static final Logger logger = LogManager.getLogger(RequestHandler.class);
 
 	public static final int HTTP_OK = HttpServletResponse.SC_OK;
@@ -413,20 +416,18 @@ public abstract class RequestHandler {
 		.endMap();
 	}
 
-        /**
-         * a document may be viewed when a contentViewable metadata field with a value true is registered with either the document or with the index metadata.
-         * @param struct
-         * @param document
-         * @return 
-         */
-        protected boolean mayView(IndexStructure struct, Document document) {
-		for (String metadataFieldName: struct.getMetadataFields()) {
-                        if ("contentViewable".equals(metadataFieldName)) {
-                            return Boolean.parseBoolean(document.get(metadataFieldName));
-                        }
-		}
-                return struct.contentViewable();
-        }
+    /**
+     * a document may be viewed when a contentViewable metadata field with a value true is registered with either the document or with the index metadata.
+     * @param struct
+     * @param document
+     * @return 
+     */
+    protected boolean mayView(IndexStructure struct, Document document) {
+    	if (struct.hasMetadataField(METADATA_FIELD_CONTENT_VIEWABLE))
+            return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
+	    return struct.contentViewable();
+    }
+    
 	protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc) throws BlsException {
 
 		JobFacets facets = (JobFacets)searchMan.search(user, facetDesc, true);

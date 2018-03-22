@@ -816,6 +816,10 @@ public class IndexStructure {
     		return new ArrayList<>(metadataFieldInfos.keySet());
 	    }
 	}
+	
+	public boolean hasMetadataField(String fieldName) {
+		return metadataFieldInfos.containsKey(fieldName);
+	}
 
 	public MetadataFieldDesc getMetadataFieldDesc(String fieldName) {
 	    MetadataFieldDesc d = null;
