@@ -406,12 +406,27 @@ public abstract class RequestHandler {
 		}
 		int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
 		String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
+                
 		if (tokenLengthField != null)
 			ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
-		ds	.entry("mayView", struct.contentViewable())
+		ds	.entry("mayView", mayView(struct, document))
 		.endMap();
 	}
 
+        /**
+         * a document may be viewed when a contentViewable metadata field with a value true is registered with either the document or with the index metadata.
+         * @param struct
+         * @param document
+         * @return 
+         */
+        protected boolean mayView(IndexStructure struct, Document document) {
+		for (String metadataFieldName: struct.getMetadataFields()) {
+                        if ("contentViewable".equals(metadataFieldName)) {
+                            return Boolean.parseBoolean(document.get(metadataFieldName));
+                        }
+		}
+                return struct.contentViewable();
+        }
 	protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc) throws BlsException {
 
 		JobFacets facets = (JobFacets)searchMan.search(user, facetDesc, true);
