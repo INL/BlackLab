@@ -327,10 +327,8 @@ public class LuceneUtil {
                                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
                                     if (maxResults < 0 || results.size() < maxResults) {
                                             String termText = term.utf8ToString();
-                                            String optDesensitized = termText;
-                                            if (!sensitive)
-                                                    optDesensitized = StringUtil.stripAccents(termText).toLowerCase();
-                                            if (!allTerms && !optDesensitized.startsWith(prefix)) {
+                                            boolean startsWithPrefix = sensitive ? termText.startsWith(prefix): StringUtil.insensitiveStartsWith(termText, prefix);
+                                            if (!allTerms && !startsWithPrefix) {
                                                     // Doesn't match prefix or different field; no more matches
                                                     break;
                                             }
@@ -344,6 +342,7 @@ public class LuceneUtil {
 			throw new RuntimeException(e);
 		}
 	}
+    
 
 	public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery, String fieldName, String propName, String altName) {
 		try {
