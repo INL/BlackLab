@@ -520,8 +520,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
             String value = apCaptureValuePath.evalXPathToString();
             /*
             The value is injected in an xpath which may use quoting in different ways.
-            The value may contain quotes that may conflict with the quoting used in the xpath.
-            We only deal with the situation where the variable is quoted like this: '$n'
+            The value may contain quotes that conflict with the quoting used in the xpath.
+            We only deal with the situation where the variable is quoted like this: '$i'
             */
             if (valuePath.contains("'$"+i+"'") && value.contains("'")) {
                 value = value.replace("'", "&apos;");
