@@ -33,6 +33,7 @@ import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
@@ -517,6 +518,14 @@ public class DocIndexerXPath extends DocIndexerConfig {
         for (String captureValuePath: annotation.getCaptureValuePaths()) {
             AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
             String value = apCaptureValuePath.evalXPathToString();
+            /*
+            The value is injected in an xpath which may use quoting in different ways.
+            The value may contain quotes that may conflict with the quoting used in the xpath.
+            We only deal with the situation where the variable is quoted like this: '$n'
+            */
+            if (valuePath.contains("'$"+i+"'") && value.contains("'")) {
+                value = value.replace("'", "&apos;");
+            }
             releaseAutoPilot(apCaptureValuePath);
             valuePath = valuePath.replace("$" + i, value);
             i++;
