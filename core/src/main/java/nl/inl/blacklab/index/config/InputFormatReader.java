@@ -230,6 +230,12 @@ public class InputFormatReader extends YamlJsonReader {
             case "name": annot.setName(str(e)); break;
             case "value": annot.setValuePath(fixedStringToXpath(str(e))); break;
             case "valuePath": annot.setValuePath(str(e)); break;
+            case "captureValuePaths":
+                ArrayNode paths = (ArrayNode) e.getValue();
+                paths.iterator().forEachRemaining((t) -> {
+                    annot.addCaptureValuePath(t.asText());
+                });
+                break;
             case "forEachPath":
                 if (!isSubAnnotation)
                     throw new InputFormatConfigException("Only subannotations may have forEachPath/namePath");
