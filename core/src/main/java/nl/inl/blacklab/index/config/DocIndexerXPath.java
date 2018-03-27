@@ -34,11 +34,15 @@ import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
  */
 public class DocIndexerXPath extends DocIndexerConfig {
+    
+    private static final Logger LOGGER = LogManager.getLogger(DocIndexerXPath.class);
 
     private static enum FragmentPosition {
         BEFORE_OPEN_TAG,
@@ -587,6 +591,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
         We only deal with the situation where the variable is quoted like this: '$i'
         */
         if (valuePath.contains("'$"+i+"'") && value.contains("'")) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("replacing ' with &apos; in " + value + " before injecting in " + valuePath);
+            }
             value = value.replace("'", "&apos;");
             /**
              * now we need to finally revert the &apos; replacement, if needed we add a process for this
@@ -613,6 +620,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     private ConfigProcessStep revertEscapeQuote() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Adding ConfigProcessStep to replace &apos; back with ' before adding index term ");
+        }
         ConfigProcessStep process = new ConfigProcessStep();
         process.setMethod("replace");
         process.addParam("find", "&apos;");
