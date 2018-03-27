@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -745,7 +746,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(new String(inputDocument, documentByteOffset, documentLengthBytes));
+        storeWholeDocument(new String(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8));
     }
 
     @Override
