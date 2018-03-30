@@ -42,7 +42,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class DocIndexerXPath extends DocIndexerConfig {
     
-    private static final Logger LOGGER = LogManager.getLogger(DocIndexerXPath.class);
+    private static final Logger logger = LogManager.getLogger(DocIndexerXPath.class);
 
     private static enum FragmentPosition {
         BEFORE_OPEN_TAG,
@@ -591,8 +591,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
         We only deal with the situation where the variable is quoted like this: '$i'
         */
         if (valuePath.contains("'$"+i+"'") && value.contains("'")) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("replacing ' with &apos; in " + value + " before injecting in " + valuePath);
+            if (logger.isDebugEnabled()) {
+                logger.debug("replacing ' with &apos; in " + value + " before injecting in " + valuePath);
             }
             value = value.replace("'", "&apos;");
             /**
@@ -620,8 +620,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     private ConfigProcessStep revertEscapeQuote() {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Adding ConfigProcessStep to replace &apos; back with ' before adding index term ");
+        if (logger.isDebugEnabled()) {
+            logger.debug("Adding ConfigProcessStep to replace &apos; back with ' before adding index term ");
         }
         ConfigProcessStep process = new ConfigProcessStep();
         process.setMethod("replace");

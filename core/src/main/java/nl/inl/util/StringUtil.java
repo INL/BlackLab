@@ -123,13 +123,6 @@ public class StringUtil {
 		return result.trim();
 	}
     
-    public static boolean insensitiveStartsWith(String s, String prefix) {
-        if (s==null||prefix==null) {
-            throw new IllegalArgumentException("both strings should be provided");
-        }
-        return stripAccents(s).startsWith(stripAccents(prefix));
-    }
-
 	static final Pattern regexCharacters = Pattern.compile("([\\|\\\\\\?\\*\\+\\(\\)\\[\\]\\-\\^\\$\\{\\}\\.])");
 
 	/**
