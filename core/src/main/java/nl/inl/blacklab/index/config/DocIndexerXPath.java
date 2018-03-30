@@ -522,7 +522,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
         for (String captureValuePath: annotation.getCaptureValuePaths()) {
             AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
             String value = apCaptureValuePath.evalXPathToString();
-            value = processCaptureValuePath(valuePath, i, value, annotation);
             releaseAutoPilot(apCaptureValuePath);
             valuePath = valuePath.replace("$" + i, value);
             i++;
@@ -577,47 +576,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
-    /**
-     * if needed replace ' with &apos; in the value of a captureValuePath and make sure that when the value is 
-     * actually retrieved the replacement is reverted to get the correct value in the index.
-     * @param value
-     * @param annotation
-     * @return 
-     */
-    private String processCaptureValuePath(String valuePath, int i, String value, ConfigAnnotation annotation) {
-        /*
-        The value is injected in an xpath which may use quoting in different ways.
-        The value may contain quotes that conflict with the quoting used in the xpath.
-        We only deal with the situation where the variable is quoted like this: '$i'
-        */
-        if (valuePath.contains("'$"+i+"'") && value.contains("'")) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("replacing ' with &apos; in " + value + " before injecting in " + valuePath);
-            }
-            value = value.replace("'", "&apos;");
-            /**
-             * now we need to finally revert the &apos; replacement, if needed we add a process for this
-             */
-            if (annotation.getProcess().isEmpty()) {
-                annotation.getProcess().add(revertEscapeQuote());
-            } else {
-                boolean stepOk=false;
-                for (ConfigProcessStep p : annotation.getProcess()) {
-                    if (p.getMethod().equals("replace")) {
-                        Map<String, String> params = p.getParam();
-                        if (params.get("find").equals("&apos;") && params.get("replace").equals("'")) {
-                            stepOk =  true;
-                            break;
-                        }
-                    }
-                }
-                if (!stepOk) {
-                    annotation.getProcess().add(revertEscapeQuote());
-                }
-            }
-        }
-        return value;
-    }
 
     private ConfigProcessStep revertEscapeQuote() {
         if (logger.isDebugEnabled()) {
