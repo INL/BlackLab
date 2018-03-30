@@ -576,18 +576,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
-
-    private ConfigProcessStep revertEscapeQuote() {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Adding ConfigProcessStep to replace &apos; back with ' before adding index term ");
-        }
-        ConfigProcessStep process = new ConfigProcessStep();
-        process.setMethod("replace");
-        process.addParam("find", "&apos;");
-        process.addParam("replace", "'");
-        return process;
-    }
-
     protected void findAnnotationMatches(ConfigAnnotation annotation, ConfigAnnotation subAnnot, String valuePath, List<Integer> indexAtPositions)
             throws XPathParseException, XPathEvalException, NavException {
         AutoPilot apValuePath = acquireAutoPilot(valuePath);
