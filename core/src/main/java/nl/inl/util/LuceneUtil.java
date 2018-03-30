@@ -311,7 +311,7 @@ public class LuceneUtil {
 		try {
 			if (!sensitive)
 				prefix = StringUtil.stripAccents(prefix).toLowerCase();
-			List<String> results = new ArrayList<>(maxResults);
+			Set<String> results = new TreeSet<>();
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
                                 if (terms == null) {
@@ -338,8 +338,7 @@ public class LuceneUtil {
                                     }
                                 }
 			}
-            Collections.sort(results);
-			return results;
+			return new ArrayList<>(results);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
