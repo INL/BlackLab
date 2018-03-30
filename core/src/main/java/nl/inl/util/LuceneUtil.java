@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -310,7 +311,7 @@ public class LuceneUtil {
 		try {
 			if (!sensitive)
 				prefix = StringUtil.stripAccents(prefix).toLowerCase();
-			List<String> results = new ArrayList<>();
+			List<String> results = new ArrayList<>(maxResults);
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
                                 if (terms == null) {
@@ -327,7 +328,7 @@ public class LuceneUtil {
                                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
                                     if (maxResults < 0 || results.size() < maxResults) {
                                             String termText = term.utf8ToString();
-                                            boolean startsWithPrefix = sensitive ? termText.startsWith(prefix): StringUtil.insensitiveStartsWith(termText, prefix);
+                                            boolean startsWithPrefix = sensitive ? StringUtil.stripAccents(termText).startsWith(prefix): termText.startsWith(prefix);
                                             if (!allTerms && !startsWithPrefix) {
                                                     // Doesn't match prefix or different field; no more matches
                                                     break;
@@ -337,6 +338,7 @@ public class LuceneUtil {
                                     }
                                 }
 			}
+            Collections.sort(results);
 			return results;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
