@@ -518,10 +518,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
         String conditionPath = annotation.getConditionPath();
 
         if (conditionPath!=null) {
-            AutoPilot apCaptureValuePath = acquireAutoPilot(conditionPath);
-            String value = apCaptureValuePath.evalXPathToString();
-            releaseAutoPilot(apCaptureValuePath);
-            if (String.valueOf(value).isEmpty()) {
+            AutoPilot apConditionPath = acquireAutoPilot(conditionPath);
+            String value = apConditionPath.evalXPathToString();
+            releaseAutoPilot(apConditionPath);
+            if (StringUtil.nullToEmpty(value).isEmpty()) {
                 return;
             }
         }
