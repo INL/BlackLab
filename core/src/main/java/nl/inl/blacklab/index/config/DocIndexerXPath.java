@@ -311,9 +311,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 // For each configured annotation...
                 for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
-                    if (!skip(annotation)) {
-                        processAnnotation(annotation, null);
-                    }
+                    processAnnotation(annotation, null);
                 }
 
                 fragPos = FragmentPosition.AFTER_CLOSE_TAG;
