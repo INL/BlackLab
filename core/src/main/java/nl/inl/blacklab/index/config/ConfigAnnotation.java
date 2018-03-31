@@ -65,6 +65,7 @@ public class ConfigAnnotation {
 
     /** Can this annotation have multiple values at one token position? [false] */
     private boolean multipleValues = false;
+    private String conditionPath;
 
     public ConfigAnnotation() {
     }
@@ -230,5 +231,15 @@ public class ConfigAnnotation {
     public void setMultipleValues(boolean multipleValues) {
         this.multipleValues = multipleValues;
     }
+
+    void setConditionPath(String condition) {
+        this.conditionPath = condition;
+    }
+
+    public String getConditionPath() {
+        return conditionPath;
+    }
+    
+    
 
 }

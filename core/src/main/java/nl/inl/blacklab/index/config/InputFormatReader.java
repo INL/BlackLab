@@ -229,6 +229,7 @@ public class InputFormatReader extends YamlJsonReader {
             switch (e.getKey()) {
             case "name": annot.setName(str(e)); break;
             case "value": annot.setValuePath(fixedStringToXpath(str(e))); break;
+            case "condition": annot.setConditionPath(str(e)); break;
             case "valuePath": annot.setValuePath(str(e)); break;
             case "captureValuePaths":
                 ArrayNode paths = (ArrayNode) e.getValue();
