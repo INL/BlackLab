@@ -311,7 +311,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 // For each configured annotation...
                 for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
-                    processAnnotation(annotation, null);
+                    if (!skip(annotation)) {
+                        processAnnotation(annotation, null);
+                    }
                 }
 
                 fragPos = FragmentPosition.AFTER_CLOSE_TAG;
@@ -514,18 +516,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
             apBase.evalXPath();
             releaseAutoPilot(apBase);
         }
-        
-        String conditionPath = annotation.getConditionPath();
-
-        if (conditionPath!=null) {
-            AutoPilot apConditionPath = acquireAutoPilot(conditionPath);
-            String value = apConditionPath.evalXPathToString();
-            releaseAutoPilot(apConditionPath);
-            if (StringUtil.nullToEmpty(value).isEmpty()) {
-                return;
-            }
-        }
-        
 
         String valuePath = annotation.getValuePath();
 
@@ -586,6 +576,23 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // We pushed when we navigated to the base element; pop now.
             navpop();
         }
+    }
+    
+    /*
+    TODO where to skip?
+    */
+    private boolean skip(ConfigAnnotation annotation) throws XPathParseException {
+        String conditionPath = annotation.getConditionPath();
+
+        if (conditionPath!=null) {
+            AutoPilot apConditionPath = acquireAutoPilot(conditionPath);
+            String value = apConditionPath.evalXPathToString();
+            releaseAutoPilot(apConditionPath);
+            if (StringUtil.nullToEmpty(value).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected void findAnnotationMatches(ConfigAnnotation annotation, ConfigAnnotation subAnnot, String valuePath, List<Integer> indexAtPositions)
