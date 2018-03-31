@@ -92,6 +92,7 @@ public class ConfigAnnotation {
 
     public ConfigAnnotation copy() {
         ConfigAnnotation result = new ConfigAnnotation(name, valuePath, forEachPath);
+        result.setConditionPath(conditionPath);
         result.setProcess(process);
         result.setDisplayName(displayName);
         result.setDescription(description);

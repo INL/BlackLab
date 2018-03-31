@@ -311,6 +311,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 // For each configured annotation...
                 for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
+//                      if (skip(annotation)) continue;
                     processAnnotation(annotation, null);
                 }
 
@@ -585,8 +586,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
         if (conditionPath!=null) {
             AutoPilot apConditionPath = acquireAutoPilot(conditionPath);
             String value = apConditionPath.evalXPathToString();
+            trace("condition "+ conditionPath + " is " + value + ".");
             releaseAutoPilot(apConditionPath);
-            if (StringUtil.nullToEmpty(value).isEmpty()) {
+            if (StringUtil.nullToEmpty(value).trim().isEmpty()) {
                 return true;
             }
         }
