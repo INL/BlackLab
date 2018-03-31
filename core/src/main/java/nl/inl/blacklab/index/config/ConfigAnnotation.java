@@ -65,7 +65,7 @@ public class ConfigAnnotation {
 
     /** Can this annotation have multiple values at one token position? [false] */
     private boolean multipleValues = false;
-    private String conditionPath;
+    private String conditionPath = null;
 
     public ConfigAnnotation() {
     }
