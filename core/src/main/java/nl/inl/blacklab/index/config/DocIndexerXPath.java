@@ -129,10 +129,18 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     /** Map from XPath expression to compiled XPath. */
-    Map<String, AutoPilot> compiledXPaths = new HashMap<>();
+    Map<String, AutoPilot> compiledXPaths = new HashMap<>(); // TODO private ??
 
     /** Map from XPath expression to compiled XPath. */
     Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
+    /*
+    TODO autopilot doesn't implement equals, risk here, private??
+    
+    Better use producer / consumer here I think, see http://www.baeldung.com/java-blocking-queue
+    
+    Also makes multithreaded indexing possible
+    
+    */
 
     /**
      * Create AutoPilot and declare namespaces on it.
@@ -278,7 +286,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
                 navpop();
             }
-            Collections.sort(tagsAndPunct);
+            Collections.sort(tagsAndPunct); // TODO why?
             Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
             InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
 
@@ -586,7 +594,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         if (conditionPath!=null) {
             AutoPilot apConditionPath = acquireAutoPilot(conditionPath);
             String value = apConditionPath.evalXPathToString();
-            trace("condition "+ conditionPath + " is " + value + ".");
+            trace("condition "+ conditionPath + " is " + value);
             releaseAutoPilot(apConditionPath);
             if (StringUtil.nullToEmpty(value).trim().isEmpty()) {
                 return true;
