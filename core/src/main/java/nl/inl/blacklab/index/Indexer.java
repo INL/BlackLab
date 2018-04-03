@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class Indexer {
 
 	static final Logger logger = LogManager.getLogger(Indexer.class);
 
-	public static final Charset DEFAULT_INPUT_ENCODING = Charset.forName("utf-8");
+	public static final Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;
 
     /** File handler that reads a single file into a byte array. */
     private static final class FetchFileHandler implements FileHandler {
