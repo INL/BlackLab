@@ -65,7 +65,6 @@ public class ConfigAnnotation {
 
     /** Can this annotation have multiple values at one token position? [false] */
     private boolean multipleValues = false;
-    private String conditionPath = null;
 
     public ConfigAnnotation() {
     }
@@ -92,7 +91,6 @@ public class ConfigAnnotation {
 
     public ConfigAnnotation copy() {
         ConfigAnnotation result = new ConfigAnnotation(name, valuePath, forEachPath);
-        result.setConditionPath(conditionPath);
         result.setProcess(process);
         result.setDisplayName(displayName);
         result.setDescription(description);
@@ -232,15 +230,5 @@ public class ConfigAnnotation {
     public void setMultipleValues(boolean multipleValues) {
         this.multipleValues = multipleValues;
     }
-
-    void setConditionPath(String condition) {
-        this.conditionPath = condition;
-    }
-
-    public String getConditionPath() {
-        return conditionPath;
-    }
-    
-    
 
 }

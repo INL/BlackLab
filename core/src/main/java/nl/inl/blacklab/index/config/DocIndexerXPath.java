@@ -129,18 +129,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     /** Map from XPath expression to compiled XPath. */
-    Map<String, AutoPilot> compiledXPaths = new HashMap<>(); // TODO private ??
+    private Map<String, AutoPilot> compiledXPaths = new HashMap<>(); // TODO private ??
 
     /** Map from XPath expression to compiled XPath. */
-    Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
-    /*
-    TODO autopilot doesn't implement equals, risk here, private??
-    
-    Better use producer / consumer here I think, see http://www.baeldung.com/java-blocking-queue
-    
-    Also makes multithreaded indexing possible
-    
-    */
+    private Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
 
     /**
      * Create AutoPilot and declare namespaces on it.
@@ -148,7 +140,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * @return the AutoPilot
      * @throws XPathParseException
      */
-    AutoPilot acquireAutoPilot(String xpathExpr) throws XPathParseException {
+    private AutoPilot acquireAutoPilot(String xpathExpr) throws XPathParseException {
         AutoPilot ap = compiledXPaths.remove(xpathExpr);
         if (ap == null) {
             ap = new AutoPilot(nav);
@@ -170,7 +162,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         return ap;
     }
 
-    void releaseAutoPilot(AutoPilot ap) {
+    private void releaseAutoPilot(AutoPilot ap) {
         String xpathExpr = autoPilotsInUse.remove(ap);
         compiledXPaths.put(xpathExpr, ap);
     }
@@ -286,7 +278,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
                 navpop();
             }
-            Collections.sort(tagsAndPunct); // TODO why?
+            Collections.sort(tagsAndPunct);
             Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
             InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
 
@@ -319,7 +311,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 // For each configured annotation...
                 for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
-//                      if (skip(annotation)) continue;
                     processAnnotation(annotation, null);
                 }
 
@@ -376,7 +367,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         releaseAutoPilot(apEvalToString);
         for (AutoPilot ap: apsInlineTag) {
             releaseAutoPilot(ap);
-        }
+    }
         if (apPunct != null)
             releaseAutoPilot(apPunct);
         if (apTokenPositionId != null)
@@ -583,24 +574,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // We pushed when we navigated to the base element; pop now.
             navpop();
         }
-    }
-    
-    /*
-    TODO where to skip?
-    */
-    private boolean skip(ConfigAnnotation annotation) throws XPathParseException {
-        String conditionPath = annotation.getConditionPath();
-
-        if (conditionPath!=null) {
-            AutoPilot apConditionPath = acquireAutoPilot(conditionPath);
-            String value = apConditionPath.evalXPathToString();
-            trace("condition "+ conditionPath + " is " + value);
-            releaseAutoPilot(apConditionPath);
-            if (StringUtil.nullToEmpty(value).trim().isEmpty()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     protected void findAnnotationMatches(ConfigAnnotation annotation, ConfigAnnotation subAnnot, String valuePath, List<Integer> indexAtPositions)
