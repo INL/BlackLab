@@ -90,40 +90,61 @@ public class Indexer {
         }
     }
 
+
     /**
-	 * FileProcessor FileHandler that creates a DocIndexer for every file and then calls {@link Indexer#indexDocIndexer(String, DocIndexer)}
-	 */
-	private class IndexDocIndexerPassthrough implements FileProcessor.FileHandler {
-		public IndexDocIndexerPassthrough() {}
-
-		@Override
-		public void directory(File dir) throws Exception {
-			//ignore
-		}
-
-		@Override
+     * FileProcessor FileHandler that creates a DocIndexer for every file and performs some reporting
+     */
+    private class DocIndexerWrapper implements FileProcessor.FileHandler {
+    	@Override
 		public void file(String path, InputStream f) throws Exception {
 			String documentName = FilenameUtils.getName(path);
 
-			// TODO streamline (hah) stream handling
-			// there's quite a bit of wrapping streams in streams in streams and going back and forth between text and bytes
-			// so much so that it's unclear what we're doing encoding-wise a few stack frames later in the docIndexers
-			// The DocIndexer will close the stream for us
+			// Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream doesn't contain a a BOM
+			// This doesn't do any character parsing/decoding itself, it just detects and skips the BOM (if present) and exposes the correct character set for this stream (if present)
+			// This way we can later use the charset to decode the input
+			// There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the default encoding to our DocIndexer
+			// This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
+			// In the case of binary data docIndexers, they should always ignore the encoding anyway
+			// and for text docIndexers, passing a binary file is an error in itself already.
 			try (
-				// Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream doesn't contain a a BOM
-				// This doesn't do any character parsing/decoding itself, it just detects and skips the BOM (if present) and exposes the correct character set for this stream (if present)
-				// This way we can later use the charset to decode the input
-				// There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the default encoding to our DocIndexer
-				// This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
-				// In the case of binary data docIndexers, they should always ignore the encoding anyway
-				// and for text docIndexers, passing a binary file is an error in itself already.
 				UnicodeStream inputStream = new UnicodeStream(f, DEFAULT_INPUT_ENCODING);
 				DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, documentName, inputStream, inputStream.getEncoding());
 			) {
-				indexDocIndexer(documentName, docIndexer);
+				impl(docIndexer, documentName);
 			}
 		}
-	}
+
+		public void file(String path, Reader reader) throws UnsupportedOperationException, Exception {
+			String documentName = FilenameUtils.getName(path);
+
+			try (DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, documentName, reader)) {
+				impl(docIndexer, documentName);
+			}
+		}
+
+		private void impl(DocIndexer indexer, String documentName) throws Exception {
+			// FIXME this is broken in multithreaded indexing as the listener is shared between threads
+			getListener().fileStarted(documentName);
+			int docsDoneBefore = searcher.getWriter().numDocs();
+			long tokensDoneBefore = getListener().getTokensProcessed();
+
+			indexer.index();
+			getListener().fileDone(documentName);
+			int docsDoneAfter = searcher.getWriter().numDocs();
+			if (docsDoneAfter == docsDoneBefore) {
+				logger.warn("No docs found in " + documentName + "; wrong format?");
+			}
+			long tokensDoneAfter = getListener().getTokensProcessed();
+			if (tokensDoneAfter == tokensDoneBefore) {
+				logger.warn("No words indexed in " + documentName + "; wrong format?");
+			}
+		}
+
+		@Override
+		public void directory(File dir) throws Exception {
+			// ignore
+		}
+	};
 
     public static byte[] fetchFileFromArchive(File f, final String pathInsideArchive) {
         if (f.getName().endsWith(".gz") || f.getName().endsWith(".tgz")) {
@@ -151,6 +172,8 @@ public class Indexer {
             throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());
         }
     }
+
+    protected DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
 
 	/** Our index */
 	protected Searcher searcher;
@@ -569,24 +592,6 @@ public class Indexer {
 		return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
 	}
 
-	// Package private on purpose for IndexDocIndexerPassThrough
-	void indexDocIndexer(String documentName, DocIndexer docIndexer) throws Exception {
-        getListener().fileStarted(documentName);
-        int docsDoneBefore = searcher.getWriter().numDocs();
-        long tokensDoneBefore = getListener().getTokensProcessed();
-
-		docIndexer.index();
-		getListener().fileDone(documentName);
-		int docsDoneAfter = searcher.getWriter().numDocs();
-		if (docsDoneAfter == docsDoneBefore) {
-			System.err.println("*** Warning, couldn't index " + documentName + "; wrong format?");
-		}
-		long tokensDoneAfter = getListener().getTokensProcessed();
-		if (tokensDoneAfter == tokensDoneBefore) {
-			System.err.println("*** Warning, no words indexed in " + documentName + "; wrong format?");
-		}
-	}
-
 	/**
      * Index a document or archive from an InputStream.
      *
@@ -600,8 +605,6 @@ public class Indexer {
     }
 
     /**
-     * @Deprecated use {@link #index(String, InputStream)}
-     *
 	 * Index a document from a Reader.
 	 *
 	 * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array directly,
@@ -616,19 +619,18 @@ public class Indexer {
 	 *            where to index from
 	 * @throws Exception
 	 */
-	@Deprecated
 	public void index(String documentName, Reader reader) throws Exception {
-		try (DocIndexer docIndexer = DocumentFormats.get(this.formatIdentifier, this, documentName, reader)) {
-            indexDocIndexer(documentName, docIndexer);
+		try {
+			docIndexerWrapper.file(documentName, reader);
 		} catch (InputFormatException e) {
 			listener.errorOccurred(e.getMessage(), "reader", new File(documentName), null);
 			if (continueAfterInputError) {
-				System.err.println("Parsing " + documentName + " failed:");
+				logger.error("Parsing " + documentName + " failed:");
 				e.printStackTrace();
-				System.err.println("(continuing indexing)");
+				logger.error("(continuing indexing)");
 			} else {
 				// Don't continue; re-throw the exception so we eventually abort
-				System.err.println("Input error while processing " + documentName);
+				logger.error("Input error while processing " + documentName);
 				if (rethrowInputError)
 					throw e;
 				e.printStackTrace();
@@ -636,11 +638,11 @@ public class Indexer {
 		} catch (Exception e) {
 			listener.errorOccurred(e.getMessage(), "reader", new File(documentName), null);
 			if (continueAfterInputError) {
-				System.err.println("Parsing " + documentName + " failed:");
+				logger.error("Parsing " + documentName + " failed:");
 				e.printStackTrace();
-				System.err.println("(continuing indexing)");
+				logger.error("(continuing indexing)");
 			} else {
-				System.err.println("Exception while processing " + documentName);
+				logger.error("Exception while processing " + documentName);
 				if (rethrowInputError)
 					throw e;
 				e.printStackTrace();
@@ -658,7 +660,7 @@ public class Indexer {
     public void index(String fileName, InputStream input, String fileNameGlob) {
     	try (FileProcessor proc = new FileProcessor(this.useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
     		proc.setFileNameGlob(fileNameGlob);
-	        proc.setFileHandler(new IndexDocIndexerPassthrough());
+	        proc.setFileHandler(docIndexerWrapper);
 		    proc.setErrorHandler(new ErrorHandler() {
 	            @Override
 	            public boolean errorOccurred(String file, String msg, Exception e) {
@@ -696,7 +698,7 @@ public class Indexer {
 	public void index(File file, String fileNameGlob) {
 		try (FileProcessor proc = new FileProcessor(useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
 			proc.setFileNameGlob(fileNameGlob);
-			proc.setFileHandler(new IndexDocIndexerPassthrough());
+			proc.setFileHandler(docIndexerWrapper);
 			proc.setErrorHandler(new ErrorHandler() {
 	            @Override
 	            public boolean errorOccurred(String file, String msg, Exception e) {
