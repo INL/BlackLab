@@ -1,7 +1,10 @@
 package nl.inl.blacklab.indexers.preprocess;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Method;
@@ -10,44 +13,46 @@ import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.jar.Manifest;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class TagPluginDutchTagger implements TagPlugin {
-    private static final Logger logger = LogManager.getLogger(TagPluginDutchTagger.class);
-
     private static final String PROP_JAR     = "jarPath";
     private static final String PROP_VECTORS = "vectorFile";
     private static final String PROP_MODEL   = "modelFile";
     private static final String PROP_LEXICON = "lexiconFile";
 
+	private static final String VERSION      = "0.2";
     private ClassLoader loader;
 
     /** The object doing the actual conversion */
     private Object converter = null;
 
-    Method handleFile;
+	private Method handleFile;
 
     @Override
     public void init(ObjectNode config) throws PluginException {
-        logger.info("initializing plugin " + getDisplayName());
 
         if (config == null)
             throw new PluginException("This plugin requires configuration");
 
+		File jar = new File(configStr(config, PROP_JAR));
+		if (!jar.exists())
+			throw new PluginException("Could not find the dutchTagger jar at location " + jar.toString());
+		if (!jar.canRead())
+			throw new PluginException("Could not read the dutchTagger jar at location " + jar.toString());
         try {
-            URL jarUrl = Paths.get(configStr(config, PROP_JAR)).toUri().toURL();
-            loader = new URLClassLoader(new URL[]{jarUrl});
+			URL jarUrl = jar.toURI().toURL();
+			loader = new URLClassLoader(new URL[]{jarUrl}, null);
+			assertVersion(loader);
 
             Properties base = new Properties();
             base.setProperty("word2vecFile", configStr(config, PROP_VECTORS));
@@ -70,11 +75,8 @@ public class TagPluginDutchTagger implements TagPlugin {
     public synchronized void perform(Reader reader, Writer writer) throws PluginException {
         // Set the ContextClassLoader to use the UrlClassLoader we pointed at the OpenConvert jar.
         // This is required because OpenConvert implicitly loads some dependencies through locators/providers (such as its xml transformers)
-        // and these locators/providers use the ClassLoader they themselves were loaded with to locate and load this dependency class.
-        // This would be fine if not for the fact that we (BlackLab) already created some of those same locators/providers, as they're builtin java classes (such as javax.xml.transform.TransformerFactory)
-        // That means it would try to find an OpenConvert dependency through the blacklab ClassLoader, which could never work.
-        // As a last resort, that ClassLoader however delegates to the ContextClassLoader, which we set to the OpenConvert UrlClassLoader we created.
-        // And so it'll eventually end up looking in the OpenConvert jar and everything is fine.
+		// and these locators/providers sometimes prefer to use the ContextClassLoader, which may have been set by a servlet container or the like.
+		// If those cases, the contextClassLoader does not have the jar we loaded on its classpath, and so it cannot find the correct classes.
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
@@ -102,7 +104,7 @@ public class TagPluginDutchTagger implements TagPlugin {
                 IOUtils.copy(fis, writer, intermediateCharset);
             }
         } catch (Exception e) {
-            throw new PluginException(e);
+			throw new PluginException("Could not tag file: " + e.getMessage(), e);
         } finally {
             if (tmpInput != null) FileUtils.deleteQuietly(tmpInput.toFile());
             if (tmpOutput != null) FileUtils.deleteQuietly(tmpOutput.toFile());
@@ -153,5 +155,22 @@ public class TagPluginDutchTagger implements TagPlugin {
     @Override
     public String getDescription() {
         return "";
+	}
+
+	/**
+	 * Ensure that the maven artifact version matches VERSION
+	 *
+	 * @param loader
+	 * @throws PluginException
+	 */
+	private static void assertVersion(ClassLoader loader) throws PluginException {
+		try (InputStream is = loader.getResourceAsStream("META-INF/MANIFEST.MF")) {
+			Manifest manifest = new Manifest(is);
+			String version = manifest.getMainAttributes().getValue("Specification-Version");
+			if (!version.equals(VERSION))
+				throw new PluginException("Mismatched version! Expected " + VERSION + " but found " + version);
+		} catch (IOException e) {
+			throw new PluginException("Could not read manifest: " + e.getMessage(), e);
+		}
     }
 }
