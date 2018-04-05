@@ -756,7 +756,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     @Override
-	public int getCharacterPosition() {
+	protected int getCharacterPosition() {
 	    // VTD-XML provides no way of getting the current character position,
 	    // only the byte position.
 	    // In order to keep track of character position (which we need for Lucene's term vector),
@@ -768,7 +768,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             int currentByteOffset = getCurrentByteOffset();
             if (currentByteOffset > lastCharPositionByteOffset) {
                 int length = currentByteOffset - lastCharPositionByteOffset;
-                String str = new String(inputDocument, lastCharPositionByteOffset, length);
+                String str = new String(inputDocument, lastCharPositionByteOffset, length, StandardCharsets.UTF_8);
                 lastCharPosition += str.length();
                 lastCharPositionByteOffset = currentByteOffset;
             }

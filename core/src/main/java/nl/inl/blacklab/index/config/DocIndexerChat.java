@@ -70,7 +70,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-	public int getCharacterPosition() {
+	protected int getCharacterPosition() {
         return fullText.length();
 	}
 

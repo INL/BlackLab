@@ -300,7 +300,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
     }
 
     @Override
-	public int getCharacterPosition() {
+	protected int getCharacterPosition() {
         return csvData.length();
 	}
 
