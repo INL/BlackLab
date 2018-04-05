@@ -30,15 +30,20 @@ import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.index.Indexer;
+import static nl.inl.blacklab.index.config.DocIndexerConfig.replaceDollarRefs;
 import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
  */
 public class DocIndexerXPath extends DocIndexerConfig {
+    
+    private static final Logger logger = LogManager.getLogger(DocIndexerXPath.class);
 
     private static enum FragmentPosition {
         BEFORE_OPEN_TAG,
@@ -125,10 +130,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     /** Map from XPath expression to compiled XPath. */
-    Map<String, AutoPilot> compiledXPaths = new HashMap<>();
+    private Map<String, AutoPilot> compiledXPaths = new HashMap<>(); // TODO private ??
 
     /** Map from XPath expression to compiled XPath. */
-    Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
+    private Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
 
     /**
      * Create AutoPilot and declare namespaces on it.
@@ -136,7 +141,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * @return the AutoPilot
      * @throws XPathParseException
      */
-    AutoPilot acquireAutoPilot(String xpathExpr) throws XPathParseException {
+    private AutoPilot acquireAutoPilot(String xpathExpr) throws XPathParseException {
         AutoPilot ap = compiledXPaths.remove(xpathExpr);
         if (ap == null) {
             ap = new AutoPilot(nav);
@@ -158,7 +163,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         return ap;
     }
 
-    void releaseAutoPilot(AutoPilot ap) {
+    private void releaseAutoPilot(AutoPilot ap) {
         String xpathExpr = autoPilotsInUse.remove(ap);
         compiledXPaths.put(xpathExpr, ap);
     }
@@ -363,7 +368,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         releaseAutoPilot(apEvalToString);
         for (AutoPilot ap: apsInlineTag) {
             releaseAutoPilot(ap);
-        }
+    }
         if (apPunct != null)
             releaseAutoPilot(apPunct);
         if (apTokenPositionId != null)

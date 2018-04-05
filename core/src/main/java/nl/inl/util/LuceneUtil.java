@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -310,7 +311,7 @@ public class LuceneUtil {
 		try {
 			if (!sensitive)
 				prefix = StringUtil.stripAccents(prefix).toLowerCase();
-			List<String> results = new ArrayList<>();
+			Set<String> results = new TreeSet<>();
 			for (LeafReaderContext leafReader: index.leaves()) {
 				Terms terms = leafReader.reader().terms(fieldName);
                                 if (terms == null) {
@@ -327,23 +328,22 @@ public class LuceneUtil {
                                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
                                     if (maxResults < 0 || results.size() < maxResults) {
                                             String termText = term.utf8ToString();
-                                            String optDesensitized = termText;
-                                            if (!sensitive)
-                                                    optDesensitized = StringUtil.stripAccents(termText).toLowerCase();
-                                            if (!allTerms && !optDesensitized.substring(0, prefix.length()).equalsIgnoreCase(prefix)) {
+                                            boolean startsWithPrefix = sensitive ? StringUtil.stripAccents(termText).startsWith(prefix): termText.startsWith(prefix);
+                                            if (!allTerms && !startsWithPrefix) {
                                                     // Doesn't match prefix or different field; no more matches
                                                     break;
                                             }
                                             // Match, add term
-                                            results.add(termText);
+                                            if (!results.contains(termText)) results.add(termText);
                                     }
                                 }
 			}
-			return results;
+			return new ArrayList<>(results);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
+    
 
 	public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery, String fieldName, String propName, String altName) {
 		try {

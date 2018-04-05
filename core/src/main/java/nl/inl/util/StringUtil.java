@@ -122,7 +122,7 @@ public class StringUtil {
 		}
 		return result.trim();
 	}
-
+    
 	static final Pattern regexCharacters = Pattern.compile("([\\|\\\\\\?\\*\\+\\(\\)\\[\\]\\-\\^\\$\\{\\}\\.])");
 
 	/**
