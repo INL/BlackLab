@@ -136,11 +136,11 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 
 		// Discover available combinations of converters and taggers
 		for (TagPlugin tagger : tagPlugins.values()) {
-			// TODO think about this, should we maybe dynamically disover combinations (i.e. every time isSupported and getFormats() is called?)
+			// TODO think about this, should we maybe dynamically discover combinations (i.e. every time isSupported and getFormats() is called?)
 			// Currently we will ignore a tagger permanently if no format is available at to process its output at initialization time (i.e. right now)
 			// If a matching format is registered in the future, the tagger could then be used, but we've already decided to ignore it here.
 
-			// This create a chicken-and-egg situation for client applications wishing to store information about custom formats in the blacklab config file.
+			// This creates a chicken-and-egg situation for client applications wishing to store information about custom formats in the blacklab config file.
 			// since then any of those formats can't be loaded until the config is loaded, but once that has happened it's too late to have those formats
 			// disovered by the convertAndTag system here.
 			if (!DocumentFormats.isSupported(tagger.getOutputFormatIdentifier())) {
