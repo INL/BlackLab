@@ -30,21 +30,16 @@ import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.index.Indexer;
-import static nl.inl.blacklab.index.config.DocIndexerConfig.replaceDollarRefs;
 import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
  */
 public class DocIndexerXPath extends DocIndexerConfig {
     
-    private static final Logger logger = LogManager.getLogger(DocIndexerXPath.class);
-
     private static enum FragmentPosition {
         BEFORE_OPEN_TAG,
         AFTER_OPEN_TAG,
