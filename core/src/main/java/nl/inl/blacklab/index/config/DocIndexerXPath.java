@@ -130,9 +130,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     /** Map from XPath expression to compiled XPath. */
-    private Map<String, AutoPilot> compiledXPaths = new HashMap<>(); // TODO private ??
+    private Map<String, AutoPilot> compiledXPaths = new HashMap<>();
 
-    /** Map from XPath expression to compiled XPath. */
+    /** AutoPilots that are currently being used. We need to keep track of this
+        to be able to re-add them to compiledXpath with the correct XPath expression later. */
     private Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
 
     /**
