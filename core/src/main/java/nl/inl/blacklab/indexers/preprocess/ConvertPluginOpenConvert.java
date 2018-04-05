@@ -84,15 +84,15 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 			inputFormat = getActualFormat(in, inputFormat);
 			if (!canConvert(in, inputCharset, inputFormat))
 				throw new PluginException("The OpenConvert plugin does not support conversion from '" + inputFormat + "' to '" + getOutputFormat() + "'");
-			
+
 			Object OpenConvertInstance = OpenConvert.newInstance();
 			Object SimpleInputOutputProcessInstance = OpenConvert_GetConverter.invoke(OpenConvertInstance, getOutputFormat(), inputFormat);
-			
+
 			SimpleInputOutputProcess_handleStream.invoke(SimpleInputOutputProcessInstance, in, inputCharset, out);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
 			throw new PluginException("Exception while running OpenConvert: ", e);
 		}
-		
+
 	}
 
 	/**
@@ -112,38 +112,37 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 	}
 
 	@Override
-    public String getId() {
-        return "OpenConvert";
-    }
+	public String getId() {
+		return "OpenConvert";
+	}
 
-    @Override
-    public String getDisplayName() {
-        return "OpenConvert";
-    }
+	@Override
+	public String getDisplayName() {
+		return "OpenConvert";
+	}
 
-    @Override
-    public String getDescription() {
-        return "File converter using the OpenConvert library";
-    }
-    
-    private static final Set<String> inputFormats = new HashSet<>(Arrays.asList("doc", "docx", "txt", "epub", "html", "alto")); // TODO (not supported in openconvert yet): rtf, odt, pdf
-    @Override
-    public Set<String> getInputFormats() {
-        return Collections.unmodifiableSet(inputFormats);
-    }
+	@Override
+	public String getDescription() {
+		return "File converter using the OpenConvert library";
+	}
 
-    private static final String outputFormat = "tei";
-    @Override
-    public String getOutputFormat() {
-        return outputFormat;
-    }
+	private static final Set<String> inputFormats = new HashSet<>(Arrays.asList("doc", "docx", "txt", "epub", "html", "alto", "rtf", "odt")); // TODO (not supported in openconvert yet): pdf
+	@Override
+	public Set<String> getInputFormats() {
+		return Collections.unmodifiableSet(inputFormats);
+	}
 
-    @Override
-    public boolean canConvert(PushbackInputStream is, Charset cs, String inputFormat) {
-    	return inputFormats.contains(getActualFormat(is, inputFormat));
-    }
-    
-    
+	@Override
+	public String getOutputFormat() {
+		return "tei";
+	}
+
+	@Override
+	public boolean canConvert(PushbackInputStream is, Charset cs, String inputFormat) {
+		return inputFormats.contains(getActualFormat(is, inputFormat));
+	}
+
+
 	private static String getActualFormat(PushbackInputStream is, String reportedFormat) {
 		reportedFormat = reportedFormat.toLowerCase();
 		if (reportedFormat.equals("xhtml"))
@@ -165,5 +164,5 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 		} catch (IOException e) {
 			return false;
 		}
-    }
+	}
 }
