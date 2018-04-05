@@ -62,7 +62,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		});
 
 		try (InputStream is = file.getInputStream()) {
-			indexer.index(file.getName(), is, "*.xml");
+			indexer.index(file.getName(), is/*, "*.xml"*/);
 			if (indexError == null) {
 				if (indexer.getListener().getFilesProcessed() == 0)
 					indexError = "No files were found when indexing, only .xml files, or archives containing .xml files are supported at the moment.";
