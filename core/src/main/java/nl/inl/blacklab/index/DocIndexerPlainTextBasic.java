@@ -134,7 +134,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 	}
 
 	@Override
-	public void index() throws IOException, InputFormatException {
+	public void index() throws IOException, MalformedInputFileException {
 		BufferedReader r = new BufferedReader(reader);
 		boolean firstWord = true;
 

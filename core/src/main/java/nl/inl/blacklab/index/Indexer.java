@@ -622,7 +622,7 @@ public class Indexer {
 	public void index(String documentName, Reader reader) throws Exception {
 		try {
 			docIndexerWrapper.file(documentName, reader);
-		} catch (InputFormatException e) {
+		} catch (MalformedInputFileException e) {
 			listener.errorOccurred(e.getMessage(), "reader", new File(documentName), null);
 			if (continueAfterInputError) {
 				logger.error("Parsing " + documentName + " failed:");

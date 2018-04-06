@@ -21,7 +21,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.BOMInputStream;
 
-import nl.inl.blacklab.index.InputFormatException;
+import nl.inl.blacklab.index.MalformedInputFileException;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 
@@ -203,7 +203,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             String rest = m.group(3).trim();
                             boolean selfClosing = rest.endsWith("/");
                             if (!isOpenTag && selfClosing)
-                                throw new InputFormatException("Close tag must not also end with /: " + tagName);
+                                throw new MalformedInputFileException("Close tag must not also end with /: " + tagName);
                             if (selfClosing)
                                 rest = rest.substring(0, rest.length() - 1);
                             Map<String, String> attributes = getAttr(rest);
@@ -211,9 +211,9 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             if (lookForDocumentTags && tagName.equals(config.getDocumentPath())) {
                                 // Document tag.
                                 if (inDocument && isOpenTag)
-                                    throw new InputFormatException("Found document open tag inside document");
+                                    throw new MalformedInputFileException("Found document open tag inside document");
                                 if (!inDocument && !isOpenTag)
-                                    throw new InputFormatException("Found document close tag outside of document");
+                                    throw new MalformedInputFileException("Found document close tag outside of document");
                                 if (isOpenTag) {
                                     // Start a new document and add attributes as metadata fields
                                     inDocument = true;

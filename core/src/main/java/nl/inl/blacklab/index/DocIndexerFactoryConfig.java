@@ -162,7 +162,6 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 	 * If config A refers to config B, then the directory where config B is located must also be present in the dirs list.
 	 * @param dirs
 	 * @throws InputFormatConfigException when one of the formats could not be loaded
-	 * @throws InputFormatException when a format could not be loaded
 	 */
 	public void addFormatsInDirectories(List<File> dirs) throws InputFormatConfigException {
 		// Finds all new configs and add them to the "unloaded" list
@@ -199,7 +198,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 			loadUnloaded();
 	}
 
-	protected ConfigInputFormat load(String formatIdentifier, File f) throws InputFormatException {
+	protected ConfigInputFormat load(String formatIdentifier, File f) throws InputFormatConfigException {
 		try {
 			ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
 			InputFormatReader.read(f, format, finder);
@@ -208,7 +207,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 			addFormat(format);
 			return format;
 		} catch (IOException e) {
-			throw new InputFormatException(e);
+			throw new InputFormatConfigException(e);
 		}
 	}
 
@@ -220,8 +219,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
 			try {
 				load(e.getKey(), e.getValue());
-			} catch (InputFormatException ex) {
-				logger.warn("Cannot load user format " + e.getValue() + ": " + ex.getMessage());
+			} catch (InputFormatConfigException ex) {
+				logger.warn("Cannot load format " + e.getValue() + ": " + ex.getMessage());
 				// an invalid format somehow got saved, or something else went wrong, just ignore this file then
 			}
 		}

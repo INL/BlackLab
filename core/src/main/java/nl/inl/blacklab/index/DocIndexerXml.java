@@ -248,7 +248,7 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 	}
 
 	@Override
-	public void index() throws IOException, InputFormatException  {
+	public void index() throws IOException, MalformedInputFileException  {
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);
 		SAXParser parser;
@@ -264,7 +264,7 @@ public abstract class DocIndexerXml extends DocIndexerAbstract {
 			} catch (IOException e) {
 				throw e;
 			} catch (SAXException e) {
-				throw new InputFormatException();
+				throw new MalformedInputFileException();
 			} catch (DocIndexer.MaxDocsReachedException e) {
 				// OK; just stop indexing prematurely
 			}

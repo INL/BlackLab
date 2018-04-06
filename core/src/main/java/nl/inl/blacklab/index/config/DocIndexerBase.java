@@ -27,7 +27,7 @@ import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.InputFormatException;
+import nl.inl.blacklab.index.MalformedInputFileException;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
@@ -539,10 +539,10 @@ public abstract class DocIndexerBase extends DocIndexer {
 
             // Add payload to start tag property indicating end position
             if (openInlineTags.size() == 0)
-                throw new InputFormatException("Close tag " + tagName + " found, but that tag is not open");
+                throw new MalformedInputFileException("Close tag " + tagName + " found, but that tag is not open");
             OpenTagInfo openTag = openInlineTags.remove(openInlineTags.size() - 1);
             if (!openTag.name.equals(tagName))
-                throw new InputFormatException("Close tag " + tagName + " found, but " + openTag.name + " expected");
+                throw new MalformedInputFileException("Close tag " + tagName + " found, but " + openTag.name + " expected");
             byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
             propTags().setPayloadAtIndex(openTag.index, new BytesRef(payload));
         }

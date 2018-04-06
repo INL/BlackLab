@@ -12,6 +12,7 @@ import java.util.List;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.index.config.InputFormatConfigException;
 
 /**
  * Document format registry, for resolving a DocIndexer class given a
@@ -72,7 +73,7 @@ public class DocumentFormats {
     }
 
     // Convenience method to avoid applications always having to create a DocIndexerFactory instance
-    public static void registerFormatsInDirectories(List<File> dirs) throws InputFormatException {
+    public static void registerFormatsInDirectories(List<File> dirs) throws InputFormatConfigException {
     	builtinConfigFactory.addFormatsInDirectories(dirs);
     }
 
