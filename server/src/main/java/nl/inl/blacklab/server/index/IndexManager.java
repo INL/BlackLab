@@ -16,7 +16,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -425,7 +425,20 @@ public class IndexManager {
 		    logger.debug("Looking for indices in collectionsDirs...");
 			for (File collection : collectionsDirs) {
 	            logger.debug("  Scanning collectionsDir: " + collection);
-				for (File subDir : FileUtils.listFilesAndDirs(collection, FalseFileFilter.FALSE, TrueFileFilter.INSTANCE /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
+	            // A file filter that accepts all directories (and files) except the userCollectionsDir,
+	            // so if the userCollectionsDir is inside a collectionsDir, it is not suddenly made public
+	            IOFileFilter notUserDirFilter = new IOFileFilter() {
+                    @Override
+                    public boolean accept(File pathName) {
+                        return !pathName.equals(userCollectionsDir);
+                    }
+
+                    @Override
+                    public boolean accept(File pathName, String fileName) {
+                        return accept(pathName);
+                    }
+	            };
+				for (File subDir : FileUtils.listFilesAndDirs(collection, FalseFileFilter.FALSE, notUserDirFilter /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
 					if (/*!subDir.getName().equals("index") ||*/ !subDir.canRead() || !Searcher.isIndex(subDir)) {
 		                if (subDir.getParentFile().equals(collection)) {
 		                    logger.debug("  Direct subdir of collection dir is not an index or cannot read: " + subDir);
