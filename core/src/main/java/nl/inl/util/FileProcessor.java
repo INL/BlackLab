@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +46,7 @@ public class FileProcessor implements AutoCloseable {
          *
          * @param path filename, including path inside archives (if the file is within an archive)
          * @param is
-         * @param file (optional, if known) the file from which the InputStream was built, 
+         * @param file (optional, if known) the file from which the InputStream was built,
          * or - if the InputStream is a file within an archive - the archive.
          * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Exception, String, File)}
          */
@@ -53,7 +54,7 @@ public class FileProcessor implements AutoCloseable {
 
         // Regular file(File f) function is omitted on purpose.
         // As we process regular files as well as "virtual" files (entries in archives and the like) in the same manner.
-        // This means in some cases there is no actual file backing up the data 
+        // This means in some cases there is no actual file backing up the data
     }
 
     /**
@@ -67,8 +68,8 @@ public class FileProcessor implements AutoCloseable {
          *
          * @param e the exception
          * @param path path to the file that the error occurred in. This includes pathing in archives if the file is inside an archive.
-         * @param file (optional, if known) the file from which the InputStream was built, 
-         * or - if the InputStream is a file within an archive - the archive.         
+         * @param file (optional, if known) the file from which the InputStream was built,
+         * or - if the InputStream is a file within an archive - the archive.
          * @return true if we should continue, false to abort
          */
         boolean errorOccurred(Throwable e, String path, File f);
@@ -91,7 +92,7 @@ public class FileProcessor implements AutoCloseable {
             return continueOnError;
         }
     }
-    
+
     /**
      * Restrict the files we handle to a file glob?
      * Note that this pattern is not applied to directories, and directories within archives.
@@ -125,18 +126,25 @@ public class FileProcessor implements AutoCloseable {
      * FileProcessor operates in two distinct stages:
      * - The traversal of directories/archives, this is done on the "main" thread (i.e. the thread that initially called processFile/processInputStream)
      * - Handling of all files/entries, this is usually done asynchronously by our Handler.
-     * 
-     * If an exception occurs in the handling stage, we want to stop all ongoing and queued handlers, 
+     *
+     * If an exception occurs in the handling stage, we want to stop all ongoing and queued handlers,
      * but also stop the the main thread if it's still busy traversing and creating more handlers.
-     * The problem is that the main thread doesn't know when a specific handler throws an exception, as the exception is thrown asynchronously.
-     * 
-     * So we need a way to abort all work from the handler thread:
-     * - aborting all handlers is easy, we can shut down the ExcecutorService directly from the handler thread when the exception occurs.
+     * The problem is that the main can't directly act on exceptions thrown in handlers, as the exception is thrown asynchronously.
+     *
+     * So we need a way to signal the main thread to cease all work:
+     * - aborting all handlers/tasks is easy, we can shut down the ExcecutorService directly from the handler thread when the exception occurs.
      * - aborting the main thread will require setting some flag and some manual checking on its part
      * we could call Thread.interrupt() on the main thread, but this would require the handlers to keep a reference to the main thread
      * so instead just use this flag that the main thread checks while it's performing work.
      */
-    private boolean abort;
+    private boolean closed = false;
+
+    /** 
+     * Separate from closed to allow aborting even while already closed or closing 
+     * This happens when an error occurs while processing remainder of queue,
+     * it's also useful to allow aborting when closing unexpectedly takes a long time.
+     */
+    private boolean aborted = false;
 
     public FileProcessor(boolean useThreads, boolean recurseSubdirs, boolean processArchives) {
         this.recurseSubdirs = recurseSubdirs;
@@ -221,8 +229,8 @@ public class FileProcessor implements AutoCloseable {
     public void setErrorHandler(ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
     }
-    
-    public void setFileHandler(FileHandler fileHandler) { 
+
+    public void setFileHandler(FileHandler fileHandler) {
         this.fileHandler = fileHandler;
     }
 
@@ -240,21 +248,21 @@ public class FileProcessor implements AutoCloseable {
         if (!file.exists())
             throw new FileNotFoundException("Input file or dir not found: " + file);
 
-        if (abort)
+        if (closed)
             return;
-        
+
         if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process the parent dir's file contents
             CompletableFuture.runAsync(makeRunnable(() -> fileHandler.directory(file)), executor)
                 .exceptionally(e -> reportAndAbort(e, file.toString(), file));
 
-            if (abort)
+            if (closed)
                 return;
-            
+
             for (File childFile : FileUtil.listFilesSorted(file)) {
                 if (!childFile.isDirectory() || recurseSubdirs)
                     processFile(childFile);
 
-                if (abort)
+                if (closed)
                     return;
             }
         } else {
@@ -265,25 +273,25 @@ public class FileProcessor implements AutoCloseable {
     /**
      * Process from an InputStream, which may be an archive or a regular file.
      *
-     * Archives (.zip and .tar.gz) will only be processed if {@link #isProcessArchives()} is true. 
+     * Archives (.zip and .tar.gz) will only be processed if {@link #isProcessArchives()} is true.
      * GZipped files (.gz) will be unpacked regardless.
      * Note that all files within archives will be processed, regardless of whether they match {@link FileProcessor#pattGlob}
      *
-     * @param path filename, optionally including path to the file or path within an archive 
+     * @param path filename, optionally including path to the file or path within an archive
      * @param is the stream
-     * @param file (optional) the file from which the InputStream was built, 
-     * or - if the InputStream is a file within an archive - the archive. 
+     * @param file (optional) the file from which the InputStream was built,
+     * or - if the InputStream is a file within an archive - the archive.
      * This is only used for reporting to FileHandler and ErrorHandler
      */
     public void processInputStream(String path, InputStream is, File file) {
-        if (abort)
+        if (closed)
             return;
-        
+
         TarGzipReader.FileHandler handler = (pathInArchive, streamInArchive) -> {
             processInputStream(pathInArchive, streamInArchive, file);
-            return !abort; // quit processing the archive if we've received an error in the meantime
+            return !closed; // quit processing the archive if we've received an error in the meantime
         };
-        
+
         if (isProcessArchives() && path.endsWith(".tar.gz") || path.endsWith(".tgz")) {
             TarGzipReader.processTarGzip(path, is, handler);
         } else if (isProcessArchives() && path.endsWith(".zip")) {
@@ -298,62 +306,74 @@ public class FileProcessor implements AutoCloseable {
 
     /**
      * Callback for when handler throws an exception.
-     * Report it, and set our abort flag & shutdown running tasks if it's irrecoverable.   
-     * 
+     * Report it, and if it's irrecoverable, abort.
+     *
      * @param t
      * @param path
      * @param f
-     * @return
+     * @return always null, has return type to enable use as exception handler in CompletableFuture
      */
-    private synchronized final Void reportAndAbort(Throwable t, String path, File f) {
-        if (!abort && !errorHandler.errorOccurred(t, path, f)) {
-            abort();
-        }
+    private synchronized Void reportAndAbort(Throwable e, String path, File f) {
+    	if (e instanceof CompletionException) // async exception
+    		e = e.getCause();
+
+    	// Only report the first fatal exception
+    	if (!aborted && !errorHandler.errorOccurred(e, path, f)) {
+			abort();
+    	}
+
         return null;
     }
 
     /**
-     * Like {@link FileProcessor#close()} but immediately abort all running handler tasks and cancel any pending tasks. 
-     * 
+     * Like {@link FileProcessor#close()} but immediately abort all running handler tasks and cancel any pending tasks.
+     *
      * Subsequent calls to close, processFile or processInputStream will have no effect.
      */
-    public synchronized void abort() {
-        if (this.abort)
-            return;
+    // this function can't be synchronized on (this) or we couldn't abort from an async handler while the main thread is working/waiting on close().
+    public void abort() {
+		synchronized (this) {
+			if (aborted)
+				return;
+			closed = true;
+			aborted = true;
+		}
 
-        this.abort = true;
-        this.executor.shutdownNow();
+        executor.shutdownNow();
     }
-    
+
     /**
      * Close the executor and wait until all running and pending handler tasks have completed.
-     * Calling this while a {@link FileProcessor#processFile(File)} or {@link FileProcessor#processInputStream(String, InputStream, File)} call
-     * is in progress will cause files for which no task has been queued yet to be skipped.
+     * Calling close() while processFile or processInputStream is in progress will cause them to skip all remaining files.
+     * Files for which a task has already been put in the queue will still be processed as normal.
      *
      * Subsequent calls to close, processFile or processInputStream will have no effect.
      */
     @Override
-    public synchronized void close() {
-        if (abort)
-            return;
+    public void close() {
+    	synchronized (this) {
+    		if (closed)
+    			return;
+    		closed = true;
+    	}
 
         try {
-            abort = true;
             executor.shutdown();
+            // Outside the synchronized block to allow calling abort() while waiting for close() to complete
+            // This is used by tasks that threw a fatal exception
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while waiting for processing threads to finish", e);
         }
     }
-    
+
     /*
-     * Bit of boilerplate to allow submitting tasks that throw checked exceptions to CompletableFuture
-     * Wrap the task, catch the checked exception, then rethrow as runtime exception,
-     * which is then caught in the future, and passed to the CompletableFuture::completeExceptionally callback
-     * 
+     * Bit of boilerplate to allow using submitting tasks that throw checked exceptions with CompletableFuture.
+     * Wrap the task in a runnable that catches the checked exception and rethrows it in an unchecked manner.
+     * The exception is then caught in the future and made available (using for example CompletableFuture::completeExceptionally)
+     *
      * see https://blog.jooq.org/2012/09/14/throw-checked-exceptions-like-runtime-exceptions-in-java/
      */
-
     @SuppressWarnings("unchecked")
     static <T extends Exception> void rethrowUnchecked(Exception t) throws T {
         throw (T) t;
