@@ -137,10 +137,10 @@ public class FileProcessor implements AutoCloseable {
      * we could call Thread.interrupt() on the main thread, but this would require the handlers to keep a reference to the main thread
      * so instead just use this flag that the main thread checks while it's performing work.
      */
-    private boolean closed = false;
+    private volatile boolean closed = false;
 
-    /** 
-     * Separate from closed to allow aborting even while already closed or closing 
+    /**
+     * Separate from closed to allow aborting even while already closed or closing
      * This happens when an error occurs while processing remainder of queue,
      * it's also useful to allow aborting when closing unexpectedly takes a long time.
      */
@@ -239,7 +239,7 @@ public class FileProcessor implements AutoCloseable {
      *
      * If this file is a directory, all child files will be processed, files within subdirectories will only be processed if
      * {@link #isRecurseSubdirs()} is true.
-     * For rules on how files are processed, regarding archives etc, see {@link #processInputStream(String, InputStream)}.
+     * For rules on how files are processed, regarding archives etc, see {@link #processInputStream(String, InputStream, File)}.
      *
      * @param file file, directory or archive to process
      * @throws FileNotFoundException
@@ -375,16 +375,16 @@ public class FileProcessor implements AutoCloseable {
      * see https://blog.jooq.org/2012/09/14/throw-checked-exceptions-like-runtime-exceptions-in-java/
      */
     @SuppressWarnings("unchecked")
-    static <T extends Exception> void rethrowUnchecked(Exception t) throws T {
+    private static <T extends Exception> void rethrowUnchecked(Exception t) throws T {
         throw (T) t;
     }
 
     @FunctionalInterface
-    private interface ThrowingRunnable<E extends Throwable> {
+    private static interface ThrowingRunnable<E extends Throwable> {
         void call() throws E;
     }
 
-    private <E extends Exception> Runnable makeRunnable(ThrowingRunnable<E> c) {
+    private static <E extends Exception> Runnable makeRunnable(ThrowingRunnable<E> c) {
         return () -> {
             try {
                 c.call();

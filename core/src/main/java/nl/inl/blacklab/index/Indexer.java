@@ -25,12 +25,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,22 +51,19 @@ import nl.inl.util.UnicodeStream;
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
  */
-// TODO there are likely some edge cases when close() is called while a file is processing, and events might be fired after the indexEnd event was fired.
 public class Indexer {
 
     static final Logger logger = LogManager.getLogger(Indexer.class);
 
     public static final Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;
 
-       /**
-     * FileProcessor FileHandler that creates a DocIndexer for every file and performs some reporting
+    /**
+     * FileProcessor FileHandler that creates a DocIndexer for every file and performs some reporting.
      */
     private class DocIndexerWrapper implements FileProcessor.FileHandler {
-        
+
         @Override
         public void file(String path, InputStream is, File file) throws Exception {
-            String documentName = FilenameUtils.getName(path);
-
             // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream doesn't contain a a BOM
             // This doesn't do any character parsing/decoding itself, it just detects and skips the BOM (if present) and exposes the correct character set for this stream (if present)
             // This way we can later use the charset to decode the input
@@ -79,22 +73,21 @@ public class Indexer {
             // and for text docIndexers, passing a binary file is an error in itself already.
             try (
                 UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
-                DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, documentName, inputStream, inputStream.getEncoding());
+                DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, path, inputStream, inputStream.getEncoding());
             ) {
-                impl(docIndexer, documentName);
+                impl(docIndexer, path);
             }
         }
 
         public void file(String path, Reader reader) throws Exception {
-            String documentName = FilenameUtils.getName(path);
-
-            try (DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, documentName, reader)) {
-                impl(docIndexer, documentName);
+            try (DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, path, reader)) {
+                impl(docIndexer, path);
             }
         }
 
         private void impl(DocIndexer indexer, String documentName) throws Exception {
-            // FIXME this is broken in multithreaded indexing as the listener is shared between threads
+            // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
+            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the meantime
             getListener().fileStarted(documentName);
             int docsDoneBefore = searcher.getWriter().numDocs();
             long tokensDoneBefore = getListener().getTokensProcessed();
@@ -115,7 +108,7 @@ public class Indexer {
         public void directory(File dir) throws Exception {
             // ignore
         }
-    };
+    }
 
     private static interface PathCapturingFileHandler extends FileProcessor.FileHandler {
         byte[] getFile();
@@ -132,12 +125,12 @@ public class Indexer {
                 }
 
                 @Override
-				public void file(String path, InputStream is, File file) throws Exception {
+                public void file(String path, InputStream is, File archive) throws Exception {
                     if (path.endsWith(pathInsideArchive))
                         this.file = IOUtils.toByteArray(is);
                 }
                 @Override
-				public byte[] getFile() {
+                public byte[] getFile() {
                     return file;
                 }
             };
@@ -237,7 +230,7 @@ public class Indexer {
 
     // TODO this is a workaround for a bug where indexStructure is always written, even when an indexing task was rollbacked on an empty index
     // result of this is that the index can never be opened again (the forwardindex is missing files that the indexMetadata.yaml says must exist?)
-    // so record rollbacks (as a result of exceptions during indexing?) and then don't write the updated indexStructure
+    // so record rollbacks and then don't write the updated indexStructure
     boolean hasRollback = false;
 
     public FieldType getMetadataFieldType(boolean tokenized) {
@@ -526,6 +519,7 @@ public class Indexer {
     /**
      * Close the index
      */
+    // TODO this should call close() on running FileProcessors
     public void close() {
 
         // Signal to the listener that we're done indexing and closing the index (which might take a
@@ -640,9 +634,9 @@ public class Indexer {
                 if (rethrowInputError)
                     throw e;
                 e.printStackTrace();
-            }
+        }
         } catch (Exception e) {
-        	listener.errorOccurred(e, documentName, null);
+            listener.errorOccurred(e, documentName, null);
             if (continueAfterInputError) {
                 logger.error("Parsing " + documentName + " failed:");
                 e.printStackTrace();
@@ -652,8 +646,8 @@ public class Indexer {
                 if (rethrowInputError)
                     throw e;
                 e.printStackTrace();
-            }
-        }
+	        }
+	    }
     }
 
     /**
@@ -803,24 +797,6 @@ public class Indexer {
     protected IndexWriter getWriter(){
         return searcher.getWriter();
     }
-
-//    /**
-//     * Set the template for the indexmetadata.json file for a new index.
-//     *
-//     * The template determines whether and how fields are tokenized/analyzed,
-//     * indicates which fields are title/author/date/pid fields, and provides
-//     * extra (optional) information like display names and descriptions.
-//     *
-//     * This method should be called just after creating the new index. It cannot
-//     * be used on existing indices; if you need to change something about your
-//     * index metadata, edit the file directly (but be careful, as it of course
-//     * will not affect already-indexed data).
-//     *
-//     * @param indexTemplateFile the JSON file to use as a template.
-//     */
-//    public void setNewIndexMetadataTemplate(File indexTemplateFile) {
-//        searcher.getIndexStructure().setNewIndexMetadataTemplate(indexTemplateFile);
-//    }
 
     public Searcher getSearcher() {
         return searcher;

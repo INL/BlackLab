@@ -416,7 +416,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                     useUnknownValue = missing;
                     break;
                 case MISSING_OR_EMPTY:
-                    useUnknownValue = missing | empty;
+                    useUnknownValue = missing || empty;
                     break;
                 case NEVER:
                     useUnknownValue = false;
@@ -428,8 +428,8 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
 
         try {
-            // Add Lucene doc to indexer
-            if (indexer != null)
+            // Add Lucene doc to indexer, if not existing already
+            if (indexer != null && !indexingIntoExistingLuceneDoc)
                 indexer.add(currentLuceneDoc);
         } catch (Exception e) {
             throw ExUtil.wrapRuntimeException(e);

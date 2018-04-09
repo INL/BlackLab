@@ -46,7 +46,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 	 * @return Docs if looking at ungrouped results, Docs+Groups if looking at results within a group, Groups if looking at groups but not within a specific group.
 	 * @throws BlsException
 	 */
-	// TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
+	// TODO share with regular RequestHandlerHits
 	private Pair<DocResults, DocGroups> getDocs() throws BlsException {
 		// Might be null
 		String groupBy = searchParam.getString("group"); if (groupBy.isEmpty()) groupBy = null;
@@ -133,8 +133,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 			printer.flush();
 			ds.plain(printer.getOut().toString());
 		} catch (IOException e) {
-			// TODO proper message
-			throw new InternalServerError("Cannot write response", 1337);
+			throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
 		}
 	}
 
@@ -189,8 +188,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 			printer.flush();
 			ds.plain(printer.getOut().toString());
 		} catch (IOException e) {
-			// TODO proper message
-			throw new InternalServerError("Cannot write response", 1337);
+			throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
 		}
 	}
 
