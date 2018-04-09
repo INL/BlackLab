@@ -25,6 +25,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -224,6 +226,9 @@ public class Indexer {
 
     /** Where to look for files linked from the input files */
     protected List<File> linkedFileDirs = new ArrayList<>();
+
+    /** If a file cannot be found in the linkedFileDirs, use this to retrieve it (if present) */
+    protected Function<String, File> linkedFileResolver;
 
     /** Index using multiple threads? */
     protected boolean useThreads = false;
@@ -829,14 +834,27 @@ public class Indexer {
         this.linkedFileDirs.add(linkedFileDir);
     }
 
+    public void setLinkedFileResolver(Function<String, File> resolver) {
+        this.linkedFileResolver = resolver;
+    }
+
+    public Optional<Function<String, File>> getLinkedFileResolver() {
+        return Optional.of(this.linkedFileResolver);
+    }
+
     public File getLinkedFile(String inputFile) {
         File f = new File(inputFile);
         if (f.exists())
             return f; // either absolute or relative to current dir
         if (f.isAbsolute())
             return null; // we tried absolute, but didn't find it
+
         // Look in the configured directories for the relative path
-        return FileUtil.findFile(linkedFileDirs, inputFile, null);
+        f = FileUtil.findFile(linkedFileDirs, inputFile, null);
+        if (f == null && this.linkedFileResolver != null)
+            f = this.linkedFileResolver.apply(inputFile);
+
+        return f;
     }
 
     public void setUseThreads(boolean useThreads) {
