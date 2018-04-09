@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +24,6 @@ import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.DocIndexerConfig;
 import nl.inl.blacklab.index.config.InputFormatConfigException;
 import nl.inl.blacklab.index.config.InputFormatReader;
-import nl.inl.blacklab.index.config.InputFormatReader.BaseFormatFinder;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
@@ -44,27 +45,25 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 	/**
 	 * Return a config from the supported list, or load it if it's in the unloaded list.
 	 * <br><br>
-	 * Why this class? Formats can depend on each other,
+	 * Why this function? Formats can depend on each other,
 	 * and this is a mechanism to allow formats to get/lazy-load other formats registered with this factory.
 	 * Why lazy-loading? Formats only refer to other formats by their name, not their file location, so we need to find them all before we actually load them.
 	 * Those found config files are kept in the {@link DocIndexerFactoryConfig#unloaded} map until they are loaded
 	 */
-	protected BaseFormatFinder finder = new BaseFormatFinder() {
-		@Override
-		public ConfigInputFormat getConfig(String formatIdentifier) throws InputFormatConfigException {
-			if(!isSupported(formatIdentifier)) // Give derived classes a chance to load a new format.
-				return null;
+	protected Function<String, Optional<ConfigInputFormat>> finder = formatIdentifier -> {
+		if(!isSupported(formatIdentifier)) // Give our wrapping DocIndexerFactory a chance to load a new format (in case it's a derived class)
+			return Optional.empty();
 
-			if (unloaded.containsKey(formatIdentifier)) {
-				File f = unloaded.get(formatIdentifier);
-				unloaded.remove(formatIdentifier); // remove before load to avoid infinite recursion on circular dependencies
-				return load(formatIdentifier, f);
-			}
-
-			// If unknown return null, can't help it.
-			return supported.get(formatIdentifier);
+		if (unloaded.containsKey(formatIdentifier)) {
+			File f = unloaded.get(formatIdentifier);
+			unloaded.remove(formatIdentifier); // remove before load to avoid infinite recursion on circular dependencies
+			return load(formatIdentifier, f);
 		}
+
+		// If unknown return null, can't help it.
+		return Optional.ofNullable(supported.get(formatIdentifier));
 	};
+
 
     public DocIndexerFactoryConfig() {
 		// Init called externally.
@@ -198,16 +197,16 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 			loadUnloaded();
 	}
 
-	protected ConfigInputFormat load(String formatIdentifier, File f) throws InputFormatConfigException {
+	protected Optional<ConfigInputFormat> load(String formatIdentifier, File f) {
 		try {
 			ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
 			InputFormatReader.read(f, format, finder);
 			format.setReadFromFile(f);
 
 			addFormat(format);
-			return format;
+			return Optional.of(format);
 		} catch (IOException e) {
-			throw new InputFormatConfigException(e);
+			return Optional.empty();
 		}
 	}
 
@@ -220,7 +219,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 			try {
 				load(e.getKey(), e.getValue());
 			} catch (InputFormatConfigException ex) {
-				logger.warn("Cannot load format " + e.getValue() + ": " + ex.getMessage());
+				logger.warn("Cannot load user format " + e.getValue() + ": " + ex.getMessage());
 				// an invalid format somehow got saved, or something else went wrong, just ignore this file then
 			}
 		}
