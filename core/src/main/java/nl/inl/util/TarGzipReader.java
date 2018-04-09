@@ -21,12 +21,13 @@ public class TarGzipReader {
 	/**
 	 * Handles a file inside the .tar.gz archive.
 	 */
+    @FunctionalInterface
 	public interface FileHandler {
 		/**
 		 * Handle a file inside the .zip or .tar.gz archive.
 		 *
 		 * @param filePath path to the archive, concatenated with any path to this file inside the archive
-		 * @param contents file contents, this stream is separate from the stream being processed, and will always remaing open until it is closed by the handler.
+		 * @param contents file contents, this stream is separate from the stream being processed, and will always remain open until it is closed by the handler.
 		 * @return true if we should continue with the next file, false if not
 		 */
 		boolean handle(String filePath, InputStream contents);

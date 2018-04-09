@@ -4,75 +4,80 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
  * Process (trees of) files, which may include archives
  * that we want to recursively process as well.
+ * This class is thread-safe as long as no configuration is changed during processing.
  */
-public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
+public class FileProcessor implements AutoCloseable {
 
-    /**
-     * A way to handle files, including files inside archives.
-     */
     public static interface FileHandler {
-
-    	/**
-    	 * Handle a directory.
-    	 *
-    	 * Called for all processed directories of the input file, including any input directory.
-    	 * NOTE: This is only called for regular directories, and not for archives or processed directories within archives.
-    	 * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the directory names may not match the provided pattern.
-    	 *
-    	 * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
-    	 *
-    	 * @param dir the directory
-    	 * @throws Exception
-    	 */
+        /**
+         * Handle a directory.
+         *
+         * Called for all processed directories of the input file, including any input directory.
+         * NOTE: This is only called for regular directories, and not for archives or processed directories within archives.
+         * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the directory names may not match the provided pattern.
+         *
+         * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
+         *
+         * @param dir the directory
+         * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Exception, String, File)}
+         */
         void directory(File dir) throws Exception;
 
-    	/**
-    	 * Handle a file stream.
-    	 *
-    	 * Called for all processed files that match the {@link FileProcessor#pattGlob}, including the input file.
-    	 * Not called for archives if {@link FileProcessor#isProcessArchives()} is true (though it will then be called for files within those archives).
-    	 *
-    	 * NOTE: the InputStream should be closed by the implementation.
-    	 *
-    	 * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
-    	 *
-    	 * @param path
-    	 * @param f
-    	 * @throws Exception
-    	 */
-        void file(String path, InputStream f) throws Exception;
+        /**
+         * Handle a file stream.
+         *
+         * Called for all processed files that match the {@link FileProcessor#pattGlob}, including the input file.
+         * Not called for archives if {@link FileProcessor#isProcessArchives()} is true (though it will then be called for files within those
+         * archives).
+         *
+         * NOTE: the InputStream should be closed by the implementation.
+         *
+         * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
+         *
+         * @param path filename, including path inside archives (if the file is within an archive)
+         * @param is
+         * @param file (optional, if known) the file from which the InputStream was built, 
+         * or - if the InputStream is a file within an archive - the archive.
+         * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Exception, String, File)}
+         */
+        void file(String path, InputStream is, File file) throws Exception;
+
+        // Regular file(File f) function is omitted on purpose.
+        // As we process regular files as well as "virtual" files (entries in archives and the like) in the same manner.
+        // This means in some cases there is no actual file backing up the data 
     }
 
     /**
      * Handles error, and decides whether to continue processing or not.
      */
+    @FunctionalInterface
     public static interface ErrorHandler {
+
         /**
          * Report an error and decide whether to continue or not.
          *
-         * @param file file the error occurred in
-         * @param msg error message (if any)
-         * @param e exception (if any)
+         * @param e the exception
+         * @param path path to the file that the error occurred in. This includes pathing in archives if the file is inside an archive.
+         * @param file (optional, if known) the file from which the InputStream was built, 
+         * or - if the InputStream is a file within an archive - the archive.         
          * @return true if we should continue, false to abort
          */
-        boolean errorOccurred(String file, String msg, Exception e);
+        boolean errorOccurred(Throwable e, String path, File f);
     }
 
     /**
      * Simple error handler that reports errors and can abort or continue.
      */
     public static class SimpleErrorHandler implements ErrorHandler {
-
         private boolean continueOnError;
 
         public SimpleErrorHandler(boolean continueOnError) {
@@ -80,89 +85,13 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
         }
 
         @Override
-        public boolean errorOccurred(String file, String msg, Exception e) {
-            if (msg != null) {
-                System.err.println("ERROR while processing file " + file);
-            }
-            if (msg != null) {
-                System.err.println("  " + msg);
-            }
-            if (e != null) {
-                e.printStackTrace(System.err);
-            }
+        public synchronized boolean errorOccurred(Throwable e, String path, File f) {
+            System.err.println("Error processing file " + f != null ? f.toString() : path);
+            e.printStackTrace(System.err);
             return continueOnError;
         }
     }
-
-    /**
-     * A task to process a file.
-     *
-     * Used for multi-threaded file processing.
-     * Is a simple wrapper to call our filehandler from a different thread for a single file.
-     * InputStreams passed in to this handler should be fully decoded/decompressed etc and be able to be used as-is.
-     */
-    private final class CallFileHandlerTask implements Runnable {
-    	private final String fileName;
-    	private final InputStream is;
-
-    	private final File directory;
-
-    	CallFileHandlerTask(String fileName, InputStream is) {
-    		this.fileName = fileName;
-    		this.is = is;
-
-    		directory = null;
-    	}
-
-    	@SuppressWarnings("unused")
-		public CallFileHandlerTask(File directory) {
-    		this.directory = directory;
-
-    		this.fileName = null;
-    		this.is = null;
-		}
-
-    	@Override
-    	public void run() {
-            try {
-            	if (directory == null)
-            		fileHandler.file(fileName, is);
-            	else
-            		fileHandler.directory(directory);
-    		} catch (Exception e) {
-    			System.err.println("Error while processing file: " + fileName);
-    			e.printStackTrace();
-    			System.err.flush();
-    			keepProcessing = errorHandler.errorOccurred(fileName, null, e);
-    		}
-    	}
-    }
-
-    /** Catches any exceptions the Runnable throws so we can handle them. */
-	private static class ExceptionCatchingThreadFactory implements ThreadFactory {
-	    private final ThreadFactory delegate;
-	    private volatile int threadCount = 0;
-
-	    ExceptionCatchingThreadFactory(ThreadFactory delegate) {
-	        this.delegate = delegate;
-	    }
-
-	    @Override
-		public Thread newThread(final Runnable r) {
-	        Thread t = delegate.newThread(r);
-	        t.setName("FileProcessorThread-" + threadCount);
-            threadCount++;
-	        t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-	            @Override
-	            public void uncaughtException(Thread t, Throwable e) {
-	                System.err.println("Uncaught exception during file processing:");
-	            	e.printStackTrace();
-	            }
-	        });
-	        return t;
-	    }
-	}
-
+    
     /**
      * Restrict the files we handle to a file glob?
      * Note that this pattern is not applied to directories, and directories within archives.
@@ -170,48 +99,57 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
      */
     private Pattern pattGlob;
 
-    /** Process subdirectories? */
+    /** Process sub directories? */
     private boolean recurseSubdirs;
 
-    /** Process archives as directories?
-     *  Note that this setting is independent of recurseSubdirs; if this is true,
-     *  files inside archives will be processed, even if recurseSubdirs is false.
+    /**
+     * Process archives as directories?
+     * Note that this setting is independent of recurseSubdirs; if this is true,
+     * files inside archives will be processed, even if recurseSubdirs is false.
      */
-    boolean processArchives;
+    private boolean processArchives;
 
     /** Skip files like Thumbs.db (Windows) and .DS_Store (OSX)? */
     private boolean skipOsSpecialFiles = true;
 
     /** What to do with each file */
-    FileHandler fileHandler;
+    private FileHandler fileHandler;
 
     /** Decides whether or not to continue when an error occurs */
-    ErrorHandler errorHandler = new SimpleErrorHandler(false);
+    private ErrorHandler errorHandler = new SimpleErrorHandler(false);
 
-    /** If false, we shouldn't process any more files */
-    boolean keepProcessing;
+    /** Executor used for processing files, uses {@link MainThreadExecutorService} if FileProcess was constructor with useThreads = false */
+    private ExecutorService executor = null;
 
-    /** Process files in separate threads? */
-    boolean useThreads = false;
-
-    /** Executor used for processing files */
-	private ThreadPoolExecutor executor;
+    /**
+     * FileProcessor operates in two distinct stages:
+     * - The traversal of directories/archives, this is done on the "main" thread (i.e. the thread that initially called processFile/processInputStream)
+     * - Handling of all files/entries, this is usually done asynchronously by our Handler.
+     * 
+     * If an exception occurs in the handling stage, we want to stop all ongoing and queued handlers, 
+     * but also stop the the main thread if it's still busy traversing and creating more handlers.
+     * The problem is that the main thread doesn't know when a specific handler throws an exception, as the exception is thrown asynchronously.
+     * 
+     * So we need a way to abort all work from the handler thread:
+     * - aborting all handlers is easy, we can shut down the ExcecutorService directly from the handler thread when the exception occurs.
+     * - aborting the main thread will require setting some flag and some manual checking on its part
+     * we could call Thread.interrupt() on the main thread, but this would require the handlers to keep a reference to the main thread
+     * so instead just use this flag that the main thread checks while it's performing work.
+     */
+    private boolean abort;
 
     public FileProcessor(boolean useThreads, boolean recurseSubdirs, boolean processArchives) {
-    	this.useThreads = useThreads;
         this.recurseSubdirs = recurseSubdirs;
         this.processArchives = processArchives;
         setFileNameGlob("*");
-        reset();
-    }
 
-    public void reset() {
-        keepProcessing = true;
-        if (executor != null) {
-            executor.shutdown();
+        // We always use an ExecutorService to call our handlers to simplify our code
+        // When not using threads, the service is just a fancy wrapper around doing task.run() on the calling thread.
+        if (useThreads) {
+            executor = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors() - 1));
+        } else {
+            executor = new MainThreadExecutorService();
         }
-       	executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(useThreads ? 8 : 1);
-		executor.setThreadFactory(new ExceptionCatchingThreadFactory(executor.getThreadFactory()));
     }
 
     /**
@@ -280,104 +218,159 @@ public class FileProcessor implements AutoCloseable, TarGzipReader.FileHandler {
         return skipOsSpecialFiles && (fileName.equals("Thumbs.db") || fileName.equals(".DS_Store"));
     }
 
-    public ErrorHandler getErrorHandler() {
-        return errorHandler;
-    }
-
     public void setErrorHandler(ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
     }
-
-    public void setFileHandler(FileHandler fileHandler) {
+    
+    public void setFileHandler(FileHandler fileHandler) { 
         this.fileHandler = fileHandler;
     }
-
-
-    /**
-     * After adding the last processing task, call this to wait for all threads to finish processing.
-     */
-    @Override
-	public void close() {
-		try {
-			executor.shutdown();
-			// Wait for all threads to finish (Long.MAX_VALUE == "forever")
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		} catch (InterruptedException e) {
-			throw new RuntimeException("Error while waiting for processing threads to finish", e);
-		}
-    }
-
 
     /**
      * Process a file or directory.
      *
-     * If this file is a directory, all child files will be processed, files within subdirectories will only be processed if {@link #isRecurseSubdirs()} is true.
+     * If this file is a directory, all child files will be processed, files within subdirectories will only be processed if
+     * {@link #isRecurseSubdirs()} is true.
      * For rules on how files are processed, regarding archives etc, see {@link #processInputStream(String, InputStream)}.
      *
-     * @param fileOrDirToProcess file, directory or archive to process
-     *
+     * @param file file, directory or archive to process
      * @throws FileNotFoundException
      */
-    public void processFile(File fileOrDirToProcess) throws FileNotFoundException {
-    	if (!fileOrDirToProcess.exists())
-    		throw new FileNotFoundException("Input file or dir not found: " + fileOrDirToProcess);
+    public void processFile(File file) throws FileNotFoundException {
+        if (!file.exists())
+            throw new FileNotFoundException("Input file or dir not found: " + file);
 
-    	if (fileOrDirToProcess.isDirectory()) { // Even if recurseSubdirs is false, we should process the parent dir's file contents
-    		try {
-    			fileHandler.directory(fileOrDirToProcess);
-    		} catch (Exception e) {
-    			keepProcessing = errorHandler.errorOccurred(fileOrDirToProcess.getName(), null, e);
-    			if (!keepProcessing)
-    				return;
-    		}
+        if (abort)
+            return;
+        
+        if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process the parent dir's file contents
+            CompletableFuture.runAsync(makeRunnable(() -> fileHandler.directory(file)), executor)
+                .exceptionally(e -> reportAndAbort(e, file.toString(), file));
 
-    		for (File childFile : FileUtil.listFilesSorted(fileOrDirToProcess)) {
-    			if (!childFile.isDirectory() || recurseSubdirs)
-    				processFile(childFile);
+            if (abort)
+                return;
+            
+            for (File childFile : FileUtil.listFilesSorted(file)) {
+                if (!childFile.isDirectory() || recurseSubdirs)
+                    processFile(childFile);
 
-	            if (!keepProcessing)
-	                break;
-	        }
+                if (abort)
+                    return;
+            }
         } else {
-    		processInputStream(fileOrDirToProcess.getName(), new FileInputStream(fileOrDirToProcess));
+            processInputStream(file.getName(), new FileInputStream(file), file);
         }
     }
 
     /**
      * Process from an InputStream, which may be an archive or a regular file.
      *
-     * Archives (.zip and .tar.gz) will only be processed if {@link #isProcessArchives()} is true. GZipped files (.gz) will be unpacked regardless.
-     * Note that in the case of archives, it will be treated as a flat file, meaning that all files are processed recursively, even within subdirectories.
+     * Archives (.zip and .tar.gz) will only be processed if {@link #isProcessArchives()} is true. 
+     * GZipped files (.gz) will be unpacked regardless.
+     * Note that all files within archives will be processed, regardless of whether they match {@link FileProcessor#pattGlob}
      *
-     * @param name
-     *            name for the InputStream (e.g. name of the file)
-     * @param is
-     *            the stream
+     * @param path filename, optionally including path to the file or path within an archive 
+     * @param is the stream
+     * @param file (optional) the file from which the InputStream was built, 
+     * or - if the InputStream is a file within an archive - the archive. 
+     * This is only used for reporting to FileHandler and ErrorHandler
      */
-    public void processInputStream(String name, InputStream is) {
-        try {
-        	if (isProcessArchives() && name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
-        		TarGzipReader.processTarGzip(name, is, this);
-        	} else if (isProcessArchives() && name.endsWith(".zip")) {
-        		TarGzipReader.ProcessZip(name, is, this);
-            } else if (name.endsWith(".gz")) {
-                TarGzipReader.processGzip(name, is, this);
-            } else if (!skipFile(name) && getFileNamePattern().matcher(name).matches()) {
-            	if (useThreads) {
-            		executor.execute(new CallFileHandlerTask(name, is));
-            	} else {
-            		fileHandler.file(name,  is);
-            	}
-        	}
-        } catch (Exception e) {
-            keepProcessing = errorHandler.errorOccurred(name, null, e);
+    public void processInputStream(String path, InputStream is, File file) {
+        if (abort)
+            return;
+        
+        TarGzipReader.FileHandler handler = (pathInArchive, streamInArchive) -> {
+            processInputStream(pathInArchive, streamInArchive, file);
+            return !abort; // quit processing the archive if we've received an error in the meantime
+        };
+        
+        if (isProcessArchives() && path.endsWith(".tar.gz") || path.endsWith(".tgz")) {
+            TarGzipReader.processTarGzip(path, is, handler);
+        } else if (isProcessArchives() && path.endsWith(".zip")) {
+            TarGzipReader.ProcessZip(path, is, handler);
+        } else if (path.endsWith(".gz")) {
+            TarGzipReader.processGzip(path, is, handler);
+        } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {
+            CompletableFuture.runAsync(makeRunnable(() -> fileHandler.file(path, is, file)), executor)
+                .exceptionally(e -> reportAndAbort(e, path, file));
         }
     }
 
-    // Callback from TarGzipReader to handle files inside archives
+    /**
+     * Callback for when handler throws an exception.
+     * Report it, and set our abort flag & shutdown running tasks if it's irrecoverable.   
+     * 
+     * @param t
+     * @param path
+     * @param f
+     * @return
+     */
+    private synchronized final Void reportAndAbort(Throwable t, String path, File f) {
+        if (!abort && !errorHandler.errorOccurred(t, path, f)) {
+            abort();
+        }
+        return null;
+    }
+
+    /**
+     * Like {@link FileProcessor#close()} but immediately abort all running handler tasks and cancel any pending tasks. 
+     * 
+     * Subsequent calls to close, processFile or processInputStream will have no effect.
+     */
+    public synchronized void abort() {
+        if (this.abort)
+            return;
+
+        this.abort = true;
+        this.executor.shutdownNow();
+    }
+    
+    /**
+     * Close the executor and wait until all running and pending handler tasks have completed.
+     * Calling this while a {@link FileProcessor#processFile(File)} or {@link FileProcessor#processInputStream(String, InputStream, File)} call
+     * is in progress will cause files for which no task has been queued yet to be skipped.
+     *
+     * Subsequent calls to close, processFile or processInputStream will have no effect.
+     */
     @Override
-    public boolean handle(String filePath, InputStream contents) {
-    	processInputStream(filePath, contents);
-    	return keepProcessing;
+    public synchronized void close() {
+        if (abort)
+            return;
+
+        try {
+            abort = true;
+            executor.shutdown();
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted while waiting for processing threads to finish", e);
+        }
+    }
+    
+    /*
+     * Bit of boilerplate to allow submitting tasks that throw checked exceptions to CompletableFuture
+     * Wrap the task, catch the checked exception, then rethrow as runtime exception,
+     * which is then caught in the future, and passed to the CompletableFuture::completeExceptionally callback
+     * 
+     * see https://blog.jooq.org/2012/09/14/throw-checked-exceptions-like-runtime-exceptions-in-java/
+     */
+
+    @SuppressWarnings("unchecked")
+    static <T extends Exception> void rethrowUnchecked(Exception t) throws T {
+        throw (T) t;
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable<E extends Throwable> {
+        void call() throws E;
+    }
+
+    private <E extends Exception> Runnable makeRunnable(ThrowingRunnable<E> c) {
+        return () -> {
+            try {
+                c.call();
+            } catch (Exception e) {
+                rethrowUnchecked(e);
+            }
+        };
     }
 }

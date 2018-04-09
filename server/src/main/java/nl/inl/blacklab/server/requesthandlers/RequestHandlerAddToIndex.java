@@ -54,9 +54,9 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		Indexer indexer = index.getIndexer();
 		indexer.setListener(new IndexListenerReportConsole() {
 			@Override
-			public synchronized boolean errorOccurred(String error, String unitType, File unit, File subunit) {
-				indexError = error + " in " + unit + (subunit == null ? "" : " (" + subunit + ")");
-				super.errorOccurred(error, unitType, unit, subunit);
+			public boolean errorOccurred(Throwable e, String path, File f) {
+				super.errorOccurred(e, path, f);
+				indexError = e.getMessage() + " in " + path;
 				return false; // Don't continue indexing
 			}
 		});

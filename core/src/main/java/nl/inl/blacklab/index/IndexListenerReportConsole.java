@@ -100,21 +100,11 @@ public class IndexListenerReportConsole extends IndexListener {
 		System.out.println("Done. Elapsed time: " + TimeUtil.describeInterval(System.currentTimeMillis() - getIndexStartTime()));
 	}
 
-	/**
-	 * An index error occurred. Report it.
-	 *
-	 * @param error type of error, i.e. "not found"
-	 * @param unitType type of indexing unit, i.e. "file", "zip", "tgz"
-	 * @param unit the indexing unit in which the error occurred
-	 * @param subunit optional subunit (i.e. which file inside zip, or null for regular files)
-	 * @return true if indexing should continue
-	 */
 	@Override
-	public synchronized boolean errorOccurred(String error, String unitType, File unit, File subunit) {
+	public boolean errorOccurred(Throwable e, String path, File f) {
 		System.out.println("An error occurred during indexing!");
-		System.out.println("error: " + error + ", unitType: " + unitType +
-				", unit: " + unit + ", subunit: " + subunit);
-		return super.errorOccurred(error, unitType, unit, subunit);
+		System.out.println("error: " + e.getMessage() + " + path + " + path);
+		return super.errorOccurred(e, path, f);
 	}
 
 	@Override
