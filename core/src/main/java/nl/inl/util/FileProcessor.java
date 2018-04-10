@@ -22,7 +22,7 @@ public class FileProcessor implements AutoCloseable {
         /**
          * Handle a directory.
          *
-         * Called for all processed directories of the input file, including any input directory.
+         * Called for all processed child (and descendant if {@link FileProcessor#isRecurseSubdirs()} directories of the input file, excluding the input directory itself.
          * NOTE: This is only called for regular directories, and not for archives or processed directories within archives.
          * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the directory names may not match the provided pattern.
          *
@@ -251,19 +251,19 @@ public class FileProcessor implements AutoCloseable {
         if (closed)
             return;
 
-        if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process the parent dir's file contents
-            CompletableFuture.runAsync(makeRunnable(() -> fileHandler.directory(file)), executor)
-                .exceptionally(e -> reportAndAbort(e, file.toString(), file));
-
-            if (closed)
-                return;
-
+        if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process all direct children
             for (File childFile : FileUtil.listFilesSorted(file)) {
-                if (!childFile.isDirectory() || recurseSubdirs)
-                    processFile(childFile);
-
                 if (closed)
                     return;
+
+                // Report
+                if (childFile.isDirectory()) {
+                    CompletableFuture.runAsync(makeRunnable(() -> fileHandler.directory(childFile)), executor)
+                    .exceptionally(e -> reportAndAbort(e, childFile.toString(), childFile));
+                }
+
+                if (recurseSubdirs || !childFile.isDirectory())
+                    processFile(childFile);
             }
         } else {
             processInputStream(file.getName(), new FileInputStream(file), file);
@@ -300,7 +300,7 @@ public class FileProcessor implements AutoCloseable {
             TarGzipReader.processGzip(path, is, handler);
         } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {
             CompletableFuture.runAsync(makeRunnable(() -> fileHandler.file(path, is, file)), executor)
-                .exceptionally(e -> reportAndAbort(e, path, file));
+            .exceptionally(e -> reportAndAbort(e, path, file));
         }
     }
 
@@ -314,13 +314,13 @@ public class FileProcessor implements AutoCloseable {
      * @return always null, has return type to enable use as exception handler in CompletableFuture
      */
     private synchronized Void reportAndAbort(Throwable e, String path, File f) {
-    	if (e instanceof CompletionException) // async exception
-    		e = e.getCause();
+        if (e instanceof CompletionException) // async exception
+            e = e.getCause();
 
-    	// Only report the first fatal exception
-    	if (!aborted && !errorHandler.errorOccurred(e, path, f)) {
-			abort();
-    	}
+        // Only report the first fatal exception
+        if (!aborted && !errorHandler.errorOccurred(e, path, f)) {
+            abort();
+        }
 
         return null;
     }
@@ -332,12 +332,12 @@ public class FileProcessor implements AutoCloseable {
      */
     // this function can't be synchronized on (this) or we couldn't abort from an async handler while the main thread is working/waiting on close().
     public void abort() {
-		synchronized (this) {
-			if (aborted)
-				return;
-			closed = true;
-			aborted = true;
-		}
+        synchronized (this) {
+            if (aborted)
+                return;
+            closed = true;
+            aborted = true;
+        }
 
         executor.shutdownNow();
     }
@@ -351,11 +351,11 @@ public class FileProcessor implements AutoCloseable {
      */
     @Override
     public void close() {
-    	synchronized (this) {
-    		if (closed)
-    			return;
-    		closed = true;
-    	}
+        synchronized (this) {
+            if (closed)
+                return;
+            closed = true;
+        }
 
         try {
             executor.shutdown();
