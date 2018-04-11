@@ -63,7 +63,7 @@ public class ComplexField {
 	private Set<String> noForwardIndexProps = new HashSet<>();
 
 	public void setNoForwardIndexProps(Set<String> noForwardIndexProps) {
-	    this.noForwardIndexProps.clear();
+		this.noForwardIndexProps.clear();
 		this.noForwardIndexProps.addAll(noForwardIndexProps);
 	}
 
@@ -123,11 +123,27 @@ public class ComplexField {
 		doc.add(new IntField(ComplexFieldUtil.lengthTokensField(fieldName), numberOfTokens(), Field.Store.YES));
 	}
 
-	public void clear() {
-		start.clear();
-		end.clear();
+
+	/**
+	 * Clear the internal state for reuse.
+	 *
+	 * @param reuseBuffers
+	 * IMPORTANT: reuseBuffers should not be used if any document passed to {@link ComplexField#addToLuceneDoc(Document)}
+	 * has not been added to the IndexWriter yet. (though IndexWriter::commit is not required).
+	 * Document does not copy data until it as added, so clearing our internal buffers before adding it to the writer
+	 * would also remove this data from the lucene Document.
+	 */
+	public void clear(boolean reuseBuffers) {
+		if (reuseBuffers) {
+			start.clear();
+			end.clear();
+		} else {
+			start = new IntArrayList();
+			end = new IntArrayList();
+		}
+
 		for (ComplexFieldProperty p : properties.values()) {
-			p.clear();
+			p.clear(reuseBuffers);
 		}
 	}
 
@@ -138,9 +154,9 @@ public class ComplexField {
 		return p;
 	}
 
-    public boolean hasProperty(String name) {
-        return properties.containsKey(name);
-    }
+	public boolean hasProperty(String name) {
+		return properties.containsKey(name);
+	}
 
 	public ComplexFieldProperty getMainProperty() {
 		return mainProperty;
@@ -161,6 +177,4 @@ public class ComplexField {
 	public Collection<ComplexFieldProperty> getProperties() {
 		return properties.values();
 	}
-
-
 }

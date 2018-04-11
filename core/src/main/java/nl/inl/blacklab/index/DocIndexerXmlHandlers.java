@@ -216,7 +216,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             indexer.getListener().documentDone(documentName);
 
             // Reset contents field for next document
-            contentsField.clear();
+            contentsField.clear(true);
             currentLuceneDoc = null;
 
             // Stop if required

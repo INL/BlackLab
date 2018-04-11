@@ -437,7 +437,8 @@ public abstract class DocIndexerBase extends DocIndexer {
 
         for (ComplexField complexField: getComplexFields().values()) {
             // Reset complex field for next document
-            complexField.clear();
+            // don't reuse buffers, they're still referenced by the lucene doc.
+            complexField.clear(!indexingIntoExistingLuceneDoc);
         }
 
         // Report progress

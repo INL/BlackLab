@@ -296,7 +296,7 @@ public class Indexer {
      * @param docIndexerClass how to index the files, or null to autodetect
      * @throws IOException
      * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
-     * @Deprecated use DocIndexerFactory version
+     * @Deprecated use version that takes a formatIdentifier
      */
     @Deprecated
     public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
@@ -335,6 +335,7 @@ public class Indexer {
      *   (if creating new index)
      * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
      * @throws IOException
+     * @Deprecated use version that takes a formatIdentifier
      */
     @Deprecated
     public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass, File indexTemplateFile)

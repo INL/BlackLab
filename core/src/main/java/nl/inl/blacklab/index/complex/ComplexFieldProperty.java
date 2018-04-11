@@ -64,7 +64,7 @@ public class ComplexFieldProperty {
 
 	/** How a property is to be indexed with respect to case and diacritics sensitivity. */
 	public enum SensitivitySetting {
-	    DEFAULT,                        // "choose default based on field name"
+		DEFAULT,                        // "choose default based on field name"
 		ONLY_SENSITIVE,                 // only index case- and diacritics-sensitively
 		ONLY_INSENSITIVE,               // only index case- and diacritics-insensitively
 		SENSITIVE_AND_INSENSITIVE,      // case+diac sensitive as well as case+diac insensitive
@@ -337,15 +337,20 @@ public class ComplexFieldProperty {
 		payloads.set(i, payload);
 	}
 
-	public void clear() {
+	public void clear(boolean reuseBuffers) {
+	    lastValuePosition = -1;
+	    // In theory, we don't need to clear the cached values between documents, but
+	    // for large data sets, this would keep getting larger and larger, so we do
+	    // it anyway.
+	    storedValues.clear(); // We can always reuse storedValues; it's exclusively owned by this
+
+	if (reuseBuffers) {
 		values.clear();
 		increments.clear();
-		lastValuePosition = -1;
-
-		// In theory, we don't need to clear the cached values between documents, but
-		// for large data sets, this would keep getting larger and larger, so we do
-		// it anyway.
-		storedValues.clear();
+		} else {
+			values = new ArrayList<>();
+			increments = new IntArrayList();
+		}
 	}
 
 	public boolean hasPayload() {
