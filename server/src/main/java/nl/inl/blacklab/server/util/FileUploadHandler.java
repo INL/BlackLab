@@ -47,8 +47,10 @@ public class FileUploadHandler {
 
 		// Create a new file upload handler
 		ServletFileUpload upload = new ServletFileUpload(factory);
-		// maximum file size to be uploaded.
-		upload.setSizeMax(MAX_UPLOAD_SIZE);
+		// maximum file size to be uploaded. Intentionally accept a bit more than we actually support,
+		// because when the SizeLimitExceededException is thrown, the request is aborted (from the browser), and user will never receive/see our response
+		// See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
+		upload.setSizeMax(MAX_UPLOAD_SIZE * 5);
 
 		try {
 			// Parse the request to get file items.
@@ -59,13 +61,12 @@ public class FileUploadHandler {
 			for (FileItem f : items) {
 				if (f.isFormField())
 					throw new BadRequest("CANNOT_UPLOAD_FILE", "File must not be uploaded as a form field.");
-				// TODO getSize == -1? Needs some more investigation
 				if (f.getSize() > MAX_UPLOAD_SIZE)
 					throw new BadRequest("CANNOT_UPLOAD_FILE", "Cannot upload file. It is larger than the maximum of " + (MAX_UPLOAD_SIZE / 1024 / 1024) + " MB.");
 			}
 			return items;
 		} catch (FileUploadBase.SizeLimitExceededException e) {
-			throw new BadRequest("ERROR_UPLOADING_FILE", "File too large (maximum " + MAX_UPLOAD_SIZE / 1024 / 1024 + " MB)");
+		    throw new BadRequest("ERROR_UPLOADING_FILE", "File too large (maximum " + MAX_UPLOAD_SIZE / 1024 / 1024 + " MB)");
 		} catch (FileUploadException e) {
 			throw new BadRequest("ERROR_UPLOADING_FILE", e.getMessage());
 		}

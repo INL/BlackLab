@@ -103,7 +103,7 @@ public class IndexListenerReportConsole extends IndexListener {
 	@Override
 	public boolean errorOccurred(Throwable e, String path, File f) {
 		System.out.println("An error occurred during indexing!");
-		System.out.println("error: " + e.getMessage() + " + path + " + path);
+		System.out.println("error: " + e.getMessage() + " (in " + path + ")");
 		return super.errorOccurred(e, path, f);
 	}
 

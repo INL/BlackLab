@@ -52,13 +52,8 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		Index index = indexMan.getIndex(indexName);
 		IndexStructure indexStructure = index.getIndexStructure();
 
-		if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
-			throw new NotAuthorized("You can only add new data to your own private indices.");
-
-		if (indexStructure.getTokenCount() > MAX_TOKEN_COUNT) {
-			throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + MAX_TOKEN_COUNT + " tokens. Cannot add any more data to it.");
-		}
-
+		// Read uploaded files before checking for errors, or the client won't see our response :(
+        // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
 		List<FileItem> dataFiles = new ArrayList<>();
 		Map<String, File> metadataFiles = new HashMap<>();
 		try {
@@ -85,6 +80,13 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 			throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
 		}
 
+		if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
+            throw new NotAuthorized("You can only add new data to your own private indices.");
+
+        if (indexStructure.getTokenCount() > MAX_TOKEN_COUNT) {
+            throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + MAX_TOKEN_COUNT + " tokens. Cannot add any more data to it.");
+        }
+
 		Indexer indexer = index.getIndexer();
 		indexer.setListener(new IndexListenerReportConsole() {
 			@Override
@@ -99,27 +101,30 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 			metadataFiles.get(FilenameUtils.getName(fileName).toLowerCase())
 		);
 
-		for (FileItem file : dataFiles) {
-			try (InputStream is = file.getInputStream()) {
-				indexer.index(file.getName(), is/*, "*.xml"*/);
-				if (indexError == null) {
-					if (indexer.getListener().getFilesProcessed() == 0)
-						indexError = "No files were found when indexing.";
-					else if (indexer.getListener().getDocsDone() == 0)
-						indexError = "No documents were found when indexing, are the files in the correct format?";
-					else if (indexer.getListener().getTokensProcessed() == 0)
-						indexError = "No tokens were found when indexing, are the files in the correct format?";
-				}
-			} catch(IOException e) {
-				throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
-			} finally {
-				// It's important we roll back on errors, or an incorrect indexstructure might be written.
-				// See Indexer#hasRollback
-				if (indexError != null)
-					indexer.rollback();
+		try {
+		    for (FileItem file : dataFiles) {
+		        try (InputStream is = file.getInputStream()) {
+		            indexer.index(file.getName(), is/*, "*.xml"*/);
+		        }
+		    }
+		} catch(IOException e) {
+		    throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
+		} finally {
+		    if (indexError == null) {
+                if (indexer.getListener().getFilesProcessed() == 0)
+                    indexError = "No files were found during indexing.";
+                else if (indexer.getListener().getDocsDone() == 0)
+                    indexError = "No documents were found during indexing, are the files in the correct format?";
+                else if (indexer.getListener().getTokensProcessed() == 0)
+                    indexError = "No tokens were found during indexing, are the files in the correct format?";
+            }
 
-				indexer.close();
-			}
+		    // It's important we roll back on errors, or an incorrect indexstructure might be written.
+		    // See Indexer#hasRollback
+		    if (indexError != null)
+		        indexer.rollback();
+
+		    indexer.close();
 		}
 
 		if (indexError != null)
