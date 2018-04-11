@@ -228,10 +228,10 @@ public abstract class DocIndexerBase extends DocIndexer {
                 DocIndexerBase ldi = (DocIndexerBase)docIndexer;
                 ldi.indexingIntoExistingLuceneDoc = true;
                 ldi.currentLuceneDoc = currentLuceneDoc;
-                if (storeWithName != null)
+                if (storeWithName != null) {
+                    // If specified, store in this content store and under this name instead of the default
                     ldi.contentStoreName = storeWithName;
-                else
-                    ldi.storeDocuments = false;
+                }
                 ldi.indexSpecificDocument(documentPath);
             } else {
                 throw new RuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is " + docIndexer.getClass().getName());
