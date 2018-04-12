@@ -55,7 +55,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		// Read uploaded files before checking for errors, or the client won't see our response :(
         // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
 		List<FileItem> dataFiles = new ArrayList<>();
-		Map<String, File> metadataFiles = new HashMap<>();
+		Map<String, File> linkedFiles = new HashMap<>();
 		try {
 			for (FileItem f : FileUploadHandler.getFiles(request)) {
 				switch (f.getFieldName()) {
@@ -63,8 +63,8 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 				case "data[]":
 					dataFiles.add(f);
 					break;
-				case "metadata":
-				case "metadata[]":
+				case "linkeddata":
+				case "linkeddata[]":
 					String fileNameOnly = FilenameUtils.getName(f.getName());
 					File temp = Files.createTempFile("", fileNameOnly).toFile();
 					temp.deleteOnExit();
@@ -72,7 +72,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 					try (OutputStream tempOut = new FileOutputStream(temp)) {
 						IOUtils.copy(f.getInputStream(), tempOut);
 					}
-					metadataFiles.put(fileNameOnly.toLowerCase(), temp);
+					linkedFiles.put(fileNameOnly.toLowerCase(), temp);
 					break;
 				}
 			}
@@ -98,7 +98,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 		});
 
 		indexer.setLinkedFileResolver(fileName ->
-			metadataFiles.get(FilenameUtils.getName(fileName).toLowerCase())
+			linkedFiles.get(FilenameUtils.getName(fileName).toLowerCase())
 		);
 
 		try {
