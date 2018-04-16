@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,10 +27,10 @@ public class TestFileProcessor {
     public static File testDirectory;
 
     // Can't annotate using @BeforeClass, because our @Parameters function runs first
-    public static void setup() {
-        testFile = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestFile.txt").getFile());
-        testArchive = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestArchive.zip").getFile());
-        testDirectory = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestDirectory").getFile());
+    public static void setup() throws URISyntaxException {
+        testFile = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestFile.txt").toURI());
+        testArchive = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestArchive.zip").toURI());
+        testDirectory = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestDirectory").toURI());
     }
 
     // Input
@@ -53,7 +54,7 @@ public class TestFileProcessor {
     @Parameter(7) public int expectedFiles;
 
     @Parameters(name="{index} - {0} useThreads:{2} recurse:{3} archives:{4} exception:{5}")
-    public static Collection<Object[]> data() {
+    public static Collection<Object[]> data() throws URISyntaxException {
         setup();
 
         return Arrays.asList(new Object[][] {
