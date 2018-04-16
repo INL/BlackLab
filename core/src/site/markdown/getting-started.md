@@ -15,7 +15,7 @@ Let's go over these one by one.
 
 ## Server or Core?
 
-The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Groovy, etc.).
+The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Groovy, etc.). Note that you will need a Java SE 8 compatible JVM to use the latest BlackLab versions.
 
 For now, this guide will focus on BlackLab Core and Java. For more information on BlackLab Server, see this [overview](blacklab-server-overview.html).
 
@@ -47,7 +47,7 @@ Git will download the project and place it in a subdirectory "BlackLab". Now swi
 
     git checkout dev
     
-Install a recent JDK (Java Development Kit). If you're on Linux, you can use your package manager to do this (OpenJDK is fine too).
+Install a recent JDK (Java Development Kit). If you're on Linux, you can use your package manager to do this (OpenJDK is fine too). Note that you will need at least JDK version 8 (i.e. openjdk-1.8.0) to use the latest BlackLab versions.
 
 BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build tool. [Install Maven](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html) (use your package manager if on Linux), change into the BlackLab directory, and build the library:
 
