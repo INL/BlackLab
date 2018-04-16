@@ -35,8 +35,6 @@ import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
