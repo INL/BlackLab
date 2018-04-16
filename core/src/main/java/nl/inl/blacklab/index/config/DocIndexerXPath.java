@@ -30,7 +30,6 @@ import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.index.Indexer;
-import static nl.inl.blacklab.index.config.DocIndexerConfig.replaceDollarRefs;
 import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
