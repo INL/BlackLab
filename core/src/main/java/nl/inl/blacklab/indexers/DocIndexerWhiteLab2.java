@@ -66,14 +66,14 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 
 	/**
 	 * If we have 1 PoS annotation, use pos tags without a set
-	 * attribute. If we have 2, we use pos tags with
+	 * attribute. If we have more than one, we use pos tags with
 	 * set="http://ilk.uvt.nl/folia/sets/frog-mbpos-cgn"
 	 */
 	int numPosAnnotations = 0;
 
 	/**
 	 * If we have 1 lemma annotation, use lemma tags without a set
-	 * attribute. If we have 2, we use pos tags with
+	 * attribute. If we have more than one, we use pos tags with
 	 * set="http://ilk.uvt.nl/folia/sets/frog-mblem-nl"
 	 */
 	int numLemmaAnnotations = 0;
@@ -197,7 +197,7 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 				String set = attributes.getValue("set");
 				boolean isSetLess = set == null || set.length() == 0;
 				boolean isFrog = !isSetLess && set.equals("http://ilk.uvt.nl/folia/sets/frog-mblem-nl");
-				if (numLemmaAnnotations == 2 && isFrog ||
+				if (numLemmaAnnotations > 2 && isFrog ||
 					numLemmaAnnotations == 1 && isSetLess) {
 					// If there were 2 lemma annotation meta declarations,
 					// we should use the frog ones; if only 1, the ones
@@ -218,7 +218,7 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
 				String set = attributes.getValue("set");
 				boolean isSetLess = set == null || set.length() == 0;
 				boolean isFrog = !isSetLess && set.equals("http://ilk.uvt.nl/folia/sets/frog-mbpos-cgn");
-				if (numPosAnnotations == 2 && isFrog ||
+				if (numPosAnnotations > 2 && isFrog ||
 					numPosAnnotations == 1 && isSetLess) {
 					// If there were 2 pos annotation meta declarations,
 					// we should use the frog ones; if only 1, the ones

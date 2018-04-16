@@ -134,7 +134,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 	}
 
 	@Override
-	public void index() throws IOException, InputFormatException {
+	public void index() throws IOException, MalformedInputFileException {
 		BufferedReader r = new BufferedReader(reader);
 		boolean firstWord = true;
 
@@ -287,7 +287,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 			indexer.getListener().documentDone(documentName);
 
 			// Reset contents field for next document
-			contentsField.clear();
+			contentsField.clear(true);
 			currentLuceneDoc = null;
 
 			// Stop if required

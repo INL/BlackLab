@@ -117,13 +117,12 @@ public abstract class IndexListenerDecorator extends IndexListener {
 	public synchronized void tokensDone(int n) {
 		subject.tokensDone(n);
 	}
-
+	
 	@Override
-	public synchronized boolean errorOccurred(String error, String unitType, File unit,
-			File subunit) {
-		return subject.errorOccurred(error, unitType, unit, subunit);
+	public synchronized boolean errorOccurred(Throwable e, String path, File f) {
+		return subject.errorOccurred(e, path, f);
 	}
-
+	
 	@Override
 	public int getErrors() {
 		return subject.getErrors();

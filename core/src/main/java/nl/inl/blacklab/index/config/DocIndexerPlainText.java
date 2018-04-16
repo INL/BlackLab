@@ -137,7 +137,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     }
 
     @Override
-	public int getCharacterPosition() {
+	protected int getCharacterPosition() {
         return fullText.length();
 	}
 

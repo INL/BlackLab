@@ -22,8 +22,6 @@ NOTE: this describes the new way of indexing, using index format configuration f
 * <a href="#edit-index-metadata">Editing the index metadata</a>
 
 
-<a id="input-format-config-overview"></a>
-
 <a id="index-supported-format"></a>
 
 ## Indexing documents in a supported format
@@ -79,9 +77,9 @@ Here's a list of built-in input formats (run IndexTool without any parameters to
 
 Adding support for your own format is quite straightforward now, and can be done by writing a configuration file (described on this page) or, if you really want, by [writing Java code](add-input-format.html).
 
-If you've written a configuration file (more on that below), you can use it with IndexTool by specifying the format name (which must match the name of the .yaml or .json file) as the FORMAT parameter on the commandline. IndexTool will search a number of directories, including the current directory and the parent of the input directory for format files with that name.
+If you've written a configuration file (more on that below), you can use it with IndexTool by specifying the format name (which must match the name of the .blf.yaml or .blf.json file) as the FORMAT parameter on the commandline. IndexTool will search a number of directories, including the current directory and the parent of the input directory for format files with that name.
 
-<a id="passing-indexing-parameters"></a>
+<a id="input-format-config-overview"></a>
 
 ## Basic overview of a configuration file
 
@@ -200,7 +198,7 @@ If a value contains such a character, it is generally safest put quotes around i
 
 ### Lists vs. objects
 
-Sometimes a value needs to be a list, even if that list only has one element. For example, to do string processing on a value (see Processing values), you have to specify a *list* of processing steps (each of which is an object), even if there's only one step (note the dash):
+Sometimes a value needs to be a list, even if that list only has one element. For example, to do string processing on a value (see <a href="#processing-values">Processing values</a>), you have to specify a *list* of processing steps (each of which is an object), even if there's only one step (note the dash):
 
     process:
     - action: replace
@@ -334,7 +332,7 @@ You can index all the values for lemma at the same token position like this:
           
 If you don't specify multipleValues, only the first value will be used. The reason you explicitly have to specify it is that this is relatively rare and could slow down the indexing process if automatically applied to all annotations.
 
-This also works for tabular formats like csv, tsv or sketch-wpl. You can specify a regular expression to use for splitting a column value into multiple values. The default is simply a semicolon (;). You can change it as follows:
+This also works for tabular formats like csv, tsv or sketch-wpl. You can specify a regular expression to use for splitting a column value into multiple values. The default is a semicolon (;). You can change it as follows:
 
     fileType: tabular
     fileTypeOptions:
@@ -467,10 +465,6 @@ Here's how to define subproperties:
         containerPath: text
         wordPath: .//w
         
-        # If specified, the token position for each id will be saved,
-        # so you can index standoff annotations referring to this id later.
-        tokenPositionIdPath: "@id"
-
         annotations:
         - name: word
           valuePath: t
@@ -501,7 +495,7 @@ For CSV/TSV files, indexing them directly can be done by defining a tabular inpu
 
 (Technical note: BlackLab uses [Apache commons-csv](https://commons.apache.org/proper/commons-csv/) to parse tabular files. Not all settings are exposed at the moment. If you find yourself needing access to a setting that isn't exposed via de configuration file yet, please contact us)
 
-Here's a simple example configuration, `my-tsv.blf.yaml`, that will parse tab-delimited files produces by the [Frog](https://languagemachines.github.io/frog/) tool:
+Here's a simple example configuration, `my-tsv.blf.yaml`, that will parse tab-delimited files produced by the [Frog](https://languagemachines.github.io/frog/) tool:
 
     fileType: tabular
 
@@ -516,10 +510,10 @@ Here's a simple example configuration, `my-tsv.blf.yaml`, that will parse tab-de
       
       # The delimiter character to use between column values
       # [default: comma (",") for CSV, tab ("\t") for TSV]
-      delimiter: ","
+      delimiter: "\t"
       
       # The quote character used around column values (where necessary)
-      # [default: double quote ("\"")]
+      # [default: disable quoting column values]
       quote: "\""
       
     annotatedFields:
@@ -552,9 +546,20 @@ Here's a configuration to index this format (`sketch-wpl.blf.yaml`, already incl
     fileType: tabular
     fileTypeOptions:
       type: tsv
-      inlineTags: true  # allows inline tags such as in Sketch WPL format
-                        # all inline tags encountered will be indexed
-      glueTags: true    # interprets <g/> to be a glue tag such as in Sketch WPL format
+      
+      # allows inline tags such as in Sketch WPL format
+      # all inline tags encountered will be indexed
+      inlineTags: true  
+                        
+      # interprets <g/> to be a glue tag such as in Sketch WPL format
+      glueTags: true
+      
+      # If the file includes "inline tags" like <p></p> and <s></s>,
+      # (like for example the Sketch Engine WPL format does)
+      # is it allowed to have separated characters after such a tag?
+      # [default: false]
+      allowSeparatorsAfterInlineTags: false 
+      
     documentPath: doc   # looks for document elements such as in Sketch WPL format
                         # (attributes are automatically indexed as metadata)
     annotatedFields:
@@ -567,7 +572,14 @@ Here's a configuration to index this format (`sketch-wpl.blf.yaml`, already incl
         - name: pos
           valuePath: 2
 
-If you want to index metadata from another file along with each document, you have to use valueField in the linkValues section (see below). In this case, in addition to 'fromInputFile' you can also use any document element attributes, because those are added as metadata fields automatically. So if the document element has an 'id' attribute, you could use that as a linkValue to locate the metadata file.
+If one of your columns contains multiple values, for example multiple alternative lemmatizations, set the `multipleValues` option for that annotation to true and specify a regular expression to use for splitting a column value into multiple values in the `fileTypeOptions`. The default is a semicolon (;). See also <a href='#multiple-values'>here</a>.
+
+    fileType: tabular
+    fileTypeOptions:
+      type: tsv
+      multipleValuesSeparator: "/"
+
+If you want to index metadata from another file along with each document, you have to use `valueField` in the `linkValues` section (see <a href='#metadata-external'>below</a>). In the SketchWPL case, in addition to `fromInputFile` you can also use any document element attributes, because those are added as metadata fields automatically. So if the document element has an `id` attribute, you could use that as a `linkValue` to locate the metadata file.
 
 <a id="plaintext"></a>
 
@@ -785,7 +797,7 @@ Linking to external files is mostly done to fetch metadata to accompany a "conte
 
 ### Add a fixed metadata field to each document
 
-You can add a field with a fixed value to every document indexed. This could be useful if you plan to add several data sets to one index and want to make sure each document is tagged with the data set name.
+You can add a field with a fixed value to every document indexed. This could be useful if you plan to add several data sets to one index and want to make sure each document is tagged with the data set name. To do this, simply specify `value` instead of `valuePath`.
 
     metadata:
     
@@ -825,7 +837,7 @@ To prevent a metadata field from being tokenized:
 
 Each BlackLab index gets a file containing "index metadata". This file is in YAML format (used to be JSON). This contains information such as the time the index was generated and the BlackLab version used, plus information about annotations and metadata fields. Some of the information is generated as part of the indexing process, and some of the information is copied directly from the input format configuration file if specified. This information is mostly used by applications to learn about the structure of the index, get human-friendly names for the various parts, and decide what UI widget to show for a metadata field.
 
-In the input format configuration file, you can specify a section corpusConfig that contains some settings to be copied directly into the indexmetadata file:
+The best way to influence the index metadata is by including a special section `corpusConfig` in your format configuration file. This section may contains certain settings to be copied directly into the indexmetadata file when a new index is created:
 
     # The settings in this block will be copied into indexmetadata.yaml
     corpusConfig:
@@ -853,7 +865,7 @@ In the input format configuration file, you can specify a section corpusConfig t
       
 See below for the exact meaning of each of these settings. 
 
-In addition to specifying this information in your input format configuration file, it is also possible to edit the index metadata file manually. If you do this, be careful, because it might break something. It is best to use a text editor with support for YAML, and to validate the resulting file with a YAML validator such as [YAML Lint](http://www.yamllint.com/). Also remember that if you edit the index metadata file, and you later decide to generate a new index from scratch, your changes to the metadata file will be lost. If possible, it is therefore preferable to put this information in the input format configuration file directly.  
+In addition to specifying this information in your input format configuration file, it is also possible to edit the index metadata file manually. If you do this, be careful, because it might break something. It is best to use a text editor with support for YAML, and to validate the resulting file with a YAML validator such as [YAML Lint](http://www.yamllint.com/). Also remember that if you edit the index metadata file, and you later decide to generate a new index from scratch, your changes to the metadata file will be lost. If possible, it is therefore preferable to put this information in the input format configuration file directly. (If you find that this is not possible in your case, please let us know.)  
 
 Here's a commented example of indexmetadata.yaml:
 
@@ -958,5 +970,3 @@ Here's a commented example of indexmetadata.yaml:
           - pos
           
 Please note: the settings pidField, titleField, authorField, dateField refer to the name of the field in the Lucene index, not an XML element name.
-
-## indexmetadata

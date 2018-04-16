@@ -1,0 +1,41 @@
+displayName: EAF (Elan Annotation Format)
+description: EAF format with Words, Lemma and PoS TIERs.
+
+documentPath: /ANNOTATION_DOCUMENT
+
+annotatedFields:
+
+  contents:
+    displayName: Contents
+    description: Contents of the documents.
+
+    # What are our word tags? (relative to container)
+    wordPath: "TIER[@LINGUISTIC_TYPE_REF='Words']/ANNOTATION/ALIGNABLE_ANNOTATION"
+
+    # If specified, a mapping from this id to token position will be saved, so we 
+    # can refer back to it for standoff annotations later.
+    tokenPositionIdPath: "@ANNOTATION_ID"
+
+    # What annotation can each word have? How do we index them?
+    # (annotations are also called "(word) properties" in BlackLab)
+    # (valuePaths relative to word path)
+    # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,
+    #       and with forEachPath you could run in to an unknown new annotation mid-way through.
+    annotations:
+
+    - name: word
+      valuePath: ANNOTATION_VALUE
+
+    standoffAnnotations:
+    - path: "/ANNOTATION_DOCUMENT/TIER[@LINGUISTIC_TYPE_REF='Lemma']/ANNOTATION/REF_ANNOTATION"
+      refTokenPositionIdPath: "@ANNOTATION_REF"
+      annotations:
+      - name: lemma
+        valuePath: ANNOTATION_VALUE
+
+    - path: "/ANNOTATION_DOCUMENT/TIER[@LINGUISTIC_TYPE_REF='PoS']/ANNOTATION/REF_ANNOTATION"
+      refTokenPositionIdPath: "@ANNOTATION_REF"
+      annotations:
+      - name: pos
+        valuePath: ANNOTATION_VALUE
+

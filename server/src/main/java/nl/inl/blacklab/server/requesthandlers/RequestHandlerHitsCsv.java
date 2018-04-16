@@ -138,8 +138,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 			printer.flush();
 			ds.plain(printer.getOut().toString());
 		} catch (IOException e) {
-			// TODO proper message
-			throw new InternalServerError("Cannot write response", 1337);
+			throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
 		}
 	}
 
@@ -221,8 +220,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 			printer.flush();
 			ds.plain(printer.getOut().toString());
 		} catch (IOException e) {
-			// TODO proper message
-			throw new InternalServerError("Cannot write response", 1337);
+			throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
 		}
 	}
 

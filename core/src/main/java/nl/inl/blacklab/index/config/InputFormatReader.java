@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,32 +33,25 @@ import nl.inl.util.StringUtil;
  * Reads ConfigInputFormat from a YAML or JSON source.
  */
 public class InputFormatReader extends YamlJsonReader {
+    public interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {}
 
-	/**
-	 * This is responsible for getting (optionally locating/loading) other configs that this config depends on.
-	 * Dependencies on other configs exists for the "baseFormat" value (this config extends a base config), or "inputFormat" for linkedDocuments.
-	 */
-	public static interface BaseFormatFinder {
-		ConfigInputFormat getConfig(String formatIdentifier);
-	}
-
-	/**
-	 *
-	 * @param r
-	 * @param isJson
-	 * @param cfg
-	 * @param finder
-	 * @throws IOException
-	 * @throws InputFormatConfigException if the file is not a valid config
-	 */
-    public static void read(Reader r, boolean isJson, ConfigInputFormat cfg, BaseFormatFinder finder) throws IOException {
+    /**
+     *
+     * @param r
+     * @param isJson
+     * @param cfg
+     * @param finder responsible for getting (optionally locating/loading) other configs that this config depends on. (for config keys "baseFormat" and "inputFormat")
+     * @throws IOException
+     * @throws InputFormatConfigException if the file is not a valid config
+     */
+    public static void read(Reader r, boolean isJson, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder) throws IOException {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
 
         JsonNode root;
         try {
-        	root = mapper.readTree(r);
+            root = mapper.readTree(r);
         } catch (JsonParseException e) {
-        	throw new InputFormatConfigException("Could not parse config file: " + e.getMessage());
+            throw new InputFormatConfigException("Could not parse config file: " + e.getMessage());
         }
         read(root, cfg, finder);
     }
@@ -65,16 +60,16 @@ public class InputFormatReader extends YamlJsonReader {
      *
      * @param file
      * @param cfg
-     * @param finder
+     * @param finder responsible for getting (optionally locating/loading) other configs that this config depends on. ("baseFormat" and "inputFormat")
      * @throws IOException
      * @throws InputFormatConfigException if the file is not a valid config
      */
-    public static void read(File file, ConfigInputFormat cfg, BaseFormatFinder finder) throws IOException {
+    public static void read(File file, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder) throws IOException {
         read(FileUtil.openForReading(file), file.getName().endsWith(".json"), cfg, finder);
         cfg.setReadFromFile(file);
     }
 
-    protected static void read(JsonNode root, ConfigInputFormat cfg, BaseFormatFinder finder) {
+    protected static void read(JsonNode root, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder) {
         obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
@@ -83,13 +78,15 @@ public class InputFormatReader extends YamlJsonReader {
             case "displayName": cfg.setDisplayName(str(e)); break;
             case "description": cfg.setDescription(str(e)); break;
             case "baseFormat": {
-            	String formatName = str(e);
-            	if (finder == null)
-            		throw new InputFormatConfigException("Format depends on base format " + formatName + " but no BaseFormatFinder provided.");
+                String formatIdentifier = str(e);
+                if (finder == null)
+                    throw new InputFormatConfigException("Format depends on base format " + formatIdentifier + " but no BaseFormatFinder provided.");
 
-                ConfigInputFormat baseFormat = finder.getConfig(formatName);
-                if (baseFormat == null)
-                    throw new InputFormatConfigException("Base format " + formatName + " not found for format " + cfg.getName());
+                ConfigInputFormat baseFormat = finder
+                        .apply(formatIdentifier)
+                        .orElseThrow(() ->
+                            new InputFormatConfigException("Base format " + formatIdentifier + " not found for format " + cfg.getName()));
+
                 cfg.setBaseFormat(baseFormat);
                 break;
             }
@@ -399,10 +396,10 @@ public class InputFormatReader extends YamlJsonReader {
 
     protected static void readInputFormat(ConfigLinkedDocument ld, Entry<String, JsonNode> e) {
         // Resolve the inputFormat right now, instead of potentially failing later when the format is actually needed at some point during indexing
-    	String formatIdentifier = str(e);
-    	Format format = DocumentFormats.getFormat(formatIdentifier);
-    	if (format == null)
-    		throw new InputFormatConfigException("Unknown input format " + str(e) + " in linked document " + ld.getName());
+        String formatIdentifier = str(e);
+        Format format = DocumentFormats.getFormat(formatIdentifier);
+        if (format == null)
+            throw new InputFormatConfigException("Unknown input format " + str(e) + " in linked document " + ld.getName());
 
         ld.setInputFormatIdentifier(formatIdentifier);
     }

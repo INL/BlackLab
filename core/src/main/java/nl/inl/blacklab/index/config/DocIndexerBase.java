@@ -27,7 +27,7 @@ import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.InputFormatException;
+import nl.inl.blacklab.index.MalformedInputFileException;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
@@ -228,10 +228,10 @@ public abstract class DocIndexerBase extends DocIndexer {
                 DocIndexerBase ldi = (DocIndexerBase)docIndexer;
                 ldi.indexingIntoExistingLuceneDoc = true;
                 ldi.currentLuceneDoc = currentLuceneDoc;
-                if (storeWithName != null)
+                if (storeWithName != null) {
+                    // If specified, store in this content store and under this name instead of the default
                     ldi.contentStoreName = storeWithName;
-                else
-                    ldi.storeDocuments = false;
+                }
                 ldi.indexSpecificDocument(documentPath);
             } else {
                 throw new RuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is " + docIndexer.getClass().getName());
@@ -416,7 +416,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                     useUnknownValue = missing;
                     break;
                 case MISSING_OR_EMPTY:
-                    useUnknownValue = missing | empty;
+                    useUnknownValue = missing || empty;
                     break;
                 case NEVER:
                     useUnknownValue = false;
@@ -428,8 +428,8 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
 
         try {
-            // Add Lucene doc to indexer
-            if (indexer != null)
+            // Add Lucene doc to indexer, if not existing already
+            if (indexer != null && !indexingIntoExistingLuceneDoc)
                 indexer.add(currentLuceneDoc);
         } catch (Exception e) {
             throw ExUtil.wrapRuntimeException(e);
@@ -437,7 +437,8 @@ public abstract class DocIndexerBase extends DocIndexer {
 
         for (ComplexField complexField: getComplexFields().values()) {
             // Reset complex field for next document
-            complexField.clear();
+            // don't reuse buffers, they're still referenced by the lucene doc.
+            complexField.clear(!indexingIntoExistingLuceneDoc);
         }
 
         // Report progress
@@ -539,10 +540,10 @@ public abstract class DocIndexerBase extends DocIndexer {
 
             // Add payload to start tag property indicating end position
             if (openInlineTags.size() == 0)
-                throw new InputFormatException("Close tag " + tagName + " found, but that tag is not open");
+                throw new MalformedInputFileException("Close tag " + tagName + " found, but that tag is not open");
             OpenTagInfo openTag = openInlineTags.remove(openInlineTags.size() - 1);
             if (!openTag.name.equals(tagName))
-                throw new InputFormatException("Close tag " + tagName + " found, but " + openTag.name + " expected");
+                throw new MalformedInputFileException("Close tag " + tagName + " found, but " + openTag.name + " expected");
             byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
             propTags().setPayloadAtIndex(openTag.index, new BytesRef(payload));
         }

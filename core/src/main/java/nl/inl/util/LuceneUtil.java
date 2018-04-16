@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -39,8 +41,6 @@ import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class LuceneUtil {
 
@@ -320,23 +320,25 @@ public class LuceneUtil {
                                 }
 				TermsEnum termsEnum = terms.iterator();
 				BytesRef brPrefix = new BytesRef(prefix.getBytes(LUCENE_DEFAULT_CHARSET));
-                                TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
-                                
-                                if (seekStatus==TermsEnum.SeekStatus.END) {
-                                    continue;
-                                }
-                                for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
-                                    if (maxResults < 0 || results.size() < maxResults) {
-                                            String termText = term.utf8ToString();
-                                            boolean startsWithPrefix = sensitive ? StringUtil.stripAccents(termText).startsWith(prefix): termText.startsWith(prefix);
-                                            if (!allTerms && !startsWithPrefix) {
-                                                    // Doesn't match prefix or different field; no more matches
-                                                    break;
-                                            }
-                                            // Match, add term
-                                            if (!results.contains(termText)) results.add(termText);
-                                    }
-                                }
+				TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
+
+				if (seekStatus == TermsEnum.SeekStatus.END) {
+					continue;
+				}
+				for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
+					if (maxResults < 0 || results.size() < maxResults) {
+						String termText = term.utf8ToString();
+						boolean startsWithPrefix = sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
+								: termText.startsWith(prefix);
+						if (!allTerms && !startsWithPrefix) {
+							// Doesn't match prefix or different field; no more matches
+							break;
+						}
+						// Match, add term
+						if (!results.contains(termText))
+							results.add(termText);
+					}
+				}
 			}
 			return new ArrayList<>(results);
 		} catch (IOException e) {

@@ -216,7 +216,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             indexer.getListener().documentDone(documentName);
 
             // Reset contents field for next document
-            contentsField.clear();
+            contentsField.clear(true);
             currentLuceneDoc = null;
 
             // Stop if required
@@ -743,7 +743,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     @Override
-    public void index() throws IOException, InputFormatException {
+    public void index() throws IOException, MalformedInputFileException {
         SAXParserFactory factory = SAXParserFactory.newInstance();
         factory.setNamespaceAware(true);
         SAXParser parser;
@@ -762,7 +762,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         } catch (IOException e) {
             throw e;
         } catch (SAXException e) {
-            throw new InputFormatException(e);
+            throw new MalformedInputFileException(e);
         } catch (DocIndexer.MaxDocsReachedException e) {
             // OK; just stop indexing prematurely
         }

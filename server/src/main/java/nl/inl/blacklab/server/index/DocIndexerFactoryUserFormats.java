@@ -18,7 +18,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.DocIndexerFactoryConfig;
-import nl.inl.blacklab.index.InputFormatException;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.InputFormatConfigException;
 import nl.inl.blacklab.index.config.InputFormatReader;
@@ -148,7 +147,6 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
 	 *                 which is formed from a combination of the userId and formatName.
 	 * @param is content of the file, assumed to be a text file with UTF_8 encoding. This stream is not closed by this function
 	 * @throws BadRequest
-	 * @throws InputFormatException when the format has an illegal name or the file is not a valid config
 	 * @throws InternalServerError if the file couldn't be written for some reason
 	 */
 	public void createUserFormat(User user, String fileName, InputStream is) throws BadRequest, InternalServerError {
