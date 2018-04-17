@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -316,6 +317,12 @@ public class FileProcessor implements AutoCloseable {
     private synchronized Void reportAndAbort(Throwable e, String path, File f) {
         if (e instanceof CompletionException) // async exception
             e = e.getCause();
+
+        // Error when submitting a task after closing the executor, can happen rarely while shutting down
+        // if a thread was being submitted to an executor right when it shuts down
+        // Don't report these errors, we caused them ourselves.
+        if (e instanceof RejectedExecutionException)
+            return null;
 
         // Only report the first fatal exception
         if (!aborted && !errorHandler.errorOccurred(e, path, f)) {
