@@ -114,7 +114,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 	 * @return the current char position
 	 */
 	@Override
-	public int getCharacterPosition() {
+	protected int getCharacterPosition() {
 		return charsContentAlreadyStored + content.length();
 	}
 

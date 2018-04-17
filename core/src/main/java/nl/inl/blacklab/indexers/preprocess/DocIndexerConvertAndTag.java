@@ -42,13 +42,13 @@ public class DocIndexerConvertAndTag extends DocIndexer {
 	public void setDocument(Reader reader) {
 		// Reader outputs chars, so we can determine our own charset when we put them back into a stream
 		// We just need to make sure to pass it on to whatever consumes the stream
-		converterInput = new PushbackInputStream(new ReaderInputStream(reader, StandardCharsets.UTF_8));
+		converterInput = new PushbackInputStream(new ReaderInputStream(reader, StandardCharsets.UTF_8), 251);
 		charset = StandardCharsets.UTF_8;
 	}
 
 	@Override
 	public void setDocument(InputStream is, Charset cs) {
-		converterInput = new PushbackInputStream(is);
+		converterInput = new PushbackInputStream(is, 251);
 		charset = cs;
 	}
 
@@ -69,10 +69,12 @@ public class DocIndexerConvertAndTag extends DocIndexer {
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			final Charset intermediateCharset = StandardCharsets.UTF_8;
 			converter.perform(converterInput, charset, FilenameUtils.getExtension(this.documentName).toLowerCase(), output);
-
+			
 			Reader taggerInput = new InputStreamReader(new ByteArrayInputStream(output.toByteArray()), intermediateCharset);
 			output.reset();
-			tagger.perform(taggerInput, new OutputStreamWriter(output, intermediateCharset));
+			try (OutputStreamWriter w = new OutputStreamWriter(output, intermediateCharset)) {
+				tagger.perform(taggerInput, w);				
+			}
 			indexerInput = new InputStreamReader(new ByteArrayInputStream(output.toByteArray()), intermediateCharset);
 		} else {
 			indexerInput = new InputStreamReader(converterInput, charset);

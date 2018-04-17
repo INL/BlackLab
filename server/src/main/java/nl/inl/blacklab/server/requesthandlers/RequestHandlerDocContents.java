@@ -1,5 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
@@ -21,8 +24,30 @@ import nl.inl.blacklab.server.util.BlsUtils;
  * Get information about the structure of an index.
  */
 public class RequestHandlerDocContents extends RequestHandler {
+	
+	boolean surroundWithRootElement;
+	
+	Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
+			"(?:\\s+encoding\\s*=\\s*([\"'])[A-Za-z][A-Za-z0-9._-]*\\2)?" +
+			"(?:\\s+standalone\\s*=\\s*([\"'])(?:yes|no)\\3)?\\s*\\?>\\s*");
+
 	public RequestHandlerDocContents(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
 		super(servlet, request, user, indexName, urlResource, urlPathPart);
+		
+		int startAtWord = searchParam.getInteger("wordstart");
+		int endAtWord = searchParam.getInteger("wordend");
+		if (startAtWord < -1 || endAtWord < -1 || (startAtWord >= 0 && endAtWord >= 0 && endAtWord <= startAtWord) ) {
+			// Illegal value. Error will be thrown, so we'll need a root element.
+			surroundWithRootElement = true;
+		} else {
+			if (startAtWord == -1 && endAtWord == -1) {
+				// Full document; no need for another root element
+				surroundWithRootElement = false;
+			} else {
+				// Part of document; surround with root element so we know for sure we'll have a single one
+				surroundWithRootElement = true;
+			}
+		}
 	}
 
 	@Override
@@ -33,19 +58,9 @@ public class RequestHandlerDocContents extends RequestHandler {
 
 	@Override
 	public boolean omitBlackLabResponseRootElement() {
-		int startAtWord = searchParam.getInteger("wordstart");
-		int endAtWord = searchParam.getInteger("wordend");
-		if (startAtWord < -1 || endAtWord < -1 || (startAtWord >= 0 && endAtWord >= 0 && endAtWord <= startAtWord) ) {
-			// Illegal value; error will be thrown, will need a root element
-			return false;
-		}
-		if (startAtWord == -1 && endAtWord == -1) {
-			// Full document; no need for another root element
-			return true;
-		}
-		return false;
+		return !surroundWithRootElement;
 	}
-
+	
 	@Override
 	public int handle(DataStream ds) throws BlsException {
 		int i = urlPathInfo.indexOf('/');
@@ -90,6 +105,21 @@ public class RequestHandlerDocContents extends RequestHandler {
 		Hits hitsInDoc = hits == null ? null : hits.getHitsInDoc(luceneDocId);
 		content = searcher.highlightContent(luceneDocId, searcher.getMainContentsFieldName(), hitsInDoc, startAtWord, endAtWord);
 
+		boolean outputXmlDeclaration = true;
+		if (surroundWithRootElement) {
+			// We've already outputted the XML declaration; don't do so again
+			outputXmlDeclaration = false;
+		}
+		Matcher m = XML_DECL.matcher(content);
+		boolean hasXmlDeclaration = m.find();
+		if (hasXmlDeclaration && !outputXmlDeclaration) {
+			// We don't want another XML declaration; strip it
+			content = content.substring(m.end());
+		}
+		if (!hasXmlDeclaration && outputXmlDeclaration) {
+			// We haven't outputted an XML declaration yet, and there's none in the document. Do so now.
+			ds.outputProlog();
+		}
 		ds.plain(content);
 		return HTTP_OK;
 	}

@@ -1,0 +1,76 @@
+# DocIndexerWhiteLab2 data-driven
+
+# For displaying in user interface (optional)
+displayName: CMDI (Component MetaData Infrastructure)
+
+# For describing input format in user interface (optional)
+description: Metadata format initiated in the CLARIN project.
+
+# (Optional, informational)
+# content, metadata or mixed?
+# (not used by BlackLab, purely informational for the frontend application)
+type: metadata
+
+# What namespaces do we use in our XPaths?
+# (if none are declared, ignore namespaces)
+namespaces:
+  '': http://www.clarin.eu/cmd/
+
+# What element starts a new document?
+# (the only absolute XPath; the rest is relative)
+documentPath: /CMD/Components
+
+# (Optional, defaults to true)
+# Should we store the document?
+store: false
+
+# A mapping from what the field would be indexed as to what we actually want it
+# indexed as. In this case, a mapping from local element names (see namePath below)
+# to a name we like better.
+#indexFieldAs:
+#  iso-639-3-code: Language-iso-code
+#  Name: AuthorName
+
+metadata:
+
+  fields:
+
+    # Don't tokenize Country, LicenseCode and id
+#  - name: Country
+#    type: untokenized
+#  - name: LicenseCode
+#    type: untokenized
+#  - name: id
+#    type: untokenized
+
+    # Index missing values as "unknown"
+#  - name: Age
+#    unknownCondition: MISSING_OR_EMPTY
+#  - name: Sex
+#    unknownCondition: MISSING_OR_EMPTY
+#  - name: Translated
+#    unknownCondition: MISSING_OR_EMPTY
+
+    # Capture all leaf elements as metadata fields
+  - forEachPath: .//*[not(*) and text()] # all leaf elements containing text
+    namePath: local-name()              # name of matched element
+    valuePath: .                        # text content of matched element
+
+#    # Fields are processed in order, so later fields can use values from earlier ones.
+#  - name: AuthorNameOrPseudonym
+#    value: ""                           # Start with an empty value
+#    process:
+#    - action: default                          # If value is currently null or empty, use this value
+#      field: Author
+#    - action: default
+#      field: Pseudonym
+
+#  - name: AuthorNameOrPseudonymSearch
+#    value: ""                           # Start with an empty value
+#    process:
+#    - action: append       # Will concatenate value
+#      separator: ", "    # separator for concatenation [space]
+#      field: Author
+#    - action: append
+#      separator: ", "    # separator for concatenation [space]
+#      field: Pseudonym

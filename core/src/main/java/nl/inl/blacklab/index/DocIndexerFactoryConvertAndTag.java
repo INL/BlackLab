@@ -87,7 +87,7 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 
 		// generate displayName
 		private static String displayName(ConvertPlugin converter, TagPlugin tagger, Format outputFormat) {
-			return tagger.getInputFormat() + "<" + tagger.getDisplayName() + "<" + converter.getDisplayName();
+			return"Generated " + StringUtils.capitalize(converter.getOutputFormat()) + " from " + converter.getDisplayName() + " and " + tagger.getDisplayName();
 		}
 
 		// generate description
@@ -127,7 +127,7 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 	 */
 	public static void initPlugins(ObjectNode pluginConfig) {
 		if (isInitialized)
-			throw new IllegalStateException("PluginManager already initialized"); 
+			throw new IllegalStateException("PluginManager already initialized");
 
 		logger.debug("Initializing plugin system");
 
@@ -136,11 +136,11 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 
 		// Discover available combinations of converters and taggers
 		for (TagPlugin tagger : tagPlugins.values()) {
-			// TODO think about this, should we maybe dynamically disover combinations (i.e. every time isSupported and getFormats() is called?)
+			// TODO think about this, should we maybe dynamically discover combinations (i.e. every time isSupported and getFormats() is called?)
 			// Currently we will ignore a tagger permanently if no format is available at to process its output at initialization time (i.e. right now)
 			// If a matching format is registered in the future, the tagger could then be used, but we've already decided to ignore it here.
 
-			// This create a chicken-and-egg situation for client applications wishing to store information about custom formats in the blacklab config file.
+			// This creates a chicken-and-egg situation for client applications wishing to store information about custom formats in the blacklab config file.
 			// since then any of those formats can't be loaded until the config is loaded, but once that has happened it's too late to have those formats
 			// disovered by the convertAndTag system here.
 			if (!DocumentFormats.isSupported(tagger.getOutputFormatIdentifier())) {
@@ -173,18 +173,20 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 				T plugin = it.next();
 				id = plugin.getId();
 				if (!PLUGINID_PATTERN.matcher(id).matches()) {
-					logger.info("Plugin id " + id + " (class " + plugin.getClass().getCanonicalName() + ") is not a valid id; ignoring plugin.");
+					logger.warn("Plugin id " + id + " (class " + plugin.getClass().getCanonicalName() + ") is not a valid id; ignoring plugin.");
 					continue;
 				}
 
 				JsonNode config = pluginConfig.get(plugin.getId());
+
+				logger.info("Initializing plugin " + plugin.getDisplayName());
 				if (config == null || config instanceof NullNode)
 					plugin.init(null);
 				else
 					plugin.init(YamlJsonReader.obj(config, plugin.getId()));
 
 				plugins.put(id, plugin);
-				logger.debug("Initialized plugin " + plugin.getDisplayName());
+				logger.info("Initialized plugin " + plugin.getDisplayName());
 			} catch (ServiceConfigurationError e) {
 				logger.error("Plugin failed to load: " + e.getMessage(), e);
 			} catch (PluginException e) {

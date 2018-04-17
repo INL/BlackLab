@@ -1,0 +1,69 @@
+displayName: TCF (Text Corpus Format)
+description: A text corpus format developed for WebLicht.
+
+namespaces:
+  '': http://www.dspin.de/data
+  'md': http://www.dspin.de/data/metadata
+  'tc': http://www.dspin.de/data/textcorpus
+  'cmd': http://www.clarin.eu/cmd/1
+
+documentPath: /D-Spin
+
+annotatedFields:
+
+  contents:
+    displayName: Contents
+    description: Contents of the documents.
+
+    # What element (relative to document) contains this field's contents?
+    # (if omitted, entire document is used)
+    containerPath: tc:TextCorpus
+
+    # What are our word tags? (relative to container)
+    wordPath: tc:tokens/tc:token
+
+    # If specified, a mapping from this id to token position will be saved, so we 
+    # can refer back to it for standoff annotations later.
+    #tokenPositionIdPath: "@ID"
+
+    # What annotation can each word have? How do we index them?
+    # (annotations are also called "(word) properties" in BlackLab)
+    # (valuePaths relative to word path)
+    # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,
+    #       and with forEachPath you could run in to an unknown new annotation mid-way through.
+    annotations:
+
+    - name: word
+      valuePath: .
+
+    - name: lemma
+      captureValuePaths:
+      - "@ID"
+      valuePath: "/D-Spin/tc:TextCorpus/tc:lemmas/tc:lemma[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
+
+    - name: pos
+      captureValuePaths:
+      - "@ID"
+      valuePath: "/D-Spin/tc:TextCorpus/tc:POStags/tc:tag[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
+
+    #standoffAnnotations:
+    #- path: tc:sentences/tc:sentence
+    #  call: tcfSentence   # Plugin method will handle this
+
+# Embedded CMDI metadata
+metadata:
+
+- containerPath: MetaData
+  fields:
+    # Capture all leaf elements as metadata fields
+  - forEachPath: .//*[not(*) and text()] # all leaf elements containing text
+    namePath: local-name()              # name of matched element
+    valuePath: .                        # text content of matched element
+
+    # We usually don't want to tokenize Country, LicenseCode or id
+  - name: Country
+    type: untokenized
+  - name: LicenseCode
+    type: untokenized
+  - name: id
+    type: untokenized

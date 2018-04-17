@@ -27,7 +27,6 @@ import nl.inl.blacklab.search.ResultsWindow;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.DocOrHitGroups;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;

@@ -15,4 +15,8 @@ public class InputFormatConfigException extends BLRuntimeException {
         super(message, cause);
     }
 
+    public InputFormatConfigException(Throwable cause) {
+        super(cause);
+    }
+
 }
