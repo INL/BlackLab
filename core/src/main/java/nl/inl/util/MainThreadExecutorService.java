@@ -12,7 +12,26 @@ import java.util.concurrent.TimeUnit;
  */
 public class MainThreadExecutorService extends AbstractExecutorService {
 
+    @FunctionalInterface
+    public static interface RejectedExecutionHandler {
+        public void rejectedExecution(Runnable r, MainThreadExecutorService e);
+    }
+
+    private RejectedExecutionHandler handler;
+
 	private boolean shutdown;
+
+	MainThreadExecutorService() {
+	    this((r, e) -> {
+	        throw new RejectedExecutionException("Task " + r.toString() +" rejected from " + e.toString());
+	    });
+	}
+
+	MainThreadExecutorService(RejectedExecutionHandler h) {
+	    if (h == null)
+	        throw new NullPointerException();
+	    this.handler = h;
+	}
 
 	@Override
 	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
@@ -43,7 +62,7 @@ public class MainThreadExecutorService extends AbstractExecutorService {
 	@Override
 	public void execute(Runnable command) {
 		if (shutdown)
-		    throw new RejectedExecutionException("ExecutorService has been stopped already");
+		    handler.rejectedExecution(command, this);
 	    command.run();
 	}
 }

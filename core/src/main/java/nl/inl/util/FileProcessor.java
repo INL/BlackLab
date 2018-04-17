@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -156,8 +156,12 @@ public class FileProcessor implements AutoCloseable {
         // When not using threads, the service is just a fancy wrapper around doing task.run() on the calling thread.
         if (useThreads) {
             executor = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors() - 1));
+            // Never throw RejectedExecutionException in the main thread
+            // (this can rarely happen when the FileProcessor shut down from another thread (usually a task thread that encountered an exception?)
+            // just in between checking state and submitting)
+            ((ThreadPoolExecutor) executor).setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         } else {
-            executor = new MainThreadExecutorService();
+            executor = new MainThreadExecutorService((r, e) ->  { /* swallow RejectedExecutionExceptions, same as above. */ });
         }
     }
 
@@ -317,12 +321,6 @@ public class FileProcessor implements AutoCloseable {
     private synchronized Void reportAndAbort(Throwable e, String path, File f) {
         if (e instanceof CompletionException) // async exception
             e = e.getCause();
-
-        // Error when submitting a task after closing the executor, can happen rarely while shutting down
-        // if a thread was being submitted to an executor right when it shuts down
-        // Don't report these errors, we caused them ourselves.
-        if (e instanceof RejectedExecutionException)
-            return null;
 
         // Only report the first fatal exception
         if (!aborted && !errorHandler.errorOccurred(e, path, f)) {
