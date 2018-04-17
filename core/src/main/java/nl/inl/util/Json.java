@@ -35,9 +35,11 @@ public class Json {
         jsonFactory = new JsonFactory();
         jsonFactory.enable(JsonParser.Feature.ALLOW_COMMENTS);
         jsonObjectMapper = new ObjectMapper(jsonFactory);
+        jsonObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
 
         yamlFactory = new YAMLFactory();
         yamlObjectMapper = new ObjectMapper(yamlFactory);
+        yamlObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
     }
 
     public static ObjectMapper getJsonObjectMapper() {
