@@ -213,7 +213,9 @@ public abstract class RequestHandler {
 							return errorObj.unavailable(indexName, status.toString());
 						}
 
-						if (debugMode && !handlerName.isEmpty() && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs", "docs-csv", "docs-grouped-csv", "fields", "termfreq", "status").contains(handlerName)) {
+						if (debugMode && !handlerName.isEmpty() && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs", 
+						        "docs-csv", "docs-grouped-csv", "fields", "termfreq", 
+						        "status", "autocomplete").contains(handlerName)) {
 							handlerName = "debug";
 						}
 
