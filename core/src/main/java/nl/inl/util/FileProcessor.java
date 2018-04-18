@@ -88,7 +88,7 @@ public class FileProcessor implements AutoCloseable {
 
         @Override
         public synchronized boolean errorOccurred(Throwable e, String path, File f) {
-            System.err.println("Error processing file " + f != null ? f.toString() : path);
+            System.err.println("Error processing file " + (f != null ? f.toString() : path));
             e.printStackTrace(System.err);
             return continueOnError;
         }
