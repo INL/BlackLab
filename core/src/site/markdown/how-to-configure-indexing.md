@@ -1,9 +1,16 @@
 # How to configure indexing in BlackLab
 
-NOTE: this describes the new way of indexing, using index format configuration files, available starting from BlackLab 1.7.0. There's also an advanced way of adding an input format that may offer slightly better performance, by implementing a Java class. For large corpora you reindex frequently, that might be worth it. See [here](indexing-with-blacklab.html). In the future, we hope to speed up the configuration approach to indexing, obviating the need for implementing your own Java class.
+NOTE: this page describes input format configuration files, which are the preferred way of indexing data starting from BlackLab 1.7.0.
 
-* <a href="#index-supported-format">Indexing documents in a supported format</a>
-* <a href="#supported-formats">Supported formats</a>
+(There's also an advanced way of adding an input format that may offer slightly (i.e. likely less than 50%) better performance, by [implementing a Java class](indexing-with-blacklab.html#using-legacy-docindexers). You probably don't need it though.)
+
+Input format configuration files can be used to index data from the commandline using the [IndexTool](indexing-with-blacklab.html#index-supported-format) 
+or using AutoSearch (our corpus frontend, configured to allow users to upload and index their own corpora).
+
+BlackLab already [supports](indexing-with-blacklab.html#supported-formats) a number of common input formats out of the box. 
+Your data may differ slightly of course, so you may use the predefined formats as a starting point and 
+customize them to fit your data. 
+
 * <a href="#input-format-config-overview">Basic overview of a configuration file</a>
 * <a href="#working-with-yaml">Working with YAML</a>
 * <a href="#extend-format">How to extend existing formats</a>
@@ -12,72 +19,14 @@ NOTE: this describes the new way of indexing, using index format configuration f
 * <a href="#multiple-values">Multiple values at one position</a>
 * <a href="#standoff-annotations">Standoff annotations</a>
 * <a href="#subproperties">Subannotations, for e.g. part of speech features</a>
-* <a href="#payloads">Storing extra information with property values, using payloads</a>
 * <a href="#tabular">Indexing tabular (CSV/TSV/SketchEngine) files</a>
 * <a href="#plaintext">Indexing plain text files</a>
 * <a href="#processing-values">Processing values</a>
 * <a href="#metadata">Metadata</a>
     * <a href="#metadata-in-document">Embedded (in-document) metadata</a>
     * <a href="#metadata-external">Linking to external (metadata) files</a>
-* <a href="#edit-index-metadata">Editing the index metadata</a>
-
-
-<a id="index-supported-format"></a>
-
-## Indexing documents in a supported format
-
-Start the IndexTool without parameters for help information:
-
-    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool
- 
-(this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory)
-
-(if you're on Windows, replace the classpath separator colon (:) with a semicolon (;))
-
-To create a new index:
-
-    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
-
-To add documents to an existing index:
-
-    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool add INDEX_DIR INPUT_FILES FORMAT
-
-If you specify a directory as the INPUT_FILES, it will be scanned recursively. You can also specify a file glob (such as \*.xml; single-quote it if you're on Linux so it doesn't get expanded by the shell) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index the contents.
-
-For example, if you have TEI data in /tmp/my-tei/ and want to create an index as a subdirectory of the current directory called "test-index", run the following command:
-
-    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei
-
-Your data is indexed and placed in a new BlackLab index in the "test-index" directory.
-
-NOTE: if you don't specify a glob, IndexTool will index all files by default. You can specify a glob (like "\*.xml" or "data-\*") to change this.
-
-To delete documents from an index:
-
-    java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool delete INDEX_DIR FILTER_QUERY
-    
-Here, FILTER_QUERY is a metadata filter query in Lucene query language that matches the documents to delete. Deleting documents and re-adding them can be used to update documents.
-
-<a id="supported-formats"></a>
-
-## Supported formats
-
-Here's a list of built-in input formats (run IndexTool without any parameters to see the up to date list):
-
-* alto (OCR XML format; see http://www.loc.gov/standards/alto/)
-* folia (a corpus XML format popular in the Netherlands; see https://proycon.github.io/folia/)
-* tei (a popular XML format for linguistic resources, including corpora. this variant indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type'. creating your own variant is easy (see below); see http://www.tei-c.org/)
-* chat (Codes for the Human Analysis of Transcripts, format created for the CHILDES project)
-* csv (comma-separated values, as exported by MS Excel)
-* pagexml (OCR XML format)
-* tsv (tab-separated values)
-* tsv-frog (output of the Frog linguistic tagger; see https://languagemachines.github.io/frog/)
-* sketch-wpl (Sketch Engine word-per-line input format, including metadata and inline tags)
-* txt (plain text files)
-
-Adding support for your own format is quite straightforward now, and can be done by writing a configuration file (described on this page) or, if you really want, by [writing Java code](add-input-format.html).
-
-If you've written a configuration file (more on that below), you can use it with IndexTool by specifying the format name (which must match the name of the .blf.yaml or .blf.json file) as the FORMAT parameter on the commandline. IndexTool will search a number of directories, including the current directory and the parent of the input directory for format files with that name.
+* <a href="#influence-index-metadata">Influencing index metadata from the input format configuration file</a>
+* <a href="#annotated-input-format-configuration-file">Annotated input format configuration file</a>
 
 <a id="input-format-config-overview"></a>
 
@@ -107,7 +56,7 @@ Suppose our XML files look like this:
         <!-- ...more documents... -->
     </root>
 
-Below is the configuration file you would need to index files of this type. This uses [YAML](http://yaml.org/) (good introduction [here](http://docs.ansible.com/ansible/latest/YAMLSyntax.html); also see below for some common pitfalls), but you can also use [JSON](http://json.org/) if you prefer.
+Below is the configuration file you would need to index files of this type. This uses [YAML](http://yaml.org/) ([good introduction](http://docs.ansible.com/ansible/latest/YAMLSyntax.html); also see below for some common pitfalls), but you can also use [JSON](http://json.org/) if you prefer.
 
 Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).
 
@@ -170,7 +119,7 @@ Note that the settings with names ending in "Path" are XPath 1.0 expressions (at
 
 To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of $BLACKLAB\_CONFIG\_DIR/formats/ (if this environment variable is set), $HOME/.blacklab/formats/ or /etc/blacklab/formats/.
 
-This page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](annotated-input-config.html). 
+This page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](#annotated-input-format-configuration-file).
 
 <a id="working-with-yaml"></a>
 
@@ -831,9 +780,9 @@ To prevent a metadata field from being tokenized:
         type: untokenized
 
 
-<a id="edit-index-metadata"></a>
+<a id="influence-index-metadata"></a>
 
-## Editing the index metadata
+## Influencing index metadata from the input format configuration file
 
 Each BlackLab index gets a file containing "index metadata". This file is in YAML format (used to be JSON). This contains information such as the time the index was generated and the BlackLab version used, plus information about annotations and metadata fields. Some of the information is generated as part of the indexing process, and some of the information is copied directly from the input format configuration file if specified. This information is mostly used by applications to learn about the structure of the index, get human-friendly names for the various parts, and decide what UI widget to show for a metadata field.
 
@@ -842,20 +791,23 @@ The best way to influence the index metadata is by including a special section `
     # The settings in this block will be copied into indexmetadata.yaml
     corpusConfig:
   
-      displayName: OpenSonar
-      description: The OpenSonar corpus.
-      contentViewable: false
-      textDirection: LTR
-    
+      # Some basic information about the corpus that may be used by a user interface.
+      displayName: OpenSonar              # Corpus name to display in user interface
+      description: The OpenSonar corpus.  # Corpus description to display in user interface
+      contentViewable: false              # Is the user allowed to view whole documents? [false]
+      textDirection: LTR                  # What's the text direction of this corpus? [LTR]
+
+      # Metadata fields with a special meaning
       specialFields:
-        pidField: id
-        titleField: title
-        authorField: author
-        dateField: date
+        pidField: id           # unique persistent identifier, used for document lookups, etc.
+        titleField: title      # used to display document title in interface
+        authorField: author    # used to display author in interface
+        dateField: date        # used to display document date in interface
       
+      # How to group metadata fields in user interface
       metadataFieldGroups:
-      - name: First group
-        fields:
+      - name: First group      # Text on tab, if there's more than one group
+        fields:                # Metadata fields to display on this tab
         - author
         - title
       - name: Second group
@@ -863,110 +815,281 @@ The best way to influence the index metadata is by including a special section `
         - date
         - keywords
       
-See below for the exact meaning of each of these settings. 
+There's also a complete [annotated index metadata file](indexing-with-blacklab.html#edit-index-metadata) if you want to know more details about that. 
 
-In addition to specifying this information in your input format configuration file, it is also possible to edit the index metadata file manually. If you do this, be careful, because it might break something. It is best to use a text editor with support for YAML, and to validate the resulting file with a YAML validator such as [YAML Lint](http://www.yamllint.com/). Also remember that if you edit the index metadata file, and you later decide to generate a new index from scratch, your changes to the metadata file will be lost. If possible, it is therefore preferable to put this information in the input format configuration file directly. (If you find that this is not possible in your case, please let us know.)  
+<a id="annotated-input-format-configuration-file"></a>
 
-Here's a commented example of indexmetadata.yaml:
+# Annotated input format configuration file
 
-    ---
-    # Display name for the index and short description
-    # (not used by BlackLab. None of the display name or description values
-    #  are used by BlackLab directly, but applications can retrieve them if they want)
-    displayName: OpenSonar
-    description: The OpenSonar corpus.
+Here's a more-or-less complete overview of what settings can occur in an input format configuration file, with explanatory comments.
+
+Input format configuration files should be named `<formatIdentifier>.blf.yaml` or `.blf.json` (depending on the format chosen). By default, BlackLab looks in $BLACKLAB_CONFIG_DIR/formats/ (if the environment variable is defined), $HOME/.blacklab/formats/ and /etc/blacklab/formats/. IndexTool searches a few more directories, including the current directory and the parent of the input and index directories.
+
+    # For displaying in user interface (optional, recommended)
+    displayName: OpenSonar FoLiA content format
     
-    # What was the name of the input format first added to this index?
-    # (it is possible to add documents of different formats to the same index,
-    #  so this is not a guarantee that all documents have this format)
-    documentFormat: OpenSonarFolia
+    # For describing input format in user interface (optional, recommended)
+    description: The file format used by OpenSonar for document contents.
     
-    # Total number of tokens in this corpus.
-    tokenCount: 12345
-
-    # Information about the index format and when and how it was created
-    # (don't change this)
-    versionInfo:
-      blackLabBuildTime: "2017-08-01 00:00:00"
-      blackLabVersion: "1.7.0"
-      indexFormat: "3.1"
-      timeCreated: "2017-07-31 16:03:37"
-      timeModified: "2017-07-31 16:03:37"
-      alwaysAddClosingToken: true
-      tagLengthInPayload: true
+    # Our base format. All settings except the above three are copied from it.
+    # We'd like this example to be self-contained, so we don't use this here
+    #baseFormat: folia
     
-    # Information about annotated (complex) and metadata fields
-    fieldInfo:
-      titleField: title            # ((optional, detected if omitted); field in the index containing
-                                   #  document title; may be used by applications)
-      authorField: author          # ((optional) field in the index containing author information;
-                                   #  may be used by applications)
-      dateField: date              # ((optional) field in the index containing document date 
-                                   #  information; may be used by applications)
-      pidField: id                 # ((optional, recommended) field in the index containing unique 
-                                   #  document id; may be used by applications to refer to documents;
-                                   #  may be used by BlackLab to directly update documents without 
-                                   #  the client having to manually delete the previous version)
-      defaultAnalyzerName: DEFAULT # The type of analyzer to use for metadata fields
-                                   # by default (DEFAULT|whitespace|standard|nontokenizing)
-      contentViewable: false       # is the user allowed to retrieve whole documents? 
-      textDirection: LTR           # text direction of the corpus (e.g. LTR/RTL) (not used by BlackLab) 
-      documentFormat: ''           # (not used by BlackLab. may be used by application to 
-                                   #  e.g. select which XSLT to use)
-      unknownValue: unknown        # what value to index if field value is unknown [unknown]
-      unknownCondition: NEVER      # When is a field value considered unknown?
-                                   # (other options: MISSING, EMPTY, MISSING_OR_EMPTY) [NEVER]
+    # What type of input files does this handle? (content, metadata?)
+    # (optional; not used by BlackLab; could be used in user interface)
+    type: content
+    
+    # The type of input file we're dealing with (xml, tabular or text)
+    fileType: xml
+    
+    # Each file type may have options associated with it (for now, only "tabular" does)
+    # We've shown the options for tabular he're but commented them out as we're describing
+    # an xml format here.
+    #fileTypeOptions:
+    #  type: tsv         # type of tabular format (tsv or csv)
+    #  delimiter: "\t"   # delimiter, if different from default (determined by "type", tab or comma)
+    #  quote: "\""       # quote character, if different from default (double quote)
+    #  inlineTags: false # are there inline tags in the file like in the Sketch Engine WPL format?
+    #  glueTags: false   # are there glue tags in the file like in the Sketch Engine WPL format?
+    
+    # What namespaces do we use in our XPaths?
+    # (if omitted: ignore namespaces)
+    namespaces:
+      '': http://ilk.uvt.nl/folia    # ('' -> default namespace)
+    
+    # What element starts a new document?
+    # (the only absolute XPath; the rest is relative)
+    documentPath: //FoLiA
+    
+    # Should documents be stores in the content store?
+    # This defaults to true, but you can turn it off if you don't need this.
+    store: false
+    
+    # Annotated, CQL-searchable fields (also called "complex fields").
+    # We usually have just one, named "contents".
+    annotatedFields:
+    
+      # Configuration for the "contents" field
+      contents:
       
-      # Information about specific metadata fields
-      metadataFields:
-      
-        # Information about the author field
-        author:
-          displayName: author                      # (optional) How to display in interface
-          description: The author of the document. # (optional) Description (e.g. tooltip) in interface
-          type: tokenized                          # ..or text, numeric, untokenized [tokenized]
-          analyzer: default                        # ..(or whitespace|standard|nontokenizing) [default]
-          unknownValue: unknown                    # overrides default unknownValue for this field
-          unknownCondition: MISSING_OR_EMPTY       # overrides default unknownCondition for this field
-          uiType: select                           # (optional) Widget to use in interface (text|select|range)
-          values:                                  # values indexed in this field
-          - firstValue
-          - secondValue
-          valueListComplete: true                  # are all values listed here, or just a few (max. 50)?
-          displayValues:                           # (optional) How to display certain values in this field
-            tolkien: J.R.R. Tolkien                #   e.g. display value "tolkien" as "J.R.R. Tolkien"
-            adams: Douglas Adams
-          displayOrder:                            # (optional) Specific order to display values in
-          - tolkien
-          - adams
-      
-      # (optional)
-      # This block allows you to define groups of metadata fields.
-      # BlackLab Server will include this information on the index structure page.
-      # This can be useful if you want to generate a user interface based on index metadata. 
-      metadataFieldGroups:
-      - name: First group
-        fields:
-        - author
-        - title
-      - name: Second group
-        fields:
-        - date
-        - keywords
+        # How to display the field in the interface (optional)
+        displayName: Contents
+    
+        # How to describe the field in the interface (optional)
+        description: Contents of the documents.
+    
+        # What element (relative to document) contains this field's contents?
+        # (if omitted, entire document is used)
+        containerPath: text
+    
+        # What are our word tags? (relative to container)
+        wordPath: .//w
+    
+        # If specified, a mapping from this id to token position will be saved, so we 
+        # can refer back to it for standoff annotations later. (relative to wordPath)
+        tokenPositionIdPath: "@xml:id"
+    
+        # What annotation can each word have? How do we index them?
+        # (annotations are also called "(word) properties" in BlackLab)
+        # (valuePaths relative to word path)
+        annotations:
+    
+        - name: word
+          displayName: Words in the text
+          description: The word forms occurring in the document text.
+          valuePath: t
+          sensitivity: sensitive_insensitive  # sensitive|s|insensitive|i|sensitive_insensitive|si|all
+                                              # (if omitted, reasonable default is chosen based on name)
+          uiType: text                        # (optional) hint for use interface
+          createForwardIndex: true            # should this property get a forward index [true]
+    
+        - name: lemma
+          valuePath: lemma/@class
+    
+          # An annotation can have subannotations. This may be useful for e.g.
+          # part-of-speech features.
+        - name: pos
+          basePath: pos          # subsequent XPaths are relative to this
+          valuePath: "@class"    # (relative to basePath)
+    
+          # Subannotations that will be indexed at the same token position
+          subAnnotations:
+    
+            # A single subannotation
+          - name: head
+            valuePath: "@head"   # (relative to basePath)
+    
+            # Multiple subannotations defined at once:
+            # visits all elements matched by forEachPath and
+            # adds a subannotation based on namePath and valuePath 
+            # for each)
+          - forEachPath: "feat"  # (relative to basePath)
+            namePath: "@subset"  # (relative to forEachPath)
+            valuePath: "@class"  # (relative to forEachPath)
+    
+        # Standoff annotations are annotations that are defined separately from the word
+        # elements, elsewhere in the same document. To use standoff annotations, you must
+        # define a tokenPositionIdPath (see above). This will make sure you can refer back
+        # to token positions so BlackLab knows at what position to index a standoff annotation.
+        standoffAnnotations:
+        - path: //timesegment               # Element containing the values to index
+          refTokenPositionIdPath: wref/@id  # What token position(s) to index these values at
+                                            # (these refer back to the tokenPositionIdPath values)
+          annotations:                      # Annotation(s) to index there
+          - name: begintime
+            valuePath: ../@begintime        # relative to path
+          - name: endtime
+            valuePath: ../@endtime
+    
+        # XML tags within the content we'd like to index
+        # Any attributes are indexed automatically.
+        # (paths relative to container)
+        inlineTags:
+        - path: .//s
+        - path: .//p
+    
+    
+    # (optional)
+    # Analyzer to use for metadata fields if not overridden
+    # (default|standard|whitespace|your own analyzer)
+    metadataDefaultAnalyzer: default
+    
+    
+    # Embedded metadata
+    # (NOTE: shown here is a simple configuration with a single "metadata block";
+    #  however, the value for the "metadata" key may also be a list of such blocks.
+    #  this can be useful if your document contains multiple areas with metadata 
+    #  you want to index)
+    metadata:
+    
+      # Where the embedded metadata is found (relative to documentPath)
+      containerPath: metadata[@type='native']
+    
+      # How each of the metadata fields can be found (relative to containerPath)
+      fields:
+    
+        # Single metadata field
+      - name: author
+        valuePath: author    # (relative to containerPath)
+    
+        # Multiple metadata fields defined at once:
+        # visits all elements matched by forEachPath and
+        # adds a metadata entry based on namePath and 
+        # valuePath for each)
+      - forEachPath: meta    # (relative to containerPath)
+        namePath: "@id"      # (relative to forEachPath)
+        valuePath: .         # (relative to forEachPath)
         
-      # Information about annotated fields (also called "complex fields" in BlackLab)
-      complexFields:
-      
-        # Information about the contents field
-        contents:
-          mainProperty: word         # used for concordances; contains char. offsets
-          displayName: contents      # (optional) how to display in GUI
-          description: The text contents of the document.
-          noForwardIndexProps: ''    # (optional) space-separated list of annotation (property)
-                                     # names that shouldn't get a forward index
-          displayOrder:              # (optional) Order to display annotation search fields
-          - word
-          - lemma
-          - pos
+    
+    # (optional)
+    # It is possible to specify a mapping to change the name of
+    # metadata fields. This can be useful if you capture a lot of
+    # metadata fields using forEachPath and want control over how they
+    # are indexed.    
+    indexFieldAs:
+      lessThanIdealName: muchBetterName
+      alsoNotAGreatName: butThisIsExcellent
+    
+    
+    # Linked metadata (or other linked document)
+    linkedDocuments:
+    
+      # What does the linked document represent?
+      # (this is used internally to determine the name of the field to store content store id in)
+      metadata:
+    
+        # Should we store the linked document?
+        store: true
+    
+        # Values we need to locate the linked document
+        # (matching values will be substituted for $1-$9 below - the first linkValue is $1, etc.)
+        linkValues:
+        - valueField: fromInputFile       # fetch the "fromInputFile" field from the Lucene doc
+    
+          # We process the raw value:
+          # - we replace backslashes with forward slashes
+          # - we keep only the last two path parts (e.g. /a/b/c/d --> c/d)
+          # - we replace .folia. with .cmdi.
+          # (processing steps like these can also be used with metadata fields and annotations!
+          #  see elsewhere for a list of available processing steps)
+          process:
+            # Normalize slashes
+          - action: replace
+            find: "\\\\"
+            replace: "/"
+            # Keep only the last two path parts (which indicate location inside metadata zip file)
+          - action: replace
+            find: "^.*/([^/]+/[^/]+)/?$"
+            replace: "$1"
+          - action: replace
+            find: "\\.folia\\."
+            replace: ".cmdi."
+    
+        # How to fetch the linked input file containing the linked document
+        # (file or http(s) reference)
+        # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
+        inputFile: /molechaser/data/opensonar/metadata/SONAR500NEW.zip
+    
+        # (Optional)
+        # If the linked input file is an archive, this is the path inside the archive where the file can be found
+        # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
+        pathInsideArchive: SONAR500/DATA/$1
+    
+        # (Optional)
+        # XPath to the (single) linked document to process.
+        # If omitted, the entire file is processed, and must contain only one document.
+        # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
+        #documentPath: /CMD/Components/SoNaRcorpus/Text[@ComponentId = $2]
+    
+        # Format identifier of the linked input file
+        inputFormat: OpenSonarCmdi
+    
+    # Configuration to be copied into indexmetadata.yaml when a new index is created
+    # from this format. These settings do not influence indexing but are for 
+    # BlackLab Server and search user interfaces. All settings are optional.
+    corpusConfig:
+    
+        # Display name for the corpus
+        displayName: My Amazing Corpus
+        
+        # Short description for the corpus 
+        description: Quite an amazing corpus, if I do say so myself.
+    
+        # Is the user allowed to view whole documents in the search interface?
+        # (used by BLS to either allow or disallow fetching full document content)
+        # (defaults to false because this is not allowed for some datasets)
+        contentViewable: true
+        
+        # Text direction of this corpus (e.g. "LTR", "left-to-right", "RTL", etc.).
+        # (default: LTR)
+        textDirection: LTR
+    
+        # You can divide your metadata fields into groups, which can
+        # be useful if you want to display them in a tabbed interface.
+        # Our default corpus interface supports this.
+        metadataFieldGroups:
+        - name: Tab1
+          fields:
+          - Field1
+          - Field2
+        - name: Tab2
+          fields:
+          - Field3
+          - Field4
+        - name: OtherFields
+          addRemainingFields: true  # BLS will add any field not yet in 
+                                    # any group to this group   
+        
+        # (optional, but pidField is highly recommended)
+        # You can specify metadata fields that have special significance here.
+        # pidField is important for use with BLS because it guarantees that URLs
+        # won't change even if you re-index. The other fields can be nice for
+        # displaying document information but are not essential.
+        specialFields:
+          pidField: id         # unique document identifier. Used by BLS for persistent URLs
+          titleField: title    # may be used by user interface to display document info
+          authorField: author  # may be used by user interface to display document info
+          dateField: pubDate   # may be used by user interface to display document info
           
-Please note: the settings pidField, titleField, authorField, dateField refer to the name of the field in the Lucene index, not an XML element name.
+    
+        

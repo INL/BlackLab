@@ -114,7 +114,7 @@ Explanation of the various resources:
 </table>
 
 NOTE: by default, users are not allowed to retrieve full document contents. In order to allow this, change the 'contentViewable' setting in the indexmetadata file in the index directory.
-You can also specify this setting in the corpusConfig part of an input format descripion file, see [here](how-to-configure-indexing.html). The contentViewable setting in the indexmetadata file may be overridden for a document by adding a boolean metadata field named "contentViewable". This can be configured in the input config file like any other metadata field. For example, if your documents contain a "license" element with an attribute status that must be equal to "public" for the content to be viewable, use an XPath query like "string(//license[1]/@status='public')".
+You can also specify this setting in the corpusConfig part of an input format descripion file, see [Influencing index metadata](how-to-configure-indexing.html#influence-index-metadata). The contentViewable setting in the indexmetadata file may be overridden for a document by adding a boolean metadata field named "contentViewable". This can be configured in the input config file like any other metadata field. For example, if your documents contain a "license" element with an attribute status that must be equal to "public" for the content to be viewable, use an XPath query like "string(//license[1]/@status='public')".
 
 Below is an overview of parameters that can be passed to the various resources. Default values for most parameters can be configured on the server; below are a few suggestions for defaults.
 
@@ -340,7 +340,7 @@ A few more examples:
 
 ## Examples
 
-For examples of using BlackLab Server from (many) different programming languages, see [here](from-different-languages.html).
+There's code examples of using BlackLab Server from [a number of different programming languages](from-different-languages.html).
 
 Below are examples of individual requests to BlackLab Server. NOTE: for clarity, double quotes have not been URL-encoded.
 
@@ -433,11 +433,11 @@ To remove an input format, send a DELETE request to the format page, e.g. `/blac
 
 ## Installation
 
-First, you need the BlackLab Server WAR file. You can either download the latest release [here](https://github.com/INL/BlackLab/releases), or you can build it by cloning the [repository](https://github.com/INL/BlackLab GitHub) and building it using Maven.
+First, you need the BlackLab Server WAR file. You can either download the [latest release](https://github.com/INL/BlackLab/releases), or you can build it by cloning the [repository](https://github.com/INL/BlackLab GitHub) and building it using Maven.
 
 BlackLab Server needs to run in a Java application server that support servlets. We’ll assume Apache Tomcat here, but others should work almost the same.
 
-For larger indices, it is important to give Tomcat's JVM enough heap memory. See [here](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.)
+For larger indices, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.)
 
 Place the configuration file blacklab-server.json (see Appendix A) in /etc/blacklab/ or, if you prefer, on the application server’s classpath. Make sure at least the “indexCollections” setting is correctly specified (should point to a directory containing one or more BlackLab indices as subdirectories). Apart from that, the file could actually be empty: default values are used for missing settings. So if you have an index in directory /home/jan/blacklab/test, the minimal blacklab-server.json looks like this:
 
@@ -445,7 +445,7 @@ Place the configuration file blacklab-server.json (see Appendix A) in /etc/black
 
 Place blacklab-server.war in Tomcat’s webapps directory ($TOMCAT/webapps/). Tomcat should automatically discover and deploy it, and you should be able to go to [http://servername:8080/blacklab-server/](http://servername:8080/blacklab-server/ "http://servername:8080/blacklab-server/") and see the BlackLab Server information page, which includes a list of available corpora.
 
-To ensure the correct handling of accented characters in (search) URLs, you should make sure that your URLs are URL-encoded UTF-8 (so e.g. searching for "señor" corresponds to a request like http://myserver/blacklab-server/mycorpus/hits?patt=%22se%C3%B1or%22 . You should also tell Tomcat to interpret URLs as UTF-8 (by default, it does ISO-8859-1) by adding an attribute URIEncoding="UTF-8" to the Connector element with the attribute port="8080" in Tomcat's server.xml file. See [here](https://tomcat.apache.org/tomcat-7.0-doc/config/http.html#Common_Attributes) for details.
+To ensure the correct handling of accented characters in (search) URLs, you should make sure that your URLs are URL-encoded UTF-8 (so e.g. searching for "señor" corresponds to a request like http://myserver/blacklab-server/mycorpus/hits?patt=%22se%C3%B1or%22 . You should also [tell Tomcat](https://tomcat.apache.org/tomcat-7.0-doc/config/http.html#Common_Attributes) to interpret URLs as UTF-8 (by default, it does ISO-8859-1) by adding an attribute URIEncoding="UTF-8" to the Connector element with the attribute port="8080" in Tomcat's server.xml file.
 
 To (significantly!) improve performance of certain operations, including sorting and grouping large result sets, you might want to consider using the [vmtouch](https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache "https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache") tool to lock the forward index files in the OS's disk cache. You could also serve these files (or the entire index) from an SSD.
 
