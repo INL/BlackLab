@@ -1,8 +1,8 @@
 # For displaying in user interface (optional)
-displayName: "TEI P5, contents in text, @type as PoS"
+displayName: "TEI P4, contents in text, @type as PoS"
 
 # For describing input format in user interface (optional)
-description: A TEI P5 variant. The text element will be indexed as annotated contents. PoS tags should be in the type attribute.
+description: A TEI P4 variant. The text element will be indexed as annotated contents. PoS tags should be in the type attribute.
 
 # (Optional, informational)
 # content, metadata or mixed?
@@ -16,7 +16,7 @@ type: content
 
 # What element starts a new document?
 # (the only absolute XPath; the rest is relative)
-documentPath: //TEI
+documentPath: //TEI.2
 
 # Annotated, CQL-searchable fields (also called "complex fields").
 # We usually have just one, named "contents".
@@ -65,5 +65,5 @@ metadata:
   containerPath: .//listBibl[@id='inlMetadata']
   fields:
   - forEachPath: bibl/interpGrp/interp
-    namePath: ../@type                  # interpGrp/@type
-    valuePath: .                        # interp (text value of element, TEI P5)
+    namePath: ../@type                   # interpGrp/@type
+    valuePath: "@value"                  # interp/@value (TEI P4)
