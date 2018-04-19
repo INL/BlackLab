@@ -313,7 +313,7 @@ public abstract class RequestHandler {
 	/** User id (if logged in) and/or session id */
 	User user;
 
-	protected IndexManager indexMan;
+    protected IndexManager indexMan;
 
 	RequestHandler(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathInfo) {
 		this.servlet = servlet;
@@ -611,4 +611,9 @@ public abstract class RequestHandler {
 				ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
 		}
 	}
+	
+    public User getUser() {
+        return user;
+    }
+
 }

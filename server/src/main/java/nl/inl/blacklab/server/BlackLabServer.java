@@ -238,6 +238,8 @@ public class BlackLabServer extends HttpServlet {
 		if (outputType == null)
 			outputType = searchManager.config().defaultOutputType();
 
+		// For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
+		searchManager.getAuthSystem().persistUser(this, request, responseObject, requestHandler.getUser());
 
 		// Is this a JSONP request?
 		String callbackFunction = ServletUtil.getParameter(request, "jsonp", "");
