@@ -39,221 +39,227 @@ import nl.inl.blacklab.server.jobs.User;
  * Request handler for hit results.
  */
 public class RequestHandlerHitsCsv extends RequestHandler {
-	public RequestHandlerHitsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
-		super(servlet, request, user, indexName, urlResource, urlPathPart);
-	}
+    public RequestHandlerHitsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
+        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    }
 
-	/**
-	 * Get the hits (and the groups from which they were extracted - if applicable) or the groups for this request.
-	 * Exceptions cleanly mapping to http error responses are thrown if any part of the request cannot be fulfilled.
-	 * Sorting is already applied to the hits.
-	 *
-	 * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits within a group, Groups if looking at grouped hits.
-	 * @throws BlsException
-	 */
-	// TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
-	private Pair<Hits, HitGroups> getHits() throws BlsException {
-		// Might be null
-		String groupBy = searchParam.getString("group"); if (groupBy.isEmpty()) groupBy = null;
-		String viewGroup = searchParam.getString("viewgroup"); if (viewGroup.isEmpty()) viewGroup = null;
-		String sortBy = searchParam.getString("sort"); if (sortBy.isEmpty()) sortBy = null;
+    /**
+     * Get the hits (and the groups from which they were extracted - if applicable) or the groups for this request.
+     * Exceptions cleanly mapping to http error responses are thrown if any part of the request cannot be fulfilled.
+     * Sorting is already applied to the hits.
+     *
+     * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits within a group, Groups if looking at grouped hits.
+     * @throws BlsException
+     */
+    // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
+    private Pair<Hits, HitGroups> getHits() throws BlsException {
+        // Might be null
+        String groupBy = searchParam.getString("group"); if (groupBy.isEmpty()) groupBy = null;
+        String viewGroup = searchParam.getString("viewgroup"); if (viewGroup.isEmpty()) viewGroup = null;
+        String sortBy = searchParam.getString("sort"); if (sortBy.isEmpty()) sortBy = null;
 
-		JobWithHits job = null;
-		Hits hits = null;
-		HitGroups groups = null;
+        JobWithHits job = null;
+        Hits hits = null;
+        HitGroups groups = null;
 
-		try {
-			if (groupBy != null) {
-				JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), true);
-				job = searchGrouped;
-				groups = searchGrouped.getGroups();
-				// don't set hits yet - only return hits if we're looking within a specific group
+        try {
+            if (groupBy != null) {
+                JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), true);
+                job = searchGrouped;
+                groups = searchGrouped.getGroups();
+                // don't set hits yet - only return hits if we're looking within a specific group
 
-				if (viewGroup != null) {
-					HitPropValue groupId = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
-					if (groupId == null)
-						throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-					HitGroup group = groups.getGroup(groupId);
-					if (group == null)
-						throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+                if (viewGroup != null) {
+                    HitPropValue groupId = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
+                    if (groupId == null)
+                        throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+                    HitGroup group = groups.getGroup(groupId);
+                    if (group == null)
+                        throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-					hits = group.getHits();
+                    hits = group.getHits();
 
-					// NOTE: sortBy is automatically applied to regular results, but not to results within groups
-					// See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-					// Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-					// There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
-					if (sortBy != null) {
-						HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
-						if (sortProp == null)
-							throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-						hits = hits.sortedBy(sortProp, sortProp.isReverse());
-					}
-				}
-			} else  {
-				// Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-				job = (JobWithHits) searchMan.search(user, searchParam.hitsSample(), true);
-				hits = job.getHits();
-			}
-		} finally {
-			// Jobs automatically have a ref to start out with
-			if (job != null)
-				job.decrRef();
-		}
+                    // NOTE: sortBy is automatically applied to regular results, but not to results within groups
+                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+                    // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+                    // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
+                    if (sortBy != null) {
+                        HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
+                        if (sortProp == null)
+                            throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
+                        hits = hits.sortedBy(sortProp, sortProp.isReverse());
+                    }
+                }
+            } else  {
+                // Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
+                job = (JobWithHits) searchMan.search(user, searchParam.hitsSample(), true);
+                hits = job.getHits();
+            }
+        } finally {
+            // Jobs automatically have a ref to start out with
+            if (job != null)
+                job.decrRef();
+        }
 
-		// apply window settings
-		// Different from the regular results, if no window settings are provided, we export the maximum amount automatically
-		// The max for CSV exports is also different from the default pagesize maximum.
-		if (hits != null) {
-			int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
-			if (!hits.sizeAtLeast(first))
-				first = 0;
+        // apply window settings
+        // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
+        // The max for CSV exports is also different from the default pagesize maximum.
+        if (hits != null) {
+            int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
+            if (!hits.sizeAtLeast(first))
+                first = 0;
 
-			int number = searchMan.config().maxExportPageSize();
-			if (searchParam.containsKey("number"))
-				number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
+            int number = searchMan.config().maxExportPageSize();
+            if (searchParam.containsKey("number"))
+                number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
 
-			hits = hits.window(first, number);
-		}
-		return Pair.of(hits, groups);
-	}
+            hits = hits.window(first, number);
+        }
+        return Pair.of(hits, groups);
+    }
 
-	private static void writeGroups(HitGroups groups, DataStreamPlain ds) throws BlsException {
-		try {
-			// Write the header
-			List<String> row = new ArrayList<>();
-			row.addAll(groups.getGroupCriteria().getPropNames());
-			row.add("count");
+    private void writeGroups(HitGroups groups, DataStreamPlain ds) throws BlsException {
+        try {
+            // Write the header
+            List<String> row = new ArrayList<>();
+            row.addAll(groups.getGroupCriteria().getPropNames());
+            row.add("count");
 
-			CSVPrinter printer = CSVFormat.EXCEL.withHeader(row.toArray(new String[0])).print(new StringBuilder("sep=,\r\n"));
+            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
+            CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
+            CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
+            addSummaryCommonFieldsCSV(format, printer, searchParam);
+            row.clear();
 
-			// write the groups
-			for (HitGroup group : groups) {
-				row.clear();
-				row.addAll(group.getIdentity().getPropValues());
-				row.add(Integer.toString(group.getHits().countSoFarHitsCounted()));
-				printer.printRecord(row);
-			}
+            // write the groups
+            for (HitGroup group : groups) {
+                row.clear();
+                row.addAll(group.getIdentity().getPropValues());
+                row.add(Integer.toString(group.getHits().countSoFarHitsCounted()));
+                printer.printRecord(row);
+            }
 
-			printer.flush();
-			ds.plain(printer.getOut().toString());
-		} catch (IOException e) {
-			throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
-		}
-	}
+            printer.flush();
+            ds.plain(printer.getOut().toString());
+        } catch (IOException e) {
+            throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
+        }
+    }
 
-	private static void writeHit(Kwic kwic, String mainTokenProperty, List<String> otherTokenProperties, String docPid, String docTitle, ArrayList<String> row) {
-		row.clear();
+    private static void writeHit(Kwic kwic, String mainTokenProperty, List<String> otherTokenProperties, String docPid, String docTitle, ArrayList<String> row) {
+        row.clear();
 
-		/*
-		 * Order of kwic/hitProps is always the same:
-		 * - punctuation (always present)
-		 * - other (non-internal) properties (in order of declaration in the index)
-		 * - word itself
-		 */
-		row.add(docPid);
-		row.add(docTitle);
+        /*
+         * Order of kwic/hitProps is always the same:
+         * - punctuation (always present)
+         * - other (non-internal) properties (in order of declaration in the index)
+         * - word itself
+         */
+        row.add(docPid);
+        row.add(docTitle);
 
-		// Only kwic supported, original document output not supported in csv currently.
-		row.add(StringUtils.join(interleave(kwic.getLeft("punct"), kwic.getLeft(mainTokenProperty)).toArray()));
-		row.add(StringUtils.join(kwic.getMatch(mainTokenProperty), " ")); // what to do about punctuation and whitespace?
-		row.add(StringUtils.join(interleave(kwic.getRight("punct"), kwic.getRight(mainTokenProperty)).toArray()));
+        // Only kwic supported, original document output not supported in csv currently.
+        row.add(StringUtils.join(interleave(kwic.getLeft("punct"), kwic.getLeft(mainTokenProperty)).toArray()));
+        row.add(StringUtils.join(kwic.getMatch(mainTokenProperty), " ")); // what to do about punctuation and whitespace?
+        row.add(StringUtils.join(interleave(kwic.getRight("punct"), kwic.getRight(mainTokenProperty)).toArray()));
 
-		// Add all other properties in this word
-		for (String otherProp : otherTokenProperties)
-			row.add(StringUtils.join(kwic.getMatch(otherProp), " "));
-	}
+        // Add all other properties in this word
+        for (String otherProp : otherTokenProperties)
+            row.add(StringUtils.join(kwic.getMatch(otherProp), " "));
+    }
 
-	private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
-		final String mainTokenProperty = getSearcher().getIndexStructure().getMainContentsField().getMainProperty().getName();
-		List<String> otherTokenProperties = new ArrayList<>();
+    private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
+        final String mainTokenProperty = getSearcher().getIndexStructure().getMainContentsField().getMainProperty().getName();
+        List<String> otherTokenProperties = new ArrayList<>();
 
-		try {
-			// Build the table headers
-			// The first few columns are fixed, and an additional columns is appended per property of tokens in this corpus.
-			List<String> columns = new ArrayList<>();
-			columns.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
+        try {
+            // Build the table headers
+            // The first few columns are fixed, and an additional columns is appended per property of tokens in this corpus.
+            ArrayList<String> row = new ArrayList<>();
+            row.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
 
-			// Retrieve the additional columns
-			for (String complexFieldName : getSearcher().getIndexStructure().getComplexFields()) {
-				ComplexFieldDesc complexField = getSearcher().getIndexStructure().getComplexFieldDesc(complexFieldName);
-				for (String tokenProperty : complexField.getProperties()) {
-					PropertyDesc desc = complexField.getPropertyDesc(tokenProperty);
-					if (tokenProperty.equals(mainTokenProperty) || desc.isInternal())
-						continue;
+            // Retrieve the additional columns
+            for (String complexFieldName : getSearcher().getIndexStructure().getComplexFields()) {
+                ComplexFieldDesc complexField = getSearcher().getIndexStructure().getComplexFieldDesc(complexFieldName);
+                for (String tokenProperty : complexField.getProperties()) {
+                    PropertyDesc desc = complexField.getPropertyDesc(tokenProperty);
+                    if (tokenProperty.equals(mainTokenProperty) || desc.isInternal())
+                        continue;
 
-					columns.add(tokenProperty);
-					otherTokenProperties.add(tokenProperty);
-				}
-			}
+                    row.add(tokenProperty);
+                    otherTokenProperties.add(tokenProperty);
+                }
+            }
 
-			// Explicitly declare the separator, excel normally uses a locale-dependent CSV-separator...
-			CSVPrinter printer = CSVFormat.EXCEL.withHeader(columns.toArray(new String[0])).print(new StringBuilder("sep=,\r\n"));
+            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
+            CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
+            CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
+            addSummaryCommonFieldsCSV(format, printer, searchParam);
+            row.clear();
 
-			// Write the hits
-			// We cannot use hitsPerDoc unfortunately, because the hits will come out sorted by their document, and we need a global order
-			// So we need to manually retrieve the documents and their data
-			Map<Integer, Pair<String, String>> luceneIdToPidAndTitle = new HashMap<>();
-			ArrayList<String> row = new ArrayList<>();
-			for (Hit hit : hits) {
-				String pid;
-				String title;
+            // Write the hits
+            // We cannot use hitsPerDoc unfortunately, because the hits will come out sorted by their document, and we need a global order
+            // So we need to manually retrieve the documents and their data
+            Map<Integer, Pair<String, String>> luceneIdToPidAndTitle = new HashMap<>();
+            for (Hit hit : hits) {
+                String pid;
+                String title;
 
-				if (!luceneIdToPidAndTitle.containsKey(hit.doc)) {
-					Document doc = getSearcher().document(hit.doc);
-					pid = getDocumentPid(getSearcher(), hit.doc, doc);
-					title = doc.get(getSearcher().getIndexStructure().titleField());
+                if (!luceneIdToPidAndTitle.containsKey(hit.doc)) {
+                    Document doc = getSearcher().document(hit.doc);
+                    pid = getDocumentPid(getSearcher(), hit.doc, doc);
+                    title = doc.get(getSearcher().getIndexStructure().titleField());
 
-					if (title == null || title.isEmpty())
-						title = "unknown (pid: " + pid + ")";
+                    if (title == null || title.isEmpty())
+                        title = "unknown (pid: " + pid + ")";
 
-					luceneIdToPidAndTitle.put(hit.doc, Pair.of(pid, title));
-				} else {
-					Pair<String, String> p = luceneIdToPidAndTitle.get(hit.doc);
-					pid = p.getLeft();
-					title = p.getRight();
-				}
+                    luceneIdToPidAndTitle.put(hit.doc, Pair.of(pid, title));
+                } else {
+                    Pair<String, String> p = luceneIdToPidAndTitle.get(hit.doc);
+                    pid = p.getLeft();
+                    title = p.getRight();
+                }
 
-				writeHit(hits.getKwic(hit), mainTokenProperty, otherTokenProperties, pid, title, row);
-				printer.printRecord(row);
-			}
-			printer.flush();
-			ds.plain(printer.getOut().toString());
-		} catch (IOException e) {
-			throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
-		}
-	}
+                writeHit(hits.getKwic(hit), mainTokenProperty, otherTokenProperties, pid, title, row);
+                printer.printRecord(row);
+            }
+            printer.flush();
+            ds.plain(printer.getOut().toString());
+        } catch (IOException e) {
+            throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
+        }
+    }
 
 
-	@Override
-	public int handle(DataStream ds) throws BlsException {
-		Pair<Hits, HitGroups> result = getHits();
-		if (result.getLeft() != null)
-			writeHits(result.getLeft(), (DataStreamPlain) ds);
-		else
-			writeGroups(result.getRight(), (DataStreamPlain) ds);
+    @Override
+    public int handle(DataStream ds) throws BlsException {
+        Pair<Hits, HitGroups> result = getHits();
+        if (result.getLeft() != null)
+            writeHits(result.getLeft(), (DataStreamPlain) ds);
+        else
+            writeGroups(result.getRight(), (DataStreamPlain) ds);
 
-		return HTTP_OK;
-	}
+        return HTTP_OK;
+    }
 
-	@Override
-	public DataFormat getOverrideType() {
-		return DataFormat.CSV;
-	}
+    @Override
+    public DataFormat getOverrideType() {
+        return DataFormat.CSV;
+    }
 
-	private static List<String> interleave(List<String> a, List<String> b) {
-		List<String> out = new ArrayList<>();
+    private static List<String> interleave(List<String> a, List<String> b) {
+        List<String> out = new ArrayList<>();
 
-		List<String> smallest = a.size() < b.size() ? a : b;
-		List<String> largest = a.size() > b.size() ? a : b;
-		for (int i = 0; i < smallest.size(); ++i) {
-			out.add(a.get(i));
-			out.add(b.get(i));
-		}
+        List<String> smallest = a.size() < b.size() ? a : b;
+        List<String> largest = a.size() > b.size() ? a : b;
+        for (int i = 0; i < smallest.size(); ++i) {
+            out.add(a.get(i));
+            out.add(b.get(i));
+        }
 
-		for (int i = largest.size()-1; i >= smallest.size(); --i)
-			out.add(largest.get(i));
+        for (int i = largest.size()-1; i >= smallest.size(); --i)
+            out.add(largest.get(i));
 
-		return out;
-	}
+        return out;
+    }
 }

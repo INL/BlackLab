@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -243,6 +244,15 @@ public class SearchParameters {
 			logger.debug("Illegal boolean value for parameter '" + name + "': " + value);
 			return false;
 		}
+	}
+
+	/**
+	 * Get an unmodifiable view of the parameters.
+	 *
+	 * @return the view
+	 */
+	public Map<String, String> getParameters() {
+	    return Collections.unmodifiableMap(map);
 	}
 
 	public void dataStream(DataStream ds) {
