@@ -140,7 +140,7 @@ public class IndexManager {
 
 		if (indices.isEmpty() && collectionsDirs.isEmpty() && userCollectionsDir == null) {
 			throw new ConfigurationException(
-				"Configuration error: no index locations found. Create " +
+				"Configuration error: no readable index locations found. Create " +
 				"/etc/blacklab/blacklab-server.json containing at least the following:\n" +
 				"{\n" +
 				"  \"indexCollections\": [\n" +

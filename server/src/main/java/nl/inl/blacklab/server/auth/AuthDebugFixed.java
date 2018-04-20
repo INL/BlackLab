@@ -21,7 +21,7 @@ public class AuthDebugFixed {
 
 	public AuthDebugFixed(Map<String, Object> parameters) {
 		Object u = parameters.get("userId");
-        this.userId = u != null ? u.toString() : "jan.niestadt@inl.nl";
+        this.userId = u != null ? u.toString() : "DEBUG-USER";
 	}
 
 	public User determineCurrentUser(HttpServlet servlet,

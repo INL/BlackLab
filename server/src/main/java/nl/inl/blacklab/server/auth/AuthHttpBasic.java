@@ -17,9 +17,8 @@ import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 /**
  * Use basic HTTP authentication.
  * 
- * NOTE: this does not work properly with our corpus-frontend,
- * because not all requests originate from the client side,
- * so the credentials are not always passed to blacklab-server.
+ * Note that you will have to enable this in web.xml for this
+ * to work.
  */
 public class AuthHttpBasic {
 

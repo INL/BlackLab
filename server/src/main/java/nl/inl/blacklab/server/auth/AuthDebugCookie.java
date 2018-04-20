@@ -15,10 +15,6 @@ import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 
 /**
  * Set a cookie to simulate a logged-in user.
- * 
- * NOTE: this does not work properly with our corpus-frontend,
- * because not all requests originate from the client side,
- * so the cookie is not always passed to blacklab-server.
  */
 public class AuthDebugCookie {
 
@@ -35,17 +31,21 @@ public class AuthDebugCookie {
 	public User determineCurrentUser(HttpServlet servlet,
 			HttpServletRequest request) {
 
-        Cookie[] cookies = request.getCookies();
-        String userId = null;
-        if (cookies != null) {
-            // Controleer of we een sessie-cookie hebben
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("autosearch-debug-user")) {
-                    userId = cookie.getValue();
-                }
-            }
-        }
+		if (userId == null) {
+        	// Is there a cookie yet?
+	        Cookie[] cookies = request.getCookies();
+	        if (cookies != null) {
+	            // Controleer of we een sessie-cookie hebben
+	            for (Cookie cookie : cookies) {
+	                if (cookie.getName().equals("autosearch-debug-user")) {
+	                    userId = cookie.getValue();
+	                }
+	            }
+	        }
+		}
+		
         if (userId == null) {
+        	// No cookie yet. Generate userId based on sessionId. Cookie will be saved in persistUser().
             userId = request.getSession().getId();
             if (userId.length() > 6) {
                 userId = userId.substring(0, 6);

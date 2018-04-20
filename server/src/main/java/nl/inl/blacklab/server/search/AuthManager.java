@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.jobs.User;
 
@@ -51,15 +52,16 @@ public class AuthManager {
 		}
 	}
 
-	public Method getAuthMethodDetermineCurrentUser() {
-		return authMethodDetermineCurrentUser;
-	}
-
-	public User determineCurrentUser(HttpServlet servlet, HttpServletRequest request) {
+	public User determineCurrentUser(BlackLabServer servlet, HttpServletRequest request) {
 		// If no auth system is configured, all users are anonymous
 		if (authObj == null) {
 			User user = User.anonymous(request.getSession().getId());
 			return user;
+		}
+		
+		// Is client on debug IP and is there a userid parameter?
+		if (servlet.getSearchManager().config().overrideUserId(request.getRemoteAddr()) && request.getParameter("userid") != null) {
+			return User.loggedIn(request.getParameter("userid"), request.getSession().getId());
 		}
 
 		// Let auth system determine the current user.
