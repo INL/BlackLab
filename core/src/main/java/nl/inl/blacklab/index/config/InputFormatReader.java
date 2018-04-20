@@ -303,6 +303,7 @@ public class InputFormatReader extends YamlJsonReader {
                 Entry<String, JsonNode> e = itTag.next();
                 switch(e.getKey()) {
                 case "path": t.setPath(str(e)); break;
+                case "displayAs": t.setDisplayAs(str(e)); break;
                 default:
                     throw new InputFormatConfigException("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
                 }
