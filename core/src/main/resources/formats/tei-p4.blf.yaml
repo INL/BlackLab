@@ -56,9 +56,10 @@ annotatedFields:
     # XML tags within the content we'd like to index
     # (relative to container)
     inlineTags:
-    - path: .//s
-      #call: openSonarSentence  # to call a plugin method for this tag
-    - path: .//p
+    - path: .//s   # Sentence
+    - path: .//p   # Paragraph
+    - path: .//pb  # Page beginning
+    - path: .//lb  # Line beginning
 
 # FoLiA's native metadata
 metadata:

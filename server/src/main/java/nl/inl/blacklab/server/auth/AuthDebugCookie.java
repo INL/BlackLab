@@ -22,8 +22,6 @@ public class AuthDebugCookie {
     
     static final int TIEN_JAAR = 10 * 365 * 24 * 60 * 60;
     
-    String userId;
-    
 	public AuthDebugCookie(Map<String, Object> parameters) {
 		// doesn't take any parameters
 	}
@@ -31,24 +29,24 @@ public class AuthDebugCookie {
 	public User determineCurrentUser(HttpServlet servlet,
 			HttpServletRequest request) {
 
-		if (userId == null) {
-        	// Is there a cookie yet?
-	        Cookie[] cookies = request.getCookies();
-	        if (cookies != null) {
-	            // Controleer of we een sessie-cookie hebben
-	            for (Cookie cookie : cookies) {
-	                if (cookie.getName().equals("autosearch-debug-user")) {
-	                    userId = cookie.getValue();
-	                }
-	            }
-	        }
-		}
+		// Is there a cookie yet?
+		String userId = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            // Controleer of we een sessie-cookie hebben
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("autosearch-debug-user")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
+        }
 		
         if (userId == null) {
         	// No cookie yet. Generate userId based on sessionId. Cookie will be saved in persistUser().
             userId = request.getSession().getId();
             if (userId.length() > 6) {
-                userId = userId.substring(0, 6);
+            	userId = userId.substring(0, 6);
             }
             userId = "user-" + userId;
             
