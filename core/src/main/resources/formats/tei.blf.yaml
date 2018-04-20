@@ -9,11 +9,6 @@ description: A TEI P5 variant. The text element will be indexed as annotated con
 # (not used by BlackLab, purely informational for the frontend application)
 type: content
 
-# What namespaces do we use in our XPaths?
-# (if none are declared, ignore namespaces)
-#namespaces:
-#  '': http://ilk.uvt.nl/folia    # ('' -> default namespace)
-
 # What element starts a new document?
 # (the only absolute XPath; the rest is relative)
 documentPath: //TEI

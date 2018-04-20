@@ -12,11 +12,11 @@ type: content
 # What namespaces do we use in our XPaths?
 # (if none are declared, ignore namespaces)
 namespaces:
-  '': http://ilk.uvt.nl/folia    # ('' -> default namespace)
+  'folia': http://ilk.uvt.nl/folia
 
 # What element starts a new document?
 # (the only absolute XPath; the rest is relative)
-documentPath: //FoLiA
+documentPath: //folia:FoLiA
 
 # Annotated, CQL-searchable fields (also called "complex fields").
 # We usually have just one, named "contents".
@@ -32,10 +32,10 @@ annotatedFields:
 
     # What element (relative to document) contains this field's contents?
     # (if omitted, entire document is used)
-    #containerPath: text
+    #containerPath: folia:text
 
     # What are our word tags? (relative to container)
-    wordPath: .//w
+    wordPath: .//folia:w
 
     # If specified, a mapping from this id to token position will be saved, so we 
     # can refer back to it for standoff annotations later.
@@ -49,27 +49,20 @@ annotatedFields:
     annotations:
 
     - name: word
-      valuePath: t
+      valuePath: folia:t
 
     - name: lemma
-      valuePath: lemma/@class
+      valuePath: folia:lemma/@class
 
     - name: pos
-      basePath: pos  # subsequent XPaths are relative to this
+      basePath: folia:pos  # subsequent XPaths are relative to this
       valuePath: "@class"
       subAnnotations:
-      - name: head
+      - name: folia:head
         valuePath: "@head"
-      - forEachPath: "feat"
+      - forEachPath: folia:feat
         namePath: "@subset"
         valuePath: "@class"
-
-    # Some optional annotations follow. In the future, maybe we could have these
-    # defined but disabled by default, and allow derived formats to activate them as needed.
-    # Same for linked metadata types.
-
-    #- name: phonetic
-    #  valuePath: .//ph
 
     #- name: xmlid
     #  valuePath: "@xml:id"          # NOTE: xml:id of w tag
@@ -78,33 +71,10 @@ annotatedFields:
     #    find: "^[^\\.]*\\.(.*)$"    # find first .
     #    replace: "$1"               # keep everything after that
 
-    #- name: speaker
-    #  valuePath: .//speaker
-
-    # Standoff annotations:
-    # refTokenPositionIdPath needs to refer back to the tokenPositionId for words defined above.
-    # (In the future, we could add the ability to refer to e.g. start/end of sentence
-    # positions using tokenPositionIds as well.)
-    # standoffAnnotations:
-    # -
-    #   # Element containing the values to index
-    #   path: //timesegment
-    #   # What token position(s) to index these values at
-    #   # (may have multiple matches per path element; values will be indexed at all those positions)
-    #   refTokenPositionIdPath: wref/@id
-    #   # The actual annotations
-    #   # (structure identical to regular annotations, so e.g. processValue and subAnnotations would work as well)
-    #   annotations:
-    #   - name: begintime
-    #     valuePath: ../@begintime
-    #   - name: endtime
-    #     valuePath: ../@endtime
-
     # XML tags within the content we'd like to index
     # (relative to container)
     inlineTags:
     - path: .//s
-      #call: openSonarSentence  # to call a plugin method for this tag
     - path: .//p
 
 # FoLiA's native metadata
@@ -117,8 +87,8 @@ metadata:
     namePath: local-name()
     valuePath: .
 
-- containerPath: metadata[@type='native']
+- containerPath: folia:metadata[@type='native']
   fields:
-  - forEachPath: meta
+  - forEachPath: folia:meta
     namePath: "@id"
     valuePath: .
