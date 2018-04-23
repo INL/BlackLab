@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
@@ -50,6 +52,8 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
  */
 public class ComplexField {
 
+    protected static final Logger logger = LogManager.getLogger(ComplexField.class);
+
 	private Map<String, ComplexFieldProperty> properties = new HashMap<>();
 
 	private IntArrayList start = new IntArrayList();
@@ -76,6 +80,10 @@ public class ComplexField {
 	 * @param mainPropHasPayloads does the main property have payloads?
 	 */
 	public ComplexField(String name, String mainPropertyName, SensitivitySetting sensitivity, boolean mainPropHasPayloads) {
+	    if (!ComplexFieldUtil.isValidXmlElementName(name))
+	        logger.warn("Field name '" + name + "' is discouraged (field/property names should be valid XML element names)");
+        if (!ComplexFieldUtil.isValidXmlElementName(mainPropertyName))
+            logger.warn("Property name '" + mainPropertyName + "' is discouraged (field/property names should be valid XML element names)");
 		boolean includeOffsets = true;
 		fieldName = name;
 		if (mainPropertyName == null)
@@ -89,6 +97,8 @@ public class ComplexField {
 	}
 
 	public ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity, boolean includePayloads) {
+        if (!ComplexFieldUtil.isValidXmlElementName(name))
+            logger.warn("Property name '" + name + "' is discouraged (field/property names should be valid XML element names)");
 		ComplexFieldProperty p = new ComplexFieldProperty(name, sensitivity, false, includePayloads);
 		if (noForwardIndexProps.contains(name)) {
 			p.setForwardIndex(false);

@@ -17,6 +17,7 @@ package nl.inl.blacklab.index.complex;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
@@ -64,6 +65,9 @@ public class ComplexFieldUtil {
 	/** For properties combined in a single Lucene field, this is the separator between the
 	 *  name prefix of an indexed value and the actual value of the property */
 	public static final String SUBPROPERTY_SEPARATOR = "\u001F";
+
+	/** Valid XML element names. Field and property names should generally conform to this. */
+    static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9\\-_\\.]*");
 
 	/**
 	 * String used to separate the base field name (say, contents) and the field property (pos,
@@ -460,6 +464,18 @@ public class ComplexFieldUtil {
 		// both-sensitive or case-insensitive
 		return fieldPropAltName.endsWith(ALT_SEP + "s") || fieldPropAltName.endsWith(ALT_SEP + "ci");
 	}
-
+	
+	/**
+	 * Is the specified name a valid XML element name?
+	 * 
+	 * Generally, field and property names should be valid XML element names,
+	 * so we don't have to sanitize them when generating output XML.
+	 * 
+	 * @param name name to check
+	 * @return true iff it's a valid XML element name
+	 */
+    public static boolean isValidXmlElementName(String name) {
+        return REGEX_VALID_XML_ELEMENT_NAME.matcher(name).matches();
+    }
 
 }
