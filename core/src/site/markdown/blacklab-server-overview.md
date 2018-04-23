@@ -567,6 +567,10 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
 	            "127.0.0.1",      // IPv4 localhost
 	            "0:0:0:0:0:0:0:1" // IPv6 localhost
 	        ],
+	        
+            // When true exclude empty word properties (lemma, pos,...) in 
+            // result (default is to include empty properties)
+            "omitEmptyProperties": false
 	    },
 	
 	    // Settings related to tuning server load and client 

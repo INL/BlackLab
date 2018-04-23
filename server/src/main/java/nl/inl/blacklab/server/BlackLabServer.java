@@ -255,6 +255,7 @@ public class BlackLabServer extends HttpServlet {
 		StringWriter buf = new StringWriter();
 		PrintWriter out = new PrintWriter(buf);
 		DataStream ds = DataStream.create(outputType, out, prettyPrint, callbackFunction);
+		ds.setOmitEmptyProperties(searchManager.config().isOmitEmptyProperties());
 		ds.startDocument(rootEl);
 		StringWriter errorBuf = new StringWriter();
 		PrintWriter errorOut = new PrintWriter(errorBuf);
