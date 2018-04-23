@@ -435,7 +435,7 @@ To see what users (if any) a private index is currently shared with, use:
 
  /blacklab-server/INDEX_NAME/sharing
  
-To set the list of users to share a private index with, send a POST request to the same URL with the 'users' parameter containing a newline-separated list of users. You can leave the parameter empty if you don't want to share the index anymore.
+To set the list of users to share a private index with, send a POST request to the same URL with the 'users[]' parameter for each user to share with (that is, you should specify this parameter multiple times, once for each user). You can leave the parameter empty if you don't want to share the index anymore.
 
 The sharing information is stored in the index directory in a file named `.shareWithUsers`.
 

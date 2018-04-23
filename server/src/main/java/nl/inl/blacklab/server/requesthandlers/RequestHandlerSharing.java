@@ -33,11 +33,13 @@ public class RequestHandlerSharing extends RequestHandler {
         Index index = indexMan.getIndex(indexName);
         
         // If POST request with 'users' parameter: update the list of users to share with
-        String[] users = request.getParameterValues("users[]");
-		if (request.getMethod().equals("POST") && users != null) {
+		if (request.getMethod().equals("POST")) {
 	        if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
 	            throw new NotAuthorized("You can only share your own private indices with others.");
 		    // Update the list of users to share with
+	        String[] users = request.getParameterValues("users[]");
+	        if (users == null)
+	            users = new String[0];
     		List<String> shareWithUsers = Arrays.asList(users).stream().map(String::trim).collect(Collectors.toList());
     		index.setShareWithUsers(shareWithUsers);
     		return Response.success(ds, "Index shared with specified user(s).");
