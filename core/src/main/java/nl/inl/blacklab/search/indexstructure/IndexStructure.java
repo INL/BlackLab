@@ -74,6 +74,38 @@ public class IndexStructure {
 	 */
 	static final String LATEST_INDEX_FORMAT = "3.1";
 
+	/** What keys may occur at top level? */
+    static final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
+            "displayName", "description", "contentViewable", "textDirection", 
+            "documentFormat", "tokenCount", "versionInfo", "fieldInfo"));
+
+    /** What keys may occur under versionInfo? */
+    static final Set<String> KEYS_VERSION_INFO = new HashSet<>(Arrays.asList(
+            "indexFormat", "blackLabBuildTime", "blackLabVersion", "timeCreated", 
+            "timeModified", "alwaysAddClosingToken", "tagLengthInPayload"));
+    
+    /** What keys may occur under fieldInfo? */
+    static final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
+            "namingScheme", "unknownCondition", "unknownValue",
+            "metadataFields", "complexFields", "metadataFieldGroups", 
+            "defaultAnalyzer", "titleField", "authorField", "dateField", "pidField"));
+    
+    /** What keys may occur under metadataFieldGroups group? */
+    static final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
+            "name", "fields", "addRemainingFields"));
+    
+    /** What keys may occur under metadata field config? */
+    static final Set<String> KEYS_META_FIELD_CONFIG = new HashSet<>(Arrays.asList(
+            "type", "displayName", "uiType",
+            "description", "group", "analyzer", 
+            "unknownValue", "unknownCondition", "values", 
+            "displayValues", "displayOrder", "valueListComplete"));
+    
+    /** What keys may occur under complex field config? */
+    static final Set<String> KEYS_COMPLEX_FIELD_CONFIG = new HashSet<>(Arrays.asList(
+            "displayName", "description", "mainProperty",
+            "noForwardIndexProps", "displayOrder"));
+    
 	public static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	/** A named group of ordered metadata fields */
@@ -988,6 +1020,23 @@ public class IndexStructure {
         this.textDirection = textDirection;
     }
 
+    /**
+     * If the object node contains any keys other than those specified, warn about it
+     * 
+     * @param where where are we in the file (e.g. "top level", "complex field 'contents'", etc.)
+     * @param node node to check
+     * @param knownKeys keys that may occur under this node
+     */
+    private void warnUnknownKeys(String where, JsonNode node, Set<String> knownKeys) {
+        Iterator<Entry<String, JsonNode>> it = node.fields();
+        while (it.hasNext()) {
+            Entry<String, JsonNode> e = it.next();
+            String key = e.getKey();
+            if (!knownKeys.contains(key))
+                logger.warn("Unknown key " + key + " " + where + " in indexmetadata file");
+        }
+    }
+    
     /** Extract the index structure from the (in-memory) JSON structure (and Lucene index).
      *
      * Looks at the Lucene index to detect certain information (sometimes) missing from the
@@ -1004,6 +1053,7 @@ public class IndexStructure {
      */
     private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate, boolean initTimestamps) {
         // Read and interpret index metadata file
+        warnUnknownKeys("at top-level", jsonRoot, KEYS_TOP_LEVEL);
         displayName = Json.getString(jsonRoot, "displayName", "");
         description = Json.getString(jsonRoot, "description", "");
         contentViewable = Json.getBoolean(jsonRoot, "contentViewable", false);
@@ -1011,7 +1061,8 @@ public class IndexStructure {
         documentFormat = Json.getString(jsonRoot, "documentFormat", "");
         tokenCount = Json.getLong(jsonRoot, "tokenCount", 0);
 
-        JsonNode versionInfo = Json.getObject(jsonRoot, "versionInfo");
+        ObjectNode versionInfo = Json.getObject(jsonRoot, "versionInfo");
+        warnUnknownKeys("in versionInfo", versionInfo, KEYS_VERSION_INFO);
         indexFormat = Json.getString(versionInfo, "indexFormat", "");
         if (initTimestamps) {
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
@@ -1025,9 +1076,11 @@ public class IndexStructure {
         }
         alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
         tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
+        
         // Specified in index metadata file?
         String namingScheme;
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
+        warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
         FieldInfos fis = reader == null ? null : MultiFields.getMergedFieldInfos(reader);
         if (fieldInfo.has("namingScheme")) {
             // Yes.
@@ -1075,6 +1128,7 @@ public class IndexStructure {
             JsonNode groups = fieldInfo.get("metadataFieldGroups");
             for (int i = 0; i < groups.size(); i++) {
                 JsonNode group = groups.get(i);
+                warnUnknownKeys("in metadataFieldGroup", group, KEYS_METADATA_GROUP);
                 String name = Json.getString(group, "name", "UNKNOWN");
                 List<String> fields = Json.getListOfStrings(group, "fields");
                 MetadataGroup metadataGroup = new MetadataGroup(name, fields);
@@ -1090,6 +1144,7 @@ public class IndexStructure {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
                 JsonNode fieldConfig = entry.getValue();
+                warnUnknownKeys("in metadata field config for '" + fieldName + "'", fieldConfig, KEYS_META_FIELD_CONFIG);                
                 FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
                 MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, fieldType);
                 fieldDesc.setDisplayName     (Json.getString(fieldConfig, "displayName", fieldName));
@@ -1116,6 +1171,7 @@ public class IndexStructure {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
                 JsonNode fieldConfig = entry.getValue();
+                warnUnknownKeys("in complex field config for '" + fieldName + "'", fieldConfig, KEYS_COMPLEX_FIELD_CONFIG);                
                 ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
                 fieldDesc.setDisplayName (Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setDescription (Json.getString(fieldConfig, "description", ""));
@@ -1180,7 +1236,7 @@ public class IndexStructure {
             	}
             } // even if we have metadata, we still have to detect props/alts
         }
-
+        
         defaultAnalyzerName = Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT");
 
         titleField = authorField = dateField = pidField = null;
