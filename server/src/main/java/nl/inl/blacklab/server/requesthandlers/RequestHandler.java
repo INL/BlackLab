@@ -31,6 +31,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -78,7 +79,8 @@ public abstract class RequestHandler {
 		availableHandlers.put("termfreq", RequestHandlerTermFreq.class);
 		availableHandlers.put("", RequestHandlerIndexStructure.class);
 		availableHandlers.put("explain", RequestHandlerExplain.class);
-		availableHandlers.put("autocomplete", RequestHandlerAutocomplete.class);
+        availableHandlers.put("autocomplete", RequestHandlerAutocomplete.class);
+        availableHandlers.put("sharing", RequestHandlerSharing.class);
 	}
 
 	/**
@@ -103,7 +105,7 @@ public abstract class RequestHandler {
 		RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName, null, null);
 		if (indexName.startsWith(":")) {
 			if (!user.isLoggedIn())
-				return errorObj.unauthorized("Log in to access your private indices.");
+				return errorObj.unauthorized("Log in to access your private index.");
 			// Private index. Prefix with user id.
 			indexName = user.getUserId() + indexName;
 		}
@@ -112,21 +114,23 @@ public abstract class RequestHandler {
 		boolean resourceOrPathGiven = urlResource.length() > 0 || urlPathInfo.length() > 0;
         boolean pathGiven = urlPathInfo.length() > 0;
 
-        // If we're doing something with a private index, it must be our own.
-		boolean isPrivateIndex = false;
+        // If we're reading a private index, we must own it or be on the share list.
+        // If we're modifying a private index, it must be our own.
+		boolean isYourPrivateIndex = false;
 		//logger.debug("Got indexName = \"" + indexName + "\" (len=" + indexName.length() + ")");
-		String shortName = indexName;
 		if (indexName.contains(":")) {
-			isPrivateIndex = true;
-			String[] userAndIndexName = indexName.split(":");
-			if (userAndIndexName.length > 1)
-				shortName = userAndIndexName[1];
-			else
-				return errorObj.illegalIndexName("");
+		    // It's a private index. Check if the logged-in user has access.
 			if (!user.isLoggedIn())
-				return errorObj.unauthorized("Log in to access your private indices.");
-			if (!user.getUserId().equals(userAndIndexName[0]))
-				return errorObj.unauthorized("You cannot access another user's private indices.");
+				return errorObj.unauthorized("Log in to access a private index.");
+			try {
+                Index index = searchManager.getIndexManager().getIndex(indexName);
+                if (!index.userMayRead(user.getUserId()))
+                	return errorObj.unauthorized("You are not authorized to access this index.");
+                isYourPrivateIndex = user.getUserId().equals(index.getUserId());
+            } catch (IndexNotFound e) {
+                // Ignore this here; this is either not an index name but some other request (e.g. cache-info)
+                // or it is an index name but will trigger an error later.
+            }
 		}
 
 		// Choose the RequestHandler subclass
@@ -143,7 +147,7 @@ public abstract class RequestHandler {
     			if (indexName.length() == 0 || resourceOrPathGiven) {
     				return errorObj.methodNotAllowed("DELETE", null);
     			}
-    			if (!isPrivateIndex)
+    			if (!isYourPrivateIndex)
     				return errorObj.forbidden("You can only delete your own private indices.");
                 requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
             }
@@ -168,16 +172,21 @@ public abstract class RequestHandler {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You must be logged in to add a format.");
                     requestHandler = new RequestHandlerAddFormat(servlet, request, user, indexName, urlResource, urlPathInfo);
-				} else if (/*request.getParameter("data") != null*/ServletFileUpload.isMultipartContent(request)) {
+				} else if (ServletFileUpload.isMultipartContent(request)) {
 					// Add document to index
-					if (!isPrivateIndex)
-						return errorObj.forbidden("Can only POST to private indices.");
-					if (urlResource.equals("docs") && urlPathInfo.length() == 0) {
+					if (!isYourPrivateIndex)
+						return errorObj.forbidden("Can only POST to your own private indices.");
+					if (urlResource.equals("docs") && urlPathInfo.isEmpty()) {
 						if (!Index.isValidIndexName(indexName))
-							return errorObj.illegalIndexName(shortName);
+							return errorObj.illegalIndexName(indexName);
 
 						// POST to /blacklab-server/indexName/docs/ : add data to index
 						requestHandler = new RequestHandlerAddToIndex(servlet, request, user, indexName, urlResource, urlPathInfo);
+					} else if (urlResource.equals("sharing") && urlPathInfo.isEmpty()) {
+                        if (!Index.isValidIndexName(indexName))
+                            return errorObj.illegalIndexName(indexName);
+                        // POST to /blacklab-server/indexName/sharing : set list of users to share with
+                        requestHandler = new RequestHandlerSharing(servlet, request, user, indexName, urlResource, urlPathInfo);
 					} else {
 						return errorObj.methodNotAllowed("POST", "You can only add new files at .../indexName/docs/");
 					}
@@ -215,7 +224,7 @@ public abstract class RequestHandler {
 
 						if (debugMode && !handlerName.isEmpty() && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs", 
 						        "docs-csv", "docs-grouped-csv", "fields", "termfreq", 
-						        "status", "autocomplete").contains(handlerName)) {
+						        "status", "autocomplete", "sharing").contains(handlerName)) {
 							handlerName = "debug";
 						}
 

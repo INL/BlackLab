@@ -429,6 +429,16 @@ To view an input format configuration, use `/blacklab-server/input-formats/FORMA
 
 To remove an input format, send a DELETE request to the format page, e.g. `/blacklab-server/input-formats/FORMAT_NAME`.
 
+#### Share private index with a list of users
+
+To see what users (if any) a private index is currently shared with, use:
+
+ /blacklab-server/INDEX_NAME/sharing
+ 
+To set the list of users to share a private index with, send a POST request to the same URL with the 'users' parameter containing a newline-separated list of users. You can leave the parameter empty if you don't want to share the index anymore.
+
+The sharing information is stored in the index directory in a file named `.shareWithUsers`.
+
 <a id="installation"></a>
 
 ## Installation

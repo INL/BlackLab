@@ -192,7 +192,7 @@ public class IndexManager {
             throw new IndexNotFound(e.getMessage());
         }
 	}
-
+	
 	/**
 	 * Create an empty user index.
 	 *
