@@ -35,7 +35,7 @@ import nl.inl.blacklab.server.util.FileUploadHandler;
  */
 public class RequestHandlerAddToIndex extends RequestHandler {
 	// TODO make configurable?
-	public static final int MAX_TOKEN_COUNT = 1_000_000;
+	public static final int MAX_TOKEN_COUNT = 100_000_000;
 
 	String indexError = null;
 
