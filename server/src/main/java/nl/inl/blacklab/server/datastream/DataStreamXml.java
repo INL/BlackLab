@@ -226,7 +226,8 @@ public class DataStreamXml extends DataStream {
 			for (int k = 1; k < names.size() - 1; k++) {
 				String name = names.get(k);
 				String value = values.get(vIndex + 1 + j);
-				print(" ").print(name).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
+				if (!omitEmptyProperties || !value.isEmpty())
+				    print(" ").print(name).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
 				j++;
 			}
 			print(">");
