@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -302,6 +303,7 @@ public class InputFormatReader extends YamlJsonReader {
                 Entry<String, JsonNode> e = itTag.next();
                 switch(e.getKey()) {
                 case "path": t.setPath(str(e)); break;
+                case "displayAs": t.setDisplayAs(str(e)); break;
                 default:
                     throw new InputFormatConfigException("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
                 }
@@ -363,6 +365,16 @@ public class InputFormatReader extends YamlJsonReader {
                 case "unknownCondition": f.setUnknownCondition(UnknownCondition.fromStringValue(str(e))); break;
                 case "unknownValue": f.setUiType(str(e)); break;
                 case "analyzer": f.setAnalyzer(str(e)); break;
+                case "displayOrder":
+                    List<String> fields = new ArrayList<>();
+                    readStringList(e, fields);
+                    f.addDisplayOrder(fields);
+                    break;
+                case "displayValues":
+                    Map<String,String> values = new HashMap<>();
+                    readStringMap(e, values);
+                    f.addDisplayValues(values);
+                    break;
                 default:
                     throw new InputFormatConfigException("Unknown key " + e.getKey() + " in metadata field " + f.getName());
                 }

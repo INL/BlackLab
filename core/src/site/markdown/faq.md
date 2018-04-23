@@ -8,7 +8,7 @@ BlackLab is a good choice if you want to search a large body of text annotated w
 
 With BlackLab, you can search for complex patterns of words (e.g. “find all nouns preceded by two or three adjectives”). It can accurately highlight matches (not just simple terms) in the original document or show them in a keyword-in-context (KWIC) view. It can quickly sort or group large result sets based on several criteria, including the exact words matched or words surrounding the match. It can also search inside specific XML tags, so you can search for people or places, for example.
 
-BlackLab supports a few XML input formats right now, including [TEI](http://www.tei-c.org/), [ALTO](http://www.loc.gov/standards/alto/) and [FoLiA](http://proycon.github.io/folia/). Adding support for a new input format [is easy](add-input-format.html).
+BlackLab supports [a number of input formats](indexing-with-blacklab.html#supported-formats) out of the box. Adding support for a new input format [is easy](how-to-configure-indexing.html).
 
 Who uses it?
 ------------
@@ -79,7 +79,7 @@ We designed BlackLab to offer the flexibility that we missed in other corpus eng
 
 What do I do if BlackLab (Server) is slow and uses 100% CPU?
 ------------------------------------------------------------
-Usually this is memory-related. Make sure the JVM has enough heap space. If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl. See [here](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/).
+Usually this is memory-related. Make sure [the JVM has enough heap space](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl. See .
 
 Future plans
 ------------

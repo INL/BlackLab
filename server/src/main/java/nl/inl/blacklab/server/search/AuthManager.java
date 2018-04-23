@@ -1,14 +1,17 @@
 package nl.inl.blacklab.server.search;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.jobs.User;
 
@@ -23,6 +26,8 @@ public class AuthManager {
 	/** The method to invoke for determining the current user. */
 	private Method authMethodDetermineCurrentUser = null;
 
+    private Method authMethodPersistUser;
+
 	public AuthManager(String authClass, Map<String, Object> authParam) throws ConfigurationException {
 		if (authClass.length() > 0) {
 			try {
@@ -33,6 +38,11 @@ public class AuthManager {
 				Class<?> cl = Class.forName(authClass);
 				authObj = cl.getConstructor(Map.class).newInstance(authParam);
 				authMethodDetermineCurrentUser = cl.getMethod("determineCurrentUser", HttpServlet.class, HttpServletRequest.class);
+				try {
+				    authMethodPersistUser = cl.getMethod("persistUser", HttpServlet.class, HttpServletRequest.class, HttpServletResponse.class, User.class);
+				} catch (NoSuchMethodException e) {
+				    authMethodPersistUser = null; // ok, optional method
+				}
 			} catch (Exception e) {
 				throw new ConfigurationException("Error instantiating auth system: " + authClass, e);
 			}
@@ -42,15 +52,16 @@ public class AuthManager {
 		}
 	}
 
-	public Method getAuthMethodDetermineCurrentUser() {
-		return authMethodDetermineCurrentUser;
-	}
-
-	public User determineCurrentUser(HttpServlet servlet, HttpServletRequest request) {
+	public User determineCurrentUser(BlackLabServer servlet, HttpServletRequest request) {
 		// If no auth system is configured, all users are anonymous
 		if (authObj == null) {
 			User user = User.anonymous(request.getSession().getId());
 			return user;
+		}
+		
+		// Is client on debug IP and is there a userid parameter?
+		if (servlet.getSearchManager().config().overrideUserId(request.getRemoteAddr()) && request.getParameter("userid") != null) {
+			return User.loggedIn(request.getParameter("userid"), request.getSession().getId());
 		}
 
 		// Let auth system determine the current user.
@@ -60,6 +71,17 @@ public class AuthManager {
 		} catch (Exception e) {
 			throw new RuntimeException("Error determining current user", e);
 		}
+	}
+	
+	public void persistUser(HttpServlet servlet, HttpServletRequest request, HttpServletResponse response, User user) {
+        if (authMethodPersistUser != null) {
+            // i.e. set cookie
+            try {
+                authMethodPersistUser.invoke(authObj, servlet, request, response, user);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                throw new RuntimeException("Error persisting user information");
+            }
+        }
 	}
 
 }

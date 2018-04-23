@@ -2,12 +2,12 @@ displayName: TCF (Text Corpus Format)
 description: A text corpus format developed for WebLicht.
 
 namespaces:
-  '': http://www.dspin.de/data
+  'd': http://www.dspin.de/data
   'md': http://www.dspin.de/data/metadata
   'tc': http://www.dspin.de/data/textcorpus
   'cmd': http://www.clarin.eu/cmd/1
 
-documentPath: /D-Spin
+documentPath: /d:D-Spin
 
 annotatedFields:
 
@@ -39,12 +39,12 @@ annotatedFields:
     - name: lemma
       captureValuePaths:
       - "@ID"
-      valuePath: "/D-Spin/tc:TextCorpus/tc:lemmas/tc:lemma[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
+      valuePath: "/d:D-Spin/tc:TextCorpus/tc:lemmas/tc:lemma[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
 
     - name: pos
       captureValuePaths:
       - "@ID"
-      valuePath: "/D-Spin/tc:TextCorpus/tc:POStags/tc:tag[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
+      valuePath: "/d:D-Spin/tc:TextCorpus/tc:POStags/tc:tag[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
 
     #standoffAnnotations:
     #- path: tc:sentences/tc:sentence
@@ -53,7 +53,7 @@ annotatedFields:
 # Embedded CMDI metadata
 metadata:
 
-- containerPath: MetaData
+- containerPath: d:MetaData
   fields:
     # Capture all leaf elements as metadata fields
   - forEachPath: .//*[not(*) and text()] # all leaf elements containing text

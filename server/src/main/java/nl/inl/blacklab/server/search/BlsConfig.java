@@ -62,10 +62,10 @@ public class BlsConfig extends YamlJsonReader {
 	/** Omit empty properties in concordances (only in XML for now)? */
 	private boolean omitEmptyProperties = false;
 
-	/**
+    /**
 	 * Which IPs are allowed to override the userId using a parameter.
 	 */
-	private Set<String> overrideUserIdIps;
+	private Set<String> overrideUserIdIps = new HashSet<>();
 
 	/** Maximum allowed value for maxretrieve parameter (-1 = no limit). */
 	private int maxHitsToRetrieveAllowed;
@@ -189,14 +189,13 @@ public class BlsConfig extends YamlJsonReader {
 					"maxHitsToRetrieveAllowed", 10_000_000);
 			maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp,
 					"maxHitsToCountAllowed", -1);
-            if (reqProp.has("overrideUserIdIps")) {
-                JsonNode jsonOverrideUserIdIps = reqProp
-                        .get("overrideUserIdIps");
-                overrideUserIdIps = new HashSet<>();
-                for (int i = 0; i < jsonOverrideUserIdIps.size(); i++) {
-                    overrideUserIdIps.add(jsonOverrideUserIdIps.get(i).textValue());
-                }
-            }
+			if (reqProp.has("overrideUserIdIps")) {
+    			JsonNode jsonOverrideUserIdIps = reqProp.get("overrideUserIdIps");
+    			overrideUserIdIps = new HashSet<>();
+    			for (int i = 0; i < jsonOverrideUserIdIps.size(); i++) {
+    				overrideUserIdIps.add(jsonOverrideUserIdIps.get(i).textValue());
+    			}
+			}
 		} else {
 			defaultOutputType = DataFormat.XML;
 			defaultPageSize = 20;
@@ -324,5 +323,5 @@ public class BlsConfig extends YamlJsonReader {
     public boolean isOmitEmptyProperties() {
         return omitEmptyProperties;
     }
-    
+
 }
