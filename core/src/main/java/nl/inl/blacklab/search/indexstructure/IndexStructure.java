@@ -367,7 +367,8 @@ public class IndexStructure {
             for (ComplexFieldDesc d: complexFields.values()) {
                 if (mainContentsField == null || d.getName().equals("contents"))
                     mainContentsField = d;
-                d.detectMainProperty(reader);
+                if (tokenCount > 0) // no use trying this on an empty index
+                    d.detectMainProperty(reader);
             }
         }
     }
@@ -920,12 +921,13 @@ public class IndexStructure {
 	/**
 	 * Is this a new, empty index?
 	 *
-	 * An empty index is one that doesn't have a main contents field yet.
+	 * An empty index is one that doesn't have a main contents field yet,
+	 * or has a main contents field but no indexed tokens yet.
 	 *
 	 * @return true if it is, false if not.
 	 */
 	public boolean isNewIndex() {
-		return mainContentsField == null;
+		return mainContentsField == null || tokenCount == 0;
 	}
 
 	/**

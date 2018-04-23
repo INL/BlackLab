@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -166,7 +167,7 @@ public abstract class Searcher {
 	 * @throws IOException
 	 */
 	public static Searcher createIndex(File indexDir) throws IOException {
-		return createIndex(indexDir, null, null, false, TextDirection.LEFT_TO_RIGHT);
+		return createIndex(indexDir, null, null, null, false, TextDirection.LEFT_TO_RIGHT);
 	}
 
 	/**
@@ -179,36 +180,37 @@ public abstract class Searcher {
 	 * @throws IOException
 	 */
 	public static Searcher createIndex(File indexDir, String displayName) throws IOException {
-		return createIndex(indexDir, displayName, null, false, TextDirection.LEFT_TO_RIGHT);
+		return createIndex(indexDir, null, displayName, null, false, TextDirection.LEFT_TO_RIGHT);
 	}
 
-	/**
-	 * Create an empty index.
-	 *
-	 * @param indexDir where to create the index
-	 * @param displayName the display name for the new index, or null to
-	 *   assign one automatically (based on the directory name)
-	 * @param documentFormat a format identifier to store as the document format,
-	 *   or null for none. See the DocumentFormats class.
-	 * @param contentViewable is viewing of the document contents allowed?
-	 * @param textDirection text direction for this corpus
-	 * @return a Searcher for the new index, in index mode
-	 * @throws IOException
-	 */
-	public static Searcher createIndex(File indexDir, String displayName, String documentFormat, boolean contentViewable, TextDirection textDirection) throws IOException {
-		Searcher rv = openForWriting(indexDir, true);
-		IndexStructure struct = rv.getIndexStructure();
-        if (displayName != null && displayName.length() > 0) {
-			struct.setDisplayName(displayName);
-		}
-		if (documentFormat != null) {
-			struct.setDocumentFormat(documentFormat);
-		}
-		struct.setContentViewable(contentViewable);
-		struct.setTextDirection(textDirection);
-		struct.writeMetadata();
-		return rv;
-	}
+    /**
+     * Create an empty index.
+     *
+     * @param indexDir where to create the index
+     * @param config format configuration for this index; used to base the index metadata on
+     * @param displayName the display name for the new index, or null to
+     *   assign one automatically (based on the directory name)
+     * @param contentViewable is viewing of the document contents allowed?
+     * @param textDirection text direction for this corpus
+     * @param documentFormat a format identifier to store as the document format,
+     *   or null for none. See the DocumentFormats class.
+     * @return a Searcher for the new index, in index mode
+     * @throws IOException
+     */
+    public static Searcher createIndex(File indexDir, ConfigInputFormat config, String displayName,
+            String documentFormatId, boolean contentViewable, TextDirection textDirection) throws IOException {
+        Searcher rv = openForWriting(indexDir, true, config);
+        IndexStructure struct = rv.getIndexStructure();
+        if (!StringUtils.isEmpty(displayName))
+            struct.setDisplayName(displayName);
+        if (config.getName() != null)
+            struct.setDocumentFormat(config.getName());
+        struct.setContentViewable(contentViewable);
+        if (textDirection != null)
+            struct.setTextDirection(textDirection);
+        struct.writeMetadata();
+        return rv;
+    }
 
 	/**
 	 * Open an index for reading ("search mode").
