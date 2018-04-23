@@ -138,7 +138,6 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 			return xpath;
 		}
 
-		@SuppressWarnings("unused")
 		public static String joinXpath(String...strings) {
 			// accumulate over all strings
 			String result = null;
@@ -285,7 +284,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
 			// Begin word template
 			// TODO: take containerPath into account too (optional, goes between documentPath and wordPath)
-			String wordBase = XslGenerator.joinXpath(config.getDocumentPath(), f.getWordsPath());
+			String wordBase = XslGenerator.joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordsPath());
 			xslt.append(XslGenerator.beginTemplate(wordBase))
 				.append("<span class=\"word\">");
 
@@ -349,7 +348,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
 			// Generate rules for inline tags
 			for (ConfigInlineTag inlineTag: f.getInlineTags()) {
-				String inlineTagPath = XslGenerator.joinXpath(config.getDocumentPath(), inlineTag.getPath());
+				String inlineTagPath = XslGenerator.joinXpath(config.getDocumentPath(), f.getContainerPath(), inlineTag.getPath());
 				String cssClass;
 				if (!inlineTag.getDisplayAs().isEmpty())
 					cssClass = inlineTag.getDisplayAs();
