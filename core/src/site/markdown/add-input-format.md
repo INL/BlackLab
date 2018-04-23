@@ -1,6 +1,9 @@
-# Adding a new input format
+# Implementing your own DocIndexer
 
-This page provides a simple tutorial. For more in-depth information, see [Indexing with BlackLab](indexing-with-blacklab.html).
+In most cases, you won't need to write Java code to add support for your input format. See [How to configure indexing](how-to-configure-indexing.html) to learn how. 
+For more information about indexing in general, see [Indexing with BlackLab](indexing-with-blacklab.html).
+
+In rare cases, you may want to implement your own DocIndexer. This page provides a simple tutorial for getting started with that.
 
 If you have text in a format that isn't supported by BlackLab yet, you will have to create a DocIndexer class to support the format. You can have a look at the DocIndexer classes supplied with BlackLab (see the nl.inl.blacklab.indexers package), but here we'll build one from the ground up, step by step.
 

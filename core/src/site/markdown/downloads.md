@@ -1,12 +1,20 @@
 # Downloads
 
 ## Latest version
-To download and build the most recent (in-development) version of BlackLab, clone the repository and build it using Maven:
+
+To download and build the most recent release of BlackLab, clone the repository and build it using Maven:
 
 	git clone git://github.com/INL/BlackLab.git
 	cd BlackLab
 	mvn install
+	
+To use the latest development version, switch to the 'dev' branch:
 
+	git clone git://github.com/INL/BlackLab.git
+	cd BlackLab
+	git checkout dev
+	mvn install
+	
 If you're using Subversion, use:
 
 	svn checkout https://github.com/INL/BlackLab/trunk BlackLab
@@ -14,6 +22,8 @@ If you're using Subversion, use:
 	mvn install
 
 ## Releases
+
+See the [GitHub releases page](https://github.com/INL/BlackLab/releases/) for the complete list. This may also include development versions you can try out. If you're looking for the BlackLab library (i.e. not BlackLab Server), choose the version with libraries included.
 
 Also see the [Change log](changelog.html).
 

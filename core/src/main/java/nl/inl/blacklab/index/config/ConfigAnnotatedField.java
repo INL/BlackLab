@@ -96,8 +96,8 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         this.inlineTags.add(inlineTag);
     }
 
-    public void addInlineTag(String path) {
-        inlineTags.add(new ConfigInlineTag(path));
+    public void addInlineTag(String path, String displayAs) {
+        inlineTags.add(new ConfigInlineTag(path, displayAs));
     }
 
     @Override

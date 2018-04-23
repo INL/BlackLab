@@ -57,11 +57,14 @@ public class BlsConfig extends YamlJsonReader {
 
 	/** The default output type, JSON or XML. */
 	private DataFormat defaultOutputType;
+	
+	/** Omit empty properties in concordances (only in XML for now)? */
+	private boolean omitEmptyProperties = false;
 
-	/**
+    /**
 	 * Which IPs are allowed to override the userId using a parameter.
 	 */
-	private Set<String> overrideUserIdIps;
+	private Set<String> overrideUserIdIps = new HashSet<>();
 
 	/** Maximum allowed value for maxretrieve parameter (-1 = no limit). */
 	private int maxHitsToRetrieveAllowed;
@@ -152,6 +155,8 @@ public class BlsConfig extends YamlJsonReader {
 			if (reqProp.has("defaultOutputType"))
 				defaultOutputType = ServletUtil.getOutputTypeFromString(
 						reqProp.get("defaultOutputType").textValue(), DataFormat.XML);
+			if (reqProp.has("omitEmptyProperties"))
+			    omitEmptyProperties = reqProp.get("omitEmptyProperties").booleanValue();
 			defaultPageSize = JsonUtil.getIntProp(reqProp, "defaultPageSize", 20);
 			maxPageSize = JsonUtil.getIntProp(reqProp, "maxPageSize", 1000);
 			maxExportPageSize = JsonUtil.getIntProp(reqProp, "maxExportPageSize", 100_000);
@@ -183,11 +188,12 @@ public class BlsConfig extends YamlJsonReader {
 					"maxHitsToRetrieveAllowed", 10_000_000);
 			maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp,
 					"maxHitsToCountAllowed", -1);
-			JsonNode jsonOverrideUserIdIps = reqProp
-					.get("overrideUserIdIps");
-			overrideUserIdIps = new HashSet<>();
-			for (int i = 0; i < jsonOverrideUserIdIps.size(); i++) {
-				overrideUserIdIps.add(jsonOverrideUserIdIps.get(i).textValue());
+			if (reqProp.has("overrideUserIdIps")) {
+    			JsonNode jsonOverrideUserIdIps = reqProp.get("overrideUserIdIps");
+    			overrideUserIdIps = new HashSet<>();
+    			for (int i = 0; i < jsonOverrideUserIdIps.size(); i++) {
+    				overrideUserIdIps.add(jsonOverrideUserIdIps.get(i).textValue());
+    			}
 			}
 		} else {
 			defaultOutputType = DataFormat.XML;
@@ -311,6 +317,10 @@ public class BlsConfig extends YamlJsonReader {
 
     public String getAccessControlAllowOrigin() {
         return allowOrigin.length() == 0 ? null : allowOrigin;
+    }
+
+    public boolean isOmitEmptyProperties() {
+        return omitEmptyProperties;
     }
 
 }

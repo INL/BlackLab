@@ -6,10 +6,9 @@
 - [Corpus Query Language](corpus-query-language.html)<br/>
   All the querying features explained.
 
-- [Add an Input Format](add-input-format.html)<br/>
-  How to use your own XML format with BlackLab.
+- [Add an Input Format](how-to-configure-indexing.html)<br/>
+  How to use your own format with BlackLab.
 
 - [Improve Search Speed](improve-search-speed.html)<br/>
   How to make use of permanent disk caching to greatly speed up some searches.
-
 

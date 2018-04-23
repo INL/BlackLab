@@ -1,13 +1,14 @@
 # Getting Started
 
-If you just want to see an example of what you can do with BlackLab, see [here](blacklab-in-action.html).
+There's [several examples online](blacklab-in-action.html) of what you can do with BlackLab.
 
 To start searching your own data, you'll need to:
 
 - [Choose between BlackLab Server and Core](#server-or-core)<br/>
-- [Obtain BlackLab](#getting-blacklab)<br/>
+- [Getting BlackLab](#getting-blacklab)<br/>
 - [Prepare your data](#preparing-your-data)<br/>
-- [Write a simple application](#anatomy-of-a-blacklab-application)<br/>
+- [Corpus search application](#corpus-search-application)<br/>
+- [Write a simple application](#write-a-simple-blacklab-application)<br/>
 
 Let's go over these one by one.
 
@@ -27,13 +28,13 @@ First you need to get the BlackLab library. The simplest way is to let Maven dow
 
 ### Maven Central
 
-BlackLab is in the Maven Central Repository, so you should be able to simply [add it to your build tool](dependency-info.html).
-
-For the available versions, see [here](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22nl.inl.blacklab%22%20AND%20a%3A%22blacklab%22).
+BlackLab is in the Maven Central Repository, so you should be able to simply [add it to your build tool](dependency-info.html). If you're not sure what version to use, see the [downloads](downloads.html) or [changelog](changelog.html) pages.
 
 ### Downloading a prebuilt binary
 
-Prebuilt binary JARs for BlackLab are available from the [Downloads](downloads.html) page.
+BlackLab Core consists of a JAR and a set of required libraries. See the [GitHub releases page](https://github.com/INL/BlackLab/releases/) and choose a jar-with-libs download. The latter one may also contain development versions you can try out.
+
+BlackLab Server only consists of a WAR file that includes everything. You could even unzip this WAR file to obtain the included BlackLab JAR and zip files if you needed to for some reason.
 
 ### Building from source
 
@@ -57,7 +58,7 @@ BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build 
 
 After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab JAR library should be under core/target/blacklab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.7-SNAPSHOT"; SNAPSHOT means it's not an official release, by the way). The BlackLab Server WAR will be in server/target/blacklab-server-VERSION.war.
 
-NOTE: If you want to use BlackLab Server and corpus-frontend, you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the "webapps" directory (e.g. /var/lib/tomcat/webapps/, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For the configuration file, see [BlackLab Server overview](blacklab-server-overview.html).
+NOTE: If you want to use BlackLab Server and [BlackLab AutoSearch](https://github.com/INL/corpus-frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the "webapps" directory (e.g. /var/lib/tomcat/webapps/, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For the configuration file, see [BlackLab Server overview](blacklab-server-overview.html).
 
 <a id="preparing-your-data"></a>
 
@@ -71,7 +72,7 @@ BlackLab supports a number of input formats, but the most well-known are [TEI](h
 
 One way to convert your data is using our tool [OpenConvert](https://github.com/INL/OpenConvert), which can generate TEI or FoLiA from txt, doc(x) or html files, among others. After conversion, you can tag the files using a tool such as <a href='http://ilk.uvt.nl/frog/'>Frog</a>. 
 
-A [web-based user interface](http://openconvert.clarin.inl.nl/) for converting and tagging (Dutch) input files is available. You will need a CLARIN.eu account, which can be obtained [here](https://user.clarin.eu/user) ([more information](https://www.clarin.eu/content/clarin-identity-provider)).
+A [web-based user interface](http://openconvert.clarin.inl.nl/) for converting and tagging (Dutch) input files is available. You will need a [CLARIN.eu account](https://user.clarin.eu/user) ([more information](https://www.clarin.eu/content/clarin-identity-provider)).
 
 ### Testing with the Brown corpus
 
@@ -81,38 +82,40 @@ The [Brown corpus](http://en.wikipedia.org/wiki/Brown_Corpus "http://en.wikipedi
 
 ### Indexing data
 
+Get the blacklab JAR and the required libraries (see above). The libraries should be in a directory called "lib" that's in the same directory as the BlackLab JAR (or elsewhere on the classpath).
+
 Start the IndexTool without parameters for help information:
 
-	java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool
+	java -cp "blacklab.jar" nl.inl.blacklab.tools.IndexTool
  
-(this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory)
+(this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory; if not, prefix it with the correct directory)
 
 (if you're on Windows, replace the classpath separator colon (:) with a semicolon (;))
 
 We want to create a new index, so we need to supply an index directory, input file(s) and an input format:
 
-	java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
+	java -cp "blacklab.jar" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
 
 If you specify a directory as the INPUT_FILES, it will be scanned recursively. You can also specify a file glob (such as \*.xml) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index its contents.
 
 For example, if you have TEI data in /tmp/my-tei/ and want to create an index as a subdirectory of the current directory called "test-index", run the following command:
 
-	java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei
+	java -cp "blacklab.jar" nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei
 
 Your data is indexed and placed in a new BlackLab index in the "test-index" directory.
 
-Please note that if you're indexing large files, you should give java more than the default heap memory, using the `-Xmx` option. See [here](https://docs.oracle.com/cd/E15523_01/web.1111/e13814/jvm_tuning.htm#PERFM161). For really large files, and if you have the memory, you could use `-Xmx 6G`, for example.
+Please note that if you're indexing large files, you should [give java more than the default heap memory](https://docs.oracle.com/cd/E15523_01/web.1111/e13814/jvm_tuning.htm#PERFM161), using the `-Xmx` option. For really large files, and if you have the memory, you could use `-Xmx 6G`, for example.
 
 See also:
 
-- [Adding a new input format](add-input-format.html) (if your format isn't supported yet and you don't want to convert)
+- [Adding a new input format](how-to-configure-indexing.html) (if your format isn't supported yet and you don't want to convert)
 - [Indexing in detail](indexing-with-blacklab.html)
 
 ### Testing your index
 
 BlackLab Core includes a very basic command-based query tool useful for testing and debugging. To query the index you just created using this tool, type:
 
-	java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.QueryTool test-index
+	java -cp "blacklab.jar" nl.inl.blacklab.tools.QueryTool test-index
 
 The query tool supports several query languages, but it will start in CorpusQL mode. A few hints:
 
@@ -127,9 +130,17 @@ See also:
 - [Using the query tool](query-tool.html)
 - [Corpus Query Language](corpus-query-language.html)
 
-<a id="anatomy-of-a-blacklab-application"></a>
+<a id="corpus-search-application"></a>
 
-## Anatomy of a BlackLab application
+## Corpus search application
+
+[BlackLab AutoSearch](https://github.com/INL/corpus-frontend/) is our corpus search application. It is easy to install; see the GitHub page for instructions.
+
+![Screenshot of corpus-frontend](images/corpus-frontend.png)
+
+<a id="write-a-simple-blacklab-application"></a>
+
+## Write a simple BlackLab application
 
 Finally, let's look at an example Java application.
 

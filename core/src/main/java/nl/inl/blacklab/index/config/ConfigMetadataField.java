@@ -181,12 +181,12 @@ public class ConfigMetadataField {
         displayValues.put(value, displayValue);
     }
 
-    public List<String> getDisplayOrder() {
-        return Collections.unmodifiableList(displayOrder);
+    public void addDisplayValues(Map<String, String> displayValues) {
+        displayValues.putAll(displayValues);
     }
 
-    public void addDisplayOrder(String field) {
-        displayOrder.add(field);
+    public List<String> getDisplayOrder() {
+        return Collections.unmodifiableList(displayOrder);
     }
 
     public List<ConfigProcessStep> getProcess() {
@@ -196,6 +196,10 @@ public class ConfigMetadataField {
     public void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
+    }
+
+    public void addDisplayOrder(List<String> fields) {
+        displayOrder.addAll(fields);
     }
 
 }

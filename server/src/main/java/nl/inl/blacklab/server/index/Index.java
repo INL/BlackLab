@@ -2,11 +2,20 @@ package nl.inl.blacklab.server.index;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -87,6 +96,8 @@ public class Index {
 
 	private static final Logger logger = LogManager.getLogger(Index.class);
 
+    private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
+
 	private final String id;
 	private final File dir;
 	private SearchCache cache;
@@ -103,6 +114,12 @@ public class Index {
 	 */
 	private Searcher searcher;
 	private IndexerWithCloseRegistration indexer;
+	
+	/** List of users who may access this index (read-only). */
+	private List<String> shareWithUsers = new ArrayList<>();
+
+	/** File where the list of users to share with is stored */
+    private File shareWithUsersFile;
 
 	/**
 	 * NOTE: Index does not support creating a new index from scratch for now, instead use {@link IndexManager#createIndex(String, String, String)}
@@ -128,8 +145,49 @@ public class Index {
 		// Opened on-demand
 		this.searcher = null;
 		this.indexer = null;
+		
+		shareWithUsersFile = new File(dir, SHARE_WITH_USERS_FILENAME);
+	    readShareWithUsersFile();
 	}
 
+    private void readShareWithUsersFile() {
+        if (shareWithUsersFile.exists()) {
+            try {
+                shareWithUsers = FileUtils.readLines(shareWithUsersFile, "utf-8").stream().map(String::trim).collect(Collectors.toList());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            shareWithUsers = new ArrayList<>();
+        }
+    }
+
+    private void writeShareWithUsersFile() {
+        if (shareWithUsers.size() == 0) {
+            // We don't want to share with anyone. Delete the share file if it exists.
+            if (shareWithUsersFile.exists()) {
+                if (!shareWithUsersFile.delete())
+                    throw new RuntimeException("Could not delete share file: " + shareWithUsersFile);
+            }
+        } else {
+            // (Over)write the share file with the current list of users to share with.
+            try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(shareWithUsersFile), StandardCharsets.UTF_8)) {
+                writer.write(StringUtils.join(shareWithUsers, "\n"));
+            } catch (IOException e) {
+                throw new RuntimeException("Could not write share file", e);
+            }
+        }
+    }
+    
+    public synchronized void setShareWithUsers(List<String> users) {
+        shareWithUsers.clear();
+        shareWithUsers.addAll(users);
+        writeShareWithUsersFile();
+    }
+
+    public synchronized List<String> getShareWithUsers() {
+        return Collections.unmodifiableList(shareWithUsers);
+    }
 
 	public String getId() {
 		return id;
@@ -398,6 +456,19 @@ public class Index {
 		if (!m.matches())
 			throw new RuntimeException();
 		return m.group(1);
+	}
+	
+	public boolean userMayRead(String userId) {
+	    // There are no restrictions on who can read non-user (public) indices
+	    if (!isUserIndex())
+	        return true;
+	    
+	    // Owner can always read their own index
+	    if (userId.equals(getUserId()))
+	        return true;
+	    
+	    // Any user the index is explicitly shared with can read it too
+	    return shareWithUsers.contains(userId);
 	}
 
 	/**

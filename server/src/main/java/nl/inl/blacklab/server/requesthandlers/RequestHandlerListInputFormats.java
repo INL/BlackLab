@@ -16,6 +16,7 @@ import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.config.ConfigAnnotatedField;
 import nl.inl.blacklab.index.config.ConfigAnnotation;
+import nl.inl.blacklab.index.config.ConfigInlineTag;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -261,11 +262,11 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
 		// and p into p...
 		// use local-name to sidestep namespaces
-		xslt.append(XslGenerator.beginTemplate("*[local-name(.)='p']"))
-			.append("<p>")
-			.append(XslGenerator.applyTemplates("node()"))
-			.append("</p>")
-			.append(XslGenerator.endTemplate);
+//		xslt.append(XslGenerator.beginTemplate("*[local-name(.)='p']"))
+//			.append("<p>")
+//			.append(XslGenerator.applyTemplates("node()"))
+//			.append("</p>")
+//			.append(XslGenerator.endTemplate);
 
 		// generate the templates for all words
 		// NOTE: 'annotation' here refers to a linguistic annotation - not an xml attribute/annotation!
@@ -283,6 +284,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 				wordAnnot = f.getAnnotations().values().iterator().next();
 
 			// Begin word template
+			// TODO: take containerPath into account too (optional, goes between documentPath and wordPath)
 			String wordBase = XslGenerator.joinXpath(config.getDocumentPath(), f.getWordsPath());
 			xslt.append(XslGenerator.beginTemplate(wordBase))
 				.append("<span class=\"word\">");
@@ -345,6 +347,20 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 						"</xsl:text>")
 				.append(XslGenerator.endTemplate);
 
+			// Generate rules for inline tags
+			for (ConfigInlineTag inlineTag: f.getInlineTags()) {
+				String inlineTagPath = XslGenerator.joinXpath(config.getDocumentPath(), inlineTag.getPath());
+				String cssClass;
+				if (!inlineTag.getDisplayAs().isEmpty())
+					cssClass = inlineTag.getDisplayAs();
+				else
+					cssClass = inlineTag.getPath().replaceAll("\\b\\w+:", "").replaceAll("\\W+", " ").trim().replace(" ", "-");
+				xslt.append(XslGenerator.beginTemplate(inlineTagPath))
+					.append("<span class=\"" + cssClass + "\">")
+					.append(XslGenerator.applyTemplates("node()"))
+					.append("</span>")
+					.append(XslGenerator.endTemplate);
+			}
 		}
 		xslt.append("</xsl:stylesheet>");
 		ds.plain(xslt.toString());

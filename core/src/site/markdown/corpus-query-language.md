@@ -100,7 +100,7 @@ You can use the "does not equal" operator (!=) to search for all words except no
 
 	[pos != "NOU"]
 
-The strings between quotes can also contain wildcards, of sorts. To be precise, they are [regular expressions](http://en.wikipedia.org/wiki/Regular_expression "http://en.wikipedia.org/wiki/Regular_expression"), which provide a flexible way of matching strings of text. For example, to find "man" or "woman", use:
+The strings between quotes can also contain wildcards, of sorts. To be precise, they are [regular expressions](http://en.wikipedia.org/wiki/Regular_expression), which provide a flexible way of matching strings of text. For example, to find "man" or "woman", use:
 
 	"(wo)?man"
 
@@ -108,7 +108,7 @@ And to find lemmata starting with "under", use:
 
 	[lemma="under.\*"]
 
-Explaining regular expression syntax is beyond the scope of this document, but for a complete overview, see [here](http://www.regular-expressions.info/ "http://www.regular-expressions.info/").
+Explaining regular expression syntax is beyond the scope of this document, but for a complete overview, see [regular-expressions.info](http://www.regular-expressions.info/).
 
 <a id="sequences"></a>
 
