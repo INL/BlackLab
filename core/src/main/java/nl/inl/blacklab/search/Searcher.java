@@ -203,7 +203,7 @@ public abstract class Searcher {
         IndexStructure struct = rv.getIndexStructure();
         if (!StringUtils.isEmpty(displayName))
             struct.setDisplayName(displayName);
-        if (config.getName() != null)
+        if (config != null && config.getName() != null)
             struct.setDocumentFormat(config.getName());
         struct.setContentViewable(contentViewable);
         if (textDirection != null)
