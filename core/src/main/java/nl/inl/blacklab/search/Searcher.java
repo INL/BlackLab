@@ -205,6 +205,9 @@ public abstract class Searcher {
             struct.setDisplayName(displayName);
         if (config != null && config.getName() != null)
             struct.setDocumentFormat(config.getName());
+        else if (!StringUtils.isEmpty(documentFormatId)){
+            struct.setDocumentFormat(documentFormatId);
+        }
         struct.setContentViewable(contentViewable);
         if (textDirection != null)
             struct.setTextDirection(textDirection);
