@@ -104,7 +104,7 @@ public class IndexStructure {
     /** What keys may occur under complex field config? */
     static final Set<String> KEYS_COMPLEX_FIELD_CONFIG = new HashSet<>(Arrays.asList(
             "displayName", "description", "mainProperty",
-            "noForwardIndexProps", "displayOrder"));
+            "noForwardIndexProps", "displayOrder", "annotations"));
     
 	public static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -525,6 +525,15 @@ public class IndexStructure {
             fieldInfo2.put("mainProperty", f.getMainProperty().getName());
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
             Json.arrayOfStrings(arr, f.getDisplayOrder());
+            ArrayNode annots = fieldInfo2.putArray("annotations");
+            for (String propName: f.getProperties()) {
+                PropertyDesc propDesc = f.getPropertyDesc(propName);
+                ObjectNode annot = annots.addObject();
+                annot.put("name", propDesc.getName());
+                annot.put("displayName", propDesc.getDisplayName());
+                annot.put("description", propDesc.getDescription());
+                annot.put("uiType", propDesc.getUiType());
+            }
         }
 
         return jsonRoot;
@@ -1178,6 +1187,46 @@ public class IndexStructure {
                 String mainPropertyName = Json.getString(fieldConfig, "mainProperty", "");
                 if (mainPropertyName.length() > 0)
                     fieldDesc.setMainPropertyName(mainPropertyName);
+                
+                // Process information about annotations (displayName, uiType, etc.
+                ArrayList<String> annotationOrder = new ArrayList<String>();
+                if (fieldConfig.has("annotations")) {
+                    JsonNode annotations = fieldConfig.get("annotations");
+                    Iterator<JsonNode> itAnnot = annotations.elements();
+                    while (itAnnot.hasNext()) {
+                        JsonNode annotation = itAnnot.next();
+                        Iterator<Entry<String, JsonNode>> itAnnotOpt = annotation.fields();
+                        PropertyDesc propDesc = new PropertyDesc();
+                        while (itAnnotOpt.hasNext()) {
+                            Entry<String, JsonNode> opt = itAnnotOpt.next();
+                            switch (opt.getKey()) {
+                            case "name":
+                                propDesc.setName(opt.getValue().textValue());
+                                annotationOrder.add(opt.getValue().textValue());
+                                break;
+                            case "displayName":
+                                propDesc.setDisplayName(opt.getValue().textValue());
+                                break;
+                            case "description":
+                                propDesc.setDescription(opt.getValue().textValue());
+                                break;
+                            case "uiType":
+                                propDesc.setUiType(opt.getValue().textValue());
+                                break;
+                            default:
+                                logger.warn("Unknown key " + opt.getKey() + " in annotation for field '" + fieldName + "' in indexmetadata file");
+                                break;
+                            }
+                        }
+                        if (StringUtils.isEmpty(propDesc.getName())) 
+                            logger.warn("Annotation entry without name for field '" + fieldName + "' in indexmetadata file; skipping");
+                        else
+                            fieldDesc.putProperty(propDesc);
+                    }
+                }
+                
+                // These properties should get no forward index
+                // TODO: refactor this so this information is stored with each property instead, deprecating this setting
                 JsonNode nodeNoForwardIndexProps = fieldConfig.get("noForwardIndexProps");
                 if (nodeNoForwardIndexProps instanceof ArrayNode) {
                     Iterator<JsonNode> itNFIP = nodeNoForwardIndexProps.elements();
@@ -1193,7 +1242,15 @@ public class IndexStructure {
                         fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
                     }
                 }
-                fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
+                
+                // This is the "natural order" of our annotations
+                // (probably not needed anymore - if not specified, the order of the annotations will be used)
+                List<String> displayOrder = Json.getListOfStrings(fieldConfig, "displayOrder");
+                if (displayOrder.size() == 0) {
+                    displayOrder.addAll(annotationOrder);
+                }
+                fieldDesc.setDisplayOrder(displayOrder);
+                
                 complexFields.put(fieldName, fieldDesc);
             }
         }
@@ -1339,16 +1396,22 @@ public class IndexStructure {
             g.put("displayName", f.getDisplayName());
             g.put("description", f.getDescription());
             g.put("mainProperty", f.getAnnotations().values().iterator().next().getName());
-            ArrayNode h = g.putArray("displayOrder");
+            ArrayNode displayOrder = g.putArray("displayOrder");
             ArrayNode noForwardIndexProps = g.putArray("noForwardIndexProps");
+            ArrayNode annotations = g.putArray("annotations");
             for (ConfigAnnotation a: f.getAnnotations().values()) {
-                h.add(a.getName());
+                displayOrder.add(a.getName());
                 if (!a.createForwardIndex())
                     noForwardIndexProps.add(a.getName());
+                ObjectNode annotation = annotations.addObject();
+                annotation.put("name", a.getName());
+                annotation.put("displayName", a.getDisplayName());
+                annotation.put("description", a.getDescription());
+                annotation.put("uiType", a.getUiType());
             }
             for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
                 for (ConfigAnnotation a: standoff.getAnnotations().values()) {
-                    h.add(a.getName());
+                    displayOrder.add(a.getName());
                     if (!a.createForwardIndex())
                         noForwardIndexProps.add(a.getName());
                 }

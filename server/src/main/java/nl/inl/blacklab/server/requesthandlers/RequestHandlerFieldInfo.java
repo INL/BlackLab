@@ -174,6 +174,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 			ds.startAttrEntry("property", "name", propName).startMap();
             ds
                     .entry("displayName", propDesc.getDisplayName())
+                    .entry("description", propDesc.getDescription())
+                    .entry("uiType", propDesc.getUiType())
 					.entry("hasForwardIndex", propDesc.hasForwardIndex())
 					.entry("sensitivity", propDesc.getSensitivity().toString())
 					.entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative()))

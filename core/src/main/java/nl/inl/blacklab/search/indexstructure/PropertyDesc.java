@@ -12,10 +12,17 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 /** Description of a property */
 public class PropertyDesc {
 	/** The property name */
-	private String propName;
+	private String name;
 
-	/** Name to display in user interface */
+	/** Name to display in user interface (optional) */
     private String displayName;
+    
+    /** Description for user interface (optional) */
+    private String description = "";
+
+    /** What UI element to use for this property (e.g. text, select);
+     *  only used in frontend, ignored by BlackLab itself. */
+    private String uiType = "";
 
     /** Any alternatives this property may have */
 	private Map<String, AltDesc> alternatives;
@@ -28,8 +35,12 @@ public class PropertyDesc {
 	/** Which of the alternatives is the main one (containing the offset info, if present) */
 	private AltDesc offsetsAlternative;
 
+    public PropertyDesc() {
+        this(null);
+    }
+    
 	public PropertyDesc(String name) {
-		propName = name;
+		this.name = name;
 		alternatives = new TreeMap<>();
 		forwardIndex = false;
 	}
@@ -63,7 +74,7 @@ public class PropertyDesc {
 		default:
 			throw new IllegalArgumentException("Unknown sensitivity " + sensitivity.toString());
 		}
-		return (propName.length() == 0 ? "(default)" : propName)
+		return (name.length() == 0 ? "(default)" : name)
 				+ (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
 	}
 
@@ -95,10 +106,14 @@ public class PropertyDesc {
 		forwardIndex = b;
 	}
 
+    public void setName(String propName) {
+        this.name = propName;
+    }
+
 	/** Get this property's name
 	 * @return the name */
 	public String getName() {
-		return propName;
+		return name;
 	}
 
 	/**
@@ -123,7 +138,7 @@ public class PropertyDesc {
 		// vector. If that has character offsets stored, it's our main property.
 		// If not, keep searching.
 		for (AltDesc alt: alternatives.values()) {
-			String luceneAltName = ComplexFieldUtil.propertyField(fieldName, propName,
+			String luceneAltName = ComplexFieldUtil.propertyField(fieldName, name,
 					alt.getName());
 			if (IndexStructure.hasOffsets(reader, luceneAltName)) {
 				offsetsAlternative = alt;
@@ -164,14 +179,31 @@ public class PropertyDesc {
     public String getDisplayName() {
         if (displayName != null)
             return displayName;
-        if (propName.equals("pos"))
+        if (name.equals("pos"))
             return "PoS";
-        return StringUtils.capitalize(propName);
+        return StringUtils.capitalize(name);
     }
 
     public boolean isInternal() {
-        return propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME) ||
-                propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME) ||
-                propName.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+        return name.equals(ComplexFieldUtil.START_TAG_PROP_NAME) ||
+                name.equals(ComplexFieldUtil.END_TAG_PROP_NAME) ||
+                name.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
     }
+
+    public void setUiType(String uiType) {
+        this.uiType = uiType;
+    }
+    
+    public String getUiType() {
+        return uiType;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
 }
