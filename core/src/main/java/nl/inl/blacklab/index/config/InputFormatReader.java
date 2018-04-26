@@ -78,6 +78,7 @@ public class InputFormatReader extends YamlJsonReader {
             switch (e.getKey()) {
             case "displayName": cfg.setDisplayName(str(e)); break;
             case "description": cfg.setDescription(str(e)); break;
+            case "helpUrl": cfg.setHelpUrl(str(e)); break;
             case "baseFormat": {
                 String formatIdentifier = str(e);
                 if (finder == null)

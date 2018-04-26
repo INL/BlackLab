@@ -210,6 +210,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                 ds.startAttrEntry("format", "name", name).startMap()
                     .entry("displayName", format.getDisplayName())
                     .entry("description", format.getDescription())
+                    .entry("helpUrl", format.getHelpUrl())
                     .entry("configurationBased", format.isConfigurationBased())
 	            .endMap().endAttrEntry();
             }

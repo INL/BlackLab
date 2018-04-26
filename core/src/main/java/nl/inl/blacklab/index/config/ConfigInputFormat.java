@@ -48,6 +48,9 @@ public class ConfigInputFormat {
     /** This format's description (optional) */
     private String description = "";
 
+    /** Link to a help page, e.g. showing an example of a correct input file (optional) */
+    private String helpUrl = "";
+
     /** This format's type indicator (optional, not used by BlackLab. usually 'contents' or 'metadata') */
     private String type = "";
 
@@ -375,6 +378,14 @@ public class ConfigInputFormat {
 
     public boolean shouldResolveNamedEntityReferences() {
         return fileType == FileType.XML && fileTypeOptions.containsKey("resolveNamedEntityReferences") && fileTypeOptions.get("resolveNamedEntityReferences").equalsIgnoreCase("true");
+    }
+
+    public String getHelpUrl() {
+        return helpUrl;
+    }
+
+    public void setHelpUrl(String helpUrl) {
+        this.helpUrl = helpUrl;
     }
 
 }

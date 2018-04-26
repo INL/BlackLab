@@ -4,6 +4,8 @@ displayName: Frog tagger tab-delimited (TSV)
 # For describing input format in user interface (optional)
 description: Tab-delimited (TSV) output produced by the Frog program
 
+helpUrl: http://languagemachines.github.io/frog/
+
 # File type defaults to XML; could also be tabular, txt, ...?
 # If XML, paths are XPaths. If tabular, paths are (1-based) column numbers.
 # (Tabular files can only contain a single annotated field and no metadata or linked documents)

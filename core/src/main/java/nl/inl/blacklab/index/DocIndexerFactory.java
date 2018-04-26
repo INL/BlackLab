@@ -38,6 +38,8 @@ public interface DocIndexerFactory {
 	    private String displayName;
 
 	    private String description;
+	    
+	    private String helpUrl;
 
         private boolean unlisted;
 
@@ -54,6 +56,10 @@ public interface DocIndexerFactory {
         public String getDescription() {
             return description;
         }
+        
+        public String getHelpUrl() {
+            return helpUrl;
+        }
 
 		public ConfigInputFormat getConfig() {
 			return config;
@@ -68,10 +74,15 @@ public interface DocIndexerFactory {
         }
 
         public Format(String formatIdentifier, String displayName, String description) {
+            this(formatIdentifier, displayName, description, "");
+        }
+
+        public Format(String formatIdentifier, String displayName, String description, String helpUrl) {
             super();
             this.formatIdentifier = formatIdentifier;
             this.displayName = displayName;
             this.description = description;
+            this.helpUrl = helpUrl;
         }
 
         public void setUnlisted(boolean b) {

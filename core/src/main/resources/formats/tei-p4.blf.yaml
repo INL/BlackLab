@@ -4,6 +4,8 @@ displayName: "TEI P4, contents in text, @type as PoS"
 # For describing input format in user interface (optional)
 description: A TEI P4 variant. The text element will be indexed as annotated contents. PoS tags should be in the type attribute.
 
+helpUrl: http://www.tei-c.org/Vault/P4/
+
 # (Optional, informational)
 # content, metadata or mixed?
 # (not used by BlackLab, purely informational for the frontend application)
