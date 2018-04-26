@@ -12,6 +12,7 @@ import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
@@ -70,6 +71,14 @@ public class TestIndex {
 	};
 
 	final static String testFormat = "testformat";
+	
+	static {
+	    // Ensure repeatable tests. Indexer opens Searcher, which in turn
+	    // will look for blacklab.yaml in several directories. We want our
+	    // tests to be independent of the local filesystem, so skip this step
+	    // for any tests using the TestIndex class.
+        ConfigReader.setIgnoreConfigFile(true);
+	}
 
 	/**
 	 * The BlackLab searcher object.
@@ -79,6 +88,7 @@ public class TestIndex {
 	private File indexDir;
 
 	public TestIndex() throws Exception {
+	    
 		// Get a temporary directory for our test index
 		indexDir = new File(System.getProperty("java.io.tmpdir"),
 				"BlackLabExample");

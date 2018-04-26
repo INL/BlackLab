@@ -1,5 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +35,31 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 
     private static final int MAX_FIELD_VALUES = 500;
 
+    private static RuleBasedCollator valueSortCollator = null;
+    
+    /**
+     * Returns a collator that sort values "properly",
+     * ignoring parentheses.
+     * 
+     * @return the collator
+     */
+    static Collator getValueSortCollator() {
+        if (valueSortCollator == null) {
+            valueSortCollator = (RuleBasedCollator) Searcher.getDefaultCollator();
+            try {
+                // Make sure it ignores parentheses when comparing
+                String rules = valueSortCollator.getRules();
+                rules = rules.replace("<'('<')'", "");   // Remove old rules for parentheses
+                rules = ", '(',')' " + rules;            // Make parentheses ignorable characters
+                valueSortCollator = new RuleBasedCollator(rules);
+            } catch (ParseException e) {
+                // Oh well, we'll use the collator as-is
+                //throw new RuntimeException();//DEBUG
+            }
+        }
+        return valueSortCollator;
+    }
+    
 	public RequestHandlerFieldInfo(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
 		super(servlet, request, user, indexName, urlResource, urlPathPart);
 	}
@@ -108,12 +136,14 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 valuesLeft.remove(value);
             }
             List<String> sortedLeft = new ArrayList<>(valuesLeft);
+            final Collator defaultCollator = getValueSortCollator();
             Collections.sort(sortedLeft, new Comparator<String>() {
                 @Override
                 public int compare(String o1, String o2) {
                     String d1 = displayValues.containsKey(o1) ? displayValues.get(o1) : o1;
                     String d2 = displayValues.containsKey(o2) ? displayValues.get(o2) : o2;
-                    return d1.compareTo(d2);
+                    //return d1.compareTo(d2);
+                    return defaultCollator.compare(d1, d2);
                 }
             });
     		for (String value: sortedLeft) {
@@ -124,7 +154,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 		}
         ds.endMap();
 	}
-
+	
 	public static void describeComplexField(DataStream ds, String indexName, String fieldName, ComplexFieldDesc fieldDesc, Searcher searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
         ds.startMap();
         if (indexName != null)
@@ -144,6 +174,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 			ds.startAttrEntry("property", "name", propName).startMap();
             ds
                     .entry("displayName", propDesc.getDisplayName())
+                    .entry("description", propDesc.getDescription())
+                    .entry("uiType", propDesc.getUiType())
 					.entry("hasForwardIndex", propDesc.hasForwardIndex())
 					.entry("sensitivity", propDesc.getSensitivity().toString())
 					.entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative()))

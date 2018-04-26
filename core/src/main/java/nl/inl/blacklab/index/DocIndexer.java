@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
@@ -49,6 +51,8 @@ import nl.inl.util.UnicodeStream;
  * Indexes a file.
  */
 public abstract class DocIndexer implements AutoCloseable {
+
+    protected static final Logger logger = LogManager.getLogger(DocIndexer.class);
 
     public Indexer indexer;
 
@@ -325,6 +329,9 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     public void addMetadataField(String name, String value) {
+        
+        if (!ComplexFieldUtil.isValidXmlElementName(name))
+            logger.warn("Field name '" + name + "' is discouraged (field/property names should be valid XML element names)");
 
         if (name == null || value == null)
             warn("Incomplete metadata field: " + name + "=" + value);

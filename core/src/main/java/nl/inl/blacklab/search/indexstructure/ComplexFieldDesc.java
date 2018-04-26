@@ -204,15 +204,19 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 		}
 		return pd;
 	}
+	
+	void putProperty(PropertyDesc propDesc) {
+	    props.put(propDesc.getName(), propDesc);
+	}
 
 	public PropertyDesc getMainProperty() {
 		if (mainProperty == null && mainPropertyName != null) {
 			// Set during indexing, when we don't actually have property information
 			// available (because the index is being built up, so we couldn't detect
 			// it on startup).
-			// Just create a property with the correct name.
-			mainProperty = new PropertyDesc(mainPropertyName);
-			props.put(mainPropertyName, mainProperty);
+			// Just create a property with the correct name, or retrieve it if it
+		    // was defined in the indexmetadata.
+			mainProperty = getOrCreateProperty(mainPropertyName);
 			mainPropertyName = null;
 		}
 		return mainProperty;

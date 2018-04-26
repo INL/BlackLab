@@ -45,9 +45,20 @@ public class ConfigReader extends YamlJsonReader {
 
 	/** Cache for getConfigDirs() */
     private static List<File> configDirs;
+    
     /** Cache of root node of config file */
     private static JsonNode blacklabConfig;
+    
+    /** Do we wish to forego looking for a config file on the filesystem? Useful for testing. */
+    private static boolean ignoreConfigFile = false;
 
+    /**
+     * Do we wish to forego looking for a config file on the filesystem? Useful for repeatable testing.
+     * @param ignoreConfigFile if true, no config file will be loaded, so all setting will be at their default
+     */
+    public static void setIgnoreConfigFile(boolean ignoreConfigFile) {
+        ConfigReader.ignoreConfigFile = ignoreConfigFile;
+    }
 
     /**
      * Load the global blacklab configuration.
@@ -63,6 +74,9 @@ public class ConfigReader extends YamlJsonReader {
      * @throws IOException
      */
     public static void setConfigFile(File file) throws FileNotFoundException, IOException {
+        if (ignoreConfigFile) // useful for repeatable testing
+            return;
+        
     	if (file == null || !file.canRead())
     		throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
@@ -89,6 +103,9 @@ public class ConfigReader extends YamlJsonReader {
      * @throws IOException
      */
     public static void setConfigFile(Reader reader, boolean isJson) throws JsonProcessingException, IOException{
+        if (ignoreConfigFile) // useful for repeatable testing
+            return;
+        
     	if (blacklabConfig != null)
     		throw new UnsupportedOperationException("Cannot load configuration file - another configuration file has already been loaded.");
 

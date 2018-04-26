@@ -1,6 +1,6 @@
 # Who is using BlackLab?
 
-- The Dutch Language Institute ([IvdNT](http://www.ivdnt.org/)) is developing BlackLab and uses it for their corpus search applications, such as [Letters as loot](http://brievenalsbuit.inl.nl/), [Corpus Gysseling](http://gysseling.corpus.taalbanknederlands.inl.nl/) and the [Corpus Hedendaags Nederlands](http://chn.inl.nl/) (CLARIN login required), a 500M+ token corpus of contemporary Dutch.
+- The Dutch Language Institute ([INT](http://www.ivdnt.org/)) is developing BlackLab and uses it for their corpus search applications, such as [Letters as loot](http://brievenalsbuit.inl.nl/), [Corpus Gysseling](http://gysseling.corpus.taalbanknederlands.inl.nl/) and the [Corpus Hedendaags Nederlands](http://chn.inl.nl/) (CLARIN login required), a 500M+ token corpus of contemporary Dutch.
 - University of Tilburg ([OpenSonar](http://opensonar.inl.nl), a Dutch corpus. Corpus query application [WhiteLab](https://github.com/Taalmonsters/WhiteLab2.0))
 - University of Antwerp ([Mind-Bending Grammars](https://www.uantwerpen.be/en/projects/mind-bending-grammars/), a EU-funded project innovatively combining language change research with research on the individual mind. Includes a corpus-query + collaborative corpus annotation web-app: [cosycat](https://github.com/emanjavacas/cosycat))
 - Allen Institute for Artificial Intelligence ([IKE](https://www.overleaf.com/articles/machine-teaching-for-information-extraction/hxxcqzwmpvdf/viewer.pdf), a knowledge extraction tool)

@@ -22,8 +22,10 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -220,7 +222,6 @@ public class IndexManager {
 			throw new BadRequest("INDEX_ALREADY_EXISTS",
 					"Could not create index. Index already exists.");
 
-
 		String userId = Index.getUserId(indexId);
 		String indexName = Index.getIndexName(indexId);
 
@@ -244,7 +245,9 @@ public class IndexManager {
 			BlsUtils.delTree(indexDir);
 		}
 		boolean contentViewable = true; // user may view his own private corpus documents
-		Searcher searcher = Searcher.createIndex(indexDir, displayName, documentFormatId, contentViewable, TextDirection.LEFT_TO_RIGHT);
+		Format format = DocumentFormats.getFormat(documentFormatId);
+        ConfigInputFormat config = format == null ? null : format.getConfig();
+		Searcher searcher = Searcher.createIndex(indexDir, config, displayName, documentFormatId, contentViewable, TextDirection.LEFT_TO_RIGHT);
 		searcher.close();
 
 		indices.put(indexId, new Index(indexId, indexDir, this.searchMan.getCache()));
