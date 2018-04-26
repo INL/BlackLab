@@ -226,8 +226,8 @@ public abstract class RequestHandler {
 							return errorObj.unavailable(indexName, status.toString());
 						}
 
-						if (debugMode && !handlerName.isEmpty() && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs", 
-						        "docs-csv", "docs-grouped-csv", "fields", "termfreq", 
+						if (debugMode && !handlerName.isEmpty() && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs",
+						        "docs-csv", "docs-grouped-csv", "fields", "termfreq",
 						        "status", "autocomplete", "sharing").contains(handlerName)) {
 							handlerName = "debug";
 						}
@@ -423,7 +423,7 @@ public abstract class RequestHandler {
 		}
 		int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
 		String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
-                
+
 		if (tokenLengthField != null)
 			ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
 		ds	.entry("mayView", mayView(struct, document))
@@ -441,7 +441,7 @@ public abstract class RequestHandler {
             return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
 	    return struct.contentViewable();
     }
-    
+
 	protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc) throws BlsException {
 
 		JobFacets facets = (JobFacets)searchMan.search(user, facetDesc, true);
@@ -624,7 +624,7 @@ public abstract class RequestHandler {
 				ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
 		}
 	}
-s
+
     public User getUser() {
         return user;
     }

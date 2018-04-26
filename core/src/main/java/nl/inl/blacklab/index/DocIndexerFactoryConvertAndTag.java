@@ -87,7 +87,7 @@ public class DocIndexerFactoryConvertAndTag implements DocIndexerFactory {
 
 		// generate displayName
 		private static String displayName(ConvertPlugin converter, TagPlugin tagger, Format outputFormat) {
-			return"Generated " + StringUtils.capitalize(converter.getOutputFormat()) + " from " + converter.getDisplayName() + " and " + tagger.getDisplayName();
+		    return StringUtils.join(converter.getInputFormats().iterator(), ", ") + " files.";
 		}
 
 		// generate description
