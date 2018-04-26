@@ -76,36 +76,36 @@ public class IndexStructure {
 
 	/** What keys may occur at top level? */
     static final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
-            "displayName", "description", "contentViewable", "textDirection", 
+            "displayName", "description", "contentViewable", "textDirection",
             "documentFormat", "tokenCount", "versionInfo", "fieldInfo"));
 
     /** What keys may occur under versionInfo? */
     static final Set<String> KEYS_VERSION_INFO = new HashSet<>(Arrays.asList(
-            "indexFormat", "blackLabBuildTime", "blackLabVersion", "timeCreated", 
+            "indexFormat", "blackLabBuildTime", "blackLabVersion", "timeCreated",
             "timeModified", "alwaysAddClosingToken", "tagLengthInPayload"));
-    
+
     /** What keys may occur under fieldInfo? */
     static final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
             "namingScheme", "unknownCondition", "unknownValue",
-            "metadataFields", "complexFields", "metadataFieldGroups", 
+            "metadataFields", "complexFields", "metadataFieldGroups",
             "defaultAnalyzer", "titleField", "authorField", "dateField", "pidField"));
-    
+
     /** What keys may occur under metadataFieldGroups group? */
     static final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
             "name", "fields", "addRemainingFields"));
-    
+
     /** What keys may occur under metadata field config? */
     static final Set<String> KEYS_META_FIELD_CONFIG = new HashSet<>(Arrays.asList(
             "type", "displayName", "uiType",
-            "description", "group", "analyzer", 
-            "unknownValue", "unknownCondition", "values", 
+            "description", "group", "analyzer",
+            "unknownValue", "unknownCondition", "values",
             "displayValues", "displayOrder", "valueListComplete"));
-    
+
     /** What keys may occur under complex field config? */
     static final Set<String> KEYS_COMPLEX_FIELD_CONFIG = new HashSet<>(Arrays.asList(
             "displayName", "description", "mainProperty",
             "noForwardIndexProps", "displayOrder", "annotations"));
-    
+
 	public static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	/** A named group of ordered metadata fields */
@@ -1031,7 +1031,7 @@ public class IndexStructure {
 
     /**
      * If the object node contains any keys other than those specified, warn about it
-     * 
+     *
      * @param where where are we in the file (e.g. "top level", "complex field 'contents'", etc.)
      * @param node node to check
      * @param knownKeys keys that may occur under this node
@@ -1045,7 +1045,7 @@ public class IndexStructure {
                 logger.warn("Unknown key " + key + " " + where + " in indexmetadata file");
         }
     }
-    
+
     /** Extract the index structure from the (in-memory) JSON structure (and Lucene index).
      *
      * Looks at the Lucene index to detect certain information (sometimes) missing from the
@@ -1085,7 +1085,7 @@ public class IndexStructure {
         }
         alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
         tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
-        
+
         // Specified in index metadata file?
         String namingScheme;
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
@@ -1153,7 +1153,7 @@ public class IndexStructure {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
                 JsonNode fieldConfig = entry.getValue();
-                warnUnknownKeys("in metadata field config for '" + fieldName + "'", fieldConfig, KEYS_META_FIELD_CONFIG);                
+                warnUnknownKeys("in metadata field config for '" + fieldName + "'", fieldConfig, KEYS_META_FIELD_CONFIG);
                 FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
                 MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, fieldType);
                 fieldDesc.setDisplayName     (Json.getString(fieldConfig, "displayName", fieldName));
@@ -1180,16 +1180,16 @@ public class IndexStructure {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
                 JsonNode fieldConfig = entry.getValue();
-                warnUnknownKeys("in complex field config for '" + fieldName + "'", fieldConfig, KEYS_COMPLEX_FIELD_CONFIG);                
+                warnUnknownKeys("in complex field config for '" + fieldName + "'", fieldConfig, KEYS_COMPLEX_FIELD_CONFIG);
                 ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
                 fieldDesc.setDisplayName (Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setDescription (Json.getString(fieldConfig, "description", ""));
                 String mainPropertyName = Json.getString(fieldConfig, "mainProperty", "");
                 if (mainPropertyName.length() > 0)
                     fieldDesc.setMainPropertyName(mainPropertyName);
-                
+
                 // Process information about annotations (displayName, uiType, etc.
-                ArrayList<String> annotationOrder = new ArrayList<String>();
+                ArrayList<String> annotationOrder = new ArrayList<>();
                 if (fieldConfig.has("annotations")) {
                     JsonNode annotations = fieldConfig.get("annotations");
                     Iterator<JsonNode> itAnnot = annotations.elements();
@@ -1218,13 +1218,13 @@ public class IndexStructure {
                                 break;
                             }
                         }
-                        if (StringUtils.isEmpty(propDesc.getName())) 
+                        if (StringUtils.isEmpty(propDesc.getName()))
                             logger.warn("Annotation entry without name for field '" + fieldName + "' in indexmetadata file; skipping");
                         else
                             fieldDesc.putProperty(propDesc);
                     }
                 }
-                
+
                 // These properties should get no forward index
                 // TODO: refactor this so this information is stored with each property instead, deprecating this setting
                 JsonNode nodeNoForwardIndexProps = fieldConfig.get("noForwardIndexProps");
@@ -1242,7 +1242,7 @@ public class IndexStructure {
                         fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
                     }
                 }
-                
+
                 // This is the "natural order" of our annotations
                 // (probably not needed anymore - if not specified, the order of the annotations will be used)
                 List<String> displayOrder = Json.getListOfStrings(fieldConfig, "displayOrder");
@@ -1250,7 +1250,7 @@ public class IndexStructure {
                     displayOrder.addAll(annotationOrder);
                 }
                 fieldDesc.setDisplayOrder(displayOrder);
-                
+
                 complexFields.put(fieldName, fieldDesc);
             }
         }
@@ -1293,24 +1293,17 @@ public class IndexStructure {
             	}
             } // even if we have metadata, we still have to detect props/alts
         }
-        
+
         defaultAnalyzerName = Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT");
 
         titleField = authorField = dateField = pidField = null;
         if (fieldInfo.has("titleField"))
             titleField = fieldInfo.get("titleField").textValue();
         if (titleField == null) {
-            String titleField1 = findTextField("title");
-            if (titleField1 == null) {
-                // Use the first text field we can find.
-                for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
-                    if (e.getValue().getType() == FieldType.TOKENIZED) {
-                        titleField1 = e.getKey();
-                        break;
-                    }
-                }
+            titleField = findTextField("title");
+            if (titleField == null) {
+                titleField = "fromInputFile";
             }
-            titleField = titleField1;
         }
         if (fieldInfo.has("authorField"))
             authorField = fieldInfo.get("authorField").textValue();
