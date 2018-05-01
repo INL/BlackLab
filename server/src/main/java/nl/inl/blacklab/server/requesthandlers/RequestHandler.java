@@ -218,7 +218,7 @@ public abstract class RequestHandler {
 						String handlerName = urlResource;
 
 						IndexStatus status = searchManager.getIndexManager().getIndex(indexName).getStatus();
-						if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status")) {
+						if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status") && !handlerName.equals("sharing")) {
 							return errorObj.unavailable(indexName, status.toString());
 						}
 
