@@ -32,8 +32,8 @@ public interface ConvertPlugin extends Plugin {
 	/**
 	 * Can this converter convert this file
 	 *
-	 * @param is
-	 * @param cs
+	 * @param is stream containing a pushback buffer of at least 251 characters
+	 * @param cs (optional) charset of the inputstream, if this is a text (non-binary) file type
 	 * @param inputFormat
 	 * @return true if this file can be converted into this plugin's outputFormat
 	 */

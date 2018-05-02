@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.index.DocIndexerFactoryConvertAndTag;
+import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.index.config.YamlJsonReader;
@@ -229,7 +229,7 @@ public class ConfigReader extends YamlJsonReader {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
             case "indexing": readIndexing(obj(e)); break;
-            case "plugins": DocIndexerFactoryConvertAndTag.initPlugins(obj(e)); break;
+            case "plugins": PluginManager.initPlugins(obj(e)); break;
             case "debug": readDebug(obj(e)); break;
             case "search":
             	break;

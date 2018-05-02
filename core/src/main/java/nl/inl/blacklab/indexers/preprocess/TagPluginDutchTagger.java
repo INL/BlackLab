@@ -25,58 +25,75 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class TagPluginDutchTagger implements TagPlugin {
-    private static final String PROP_JAR     = "jarPath";
+    private static final String PROP_JAR = "jarPath";
     private static final String PROP_VECTORS = "vectorFile";
-    private static final String PROP_MODEL   = "modelFile";
+    private static final String PROP_MODEL = "modelFile";
     private static final String PROP_LEXICON = "lexiconFile";
 
-	private static final String VERSION      = "0.2";
+    private static final String VERSION = "0.2";
     private ClassLoader loader;
 
     /** The object doing the actual conversion */
     private Object converter = null;
 
-	private Method handleFile;
+    private Method handleFile;
+
+    // lazy initialization, since the DutchTagger is VERY slow to initialize
+    Properties converterProps = new Properties();
+    boolean isInitialized = false;
+    // TODO store error bit
+
 
     @Override
     public void init(ObjectNode config) throws PluginException {
-
         if (config == null)
             throw new PluginException("This plugin requires configuration");
 
-		File jar = new File(configStr(config, PROP_JAR));
-		if (!jar.exists())
-			throw new PluginException("Could not find the dutchTagger jar at location " + jar.toString());
-		if (!jar.canRead())
-			throw new PluginException("Could not read the dutchTagger jar at location " + jar.toString());
+        File jar = new File(configStr(config, PROP_JAR));
+        if (!jar.exists())
+            throw new PluginException("Could not find the dutchTagger jar at location " + jar.toString());
+        if (!jar.canRead())
+            throw new PluginException("Could not read the dutchTagger jar at location " + jar.toString());
         try {
-			URL jarUrl = jar.toURI().toURL();
-			loader = new URLClassLoader(new URL[]{jarUrl}, null);
-			assertVersion(loader);
+            URL jarUrl = jar.toURI().toURL();
+            loader = new URLClassLoader(new URL[] { jarUrl }, null);
+            assertVersion(loader);
 
-            Properties base = new Properties();
-            base.setProperty("word2vecFile", configStr(config, PROP_VECTORS));
-            base.setProperty("taggingModel", configStr(config, PROP_MODEL));
-            base.setProperty("lexiconPath", configStr(config, PROP_LEXICON));
-            base.setProperty("tokenize", "true");
+            converterProps.setProperty("word2vecFile", configStr(config, PROP_VECTORS));
+            converterProps.setProperty("taggingModel", configStr(config, PROP_MODEL));
+            converterProps.setProperty("lexiconPath", configStr(config, PROP_LEXICON));
+            converterProps.setProperty("tokenize", "true");
 
-            Class<?> converterClass = loader.loadClass("nl.namescape.tagging.ImpactTaggerLemmatizerClient");
-            Method setProperties = converterClass.getMethod("setProperties", Properties.class);
-            handleFile = converterClass.getMethod("handleFile", String.class, String.class);
-
-            converter = converterClass.newInstance();
-            setProperties.invoke(converter, base);
         } catch (Exception e) {
             throw new PluginException("Error initializing DutchTaggerLemmatizer plugin", e);
         }
     }
 
+    private void lazyInit() throws PluginException {
+        if (isInitialized)
+            return;
+        isInitialized = true;
+
+        try {
+            Class<?> converterClass = loader.loadClass("nl.namescape.tagging.ImpactTaggerLemmatizerClient");
+            Method setProperties = converterClass.getMethod("setProperties", Properties.class);
+            handleFile = converterClass.getMethod("handleFile", String.class, String.class);
+
+            converter = converterClass.newInstance();
+            setProperties.invoke(converter, converterProps);
+        } catch (Exception e) {
+            throw new PluginException("Error lazy-initializing DutchTagger jar", e);
+        }
+    }
+
     @Override
     public synchronized void perform(Reader reader, Writer writer) throws PluginException {
+        lazyInit();
+
         // Set the ContextClassLoader to use the UrlClassLoader we pointed at the OpenConvert jar.
         // This is required because OpenConvert implicitly loads some dependencies through locators/providers (such as its xml transformers)
-		// and these locators/providers sometimes prefer to use the ContextClassLoader, which may have been set by a servlet container or the like.
-		// If those cases, the contextClassLoader does not have the jar we loaded on its classpath, and so it cannot find the correct classes.
+        // and these locators/providers sometimes prefer to use the ContextClassLoader, which may have been set by a servlet container or the like.
+        // If those cases, the contextClassLoader does not have the jar we loaded on its classpath, and so it cannot find the correct classes.
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
@@ -104,10 +121,12 @@ public class TagPluginDutchTagger implements TagPlugin {
                 IOUtils.copy(fis, writer, intermediateCharset);
             }
         } catch (Exception e) {
-			throw new PluginException("Could not tag file: " + e.getMessage(), e);
+            throw new PluginException("Could not tag file: " + e.getMessage(), e);
         } finally {
-            if (tmpInput != null) FileUtils.deleteQuietly(tmpInput.toFile());
-            if (tmpOutput != null) FileUtils.deleteQuietly(tmpOutput.toFile());
+            if (tmpInput != null)
+                FileUtils.deleteQuietly(tmpInput.toFile());
+            if (tmpOutput != null)
+                FileUtils.deleteQuietly(tmpOutput.toFile());
         }
     }
 
@@ -154,23 +173,23 @@ public class TagPluginDutchTagger implements TagPlugin {
 
     @Override
     public String getDescription() {
-        return "";
-	}
+        return "Tags dutch text in the TEI format";
+    }
 
-	/**
-	 * Ensure that the maven artifact version matches VERSION
-	 *
-	 * @param loader
-	 * @throws PluginException
-	 */
-	private static void assertVersion(ClassLoader loader) throws PluginException {
-		try (InputStream is = loader.getResourceAsStream("META-INF/MANIFEST.MF")) {
-			Manifest manifest = new Manifest(is);
-			String version = manifest.getMainAttributes().getValue("Specification-Version");
-			if (!version.equals(VERSION))
-				throw new PluginException("Mismatched version! Expected " + VERSION + " but found " + version);
-		} catch (IOException e) {
-			throw new PluginException("Could not read manifest: " + e.getMessage(), e);
-		}
+    /**
+     * Ensure that the maven artifact version matches VERSION
+     *
+     * @param loader
+     * @throws PluginException
+     */
+    private static void assertVersion(ClassLoader loader) throws PluginException {
+        try (InputStream is = loader.getResourceAsStream("META-INF/MANIFEST.MF")) {
+            Manifest manifest = new Manifest(is);
+            String version = manifest.getMainAttributes().getValue("Specification-Version");
+            if (!version.equals(VERSION))
+                throw new PluginException("Mismatched version! Expected " + VERSION + " but found " + version);
+        } catch (IOException e) {
+            throw new PluginException("Could not read manifest: " + e.getMessage(), e);
+        }
     }
 }

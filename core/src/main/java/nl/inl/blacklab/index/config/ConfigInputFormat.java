@@ -16,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.config.InputFormatReader.BaseFormatFinder;
+import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
+import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 import nl.inl.util.FileUtil;
 
 /**
@@ -86,6 +88,12 @@ public class ConfigInputFormat {
 
     /** Linked document(s), e.g. containing our metadata */
     private Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
+
+    /** id of a {@link ConvertPlugin} to run files through prior to indexing */
+    private String convertPluginId;
+
+    /** id of a {@link TagPlugin} to run files through prior to indexing, this happens after converting (if applicable) */
+    private String tagPluginId;
 
     /** What file was this format read from? Useful if we want to display it in BLS. */
     private File readFromFile;
@@ -242,6 +250,22 @@ public class ConfigInputFormat {
 
     public void addLinkedDocument(ConfigLinkedDocument d) {
         linkedDocuments.put(d.getName(), d);
+    }
+
+    public void setConvertPluginId(String id) {
+        this.convertPluginId = id;
+    }
+
+    public String getConvertPluginId() {
+        return convertPluginId;
+    }
+
+    public void setTagPluginId(String id) {
+        this.tagPluginId = id;
+    }
+
+    public String getTagPluginId() {
+        return tagPluginId;
     }
 
     public boolean isNamespaceAware() {

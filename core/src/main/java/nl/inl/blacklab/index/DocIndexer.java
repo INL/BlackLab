@@ -54,7 +54,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     protected static final Logger logger = LogManager.getLogger(DocIndexer.class);
 
-    public Indexer indexer;
+    protected Indexer indexer;
 
     /** Do we want to omit norms? (Default: yes) */
     protected boolean omitNorms = true;
@@ -329,7 +329,6 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     public void addMetadataField(String name, String value) {
-        
         if (!ComplexFieldUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name + "' is discouraged (field/property names should be valid XML element names)");
 

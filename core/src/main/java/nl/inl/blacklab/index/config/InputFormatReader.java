@@ -105,6 +105,8 @@ public class InputFormatReader extends YamlJsonReader {
             case "metadataDefaultAnalyzer": cfg.setMetadataDefaultAnalyzer(str(e)); break;
             case "metadata": readMetadata(e, cfg); break;
             case "linkedDocuments": readLinkedDocuments(e, cfg); break;
+            case "convertPlugin": cfg.setConvertPluginId(str(e)); break;
+            case "tagPlugin": cfg.setTagPluginId(str(e)); break;
             default:
                 throw new InputFormatConfigException("Unknown top-level key " + e.getKey());
             }

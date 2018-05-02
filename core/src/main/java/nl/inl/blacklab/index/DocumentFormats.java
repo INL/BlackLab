@@ -36,8 +36,6 @@ public class DocumentFormats {
 		// So register config-based factory after class-based factory
 		registerFactory(builtinClassFactory);
 		registerFactory(builtinConfigFactory);
-
-		registerFactory(new DocIndexerFactoryConvertAndTag());
     }
 
     /**
