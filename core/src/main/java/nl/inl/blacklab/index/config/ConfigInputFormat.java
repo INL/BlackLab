@@ -26,7 +26,7 @@ import nl.inl.util.FileUtil;
 public class ConfigInputFormat {
 
     /** Basic file types we support */
-    static enum FileType {
+    public enum FileType {
         XML,
         TABULAR,  // csv, tsv
         TEXT,     // plain text
