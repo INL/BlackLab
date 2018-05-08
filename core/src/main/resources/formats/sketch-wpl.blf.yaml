@@ -1,4 +1,4 @@
-displayName: Sketch Engine word-per-line (WPL) input format
+displayName: Sketch Engine WPL (word-per-line) input format
 description: A format including word, lemma and PoS codes as well as punctuation, inline tags and document metadata.
 helpUrl: https://www.sketchengine.eu/documentation/preparing-corpus-text/
 

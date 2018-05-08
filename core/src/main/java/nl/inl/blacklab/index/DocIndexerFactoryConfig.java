@@ -76,7 +76,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 		isInitialized = true;
 
 		// Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass, or this will override those classes.
-		String[] formats = { "chat", "csv", "eaf", "folia", "sketch-wpl", "tcf", "tei-p4", "tei", "tsv-frog", "tsv", "txt" };
+		String[] formats = { "chat", "cmdi", "csv", "eaf", "folia", "sketch-wpl", "tcf", "tei-p4", "tei", "tsv-frog", "tsv", "txt" };
 		for (String formatIdentifier: formats) {
 			try (InputStream is = DocumentFormats.class	.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
 				if (is == null)
