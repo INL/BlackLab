@@ -38,8 +38,8 @@ public class PluginManager {
 
     private static boolean isInitialized = false;
 
-    private static Map<String, ConvertPlugin> convertPlugins;
-    private static Map<String, TagPlugin> tagPlugins;
+    private static Map<String, ConvertPlugin> convertPlugins = new HashMap<>();
+    private static Map<String, TagPlugin> tagPlugins = new HashMap<>();
 
 
     /*
