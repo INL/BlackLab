@@ -69,6 +69,7 @@ public class PluginManager {
     public static void initPlugins(ObjectNode pluginConfig) {
         if (isInitialized)
             throw new IllegalStateException("PluginManager already initialized");
+        isInitialized = true;
 
         logger.info("Initializing plugin system");
 
@@ -76,6 +77,7 @@ public class PluginManager {
         tagPlugins = initPlugins(TagPlugin.class, pluginConfig);
 
         logger.info("Finished Initializing plugin system");
+
     }
 
     private static <T extends Plugin> Map<String, T> initPlugins(Class<T> pluginClass, ObjectNode pluginConfig) {
@@ -117,10 +119,14 @@ public class PluginManager {
     }
 
     public static Optional<ConvertPlugin> getConverter(String convertPluginId) {
+        if (!isInitialized)
+            throw new UnsupportedOperationException("Plugin system is not initialized, place a top-level key \"plugins\" with per-plugin configuration in your blacklab config to use plugins.");
         return Optional.ofNullable(convertPlugins.get(convertPluginId));
     }
 
     public static Optional<TagPlugin> getTagger(String tagPluginId) {
+        if (!isInitialized)
+            throw new UnsupportedOperationException("Plugin system is not initialized, place a top-level key \"plugins\" with per-plugin configuration in your blacklab config to use plugins.");
         return Optional.ofNullable(tagPlugins.get(tagPluginId));
     }
 }
