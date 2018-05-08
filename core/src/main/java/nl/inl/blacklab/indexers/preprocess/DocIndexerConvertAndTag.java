@@ -100,10 +100,6 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         this.outputIndexer.setDocumentName(this.documentName);
         this.outputIndexer.setConfigInputFormat(config);
 
-        try (FileOutputStream os = new FileOutputStream(new File("C:\\Users\\Mertens\\Desktop\\output.txt"))) {
-            IOUtils.copy(new ByteArrayInputStream(output.toByteArray()), os);
-        }
-
         try (InputStream is = new ByteArrayInputStream(output.toByteArray())) {
             this.outputIndexer.setDocument(is, charset);
             this.outputIndexer.index();
