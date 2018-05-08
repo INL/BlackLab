@@ -3,6 +3,7 @@ package nl.inl.blacklab.indexers.preprocess;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
 
@@ -26,7 +27,7 @@ public class TagPluginNoop implements TagPlugin {
     }
 
     @Override
-    public void init(ObjectNode config) throws PluginException {
+    public void init(Optional<ObjectNode> config) throws PluginException {
         return;
     }
 

@@ -13,6 +13,7 @@ import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.jar.Manifest;
 
@@ -38,16 +39,9 @@ public class TagPluginDutchTagger implements TagPlugin {
 
     private Method handleFile;
 
-    // lazy initialization, since the DutchTagger is VERY slow to initialize
-    Properties converterProps = new Properties();
-    boolean isInitialized = false;
-    // TODO store error bit
-
-
     @Override
-    public void init(ObjectNode config) throws PluginException {
-        if (config == null)
-            throw new PluginException("This plugin requires configuration");
+    public void init(Optional<ObjectNode> configNode) throws PluginException {
+        ObjectNode config = configNode.orElseThrow(() -> new PluginException("This plugin requires configuration"));
 
         File jar = new File(configStr(config, PROP_JAR));
         if (!jar.exists())
@@ -59,22 +53,12 @@ public class TagPluginDutchTagger implements TagPlugin {
             loader = new URLClassLoader(new URL[] { jarUrl }, null);
             assertVersion(loader);
 
+            Properties converterProps = new Properties();
             converterProps.setProperty("word2vecFile", configStr(config, PROP_VECTORS));
             converterProps.setProperty("taggingModel", configStr(config, PROP_MODEL));
             converterProps.setProperty("lexiconPath", configStr(config, PROP_LEXICON));
             converterProps.setProperty("tokenize", "true");
 
-        } catch (Exception e) {
-            throw new PluginException("Error initializing DutchTaggerLemmatizer plugin", e);
-        }
-    }
-
-    private void lazyInit() throws PluginException {
-        if (isInitialized)
-            return;
-        isInitialized = true;
-
-        try {
             Class<?> converterClass = loader.loadClass("nl.namescape.tagging.ImpactTaggerLemmatizerClient");
             Method setProperties = converterClass.getMethod("setProperties", Properties.class);
             handleFile = converterClass.getMethod("handleFile", String.class, String.class);
@@ -82,14 +66,12 @@ public class TagPluginDutchTagger implements TagPlugin {
             converter = converterClass.newInstance();
             setProperties.invoke(converter, converterProps);
         } catch (Exception e) {
-            throw new PluginException("Error lazy-initializing DutchTagger jar", e);
+            throw new PluginException("Error initializing DutchTaggerLemmatizer plugin", e);
         }
     }
 
     @Override
     public synchronized void perform(Reader reader, Writer writer) throws PluginException {
-        lazyInit();
-
         // Set the ContextClassLoader to use the UrlClassLoader we pointed at the OpenConvert jar.
         // This is required because OpenConvert implicitly loads some dependencies through locators/providers (such as its xml transformers)
         // and these locators/providers sometimes prefer to use the ContextClassLoader, which may have been set by a servlet container or the like.
@@ -110,7 +92,8 @@ public class TagPluginDutchTagger implements TagPlugin {
             tmpInput = Files.createTempFile("", ".xml");
             tmpOutput = Files.createTempFile("", ".xml");
 
-            final Charset intermediateCharset = Charset.defaultCharset(); // Use this, as the tagger is a little dumb and doesn't allow us to specify a charset
+            // Use this, as the tagger is a little dumb and doesn't allow us to specify a charset
+            final Charset intermediateCharset = Charset.defaultCharset();
             try (FileOutputStream os = new FileOutputStream(tmpInput.toFile())) {
                 IOUtils.copy(reader, os, intermediateCharset);
             }

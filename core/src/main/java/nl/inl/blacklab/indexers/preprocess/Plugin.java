@@ -1,5 +1,7 @@
 package nl.inl.blacklab.indexers.preprocess;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
@@ -49,9 +51,9 @@ public interface Plugin {
 	/**
 	 * Initializes the plugin, called once after the initial loading of the class.
 	 *
-	 * @param config the config settings for this plugin, may be null.
+	 * @param config the config settings for this plugin
 	 * @throws PluginException
 	 */
-	public void init(ObjectNode config) throws PluginException;
+	public void init(Optional<ObjectNode> config) throws PluginException;
 }
 
