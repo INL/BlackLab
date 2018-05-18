@@ -23,6 +23,8 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
+import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
+import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats.IllegalUserFormatIdentifier;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -203,16 +205,24 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 		ds.endMap().endEntry();
 
 		// List supported input formats
+		// Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
 	    ds.startEntry("supportedInputFormats").startMap();
         for (Format format: DocumentFormats.getFormats()) {
-            String name = format.getId();
-            if (!name.contains(":") || name.startsWith(user.getUserId() + ':')) { // TODO
-                ds.startAttrEntry("format", "name", name).startMap()
-                    .entry("displayName", format.getDisplayName())
-                    .entry("description", format.getDescription())
-                    .entry("configurationBased", format.isConfigurationBased())
-	            .endMap().endAttrEntry();
+            try {
+                String userId = DocIndexerFactoryUserFormats.getUserIdOrFormatName(format.getId(), false);
+                // Other user's formats are not explicitly enumerated (but should still be considered public)
+                if (!userId.equals(user.getUserId()))
+                    continue;
+            } catch (IllegalUserFormatIdentifier e) {
+                // Alright, it's evidently not a user format, that means it's public. List it.
             }
+
+            ds.startAttrEntry("format", "name", format.getId()).startMap()
+                .entry("displayName", format.getDisplayName())
+                .entry("description", format.getDescription())
+                .entry("helpUrl", format.getHelpUrl())
+                .entry("configurationBased", format.isConfigurationBased())
+            .endMap().endAttrEntry();
         }
 	    ds.endMap().endEntry();
 		ds.endMap();
@@ -220,8 +230,19 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 		return HTTP_OK;
 	}
 
-	private static int handleXsltRequest(DataStream ds, ConfigInputFormat config) {
-		// We want an XSLT from this config.
+	/**
+	 * Generate an xslt document that can transform documents into a basic html view with some minor formatting for highlights.
+	 *
+	 * @param ds
+	 * @param config
+	 * @return http code
+	 * @throws NotFound if the config does not pertain to an XML-based format (tsv, plaintext, etc)
+	 */
+	private static int handleXsltRequest(DataStream ds, ConfigInputFormat config) throws NotFound {
+	    if (!ConfigInputFormat.FileType.XML.equals(config.getFileType()))
+            throw new NotFound("NOT_FOUND", "The format '" + config.getName() + "' does not apply to XML-type documents, and cannot be converted to XSLT.");
+
+	    // We want an XSLT from this config.
 		StringBuilder xslt = new StringBuilder();
 		StringBuilder nameSpaces = new StringBuilder();
 		StringBuilder excludeResultPrefixes = new StringBuilder();
@@ -258,14 +279,6 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 			.append(XslGenerator.applyTemplates("node()")) // we don't know what level we're at, so explicitly match everything else
 			.append("</span>")
 			.append(XslGenerator.endTemplate);
-
-		// and p into p...
-		// use local-name to sidestep namespaces
-//		xslt.append(XslGenerator.beginTemplate("*[local-name(.)='p']"))
-//			.append("<p>")
-//			.append(XslGenerator.applyTemplates("node()"))
-//			.append("</p>")
-//			.append(XslGenerator.endTemplate);
 
 		// generate the templates for all words
 		// NOTE: 'annotation' here refers to a linguistic annotation - not an xml attribute/annotation!
@@ -342,7 +355,8 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 						"This can be caused by inconsistent use of default namespaces within the xml document. " +
 						"The documents will usually still be indexed, because blacklab is a bit more lenient towards elements that " +
 						"should be in a namespace, but actually aren't or vice versa. " +
-						"To see your documents, try creating a new index, and spell out the namespaces fully within your xpath. " +
+						"To see your documents, try creating a new index, and spell out the namespaces fully within your xpath expression. " +
+						"If you entire document is within a default namespace, you will need to set it in the import format as \"\": \"http://my-default-namespace.site/namespace\"" +
 						"</xsl:text>")
 				.append(XslGenerator.endTemplate);
 

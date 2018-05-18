@@ -53,7 +53,7 @@ import nl.inl.blacklab.server.jobs.User;
  * {@link DocIndexerFactoryUserFormats#isSupported(String)} is called with a formatIdentifier resembling a user-defined format.
  */
 public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
-	private static class IllegalUserFormatIdentifier extends Exception {
+	public static class IllegalUserFormatIdentifier extends Exception {
 		public IllegalUserFormatIdentifier(String message) {
 			super(message);
 		}
@@ -254,14 +254,14 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
     }
 
     /**
-     * Extract the userId portion of a formatIdentifier as created by {@link DocIndexerFactoryUserFormats#getFormatIdentifier(User, String)}
+     * Extract the userId portion of a formatIdentifier as created by {@link DocIndexerFactoryUserFormats#getFormatIdentifier(String, String)}
      *
      * @param formatIdentifier
      * @param getFormatName return the formatName instead of the userId
      * @return the userId or formatName
      * @throws IllegalUserFormatIdentifier when the formatIdentifier does not follow the pattern of userId:formatName or the userId or formatName contain illegal characters
      */
-    private static String getUserIdOrFormatName(String formatIdentifier, boolean getFormatName) throws IllegalUserFormatIdentifier {
+    public static String getUserIdOrFormatName(String formatIdentifier, boolean getFormatName) throws IllegalUserFormatIdentifier {
     	Matcher m = formatIdentifierPattern.matcher(formatIdentifier);
     	if (!m.matches())
     		throw new IllegalUserFormatIdentifier(formatIdentifier + " is not a valid user format id");

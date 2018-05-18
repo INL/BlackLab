@@ -27,9 +27,9 @@ import nl.inl.blacklab.index.Indexer;
  */
 public class DocIndexerTeiText extends DocIndexerTeiBase {
 
-    public static String getDisplayName() { return "Alternate TEI indexer"; }
+    public static String getDisplayName() { return "TEI-DocIndexer-text (alternate TEI indexer)"; }
     public static String getDescription() { return
-            "Like di-tei, but contents should be in text element."; }
+                "Main contents should be in text element, should be tokenized and PoS tags should be in the type attribute."; }
 
 	public DocIndexerTeiText(Indexer indexer, String fileName, Reader reader) {
 		super(indexer, fileName, reader, "text", true);

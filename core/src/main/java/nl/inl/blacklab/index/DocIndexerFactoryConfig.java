@@ -76,7 +76,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 		isInitialized = true;
 
 		// Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass, or this will override those classes.
-		String[] formats = { "chat", "csv", "eaf", "folia", "sketch-wpl", "tcf", "tei-p4", "tei", "tsv-frog", "tsv", "txt" };
+		String[] formats = { "chat", "cmdi", "csv", "eaf", "folia", "sketch-wpl", "tcf", "tei-p4", "tei", "tsv-frog", "tsv", "txt" };
 		for (String formatIdentifier: formats) {
 			try (InputStream is = DocumentFormats.class	.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
 				if (is == null)
@@ -117,8 +117,9 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 	public List<Format> getFormats() {
 		List<Format> ret = new ArrayList<>();
 		for (Entry<String, ConfigInputFormat> e: this.supported.entrySet()) {
-			Format desc = new Format(e.getValue().getName(), e.getValue().getDisplayName(), e.getValue().getDescription());
-			desc.setConfig(e.getValue());
+			ConfigInputFormat config = e.getValue();
+            Format desc = new Format(config.getName(), config.getDisplayName(), config.getDescription(), config.getHelpUrl());
+			desc.setConfig(config);
 			desc.setUnlisted(false);
 			ret.add(desc);
 		}
@@ -136,7 +137,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 		    loadUnloaded();
 		    inputFormat = this.supported.get(formatIdentifier);
 		}
-		Format desc = new Format(inputFormat.getName(), inputFormat.getDisplayName(), inputFormat.getDescription());
+		Format desc = new Format(inputFormat.getName(), inputFormat.getDisplayName(), inputFormat.getDescription(), inputFormat.getHelpUrl());
 		desc.setConfig(inputFormat);
 		desc.setUnlisted(false);
 		return desc;

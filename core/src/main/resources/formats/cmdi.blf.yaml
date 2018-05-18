@@ -6,6 +6,8 @@ displayName: CMDI (Component MetaData Infrastructure)
 # For describing input format in user interface (optional)
 description: Metadata format initiated in the CLARIN project.
 
+helpUrl: https://www.clarin.eu/content/component-metadata
+
 # (Optional, informational)
 # content, metadata or mixed?
 # (not used by BlackLab, purely informational for the frontend application)

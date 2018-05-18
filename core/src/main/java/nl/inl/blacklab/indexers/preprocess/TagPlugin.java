@@ -6,7 +6,8 @@ import java.io.Writer;
 import nl.inl.blacklab.index.DocIndexer;
 
 public interface TagPlugin extends Plugin {
-	/**
+
+    /**
 	 * Get the name of the format this plugin can tag.
 	 * Should be as descriptive as possible (e.g. just "xml" is not exact enough,
 	 * because xml can mean different things based on the contents of the file, so instead use "folia" or "tei", or whatever contents the file happens to have).

@@ -78,6 +78,7 @@ public class InputFormatReader extends YamlJsonReader {
             switch (e.getKey()) {
             case "displayName": cfg.setDisplayName(str(e)); break;
             case "description": cfg.setDescription(str(e)); break;
+            case "helpUrl": cfg.setHelpUrl(str(e)); break;
             case "baseFormat": {
                 String formatIdentifier = str(e);
                 if (finder == null)
@@ -104,6 +105,8 @@ public class InputFormatReader extends YamlJsonReader {
             case "metadataDefaultAnalyzer": cfg.setMetadataDefaultAnalyzer(str(e)); break;
             case "metadata": readMetadata(e, cfg); break;
             case "linkedDocuments": readLinkedDocuments(e, cfg); break;
+            case "convertPlugin": cfg.setConvertPluginId(str(e)); break;
+            case "tagPlugin": cfg.setTagPluginId(str(e)); break;
             default:
                 throw new InputFormatConfigException("Unknown top-level key " + e.getKey());
             }

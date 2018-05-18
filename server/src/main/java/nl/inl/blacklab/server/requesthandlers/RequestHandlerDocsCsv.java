@@ -34,184 +34,191 @@ import nl.inl.blacklab.server.jobs.User;
  * Request handler for hit results.
  */
 public class RequestHandlerDocsCsv extends RequestHandler {
-	public RequestHandlerDocsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
-		super(servlet, request, user, indexName, urlResource, urlPathPart);
-	}
+    public RequestHandlerDocsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
+        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    }
 
-	/**
-	 * Get the docs (and the groups from which they were extracted - if applicable) or the groups for this request.
-	 * Exceptions cleanly mapping to http error responses are thrown if any part of the request cannot be fulfilled.
-	 * Sorting is already applied to the results.
-	 *
-	 * @return Docs if looking at ungrouped results, Docs+Groups if looking at results within a group, Groups if looking at groups but not within a specific group.
-	 * @throws BlsException
-	 */
-	// TODO share with regular RequestHandlerHits
-	private Pair<DocResults, DocGroups> getDocs() throws BlsException {
-		// Might be null
-		String groupBy = searchParam.getString("group"); if (groupBy.isEmpty()) groupBy = null;
-		String viewGroup = searchParam.getString("viewgroup"); if (viewGroup.isEmpty()) viewGroup = null;
-		String sortBy = searchParam.getString("sort"); if (sortBy.isEmpty()) sortBy = null;
+    /**
+     * Get the docs (and the groups from which they were extracted - if applicable) or the groups for this request.
+     * Exceptions cleanly mapping to http error responses are thrown if any part of the request cannot be fulfilled.
+     * Sorting is already applied to the results.
+     *
+     * @return Docs if looking at ungrouped results, Docs+Groups if looking at results within a group, Groups if looking at groups but not within a specific group.
+     * @throws BlsException
+     */
+    // TODO share with regular RequestHandlerHits
+    private Pair<DocResults, DocGroups> getDocs() throws BlsException {
+        // Might be null
+        String groupBy = searchParam.getString("group"); if (groupBy.isEmpty()) groupBy = null;
+        String viewGroup = searchParam.getString("viewgroup"); if (viewGroup.isEmpty()) viewGroup = null;
+        String sortBy = searchParam.getString("sort"); if (sortBy.isEmpty()) sortBy = null;
 
-		JobWithDocs job= null;
-		DocResults docs = null;
-		DocGroups groups = null;
+        JobWithDocs job= null;
+        DocResults docs = null;
+        DocGroups groups = null;
 
-		try {
-			if (groupBy != null) {
-				JobDocsGrouped searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
-				job = searchGrouped;
-				groups = searchGrouped.getGroups();
-				// don't set docs yet - only return docs if we're looking within a specific group
+        try {
+            if (groupBy != null) {
+                JobDocsGrouped searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
+                job = searchGrouped;
+                groups = searchGrouped.getGroups();
+                // don't set docs yet - only return docs if we're looking within a specific group
 
-				if (viewGroup != null) {
-					HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(), viewGroup);
-					if (groupId == null)
-						throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-					DocGroup group = groups.getGroup(groupId);
-					if (group == null)
-						throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+                if (viewGroup != null) {
+                    HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(), viewGroup);
+                    if (groupId == null)
+                        throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+                    DocGroup group = groups.getGroup(groupId);
+                    if (group == null)
+                        throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-					docs = group.getResults();
+                    docs = group.getResults();
 
-					// NOTE: sortBy is automatically applied to regular results, but not to results within groups
-					// See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-					// Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-					// There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
-					if (sortBy != null) {
-						DocProperty sortProp = DocProperty.deserialize(sortBy);
-						if (sortProp == null)
-							throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-						docs.sort(sortProp, sortProp.isReverse());
-					}
-				}
-			} else  {
-				// Don't use JobDocsAll, as we only might not need them all.
-				job = (JobWithDocs) searchMan.search(user, searchParam.docsSorted(), true);
-				docs = job.getDocResults();
-			}
-		} finally {
-			if (job != null)
-				job.decrRef();
-		}
+                    // NOTE: sortBy is automatically applied to regular results, but not to results within groups
+                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+                    // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+                    // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
+                    if (sortBy != null) {
+                        DocProperty sortProp = DocProperty.deserialize(sortBy);
+                        if (sortProp == null)
+                            throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
+                        docs.sort(sortProp, sortProp.isReverse());
+                    }
+                }
+            } else  {
+                // Don't use JobDocsAll, as we only might not need them all.
+                job = (JobWithDocs) searchMan.search(user, searchParam.docsSorted(), true);
+                docs = job.getDocResults();
+            }
+        } finally {
+            if (job != null)
+                job.decrRef();
+        }
 
-		// apply window settings
-		// Different from the regular results, if no window settings are provided, we export the maximum amount automatically
-		// The max for CSV exports is also different from the default pagesize maximum.
-		if (docs != null) {
-			int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
-			if (!docs.sizeAtLeast(first))
-				first = 0;
+        // apply window settings
+        // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
+        // The max for CSV exports is also different from the default pagesize maximum.
+        if (docs != null) {
+            int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
+            if (!docs.sizeAtLeast(first))
+                first = 0;
 
-			int number = searchMan.config().maxExportPageSize();
-			if (searchParam.containsKey("number"))
-				number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
+            int number = searchMan.config().maxExportPageSize();
+            if (searchParam.containsKey("number"))
+                number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
 
-			docs = docs.window(first, number);
-		}
+            docs = docs.window(first, number);
+        }
 
-		return Pair.of(docs, groups);
-	}
+        return Pair.of(docs, groups);
+    }
 
-	private static void writeGroups(DocGroups groups, DataStreamPlain ds) throws BlsException {
-		try {
-			// Write the header
-			List<String> row = new ArrayList<>();
-			row.addAll(groups.getGroupCriteria().getPropNames());
-			row.add("count");
+    private void writeGroups(DocGroups groups, DataStreamPlain ds) throws BlsException {
+        try {
+            // Write the header
+            List<String> row = new ArrayList<>();
+            row.addAll(groups.getGroupCriteria().getPropNames());
+            row.add("count");
 
-			CSVPrinter printer = CSVFormat.EXCEL.withHeader(row.toArray(new String[0])).print(new StringBuilder("sep=,\r\n"));
+            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
+            CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
+            CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
+            addSummaryCommonFieldsCSV(format, printer, searchParam);
+            row.clear();
 
-			// write the groups
-			for (DocGroup group : groups) {
-				row.clear();
-				row.addAll(group.getIdentity().getPropValues());
-				row.add(Integer.toString(group.getResults().countSoFarDocsCounted()));
-				printer.printRecord(row);
-			}
+            // write the groups
+            for (DocGroup group : groups) {
+                row.clear();
+                row.addAll(group.getIdentity().getPropValues());
+                row.add(Integer.toString(group.getResults().countSoFarDocsCounted()));
+                printer.printRecord(row);
+            }
 
-			printer.flush();
-			ds.plain(printer.getOut().toString());
-		} catch (IOException e) {
-			throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
-		}
-	}
+            printer.flush();
+            ds.plain(printer.getOut().toString());
+        } catch (IOException e) {
+            throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
+        }
+    }
 
-	private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
-		try {
-			IndexStructure struct = this.getSearcher().getIndexStructure();
-			String pidField = struct.pidField();
-			String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
+    private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
+        try {
+            IndexStructure struct = this.getSearcher().getIndexStructure();
+            String pidField = struct.pidField();
+            String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
 
-			// Build the header; 2 columns for pid and length, then 1 for each metadata field
-			List<String> row = new ArrayList<>();
-			row.add("docPid");
-			row.add("numberOfHits");
-			if (tokenLengthField != null)
-				row.add("lengthInTokens");
+            // Build the header; 2 columns for pid and length, then 1 for each metadata field
+            List<String> row = new ArrayList<>();
+            row.add("docPid");
+            row.add("numberOfHits");
+            if (tokenLengthField != null)
+                row.add("lengthInTokens");
 
-			Collection<String> metadataFieldIds = struct.getMetadataFields();
-			metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
-			metadataFieldIds.remove("lengthInTokens");
-			metadataFieldIds.remove("mayView");
+            Collection<String> metadataFieldIds = struct.getMetadataFields();
+            metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
+            metadataFieldIds.remove("lengthInTokens");
+            metadataFieldIds.remove("mayView");
 
-			row.addAll(metadataFieldIds); // NOTE: don't add display names, CSVPrinter can't handle duplicate names
+            row.addAll(metadataFieldIds); // NOTE: don't add display names, CSVPrinter can't handle duplicate names
 
-			// Explicitly declare the separator, excel normally uses a locale-dependent CSV-separator...
-			CSVPrinter printer = CSVFormat.EXCEL.withHeader(row.toArray(new String[0])).print(new StringBuilder("sep=,\r\n"));
+            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
+            CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
+            CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
+            addSummaryCommonFieldsCSV(format, printer, searchParam);
+            row.clear();
 
-			int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
-			for (DocResult docResult : docs) {
-				Document doc = docResult.getDocument();
-				row.clear();
+            int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
+            for (DocResult docResult : docs) {
+                Document doc = docResult.getDocument();
+                row.clear();
 
-				// Pid field, use lucene doc id if not provided
-				if (pidField != null && doc.get(pidField) != null)
-					row.add(doc.get(pidField));
-				else
-					row.add(Integer.toString(docResult.getDocId()));
+                // Pid field, use lucene doc id if not provided
+                if (pidField != null && doc.get(pidField) != null)
+                    row.add(doc.get(pidField));
+                else
+                    row.add(Integer.toString(docResult.getDocId()));
 
-				row.add(Integer.toString(docResult.getNumberOfHits()));
+                row.add(Integer.toString(docResult.getNumberOfHits()));
 
-				// Length field, if applicable
-				if (tokenLengthField != null)
-					row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - subtractFromLength)); // lengthInTokens
+                // Length field, if applicable
+                if (tokenLengthField != null)
+                    row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - subtractFromLength)); // lengthInTokens
 
-				// other fields in order of appearance
-				for (String fieldId : metadataFieldIds) {
-					row.add(doc.get(fieldId));
-				}
+                // other fields in order of appearance
+                for (String fieldId : metadataFieldIds) {
+                    row.add(doc.get(fieldId));
+                }
 
-				printer.printRecord(row);
-			}
+                printer.printRecord(row);
+            }
 
-			printer.flush();
-			ds.plain(printer.getOut().toString());
-		} catch (IOException e) {
-			throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
-		}
-	}
+            printer.flush();
+            ds.plain(printer.getOut().toString());
+        } catch (IOException e) {
+            throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
+        }
+    }
 
-	@Override
-	public int handle(DataStream ds) throws BlsException {
-		Pair<DocResults, DocGroups> result = getDocs();
-		if (result.getLeft() != null)
-			writeDocs(result.getLeft(), (DataStreamPlain) ds);
-		else
-			writeGroups(result.getRight(), (DataStreamPlain) ds);
+    @Override
+    public int handle(DataStream ds) throws BlsException {
+        Pair<DocResults, DocGroups> result = getDocs();
+        if (result.getLeft() != null)
+            writeDocs(result.getLeft(), (DataStreamPlain) ds);
+        else
+            writeGroups(result.getRight(), (DataStreamPlain) ds);
 
-		return HTTP_OK;
-	}
+        return HTTP_OK;
+    }
 
-	@Override
-	public DataFormat getOverrideType() {
-		return DataFormat.CSV;
-	}
+    @Override
+    public DataFormat getOverrideType() {
+        return DataFormat.CSV;
+    }
 
-	@Override
-	protected boolean isDocsOperation() {
-		return true;
-	}
+    @Override
+    protected boolean isDocsOperation() {
+        return true;
+    }
 }
 
 

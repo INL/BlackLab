@@ -6,7 +6,9 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
+import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -24,12 +26,20 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
 	public int handle(DataStream ds) throws BlsException {
 		debug(logger, "REQ add format: " + indexName);
 
-		// Get the uploaded file parameters
-        String formatIdentifier = urlResource; //request.getParameter("format");
-
         DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
         if (formatMan == null)
 			throw new BadRequest("CANNOT_DELETE_INDEX ", "Could not delete format. The server is not configured with support for user content.");
+
+
+        String formatIdentifier = urlResource;
+        if (formatIdentifier == null || formatIdentifier.isEmpty()) {
+            throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found");
+        }
+
+        for (Index i : indexMan.getAvailablePrivateIndices(user.getUserId())) {
+            if (formatIdentifier.equals(i.getIndexStructure().getDocumentFormat()))
+                throw new BadRequest("CANNOT_DELETE_INDEX ", "Could not delete format. The format is still being used by a corpus.");
+        }
 
         formatMan.deleteUserFormat(user, formatIdentifier);
 		return Response.success(ds, "Format deleted.");

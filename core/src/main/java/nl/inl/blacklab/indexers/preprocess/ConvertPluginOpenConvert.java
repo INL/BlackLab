@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -40,9 +41,8 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 	}
 
 	@Override
-	public void init(ObjectNode config) throws PluginException {
-		if (config == null)
-			throw new PluginException("This plugin requires a configuration.");
+	public void init(Optional<ObjectNode> configNode) throws PluginException {
+		ObjectNode config = configNode.orElseThrow(() -> new PluginException("This plugin requires a configuration."));
 
 		File jar = new File(configStr(config, PROP_JAR));
 		if (!jar.exists())

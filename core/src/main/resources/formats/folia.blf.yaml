@@ -4,6 +4,8 @@ displayName: FoLiA (Format for Linguistic Annotation)
 # For describing input format in user interface (optional)
 description: A file format for linguistically annotated text. See https://proycon.github.io/folia/
 
+helpUrl: https://proycon.github.io/folia/
+
 # (Optional, informational)
 # content, metadata or mixed?
 # (not used by BlackLab, purely informational for the frontend application)

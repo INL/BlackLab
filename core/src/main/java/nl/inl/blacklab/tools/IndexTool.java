@@ -354,12 +354,15 @@ public class IndexTool {
             String name = format.getId();
 		    String displayName = format.getDisplayName();
 		    String desc = format.getDescription();
+		    String url = format.getHelpUrl();
+		    if (!url.isEmpty())
+		        url = "\n      (see " + url + ")";
             if (displayName.length() > 0)
                 displayName = " (" + displayName + ")";
             if (desc.length() > 0) {
                 desc = "\n      " + StringUtil.join(StringUtil.wrap(desc, 75), "\n      ");
             }
-			System.out.println("  " + name + displayName + desc);
+			System.out.println("  " + name + displayName + desc + url);
 		}
 	}
 

@@ -39,6 +39,8 @@ public interface DocIndexerFactory {
 
 	    private String description;
 
+	    private String helpUrl;
+
         private boolean unlisted;
 
 		private ConfigInputFormat config;
@@ -55,6 +57,10 @@ public interface DocIndexerFactory {
             return description;
         }
 
+        public String getHelpUrl() {
+            return helpUrl;
+        }
+
 		public ConfigInputFormat getConfig() {
 			return config;
 		}
@@ -68,18 +74,21 @@ public interface DocIndexerFactory {
         }
 
         public Format(String formatIdentifier, String displayName, String description) {
+            this(formatIdentifier, displayName, description, "");
+        }
+
+        public Format(String formatIdentifier, String displayName, String description, String helpUrl) {
             super();
             this.formatIdentifier = formatIdentifier;
             this.displayName = displayName;
             this.description = description;
+            this.helpUrl = helpUrl;
         }
 
         public void setUnlisted(boolean b) {
             this.unlisted = b;
         }
 
-        // TODO this feels like a hack, can we resolve dependencies on other formats in InputFormatReader differently
-        // and remove the config object from this class?
         public void setConfig(ConfigInputFormat config) {
         	this.config = config;
         }

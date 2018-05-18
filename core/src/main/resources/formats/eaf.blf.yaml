@@ -1,5 +1,6 @@
 displayName: EAF (Elan Annotation Format)
 description: EAF format with Words, Lemma and PoS TIERs.
+helpUrl: http://www.mpi.nl/corpus/html/elan/index.html
 
 documentPath: /ANNOTATION_DOCUMENT
 

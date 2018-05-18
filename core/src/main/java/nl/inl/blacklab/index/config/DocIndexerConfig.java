@@ -10,6 +10,7 @@ import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 
 /**
@@ -45,8 +46,14 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         	break;
         default: throw new InputFormatConfigException("Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
         }
+
         docIndexer.setConfigInputFormat(config);
-        return docIndexer;
+
+        if (config.getConvertPluginId() != null || config.getTagPluginId() != null) {
+            return new DocIndexerConvertAndTag(docIndexer, config);
+        } else {
+            return docIndexer;
+        }
     }
 
     /** Our input format */
@@ -89,7 +96,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
             // Define the properties that make up our complex field
         	List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
-        	if (annotations.size() == 0)
+        	if (annotations.isEmpty())
         		throw new InputFormatConfigException("No annotations defined for field " + af.getName());
         	ConfigAnnotation mainAnnotation = annotations.get(0);
             ComplexField complexField = new ComplexField(af.getName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation), false);

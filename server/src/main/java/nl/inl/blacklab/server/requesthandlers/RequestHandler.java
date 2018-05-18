@@ -1,7 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +12,8 @@ import java.util.Map.Entry;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -218,12 +222,12 @@ public abstract class RequestHandler {
 						String handlerName = urlResource;
 
 						IndexStatus status = searchManager.getIndexManager().getIndex(indexName).getStatus();
-						if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status")) {
+						if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug") && !handlerName.equals("fields") && !handlerName.equals("status") && !handlerName.equals("sharing")) {
 							return errorObj.unavailable(indexName, status.toString());
 						}
 
-						if (debugMode && !handlerName.isEmpty() && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs", 
-						        "docs-csv", "docs-grouped-csv", "fields", "termfreq", 
+						if (debugMode && !handlerName.isEmpty() && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs",
+						        "docs-csv", "docs-grouped-csv", "fields", "termfreq",
 						        "status", "autocomplete", "sharing").contains(handlerName)) {
 							handlerName = "debug";
 						}
@@ -419,7 +423,7 @@ public abstract class RequestHandler {
 		}
 		int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
 		String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
-                
+
 		if (tokenLengthField != null)
 			ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
 		ds	.entry("mayView", mayView(struct, document))
@@ -430,14 +434,14 @@ public abstract class RequestHandler {
      * a document may be viewed when a contentViewable metadata field with a value true is registered with either the document or with the index metadata.
      * @param struct
      * @param document
-     * @return 
+     * @return true iff the content from documents in the index may be viewed
      */
     protected boolean mayView(IndexStructure struct, Document document) {
     	if (struct.hasMetadataField(METADATA_FIELD_CONTENT_VIEWABLE))
             return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
 	    return struct.contentViewable();
     }
-    
+
 	protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc) throws BlsException {
 
 		JobFacets facets = (JobFacets)searchMan.search(user, facetDesc, true);
@@ -620,9 +624,49 @@ public abstract class RequestHandler {
 				ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
 		}
 	}
-	
+
     public User getUser() {
         return user;
     }
 
+	private static ArrayList<String> temp = new ArrayList<>();
+	private static synchronized void writeRow(CSVPrinter printer, int numColumns, Object... values) {
+	    for (Object o : values)
+	        temp.add(o.toString());
+	    for (int i = temp.size(); i < numColumns; ++i)
+	        temp.add("");
+	    try {
+            printer.printRecord(temp);
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot write response");
+        }
+	    temp.clear();
+	}
+
+	/**
+     * Output most of the fields of the search summary.
+     *
+     * @param format csv fomat/printer to write output to, note that the format must contain at least 2 columns.
+     * @param printer
+     * @param searchParam original search parameters
+     */
+	// TODO tidy up csv handling
+    protected void addSummaryCommonFieldsCSV(CSVFormat format, CSVPrinter printer, SearchParameters searchParam) {
+        final int numColumns = format.getHeader().length;
+        if (numColumns < 2)
+            throw new IllegalArgumentException("Csv must contain at least 2 columns");
+
+        // Our search parameters
+        writeRow(printer, numColumns, "searchParam");
+        for (Entry<String, String> e : searchParam.getParameters().entrySet()) {
+            // ugly -- mimic normal summaryCommonFields
+            if ("samplenum".equals(e.getKey()))
+                writeRow(printer, numColumns, "sampleSize", e.getValue());
+            else if ("sample".equals(e.getKey()))
+                writeRow(printer, numColumns, "samplePercentage", e.getValue());
+            else
+                writeRow(printer, numColumns, e.getKey(), e.getValue());
+        }
+        writeRow(printer, numColumns, "");
+    }
 }
