@@ -61,7 +61,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
         this.reader = reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader(reader);
     }
 
-    static final Pattern REGEX_WORD = Pattern.compile("\\b\\w+\\b");
+    static final Pattern REGEX_WORD = Pattern.compile("\\b\\p{L}+\\b");
 
     @Override
     public void index() throws Exception {
