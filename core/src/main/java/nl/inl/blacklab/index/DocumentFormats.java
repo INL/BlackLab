@@ -61,7 +61,7 @@ public class DocumentFormats {
     }
 
     // Convenience method to avoid applications always having to create a DocIndexerFactory instance
-    public static void registerFormat(String formatIdentifier, Class<? extends DocIndexer> docIndexerClass) {
+    public static void registerFormat(String formatIdentifier, Class<? extends DocIndexerAbstract> docIndexerClass) {
     	builtinClassFactory.addFormat(formatIdentifier, docIndexerClass);
     }
 

@@ -6,6 +6,10 @@ displayName: CMDI (Component MetaData Infrastructure)
 # For describing input format in user interface (optional)
 description: Metadata format initiated in the CLARIN project.
 
+# Since this format only indexes metadata, it's for advanced users only
+# Hide it by default
+isVisible: false
+
 helpUrl: https://www.clarin.eu/content/component-metadata
 
 # (Optional, informational)
