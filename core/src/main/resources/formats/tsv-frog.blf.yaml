@@ -27,12 +27,15 @@ annotatedFields:
     annotations:
 
     - name: word
+      displayName: Word
       valuePath: 2
 
     - name: lemma
+      displayName: Lemma
       valuePath: 3
 
     - name: pos
+      displayName: PoS
       valuePath: 5
 
 

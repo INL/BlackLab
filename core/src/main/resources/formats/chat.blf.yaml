@@ -8,6 +8,7 @@ annotatedFields:
   contents:
     annotations:
     - name: word
+      displayName: Word
       valuePath: .
 
 # You may change the names of metadata fields if you wish

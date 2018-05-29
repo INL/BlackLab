@@ -51,12 +51,15 @@ annotatedFields:
     annotations:
 
     - name: word
+      displayName: Word
       valuePath: folia:t
 
     - name: lemma
+      displayName: Lemma
       valuePath: folia:lemma/@class
 
     - name: pos
+      displayName: PoS
       basePath: folia:pos  # subsequent XPaths are relative to this
       valuePath: "@class"
       subAnnotations:
