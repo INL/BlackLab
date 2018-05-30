@@ -20,6 +20,15 @@ import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.DocIndexerConfig;
 
+/**
+ * Wrapper class for a regular DocIndexer.
+ * It's activated when a format has the "convertPlugin" or "tagPlugin" properties.
+ * This DocIndexer will first run the to-be-indexed file through the convert and tagging plugins
+ * before handing result off to the actual DocIndexer.
+ * <p>
+ * It shares the ConfigInputFormat object with the actual DocIndexer,
+ * and should be considered an internal implementation detail of the DocIndexer system.
+ */
 public class DocIndexerConvertAndTag extends DocIndexerConfig {
 
 	PushbackInputStream input;

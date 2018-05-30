@@ -44,7 +44,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
 	/**
 	 * Return a config from the supported list, or load it if it's in the unloaded list.
-	 * <br><br>
+	 * <p>
 	 * Why this function? Formats can depend on each other,
 	 * and this is a mechanism to allow formats to get/lazy-load other formats registered with this factory.
 	 * Why lazy-loading? Formats only refer to other formats by their name, not their file location, so we need to find them all before we actually load them.
@@ -78,7 +78,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 		// Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass, or this will override those classes.
 		String[] formats = { "chat", "cmdi", "csv", "eaf", "folia", "sketch-wpl", "tcf", "tei-p4", "tei", "tsv-frog", "tsv", "txt" };
 		for (String formatIdentifier: formats) {
-			try (InputStream is = DocumentFormats.class	.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
+			try (InputStream is = DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
 				if (is == null)
 					continue; // not found
 

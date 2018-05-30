@@ -45,9 +45,10 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
 import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
+import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -192,21 +193,21 @@ public abstract class Searcher {
      *   assign one automatically (based on the directory name)
      * @param contentViewable is viewing of the document contents allowed?
      * @param textDirection text direction for this corpus
-     * @param documentFormat a format identifier to store as the document format,
-     *   or null for none. See the DocumentFormats class.
+     * @param formatIdentifier a format identifier to store as the document format,
+     *   or null for none. See {@link DocumentFormats} class.
      * @return a Searcher for the new index, in index mode
      * @throws IOException
      */
     public static Searcher createIndex(File indexDir, ConfigInputFormat config, String displayName,
-            String documentFormatId, boolean contentViewable, TextDirection textDirection) throws IOException {
+            String formatIdentifier, boolean contentViewable, TextDirection textDirection) throws IOException {
         Searcher rv = openForWriting(indexDir, true, config);
         IndexStructure struct = rv.getIndexStructure();
         if (!StringUtils.isEmpty(displayName))
             struct.setDisplayName(displayName);
         if (config != null && config.getName() != null)
             struct.setDocumentFormat(config.getName());
-        else if (!StringUtils.isEmpty(documentFormatId)){
-            struct.setDocumentFormat(documentFormatId);
+        else if (!StringUtils.isEmpty(formatIdentifier)){
+            struct.setDocumentFormat(formatIdentifier);
         }
         struct.setContentViewable(contentViewable);
         if (textDirection != null)

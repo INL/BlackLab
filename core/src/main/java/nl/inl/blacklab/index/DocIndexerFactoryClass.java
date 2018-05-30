@@ -59,7 +59,6 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
 		// By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
 		// By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
 		supported.put("di-tei", DocIndexerTei.class);
-		//register("di-tei-element-body", DocIndexerTei.class);
 		supported.put("di-tei-element-text", DocIndexerTeiText.class);
 		supported.put("di-tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
 	}
