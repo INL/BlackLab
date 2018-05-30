@@ -204,6 +204,10 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 		}
 		return pd;
 	}
+
+    public boolean hasProperty(String fieldName) {
+        return props.containsKey(fieldName);
+    }
 	
 	void putProperty(PropertyDesc propDesc) {
 	    props.put(propDesc.getName(), propDesc);
