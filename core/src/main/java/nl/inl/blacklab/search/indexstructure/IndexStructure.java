@@ -300,7 +300,7 @@ public class IndexStructure {
             ObjectNode complex = fieldInfo.putObject("complexFields");
 
             addFieldInfoFromConfig(metadata, complex, metaGroups, config);
-            extractFromJson(jsonRoot, null, false, false);
+            extractFromJson(jsonRoot, null, true, false);
             writeMetadata();
         } else {
             // Read existing metadata or create empty new one
@@ -634,6 +634,15 @@ public class IndexStructure {
 	 * @return the complex field names */
 	public Collection<String> getComplexFields() {
 		return complexFields.keySet();
+	}
+	
+	/**
+	 * Does the specified complex field exist?
+	 * @param fieldName complex field name
+	 * @return true iff it exists
+	 */
+	public boolean hasComplexField(String fieldName) {
+	    return complexFields.containsKey(fieldName);
 	}
 
 	/** Get the description of one complex field
