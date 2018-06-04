@@ -35,6 +35,8 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		NO
 	}
 
+    private static final int MAX_METADATA_VALUES_TO_STORE = 50;
+
 	/**
 	 * The field type: text, untokenized or numeric.
 	 */
@@ -83,7 +85,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 	 *  search application to generate metadata search interface. */
     private String uiType = "";
 
-	public MetadataFieldDesc(String fieldName, FieldType type) {
+    public MetadataFieldDesc(String fieldName, FieldType type) {
 		super(fieldName);
 		this.type = type;
 	}
@@ -212,7 +214,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 			values.put(value, values.get(value) + 1);
 		} else {
 			// New value; add it
-			if (values.size() >= 50) {
+			if (values.size() >= MAX_METADATA_VALUES_TO_STORE) {
 				// We can't store thousands of unique values;
 				// Stop storing now and indicate that there's more.
 				valueListComplete = ValueListComplete.NO;
@@ -237,4 +239,5 @@ public class MetadataFieldDesc extends BaseFieldDesc {
     public String getUiType() {
         return uiType;
     }
+
 }

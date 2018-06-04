@@ -238,9 +238,24 @@ public class Json {
      * @param defVal value to use if key doesn't exist
      * @return the long value
      */
-    public static long getLong(ObjectNode parent, String name, int defVal) {
+    public static long getLong(ObjectNode parent, String name, long defVal) {
         if (parent.has(name))
             return parent.get(name).longValue();
+        return defVal;
+    }
+
+    /**
+     * Get an int value from a JSON Object, or substitute a default value
+     * if the key doesn't exist.
+     *
+     * @param parent parent node to get the object from
+     * @param name name of the value to get
+     * @param defVal value to use if key doesn't exist
+     * @return the int value
+     */
+    public static int getInt(ObjectNode parent, String name, int defVal) {
+        if (parent.has(name))
+            return parent.get(name).intValue();
         return defVal;
     }
 

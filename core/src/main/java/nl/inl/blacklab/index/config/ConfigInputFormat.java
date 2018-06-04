@@ -14,6 +14,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.index.DocIndexerAbstract;
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.config.InputFormatReader.BaseFormatFinder;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
@@ -52,6 +54,13 @@ public class ConfigInputFormat {
 
     /** Link to a help page, e.g. showing an example of a correct input file (optional) */
     private String helpUrl = "";
+
+    /**
+     * Should this format be marked as hidden? Mirrors {@link DocIndexerAbstract#isVisible(Class)}.
+     * Used to set {@link Format#isVisible()}, to indicate internal formats to client applications,
+     * but has no other internal meaning.
+     */
+    private boolean visible = true;
 
     /** This format's type indicator (optional, not used by BlackLab. usually 'contents' or 'metadata') */
     private String type = "";
@@ -151,6 +160,7 @@ public class ConfigInputFormat {
             addAnnotatedField(f.copy());
         }
         linkedDocuments.putAll(baseFormat.getLinkedDocuments());
+        setVisible(baseFormat.isVisible());
     }
 
     /**
@@ -209,6 +219,14 @@ public class ConfigInputFormat {
 
     public void setFileType(FileType fileType) {
         this.fileType = fileType;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean listed) {
+        this.visible = listed;
     }
 
 //    public ConfigTabularOptions getTabularOptions() {

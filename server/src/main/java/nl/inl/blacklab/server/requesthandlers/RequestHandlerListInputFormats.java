@@ -222,6 +222,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                 .entry("description", format.getDescription())
                 .entry("helpUrl", format.getHelpUrl())
                 .entry("configurationBased", format.isConfigurationBased())
+                .entry("isVisible", format.isVisible())
             .endMap().endAttrEntry();
         }
 	    ds.endMap().endEntry();

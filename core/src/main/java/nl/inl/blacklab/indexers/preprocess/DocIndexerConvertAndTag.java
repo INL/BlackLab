@@ -2,8 +2,6 @@ package nl.inl.blacklab.indexers.preprocess;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -14,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.lucene.document.Document;
 

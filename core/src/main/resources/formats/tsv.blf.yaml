@@ -11,8 +11,11 @@ annotatedFields:
   contents:
     annotations:
     - name: word
+      displayName: Word
       valuePath: word
     - name: lemma
+      displayName: Lemma
       valuePath: lemma
     - name: pos
+      displayName: PoS
       valuePath: pos

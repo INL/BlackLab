@@ -8,6 +8,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -39,24 +40,23 @@ public class RequestHandlerAutocomplete extends RequestHandler {
 
         String[] pathParts = StringUtils.split(urlPathInfo, '/');
         if (pathParts.length == 0)
-        	throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a field name to autocomplete.");
+        	throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a field name and optionally a property to autocomplete.");
 
         String complexFieldName = pathParts.length > 1 ? pathParts[0] : null;
         String fieldName        = pathParts.length > 1 ? pathParts[1] : pathParts[0];
         String term = searchParam.getString("term");
 
         if (fieldName.isEmpty()) {
-            throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a field name to autocomplete.");
+            throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a field name and optionally a property to autocomplete.");
         }
-        if (term == null || term.isEmpty())
-            throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Specify a term for "+fieldName+" to autocomplete.");
-
         Searcher searcher = getSearcher();
         IndexStructure struct = searcher.getIndexStructure();
+        if (complexFieldName == null && struct.getComplexFields().contains(fieldName))
+            throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Also specify a property to autocomplete for complexfield: " + fieldName);
 
-        if (struct.getComplexFields().contains(fieldName))
-            throw new BadRequest("COMPLEX_FIELD_NOT_ALLOWED", "autocomplete not supported for complexfield: " + fieldName);
-
+        if (term == null || term.isEmpty())
+            throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Pass a parameter 'term' to autocomplete.");
+        
         /*
          * Rather specific code:
          * We require the exact name of the property in the lucene index in order to find autocompletion results
@@ -73,7 +73,12 @@ public class RequestHandlerAutocomplete extends RequestHandler {
          */
         boolean sensitiveMatching = true;
         if (complexFieldName != null && !complexFieldName.isEmpty()) {
-        	PropertyDesc prop = struct.getComplexFieldDesc(complexFieldName).getPropertyDesc(fieldName);
+            if (!struct.hasComplexField(complexFieldName))
+                throw new BadRequest("UNKNOWN_FIELD", "Complex field '" + complexFieldName + "' does not exist.");
+        	ComplexFieldDesc complexFieldDesc = struct.getComplexFieldDesc(complexFieldName);
+        	if (!complexFieldDesc.hasProperty(fieldName))
+                throw new BadRequest("UNKNOWN_PROPERTY", "Complex field '" + complexFieldName + "' has no property '" + fieldName + "'.");
+            PropertyDesc prop = complexFieldDesc.getPropertyDesc(fieldName);
         	if (prop.hasAlternative(ComplexFieldUtil.INSENSITIVE_ALT_NAME)) {
         		sensitiveMatching = false;
         		fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
@@ -90,7 +95,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
     public static void autoComplete(DataStream ds, String fieldName, String term, IndexReader reader, boolean sensitive) {
         ds.startList();
         LuceneUtil.findTermsByPrefix(reader, fieldName, term, sensitive, MAX_VALUES).forEach((v) -> {
-            ds.item(v, v);
+            ds.item("term", v);
         });
         ds.endList();
     }

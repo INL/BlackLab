@@ -35,14 +35,17 @@ annotatedFields:
     annotations:
 
     - name: word
+      displayName: Word
       valuePath: .
 
     - name: lemma
+      displayName: Lemma
       captureValuePaths:
       - "@ID"
       valuePath: "/d:D-Spin/tc:TextCorpus/tc:lemmas/tc:lemma[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
 
     - name: pos
+      displayName: PoS
       captureValuePaths:
       - "@ID"
       valuePath: "/d:D-Spin/tc:TextCorpus/tc:POStags/tc:tag[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"

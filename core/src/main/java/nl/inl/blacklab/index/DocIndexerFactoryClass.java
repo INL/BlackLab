@@ -34,7 +34,7 @@ import nl.inl.util.UnicodeStream;
  */
 public class DocIndexerFactoryClass implements DocIndexerFactory {
 
-	private Map<String, Class<? extends DocIndexer>> supported = new HashMap<>();
+	private Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
 	private Set<String> unsupported = new HashSet<>();
 
 	public DocIndexerFactoryClass() {
@@ -75,9 +75,9 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
 	@Override
 	public List<Format> getFormats() {
 		List<Format> ret = new ArrayList<>();
-		for (Entry<String, Class<? extends DocIndexer>> e : supported.entrySet()) {
-			Format desc = new Format(e.getKey(), DocIndexer.getDisplayName(e.getValue()), DocIndexer.getDescription(e.getValue()));
-			desc.setUnlisted(!DocIndexer.listFormat(e.getValue()));
+		for (Entry<String, Class<? extends DocIndexerAbstract>> e : supported.entrySet()) {
+			Format desc = new Format(e.getKey(), DocIndexerAbstract.getDisplayName(e.getValue()), DocIndexerAbstract.getDescription(e.getValue()));
+			desc.setVisible(DocIndexerAbstract.isVisible(e.getValue()));
 			ret.add(desc);
 		}
 		return ret;
@@ -89,25 +89,25 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
 			return null;
 
 		Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
-		Format desc = new Format(formatIdentifier, DocIndexer.getDisplayName(docIndexerClass), DocIndexer.getDescription(docIndexerClass));
-		desc.setUnlisted(!DocIndexer.listFormat(docIndexerClass));
+		Format desc = new Format(formatIdentifier, DocIndexerAbstract.getDisplayName(docIndexerClass), DocIndexerAbstract.getDescription(docIndexerClass));
+		desc.setVisible(DocIndexerAbstract.isVisible(docIndexerClass));
 		return desc;
 	}
 
-	public void addFormat(String formatIdentifier, Class<? extends DocIndexer> docIndexerClass) {
+	public void addFormat(String formatIdentifier, Class<? extends DocIndexerAbstract> docIndexerClass) {
 		this.supported.put(formatIdentifier, docIndexerClass);
 	}
 
 	@SuppressWarnings("unchecked")
 	private void find(String formatIdentifier) {
 	    // Is it a fully qualified class name?
-        Class<? extends DocIndexer> docIndexerClass = null;
+        Class<? extends DocIndexerAbstract> docIndexerClass = null;
         try {
-            docIndexerClass = (Class<? extends DocIndexer>) Class.forName(formatIdentifier);
+            docIndexerClass = (Class<? extends DocIndexerAbstract>) Class.forName(formatIdentifier);
         } catch (Exception e1) {
             try {
                 // No. Is it a class in the BlackLab indexers package?
-                docIndexerClass = (Class<? extends DocIndexer>) Class.forName("nl.inl.blacklab.indexers." + formatIdentifier);
+                docIndexerClass = (Class<? extends DocIndexerAbstract>) Class.forName("nl.inl.blacklab.indexers." + formatIdentifier);
             } catch (Exception e) {
                 // Couldn't be resolved. That's okay, maybe another factory will support this key
             	// Cache the key for next time.

@@ -25,6 +25,7 @@ annotatedFields:
     annotations:
 
     - name: word
+      displayName: Word
       valuePath: ANNOTATION_VALUE
 
     standoffAnnotations:
@@ -32,11 +33,13 @@ annotatedFields:
       refTokenPositionIdPath: "@ANNOTATION_REF"
       annotations:
       - name: lemma
+        displayName: Lemma
         valuePath: ANNOTATION_VALUE
 
     - path: "/ANNOTATION_DOCUMENT/TIER[@LINGUISTIC_TYPE_REF='PoS']/ANNOTATION/REF_ANNOTATION"
       refTokenPositionIdPath: "@ANNOTATION_REF"
       annotations:
       - name: pos
+        displayName: PoS
         valuePath: ANNOTATION_VALUE
 

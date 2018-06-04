@@ -8,4 +8,5 @@ annotatedFields:
   contents:
     annotations:
     - name: word
+      displayName: Word
       valuePath: .

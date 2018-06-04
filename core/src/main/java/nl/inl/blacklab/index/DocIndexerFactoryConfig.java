@@ -120,7 +120,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 			ConfigInputFormat config = e.getValue();
             Format desc = new Format(config.getName(), config.getDisplayName(), config.getDescription(), config.getHelpUrl());
 			desc.setConfig(config);
-			desc.setUnlisted(false);
+			desc.setVisible(config.isVisible());
 			ret.add(desc);
 		}
 
@@ -132,14 +132,14 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 		if (!isSupported(formatIdentifier))
 			return null;
 
-		ConfigInputFormat inputFormat = this.supported.get(formatIdentifier);
-		if (inputFormat == null) {
+		ConfigInputFormat config = this.supported.get(formatIdentifier);
+		if (config == null) {
 		    loadUnloaded();
-		    inputFormat = this.supported.get(formatIdentifier);
+		    config = this.supported.get(formatIdentifier);
 		}
-		Format desc = new Format(inputFormat.getName(), inputFormat.getDisplayName(), inputFormat.getDescription(), inputFormat.getHelpUrl());
-		desc.setConfig(inputFormat);
-		desc.setUnlisted(false);
+		Format desc = new Format(config.getName(), config.getDisplayName(), config.getDescription(), config.getHelpUrl());
+		desc.setConfig(config);
+		desc.setVisible(config.isVisible());
 		return desc;
 	}
 

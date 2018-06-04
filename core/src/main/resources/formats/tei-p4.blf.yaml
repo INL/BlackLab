@@ -44,10 +44,13 @@ annotatedFields:
     #       and with forEachPath you could run in to an unknown new annotation mid-way through.
     annotations:
     - name: word
+      displayName: Word
       valuePath: .
     - name: lemma
+      displayName: Lemma
       valuePath: "@lemma"
     - name: pos
+      displayName: PoS
       valuePath: "@type"
 
     # XML tags within the content we'd like to index

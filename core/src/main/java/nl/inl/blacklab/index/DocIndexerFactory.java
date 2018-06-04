@@ -41,7 +41,7 @@ public interface DocIndexerFactory {
 
 	    private String helpUrl;
 
-        private boolean unlisted;
+        private boolean visible = true;
 
 		private ConfigInputFormat config;
 
@@ -69,8 +69,8 @@ public interface DocIndexerFactory {
 			return config != null;
 		}
 
-		public boolean isUnlisted() {
-            return unlisted;
+		public boolean isVisible() {
+            return visible;
         }
 
         public Format(String formatIdentifier, String displayName, String description) {
@@ -85,8 +85,8 @@ public interface DocIndexerFactory {
             this.helpUrl = helpUrl;
         }
 
-        public void setUnlisted(boolean b) {
-            this.unlisted = b;
+        public void setVisible(boolean b) {
+            this.visible = b;
         }
 
         public void setConfig(ConfigInputFormat config) {
@@ -112,7 +112,7 @@ public interface DocIndexerFactory {
 	 * Return all formats supported by this factory.
 	 * @return the list
 	 */
-	List<? extends Format> getFormats();
+	List<Format> getFormats();
 
 	/**
 	 * Get the full format from its identifier.

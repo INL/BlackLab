@@ -184,7 +184,7 @@ It matters where baseFormat is placed, as it effectively copies values from the 
 
 To be precise, setting baseFormat does the following:
 
-- copy type, fileType, documentPath, store, metadataDefaultAnalyzer, 
+- copy type, fileType, documentPath, store, metadataDefaultAnalyzer
 - copy the corpusConfig settings
 - add all fileTypeOptions
 - add all namespace declarations
@@ -956,7 +956,7 @@ Input format configuration files should be named `<formatIdentifier>.blf.yaml` o
     # (default|standard|whitespace|your own analyzer)
     metadataDefaultAnalyzer: default
     
-    
+
     # Embedded metadata
     # (NOTE: shown here is a simple configuration with a single "metadata block";
     #  however, the value for the "metadata" key may also be a list of such blocks.
