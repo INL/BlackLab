@@ -21,6 +21,7 @@ customize them to fit your data.
 * <a href="#subproperties">Subannotations, for e.g. part of speech features</a>
 * <a href="#tabular">Indexing tabular (CSV/TSV/SketchEngine) files</a>
 * <a href="#plaintext">Indexing plain text files</a>
+* <a href="#other">Indexing other files</a>
 * <a href="#processing-values">Processing values</a>
 * <a href="#metadata">Metadata</a>
     * <a href="#metadata-in-document">Embedded (in-document) metadata</a>
@@ -597,13 +598,47 @@ To index metadata information based on the input file path, use a section such a
         #documentPath: /root/metadata[@docId = $2]
 
 
+<a id="other"></a>
+
+## Indexing other files
+
+For some types of files it is possible to automatically convert them be to another file type that can be indexed.   
+Support for this feature works through plugins and is still experimental. 
+
+Add the following lines to your configuration file to convert your files before indexing them according to the rest of the configuration.
+
+    convertPlugin: OpenConvert
+    tagPlugin: DutchTagger
+
+This setup will convert `doc, docx, txt, epub, html, alto, rtf and odt` into `tei`.
+
+
+This will however not work until you provide the right .jar and data files to the plugins. Adding the following configuration to `blacklab.json` will enable the plugins to do their work.
+
+    {
+      "plugins": {
+        "OpenConvert": {
+          "jarPath": "/path/to/OpenConvert-0.2.0.jar"
+        },
+
+        "DutchTagger": {
+          "jarPath": "/path/to//DutchTagger-0.2.0.jar",
+          "vectorFile": "/path/to/duthtagger/data/vectors.bin",
+          "modelFile": "/path/to/dutchtagger/model",
+          "lexiconFile": "/path/to/dutchtagger/lexicon.tab"
+        }
+      }
+    }
+
+Currently the files and exact version of OpenConvert are not publically available, but look at the [plugins](plugins.html) page for more information on how write your own plugin.
+
 <a id="processing-values"></a>
 
 ## Processing values 
 
 It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc.
 
-It is possible to perform string processing on [standoff] (sub)annotations, metadata values, and linkValues (in the linked document section, see "Linking to external (metadata) files").
+It is possible to perform string processing on [standoff](\#subproperties) (sub)annotations, metadata values, and linkValues (in the linked document section, see "Linking to external (metadata) files").
 
 For example, to process a metadata field value, simply add a "process" key with a list of actions to perform, like so:
 
