@@ -23,7 +23,7 @@ If you're using Subversion, use:
 
 ## Releases
 
-See the [GitHub releases page](https://github.com/INL/BlackLab/releases/) for the complete list. This may also include development versions you can try out. If you're looking for the BlackLab library (i.e. not BlackLab Server), choose the version with libraries included.
+See the [GitHub releases page](https://github.com/INL/BlackLab/releases/) for the complete list. This may also include development versions you can try out. If you're looking for the BlackLab library or commandline tools (i.e. not BlackLab Server), choose the version with libraries included.
 
 Also see the [Change log](changelog.html).
 
@@ -40,6 +40,13 @@ Also see the [Change log](changelog.html).
 			<td><a href='https://github.com/INL/BlackLab/archive/master.tar.gz'>Source (tgz)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/master.zip'>Source (zip)</a></td>
 			<td>In-development version</td>
+		</tr>
+		<tr>
+			<td>v1.7.0</td>
+			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.7.0/blacklab-1.7.0.jar'>Binary (jar)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.7.0.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/v1.7.0.zip'>Source (zip)</a></td>
+			<td>Made configuring input formats much easier, using a YAML (or JSON) file. Improved corpus structure information to allow better UI generation. Many other improvements.</td>
 		</tr>
 		<tr>
 			<td>v1.6.0</td>
