@@ -198,14 +198,14 @@ public class Indexer {
     protected String formatIdentifier;
 
     /**
-     * @deprecated (since 1.7) use return value of {@link IndexListener#errorOccurred(String, String, File, File)}
+     * @deprecated (since 1.7) use return value of {@link IndexListener#errorOccurred(Throwable, String, File)}
      * If an error occurs (e.g. an XML parse error), should we
      *  try to continue indexing, or abort? */
     @Deprecated
     protected boolean continueAfterInputError = true;
 
     /**
-     * @deprecated (since 1.7) use {@link IndexListener#errorOccurred(String, String, File, File)}
+     * @deprecated (since 1.7) use {@link IndexListener#errorOccurred(Throwable, String, File)}
      * If an error occurs (e.g. an XML parse error), and we don't
      * continue indexing, should we re-throw it, or assume the client
      * picked it up in the listener and return normally?
@@ -243,7 +243,7 @@ public class Indexer {
     }
 
     /**
-     * @deprecated (since 1.7) use return value of {@link IndexListener#errorOccurred(String, String, File, File)}
+     * @deprecated (since 1.7) use return value of {@link IndexListener#errorOccurred(Throwable, String, File)}
      * If an error occurs (e.g. an XML parse error), should we
      *  try to continue indexing, or abort?
      *  @param b if true, continue; if false, abort

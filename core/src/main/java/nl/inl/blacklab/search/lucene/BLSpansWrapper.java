@@ -48,8 +48,8 @@ public class BLSpansWrapper extends BLSpans {
 			// For anything but the very basic TermSpans,
 			// this wrapper shouldn't be used anymore because everything is already BLSpans.
 			// (which is needed for token tagging)
-			// Just to make sure, print an error for now (will upgrade to
-			// throwing an exception in the future)
+			// Just to make sure, print an error for now
+		    // TODO upgrade to throwing an exception in the future)
 			System.err.println("### BLSpansWrapper: " + source + " ###");
 		}
 

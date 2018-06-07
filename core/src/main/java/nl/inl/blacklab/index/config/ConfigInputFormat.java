@@ -114,7 +114,7 @@ public class ConfigInputFormat {
     /**
      *
      * @param file the file to read, the name of this file (minus the .blf.* extension) will be used as this format's name.
-     * @param baseFormatFinder finder to locate the baseFormat of this config, if set, may be null if no baseFormat is required
+     * @param finder finder to locate the baseFormat of this config, if set, may be null if no baseFormat is required
      * @throws IOException
      */
     public ConfigInputFormat(File file, BaseFormatFinder finder) throws IOException {
@@ -128,7 +128,7 @@ public class ConfigInputFormat {
      * @param name
      * @param reader
      * @param isJson
-     * @param baseFormatFinder finder to locate the baseFormat of this config, if set, may be null if no baseFormat is required
+     * @param finder finder to locate the baseFormat of this config, if set, may be null if no baseFormat is required
      * @throws IOException
      */
     public ConfigInputFormat(String name, Reader reader, boolean isJson, BaseFormatFinder finder) throws IOException {

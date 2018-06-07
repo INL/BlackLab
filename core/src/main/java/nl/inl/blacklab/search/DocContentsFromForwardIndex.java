@@ -88,7 +88,6 @@ public class DocContentsFromForwardIndex extends DocContents {
 	 * Get the context of a specific property from the complete
 	 * context list.
 	 *
-	 * @param allContext the complete context list of all properties
 	 * @param property the property to get the context for
 	 * @return the context for this property
 	 */

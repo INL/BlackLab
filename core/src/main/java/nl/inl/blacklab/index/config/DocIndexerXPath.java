@@ -39,7 +39,7 @@ import nl.inl.util.XmlUtil;
  * An indexer configured using full XPath 1.0 expressions.
  */
 public class DocIndexerXPath extends DocIndexerConfig {
-    
+
     private static enum FragmentPosition {
         BEFORE_OPEN_TAG,
         AFTER_OPEN_TAG,
@@ -498,7 +498,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Process an annotation at the current position.
      *
      * @param annotation annotation to process
-     * @param apAnnot autopilot object to use (so we don't keep creating new ones)
      * @param indexAtPositions if null: index at the current position; otherwise, index at all these positions
      * @throws VTDException on XPath error
      */
@@ -708,7 +707,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
 	/**
      * Gets attribute map for current element
-     * @return
      */
     private Map<String, String> getAttributes() {
 		navpush();

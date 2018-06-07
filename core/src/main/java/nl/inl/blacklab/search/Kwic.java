@@ -102,7 +102,6 @@ public class Kwic {
 	 * Get the context of a specific property from the complete
 	 * context list.
 	 *
-	 * @param allContext the complete context list of all properties
 	 * @param property the property to get the context for
 	 * @param start first word position to get the property context for
 	 * @param end word position after the last to get the property context for

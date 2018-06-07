@@ -32,7 +32,6 @@ import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
-import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 
 /**
  * Combines two spans, keeping only combinations of hits that occur one after the other. The order is
@@ -117,7 +116,6 @@ class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
 	 * hits. But when a clause also matches the empty sequence, you may miss valid sequence
 	 * matches because there's no hit in the clause to combine with the hits from other clauses.
 	 *
-	 * @param alternatives the alternative sequences we have built so far
 	 * @param parts translation results for each of the clauses so far
 	 * @param reader the index reader
 	 * @return several alternatives combined with or

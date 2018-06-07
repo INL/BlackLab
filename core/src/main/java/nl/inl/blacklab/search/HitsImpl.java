@@ -234,8 +234,6 @@ public class HitsImpl extends Hits {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param concordanceFieldName
-	 *            field to use by default when finding concordances
 	 * @param hits the list of hits to wrap
 	 */
 	HitsImpl(Searcher searcher, List<Hit> hits) {
@@ -278,8 +276,6 @@ public class HitsImpl extends Hits {
 	 *
 	 * @param searcher
 	 *            the searcher object
-	 * @param concordanceFieldPropName
-	 *            field to use by default when finding concordances
 	 * @param sourceQuery
 	 *            the query to execute to get the hits
 	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
@@ -1685,7 +1681,6 @@ public class HitsImpl extends Hits {
 	/**
 	 * Generate concordances from content store (slower).
 	 *
-	 * @param hits the hits for which to retrieve concordances
 	 * @param contextSize how many words around the hit to retrieve
 	 * @param fieldName field to use for building concordances
 	 * @return the concordances

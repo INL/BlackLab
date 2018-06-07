@@ -71,7 +71,7 @@ public class TestIndex {
 	};
 
 	final static String testFormat = "testformat";
-	
+
 	static {
 	    // Ensure repeatable tests. Indexer opens Searcher, which in turn
 	    // will look for blacklab.yaml in several directories. We want our
@@ -88,7 +88,7 @@ public class TestIndex {
 	private File indexDir;
 
 	public TestIndex() throws Exception {
-	    
+
 		// Get a temporary directory for our test index
 		indexDir = new File(System.getProperty("java.io.tmpdir"),
 				"BlackLabExample");
@@ -200,9 +200,8 @@ public class TestIndex {
 	/**
 	 * Return a list of concordance strings.
 	 *
-	 * @param hits
-	 *            the hits to display
-	 * @return
+	 * @param hits the hits to display
+	 * @return the left, match and right values for the "word" property
 	 */
 	static List<String> getConcordances(Hits hits) {
 		List<String> results = new ArrayList<>();

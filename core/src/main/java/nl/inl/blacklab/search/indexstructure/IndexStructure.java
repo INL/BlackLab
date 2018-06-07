@@ -1045,7 +1045,7 @@ public class IndexStructure {
      * @param node node to check
      * @param knownKeys keys that may occur under this node
      */
-    private void warnUnknownKeys(String where, JsonNode node, Set<String> knownKeys) {
+    private static void warnUnknownKeys(String where, JsonNode node, Set<String> knownKeys) {
         Iterator<Entry<String, JsonNode>> it = node.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();

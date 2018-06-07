@@ -22,34 +22,33 @@ public class FileProcessor implements AutoCloseable {
     public static interface FileHandler {
         /**
          * Handle a directory.
-         *
+         * <p>
          * Called for all processed child (and descendant if {@link FileProcessor#isRecurseSubdirs()} directories of the input file, excluding the input directory itself.
          * NOTE: This is only called for regular directories, and not for archives or processed directories within archives.
          * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the directory names may not match the provided pattern.
-         *
-         * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
+         * <p>
+         * This function may be called in multiple threads when FileProcessor was created with thread support (see {@link FileProcessor#FileProcessor(boolean, boolean, boolean)})
          *
          * @param dir the directory
-         * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Exception, String, File)}
+         * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void directory(File dir) throws Exception;
 
         /**
          * Handle a file stream.
-         *
+         * <p>
          * Called for all processed files that match the {@link FileProcessor#pattGlob}, including the input file.
          * Not called for archives if {@link FileProcessor#isProcessArchives()} is true (though it will then be called for files within those
          * archives).
-         *
-         * NOTE: the InputStream should be closed by the implementation.
-         *
-         * This function may be called in multiple threads when {@link FileProcessor#useThreads} is true.
+         * <p>
+         * This function may be called in multiple threads when FileProcessor was created with thread support (see {@link FileProcessor#FileProcessor(boolean, boolean, boolean)})
+         * <br>NOTE: the InputStream should be closed by the implementation.
          *
          * @param path filename, including path inside archives (if the file is within an archive)
          * @param is
          * @param file (optional, if known) the file from which the InputStream was built,
          * or - if the InputStream is a file within an archive - the archive.
-         * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Exception, String, File)}
+         * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void file(String path, InputStream is, File file) throws Exception;
 
@@ -69,7 +68,7 @@ public class FileProcessor implements AutoCloseable {
          *
          * @param e the exception
          * @param path path to the file that the error occurred in. This includes pathing in archives if the file is inside an archive.
-         * @param file (optional, if known) the file from which the InputStream was built,
+         * @param f (optional, if known) the file from which the InputStream was built,
          * or - if the InputStream is a file within an archive - the archive.
          * @return true if we should continue, false to abort
          */
@@ -312,8 +311,9 @@ public class FileProcessor implements AutoCloseable {
     /**
      * Callback for when handler throws an exception.
      * Report it, and if it's irrecoverable, abort.
+     * {@link ErrorHandler#errorOccurred(Throwable, String, File)}
      *
-     * @param t
+     * @param e
      * @param path
      * @param f
      * @return always null, has return type to enable use as exception handler in CompletableFuture
