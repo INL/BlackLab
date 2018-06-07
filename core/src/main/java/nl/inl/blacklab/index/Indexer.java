@@ -391,7 +391,7 @@ public class Indexer {
                 } else {
                     // TODO we should delete the newly created index here as it failed, how do we clean up files properly?
                     searcher.close();
-                    throw new DocumentFormatException("Invalid default formatIdentifier (as formatIdenfitier or 'documentFormat' key in indexTemplateFile) specified when creating new index in "+directory);
+                    throw new DocumentFormatException("Input format config '" + formatIdentifier + "' not found (or format config contains an error) when creating new index in " + directory);
                 }
             } else if (DocumentFormats.isSupported(formatIdentifier)) {
                 this.formatIdentifier = formatIdentifier;
@@ -418,7 +418,7 @@ public class Indexer {
                     searcher.getIndexStructure().writeMetadata();
                 }
             } else {
-                throw new DocumentFormatException("Invalid default formatIdentifier (as formatIdenfitier or 'documentFormat' key in indexTemplateFile) specified when creating new index in "+directory);
+                throw new DocumentFormatException("Input format config '" + formatIdentifier + "' not found (or format config contains an error) when creating new index in " + directory);
             }
         } else { // opening an existing index
 
