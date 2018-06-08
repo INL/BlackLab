@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -421,6 +423,8 @@ public class HitsImpl extends Hits {
 		ensureHitsRead(-1);
 	}
 
+	Lock ensureHitsReadLock = new ReentrantLock();
+
 	/**
 	 * Ensure that we have read at least as many hits as specified in the parameter.
 	 *
@@ -429,125 +433,139 @@ public class HitsImpl extends Hits {
 	 * @throws InterruptedException if the thread was interrupted during this operation
 	 */
 	void ensureHitsRead(int number) throws InterruptedException {
+		// Prevent locking when not required
 		if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
 			return;
 
-		synchronized (this) {
-			boolean readAllHits = number < 0;
-			try {
-				int maxHitsToCount = settings.maxHitsToCount();
-				int maxHitsToRetrieve = settings.maxHitsToRetrieve();
-				while (readAllHits || hits.size() < number) {
+		while (!ensureHitsReadLock.tryLock()) {
+			/*
+			 * Another thread is already counting, we don't want to straight up block until it's done
+			 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
+			 * So instead poll our own state, then if we're still missing results after that just count them ourselves
+			 */
+			Thread.sleep(50);
+			if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
+				return;
+		}
 
-					// Don't hog the CPU, don't take too long
-					etiquette.behave();
+		boolean readAllHits = number < 0;
+		try {
+			int maxHitsToCount = settings.maxHitsToCount();
+			int maxHitsToRetrieve = settings.maxHitsToRetrieve();
+			while (readAllHits || hits.size() < number) {
 
-					// Stop if we're at the maximum number of hits we want to count
-					if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
-						maxHitsCounted = true;
-						break;
-					}
+				// Don't hog the CPU, don't take too long
+				etiquette.behave();
 
-					// Get the next hit from the spans, moving to the next
-					// segment when necessary.
-					while (true) {
-						while (currentSourceSpans == null) {
-							// Exhausted (or not started yet); get next segment spans.
+				// Stop if we're at the maximum number of hits we want to count
+				if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
+					maxHitsCounted = true;
+					break;
+				}
 
-							if (spanQuery == null) {
-								// We started from a Spans, not a SpanQuery. We're done now.
-								// (only used in deprecated methods or while testing)
-								return;
-							}
+				// Get the next hit from the spans, moving to the next
+				// segment when necessary.
+				while (true) {
+					while (currentSourceSpans == null) {
+						// Exhausted (or not started yet); get next segment spans.
 
-							atomicReaderContextIndex++;
-							if (atomicReaderContexts != null && atomicReaderContextIndex >= atomicReaderContexts.size()) {
+						if (spanQuery == null) {
+							// We started from a Spans, not a SpanQuery. We're done now.
+							// (only used in deprecated methods or while testing)
+							return;
+						}
+
+						atomicReaderContextIndex++;
+						if (atomicReaderContexts != null && atomicReaderContextIndex >= atomicReaderContexts.size()) {
+							sourceSpansFullyRead = true;
+							return;
+						}
+						if (atomicReaderContexts != null) {
+							// Get the atomic reader context and get the next Spans from it.
+							LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
+							currentDocBase = context.docBase;
+							BLSpans spans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
+							currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
+						} else {
+							// TESTING
+							currentDocBase = 0;
+							if (atomicReaderContextIndex > 0) {
 								sourceSpansFullyRead = true;
 								return;
 							}
-							if (atomicReaderContexts != null) {
-								// Get the atomic reader context and get the next Spans from it.
-								LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
-								currentDocBase = context.docBase;
-								BLSpans spans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
-								currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
-							} else {
-								// TESTING
-								currentDocBase = 0;
-								if (atomicReaderContextIndex > 0) {
-									sourceSpansFullyRead = true;
-									return;
-								}
-								BLSpans spans = (BLSpans) weight.getSpans(null, Postings.OFFSETS);
-								currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
-							}
-
-							if (currentSourceSpans != null) {
-								// Update the hit query context with our new spans,
-								// and notify the spans of the hit query context
-								// (TODO: figure out if we need to call setHitQueryContext()
-								//    for each segment or not; if it's just about capture groups
-								//    registering themselves, we only need that for the first Spans.
-								//    But it's probably required for backreferences, etc. anyway,
-								//    and there won't be that many segments, so it's probably ok)
-								hitQueryContext.setSpans(currentSourceSpans);
-								currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
-								if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-									capturedGroups = new HashMap<>();
-								}
-
-								int doc = currentSourceSpans.nextDoc();
-								if (doc == DocIdSetIterator.NO_MORE_DOCS)
-									currentSourceSpans = null; // no matching docs in this segment, try next
-							}
+							BLSpans spans = (BLSpans) weight.getSpans(null, Postings.OFFSETS);
+							currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
 						}
 
-						// Advance to next hit
-						int start = currentSourceSpans.nextStartPosition();
-						if (start == Spans.NO_MORE_POSITIONS) {
-							int doc = currentSourceSpans.nextDoc();
-							if (doc != DocIdSetIterator.NO_MORE_DOCS) {
-								// Go to first hit in doc
-								start = currentSourceSpans.nextStartPosition();
-							} else {
-								// This one is exhausted; go to the next one.
-								currentSourceSpans = null;
-							}
-						}
 						if (currentSourceSpans != null) {
-							// We're at the next hit.
-							break;
+							// Update the hit query context with our new spans,
+							// and notify the spans of the hit query context
+							// (TODO: figure out if we need to call setHitQueryContext()
+							//    for each segment or not; if it's just about capture groups
+							//    registering themselves, we only need that for the first Spans.
+							//    But it's probably required for backreferences, etc. anyway,
+							//    and there won't be that many segments, so it's probably ok)
+							hitQueryContext.setSpans(currentSourceSpans);
+							currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
+							if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
+								capturedGroups = new HashMap<>();
+							}
+
+							int doc = currentSourceSpans.nextDoc();
+							if (doc == DocIdSetIterator.NO_MORE_DOCS)
+								currentSourceSpans = null; // no matching docs in this segment, try next
 						}
 					}
 
-					// Count the hit and add it (unless we've reached the maximum number of hits we
-					// want)
-					hitsCounted++;
-					int hitDoc = currentSourceSpans.docID() + currentDocBase;
-					if (hitDoc != previousHitDoc) {
-						docsCounted++;
-						if (!maxHitsRetrieved)
-							docsRetrieved++;
-						previousHitDoc = hitDoc;
-					}
-					maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
-					if (!maxHitsRetrieved) {
-						Hit hit = currentSourceSpans.getHit();
-						Hit offsetHit = new Hit(hit.doc + currentDocBase, hit.start, hit.end);
-						if (capturedGroups != null) {
-							Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
-							hitQueryContext.getCapturedGroups(groups);
-							capturedGroups.put(offsetHit, groups);
+					// Advance to next hit
+					int start = currentSourceSpans.nextStartPosition();
+					if (start == Spans.NO_MORE_POSITIONS) {
+						int doc = currentSourceSpans.nextDoc();
+						if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+							// Go to first hit in doc
+							start = currentSourceSpans.nextStartPosition();
+						} else {
+							// This one is exhausted; go to the next one.
+							currentSourceSpans = null;
 						}
-						hits.add(offsetHit);
+					}
+					if (currentSourceSpans != null) {
+						// We're at the next hit.
+						break;
 					}
 				}
-			} catch (InterruptedException e) {
-				maxHitsRetrieved = maxHitsCounted = true; // we've stopped retrieving/counting
-				throw e;
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+
+				// Count the hit and add it (unless we've reached the maximum number of hits we
+				// want)
+				hitsCounted++;
+				if (Math.random() < 0.05)
+					Thread.sleep(1);
+				int hitDoc = currentSourceSpans.docID() + currentDocBase;
+				if (hitDoc != previousHitDoc) {
+					docsCounted++;
+					if (!maxHitsRetrieved)
+						docsRetrieved++;
+					previousHitDoc = hitDoc;
+				}
+				maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
+				if (!maxHitsRetrieved) {
+					Hit hit = currentSourceSpans.getHit();
+					Hit offsetHit = new Hit(hit.doc + currentDocBase, hit.start, hit.end);
+					if (capturedGroups != null) {
+						Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
+						hitQueryContext.getCapturedGroups(groups);
+						capturedGroups.put(offsetHit, groups);
+					}
+					hits.add(offsetHit);
+				}
 			}
+		} catch (InterruptedException e) {
+			maxHitsRetrieved = maxHitsCounted = true; // we've stopped retrieving/counting
+			throw e;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} finally {
+			ensureHitsReadLock.unlock();
 		}
 	}
 

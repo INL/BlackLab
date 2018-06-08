@@ -30,6 +30,7 @@ import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped;
 import nl.inl.blacklab.server.jobs.JobHitsTotal;
@@ -98,10 +99,21 @@ public class RequestHandlerHits extends RequestHandler {
 			} else {
 				// Since we're going to always launch a totals count anyway, just do it right away
 				// then construct a window on top of the total
-				job = searchMan.search(user, searchParam.hitsTotal(), block);
+				job = searchMan.search(user, searchParam.hitsTotal(), false); // always launch totals nonblocking!
 				JobHitsTotal jobTotal = (JobHitsTotal) job;
 
-				total = jobTotal.getHits();
+				int sleepTime = 10;
+				int totalSleepTime = 0;
+				while ((total = jobTotal.getHits()) == null) { // Wait for job to start up for a bit
+					try {
+						totalSleepTime += sleepTime;
+						Thread.sleep(sleepTime = Math.max(sleepTime * 2, 500));
+						if (totalSleepTime >= 1000)
+							throw new ServiceUnavailable("Timeout");
+					} catch (InterruptedException e) {
+						throw new ServiceUnavailable("Interrupted");
+					}
+				}
 
 				// check if we have the requested window available
 				// NOTE: don't create the HitsWindow object yet, as it will attempt to resolve the hits immediately and block the thread until they've been found.
@@ -109,14 +121,11 @@ public class RequestHandlerHits extends RequestHandler {
 				int first = Math.max(0, searchParam.getInteger("first"));
 				int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
 
-				if (total.countSoFarHitsRetrieved() < (first + size)) {
-					if (!jobTotal.finished()) // If we're not finished counting, we might have them later
-						return Response.busy(ds, servlet);
+				total.sizeAtLeast(first + size);
 
-					// Finished counting, but haven't retrieved enough hits, out of range window requested!
-					if (total.countSoFarHitsRetrieved() <= first)
-						first = 0;
-				}
+				// We blocked, so if we don't have the page available, the request is out of bounds.
+				if (total.countSoFarHitsRetrieved() < first)
+					first = 0;
 
 				window = total.window(first, size);
 			}

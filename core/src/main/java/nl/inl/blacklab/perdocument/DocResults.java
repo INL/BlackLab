@@ -22,6 +22,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -81,16 +83,15 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	 * @param hits hits to get per-doc result for
 	 * @return the per-document results.
 	 */
-	static public DocResults _fromHits(Searcher searcher, Hits hits) {
+	public static DocResults _fromHits(Searcher searcher, Hits hits) {
 		return new DocResults(searcher, hits);
 	}
 
 	boolean sourceHitsFullyRead() {
 		if (sourceHits == null)
 			return true;
-		synchronized(sourceHitsIterator) {
-			return !sourceHitsIterator.hasNext();
-		}
+		
+		return !sourceHitsIterator.hasNext();
 	}
 
 	/**
@@ -100,12 +101,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	 */
 	DocResults(Searcher searcher, Hits hits) {
 		this.searcher = searcher;
-		try {
-			sourceHits = hits;
-			sourceHitsIterator = hits.iterator();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		this.sourceHits = hits;
+		this.sourceHitsIterator = hits.iterator();
 	}
 
 	/**
@@ -328,6 +325,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		ensureResultsRead(-1);
 	}
 
+	Lock ensureResultsReadLock = new ReentrantLock();
+
 	/**
 	 * If we still have only partially read our Hits object,
 	 * read some more of it and add the hits.
@@ -335,11 +334,22 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 	 * @param index the number of results we want to ensure have been read, or negative for all results
 	 * @throws InterruptedException
 	 */
-	synchronized void ensureResultsRead(int index) throws InterruptedException {
-		if (sourceHitsFullyRead())
+	void ensureResultsRead(int index) throws InterruptedException {
+		if (sourceHitsFullyRead() || (index >= 0 && results.size() >= index))
 			return;
 
-		synchronized(sourceHitsIterator) {
+		while (!ensureResultsReadLock.tryLock()) {
+			/*
+			* Another thread is already counting, we don't want to straight up block until it's done
+			* as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
+			* So instead poll our own state, then if we're still missing results after that just count them ourselves
+			*/
+			Thread.sleep(50);
+			if (sourceHitsFullyRead() || (index >= 0 && results.size() >= index))
+				return;
+		}
+
+		try {
 			// Fill list of document results
 			int doc = partialDocId;
 			List<Hit> docHits = partialDocHits;
@@ -347,7 +357,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 			partialDocHits = null;
 
 			IndexReader indexReader = searcher.getIndexReader();
-			while ( (index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
+			while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
 				Hit hit = sourceHitsIterator.next();
 				if (hit.doc != doc) {
@@ -372,6 +382,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 					addDocResultToList(doc, hits, indexReader);
 				}
 			}
+		} finally {
+			ensureResultsReadLock.unlock();
 		}
 	}
 
