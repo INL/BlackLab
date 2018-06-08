@@ -545,7 +545,6 @@ public class HitsImpl extends Hits {
 						docsRetrieved++;
 					previousHitDoc = hitDoc;
 				}
-				maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
 				if (!maxHitsRetrieved) {
 					Hit hit = currentSourceSpans.getHit();
 					Hit offsetHit = new Hit(hit.doc + currentDocBase, hit.start, hit.end);
@@ -555,6 +554,7 @@ public class HitsImpl extends Hits {
 						capturedGroups.put(offsetHit, groups);
 					}
 					hits.add(offsetHit);
+					maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
 				}
 			}
 		} catch (InterruptedException e) {
