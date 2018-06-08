@@ -538,8 +538,6 @@ public class HitsImpl extends Hits {
 				// Count the hit and add it (unless we've reached the maximum number of hits we
 				// want)
 				hitsCounted++;
-				if (Math.random() < 0.05)
-					Thread.sleep(1);
 				int hitDoc = currentSourceSpans.docID() + currentDocBase;
 				if (hitDoc != previousHitDoc) {
 					docsCounted++;
