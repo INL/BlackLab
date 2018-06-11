@@ -2,6 +2,15 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.7.1
+
+### Changed
+* Default maximum file upload size is now 1GB. 
+
+### Fixed
+* Don't block until all hits have been counted.
+* Fixed bug when maxHitsToRetrieve and maxHitsToCount are the same value
+
 ## Improvements up to v1.7.0
 
 ### New
