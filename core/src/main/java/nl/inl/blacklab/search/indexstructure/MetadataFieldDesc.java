@@ -170,12 +170,8 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 		return Collections.unmodifiableMap(values);
 	}
 
-	public boolean isValueListComplete() {
-		// NOTE: UNKNOWN means addValue() hasn't been called. This is reported as NO
-		//  because some indices may not have values stored. Fields that actually don't
-		//  have any values should be rare and aren't very useful, so this seems like
-		//  an okay choice.
-		return valueListComplete == ValueListComplete.YES;
+	public ValueListComplete isValueListComplete() {
+		return valueListComplete;
 	}
 
     public Map<String, String> getDisplayValues() {
