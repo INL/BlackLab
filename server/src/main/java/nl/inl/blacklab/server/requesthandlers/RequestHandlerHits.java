@@ -108,7 +108,7 @@ public class RequestHandlerHits extends RequestHandler {
 					try {
 						totalSleepTime += sleepTime;
 						Thread.sleep(sleepTime = Math.max(sleepTime * 2, 500));
-						if (totalSleepTime >= 1000)
+						if (totalSleepTime >= 5000)
 							throw new ServiceUnavailable("Timeout");
 					} catch (InterruptedException e) {
 						throw new ServiceUnavailable("Interrupted");
