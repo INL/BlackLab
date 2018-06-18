@@ -344,9 +344,9 @@ public class ComplexFieldProperty {
 	    // it anyway.
 	    storedValues.clear(); // We can always reuse storedValues; it's exclusively owned by this
 
-	if (reuseBuffers) {
-		values.clear();
-		increments.clear();
+		if (reuseBuffers) {
+			values.clear();
+			increments.clear();
 		} else {
 			values = new ArrayList<>();
 			increments = new IntArrayList();
