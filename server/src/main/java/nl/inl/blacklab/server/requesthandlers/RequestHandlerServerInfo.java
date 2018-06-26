@@ -60,9 +60,9 @@ public class RequestHandlerServerInfo extends RequestHandler {
 					}
 				}
 
-				String documentFormat = struct.getDocumentFormat();
-				if (documentFormat != null && documentFormat.length() > 0)
-					ds.entry("documentFormat", documentFormat);
+				String formatIdentifier = struct.getDocumentFormat();
+				if (formatIdentifier != null && formatIdentifier.length() > 0)
+					ds.entry("documentFormat", formatIdentifier);
 				ds.entry("timeModified", struct.getTimeModified());
 				if (struct.getTokenCount() > 0)
 					ds.entry("tokenCount", struct.getTokenCount());

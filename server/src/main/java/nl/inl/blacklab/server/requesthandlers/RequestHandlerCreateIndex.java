@@ -24,20 +24,17 @@ public class RequestHandlerCreateIndex extends RequestHandler {
 			if (newIndexName == null || newIndexName.length() == 0)
 				return Response.badRequest(ds, "ILLEGAL_INDEX_NAME", "You didn't specify the required name parameter.");
 			String displayName = request.getParameter("display");
-			String documentFormat = request.getParameter("format");
+			String formatIdentifier = request.getParameter("format");
 
-			debug(logger, "REQ create index: " + newIndexName + ", " + displayName + ", " + documentFormat);
+			debug(logger, "REQ create index: " + newIndexName + ", " + displayName + ", " + formatIdentifier);
 			if (!user.isLoggedIn() || !newIndexName.startsWith(user.getUserId() + ":")) {
 				logger.debug("(forbidden, cannot create index in another user's area)");
 				return Response.forbidden(ds, "You can only create indices in your own private area.");
 			}
 
-			indexMan.createIndex(newIndexName, displayName, documentFormat);
+			indexMan.createIndex(newIndexName, displayName, formatIdentifier);
 
 			return Response.status(ds, "SUCCESS", "Index created succesfully.", HttpServletResponse.SC_CREATED);
-			//DataObjectMapElement response = DataObject.statusObject("SUCCESS", "Index created succesfully.");
-			//response.put("url", ServletUtil.getServletBaseUrl(request) + "/" + indexName);
-			//return new Response(response);
 		} catch (BlsException e) {
 			throw e;
 		} catch (Exception e) {

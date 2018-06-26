@@ -570,7 +570,12 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
 	        
             // When true exclude empty word properties (lemma, pos,...) in 
             // result (default is to include empty properties)
-            "omitEmptyProperties": false
+            "omitEmptyProperties": false,
+            
+            // By default, BLS will send the Access-Control-Allow-Origin
+            // header to allow all origins to connect, but you can override
+            // this behaviour here.
+            "accessControlAllowOrigin": "*"
 	    },
 	
 	    // Settings related to tuning server load and client 

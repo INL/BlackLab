@@ -445,7 +445,6 @@ public class QueryTool {
 	 * @param encoding the output encoding to use
 	 * @throws UnsupportedEncodingException
 	 * @throws CorruptIndexException
-	 * @throws IOException
 	 */
 	private static void run(File indexDir, File inputFile, String encoding)
 			throws UnsupportedEncodingException, CorruptIndexException {

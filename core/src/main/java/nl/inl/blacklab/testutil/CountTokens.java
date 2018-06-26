@@ -70,7 +70,6 @@ public class CountTokens {
 	}
 
 	/** Export the whole corpus.
-	 * @param exportDir directory to export to
 	 */
 	private void count() {
 

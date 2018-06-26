@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.ValueListComplete;
 import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -36,11 +37,11 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     private static final int MAX_FIELD_VALUES = 500;
 
     private static RuleBasedCollator valueSortCollator = null;
-    
+
     /**
      * Returns a collator that sort values "properly",
      * ignoring parentheses.
-     * 
+     *
      * @return the collator
      */
     static Collator getValueSortCollator() {
@@ -59,7 +60,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
         return valueSortCollator;
     }
-    
+
 	public RequestHandlerFieldInfo(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
 		super(servlet, request, user, indexName, urlResource, urlPathPart);
 	}
@@ -99,7 +100,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 
 	public static void describeMetadataField(DataStream ds, String indexName, String fieldName, MetadataFieldDesc fd, boolean listValues) {
         ds.startMap();
-		boolean valueListComplete = fd.isValueListComplete();
+		boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES); // report false for UNKNOWN - this usually means there's no values either way
 
 		// Assemble response
 		if (indexName != null)
@@ -154,7 +155,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 		}
         ds.endMap();
 	}
-	
+
 	public static void describeComplexField(DataStream ds, String indexName, String fieldName, ComplexFieldDesc fieldDesc, Searcher searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
         ds.startMap();
         if (indexName != null)

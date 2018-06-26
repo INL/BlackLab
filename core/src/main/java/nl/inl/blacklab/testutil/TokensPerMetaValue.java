@@ -13,6 +13,7 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.ValueListComplete;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -39,7 +40,7 @@ public class TokensPerMetaValue {
 			for (String metaFieldName: indexStructure.getMetadataFields()) {
 				// Check if this field has only a few values
 				MetadataFieldDesc fd = indexStructure.getMetadataFieldDesc(metaFieldName);
-				if (fd.isValueListComplete()) {
+				if (fd.isValueListComplete().equals(ValueListComplete.YES)) {
 					// Loop over the values
 					for (Map.Entry<String, Integer> entry: fd.getValueDistribution().entrySet()) {
 						// Determine token count for this value

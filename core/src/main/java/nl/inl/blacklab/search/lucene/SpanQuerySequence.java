@@ -415,7 +415,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 	 * hits. But when a clause also matches the empty sequence, you may miss valid sequence
 	 * matches because there's no hit in the clause to combine with the hits from other clauses.
 	 *
-	 * @param alternatives the alternative sequences we have built so far
 	 * @param parts translation results for each of the clauses so far
 	 * @param reader the index reader
 	 * @return several alternatives combined with or

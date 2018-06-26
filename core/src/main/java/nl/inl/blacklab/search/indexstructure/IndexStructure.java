@@ -52,6 +52,7 @@ import nl.inl.blacklab.index.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.index.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
+import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.ValueListComplete;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
@@ -493,7 +494,8 @@ public class IndexStructure {
             fi.put("analyzer", f.getAnalyzerName());
             fi.put("unknownValue", f.getUnknownValue());
             fi.put("unknownCondition", unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString());
-            fi.put("valueListComplete", f.isValueListComplete());
+            if (f.isValueListComplete() != ValueListComplete.UNKNOWN)
+            	fi.put("valueListComplete", f.isValueListComplete().equals(ValueListComplete.YES));
             Map<String, Integer> values = f.getValueDistribution();
             if (values != null) {
                 ObjectNode jsonValues = fi.putObject("values");
@@ -635,7 +637,7 @@ public class IndexStructure {
 	public Collection<String> getComplexFields() {
 		return complexFields.keySet();
 	}
-	
+
 	/**
 	 * Does the specified complex field exist?
 	 * @param fieldName complex field name
@@ -1045,7 +1047,7 @@ public class IndexStructure {
      * @param node node to check
      * @param knownKeys keys that may occur under this node
      */
-    private void warnUnknownKeys(String where, JsonNode node, Set<String> knownKeys) {
+    private static void warnUnknownKeys(String where, JsonNode node, Set<String> knownKeys) {
         Iterator<Entry<String, JsonNode>> it = node.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
@@ -1179,7 +1181,8 @@ public class IndexStructure {
                     fieldDesc.setDisplayValues(fieldConfig.get("displayValues"));
                 if (fieldConfig.has("displayOrder"))
                     fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
-                fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
+                if (fieldConfig.has("valueListComplete"))
+                	fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
                 metadataFieldInfos.put(fieldName, fieldDesc);
             }
 

@@ -194,26 +194,23 @@ public class IndexManager {
             throw new IndexNotFound(e.getMessage());
         }
 	}
-	
+
 	/**
 	 * Create an empty user index.
 	 *
 	 * Indices may only be created by a logged-in user in his own private area.
 	 * The index name is strictly validated, disallowing any weird input.
 	 *
-	 * @param indexId
-	 *            the index name, including user prefix
+	 * @param indexId the index name, including user prefix
 	 * @param displayName
-	 * @param documentFormatId the document format identifier (e.g. tei, folia, ..)
-	 * @throws BlsException
-	 *             if we're not allowed to create the index for whatever reason
-	 * @throws IOException
-	 *             if creation failed unexpectedly
+	 * @param formatIdentifier the document format identifier (e.g. tei, folia, ..). See {@link DocumentFormats}
+	 * @throws BlsException if we're not allowed to create the index for whatever reason
+	 * @throws IOException if creation failed unexpectedly
 	 */
-	public synchronized void createIndex(String indexId, String displayName, String documentFormatId) throws BlsException,
-			IOException {
-		if (!DocumentFormats.isSupported(documentFormatId))
-			throw new BadRequest("FORMAT_NOT_FOUND", "Unknown format: " + documentFormatId);
+	public synchronized void createIndex(String indexId, String displayName, String formatIdentifier)
+	    throws BlsException, IOException {
+		if (!DocumentFormats.isSupported(formatIdentifier))
+			throw new BadRequest("FORMAT_NOT_FOUND", "Unknown format: " + formatIdentifier);
 		if (!Index.isUserIndex(indexId))
 			throw new NotAuthorized("Can only create private indices.");
 		if (!Index.isValidIndexName(indexId))
@@ -245,9 +242,9 @@ public class IndexManager {
 			BlsUtils.delTree(indexDir);
 		}
 		boolean contentViewable = true; // user may view his own private corpus documents
-		Format format = DocumentFormats.getFormat(documentFormatId);
+		Format format = DocumentFormats.getFormat(formatIdentifier);
         ConfigInputFormat config = format == null ? null : format.getConfig();
-		Searcher searcher = Searcher.createIndex(indexDir, config, displayName, documentFormatId, contentViewable, TextDirection.LEFT_TO_RIGHT);
+		Searcher searcher = Searcher.createIndex(indexDir, config, displayName, formatIdentifier, contentViewable, TextDirection.LEFT_TO_RIGHT);
 		searcher.close();
 
 		indices.put(indexId, new Index(indexId, indexDir, this.searchMan.getCache()));

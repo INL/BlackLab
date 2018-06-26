@@ -2,13 +2,64 @@
 
 ## Improvements in HEAD
 
-## New
-* Much user-friendlier indexing using .json/.yaml config files,
-  at the cost of a bit of speed. See documentation.
+## Improvements up to v1.7.1
 
-## Fixed
+### Changed
+* Default maximum file upload size is now 1GB. 
+
+### Fixed
+* Don't block until all hits have been counted.
+* Fixed bug when maxHitsToRetrieve and maxHitsToCount are the same value
+
+## Improvements up to v1.7.0
+
+### New
+* Much user-friendlier indexing using .json/.yaml config files.
+  Added support for tabular formats and plain text.
+  Includes built-in format configurations for many popular formats.
+  See documentation.
+* Added "linked document" indexing, which provides e.g. the ability 
+  to automatically locate and index the corresponding metadata for 
+  each document.
+* BLS can now return results in CSV format.
+* BLS now supports an "autocomplete" request for metadata fields as well as
+  property values. 
+* Corpora now have a text direction setting that the user interface can 
+  use to change how things are displayed.
+* contentViewable can now be specified at the document level as well 
+  as corpus-wide, by adding a metadata field named "contentViewable"
+  with the value "true" or "false". The per-document setting overrides 
+  the corpus-wide setting.
+* BLS now allows private corpus owners to explicitly share the corpus with
+  other users.
+* Many small additions to make it easier to generate a user-friendly
+  user interface based on corpus structure information from BlackLab Server,
+  such as displayName for fields and values, uiType for field and 
+  properties, etc.
+* BLS can now omit empty properties in the results if desired. Default is
+  to include empty properties. Use requests.omitEmptyProperties setting to 
+  change.
+* BLS will now send the "Access-Control-Allow-Origin: *" header by 
+  default, allowing a frontend on another server to access it.
+  This can be overridden in the requests.accessControlAllowOrigin
+  setting.
+* BLS can attempt to generate a default XSLT from a (XML-based) input format
+  configuration.
+* Added a MetadataFetcher that reads from CSV files.
+* Added plugin capability for document conversion and tagging before indexing,
+  allowing BLS to e.g. take ePub input files, convert them to a corpus format, 
+  linguistically annotate them and index them. This feature is somewhat 
+  experimental and as of yet undocumented.
+* Many smaller improvements.
+
+### Changed
+* BlackLab now requires Java 8.
+* BLS no longer trims leading/trailing whitespace from parameter values. 
+
+### Fixed
 * Untokenized fields weren't lowercased while indexing, but were lowercased
   when searching, causing problems. Now they are treated the same.
+* Numerous other bugfixes.
 
 ## Improvements up to v1.6.0
 

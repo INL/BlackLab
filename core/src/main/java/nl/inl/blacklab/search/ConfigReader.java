@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.DownloadCache;
+import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.index.config.YamlJsonReader;
 import nl.inl.util.FileUtil;
@@ -45,10 +45,10 @@ public class ConfigReader extends YamlJsonReader {
 
 	/** Cache for getConfigDirs() */
     private static List<File> configDirs;
-    
+
     /** Cache of root node of config file */
     private static JsonNode blacklabConfig;
-    
+
     /** Do we wish to forego looking for a config file on the filesystem? Useful for testing. */
     private static boolean ignoreConfigFile = false;
 
@@ -76,7 +76,7 @@ public class ConfigReader extends YamlJsonReader {
     public static void setConfigFile(File file) throws FileNotFoundException, IOException {
         if (ignoreConfigFile) // useful for repeatable testing
             return;
-        
+
     	if (file == null || !file.canRead())
     		throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
@@ -105,7 +105,7 @@ public class ConfigReader extends YamlJsonReader {
     public static void setConfigFile(Reader reader, boolean isJson) throws JsonProcessingException, IOException{
         if (ignoreConfigFile) // useful for repeatable testing
             return;
-        
+
     	if (blacklabConfig != null)
     		throw new UnsupportedOperationException("Cannot load configuration file - another configuration file has already been loaded.");
 
@@ -124,13 +124,14 @@ public class ConfigReader extends YamlJsonReader {
     	if (blacklabConfig != null)
     		return;
 
-		try {
-			File file = FileUtil.findFile(getDefaultConfigDirs(), "blacklab", Arrays.asList("yaml", "yml", "json"));
-			if (file != null)
-				setConfigFile(file);
-		} catch (IOException e) {
-			logger.warn("Could not load default blacklab configuration file: " + e.getMessage());
-		}
+    	File file = FileUtil.findFile(getDefaultConfigDirs(), "blacklab", Arrays.asList("yaml", "yml", "json"));
+    	if (file != null) {
+    		try {
+    			setConfigFile(file);
+    		} catch (IOException e) {
+    			logger.warn("Could not load default blacklab configuration file " + file + ": " + e.getMessage());
+    		}
+    	}
     }
 
     /**

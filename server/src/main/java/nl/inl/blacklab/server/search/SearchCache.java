@@ -440,7 +440,6 @@ public class SearchCache {
 
 	/**
 	 * Apply one of the load managing actions to a search.
-	 * @param m
 	 *
 	 * @param search the search
 	 * @param action the action to apply

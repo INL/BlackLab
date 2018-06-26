@@ -88,7 +88,7 @@ public class PluginManager {
             throw new IllegalStateException("PluginManager already initialized");
         isInitialized = true;
 
-        logger.info("Initializing plugin system");
+        logger.debug("Initializing plugin system...");
 
         JsonNode delayNode = pluginConfig.get(PROP_DELAY_INITIALIZATION);
         boolean delayInitialization = (delayNode != null && !(delayNode instanceof NullNode) && delayNode.asBoolean());
@@ -103,14 +103,14 @@ public class PluginManager {
         if (!delayInitialization) {
             CompletableFuture.runAsync(() -> {
                 // only now they're all located, initialize them
-                logger.info("Config setting " + PROP_DELAY_INITIALIZATION + " is false, initializing plugins...");
+                logger.trace("Config setting " + PROP_DELAY_INITIALIZATION + " is false, initializing plugins...");
                 initializePlugins(convertPlugins);
                 initializePlugins(tagPlugins);
-                logger.info("Finished Initializing plugin system");
+                logger.trace("Finished Initializing plugin system");
             });
         } else {
-            logger.info("Config setting " + PROP_DELAY_INITIALIZATION + " is true, plugins will be initialized on first use.");
-            logger.info("Finished Initializing plugin system");
+            logger.trace("Config setting " + PROP_DELAY_INITIALIZATION + " is true, plugins will be initialized on first use.");
+            logger.trace("Finished Initializing plugin system");
         }
     }
 

@@ -297,7 +297,7 @@ public class FileUtil {
                 boolean fileExists = configFile.exists();
                 boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());
                 if (!fileExists)
-                    logger.debug("Configfile not found: " + configFile);
+                    logger.trace("Configfile not found: " + configFile);
                 else if (!reallyInsideDir)
                     logger.debug("Configfile found but not inside dir: " + configFile);
                 if (fileExists && reallyInsideDir)
@@ -312,7 +312,7 @@ public class FileUtil {
                     boolean fileExists = configFile.exists();
                     boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());
                     if (!fileExists)
-                        logger.debug("Configfile not found: " + configFile);
+                        logger.trace("Configfile not found: " + configFile);
                     else if (!reallyInsideDir)
                         logger.debug("Configfile found but not inside dir: " + configFile);
                     if (fileExists && reallyInsideDir)

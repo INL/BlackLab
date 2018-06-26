@@ -171,7 +171,6 @@ public class XmlHighlighter {
 	 * @param stopAfterChars
 	 *            after how many characters of text content to cut this fragment.
 	 *            -1 = no cutting.
-	 * @param offset
 	 * @return the highlighted XML content.
 	 */
 	private String highlightInternal(String xmlContent, List<TagLocation> tags, int stopAfterChars) {

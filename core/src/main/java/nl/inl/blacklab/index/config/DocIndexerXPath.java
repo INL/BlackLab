@@ -20,8 +20,10 @@ import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.ximpleware.AutoPilot;
+import com.ximpleware.BookMark;
 import com.ximpleware.NavException;
 import com.ximpleware.VTDException;
 import com.ximpleware.VTDGen;
@@ -39,7 +41,7 @@ import nl.inl.util.XmlUtil;
  * An indexer configured using full XPath 1.0 expressions.
  */
 public class DocIndexerXPath extends DocIndexerConfig {
-    
+
     private static enum FragmentPosition {
         BEFORE_OPEN_TAG,
         AFTER_OPEN_TAG,
@@ -282,7 +284,20 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // Now, find all words, keeping track of what inline objects occur in between.
             navpush();
             words.resetXPath();
+
+            // first find all words and sort the list -- words are returned out of order when they are at different nesting levels
+            // since the xpath spec doesn't enforce any order, there's nothing we can do
+            // so record their positions, sort the list, then restore the position and carry on
+            List<Pair<Integer, BookMark>> wordPositions = new ArrayList<>();
             while (words.evalXPath() != -1) {
+            	BookMark b = new BookMark(nav);
+            	b.setCursorPosition();
+            	wordPositions.add(Pair.of(nav.getCurrentIndex(), b));
+            }
+            wordPositions.sort((a, b) -> a.getKey().compareTo(b.getKey()));
+
+            for(Pair<Integer, BookMark> wordPosition : wordPositions) {
+            	wordPosition.getValue().setCursorPosition();
 
                 // Capture tokenPositionId for this token position?
                 if (apTokenPositionId != null) {
@@ -498,7 +513,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Process an annotation at the current position.
      *
      * @param annotation annotation to process
-     * @param apAnnot autopilot object to use (so we don't keep creating new ones)
      * @param indexAtPositions if null: index at the current position; otherwise, index at all these positions
      * @throws VTDException on XPath error
      */
@@ -708,7 +722,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
 	/**
      * Gets attribute map for current element
-     * @return
      */
     private Map<String, String> getAttributes() {
 		navpush();
