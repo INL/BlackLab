@@ -69,6 +69,10 @@ public class TextPatternRegex extends TextPatternTerm {
 	 * @return the TextPattern
 	 */
 	public TextPattern rewrite() {
+        // Is it "any token"?
+        if (value.equals("^.*$")) {
+            return new TextPatternAnyToken(1, 1);
+        }
 
         // If there's a case-sensitivity toggle flag after a
         // start-of-string match, put the flag first so we can
@@ -88,7 +92,7 @@ public class TextPatternRegex extends TextPatternTerm {
 			forceInsensitive = true;
 			newValue = newValue.substring(4);
 		}
-
+		
 		// If this contains no funny characters, only (Unicode) letters and digits,
 		// surrounded by ^ and $, turn it into a TermQuery, which might be a little
 		// faster than doing it via RegexpQuery (which has to build an Automaton).

@@ -299,5 +299,12 @@ public class TestQueryRewrite {
 		assertRewriteResult("a:[] 'en' b:[] :: a.word = b.word", "CONSTRAINT(CAPTURE(CAPTURE(EXPAND(EXPAND(TERM(contents%word@i:en), R, 1, 1), L, 1, 1), b, 2, 0), a, 0, -2), a.word = b.word)");
 	}
 
+    @Test
+    public void testRewritePropertyRegexMatchAll() {
+        assertRewriteResult("[lemma='.*']", "ANYTOKEN(1, 1)");
+        //TODO: assertRewriteResult("[lemma='.*' & word='de']", "TERM(contents%word@i:de)");
+        //TODO: assertRewriteResult("[lemma='.*' & word='.*']", "ANYTOKEN(1, 1)");
+    }
+
 
 }
