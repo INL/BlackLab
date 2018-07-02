@@ -28,6 +28,8 @@ public class AuthRequestAttribute {
 			logger.error("authSystem.attributeName parameter missing in blacklab-server.json");
 		} else {
 			this.attributeName = parName.toString();
+			if (parameters.size() > 1)
+			    logger.warn("AuthRequestAttribute only takes one parameters (attributeName), but others were passed.");
 		}
 	}
 

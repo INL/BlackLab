@@ -221,6 +221,7 @@ public class BlsConfig extends YamlJsonReader {
 			authParam = JsonUtil.mapFromJsonObject(authProp);
 			if (authParam.containsKey("class")) {
 				authClass = authParam.get("class").toString();
+				authParam.remove("class");
 			}
 		} else {
 			authParam = new HashMap<>();

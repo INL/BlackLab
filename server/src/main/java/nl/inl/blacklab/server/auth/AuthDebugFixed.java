@@ -5,6 +5,9 @@ import java.util.Map;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -17,9 +20,15 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public class AuthDebugFixed {
 
+    static final Logger logger = LogManager.getLogger(AuthDebugFixed.class);
+    
 	private String userId;
 
 	public AuthDebugFixed(Map<String, Object> parameters) {
+        boolean hasUserId = parameters.containsKey("userId");
+        int expectedParameters = hasUserId ? 1 : 0;
+        if (parameters.size() > expectedParameters)
+            logger.warn("AuthDebugFixed only takes one parameter (userId), but other parameters were passed.");
 		Object u = parameters.get("userId");
         this.userId = u != null ? u.toString() : "DEBUG-USER";
 	}

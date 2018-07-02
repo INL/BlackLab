@@ -5,6 +5,9 @@ import java.util.Map;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Used for CLARIN login (Shibboleth), which passes userid
  * in an attribute called "eppn". Special class because for unknown
@@ -14,8 +17,12 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class AuthClarinEppn extends AuthRequestAttribute {
 
-	public AuthClarinEppn(Map<String, Object> dummy) {
+    private static final Logger logger = LogManager.getLogger(AuthClarinEppn.class);
+
+	public AuthClarinEppn(Map<String, Object> param) {
 		super("eppn");
+		if (param.size() > 0)
+		    logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
 	}
 
 	@Override

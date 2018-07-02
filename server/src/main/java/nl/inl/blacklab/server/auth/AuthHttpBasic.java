@@ -26,8 +26,10 @@ public class AuthHttpBasic {
     
     Decoder base64Decoder = Base64.getDecoder();
     
-	public AuthHttpBasic(Map<String, Object> parameters) {
+	public AuthHttpBasic(Map<String, Object> param) {
 		// doesn't take any parameters
+        if (param.size() > 0)
+            logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
 	}
 
 	public User determineCurrentUser(HttpServlet servlet,

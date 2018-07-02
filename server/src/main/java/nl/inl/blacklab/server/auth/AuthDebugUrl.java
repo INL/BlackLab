@@ -5,6 +5,9 @@ import java.util.Map;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -15,8 +18,12 @@ import nl.inl.blacklab.server.jobs.User;
  */
 public class AuthDebugUrl {
 
-	public AuthDebugUrl(Map<String, Object> parameters) {
+    static final Logger logger = LogManager.getLogger(AuthDebugFixed.class);
+
+    public AuthDebugUrl(Map<String, Object> param) {
 		// doesn't take any parameters
+        if (param.size() > 0)
+            logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
 	}
 
 	public User determineCurrentUser(HttpServlet servlet,

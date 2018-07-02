@@ -11,7 +11,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 
 /**
  * Set a cookie to simulate a logged-in user.
@@ -24,12 +23,14 @@ import nl.inl.blacklab.server.requesthandlers.RequestHandler;
  */
 public class AuthDebugCookie {
 
-    static final Logger logger = LogManager.getLogger(RequestHandler.class);
+    static final Logger logger = LogManager.getLogger(AuthDebugCookie.class);
     
     static final int TEN_YEARS = 10 * 365 * 24 * 60 * 60;
     
-	public AuthDebugCookie(Map<String, Object> parameters) {
+	public AuthDebugCookie(Map<String, Object> param) {
 		// doesn't take any parameters
+        if (param.size() > 0)
+            logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
 	}
 
 	public User determineCurrentUser(HttpServlet servlet,
