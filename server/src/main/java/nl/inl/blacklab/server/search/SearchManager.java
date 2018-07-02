@@ -32,23 +32,18 @@ public class SearchManager {
     public SearchManager(JsonNode properties) throws ConfigurationException {
         logger.debug("SearchManager created");
 
-//        try {
-            // The main config object
-            config = new BlsConfig(properties);
+        // The main config object
+        config = new BlsConfig(properties);
 
-            // Create the cache
-            // Use the performance properties [optional, defaults will be used if missing]
-            cache = new SearchCache(this, config);
+        // Create the cache
+        // Use the performance properties [optional, defaults will be used if missing]
+        cache = new SearchCache(this, config);
 
-            // Find the indices
-            indexMan = new IndexManager(this, properties);
+        // Find the indices
+        indexMan = new IndexManager(this, properties);
 
-            // Init auth system
-            authSystem = new AuthManager(config.getAuthClass(), config.getAuthParam());
-//        } catch (JsonProcessingException e) {
-//            e.printStackTrace();
-//            throw new ConfigurationException("Invalid JSON in blacklab-server.json; please validate: " + e.getMessage());
-//        }
+        // Init auth system
+        authSystem = new AuthManager(config.getAuthClass(), config.getAuthParam());
 
         // Set up the parameter default values
         SearchParameters.setDefault("number", "" + config.defaultPageSize());

@@ -15,12 +15,18 @@ import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 
 /**
  * Set a cookie to simulate a logged-in user.
+ * 
+ * NOTE: this doesn't work properly with corpus-frontend at the moment,
+ * because corpus-frontend performs requests to BLS from both the client
+ * and the server. Both of these get assigned different cookies, causing
+ * problems. One way to fix this would be to only use BLS from the client,
+ * but that would require significant changes to the application. 
  */
 public class AuthDebugCookie {
 
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
     
-    static final int TIEN_JAAR = 10 * 365 * 24 * 60 * 60;
+    static final int TEN_YEARS = 10 * 365 * 24 * 60 * 60;
     
 	public AuthDebugCookie(Map<String, Object> parameters) {
 		// doesn't take any parameters
@@ -64,7 +70,7 @@ public class AuthDebugCookie {
             HttpServletRequest request, HttpServletResponse response, User user) {
 	    Cookie cookie = new Cookie("autosearch-debug-user", user.getUserId());
 	    cookie.setPath("/");
-        cookie.setMaxAge(TIEN_JAAR);
+        cookie.setMaxAge(TEN_YEARS);
 	    response.addCookie(cookie);
 	}
 
