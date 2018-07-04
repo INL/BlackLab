@@ -234,15 +234,15 @@ IMPORTANT: generating the XSLT might not work correctly if your XML namespaces c
 
 Namespaces can be declared in the top-level "namespaces" block, which is simply a map of namespace prefix (e.g. "tei") to the namespace URI (e.g. "http://www.tei-c.org/ns/1.0"). So for example, if your documents declare namespaces as follows:
 
-  <doc xmlns:my-ns="http://example.com/my-ns" xmlns="http://example.com/other-ns">
+    <doc xmlns:my-ns="http://example.com/my-ns" xmlns="http://example.com/other-ns">
      ...
-  </doc>
+    </doc>
   
 Then your format config file should contain this namespaces section:
 
-  namespaces:
-    '': http://example.com/other-ns    # The default namespace
-    my-ns: http://example.com/my-ns
+    namespaces:
+      '': http://example.com/other-ns    # The default namespace
+      my-ns: http://example.com/my-ns
 
 If you forget to declare some or all of these namespaces, the document might index correctly, but the generated XSLT won't work and will likely show a message saying that no words have been found in the document. Updating your format config file should fix this; re-indexing shouldn't be necessary, as the XSLT is generated directly from the config file, not the index.
 
