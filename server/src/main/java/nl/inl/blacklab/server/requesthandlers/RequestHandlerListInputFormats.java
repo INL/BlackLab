@@ -343,6 +343,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 			 * To warn the user of this, we attempt to match the document root, without any words inside it, and if it hits, we output a warning.
 			 */
 
+			/*
 			String [] test = wordBase.split("\\|");
 			for (int i = 0; i < test.length; i++) {
 				test[i] = test[i].startsWith("//") ? "." + test[i] : ".//" + test[i];
@@ -360,6 +361,25 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 						"If you entire document is within a default namespace, you will need to set it in the import format as \"\": \"http://my-default-namespace.site/namespace\"" +
 						"</xsl:text>")
 				.append(XslGenerator.endTemplate);
+			*/
+			
+			xslt.append(XslGenerator.beginTemplate("/"))
+			    .append("<xsl:choose>" +
+                        "  <xsl:when test='" + wordBase + "'>" +
+                        "    <xsl:apply-templates/>" +
+                        "  </xsl:when>" +
+                        "  <xsl:otherwise>" +
+                        "    <xsl:text>" +
+                        "No words have been found within this entire document." +
+                        "This can be caused by inconsistent use of default namespaces within the xml document. " +
+                        "The documents will usually still be indexed, because blacklab is a bit more lenient towards elements that " +
+                        "should be in a namespace, but actually aren't or vice versa. " +
+                        "To see your documents, try creating a new index, and spell out the namespaces fully within your xpath expression. " +
+                        "If you entire document is within a default namespace, you will need to set it in the import format as \"\": \"http://my-default-namespace.site/namespace\"" +
+                        "    </xsl:text>" +
+                        "  </xsl:otherwise>" +
+			            "</xsl:choose>")
+			    .append(XslGenerator.endTemplate);
 
 			// Generate rules for inline tags
 			for (ConfigInlineTag inlineTag: f.getInlineTags()) {
