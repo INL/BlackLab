@@ -14,8 +14,9 @@ customize them to fit your data.
 * <a href="#input-format-config-overview">Basic overview of a configuration file</a>
 * <a href="#working-with-yaml">Working with YAML</a>
 * <a href="#extend-format">How to extend existing formats</a>
-* <a href="#sensitivity">Configuring case- and diacritics sensitivity per property</a>
-* <a href="#disable-fi">Why and how to disable the forward index for a property</a>
+* <a href="#sensitivity">Configuring case- and diacritics sensitivity per annotation</a>
+* <a href="#generated-xslt">Making sure an XSLT can be generated from your format config</a>
+* <a href="#disable-fi">Reducing index size by disabling the forward index for some annotations</a>
 * <a href="#multiple-values">Multiple values at one position</a>
 * <a href="#standoff-annotations">Standoff annotations</a>
 * <a href="#subproperties">Subannotations, for e.g. part of speech features</a>
@@ -223,9 +224,31 @@ If you don't configure these, BlackLab will pick default values:
 * all other annotations get "insensitive"
 
 
+<a id="generated-xslt"></a>
+
+## Making sure an XSLT can be generated from your format config
+
+If you're creating your own corpora by uploading data to corpus-frontend, you want to be able to view your documents as well, without having to write an XSLT yourself. BlackLab Server can generate a default XSLT from your format config file. However, because BlackLab is a bit more lenient with namespaces than the XSLT processor that generates the document view, the generated XSLT will only work correctly if you take care to define your namespaces correctly in your format config file.
+
+IMPORTANT: generating the XSLT might not work correctly if your XML namespaces change throughout the document, e.g. if you declare local namespaces on elements, instead of 
+
+Namespaces can be declared in the top-level "namespaces" block, which is simply a map of namespace prefix (e.g. "tei") to the namespace URI (e.g. "http://www.tei-c.org/ns/1.0"). So for example, if your documents declare namespaces as follows:
+
+  <doc xmlns:my-ns="http://example.com/my-ns" xmlns="http://example.com/other-ns">
+     ...
+  </doc>
+  
+Then your format config file should contain this namespaces section:
+
+  namespaces:
+    '': http://example.com/other-ns    # The default namespace
+    my-ns: http://example.com/my-ns
+
+If you forget to declare some or all of these namespaces, the document might index correctly, but the generated XSLT won't work and will likely show a message saying that no words have been found in the document. Updating your format config file should fix this; re-indexing shouldn't be necessary, as the XSLT is generated directly from the config file, not the index.
+
 <a id="disable-fi"></a>
 
-## Why and how to disable the forward index for an annotation
+## Reducing index size by disabling the forward index for some annotations
 
 By default, all annotations get a forward index. The forward index is the complement to Lucene's reverse index, and can 
 quickly answer the question "what value appears in position X of document Y?". This functionality is used to generate
@@ -432,7 +455,7 @@ Here's how to define subproperties:
             namePath: "@subset" # subset attribute contains the subannotation name
             valuePath: "@class" # class attribute contains the subannotation value
 
-Note that these subproperties will not have their own forward index; only the main annotation has one, and it includes only the first value indexed at any location, so the subproperty values aren't stored there either.
+Note that these subproperties will not have their own forward index; only the main annotation has one, and it includes only the first value indexed at any location, so the subannotation values aren't stored there either.
 
 Adding a few subproperties per token position like this will make the index slightly larger, but it shouldn't affect performance or index size too much.
 
@@ -937,7 +960,7 @@ Input format configuration files should be named `<formatIdentifier>.blf.yaml` o
           sensitivity: sensitive_insensitive  # sensitive|s|insensitive|i|sensitive_insensitive|si|all
                                               # (if omitted, reasonable default is chosen based on name)
           uiType: text                        # (optional) hint for use interface
-          createForwardIndex: true            # should this property get a forward index [true]
+          createForwardIndex: true            # should this annotation get a forward index [true]
     
         - name: lemma
           valuePath: lemma/@class
