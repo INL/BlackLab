@@ -138,11 +138,6 @@ public class ContentStoreMemory extends ContentStore {
 	}
 
 	@Override
-	public Set<Integer> getDocIds() {
-		return toc.keySet();
-	}
-
-	@Override
 	public boolean isDeleted(int id) {
 		return false;
 	}

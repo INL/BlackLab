@@ -65,7 +65,7 @@ public class BatchContentStore {
 
 		System.err.print("Opening content store... ");
 		ContentStore cs = new ContentStoreDirZip(indexDir);
-		System.err.println("done. [#docs: " + cs.getDocIds().size() + "]");
+		System.err.println("done. [#docs: " + cs.idSet().size() + "]");
 
 		System.out.println("First\tNumber\tSkip\tSnippets\tTime");
 
@@ -117,7 +117,7 @@ public class BatchContentStore {
 
 		// Build sorted list of non-deleted ids.
 		List<Integer> docIds = new ArrayList<>();
-		for (Integer i : cs.getDocIds()) {
+		for (Integer i : cs.idSet()) {
 			if (!cs.isDeleted(i))
 				docIds.add(i);
 		}

@@ -940,7 +940,7 @@ public class QueryTool {
 			jlineChecked = true;
 			try {
 				Class<?> c = Class.forName("jline.ConsoleReader");
-				jlineConsoleReader = c.newInstance();
+				jlineConsoleReader = c.getConstructor().newInstance();
 
 				// Disable bell
 				c.getMethod("setBellEnabled", boolean.class).invoke(jlineConsoleReader, false);

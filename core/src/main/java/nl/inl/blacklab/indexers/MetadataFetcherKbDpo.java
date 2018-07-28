@@ -109,7 +109,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 			XPath xpath = factory.newXPath();
 			xpath.setNamespaceContext(new NamespaceContext() {
 				@Override
-				public Iterator<?> getPrefixes(String arg0) {
+				public Iterator<String> getPrefixes(String arg0) {
 					throw new UnsupportedOperationException();
 				}
 
@@ -166,7 +166,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 				methEntityUtilsConsume = clsEntityUtils.getMethod("consume", clsHttpEntity);
 
 				// Instantiate HTTP client object
-				defaultHttpClient = clsDefaultHttpClient.newInstance();
+				defaultHttpClient = clsDefaultHttpClient.getConstructor().newInstance();
 
 			} catch (Exception e) {
 				throw new RuntimeException("Error finding (some of the) Apache HTTP libraries."

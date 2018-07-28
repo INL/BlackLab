@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -87,11 +86,11 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 			if (!canConvert(in, inputCharset, inputFormat))
 				throw new PluginException("The OpenConvert plugin does not support conversion from '" + inputFormat + "' to '" + getOutputFormat() + "'");
 
-			Object OpenConvertInstance = OpenConvert.newInstance();
+			Object OpenConvertInstance = OpenConvert.getConstructor().newInstance();
 			Object SimpleInputOutputProcessInstance = OpenConvert_GetConverter.invoke(OpenConvertInstance, getOutputFormat(), inputFormat);
 
 			SimpleInputOutputProcess_handleStream.invoke(SimpleInputOutputProcessInstance, in, inputCharset, out);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
+		} catch (ReflectiveOperationException | IllegalArgumentException | IOException | SecurityException e) {
 			throw new PluginException("Exception while running OpenConvert: " + e.getMessage(), e);
 		}
 	}

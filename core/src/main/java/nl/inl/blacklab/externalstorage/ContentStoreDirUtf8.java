@@ -789,11 +789,6 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 	}
 
 	@Override
-	public Set<Integer> getDocIds() {
-		return toc.keySet();
-	}
-
-	@Override
 	public boolean isDeleted(int id) {
 		return toc.get(id).deleted;
 	}

@@ -108,7 +108,7 @@ public abstract class ContentStore {
 	 * Use isDeleted() to check.
 	 * @return the set of doc ids
 	 */
-	public abstract Set<Integer> getDocIds();
+	public abstract Set<Integer> idSet();
 
 	/**
 	 * Return true iff the entry with this id was deleted.
@@ -144,9 +144,6 @@ public abstract class ContentStore {
 		throw new UnsupportedOperationException("Unknown content store type " + type);
 	}
 
-	/** @return the set of all content store ids */
-	public abstract Set<Integer> idSet();
-
 	/** A task to perform on a document in the content store. */
 	public interface DocTask {
 		void perform(int cid, String contents);
@@ -156,9 +153,7 @@ public abstract class ContentStore {
 	 * @param task the task to perform
 	 */
 	public void forEachDocument(DocTask task) {
-		for (Integer cid: idSet()) {
-			task.perform(cid, retrieve(cid));
-		}
+		idSet().stream().forEach(cid -> task.perform(cid, retrieve(cid)));
 	}
 
 }

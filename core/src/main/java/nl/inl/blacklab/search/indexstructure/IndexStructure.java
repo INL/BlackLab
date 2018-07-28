@@ -744,7 +744,7 @@ public class IndexStructure {
 	 * @param search the string to search for
 	 * @return the field name, or null if no fields matched
 	 */
-	public String findTextField(String search) {
+	private String findTextField(String search) {
 		return findTextField(search, true);
 	}
 
@@ -756,7 +756,7 @@ public class IndexStructure {
 	 *  string match; if true, all field names containing the search string match.
 	 * @return the field name, or null if no fields matched
 	 */
-	public String findTextField(String search, boolean partialMatchOkay) {
+	private String findTextField(String search, boolean partialMatchOkay) {
 		// Find documents with title in the name
 		List<String> fieldsFound = new ArrayList<>();
 		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {

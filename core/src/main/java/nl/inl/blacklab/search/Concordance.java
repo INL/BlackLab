@@ -24,13 +24,13 @@ import nl.inl.util.XmlUtil;
 public class Concordance {
 
 	/** Document fragment to use to create concordance */
-	String fragment;
+	private String fragment;
 
 	/** Where in content the match starts */
-	int matchStart;
+	private int matchStart;
 
 	/** Where in content the match ends */
-	int matchEnd;
+	private int matchEnd;
 
 	/**
 	 * Construct a concordance.

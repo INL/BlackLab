@@ -63,7 +63,7 @@ public class TagPluginDutchTagger implements TagPlugin {
             Method setProperties = converterClass.getMethod("setProperties", Properties.class);
             handleFile = converterClass.getMethod("handleFile", String.class, String.class);
 
-            converter = converterClass.newInstance();
+            converter = converterClass.getConstructor().newInstance();
             setProperties.invoke(converter, converterProps);
         } catch (Exception e) {
             throw new PluginException("Error initializing DutchTaggerLemmatizer plugin", e);

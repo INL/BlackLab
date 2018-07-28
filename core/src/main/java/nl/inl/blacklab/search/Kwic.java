@@ -33,11 +33,11 @@ import nl.inl.util.StringUtil;
  */
 public class Kwic {
 
-	DocContentsFromForwardIndex fragment;
+	private DocContentsFromForwardIndex fragment;
 
-	int hitStart;
+	private int hitStart;
 
-	int hitEnd;
+	private int hitEnd;
 
 	/**
 	 * Construct a Kwic object

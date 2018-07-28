@@ -46,7 +46,6 @@ import nl.inl.blacklab.search.fimatch.Nfa;
  *
  * See SpanSequenceRaw for details on the matching process.
  */
-@SuppressWarnings("unused")
 class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
 
 	public SpanQuerySequenceOfTwo(BLSpanQuery first, BLSpanQuery second) {

@@ -605,7 +605,9 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	/**
 	 * Iterate over the hits in the original (pre-sort) order.
 	 * @return an iterable object that will produce hits in the original order.
+	 * @deprecated if you need the original order, keep that Hits object around and use .sortedBy()
 	 */
+	@Deprecated
 	public Iterable<Hit> hitsInOriginalOrder() {
 		return new Iterable<Hit>() {
 			@Override
@@ -622,7 +624,10 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 * @param originalOrder if true, returns hits in original order. If false,
 	 *   returns them in sorted order (if any)
 	 * @return the iterator
+	 * @deprecated if you need the original order, keep that Hits object around and use .sortedBy(); 
+	 *    otherwise, use iterator()
 	 */
+	@Deprecated
 	public Iterator<Hit> getIterator(boolean originalOrder) {
 		return new Iterator<Hit>() {
 			int i = -1;
@@ -1012,11 +1017,11 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 		return settings().concAttrProps();
 	}
 
-	public HitQueryContext getHitQueryContext() {
+	private HitQueryContext getHitQueryContext() {
 		return hitQueryContext;
 	}
 
-	protected void setHitQueryContext(HitQueryContext hitQueryContext) {
+	private void setHitQueryContext(HitQueryContext hitQueryContext) {
 		this.hitQueryContext = hitQueryContext;
 	}
 

@@ -19,7 +19,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-@SuppressWarnings("boxing")
 public class TestFileProcessor {
 
     public static File testFile;

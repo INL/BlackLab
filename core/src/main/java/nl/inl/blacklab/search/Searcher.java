@@ -950,8 +950,8 @@ public abstract class Searcher {
 	 *            the Lucene Document id
 	 * @param fieldName
 	 *            the name of the field
-	 * @param startAtWord where to start getting the content (-1 for start of document, 0 for first word)
-	 * @param endAtWord where to end getting the content (-1 for end of document)
+	 * @param startAtWord where to start getting the content (first word returned; -1 for start of document, 0 for first word)
+	 * @param endAtWord where to end getting the content (last word returned; -1 for end of document)
 	 * @return the field content
 	 */
 	public String getContent(int docId, String fieldName, int startAtWord, int endAtWord) {
@@ -1111,33 +1111,37 @@ public abstract class Searcher {
 	 *            field to highlight
 	 * @param hits
 	 *            the hits
-	 * @param startAtWord where to start highlighting (first word returned)
-	 * @param endAtWord where to end highlighting (first word not returned)
+	 * @param startAtWord where to start highlighting (first word returned), or -1 for start of document
+	 * @param endAtWord where to end highlighting (first word not returned), or -1 for end of document
 	 * @return the highlighted content
 	 */
 	public String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord) {
-		// Get the field content
-		int endAtWordForCharPos = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
-		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWordForCharPos);
+		
+		// Convert word positions to char positions
+		int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
+		int[] startEndCharPos = startEndWordToCharPos(docId, fieldName, startAtWord, lastWord);
+		
+		// Get content by char positions
 		int startAtChar = startEndCharPos[0];
 		int endAtChar = startEndCharPos[1];
 		String content = getContentByCharPos(docId, fieldName, startAtChar, endAtChar);
 
-		if (hits == null && startAtWord == -1 && endAtWord == -1) {
-			// No hits to highlight, and we've fetched the whole document, so it is
-			// well-formed already. Just return as-is.
-			return content;
+		boolean wholeDocument = startAtWord == -1 && endAtWord == -1;
+		boolean mustFixUnbalancedTags = !wholeDocument;
+		
+		// Do we have anything to highlight, or do we have an XML fragment that needs balancing?
+		if (hits != null || mustFixUnbalancedTags) {
+			// Find the character offsets for the hits and highlight
+			List<HitCharSpan> hitspans = null;
+			if (hits != null) // if hits == null, we still want the highlighter to make it well-formed
+				hitspans = getCharacterOffsets(docId, fieldName, hits);
+			XmlHighlighter hl = new XmlHighlighter();
+			hl.setUnbalancedTagsStrategy(getDefaultUnbalancedTagsStrategy());
+			if (startAtChar == -1)
+				startAtChar = 0;
+			content = hl.highlight(content, hitspans, startAtChar);
 		}
-
-		// Find the character offsets for the hits and highlight
-		List<HitCharSpan> hitspans = null;
-		if (hits != null) // if hits == null, we still want the highlighter to make it well-formed
-			hitspans = getCharacterOffsets(docId, fieldName, hits);
-		XmlHighlighter hl = new XmlHighlighter();
-		hl.setUnbalancedTagsStrategy(getDefaultUnbalancedTagsStrategy());
-		if (startAtChar == -1)
-			startAtChar = 0;
-		return hl.highlight(content, hitspans, startAtChar);
+		return content;
 	}
 
 
@@ -1408,7 +1412,7 @@ public abstract class Searcher {
 	 * @param create if true, create a new content store even if one exists
 	 * @return the content store
 	 */
-	public ContentStore openContentStore(File indexXmlDir, boolean create) {
+	protected ContentStore openContentStore(File indexXmlDir, boolean create) {
 		return ContentStore.open(indexXmlDir, create);
 	}
 

@@ -153,7 +153,7 @@ public class TestContentStoreDirFixedBlock {
 		}
 
 		// Check that the status of ids in the store matches those in our storedKeys list
-		Set<Integer> keysFromStore = store.getDocIds();
+		Set<Integer> keysFromStore = store.idSet();
 		int liveDocs = 0;
 		for (Integer key: keysFromStore) {
 			boolean isDeleted = store.isDeleted(key);
