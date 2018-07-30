@@ -17,7 +17,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 
 public class FileUploadHandler {
 
-	private static final long MAX_UPLOAD_SIZE = FileUtils.ONE_GB;
+	private static final long MAX_UPLOAD_SIZE = FileUtils.ONE_GB * 2;
 
 	private static final int MAX_MEM_UPLOAD_SIZE = (int) FileUtils.ONE_MB * 5;
 
