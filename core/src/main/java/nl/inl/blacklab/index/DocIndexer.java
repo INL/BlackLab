@@ -333,8 +333,10 @@ public abstract class DocIndexer implements AutoCloseable {
         if (!ComplexFieldUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name + "' is discouraged (field/property names should be valid XML element names)");
 
-        if (name == null || value == null)
-            warn("Incomplete metadata field: " + name + "=" + value);
+        if (name == null || value == null) {
+            warn("Incomplete metadata field: " + name + "=" + value + " (skipping)");
+            return;
+        }
 
         IndexStructure struct = indexer.getSearcher().getIndexStructure();
         struct.registerMetadataField(name);
