@@ -1446,8 +1446,10 @@ public class HitsImpl extends Hits {
 			}
 			List<String> properties = new ArrayList<>();
 			properties.add(concPunctFI);
-			for (int k = 0; k < attrContext.length; k++) {
-				properties.add(attrName[k]);
+			if (attrContext != null) {
+    			for (int k = 0; k < attrContext.length; k++) {
+    				properties.add(attrName[k]);
+    			}
 			}
 			properties.add(concWordFI);
 			Kwic kwic = new Kwic(properties, tokens, contextHitStart, contextRightStart);

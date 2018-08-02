@@ -310,6 +310,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 					return name.matches("data\\d+.dat");
 				}
 			});
+            if (dataFiles == null)
+                throw new RuntimeException("Error finding old data files in content store dir: " + dir);
 			for (File f : dataFiles) {
 				f.delete();
 			}

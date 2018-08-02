@@ -351,6 +351,8 @@ public class FileUtil {
 	 */
 	public static File[] listFilesSorted(File dir) {
 		File[] files = dir.listFiles();
+		if (files == null)
+		    throw new RuntimeException("Error listing in directory: " + dir);
 		Arrays.sort(files, LIST_FILES_COMPARATOR);
 		return files;
 	}

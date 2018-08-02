@@ -614,6 +614,9 @@ class ForwardIndexImplV3 extends ForwardIndex {
 						}
 					}
 
+					if (whichChunk == null) {
+					    throw new RuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
+					}
 					whichChunk.position((int) (e.offset * SIZEOF_INT - chunkOffsetBytes));
 					ib = whichChunk.asIntBuffer();
 				}
