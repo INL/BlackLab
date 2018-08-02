@@ -302,22 +302,23 @@ public class ConfigReader extends YamlJsonReader {
 	 */
     public static List<File> getDefaultConfigDirs() {
         if (configDirs == null) {
-            configDirs = new ArrayList<>();
+            List<File> configDirList = new ArrayList<>();
             String strConfigDir = System.getenv("BLACKLAB_CONFIG_DIR");
             if (strConfigDir != null && strConfigDir.length() > 0) {
                 File configDir = new File(strConfigDir);
                 if (configDir.exists()) {
                     if (!configDir.canRead())
                         logger.warn("BLACKLAB_CONFIG_DIR points to a unreadable directory: " + strConfigDir);
-                    configDirs.add(configDir);
+                    configDirList.add(configDir);
                 } else {
                     logger.warn("BLACKLAB_CONFIG_DIR points to a non-existent directory: " + strConfigDir);
                 }
             }
-            configDirs.add(new File(System.getProperty("user.home"), ".blacklab"));
-            configDirs.add(new File("/etc/blacklab"));
-            configDirs.add(new File("/vol1/etc/blacklab")); // TODO: remove, INT-specific
-            configDirs.add(new File(System.getProperty("java.io.tmpdir")));
+            configDirList.add(new File(System.getProperty("user.home"), ".blacklab"));
+            configDirList.add(new File("/etc/blacklab"));
+            configDirList.add(new File("/vol1/etc/blacklab")); // TODO: remove, INT-specific
+            configDirList.add(new File(System.getProperty("java.io.tmpdir")));
+            configDirs = configDirList; // assign when fully initialized to avoid synchronization issues
         }
         return new ArrayList<>(configDirs);
     }
