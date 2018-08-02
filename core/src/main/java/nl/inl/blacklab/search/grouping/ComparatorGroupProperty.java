@@ -29,7 +29,7 @@ class ComparatorGroupProperty implements Comparator<Group> {
 
 	@Override
 	public int compare(Group first, Group second) {
-		return sortReverse ? -prop.compare(first, second) : prop.compare(first, second);
+		return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
 	}
 
 }

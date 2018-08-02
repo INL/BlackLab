@@ -74,6 +74,11 @@ class InlineObject implements Comparable<InlineObject> {
         }
         return offset - o.offset;
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof InlineObject ? compareTo((InlineObject) obj) == 0 : false;
+    }
 
     @Override
     public String toString() {

@@ -38,7 +38,7 @@ public class IndexListenerReportConsoleVerbose extends IndexListener {
 		if (elapsed == 0)
 			elapsed = 1;
 		long chars = getCharsProcessed();
-		System.out.printf("%04d  Chars done total: %d, %d CPS\n", elapsed, chars, chars / elapsed);
+		System.out.printf("%04d  Chars done total: %d, %d CPS%n", elapsed, chars, chars / elapsed);
 	}
 
 	private long getElapsed() {

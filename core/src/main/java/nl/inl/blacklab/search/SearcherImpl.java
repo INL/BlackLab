@@ -556,7 +556,8 @@ public class SearcherImpl extends Searcher implements Closeable {
 	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException,
 			CorruptIndexException, LockObtainFailedException {
 		if (!indexDir.exists() && create) {
-			indexDir.mkdir();
+			if (!indexDir.mkdir())
+			    throw new RuntimeException("Could not create dir: " + indexDir);
 		}
 		Path indexPath = indexDir.toPath();
 		while (Files.isSymbolicLink(indexPath)) {

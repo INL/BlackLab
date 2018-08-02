@@ -98,9 +98,9 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 	@Override
 	public int compare(DocResult a, DocResult b) {
 		for (DocProperty crit : criteria) {
-			int cmp = crit.compare(a, b);
+		    int cmp = reverse ? crit.compare(b, a) : crit.compare(a, b);
 			if (cmp != 0)
-				return reverse ? -cmp : cmp;
+				return cmp;
 		}
 		return 0;
 	}

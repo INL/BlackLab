@@ -22,7 +22,7 @@ public class HitPropValueString extends HitPropValue {
 
 	@Override
 	public boolean equals(Object obj) {
-		return value.equals(((HitPropValueString)obj).value);
+		return obj == null ? false : value.equals(((HitPropValueString)obj).value);
 	}
 
 	public static HitPropValue deserialize(String info) {

@@ -29,7 +29,7 @@ public class GroupPropertyIdentity extends GroupProperty {
 	@Override
 	public int compare(Group a, Group b) {
 		if (reverse)
-			return -a.getIdentity().compareTo(b.getIdentity());
+			return b.getIdentity().compareTo(a.getIdentity());
 		return a.getIdentity().compareTo(b.getIdentity());
 	}
 

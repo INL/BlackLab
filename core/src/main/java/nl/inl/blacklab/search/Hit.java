@@ -23,7 +23,7 @@ package nl.inl.blacklab.search;
  * This class has public members for the sake of efficiency; this makes a non-trivial difference
  * when iterating over hundreds of thousands of hits.
  */
-public class Hit implements Comparable<Hit>, Cloneable {
+public class Hit implements Comparable<Hit> {
 
 	@Override
 	public boolean equals(Object with) {
@@ -85,12 +85,6 @@ public class Hit implements Comparable<Hit>, Cloneable {
 	@Override
 	public int hashCode() {
 		return (doc * 17 + start) * 31 + end;
-	}
-
-	@Override
-	protected Object clone() {
-		Hit hit = new Hit(doc, start, end);
-		return hit;
 	}
 
 }

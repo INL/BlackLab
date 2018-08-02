@@ -103,7 +103,7 @@ public class TarGzipReader {
 	 * @param zipStream the .zip input stream to decompress. The stream will be closed after processing.
 	 * @param fileHandler the handler to call for each regular file
 	 */
-	public static void ProcessZip(String fileName, InputStream zipStream, FileHandler fileHandler) {
+	public static void processZip(String fileName, InputStream zipStream, FileHandler fileHandler) {
 	    try (ZipInputStream s = new ZipInputStream(zipStream)) {
             for (ZipEntry e = s.getNextEntry(); e != null; e = s.getNextEntry()) {
                 if (e.isDirectory())

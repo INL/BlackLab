@@ -165,7 +165,8 @@ public abstract class ForwardIndex {
 		if (!dir.exists()) {
 			if (!create)
 				throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
-			dir.mkdir();
+			if (!dir.mkdir())
+			    throw new RuntimeException("Could not create dir: " + dir);
 		}
 
 		// Version check

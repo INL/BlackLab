@@ -74,4 +74,9 @@ class TocEntry implements Comparable<TocEntry> {
 	public int compareTo(TocEntry o) {
 		return (int) (offset - o.offset);
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+	    return obj instanceof TocEntry ? compareTo((TocEntry) obj) == 0 : false;
+	}
 }

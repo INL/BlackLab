@@ -299,15 +299,21 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	 */
 	public ContentStoreDirFixedBlock(File dir, boolean create) {
 		this.dir = dir;
-		if (!dir.exists())
-			dir.mkdir();
+		if (!dir.exists()) {
+			if (!dir.mkdir())
+			    throw new RuntimeException("Could not create dir: " + dir);
+		}
 		tocFile = new File(dir, TOC_FILE_NAME);
-		contentsFile = new File(dir, CONTENTS_FILE_NAME);
+        contentsFile = new File(dir, CONTENTS_FILE_NAME);
 		if (create && tocFile.exists()) {
 			// Delete the ContentStore files
-			tocFile.delete();
-			new File(dir, VERSION_FILE_NAME).delete();
-			new File(dir, CONTENTS_FILE_NAME).delete();
+			if (!tocFile.delete())
+			    throw new RuntimeException("Could not delete TOC file: " + tocFile);
+			File versionFile = new File(dir, VERSION_FILE_NAME);
+            if (versionFile.exists() && !versionFile.delete())
+                throw new RuntimeException("Could not delete version file: " + tocFile);
+			if (contentsFile.exists() && !contentsFile.delete())
+                throw new RuntimeException("Could not delete contents file: " + contentsFile);
 
 			// Also delete old content store format files if present
 			File[] dataFiles = dir.listFiles(new FilenameFilter() {
@@ -319,7 +325,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			if (dataFiles == null)
 			    throw new RuntimeException("Error finding old data files in content store dir: " + dir);
 			for (File f : dataFiles) {
-				f.delete();
+				if (!f.delete())
+				    throw new RuntimeException("Could not delete data file: " + f);
 			}
 		}
 		toc = IntObjectMaps.mutable.empty();  //Maps.mutable.empty();

@@ -60,21 +60,6 @@ public class TextPatternAndNot extends TextPattern {
 	}
 
 	@Override
-	public Object clone() {
-		try {
-			TextPatternAndNot clone = (TextPatternAndNot) super.clone();
-
-			// copy list of children so we can modify it independently
-			clone.include = new ArrayList<>(include);
-			clone.exclude = new ArrayList<>(exclude);
-
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new UnsupportedOperationException("Clone not supported: " + e.getMessage());
-		}
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof TextPatternAndNot) {
 			return include.equals(((TextPatternAndNot) obj).include) &&

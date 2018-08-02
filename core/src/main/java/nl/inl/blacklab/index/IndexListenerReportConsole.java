@@ -79,7 +79,7 @@ public class IndexListenerReportConsole extends IndexListener {
 			curTokensSpeed = curTokensSpeed * 0.7 + lastTokensSpeed * 0.3;
 
 			System.out
-					.printf("%d docs done (%d MB, %dk tokens). Average speed %.1fk tokens/s (%.1f MB/s), currently %.1fk tokens/s (%.1f MB/s)\n",
+					.printf("%d docs done (%d MB, %dk tokens). Average speed %.1fk tokens/s (%.1f MB/s), currently %.1fk tokens/s (%.1f MB/s)%n",
 							getDocsDone(), (int) mbDone, (int) kTokensDone, overallTokenSpeed,
 							overallSpeed, curTokensSpeed, curSpeed);
 

@@ -297,13 +297,18 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 	 */
 	public ContentStoreDirUtf8(File dir, boolean create) {
 		this.dir = dir;
-		if (!dir.exists())
-			dir.mkdir();
+		if (!dir.exists()) {
+			if (!dir.mkdir())
+			    throw new RuntimeException("Could not create dir: " + dir);
+		}
 		tocFile = new File(dir, "toc.dat");
 		if (create && tocFile.exists()) {
 			// Delete the ContentStore files
-			tocFile.delete();
-			new File(dir, "version.dat").delete();
+			if (!tocFile.delete())
+                throw new RuntimeException("Could not delete file: " + tocFile);
+			File versionFile = new File(dir, "version.dat");
+            if (versionFile.exists() && !versionFile.delete())
+                throw new RuntimeException("Could not delete file: " + versionFile);
 			File[] dataFiles = dir.listFiles(new FilenameFilter() {
 				@Override
 				public boolean accept(File dir_, String name) {
@@ -313,7 +318,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             if (dataFiles == null)
                 throw new RuntimeException("Error finding old data files in content store dir: " + dir);
 			for (File f : dataFiles) {
-				f.delete();
+				if (!f.delete())
+				    throw new RuntimeException("Could not delete file: " + f);
 			}
 		}
 		toc = Maps.mutable.empty();

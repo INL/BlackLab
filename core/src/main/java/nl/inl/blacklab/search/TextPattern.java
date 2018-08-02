@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * abstract layer to describe the pattern we're interested in, which can then be translated into,
  * for example, a SpanQuery object or a String, depending on our needs.
  */
-public abstract class TextPattern implements Cloneable {
+public abstract class TextPattern {
 
 	public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 

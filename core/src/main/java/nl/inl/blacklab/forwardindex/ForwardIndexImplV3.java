@@ -154,7 +154,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		if (!dir.exists()) {
 			if (!create)
 				throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
-			dir.mkdir();
+			if (!dir.mkdir())
+			    throw new RuntimeException("Could not create dir: " + dir);
 		}
 
 		this.indexMode = indexMode;
@@ -183,7 +184,8 @@ class ForwardIndexImplV3 extends ForwardIndex {
 					throw new IllegalArgumentException("No TOC found, and not in index mode!");
 				}
 				terms = Terms.open(indexMode, collators, null, true);
-				tokensFile.createNewFile();
+				if (!tokensFile.createNewFile())
+				    throw new RuntimeException("Could not create file: " + tokensFile);
 				tokensFileChunks = null;
 				tocModified = true;
 				terms.setBlockBasedFile(useBlockBasedTermsFile);
@@ -286,8 +288,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		termsFile.delete();
-		tocFile.delete();
+		if (termsFile.exists() && !termsFile.delete())
+		    throw new RuntimeException("Could not delete file: " + termsFile);
+		if (tocFile.exists() && !tocFile.delete())
+		    throw new RuntimeException("Could not delete file: " + tocFile);
 		toc.clear();
 		deletedTocEntries.clear();
 		tokenFileEndPosition = 0;

@@ -26,7 +26,7 @@ public class HitPropValueInt extends HitPropValue {
 
 	@Override
 	public boolean equals(Object obj) {
-		return value == ((HitPropValueInt)obj).value;
+		return obj == null ? false : value == ((HitPropValueInt)obj).value;
 	}
 
 	public static HitPropValue deserialize(String info) {

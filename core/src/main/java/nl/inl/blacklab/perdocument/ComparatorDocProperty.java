@@ -29,6 +29,6 @@ public class ComparatorDocProperty implements Comparator<DocResult> {
 
 	@Override
 	public int compare(DocResult first, DocResult second) {
-		return sortReverse ? -prop.compare(first, second) : prop.compare(first, second);
+		return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
 	}
 }

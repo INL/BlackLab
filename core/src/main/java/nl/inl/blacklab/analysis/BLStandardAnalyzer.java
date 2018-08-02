@@ -21,8 +21,6 @@ package nl.inl.blacklab.analysis;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collections;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -82,32 +80,5 @@ public class BLStandardAnalyzer extends Analyzer {
 				System.out.println(new String(ta.buffer(), 0, ta.length()));
 			}
 		}
-	}
-
-	/* CODE JESSE: */
-	static Pattern prePunctuationPattern = Pattern.compile("(^|\\s)\\p{P}+");
-	static Pattern postPunctuationPattern = Pattern.compile("\\p{P}+($|\\s)");
-
-	public String prePunctuation = "";
-	public String postPunctuation = "";
-	public String trimmedToken = "";
-
-	public void tokenize(String t) {
-		Matcher m1 = prePunctuationPattern.matcher(t);
-		Matcher m2 = postPunctuationPattern.matcher(t);
-
-		int s = 0;
-		int e = t.length();
-
-		if (m1.find())
-			s = m1.end();
-		if (m2.find())
-			e = m2.start();
-
-		if (e < s)
-			e = s;
-		trimmedToken = t.substring(s, e);
-		prePunctuation = t.substring(0, s);
-		postPunctuation = t.substring(e, t.length());
 	}
 }

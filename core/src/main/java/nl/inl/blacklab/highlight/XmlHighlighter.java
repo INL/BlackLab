@@ -116,6 +116,11 @@ public class XmlHighlighter {
 			}
 			return a - b;
 		}
+		
+		@Override
+		public boolean equals(Object obj) {
+		    return obj instanceof TagLocation ? compareTo((TagLocation) obj) == 0 : false;
+		}
 
 		@Override
 		public String toString() {

@@ -131,9 +131,9 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 	@Override
 	public int compare(Object i, Object j) {
 		for (HitProperty crit : criteria) {
-			int cmp = crit.compare(i, j);
+			int cmp = reverse ? crit.compare(j, i) : crit.compare(i, j);
 			if (cmp != 0)
-				return reverse ? -cmp : cmp;
+				return cmp;
 		}
 		return 0;
 	}

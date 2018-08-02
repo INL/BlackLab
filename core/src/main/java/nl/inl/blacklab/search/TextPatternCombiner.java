@@ -43,20 +43,6 @@ public abstract class TextPatternCombiner extends TextPattern {
 		clauses.add(clause);
 	}
 
-	@Override
-	public Object clone() {
-		try {
-			TextPatternCombiner clone = (TextPatternCombiner) super.clone();
-
-			// copy list of children so we can modify it independently
-			clone.clauses = new ArrayList<>(clauses);
-
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new UnsupportedOperationException("Clone not supported: " + e.getMessage());
-		}
-	}
-
 	public void replaceClause(TextPattern oldClause, TextPattern... newClauses) {
 		int i = clauses.indexOf(oldClause);
 		clauses.remove(i);

@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.ThreadPriority;
 
-public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prioritizable {
+public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
 
 	/** In context arrays, how many bookkeeping ints are stored at the start? */
 	public final static int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;

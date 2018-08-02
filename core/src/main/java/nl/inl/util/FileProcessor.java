@@ -299,7 +299,7 @@ public class FileProcessor implements AutoCloseable {
         if (isProcessArchives() && path.endsWith(".tar.gz") || path.endsWith(".tgz")) {
             TarGzipReader.processTarGzip(path, is, handler);
         } else if (isProcessArchives() && path.endsWith(".zip")) {
-            TarGzipReader.ProcessZip(path, is, handler);
+            TarGzipReader.processZip(path, is, handler);
         } else if (path.endsWith(".gz")) {
             TarGzipReader.processGzip(path, is, handler);
         } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {

@@ -65,7 +65,7 @@ public class StringUtil {
 	private static Locale englishLocale = new Locale("en", "GB");
 
 	/** The default collator: Dutch, case-insensitive */
-	protected static Collator dutchInsensitiveCollator = null;
+	private static Collator dutchInsensitiveCollator = null;
 
 	private static Collator englishInsensitiveCollator;
 

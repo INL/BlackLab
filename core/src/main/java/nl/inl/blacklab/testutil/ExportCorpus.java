@@ -83,8 +83,10 @@ public class ExportCorpus {
 					}
 					System.out.println(file);
 					File dir = file.getAbsoluteFile().getParentFile();
-					if (!dir.exists())
-						dir.mkdirs(); // create any subdirectories required
+					if (!dir.exists()) {
+						if (!dir.mkdirs()) // create any subdirectories required
+						    throw new RuntimeException("Could not create dir(s): " + dir);
+					}
 					try (PrintWriter pw = FileUtil.openForWriting(file)) {
 						pw.write(xml);
 					}

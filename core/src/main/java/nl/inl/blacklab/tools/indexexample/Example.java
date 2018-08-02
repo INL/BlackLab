@@ -73,7 +73,8 @@ public class Example {
 			FileUtil.processTree(indexDir, new FileTask() {
 				@Override
 				public void process(File f) {
-					f.delete();
+					if (!f.delete())
+					    throw new RuntimeException("Could not delete file: " + f);
 				}
 			});
 		}
@@ -182,7 +183,7 @@ public class Example {
 			String match = concParts[1];
 			String right = concParts[2];
 
-			System.out.printf("[%05d:%06d] %45s[%s]%s\n", hit.doc, hit.start, left, match, right);
+			System.out.printf("[%05d:%06d] %45s[%s]%s%n", hit.doc, hit.start, left, match, right);
 		}
 	}
 

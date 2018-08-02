@@ -266,7 +266,8 @@ public class IndexStructure {
         File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME, Arrays.asList("json", "yaml", "yml"));
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
-            metadataFile.delete();
+            if (metadataFile.exists() && !metadataFile.delete())
+                throw new RuntimeException("Could not delete file: " + metadataFile);
         }
 
         // If none found, or creating new index: write a .yaml file.
@@ -326,7 +327,8 @@ public class IndexStructure {
         File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME, Arrays.asList("json", "yaml", "yml"));
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
-            metadataFile.delete();
+            if (!metadataFile.delete())
+                throw new RuntimeException("Could not delete file: " + metadataFile);
         }
 
         // If none found, or creating new index: metadata file should be same format as template.

@@ -108,7 +108,7 @@ public class DownloadCache {
         }
 
         public void delete() {
-            if (!file.delete())
+            if (file.exists() && !file.delete())
                 throw new RuntimeException("Unable to delete downloaded file: " + file);
         }
 
@@ -218,7 +218,8 @@ public class DownloadCache {
             downloadTempDir = new File(System.getProperty("java.io.tmpdir"), "bls-download-cache");
         }
         if (!downloadTempDir.exists()) {
-            downloadTempDir.mkdir();
+            if (!downloadTempDir.mkdir())
+                throw new RuntimeException("Could not create dir: " + downloadTempDir);
             downloadTempDir.deleteOnExit();
         }
         return downloadTempDir;
