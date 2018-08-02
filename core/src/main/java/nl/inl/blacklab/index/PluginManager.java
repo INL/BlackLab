@@ -65,12 +65,12 @@ public class PluginManager {
     private static Map<String, PluginData<ConvertPlugin>> convertPlugins = new HashMap<>();
     private static Map<String, PluginData<TagPlugin>> tagPlugins = new HashMap<>();
 
-    /*
-     * Nothing to do; initialization happens when the blacklab config is loaded.
-     * The blacklab Config is automatically loaded when the first Searcher is opened, or earlier by a user library.
-     * So plugin formats should always be visible by the time they're needed.
-     * (except when trying to query available formats before opening a searcher or loading a config...this is an edge case)
-     */
+    // Nothing to do; initialization happens when the blacklab config is loaded.
+    // The blacklab Config is automatically loaded when the first Searcher is
+    // opened, or earlier by a user library.
+    // So plugin formats should always be visible by the time they're needed.
+    // (except when trying to query available formats before opening a searcher or
+    // loading a config...this is an edge case)
     private PluginManager() {
     }
 
@@ -161,7 +161,8 @@ public class PluginManager {
     public static Optional<ConvertPlugin> getConverter(String convertPluginId) throws PluginException {
         if (!isInitialized)
             throw new UnsupportedOperationException(
-                    "Plugin system is not initialized, place a top-level key \"plugins\" with per-plugin configuration in your blacklab config to use plugins.");
+                    "Plugin system is not initialized, place a top-level key \"plugins\" with " +
+                            "per-plugin configuration in your blacklab config to use plugins.");
 
         Optional<PluginData<ConvertPlugin>> data = Optional.ofNullable(convertPlugins.get(convertPluginId));
         if (data.isPresent())
@@ -173,7 +174,8 @@ public class PluginManager {
     public static Optional<TagPlugin> getTagger(String tagPluginId) throws PluginException {
         if (!isInitialized)
             throw new UnsupportedOperationException(
-                    "Plugin system is not initialized, place a top-level key \"plugins\" with per-plugin configuration in your blacklab config to use plugins.");
+                    "Plugin system is not initialized, place a top-level key \"plugins\" with " +
+                            "per-plugin configuration in your blacklab config to use plugins.");
 
         Optional<PluginData<TagPlugin>> data = Optional.ofNullable(tagPlugins.get(tagPluginId));
         if (data.isPresent())

@@ -332,10 +332,6 @@ public class ConfigInputFormat {
         return getAnnotatedField(name, false);
     }
 
-    public ConfigAnnotatedField getOrCreateAnnotatedField(String name) {
-        return getAnnotatedField(name, true);
-    }
-
     private ConfigAnnotatedField getAnnotatedField(String name, boolean createIfNotFound) {
         ConfigAnnotatedField f = annotatedFields.get(name);
         if (f == null && createIfNotFound) {
@@ -343,6 +339,10 @@ public class ConfigInputFormat {
             annotatedFields.put(name, f);
         }
         return f;
+    }
+
+    public ConfigAnnotatedField getOrCreateAnnotatedField(String name) {
+        return getAnnotatedField(name, true);
     }
 
     public Map<String, ConfigLinkedDocument> getLinkedDocuments() {
@@ -353,10 +353,6 @@ public class ConfigInputFormat {
         return getLinkedDocument(name, false);
     }
 
-    public ConfigLinkedDocument getOrCreateLinkedDocument(String name) {
-        return getLinkedDocument(name, true);
-    }
-
     private ConfigLinkedDocument getLinkedDocument(String name, boolean createIfNotFound) {
         ConfigLinkedDocument ld = linkedDocuments.get(name);
         if (ld == null && createIfNotFound) {
@@ -364,6 +360,10 @@ public class ConfigInputFormat {
             linkedDocuments.put(name, ld);
         }
         return ld;
+    }
+
+    public ConfigLinkedDocument getOrCreateLinkedDocument(String name) {
+        return getLinkedDocument(name, true);
     }
 
     public Map<String, String> getIndexFieldAs() {

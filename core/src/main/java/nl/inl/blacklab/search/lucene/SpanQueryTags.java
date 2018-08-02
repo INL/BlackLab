@@ -26,6 +26,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
+
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.StringUtil;
 
@@ -33,7 +34,7 @@ import nl.inl.util.StringUtil;
  *
  * Returns spans corresponding to a certain element (tag) type.
  *
- * For example, SpanQueryTags("ne") will give us spans for all the <ne> elements
+ * For example, SpanQueryTags("ne") will give us spans for all the {@code <ne>} elements
  * in the document.
  */
 public class SpanQueryTags extends BLSpanQuery {

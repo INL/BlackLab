@@ -1126,7 +1126,9 @@ public class HitsImpl extends Hits {
         }
 
         throw new UnsupportedOperationException(
-                "Concordance type is set to CONTENT_STORE, but you can only make KWICs from the forward index. NOTE: if your index has no 'punct' property, concordance type will default to CONTENT_STORE instead of FORWARD_INDEX.");
+                "Concordance type is set to CONTENT_STORE, but you can only make KWICs from the forward index. " +
+                        "NOTE: if your index has no 'punct' property, concordance type will default to CONTENT_STORE " +
+                        "instead of FORWARD_INDEX.");
     }
 
     /**

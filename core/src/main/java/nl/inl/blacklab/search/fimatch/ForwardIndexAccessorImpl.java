@@ -139,7 +139,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             return fis.get(0).getDocLength(getFiid(0, docId)) - 1;
         }
 
-        int[] starts = { 0 }, ends = { 0 };
+        int[] starts = { 0 };
+        int[] ends = { 0 };
 
         @Override
         public int[] getChunk(int propIndex, int docId, int start, int end) {

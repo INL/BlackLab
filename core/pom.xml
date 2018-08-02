@@ -632,8 +632,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-pmd-plugin</artifactId>
-				<version>3.5</version>
+				<version>3.10.0</version>
 				<configuration>
+                    <rulesets>
+                    	<!-- TODO: These appear to be ignored..? -->
+                        <ruleset>pmd-rules.xml</ruleset>
+                    </rulesets>
 					<linkXref>true</linkXref>
 					<sourceEncoding>utf-8</sourceEncoding>
 					<minimumTokens>100</minimumTokens>

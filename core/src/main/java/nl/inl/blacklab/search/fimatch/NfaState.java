@@ -177,10 +177,6 @@ public abstract class NfaState {
         return "NFA:" + dump(stateNrs);
     }
 
-    public static String dump(NfaState state, Map<NfaState, Integer> stateNrs) {
-        return state == null ? "DANGLING" : state.dump(stateNrs);
-    }
-
     /**
      * Visit each node and replace dangling arrows (nulls) with the match state.
      *
@@ -201,6 +197,10 @@ public abstract class NfaState {
      *            finish() in your implementations, not finishInternal().
      */
     protected abstract void finishInternal(Set<NfaState> visited);
+
+    public static String dump(NfaState state, Map<NfaState, Integer> stateNrs) {
+        return state == null ? "DANGLING" : state.dump(stateNrs);
+    }
 
     public String dump(Map<NfaState, Integer> stateNrs) {
         Integer n = stateNrs.get(this);

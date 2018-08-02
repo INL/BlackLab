@@ -62,7 +62,7 @@ public class UnicodeStream extends InputStream {
      * @throws IOException If an I/O error occurs.
      */
     public UnicodeStream(InputStream in, Charset defaultEncoding) throws IOException {
-        byte bom[] = new byte[BOM_SIZE];
+        byte[] bom = new byte[BOM_SIZE];
         int unread;
         PushbackInputStream pushbackStream = new PushbackInputStream(in, BOM_SIZE);
         int n = pushbackStream.read(bom, 0, bom.length);
@@ -119,13 +119,13 @@ public class UnicodeStream extends InputStream {
     }
 
     @Override
-    public void close() throws IOException {
-        stream.close();
+    public int read() throws IOException {
+        return stream.read();
     }
 
     @Override
-    public int read() throws IOException {
-        return stream.read();
+    public void close() throws IOException {
+        stream.close();
     }
 
     @Override

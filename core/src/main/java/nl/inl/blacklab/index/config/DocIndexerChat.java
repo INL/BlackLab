@@ -925,7 +925,8 @@ public class DocIndexerChat extends DocIndexerConfig {
 ////        String hexformat = "{0:#06X}";
 ////        // hexformat = "0x%0.4X"
 ////        charmapfile = open(charmapfilename, "w", encoding = "utf8");
-////        charmapwriter = csv.writer(charmapfile, delimiter = tab, quotechar = myquotechar, quoting = csv.QUOTE_MINIMAL, lineterminator = "\n");
+////        charmapwriter = csv.writer(charmapfile, delimiter = tab, quotechar = myquotechar, 
+    // quoting = csv.QUOTE_MINIMAL, lineterminator = "\n");
 ////        for (el in charmap) {
 ////            ordel = ord(el)
 ////            therow = [el, ordel , hexformat.format(ordel), charmap[el]]
@@ -1033,7 +1034,9 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     // JN fixed(?)
     private final Pattern CHECK_PATTERN = Pattern.compile(
-            "[\\]\\[\\\\(\\\\)&%@/ = ><_0^~\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB123456789\u00B7\u22A5\u00B7\u0001]");
+            "[\\]\\[\\\\(\\\\)&%@/ = ><_0^~\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E" +
+                    "\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9" +
+                    "\u2581\u2594\u263A\u222C\u03AB123456789\u00B7\u22A5\u00B7\u0001]");
 
     // + should not occur except as compund marker black+board
     private final Pattern PLUS_PATTERN = Pattern.compile("\\W\\+|\\+\\W");
@@ -1080,7 +1083,9 @@ public class DocIndexerChat extends DocIndexerConfig {
     // NOTE JN: used https://r12a.github.io/apps/conversion/ to convert unicode
     // characters to escape sequences
     private static final Pattern CHAT_CA_SYMS = Pattern.compile(
-            "[\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB\u222E\u00A7\u223E\u21BB\u1F29\u201E\u2021\u0323\u0323\u02B0\u0304\u02940]");
+            "[\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309" +
+                    "\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB\u222E\u00A7" +
+                    "\u223E\u21BB\u1F29\u201E\u2021\u0323\u0323\u02B0\u0304\u02940]");
     private static final Pattern TIME_ALIGN = Pattern.compile("\u0015[0123456789_ ]+\u0015");
 
     private String cleanText(String str) {

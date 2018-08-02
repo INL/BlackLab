@@ -69,14 +69,44 @@ public class Kwic {
         return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.properties.size()));
     }
 
+    /**
+     * Get the left context of a specific property
+     * 
+     * @param property the property to get the context for
+     * @return the context
+     */
+    public List<String> getLeft(String property) {
+        return getSinglePropertyContext(property, 0, hitStart);
+    }
+
     public List<String> getMatch() {
         return Collections.unmodifiableList(
                 fragment.tokens.subList(hitStart * fragment.properties.size(), hitEnd * fragment.properties.size()));
     }
 
+    /**
+     * Get the match context of a specific property
+     * 
+     * @param property the property to get the context for
+     * @return the context
+     */
+    public List<String> getMatch(String property) {
+        return getSinglePropertyContext(property, hitStart, hitEnd);
+    }
+
     public List<String> getRight() {
         return Collections
                 .unmodifiableList(fragment.tokens.subList(hitEnd * fragment.properties.size(), fragment.tokens.size()));
+    }
+
+    /**
+     * Get the right context of a specific property
+     * 
+     * @param property the property to get the context for
+     * @return the context
+     */
+    public List<String> getRight(String property) {
+        return getSinglePropertyContext(property, hitEnd, fragment.tokens.size() / fragment.properties.size());
     }
 
     /**
@@ -127,36 +157,6 @@ public class Kwic {
                 return size;
             }
         };
-    }
-
-    /**
-     * Get the left context of a specific property
-     * 
-     * @param property the property to get the context for
-     * @return the context
-     */
-    public List<String> getLeft(String property) {
-        return getSinglePropertyContext(property, 0, hitStart);
-    }
-
-    /**
-     * Get the match context of a specific property
-     * 
-     * @param property the property to get the context for
-     * @return the context
-     */
-    public List<String> getMatch(String property) {
-        return getSinglePropertyContext(property, hitStart, hitEnd);
-    }
-
-    /**
-     * Get the right context of a specific property
-     * 
-     * @param property the property to get the context for
-     * @return the context
-     */
-    public List<String> getRight(String property) {
-        return getSinglePropertyContext(property, hitEnd, fragment.tokens.size() / fragment.properties.size());
     }
 
     /**

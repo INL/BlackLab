@@ -407,21 +407,6 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
     }
 
     /**
-     * Return the KWIC for the specified hit.
-     *
-     * The first call to this method will fetch the KWICs for all the hits in this
-     * Hits object. So make sure to select an appropriate HitsWindow first: don't
-     * call this method on a Hits set with >1M hits unless you really want to
-     * display all of them in one go.
-     *
-     * @param h the hit
-     * @return KWIC for this hit
-     */
-    public Kwic getKwic(Hit h) {
-        return getKwic(h, settings().contextSize());
-    }
-
-    /**
      * Retrieve a single concordance. Only use if you need a larger snippet around a
      * single hit. If you need concordances for a set of hits, just instantiate a
      * HitsWindow and call getConcordance() on that; it will fetch all concordances
@@ -433,19 +418,6 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @return the concordance
      */
     public abstract Concordance getConcordance(String fieldName, Hit hit, int contextSize);
-
-    /**
-     * Retrieve a single KWIC (KeyWord In Context). Only use if you need a larger
-     * snippet around a single hit. If you need KWICs for a set of hits, just
-     * instantiate a HitsWindow and call getKwic() on that; it will fetch all KWICs
-     * in the window in a batch, which is more efficient.
-     *
-     * @param fieldName field to use for building the KWIC
-     * @param hit the hit for which we want a KWIC
-     * @param contextSize the desired number of words around the hit
-     * @return the KWIC
-     */
-    public abstract Kwic getKwic(String fieldName, Hit hit, int contextSize);
 
     /**
      * Get a concordance with a custom context size.
@@ -463,6 +435,34 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @return concordance for this hit
      */
     public abstract Concordance getConcordance(Hit h, int contextSize);
+
+    /**
+     * Return the KWIC for the specified hit.
+     *
+     * The first call to this method will fetch the KWICs for all the hits in this
+     * Hits object. So make sure to select an appropriate HitsWindow first: don't
+     * call this method on a Hits set with >1M hits unless you really want to
+     * display all of them in one go.
+     *
+     * @param h the hit
+     * @return KWIC for this hit
+     */
+    public Kwic getKwic(Hit h) {
+        return getKwic(h, settings().contextSize());
+    }
+
+    /**
+     * Retrieve a single KWIC (KeyWord In Context). Only use if you need a larger
+     * snippet around a single hit. If you need KWICs for a set of hits, just
+     * instantiate a HitsWindow and call getKwic() on that; it will fetch all KWICs
+     * in the window in a batch, which is more efficient.
+     *
+     * @param fieldName field to use for building the KWIC
+     * @param hit the hit for which we want a KWIC
+     * @param contextSize the desired number of words around the hit
+     * @return the KWIC
+     */
+    public abstract Kwic getKwic(String fieldName, Hit hit, int contextSize);
 
     /**
      * Get a KWIC with a custom context size.

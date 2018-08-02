@@ -134,6 +134,11 @@ public class VersionFile {
         return file.exists();
     }
 
+    public static boolean exists(File indexDir) {
+        VersionFile vf = new VersionFile(indexDir);
+        return vf.exists();
+    }
+
     public void read() {
         try {
             if (!file.exists())
@@ -169,11 +174,6 @@ public class VersionFile {
             return "no version file found";
         vf.read();
         return vf.toString();
-    }
-
-    public static boolean exists(File indexDir) {
-        VersionFile vf = new VersionFile(indexDir);
-        return vf.exists();
     }
 
 }

@@ -95,7 +95,8 @@ public class CompleteQuery {
         if ((a == null) != (b == null) ||
                 (d == null) != (e == null)) {
             throw new UnsupportedOperationException(
-                    "or can only be used to combine contents clauses or metadata clauses; you can't combine the two with eachother with or");
+                    "or can only be used to combine contents clauses or metadata clauses; " +
+                            "you can't combine the two with eachother with or");
         }
 
         if (a != null && b != null)

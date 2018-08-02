@@ -1168,11 +1168,14 @@ public class IndexStructure {
             }
             if (!usingSpecialCharsAsSeparators && !usingCharacterCodesAsSeparators) {
                 throw new RuntimeException(
-                        "Could not detect index naming scheme. If your index was created with an old version of BlackLab, it may use the old naming scheme and cannot be opened with this version. Please re-index your data, or use a BlackLab version from before August 2014.");
+                        "Could not detect index naming scheme. If your index was created with an old version of " +
+                                "BlackLab, it may use the old naming scheme and cannot be opened with this version. " +
+                                "Please re-index your data, or use a BlackLab version from before August 2014.");
             }
             if (usingSpecialCharsAsSeparators && usingCharacterCodesAsSeparators) {
                 throw new RuntimeException(
-                        "Your index seems to use two different naming schemes. Avoid using '%', '@', '#' or '_' in (metadata) field names and re-index your data.");
+                        "Your index seems to use two different naming schemes. Avoid using '%', '@', '#' or '_' in " +
+                                "(metadata) field names and re-index your data.");
             }
             ComplexFieldUtil.setFieldNameSeparators(usingCharacterCodesAsSeparators);
         }

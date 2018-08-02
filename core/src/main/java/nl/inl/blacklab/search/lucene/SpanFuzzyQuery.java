@@ -43,7 +43,7 @@ import org.apache.lucene.search.TermQuery;
 /**
  * A fuzzy (approximate) query with spans.
  *
- * @author Karl Wettin <kalle@snigel.net>
+ * @author Karl Wettin &lt;kalle@snigel.net&gt;
  */
 public class SpanFuzzyQuery extends BLSpanQuery {
     public final static int defaultMaxEdits = 2;

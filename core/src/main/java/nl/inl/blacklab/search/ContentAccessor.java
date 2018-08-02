@@ -47,6 +47,14 @@ public class ContentAccessor {
         this.fieldName = fieldName;
     }
 
+    private int getContentId(Document d) {
+        String contentIdStr = d.get(contentIdField);
+        if (contentIdStr == null)
+            throw new RuntimeException("Lucene document has no content id: " + d);
+        int contentId = Integer.parseInt(contentIdStr);
+        return contentId;
+    }
+
     /**
      * Get substrings from a document.
      *
@@ -61,14 +69,6 @@ public class ContentAccessor {
     public String[] getSubstringsFromDocument(Document d, int[] start, int[] end) {
         int contentId = getContentId(d);
         return getSubstringsFromDocument(contentId, start, end);
-    }
-
-    private int getContentId(Document d) {
-        String contentIdStr = d.get(contentIdField);
-        if (contentIdStr == null)
-            throw new RuntimeException("Lucene document has no content id: " + d);
-        int contentId = Integer.parseInt(contentIdStr);
-        return contentId;
     }
 
     /**

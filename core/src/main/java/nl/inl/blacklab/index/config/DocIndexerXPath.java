@@ -80,6 +80,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     @Override
+    public void close() throws Exception {
+        // NOP, we already closed our input after we read it
+    }
+
+    @Override
     public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
         try {
             setDocument(FileUtils.readFileToByteArray(file), defaultCharset);
@@ -108,11 +113,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void close() throws Exception {
-        // NOP, we already closed our input after we read it
     }
 
     @Override

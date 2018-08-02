@@ -87,7 +87,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
     private boolean hasGlueTags;
 
     /**
-     * After an inline tag such as <s>, may there be separator character(s) like on
+     * After an inline tag such as {@code <s>}, may there be separator character(s) like on
      * the non-tag lines? By default, this is not allowed, but this option can be
      * turned on in the configuration file.
      */

@@ -75,11 +75,11 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         if (this.input == null)
             throw new IllegalStateException("A document must be set before calling index()");
 
-        /*
-         * If the converter can't handle the file,
-         * we assume that the file is already in the output format, and we attempt to index it directly.
-         * This isn't entirely correct when the file is in a format neither the converter nor the indexer can handle, but that is technically user error.
-         */
+        // If the converter can't handle the file, we assume that the file is already in
+        // the output format, and we attempt to index it directly.
+        // This isn't entirely correct when the file is in a format neither the
+        // converter nor the indexer can handle, but that is technically user error.
+        //
         // ByteArrayOutputStream can conveniently be read and reused even after close()
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         if (config.getConvertPluginId() != null) {

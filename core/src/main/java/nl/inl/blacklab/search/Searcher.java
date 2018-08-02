@@ -764,6 +764,70 @@ public abstract class Searcher {
     public abstract void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
             boolean fillInDefaultsIfNotFound);
 
+    /**
+     * Get character positions from a list of hits.
+     *
+     * @param doc the document from which to find character positions
+     * @param fieldName the field from which to find character positions
+     * @param hits the hits for which we wish to find character positions
+     * @return a list of HitSpan objects containing the character positions for the
+     *         hits.
+     */
+    private List<HitCharSpan> getCharacterOffsets(int doc, String fieldName, Hits hits) {
+        int[] starts = new int[hits.size()];
+        int[] ends = new int[hits.size()];
+        Iterator<Hit> hitsIt = hits.iterator();
+        for (int i = 0; i < starts.length; i++) {
+            Hit hit = hitsIt.next(); // hits.get(i);
+            starts[i] = hit.start;
+            ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
+                                   // subtract one
+        }
+    
+        getCharacterOffsets(doc, fieldName, starts, ends, true);
+    
+        List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
+        for (int i = 0; i < starts.length; i++) {
+            hitspans.add(new HitCharSpan(starts[i], ends[i]));
+        }
+        return hitspans;
+    }
+
+    /**
+     * Convert start/end word positions to char positions.
+     *
+     * @param docId Lucene Document id
+     * @param fieldName name of the field
+     * @param startAtWord where to start getting the content (-1 for start of
+     *            document, 0 for first word)
+     * @param endAtWord where to end getting the content (-1 for end of document)
+     * @return the start and end char position as a two element int array (with any
+     *         -1's preserved)
+     */
+    private int[] startEndWordToCharPos(int docId, String fieldName,
+            int startAtWord, int endAtWord) {
+        if (startAtWord == -1 && endAtWord == -1) {
+            // No need to translate anything
+            return new int[] { -1, -1 };
+        }
+
+        // Translate word pos to char pos and retrieve content
+        // NOTE: this boolean stuff is a bit iffy, but is necessary because
+        // getCharacterOffsets doesn't handle -1 to mean start/end of doc.
+        // We should probably fix that some time.
+        boolean startAtStartOfDoc = startAtWord == -1;
+        boolean endAtEndOfDoc = endAtWord == -1;
+        int[] starts = new int[] { startAtStartOfDoc ? 0 : startAtWord };
+        int[] ends = new int[] { endAtEndOfDoc ? starts[0] : endAtWord };
+        getCharacterOffsets(docId, fieldName, starts, ends, true);
+        if (startAtStartOfDoc)
+            starts[0] = -1;
+        if (endAtEndOfDoc)
+            ends[0] = -1;
+        int[] startEnd = new int[] { starts[0], ends[0] };
+        return startEnd;
+    }
+
     public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord,
             int endAtWord) {
         Hit hit = new Hit(docId, startAtWord, endAtWord);
@@ -818,73 +882,9 @@ public abstract class Searcher {
                 throw new IllegalArgumentException("Field not found: " + fieldName);
             return getWordsFromString(content, startAtWord, endAtWord);
         }
-
+    
         int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord);
         return contentStores.getSubstrings(fieldName, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
-    }
-
-    /**
-     * Get character positions from a list of hits.
-     *
-     * @param doc the document from which to find character positions
-     * @param fieldName the field from which to find character positions
-     * @param hits the hits for which we wish to find character positions
-     * @return a list of HitSpan objects containing the character positions for the
-     *         hits.
-     */
-    private List<HitCharSpan> getCharacterOffsets(int doc, String fieldName, Hits hits) {
-        int[] starts = new int[hits.size()];
-        int[] ends = new int[hits.size()];
-        Iterator<Hit> hitsIt = hits.iterator();
-        for (int i = 0; i < starts.length; i++) {
-            Hit hit = hitsIt.next(); // hits.get(i);
-            starts[i] = hit.start;
-            ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
-                                   // subtract one
-        }
-
-        getCharacterOffsets(doc, fieldName, starts, ends, true);
-
-        List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
-        for (int i = 0; i < starts.length; i++) {
-            hitspans.add(new HitCharSpan(starts[i], ends[i]));
-        }
-        return hitspans;
-    }
-
-    /**
-     * Convert start/end word positions to char positions.
-     *
-     * @param docId Lucene Document id
-     * @param fieldName name of the field
-     * @param startAtWord where to start getting the content (-1 for start of
-     *            document, 0 for first word)
-     * @param endAtWord where to end getting the content (-1 for end of document)
-     * @return the start and end char position as a two element int array (with any
-     *         -1's preserved)
-     */
-    private int[] startEndWordToCharPos(int docId, String fieldName,
-            int startAtWord, int endAtWord) {
-        if (startAtWord == -1 && endAtWord == -1) {
-            // No need to translate anything
-            return new int[] { -1, -1 };
-        }
-
-        // Translate word pos to char pos and retrieve content
-        // NOTE: this boolean stuff is a bit iffy, but is necessary because
-        // getCharacterOffsets doesn't handle -1 to mean start/end of doc.
-        // We should probably fix that some time.
-        boolean startAtStartOfDoc = startAtWord == -1;
-        boolean endAtEndOfDoc = endAtWord == -1;
-        int[] starts = new int[] { startAtStartOfDoc ? 0 : startAtWord };
-        int[] ends = new int[] { endAtEndOfDoc ? starts[0] : endAtWord };
-        getCharacterOffsets(docId, fieldName, starts, ends, true);
-        if (startAtStartOfDoc)
-            starts[0] = -1;
-        if (endAtEndOfDoc)
-            ends[0] = -1;
-        int[] startEnd = new int[] { starts[0], ends[0] };
-        return startEnd;
     }
 
     /**
@@ -1058,6 +1058,17 @@ public abstract class Searcher {
     protected abstract ContentStore openContentStore(String fieldName);
 
     /**
+     * Factory method to create a directory content store.
+     *
+     * @param indexXmlDir the content store directory
+     * @param create if true, create a new content store even if one exists
+     * @return the content store
+     */
+    protected ContentStore openContentStore(File indexXmlDir, boolean create) {
+        return ContentStore.open(indexXmlDir, create);
+    }
+
+    /**
      * Tries to get the ForwardIndex object for the specified fieldname.
      *
      * Looks for an already-opened forward index first. If none is found, and if
@@ -1178,17 +1189,6 @@ public abstract class Searcher {
             rv.add(new Concordance(new String[] { leftContext, hitText, rightContext }));
         }
         return rv;
-    }
-
-    /**
-     * Factory method to create a directory content store.
-     *
-     * @param indexXmlDir the content store directory
-     * @param create if true, create a new content store even if one exists
-     * @return the content store
-     */
-    protected ContentStore openContentStore(File indexXmlDir, boolean create) {
-        return ContentStore.open(indexXmlDir, create);
     }
 
     /**

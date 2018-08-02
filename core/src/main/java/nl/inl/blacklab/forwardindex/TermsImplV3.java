@@ -546,10 +546,8 @@ class TermsImplV3 extends Terms {
                         // Write offset and data arrays to file
                         ib.put(termStringOffsets);
                         ib.put((int) termStringsByteSize); // size of the data block to follow
-                        buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance
-                                                                                                                 // past
-                                                                                                                 // offsets
-                                                                                                                 // array
+                        // advance past offsets array
+                        buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
                         buf.put(termStrings);
                         ib = buf.asIntBuffer();
                     } else {

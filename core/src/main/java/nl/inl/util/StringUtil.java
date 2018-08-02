@@ -315,7 +315,7 @@ public class StringUtil {
      */
     public static List<String> wrap(String message, int wrapAt) {
         List<String> wrapped = new ArrayList<>();
-        String lines[] = message.split("\n");
+        String[] lines = message.split("\n");
         for (String line : lines) {
             if (line.length() > 0) {
                 while (line.length() > 0) {

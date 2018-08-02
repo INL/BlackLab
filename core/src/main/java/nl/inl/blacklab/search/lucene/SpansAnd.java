@@ -30,10 +30,10 @@ class SpansAnd extends BLSpans {
     private BLSpans[] spans = new BLSpans[2];
 
     /** -1 = not started, NO_MORE_DOCS = done, otherwise = docID */
-    private int currentDoc[] = new int[2];
+    private int[] currentDoc = new int[2];
 
     /** -1 = not started, NO_MORE_POSITIONS = done, otherwise = start position */
-    private int currentStart[] = new int[2];
+    private int[] currentStart = new int[2];
 
     private boolean alreadyAtFirstMatch = false;
 

@@ -29,7 +29,7 @@ import org.eclipse.collections.api.IntIterable;
 import org.eclipse.collections.api.iterator.IntIterator;
 
 /**
- * Takes an Iterable<String> and iterates through it as a TokenStream.
+ * Takes an {@code Iterable<String>} and iterates through it as a TokenStream.
  *
  * The Strings are taken as terms, and the position increment is always 1.
  */

@@ -233,6 +233,20 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     }
 
     /**
+     * Sort documents based on a document property.
+     * 
+     * @param prop the property to sort on
+     * @param sortReverse true iff we want to sort in reverse.
+     */
+    public void sort(DocProperty prop, boolean sortReverse) {
+        Comparator<DocResult> comparator = new ComparatorDocProperty(prop);
+        if (sortReverse) {
+            comparator = new ReverseComparator<>(comparator);
+        }
+        sort(comparator);
+    }
+
+    /**
      * Determines if there are at least a certain number of results
      *
      * This may be used if we don't want to process all results (which may be a lot)
@@ -286,20 +300,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         if (sourceHits == null)
             return size(); // no hits, just documents
         return sourceHits.totalNumberOfDocs();
-    }
-
-    /**
-     * Sort documents based on a document property.
-     * 
-     * @param prop the property to sort on
-     * @param sortReverse true iff we want to sort in reverse.
-     */
-    public void sort(DocProperty prop, boolean sortReverse) {
-        Comparator<DocResult> comparator = new ComparatorDocProperty(prop);
-        if (sortReverse) {
-            comparator = new ReverseComparator<>(comparator);
-        }
-        sort(comparator);
     }
 
     /**
