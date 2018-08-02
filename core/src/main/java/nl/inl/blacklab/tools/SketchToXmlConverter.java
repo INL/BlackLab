@@ -31,9 +31,10 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.util.FileUtil;
-import nl.inl.util.StringUtil;
 
 /**
  * Convert the ANW Corpus Sketch format files to almost-identical XML files. Using XML is useful
@@ -232,10 +233,10 @@ public class SketchToXmlConverter {
 			out.append(line);
 		} else if (line.indexOf('\t') < 0) {
 			// no tabs; punctuation
-			out.append("<pu>").append(StringUtil.escapeXmlChars(line)).append("</pu>");
+			out.append("<pu>").append(StringEscapeUtils.escapeXml10(line)).append("</pu>");
 			docWasEmpty = false;
 		} else {
-			line = StringUtil.escapeXmlChars(line);
+			line = StringEscapeUtils.escapeXml10(line);
 			String[] parts = line.split("\t", 3);
 			out.append("<w p=\"").append(parts[1]).append("\" l=\"").append(parts[2]).append("\">")
 					.append(parts[0]).append("</w>");

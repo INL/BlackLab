@@ -18,6 +18,7 @@ package nl.inl.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +40,7 @@ public class TestStringUtil {
 	@Test
 	public void testEscapeXmlChars() {
 		Assert.assertEquals("Test &lt; &amp; &gt; &quot; test",
-				StringUtil.escapeXmlChars("Test < & > \" test"));
+				StringEscapeUtils.escapeXml10("Test < & > \" test"));
 	}
 
 	@Test

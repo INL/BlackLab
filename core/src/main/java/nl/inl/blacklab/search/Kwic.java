@@ -19,7 +19,7 @@ import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.util.StringUtil;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 
 /**
@@ -207,7 +207,7 @@ public class Kwic {
 			int j = 0;
 			if (i > 0 || !leavePunctBefore) {
 				if (produceXml)
-					b.append(StringUtil.escapeXmlChars(context.get(vIndex)));
+					b.append(StringEscapeUtils.escapeXml10(context.get(vIndex)));
 				else
 					b.append(context.get(vIndex));
 			}
@@ -216,7 +216,7 @@ public class Kwic {
 				for (int k = 1; k < valuesPerWord - 1; k++) {
 					String name = fragment.properties.get(k);
 					String value = context.get(vIndex + 1 + j);
-					b.append(" ").append(name).append("=\"").append(StringUtil.escapeXmlChars(value)).append("\"");
+					b.append(" ").append(name).append("=\"").append(StringEscapeUtils.escapeXml10(value)).append("\"");
 					j++;
 				}
 				b.append(">");
@@ -226,7 +226,7 @@ public class Kwic {
 					j += valuesPerWord - 2;
 			}
 			if (produceXml)
-				b.append(StringUtil.escapeXmlChars(context.get(vIndex + 1 + j))).append("</w>");
+				b.append(StringEscapeUtils.escapeXml10(context.get(vIndex + 1 + j))).append("</w>");
 			else
 				b.append(context.get(vIndex + 1 + j));
 		}

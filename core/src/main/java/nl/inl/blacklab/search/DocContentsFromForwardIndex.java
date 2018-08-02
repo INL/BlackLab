@@ -4,7 +4,7 @@ import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.util.StringUtil;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  * (Part of) the contents of a document,
@@ -72,16 +72,16 @@ public class DocContentsFromForwardIndex extends DocContents {
 			int vIndex = i * valuesPerWord;
 			int j = 0;
 			if (i > 0)
-				b.append(StringUtil.escapeXmlChars(tokens.get(vIndex)));
+				b.append(StringEscapeUtils.escapeXml10(tokens.get(vIndex)));
 			b.append("<w");
 			for (int k = 1; k < properties.size() - 1; k++) {
 				String name = properties.get(k);
 				String value = tokens.get(vIndex + 1 + j);
-				b.append(" ").append(name).append("=\"").append(StringUtil.escapeXmlChars(value)).append("\"");
+				b.append(" ").append(name).append("=\"").append(StringEscapeUtils.escapeXml10(value)).append("\"");
 				j++;
 			}
 			b.append(">");
-			b.append(StringUtil.escapeXmlChars(tokens.get(vIndex + 1 + j)));
+			b.append(StringEscapeUtils.escapeXml10(tokens.get(vIndex + 1 + j)));
 			b.append("</w>");
 		}
 		return b.toString();

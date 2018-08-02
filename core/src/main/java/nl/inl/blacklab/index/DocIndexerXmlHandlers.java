@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
@@ -536,35 +537,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * @return the escaped string
      */
     public String escapeXmlChars(String source) {
-        escapeBuilder.setLength(0); // clear
-        int start = 0;
-        char[] srcArr = new char[source.length()];
-        source.getChars(0, source.length(), srcArr, 0);
-        int end = source.length();
-        for (int i = 0; i < end; i++) {
-            char c = srcArr[i]; // source.charAt(i);
-            if (c == '<' || c == '>' || c == '&' || c == '"') {
-                escapeBuilder.append(srcArr, start, i - start); // source.substring(start,
-                                                                // i));
-                switch (c) {
-                case '<':
-                    escapeBuilder.append("&lt;");
-                    break;
-                case '>':
-                    escapeBuilder.append("&gt;");
-                    break;
-                case '&':
-                    escapeBuilder.append("&amp;");
-                    break;
-                case '"':
-                    escapeBuilder.append("&quot;");
-                    break;
-                }
-                start = i + 1;
-            }
-        }
-        escapeBuilder.append(srcArr, start, end - start); // source.substring(start));
-        return escapeBuilder.toString();
+        return StringEscapeUtils.escapeXml10(source); //@@@@@@@@@@@
     }
 
     /**

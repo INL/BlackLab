@@ -133,44 +133,6 @@ public class StringUtil {
 	}
 
 	/**
-	 * Escape the special XML chars (<, >, &, ") with their named entity equivalents.
-	 *
-	 * @param source
-	 *            the source string
-	 * @return the escaped string
-	 */
-	public static String escapeXmlChars(String source) {
-		if (source == null)
-			source = "";
-		int estResultLength = source.length() * 5 / 4; // reasonable estimate of max. space needed
-		StringBuilder sb = new StringBuilder(estResultLength);
-		int start = 0;
-		for (int i = 0; i < source.length(); i++) {
-			char c = source.charAt(i);
-			if (c == '<' || c == '>' || c == '&' || c == '"') {
-				sb.append(source.substring(start, i));
-				switch (c) {
-				case '<':
-					sb.append("&lt;");
-					break;
-				case '>':
-					sb.append("&gt;");
-					break;
-				case '&':
-					sb.append("&amp;");
-					break;
-				case '"':
-					sb.append("&quot;");
-					break;
-				}
-				start = i + 1;
-			}
-		}
-		sb.append(source.substring(start));
-		return sb.toString();
-	}
-
-	/**
 	 * Get the default collator.
 	 *
 	 * @return the default collator.
