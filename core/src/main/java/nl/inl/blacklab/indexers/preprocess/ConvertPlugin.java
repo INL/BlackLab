@@ -17,7 +17,7 @@ public interface ConvertPlugin extends Plugin {
 	 *
 	 * @return the list of formats and file extensions supported by this converter.
 	 */
-	public Set<String> getInputFormats();
+	Set<String> getInputFormats();
 
 	/**
 	 * Get the name of the format this plugin will convert files into.
@@ -27,7 +27,7 @@ public interface ConvertPlugin extends Plugin {
 	 *
 	 * @return the format this convertplugin outputs.
 	 */
-	public String getOutputFormat();
+	String getOutputFormat();
 
 	/**
 	 * Can this converter convert this file
@@ -37,7 +37,7 @@ public interface ConvertPlugin extends Plugin {
 	 * @param inputFormat
 	 * @return true if this file can be converted into this plugin's outputFormat
 	 */
-	public boolean canConvert(PushbackInputStream is, Charset cs, String inputFormat);
+	boolean canConvert(PushbackInputStream is, Charset cs, String inputFormat);
 
 	/**
 	 * Perform on a text file.
@@ -48,5 +48,5 @@ public interface ConvertPlugin extends Plugin {
 	 * @param os output. Should not be closed by the implementation.
 	 * @throws PluginException
 	 */
-	public void perform(InputStream is, Charset cs, String inputFormat, OutputStream os) throws PluginException;
+	void perform(InputStream is, Charset cs, String inputFormat, OutputStream os) throws PluginException;
 }

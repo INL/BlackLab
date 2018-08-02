@@ -194,27 +194,9 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
 	 *            the hit property to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
-	 * @param sensitive whether to sort case-sensitively or not
 	 * @return a new Hits object with the same hits, sorted in the specified way
 	 */
-	public abstract Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive);
-
-	/**
-	 * Return a new Hits object with these hits sorted by the given property.
-	 *
-	 * This keeps the existing sort (or lack of one) intact and allows you to cache
-	 * different sorts of the same resultset. The hits themselves are reused between
-	 * the two Hits instances, so not too much additional memory is used.
-	 *
-	 * @param sortProp
-	 *            the hit property to sort on
-	 * @param reverseSort
-	 *            if true, sort in descending order
-	 * @return a new Hits object with the same hits, sorted in the specified way
-	 */
-	public Hits sortedBy(final HitProperty sortProp, boolean reverseSort) {
-		return sortedBy(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
-	}
+	public abstract Hits sortedBy(HitProperty sortProp, boolean reverseSort);
 
 	/**
 	 * Return a new Hits object with these hits sorted by the given property.
@@ -228,7 +210,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
 	 * @return a new Hits object with the same hits, sorted in the specified way
 	 */
 	public Hits sortedBy(final HitProperty sortProp) {
-		return sortedBy(sortProp, false, searcher.isDefaultSearchCaseSensitive());
+		return sortedBy(sortProp, false);
 	}
 
 	/**

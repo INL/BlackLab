@@ -51,6 +51,12 @@ public class TextPatternSequence extends TextPatternAndNot {
 		return false;
 	}
 
+    // appease PMD
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
 	@Override
 	public String toString() {
 		return "SEQ(" + clausesToString(include) + ")";

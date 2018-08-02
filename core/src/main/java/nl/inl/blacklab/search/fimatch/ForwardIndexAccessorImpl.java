@@ -125,7 +125,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 		 */
 		@Override
 		public ForwardIndexDocument getForwardIndexDoc(int id) {
-			return new ForwardIndexDocumentImpl(this, id, reader);
+			return new ForwardIndexDocumentImpl(this, id);
 		}
 
 		@Override

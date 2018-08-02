@@ -15,7 +15,7 @@ public interface TagPlugin extends Plugin {
 	 *
 	 * @return the format this convertplugin outputs.
 	 */
-	public String getInputFormat();
+	String getInputFormat();
 
 	/**
 	 * Get the name of the format this plugin tags into.
@@ -23,14 +23,14 @@ public interface TagPlugin extends Plugin {
 	 *
 	 * @return the formatIdentifier
 	 */
-	public String getOutputFormatIdentifier();
+	String getOutputFormatIdentifier();
 
 	/**
 	 * Unfortunate side-effect of docIndexers requiring a filename to do their work.
 	 * @param inputFileName
 	 * @return a valid file name for an indexable file of the type as returned by {@link TagPlugin#getOutputFormatIdentifier()}
 	 */
-	public String getOutputFileName(String inputFileName);
+	String getOutputFileName(String inputFileName);
 
 
 	/**
@@ -40,5 +40,5 @@ public interface TagPlugin extends Plugin {
 	 * @param writer output. Should not be closed by the implementation.
 	 * @throws PluginException
 	 */
-	public void perform(Reader reader, Writer writer) throws PluginException;
+	void perform(Reader reader, Writer writer) throws PluginException;
 }

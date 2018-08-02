@@ -42,6 +42,12 @@ public class TextPatternNot extends TextPatternCombiner {
 		}
 		return false;
 	}
+	
+	// appease PMD
+	@Override
+	public int hashCode() {
+	    return super.hashCode();
+	}
 
 	@Override
 	public String toString() {

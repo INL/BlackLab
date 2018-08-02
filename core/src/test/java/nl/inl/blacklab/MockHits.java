@@ -70,7 +70,7 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+	public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
         throw new UnsupportedOperationException();
 	}
 

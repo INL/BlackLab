@@ -3,8 +3,6 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.lucene.index.LeafReader;
-
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
 
 /** Source of tokens for the forward index matching process. */
@@ -25,7 +23,7 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
 	/** Chunks of the document from the forward index, for each of the properties. */
 	private List<List<int[]>> allPropChunks = new ArrayList<>();
 
-	public ForwardIndexDocumentImpl(ForwardIndexAccessorLeafReader fiAccessor, int docId, LeafReader reader) {
+	public ForwardIndexDocumentImpl(ForwardIndexAccessorLeafReader fiAccessor, int docId) {
 		this.fiAccessor = fiAccessor;
 		this.docId = docId;
 		this.docLengthTokens = fiAccessor.getDocLength(docId);

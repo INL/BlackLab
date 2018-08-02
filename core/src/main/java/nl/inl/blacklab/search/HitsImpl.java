@@ -528,9 +528,8 @@ public class HitsImpl extends Hits {
 	 *            the hit property to sort on
 	 * @param reverseSort
 	 *            if true, sort in descending order
-	 * @param sensitive whether to sort case-sensitively or not
 	 */
-	private synchronized void sort(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+	private synchronized void sort(final HitProperty sortProp, boolean reverseSort) {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -569,10 +568,10 @@ public class HitsImpl extends Hits {
 	}
 	
 	@Override
-	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+	public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
         HitsImpl hits = copy();
         sortProp = sortProp.copyWithHits(hits);
-        hits.sort(sortProp, reverseSort, sensitive);
+        hits.sort(sortProp, reverseSort);
         return hits;
 	}
 
@@ -1145,7 +1144,7 @@ public class HitsImpl extends Hits {
 			Thread.currentThread().interrupt();
 		}
 		// Make sure we don't have the desired context already
-		if (contextFieldsPropName != null && fieldProps.equals(contextFieldsPropName)
+		if (contextFieldsPropName != null && contextFieldsPropName.equals(fieldProps)
 				&& settings().contextSize() == currentContextSize) {
 			return;
 		}

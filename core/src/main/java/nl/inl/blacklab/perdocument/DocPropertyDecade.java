@@ -61,8 +61,12 @@ public class DocPropertyDecade extends DocProperty {
 		String strYearB = b.getDocument().get(fieldName);
 		if (strYearB == null)
 			strYearB = "";
-		if (strYearA.length() == 0) // sort missing year at the end
-			return strYearB.length() == 0 ? 0 : (reverse ? -1 : 1);
+		if (strYearA.length() == 0) { // sort missing year at the end
+		    if (strYearB.length() == 0)
+		        return 0;
+		    else
+		        return reverse ? -1 : 1;
+		}
 		if (strYearB.length() == 0) // sort missing year at the end
 			return reverse ? 1 : -1;
 		int year1;

@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public interface Plugin {
 
-	public static class PluginException extends Exception {
+	static class PluginException extends Exception {
 		public PluginException() {
 			super();
 		}
@@ -36,17 +36,17 @@ public interface Plugin {
 	 *
 	 * @return the global identifier for this plugin
 	 */
-	public String getId();
+	String getId();
 
 	/**
 	 * Return a user-friendly name for this plugin that can be used in messages, etc.
 	 *
 	 * @return a user-friendly name for this plugin
 	 */
-	public String getDisplayName();
+	String getDisplayName();
 
 
-	public String getDescription();
+	String getDescription();
 
 	/**
 	 * Initializes the plugin, called once after the initial loading of the class.
@@ -54,6 +54,6 @@ public interface Plugin {
 	 * @param config the config settings for this plugin
 	 * @throws PluginException
 	 */
-	public void init(Optional<ObjectNode> config) throws PluginException;
+	void init(Optional<ObjectNode> config) throws PluginException;
 }
 

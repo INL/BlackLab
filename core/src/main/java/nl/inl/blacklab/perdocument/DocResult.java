@@ -47,7 +47,7 @@ public class DocResult {
 	 * @param doc the Lucene document id
 	 * @param docHits hits in the document
 	 */
-	public DocResult(Searcher searcher, String concField, int doc, Hits docHits) {
+	public DocResult(int doc, Hits docHits) {
 		this.docId = doc;
 		this.score = 0.0f;
 		hits = docHits;

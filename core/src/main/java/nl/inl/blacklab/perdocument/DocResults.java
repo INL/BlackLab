@@ -25,7 +25,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
@@ -356,7 +355,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 			partialDocId = -1;
 			partialDocHits = null;
 
-			IndexReader indexReader = searcher.getIndexReader();
 			while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
 				Hit hit = sourceHitsIterator.next();
@@ -364,7 +362,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 					if (docHits != null) {
 						Hits hits = Hits.fromList(searcher, docHits);
 						hits.copySettingsFrom(sourceHits); // concordance type, etc.
-						addDocResultToList(doc, hits, indexReader);
+						addDocResultToList(doc, hits);
 					}
 					doc = hit.doc;
 					docHits = new ArrayList<>();
@@ -379,7 +377,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 				} else {
 					Hits hits = Hits.fromList(searcher, docHits);
 					hits.copySettingsFrom(sourceHits); // concordance type, etc.
-					addDocResultToList(doc, hits, indexReader);
+					addDocResultToList(doc, hits);
 				}
 			}
 		} finally {
@@ -387,8 +385,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 		}
 	}
 
-	private void addDocResultToList(int doc, Hits docHits, IndexReader indexReader) {
-		DocResult docResult = new DocResult(searcher, sourceHits.settings().concordanceField(), doc, docHits);
+	private void addDocResultToList(int doc, Hits docHits) {
+		DocResult docResult = new DocResult(doc, docHits);
 		// Make sure we remember what kind of context we have, if any
 		docResult.setContextField(sourceHits.getContextFieldPropName());
 		results.add(docResult);
