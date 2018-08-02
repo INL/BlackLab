@@ -230,7 +230,7 @@ public class FileProcessor implements AutoCloseable {
         return skipOsSpecialFiles && (fileName.equals("Thumbs.db") || fileName.equals(".DS_Store"));
     }
 
-    public void setErrorHandler(ErrorHandler errorHandler) {
+    public synchronized void setErrorHandler(ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
     }
 
