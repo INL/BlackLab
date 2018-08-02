@@ -73,7 +73,7 @@ public class ConfigReader extends YamlJsonReader {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public static void setConfigFile(File file) throws FileNotFoundException, IOException {
+    public synchronized static void setConfigFile(File file) throws FileNotFoundException, IOException {
         if (ignoreConfigFile) // useful for repeatable testing
             return;
 
@@ -102,7 +102,7 @@ public class ConfigReader extends YamlJsonReader {
      * @throws JsonProcessingException
      * @throws IOException
      */
-    public static void setConfigFile(Reader reader, boolean isJson) throws JsonProcessingException, IOException{
+    public synchronized static void setConfigFile(Reader reader, boolean isJson) throws JsonProcessingException, IOException{
         if (ignoreConfigFile) // useful for repeatable testing
             return;
 
@@ -120,7 +120,7 @@ public class ConfigReader extends YamlJsonReader {
     }
 
 
-    public static void loadDefaultConfig() {
+    public synchronized static void loadDefaultConfig() {
     	if (blacklabConfig != null)
     		return;
 
@@ -141,7 +141,7 @@ public class ConfigReader extends YamlJsonReader {
      *
      * @return the loaded configuration file, or null if no config has been loaded yet.
      */
-    public static JsonNode getConfigFile() {
+    public synchronized static JsonNode getConfigFile() {
     	return blacklabConfig;
     }
 
@@ -151,7 +151,7 @@ public class ConfigReader extends YamlJsonReader {
      * @param searcher
      * @throws IOException
      */
-    public static void applyConfig(Searcher searcher) throws IOException {
+    public synchronized static void applyConfig(Searcher searcher) throws IOException {
     	if (blacklabConfig == null)
     		loadDefaultConfig();
 

@@ -212,7 +212,7 @@ public class DownloadCache {
             maxDownloadedFileSize = maxDownloadFolderSize;
     }
 
-    public static File getDownloadTempDir() {
+    public synchronized static File getDownloadTempDir() {
         if (downloadTempDir == null) {
             downloadTempDir = new File(System.getProperty("java.io.tmpdir"), "bls-download-cache");
         }
