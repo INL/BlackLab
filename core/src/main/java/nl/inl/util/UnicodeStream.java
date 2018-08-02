@@ -21,7 +21,7 @@ import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
 
 /**
- * Reader that skips BOM in UTF-8 (and other Unicode encodings) files.
+ * InputStream that detects and skips BOM in UTF-8 (and other Unicode encodings) files.
  *
  * Taken from
  * http://stackoverflow.com/questions/1835430/byte-order-mark-screws-up-file-reading-in-java which
@@ -54,8 +54,7 @@ public class UnicodeStream extends InputStream {
 	}
 
 	/**
-	 * Construct UnicodeReader, a Reader that skips
-	 * the BOM in Unicode files (if present).
+	 * Construct InputStream, a Reader that detects and skips the BOM in Unicode files (if present).
 	 *
 	 * @param in
 	 *            Input stream.

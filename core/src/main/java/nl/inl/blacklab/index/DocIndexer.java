@@ -140,7 +140,9 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     public void setDocument(InputStream is, Charset cs) {
         try {
-            setDocument(new InputStreamReader(new UnicodeStream(is, cs)));
+            UnicodeStream unicodeStream = new UnicodeStream(is, cs);
+            Charset detectedCharset = unicodeStream.getEncoding();
+            setDocument(new InputStreamReader(unicodeStream, detectedCharset));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

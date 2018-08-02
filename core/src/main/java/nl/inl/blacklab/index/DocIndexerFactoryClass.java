@@ -199,7 +199,8 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
                 // No, this is an older DocIndexer that takes document name and reader directly.
                 constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
                 UnicodeStream is = new UnicodeStream(new FileInputStream(f), Indexer.DEFAULT_INPUT_ENCODING);
-                docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(is, cs));
+                Charset detectedCharset = is.getEncoding();
+                docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(is, detectedCharset));
             }
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
