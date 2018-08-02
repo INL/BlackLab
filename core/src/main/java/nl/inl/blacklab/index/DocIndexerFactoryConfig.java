@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,7 +83,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 				if (is == null)
 					continue; // not found
 
-				try (Reader reader = new BufferedReader(new InputStreamReader(is))) {
+				try (Reader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
 					ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
 
 					format.setReadFromFile(new File("$BLACKLAB_JAR/formats/" + formatIdentifier + ".blf.yaml"));

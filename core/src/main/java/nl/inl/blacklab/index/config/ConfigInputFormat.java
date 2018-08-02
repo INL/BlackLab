@@ -3,8 +3,10 @@ package nl.inl.blacklab.index.config;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -408,8 +410,10 @@ public class ConfigInputFormat {
 		if (readFromFile == null)
 			return null;
 
-		if (readFromFile.getPath().startsWith("$BLACKLAB_JAR"))
-			return new BufferedReader(new InputStreamReader(DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + getName() + ".blf.yaml")));
+		if (readFromFile.getPath().startsWith("$BLACKLAB_JAR")) {
+            InputStream stream = DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + getName() + ".blf.yaml");
+            return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+        }
 		return FileUtil.openForReading(readFromFile);
 	}
 
