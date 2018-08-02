@@ -107,8 +107,6 @@ public class IndexStructure {
             "displayName", "description", "mainProperty",
             "noForwardIndexProps", "displayOrder", "annotations"));
 
-	public static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
 	/** A named group of ordered metadata fields */
 	public static class MetadataGroup {
 
@@ -1437,7 +1435,9 @@ public class IndexStructure {
      * @return a string representation, e.g. "1980-02-01 00:00:00"
      */
     static String getTimestamp() {
-    	return DATETIME_FORMAT.format(new Date());
+        // NOTE: DateFormat is not threadsafe, so we just create a new one every time.
+        DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	return dateTimeFormat.format(new Date());
     }
 
 
