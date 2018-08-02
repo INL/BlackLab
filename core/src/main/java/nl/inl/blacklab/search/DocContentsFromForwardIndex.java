@@ -12,9 +12,12 @@ import nl.inl.util.StringUtil;
  *
   * The tokens list in this class stores all the properties for each word,
  * in this order:
- * - punctuation before this word ("punct")
- * - all other properties except punctuation and word (e.g. "lemma", "pos")
- * - the word itself ("word")
+ * 
+ * <ul>
+ * <li>punctuation before this word ("punct")
+ * <li>all other properties except punctuation and word (e.g. "lemma", "pos")
+ * <li>the word itself ("word")
+ * </ul>
  *
  * So if you had "lemma" and "pos" as extra properties in addition to "punct"
  * and "word", and you had 10 words of context, the List size would be 40.

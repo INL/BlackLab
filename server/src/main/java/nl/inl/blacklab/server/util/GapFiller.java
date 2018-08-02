@@ -20,12 +20,15 @@ import nl.inl.blacklab.search.TextPatternOr;
  * Fills gaps in a template string with column values from TSV data.
  *
  * URL parameters:
- * - template:   The string with gaps to be filled (default: @@) in it
- * - gap:        Gap pattern (regex; default: @@)
- * - values:     A table of values to fill in (default: TSV)
- * - valsep:     Value separator (single character; default: tab)
- * - vallinesep: Value line separator (regex; default: newline)
- * - outsep:     Output value separator (default: |)
+ * 
+ * <p><ul>
+ * <li>template:   The string with gaps to be filled (default: @@) in it
+ * <li>gap:        Gap pattern (regex; default: @@)
+ * <li>values:     A table of values to fill in (default: TSV)
+ * <li>valsep:     Value separator (single character; default: tab)
+ * <li>vallinesep: Value line separator (regex; default: newline)
+ * <li>outsep:     Output value separator (default: |)
+ * </ul>
  *
  * Example URL: /gap-filler?valsep=$&vallinesep=!&outsep=|&
  *                  template=The%20@@%20fox%20jumps%20over%20the%20@@%20dog.&

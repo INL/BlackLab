@@ -23,8 +23,11 @@ import nl.inl.blacklab.search.Span;
 
 /**
  * Simple version of sequence Spans. Assumes that:
- * - right side is ordered by start point, and start points are unique
- * - left side is ordered by end point, and end points are unique
+ * 
+ * <p><ul>
+ * <li>right side is ordered by start point, and start points are unique
+ * <li>left side is ordered by end point, and end points are unique
+ * </ul>
  * 
  * The client should ensure these properties are true.
  */

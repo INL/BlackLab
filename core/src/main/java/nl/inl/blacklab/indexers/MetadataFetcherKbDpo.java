@@ -38,10 +38,13 @@ import nl.inl.util.XmlUtil;
  *
  * In order for this class to work correctly, you should add the following
  * libraries to the classpath (from Apache Http Components, version 4.1.2 or up):
- * - commons-codec
- * - commons-logging
- * - httpclient
- * - httpcore
+ * 
+ * <p><ul>
+ * <li>commons-codec
+ * <li>commons-logging
+ * <li>httpclient
+ * <li>httpcore
+ * </ul>
  */
 public class MetadataFetcherKbDpo extends MetadataFetcher {
 
