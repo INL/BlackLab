@@ -47,13 +47,10 @@ public abstract class DocIndexerBase extends DocIndexer {
 
         public String name;
 
-        public int position;
-
         public int index;
 
-        public OpenTagInfo(String name, int position, int index) {
+        public OpenTagInfo(String name, int index) {
             this.name = name;
-            this.position = position;
             this.index = index;
         }
     }
@@ -523,7 +520,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             propTags().addValue(tagName, posIncrement);
             propTags().addPayload(null);
             int startTagIndex = propTags().getLastValueIndex();
-            openInlineTags.add(new OpenTagInfo(tagName, currentPos, startTagIndex));
+            openInlineTags.add(new OpenTagInfo(tagName, startTagIndex));
 
             for (Entry<String, String> e: attributes.entrySet()) {
                 // Index element attribute values

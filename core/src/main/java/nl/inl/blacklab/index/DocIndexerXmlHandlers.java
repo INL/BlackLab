@@ -295,16 +295,14 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
     /* Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
     static class OpenTagInfo {
-        public int position;
         public int index;
 
-        public OpenTagInfo(int position, int index) {
-            this.position = position;
+        public OpenTagInfo(int index) {
             this.index = index;
         }
     }
 
-    List<OpenTagInfo> openTags = new ArrayList<>();
+    List<Integer> openTagIndexes = new ArrayList<>();
 
     /** Handle tags. */
     public class InlineTagHandler extends ElementHandler {
@@ -319,7 +317,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             propStartTag.addValue(localName, posIncrement);
             propStartTag.addPayload(null);
             int startTagIndex = propStartTag.getLastValueIndex();
-            openTags.add(new OpenTagInfo(currentPos, startTagIndex));
+            openTagIndexes.add(startTagIndex);
             for (int i = 0; i < attributes.getLength(); i++) {
                 // Index element attribute values
                 String name = attributes.getLocalName(i);
@@ -335,9 +333,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             int currentPos = propMain.lastValuePosition() + 1;
 
             // Add payload to start tag property indicating end position
-            OpenTagInfo openTag = openTags.remove(openTags.size() - 1);
+            Integer openTagIndex = openTagIndexes.remove(openTagIndexes.size() - 1);
             byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
-            propStartTag.setPayloadAtIndex(openTag.index, new BytesRef(payload));
+            propStartTag.setPayloadAtIndex(openTagIndex, new BytesRef(payload));
         }
     }
 
