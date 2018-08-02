@@ -228,14 +228,25 @@ public class BlackLabServer extends HttpServlet {
         handleRequest(request, responseObject);
     }
 
-    private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
-        try {
-            request.setCharacterEncoding("utf-8");
-        } catch (UnsupportedEncodingException ex) {
-            logger.warn(ex.getMessage(), ex);
+    Override
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doOptions(req, resp);
+        String allowOrigin = searchManager == null ? "*" : searchManager.config().getAccessControlAllowOrigin();
+        if (allowOrigin != null) {
+        	resp.addHeader("Access-Control-Allow-Origin", allowOrigin);
+        	resp.addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        	resp.addHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
         }
+    }
 
-        try {
+	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
+            try {
+                request.setCharacterEncoding("utf-8");
+            } catch (UnsupportedEncodingException ex) {
+                logger.warn(ex.getMessage(),ex);
+            }
+
+	    try {
             request.setCharacterEncoding("utf-8");
         } catch (UnsupportedEncodingException ex) {
             logger.error(ex);
