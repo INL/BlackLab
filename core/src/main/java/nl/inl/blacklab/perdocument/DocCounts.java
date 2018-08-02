@@ -92,8 +92,7 @@ public class DocCounts implements Iterable<DocCount> {
 	}
 
 	public void sort(DocGroupProperty prop, boolean sortReverse) {
-		Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse,
-				searcher.getCollator());
+		Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse);
 		Collections.sort(orderedGroups, comparator);
 	}
 

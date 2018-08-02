@@ -294,7 +294,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     /* Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
-    class OpenTagInfo {
+    static class OpenTagInfo {
         public int position;
         public int index;
 

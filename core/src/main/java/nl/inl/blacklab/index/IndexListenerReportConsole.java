@@ -23,7 +23,7 @@ import nl.inl.util.TimeUtil;
  * Used to report progress while indexing, so we can give feedback to the user.
  */
 public class IndexListenerReportConsole extends IndexListener {
-	final int REPORT_INTERVAL_SEC = 10;
+	static final int REPORT_INTERVAL_SEC = 10;
 
 	long prevCharsDoneReported = 0;
 

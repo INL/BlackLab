@@ -166,8 +166,7 @@ public class ResultsGrouper extends HitGroups {
 	 */
 	@Override
 	public void sortGroups(GroupProperty prop, boolean sortReverse) {
-		Comparator<Group> comparator = new ComparatorGroupProperty(prop, sortReverse,
-				searcher.getCollator());
+		Comparator<Group> comparator = new ComparatorGroupProperty(prop, sortReverse);
 
 		Collections.sort(groupsOrdered, comparator);
 	}

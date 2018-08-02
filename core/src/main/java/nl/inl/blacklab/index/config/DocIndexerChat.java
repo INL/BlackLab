@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -422,7 +423,8 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
 	private void addDocumentMetadata(Map<String, Object> metadata) {
-        for (String el: metadata.keySet()) {
+        for (Entry<String, Object> entry: metadata.entrySet()) {
+            String el = entry.getKey();
             if (DO_NOT_PRINT_IN_HEADERS.contains(el)) {
                 // (pass)
             } else if (ALL_HEADERS.contains(el)) {
@@ -512,7 +514,8 @@ public class DocIndexerChat extends DocIndexerConfig {
     @SuppressWarnings("unchecked")
 	private void startBlock() {
     	Map<String, String> blockMetadata = new HashMap<>();
-        for (String el: metadata.keySet()) {
+        for (Entry<String, Object> entry: metadata.entrySet()) {
+            String el = entry.getKey();
             if (DO_NOT_PRINT_IN_HEADERS.contains(el)) {
                 // (pass)
             } else if (ALL_HEADERS.contains(el)) {
@@ -539,7 +542,8 @@ public class DocIndexerChat extends DocIndexerConfig {
             Map<String, Object> participants = (Map<String, Object>)metadata.get("participants");
             if (participants != null && participants.containsKey(curcode)) {
                 Map<String, Object> codeMap = (Map<String, Object>)participants.get(curcode);
-                for (String el: codeMap.keySet()) {
+                for (Entry<String, Object> entry: codeMap.entrySet()) {
+                    String el = entry.getKey();
                     blockMetadata.put(despaceMetadataName(el), codeMap.get(el).toString());
                 }
             }
@@ -549,7 +553,8 @@ public class DocIndexerChat extends DocIndexerConfig {
             if (mdid != null) {
                 Map<String, Object> curcodeMap = (Map<String, Object>)mdid.get(curcode);
                 if (curcodeMap != null) {
-                    for (String el: curcodeMap.keySet()) {
+                    for (Entry<String, Object> entry: curcodeMap.entrySet()) {
+                        String el = entry.getKey();
                         Object curval = curcodeMap.get(el);
                         if (curval instanceof Date) {
                         	blockMetadata.put(despaceMetadataName(el), toIsoFormat((Date) curcodeMap.get(el)));
@@ -833,46 +838,46 @@ public class DocIndexerChat extends DocIndexerConfig {
 
 //  private final String TAB = "\t";
 //  private final String MY_QUOTE_CHAR = "\"";
-    private final char MD_CHAR = '@';
-    private final char UTT_CHAR = '*';
-    private final char ANNO_CHAR = '%';
-    private final char SPACE_CHAR = ' ';
-    private final String HEADERLINE_END_SYMB = ":";
-    private final String ID_SEP = "\\|";
+    private static final char MD_CHAR = '@';
+    private static final char UTT_CHAR = '*';
+    private static final char ANNO_CHAR = '%';
+    private static final char SPACE_CHAR = ' ';
+    private static final String HEADERLINE_END_SYMB = ":";
+    private static final String ID_SEP = "\\|";
 //    private final String META_KW = "##META";
-    private final String SPACE = " ";
+    private static final String SPACE = " ";
 //  private final String UNDERSCORE = "_";
 
-    private final String SEPS = "[-.,/;:_!~\\\\]";
-    private final String ONE_OR_MORE_DIGITS = "[0-9]+";
-    private final String DIGITS_ONE_OR_TWO = "[0-9]{1,2}";
-    private final String OPT_DAYS = "(" + ONE_OR_MORE_DIGITS + ")?";
-    private final String OPT_SEP_DAYS = "(\\." + OPT_DAYS + ")?";
-    private final String OPT_MONTHS = "(" + DIGITS_ONE_OR_TWO + OPT_SEP_DAYS + ")?";
-    private final String OPT_SEP_MONTHS = "(;"  + OPT_MONTHS + ")?";
-    private final String AGE_REGEX = "^" + ONE_OR_MORE_DIGITS + OPT_SEP_MONTHS + "$";
+    private static final String SEPS = "[-.,/;:_!~\\\\]";
+    private static final String ONE_OR_MORE_DIGITS = "[0-9]+";
+    private static final String DIGITS_ONE_OR_TWO = "[0-9]{1,2}";
+    private static final String OPT_DAYS = "(" + ONE_OR_MORE_DIGITS + ")?";
+    private static final String OPT_SEP_DAYS = "(\\." + OPT_DAYS + ")?";
+    private static final String OPT_MONTHS = "(" + DIGITS_ONE_OR_TWO + OPT_SEP_DAYS + ")?";
+    private static final String OPT_SEP_MONTHS = "(;"  + OPT_MONTHS + ")?";
+    private static final String AGE_REGEX = "^" + ONE_OR_MORE_DIGITS + OPT_SEP_MONTHS + "$";
 
-    private final List<String> SIMPLE_HEADERNAMES = Arrays.asList(
+    private static final List<String> SIMPLE_HEADERNAMES = Arrays.asList(
         "pid",  "transcriber",  "coder",  "date",  "location",
         "situation", "number", "interaction type", "activities",
         "comment", "bck", "warning", "transcription",
         "time start", "time duration", "tape location", "room layout",
         "recording quality", "number", "media"
     );
-    private final List<String> SIMPLE_INT_HEADERNAMES = Arrays.asList("g", "page");
-    private final List<String> SIMPLE_COUNTER_HEADERS = Arrays.asList("new episode");
-    private final List<String> SKIP_HEADER_NAMES = Arrays.asList("exceptions");
-    private final List<String> PARTICIPANT_SPECIFIC_HEADERS = Arrays.asList("birth of", "birthplace of", "l1 of", "age of");
-    private final List<String> CREATED_MD_NAMES = Arrays.asList("charencoding", "parsefile", "speaker", "origutt");
-    private final List<String> DO_NOT_PRINT_IN_HEADERS = Arrays.asList(
+    private static final List<String> SIMPLE_INT_HEADERNAMES = Arrays.asList("g", "page");
+    private static final List<String> SIMPLE_COUNTER_HEADERS = Arrays.asList("new episode");
+    private static final List<String> SKIP_HEADER_NAMES = Arrays.asList("exceptions");
+    private static final List<String> PARTICIPANT_SPECIFIC_HEADERS = Arrays.asList("birth of", "birthplace of", "l1 of", "age of");
+    private static final List<String> CREATED_MD_NAMES = Arrays.asList("charencoding", "parsefile", "speaker", "origutt");
+    private static final List<String> DO_NOT_PRINT_IN_HEADERS = Arrays.asList(
             "id", "participants", "languages", "colorwords",
             "options", "uttid", "parsefile", "speaker", "origutt"
     );
-    private List<String> ALL_HEADERS = new ArrayList<>();
-    private List<String> PRINT_IN_HEADERS = new ArrayList<>();
-    private List<Character> START_CHARS_TO_CHECK = new ArrayList<>();
+    private static final List<String> ALL_HEADERS = new ArrayList<>();
+    private static final List<String> PRINT_IN_HEADERS = new ArrayList<>();
+    private static final List<Character> START_CHARS_TO_CHECK = new ArrayList<>();
 
-    {
+    static {
         ALL_HEADERS.addAll(SIMPLE_HEADERNAMES);
         ALL_HEADERS.addAll(SIMPLE_INT_HEADERNAMES);
         ALL_HEADERS.addAll(SIMPLE_COUNTER_HEADERS);
@@ -935,68 +940,68 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     //class CleanChildesMetadata {
 
-    public String scoped(String str) {
+    public static String scoped(String str) {
         return "<(([^<>]|\\[<\\]|\\[>\\])*)>\\s*" + str;
     }
 
-    final String EMPTY_STRING = "";
+    static final String EMPTY_STRING = "";
 
-    final int SKIP_LINES = 1;
-    final int HEADER = 1;
-    final int LCTR = 0;
+    static final int SKIP_LINES = 1;
+    static final int HEADER = 1;
+    static final int LCTR = 0;
 
     // hexformat = "{0:#06X}"
     //final String hexformat = "\\u{0:04X}";
 
     // scopestr = "<([^<>]*)>\\s*"
 
-    final String GT_REPL = "\u00A9";  // copyright sign
-    final String LT_REPL = "\u00AE"; // Registered sign
-    final Pattern GT_REPL_SCOPED = Pattern.compile(scoped(GT_REPL));
-    final Pattern LT_REPL_SCOPED = Pattern.compile(scoped(LT_REPL));
-    final Pattern GT_REPL_UNSCOPED = Pattern.compile(GT_REPL);
-    final Pattern LT_REPL_UNSCOPED = Pattern.compile(LT_REPL);
+    static final String GT_REPL = "\u00A9";  // copyright sign
+    static final String LT_REPL = "\u00AE"; // Registered sign
+    static final Pattern GT_REPL_SCOPED = Pattern.compile(scoped(GT_REPL));
+    static final Pattern LT_REPL_SCOPED = Pattern.compile(scoped(LT_REPL));
+    static final Pattern GT_REPL_UNSCOPED = Pattern.compile(GT_REPL);
+    static final Pattern LT_REPL_UNSCOPED = Pattern.compile(LT_REPL);
 
-    final Pattern PAUSES3 = Pattern.compile("\\(\\.\\.\\.\\)");
-    final Pattern PAUSES2 = Pattern.compile("\\(\\.\\.\\)");
-    final Pattern PAUSES1 = Pattern.compile("\\([0-9]*\\.[0-9]*\\)");
-    final Pattern LEFT_BRACKET = Pattern.compile("\\(");
-    final Pattern RIGHT_BRACKET = Pattern.compile("\\)");
-    final Pattern AT_SIGN_LETTERS = Pattern.compile("@[\\w:]+");
-    final Pattern WWW = Pattern.compile("www");
-    final Pattern PHON_FRAG1 = Pattern.compile("& = [\\w:]+");
-    final Pattern PHON_FRAG2 = Pattern.compile("&[\\w:]+");
-    final Pattern ZERO_STR = Pattern.compile("0(\\w+)");
-    final Pattern BARE_ZERO = Pattern.compile("0");
-    final Pattern PLUS_DOT_DOT = Pattern.compile("\\+\\.\\.");
-    final String LT_STR = "\\[<\\]";
-    final Pattern LT_REGEX = Pattern.compile(LT_STR);
+    static final Pattern PAUSES3 = Pattern.compile("\\(\\.\\.\\.\\)");
+    static final Pattern PAUSES2 = Pattern.compile("\\(\\.\\.\\)");
+    static final Pattern PAUSES1 = Pattern.compile("\\([0-9]*\\.[0-9]*\\)");
+    static final Pattern LEFT_BRACKET = Pattern.compile("\\(");
+    static final Pattern RIGHT_BRACKET = Pattern.compile("\\)");
+    static final Pattern AT_SIGN_LETTERS = Pattern.compile("@[\\w:]+");
+    static final Pattern WWW = Pattern.compile("www");
+    static final Pattern PHON_FRAG1 = Pattern.compile("& = [\\w:]+");
+    static final Pattern PHON_FRAG2 = Pattern.compile("&[\\w:]+");
+    static final Pattern ZERO_STR = Pattern.compile("0(\\w+)");
+    static final Pattern BARE_ZERO = Pattern.compile("0");
+    static final Pattern PLUS_DOT_DOT = Pattern.compile("\\+\\.\\.");
+    static final String LT_STR = "\\[<\\]";
+    static final Pattern LT_REGEX = Pattern.compile(LT_STR);
 
     // ltre1 = Pattern.compile(scoped(ltstr))
     // ltre2 = Pattern.compile(ltstr)
-    final String DOUBLE_SLASH_STR = "\\[//\\]";
-    final Pattern DOUBLE_SLASH_SCOPED = Pattern.compile(scoped(DOUBLE_SLASH_STR));
-    final Pattern DOUBLE_SLASH_UNSCOPED = Pattern.compile(DOUBLE_SLASH_STR);
-    final Pattern EXCLAM2 = Pattern.compile("\\[!\\]");
-    final Pattern EXCLAM1 = Pattern.compile("<([^>]*)>\\s*\\[!\\]");
-    final String SLASH_STR = "\\[/\\]";
-    final Pattern SLASH_SCOPED = Pattern.compile(scoped(SLASH_STR));
-    final Pattern SLASH_UNSCOPED = Pattern.compile(SLASH_STR);
-    final String GT_STR = "\\[>\\]";
-    final Pattern GT_REGEX = Pattern.compile(GT_STR);
+    static final String DOUBLE_SLASH_STR = "\\[//\\]";
+    static final Pattern DOUBLE_SLASH_SCOPED = Pattern.compile(scoped(DOUBLE_SLASH_STR));
+    static final Pattern DOUBLE_SLASH_UNSCOPED = Pattern.compile(DOUBLE_SLASH_STR);
+    static final Pattern EXCLAM2 = Pattern.compile("\\[!\\]");
+    static final Pattern EXCLAM1 = Pattern.compile("<([^>]*)>\\s*\\[!\\]");
+    static final String SLASH_STR = "\\[/\\]";
+    static final Pattern SLASH_SCOPED = Pattern.compile(scoped(SLASH_STR));
+    static final Pattern SLASH_UNSCOPED = Pattern.compile(SLASH_STR);
+    static final String GT_STR = "\\[>\\]";
+    static final Pattern GT_REGEX = Pattern.compile(GT_STR);
     // gtre1 = Pattern.compile(scoped(gtstr))
     // gtre2 = Pattern.compile(gtstr)
-    final String Q_STR = "\\[\\?\\]";
-    final Pattern Q_REGEX_SCOPED = Pattern.compile(scoped(Q_STR));
-    final Pattern Q_REGEX_UNSCOPED = Pattern.compile(Q_STR);
-    final Pattern EQ_EXCLAM = Pattern.compile("<([^>]*)>\\s*\\[ = ![^\\]]*\\]");
-    final Pattern EQ_TEXT1 = Pattern.compile("<([^>]*)>\\s*\\[ = [^\\]]*\\]");
-    final Pattern EQ_TEXT2 = Pattern.compile("\\[ = [^\\]]*\\]");
-    final Pattern COLON_REGEX = Pattern.compile("[^ ]+\\s+\\[:([^\\]]*)\\]");
-    final Pattern DOUBLE_EXCLAM = Pattern.compile("\\[!!\\]");
-    final Pattern PLUS3 = Pattern.compile("\\+\\/(\\/)?[\\.\\?]");
-    final Pattern PLUS2 = Pattern.compile("\\+[\\.\\^<,\\+\"]");
-    final Pattern PLUS_QUOTE = Pattern.compile("\\+(\\+\"\\.|!\\?)");
+    static final String Q_STR = "\\[\\?\\]";
+    static final Pattern Q_REGEX_SCOPED = Pattern.compile(scoped(Q_STR));
+    static final Pattern Q_REGEX_UNSCOPED = Pattern.compile(Q_STR);
+    static final Pattern EQ_EXCLAM = Pattern.compile("<([^>]*)>\\s*\\[ = ![^\\]]*\\]");
+    static final Pattern EQ_TEXT1 = Pattern.compile("<([^>]*)>\\s*\\[ = [^\\]]*\\]");
+    static final Pattern EQ_TEXT2 = Pattern.compile("\\[ = [^\\]]*\\]");
+    static final Pattern COLON_REGEX = Pattern.compile("[^ ]+\\s+\\[:([^\\]]*)\\]");
+    static final Pattern DOUBLE_EXCLAM = Pattern.compile("\\[!!\\]");
+    static final Pattern PLUS3 = Pattern.compile("\\+\\/(\\/)?[\\.\\?]");
+    static final Pattern PLUS2 = Pattern.compile("\\+[\\.\\^<,\\+\"]");
+    static final Pattern PLUS_QUOTE = Pattern.compile("\\+(\\+\"\\.|!\\?)");
     // nesting = Pattern.compile(r"<([^<>]*(<[^<>]*>(\[>\]|\[<\]|[^<>])*)+)>")
     // nesting = Pattern.compile(r"<(([^<>]|\[<\]|\[>\])*)>")
 

@@ -161,7 +161,7 @@ public class QueryTool {
 	private Map<String, List<String>> wordLists = new HashMap<>();
 
 	/** Thrown when an error occurs during parsing */
-	class ParseException extends Exception {
+	static class ParseException extends Exception {
 
 		public ParseException() {
 			super();
@@ -181,7 +181,7 @@ public class QueryTool {
 	}
 
 	/** Generic command parser interface */
-	abstract class Parser {
+	abstract static class Parser {
 		public abstract String getPrompt();
 
 		public abstract String getName();

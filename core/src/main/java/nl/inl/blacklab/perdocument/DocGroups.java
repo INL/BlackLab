@@ -97,8 +97,7 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
 	 * @param sortReverse if true, perform reverse sort
 	 */
 	public void sort(DocGroupProperty prop, boolean sortReverse) {
-		Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse,
-				searcher.getCollator());
+		Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse);
 		Collections.sort(orderedGroups, comparator);
 	}
 

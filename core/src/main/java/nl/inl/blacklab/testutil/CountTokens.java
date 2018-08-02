@@ -16,7 +16,7 @@ import nl.inl.util.LogUtil;
  *  that don't store this in the metadata file). */
 public class CountTokens {
 
-	private final class CountTask implements LuceneDocTask {
+	private static final class CountTask implements LuceneDocTask {
         private final String tokenLengthField;
         int totalDocs;
         int docsDone = 0;

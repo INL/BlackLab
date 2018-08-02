@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.Searcher;
  */
 public class HitPropertyContextWords extends HitProperty {
 
-	final int MAX_HIT_LENGTH = 10;
+	private static final int MAX_HIT_LENGTH = 10;
 
 	/** A location in the hit context to start a stretch of words from. */
 	public enum ContextStart {

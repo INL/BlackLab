@@ -15,19 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-import java.text.Collator;
 import java.util.Comparator;
 
 class ComparatorGroupProperty implements Comparator<Group> {
 	private GroupProperty prop;
 
-	Collator collator;
-
 	boolean sortReverse;
 
-	public ComparatorGroupProperty(GroupProperty prop, boolean sortReverse, Collator collator) {
+	public ComparatorGroupProperty(GroupProperty prop, boolean sortReverse) {
 		this.prop = prop;
-		this.collator = collator;
 		this.sortReverse = prop.defaultSortDescending() ? !sortReverse : sortReverse;
 	}
 

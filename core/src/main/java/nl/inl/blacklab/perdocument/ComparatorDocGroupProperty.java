@@ -15,19 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
-import java.text.Collator;
 import java.util.Comparator;
 
 public class ComparatorDocGroupProperty implements Comparator<DocGroup> {
 	private DocGroupProperty prop;
 
-	Collator collator;
-
 	boolean sortReverse;
 
-	public ComparatorDocGroupProperty(DocGroupProperty prop, boolean sortReverse, Collator collator) {
+	public ComparatorDocGroupProperty(DocGroupProperty prop, boolean sortReverse) {
 		this.prop = prop;
-		this.collator = collator;
 		this.sortReverse = prop.defaultSortDescending() ? !sortReverse : sortReverse;
 	}
 

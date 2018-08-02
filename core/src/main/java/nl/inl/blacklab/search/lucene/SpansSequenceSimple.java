@@ -36,8 +36,6 @@ class SpansSequenceSimple extends BLSpans {
 
 	private BLSpans right;
 
-	boolean more = true;
-
 	int currentDoc = -1;
 
 	private boolean alreadyAtFirstMatch = false;
