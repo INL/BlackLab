@@ -335,8 +335,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		tocModified = false;
 		if (create) {
 			clear();
-			if (tocFile.exists())
-				tocFile.delete();
+			if (tocFile.exists() && !tocFile.delete())
+			    throw new RuntimeException("Could not delete file: " + tocFile);
 			setStoreType();
 		}
 		blockIndicesWhileStoring = new IntArrayList();
@@ -381,8 +381,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 		closeContentsFile();
 
 		// delete contents file and empty TOC
-		if (contentsFile.exists())
-			contentsFile.delete();
+		if (contentsFile.exists() && !contentsFile.delete())
+		    throw new RuntimeException("Could not delete file: " + contentsFile);
 		toc.clear();
 		freeBlocks.clear();
 		tocModified = true;

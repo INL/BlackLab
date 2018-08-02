@@ -164,12 +164,12 @@ class ForwardIndexImplV3 extends ForwardIndex {
 		tocFile = new File(dir, "docs.dat");
 		tokensFile = new File(dir, "tokens.dat");
 		if (create) {
-			if (tokensFile.exists())
-				tokensFile.delete();
-			if (tocFile.exists())
-				tocFile.delete();
-			if (termsFile.exists())
-				termsFile.delete();
+			if (tokensFile.exists() && !tokensFile.delete())
+			    throw new RuntimeException("Could not delete file: " + tokensFile);
+			if (tocFile.exists() && !tocFile.delete())
+                throw new RuntimeException("Could not delete file: " + tocFile);
+			if (termsFile.exists() && !termsFile.delete())
+                throw new RuntimeException("Could not delete file: " + termsFile);
 		}
 		toc = new ArrayList<>();
 		deletedTocEntries = new ArrayList<>();

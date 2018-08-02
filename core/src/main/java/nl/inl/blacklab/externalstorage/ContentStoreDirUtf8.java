@@ -328,8 +328,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		tocModified = false;
 		if (create) {
 			clear();
-			if (tocFile.exists())
-				tocFile.delete();
+			if (tocFile.exists() && !tocFile.delete())
+			    throw new RuntimeException("Could not delete file: " + tocFile);
 			setStoreType();
 		}
 		blockOffsetWhileStoring = new ArrayList<>();
@@ -354,8 +354,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		for (Map.Entry<Integer, TocEntry> me : toc.entrySet()) {
 			TocEntry e = me.getValue();
 			File f = getContentFile(e.fileId);
-			if (f.exists())
-				f.delete();
+			if (f.exists() && !f.delete())
+			    throw new RuntimeException("Could not delete file: " + f);
 		}
 		toc.clear();
 		tocModified = true;
@@ -647,8 +647,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 			}
 			if (currentStoreFileStream == null) {
 				File f = getContentFile(currentFileId);
-				if (createNew && f.exists())
-					f.delete(); // leftover from previous index; delete
+				if (createNew && f.exists() && !f.delete()) // leftover from previous index; delete
+				    throw new RuntimeException("Could not delete file: " + f);
 				currentStoreFileStream = new BufferedOutputStream(new FileOutputStream(f, true));
 			}
 			return currentStoreFileStream;

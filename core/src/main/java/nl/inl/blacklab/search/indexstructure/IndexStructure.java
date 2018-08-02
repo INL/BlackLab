@@ -346,7 +346,8 @@ public class IndexStructure {
                 boolean existingIsJson = metadataFile.getName().endsWith(".json");
                 if (existingIsJson != templateIsJson) {
                     // Delete the existing, different-format file to avoid confusion.
-                    metadataFile.delete();
+                    if (!metadataFile.delete())
+                        throw new RuntimeException("Could not delete file: " + metadataFile);
                 }
             }
             metadataFile = new File(indexDir, METADATA_FILE_NAME + "." + templateExt);
